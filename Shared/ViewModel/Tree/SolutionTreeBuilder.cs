@@ -1,7 +1,8 @@
 namespace Moba.Shared.ViewModel.Tree;
 
-using System.Collections.Generic;
 using Moba.Backend.Model;
+
+using System.Collections.Generic;
 
 public static class SolutionTreeBuilder
 {

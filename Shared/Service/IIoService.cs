@@ -1,7 +1,8 @@
 namespace Moba.Shared.Service;
 
-using System.Threading.Tasks;
 using Moba.Backend.Model;
+
+using System.Threading.Tasks;
 
 public interface IIoService
 {

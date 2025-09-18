@@ -34,7 +34,10 @@ public class Solution
             string json = File.ReadAllText(path);
             if (!string.IsNullOrEmpty(json))
             {
-                var settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All };
+                JsonSerializerSettings settings = new()
+                {
+                    TypeNameHandling = TypeNameHandling.All
+                };
 
                 var temp = JsonConvert.DeserializeObject<Solution>(json, settings);
 

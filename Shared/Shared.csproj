@@ -9,4 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Backend\Backend.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="ViewModel\DesignTime\" />
+  </ItemGroup>
 </Project>
