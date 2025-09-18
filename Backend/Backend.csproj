@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Moba.Backend</RootNamespace>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="Z21" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Sound\Sound.csproj" />
+  </ItemGroup>
+</Project>

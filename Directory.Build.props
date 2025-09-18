@@ -1,0 +1,24 @@
+<Project>
+  <PropertyGroup>
+    <!-- Gemeinsame Projekteinstellungen -->
+    <Company>MOBAflow</Company>
+    <Authors>MOBAflow</Authors>
+    <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <Deterministic>true</Deterministic>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://dev.azure.com/ahuelsmann/MOBAflow/_git/MOBAflow</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <IncludeSymbols>false</IncludeSymbols>
+    <IncludeSource>false</IncludeSource>
+  </PropertyGroup>
+
+  <!-- Gemeinsame Konfiguration für Release (kann bei Bedarf überschrieben werden) -->
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+</Project>

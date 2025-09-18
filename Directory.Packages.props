@@ -1,0 +1,16 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Zentrale Paketversionen -->
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageVersion Include="Z21" Version="4.0.0" />
+    <PackageVersion Include="NAudio" Version="2.2.1" />
+    <PackageVersion Include="Microsoft.CognitiveServices.Speech" Version="1.43.0" />
+    <PackageVersion Include="System.Windows.Extensions" Version="9.0.4" />
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4948" />
+    <PackageVersion Include="Microsoft.WindowsAppSDK" Version="1.8.250907003" />
+  </ItemGroup>
+</Project>

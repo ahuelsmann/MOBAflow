@@ -1,0 +1,76 @@
+root = true
+# You can modify the rules from these initially generated values to suit your own policies
+# You can learn more about editorconfig here: https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference
+
+# top-most EditorConfig file
+
+# common settings
+[*]
+indent_style = space
+max_line_length = 140
+charset = utf-8
+trim_trailing_whitespace = true
+end_of_line = crlf
+insert_final_newline = false
+
+# ReSharper properties
+resharper_csharp_max_line_length = 140
+resharper_csharp_braces_redundant = true
+resharper_max_formal_parameters_on_line = 4
+resharper_max_initializer_elements_on_line = 4
+resharper_max_invocation_arguments_on_line = 4
+resharper_max_primary_constructor_parameters_on_line = 4
+resharper_csharp_max_invocation_arguments_on_line = 4
+resharper_csharp_wrap_chained_method_calls = chop_if_long
+resharper_max_enum_members_on_line = 1
+resharper_max_attribute_length_for_same_line = 140
+resharper_csharp_empty_block_style = together_same_line
+resharper_csharp_wrap_arguments_style = chop_if_long
+resharper_csharp_method_or_operator_body = expression_body
+resharper_csharp_wrap_primary_constructor_parameters_style = chop_if_long
+
+# .NET formatting rules
+[*.{cs,vb}]
+indent_size = 4
+tab_width = 4
+dotnet_sort_system_directives_first = false
+dotnet_style_operator_placement_when_wrapping = beginning_of_line
+csharp_using_directive_placement = inside_namespace
+csharp_style_var_for_built_in_types = true
+csharp_prefer_braces = false
+
+# Roslyn Analyzer setting
+# severity levels: error, warning, suggestion, silent, none, default
+# see https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/configuration-options#severity-level for details
+dotnet_diagnostic.CA1822.severity = none # static is evil (in most cases)
+dotnet_diagnostic.CA1859.severity = suggestion # use specific types in return values of private methods to improve performance. severity suggestion should be sufficient here.
+
+dotnet_code_quality.ca1062.api_surface = public # Validate (null check) arguments of public methods
+
+[*.{appxmanifest,axml,build,config,cshtml,dbml,discomap,dtd,htm,html,jsproj,lsproj,njsproj,nuspec,proj,props,proto,razor,resw,resx,StyleCop,targets,tasks,vbproj,xml,xsd}]
+indent_size = 2
+tab_width = 2
+max_line_length = 160
+
+[*.{asax,ascx,aspx,axaml,css,cpp,js,jsx,master,paml,skin,ts,tsx,xamlx,xoml}]
+indent_size = 4
+tab_width = 4
+
+[*.xaml]
+indent_style = space
+indent_size = 4
+tab_width = 4
+
+[*.{json,resjson}]
+indent_style = space
+indent_size = 2
+tab_width = 2
+
+[*.{csproj,sh}]
+charset = utf-8
+indent_size = 2
+tab_width = 2
+
+[*.md]
+max_line_length = off
+trim_trailing_whitespace = false

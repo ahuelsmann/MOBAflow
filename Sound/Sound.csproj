@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Moba.Sound</RootNamespace>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="Ton.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NAudio" />
+    <PackageReference Include="Microsoft.CognitiveServices.Speech" />
+    <PackageReference Include="System.Windows.Extensions" />
+  </ItemGroup>
+</Project>
