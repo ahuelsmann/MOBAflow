@@ -11,7 +11,7 @@ public static class SolutionTreeBuilder
         var root = new TreeNodeViewModel("Solution", solution);
         foreach (var project in solution.Projects)
         {
-            var projNode = new TreeNodeViewModel(project.Setting?.Name ?? "Project", project);
+            var projNode = new TreeNodeViewModel(project.Setting.Name, project);
             root.Children.Add(projNode);
 
             projNode.Children.Add(CreateCollectionNode("SpeakerEngines", project.SpeakerEngines));

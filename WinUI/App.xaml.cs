@@ -1,4 +1,4 @@
-namespace WinUI;
+namespace Moba.WinUI;
 
 using Microsoft.UI.Xaml;
 
