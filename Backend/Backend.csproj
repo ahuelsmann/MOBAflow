@@ -5,7 +5,6 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" />
-    <PackageReference Include="Z21" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Sound\Sound.csproj" />
