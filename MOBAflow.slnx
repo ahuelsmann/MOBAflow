@@ -2,11 +2,20 @@
   <Configurations>
     <Platform Name="x64" />
   </Configurations>
-  <Project Path="Backend/Backend.csproj" />
-  <Project Path="Shared/Shared.csproj" />
-  <Project Path="Sound/Sound.csproj" />
+  <Project Path="Backend/Backend.csproj">
+    <Platform Solution="*|x64" Project="x64" />
+    <Deploy />
+  </Project>
+  <Project Path="Shared/Shared.csproj">
+    <Platform Solution="*|x64" Project="x64" />
+    <Deploy />
+  </Project>
+  <Project Path="Sound/Sound.csproj">
+    <Platform Solution="*|x64" Project="x64" />
+    <Deploy />
+  </Project>
   <Project Path="WinUI/WinUI.csproj">
-    <Platform Project="x64" />
+    <Platform Solution="*|x64" Project="x64" />
     <Deploy />
   </Project>
 </Solution>
