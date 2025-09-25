@@ -13,20 +13,20 @@ public partial class MainWindowViewModel(IIoService ioService) : ObservableObjec
     private readonly IIoService _ioService = ioService;
 
     [ObservableProperty]
-    private string title = "MOBAflow"; // Generates Title property
+    public partial string Title { get; set; } = "MOBAflow"; // Generates Title property
 
     [ObservableProperty]
-    private string? currentSolutionPath; // Path of loaded solution
+    public partial string? CurrentSolutionPath { get; set; } // Path of loaded solution
 
     [ObservableProperty]
-    private bool hasSolution;
+    public partial bool HasSolution { get; set; }
 
     [ObservableProperty]
-    private Solution? solution; // The loaded solution model
+    public partial Solution? Solution { get; set; } // The loaded solution model
 
     partial void OnSolutionChanged(Solution? value)
     {
-        HasSolution = value != null && value.Projects.Count > 0;
+        HasSolution = value is { Projects.Count: > 0 };
         SaveSolutionCommand.NotifyCanExecuteChanged();
     }
 
