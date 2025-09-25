@@ -2,7 +2,7 @@ namespace Moba.WinUI;
 
 using Microsoft.UI.Xaml;
 
-using Moba.WinUI.View;
+using View;
 
 /// <summary>
 /// Provides application-specific behavior to supplement the default Application class.
