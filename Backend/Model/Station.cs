@@ -1,6 +1,6 @@
 namespace Moba.Backend.Model;
 
-public partial class Station
+public class Station
 {
     public Station()
     {

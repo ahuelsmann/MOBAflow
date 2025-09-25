@@ -1,6 +1,6 @@
 namespace Moba.Backend.Model;
 
-public partial class Workflow
+public class Workflow
 {
     public Workflow()
     {
