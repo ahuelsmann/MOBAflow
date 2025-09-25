@@ -1,6 +1,6 @@
 namespace Moba.Backend.Interface;
 
-using Moba.Backend.Model;
+using Model;
 
 public interface IAction
 {

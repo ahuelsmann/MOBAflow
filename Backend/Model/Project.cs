@@ -1,6 +1,6 @@
 namespace Moba.Backend.Model;
 
-using Moba.Sound;
+using Sound;
 
 public class Project
 {

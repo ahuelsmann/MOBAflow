@@ -1,6 +1,6 @@
 namespace Moba.Backend.Model;
 
-using Moba.Backend.Enum;
+using Enum;
 
 public class Details
 {

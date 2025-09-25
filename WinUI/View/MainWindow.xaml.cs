@@ -2,9 +2,9 @@ namespace Moba.WinUI.View;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Moba.Shared.ViewModel;
-using Moba.Shared.Service;
-using Moba.WinUI.Service;
+using SharedUI.ViewModel;
+using Moba.SharedUI.Service;
+using Service;
 
 /// <summary>
 /// An empty window that can be used on its own or navigated to within a Frame.

@@ -1,7 +1,7 @@
 namespace Moba.WinUI.Service;
 
-using Moba.Backend.Model;
-using Moba.Shared.Service;
+using Backend.Model;
+using Moba.SharedUI.Service;
 
 using System;
 using System.Collections.Generic;

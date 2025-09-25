@@ -3,19 +3,18 @@
     <Platform Name="x64" />
   </Configurations>
   <Project Path="Backend/Backend.csproj">
-    <Platform Solution="*|x64" Project="x64" />
+    <Platform Project="x64" />
     <Deploy />
   </Project>
-  <Project Path="Shared/Shared.csproj">
-    <Platform Solution="*|x64" Project="x64" />
-    <Deploy />
+  <Project Path="SharedUI/SharedUI.csproj" Id="e6527119-fec0-439b-bd9a-a0525ac0f93e">
+    <Platform Project="x64" />
   </Project>
   <Project Path="Sound/Sound.csproj">
-    <Platform Solution="*|x64" Project="x64" />
+    <Platform Project="x64" />
     <Deploy />
   </Project>
   <Project Path="WinUI/WinUI.csproj">
-    <Platform Solution="*|x64" Project="x64" />
+    <Platform Project="x64" />
     <Deploy />
   </Project>
 </Solution>

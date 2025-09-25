@@ -1,6 +1,6 @@
 namespace Moba.Backend.Model.Action;
 
-using Moba.Backend.Enum;
+using Enum;
 
 public class Announcement : Base
 {

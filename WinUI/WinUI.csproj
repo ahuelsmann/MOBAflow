@@ -41,10 +41,10 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Shared\Shared.csproj" />
+    <Folder Include="View" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="View" />
+    <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="MainWindow.xaml">
