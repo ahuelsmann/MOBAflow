@@ -5,6 +5,7 @@
   <ItemGroup>
     <!-- Zentrale Paketversionen -->
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.15.0.120848" />
     <PackageVersion Include="Z21" Version="4.0.0" />
     <PackageVersion Include="NAudio" Version="2.2.1" />
     <PackageVersion Include="Microsoft.CognitiveServices.Speech" Version="1.46.0" />
