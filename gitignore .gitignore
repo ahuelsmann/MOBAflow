@@ -1,0 +1,56 @@
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+[Aa]rtifacts/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+
+# .NET
+*.dll
+*.exe
+*.pdb
+project.lock.json
+project.fragment.lock.json
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+
+# Windows/WinUI specific
+AppPackages/
+BundleArtifacts/
+*.appx
+*.appxbundle
+*.appxupload
+Package.StoreAssociation.xml
+_pkginfo.txt
+
+# Temporary files
+*.tmp
+*.log
+*~
+*.cache
+
+# Code coverage
+coverage*.json
+coverage*.xml
+coverage*.info
+*.coverage
+
+# Source generators
+Generated\ Files/
+
+# Local History
+.localhistory/

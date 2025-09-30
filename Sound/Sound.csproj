@@ -11,10 +11,6 @@
   <ItemGroup>
     <PackageReference Include="NAudio" />
     <PackageReference Include="Microsoft.CognitiveServices.Speech" />
-    <PackageReference Include="SonarAnalyzer.CSharp">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="System.Windows.Extensions" />
   </ItemGroup>
 </Project>

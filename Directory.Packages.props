@@ -9,7 +9,6 @@
     <PackageVersion Include="Microsoft.CognitiveServices.Speech" Version="1.46.0" />
     <PackageVersion Include="System.Windows.Extensions" Version="9.0.9" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.6584" />
     <PackageVersion Include="Microsoft.WindowsAppSDK" Version="1.8.250916003" />
     <PackageVersion Include="Microsoft.SourceLink.AzureRepos.Git" Version="8.0.0" />
   </ItemGroup>

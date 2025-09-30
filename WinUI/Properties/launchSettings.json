@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "WinUI (Unpackaged)": {
+    "WinUI": {
       "commandName": "Project"
     }
   }

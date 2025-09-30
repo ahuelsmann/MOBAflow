@@ -1,34 +1,21 @@
 root = true
-# You can modify the rules from these initially generated values to suit your own policies
-# You can learn more about editorconfig here: https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference
 
-# top-most EditorConfig file
-
-# common settings
+# Common settings for all files
 [*]
 indent_style = space
-max_line_length = 140
+indent_size = 4
 charset = utf-8
 trim_trailing_whitespace = true
 end_of_line = crlf
+max_line_length = 140
 insert_final_newline = false
 
-# ReSharper properties
-resharper_csharp_max_line_length = 140
-resharper_csharp_braces_redundant = true
-resharper_max_formal_parameters_on_line = 4
-resharper_max_initializer_elements_on_line = 4
-resharper_max_invocation_arguments_on_line = 4
-resharper_max_primary_constructor_parameters_on_line = 4
-resharper_csharp_max_invocation_arguments_on_line = 4
-resharper_csharp_wrap_chained_method_calls = chop_if_long
-resharper_max_enum_members_on_line = 1
-resharper_max_attribute_length_for_same_line = 140
-resharper_csharp_empty_block_style = together_same_line
-resharper_csharp_wrap_arguments_style = chop_if_long
-resharper_csharp_method_or_operator_body = expression_body
-resharper_csharp_wrap_primary_constructor_parameters_style = chop_if_long
-csharp_using_directive_placement = inside_namespace:silent
+# C# and VB.NET files
+[*.{cs,vb}]
+# Using directives
+csharp_using_directive_placement = inside_namespace
+
+# Code style preferences
 csharp_prefer_simple_using_statement = true:suggestion
 csharp_prefer_braces = false:silent
 csharp_style_namespace_declarations = file_scoped:silent
@@ -36,100 +23,91 @@ csharp_style_prefer_method_group_conversion = true:silent
 csharp_style_prefer_top_level_statements = true:silent
 csharp_style_prefer_primary_constructors = true:suggestion
 csharp_prefer_system_threading_lock = true:suggestion
-csharp_style_prefer_simple_property_accessors = true:suggestion
+csharp_style_var_for_built_in_types = true:suggestion
+
+# Expression-bodied members
 csharp_style_expression_bodied_methods = false:silent
 csharp_style_expression_bodied_constructors = false:silent
+csharp_style_expression_bodied_operators = false:silent
+csharp_style_expression_bodied_properties = true:silent
+csharp_style_expression_bodied_indexers = true:silent
+csharp_style_expression_bodied_accessors = true:silent
 
-# .NET formatting rules
-[*.{cs,vb}]
-indent_size = 4
-tab_width = 4
+# Formatting
 dotnet_sort_system_directives_first = false
 dotnet_style_operator_placement_when_wrapping = beginning_of_line
-csharp_using_directive_placement = inside_namespace
-csharp_style_var_for_built_in_types = true
-csharp_prefer_braces = false
 
-# Roslyn Analyzer setting
-# severity levels: error, warning, suggestion, silent, none, default
-# see https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/configuration-options#severity-level for details
-dotnet_diagnostic.CA1822.severity = none # static is evil (in most cases)
-dotnet_diagnostic.CA1859.severity = suggestion # use specific types in return values of private methods to improve performance. severity suggestion should be sufficient here.
+# ReSharper properties
+resharper_csharp_max_line_length = 140
+resharper_max_formal_parameters_on_line = 4
+resharper_max_invocation_arguments_on_line = 4
+resharper_max_primary_constructor_parameters_on_line = 4
+resharper_csharp_wrap_chained_method_calls = chop_if_long
+resharper_max_enum_members_on_line = 1
+resharper_max_attribute_length_for_same_line = 140
+resharper_csharp_empty_block_style = together_same_line
+resharper_csharp_wrap_arguments_style = chop_if_long
+resharper_csharp_method_or_operator_body = expression_body
+resharper_csharp_wrap_primary_constructor_parameters_style = chop_if_long
+resharper_csharp_braces_redundant = true
 
-dotnet_code_quality.ca1062.api_surface = public # Validate (null check) arguments of public methods
+# Code analysis
+dotnet_diagnostic.CA1822.severity = none
+dotnet_diagnostic.CA1859.severity = suggestion
+dotnet_code_quality.ca1062.api_surface = public
 
-[*.{appxmanifest,axml,build,config,cshtml,dbml,discomap,dtd,htm,html,jsproj,lsproj,njsproj,nuspec,proj,props,proto,razor,resw,resx,StyleCop,targets,tasks,vbproj,xml,xsd}]
-indent_size = 2
-tab_width = 2
-max_line_length = 160
-
-[*.{asax,ascx,aspx,axaml,css,cpp,js,jsx,master,paml,skin,ts,tsx,xamlx,xoml}]
-indent_size = 4
-tab_width = 4
-
-[*.xaml]
-indent_style = space
-indent_size = 4
-tab_width = 4
-
-[*.{json,resjson}]
-indent_style = space
-indent_size = 2
-tab_width = 2
-
-[*.{csproj,sh}]
-charset = utf-8
-indent_size = 2
-tab_width = 2
-
-[*.md]
-max_line_length = off
-trim_trailing_whitespace = false
-
-[*.{cs,vb}]
-#### Naming styles ####
-
-# Naming rules
-
+#### Naming conventions ####
+# Interfaces should be prefixed with I
 dotnet_naming_rule.interface_should_be_begins_with_i.severity = suggestion
 dotnet_naming_rule.interface_should_be_begins_with_i.symbols = interface
 dotnet_naming_rule.interface_should_be_begins_with_i.style = begins_with_i
 
+# Types should be PascalCase
 dotnet_naming_rule.types_should_be_pascal_case.severity = suggestion
 dotnet_naming_rule.types_should_be_pascal_case.symbols = types
 dotnet_naming_rule.types_should_be_pascal_case.style = pascal_case
 
+# Non-field members should be PascalCase
 dotnet_naming_rule.non_field_members_should_be_pascal_case.severity = suggestion
 dotnet_naming_rule.non_field_members_should_be_pascal_case.symbols = non_field_members
 dotnet_naming_rule.non_field_members_should_be_pascal_case.style = pascal_case
 
-# Symbol specifications
+# Private fields should be _camelCase
+dotnet_naming_rule.private_fields_should_be_underscore_camel_case.severity = suggestion
+dotnet_naming_rule.private_fields_should_be_underscore_camel_case.symbols = private_fields
+dotnet_naming_rule.private_fields_should_be_underscore_camel_case.style = underscore_camel_case
 
+# Symbol specifications
 dotnet_naming_symbols.interface.applicable_kinds = interface
 dotnet_naming_symbols.interface.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
-dotnet_naming_symbols.interface.required_modifiers = 
 
 dotnet_naming_symbols.types.applicable_kinds = class, struct, interface, enum
 dotnet_naming_symbols.types.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
-dotnet_naming_symbols.types.required_modifiers = 
 
 dotnet_naming_symbols.non_field_members.applicable_kinds = property, event, method
 dotnet_naming_symbols.non_field_members.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
-dotnet_naming_symbols.non_field_members.required_modifiers = 
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
 
 # Naming styles
-
 dotnet_naming_style.begins_with_i.required_prefix = I
-dotnet_naming_style.begins_with_i.required_suffix = 
-dotnet_naming_style.begins_with_i.word_separator = 
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
 
-dotnet_naming_style.pascal_case.required_prefix = 
-dotnet_naming_style.pascal_case.required_suffix = 
-dotnet_naming_style.pascal_case.word_separator = 
 dotnet_naming_style.pascal_case.capitalization = pascal_case
 
-dotnet_naming_style.pascal_case.required_prefix = 
-dotnet_naming_style.pascal_case.required_suffix = 
-dotnet_naming_style.pascal_case.word_separator = 
-dotnet_naming_style.pascal_case.capitalization = pascal_case
+dotnet_naming_style.underscore_camel_case.required_prefix = _
+dotnet_naming_style.underscore_camel_case.capitalization = camel_case
+
+# XML and project files
+[*.{xml,xaml,csproj,props,targets}]
+indent_size = 2
+
+# JSON files
+[*.{json,resjson}]
+indent_size = 2
+
+# Markdown files
+[*.md]
+max_line_length = off
+trim_trailing_whitespace = false
