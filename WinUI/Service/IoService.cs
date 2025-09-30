@@ -1,6 +1,7 @@
 namespace Moba.WinUI.Service;
 
 using Backend.Model;
+
 using Moba.SharedUI.Service;
 
 using System;
@@ -27,7 +28,7 @@ public class IoService : IIoService
             picker.FileTypeFilter.Add(".json");
             var file = await picker.PickSingleFileAsync();
             if (file == null) return (null, null, null);
-            var sol = Solution.Load(file.Path);
+            var sol = await Solution.LoadAsync(file.Path);
             return (sol, file.Path, null);
         }
         catch (Exception ex)
@@ -51,7 +52,7 @@ public class IoService : IIoService
                 if (file == null) return (false, null, null);
                 path = file.Path;
             }
-            Solution.Save(path!, solution);
+            await Solution.SaveAsync(path!, solution);
             return (true, path, null);
         }
         catch (Exception ex)

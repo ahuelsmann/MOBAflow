@@ -11,7 +11,7 @@ public class Solution
 
     public List<Project> Projects { get; set; }
 
-    public static void Save(string path, Solution? solution)
+    public static async Task SaveAsync(string path, Solution? solution)
     {
         if (!string.IsNullOrEmpty(path) && solution != null)
         {
@@ -21,17 +21,17 @@ public class Solution
                 TypeNameHandling = TypeNameHandling.All
             };
 
-            string json = JsonConvert.SerializeObject(solution, Formatting.Indented, settings);
+            string json = JsonConvert.SerializeObject(solution, settings);
 
-            File.WriteAllText(path, json);
+            await File.WriteAllTextAsync(path, json);
         }
     }
 
-    public static Solution? Load(string path)
+    public static async Task<Solution?> LoadAsync(string path)
     {
         if (!string.IsNullOrEmpty(path) && File.Exists(path))
         {
-            string json = File.ReadAllText(path);
+            string json = await File.ReadAllTextAsync(path);
             if (!string.IsNullOrEmpty(json))
             {
                 JsonSerializerSettings settings = new()
