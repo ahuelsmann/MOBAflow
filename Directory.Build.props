@@ -1,28 +1,49 @@
 <Project>
   <PropertyGroup>
-    <!-- Gemeinsame Projekteinstellungen -->
-    <Company>MOBAflow</Company>
-    <Authors>MOBAflow</Authors>
-    <LangVersion>preview</LangVersion>
+    <!-- Project Metadata -->
+    <Company>Andreas Huelsmann</Company>
+    <Authors>Andreas Huelsmann</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    
+    <!-- Repository Information -->
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://dev.azure.com/ahuelsmann/MOBAflow/_git/MOBAflow</RepositoryUrl>
+    
+    <!-- Build Configuration -->
+    <Configurations>Debug;Release</Configurations>
+    <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AnalysisLevel>latest</AnalysisLevel>
-    <Deterministic>true</Deterministic>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://dev.azure.com/ahuelsmann/MOBAflow/_git/MOBAflow</RepositoryUrl>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <IncludeSymbols>false</IncludeSymbols>
-    <IncludeSource>false</IncludeSource>
-    <!-- Force x64 because Z21 dependency ships AMD64 only -->
+    <Deterministic>true</Deterministic>
+    
+    <!-- Platform Configuration -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PlatformTarget>x64</PlatformTarget>
     <Platforms>x64</Platforms>
-    <!-- Prevent mismatch from escalating -->
     <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>Warning</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+    
+    <!-- Output Configuration -->
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    
+    <!-- Debugging & Source Linking -->
+    <IncludeSymbols>true</IncludeSymbols>
+    <IncludeSource>true</IncludeSource>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
   </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+  
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <Optimize>false</Optimize>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <Optimize>true</Optimize>
+    <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
 </Project>

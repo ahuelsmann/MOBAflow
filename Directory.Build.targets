@@ -1,0 +1,9 @@
+<Project>
+  <ItemGroup>
+    <!-- SourceLink für besseres Debugging -->
+    <PackageReference Include="Microsoft.SourceLink.AzureRepos.Git">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>

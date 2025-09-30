@@ -13,16 +13,16 @@ public partial class MainWindowViewModel(IIoService ioService) : ObservableObjec
     private readonly IIoService _ioService = ioService;
 
     [ObservableProperty]
-    public partial string Title { get; set; } = "MOBAflow"; // Generates Title property
+    private string title = "MOBAflow";
 
     [ObservableProperty]
-    public partial string? CurrentSolutionPath { get; set; } // Path of loaded solution
+    private string? currentSolutionPath;
 
     [ObservableProperty]
-    public partial bool HasSolution { get; set; }
+    private bool hasSolution;
 
     [ObservableProperty]
-    public partial Solution? Solution { get; set; } // The loaded solution model
+    private Solution? solution;
 
     partial void OnSolutionChanged(Solution? value)
     {
