@@ -9,6 +9,20 @@ trim_trailing_whitespace = true
 end_of_line = crlf
 max_line_length = 140
 insert_final_newline = false
+csharp_using_directive_placement = inside_namespace:silent
+csharp_prefer_simple_using_statement = true:suggestion
+csharp_prefer_braces = false:silent
+csharp_style_namespace_declarations = file_scoped:silent
+csharp_style_prefer_method_group_conversion = true:silent
+csharp_style_prefer_top_level_statements = true:silent
+csharp_style_prefer_primary_constructors = true:suggestion
+csharp_prefer_system_threading_lock = true:suggestion
+csharp_style_prefer_simple_property_accessors = true:suggestion
+csharp_style_expression_bodied_methods = false:silent
+csharp_style_expression_bodied_constructors = false:silent
+csharp_style_expression_bodied_operators = false:silent
+csharp_style_expression_bodied_properties = true:silent
+csharp_style_expression_bodied_indexers = true:silent
 
 # C# and VB.NET files
 [*.{cs,vb}]
@@ -98,6 +112,7 @@ dotnet_naming_style.pascal_case.capitalization = pascal_case
 
 dotnet_naming_style.underscore_camel_case.required_prefix = _
 dotnet_naming_style.underscore_camel_case.capitalization = camel_case
+tab_width = 4
 
 # XML and project files
 [*.{xml,xaml,csproj,props,targets}]

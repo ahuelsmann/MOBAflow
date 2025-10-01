@@ -1,6 +1,6 @@
 <Solution>
   <Configurations>
-    <Platform Name="x64" />
+    <Platform Name="Any CPU" />
   </Configurations>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
@@ -10,18 +10,18 @@
     <File Path="Directory.Packages.props" />
   </Folder>
   <Project Path="Backend/Backend.csproj">
-    <Platform Project="x64" />
+    <Platform Project="Any CPU" />
     <Deploy />
   </Project>
   <Project Path="SharedUI/SharedUI.csproj" Id="e6527119-fec0-439b-bd9a-a0525ac0f93e">
-    <Platform Project="x64" />
+    <Platform Project="Any CPU" />
   </Project>
   <Project Path="Sound/Sound.csproj">
-    <Platform Project="x64" />
+    <Platform Project="Any CPU" />
     <Deploy />
   </Project>
   <Project Path="WinUI/WinUI.csproj">
-    <Platform Project="x64" />
+    <Platform Project="Any CPU" />
     <Deploy />
   </Project>
 </Solution>
