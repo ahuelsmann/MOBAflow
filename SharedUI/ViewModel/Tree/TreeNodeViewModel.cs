@@ -12,5 +12,5 @@ public class TreeNodeViewModel
 
     public string Name { get; set; }
     public object? Tag { get; set; }
-    public ObservableCollection<TreeNodeViewModel> Children { get; } = new();
+    public ObservableCollection<TreeNodeViewModel> Children { get; } = [];
 }

@@ -34,15 +34,15 @@ public partial class MainWindowViewModel(IIoService ioService) : ObservableObjec
     [RelayCommand]
     private async Task LoadSolutionAsync()
     {
-        var (solution, path, error) = await _ioService.LoadAsync();
+        (Solution? _solution, string? path, string? error) = await _ioService.LoadAsync();
         if (!string.IsNullOrEmpty(error))
         {
             // TODO: expose error to UI (add property or messaging)
             return;
         }
-        if (solution != null)
+        if (_solution != null)
         {
-            Solution = solution;
+            Solution = _solution;
             CurrentSolutionPath = path;
         }
     }

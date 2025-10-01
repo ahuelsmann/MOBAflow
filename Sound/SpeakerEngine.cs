@@ -1,7 +1,5 @@
 using Microsoft.CognitiveServices.Speech;
 
-using Moba.Common.Interface;
-
 namespace Moba.Sound;
 
 // https://learn.microsoft.com/de-de/azure/ai-services/speech-service/get-started-text-to-speech?tabs=windows%2Cterminal&pivots=programming-language-csharp    public class Speaker2 : ISpeaker

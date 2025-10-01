@@ -1,4 +1,4 @@
-namespace Moba.Common.Interface;
+namespace Moba.Sound;
 
 public interface ISpeakerEngine
 {
