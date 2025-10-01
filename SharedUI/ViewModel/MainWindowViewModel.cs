@@ -1,9 +1,10 @@
 namespace Moba.SharedUI.ViewModel;
 
+using Backend.Model;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using Backend.Model;
 using Service;
 
 using System.Threading.Tasks;

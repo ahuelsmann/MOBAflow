@@ -11,20 +11,35 @@
         <MicaBackdrop />
     </Window.SystemBackdrop>
     <Grid>
-        <NavigationView x:Name="Nav" PaneDisplayMode="Left" IsSettingsVisible="False">
+        <NavigationView
+            x:Name="Nav"
+            IsSettingsVisible="False"
+            PaneDisplayMode="Left">
             <NavigationView.Header>
                 <CommandBar DefaultLabelPosition="Right">
-                    <AppBarButton Icon="OpenFile" Label="Laden" Command="{x:Bind ViewModel.LoadSolutionCommand}" />
-                    <AppBarButton Icon="Save" Label="Speichern" Command="{x:Bind ViewModel.SaveSolutionCommand}" />
+                    <AppBarButton
+                        Command="{x:Bind ViewModel.LoadSolutionCommand}"
+                        Icon="OpenFile"
+                        Label="Load" />
+                    <AppBarButton
+                        Command="{x:Bind ViewModel.SaveSolutionCommand}"
+                        Icon="Save"
+                        Label="Save" />
                     <AppBarSeparator />
                     <AppBarElementContainer>
-                        <TextBlock Text="{x:Bind ViewModel.CurrentSolutionPath, Mode=OneWay}" VerticalAlignment="Center" />
+                        <TextBlock VerticalAlignment="Center" Text="{x:Bind ViewModel.CurrentSolutionPath, Mode=OneWay}" />
                     </AppBarElementContainer>
                 </CommandBar>
             </NavigationView.Header>
             <NavigationView.MenuItems>
-                <NavigationViewItem Icon="Home" Content="Übersicht" Tag="overview" />
-                <NavigationViewItem Icon="Document" Content="Projekte" Tag="projects" />
+                <NavigationViewItem
+                    Content="Overview"
+                    Icon="Home"
+                    Tag="overview" />
+                <NavigationViewItem
+                    Content="Projects"
+                    Icon="Document"
+                    Tag="projects" />
             </NavigationView.MenuItems>
             <Frame x:Name="ContentFrame" />
         </NavigationView>

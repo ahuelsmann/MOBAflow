@@ -1,9 +1,10 @@
 namespace Moba.Backend.Model.Action;
 
 using Enum;
+
 using Interface;
 
-public class Base 
+public class Base
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = string.Empty;
