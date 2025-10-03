@@ -1,27 +1,22 @@
 <Solution>
-  <Configurations>
-    <Platform Name="Any CPU" />
-  </Configurations>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
     <File Path=".gitignore" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Build.targets" />
     <File Path="Directory.Packages.props" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
   </Folder>
   <Project Path="Backend/Backend.csproj">
-    <Platform Project="Any CPU" />
     <Deploy />
   </Project>
-  <Project Path="SharedUI/SharedUI.csproj" Id="e6527119-fec0-439b-bd9a-a0525ac0f93e">
-    <Platform Project="Any CPU" />
-  </Project>
+  <Project Path="SharedUI/SharedUI.csproj" Id="e6527119-fec0-439b-bd9a-a0525ac0f93e" />
   <Project Path="Sound/Sound.csproj">
-    <Platform Project="Any CPU" />
     <Deploy />
   </Project>
+  <Project Path="Test/Test.csproj" Id="0c1e5217-ca11-41f0-83b1-5b26ca7e3b4d" />
   <Project Path="WinUI/WinUI.csproj">
-    <Platform Project="Any CPU" />
     <Deploy />
   </Project>
 </Solution>

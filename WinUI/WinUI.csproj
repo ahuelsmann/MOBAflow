@@ -13,9 +13,6 @@
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
   </PropertyGroup>
   <ItemGroup>
-    <None Remove="example-solution.json" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="example-solution.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

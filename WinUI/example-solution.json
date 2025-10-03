@@ -3,52 +3,74 @@
     {
       "SpeakerEngines": [
         {
-          "Name": "Azure Speech Service"
+          "Name": "Microsoft.CognitiveServices.Speech"
         }
       ],
       "Voices": [
         {
           "Name": "ElkeNeural",
-          "ProsodyRate": 1.0
+          "ProsodyRate": 0.0
         },
         {
           "Name": "KatjaNeural",
-          "ProsodyRate": 0.9
+          "ProsodyRate": 0.0
+        },
+        {
+          "Name": "ConradNeural",
+          "ProsodyRate": 0.0
         },
         {
           "Name": "MajaNeural",
-          "ProsodyRate": 1.1
+          "ProsodyRate": 0.0
+        },
+        {
+          "Name": "TanjaNeural",
+          "ProsodyRate": 0.0
         }
       ],
       "Locomotives": [
         {
-          "Name": "BR 101",
+          "Name": "BR 101 - DB Regio",
           "Pos": 1,
           "DigitalAddress": 3,
           "Manufacturer": "Märklin",
           "ArticleNumber": "37101",
           "Series": "101",
-          "ColorPrimary": "Chromoxidgrün",
+          "ColorPrimary": "Orientrot",
           "ColorSecondary": "Verkehrsrot",
           "IsPushing": false,
-          "Details": null
+          "Details": {
+            "Axles": 4,
+            "Epoch": "VI",
+            "RailroadCompany": "DB Regio",
+            "Power": "AC",
+            "Digital": "mfx",
+            "Description": "Electric locomotive for passenger services"
+          }
         },
         {
-          "Name": "BR 185",
+          "Name": "BR 185 - DB Cargo",
           "Pos": 2,
           "DigitalAddress": 5,
           "Manufacturer": "Roco",
           "ArticleNumber": "73456",
           "Series": "185",
-          "ColorPrimary": "Orientrot",
-          "ColorSecondary": "None",
+          "ColorPrimary": "Verkehrsrot",
+          "ColorSecondary": null,
           "IsPushing": false,
-          "Details": null
+          "Details": {
+            "Axles": 4,
+            "Epoch": "VI",
+            "RailroadCompany": "DB Cargo",
+            "Power": "AC",
+            "Digital": "DCC",
+            "Description": "Electric freight locomotive"
+          }
         }
       ],
       "PassengerWagons": [
         {
-          "Name": "Abteilwagen 2. Klasse",
+          "Name": "Compartment Coach 2nd Class",
           "Pos": 1,
           "DigitalAddress": null,
           "Manufacturer": "Märklin",
@@ -57,10 +79,17 @@
           "ColorPrimary": "Chromoxidgrün",
           "ColorSecondary": null,
           "WagonClass": "Second",
-          "Details": null
+          "Details": {
+            "Axles": 4,
+            "Epoch": "IV",
+            "RailroadCompany": "DB",
+            "Power": null,
+            "Digital": null,
+            "Description": "Standard 2nd class passenger coach"
+          }
         },
         {
-          "Name": "Speisewagen",
+          "Name": "Dining Car",
           "Pos": 2,
           "DigitalAddress": null,
           "Manufacturer": "Roco",
@@ -69,10 +98,17 @@
           "ColorPrimary": "Orientrot",
           "ColorSecondary": null,
           "WagonClass": "Dining",
-          "Details": null
+          "Details": {
+            "Axles": 4,
+            "Epoch": "IV",
+            "RailroadCompany": "DB",
+            "Power": null,
+            "Digital": null,
+            "Description": "Restaurant car with kitchen"
+          }
         },
         {
-          "Name": "Schlafwagen",
+          "Name": "Sleeping Car",
           "Pos": 3,
           "DigitalAddress": null,
           "Manufacturer": "Fleischmann",
@@ -86,7 +122,7 @@
       ],
       "GoodsWagons": [
         {
-          "Name": "Containerwagen",
+          "Name": "Container Wagon",
           "Pos": 1,
           "DigitalAddress": null,
           "Manufacturer": "Roco",
@@ -98,7 +134,7 @@
           "Details": null
         },
         {
-          "Name": "Kesselwagen",
+          "Name": "Tank Wagon",
           "Pos": 2,
           "DigitalAddress": null,
           "Manufacturer": "Märklin",
@@ -110,7 +146,7 @@
           "Details": null
         },
         {
-          "Name": "Güterwagen",
+          "Name": "Open Goods Wagon",
           "Pos": 3,
           "DigitalAddress": null,
           "Manufacturer": "Fleischmann",
@@ -125,7 +161,7 @@
       "Trains": [
         {
           "IsDoubleTraction": false,
-          "Name": "RE 6",
+          "Name": "RE 6 Cologne - Düsseldorf",
           "TrainType": "Passenger",
           "ServiceType": "RegionalExpress",
           "Locomotives": [],
@@ -133,7 +169,7 @@
         },
         {
           "IsDoubleTraction": false,
-          "Name": "IC 2024",
+          "Name": "IC 2024 Hamburg - Munich",
           "TrainType": "Passenger",
           "ServiceType": "InterCity",
           "Locomotives": [],
@@ -141,7 +177,7 @@
         },
         {
           "IsDoubleTraction": false,
-          "Name": "Güterzug",
+          "Name": "Freight Train North",
           "TrainType": "Freight",
           "ServiceType": "Freight",
           "Locomotives": [],
@@ -150,11 +186,11 @@
       ],
       "Workflows": [
         {
-          "Name": "Standard Ansage",
+          "Name": "Platform Announcement",
           "Actions": []
         },
         {
-          "Name": "Einfahrt Hauptbahnhof",
+          "Name": "Arrival Main Station",
           "Actions": []
         }
       ],
@@ -163,13 +199,13 @@
           "InPort": 1,
           "IsUsingTimerToIgnoreFeedbacks": false,
           "IntervalForTimerToIgnoreFeedbacks": 5.0,
-          "Name": "Fahrt 1",
-          "Text": "Regionalexpress nach Köln über Düsseldorf und Leverkusen",
+          "Name": "Journey 1 - Regional Express",
+          "Text": "Regional Express to Cologne via Düsseldorf and Leverkusen",
           "Train": null,
           "Stations": [],
           "CurrentCounter": 0,
           "CurrentPos": 0,
-          "OnLastStop": 0,
+          "OnLastStop": "None",
           "NextJourney": null,
           "FirstPos": 0
         },
@@ -177,32 +213,32 @@
           "InPort": 2,
           "IsUsingTimerToIgnoreFeedbacks": false,
           "IntervalForTimerToIgnoreFeedbacks": 5.0,
-          "Name": "Fahrt 2",
-          "Text": "Intercity nach Hamburg Hauptbahnhof",
+          "Name": "Journey 2 - InterCity",
+          "Text": "InterCity to Hamburg Main Station",
           "Train": null,
           "Stations": [],
           "CurrentCounter": 0,
           "CurrentPos": 0,
-          "OnLastStop": 0,
+          "OnLastStop": "None",
           "NextJourney": null,
           "FirstPos": 0
         }
       ],
       "Ips": [
         {
-          "Address": "192.168.0.111"
+          "Address": "192.168.0.1"
         },
         {
-          "Address": "192.168.0.112"
+          "Address": "127.0.0.1"
         }
       ],
       "Setting": {
-        "Name": "Mein Modellbahn-Projekt",
+        "Name": "My Model Railway Project",
         "SpeechSynthesizerRate": 0,
-        "SpeechSynthesizerVolume": 100,
-        "SpeakerEngineName": "Azure Speech Service",
+        "SpeechSynthesizerVolume": 90,
+        "SpeakerEngineName": "Microsoft.CognitiveServices.Speech",
         "VoiceName": "ElkeNeural",
-        "JourneyName": "Fahrt 1",
+        "JourneyName": "Journey 1 - Regional Express",
         "IsResetWindowLayoutOnStart": false
       }
     }
