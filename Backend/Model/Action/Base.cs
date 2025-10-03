@@ -1,10 +1,9 @@
 namespace Moba.Backend.Model.Action;
 
-using Enum;
+using Moba.Backend.Model.Enum;
+using Moba.Backend.Interface;
 
-using Interface;
-
-public class Base
+public abstract class Base
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = string.Empty;

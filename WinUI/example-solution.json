@@ -28,8 +28,8 @@
           "Manufacturer": "Märklin",
           "ArticleNumber": "37101",
           "Series": "101",
-          "ColorPrimary": 1,
-          "ColorSecondary": 0,
+          "ColorPrimary": "Chromoxidgrün",
+          "ColorSecondary": "Verkehrsrot",
           "IsPushing": false,
           "Details": null
         },
@@ -40,23 +40,110 @@
           "Manufacturer": "Roco",
           "ArticleNumber": "73456",
           "Series": "185",
-          "ColorPrimary": 2,
-          "ColorSecondary": 1,
+          "ColorPrimary": "Orientrot",
+          "ColorSecondary": "None",
           "IsPushing": false,
           "Details": null
         }
       ],
-      "PassengerWagons": [],
+      "PassengerWagons": [
+        {
+          "Name": "Abteilwagen 2. Klasse",
+          "Pos": 1,
+          "DigitalAddress": null,
+          "Manufacturer": "Märklin",
+          "ArticleNumber": "43125",
+          "Series": "Bm 235",
+          "ColorPrimary": "Chromoxidgrün",
+          "ColorSecondary": null,
+          "WagonClass": "Second",
+          "Details": null
+        },
+        {
+          "Name": "Speisewagen",
+          "Pos": 2,
+          "DigitalAddress": null,
+          "Manufacturer": "Roco",
+          "ArticleNumber": "64390",
+          "Series": "WRmh 132",
+          "ColorPrimary": "Orientrot",
+          "ColorSecondary": null,
+          "WagonClass": "Dining",
+          "Details": null
+        },
+        {
+          "Name": "Schlafwagen",
+          "Pos": 3,
+          "DigitalAddress": null,
+          "Manufacturer": "Fleischmann",
+          "ArticleNumber": "5145",
+          "Series": "WLABm 171",
+          "ColorPrimary": "Ozenblau",
+          "ColorSecondary": null,
+          "WagonClass": "Sleeping",
+          "Details": null
+        }
+      ],
+      "GoodsWagons": [
+        {
+          "Name": "Containerwagen",
+          "Pos": 1,
+          "DigitalAddress": null,
+          "Manufacturer": "Roco",
+          "ArticleNumber": "76229",
+          "Series": "Sgns",
+          "ColorPrimary": "Private",
+          "ColorSecondary": null,
+          "Cargo": "Container",
+          "Details": null
+        },
+        {
+          "Name": "Kesselwagen",
+          "Pos": 2,
+          "DigitalAddress": null,
+          "Manufacturer": "Märklin",
+          "ArticleNumber": "48317",
+          "Series": "Zans",
+          "ColorPrimary": "Special",
+          "ColorSecondary": null,
+          "Cargo": "Oil",
+          "Details": null
+        },
+        {
+          "Name": "Güterwagen",
+          "Pos": 3,
+          "DigitalAddress": null,
+          "Manufacturer": "Fleischmann",
+          "ArticleNumber": "528202",
+          "Series": "Eanos",
+          "ColorPrimary": "Orientrot",
+          "ColorSecondary": null,
+          "Cargo": "Coal",
+          "Details": null
+        }
+      ],
       "Trains": [
         {
           "IsDoubleTraction": false,
           "Name": "RE 6",
+          "TrainType": "Passenger",
+          "ServiceType": "RegionalExpress",
           "Locomotives": [],
           "Wagons": []
         },
         {
           "IsDoubleTraction": false,
           "Name": "IC 2024",
+          "TrainType": "Passenger",
+          "ServiceType": "InterCity",
+          "Locomotives": [],
+          "Wagons": []
+        },
+        {
+          "IsDoubleTraction": false,
+          "Name": "Güterzug",
+          "TrainType": "Freight",
+          "ServiceType": "Freight",
           "Locomotives": [],
           "Wagons": []
         }

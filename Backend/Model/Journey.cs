@@ -1,6 +1,6 @@
 namespace Moba.Backend.Model;
 
-using Enum;
+using Moba.Backend.Model.Enum;
 
 public class Journey
 {

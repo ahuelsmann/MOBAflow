@@ -10,6 +10,7 @@ public class Project
         Voices = [];
         Locomotives = [];
         PassengerWagons = [];
+        GoodsWagons = [];
         Trains = [];
         Workflows = [];
         Journeys = [];
@@ -21,6 +22,7 @@ public class Project
     public List<Voice> Voices { get; set; }
     public List<Locomotive> Locomotives { get; set; }
     public List<PassengerWagon> PassengerWagons { get; set; }
+    public List<GoodsWagon> GoodsWagons { get; set; }
     public List<Train> Trains { get; set; }
     public List<Workflow> Workflows { get; set; }
     public List<Journey> Journeys { get; set; }
