@@ -1,4 +1,4 @@
-namespace Moba.Backend.Enum;
+namespace Moba.Backend.Model.Enum;
 
 public enum PowerSystem
 {

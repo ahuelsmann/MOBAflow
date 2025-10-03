@@ -17,8 +17,7 @@ public class Solution
         {
             JsonSerializerSettings settings = new()
             {
-                Formatting = Formatting.Indented,
-                TypeNameHandling = TypeNameHandling.All
+                Formatting = Formatting.Indented
             };
 
             string json = JsonConvert.SerializeObject(solution, settings);
@@ -34,12 +33,7 @@ public class Solution
             string json = await File.ReadAllTextAsync(path);
             if (!string.IsNullOrEmpty(json))
             {
-                JsonSerializerSettings settings = new()
-                {
-                    TypeNameHandling = TypeNameHandling.All
-                };
-
-                var temp = JsonConvert.DeserializeObject<Solution>(json, settings);
+                var temp = JsonConvert.DeserializeObject<Solution>(json);
 
                 if (temp != null)
                 {

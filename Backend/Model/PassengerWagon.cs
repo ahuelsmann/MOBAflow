@@ -1,3 +1,16 @@
 namespace Moba.Backend.Model;
 
-public class PassengerWagon : Wagon { }
+using Moba.Backend.Model.Enum;
+
+public class PassengerWagon : Wagon
+{
+    public PassengerWagon()
+    {
+        WagonClass = PassengerClass.Second;
+    }
+
+    /// <summary>
+    /// Wagenklasse (z.B. 1., 2. Klasse, Speisewagen, etc.)
+    /// </summary>
+    public PassengerClass WagonClass { get; set; }
+}

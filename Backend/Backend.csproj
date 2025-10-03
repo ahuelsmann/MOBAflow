@@ -9,4 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Sound\Sound.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Enum\" />
+  </ItemGroup>
 </Project>

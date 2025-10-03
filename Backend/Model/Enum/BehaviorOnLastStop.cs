@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Moba.Backend.Enum;
+namespace Moba.Backend.Model.Enum;
 
 public enum BehaviorOnLastStop
 {

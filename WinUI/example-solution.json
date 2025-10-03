@@ -1,0 +1,123 @@
+{
+  "Projects": [
+    {
+      "SpeakerEngines": [
+        {
+          "Name": "Azure Speech Service"
+        }
+      ],
+      "Voices": [
+        {
+          "Name": "ElkeNeural",
+          "ProsodyRate": 1.0
+        },
+        {
+          "Name": "KatjaNeural",
+          "ProsodyRate": 0.9
+        },
+        {
+          "Name": "MajaNeural",
+          "ProsodyRate": 1.1
+        }
+      ],
+      "Locomotives": [
+        {
+          "Name": "BR 101",
+          "Pos": 1,
+          "DigitalAddress": 3,
+          "Manufacturer": "Märklin",
+          "ArticleNumber": "37101",
+          "Series": "101",
+          "ColorPrimary": 1,
+          "ColorSecondary": 0,
+          "IsPushing": false,
+          "Details": null
+        },
+        {
+          "Name": "BR 185",
+          "Pos": 2,
+          "DigitalAddress": 5,
+          "Manufacturer": "Roco",
+          "ArticleNumber": "73456",
+          "Series": "185",
+          "ColorPrimary": 2,
+          "ColorSecondary": 1,
+          "IsPushing": false,
+          "Details": null
+        }
+      ],
+      "PassengerWagons": [],
+      "Trains": [
+        {
+          "IsDoubleTraction": false,
+          "Name": "RE 6",
+          "Locomotives": [],
+          "Wagons": []
+        },
+        {
+          "IsDoubleTraction": false,
+          "Name": "IC 2024",
+          "Locomotives": [],
+          "Wagons": []
+        }
+      ],
+      "Workflows": [
+        {
+          "Name": "Standard Ansage",
+          "Actions": []
+        },
+        {
+          "Name": "Einfahrt Hauptbahnhof",
+          "Actions": []
+        }
+      ],
+      "Journeys": [
+        {
+          "InPort": 1,
+          "IsUsingTimerToIgnoreFeedbacks": false,
+          "IntervalForTimerToIgnoreFeedbacks": 5.0,
+          "Name": "Fahrt 1",
+          "Text": "Regionalexpress nach Köln über Düsseldorf und Leverkusen",
+          "Train": null,
+          "Stations": [],
+          "CurrentCounter": 0,
+          "CurrentPos": 0,
+          "OnLastStop": 0,
+          "NextJourney": null,
+          "FirstPos": 0
+        },
+        {
+          "InPort": 2,
+          "IsUsingTimerToIgnoreFeedbacks": false,
+          "IntervalForTimerToIgnoreFeedbacks": 5.0,
+          "Name": "Fahrt 2",
+          "Text": "Intercity nach Hamburg Hauptbahnhof",
+          "Train": null,
+          "Stations": [],
+          "CurrentCounter": 0,
+          "CurrentPos": 0,
+          "OnLastStop": 0,
+          "NextJourney": null,
+          "FirstPos": 0
+        }
+      ],
+      "Ips": [
+        {
+          "Address": "192.168.0.111"
+        },
+        {
+          "Address": "192.168.0.112"
+        }
+      ],
+      "Setting": {
+        "Name": "Mein Modellbahn-Projekt",
+        "SpeechSynthesizerRate": 0,
+        "SpeechSynthesizerVolume": 100,
+        "SpeakerEngineName": "Azure Speech Service",
+        "VoiceName": "ElkeNeural",
+        "JourneyName": "Fahrt 1",
+        "IsResetWindowLayoutOnStart": false
+      }
+    }
+  ]
+}
