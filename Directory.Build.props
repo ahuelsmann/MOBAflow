@@ -20,6 +20,9 @@
 
     <!-- Output Configuration -->
     <UseArtifactsOutput>true</UseArtifactsOutput>
+
+    <!-- Localization Configuration -->
+    <SatelliteResourceLanguages>de;en</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
