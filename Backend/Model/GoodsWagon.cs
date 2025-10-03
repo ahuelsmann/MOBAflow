@@ -10,7 +10,7 @@ public class GoodsWagon : Wagon
     }
 
     /// <summary>
-    /// Art der Ladung (z.B. Container, Kohle, Holz, Öl, etc.)
+    /// Type of cargo (e.g. Container, Coal, Wood, Oil, etc.)
     /// </summary>
     public CargoType Cargo { get; set; }
 }

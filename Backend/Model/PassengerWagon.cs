@@ -10,7 +10,7 @@ public class PassengerWagon : Wagon
     }
 
     /// <summary>
-    /// Wagenklasse (z.B. 1., 2. Klasse, Speisewagen, etc.)
+    /// Car class (e.g. 1st, 2nd class, dining car, etc.)
     /// </summary>
     public PassengerClass WagonClass { get; set; }
 }

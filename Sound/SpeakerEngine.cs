@@ -2,7 +2,7 @@ using Microsoft.CognitiveServices.Speech;
 
 namespace Moba.Sound;
 
-// https://learn.microsoft.com/de-de/azure/ai-services/speech-service/get-started-text-to-speech?tabs=windows%2Cterminal&pivots=programming-language-csharp    public class Speaker2 : ISpeaker
+// https://learn.microsoft.com/de-de/azure/ai-services/speech-service/get-started-text-to-speech?tabs=windows%2Cterminal&pivots=programming-language-csharp
 public class SpeakerEngine : ISpeakerEngine
 {
     // This example requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
@@ -31,23 +31,7 @@ public class SpeakerEngine : ISpeakerEngine
         var speechConfig = SpeechConfig.FromSubscription(SpeechKey, SpeechRegion);
         speechConfig.SpeechSynthesisLanguage = "de-DE";
 
-        //KatjaNeural       (weiblich) 2. Platz weiblich
-        //ConradNeural      (männlich) 1. Platz männlich
-        //AmalaNeural       (weiblich)
-        //BerndNeural       (männlich)
-        //ChristophNeural   (männlich)
-        //ElkeNeural        (weiblich)  1. Platz weiblich
-        //FlorianMultilingualNeural (Männlich)
-        //GiselaNeural      (Weiblich, Kind) <- Witzig
-        //KasperNeural      (männlich)
-        //KillianNeural     (männlich)
-        //KlarissaNeural    (weiblich)  5. Platz
-        //KlausNeural       (männlich)
-        //LouisaNeural      (weiblich)  4. Platz
-        //MajaNeural        (weiblich)  3. Place
-        //RalfNeural        (männlich)
-        //TanjaNeural       (weiblich)  Stimme könnte passend für Ansange am Bahnsteig sein.
-
+        // https://learn.microsoft.com/de-de/azure/ai-services/speech-service/language-support?tabs=tts#prebuilt-neural-voices
         string ssml = string.IsNullOrEmpty(voiceName)
             ? $@"<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='de-DE'>
                             <voice name='de-DE-ElkeNeuralNeural'>
@@ -59,7 +43,6 @@ public class SpeakerEngine : ISpeakerEngine
                                 <prosody rate='-15%'>{message}</prosody>
                               </voice>
                           </speak>";
-        // https://learn.microsoft.com/de-de/azure/ai-services/speech-service/language-support?tabs=tts#prebuilt-neural-voices
 
         using var speechSynthesizer = new SpeechSynthesizer(speechConfig);
         var speechSynthesisResult = await speechSynthesizer.SpeakSsmlAsync(ssml);
