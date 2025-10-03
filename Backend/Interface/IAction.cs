@@ -8,5 +8,4 @@ public interface IAction
     string Name { get; set; }
     int Number { get; set; }
     IList<IAction> Actions { get; set; }
-    Task ExecuteAsync(Journey journey, Station stop);
 }

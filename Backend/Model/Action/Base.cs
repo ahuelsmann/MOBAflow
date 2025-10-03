@@ -3,7 +3,7 @@ namespace Moba.Backend.Model.Action;
 using Moba.Backend.Model.Enum;
 using Moba.Backend.Interface;
 
-public abstract class Base
+public abstract class Base : IAction
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = string.Empty;
