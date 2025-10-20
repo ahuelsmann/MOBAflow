@@ -2,7 +2,9 @@ namespace Moba.SharedUI.ViewModel.Action;
 
 using Backend.Model;
 using Backend.Model.Action;
+
 using CommunityToolkit.Mvvm.ComponentModel;
+
 using System.Diagnostics;
 
 public partial class GongViewModel : ObservableObject
@@ -24,7 +26,7 @@ public partial class GongViewModel : ObservableObject
     public async Task ExecuteAsync(Journey journey, Station station)
     {
         Debug.WriteLine("🔔 Gong wird abgespielt");
-        
+
         await Task.CompletedTask;
     }
 

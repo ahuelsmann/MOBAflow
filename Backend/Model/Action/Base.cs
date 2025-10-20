@@ -1,7 +1,7 @@
 namespace Moba.Backend.Model.Action;
 
-using Moba.Backend.Model.Enum;
-using Moba.Backend.Interface;
+using Enum;
+using Interface;
 
 public abstract class Base : IAction
 {

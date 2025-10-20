@@ -1,6 +1,6 @@
 namespace Moba.Backend.Model.Action;
 
-using Moba.Backend.Model.Enum;
+using Enum;
 
 public class Gong : Base
 {

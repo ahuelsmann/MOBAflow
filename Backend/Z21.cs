@@ -9,7 +9,7 @@ public delegate void Feedback(FeedbackResult feedbackContent);
 public class Z21 : IDisposable
 {
     public event Feedback? Received;
-    
+
     private UdpClient? _client;
     private CancellationTokenSource? _cancellationTokenSource;
     private Task? _receiverTask;
@@ -85,7 +85,7 @@ public class Z21 : IDisposable
                 string valuesHexadecimal = string.Join(",", content.Select(b => b.ToString("X2")));
                 string valuesDecimal = string.Join(",", content);
                 string header = BitConverter.ToString(content, 0, 4);
-                
+
                 Debug.WriteLine($"Empfangene Nachricht: {header}");
                 Debug.WriteLine(valuesHexadecimal);
                 Debug.WriteLine(valuesDecimal);
@@ -188,7 +188,7 @@ public class Z21 : IDisposable
             try
             {
                 await Task.Delay(60000, cancellationToken);
-                
+
                 byte[] sendBytes = [0x04, 0x00, 0x1A, 0x00];
                 await _client.SendAsync(sendBytes, sendBytes.Length);
             }

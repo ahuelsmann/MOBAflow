@@ -1,6 +1,6 @@
 namespace Moba.Backend.Model;
 
-using Moba.Backend.Model.Enum;
+using Enum;
 
 public class PassengerWagon : Wagon
 {

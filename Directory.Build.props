@@ -5,30 +5,19 @@
     <Authors>Andreas Huelsmann</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Copyright>Copyright © $([System.DateTime]::Now.Year) Andreas Huelsmann</Copyright>
-
     <!-- Repository Information -->
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://dev.azure.com/ahuelsmann/MOBAflow/_git/MOBAflow</RepositoryUrl>
-
     <!-- Build Configuration -->
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-
     <!-- Platform Configuration -->
     <PlatformTarget>x64</PlatformTarget>
-
-    <!-- Output Configuration -->
-    <UseArtifactsOutput>true</UseArtifactsOutput>
-
-    <!-- Localization Configuration -->
-    <SatelliteResourceLanguages>de;en</SatelliteResourceLanguages>
   </PropertyGroup>
-
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <Optimize>false</Optimize>
   </PropertyGroup>
-
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <Optimize>true</Optimize>
   </PropertyGroup>

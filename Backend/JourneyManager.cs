@@ -1,9 +1,13 @@
-using System.Diagnostics;
 using Moba.Backend.Model;
 using Moba.Backend.Model.Enum;
 
+using System.Diagnostics;
+
 namespace Moba.Backend;
 
+/// <summary>
+/// Verwaltet die Ausführung von Reisen basierend auf Feedback-Ereignissen (Gleisrückmeldestellen).
+/// </summary>
 public class JourneyManager : IDisposable
 {
     private readonly Z21 _z21;
@@ -11,8 +15,6 @@ public class JourneyManager : IDisposable
     private readonly Dictionary<uint, DateTime> _lastFeedbackTime = new();
     private bool _isProcessing;
     private bool _disposed;
-
-    public event EventHandler<(Journey Journey, Station Station)>? StationReached;
 
     public JourneyManager(Z21 z21, List<Journey> journeys)
     {
@@ -88,13 +90,17 @@ public class JourneyManager : IDisposable
             if (journey.CurrentCounter >= currentStation.NumberOfLapsToStop)
             {
                 Debug.WriteLine($"🚉 Station erreicht: {currentStation.Name}");
-                
-                StationReached?.Invoke(this, (journey, currentStation));
+
+                // Workflow der Station ausführen, falls vorhanden
+                if (currentStation.Flow != null)
+                {
+                    await currentStation.Flow.StartAsync();
+                }
 
                 journey.CurrentCounter = 0;
 
                 bool isLastStation = journey.CurrentPos == journey.Stations.Count - 1;
-                
+
                 if (isLastStation)
                 {
                     await HandleLastStationAsync(journey);
