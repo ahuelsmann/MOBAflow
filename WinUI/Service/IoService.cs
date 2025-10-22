@@ -4,32 +4,43 @@ using Backend.Model;
 
 using Moba.SharedUI.Service;
 
+using Microsoft.Windows.Storage.Pickers;
+
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-using Windows.Storage.Pickers;
-
 public class IoService : IIoService
 {
-    private readonly nint _hwnd;
+    private Microsoft.UI.WindowId? _windowId;
 
-    public IoService(nint hwnd)
+    /// <summary>
+    /// Sets the WindowId for the file pickers. Must be called before using the service.
+    /// </summary>
+    public void SetWindowId(Microsoft.UI.WindowId windowId)
     {
-        _hwnd = hwnd;
+        _windowId = windowId;
     }
 
     public async Task<(Solution? solution, string? path, string? error)> LoadAsync()
     {
+        if (_windowId == null)
+            throw new InvalidOperationException("WindowId must be set before using IoService");
+
         try
         {
-            var picker = new FileOpenPicker();
-            WinRT.Interop.InitializeWithWindow.Initialize(picker, _hwnd);
-            picker.FileTypeFilter.Add(".json");
-            var file = await picker.PickSingleFileAsync();
-            if (file == null) return (null, null, null);
-            var sol = await Solution.LoadAsync(file.Path);
-            return (sol, file.Path, null);
+            var picker = new FileOpenPicker(_windowId.Value)
+            {
+                SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+                FileTypeFilter = { ".json" }
+            };
+
+            var result = await picker.PickSingleFileAsync();
+            if (result == null) return (null, null, null);
+
+            var sol = new Solution();
+            sol = await sol.LoadAsync(result.Path);
+            return (sol, result.Path, null);
         }
         catch (Exception ex)
         {
@@ -39,19 +50,27 @@ public class IoService : IIoService
 
     public async Task<(bool success, string? path, string? error)> SaveAsync(Solution solution, string? currentPath)
     {
+        if (_windowId == null)
+            throw new InvalidOperationException("WindowId must be set before using IoService");
+
         try
         {
             string? path = currentPath;
             if (string.IsNullOrEmpty(path))
             {
-                var picker = new FileSavePicker();
-                WinRT.Interop.InitializeWithWindow.Initialize(picker, _hwnd);
-                picker.FileTypeChoices.Add("JSON", new List<string> { ".json" });
-                picker.SuggestedFileName = "solution";
-                var file = await picker.PickSaveFileAsync();
-                if (file == null) return (false, null, null);
-                path = file.Path;
+                var picker = new FileSavePicker(_windowId.Value)
+                {
+                    SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+                    SuggestedFileName = "solution",
+                    DefaultFileExtension = ".json",
+                    FileTypeChoices = { { "JSON", new List<string> { ".json" } } }
+                };
+
+                var result = await picker.PickSaveFileAsync();
+                if (result == null) return (false, null, null);
+                path = result.Path;
             }
+
             await Solution.SaveAsync(path!, solution);
             return (true, path, null);
         }

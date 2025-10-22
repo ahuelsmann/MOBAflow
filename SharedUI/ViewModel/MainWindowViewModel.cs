@@ -12,9 +12,16 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
-public partial class MainWindowViewModel(IIoService ioService) : ObservableObject
+public partial class MainWindowViewModel : ObservableObject
 {
-    private readonly IIoService _ioService = ioService;
+    private readonly IIoService _ioService;
+    private readonly TreeViewBuilder _treeViewBuilder;
+
+    public MainWindowViewModel(IIoService ioService)
+    {
+        _ioService = ioService;
+        _treeViewBuilder = new TreeViewBuilder();
+    }
 
     [ObservableProperty]
     private string title = "MOBAflow";
@@ -36,6 +43,9 @@ public partial class MainWindowViewModel(IIoService ioService) : ObservableObjec
 
     [ObservableProperty]
     private string selectedNodeType = string.Empty;
+
+    // Event für das Beenden der Anwendung
+    public event EventHandler? ExitApplicationRequested;
 
     partial void OnSolutionChanged(Solution? value)
     {
@@ -85,146 +95,18 @@ public partial class MainWindowViewModel(IIoService ioService) : ObservableObjec
 
     private bool CanSaveSolution() => Solution != null;
 
+    public void OnWindowClosing()
+    {
+        // Hier können Sie zukünftig Aufräumarbeiten durchführen
+        // z.B. ungespeicherte Änderungen prüfen, Zustand speichern, etc.
+
+        // Event auslösen, damit die View die Anwendung beenden kann
+        ExitApplicationRequested?.Invoke(this, EventArgs.Empty);
+    }
+
     private void BuildTreeView()
     {
-        TreeNodes.Clear();
-
-        if (Solution == null) return;
-
-        var solutionNode = new TreeNodeViewModel
-        {
-            DisplayName = "Solution",
-            Icon = "\uE8F1", // Solution icon
-            IsExpanded = true,
-            DataContext = Solution,
-            DataType = typeof(Solution)
-        };
-
-        foreach (var project in Solution.Projects)
-        {
-            var projectNode = new TreeNodeViewModel
-            {
-                DisplayName = $"Project {Solution.Projects.IndexOf(project) + 1}",
-                Icon = "\uE8B7", // Folder icon
-                IsExpanded = true,
-                DataContext = project,
-                DataType = typeof(Project)
-            };
-
-            // Journeys
-            if (project.Journeys.Count > 0)
-            {
-                var journeysFolder = new TreeNodeViewModel
-                {
-                    DisplayName = "Journeys",
-                    Icon = "\uE8B7",
-                    IsExpanded = true
-                };
-
-                foreach (var journey in project.Journeys)
-                {
-                    var journeyNode = new TreeNodeViewModel
-                    {
-                        DisplayName = journey.Name,
-                        Icon = "\uE81D", // Train icon
-                        DataContext = journey,
-                        DataType = typeof(Journey)
-                    };
-
-                    // Stations
-                    foreach (var station in journey.Stations)
-                    {
-                        journeyNode.Children.Add(new TreeNodeViewModel
-                        {
-                            DisplayName = station.Name,
-                            Icon = "\uE80F", // Location icon
-                            DataContext = station,
-                            DataType = typeof(Station)
-                        });
-                    }
-
-                    journeysFolder.Children.Add(journeyNode);
-                }
-
-                projectNode.Children.Add(journeysFolder);
-            }
-
-            // Workflows
-            if (project.Workflows.Count > 0)
-            {
-                var workflowsFolder = new TreeNodeViewModel
-                {
-                    DisplayName = "Workflows",
-                    Icon = "\uE8B7",
-                    IsExpanded = true
-                };
-
-                foreach (var workflow in project.Workflows)
-                {
-                    workflowsFolder.Children.Add(new TreeNodeViewModel
-                    {
-                        DisplayName = workflow.Name,
-                        Icon = "\uE9D9", // Flow icon
-                        DataContext = workflow,
-                        DataType = typeof(Workflow)
-                    });
-                }
-
-                projectNode.Children.Add(workflowsFolder);
-            }
-
-            // Locomotives
-            if (project.Locomotives.Count > 0)
-            {
-                var locomotivesFolder = new TreeNodeViewModel
-                {
-                    DisplayName = "Locomotives",
-                    Icon = "\uE8B7",
-                    IsExpanded = false
-                };
-
-                foreach (var loco in project.Locomotives)
-                {
-                    locomotivesFolder.Children.Add(new TreeNodeViewModel
-                    {
-                        DisplayName = loco.Name,
-                        Icon = "\uE81D",
-                        DataContext = loco,
-                        DataType = loco.GetType()
-                    });
-                }
-
-                projectNode.Children.Add(locomotivesFolder);
-            }
-
-            // Trains
-            if (project.Trains.Count > 0)
-            {
-                var trainsFolder = new TreeNodeViewModel
-                {
-                    DisplayName = "Trains",
-                    Icon = "\uE8B7",
-                    IsExpanded = false
-                };
-
-                foreach (var train in project.Trains)
-                {
-                    trainsFolder.Children.Add(new TreeNodeViewModel
-                    {
-                        DisplayName = train.Name,
-                        Icon = "\uE81D",
-                        DataContext = train,
-                        DataType = train.GetType()
-                    });
-                }
-
-                projectNode.Children.Add(trainsFolder);
-            }
-
-            solutionNode.Children.Add(projectNode);
-        }
-
-        TreeNodes.Add(solutionNode);
+        TreeNodes = _treeViewBuilder.BuildTreeView(Solution);
     }
 
     public void OnNodeSelected(TreeNodeViewModel? node)
@@ -240,11 +122,29 @@ public partial class MainWindowViewModel(IIoService ioService) : ObservableObjec
         SelectedNodeType = node.DataType.Name;
 
         var props = node.DataType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.CanRead && !p.PropertyType.IsGenericType);
+        .Where(p => p.CanRead && !p.PropertyType.IsGenericType && IsSimpleType(p.PropertyType)); // Nur einfache Typen
 
         foreach (var prop in props)
         {
             Properties.Add(new PropertyViewModel(prop, node.DataContext));
         }
+    }
+
+    /// <summary>
+    /// Prüft, ob ein Typ ein "einfacher" Typ ist, der im PropertyGrid angezeigt werden soll
+    /// </summary>
+    private static bool IsSimpleType(Type type)
+    {
+        // Nullable Types berücksichtigen
+        var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
+
+        return underlyingType.IsPrimitive       // int, bool, byte, etc.
+            || underlyingType.IsEnum             // Enums
+            || underlyingType == typeof(string)  // string
+            || underlyingType == typeof(decimal) // decimal
+            || underlyingType == typeof(DateTime) // DateTime
+            || underlyingType == typeof(DateTimeOffset) // DateTimeOffset
+            || underlyingType == typeof(TimeSpan) // TimeSpan
+            || underlyingType == typeof(Guid);    // Guid
     }
 }

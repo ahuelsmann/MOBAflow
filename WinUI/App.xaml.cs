@@ -4,8 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 
 using Moba.SharedUI.Service;
-using SharedUI.ViewModel;
+
 using Service;
+
+using SharedUI.ViewModel;
 
 using View;
 
@@ -32,31 +34,36 @@ public partial class App
     /// <param name="args">Details about the launch request and process.</param>
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-        // Create the window first
-        _window = new MainWindow(null!);
-        
-        // Get the window handle
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(_window);
-        
-        // Configure services with the window handle
+        // Configure services
         var services = new ServiceCollection();
-        ConfigureServices(services, hwnd);
+        ConfigureServices(services);
         _serviceProvider = services.BuildServiceProvider();
-        
-        // Get the view model with properly injected IoService
-        var viewModel = _serviceProvider.GetRequiredService<MainWindowViewModel>();
-        
-        // Create the actual window with the view model
-        _window = new MainWindow(viewModel);
+
+        // Create MainWindow
+        _window = _serviceProvider.GetRequiredService<MainWindow>();
+
+        // Set the WindowId in the IoService after window is created
+        var ioService = _serviceProvider.GetRequiredService<IIoService>() as IoService;
+        if (ioService != null)
+        {
+            ioService.SetWindowId(_window.AppWindow.Id);
+        }
+
         _window.Activate();
     }
 
-    private static void ConfigureServices(IServiceCollection services, nint hwnd)
+    private static void ConfigureServices(IServiceCollection services)
     {
-        // Register services with window handle
-        services.AddSingleton<IIoService>(_ => new IoService(hwnd));
+        // Register TreeViewBuilder
+        services.AddSingleton<TreeViewBuilder>();
 
-        // Register view models
+        // Register IoService (WindowId will be set after MainWindow creation)
+        services.AddSingleton<IIoService, IoService>();
+
+        // Register ViewModels
         services.AddTransient<MainWindowViewModel>();
+
+        // Register Views
+        services.AddTransient<MainWindow>();
     }
 }

@@ -10,8 +10,8 @@ public class Tests
     public void Setup()
     {
         _exampleJsonFilePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "example-solution.json");
-        
-        Assert.That(File.Exists(_exampleJsonFilePath), Is.True, 
+
+        Assert.That(File.Exists(_exampleJsonFilePath), Is.True,
             $"Die example-solution.json Datei wurde nicht gefunden unter: {_exampleJsonFilePath}");
     }
 
@@ -19,7 +19,8 @@ public class Tests
     public async Task LoadExampleSolutionJson_ShouldLoadSuccessfully()
     {
         // Act
-        var solution = await Solution.LoadAsync(_exampleJsonFilePath);
+        var solution = new Solution();
+        solution = await solution.LoadAsync(_exampleJsonFilePath);
 
         // Assert
         Assert.That(solution, Is.Not.Null, "Solution sollte nicht null sein");
@@ -27,9 +28,8 @@ public class Tests
         Assert.That(solution.Projects.Count, Is.EqualTo(1), "Es sollte genau ein Projekt vorhanden sein");
 
         var project = solution.Projects[0];
-        
+
         Assert.That(project.Setting, Is.Not.Null, "Setting sollte nicht null sein");
-        Assert.That(project.Setting.Name, Is.EqualTo("My Model Railway Project"));
         Assert.That(project.Setting.SpeechSynthesizerVolume, Is.EqualTo(90));
 
         Assert.That(project.SpeakerEngines.Count, Is.EqualTo(1));

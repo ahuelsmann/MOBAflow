@@ -1,6 +1,7 @@
 {
   "Projects": [
     {
+      "Name": "Model Railway Control System",
       "SpeakerEngines": [
         {
           "Name": "Microsoft.CognitiveServices.Speech"
@@ -164,34 +165,263 @@
           "Name": "RE 6 Cologne - Düsseldorf",
           "TrainType": "Passenger",
           "ServiceType": "RegionalExpress",
-          "Locomotives": [],
-          "Wagons": []
+          "Locomotives": [
+            {
+              "Name": "BR 101 - DB Regio",
+              "Pos": 1,
+              "DigitalAddress": 3,
+              "Manufacturer": "Märklin",
+              "ArticleNumber": "37101",
+              "Series": "101",
+              "ColorPrimary": "Orientrot",
+              "ColorSecondary": "Verkehrsrot",
+              "IsPushing": false,
+              "Details": {
+                "Axles": 4,
+                "Epoch": "VI",
+                "RailroadCompany": "DB Regio",
+                "Power": "AC",
+                "Digital": "mfx",
+                "Description": "Electric locomotive for passenger services"
+              }
+            }
+          ],
+          "Wagons": [
+            {
+              "Name": "Compartment Coach 2nd Class",
+              "Pos": 1,
+              "DigitalAddress": null,
+              "Manufacturer": "Märklin",
+              "ArticleNumber": "43125",
+              "Series": "Bm 235",
+              "ColorPrimary": "Chromoxidgrün",
+              "ColorSecondary": null,
+              "WagonClass": "Second",
+              "Details": {
+                "Axles": 4,
+                "Epoch": "IV",
+                "RailroadCompany": "DB",
+                "Power": null,
+                "Digital": null,
+                "Description": "Standard 2nd class passenger coach"
+              }
+            },
+            {
+              "Name": "Compartment Coach 2nd Class",
+              "Pos": 2,
+              "DigitalAddress": null,
+              "Manufacturer": "Märklin",
+              "ArticleNumber": "43125",
+              "Series": "Bm 235",
+              "ColorPrimary": "Chromoxidgrün",
+              "ColorSecondary": null,
+              "WagonClass": "Second",
+              "Details": {
+                "Axles": 4,
+                "Epoch": "IV",
+                "RailroadCompany": "DB",
+                "Power": null,
+                "Digital": null,
+                "Description": "Standard 2nd class passenger coach"
+              }
+            }
+          ]
         },
         {
           "IsDoubleTraction": false,
           "Name": "IC 2024 Hamburg - Munich",
           "TrainType": "Passenger",
           "ServiceType": "InterCity",
-          "Locomotives": [],
-          "Wagons": []
+          "Locomotives": [
+            {
+              "Name": "BR 101 - DB Regio",
+              "Pos": 1,
+              "DigitalAddress": 3,
+              "Manufacturer": "Märklin",
+              "ArticleNumber": "37101",
+              "Series": "101",
+              "ColorPrimary": "Orientrot",
+              "ColorSecondary": "Verkehrsrot",
+              "IsPushing": false,
+              "Details": {
+                "Axles": 4,
+                "Epoch": "VI",
+                "RailroadCompany": "DB Regio",
+                "Power": "AC",
+                "Digital": "mfx",
+                "Description": "Electric locomotive for passenger services"
+              }
+            }
+          ],
+          "Wagons": [
+            {
+              "Name": "Compartment Coach 2nd Class",
+              "Pos": 1,
+              "DigitalAddress": null,
+              "Manufacturer": "Märklin",
+              "ArticleNumber": "43125",
+              "Series": "Bm 235",
+              "ColorPrimary": "Chromoxidgrün",
+              "ColorSecondary": null,
+              "WagonClass": "Second",
+              "Details": {
+                "Axles": 4,
+                "Epoch": "IV",
+                "RailroadCompany": "DB",
+                "Power": null,
+                "Digital": null,
+                "Description": "Standard 2nd class passenger coach"
+              }
+            },
+            {
+              "Name": "Dining Car",
+              "Pos": 2,
+              "DigitalAddress": null,
+              "Manufacturer": "Roco",
+              "ArticleNumber": "64390",
+              "Series": "WRmh 132",
+              "ColorPrimary": "Orientrot",
+              "ColorSecondary": null,
+              "WagonClass": "Dining",
+              "Details": {
+                "Axles": 4,
+                "Epoch": "IV",
+                "RailroadCompany": "DB",
+                "Power": null,
+                "Digital": null,
+                "Description": "Restaurant car with kitchen"
+              }
+            },
+            {
+              "Name": "Sleeping Car",
+              "Pos": 3,
+              "DigitalAddress": null,
+              "Manufacturer": "Fleischmann",
+              "ArticleNumber": "5145",
+              "Series": "WLABm 171",
+              "ColorPrimary": "Ozenblau",
+              "ColorSecondary": null,
+              "WagonClass": "Sleeping",
+              "Details": null
+            }
+          ]
         },
         {
           "IsDoubleTraction": false,
           "Name": "Freight Train North",
           "TrainType": "Freight",
           "ServiceType": "Freight",
-          "Locomotives": [],
-          "Wagons": []
+          "Locomotives": [
+            {
+              "Name": "BR 185 - DB Cargo",
+              "Pos": 1,
+              "DigitalAddress": 5,
+              "Manufacturer": "Roco",
+              "ArticleNumber": "73456",
+              "Series": "185",
+              "ColorPrimary": "Verkehrsrot",
+              "ColorSecondary": null,
+              "IsPushing": false,
+              "Details": {
+                "Axles": 4,
+                "Epoch": "VI",
+                "RailroadCompany": "DB Cargo",
+                "Power": "AC",
+                "Digital": "DCC",
+                "Description": "Electric freight locomotive"
+              }
+            }
+          ],
+          "Wagons": [
+            {
+              "Name": "Container Wagon",
+              "Pos": 1,
+              "DigitalAddress": null,
+              "Manufacturer": "Roco",
+              "ArticleNumber": "76229",
+              "Series": "Sgns",
+              "ColorPrimary": "Private",
+              "ColorSecondary": null,
+              "Cargo": "Container",
+              "Details": null
+            },
+            {
+              "Name": "Tank Wagon",
+              "Pos": 2,
+              "DigitalAddress": null,
+              "Manufacturer": "Märklin",
+              "ArticleNumber": "48317",
+              "Series": "Zans",
+              "ColorPrimary": "Special",
+              "ColorSecondary": null,
+              "Cargo": "Oil",
+              "Details": null
+            },
+            {
+              "Name": "Open Goods Wagon",
+              "Pos": 3,
+              "DigitalAddress": null,
+              "Manufacturer": "Fleischmann",
+              "ArticleNumber": "528202",
+              "Series": "Eanos",
+              "ColorPrimary": "Orientrot",
+              "ColorSecondary": null,
+              "Cargo": "Coal",
+              "Details": null
+            }
+          ]
         }
       ],
       "Workflows": [
         {
           "Name": "Platform Announcement",
-          "Actions": []
+          "InPort": 10,
+          "IsUsingTimerToIgnoreFeedbacks": true,
+          "IntervalForTimerToIgnoreFeedbacks": 3.0,
+          "Actions": [
+            {
+              "Id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+              "Name": "Gong Sound",
+              "Number": 1,
+              "Type": "Gong"
+            },
+            {
+              "Id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+              "Name": "Departure Announcement",
+              "Number": 2,
+              "Type": "Announcement",
+              "TextToSpeak": "Attention on platform 3. The Regional Express to Cologne is now departing. Please stand back from the platform edge."
+            }
+          ]
         },
         {
           "Name": "Arrival Main Station",
-          "Actions": []
+          "InPort": 11,
+          "IsUsingTimerToIgnoreFeedbacks": false,
+          "IntervalForTimerToIgnoreFeedbacks": 0.0,
+          "Actions": [
+            {
+              "Id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+              "Name": "Arrival Announcement",
+              "Number": 1,
+              "Type": "Announcement",
+              "TextToSpeak": "We have now arrived at Main Station. Please take all your belongings with you."
+            },
+            {
+              "Id": "d4e5f6a7-b8c9-0123-def1-234567890123",
+              "Name": "Stop Train Command",
+              "Number": 2,
+              "Type": "Command",
+              "Bytes": [0, 3, 0, 0],
+              "BytesString": "00 03 00 00"
+            },
+            {
+              "Id": "e5f6a7b8-c9d0-1234-ef12-345678901234",
+              "Name": "Station Gong",
+              "Number": 3,
+              "Type": "Gong"
+            }
+          ]
         }
       ],
       "Journeys": [
@@ -201,8 +431,153 @@
           "IntervalForTimerToIgnoreFeedbacks": 5.0,
           "Name": "Journey 1 - Regional Express",
           "Text": "Regional Express to Cologne via Düsseldorf and Leverkusen",
-          "Train": null,
-          "Stations": [],
+          "Train": {
+            "IsDoubleTraction": false,
+            "Name": "RE 6 Cologne - Düsseldorf",
+            "TrainType": "Passenger",
+            "ServiceType": "RegionalExpress",
+            "Locomotives": [
+              {
+                "Name": "BR 101 - DB Regio",
+                "Pos": 1,
+                "DigitalAddress": 3,
+                "Manufacturer": "Märklin",
+                "ArticleNumber": "37101",
+                "Series": "101",
+                "ColorPrimary": "Orientrot",
+                "ColorSecondary": "Verkehrsrot",
+                "IsPushing": false,
+                "Details": {
+                  "Axles": 4,
+                  "Epoch": "VI",
+                  "RailroadCompany": "DB Regio",
+                  "Power": "AC",
+                  "Digital": "mfx",
+                  "Description": "Electric locomotive for passenger services"
+                }
+              }
+            ],
+            "Wagons": [
+              {
+                "Name": "Compartment Coach 2nd Class",
+                "Pos": 1,
+                "DigitalAddress": null,
+                "Manufacturer": "Märklin",
+                "ArticleNumber": "43125",
+                "Series": "Bm 235",
+                "ColorPrimary": "Chromoxidgrün",
+                "ColorSecondary": null,
+                "WagonClass": "Second",
+                "Details": {
+                  "Axles": 4,
+                  "Epoch": "IV",
+                  "RailroadCompany": "DB",
+                  "Power": null,
+                  "Digital": null,
+                  "Description": "Standard 2nd class passenger coach"
+                }
+              },
+              {
+                "Name": "Compartment Coach 2nd Class",
+                "Pos": 2,
+                "DigitalAddress": null,
+                "Manufacturer": "Märklin",
+                "ArticleNumber": "43125",
+                "Series": "Bm 235",
+                "ColorPrimary": "Chromoxidgrün",
+                "ColorSecondary": null,
+                "WagonClass": "Second",
+                "Details": {
+                  "Axles": 4,
+                  "Epoch": "IV",
+                  "RailroadCompany": "DB",
+                  "Power": null,
+                  "Digital": null,
+                  "Description": "Standard 2nd class passenger coach"
+                }
+              }
+            ]
+          },
+          "Stations": [
+            {
+              "Name": "Düsseldorf Main Station",
+              "Number": 1,
+              "NumberOfLapsToStop": 0,
+              "Arrival": "2024-03-15T14:30:00",
+              "Departure": "2024-03-15T14:35:00",
+              "Track": 3,
+              "IsExitOnLeft": true,
+              "Flow": {
+                "Name": "Platform Announcement",
+                "InPort": 10,
+                "IsUsingTimerToIgnoreFeedbacks": true,
+                "IntervalForTimerToIgnoreFeedbacks": 3.0,
+                "Actions": [
+                  {
+                    "Id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                    "Name": "Gong Sound",
+                    "Number": 1,
+                    "Type": "Gong"
+                  },
+                  {
+                    "Id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+                    "Name": "Departure Announcement",
+                    "Number": 2,
+                    "Type": "Announcement",
+                    "TextToSpeak": "Attention on platform 3. The Regional Express to Cologne is now departing. Please stand back from the platform edge."
+                  }
+                ]
+              }
+            },
+            {
+              "Name": "Leverkusen Central",
+              "Number": 2,
+              "NumberOfLapsToStop": 0,
+              "Arrival": "2024-03-15T14:50:00",
+              "Departure": "2024-03-15T14:52:00",
+              "Track": 2,
+              "IsExitOnLeft": false,
+              "Flow": null
+            },
+            {
+              "Name": "Cologne Main Station",
+              "Number": 3,
+              "NumberOfLapsToStop": 1,
+              "Arrival": "2024-03-15T15:10:00",
+              "Departure": null,
+              "Track": 7,
+              "IsExitOnLeft": true,
+              "Flow": {
+                "Name": "Arrival Main Station",
+                "InPort": 11,
+                "IsUsingTimerToIgnoreFeedbacks": false,
+                "IntervalForTimerToIgnoreFeedbacks": 0.0,
+                "Actions": [
+                  {
+                    "Id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+                    "Name": "Arrival Announcement",
+                    "Number": 1,
+                    "Type": "Announcement",
+                    "TextToSpeak": "We have now arrived at Cologne Main Station. Please take all your belongings with you."
+                  },
+                  {
+                    "Id": "d4e5f6a7-b8c9-0123-def1-234567890123",
+                    "Name": "Stop Train Command",
+                    "Number": 2,
+                    "Type": "Command",
+                    "Bytes": [0, 3, 0, 0],
+                    "BytesString": "00 03 00 00"
+                  },
+                  {
+                    "Id": "e5f6a7b8-c9d0-1234-ef12-345678901234",
+                    "Name": "Station Gong",
+                    "Number": 3,
+                    "Type": "Gong"
+                  }
+                ]
+              }
+            }
+          ],
           "CurrentCounter": 0,
           "CurrentPos": 0,
           "OnLastStop": "None",
@@ -215,8 +590,185 @@
           "IntervalForTimerToIgnoreFeedbacks": 5.0,
           "Name": "Journey 2 - InterCity",
           "Text": "InterCity to Hamburg Main Station",
-          "Train": null,
-          "Stations": [],
+          "Train": {
+            "IsDoubleTraction": false,
+            "Name": "IC 2024 Hamburg - Munich",
+            "TrainType": "Passenger",
+            "ServiceType": "InterCity",
+            "Locomotives": [
+              {
+                "Name": "BR 101 - DB Regio",
+                "Pos": 1,
+                "DigitalAddress": 3,
+                "Manufacturer": "Märklin",
+                "ArticleNumber": "37101",
+                "Series": "101",
+                "ColorPrimary": "Orientrot",
+                "ColorSecondary": "Verkehrsrot",
+                "IsPushing": false,
+                "Details": {
+                  "Axles": 4,
+                  "Epoch": "VI",
+                  "RailroadCompany": "DB Regio",
+                  "Power": "AC",
+                  "Digital": "mfx",
+                  "Description": "Electric locomotive for passenger services"
+                }
+              }
+            ],
+            "Wagons": [
+              {
+                "Name": "Compartment Coach 2nd Class",
+                "Pos": 1,
+                "DigitalAddress": null,
+                "Manufacturer": "Märklin",
+                "ArticleNumber": "43125",
+                "Series": "Bm 235",
+                "ColorPrimary": "Chromoxidgrün",
+                "ColorSecondary": null,
+                "WagonClass": "Second",
+                "Details": {
+                  "Axles": 4,
+                  "Epoch": "IV",
+                  "RailroadCompany": "DB",
+                  "Power": null,
+                  "Digital": null,
+                  "Description": "Standard 2nd class passenger coach"
+                }
+              },
+              {
+                "Name": "Dining Car",
+                "Pos": 2,
+                "DigitalAddress": null,
+                "Manufacturer": "Roco",
+                "ArticleNumber": "64390",
+                "Series": "WRmh 132",
+                "ColorPrimary": "Orientrot",
+                "ColorSecondary": null,
+                "WagonClass": "Dining",
+                "Details": {
+                  "Axles": 4,
+                  "Epoch": "IV",
+                  "RailroadCompany": "DB",
+                  "Power": null,
+                  "Digital": null,
+                  "Description": "Restaurant car with kitchen"
+                }
+              },
+              {
+                "Name": "Sleeping Car",
+                "Pos": 3,
+                "DigitalAddress": null,
+                "Manufacturer": "Fleischmann",
+                "ArticleNumber": "5145",
+                "Series": "WLABm 171",
+                "ColorPrimary": "Ozenblau",
+                "ColorSecondary": null,
+                "WagonClass": "Sleeping",
+                "Details": null
+              }
+            ]
+          },
+          "Stations": [
+            {
+              "Name": "Munich Central Station",
+              "Number": 1,
+              "NumberOfLapsToStop": 0,
+              "Arrival": null,
+              "Departure": "2024-03-15T08:15:00",
+              "Track": 11,
+              "IsExitOnLeft": true,
+              "Flow": {
+                "Name": "Platform Announcement",
+                "InPort": 10,
+                "IsUsingTimerToIgnoreFeedbacks": true,
+                "IntervalForTimerToIgnoreFeedbacks": 3.0,
+                "Actions": [
+                  {
+                    "Id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                    "Name": "Gong Sound",
+                    "Number": 1,
+                    "Type": "Gong"
+                  },
+                  {
+                    "Id": "f6a7b8c9-d0e1-2345-f123-456789012345",
+                    "Name": "IC Departure",
+                    "Number": 2,
+                    "Type": "Announcement",
+                    "TextToSpeak": "InterCity 2024 to Hamburg is departing from platform 11. Next stop: Nuremberg."
+                  }
+                ]
+              }
+            },
+            {
+              "Name": "Nuremberg Central Station",
+              "Number": 2,
+              "NumberOfLapsToStop": 0,
+              "Arrival": "2024-03-15T09:45:00",
+              "Departure": "2024-03-15T09:50:00",
+              "Track": 5,
+              "IsExitOnLeft": false,
+              "Flow": null
+            },
+            {
+              "Name": "Frankfurt Main Station",
+              "Number": 3,
+              "NumberOfLapsToStop": 0,
+              "Arrival": "2024-03-15T11:30:00",
+              "Departure": "2024-03-15T11:35:00",
+              "Track": 9,
+              "IsExitOnLeft": true,
+              "Flow": null
+            },
+            {
+              "Name": "Hannover Central Station",
+              "Number": 4,
+              "NumberOfLapsToStop": 0,
+              "Arrival": "2024-03-15T13:20:00",
+              "Departure": "2024-03-15T13:25:00",
+              "Track": 4,
+              "IsExitOnLeft": false,
+              "Flow": null
+            },
+            {
+              "Name": "Hamburg Main Station",
+              "Number": 5,
+              "NumberOfLapsToStop": 2,
+              "Arrival": "2024-03-15T15:00:00",
+              "Departure": null,
+              "Track": 14,
+              "IsExitOnLeft": true,
+              "Flow": {
+                "Name": "Arrival Main Station",
+                "InPort": 11,
+                "IsUsingTimerToIgnoreFeedbacks": false,
+                "IntervalForTimerToIgnoreFeedbacks": 0.0,
+                "Actions": [
+                  {
+                    "Id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+                    "Name": "Arrival Announcement",
+                    "Number": 1,
+                    "Type": "Announcement",
+                    "TextToSpeak": "We have now arrived at Hamburg Main Station. End of journey. Please take all your belongings with you."
+                  },
+                  {
+                    "Id": "d4e5f6a7-b8c9-0123-def1-234567890123",
+                    "Name": "Stop Train Command",
+                    "Number": 2,
+                    "Type": "Command",
+                    "Bytes": [0, 3, 0, 0],
+                    "BytesString": "00 03 00 00"
+                  },
+                  {
+                    "Id": "e5f6a7b8-c9d0-1234-ef12-345678901234",
+                    "Name": "Station Gong",
+                    "Number": 3,
+                    "Type": "Gong"
+                  }
+                ]
+              }
+            }
+          ],
           "CurrentCounter": 0,
           "CurrentPos": 0,
           "OnLastStop": "None",
@@ -233,7 +785,6 @@
         }
       ],
       "Setting": {
-        "Name": "My Model Railway Project",
         "SpeechSynthesizerRate": 0,
         "SpeechSynthesizerVolume": 90,
         "SpeakerEngineName": "Microsoft.CognitiveServices.Speech",

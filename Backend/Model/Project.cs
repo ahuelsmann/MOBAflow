@@ -1,6 +1,7 @@
 namespace Moba.Backend.Model;
 
 using Sound;
+using System.ComponentModel.DataAnnotations;
 
 public class Project
 {
@@ -17,6 +18,9 @@ public class Project
         Ips = [];
         Setting = new Setting();
     }
+
+    [Display(Name = "Project Name")]
+    public string Name { get; set; } = string.Empty;
 
     public List<SpeakerEngine> SpeakerEngines { get; set; }
     public List<Voice> Voices { get; set; }
