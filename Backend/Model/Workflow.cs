@@ -6,9 +6,15 @@ public class Workflow
 {
     public Workflow()
     {
+        Id = Guid.NewGuid();  // ✅ Eindeutige ID generieren
         Name = "New Flow";
         Actions = [];
     }
+
+    /// <summary>
+    /// Eindeutiger Identifier für diesen Workflow
+    /// </summary>
+    public Guid Id { get; set; }
 
     public string Name { get; set; }
 
@@ -40,7 +46,7 @@ public class Workflow
             return;
         }
 
-        Debug.WriteLine($"▶ Workflow '{Name}' wird gestartet ({Actions.Count} Actions)");
+        Debug.WriteLine($"▶ Workflow '{Name}' (ID: {Id}) wird gestartet ({Actions.Count} Actions)");
 
         try
         {
@@ -60,5 +66,25 @@ public class Workflow
             Debug.WriteLine($"❌ Fehler in Workflow '{Name}': {ex.Message}");
             throw;
         }
+    }
+
+    // ✅ Überschreibe Equals und GetHashCode für ComboBox-Gleichheit
+    public override bool Equals(object? obj)
+    {
+        if (obj is Workflow other)
+        {
+            return Id == other.Id;  // Vergleich basierend auf GUID
+        }
+        return false;
+    }
+
+    public override int GetHashCode()
+    {
+        return Id.GetHashCode();
+    }
+
+    public override string ToString()
+    {
+        return Name;
     }
 }

@@ -18,6 +18,18 @@ public sealed partial class MainWindow
 
         // Behandle das Closed-Event des Fensters
         Closed += MainWindow_Closed;
+
+        // Registriere PropertyChanged für Z21-Status-Icon-Update
+        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+    }
+
+    private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        // Aktualisiere Z21-Status-Icon wenn IsZ21Connected sich ändert
+        if (e.PropertyName == nameof(MainWindowViewModel.IsZ21Connected))
+        {
+            Z21StatusIcon.Glyph = ViewModel.IsZ21Connected ? "\uE8EB" : "\uF384";
+        }
     }
 
     private void MainWindow_Closed(object sender, Microsoft.UI.Xaml.WindowEventArgs args)

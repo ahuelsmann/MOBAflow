@@ -36,23 +36,50 @@ public class Z21 : IDisposable
 
     public async Task DisconnectAsync()
     {
-        if (_cancellationTokenSource != null)
+        try
         {
-            await _cancellationTokenSource.CancelAsync();
-        }
+            if (_cancellationTokenSource != null)
+            {
+                await _cancellationTokenSource.CancelAsync();
+            }
 
-        if (_receiverTask != null)
+            // Warte auf Tasks, aber ignoriere OperationCanceledException
+            if (_receiverTask != null)
+            {
+                try
+                {
+                    await _receiverTask;
+                }
+                catch (OperationCanceledException)
+                {
+                    // Erwartet - Task wurde abgebrochen (inkludiert TaskCanceledException)
+                    Debug.WriteLine("📡 Receiver task cancelled");
+                }
+            }
+
+            if (_pingTask != null)
+            {
+                try
+                {
+                    await _pingTask;
+                }
+                catch (OperationCanceledException)
+                {
+                    // Erwartet - Task wurde abgebrochen (inkludiert TaskCanceledException)
+                    Debug.WriteLine("🏓 Ping task cancelled");
+                }
+            }
+
+            _client?.Close();
+            _client = null;
+
+            Debug.WriteLine("✅ Z21 disconnected successfully");
+        }
+        catch (Exception ex)
         {
-            await _receiverTask;
+            Debug.WriteLine($"⚠️ Error during disconnect: {ex.Message}");
+            // Nicht weiterwerfen - Disconnect sollte immer "erfolgreich" sein
         }
-
-        if (_pingTask != null)
-        {
-            await _pingTask;
-        }
-
-        _client?.Close();
-        _client = null;
     }
 
     private async Task SendHandshakeAsync()

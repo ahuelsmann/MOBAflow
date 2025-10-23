@@ -374,6 +374,7 @@
       ],
       "Workflows": [
         {
+          "Id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
           "Name": "Platform Announcement",
           "InPort": 10,
           "IsUsingTimerToIgnoreFeedbacks": true,
@@ -395,6 +396,7 @@
           ]
         },
         {
+          "Id": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
           "Name": "Arrival Main Station",
           "InPort": 11,
           "IsUsingTimerToIgnoreFeedbacks": false,
@@ -412,7 +414,7 @@
               "Name": "Stop Train Command",
               "Number": 2,
               "Type": "Command",
-              "Bytes": [0, 3, 0, 0],
+              "Bytes": [ 0, 3, 0, 0 ],
               "BytesString": "00 03 00 00"
             },
             {
@@ -507,27 +509,7 @@
               "Departure": "2024-03-15T14:35:00",
               "Track": 3,
               "IsExitOnLeft": true,
-              "Flow": {
-                "Name": "Platform Announcement",
-                "InPort": 10,
-                "IsUsingTimerToIgnoreFeedbacks": true,
-                "IntervalForTimerToIgnoreFeedbacks": 3.0,
-                "Actions": [
-                  {
-                    "Id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-                    "Name": "Gong Sound",
-                    "Number": 1,
-                    "Type": "Gong"
-                  },
-                  {
-                    "Id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
-                    "Name": "Departure Announcement",
-                    "Number": 2,
-                    "Type": "Announcement",
-                    "TextToSpeak": "Attention on platform 3. The Regional Express to Cologne is now departing. Please stand back from the platform edge."
-                  }
-                ]
-              }
+              "Flow": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
             },
             {
               "Name": "Leverkusen Central",
@@ -547,35 +529,7 @@
               "Departure": null,
               "Track": 7,
               "IsExitOnLeft": true,
-              "Flow": {
-                "Name": "Arrival Main Station",
-                "InPort": 11,
-                "IsUsingTimerToIgnoreFeedbacks": false,
-                "IntervalForTimerToIgnoreFeedbacks": 0.0,
-                "Actions": [
-                  {
-                    "Id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
-                    "Name": "Arrival Announcement",
-                    "Number": 1,
-                    "Type": "Announcement",
-                    "TextToSpeak": "We have now arrived at Cologne Main Station. Please take all your belongings with you."
-                  },
-                  {
-                    "Id": "d4e5f6a7-b8c9-0123-def1-234567890123",
-                    "Name": "Stop Train Command",
-                    "Number": 2,
-                    "Type": "Command",
-                    "Bytes": [0, 3, 0, 0],
-                    "BytesString": "00 03 00 00"
-                  },
-                  {
-                    "Id": "e5f6a7b8-c9d0-1234-ef12-345678901234",
-                    "Name": "Station Gong",
-                    "Number": 3,
-                    "Type": "Gong"
-                  }
-                ]
-              }
+              "Flow": "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
             }
           ],
           "CurrentCounter": 0,
@@ -678,27 +632,7 @@
               "Departure": "2024-03-15T08:15:00",
               "Track": 11,
               "IsExitOnLeft": true,
-              "Flow": {
-                "Name": "Platform Announcement",
-                "InPort": 10,
-                "IsUsingTimerToIgnoreFeedbacks": true,
-                "IntervalForTimerToIgnoreFeedbacks": 3.0,
-                "Actions": [
-                  {
-                    "Id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-                    "Name": "Gong Sound",
-                    "Number": 1,
-                    "Type": "Gong"
-                  },
-                  {
-                    "Id": "f6a7b8c9-d0e1-2345-f123-456789012345",
-                    "Name": "IC Departure",
-                    "Number": 2,
-                    "Type": "Announcement",
-                    "TextToSpeak": "InterCity 2024 to Hamburg is departing from platform 11. Next stop: Nuremberg."
-                  }
-                ]
-              }
+              "Flow": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
             },
             {
               "Name": "Nuremberg Central Station",
@@ -738,35 +672,7 @@
               "Departure": null,
               "Track": 14,
               "IsExitOnLeft": true,
-              "Flow": {
-                "Name": "Arrival Main Station",
-                "InPort": 11,
-                "IsUsingTimerToIgnoreFeedbacks": false,
-                "IntervalForTimerToIgnoreFeedbacks": 0.0,
-                "Actions": [
-                  {
-                    "Id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
-                    "Name": "Arrival Announcement",
-                    "Number": 1,
-                    "Type": "Announcement",
-                    "TextToSpeak": "We have now arrived at Hamburg Main Station. End of journey. Please take all your belongings with you."
-                  },
-                  {
-                    "Id": "d4e5f6a7-b8c9-0123-def1-234567890123",
-                    "Name": "Stop Train Command",
-                    "Number": 2,
-                    "Type": "Command",
-                    "Bytes": [0, 3, 0, 0],
-                    "BytesString": "00 03 00 00"
-                  },
-                  {
-                    "Id": "e5f6a7b8-c9d0-1234-ef12-345678901234",
-                    "Name": "Station Gong",
-                    "Number": 3,
-                    "Type": "Gong"
-                  }
-                ]
-              }
+              "Flow": "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
             }
           ],
           "CurrentCounter": 0,
