@@ -18,47 +18,47 @@ public class TreeViewBuilder
     {
         var treeNodes = new ObservableCollection<TreeNodeViewModel>();
 
-   if (solution == null)
-          return treeNodes;
+        if (solution == null)
+            return treeNodes;
 
         var solutionNode = CreateSolutionNode(solution);
 
         foreach (var project in solution.Projects)
         {
- var projectNode = CreateProjectNode(project, solution.Projects.IndexOf(project));
-        solutionNode.Children.Add(projectNode);
+            var projectNode = CreateProjectNode(project, solution.Projects.IndexOf(project));
+            solutionNode.Children.Add(projectNode);
         }
 
-     treeNodes.Add(solutionNode);
+        treeNodes.Add(solutionNode);
         return treeNodes;
     }
 
     private static TreeNodeViewModel CreateSolutionNode(Solution solution)
     {
-  return new TreeNodeViewModel
+        return new TreeNodeViewModel
         {
-      DisplayName = "Solution",
- Icon = "\uE8F1", // Solution icon
-  IsExpanded = true,
+            DisplayName = "Solution",
+            Icon = "\uE8F1", // Solution icon
+            IsExpanded = true,
             DataContext = solution,
-     DataType = typeof(Solution)
-     };
+            DataType = typeof(Solution)
+        };
     }
 
     private static TreeNodeViewModel CreateProjectNode(Project project, int index)
     {
-     // Zeige Project-Name wenn vorhanden, sonst "Project {index + 1}"
-   var displayName = string.IsNullOrEmpty(project.Name) 
-            ? $"Project {index + 1}" 
-            : project.Name;
+        // Zeige Project-Name wenn vorhanden, sonst "Project {index + 1}"
+        var displayName = string.IsNullOrEmpty(project.Name)
+                 ? $"Project {index + 1}"
+                 : project.Name;
 
         var projectNode = new TreeNodeViewModel
         {
-  DisplayName = displayName,
+            DisplayName = displayName,
             Icon = "\uE8B7", // Folder icon
-      IsExpanded = true,
+            IsExpanded = true,
             DataContext = project,
-   DataType = typeof(Project)
+            DataType = typeof(Project)
         };
 
         // Setting als erstes Kind-Element
@@ -67,25 +67,25 @@ public class TreeViewBuilder
         // Journeys
         if (project.Journeys.Count > 0)
         {
-        projectNode.Children.Add(CreateJourneysFolder(project.Journeys));
- }
+            projectNode.Children.Add(CreateJourneysFolder(project.Journeys));
+        }
 
         // Workflows
         if (project.Workflows.Count > 0)
         {
-  projectNode.Children.Add(CreateWorkflowsFolder(project.Workflows));
+            projectNode.Children.Add(CreateWorkflowsFolder(project.Workflows));
         }
 
         // Locomotives
         if (project.Locomotives.Count > 0)
-   {
+        {
             projectNode.Children.Add(CreateLocomotivesFolder(project.Locomotives));
         }
 
         // Trains
-  if (project.Trains.Count > 0)
+        if (project.Trains.Count > 0)
         {
-  projectNode.Children.Add(CreateTrainsFolder(project.Trains));
+            projectNode.Children.Add(CreateTrainsFolder(project.Trains));
         }
 
         return projectNode;
@@ -95,10 +95,10 @@ public class TreeViewBuilder
     {
         return new TreeNodeViewModel
         {
-      DisplayName = "Setting",
-   Icon = "\uE713", // Settings icon
-         DataContext = setting,
-        DataType = typeof(Setting)
+            DisplayName = "Setting",
+            Icon = "\uE713", // Settings icon
+            DataContext = setting,
+            DataType = typeof(Setting)
         };
     }
 
@@ -106,32 +106,32 @@ public class TreeViewBuilder
     {
         var journeysFolder = new TreeNodeViewModel
         {
- DisplayName = "Journeys",
-      Icon = "\uE8B7",
-          IsExpanded = true
-  };
+            DisplayName = "Journeys",
+            Icon = "\uE8B7",
+            IsExpanded = true
+        };
 
- foreach (var journey in journeys)
+        foreach (var journey in journeys)
         {
             var journeyNode = new TreeNodeViewModel
             {
-          DisplayName = journey.Name,
-         Icon = "\uE81D", // Train icon
-    DataContext = journey,
-            DataType = typeof(Journey)
-        };
+                DisplayName = journey.Name,
+                Icon = "\uE81D", // Train icon
+                DataContext = journey,
+                DataType = typeof(Journey)
+            };
 
-   // Stations
+            // Stations
             foreach (var station in journey.Stations)
-   {
+            {
                 journeyNode.Children.Add(new TreeNodeViewModel
-       {
-         DisplayName = station.Name,
-    Icon = "\uE80F", // Location icon
-        DataContext = station,
-          DataType = typeof(Station)
-     });
-       }
+                {
+                    DisplayName = station.Name,
+                    Icon = "\uE80F", // Location icon
+                    DataContext = station,
+                    DataType = typeof(Station)
+                });
+            }
 
             journeysFolder.Children.Add(journeyNode);
         }
@@ -144,42 +144,42 @@ public class TreeViewBuilder
         var workflowsFolder = new TreeNodeViewModel
         {
             DisplayName = "Workflows",
-     Icon = "\uE8B7",
-     IsExpanded = true
+            Icon = "\uE8B7",
+            IsExpanded = true
         };
 
         foreach (var workflow in workflows)
         {
-      workflowsFolder.Children.Add(new TreeNodeViewModel
-      {
-          DisplayName = workflow.Name,
-     Icon = "\uE9D9", // Flow icon
-             DataContext = workflow,
-          DataType = typeof(Workflow)
-      });
-      }
+            workflowsFolder.Children.Add(new TreeNodeViewModel
+            {
+                DisplayName = workflow.Name,
+                Icon = "\uE9D9", // Flow icon
+                DataContext = workflow,
+                DataType = typeof(Workflow)
+            });
+        }
 
-    return workflowsFolder;
+        return workflowsFolder;
     }
 
     private static TreeNodeViewModel CreateLocomotivesFolder(List<Locomotive> locomotives)
     {
-      var locomotivesFolder = new TreeNodeViewModel
+        var locomotivesFolder = new TreeNodeViewModel
         {
-   DisplayName = "Locomotives",
+            DisplayName = "Locomotives",
             Icon = "\uE8B7",
             IsExpanded = false
         };
 
-      foreach (var loco in locomotives)
+        foreach (var loco in locomotives)
         {
-  locomotivesFolder.Children.Add(new TreeNodeViewModel
-{
-          DisplayName = loco.Name,
+            locomotivesFolder.Children.Add(new TreeNodeViewModel
+            {
+                DisplayName = loco.Name,
                 Icon = "\uE81D",
-         DataContext = loco,
-            DataType = loco.GetType()
- });
+                DataContext = loco,
+                DataType = loco.GetType()
+            });
         }
 
         return locomotivesFolder;
@@ -190,21 +190,21 @@ public class TreeViewBuilder
         var trainsFolder = new TreeNodeViewModel
         {
             DisplayName = "Trains",
-     Icon = "\uE8B7",
+            Icon = "\uE8B7",
             IsExpanded = false
         };
 
         foreach (var train in trains)
         {
             trainsFolder.Children.Add(new TreeNodeViewModel
-          {
-      DisplayName = train.Name,
-            Icon = "\uE81D",
+            {
+                DisplayName = train.Name,
+                Icon = "\uE81D",
                 DataContext = train,
-      DataType = train.GetType()
- });
+                DataType = train.GetType()
+            });
         }
 
         return trainsFolder;
- }
+    }
 }

@@ -238,6 +238,35 @@ public class Z21 : IDisposable
         }
     }
 
+    /// <summary>
+    /// Simulates a feedback event for testing purposes without requiring actual Z21 hardware feedback.
+    /// This triggers the same Received event as a real Z21 feedback message would.
+    /// </summary>
+    /// <param name="inPort">The InPort number (0-255) to simulate feedback for</param>
+    public void SimulateFeedback(int inPort)
+    {
+        if (inPort < 0 || inPort > 255)
+        {
+            throw new ArgumentOutOfRangeException(nameof(inPort), "InPort must be between 0 and 255");
+        }
+
+        // Build a simulated Z21 feedback message (0F-00-80-00 format)
+        // Byte structure: [Length, 0x00, 0x80, 0x00, GroupIndex, InPort, ...]
+        byte[] simulatedContent = [
+            0x0F, 0x00, 0x80, 0x00,  // Header
+            0x00,          // GroupIndex (dummy value)
+       (byte)inPort,             // InPort
+            0x01,           // Status (occupied)
+     0x00, 0x00, 0x00, 0x00,  // Additional bytes
+            0x00, 0x00, 0x00, 0x00   // Padding
+        ];
+
+   Debug.WriteLine($"⚡ Simulating feedback for InPort {inPort}");
+     
+      // Trigger the same event as real Z21 feedback
+ Received?.Invoke(new FeedbackResult(simulatedContent));
+    }
+
     public void Dispose()
     {
         Dispose(true);

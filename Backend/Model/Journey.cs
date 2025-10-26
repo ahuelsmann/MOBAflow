@@ -1,8 +1,9 @@
 namespace Moba.Backend.Model;
 
 using Enum;
+using CommunityToolkit.Mvvm.ComponentModel;
 
-public class Journey
+public partial class Journey : ObservableObject
 {
     public Journey()
     {
@@ -13,19 +14,40 @@ public class Journey
         Stations = [];
     }
 
-    public uint InPort { get; set; }
-    public bool IsUsingTimerToIgnoreFeedbacks { get; set; }
-    public double IntervalForTimerToIgnoreFeedbacks { get; set; }
-    public string Name { get; set; }
-    public string? Text { get; set; }
-    public Train? Train { get; set; }
+    [ObservableProperty]
+    private uint inPort;
+
+    [ObservableProperty]
+    private bool isUsingTimerToIgnoreFeedbacks;
+
+    [ObservableProperty]
+    private double intervalForTimerToIgnoreFeedbacks;
+
+    [ObservableProperty]
+    private string name = "New Journey";
+
+    [ObservableProperty]
+    private string? text = string.Empty;
+
+    [ObservableProperty]
+    private Train? train;
+
     public List<Station> Stations { get; set; }
-    public uint CurrentCounter { get; set; }
-    public uint CurrentPos { get; set; }
+
+    [ObservableProperty]
+    private uint currentCounter;
+
+    [ObservableProperty]
+    private uint currentPos;
 
     #region BehaviorOnLastStop
-    public BehaviorOnLastStop OnLastStop { get; set; }
-    public string? NextJourney { get; set; }
-    public uint FirstPos { get; set; }
+    [ObservableProperty]
+    private BehaviorOnLastStop onLastStop;
+
+    [ObservableProperty]
+    private string? nextJourney = string.Empty;
+
+    [ObservableProperty]
+    private uint firstPos;
     #endregion
 }

@@ -6,11 +6,18 @@ using System.Reflection;
 
 namespace Moba.SharedUI.ViewModel;
 
-public partial class PropertyViewModel : ObservableObject
+public partial class PropertyViewModel : ObservableObject, IDisposable
 {
     private readonly PropertyInfo _propertyInfo;
     private readonly object _target;
     private string? _pendingValue;
+    private bool _disposed;
+
+    /// <summary>
+    /// Event wird ausgelöst, wenn ein Property-Wert geändert wurde.
+    /// Wird verwendet, um TreeNodes über Änderungen zu informieren.
+    /// </summary>
+    public event EventHandler? ValueChanged;
 
     public PropertyViewModel(PropertyInfo propertyInfo, object target)
     {
@@ -32,6 +39,37 @@ public partial class PropertyViewModel : ObservableObject
         if (IsEnum)
         {
             EnumValues = Enum.GetValues(underlyingType).Cast<object>().ToList();
+        }
+
+        // Wenn das Target INotifyPropertyChanged implementiert, registriere Event-Handler
+        if (_target is System.ComponentModel.INotifyPropertyChanged notifyTarget)
+        {
+            notifyTarget.PropertyChanged += OnTargetPropertyChanged;
+        }
+    }
+
+    /// <summary>
+    /// Wird aufgerufen, wenn sich eine Property am Target-Objekt ändert.
+    /// Aktualisiert die UI-Bindings automatisch.
+    /// </summary>
+    private void OnTargetPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        // ✅ Performance: Nur reagieren, wenn es unsere Property ist ODER wenn PropertyName null ist (alle Properties)
+        if (e.PropertyName == null || e.PropertyName == _propertyInfo.Name)
+        {
+            // UI-Bindings aktualisieren - nur Value, der Rest wird durch Binding automatisch aktualisiert
+            OnPropertyChanged(nameof(Value));
+            
+            // Nur spezifische Properties aktualisieren, wenn nötig
+            if (IsBoolean)
+                OnPropertyChanged(nameof(BoolValue));
+            if (IsEnum)
+                OnPropertyChanged(nameof(EnumValue));
+            if (IsReference)
+            {
+                OnPropertyChanged(nameof(ReferenceValue));
+                OnPropertyChanged(nameof(ReferenceValueName));
+            }
         }
     }
 
@@ -82,6 +120,7 @@ public partial class PropertyViewModel : ObservableObject
                     {
                         _propertyInfo.SetValue(_target, value);
                         _pendingValue = null;
+                        ValueChanged?.Invoke(this, EventArgs.Empty);
                     }
                     else
                     {
@@ -92,6 +131,7 @@ public partial class PropertyViewModel : ObservableObject
                             var convertedValue = converter.ConvertFromString(value);
                             _propertyInfo.SetValue(_target, convertedValue);
                             _pendingValue = null;
+                            ValueChanged?.Invoke(this, EventArgs.Empty);
                         }
                         else if (_propertyInfo.PropertyType.IsPrimitive ||
                                  _propertyInfo.PropertyType.IsEnum ||
@@ -104,6 +144,7 @@ public partial class PropertyViewModel : ObservableObject
                             var convertedValue = Convert.ChangeType(value, _propertyInfo.PropertyType);
                             _propertyInfo.SetValue(_target, convertedValue);
                             _pendingValue = null;
+                            ValueChanged?.Invoke(this, EventArgs.Empty);
                         }
                         // Komplexe Typen werden ignoriert
                     }
@@ -137,6 +178,7 @@ public partial class PropertyViewModel : ObservableObject
                     return;
 
                 _propertyInfo.SetValue(_target, value);
+                ValueChanged?.Invoke(this, EventArgs.Empty);
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(Value));
             }
@@ -158,6 +200,7 @@ public partial class PropertyViewModel : ObservableObject
                     return;
 
                 _propertyInfo.SetValue(_target, value);
+                ValueChanged?.Invoke(this, EventArgs.Empty);
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(Value));
             }
@@ -173,19 +216,6 @@ public partial class PropertyViewModel : ObservableObject
         get
         {
             var value = _propertyInfo.GetValue(_target);
-
-            // ✅ Debug: Log was wir zurückgeben
-            if (value != null)
-            {
-                System.Diagnostics.Debug.WriteLine($"ReferenceValue GET: {value.GetType().Name} - {value}");
-
-                // Prüfe ob Workflow
-                if (value is Backend.Model.Workflow workflow)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Workflow: Id={workflow.Id}, Name={workflow.Name}");
-                }
-            }
-
             return value;
         }
         set
@@ -194,17 +224,11 @@ public partial class PropertyViewModel : ObservableObject
             {
                 var currentValue = _propertyInfo.GetValue(_target);
 
-                // ✅ Debug: Log was gesetzt wird
-                System.Diagnostics.Debug.WriteLine($"ReferenceValue SET: {value?.GetType().Name ?? "null"}");
-                if (value is Backend.Model.Workflow workflow)
-                {
-                    System.Diagnostics.Debug.WriteLine($"  Workflow: Id={workflow.Id}, Name={workflow.Name}");
-                }
-
                 if (Equals(currentValue, value))
                     return;
 
                 _propertyInfo.SetValue(_target, value);
+                ValueChanged?.Invoke(this, EventArgs.Empty);
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(Value));
                 OnPropertyChanged(nameof(ReferenceValueName));
@@ -225,17 +249,10 @@ public partial class PropertyViewModel : ObservableObject
 
             // Versuche "Name" Property zu lesen
             var nameProp = value.GetType().GetProperty("Name");
-            var name = nameProp?.GetValue(value)?.ToString();
-
-            // ✅ Debug
-            System.Diagnostics.Debug.WriteLine($"ReferenceValueName GET: {name}");
-
-            return name;
+            return nameProp?.GetValue(value)?.ToString();
         }
         set
         {
-            System.Diagnostics.Debug.WriteLine($"ReferenceValueName SET: {value}");
-
             if (_propertyInfo.CanWrite && ReferenceValues != null)
             {
                 // Finde das Objekt mit dem passenden Namen
@@ -249,16 +266,45 @@ public partial class PropertyViewModel : ObservableObject
                    return itemName == value;
                });
 
-                System.Diagnostics.Debug.WriteLine($"  Matching Item: {matchingItem?.GetType().Name ?? "null"}");
-
                 if (matchingItem != ReferenceValue)
                 {
                     _propertyInfo.SetValue(_target, matchingItem);
+                    ValueChanged?.Invoke(this, EventArgs.Empty);
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(ReferenceValue));
                     OnPropertyChanged(nameof(Value));
                 }
             }
         }
+    }
+
+    public void Refresh()
+    {
+        // ✅ Performance: Nur notwendige Properties aktualisieren
+        OnPropertyChanged(nameof(Value));
+  
+        if (IsBoolean)
+           OnPropertyChanged(nameof(BoolValue));
+        if (IsEnum)
+            OnPropertyChanged(nameof(EnumValue));
+        if (IsReference)
+        {
+          OnPropertyChanged(nameof(ReferenceValue));
+        OnPropertyChanged(nameof(ReferenceValueName));
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        // Event-Handler entfernen
+        if (_target is System.ComponentModel.INotifyPropertyChanged notifyTarget)
+        {
+            notifyTarget.PropertyChanged -= OnTargetPropertyChanged;
+        }
+
+        _disposed = true;
     }
 }

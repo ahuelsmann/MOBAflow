@@ -21,7 +21,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     public MainWindowViewModel(IIoService ioService)
     {
-   _ioService = ioService;
+        _ioService = ioService;
         _treeViewBuilder = new TreeViewBuilder();
     }
 
@@ -29,7 +29,7 @@ public partial class MainWindowViewModel : ObservableObject
     private string title = "MOBAflow";
 
     [ObservableProperty]
- private string? currentSolutionPath;
+    private string? currentSolutionPath;
 
     [ObservableProperty]
     private bool hasSolution;
@@ -46,19 +46,25 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private string selectedNodeType = string.Empty;
 
-  [ObservableProperty]
+    [ObservableProperty]
+    private TreeNodeViewModel? currentSelectedNode;
+
+    [ObservableProperty]
     private bool isZ21Connected;
 
     [ObservableProperty]
-  private string z21StatusText = "Disconnected";
+    private string z21StatusText = "Disconnected";
+
+    [ObservableProperty]
+    private string simulateInPort = "1";
 
     // Event für das Beenden der Anwendung
     public event EventHandler? ExitApplicationRequested;
 
     partial void OnSolutionChanged(Solution? value)
     {
-   HasSolution = value is { Projects.Count: > 0 };
-    SaveSolutionCommand.NotifyCanExecuteChanged();
+        HasSolution = value is { Projects.Count: > 0 };
+        SaveSolutionCommand.NotifyCanExecuteChanged();
         ConnectToZ21Command.NotifyCanExecuteChanged();
         BuildTreeView();
     }
@@ -69,72 +75,73 @@ public partial class MainWindowViewModel : ObservableObject
         (Solution? _solution, string? path, string? error) = await _ioService.LoadAsync();
         if (!string.IsNullOrEmpty(error))
         {
-        // TODO: expose error to UI (add property or messaging)
-          return;
+            // TODO: expose error to UI (add property or messaging)
+            return;
         }
-     if (_solution != null)
+        if (_solution != null)
         {
-  Solution = _solution;
-        CurrentSolutionPath = path;
-      }
+            Solution = _solution;
+            CurrentSolutionPath = path;
+        }
     }
 
     [RelayCommand(CanExecute = nameof(CanSaveSolution))]
     private async Task SaveSolutionAsync()
     {
-   if (Solution == null) return;
+        if (Solution == null) return;
         var (success, path, error) = await _ioService.SaveAsync(Solution, CurrentSolutionPath);
         if (success && path != null)
-      {
-          CurrentSolutionPath = path;
-    }
+        {
+            CurrentSolutionPath = path;
+        }
         else if (!string.IsNullOrEmpty(error))
- {
-      // TODO: expose error to UI
+        {
+            // TODO: expose error to UI
         }
     }
 
     [RelayCommand]
     private void AddProject()
     {
-     if (Solution == null) return;
+        if (Solution == null) return;
         Solution.Projects.Add(new Project());
-   BuildTreeView();
+        BuildTreeView();
     }
 
     [RelayCommand(CanExecute = nameof(CanConnectToZ21))]
     private async Task ConnectToZ21Async()
     {
         try
- {
-     Z21StatusText = "Connecting...";
-            
+        {
+            Z21StatusText = "Connecting...";
+
             // Z21 erstellen und verbinden
-      _z21 = new Backend.Z21();
-            
-          // IP-Adresse aus dem ersten Project holen
-     var ip = Solution?.Projects.FirstOrDefault()?.Ips.FirstOrDefault()?.Address;
-   if (string.IsNullOrEmpty(ip))
-    {
-          Z21StatusText = "No IP configured";
-           return;
-   }
+            _z21 = new Backend.Z21();
+
+            // IP-Adresse aus dem ersten Project holen
+            var ip = Solution?.Projects.FirstOrDefault()?.Ips.FirstOrDefault()?.Address;
+            if (string.IsNullOrEmpty(ip))
+            {
+                Z21StatusText = "No IP configured";
+                return;
+            }
 
             await _z21.ConnectAsync(System.Net.IPAddress.Parse(ip));
-            
-   // JourneyManager für das erste Project erstellen
-         if (Solution?.Projects.FirstOrDefault() is Project project)
+
+            // JourneyManager für das erste Project erstellen
+            if (Solution?.Projects.FirstOrDefault() is Project project)
             {
-      _journeyManager = new Backend.JourneyManager(_z21, project.Journeys);
-    Z21StatusText = $"Connected to {ip}";
-     IsZ21Connected = true;
-          DisconnectFromZ21Command.NotifyCanExecuteChanged();
-    }
+                _journeyManager = new Backend.JourneyManager(_z21, project.Journeys);
+                Z21StatusText = $"Connected to {ip}";
+                IsZ21Connected = true;
+                DisconnectFromZ21Command.NotifyCanExecuteChanged();
+                SimulateFeedbackCommand.NotifyCanExecuteChanged();
+            }
         }
-      catch (System.Exception ex)
+        catch (System.Exception ex)
         {
-          Z21StatusText = $"Error: {ex.Message}";
-        IsZ21Connected = false;
+            Z21StatusText = $"Error: {ex.Message}";
+            IsZ21Connected = false;
         }
     }
 
@@ -143,21 +150,43 @@ public partial class MainWindowViewModel : ObservableObject
     {
         try
         {
-      Z21StatusText = "Disconnecting...";
-            
+            Z21StatusText = "Disconnecting...";
+
             _journeyManager?.Dispose();
             _journeyManager = null;
- 
+
             if (_z21 != null)
-   {
-        await _z21.DisconnectAsync();
-   _z21.Dispose();
- _z21 = null;
-        }
-  
+            {
+                await _z21.DisconnectAsync();
+                _z21.Dispose();
+                _z21 = null;
+            }
+
             IsZ21Connected = false;
             Z21StatusText = "Disconnected";
-  ConnectToZ21Command.NotifyCanExecuteChanged();
+            ConnectToZ21Command.NotifyCanExecuteChanged();
+            SimulateFeedbackCommand.NotifyCanExecuteChanged();
+        }
+        catch (System.Exception ex)
+        {
+            Z21StatusText = $"Error: {ex.Message}";
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanSimulateFeedback))]
+    private void SimulateFeedback()
+    {
+        try
+        {
+            if (int.TryParse(SimulateInPort, out int inPort))
+            {
+                _z21?.SimulateFeedback(inPort);
+                Z21StatusText = $"Simulated feedback for InPort {inPort}";
+            }
+            else
+            {
+                Z21StatusText = "Invalid InPort number";
+            }
         }
         catch (System.Exception ex)
         {
@@ -167,9 +196,11 @@ public partial class MainWindowViewModel : ObservableObject
 
     private bool CanSaveSolution() => Solution != null;
 
-private bool CanConnectToZ21() => Solution != null && !IsZ21Connected;
+    private bool CanConnectToZ21() => Solution != null && !IsZ21Connected;
 
     private bool CanDisconnectFromZ21() => IsZ21Connected;
+
+    private bool CanSimulateFeedback() => IsZ21Connected;
 
     public void OnWindowClosing()
     {
@@ -177,37 +208,37 @@ private bool CanConnectToZ21() => Solution != null && !IsZ21Connected;
         if (_z21 != null)
         {
             try
-  {
-   _journeyManager?.Dispose();
-       
-     // DisconnectAsync aufrufen, aber TaskCanceledException ist ok
-         var disconnectTask = _z21.DisconnectAsync();
-     disconnectTask.Wait(TimeSpan.FromSeconds(5)); // Max 5 Sekunden warten
-     
-       _z21.Dispose();
-     }
-       catch (AggregateException ae)
- {
-       // AggregateException kann TaskCanceledException enthalten
-   bool hasOnlyExpectedExceptions = ae.InnerExceptions.All(e => 
-            e is TaskCanceledException || e is OperationCanceledException);
-   
-   if (!hasOnlyExpectedExceptions)
-   {
-        // Nur loggen, wenn unerwartete Exceptions dabei sind
-    System.Diagnostics.Debug.WriteLine($"⚠️ Unexpected exception during shutdown: {ae}");
-      }
-        }
-   catch (TaskCanceledException)
-    {
-        // Erwartet beim Herunterfahren - ignorieren
-       System.Diagnostics.Debug.WriteLine("Z21 disconnect cancelled (expected)");
-  }
-catch (Exception ex)
-    {
-    // Andere Exceptions loggen
-  System.Diagnostics.Debug.WriteLine($"⚠️ Error during Z21 shutdown: {ex.Message}");
-   }
+            {
+                _journeyManager?.Dispose();
+
+                // DisconnectAsync aufrufen, aber TaskCanceledException ist ok
+                var disconnectTask = _z21.DisconnectAsync();
+                disconnectTask.Wait(TimeSpan.FromSeconds(5)); // Max 5 Sekunden warten
+
+                _z21.Dispose();
+            }
+            catch (AggregateException ae)
+            {
+                // AggregateException kann TaskCanceledException enthalten
+                bool hasOnlyExpectedExceptions = ae.InnerExceptions.All(e =>
+                         e is TaskCanceledException || e is OperationCanceledException);
+
+                if (!hasOnlyExpectedExceptions)
+                {
+                    // Nur loggen, wenn unerwartete Exceptions dabei sind
+                    System.Diagnostics.Debug.WriteLine($"⚠️ Unexpected exception during shutdown: {ae}");
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                // Erwartet beim Herunterfahren - ignorieren
+                System.Diagnostics.Debug.WriteLine("Z21 disconnect cancelled (expected)");
+            }
+            catch (Exception ex)
+            {
+                // Andere Exceptions loggen
+                System.Diagnostics.Debug.WriteLine($"⚠️ Error during Z21 shutdown: {ex.Message}");
+            }
         }
 
         // Event auslösen, damit die View die Anwendung beenden kann
@@ -221,36 +252,56 @@ catch (Exception ex)
 
     public void OnNodeSelected(TreeNodeViewModel? node)
     {
+        // Alte PropertyViewModels aufräumen (Event-Handler entfernen)
+        foreach (var prop in Properties)
+        {
+            prop.ValueChanged -= OnPropertyValueChanged;
+            prop.Dispose(); // ✅ PropertyViewModel aufräumen
+        }
+
         Properties.Clear();
+        CurrentSelectedNode = node;
 
         if (node?.DataContext == null || node.DataType == null)
- {
-   SelectedNodeType = string.Empty;
-         return;
-    }
+        {
+            SelectedNodeType = string.Empty;
+            return;
+        }
 
         SelectedNodeType = node.DataType.Name;
 
         var props = node.DataType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.CanRead 
+            .Where(p => p.CanRead
           && !p.PropertyType.IsGenericType  // Keine Lists
      && (IsSimpleType(p.PropertyType) || IsReferenceType(p.PropertyType))); // Einfache Typen ODER Referenzen
 
-  // Den Kontext (Project) ermitteln für Referenz-Lookups
+        // Den Kontext (Project) ermitteln für Referenz-Lookups
         var contextProject = FindParentProject(node);
 
-  foreach (var prop in props)
+        foreach (var prop in props)
         {
-      var propertyViewModel = new PropertyViewModel(prop, node.DataContext);
-  
+            var propertyViewModel = new PropertyViewModel(prop, node.DataContext);
+
             // Für Referenz-Properties die verfügbaren Werte setzen
             if (IsReferenceType(prop.PropertyType))
-          {
-       propertyViewModel.ReferenceValues = GetReferenceValues(prop.PropertyType, contextProject);
-         }
+            {
+                propertyViewModel.ReferenceValues = GetReferenceValues(prop.PropertyType, contextProject);
+            }
 
-      Properties.Add(propertyViewModel);
+            // Event-Handler registrieren für Tree-Updates
+            propertyViewModel.ValueChanged += OnPropertyValueChanged;
+
+            Properties.Add(propertyViewModel);
         }
+    }
+
+    /// <summary>
+    /// Wird aufgerufen, wenn ein Property-Wert im PropertyGrid geändert wurde.
+    /// Aktualisiert den DisplayName des aktuellen TreeNodes.
+    /// </summary>
+    private void OnPropertyValueChanged(object? sender, EventArgs e)
+    {
+        CurrentSelectedNode?.RefreshDisplayName();
     }
 
     /// <summary>
@@ -259,33 +310,33 @@ catch (Exception ex)
     private Project? FindParentProject(TreeNodeViewModel node)
     {
         // Prüfe ob der aktuelle Node ein Project ist
-     if (node.DataContext is Project project)
-{
-        return project;
+        if (node.DataContext is Project project)
+        {
+            return project;
         }
 
         // Durchsuche die Solution nach dem Project, das dieses Objekt enthält
-     if (Solution != null && node.DataContext != null)
-  {
-     foreach (var proj in Solution.Projects)
+        if (Solution != null && node.DataContext != null)
+        {
+            foreach (var proj in Solution.Projects)
             {
-       // Prüfe ob das Objekt in einer der Listen des Projects ist
-        if (node.DataContext is Station station && ContainsStation(proj, station))
-           return proj;
-     if (node.DataContext is Workflow workflow && proj.Workflows.Contains(workflow))
-     return proj;
+                // Prüfe ob das Objekt in einer der Listen des Projects ist
+                if (node.DataContext is Station station && ContainsStation(proj, station))
+                    return proj;
+                if (node.DataContext is Workflow workflow && proj.Workflows.Contains(workflow))
+                    return proj;
                 if (node.DataContext is Journey journey && proj.Journeys.Contains(journey))
                     return proj;
-     if (node.DataContext is Train train && proj.Trains.Contains(train))
-    return proj;
+                if (node.DataContext is Train train && proj.Trains.Contains(train))
+                    return proj;
                 if (node.DataContext is Locomotive loco && proj.Locomotives.Contains(loco))
-   return proj;
-         if (node.DataContext is Setting setting && proj.Setting == setting)
-               return proj;
-   }
+                    return proj;
+                if (node.DataContext is Setting setting && proj.Setting == setting)
+                    return proj;
+            }
         }
 
-      return null;
+        return null;
     }
 
     /// <summary>
@@ -315,15 +366,15 @@ catch (Exception ex)
     }
 
     /// <summary>
- /// Prüft, ob ein Typ eine Objektreferenz ist (z.B. Workflow, Train, etc.)
+    /// Prüft, ob ein Typ eine Objektreferenz ist (z.B. Workflow, Train, etc.)
     /// </summary>
     private static bool IsReferenceType(Type type)
     {
         var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
-   
+
         // Nur bestimmte Typen erlauben (Whitelist-Ansatz)
         return underlyingType == typeof(Backend.Model.Workflow);
-// Hier können später weitere Typen hinzugefügt werden:
+        // Hier können später weitere Typen hinzugefügt werden:
         // || underlyingType == typeof(Backend.Model.Train)
         // || underlyingType == typeof(Backend.Model.Locomotive);
     }
@@ -335,22 +386,22 @@ catch (Exception ex)
     {
         var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
 
-    // Workflow-Referenzen
+        // Workflow-Referenzen
         if (underlyingType == typeof(Backend.Model.Workflow))
         {
             if (contextProject == null)
-      return new List<object?> { null };
+                return new List<object?> { null };
 
-          // Nur Workflows aus dem AKTUELLEN Project
+            // Nur Workflows aus dem AKTUELLEN Project
             var workflows = contextProject.Workflows.Cast<object>().ToList();
- 
-          // Null-Option hinzufügen (für optionale Workflows)
-      return new List<object?> { null }.Concat(workflows);
+
+            // Null-Option hinzufügen (für optionale Workflows)
+            return new List<object?> { null }.Concat(workflows);
         }
 
         // Hier können später weitere Typen hinzugefügt werden
         // if (underlyingType == typeof(Backend.Model.Train)) { ... }
 
-    return null;
+        return null;
     }
 }

@@ -1,8 +1,9 @@
 using System.Diagnostics;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Moba.Backend.Model;
 
-public class Workflow
+public partial class Workflow : ObservableObject
 {
     public Workflow()
     {
@@ -16,24 +17,28 @@ public class Workflow
     /// </summary>
     public Guid Id { get; set; }
 
-    public string Name { get; set; }
+    [ObservableProperty]
+    private string name = "New Flow";
 
     public List<Action.Base> Actions { get; set; }
 
     /// <summary>
     /// Zuordnung R-BUS-Port zu Workflow.
     /// </summary>
-    public uint InPort { get; set; }
+    [ObservableProperty]
+    private uint inPort;
 
     /// <summary>
     /// Wiederholte Feedbacks ignorieren.
     /// </summary>
-    public bool IsUsingTimerToIgnoreFeedbacks { get; set; }
+    [ObservableProperty]
+    private bool isUsingTimerToIgnoreFeedbacks;
 
     /// <summary>
     /// Wiederholte Feedbacks ignorieren für x Sekunden.
     /// </summary>
-    public double IntervalForTimerToIgnoreFeedbacks { get; set; }
+    [ObservableProperty]
+    private double intervalForTimerToIgnoreFeedbacks;
 
     /// <summary>
     /// Startet die Ausführung aller Actions dieses Workflows
