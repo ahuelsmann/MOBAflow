@@ -1,7 +1,5 @@
 namespace Moba.Backend.Interface;
 
-using Model;
-
 public interface IAction
 {
     Guid Id { get; set; }

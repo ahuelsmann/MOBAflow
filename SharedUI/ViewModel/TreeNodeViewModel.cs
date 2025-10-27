@@ -7,7 +7,7 @@ namespace Moba.SharedUI.ViewModel;
 public partial class TreeNodeViewModel : ObservableObject
 {
     [ObservableProperty]
-  private string displayName = string.Empty;
+    private string displayName = string.Empty;
 
     [ObservableProperty]
     private string icon = "\uE8B7"; // Document icon
@@ -28,16 +28,16 @@ public partial class TreeNodeViewModel : ObservableObject
     public void RefreshDisplayName()
     {
         if (DataContext == null)
-          return;
+            return;
 
-    // Versuche die "Name"-Property zu lesen
- var nameProp = DataContext.GetType().GetProperty("Name");
-      if (nameProp != null)
+        // Versuche die "Name"-Property zu lesen
+        var nameProp = DataContext.GetType().GetProperty("Name");
+        if (nameProp != null)
         {
             var newName = nameProp.GetValue(DataContext)?.ToString();
- if (!string.IsNullOrEmpty(newName) && newName != DisplayName)
-   {
-        DisplayName = newName;
+            if (!string.IsNullOrEmpty(newName) && newName != DisplayName)
+            {
+                DisplayName = newName;
             }
         }
     }

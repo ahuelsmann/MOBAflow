@@ -68,13 +68,13 @@ public partial class AnnouncementViewModel : ObservableObject
             .Replace("{CurrentLap}", journey.CurrentCounter.ToString());
     }
 
-    public Announcement ToModel()
-    {
-        return Model;
-    }
+    //public Announcement ToModel()
+    //{
+    //    return Model;
+    //}
 
-    public static AnnouncementViewModel FromModel(Announcement model, ISpeakerEngine? speakerEngine = null, Project? project = null)
-    {
-        return new AnnouncementViewModel(model, speakerEngine, project);
-    }
+    //public static AnnouncementViewModel FromModel(Announcement model, ISpeakerEngine? speakerEngine = null, Project? project = null)
+    //{
+    //    return new AnnouncementViewModel(model, speakerEngine, project);
+    //}
 }

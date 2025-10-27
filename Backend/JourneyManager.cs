@@ -6,46 +6,61 @@ using System.Diagnostics;
 namespace Moba.Backend;
 
 /// <summary>
-/// Verwaltet die Ausführung von Reisen basierend auf Feedback-Ereignissen (Gleisrückmeldestellen).
+/// Manages the execution of journeys based on feedback events (track feedback points).
 /// </summary>
 public class JourneyManager : IDisposable
 {
     private readonly Z21 _z21;
     private readonly List<Journey> _journeys;
     private readonly Dictionary<uint, DateTime> _lastFeedbackTime = new();
-    private bool _isProcessing;
+    private readonly SemaphoreSlim _processingLock = new(1, 1);
     private bool _disposed;
+    private readonly Model.Action.ActionExecutionContext _executionContext;
 
-    public JourneyManager(Z21 z21, List<Journey> journeys)
+    public JourneyManager(Z21 z21, List<Journey> journeys, Model.Action.ActionExecutionContext? executionContext = null)
     {
         _z21 = z21;
         _journeys = journeys;
         _z21.Received += OnFeedbackReceived;
+
+        // Create execution context with Z21
+        _executionContext = executionContext ?? new Model.Action.ActionExecutionContext
+        {
+            Z21 = z21
+        };
     }
 
     private async void OnFeedbackReceived(FeedbackResult feedback)
     {
-        if (_isProcessing)
+        // Ensure only one feedback is processed at a time, ignore re-entrancy like previous _isProcessing flag
+        if (!await _processingLock.WaitAsync(0))
         {
-            Debug.WriteLine("⏸ Feedback ignoriert - Verarbeitung läuft bereits");
+            Debug.WriteLine("⏸ Feedback ignored - Processing already in progress");
             return;
         }
 
-        Debug.WriteLine($"📡 Feedback empfangen: InPort {feedback.InPort}");
-
-        foreach (var journey in _journeys)
+        try
         {
-            if (journey.InPort == feedback.InPort)
-            {
-                if (ShouldIgnoreFeedback(journey))
-                {
-                    Debug.WriteLine($"⏭ Feedback für Journey '{journey.Name}' ignoriert (Timer aktiv)");
-                    continue;
-                }
+            Debug.WriteLine($"📡 Feedback received: InPort {feedback.InPort}");
 
-                UpdateLastFeedbackTime(journey.InPort);
-                await HandleJourneyFeedbackAsync(journey);
+            foreach (var journey in _journeys)
+            {
+                if (journey.InPort == feedback.InPort)
+                {
+                    if (ShouldIgnoreFeedback(journey))
+                    {
+                        Debug.WriteLine($"⏭ Feedback for journey '{journey.Name}' ignored (timer active)");
+                        continue;
+                    }
+
+                    UpdateLastFeedbackTime(journey.InPort);
+                    await HandleJourneyFeedbackAsync(journey);
+                }
             }
+        }
+        finally
+        {
+            _processingLock.Release();
         }
     }
 
@@ -58,7 +73,7 @@ public class JourneyManager : IDisposable
 
         if (_lastFeedbackTime.TryGetValue(journey.InPort, out DateTime lastTime))
         {
-            var elapsed = (DateTime.Now - lastTime).TotalSeconds;
+            var elapsed = (DateTime.UtcNow - lastTime).TotalSeconds;
             return elapsed < journey.IntervalForTimerToIgnoreFeedbacks;
         }
 
@@ -67,84 +82,74 @@ public class JourneyManager : IDisposable
 
     private void UpdateLastFeedbackTime(uint inPort)
     {
-        _lastFeedbackTime[inPort] = DateTime.Now;
+        _lastFeedbackTime[inPort] = DateTime.UtcNow;
     }
 
     private async Task HandleJourneyFeedbackAsync(Journey journey)
     {
-        _isProcessing = true;
+        journey.CurrentCounter++;
+        Debug.WriteLine($"🔄 Journey '{journey.Name}': Round {journey.CurrentCounter}, Position {journey.CurrentPos}");
 
-        try
+        if (journey.CurrentPos >= journey.Stations.Count)
         {
-            journey.CurrentCounter++;
-            Debug.WriteLine($"🔄 Journey '{journey.Name}': Runde {journey.CurrentCounter}, Position {journey.CurrentPos}");
-
-            if (journey.CurrentPos >= journey.Stations.Count)
-            {
-                Debug.WriteLine($"⚠ CurrentPos außerhalb der Stations-Liste");
-                return;
-            }
-
-            var currentStation = journey.Stations[(int)journey.CurrentPos];
-
-            if (journey.CurrentCounter >= currentStation.NumberOfLapsToStop)
-            {
-                Debug.WriteLine($"🚉 Station erreicht: {currentStation.Name}");
-
-                // Workflow der Station ausführen, falls vorhanden
-                if (currentStation.Flow != null)
-                {
-                    await currentStation.Flow.StartAsync();
-                }
-
-                journey.CurrentCounter = 0;
-
-                bool isLastStation = journey.CurrentPos == journey.Stations.Count - 1;
-
-                if (isLastStation)
-                {
-                    await HandleLastStationAsync(journey);
-                }
-                else
-                {
-                    journey.CurrentPos++;
-                }
-            }
+            Debug.WriteLine($"⚠ CurrentPos out of Stations list bounds");
+            return;
         }
-        finally
+
+        var currentStation = journey.Stations[(int)journey.CurrentPos];
+
+        if (journey.CurrentCounter >= currentStation.NumberOfLapsToStop)
         {
-            _isProcessing = false;
+            Debug.WriteLine($"🚉 Station reached: {currentStation.Name}");
+
+            // Execute station workflow if present
+            if (currentStation.Flow != null)
+            {
+                await currentStation.Flow.StartAsync(_executionContext);
+            }
+
+            journey.CurrentCounter = 0;
+
+            bool isLastStation = journey.CurrentPos == journey.Stations.Count - 1;
+
+            if (isLastStation)
+            {
+                await HandleLastStationAsync(journey);
+            }
+            else
+            {
+                journey.CurrentPos++;
+            }
         }
     }
 
     private async Task HandleLastStationAsync(Journey journey)
     {
-        Debug.WriteLine($"🏁 Letzte Station von Journey '{journey.Name}' erreicht");
+        Debug.WriteLine($"🏁 Last station of journey '{journey.Name}' reached");
 
         switch (journey.OnLastStop)
         {
             case BehaviorOnLastStop.BeginAgainFromFistStop:
-                Debug.WriteLine("🔄 Journey wird von vorne gestartet");
+                Debug.WriteLine("🔄 Journey will restart from beginning");
                 journey.CurrentPos = 0;
                 break;
 
             case BehaviorOnLastStop.GotoJourney:
-                Debug.WriteLine($"➡ Wechsel zu Journey: {journey.NextJourney}");
+                Debug.WriteLine($"➡ Switching to journey: {journey.NextJourney}");
                 var nextJourney = _journeys.FirstOrDefault(j => j.Name == journey.NextJourney);
                 if (nextJourney != null)
                 {
                     nextJourney.CurrentPos = nextJourney.FirstPos;
-                    Debug.WriteLine($"✅ Journey '{nextJourney.Name}' aktiviert bei Position {nextJourney.FirstPos}");
+                    Debug.WriteLine($"✅ Journey '{nextJourney.Name}' activated at position {nextJourney.FirstPos}");
                 }
                 else
                 {
-                    Debug.WriteLine($"⚠ Journey '{journey.NextJourney}' nicht gefunden");
+                    Debug.WriteLine($"⚠ Journey '{journey.NextJourney}' not found");
                 }
                 break;
 
             case BehaviorOnLastStop.None:
-            default:
-                Debug.WriteLine("⏹ Journey stoppt");
+                Debug.WriteLine("⏹ Journey stops");
                 break;
         }
 
@@ -155,7 +160,7 @@ public class JourneyManager : IDisposable
     {
         journey.CurrentCounter = 0;
         journey.CurrentPos = journey.FirstPos;
-        Debug.WriteLine($"🔄 Journey '{journey.Name}' zurückgesetzt");
+        Debug.WriteLine($"🔄 Journey '{journey.Name}' reset");
     }
 
     public void ResetAll()
@@ -165,7 +170,7 @@ public class JourneyManager : IDisposable
             Reset(journey);
         }
         _lastFeedbackTime.Clear();
-        Debug.WriteLine("🔄 Alle Journeys zurückgesetzt");
+        Debug.WriteLine("🔄 All journeys reset");
     }
 
     public void Dispose()
@@ -184,6 +189,7 @@ public class JourneyManager : IDisposable
         if (disposing)
         {
             _z21.Received -= OnFeedbackReceived;
+            _processingLock.Dispose();
         }
 
         _disposed = true;

@@ -6,13 +6,12 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 /// <summary>
-/// Custom JSON Converter für Workflow-Referenzen in Stations.
-/// Serialisiert nur die Workflow-GUID statt das gesamte Objekt.
+/// Custom JSON converter for workflow references in stations.
+/// Serializes only the workflow GUID instead of the entire object.
 /// </summary>
 public class WorkflowReferenceConverter : JsonConverter<Workflow?>
 {
-    // ❌ PROBLEM: CurrentProject ist während Deserialisierung immer null!
-    // ✅ LÖSUNG: Speichere temporäres Workflow-Objekt mit nur der GUID
+    // Set during deserialization
     public static Project? CurrentProject { get; set; }
 
     public override void WriteJson(JsonWriter writer, Workflow? value, JsonSerializer serializer)
@@ -23,7 +22,7 @@ public class WorkflowReferenceConverter : JsonConverter<Workflow?>
         }
         else
         {
-            // ✅ Speichere nur die GUID, nicht das ganze Objekt
+            // Save only the GUID, not the entire object
             writer.WriteValue(value.Id.ToString());
         }
     }
@@ -44,20 +43,20 @@ public class WorkflowReferenceConverter : JsonConverter<Workflow?>
                 return null;
             }
 
-            // ✅ Parse GUID
+            // Parse GUID
             if (Guid.TryParse(workflowIdString, out Guid workflowId))
             {
-                // ✅ NEUE STRATEGIE: Erstelle temporäres Workflow-Objekt mit nur der GUID
-                // Das wird später in RestoreWorkflowReferences durch die echte Referenz ersetzt
+                // NEW STRATEGY: Create temporary workflow object with only the GUID
+                // This will be replaced later in RestoreWorkflowReferences with the real reference
                 return new Workflow { Id = workflowId };
             }
 
-            // Fallback: Alte Dateien verwenden noch Namen
-            // Erstelle temporäres Workflow-Objekt mit nur dem Namen
+            // Fallback: Old files still use names
+            // Create temporary workflow object with only the name
             return new Workflow { Name = workflowIdString };
         }
 
-        // Fallback: Wenn es ein vollständiges Objekt ist (alte JSON-Dateien)
+        // Fallback: If it's a complete object (old JSON files)
         if (reader.TokenType == JsonToken.StartObject)
         {
             var obj = JObject.Load(reader);

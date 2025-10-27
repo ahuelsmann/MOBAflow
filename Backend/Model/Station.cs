@@ -1,7 +1,8 @@
 namespace Moba.Backend.Model;
 
-using Newtonsoft.Json;
 using Moba.Backend.Converter;
+
+using Newtonsoft.Json;
 
 public class Station
 {
@@ -17,7 +18,7 @@ public class Station
     public DateTime? Departure { get; set; }
     public uint Track { get; set; }
     public bool IsExitOnLeft { get; set; }
-    
+
     [JsonConverter(typeof(WorkflowReferenceConverter))]
     public Workflow? Flow { get; set; }
 }

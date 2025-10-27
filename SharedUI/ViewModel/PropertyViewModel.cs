@@ -42,7 +42,7 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
         }
 
         // Wenn das Target INotifyPropertyChanged implementiert, registriere Event-Handler
-        if (_target is System.ComponentModel.INotifyPropertyChanged notifyTarget)
+        if (_target is INotifyPropertyChanged notifyTarget)
         {
             notifyTarget.PropertyChanged += OnTargetPropertyChanged;
         }
@@ -52,14 +52,14 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
     /// Wird aufgerufen, wenn sich eine Property am Target-Objekt ändert.
     /// Aktualisiert die UI-Bindings automatisch.
     /// </summary>
-    private void OnTargetPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void OnTargetPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         // ✅ Performance: Nur reagieren, wenn es unsere Property ist ODER wenn PropertyName null ist (alle Properties)
         if (e.PropertyName == null || e.PropertyName == _propertyInfo.Name)
         {
             // UI-Bindings aktualisieren - nur Value, der Rest wird durch Binding automatisch aktualisiert
             OnPropertyChanged(nameof(Value));
-            
+
             // Nur spezifische Properties aktualisieren, wenn nötig
             if (IsBoolean)
                 OnPropertyChanged(nameof(BoolValue));
@@ -101,7 +101,7 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
     /// Liefert alle verfügbaren Objekte für Referenz-Properties (z.B. alle Workflows)
     /// Wird von außen gesetzt (z.B. vom ViewModel)
     /// </summary>
-    public IEnumerable<object>? ReferenceValues { get; set; }
+    public IEnumerable<object?>? ReferenceValues { get; set; }
 
     public string? Value
     {
@@ -208,14 +208,27 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// Referenz-spezifische Property für Two-Way-Binding mit ComboBox
-    /// (z.B. Workflow-Auswahl)
+    /// Reference-specific property for two-way binding with ComboBox
+    /// (e.g., workflow selection)
     /// </summary>
     public object? ReferenceValue
     {
         get
         {
             var value = _propertyInfo.GetValue(_target);
+
+            // Debug: Log what we're returning
+            if (value != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"ReferenceValue GET: {value.GetType().Name} - {value}");
+
+                // Check if Workflow
+                if (value is Backend.Model.Workflow workflow)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Workflow: Id={workflow.Id}, Name={workflow.Name}");
+                }
+            }
+
             return value;
         }
         set
@@ -224,11 +237,17 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
             {
                 var currentValue = _propertyInfo.GetValue(_target);
 
+                // Debug: Log what is being set
+                System.Diagnostics.Debug.WriteLine($"ReferenceValue SET: {value?.GetType().Name ?? "null"}");
+                if (value is Backend.Model.Workflow workflow)
+                {
+                    System.Diagnostics.Debug.WriteLine($"  Workflow: Id={workflow.Id}, Name={workflow.Name}");
+                }
+
                 if (Equals(currentValue, value))
                     return;
 
                 _propertyInfo.SetValue(_target, value);
-                ValueChanged?.Invoke(this, EventArgs.Empty);
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(Value));
                 OnPropertyChanged(nameof(ReferenceValueName));
@@ -237,7 +256,7 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// Name des referenzierten Objekts (z.B. Workflow.Name) für SelectedValue-Binding
+    /// Name of the referenced object (e.g., Workflow.Name) for SelectedValue binding
     /// </summary>
     public string? ReferenceValueName
     {
@@ -247,29 +266,37 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
             if (value == null)
                 return null;
 
-            // Versuche "Name" Property zu lesen
+            // Try to read "Name" property
             var nameProp = value.GetType().GetProperty("Name");
-            return nameProp?.GetValue(value)?.ToString();
+            var valueName = nameProp?.GetValue(value)?.ToString();
+
+            // Debug
+            System.Diagnostics.Debug.WriteLine($"ReferenceValueName GET: {valueName}");
+
+            return valueName;
         }
         set
         {
+            System.Diagnostics.Debug.WriteLine($"ReferenceValueName SET: {value}");
+
             if (_propertyInfo.CanWrite && ReferenceValues != null)
             {
-                // Finde das Objekt mit dem passenden Namen
+                // Find object with matching name
                 var matchingItem = ReferenceValues.FirstOrDefault(item =>
-               {
-                   if (item == null)
-                       return string.IsNullOrEmpty(value);
+                  {
+                      if (item == null)
+                          return string.IsNullOrEmpty(value);
 
-                   var nameProp = item.GetType().GetProperty("Name");
-                   var itemName = nameProp?.GetValue(item)?.ToString();
-                   return itemName == value;
-               });
+                      var nameProp = item.GetType().GetProperty("Name");
+                      var itemName = nameProp?.GetValue(item)?.ToString();
+                      return itemName == value;
+                  });
+
+                System.Diagnostics.Debug.WriteLine($"  Matching Item: {matchingItem?.GetType().Name ?? "null"}");
 
                 if (matchingItem != ReferenceValue)
                 {
                     _propertyInfo.SetValue(_target, matchingItem);
-                    ValueChanged?.Invoke(this, EventArgs.Empty);
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(ReferenceValue));
                     OnPropertyChanged(nameof(Value));
@@ -278,21 +305,21 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
         }
     }
 
-    public void Refresh()
-    {
-        // ✅ Performance: Nur notwendige Properties aktualisieren
-        OnPropertyChanged(nameof(Value));
-  
-        if (IsBoolean)
-           OnPropertyChanged(nameof(BoolValue));
-        if (IsEnum)
-            OnPropertyChanged(nameof(EnumValue));
-        if (IsReference)
-        {
-          OnPropertyChanged(nameof(ReferenceValue));
-        OnPropertyChanged(nameof(ReferenceValueName));
-        }
-    }
+    //public void Refresh()
+    //{
+    //    // ✅ Performance: Nur notwendige Properties aktualisieren
+    //    OnPropertyChanged(nameof(Value));
+
+    //    if (IsBoolean)
+    //        OnPropertyChanged(nameof(BoolValue));
+    //    if (IsEnum)
+    //        OnPropertyChanged(nameof(EnumValue));
+    //    if (IsReference)
+    //    {
+    //        OnPropertyChanged(nameof(ReferenceValue));
+    //        OnPropertyChanged(nameof(ReferenceValueName));
+    //    }
+    //}
 
     public void Dispose()
     {
@@ -300,7 +327,7 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
             return;
 
         // Event-Handler entfernen
-        if (_target is System.ComponentModel.INotifyPropertyChanged notifyTarget)
+        if (_target is INotifyPropertyChanged notifyTarget)
         {
             notifyTarget.PropertyChanged -= OnTargetPropertyChanged;
         }

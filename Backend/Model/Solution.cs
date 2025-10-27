@@ -23,10 +23,10 @@ public class Solution
             {
                 Formatting = Formatting.Indented,
                 Converters = { new ActionConverter() },
-                // ✅ Ignoriere Referenz-Loops (z.B. bei zirkulären Referenzen)
+                // Ignore reference loops (e.g., circular references)
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-                // ✅ Null-Werte NICHT ignorieren - wichtig für Workflow-Referenzen!
-                // Wenn Flow = null ist, muss das auch gespeichert werden
+                // Do NOT ignore null values - important for workflow references!
+                // If Flow = null, this must be saved
                 NullValueHandling = NullValueHandling.Include
             };
 
@@ -55,7 +55,7 @@ public class Solution
                 {
                     temp.Name = path;
 
-                    // ✅ Workflow-Referenzen in Stations wiederherstellen
+                    // Restore workflow references in stations
                     RestoreWorkflowReferences(temp);
 
                     return temp;
@@ -66,7 +66,7 @@ public class Solution
     }
 
     /// <summary>
-    /// Stellt Workflow-Referenzen in Stations wieder her nach dem Laden
+    /// Restores workflow references in stations after loading
     /// </summary>
     private static void RestoreWorkflowReferences(Solution solution)
     {
@@ -82,7 +82,7 @@ public class Solution
                 System.Diagnostics.Debug.WriteLine($"    - {wf.Name} (Id: {wf.Id})");
             }
 
-            // Iteriere durch alle Journeys und Stations
+            // Iterate through all journeys and stations
             foreach (var journey in project.Journeys)
             {
                 System.Diagnostics.Debug.WriteLine($"  Journey: {journey.Name}");
@@ -92,25 +92,25 @@ public class Solution
                     System.Diagnostics.Debug.WriteLine($"    Station: {station.Name}");
                     System.Diagnostics.Debug.WriteLine($"      Flow BEFORE: {station.Flow?.Name ?? "null"} (Id: {station.Flow?.Id})");
 
-                    // ✅ Flow ist jetzt ein temporäres Workflow-Objekt mit nur der GUID
-                    // Ersetze es durch die echte Referenz aus project.Workflows
+                    // Flow is now a temporary Workflow object with only the GUID
+                    // Replace it with the real reference from project.Workflows
                     if (station.Flow != null)
                     {
                         Workflow? matchingWorkflow = null;
 
-                        // Suche nach GUID
+                        // Search by GUID
                         if (station.Flow.Id != Guid.Empty)
                         {
                             matchingWorkflow = project.Workflows
-                           .FirstOrDefault(w => w.Id == station.Flow.Id);
+                                                .FirstOrDefault(w => w.Id == station.Flow.Id);
                             System.Diagnostics.Debug.WriteLine($"      Searching by GUID: {station.Flow.Id}");
                         }
 
-                        // Fallback: Suche nach Namen (alte Dateien)
+                        // Fallback: Search by name (old files)
                         if (matchingWorkflow == null && !string.IsNullOrEmpty(station.Flow.Name))
                         {
                             matchingWorkflow = project.Workflows
-                          .FirstOrDefault(w => w.Name == station.Flow.Name);
+                                .FirstOrDefault(w => w.Name == station.Flow.Name);
                             System.Diagnostics.Debug.WriteLine($"      Searching by Name: {station.Flow.Name}");
                         }
 

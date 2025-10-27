@@ -111,37 +111,50 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanConnectToZ21))]
     private async Task ConnectToZ21Async()
     {
-        try
+        if (Solution?.Projects.Count > 0)
         {
-            Z21StatusText = "Connecting...";
+            var project = Solution.Projects[0];
 
-            // Z21 erstellen und verbinden
-            _z21 = new Backend.Z21();
+            // Initialize Z21 if not already done
+            _z21 ??= new Backend.Z21();
 
-            // IP-Adresse aus dem ersten Project holen
-            var ip = Solution?.Projects.FirstOrDefault()?.Ips.FirstOrDefault()?.Address;
-            if (string.IsNullOrEmpty(ip))
+            if (project.Ips.Count > 0)
             {
-                Z21StatusText = "No IP configured";
-                return;
+                try
+                {
+                    Z21StatusText = "Connecting...";
+                    var address = System.Net.IPAddress.Parse(project.Ips[0].Address);
+                    await _z21.ConnectAsync(address);
+
+                    IsZ21Connected = true;
+                    Z21StatusText = $"Connected to {project.Ips[0].Address}";
+
+                    // ✅ Create execution context - only shared dependencies
+                    var executionContext = new Moba.Backend.Model.Action.ActionExecutionContext
+                    {
+                        Z21 = _z21,
+                        // TODO: Add SpeakerEngine when needed
+                        // SpeakerEngine = _speakerEngine,
+                        Project = project
+                    };
+
+                    // Initialize JourneyManager with context
+                    _journeyManager?.Dispose();
+                    _journeyManager = new Moba.Backend.JourneyManager(_z21, project.Journeys, executionContext);
+
+                    ConnectToZ21Command.NotifyCanExecuteChanged();
+                    DisconnectFromZ21Command.NotifyCanExecuteChanged();
+                    SimulateFeedbackCommand.NotifyCanExecuteChanged();
+                }
+                catch (Exception ex)
+                {
+                    Z21StatusText = $"Connection failed: {ex.Message}";
+                }
             }
-
-            await _z21.ConnectAsync(System.Net.IPAddress.Parse(ip));
-
-            // JourneyManager für das erste Project erstellen
-            if (Solution?.Projects.FirstOrDefault() is Project project)
+            else
             {
-                _journeyManager = new Backend.JourneyManager(_z21, project.Journeys);
-                Z21StatusText = $"Connected to {ip}";
-                IsZ21Connected = true;
-                DisconnectFromZ21Command.NotifyCanExecuteChanged();
-                SimulateFeedbackCommand.NotifyCanExecuteChanged();
+                Z21StatusText = "No IP address configured";
             }
-        }
-        catch (System.Exception ex)
-        {
-            Z21StatusText = $"Error: {ex.Message}";
-            IsZ21Connected = false;
         }
     }
 
@@ -167,7 +180,7 @@ public partial class MainWindowViewModel : ObservableObject
             ConnectToZ21Command.NotifyCanExecuteChanged();
             SimulateFeedbackCommand.NotifyCanExecuteChanged();
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             Z21StatusText = $"Error: {ex.Message}";
         }
@@ -188,7 +201,7 @@ public partial class MainWindowViewModel : ObservableObject
                 Z21StatusText = "Invalid InPort number";
             }
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             Z21StatusText = $"Error: {ex.Message}";
         }
@@ -204,44 +217,49 @@ public partial class MainWindowViewModel : ObservableObject
 
     public void OnWindowClosing()
     {
-        // Z21-Verbindung trennen beim Beenden
+        // Disconnect Z21 connection when exiting (non-blocking to avoid UI freeze)
         if (_z21 != null)
         {
             try
             {
                 _journeyManager?.Dispose();
 
-                // DisconnectAsync aufrufen, aber TaskCanceledException ist ok
-                var disconnectTask = _z21.DisconnectAsync();
-                disconnectTask.Wait(TimeSpan.FromSeconds(5)); // Max 5 Sekunden warten
+                var z21 = _z21; // capture local
+                _z21 = null;
 
-                _z21.Dispose();
-            }
-            catch (AggregateException ae)
-            {
-                // AggregateException kann TaskCanceledException enthalten
-                bool hasOnlyExpectedExceptions = ae.InnerExceptions.All(e =>
-                         e is TaskCanceledException || e is OperationCanceledException);
-
-                if (!hasOnlyExpectedExceptions)
+                // Run disconnect in background without blocking UI
+                _ = Task.Run(async () =>
                 {
-                    // Nur loggen, wenn unerwartete Exceptions dabei sind
-                    System.Diagnostics.Debug.WriteLine($"⚠️ Unexpected exception during shutdown: {ae}");
-                }
-            }
-            catch (TaskCanceledException)
-            {
-                // Erwartet beim Herunterfahren - ignorieren
-                System.Diagnostics.Debug.WriteLine("Z21 disconnect cancelled (expected)");
+                    try
+                    {
+                        await z21.DisconnectAsync();
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        // Expected during shutdown
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Expected during shutdown
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"⚠️ Error during Z21 shutdown: {ex.Message}");
+                    }
+                    finally
+                    {
+                        z21.Dispose();
+                    }
+                });
             }
             catch (Exception ex)
             {
-                // Andere Exceptions loggen
-                System.Diagnostics.Debug.WriteLine($"⚠️ Error during Z21 shutdown: {ex.Message}");
+                // Log other exceptions
+                System.Diagnostics.Debug.WriteLine($"⚠️ Error scheduling Z21 shutdown: {ex.Message}");
             }
         }
 
-        // Event auslösen, damit die View die Anwendung beenden kann
+        // Trigger event so the view can close the application
         ExitApplicationRequested?.Invoke(this, EventArgs.Empty);
     }
 
@@ -272,8 +290,8 @@ public partial class MainWindowViewModel : ObservableObject
 
         var props = node.DataType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(p => p.CanRead
-          && !p.PropertyType.IsGenericType  // Keine Lists
-     && (IsSimpleType(p.PropertyType) || IsReferenceType(p.PropertyType))); // Einfache Typen ODER Referenzen
+            && !p.PropertyType.IsGenericType // Keine Lists
+            && (IsSimpleType(p.PropertyType) || IsReferenceType(p.PropertyType))); // Einfache Typen ODER Referenzen
 
         // Den Kontext (Project) ermitteln für Referenz-Lookups
         var contextProject = FindParentProject(node);
@@ -356,13 +374,13 @@ public partial class MainWindowViewModel : ObservableObject
         var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
 
         return underlyingType.IsPrimitive       // int, bool, byte, etc.
-  || underlyingType.IsEnum   // Enums
-          || underlyingType == typeof(string)  // string
-      || underlyingType == typeof(decimal) // decimal
-         || underlyingType == typeof(DateTime) // DateTime
+            || underlyingType.IsEnum   // Enums
+            || underlyingType == typeof(string)  // string
+            || underlyingType == typeof(decimal) // decimal
+            || underlyingType == typeof(DateTime) // DateTime
             || underlyingType == typeof(DateTimeOffset) // DateTimeOffset
-    || underlyingType == typeof(TimeSpan) // TimeSpan
-|| underlyingType == typeof(Guid);    // Guid
+            || underlyingType == typeof(TimeSpan) // TimeSpan
+            || underlyingType == typeof(Guid);    // Guid
     }
 
     /// <summary>
@@ -373,21 +391,17 @@ public partial class MainWindowViewModel : ObservableObject
         var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
 
         // Nur bestimmte Typen erlauben (Whitelist-Ansatz)
-        return underlyingType == typeof(Backend.Model.Workflow);
+        return underlyingType == typeof(Workflow);
         // Hier können später weitere Typen hinzugefügt werden:
         // || underlyingType == typeof(Backend.Model.Train)
         // || underlyingType == typeof(Backend.Model.Locomotive);
     }
 
-    /// <summary>
-    /// Liefert die verfügbaren Werte für eine Referenz-Property
-    /// </summary>
-    private static IEnumerable<object>? GetReferenceValues(Type type, Project? contextProject)
+    private static IEnumerable<object?>? GetReferenceValues(Type type, Project? contextProject)
     {
         var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
 
-        // Workflow-Referenzen
-        if (underlyingType == typeof(Backend.Model.Workflow))
+        if (underlyingType == typeof(Workflow))
         {
             if (contextProject == null)
                 return new List<object?> { null };

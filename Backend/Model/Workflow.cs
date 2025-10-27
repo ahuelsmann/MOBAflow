@@ -1,95 +1,92 @@
 using System.Diagnostics;
-using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Moba.Backend.Model;
 
-public partial class Workflow : ObservableObject
+public class Workflow
 {
     public Workflow()
     {
-        Id = Guid.NewGuid();  // ✅ Eindeutige ID generieren
+        Id = Guid.NewGuid();
         Name = "New Flow";
         Actions = [];
     }
 
     /// <summary>
-    /// Eindeutiger Identifier für diesen Workflow
+    /// Unique identifier for this workflow
     /// </summary>
     public Guid Id { get; set; }
 
-    [ObservableProperty]
-    private string name = "New Flow";
+    public string Name { get; set; }
 
     public List<Action.Base> Actions { get; set; }
 
     /// <summary>
-    /// Zuordnung R-BUS-Port zu Workflow.
+    /// R-BUS port assignment for this workflow
     /// </summary>
-    [ObservableProperty]
-    private uint inPort;
+    public uint InPort { get; set; }
 
     /// <summary>
-    /// Wiederholte Feedbacks ignorieren.
+    /// Ignore repeated feedbacks
     /// </summary>
-    [ObservableProperty]
-    private bool isUsingTimerToIgnoreFeedbacks;
+    public bool IsUsingTimerToIgnoreFeedbacks { get; set; }
 
     /// <summary>
-    /// Wiederholte Feedbacks ignorieren für x Sekunden.
+    /// Ignore repeated feedbacks for x seconds
     /// </summary>
-    [ObservableProperty]
-    private double intervalForTimerToIgnoreFeedbacks;
+    public double IntervalForTimerToIgnoreFeedbacks { get; set; }
 
     /// <summary>
-    /// Startet die Ausführung aller Actions dieses Workflows
+    /// Starts the execution of all actions in this workflow
     /// </summary>
-    public async Task StartAsync()
+    /// <param name="context">Execution context containing dependencies (Z21, SpeakerEngine, etc.)</param>
+    /// <exception cref="InvalidOperationException">Thrown when the workflow has no actions</exception>
+    public async Task StartAsync(Action.ActionExecutionContext? context = null)
     {
         if (Actions.Count == 0)
         {
-            Debug.WriteLine($"⚠ Workflow '{Name}' hat keine Actions");
-            return;
+            throw new InvalidOperationException($"Every workflow must have at least one action. Workflow: '{Name}' (ID: {Id})");
         }
 
-        Debug.WriteLine($"▶ Workflow '{Name}' (ID: {Id}) wird gestartet ({Actions.Count} Actions)");
+        Debug.WriteLine($"▶ Starting workflow '{Name}' (ID: {Id}) with {Actions.Count} action(s)");
+
+        // Create default context if none provided
+        context ??= new Action.ActionExecutionContext();
 
         try
         {
             foreach (var action in Actions)
             {
-                Debug.WriteLine($"  🔧 Aktion: {action.Name} ({action.Type})");
+                Debug.WriteLine($"  🔧 Executing action: {action.Name} ({action.Type})");
 
-                // Hier erfolgt die eigentliche Action-Ausführung
-                // await action.ExecuteAsync();
-                await Task.CompletedTask;
+                await action.ExecuteAsync(context);
             }
 
-            Debug.WriteLine($"✅ Workflow '{Name}' abgeschlossen");
+            Debug.WriteLine($"✅ Workflow '{Name}' completed successfully");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"❌ Fehler in Workflow '{Name}': {ex.Message}");
+            Debug.WriteLine($"❌ Error in workflow '{Name}': {ex.Message}");
             throw;
         }
     }
 
-    // ✅ Überschreibe Equals und GetHashCode für ComboBox-Gleichheit
-    public override bool Equals(object? obj)
-    {
-        if (obj is Workflow other)
-        {
-            return Id == other.Id;  // Vergleich basierend auf GUID
-        }
-        return false;
-    }
+    // Override Equals and GetHashCode for ComboBox equality
+    //public override bool Equals(object? obj)
+    //{
+    //    if (obj is Workflow other)
+    //    {
+    //        return Id == other.Id;
+    //    }
+    //    return false;
+    //}
 
-    public override int GetHashCode()
-    {
-        return Id.GetHashCode();
-    }
+    //public override int GetHashCode()
+    //{
+    //    return Id.GetHashCode();
+    //}
 
-    public override string ToString()
-    {
-        return Name;
-    }
+    //public override string ToString()
+    //{
+    //    return Name;
+    //}
 }

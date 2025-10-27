@@ -40,6 +40,24 @@ public partial class WorkflowViewModel : ObservableObject
         set => SetProperty(Model.Name, value, Model, (m, v) => m.Name = v);
     }
 
+    public uint InPort
+    {
+        get => Model.InPort;
+        set => SetProperty(Model.InPort, value, Model, (m, v) => m.InPort = v);
+    }
+
+    public bool IsUsingTimerToIgnoreFeedbacks
+    {
+        get => Model.IsUsingTimerToIgnoreFeedbacks;
+        set => SetProperty(Model.IsUsingTimerToIgnoreFeedbacks, value, Model, (m, v) => m.IsUsingTimerToIgnoreFeedbacks = v);
+    }
+
+    public double IntervalForTimerToIgnoreFeedbacks
+    {
+        get => Model.IntervalForTimerToIgnoreFeedbacks;
+        set => SetProperty(Model.IntervalForTimerToIgnoreFeedbacks, value, Model, (m, v) => m.IntervalForTimerToIgnoreFeedbacks = v);
+    }
+
     public ObservableCollection<object> Actions { get; }
 
     public async Task StartAsync(Journey journey, Station station)
@@ -91,31 +109,31 @@ public partial class WorkflowViewModel : ObservableObject
         };
     }
 
-    public Workflow ToModel()
-    {
-        Model.Actions.Clear();
+    //public Workflow ToModel()
+    //{
+    //    Model.Actions.Clear();
         
-        foreach (var actionVM in Actions)
-        {
-            switch (actionVM)
-            {
-                case AnnouncementViewModel announcementVM:
-                    Model.Actions.Add(announcementVM.ToModel());
-                    break;
-                case GongViewModel gongVM:
-                    Model.Actions.Add(gongVM.ToModel());
-                    break;
-                case CommandViewModel commandVM:
-                    Model.Actions.Add(commandVM.ToModel());
-                    break;
-            }
-        }
+    //    foreach (var actionVM in Actions)
+    //    {
+    //        switch (actionVM)
+    //        {
+    //            case AnnouncementViewModel announcementVM:
+    //                Model.Actions.Add(announcementVM.ToModel());
+    //                break;
+    //            case GongViewModel gongVM:
+    //                Model.Actions.Add(gongVM.ToModel());
+    //                break;
+    //            case CommandViewModel commandVM:
+    //                Model.Actions.Add(commandVM.ToModel());
+    //                break;
+    //        }
+    //    }
 
-        return Model;
-    }
+    //    return Model;
+    //}
 
-    public static WorkflowViewModel FromModel(Workflow model, ISpeakerEngine? speakerEngine = null, Project? project = null, Z21? z21 = null)
-    {
-        return new WorkflowViewModel(model, speakerEngine, project, z21);
-    }
+    //public static WorkflowViewModel FromModel(Workflow model, ISpeakerEngine? speakerEngine = null, Project? project = null, Z21? z21 = null)
+    //{
+    //    return new WorkflowViewModel(model, speakerEngine, project, z21);
+    //}
 }

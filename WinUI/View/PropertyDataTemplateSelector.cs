@@ -3,7 +3,7 @@ namespace Moba.WinUI.View;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-using Moba.SharedUI.ViewModel;
+using SharedUI.ViewModel;
 
 /// <summary>
 /// Wählt das passende DataTemplate basierend auf dem Property-Typ

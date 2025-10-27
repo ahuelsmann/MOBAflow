@@ -28,4 +28,7 @@
   <ItemGroup>
     <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Converter\" />
+  </ItemGroup>
 </Project>

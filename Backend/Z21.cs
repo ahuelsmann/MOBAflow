@@ -43,7 +43,7 @@ public class Z21 : IDisposable
                 await _cancellationTokenSource.CancelAsync();
             }
 
-            // Warte auf Tasks, aber ignoriere OperationCanceledException
+            // Wait for tasks, but ignore OperationCanceledException
             if (_receiverTask != null)
             {
                 try
@@ -52,7 +52,7 @@ public class Z21 : IDisposable
                 }
                 catch (OperationCanceledException)
                 {
-                    // Erwartet - Task wurde abgebrochen (inkludiert TaskCanceledException)
+                    // Expected - Task was cancelled (includes TaskCanceledException)
                     Debug.WriteLine("📡 Receiver task cancelled");
                 }
             }
@@ -65,7 +65,7 @@ public class Z21 : IDisposable
                 }
                 catch (OperationCanceledException)
                 {
-                    // Erwartet - Task wurde abgebrochen (inkludiert TaskCanceledException)
+                    // Expected - Task was cancelled (includes TaskCanceledException)
                     Debug.WriteLine("🏓 Ping task cancelled");
                 }
             }
@@ -78,7 +78,7 @@ public class Z21 : IDisposable
         catch (Exception ex)
         {
             Debug.WriteLine($"⚠️ Error during disconnect: {ex.Message}");
-            // Nicht weiterwerfen - Disconnect sollte immer "erfolgreich" sein
+            // Don't rethrow - Disconnect should always "succeed"
         }
     }
 
@@ -109,11 +109,18 @@ public class Z21 : IDisposable
                 UdpReceiveResult result = await _client.ReceiveAsync(cancellationToken);
                 byte[] content = result.Buffer;
 
+                // Guard against very short UDP packets
+                if (content.Length < 4)
+                {
+                    Debug.WriteLine($"⚠ Short UDP packet received ({content.Length} bytes): {BitConverter.ToString(content)}");
+                    continue;
+                }
+
                 string valuesHexadecimal = string.Join(",", content.Select(b => b.ToString("X2")));
                 string valuesDecimal = string.Join(",", content);
                 string header = BitConverter.ToString(content, 0, 4);
 
-                Debug.WriteLine($"Empfangene Nachricht: {header}");
+                Debug.WriteLine($"Received message: {header}");
                 Debug.WriteLine(valuesHexadecimal);
                 Debug.WriteLine(valuesDecimal);
                 Debug.WriteLine("");
@@ -121,35 +128,35 @@ public class Z21 : IDisposable
                 switch (header)
                 {
                     case "07-00-40-00":
-                        Debug.WriteLine("🔴 Z21 Notstopp erkannt.");
+                        Debug.WriteLine("🔴 Z21 emergency stop detected.");
                         ParseStopMessage(content);
                         break;
                     case "08-00-50-00":
-                        Debug.WriteLine("🛠 Z21 Broadcast Flags wurden gesetzt.");
+                        Debug.WriteLine("🛠 Z21 broadcast flags set.");
                         break;
                     case "04-00-51-00":
-                        Debug.WriteLine("📡 Z21 Broadcast Flags wurden abgefragt.");
+                        Debug.WriteLine("📡 Z21 broadcast flags queried.");
                         break;
                     case "08-00-61-00":
-                        Debug.WriteLine("⚡ Kurzschluss erkannt!");
+                        Debug.WriteLine("⚡ Short circuit detected!");
                         break;
                     case "08-00-62-00":
-                        Debug.WriteLine("🔌 Gleisspannung und Stromwerte empfangen.");
+                        Debug.WriteLine("🔌 Track voltage and current values received.");
                         ParseVoltageAndCurrent(content);
                         break;
                     case "0C-00-30-00":
-                        Debug.WriteLine("🚂 Lok-Informationen empfangen.");
+                        Debug.WriteLine("🚂 Locomotive information received.");
                         ParseLocoInfo(content);
                         break;
                     case "0F-00-80-00":
                         Received?.Invoke(new FeedbackResult(content));
                         break;
                     case "14-00-84-00":
-                        Debug.WriteLine("🔄 Z21 Systemstatus geändert!");
+                        Debug.WriteLine("🔄 Z21 system state changed!");
                         ParseSystemStateChange(content);
                         break;
                     default:
-                        Debug.WriteLine($"⚠ Unbekannte Nachricht: {BitConverter.ToString(content)}");
+                        Debug.WriteLine($"⚠ Unknown message: {BitConverter.ToString(content)}");
                         break;
                 }
             }
@@ -159,7 +166,7 @@ public class Z21 : IDisposable
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"❌ Fehler beim Empfangen: {ex.Message}");
+                Debug.WriteLine($"❌ Error receiving: {ex.Message}");
             }
         }
     }
@@ -168,7 +175,7 @@ public class Z21 : IDisposable
     {
         if (data.Length > 7)
         {
-            Debug.WriteLine($"Zusätzliche Statusdaten beim Notstopp: {BitConverter.ToString(data, 7)}");
+            Debug.WriteLine($"Additional status data during emergency stop: {BitConverter.ToString(data, 7)}");
         }
     }
 
@@ -178,7 +185,7 @@ public class Z21 : IDisposable
         {
             int voltage = data[4] + (data[5] << 8);
             int current = data[6] + (data[7] << 8);
-            Debug.WriteLine($"⚡ Spannung: {voltage} mV, Strom: {current} mA");
+            Debug.WriteLine($"⚡ Voltage: {voltage} mV, Current: {current} mA");
         }
     }
 
@@ -189,7 +196,7 @@ public class Z21 : IDisposable
             int locoAddress = data[4] + (data[5] << 8);
             int speed = data[6];
             bool direction = (data[7] & 0x80) != 0;
-            Debug.WriteLine($"🚂 Lok-Adresse: {locoAddress}, Geschwindigkeit: {speed}, Richtung: {(direction ? "Vorwärts" : "Rückwärts")}");
+            Debug.WriteLine($"🚂 Loco address: {locoAddress}, Speed: {speed}, Direction: {(direction ? "Forward" : "Reverse")}");
         }
     }
 
@@ -202,10 +209,10 @@ public class Z21 : IDisposable
         int voltage = data[6] + (data[7] << 8);
         int current = data[8] + (data[9] << 8);
 
-        Debug.WriteLine($"🔌 Gleisspannung: {(trackPowerStatus == 1 ? "An" : "Aus")}");
-        Debug.WriteLine($"⚡ Kurzschluss: {(shortCircuitStatus != 0 ? "Ja" : "Nein")}");
-        Debug.WriteLine($"🔋 Spannung: {voltage} mV");
-        Debug.WriteLine($"🔋 Strom: {current} mA");
+        Debug.WriteLine($"🔌 Track power: {(trackPowerStatus == 1 ? "On" : "Off")}");
+        Debug.WriteLine($"⚡ Short circuit: {(shortCircuitStatus != 0 ? "Yes" : "No")}");
+        Debug.WriteLine($"🔋 Voltage: {voltage} mV");
+        Debug.WriteLine($"🔋 Current: {current} mA");
     }
 
     private async Task SendPingAsync(CancellationToken cancellationToken)
@@ -225,7 +232,7 @@ public class Z21 : IDisposable
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"❌ Fehler beim Ping: {ex.Message}");
+                Debug.WriteLine($"❌ Error sending ping: {ex.Message}");
             }
         }
     }
@@ -253,18 +260,18 @@ public class Z21 : IDisposable
         // Build a simulated Z21 feedback message (0F-00-80-00 format)
         // Byte structure: [Length, 0x00, 0x80, 0x00, GroupIndex, InPort, ...]
         byte[] simulatedContent = [
-            0x0F, 0x00, 0x80, 0x00,  // Header
-            0x00,          // GroupIndex (dummy value)
-       (byte)inPort,             // InPort
-            0x01,           // Status (occupied)
-     0x00, 0x00, 0x00, 0x00,  // Additional bytes
-            0x00, 0x00, 0x00, 0x00   // Padding
+            0x0F, 0x00, 0x80, 0x00,     // Header
+            0x00,                       // GroupIndex (dummy value)
+            (byte)inPort,               // InPort
+            0x01,                       // Status (occupied)
+            0x00, 0x00, 0x00, 0x00,     // Additional bytes
+            0x00, 0x00, 0x00, 0x00      // Padding
         ];
 
-   Debug.WriteLine($"⚡ Simulating feedback for InPort {inPort}");
-     
-      // Trigger the same event as real Z21 feedback
- Received?.Invoke(new FeedbackResult(simulatedContent));
+        Debug.WriteLine($"⚡ Simulating feedback for InPort {inPort}");
+
+        // Trigger the same event as real Z21 feedback
+        Received?.Invoke(new FeedbackResult(simulatedContent));
     }
 
     public void Dispose()

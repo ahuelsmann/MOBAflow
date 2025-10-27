@@ -1,11 +1,11 @@
-using System.Diagnostics;
-
 using Moba.Backend.Model;
+
+using System.Diagnostics;
 
 namespace Moba.Backend;
 
 /// <summary>
-/// Verwaltet die Ausführung von Workflows basierend auf Feedback-Ereignissen (Gleisrückmeldestellen).
+/// Manages the execution of workflows based on feedback events (track feedback points).
 /// </summary>
 public class WorkflowManager : IDisposable
 {
@@ -14,23 +14,30 @@ public class WorkflowManager : IDisposable
     private readonly Dictionary<uint, DateTime> _lastFeedbackTime = new();
     private bool _isProcessing;
     private bool _disposed;
+    private readonly Model.Action.ActionExecutionContext _executionContext;
 
-    public WorkflowManager(Z21 z21, List<Workflow> workflows)
+    public WorkflowManager(Z21 z21, List<Workflow> workflows, Model.Action.ActionExecutionContext? executionContext = null)
     {
         _z21 = z21;
         _workflows = workflows;
         _z21.Received += OnFeedbackReceived;
+
+        // Create execution context with Z21
+        _executionContext = executionContext ?? new Model.Action.ActionExecutionContext
+        {
+            Z21 = z21
+        };
     }
 
     private async void OnFeedbackReceived(FeedbackResult feedback)
     {
         if (_isProcessing)
         {
-            Debug.WriteLine("⏸ Workflow-Feedback ignoriert - Verarbeitung läuft bereits");
+            Debug.WriteLine("⏸ Workflow feedback ignored - Processing already in progress");
             return;
         }
 
-        Debug.WriteLine($"📡 Workflow-Feedback empfangen: InPort {feedback.InPort}");
+        Debug.WriteLine($"📡 Workflow feedback received: InPort {feedback.InPort}");
 
         foreach (var workflow in _workflows)
         {
@@ -38,7 +45,7 @@ public class WorkflowManager : IDisposable
             {
                 if (ShouldIgnoreFeedback(workflow))
                 {
-                    Debug.WriteLine($"⏭ Feedback für Workflow '{workflow.Name}' ignoriert (Timer aktiv)");
+                    Debug.WriteLine($"⏭ Feedback for workflow '{workflow.Name}' ignored (timer active)");
                     continue;
                 }
 
@@ -57,7 +64,7 @@ public class WorkflowManager : IDisposable
 
         if (_lastFeedbackTime.TryGetValue(workflow.InPort, out DateTime lastTime))
         {
-            var elapsed = (DateTime.Now - lastTime).TotalSeconds;
+            var elapsed = (DateTime.UtcNow - lastTime.ToUniversalTime()).TotalSeconds;
             return elapsed < workflow.IntervalForTimerToIgnoreFeedbacks;
         }
 
@@ -66,7 +73,7 @@ public class WorkflowManager : IDisposable
 
     private void UpdateLastFeedbackTime(uint inPort)
     {
-        _lastFeedbackTime[inPort] = DateTime.Now;
+        _lastFeedbackTime[inPort] = DateTime.UtcNow;
     }
 
     private async Task HandleWorkflowFeedbackAsync(Workflow workflow)
@@ -75,15 +82,15 @@ public class WorkflowManager : IDisposable
 
         try
         {
-            Debug.WriteLine($"▶ Workflow '{workflow.Name}' wird ausgeführt");
+            Debug.WriteLine($"▶ Executing workflow '{workflow.Name}'");
 
-            await workflow.StartAsync();
+            await workflow.StartAsync(_executionContext);
 
-            Debug.WriteLine($"✅ Workflow '{workflow.Name}' abgeschlossen");
+            Debug.WriteLine($"✅ Workflow '{workflow.Name}' completed");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"❌ Fehler bei Workflow '{workflow.Name}': {ex.Message}");
+            Debug.WriteLine($"❌ Error in workflow '{workflow.Name}': {ex.Message}");
         }
         finally
         {
@@ -94,7 +101,7 @@ public class WorkflowManager : IDisposable
     public void ResetAll()
     {
         _lastFeedbackTime.Clear();
-        Debug.WriteLine("🔄 Alle Workflow-Timer zurückgesetzt");
+        Debug.WriteLine("🔄 All workflow timers reset");
     }
 
     public void Dispose()

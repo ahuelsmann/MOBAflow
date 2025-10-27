@@ -78,13 +78,13 @@ public partial class CommandViewModel : ObservableObject
         }
     }
 
-    public Command ToModel()
-    {
-        return Model;
-    }
+    //public Command ToModel()
+    //{
+    //    return Model;
+    //}
 
-    public static CommandViewModel FromModel(Command model, Z21? z21 = null)
-    {
-        return new CommandViewModel(model, z21);
-    }
+    //public static CommandViewModel FromModel(Command model, Z21? z21 = null)
+    //{
+    //    return new CommandViewModel(model, z21);
+    //}
 }

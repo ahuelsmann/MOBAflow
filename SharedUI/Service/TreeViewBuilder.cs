@@ -1,8 +1,10 @@
 namespace Moba.SharedUI.Service;
 
 using Backend.Model;
-using ViewModel;
+
 using System.Collections.ObjectModel;
+
+using ViewModel;
 
 /// <summary>
 /// Verantwortlich für das Erstellen der TreeView-Struktur aus einer Solution
