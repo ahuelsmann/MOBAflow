@@ -7,16 +7,16 @@ using System.Collections.ObjectModel;
 using ViewModel;
 
 /// <summary>
-/// Verantwortlich für das Erstellen der TreeView-Struktur aus einer Solution
+/// Responsible for creating the TreeView structure from a Solution
 /// </summary>
-public class TreeViewBuilder
+public static class TreeViewBuilder
 {
     /// <summary>
-    /// Erstellt die TreeView-Struktur aus einer Solution
+    /// Creates the TreeView structure from a Solution
     /// </summary>
-    /// <param name="solution">Die Solution, für die die TreeView erstellt werden soll</param>
-    /// <returns>Eine ObservableCollection mit dem Root-TreeNode</returns>
-    public ObservableCollection<TreeNodeViewModel> BuildTreeView(Solution? solution)
+    /// <param name="solution">The Solution for which the TreeView should be created</param>
+    /// <returns>An ObservableCollection with the root TreeNode</returns>
+    public static ObservableCollection<TreeNodeViewModel> BuildTreeView(Solution? solution)
     {
         var treeNodes = new ObservableCollection<TreeNodeViewModel>();
 
@@ -49,7 +49,7 @@ public class TreeViewBuilder
 
     private static TreeNodeViewModel CreateProjectNode(Project project, int index)
     {
-        // Zeige Project-Name wenn vorhanden, sonst "Project {index + 1}"
+        // Show Project name if available, otherwise "Project {index + 1}"
         var displayName = string.IsNullOrEmpty(project.Name)
                  ? $"Project {index + 1}"
                  : project.Name;
@@ -63,7 +63,7 @@ public class TreeViewBuilder
             DataType = typeof(Project)
         };
 
-        // Setting als erstes Kind-Element
+        // Setting as first child element
         projectNode.Children.Add(CreateSettingNode(project.Setting));
 
         // Journeys

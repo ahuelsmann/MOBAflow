@@ -14,8 +14,8 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
     private bool _disposed;
 
     /// <summary>
-    /// Event wird ausgelöst, wenn ein Property-Wert geändert wurde.
-    /// Wird verwendet, um TreeNodes über Änderungen zu informieren.
+    /// Event is triggered when a property value has changed.
+    /// Used to notify TreeNodes about changes.
     /// </summary>
     public event EventHandler? ValueChanged;
 
@@ -24,43 +24,40 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
         _propertyInfo = propertyInfo;
         _target = target;
 
-        // Display-Attribut auslesen, falls vorhanden
+        // Read Display attribute if available
         var displayAttr = propertyInfo.GetCustomAttribute<DisplayAttribute>();
         Name = displayAttr?.Name ?? propertyInfo.Name;
 
-        // Underlying Type für Nullable<T> ermitteln
+        // Determine underlying type for Nullable<T>
         var underlyingType = Nullable.GetUnderlyingType(propertyInfo.PropertyType) ?? propertyInfo.PropertyType;
 
-        // Property-Typ prüfen
+        // Check property type
         IsBoolean = underlyingType == typeof(bool);
         IsEnum = underlyingType.IsEnum;
 
-        // Enum-Werte sammeln
+        // Collect enum values
         if (IsEnum)
         {
             EnumValues = Enum.GetValues(underlyingType).Cast<object>().ToList();
         }
 
-        // Wenn das Target INotifyPropertyChanged implementiert, registriere Event-Handler
+        // If the target implements INotifyPropertyChanged, register event handler
         if (_target is INotifyPropertyChanged notifyTarget)
         {
             notifyTarget.PropertyChanged += OnTargetPropertyChanged;
         }
     }
 
-    /// <summary>
-    /// Wird aufgerufen, wenn sich eine Property am Target-Objekt ändert.
-    /// Aktualisiert die UI-Bindings automatisch.
-    /// </summary>
+    // Called when a property on the target object changes - updates UI bindings automatically
     private void OnTargetPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        // ✅ Performance: Nur reagieren, wenn es unsere Property ist ODER wenn PropertyName null ist (alle Properties)
+        // Performance: Only react if it's our property OR if PropertyName is null (all properties)
         if (e.PropertyName == null || e.PropertyName == _propertyInfo.Name)
         {
-            // UI-Bindings aktualisieren - nur Value, der Rest wird durch Binding automatisch aktualisiert
+            // Update UI bindings - only Value, the rest is updated automatically through binding
             OnPropertyChanged(nameof(Value));
 
-            // Nur spezifische Properties aktualisieren, wenn nötig
+            // Only update specific properties when necessary
             if (IsBoolean)
                 OnPropertyChanged(nameof(BoolValue));
             if (IsEnum)
@@ -77,29 +74,29 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
     private string name = string.Empty;
 
     /// <summary>
-    /// Gibt an, ob die Property vom Typ Boolean ist
+    /// Indicates whether the property is of type Boolean
     /// </summary>
     public bool IsBoolean { get; }
 
     /// <summary>
-    /// Gibt an, ob die Property vom Typ Enum ist
+    /// Indicates whether the property is of type Enum
     /// </summary>
     public bool IsEnum { get; }
 
     /// <summary>
-    /// Gibt an, ob die Property eine Objektreferenz ist (z.B. Workflow, Train, etc.)
-    /// Wird true, wenn ReferenceValues gesetzt wurde
+    /// Indicates whether the property is an object reference (e.g., Workflow, Train, etc.)
+    /// Returns true when ReferenceValues has been set
     /// </summary>
     public bool IsReference => ReferenceValues != null && ReferenceValues.Any();
 
     /// <summary>
-    /// Liefert alle möglichen Enum-Werte für eine ComboBox
+    /// Provides all possible enum values for a ComboBox
     /// </summary>
     public IEnumerable<object>? EnumValues { get; }
 
     /// <summary>
-    /// Liefert alle verfügbaren Objekte für Referenz-Properties (z.B. alle Workflows)
-    /// Wird von außen gesetzt (z.B. vom ViewModel)
+    /// Provides all available objects for reference properties (e.g., all Workflows)
+    /// Set from outside (e.g., by the ViewModel)
     /// </summary>
     public IEnumerable<object?>? ReferenceValues { get; set; }
 
@@ -124,7 +121,7 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
                     }
                     else
                     {
-                        // Versuch die Konvertierung
+                        // Try conversion
                         var converter = TypeDescriptor.GetConverter(_propertyInfo.PropertyType);
                         if (converter.CanConvertFrom(typeof(string)))
                         {
@@ -146,7 +143,7 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
                             _pendingValue = null;
                             ValueChanged?.Invoke(this, EventArgs.Empty);
                         }
-                        // Komplexe Typen werden ignoriert
+                        // Complex types are ignored
                     }
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(BoolValue));
@@ -155,7 +152,7 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
                 }
                 catch
                 {
-                    // Bei Konvertierungsfehlern den eingegebenen Wert temporär speichern
+                    // On conversion errors, temporarily store the entered value
                     _pendingValue = value;
                     OnPropertyChanged();
                 }
@@ -164,7 +161,7 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// Boolean-spezifische Property für Two-Way-Binding mit CheckBox
+    /// Boolean-specific property for two-way binding with CheckBox
     /// </summary>
     public bool BoolValue
     {
@@ -186,7 +183,7 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// Enum-spezifische Property für Two-Way-Binding mit ComboBox
+    /// Enum-specific property for two-way binding with ComboBox
     /// </summary>
     public object? EnumValue
     {
@@ -208,8 +205,7 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// Reference-specific property for two-way binding with ComboBox
-    /// (e.g., workflow selection)
+    /// Reference-specific property for two-way binding with ComboBox (e.g., workflow selection)
     /// </summary>
     public object? ReferenceValue
     {
@@ -283,14 +279,14 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
             {
                 // Find object with matching name
                 var matchingItem = ReferenceValues.FirstOrDefault(item =>
-                  {
-                      if (item == null)
-                          return string.IsNullOrEmpty(value);
+                {
+                    if (item == null)
+                        return string.IsNullOrEmpty(value);
 
-                      var nameProp = item.GetType().GetProperty("Name");
-                      var itemName = nameProp?.GetValue(item)?.ToString();
-                      return itemName == value;
-                  });
+                    var nameProp = item.GetType().GetProperty("Name");
+                    var itemName = nameProp?.GetValue(item)?.ToString();
+                    return itemName == value;
+                });
 
                 System.Diagnostics.Debug.WriteLine($"  Matching Item: {matchingItem?.GetType().Name ?? "null"}");
 
@@ -305,33 +301,32 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
         }
     }
 
-    //public void Refresh()
-    //{
-    //    // ✅ Performance: Nur notwendige Properties aktualisieren
-    //    OnPropertyChanged(nameof(Value));
+    /// <summary>
+    /// Releases managed and unmanaged resources.
+    /// </summary>
+    /// <param name="disposing">True to release managed resources; otherwise, false.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                // Release managed resources
+                if (_target is INotifyPropertyChanged notifyTarget)
+                {
+                    notifyTarget.PropertyChanged -= OnTargetPropertyChanged;
+                }
+            }
 
-    //    if (IsBoolean)
-    //        OnPropertyChanged(nameof(BoolValue));
-    //    if (IsEnum)
-    //        OnPropertyChanged(nameof(EnumValue));
-    //    if (IsReference)
-    //    {
-    //        OnPropertyChanged(nameof(ReferenceValue));
-    //        OnPropertyChanged(nameof(ReferenceValueName));
-    //    }
-    //}
+            // Unmanaged resources would be released here (none present)
+
+            _disposed = true;
+        }
+    }
 
     public void Dispose()
     {
-        if (_disposed)
-            return;
-
-        // Event-Handler entfernen
-        if (_target is INotifyPropertyChanged notifyTarget)
-        {
-            notifyTarget.PropertyChanged -= OnTargetPropertyChanged;
-        }
-
-        _disposed = true;
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 }

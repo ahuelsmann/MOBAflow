@@ -32,12 +32,8 @@ public class JourneyManager : IDisposable
 
     private async void OnFeedbackReceived(FeedbackResult feedback)
     {
-        // Ensure only one feedback is processed at a time, ignore re-entrancy like previous _isProcessing flag
-        if (!await _processingLock.WaitAsync(0))
-        {
-            Debug.WriteLine("⏸ Feedback ignored - Processing already in progress");
-            return;
-        }
+        // Wait for lock (blocking) - queues feedbacks sequentially
+        await _processingLock.WaitAsync();
 
         try
         {

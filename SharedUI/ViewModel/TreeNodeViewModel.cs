@@ -22,15 +22,15 @@ public partial class TreeNodeViewModel : ObservableObject
     public Type? DataType { get; set; }
 
     /// <summary>
-    /// Aktualisiert den DisplayName basierend auf dem DataContext.
-    /// Wird aufgerufen, wenn Properties im PropertyGrid geändert werden.
+    /// Updates the DisplayName based on the DataContext.
+    /// Called when properties in the PropertyGrid are changed.
     /// </summary>
     public void RefreshDisplayName()
     {
         if (DataContext == null)
             return;
 
-        // Versuche die "Name"-Property zu lesen
+        // Try to read the "Name" property
         var nameProp = DataContext.GetType().GetProperty("Name");
         if (nameProp != null)
         {

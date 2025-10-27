@@ -16,6 +16,14 @@ public partial class JourneyViewModel : ObservableObject
     {
         Model = model;
         Stations = new ObservableCollection<Station>(model.Stations);
+        
+        // Subscribe to Model's lightweight StateChanged event
+        Model.StateChanged += (s, e) =>
+        {
+            // Notify UI about ALL properties that might have changed
+            OnPropertyChanged(nameof(CurrentCounter));
+            OnPropertyChanged(nameof(CurrentPos));
+        };
     }
 
     public uint InPort
@@ -85,26 +93,4 @@ public partial class JourneyViewModel : ObservableObject
         get => Model.FirstPos;
         set => SetProperty(Model.FirstPos, value, Model, (m, v) => m.FirstPos = v);
     }
-
-    /// <summary>
-    /// Converts the ViewModel back to the Model including all stations
-    /// </summary>
-    //public Journey ToModel()
-    //{
-    //    Model.Stations.Clear();
-    //    foreach (var station in Stations)
-    //    {
-    //        Model.Stations.Add(station);
-    //    }
-
-    //    return Model;
-    //}
-
-    /// <summary>
-    /// Creates a JourneyViewModel from a Journey model
-    /// </summary>
-    //public static JourneyViewModel FromModel(Journey model)
-    //{
-    //    return new JourneyViewModel(model);
-    //}
 }

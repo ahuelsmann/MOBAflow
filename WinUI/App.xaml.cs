@@ -54,9 +54,6 @@ public partial class App
 
     private static void ConfigureServices(IServiceCollection services)
     {
-        // Register TreeViewBuilder
-        services.AddSingleton<TreeViewBuilder>();
-
         // Register IoService (WindowId will be set after MainWindow creation)
         services.AddSingleton<IIoService, IoService>();
 

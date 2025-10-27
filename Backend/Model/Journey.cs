@@ -4,6 +4,9 @@ using Enum;
 
 public class Journey
 {
+    // Lightweight event for notifying changes (no UI dependency!)
+    public event EventHandler? StateChanged;
+
     public Journey()
     {
         Name = "New Journey";
@@ -27,9 +30,33 @@ public class Journey
 
     public List<Station> Stations { get; set; }
 
-    public uint CurrentCounter { get; set; }
+    private uint _currentCounter;
+    public uint CurrentCounter
+    {
+        get => _currentCounter;
+        set
+        {
+            if (_currentCounter != value)
+            {
+                _currentCounter = value;
+                StateChanged?.Invoke(this, EventArgs.Empty);  // ✅ Simple event, no UI dependency
+            }
+        }
+    }
 
-    public uint CurrentPos { get; set; }
+    private uint _currentPos;
+    public uint CurrentPos
+    {
+        get => _currentPos;
+        set
+        {
+            if (_currentPos != value)
+            {
+                _currentPos = value;
+                StateChanged?.Invoke(this, EventArgs.Empty);  // ✅ Simple event, no UI dependency
+            }
+        }
+    }
 
     #region BehaviorOnLastStop
     public BehaviorOnLastStop OnLastStop { get; set; }

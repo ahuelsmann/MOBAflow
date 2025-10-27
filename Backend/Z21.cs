@@ -149,7 +149,8 @@ public class Z21 : IDisposable
                         ParseLocoInfo(content);
                         break;
                     case "0F-00-80-00":
-                        Received?.Invoke(new FeedbackResult(content));
+                         // Fire event asynchronously to not block UDP receive loop
+                        _ = Task.Run(() => Received?.Invoke(new FeedbackResult(content)));
                         break;
                     case "14-00-84-00":
                         Debug.WriteLine("🔄 Z21 system state changed!");
