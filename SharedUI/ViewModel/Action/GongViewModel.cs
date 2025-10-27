@@ -29,14 +29,4 @@ public partial class GongViewModel : ObservableObject
 
         await Task.CompletedTask;
     }
-
-    //public Gong ToModel()
-    //{
-    //    return Model;
-    //}
-
-    //public static GongViewModel FromModel(Gong model)
-    //{
-    //    return new GongViewModel(model);
-    //}
 }

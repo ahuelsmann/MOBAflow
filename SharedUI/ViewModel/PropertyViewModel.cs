@@ -309,13 +309,9 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
     {
         if (!_disposed)
         {
-            if (disposing)
+            if (disposing && _target is INotifyPropertyChanged notifyTarget)
             {
-                // Release managed resources
-                if (_target is INotifyPropertyChanged notifyTarget)
-                {
-                    notifyTarget.PropertyChanged -= OnTargetPropertyChanged;
-                }
+                notifyTarget.PropertyChanged -= OnTargetPropertyChanged;
             }
 
             // Unmanaged resources would be released here (none present)

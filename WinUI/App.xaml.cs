@@ -44,10 +44,7 @@ public partial class App
 
         // Set the WindowId in the IoService after window is created
         var ioService = _serviceProvider.GetRequiredService<IIoService>() as IoService;
-        if (ioService != null)
-        {
-            ioService.SetWindowId(_window.AppWindow.Id);
-        }
+        ioService?.SetWindowId(_window.AppWindow.Id);
 
         _window.Activate();
     }
