@@ -15,7 +15,6 @@ public class ActionConverter : JsonConverter<Base>
 
         ActionType type = jo["Type"]?.ToObject<ActionType>() ?? ActionType.Unknown;
 
-        // Erstelle einen neuen Serializer ohne diesen Converter, um Endlosschleifen zu vermeiden
         var newSerializer = new JsonSerializer
         {
             ContractResolver = serializer.ContractResolver,
@@ -24,7 +23,6 @@ public class ActionConverter : JsonConverter<Base>
             DefaultValueHandling = serializer.DefaultValueHandling
         };
 
-        // Kopiere alle Converters außer diesem
         foreach (var converter in serializer.Converters)
         {
             if (converter.GetType() != typeof(ActionConverter))
@@ -52,7 +50,6 @@ public class ActionConverter : JsonConverter<Base>
             return;
         }
 
-        // Erstelle einen neuen Serializer ohne diesen Converter, um Endlosschleifen zu vermeiden
         var newSerializer = new JsonSerializer
         {
             ContractResolver = serializer.ContractResolver,
@@ -61,7 +58,6 @@ public class ActionConverter : JsonConverter<Base>
             DefaultValueHandling = serializer.DefaultValueHandling
         };
 
-        // Kopiere alle Converters außer diesem
         foreach (var converter in serializer.Converters)
         {
             if (converter.GetType() != typeof(ActionConverter))
