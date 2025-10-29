@@ -1,9 +1,12 @@
 namespace Moba.Backend.Model;
 
-using Moba.Backend.Converter;
+using Converter;
 
 using Newtonsoft.Json;
 
+/// <summary>
+/// Represents a stop.
+/// </summary>
 public class Station
 {
     public Station()

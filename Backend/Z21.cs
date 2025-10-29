@@ -6,6 +6,9 @@ namespace Moba.Backend;
 
 public delegate void Feedback(FeedbackResult feedbackContent);
 
+/// <summary>
+/// This class enables bidirectional communication via UDP with a Z21 digital control center in your network.
+/// </summary>
 public class Z21 : IDisposable
 {
     public event Feedback? Received;
@@ -16,6 +19,11 @@ public class Z21 : IDisposable
     private Task? _pingTask;
     private bool _disposed;
 
+    /// <summary>
+    /// Connect to Z21.
+    /// </summary>
+    /// <param name="address">IP address of the Z21.</param>
+    /// <param name="cancellationToken">Enables the controlled cancellation of long-running operations.</param>
     public async Task ConnectAsync(IPAddress address, CancellationToken cancellationToken = default)
     {
         _client = new UdpClient();
@@ -34,6 +42,9 @@ public class Z21 : IDisposable
         await SetBroadcastFlagsAsync();
     }
 
+    /// <summary>
+    /// Disconnect from Z21.
+    /// </summary>
     public async Task DisconnectAsync()
     {
         try
@@ -149,7 +160,7 @@ public class Z21 : IDisposable
                         ParseLocoInfo(content);
                         break;
                     case "0F-00-80-00":
-                         // Fire event asynchronously to not block UDP receive loop
+                        // Fire event asynchronously to not block UDP receive loop
                         _ = Task.Run(() => Received?.Invoke(new FeedbackResult(content)));
                         break;
                     case "14-00-84-00":
@@ -238,6 +249,10 @@ public class Z21 : IDisposable
         }
     }
 
+    /// <summary>
+    /// Sends a digital command to the Z21.
+    /// </summary>
+    /// <param name="sendBytes">The byte sequence containing the command for the Z21.</param>
     public async Task SendCommandAsync(byte[] sendBytes)
     {
         if (_client != null)
@@ -250,7 +265,7 @@ public class Z21 : IDisposable
     /// Simulates a feedback event for testing purposes without requiring actual Z21 hardware feedback.
     /// This triggers the same Received event as a real Z21 feedback message would.
     /// </summary>
-    /// <param name="inPort">The InPort number (0-255) to simulate feedback for</param>
+    /// <param name="inPort">The InPort number (0-255) to simulate feedback for.</param>
     public void SimulateFeedback(int inPort)
     {
         if (inPort < 0 || inPort > 255)

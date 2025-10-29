@@ -1,8 +1,12 @@
 namespace Moba.Backend.Model;
 
 using Sound;
+
 using System.ComponentModel.DataAnnotations;
 
+/// <summary>
+/// Represents a MOBA project. All elements necessary for the application are defined here.
+/// </summary>
 public class Project
 {
     public Project()
@@ -15,7 +19,7 @@ public class Project
         Trains = [];
         Workflows = [];
         Journeys = [];
-        Ips = [];
+        IpAddresses = ["127.0.0.1"];
         Setting = new Setting();
     }
 
@@ -30,6 +34,6 @@ public class Project
     public List<Train> Trains { get; set; }
     public List<Workflow> Workflows { get; set; }
     public List<Journey> Journeys { get; set; }
-    public List<Ip> Ips { get; set; }
+    public List<string> IpAddresses { get; set; }
     public Setting Setting { get; set; }
 }

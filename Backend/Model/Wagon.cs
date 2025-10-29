@@ -2,6 +2,9 @@ namespace Moba.Backend.Model;
 
 using Enum;
 
+/// <summary>
+/// Represents a railroad wagon.
+/// </summary>
 public class Wagon
 {
     public Wagon()

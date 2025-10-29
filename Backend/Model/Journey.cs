@@ -2,6 +2,9 @@ namespace Moba.Backend.Model;
 
 using Enum;
 
+/// <summary>
+/// Represents a journey or timetable with all stops or stations.
+/// </summary>
 public class Journey
 {
     // Lightweight event for notifying changes (no UI dependency!)

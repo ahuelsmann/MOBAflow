@@ -2,6 +2,9 @@ namespace Moba.Backend.Model;
 
 using Enum;
 
+/// <summary>
+/// Additional details about a locomotive or wagon.
+/// </summary>
 public class Details
 {
     public byte Axles { get; set; }

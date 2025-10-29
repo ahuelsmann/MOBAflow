@@ -382,9 +382,9 @@
           "Actions": [
             {
               "Id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-              "Name": "Gong Sound",
+              "Name": "Attention Signal",
               "Number": 1,
-              "Type": "Gong"
+              "Type": "Sound"
             },
             {
               "Id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
@@ -419,9 +419,9 @@
             },
             {
               "Id": "e5f6a7b8-c9d0-1234-ef12-345678901234",
-              "Name": "Station Gong",
+              "Name": "Attention Signal",
               "Number": 3,
-              "Type": "Gong"
+              "Type": "Sound"
             }
           ]
         }
@@ -682,14 +682,7 @@
           "FirstPos": 0
         }
       ],
-      "Ips": [
-        {
-          "Address": "192.168.0.1"
-        },
-        {
-          "Address": "127.0.0.1"
-        }
-      ],
+      "IpAddresses": [ "127.0.0.1", "192.168.0.1" ],
       "Setting": {
         "SpeechSynthesizerRate": 0,
         "SpeechSynthesizerVolume": 90,

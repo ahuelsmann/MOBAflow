@@ -6,7 +6,7 @@ using System.Diagnostics;
 namespace Moba.Backend;
 
 /// <summary>
-/// Manages the execution of journeys based on feedback events (track feedback points).
+/// Manages the execution of a workflow and there actions related to a journey or stop (station) based on feedback events (track feedback points).
 /// </summary>
 public class JourneyManager : IDisposable
 {

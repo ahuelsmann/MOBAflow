@@ -2,6 +2,9 @@ using System.Diagnostics;
 
 namespace Moba.Backend.Model;
 
+/// <summary>
+/// A workflow with a list of actions of different types.
+/// </summary>
 public class Workflow
 {
     public Workflow()
@@ -12,7 +15,7 @@ public class Workflow
     }
 
     /// <summary>
-    /// Unique identifier for this workflow
+    /// Unique identifier for this workflow.
     /// </summary>
     public Guid Id { get; set; }
 
@@ -21,25 +24,25 @@ public class Workflow
     public List<Action.Base> Actions { get; set; }
 
     /// <summary>
-    /// R-BUS port assignment for this workflow
+    /// R-BUS port assignment for this workflow.
     /// </summary>
     public uint InPort { get; set; }
 
     /// <summary>
-    /// Ignore repeated feedbacks
+    /// Ignore repeated feedbacks.
     /// </summary>
     public bool IsUsingTimerToIgnoreFeedbacks { get; set; }
 
     /// <summary>
-    /// Ignore repeated feedbacks for x seconds
+    /// Ignore repeated feedbacks for x seconds.
     /// </summary>
     public double IntervalForTimerToIgnoreFeedbacks { get; set; }
 
     /// <summary>
-    /// Starts the execution of all actions in this workflow
+    /// Starts the execution of all actions in this workflow.
     /// </summary>
     /// <param name="context">Execution context containing dependencies (Z21, SpeakerEngine, etc.)</param>
-    /// <exception cref="InvalidOperationException">Thrown when the workflow has no actions</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the workflow has no actions.</exception>
     public async Task StartAsync(Action.ActionExecutionContext? context = null)
     {
         if (Actions.Count == 0)

@@ -6,8 +6,6 @@ public enum PassengerClass
     First,
     Second,
     Third,
-    FirstSecond,
-    SecondThird,
     Dining,
     Sleeping,
     Baggage,

@@ -6,7 +6,7 @@ using Microsoft.UI.Xaml.Controls;
 using SharedUI.ViewModel;
 
 /// <summary>
-/// Wählt das passende DataTemplate basierend auf dem Property-Typ
+/// Provides the DataTemplate that matches the property type.
 /// </summary>
 public class PropertyDataTemplateSelector : DataTemplateSelector
 {

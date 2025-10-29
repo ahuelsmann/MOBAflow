@@ -4,6 +4,10 @@ using Converter;
 
 using Newtonsoft.Json;
 
+/// <summary>
+/// A solution folder that can contain multiple MOBA projects.
+/// The solution represents the root element. It is the first element within an object tree.
+/// </summary>
 public class Solution
 {
     public Solution()
@@ -15,6 +19,11 @@ public class Solution
 
     public List<Project> Projects { get; set; }
 
+    /// <summary>
+    /// Save the solution.
+    /// </summary>
+    /// <param name="path">Expects the full path including file name.</param>
+    /// <param name="solution">Instance of the solution to be saved.</param>
     public static async Task SaveAsync(string path, Solution? solution)
     {
         if (!string.IsNullOrEmpty(path) && solution != null)
@@ -36,6 +45,11 @@ public class Solution
         }
     }
 
+    /// <summary>
+    /// Load the solution.
+    /// </summary>
+    /// <param name="path">Expects the full path including file name.</param>
+    /// <returns>Returns an instance of the loaded solution.</returns>
     public async Task<Solution?> LoadAsync(string path)
     {
         if (!string.IsNullOrEmpty(path) && File.Exists(path))

@@ -2,11 +2,14 @@ namespace Moba.Backend.Model;
 
 using Enum;
 
+/// <summary>
+/// Represents a freight wagon.
+/// </summary>
 public class GoodsWagon : Wagon
 {
     public GoodsWagon()
     {
-        Cargo = CargoType.General;
+        Cargo = CargoType.None;
     }
 
     /// <summary>

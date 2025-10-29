@@ -115,16 +115,16 @@ public partial class MainWindowViewModel : ObservableObject
             // Initialize Z21 if not already done
             _z21 ??= new Backend.Z21();
 
-            if (project.Ips.Count > 0)
+            if (project.IpAddresses.Count > 0)
             {
                 try
                 {
                     Z21StatusText = "Connecting...";
-                    var address = System.Net.IPAddress.Parse(project.Ips[0].Address);
+                    var address = System.Net.IPAddress.Parse(project.IpAddresses[0]);
                     await _z21.ConnectAsync(address);
 
                     IsZ21Connected = true;
-                    Z21StatusText = $"Connected to {project.Ips[0].Address}";
+                    Z21StatusText = $"Connected to {project.IpAddresses[0]}";
 
                     // Create execution context with shared dependencies
                     var executionContext = new Moba.Backend.Model.Action.ActionExecutionContext

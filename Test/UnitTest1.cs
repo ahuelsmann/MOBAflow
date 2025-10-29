@@ -1,18 +1,18 @@
-namespace Test;
+namespace Moba.Test;
 
-using Moba.Backend.Model;
+using Backend.Model;
 
 public class Tests
 {
-    private string _exampleJsonFilePath = string.Empty;
+    private string _testFile = string.Empty;
 
     [SetUp]
     public void Setup()
     {
-        _exampleJsonFilePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "example-solution.json");
+        _testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "example-solution.json");
 
-        Assert.That(File.Exists(_exampleJsonFilePath), Is.True,
-            $"Die example-solution.json Datei wurde nicht gefunden unter: {_exampleJsonFilePath}");
+        Assert.That(File.Exists(_testFile), Is.True,
+            $"Test file example-solution.json not found: {_testFile}");
     }
 
     [Test]
@@ -20,7 +20,7 @@ public class Tests
     {
         // Act
         var solution = new Solution();
-        solution = await solution.LoadAsync(_exampleJsonFilePath);
+        solution = await solution.LoadAsync(_testFile);
 
         // Assert
         Assert.That(solution, Is.Not.Null, "Solution sollte nicht null sein");
@@ -57,7 +57,7 @@ public class Tests
         Assert.That(project.Journeys.Count, Is.EqualTo(2));
         Assert.That(project.Journeys[0].Name, Is.EqualTo("Journey 1 - Regional Express"));
 
-        Assert.That(project.Ips.Count, Is.EqualTo(2));
-        Assert.That(project.Ips[0].Address, Is.EqualTo("192.168.0.1"));
+        Assert.That(project.IpAddresses.Count, Is.EqualTo(2));
+        Assert.That(project.IpAddresses[0], Is.EqualTo("127.0.0.1"));
     }
 }

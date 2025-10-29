@@ -2,6 +2,9 @@ namespace Moba.Backend.Model;
 
 using System.ComponentModel.DataAnnotations;
 
+/// <summary>
+/// This class represents general MOBA project related settings.
+/// </summary>
 public class Setting
 {
     private uint _speechSynthesizerVolume = 90;

@@ -12,7 +12,7 @@ public class ActionConverter : JsonConverter<Base>
     {
         JObject jo = JObject.Load(reader);
 
-        ActionType type = jo["Type"]?.ToObject<ActionType>() ?? ActionType.Unknown;
+        ActionType? type = jo["Type"]?.ToObject<ActionType>();
 
         var newSerializer = new JsonSerializer
         {

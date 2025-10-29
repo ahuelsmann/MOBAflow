@@ -2,15 +2,18 @@ namespace Moba.Backend.Model;
 
 using Enum;
 
+/// <summary>
+/// Represents a passenger wagon.
+/// </summary>
 public class PassengerWagon : Wagon
 {
     public PassengerWagon()
     {
-        WagonClass = PassengerClass.Second;
+        WagonClass = PassengerClass.None;
     }
 
     /// <summary>
-    /// Car class (e.g. 1st, 2nd class, dining car, etc.)
+    /// Class (e.g. 1st, 2nd class.)
     /// </summary>
     public PassengerClass WagonClass { get; set; }
 }

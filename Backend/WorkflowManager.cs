@@ -5,7 +5,7 @@ using System.Diagnostics;
 namespace Moba.Backend;
 
 /// <summary>
-/// Manages the execution of workflows based on feedback events (track feedback points).
+/// Manages the execution of workflows and there actions based on feedback events (track feedback points) independent of a journey.
 /// </summary>
 public class WorkflowManager : IDisposable
 {
