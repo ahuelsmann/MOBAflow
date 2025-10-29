@@ -286,9 +286,12 @@ public partial class MainWindowViewModel : ObservableObject
         SelectedNodeType = node.DataType.Name;
 
         var props = node.DataType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-       .Where(p => p.CanRead
-   && !p.PropertyType.IsGenericType // No lists
-         && (IsSimpleType(p.PropertyType) || IsReferenceType(p.PropertyType))); // Simple types OR references
+       .Where(p => p is
+       {
+           CanRead: true, PropertyType.IsGenericType: false
+       } // No lists
+        && (IsSimpleType(p.PropertyType)
+        || IsReferenceType(p.PropertyType))); // Simple types OR references
 
         // Get context (Project) for reference lookups
         var contextProject = FindParentProject(node);
@@ -352,13 +355,13 @@ public partial class MainWindowViewModel : ObservableObject
         var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
 
         return underlyingType.IsPrimitive       // int, bool, byte, etc.
-      || underlyingType.IsEnum   // Enums
-   || underlyingType == typeof(string)  // string
-       || underlyingType == typeof(decimal) // decimal
-            || underlyingType == typeof(DateTime) // DateTime
-       || underlyingType == typeof(DateTimeOffset) // DateTimeOffset
-            || underlyingType == typeof(TimeSpan) // TimeSpan
-            || underlyingType == typeof(Guid);    // Guid
+        || underlyingType.IsEnum                // Enums
+        || underlyingType == typeof(string)     // string
+        || underlyingType == typeof(decimal)    // decimal
+        || underlyingType == typeof(DateTime)   // DateTime
+        || underlyingType == typeof(DateTimeOffset) // DateTimeOffset
+        || underlyingType == typeof(TimeSpan)   // TimeSpan
+        || underlyingType == typeof(Guid);      // Guid
     }
 
     // Checks if a type is an object reference (e.g., Workflow, Train, etc.)

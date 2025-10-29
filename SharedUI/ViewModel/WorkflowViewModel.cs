@@ -28,7 +28,7 @@ public partial class WorkflowViewModel : ObservableObject
         _speakerEngine = speakerEngine;
         _project = project;
         _z21 = z21;
-        
+
         Actions = new ObservableCollection<object>(
             model.Actions.Select(CreateViewModelForAction)
         );
@@ -74,19 +74,19 @@ public partial class WorkflowViewModel : ObservableObject
         {
             switch (actionVM)
             {
-                case AnnouncementViewModel announcementVM:
-                    System.Diagnostics.Debug.WriteLine($"🎬 Führe Action aus: Announcement - {announcementVM.Name}");
-                    await announcementVM.ExecuteAsync(journey, station);
+                case AnnouncementViewModel announcement:
+                    System.Diagnostics.Debug.WriteLine($"🎬 Führe Action aus: Announcement - {announcement.Name}");
+                    await announcement.ExecuteAsync(journey, station);
                     break;
 
-                case GongViewModel gongVM:
-                    System.Diagnostics.Debug.WriteLine($"🎬 Führe Action aus: Gong - {gongVM.Name}");
-                    await gongVM.ExecuteAsync(journey, station);
+                case AudioViewModel audio:
+                    System.Diagnostics.Debug.WriteLine($"🎬 Führe Action aus: Sound - {audio.Name}");
+                    await audio.ExecuteAsync(journey, station);
                     break;
 
-                case CommandViewModel commandVM:
-                    System.Diagnostics.Debug.WriteLine($"🎬 Führe Action aus: Command - {commandVM.Name}");
-                    await commandVM.ExecuteAsync(journey, station);
+                case CommandViewModel command:
+                    System.Diagnostics.Debug.WriteLine($"🎬 Führe Action aus: Command - {command.Name}");
+                    await command.ExecuteAsync(journey, station);
                     break;
 
                 default:
@@ -103,37 +103,9 @@ public partial class WorkflowViewModel : ObservableObject
         return action switch
         {
             Announcement announcement => new AnnouncementViewModel(announcement, _speakerEngine, _project),
-            Gong gong => new GongViewModel(gong),
+            Audio gong => new AudioViewModel(gong),
             Command command => new CommandViewModel(command, _z21),
             _ => throw new NotSupportedException($"Action-Typ {action.GetType().Name} wird nicht unterstützt")
         };
     }
-
-    //public Workflow ToModel()
-    //{
-    //    Model.Actions.Clear();
-        
-    //    foreach (var actionVM in Actions)
-    //    {
-    //        switch (actionVM)
-    //        {
-    //            case AnnouncementViewModel announcementVM:
-    //                Model.Actions.Add(announcementVM.ToModel());
-    //                break;
-    //            case GongViewModel gongVM:
-    //                Model.Actions.Add(gongVM.ToModel());
-    //                break;
-    //            case CommandViewModel commandVM:
-    //                Model.Actions.Add(commandVM.ToModel());
-    //                break;
-    //        }
-    //    }
-
-    //    return Model;
-    //}
-
-    //public static WorkflowViewModel FromModel(Workflow model, ISpeakerEngine? speakerEngine = null, Project? project = null, Z21? z21 = null)
-    //{
-    //    return new WorkflowViewModel(model, speakerEngine, project, z21);
-    //}
 }

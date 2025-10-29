@@ -6,11 +6,11 @@ namespace Moba.Sound;
 public static class SoundManager
 {
     [SupportedOSPlatform("windows")]
-    public static void Gong()
+    public static void Play(string waveFile)
     {
         SoundPlayer player = new()
         {
-            SoundLocation = "Ton.wav"
+            SoundLocation = waveFile
         };
         player.Play();
         Thread.Sleep(1500);

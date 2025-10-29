@@ -1,7 +1,6 @@
 namespace Moba.Backend.Model.Action;
 
 using Enum;
-using System.Diagnostics;
 
 /// <summary>
 /// This action performs text-to-speech announcements using the Azure Speech Service.
@@ -36,33 +35,11 @@ public class Announcement : Base
     /// </summary>
     /// <param name="context">Execution context containing the SpeakerEngine for text-to-speech conversion</param>
     /// <returns>A task representing the asynchronous operation</returns>
-    /// <exception cref="Exception">Thrown when the speech synthesis fails</exception>
     public override async Task ExecuteAsync(ActionExecutionContext context)
     {
-        if (string.IsNullOrWhiteSpace(TextToSpeak))
+        if (!string.IsNullOrEmpty(TextToSpeak) && context.SpeakerEngine != null)
         {
-            Debug.WriteLine("  ⚠ Announcement has no text to speak");
-            return;
-        }
-
-        Debug.WriteLine($"  🗣 Announcement: '{TextToSpeak}'");
-
-        if (context.SpeakerEngine != null)
-        {
-            try
-            {
-                await context.SpeakerEngine.AnnouncementAsync(TextToSpeak, null);
-                Debug.WriteLine("  ✅ Announcement completed");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"  ❌ Error playing announcement: {ex.Message}");
-                throw;
-            }
-        }
-        else
-        {
-            Debug.WriteLine("  ⚠ No SpeakerEngine available - announcement not played");
+            await context.SpeakerEngine.AnnouncementAsync(TextToSpeak, null);
         }
     }
 }

@@ -69,24 +69,4 @@ public class Workflow
             throw;
         }
     }
-
-    // Override Equals and GetHashCode for ComboBox equality
-    //public override bool Equals(object? obj)
-    //{
-    //    if (obj is Workflow other)
-    //    {
-    //        return Id == other.Id;
-    //    }
-    //    return false;
-    //}
-
-    //public override int GetHashCode()
-    //{
-    //    return Id.GetHashCode();
-    //}
-
-    //public override string ToString()
-    //{
-    //    return Name;
-    //}
 }

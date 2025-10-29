@@ -5,5 +5,5 @@ public enum ActionType
     Unknown,
     Announcement,
     Command,
-    Gong,
+    Sound,
 }

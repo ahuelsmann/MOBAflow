@@ -9,7 +9,7 @@ using Newtonsoft.Json.Linq;
 /// Custom JSON converter for workflow references in stations.
 /// Serializes only the workflow GUID instead of the entire object.
 /// </summary>
-public class WorkflowReferenceConverter : JsonConverter<Workflow?>
+public class WorkflowConverter : JsonConverter<Workflow?>
 {
     // Set during deserialization
     public static Project? CurrentProject { get; set; }

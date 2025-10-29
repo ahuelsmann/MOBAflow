@@ -67,14 +67,4 @@ public partial class AnnouncementViewModel : ObservableObject
             .Replace("{TrainName}", journey.Train?.Name ?? "Unbekannt")
             .Replace("{CurrentLap}", journey.CurrentCounter.ToString());
     }
-
-    //public Announcement ToModel()
-    //{
-    //    return Model;
-    //}
-
-    //public static AnnouncementViewModel FromModel(Announcement model, ISpeakerEngine? speakerEngine = null, Project? project = null)
-    //{
-    //    return new AnnouncementViewModel(model, speakerEngine, project);
-    //}
 }

@@ -7,12 +7,12 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using System.Diagnostics;
 
-public partial class GongViewModel : ObservableObject
+public partial class AudioViewModel : ObservableObject
 {
     [ObservableProperty]
-    private Gong model;
+    private Audio model;
 
-    public GongViewModel(Gong model)
+    public AudioViewModel(Audio model)
     {
         Model = model;
     }
@@ -25,8 +25,7 @@ public partial class GongViewModel : ObservableObject
 
     public async Task ExecuteAsync(Journey journey, Station station)
     {
-        Debug.WriteLine("🔔 Gong wird abgespielt");
-
+        Debug.WriteLine("🔔 Sound wird abgespielt");
         await Task.CompletedTask;
     }
 }

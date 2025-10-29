@@ -20,18 +20,18 @@ public abstract class Base : IAction
     /// Name of an action. The user can use this property as free text to provide a short description of the action.
     /// </summary>
     public string Name { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// Can be used to set the order in which actions are processed.
     /// </summary>
     public int Number { get; set; }
-    
+
     /// <summary>
-    /// Specifies the type of this action (e.g., Command, Announcement, Gong).
+    /// Specifies the type of this action (e.g., Command, Announcement, Sound).
     /// Used for type identification and UI rendering. Derived classes override this to return their specific type.
     /// </summary>
     public virtual ActionType Type { get; set; }
-    
+
     /// <summary>
     /// List of additional actions that will be performed after this action.
     /// </summary>
@@ -44,14 +44,4 @@ public abstract class Base : IAction
     /// <param name="context">Execution context containing dependencies (Z21, SpeakerEngine, Project settings, etc.)</param>
     /// <returns>A task representing the asynchronous operation</returns>
     public abstract Task ExecuteAsync(ActionExecutionContext context);
-
-    /// <summary>
-    /// Executes this action asynchronously without context (for backward compatibility).
-    /// Creates an empty ActionExecutionContext internally.
-    /// </summary>
-    /// <returns>A task representing the asynchronous operation</returns>
-    public Task ExecuteAsync()
-    {
-     return ExecuteAsync(new ActionExecutionContext());
-    }
 }

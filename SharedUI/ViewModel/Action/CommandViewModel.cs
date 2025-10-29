@@ -77,14 +77,4 @@ public partial class CommandViewModel : ObservableObject
             Debug.WriteLine("⚠ Z21 nicht verfügbar - Command nicht gesendet");
         }
     }
-
-    //public Command ToModel()
-    //{
-    //    return Model;
-    //}
-
-    //public static CommandViewModel FromModel(Command model, Z21? z21 = null)
-    //{
-    //    return new CommandViewModel(model, z21);
-    //}
 }

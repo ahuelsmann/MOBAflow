@@ -19,6 +19,6 @@ public class Station
     public uint Track { get; set; }
     public bool IsExitOnLeft { get; set; }
 
-    [JsonConverter(typeof(WorkflowReferenceConverter))]
+    [JsonConverter(typeof(WorkflowConverter))]
     public Workflow? Flow { get; set; }
 }
