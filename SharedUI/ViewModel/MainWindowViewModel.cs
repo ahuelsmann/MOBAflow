@@ -1,6 +1,7 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Model;
+using Backend.Manager;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -16,7 +17,7 @@ public partial class MainWindowViewModel : ObservableObject
 {
     private readonly IIoService _ioService;
     private Backend.Z21? _z21;
-    private Backend.JourneyManager? _journeyManager;
+    private JourneyManager? _journeyManager;
 
     public MainWindowViewModel(IIoService ioService)
     {
@@ -137,7 +138,7 @@ public partial class MainWindowViewModel : ObservableObject
 
                     // Initialize JourneyManager with context
                     _journeyManager?.Dispose();
-                    _journeyManager = new Backend.JourneyManager(_z21, project.Journeys, executionContext);
+      _journeyManager = new JourneyManager(_z21, project.Journeys, executionContext);
 
                     ConnectToZ21Command.NotifyCanExecuteChanged();
                     DisconnectFromZ21Command.NotifyCanExecuteChanged();
@@ -319,7 +320,7 @@ public partial class MainWindowViewModel : ObservableObject
         CurrentSelectedNode?.RefreshDisplayName();
     }
 
-    // Finds the parent Project of a TreeNode (e.g., for a Station)
+    // Finds the parent Project of a TreeNode (e.g., for a Station or Platform)
     private Project? FindParentProject(TreeNodeViewModel node)
     {
         // Check if current node is a Project
@@ -332,20 +333,27 @@ public partial class MainWindowViewModel : ObservableObject
         // Type-check once, then search in projects
         return node.DataContext switch
         {
-            Station station => Solution.Projects.FirstOrDefault(p => ContainsStation(p, station)),
-            Workflow workflow => Solution.Projects.FirstOrDefault(p => p.Workflows.Contains(workflow)),
-            Journey journey => Solution.Projects.FirstOrDefault(p => p.Journeys.Contains(journey)),
-            Train train => Solution.Projects.FirstOrDefault(p => p.Trains.Contains(train)),
+    Station station => Solution.Projects.FirstOrDefault(p => ContainsStation(p, station)),
+            Platform platform => Solution.Projects.FirstOrDefault(p => ContainsPlatform(p, platform)),
+     Workflow workflow => Solution.Projects.FirstOrDefault(p => p.Workflows.Contains(workflow)),
+       Journey journey => Solution.Projects.FirstOrDefault(p => p.Journeys.Contains(journey)),
+   Train train => Solution.Projects.FirstOrDefault(p => p.Trains.Contains(train)),
             Locomotive loco => Solution.Projects.FirstOrDefault(p => p.Locomotives.Contains(loco)),
-            Setting setting => Solution.Projects.FirstOrDefault(p => p.Setting == setting),
-            _ => null
-        };
+         Setting setting => Solution.Projects.FirstOrDefault(p => p.Setting == setting),
+       _ => null
+   };
     }
 
     // Checks if a Station is contained in one of the Project's Journeys
     private static bool ContainsStation(Project project, Station station)
     {
         return project.Journeys.Any(j => j.Stations.Contains(station));
+    }
+
+    // Checks if a Platform is contained in one of the Project's Journey Stations
+    private static bool ContainsPlatform(Project project, Platform platform)
+    {
+        return project.Journeys.Any(j => j.Stations.Any(s => s.Platforms.Contains(platform)));
     }
 
     // Checks if a type is a "simple" type that should be displayed in the PropertyGrid

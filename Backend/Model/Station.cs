@@ -12,6 +12,7 @@ public class Station
     public Station()
     {
         Name = "New Station";
+        Platforms = new List<Platform>();
     }
 
     public string Name { get; set; }
@@ -22,6 +23,15 @@ public class Station
     public uint Track { get; set; }
     public bool IsExitOnLeft { get; set; }
 
+    /// <summary>
+    /// Workflow triggered by journey progression when the train reaches this station.
+    /// </summary>
     [JsonConverter(typeof(WorkflowConverter))]
     public Workflow? Flow { get; set; }
+
+    /// <summary>
+    /// List of platforms associated with this station.
+    /// Each platform can have its own feedback-triggered workflow for platform-specific announcements.
+    /// </summary>
+    public List<Platform> Platforms { get; set; }
 }

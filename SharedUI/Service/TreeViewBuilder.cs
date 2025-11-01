@@ -126,13 +126,30 @@ public static class TreeViewBuilder
             // Stations
             foreach (var station in journey.Stations)
             {
-                journeyNode.Children.Add(new TreeNodeViewModel
+                var stationNode = new TreeNodeViewModel
                 {
                     DisplayName = station.Name,
                     Icon = "\uE80F", // Location icon
                     DataContext = station,
                     DataType = typeof(Station)
-                });
+                };
+
+                // Platforms under Station
+                if (station.Platforms.Count > 0)
+                {
+                    foreach (var platform in station.Platforms)
+                    {
+                        stationNode.Children.Add(new TreeNodeViewModel
+                        {
+                            DisplayName = platform.Name,
+                            Icon = "\uE81E", // Map pin icon for platform
+                            DataContext = platform,
+                            DataType = typeof(Platform)
+                        });
+                    }
+                }
+
+                journeyNode.Children.Add(stationNode);
             }
 
             journeysFolder.Children.Add(journeyNode);

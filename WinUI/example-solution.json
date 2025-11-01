@@ -509,7 +509,25 @@
               "Departure": "2024-03-15T14:35:00",
               "Track": 3,
               "IsExitOnLeft": true,
-              "Flow": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+              "Flow": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+              "Platforms": [
+                {
+                  "Name": "Gleis 3",
+                  "Track": 3,
+                  "InPort": 50,
+                  "Flow": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+                  "IsUsingTimerToIgnoreFeedbacks": true,
+                  "IntervalForTimerToIgnoreFeedbacks": 5.0
+                },
+                {
+                  "Name": "Gleis 4",
+                  "Track": 4,
+                  "InPort": 51,
+                  "Flow": null,
+                  "IsUsingTimerToIgnoreFeedbacks": false,
+                  "IntervalForTimerToIgnoreFeedbacks": 0.0
+                }
+              ]
             },
             {
               "Name": "Leverkusen Central",
@@ -519,7 +537,8 @@
               "Departure": "2024-03-15T14:52:00",
               "Track": 2,
               "IsExitOnLeft": false,
-              "Flow": null
+              "Flow": null,
+              "Platforms": []
             },
             {
               "Name": "Cologne Main Station",
@@ -529,7 +548,17 @@
               "Departure": null,
               "Track": 7,
               "IsExitOnLeft": true,
-              "Flow": "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+              "Flow": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+              "Platforms": [
+                {
+                  "Name": "Gleis 7",
+                  "Track": 7,
+                  "InPort": 52,
+                  "Flow": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+                  "IsUsingTimerToIgnoreFeedbacks": true,
+                  "IntervalForTimerToIgnoreFeedbacks": 3.0
+                }
+              ]
             }
           ],
           "CurrentCounter": 0,
@@ -632,7 +661,17 @@
               "Departure": "2024-03-15T08:15:00",
               "Track": 11,
               "IsExitOnLeft": true,
-              "Flow": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+              "Flow": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+              "Platforms": [
+                {
+                  "Name": "Gleis 11",
+                  "Track": 11,
+                  "InPort": 60,
+                  "Flow": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+                  "IsUsingTimerToIgnoreFeedbacks": true,
+                  "IntervalForTimerToIgnoreFeedbacks": 4.0
+                }
+              ]
             },
             {
               "Name": "Nuremberg Central Station",
@@ -642,7 +681,8 @@
               "Departure": "2024-03-15T09:50:00",
               "Track": 5,
               "IsExitOnLeft": false,
-              "Flow": null
+              "Flow": null,
+              "Platforms": []
             },
             {
               "Name": "Frankfurt Main Station",
@@ -652,7 +692,8 @@
               "Departure": "2024-03-15T11:35:00",
               "Track": 9,
               "IsExitOnLeft": true,
-              "Flow": null
+              "Flow": null,
+              "Platforms": []
             },
             {
               "Name": "Hannover Central Station",
@@ -662,7 +703,8 @@
               "Departure": "2024-03-15T13:25:00",
               "Track": 4,
               "IsExitOnLeft": false,
-              "Flow": null
+              "Flow": null,
+              "Platforms": []
             },
             {
               "Name": "Hamburg Main Station",
@@ -672,7 +714,17 @@
               "Departure": null,
               "Track": 14,
               "IsExitOnLeft": true,
-              "Flow": "b2c3d4e5-f6a7-8901-2345-678901bcdef0"
+              "Flow": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+              "Platforms": [
+                {
+                  "Name": "Gleis 14",
+                  "Track": 14,
+                  "InPort": 61,
+                  "Flow": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+                  "IsUsingTimerToIgnoreFeedbacks": true,
+                  "IntervalForTimerToIgnoreFeedbacks": 6.0
+                }
+              ]
             }
           ],
           "CurrentCounter": 0,

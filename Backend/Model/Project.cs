@@ -19,7 +19,7 @@ public class Project
         Trains = [];
         Workflows = [];
         Journeys = [];
-        IpAddresses = ["127.0.0.1"];
+        IpAddresses = [];
         Setting = new Setting();
     }
 
