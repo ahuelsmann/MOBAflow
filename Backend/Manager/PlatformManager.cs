@@ -28,32 +28,32 @@ public class PlatformManager : BaseFeedbackManager<Platform>
 
     protected override async Task ProcessFeedbackAsync(FeedbackResult feedback)
     {
-   // Wait for lock (blocking) - queues feedbacks sequentially
+        // Wait for lock (blocking) - queues feedbacks sequentially
         await _processingLock.WaitAsync();
 
         try
         {
-     Debug.WriteLine($"📡 Platform feedback received: InPort {feedback.InPort}");
+            Debug.WriteLine($"📡 Platform feedback received: InPort {feedback.InPort}");
 
-      foreach (var platform in Entities)
-         {
-       if (GetInPort(platform) == feedback.InPort)
-   {
-    if (ShouldIgnoreFeedback(platform))
-  {
-    Debug.WriteLine($"⏭ Feedback for platform '{GetEntityName(platform)}' ignored (timer active)");
-      continue;
-       }
+            foreach (var platform in Entities)
+            {
+                if (GetInPort(platform) == feedback.InPort)
+                {
+                    if (ShouldIgnoreFeedback(platform))
+                    {
+                        Debug.WriteLine($"⏭ Feedback for platform '{GetEntityName(platform)}' ignored (timer active)");
+                        continue;
+                    }
 
-   UpdateLastFeedbackTime(GetInPort(platform));
-    await HandlePlatformFeedbackAsync(platform);
-       }
+                    UpdateLastFeedbackTime(GetInPort(platform));
+                    await HandlePlatformFeedbackAsync(platform);
+                }
             }
-   }
+        }
         finally
-  {
-      _processingLock.Release();
-   }
+        {
+            _processingLock.Release();
+        }
     }
 
     /// <summary>
@@ -62,35 +62,35 @@ public class PlatformManager : BaseFeedbackManager<Platform>
     /// <param name="platform">The platform whose workflow should be executed</param>
     private async Task HandlePlatformFeedbackAsync(Platform platform)
     {
-   try
-  {
-      Debug.WriteLine($"▶ Executing platform workflow for '{platform.Name}' (Track {platform.Track})");
+        try
+        {
+            Debug.WriteLine($"▶ Executing platform workflow for '{platform.Name}' (Track {platform.Track})");
 
-    if (platform.Flow != null)
-{
-        await platform.Flow.StartAsync(ExecutionContext);
-      Debug.WriteLine($"✅ Platform workflow '{platform.Name}' completed");
-}
+            if (platform.Flow != null)
+            {
+                await platform.Flow.StartAsync(ExecutionContext);
+                Debug.WriteLine($"✅ Platform workflow '{platform.Name}' completed");
+            }
             else
-       {
-      Debug.WriteLine($"⚠ Platform '{platform.Name}' has no workflow assigned");
-    }
-     }
+            {
+                Debug.WriteLine($"⚠ Platform '{platform.Name}' has no workflow assigned");
+            }
+        }
         catch (Exception ex)
-  {
-      Debug.WriteLine($"❌ Error in platform workflow '{platform.Name}': {ex.Message}");
-      }
+        {
+            Debug.WriteLine($"❌ Error in platform workflow '{platform.Name}': {ex.Message}");
+        }
     }
 
     public override void ResetAll()
     {
-   base.ResetAll();
-    Debug.WriteLine("🔄 All platform timers reset");
+        base.ResetAll();
+        Debug.WriteLine("🔄 All platform timers reset");
     }
 
     protected override uint GetInPort(Platform entity) => entity.InPort;
 
-protected override bool IsUsingTimerToIgnoreFeedbacks(Platform entity) => entity.IsUsingTimerToIgnoreFeedbacks;
+    protected override bool IsUsingTimerToIgnoreFeedbacks(Platform entity) => entity.IsUsingTimerToIgnoreFeedbacks;
 
     protected override double GetIntervalForTimerToIgnoreFeedbacks(Platform entity) => entity.IntervalForTimerToIgnoreFeedbacks;
 

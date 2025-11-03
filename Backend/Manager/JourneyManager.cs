@@ -19,7 +19,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>
     /// <param name="journeys">List of journeys to manage</param>
     /// <param name="executionContext">Optional execution context; if null, a new context with Z21 will be created</param>
     public JourneyManager(Z21 z21, List<Journey> journeys, Model.Action.ActionExecutionContext? executionContext = null)
- : base(z21, journeys, executionContext)
+    : base(z21, journeys, executionContext)
     {
     }
 
@@ -28,29 +28,29 @@ public class JourneyManager : BaseFeedbackManager<Journey>
         // Wait for lock (blocking) - queues feedbacks sequentially
         await _processingLock.WaitAsync();
 
-      try
+        try
         {
-     Debug.WriteLine($"📡 Feedback received: InPort {feedback.InPort}");
+            Debug.WriteLine($"📡 Feedback received: InPort {feedback.InPort}");
 
-      foreach (var journey in Entities)
-         {
-     if (GetInPort(journey) == feedback.InPort)
-        {
-        if (ShouldIgnoreFeedback(journey))
-      {
-     Debug.WriteLine($"⏭ Feedback for journey '{GetEntityName(journey)}' ignored (timer active)");
-    continue;
-  }
+            foreach (var journey in Entities)
+            {
+                if (GetInPort(journey) == feedback.InPort)
+                {
+                    if (ShouldIgnoreFeedback(journey))
+                    {
+                        Debug.WriteLine($"⏭ Feedback for journey '{GetEntityName(journey)}' ignored (timer active)");
+                        continue;
+                    }
 
-       UpdateLastFeedbackTime(GetInPort(journey));
-    await HandleJourneyFeedbackAsync(journey);
-  }
-    }
+                    UpdateLastFeedbackTime(GetInPort(journey));
+                    await HandleJourneyFeedbackAsync(journey);
+                }
+            }
         }
         finally
-  {
+        {
             _processingLock.Release();
-   }
+        }
     }
 
     private async Task HandleJourneyFeedbackAsync(Journey journey)
@@ -59,67 +59,67 @@ public class JourneyManager : BaseFeedbackManager<Journey>
         Debug.WriteLine($"🔄 Journey '{journey.Name}': Round {journey.CurrentCounter}, Position {journey.CurrentPos}");
 
         if (journey.CurrentPos >= journey.Stations.Count)
-    {
-    Debug.WriteLine($"⚠ CurrentPos out of Stations list bounds");
-         return;
-   }
+        {
+            Debug.WriteLine($"⚠ CurrentPos out of Stations list bounds");
+            return;
+        }
 
         var currentStation = journey.Stations[(int)journey.CurrentPos];
 
-  if (journey.CurrentCounter >= currentStation.NumberOfLapsToStop)
+        if (journey.CurrentCounter >= currentStation.NumberOfLapsToStop)
         {
-       Debug.WriteLine($"🚉 Station reached: {currentStation.Name}");
+            Debug.WriteLine($"🚉 Station reached: {currentStation.Name}");
 
-       // Execute station workflow if present
-    if (currentStation.Flow != null)
-  {
-          await currentStation.Flow.StartAsync(ExecutionContext);
-    }
+            // Execute station workflow if present
+            if (currentStation.Flow != null)
+            {
+                await currentStation.Flow.StartAsync(ExecutionContext);
+            }
 
             journey.CurrentCounter = 0;
 
             bool isLastStation = journey.CurrentPos == journey.Stations.Count - 1;
 
-    if (isLastStation)
-         {
- await HandleLastStationAsync(journey);
-   }
-    else
-  {
-     journey.CurrentPos++;
-      }
-}
+            if (isLastStation)
+            {
+                await HandleLastStationAsync(journey);
+            }
+            else
+            {
+                journey.CurrentPos++;
+            }
+        }
     }
 
     private async Task HandleLastStationAsync(Journey journey)
     {
-   Debug.WriteLine($"🏁 Last station of journey '{journey.Name}' reached");
+        Debug.WriteLine($"🏁 Last station of journey '{journey.Name}' reached");
 
         switch (journey.OnLastStop)
         {
-          case BehaviorOnLastStop.BeginAgainFromFistStop:
-     Debug.WriteLine("🔄 Journey will restart from beginning");
-      journey.CurrentPos = 0;
-         break;
+            case BehaviorOnLastStop.BeginAgainFromFistStop:
+                Debug.WriteLine("🔄 Journey will restart from beginning");
+                journey.CurrentPos = 0;
+                break;
 
-      case BehaviorOnLastStop.GotoJourney:
-   Debug.WriteLine($"➡ Switching to journey: {journey.NextJourney}");
- var nextJourney = Entities.FirstOrDefault(j => j.Name == journey.NextJourney);
-     if (nextJourney != null)
-      {
-           nextJourney.CurrentPos = nextJourney.FirstPos;
-     Debug.WriteLine($"✅ Journey '{nextJourney.Name}' activated at position {nextJourney.FirstPos}");
+            case BehaviorOnLastStop.GotoJourney:
+                Debug.WriteLine($"➡ Switching to journey: {journey.NextJourney}");
+                var nextJourney = Entities.FirstOrDefault(j => j.Name == journey.NextJourney);
+                if (nextJourney != null)
+                {
+                    nextJourney.CurrentPos = nextJourney.FirstPos;
+                    Debug.WriteLine($"✅ Journey '{nextJourney.Name}' activated at position {nextJourney.FirstPos}");
+                }
+                else
+                {
+                    Debug.WriteLine($"⚠ Journey '{journey.NextJourney}' not found");
+                }
+                break;
+
+            case BehaviorOnLastStop.None:
+                Debug.WriteLine("⏹ Journey stops");
+                break;
         }
-    else
-      {
-       Debug.WriteLine($"⚠ Journey '{journey.NextJourney}' not found");
-     }
-          break;
-
-   case BehaviorOnLastStop.None:
-   Debug.WriteLine("⏹ Journey stops");
-        break;
-      }
 
         await Task.CompletedTask;
     }
@@ -130,20 +130,20 @@ public class JourneyManager : BaseFeedbackManager<Journey>
     /// <param name="journey">The journey to reset</param>
     public static void Reset(Journey journey)
     {
-      journey.CurrentCounter = 0;
+        journey.CurrentCounter = 0;
         journey.CurrentPos = journey.FirstPos;
         Debug.WriteLine($"🔄 Journey '{journey.Name}' reset");
     }
 
     public override void ResetAll()
     {
-  foreach (var journey in Entities)
+        foreach (var journey in Entities)
         {
             Reset(journey);
-}
-     base.ResetAll();
-  Debug.WriteLine("🔄 All journeys reset");
- }
+        }
+        base.ResetAll();
+        Debug.WriteLine("🔄 All journeys reset");
+    }
 
     protected override uint GetInPort(Journey entity) => entity.InPort;
 
@@ -155,6 +155,6 @@ public class JourneyManager : BaseFeedbackManager<Journey>
 
     protected override void CleanupResources()
     {
-  _processingLock.Dispose();
+        _processingLock.Dispose();
     }
 }

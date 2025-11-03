@@ -18,53 +18,53 @@ public class WorkflowManager : BaseFeedbackManager<Workflow>
     /// <param name="workflows">List of workflows to manage</param>
     /// <param name="executionContext">Optional execution context; if null, a new context with Z21 will be created</param>
     public WorkflowManager(Z21 z21, List<Workflow> workflows, Model.Action.ActionExecutionContext? executionContext = null)
-     : base(z21, workflows, executionContext)
+    : base(z21, workflows, executionContext)
     {
     }
 
     protected override async Task ProcessFeedbackAsync(FeedbackResult feedback)
     {
         // Wait for lock (blocking) - queues feedbacks sequentially
-  await _processingLock.WaitAsync();
+        await _processingLock.WaitAsync();
 
         try
-    {
-       Debug.WriteLine($"📡 Workflow feedback received: InPort {feedback.InPort}");
+        {
+            Debug.WriteLine($"📡 Workflow feedback received: InPort {feedback.InPort}");
 
             foreach (var workflow in Entities)
-{
-       if (GetInPort(workflow) == feedback.InPort)
-       {
-         if (ShouldIgnoreFeedback(workflow))
-   {
-      Debug.WriteLine($"⏭ Feedback for workflow '{GetEntityName(workflow)}' ignored (timer active)");
-            continue;
-       }
+            {
+                if (GetInPort(workflow) == feedback.InPort)
+                {
+                    if (ShouldIgnoreFeedback(workflow))
+                    {
+                        Debug.WriteLine($"⏭ Feedback for workflow '{GetEntityName(workflow)}' ignored (timer active)");
+                        continue;
+                    }
 
-          UpdateLastFeedbackTime(GetInPort(workflow));
-           await HandleWorkflowFeedbackAsync(workflow);
-        }
-    }
+                    UpdateLastFeedbackTime(GetInPort(workflow));
+                    await HandleWorkflowFeedbackAsync(workflow);
+                }
+            }
         }
         finally
-  {
-      _processingLock.Release();
+        {
+            _processingLock.Release();
         }
-}
+    }
 
     private async Task HandleWorkflowFeedbackAsync(Workflow workflow)
     {
-   try
+        try
         {
-         Debug.WriteLine($"▶ Executing workflow '{workflow.Name}'");
+            Debug.WriteLine($"▶ Executing workflow '{workflow.Name}'");
 
-      await workflow.StartAsync(ExecutionContext);
+            await workflow.StartAsync(ExecutionContext);
 
             Debug.WriteLine($"✅ Workflow '{workflow.Name}' completed");
         }
         catch (Exception ex)
         {
-     Debug.WriteLine($"❌ Error in workflow '{workflow.Name}': {ex.Message}");
+            Debug.WriteLine($"❌ Error in workflow '{workflow.Name}': {ex.Message}");
         }
     }
 

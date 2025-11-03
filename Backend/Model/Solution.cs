@@ -27,21 +27,21 @@ public class Solution
     public static async Task SaveAsync(string path, Solution? solution)
     {
         if (!string.IsNullOrEmpty(path) && solution != null)
-{
-    JsonSerializerSettings settings = new()
+        {
+            JsonSerializerSettings settings = new()
             {
-          Formatting = Formatting.Indented,
-      Converters = { new ActionConverter() },
+                Formatting = Formatting.Indented,
+                Converters = { new ActionConverter() },
                 // Ignore reference loops (e.g., circular references)
                 ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
                 // Do NOT ignore null values - important for workflow references!
-        // If Flow = null, this must be saved
-            NullValueHandling = NullValueHandling.Include
-   };
+                // If Flow = null, this must be saved
+                NullValueHandling = NullValueHandling.Include
+            };
 
- string json = JsonConvert.SerializeObject(solution, settings);
+            string json = JsonConvert.SerializeObject(solution, settings);
 
-     await File.WriteAllTextAsync(path, json);
+            await File.WriteAllTextAsync(path, json);
         }
     }
 
@@ -53,75 +53,75 @@ public class Solution
     public async Task<Solution?> LoadAsync(string path)
     {
         if (!string.IsNullOrEmpty(path) && File.Exists(path))
-    {
-   string json = await File.ReadAllTextAsync(path);
-   if (!string.IsNullOrEmpty(json))
-          {
-    JsonSerializerSettings settings = new()
- {
-          Converters = { new ActionConverter() },
-     ReferenceLoopHandling = ReferenceLoopHandling.Ignore
-     };
+        {
+            string json = await File.ReadAllTextAsync(path);
+            if (!string.IsNullOrEmpty(json))
+            {
+                JsonSerializerSettings settings = new()
+                {
+                    Converters = { new ActionConverter() },
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+                };
 
-     var temp = JsonConvert.DeserializeObject<Solution>(json, settings);
+                var temp = JsonConvert.DeserializeObject<Solution>(json, settings);
 
-     if (temp != null)
-   {
-    temp.Name = path;
+                if (temp != null)
+                {
+                    temp.Name = path;
 
-            // Restore workflow references in stations and platforms
-           RestoreWorkflowReferences(temp);
+                    // Restore workflow references in stations and platforms
+                    RestoreWorkflowReferences(temp);
 
-       return temp;
-         }
-    }
+                    return temp;
+                }
+            }
         }
         return null;
     }
 
-/// <summary>
+    /// <summary>
     /// Restores workflow references in stations and platforms after loading
     /// </summary>
- private static void RestoreWorkflowReferences(Solution solution)
+    private static void RestoreWorkflowReferences(Solution solution)
     {
         System.Diagnostics.Debug.WriteLine("🔄 RestoreWorkflowReferences START");
 
         foreach (var project in solution.Projects)
-  {
-     System.Diagnostics.Debug.WriteLine($"  Project: {project.Name}");
-         System.Diagnostics.Debug.WriteLine($"  Workflows: {project.Workflows.Count}");
-
-         foreach (var wf in project.Workflows)
         {
-        System.Diagnostics.Debug.WriteLine($"    - {wf.Name} (Id: {wf.Id})");
-   }
+            System.Diagnostics.Debug.WriteLine($"  Project: {project.Name}");
+            System.Diagnostics.Debug.WriteLine($"  Workflows: {project.Workflows.Count}");
 
-  // Iterate through all journeys and stations
- foreach (var journey in project.Journeys)
+            foreach (var wf in project.Workflows)
             {
-     System.Diagnostics.Debug.WriteLine($"  Journey: {journey.Name}");
-
-        foreach (var station in journey.Stations)
-    {
-                 System.Diagnostics.Debug.WriteLine($"    Station: {station.Name}");
-
-   // Restore station workflow reference
-         var restoredStationFlow = RestoreWorkflowReference(station.Flow, project.Workflows, "Station", station.Name);
-    station.Flow = restoredStationFlow;
-
-        // Restore platform workflow references
-       if (station.Platforms.Count > 0)
-            {
-        System.Diagnostics.Debug.WriteLine($"      Platforms: {station.Platforms.Count}");
-   foreach (var platform in station.Platforms)
-    {
-       var restoredPlatformFlow = RestoreWorkflowReference(platform.Flow, project.Workflows, "Platform", platform.Name);
-     platform.Flow = restoredPlatformFlow;
-   }
-      }
-         }
+                System.Diagnostics.Debug.WriteLine($"    - {wf.Name} (Id: {wf.Id})");
             }
- }
+
+            // Iterate through all journeys and stations
+            foreach (var journey in project.Journeys)
+            {
+                System.Diagnostics.Debug.WriteLine($"  Journey: {journey.Name}");
+
+                foreach (var station in journey.Stations)
+                {
+                    System.Diagnostics.Debug.WriteLine($"    Station: {station.Name}");
+
+                    // Restore station workflow reference
+                    var restoredStationFlow = RestoreWorkflowReference(station.Flow, project.Workflows, "Station", station.Name);
+                    station.Flow = restoredStationFlow;
+
+                    // Restore platform workflow references
+                    if (station.Platforms.Count > 0)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"      Platforms: {station.Platforms.Count}");
+                        foreach (var platform in station.Platforms)
+                        {
+                            var restoredPlatformFlow = RestoreWorkflowReference(platform.Flow, project.Workflows, "Platform", platform.Name);
+                            platform.Flow = restoredPlatformFlow;
+                        }
+                    }
+                }
+            }
+        }
 
         System.Diagnostics.Debug.WriteLine("🔄 RestoreWorkflowReferences END");
     }
@@ -133,43 +133,43 @@ public class Solution
     private static Workflow? RestoreWorkflowReference(
         Workflow? currentFlow,
         List<Workflow> projectWorkflows,
-   string entityType,
+        string entityType,
         string entityName)
     {
-      System.Diagnostics.Debug.WriteLine($"      Flow BEFORE: {currentFlow?.Name ?? "null"} (Id: {currentFlow?.Id})");
+        System.Diagnostics.Debug.WriteLine($"      Flow BEFORE: {currentFlow?.Name ?? "null"} (Id: {currentFlow?.Id})");
 
         // Flow is now a temporary Workflow object with only the GUID
-   // Replace it with the real reference from project.Workflows
+        // Replace it with the real reference from project.Workflows
         if (currentFlow != null)
         {
-      Workflow? matchingWorkflow = null;
+            Workflow? matchingWorkflow = null;
 
-     // Search by GUID
-          if (currentFlow.Id != Guid.Empty)
+            // Search by GUID
+            if (currentFlow.Id != Guid.Empty)
             {
-         matchingWorkflow = projectWorkflows.FirstOrDefault(w => w.Id == currentFlow.Id);
-    System.Diagnostics.Debug.WriteLine($"        Searching by GUID: {currentFlow.Id}");
+                matchingWorkflow = projectWorkflows.FirstOrDefault(w => w.Id == currentFlow.Id);
+                System.Diagnostics.Debug.WriteLine($"        Searching by GUID: {currentFlow.Id}");
             }
 
             // Fallback: Search by name (old files)
-   if (matchingWorkflow == null && !string.IsNullOrEmpty(currentFlow.Name))
- {
-           matchingWorkflow = projectWorkflows.FirstOrDefault(w => w.Name == currentFlow.Name);
-       System.Diagnostics.Debug.WriteLine($"        Searching by Name: {currentFlow.Name}");
+            if (matchingWorkflow == null && !string.IsNullOrEmpty(currentFlow.Name))
+            {
+                matchingWorkflow = projectWorkflows.FirstOrDefault(w => w.Name == currentFlow.Name);
+                System.Diagnostics.Debug.WriteLine($"        Searching by Name: {currentFlow.Name}");
             }
 
-   if (matchingWorkflow != null)
-  {
-    System.Diagnostics.Debug.WriteLine($"        ✅ Found for {entityType} '{entityName}': {matchingWorkflow.Name} (Id: {matchingWorkflow.Id})");
+            if (matchingWorkflow != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"        ✅ Found for {entityType} '{entityName}': {matchingWorkflow.Name} (Id: {matchingWorkflow.Id})");
                 return matchingWorkflow;
             }
-       else
-     {
-     System.Diagnostics.Debug.WriteLine($" ❌ NO MATCHING WORKFLOW FOUND for {entityType} '{entityName}'!");
-      return null;
- }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($" ❌ NO MATCHING WORKFLOW FOUND for {entityType} '{entityName}'!");
+                return null;
+            }
         }
 
-  return null;
+        return null;
     }
 }

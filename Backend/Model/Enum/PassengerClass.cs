@@ -7,7 +7,9 @@ public enum PassengerClass
     Second,
     Third,
     Dining,
+    Bistro,
     Sleeping,
     Baggage,
-    MailCar,
+    Bike,
+    Mail,
 }
