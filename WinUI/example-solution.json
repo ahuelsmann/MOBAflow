@@ -428,78 +428,24 @@
       ],
       "Journeys": [
         {
-          "InPort": 1,
-          "IsUsingTimerToIgnoreFeedbacks": false,
-          "IntervalForTimerToIgnoreFeedbacks": 5.0,
           "Name": "RE 78 (Porta-Express)",
-          "Text": "Regional Express to Cologne via Düsseldorf and Leverkusen",
+          "Text": "Nächster Halt {StationName}. Ausstieg in Fahrtrichtung {StationIsExitOnLeft}.",
+          "InPort": 1,
+          "IsUsingTimerToIgnoreFeedbacks": true,
+          "IntervalForTimerToIgnoreFeedbacks": 5.0,
           "Train": {
             "IsDoubleTraction": false,
             "Name": "RE 78",
             "TrainType": "Passenger",
             "ServiceType": "RegionalExpress",
-            "Locomotives": [
-              {
-                "Name": "BR 101 - DB Regio",
-                "Pos": 1,
-                "DigitalAddress": 3,
-                "Manufacturer": "Märklin",
-                "ArticleNumber": "37101",
-                "Series": "101",
-                "ColorPrimary": "Orientrot",
-                "ColorSecondary": "Verkehrsrot",
-                "IsPushing": false,
-                "Details": {
-                  "Axles": 4,
-                  "Epoch": "VI",
-                  "RailroadCompany": "DB Regio",
-                  "Power": "AC",
-                  "Digital": "mfx",
-                  "Description": "Electric locomotive for passenger services"
-                }
-              }
-            ],
-            "Wagons": [
-              {
-                "Name": "Compartment Coach 2nd Class",
-                "Pos": 1,
-                "DigitalAddress": null,
-                "Manufacturer": "Märklin",
-                "ArticleNumber": "43125",
-                "Series": "Bm 235",
-                "ColorPrimary": "Chromoxidgrün",
-                "ColorSecondary": null,
-                "WagonClass": "Second",
-                "Details": {
-                  "Axles": 4,
-                  "Epoch": "IV",
-                  "RailroadCompany": "DB",
-                  "Power": null,
-                  "Digital": null,
-                  "Description": "Standard 2nd class passenger coach"
-                }
-              },
-              {
-                "Name": "Compartment Coach 2nd Class",
-                "Pos": 2,
-                "DigitalAddress": null,
-                "Manufacturer": "Märklin",
-                "ArticleNumber": "43125",
-                "Series": "Bm 235",
-                "ColorPrimary": "Chromoxidgrün",
-                "ColorSecondary": null,
-                "WagonClass": "Second",
-                "Details": {
-                  "Axles": 4,
-                  "Epoch": "IV",
-                  "RailroadCompany": "DB",
-                  "Power": null,
-                  "Digital": null,
-                  "Description": "Standard 2nd class passenger coach"
-                }
-              }
-            ]
+            "Locomotives": [],
+            "Wagons": []
           },
+          "CurrentCounter": 0,
+          "CurrentPos": 0,
+          "OnLastStop": 1,
+          "NextJourney": null,
+          "FirstPos": 0,
           "Stations": [
             {
               "Name": "Bielefeld Hauptbahnhof",
@@ -509,37 +455,76 @@
               "Departure": null,
               "Track": 1,
               "IsExitOnLeft": true,
-              "Flow": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+              "Flow": null,
               "Platforms": []
             },
             {
-              "Name": "Leverkusen Central",
+              "Name": "Herford",
               "Number": 2,
               "NumberOfLapsToStop": 2,
               "Arrival": null,
               "Departure": null,
-              "Track": 2,
+              "Track": 1,
               "IsExitOnLeft": false,
               "Flow": null,
               "Platforms": []
             },
             {
-              "Name": "Cologne Main Station",
+              "Name": "Löhne in Westfalen",
               "Number": 3,
               "NumberOfLapsToStop": 2,
               "Arrival": null,
               "Departure": null,
-              "Track": 7,
+              "Track": 1,
               "IsExitOnLeft": true,
-              "Flow": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+              "Flow": null,
+              "Platforms": []
+            },
+            {
+              "Name": "Bad Oeynhausen",
+              "Number": 4,
+              "NumberOfLapsToStop": 2,
+              "Arrival": null,
+              "Departure": null,
+              "Track": 1,
+              "IsExitOnLeft": true,
+              "Flow": null,
+              "Platforms": []
+            },
+            {
+              "Name": "Porta Westfalica",
+              "Number": 5,
+              "NumberOfLapsToStop": 2,
+              "Arrival": null,
+              "Departure": null,
+              "Track": 1,
+              "IsExitOnLeft": true,
+              "Flow": null,
+              "Platforms": []
+            },
+            {
+              "Name": "Minden in Westfalen",
+              "Number": 6,
+              "NumberOfLapsToStop": 2,
+              "Arrival": null,
+              "Departure": null,
+              "Track": 1,
+              "IsExitOnLeft": true,
+              "Flow": null,
+              "Platforms": []
+            },
+            {
+              "Name": "Nienburg an der Weser",
+              "Number": 7,
+              "NumberOfLapsToStop": 2,
+              "Arrival": null,
+              "Departure": null,
+              "Track": 1,
+              "IsExitOnLeft": true,
+              "Flow": null,
               "Platforms": []
             }
-          ],
-          "CurrentCounter": 0,
-          "CurrentPos": 0,
-          "OnLastStop": "None",
-          "NextJourney": null,
-          "FirstPos": 0
+          ]
         }
       ],
       "IpAddresses": [ "127.0.0.1", "192.168.0.1" ],

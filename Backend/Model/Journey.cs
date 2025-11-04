@@ -19,19 +19,17 @@ public class Journey
         Stations = [];
     }
 
+    public string Name { get; set; }
+
+    public string? Text { get; set; }
+
     public uint InPort { get; set; }
 
     public bool IsUsingTimerToIgnoreFeedbacks { get; set; }
 
     public double IntervalForTimerToIgnoreFeedbacks { get; set; }
 
-    public string Name { get; set; }
-
-    public string? Text { get; set; }
-
     public Train? Train { get; set; }
-
-    public List<Station> Stations { get; set; }
 
     private uint _currentCounter;
     public uint CurrentCounter
@@ -68,4 +66,5 @@ public class Journey
 
     public uint FirstPos { get; set; }
     #endregion
+    public List<Station> Stations { get; set; }
 }
