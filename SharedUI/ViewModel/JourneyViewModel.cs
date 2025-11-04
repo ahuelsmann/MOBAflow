@@ -6,6 +6,7 @@ using Backend.Model.Enum;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using System.Collections.ObjectModel;
+using System.ComponentModel.DataAnnotations;
 
 public partial class JourneyViewModel : ObservableObject
 {
@@ -16,11 +17,10 @@ public partial class JourneyViewModel : ObservableObject
     {
         Model = model;
         Stations = new ObservableCollection<Station>(model.Stations);
-        
-        // Subscribe to Model's lightweight StateChanged event
+
+        // Subscribe to StateChanged event in model class Journey.
         Model.StateChanged += (s, e) =>
         {
-            // Notify UI about ALL properties that might have changed
             OnPropertyChanged(nameof(CurrentCounter));
             OnPropertyChanged(nameof(CurrentPos));
         };
@@ -50,6 +50,7 @@ public partial class JourneyViewModel : ObservableObject
         set => SetProperty(Model.Name, value, Model, (m, v) => m.Name = v);
     }
 
+    [Display(Name = "Text-to-speech template")]
     public string? Text
     {
         get => Model.Text;

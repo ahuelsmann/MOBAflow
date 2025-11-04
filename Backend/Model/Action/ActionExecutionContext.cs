@@ -19,4 +19,15 @@ public class ActionExecutionContext
     /// Current project including journeys and their stations. A workflow with actions can be defined at a station.
     /// </summary>
     public Project? Project { get; set; }
+
+    /// <summary>
+    /// Template text from Journey that can contain placeholders like {StationName}, {StationIsExitOnLeft}, etc.
+    /// This will be used by Announcement actions to generate context-specific announcements.
+    /// </summary>
+    public string? JourneyTemplateText { get; set; }
+
+    /// <summary>
+    /// Current station context for template variable replacement.
+    /// </summary>
+    public Station? CurrentStation { get; set; }
 }

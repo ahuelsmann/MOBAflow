@@ -27,25 +27,18 @@ public class IoService : IIoService
         if (_windowId == null)
             throw new InvalidOperationException("WindowId must be set before using IoService");
 
-        try
+        var picker = new FileOpenPicker(_windowId.Value)
         {
-            var picker = new FileOpenPicker(_windowId.Value)
-            {
-                SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
-                FileTypeFilter = { ".json" }
-            };
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+            FileTypeFilter = { ".json" }
+        };
 
-            var result = await picker.PickSingleFileAsync();
-            if (result == null) return (null, null, null);
+        var result = await picker.PickSingleFileAsync();
+        if (result == null) return (null, null, null);
 
-            var sol = new Solution();
-            sol = await sol.LoadAsync(result.Path);
-            return (sol, result.Path, null);
-        }
-        catch (Exception ex)
-        {
-            return (null, null, ex.Message);
-        }
+        var sol = new Solution();
+        sol = await sol.LoadAsync(result.Path);
+        return (sol, result.Path, null);
     }
 
     public async Task<(bool success, string? path, string? error)> SaveAsync(Solution solution, string? currentPath)
@@ -53,30 +46,23 @@ public class IoService : IIoService
         if (_windowId == null)
             throw new InvalidOperationException("WindowId must be set before using IoService");
 
-        try
+        string? path = currentPath;
+        if (string.IsNullOrEmpty(path))
         {
-            string? path = currentPath;
-            if (string.IsNullOrEmpty(path))
+            var picker = new FileSavePicker(_windowId.Value)
             {
-                var picker = new FileSavePicker(_windowId.Value)
-                {
-                    SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
-                    SuggestedFileName = "solution",
-                    DefaultFileExtension = ".json",
-                    FileTypeChoices = { { "JSON", new List<string> { ".json" } } }
-                };
+                SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+                SuggestedFileName = "solution",
+                DefaultFileExtension = ".json",
+                FileTypeChoices = { { "JSON", new List<string> { ".json" } } }
+            };
 
-                var result = await picker.PickSaveFileAsync();
-                if (result == null) return (false, null, null);
-                path = result.Path;
-            }
+            var result = await picker.PickSaveFileAsync();
+            if (result == null) return (false, null, null);
+            path = result.Path;
+        }
 
-            await Solution.SaveAsync(path!, solution);
-            return (true, path, null);
-        }
-        catch (Exception ex)
-        {
-            return (false, currentPath, ex.Message);
-        }
+        await Solution.SaveAsync(path!, solution);
+        return (true, path, null);
     }
 }

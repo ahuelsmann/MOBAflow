@@ -115,12 +115,15 @@ public static class TreeViewBuilder
 
         foreach (var journey in journeys)
         {
+            // Wrap Journey Model in JourneyViewModel for proper UI binding
+            var journeyViewModel = new JourneyViewModel(journey);
+            
             var journeyNode = new TreeNodeViewModel
             {
                 DisplayName = journey.Name,
                 Icon = "\uE81D", // Train icon
-                DataContext = journey,
-                DataType = typeof(Journey)
+                DataContext = journeyViewModel,  // ← Use ViewModel instead of Model
+                DataType = typeof(JourneyViewModel)  // ← Use ViewModel type
             };
 
             // Stations

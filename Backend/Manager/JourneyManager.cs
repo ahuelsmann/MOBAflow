@@ -73,7 +73,15 @@ public class JourneyManager : BaseFeedbackManager<Journey>
             // Execute station workflow if present
             if (currentStation.Flow != null)
             {
+                // Set template context for announcements
+                ExecutionContext.JourneyTemplateText = journey.Text;
+                ExecutionContext.CurrentStation = currentStation;
+
                 await currentStation.Flow.StartAsync(ExecutionContext);
+
+                // Clear context after workflow execution
+                ExecutionContext.JourneyTemplateText = null;
+                ExecutionContext.CurrentStation = null;
             }
 
             journey.CurrentCounter = 0;

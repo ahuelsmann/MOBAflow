@@ -51,23 +51,16 @@ public class StationManager : BaseFeedbackManager<Station>
 
     private async Task HandleFeedbackAsync(Station station)
     {
-        try
-        {
-            Debug.WriteLine($"▶ Executing station workflow for '{station.Name}'");
+        Debug.WriteLine($"▶ Executing station workflow for '{station.Name}'");
 
-            if (station.Flow != null)
-            {
-                await station.Flow.StartAsync(ExecutionContext);
-                Debug.WriteLine($"✅ Station workflow '{station.Name}' completed");
-            }
-            else
-            {
-                Debug.WriteLine($"⚠ Station '{station.Name}' has no workflow assigned");
-            }
-        }
-        catch (Exception ex)
+        if (station.Flow != null)
         {
-            Debug.WriteLine($"❌ Error in station workflow '{station.Name}': {ex.Message}");
+            await station.Flow.StartAsync(ExecutionContext);
+            Debug.WriteLine($"✅ Station workflow '{station.Name}' completed");
+        }
+        else
+        {
+            Debug.WriteLine($"⚠ Station '{station.Name}' has no workflow assigned");
         }
     }
 

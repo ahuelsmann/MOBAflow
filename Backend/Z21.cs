@@ -47,50 +47,42 @@ public class Z21 : IDisposable
     /// </summary>
     public async Task DisconnectAsync()
     {
-        try
+        if (_cancellationTokenSource != null)
         {
-            if (_cancellationTokenSource != null)
-            {
-                await _cancellationTokenSource.CancelAsync();
-            }
-
-            // Wait for tasks, but ignore OperationCanceledException
-            if (_receiverTask != null)
-            {
-                try
-                {
-                    await _receiverTask;
-                }
-                catch (OperationCanceledException)
-                {
-                    // Expected - Task was cancelled (includes TaskCanceledException)
-                    Debug.WriteLine("📡 Receiver task cancelled");
-                }
-            }
-
-            if (_pingTask != null)
-            {
-                try
-                {
-                    await _pingTask;
-                }
-                catch (OperationCanceledException)
-                {
-                    // Expected - Task was cancelled (includes TaskCanceledException)
-                    Debug.WriteLine("🏓 Ping task cancelled");
-                }
-            }
-
-            _client?.Close();
-            _client = null;
-
-            Debug.WriteLine("✅ Z21 disconnected successfully");
+            await _cancellationTokenSource.CancelAsync();
         }
-        catch (Exception ex)
+
+        // Wait for tasks, but ignore OperationCanceledException
+        if (_receiverTask != null)
         {
-            Debug.WriteLine($"⚠️ Error during disconnect: {ex.Message}");
-            // Don't rethrow - Disconnect should always "succeed"
+            try
+            {
+                await _receiverTask;
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected - Task was cancelled (includes TaskCanceledException)
+                Debug.WriteLine("📡 Receiver task cancelled");
+            }
         }
+
+        if (_pingTask != null)
+        {
+            try
+            {
+                await _pingTask;
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected - Task was cancelled (includes TaskCanceledException)
+                Debug.WriteLine("🏓 Ping task cancelled");
+            }
+        }
+
+        _client?.Close();
+        _client = null;
+
+        Debug.WriteLine("✅ Z21 disconnected successfully");
     }
 
     private async Task SendHandshakeAsync()
@@ -115,70 +107,59 @@ public class Z21 : IDisposable
     {
         while (!cancellationToken.IsCancellationRequested && _client != null)
         {
-            try
+            UdpReceiveResult result = await _client.ReceiveAsync(cancellationToken);
+            byte[] content = result.Buffer;
+
+            // Guard against very short UDP packets
+            if (content.Length < 4)
             {
-                UdpReceiveResult result = await _client.ReceiveAsync(cancellationToken);
-                byte[] content = result.Buffer;
-
-                // Guard against very short UDP packets
-                if (content.Length < 4)
-                {
-                    Debug.WriteLine($"⚠ Short UDP packet received ({content.Length} bytes): {BitConverter.ToString(content)}");
-                    continue;
-                }
-
-                string valuesHexadecimal = string.Join(",", content.Select(b => b.ToString("X2")));
-                string valuesDecimal = string.Join(",", content);
-                string header = BitConverter.ToString(content, 0, 4);
-
-                Debug.WriteLine($"Received message: {header}");
-                Debug.WriteLine(valuesHexadecimal);
-                Debug.WriteLine(valuesDecimal);
-                Debug.WriteLine("");
-
-                switch (header)
-                {
-                    case "07-00-40-00":
-                        Debug.WriteLine("🔴 Z21 emergency stop detected.");
-                        ParseStopMessage(content);
-                        break;
-                    case "08-00-50-00":
-                        Debug.WriteLine("🛠 Z21 broadcast flags set.");
-                        break;
-                    case "04-00-51-00":
-                        Debug.WriteLine("📡 Z21 broadcast flags queried.");
-                        break;
-                    case "08-00-61-00":
-                        Debug.WriteLine("⚡ Short circuit detected!");
-                        break;
-                    case "08-00-62-00":
-                        Debug.WriteLine("🔌 Track voltage and current values received.");
-                        ParseVoltageAndCurrent(content);
-                        break;
-                    case "0C-00-30-00":
-                        Debug.WriteLine("🚂 Locomotive information received.");
-                        ParseLocoInfo(content);
-                        break;
-                    case "0F-00-80-00":
-                        // Fire event asynchronously to not block UDP receive loop
-                        _ = Task.Run(() => Received?.Invoke(new FeedbackResult(content)));
-                        break;
-                    case "14-00-84-00":
-                        Debug.WriteLine("🔄 Z21 system state changed!");
-                        ParseSystemStateChange(content);
-                        break;
-                    default:
-                        Debug.WriteLine($"⚠ Unknown message: {BitConverter.ToString(content)}");
-                        break;
-                }
+                Debug.WriteLine($"⚠ Short UDP packet received ({content.Length} bytes): {BitConverter.ToString(content)}");
+                continue;
             }
-            catch (OperationCanceledException)
+
+            string valuesHexadecimal = string.Join(",", content.Select(b => b.ToString("X2")));
+            string valuesDecimal = string.Join(",", content);
+            string header = BitConverter.ToString(content, 0, 4);
+
+            Debug.WriteLine($"Received message: {header}");
+            Debug.WriteLine(valuesHexadecimal);
+            Debug.WriteLine(valuesDecimal);
+            Debug.WriteLine("");
+
+            switch (header)
             {
-                break;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"❌ Error receiving: {ex.Message}");
+                case "07-00-40-00":
+                    Debug.WriteLine("🔴 Z21 emergency stop detected.");
+                    ParseStopMessage(content);
+                    break;
+                case "08-00-50-00":
+                    Debug.WriteLine("🛠 Z21 broadcast flags set.");
+                    break;
+                case "04-00-51-00":
+                    Debug.WriteLine("📡 Z21 broadcast flags queried.");
+                    break;
+                case "08-00-61-00":
+                    Debug.WriteLine("⚡ Short circuit detected!");
+                    break;
+                case "08-00-62-00":
+                    Debug.WriteLine("🔌 Track voltage and current values received.");
+                    ParseVoltageAndCurrent(content);
+                    break;
+                case "0C-00-30-00":
+                    Debug.WriteLine("🚂 Locomotive information received.");
+                    ParseLocoInfo(content);
+                    break;
+                case "0F-00-80-00":
+                    // Fire event - async void handlers will not block the UDP receive loop
+                    Received?.Invoke(new FeedbackResult(content));
+                    break;
+                case "14-00-84-00":
+                    Debug.WriteLine("🔄 Z21 system state changed!");
+                    ParseSystemStateChange(content);
+                    break;
+                default:
+                    Debug.WriteLine($"⚠ Unknown message: {BitConverter.ToString(content)}");
+                    break;
             }
         }
     }
@@ -231,21 +212,10 @@ public class Z21 : IDisposable
     {
         while (!cancellationToken.IsCancellationRequested && _client != null)
         {
-            try
-            {
-                await Task.Delay(60000, cancellationToken);
+            await Task.Delay(60000, cancellationToken);
 
-                byte[] sendBytes = [0x04, 0x00, 0x1A, 0x00];
-                await _client.SendAsync(sendBytes, sendBytes.Length);
-            }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"❌ Error sending ping: {ex.Message}");
-            }
+            byte[] sendBytes = [0x04, 0x00, 0x1A, 0x00];
+            await _client.SendAsync(sendBytes, sendBytes.Length);
         }
     }
 

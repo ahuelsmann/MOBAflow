@@ -2,6 +2,8 @@ namespace Moba.Backend.Model.Action;
 
 using Enum;
 
+using System.Diagnostics;
+
 /// <summary>
 /// This action performs text-to-speech announcements using the Azure Speech Service.
 /// This action can be used for announcements of various services. For example, it could be used for loudspeaker announcements on a train, in a station, or on a platform.
@@ -31,15 +33,61 @@ public class Announcement : Base
 
     /// <summary>
     /// Executes the announcement by converting the text to speech using the SpeakerEngine.
+    /// If a JourneyTemplateText is provided in the context, it will be used instead of TextToSpeak and placeholders will be replaced.
     /// If no SpeakerEngine is available or TextToSpeak is empty, the announcement will be skipped with a debug message.
     /// </summary>
     /// <param name="context">Execution context containing the SpeakerEngine for text-to-speech conversion</param>
     /// <returns>A task representing the asynchronous operation</returns>
     public override async Task ExecuteAsync(ActionExecutionContext context)
     {
-        if (!string.IsNullOrEmpty(TextToSpeak) && context.SpeakerEngine != null)
+        // Use JourneyTemplateText if available, otherwise fall back to TextToSpeak
+        string? textToAnnounce = !string.IsNullOrEmpty(context.JourneyTemplateText)
+            ? context.JourneyTemplateText
+            : TextToSpeak;
+
+        if (string.IsNullOrEmpty(textToAnnounce))
         {
-            await context.SpeakerEngine.AnnouncementAsync(TextToSpeak, null);
+            Debug.WriteLine("⚠ Announcement skipped: No text to speak");
+            return;
         }
+
+        // Replace placeholders if CurrentStation is available
+        if (context.CurrentStation != null)
+        {
+            textToAnnounce = ReplacePlaceholders(textToAnnounce, context.CurrentStation);
+        }
+
+        if (context.SpeakerEngine != null)
+        {
+            Debug.WriteLine($"📢 Announcement: {textToAnnounce}");
+            await context.SpeakerEngine.AnnouncementAsync(textToAnnounce, null);
+        }
+        else
+        {
+            Debug.WriteLine("⚠ Announcement skipped: No SpeakerEngine available");
+        }
+    }
+
+    /// <summary>
+    /// Replaces placeholders in the template text with actual station data.
+    /// Supported placeholders:
+    /// - {StationName}: Name of the station
+    /// - {StationIsExitOnLeft}: "links" if exit is on left, "rechts" otherwise
+    /// </summary>
+    /// <param name="template">Template text with placeholders</param>
+    /// <param name="station">Current station for data replacement</param>
+    /// <returns>Text with replaced placeholders</returns>
+    private static string ReplacePlaceholders(string template, Station station)
+    {
+        var result = template;
+
+        // Replace {StationName}
+        result = result.Replace("{StationName}", station.Name);
+
+        // Replace {StationIsExitOnLeft}
+        string exitDirection = station.IsExitOnLeft ? "links" : "rechts";
+        result = result.Replace("{StationIsExitOnLeft}", exitDirection);
+
+        return result;
     }
 }

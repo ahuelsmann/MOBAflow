@@ -2,6 +2,8 @@ namespace Moba.Backend.Model;
 
 using Enum;
 
+using System.ComponentModel.DataAnnotations;
+
 /// <summary>
 /// Represents a journey or timetable with all stops or stations.
 /// </summary>
@@ -40,7 +42,7 @@ public class Journey
             if (_currentCounter != value)
             {
                 _currentCounter = value;
-                StateChanged?.Invoke(this, EventArgs.Empty);  // ✅ Simple event, no UI dependency
+                StateChanged?.Invoke(this, EventArgs.Empty);
             }
         }
     }
@@ -54,7 +56,7 @@ public class Journey
             if (_currentPos != value)
             {
                 _currentPos = value;
-                StateChanged?.Invoke(this, EventArgs.Empty);  // ✅ Simple event, no UI dependency
+                StateChanged?.Invoke(this, EventArgs.Empty);
             }
         }
     }

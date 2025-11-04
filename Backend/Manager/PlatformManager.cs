@@ -62,23 +62,16 @@ public class PlatformManager : BaseFeedbackManager<Platform>
     /// <param name="platform">The platform whose workflow should be executed</param>
     private async Task HandleFeedbackAsync(Platform platform)
     {
-        try
-        {
-            Debug.WriteLine($"▶ Executing platform workflow for '{platform.Name}' (Track {platform.Track})");
+        Debug.WriteLine($"▶ Executing platform workflow for '{platform.Name}' (Track {platform.Track})");
 
-            if (platform.Flow != null)
-            {
-                await platform.Flow.StartAsync(ExecutionContext);
-                Debug.WriteLine($"✅ Platform workflow '{platform.Name}' completed");
-            }
-            else
-            {
-                Debug.WriteLine($"⚠ Platform '{platform.Name}' has no workflow assigned");
-            }
-        }
-        catch (Exception ex)
+        if (platform.Flow != null)
         {
-            Debug.WriteLine($"❌ Error in platform workflow '{platform.Name}': {ex.Message}");
+            await platform.Flow.StartAsync(ExecutionContext);
+            Debug.WriteLine($"✅ Platform workflow '{platform.Name}' completed");
+        }
+        else
+        {
+            Debug.WriteLine($"⚠ Platform '{platform.Name}' has no workflow assigned");
         }
     }
 

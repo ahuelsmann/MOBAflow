@@ -138,7 +138,7 @@ public partial class MainWindowViewModel : ObservableObject
 
                     // Initialize JourneyManager with context
                     _journeyManager?.Dispose();
-      _journeyManager = new JourneyManager(_z21, project.Journeys, executionContext);
+                    _journeyManager = new JourneyManager(_z21, project.Journeys, executionContext);
 
                     ConnectToZ21Command.NotifyCanExecuteChanged();
                     DisconnectFromZ21Command.NotifyCanExecuteChanged();
@@ -330,18 +330,25 @@ public partial class MainWindowViewModel : ObservableObject
         if (Solution == null || node.DataContext == null)
             return null;
 
-        // Type-check once, then search in projects
-        return node.DataContext switch
+        // Handle JourneyViewModel - extract the Model
+        var dataContext = node.DataContext;
+        if (dataContext is JourneyViewModel journeyVm)
         {
-    Station station => Solution.Projects.FirstOrDefault(p => ContainsStation(p, station)),
+            return Solution.Projects.FirstOrDefault(p => p.Journeys.Contains(journeyVm.Model));
+        }
+
+        // Type-check once, then search in projects
+        return dataContext switch
+        {
+            Station station => Solution.Projects.FirstOrDefault(p => ContainsStation(p, station)),
             Platform platform => Solution.Projects.FirstOrDefault(p => ContainsPlatform(p, platform)),
-     Workflow workflow => Solution.Projects.FirstOrDefault(p => p.Workflows.Contains(workflow)),
-       Journey journey => Solution.Projects.FirstOrDefault(p => p.Journeys.Contains(journey)),
-   Train train => Solution.Projects.FirstOrDefault(p => p.Trains.Contains(train)),
+            Workflow workflow => Solution.Projects.FirstOrDefault(p => p.Workflows.Contains(workflow)),
+            Journey journey => Solution.Projects.FirstOrDefault(p => p.Journeys.Contains(journey)),
+            Train train => Solution.Projects.FirstOrDefault(p => p.Trains.Contains(train)),
             Locomotive loco => Solution.Projects.FirstOrDefault(p => p.Locomotives.Contains(loco)),
-         Settings setting => Solution.Projects.FirstOrDefault(p => p.Settings == setting),
-       _ => null
-   };
+            Settings setting => Solution.Projects.FirstOrDefault(p => p.Settings == setting),
+            _ => null
+        };
     }
 
     // Checks if a Station is contained in one of the Project's Journeys

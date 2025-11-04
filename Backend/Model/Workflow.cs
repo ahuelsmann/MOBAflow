@@ -55,21 +55,13 @@ public class Workflow
         // Create default context if none provided
         context ??= new Action.ActionExecutionContext();
 
-        try
+        foreach (var action in Actions)
         {
-            foreach (var action in Actions)
-            {
-                Debug.WriteLine($"  🔧 Executing action: {action.Name} ({action.Type})");
+            Debug.WriteLine($"  🔧 Executing action: {action.Name} ({action.Type})");
 
-                await action.ExecuteAsync(context);
-            }
+            await action.ExecuteAsync(context);
+        }
 
-            Debug.WriteLine($"✅ Workflow '{Name}' completed successfully");
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"❌ Error in workflow '{Name}': {ex.Message}");
-            throw;
-        }
+        Debug.WriteLine($"✅ Workflow '{Name}' completed successfully");
     }
 }

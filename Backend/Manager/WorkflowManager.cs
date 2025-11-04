@@ -54,18 +54,11 @@ public class WorkflowManager : BaseFeedbackManager<Workflow>
 
     private async Task HandleFeedbackAsync(Workflow workflow)
     {
-        try
-        {
-            Debug.WriteLine($"▶ Executing workflow '{workflow.Name}'");
+        Debug.WriteLine($"▶ Executing workflow '{workflow.Name}'");
 
-            await workflow.StartAsync(ExecutionContext);
+        await workflow.StartAsync(ExecutionContext);
 
-            Debug.WriteLine($"✅ Workflow '{workflow.Name}' completed");
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"❌ Error in workflow '{workflow.Name}': {ex.Message}");
-        }
+        Debug.WriteLine($"✅ Workflow '{workflow.Name}' completed");
     }
 
     protected override uint GetInPort(Workflow entity) => entity.InPort;
