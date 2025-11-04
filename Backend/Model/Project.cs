@@ -20,7 +20,7 @@ public class Project
         Workflows = [];
         Journeys = [];
         IpAddresses = [];
-        Setting = new Setting();
+        Settings = new Settings();
     }
 
     [Display(Name = "Project Name")]
@@ -35,5 +35,5 @@ public class Project
     public List<Workflow> Workflows { get; set; }
     public List<Journey> Journeys { get; set; }
     public List<string> IpAddresses { get; set; }
-    public Setting Setting { get; set; }
+    public Settings Settings { get; set; }
 }

@@ -5,11 +5,11 @@ using System.ComponentModel.DataAnnotations;
 /// <summary>
 /// This class represents general MOBA project related settings.
 /// </summary>
-public class Setting
+public class Settings
 {
     private uint _speechSynthesizerVolume = 90;
 
-    public Setting()
+    public Settings()
     {
         SpeechSynthesizerRate = -1;
         SpeechSynthesizerVolume = 90;

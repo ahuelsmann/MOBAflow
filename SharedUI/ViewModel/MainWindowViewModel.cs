@@ -339,7 +339,7 @@ public partial class MainWindowViewModel : ObservableObject
        Journey journey => Solution.Projects.FirstOrDefault(p => p.Journeys.Contains(journey)),
    Train train => Solution.Projects.FirstOrDefault(p => p.Trains.Contains(train)),
             Locomotive loco => Solution.Projects.FirstOrDefault(p => p.Locomotives.Contains(loco)),
-         Setting setting => Solution.Projects.FirstOrDefault(p => p.Setting == setting),
+         Settings setting => Solution.Projects.FirstOrDefault(p => p.Settings == setting),
        _ => null
    };
     }

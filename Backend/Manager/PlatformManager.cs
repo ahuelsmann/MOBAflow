@@ -16,13 +16,13 @@ public class PlatformManager : BaseFeedbackManager<Platform>
     private readonly SemaphoreSlim _processingLock = new(1, 1);
 
     /// <summary>
-    /// Initializes a new instance of the PlatformManager class.
+    /// Initializes a new instance of the PlatformManager.
     /// </summary>
     /// <param name="z21">Z21 command station for receiving feedback events</param>
     /// <param name="platforms">List of platforms to manage</param>
     /// <param name="executionContext">Optional execution context; if null, a new context with Z21 will be created</param>
     public PlatformManager(Z21 z21, List<Platform> platforms, Model.Action.ActionExecutionContext? executionContext = null)
-   : base(z21, platforms, executionContext)
+    : base(z21, platforms, executionContext)
     {
     }
 
@@ -33,7 +33,7 @@ public class PlatformManager : BaseFeedbackManager<Platform>
 
         try
         {
-            Debug.WriteLine($"📡 Platform feedback received: InPort {feedback.InPort}");
+            Debug.WriteLine($"📡 Feedback received: InPort {feedback.InPort}");
 
             foreach (var platform in Entities)
             {
@@ -46,7 +46,7 @@ public class PlatformManager : BaseFeedbackManager<Platform>
                     }
 
                     UpdateLastFeedbackTime(GetInPort(platform));
-                    await HandlePlatformFeedbackAsync(platform);
+                    await HandleFeedbackAsync(platform);
                 }
             }
         }
@@ -60,7 +60,7 @@ public class PlatformManager : BaseFeedbackManager<Platform>
     /// Executes the workflow associated with the platform.
     /// </summary>
     /// <param name="platform">The platform whose workflow should be executed</param>
-    private async Task HandlePlatformFeedbackAsync(Platform platform)
+    private async Task HandleFeedbackAsync(Platform platform)
     {
         try
         {

@@ -29,8 +29,8 @@ public class SolutionTest
 
         var project = solution.Projects[0];
 
-        Assert.That(project.Setting, Is.Not.Null, "Setting sollte nicht null sein");
-        Assert.That(project.Setting.SpeechSynthesizerVolume, Is.EqualTo(90));
+        Assert.That(project.Settings, Is.Not.Null, "Settings sollte nicht null sein");
+        Assert.That(project.Settings.SpeechSynthesizerVolume, Is.EqualTo(90));
 
         Assert.That(project.SpeakerEngines.Count, Is.EqualTo(1));
         Assert.That(project.SpeakerEngines[0].Name, Is.EqualTo("Microsoft.CognitiveServices.Speech"));

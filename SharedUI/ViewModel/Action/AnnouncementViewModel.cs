@@ -49,7 +49,7 @@ public partial class AnnouncementViewModel : ObservableObject
 
         if (_speakerEngine != null)
         {
-            string? voiceName = _project?.Setting.VoiceName;
+            string? voiceName = _project?.Settings.VoiceName;
             await _speakerEngine.AnnouncementAsync(message, voiceName);
         }
         else

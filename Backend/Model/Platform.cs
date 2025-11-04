@@ -1,6 +1,7 @@
 namespace Moba.Backend.Model;
 
 using Converter;
+
 using Newtonsoft.Json;
 
 /// <summary>
@@ -18,7 +19,7 @@ public class Platform
 
     /// <summary>
     /// Name or number of the platform (e.g., "Platform 1", "Gleis 3a").
-  /// </summary>
+    /// </summary>
     public string Name { get; set; }
 
     /// <summary>
@@ -30,10 +31,10 @@ public class Platform
     /// R-BUS port assignment for this platform's feedback point.
     /// When this feedback is triggered, the platform workflow will be executed.
     /// </summary>
-  public uint InPort { get; set; }
+    public uint InPort { get; set; }
 
     /// <summary>
- /// Workflow containing actions (announcements, commands, sounds) to be executed 
+    /// Workflow containing actions (announcements, commands, sounds) to be executed 
     /// when a train triggers the platform's feedback point.
     /// </summary>
     [JsonConverter(typeof(WorkflowConverter))]

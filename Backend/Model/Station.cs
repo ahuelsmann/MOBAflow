@@ -22,7 +22,7 @@ public class Station
     public DateTime? Departure { get; set; }
     public uint Track { get; set; } = 1;
     public bool IsExitOnLeft { get; set; }
-    public string TransferConnections { get; set; } = string.Empty; //  (Umstiegsmöglichkeit/Umsteigemöglichkeiten)
+    public string TransferConnections { get; set; } = string.Empty; // (Umsteigemöglichkeiten)
 
     /// <summary>
     /// Workflow triggered by journey progression when the train reaches this station.

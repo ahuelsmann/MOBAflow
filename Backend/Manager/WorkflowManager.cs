@@ -29,7 +29,7 @@ public class WorkflowManager : BaseFeedbackManager<Workflow>
 
         try
         {
-            Debug.WriteLine($"📡 Workflow feedback received: InPort {feedback.InPort}");
+            Debug.WriteLine($"📡 Feedback received: InPort {feedback.InPort}");
 
             foreach (var workflow in Entities)
             {
@@ -42,7 +42,7 @@ public class WorkflowManager : BaseFeedbackManager<Workflow>
                     }
 
                     UpdateLastFeedbackTime(GetInPort(workflow));
-                    await HandleWorkflowFeedbackAsync(workflow);
+                    await HandleFeedbackAsync(workflow);
                 }
             }
         }
@@ -52,7 +52,7 @@ public class WorkflowManager : BaseFeedbackManager<Workflow>
         }
     }
 
-    private async Task HandleWorkflowFeedbackAsync(Workflow workflow)
+    private async Task HandleFeedbackAsync(Workflow workflow)
     {
         try
         {

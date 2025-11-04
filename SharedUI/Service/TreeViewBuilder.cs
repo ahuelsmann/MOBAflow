@@ -63,8 +63,8 @@ public static class TreeViewBuilder
             DataType = typeof(Project)
         };
 
-        // Setting as first child element
-        projectNode.Children.Add(CreateSettingNode(project.Setting));
+        // Settings as first child element
+        projectNode.Children.Add(CreateSettingNode(project.Settings));
 
         // Journeys
         if (project.Journeys.Count > 0)
@@ -93,14 +93,14 @@ public static class TreeViewBuilder
         return projectNode;
     }
 
-    private static TreeNodeViewModel CreateSettingNode(Setting setting)
+    private static TreeNodeViewModel CreateSettingNode(Settings settings)
     {
         return new TreeNodeViewModel
         {
-            DisplayName = "Setting",
+            DisplayName = "Settings",
             Icon = "\uE713", // Settings icon
-            DataContext = setting,
-            DataType = typeof(Setting)
+            DataContext = settings,
+            DataType = typeof(Settings)
         };
     }
 

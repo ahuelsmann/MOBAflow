@@ -43,7 +43,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>
                     }
 
                     UpdateLastFeedbackTime(GetInPort(journey));
-                    await HandleJourneyFeedbackAsync(journey);
+                    await HandleFeedbackAsync(journey);
                 }
             }
         }
@@ -53,7 +53,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>
         }
     }
 
-    private async Task HandleJourneyFeedbackAsync(Journey journey)
+    private async Task HandleFeedbackAsync(Journey journey)
     {
         journey.CurrentCounter++;
         Debug.WriteLine($"🔄 Journey '{journey.Name}': Round {journey.CurrentCounter}, Position {journey.CurrentPos}");
