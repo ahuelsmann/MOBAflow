@@ -1,21 +1,20 @@
-namespace Moba.Test;
+namespace Moba.Test.Unit;
 
 using Backend;
-using Backend.Model;
 using Backend.Manager;
-using System.Net;
+using Backend.Model;
 
-public class PlatformTests
+public class PlatformTest
 {
- [Test]
+    [Test]
     public void Platform_Creation_ShouldInitializeWithDefaults()
-  {
+    {
         // Arrange & Act
-   var platform = new Platform();
+        var platform = new Platform();
 
         // Assert
         Assert.That(platform.Name, Is.EqualTo("New Platform"));
- Assert.That(platform.Track, Is.EqualTo(0));
+        Assert.That(platform.Track, Is.EqualTo(0));
         Assert.That(platform.InPort, Is.EqualTo(0));
         Assert.That(platform.Flow, Is.Null);
         Assert.That(platform.IsUsingTimerToIgnoreFeedbacks, Is.False);
@@ -31,25 +30,25 @@ public class PlatformTests
 
         // Act
         platform.Name = "Platform 3";
-  platform.Track = 3;
+        platform.Track = 3;
         platform.InPort = 42;
         platform.Flow = workflow;
         platform.IsUsingTimerToIgnoreFeedbacks = true;
-     platform.IntervalForTimerToIgnoreFeedbacks = 5.0;
+        platform.IntervalForTimerToIgnoreFeedbacks = 5.0;
 
         // Assert
         Assert.That(platform.Name, Is.EqualTo("Platform 3"));
         Assert.That(platform.Track, Is.EqualTo(3));
         Assert.That(platform.InPort, Is.EqualTo(42));
-  Assert.That(platform.Flow, Is.EqualTo(workflow));
+        Assert.That(platform.Flow, Is.EqualTo(workflow));
         Assert.That(platform.IsUsingTimerToIgnoreFeedbacks, Is.True);
-Assert.That(platform.IntervalForTimerToIgnoreFeedbacks, Is.EqualTo(5.0));
-  }
+        Assert.That(platform.IntervalForTimerToIgnoreFeedbacks, Is.EqualTo(5.0));
+    }
 
     [Test]
     public void Station_Platforms_ShouldInitializeAsEmptyList()
     {
-    // Arrange & Act
+        // Arrange & Act
         var station = new Station();
 
         // Assert
@@ -60,7 +59,7 @@ Assert.That(platform.IntervalForTimerToIgnoreFeedbacks, Is.EqualTo(5.0));
     [Test]
     public void Station_ShouldAllowAddingPlatforms()
     {
-// Arrange
+        // Arrange
         var station = new Station { Name = "Main Station" };
         var platform1 = new Platform { Name = "Platform 1", Track = 1 };
         var platform2 = new Platform { Name = "Platform 2", Track = 2 };
@@ -70,7 +69,7 @@ Assert.That(platform.IntervalForTimerToIgnoreFeedbacks, Is.EqualTo(5.0));
         station.Platforms.Add(platform2);
 
         // Assert
-   Assert.That(station.Platforms.Count, Is.EqualTo(2));
+        Assert.That(station.Platforms.Count, Is.EqualTo(2));
         Assert.That(station.Platforms[0].Name, Is.EqualTo("Platform 1"));
         Assert.That(station.Platforms[1].Name, Is.EqualTo("Platform 2"));
     }
@@ -79,49 +78,49 @@ Assert.That(platform.IntervalForTimerToIgnoreFeedbacks, Is.EqualTo(5.0));
     public async Task PlatformManager_ShouldExecutePlatformWorkflow_OnFeedback()
     {
         // Arrange
-     var z21 = new Z21();
+        var z21 = new Z21();
         var workflow = new Workflow
         {
             Name = "Platform Announcement",
-      Actions =
- [
-     new Backend.Model.Action.Command([0x01, 0x02])
-     {
-         Name = "Test Command"
+            Actions =
+            [
+                new Backend.Model.Action.Command([0x01, 0x02])
+                {
+                    Name = "Test Command"
                 }
-  ]
-     };
+            ]
+        };
 
         var platform = new Platform
         {
-      Name = "Platform 3",
-     Track = 3,
-   InPort = 100,
+            Name = "Platform 3",
+            Track = 3,
+            InPort = 100,
             Flow = workflow
         };
 
-     var platforms = new List<Platform> { platform };
+        var platforms = new List<Platform> { platform };
         var platformManager = new PlatformManager(z21, platforms);
 
-      bool workflowExecuted = false;
+        bool workflowExecuted = false;
         int feedbackReceived = 0;
 
         // We can't easily intercept workflow execution without modifying the code,
         // so we'll just verify the manager doesn't crash
-      try
-      {
-        // Act
+        try
+        {
+            // Act
             z21.SimulateFeedback(100);
 
-     // Wait a bit for async processing
+            // Wait a bit for async processing
             await Task.Delay(100);
 
-    // Assert - no exception thrown
+            // Assert - no exception thrown
             Assert.Pass("PlatformManager handled feedback without exceptions");
         }
-    finally
-    {
-       platformManager.Dispose();
+        finally
+        {
+            platformManager.Dispose();
         }
     }
 
@@ -132,89 +131,89 @@ Assert.That(platform.IntervalForTimerToIgnoreFeedbacks, Is.EqualTo(5.0));
         var z21 = new Z21();
         var workflow = new Workflow
         {
-     Name = "Platform Announcement",
-  Actions =
-     [
-           new Backend.Model.Action.Command([0x01, 0x02])
-        {
-  Name = "Test Command"
-      }
-      ]
+            Name = "Platform Announcement",
+            Actions =
+            [
+                new Backend.Model.Action.Command([0x01, 0x02])
+                {
+                    Name = "Test Command"
+                }
+            ]
         };
 
         var platform = new Platform
         {
-       Name = "Platform 3",
-  Track = 3,
-   InPort = 101,
- Flow = workflow,
-    IsUsingTimerToIgnoreFeedbacks = true,
+            Name = "Platform 3",
+            Track = 3,
+            InPort = 101,
+            Flow = workflow,
+            IsUsingTimerToIgnoreFeedbacks = true,
             IntervalForTimerToIgnoreFeedbacks = 2.0 // 2 seconds
         };
 
         var platforms = new List<Platform> { platform };
-    var platformManager = new PlatformManager(z21, platforms);
+        var platformManager = new PlatformManager(z21, platforms);
 
         try
         {
-       // Act - First feedback should be processed
-      z21.SimulateFeedback(101);
-      await Task.Delay(100);
-
-     // Act - Second feedback within timer interval should be ignored
-  z21.SimulateFeedback(101);
+            // Act - First feedback should be processed
+            z21.SimulateFeedback(101);
             await Task.Delay(100);
 
-    // Assert - no exception thrown, timer logic worked
-      Assert.Pass("PlatformManager correctly handled timer-based feedback filtering");
+            // Act - Second feedback within timer interval should be ignored
+            z21.SimulateFeedback(101);
+            await Task.Delay(100);
+
+            // Assert - no exception thrown, timer logic worked
+            Assert.Pass("PlatformManager correctly handled timer-based feedback filtering");
         }
         finally
-     {
-       platformManager.Dispose();
+        {
+            platformManager.Dispose();
         }
     }
 
     [Test]
     public void PlatformManager_ResetAll_ShouldClearTimers()
     {
-   // Arrange
-      var z21 = new Z21();
+        // Arrange
+        var z21 = new Z21();
         var platform = new Platform
         {
             Name = "Platform 1",
-       InPort = 102
+            InPort = 102
         };
 
         var platforms = new List<Platform> { platform };
-   var platformManager = new PlatformManager(z21, platforms);
+        var platformManager = new PlatformManager(z21, platforms);
 
         try
         {
-// Act
+            // Act
             platformManager.ResetAll();
 
             // Assert - no exception thrown
             Assert.Pass("ResetAll executed without exceptions");
-  }
-      finally
-  {
-     platformManager.Dispose();
+        }
+        finally
+        {
+            platformManager.Dispose();
         }
     }
 
-  [Test]
+    [Test]
     public void PlatformManager_Dispose_ShouldUnsubscribeFromZ21()
     {
-     // Arrange
- var z21 = new Z21();
+        // Arrange
+        var z21 = new Z21();
         var platforms = new List<Platform>();
         var platformManager = new PlatformManager(z21, platforms);
 
-    // Act
+        // Act
         platformManager.Dispose();
 
-      // Dispose again should not throw
-    platformManager.Dispose();
+        // Dispose again should not throw
+        platformManager.Dispose();
 
         // Assert - no exception thrown
         Assert.Pass("Dispose executed successfully and is idempotent");

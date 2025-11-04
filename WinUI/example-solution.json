@@ -1,7 +1,7 @@
 {
   "Projects": [
     {
-      "Name": "Model Railway Control System",
+      "Name": "myMOBA",
       "SpeakerEngines": [
         {
           "Name": "Microsoft.CognitiveServices.Speech"
@@ -431,11 +431,11 @@
           "InPort": 1,
           "IsUsingTimerToIgnoreFeedbacks": false,
           "IntervalForTimerToIgnoreFeedbacks": 5.0,
-          "Name": "Journey 1 - Regional Express",
+          "Name": "RE 78 (Porta-Express)",
           "Text": "Regional Express to Cologne via Düsseldorf and Leverkusen",
           "Train": {
             "IsDoubleTraction": false,
-            "Name": "RE 6 Cologne - Düsseldorf",
+            "Name": "RE 78",
             "TrainType": "Passenger",
             "ServiceType": "RegionalExpress",
             "Locomotives": [
@@ -502,39 +502,22 @@
           },
           "Stations": [
             {
-              "Name": "Düsseldorf Main Station",
+              "Name": "Bielefeld Hauptbahnhof",
               "Number": 1,
-              "NumberOfLapsToStop": 0,
-              "Arrival": "2024-03-15T14:30:00",
-              "Departure": "2024-03-15T14:35:00",
-              "Track": 3,
+              "NumberOfLapsToStop": 2,
+              "Arrival": null,
+              "Departure": null,
+              "Track": 1,
               "IsExitOnLeft": true,
               "Flow": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
-              "Platforms": [
-                {
-                  "Name": "Gleis 3",
-                  "Track": 3,
-                  "InPort": 50,
-                  "Flow": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
-                  "IsUsingTimerToIgnoreFeedbacks": true,
-                  "IntervalForTimerToIgnoreFeedbacks": 5.0
-                },
-                {
-                  "Name": "Gleis 4",
-                  "Track": 4,
-                  "InPort": 51,
-                  "Flow": null,
-                  "IsUsingTimerToIgnoreFeedbacks": false,
-                  "IntervalForTimerToIgnoreFeedbacks": 0.0
-                }
-              ]
+              "Platforms": []
             },
             {
               "Name": "Leverkusen Central",
               "Number": 2,
-              "NumberOfLapsToStop": 0,
-              "Arrival": "2024-03-15T14:50:00",
-              "Departure": "2024-03-15T14:52:00",
+              "NumberOfLapsToStop": 2,
+              "Arrival": null,
+              "Departure": null,
               "Track": 2,
               "IsExitOnLeft": false,
               "Flow": null,
@@ -543,188 +526,13 @@
             {
               "Name": "Cologne Main Station",
               "Number": 3,
-              "NumberOfLapsToStop": 1,
-              "Arrival": "2024-03-15T15:10:00",
+              "NumberOfLapsToStop": 2,
+              "Arrival": null,
               "Departure": null,
               "Track": 7,
               "IsExitOnLeft": true,
               "Flow": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
-              "Platforms": [
-                {
-                  "Name": "Gleis 7",
-                  "Track": 7,
-                  "InPort": 52,
-                  "Flow": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
-                  "IsUsingTimerToIgnoreFeedbacks": true,
-                  "IntervalForTimerToIgnoreFeedbacks": 3.0
-                }
-              ]
-            }
-          ],
-          "CurrentCounter": 0,
-          "CurrentPos": 0,
-          "OnLastStop": "None",
-          "NextJourney": null,
-          "FirstPos": 0
-        },
-        {
-          "InPort": 2,
-          "IsUsingTimerToIgnoreFeedbacks": false,
-          "IntervalForTimerToIgnoreFeedbacks": 5.0,
-          "Name": "Journey 2 - InterCity",
-          "Text": "InterCity to Hamburg Main Station",
-          "Train": {
-            "IsDoubleTraction": false,
-            "Name": "IC 2024 Hamburg - Munich",
-            "TrainType": "Passenger",
-            "ServiceType": "InterCity",
-            "Locomotives": [
-              {
-                "Name": "BR 101 - DB Regio",
-                "Pos": 1,
-                "DigitalAddress": 3,
-                "Manufacturer": "Märklin",
-                "ArticleNumber": "37101",
-                "Series": "101",
-                "ColorPrimary": "Orientrot",
-                "ColorSecondary": "Verkehrsrot",
-                "IsPushing": false,
-                "Details": {
-                  "Axles": 4,
-                  "Epoch": "VI",
-                  "RailroadCompany": "DB Regio",
-                  "Power": "AC",
-                  "Digital": "mfx",
-                  "Description": "Electric locomotive for passenger services"
-                }
-              }
-            ],
-            "Wagons": [
-              {
-                "Name": "Compartment Coach 2nd Class",
-                "Pos": 1,
-                "DigitalAddress": null,
-                "Manufacturer": "Märklin",
-                "ArticleNumber": "43125",
-                "Series": "Bm 235",
-                "ColorPrimary": "Chromoxidgrün",
-                "ColorSecondary": null,
-                "WagonClass": "Second",
-                "Details": {
-                  "Axles": 4,
-                  "Epoch": "IV",
-                  "RailroadCompany": "DB",
-                  "Power": null,
-                  "Digital": null,
-                  "Description": "Standard 2nd class passenger coach"
-                }
-              },
-              {
-                "Name": "Dining Car",
-                "Pos": 2,
-                "DigitalAddress": null,
-                "Manufacturer": "Roco",
-                "ArticleNumber": "64390",
-                "Series": "WRmh 132",
-                "ColorPrimary": "Orientrot",
-                "ColorSecondary": null,
-                "WagonClass": "Dining",
-                "Details": {
-                  "Axles": 4,
-                  "Epoch": "IV",
-                  "RailroadCompany": "DB",
-                  "Power": null,
-                  "Digital": null,
-                  "Description": "Restaurant car with kitchen"
-                }
-              },
-              {
-                "Name": "Sleeping Car",
-                "Pos": 3,
-                "DigitalAddress": null,
-                "Manufacturer": "Fleischmann",
-                "ArticleNumber": "5145",
-                "Series": "WLABm 171",
-                "ColorPrimary": "Ozenblau",
-                "ColorSecondary": null,
-                "WagonClass": "Sleeping",
-                "Details": null
-              }
-            ]
-          },
-          "Stations": [
-            {
-              "Name": "Munich Central Station",
-              "Number": 1,
-              "NumberOfLapsToStop": 0,
-              "Arrival": null,
-              "Departure": "2024-03-15T08:15:00",
-              "Track": 11,
-              "IsExitOnLeft": true,
-              "Flow": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
-              "Platforms": [
-                {
-                  "Name": "Gleis 11",
-                  "Track": 11,
-                  "InPort": 60,
-                  "Flow": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
-                  "IsUsingTimerToIgnoreFeedbacks": true,
-                  "IntervalForTimerToIgnoreFeedbacks": 4.0
-                }
-              ]
-            },
-            {
-              "Name": "Nuremberg Central Station",
-              "Number": 2,
-              "NumberOfLapsToStop": 0,
-              "Arrival": "2024-03-15T09:45:00",
-              "Departure": "2024-03-15T09:50:00",
-              "Track": 5,
-              "IsExitOnLeft": false,
-              "Flow": null,
               "Platforms": []
-            },
-            {
-              "Name": "Frankfurt Main Station",
-              "Number": 3,
-              "NumberOfLapsToStop": 0,
-              "Arrival": "2024-03-15T11:30:00",
-              "Departure": "2024-03-15T11:35:00",
-              "Track": 9,
-              "IsExitOnLeft": true,
-              "Flow": null,
-              "Platforms": []
-            },
-            {
-              "Name": "Hannover Central Station",
-              "Number": 4,
-              "NumberOfLapsToStop": 0,
-              "Arrival": "2024-03-15T13:20:00",
-              "Departure": "2024-03-15T13:25:00",
-              "Track": 4,
-              "IsExitOnLeft": false,
-              "Flow": null,
-              "Platforms": []
-            },
-            {
-              "Name": "Hamburg Main Station",
-              "Number": 5,
-              "NumberOfLapsToStop": 2,
-              "Arrival": "2024-03-15T15:00:00",
-              "Departure": null,
-              "Track": 14,
-              "IsExitOnLeft": true,
-              "Flow": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
-              "Platforms": [
-                {
-                  "Name": "Gleis 14",
-                  "Track": 14,
-                  "InPort": 61,
-                  "Flow": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
-                  "IsUsingTimerToIgnoreFeedbacks": true,
-                  "IntervalForTimerToIgnoreFeedbacks": 6.0
-                }
-              ]
             }
           ],
           "CurrentCounter": 0,

@@ -11,7 +11,6 @@
   <Project Path="Backend/Backend.csproj">
     <Deploy />
   </Project>
-  <Project Path="Data/Data.csproj" Id="7f01a52d-bd00-4f74-bd7c-bed01ea547aa" />
   <Project Path="SharedUI/SharedUI.csproj" Id="e6527119-fec0-439b-bd9a-a0525ac0f93e" />
   <Project Path="Sound/Sound.csproj">
     <Deploy />

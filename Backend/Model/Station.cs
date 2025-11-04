@@ -16,12 +16,13 @@ public class Station
     }
 
     public string Name { get; set; }
-    public uint Number { get; set; }
-    public uint NumberOfLapsToStop { get; set; }
+    public uint Number { get; set; } = 0;
+    public uint NumberOfLapsToStop { get; set; } = 2;
     public DateTime? Arrival { get; set; }
     public DateTime? Departure { get; set; }
-    public uint Track { get; set; }
+    public uint Track { get; set; } = 1;
     public bool IsExitOnLeft { get; set; }
+    public string TransferConnections { get; set; } = string.Empty; //  (Umstiegsmöglichkeit/Umsteigemöglichkeiten)
 
     /// <summary>
     /// Workflow triggered by journey progression when the train reaches this station.

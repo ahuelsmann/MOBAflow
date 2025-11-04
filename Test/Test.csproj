@@ -23,6 +23,10 @@
     <ProjectReference Include="..\Backend\Backend.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\WinUI\example-solution.json" Link="example-solution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\WinUI\example-solution.json" Link="TestFile\example-solution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\WinUI\germany-stations.json" Link="TestFile\germany-stations.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="TestFile\" />
   </ItemGroup>
 </Project>

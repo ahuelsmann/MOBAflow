@@ -1,15 +1,15 @@
-namespace Moba.Test;
+namespace Moba.Test.Unit;
 
 using Backend.Model;
 
-public class Tests
+public class SolutionTest
 {
     private string _testFile = string.Empty;
 
     [SetUp]
     public void Setup()
     {
-        _testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "example-solution.json");
+        _testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, @"TestFile\example-solution.json");
 
         Assert.That(File.Exists(_testFile), Is.True,
             $"Test file example-solution.json not found: {_testFile}");
@@ -54,8 +54,8 @@ public class Tests
         Assert.That(project.Workflows.Count, Is.EqualTo(2));
         Assert.That(project.Workflows[0].Name, Is.EqualTo("Platform Announcement"));
 
-        Assert.That(project.Journeys.Count, Is.EqualTo(2));
-        Assert.That(project.Journeys[0].Name, Is.EqualTo("Journey 1 - Regional Express"));
+        Assert.That(project.Journeys.Count, Is.EqualTo(1));
+        Assert.That(project.Journeys[0].Name, Is.EqualTo("RE 78 (Porta-Express)"));
 
         Assert.That(project.IpAddresses.Count, Is.EqualTo(2));
         Assert.That(project.IpAddresses[0], Is.EqualTo("127.0.0.1"));

@@ -1,4 +1,6 @@
-namespace Moba.Data;
+namespace Moba.Backend.Data;
+
+using Model;
 
 /// <summary>
 /// This class represents a city with at least one train station.
@@ -19,8 +21,8 @@ public class City
 
     /// <summary>
     /// List of train stations in this city.
-    /// For cities with only one station (Hauptbahnhof), this list contains one entry.
+    /// For cities with only one station (Main Station), this list contains one entry.
     /// For larger cities, multiple stations can be configured (e.g., "Hamburg Hbf", "Hamburg-Altona").
     /// </summary>
-    public List<StationTemplate> Stations { get; set; }
+    public List<Station> Stations { get; set; }
 }
