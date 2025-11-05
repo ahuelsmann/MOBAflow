@@ -26,7 +26,7 @@ public class Project
     [Display(Name = "Project Name")]
     public string Name { get; set; } = string.Empty;
 
-    public List<SpeakerEngine> SpeakerEngines { get; set; }
+    public List<CognitiveSpeechEngine> SpeakerEngines { get; set; }
     public List<Voice> Voices { get; set; }
     public List<Locomotive> Locomotives { get; set; }
     public List<PassengerWagon> PassengerWagons { get; set; }

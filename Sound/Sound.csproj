@@ -10,6 +10,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CognitiveServices.Speech" />
+    <PackageReference Include="System.Speech" />
     <PackageReference Include="System.Windows.Extensions" />
   </ItemGroup>
 </Project>

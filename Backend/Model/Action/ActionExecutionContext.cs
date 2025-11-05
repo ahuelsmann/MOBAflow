@@ -1,5 +1,7 @@
 namespace Moba.Backend.Model.Action;
 
+using Moba.Sound;
+
 /// <summary>
 /// Provides execution context and dependencies for action execution
 /// </summary>
@@ -13,7 +15,7 @@ public class ActionExecutionContext
     /// <summary>
     /// Speaker engine for text-to-speech announcements.
     /// </summary>
-    public Sound.SpeakerEngine? SpeakerEngine { get; set; }
+    public ISpeakerEngine? SpeakerEngine { get; set; }
 
     /// <summary>
     /// Current project including journeys and their stations. A workflow with actions can be defined at a station.
