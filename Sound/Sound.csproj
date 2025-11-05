@@ -9,7 +9,6 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="NAudio" />
     <PackageReference Include="Microsoft.CognitiveServices.Speech" />
     <PackageReference Include="System.Windows.Extensions" />
   </ItemGroup>

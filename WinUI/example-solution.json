@@ -240,6 +240,8 @@
         "127.0.0.1"
       ],
       "Settings": {
+        "SpeechKey": "b29427debf254c88bef939dbab94f162",
+        "SpeechRegion": "germanywestcentral",
         "SpeechSynthesizerRate": 0,
         "SpeechSynthesizerVolume": 90,
         "SpeakerEngineName": "Microsoft.CognitiveServices.Speech",

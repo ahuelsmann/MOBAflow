@@ -15,6 +15,12 @@ public class Settings
         SpeechSynthesizerVolume = 90;
     }
 
+    [Display(Name = "Speech Key")]
+    public string? SpeechKey { get; set; }
+
+    [Display(Name = "Speech Region")]
+    public string? SpeechRegion { get; set; }
+
     [Display(Name = "Speech Synthesizer Rate")]
     public int SpeechSynthesizerRate { get; set; }
     

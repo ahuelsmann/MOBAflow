@@ -1,6 +1,6 @@
 namespace Moba.Backend.Manager;
 
-using Moba.Backend.Model;
+using Model;
 
 using System.Diagnostics;
 

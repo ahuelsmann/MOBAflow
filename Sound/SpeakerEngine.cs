@@ -5,41 +5,40 @@ namespace Moba.Sound;
 // https://learn.microsoft.com/de-de/azure/ai-services/speech-service/get-started-text-to-speech?tabs=windows%2Cterminal&pivots=programming-language-csharp
 public class SpeakerEngine : ISpeakerEngine
 {
-    // This example requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
-    // setx SPEECH_KEY your-key
-    // setx SPEECH_REGION your-region
-    // and
-    // set SPEECH_KEY your-key
-    // set SPEECH_REGION your-region
-    private static readonly string? SpeechKey = Environment.GetEnvironmentVariable("SPEECH_KEY");
-    private static readonly string? SpeechRegion = Environment.GetEnvironmentVariable("SPEECH_REGION");
+    public SpeakerEngine() { }
 
     public string Name { get; set; } = "Microsoft.CognitiveServices.Speech";
 
     public async Task AnnouncementAsync(string message, string? voiceName)
     {
+        Environment.SetEnvironmentVariable("SPEECH_KEY", "b29427debf254c88bef939dbab94f162");
+        Environment.SetEnvironmentVariable("SPEECH_REGION", "germanywestcentral");
+
+        string? speechKey = Environment.GetEnvironmentVariable("SPEECH_KEY");
+        string? speechRegion = Environment.GetEnvironmentVariable("SPEECH_REGION");
+
         if (string.IsNullOrEmpty(message))
         {
             throw new ArgumentNullException(nameof(message));
         }
 
-        if (string.IsNullOrEmpty(SpeechKey) || string.IsNullOrEmpty(SpeechRegion))
-        {
-            throw new InvalidOperationException("Please set the environment variables SPEECH_KEY and SPEECH_REGION.");
-        }
+        //if (string.IsNullOrEmpty(speechKey) || string.IsNullOrEmpty(speechRegion))
+        //{
+        //    throw new InvalidOperationException("Please set the environment variables SPEECH_KEY and SPEECH_REGION.");
+        //}
 
-        var speechConfig = SpeechConfig.FromSubscription(SpeechKey, SpeechRegion);
+        var speechConfig = SpeechConfig.FromSubscription(speechKey, speechRegion);
         speechConfig.SpeechSynthesisLanguage = "de-DE";
 
         // https://learn.microsoft.com/de-de/azure/ai-services/speech-service/language-support?tabs=tts#prebuilt-neural-voices
         string ssml = string.IsNullOrEmpty(voiceName)
             ? $@"<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='de-DE'>
-                            <voice name='de-DE-ElkeNeuralNeural'>
+                            <voice name='de-DE-ElkeNeural'>
                                 <prosody rate='-15%'>{message}</prosody>
                             </voice>
                           </speak>"
             : $@"<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='de-DE'>
-                              <voice name='de-DE-{voiceName}Neural'>
+                              <voice name='de-DE-{voiceName}'>
                                 <prosody rate='-15%'>{message}</prosody>
                               </voice>
                           </speak>";
@@ -49,7 +48,7 @@ public class SpeakerEngine : ISpeakerEngine
         OutputSpeechSynthesisResult(speechSynthesisResult, message);
     }
 
-    private static void OutputSpeechSynthesisResult(SpeechSynthesisResult speechSynthesisResult, string text)
+    private void OutputSpeechSynthesisResult(SpeechSynthesisResult speechSynthesisResult, string text)
     {
         switch (speechSynthesisResult.Reason)
         {
