@@ -185,14 +185,26 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand(CanExecute = nameof(CanSimulateFeedback))]
-    private void SimulateFeedback()
+    private async void SimulateFeedback()
     {
         try
         {
             if (int.TryParse(SimulateInPort, out int inPort))
             {
-                _z21?.SimulateFeedback(inPort);
-                Z21StatusText = $"Simulated feedback for InPort {inPort}";
+                // Send simulation to FeedbackApi instead of local Z21
+                using var httpClient = new System.Net.Http.HttpClient();
+                httpClient.BaseAddress = new Uri("http://localhost:5001");
+                
+                var response = await httpClient.PostAsync($"/api/feedback/simulate/{inPort}", null);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    Z21StatusText = $"Simulated feedback for InPort {inPort} via API";
+                }
+                else
+                {
+                    Z21StatusText = $"API simulation failed: {response.StatusCode}";
+                }
             }
             else
             {
@@ -227,28 +239,28 @@ public partial class MainWindowViewModel : ObservableObject
 
                 // Run disconnect in background without blocking UI
                 _ = Task.Run(async () =>
-                   {
-                       try
-                       {
-                           await z21.DisconnectAsync();
-                       }
-                       catch (TaskCanceledException)
-                       {
-                           // Expected during shutdown
-                       }
-                       catch (OperationCanceledException)
-                       {
-                           // Expected during shutdown
-                       }
-                       catch (Exception ex)
-                       {
-                           System.Diagnostics.Debug.WriteLine($"⚠️ Error during Z21 shutdown: {ex.Message}");
-                       }
-                       finally
-                       {
-                           z21.Dispose();
-                       }
-                   });
+                {
+                    try
+                    {
+                        await z21.DisconnectAsync();
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        // Expected during shutdown
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Expected during shutdown
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"⚠️ Error during Z21 shutdown: {ex.Message}");
+                    }
+                    finally
+                    {
+                        z21.Dispose();
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -287,12 +299,13 @@ public partial class MainWindowViewModel : ObservableObject
         SelectedNodeType = node.DataType.Name;
 
         var props = node.DataType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-       .Where(p => p is
-       {
-           CanRead: true, PropertyType.IsGenericType: false
-       } // No lists
-        && (IsSimpleType(p.PropertyType)
-        || IsReferenceType(p.PropertyType))); // Simple types OR references
+            .Where(p => p is
+            {
+                CanRead: true,
+                PropertyType.IsGenericType: false
+            } // No lists
+            && (IsSimpleType(p.PropertyType)
+            || IsReferenceType(p.PropertyType))); // Simple types OR references
 
         // Get context (Project) for reference lookups
         var contextProject = FindParentProject(node);

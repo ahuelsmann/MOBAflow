@@ -34,6 +34,9 @@ public partial class App
     /// <param name="args">Details about the launch request and process.</param>
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        // FeedbackApi is started by Visual Studio (Multiple Startup Projects)
+        // No need to start it here
+        
         // Configure services
         var services = new ServiceCollection();
         ConfigureServices(services);

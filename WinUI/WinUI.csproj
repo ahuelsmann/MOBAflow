@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <RootNamespace>Moba.WinUI</RootNamespace>
     <AssemblyName>MOBAflow</AssemblyName>
@@ -33,6 +33,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
+    <ProjectReference Include="..\FeedbackApi\FeedbackApi.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Converter\" />

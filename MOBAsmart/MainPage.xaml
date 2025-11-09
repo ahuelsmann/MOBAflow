@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MOBAsmart.MainPage"
+             Title="MOBAsmart">
+
+    <Grid RowDefinitions="Auto,*" Padding="20">
+        
+        <!-- Header with connection status -->
+        <VerticalStackLayout Grid.Row="0" Spacing="10" Margin="0,0,0,20">
+            <Label Text="MOBAsmart - Z21 Feedback Monitor" 
+                   FontSize="24" 
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"/>
+            
+            <Label x:Name="StatusLabel" 
+                   Text="Disconnected" 
+                   FontSize="14"
+                   TextColor="Red"
+                   HorizontalOptions="Center"/>
+            
+            <Button x:Name="ConnectButton"
+                    Text="Connect"
+                    Clicked="OnConnectClicked"
+                    HorizontalOptions="Center"/>
+        </VerticalStackLayout>
+
+        <!-- Feedback statistics list -->
+        <CollectionView Grid.Row="1" 
+                        x:Name="FeedbackList">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Frame Padding="15" Margin="0,5" BorderColor="LightGray">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            
+                            <!-- InPort number -->
+                            <Label Grid.Column="0"
+                                   Text="{Binding InPort, StringFormat='InPort {0}'}"
+                                   FontSize="18"
+                                   FontAttributes="Bold"
+                                   VerticalOptions="Center"/>
+                            
+                            <!-- Entity info (if available) -->
+                            <VerticalStackLayout Grid.Column="1" 
+                                                 Margin="15,0,0,0"
+                                                 VerticalOptions="Center">
+                                <Label Text="{Binding EntityName}"
+                                       FontSize="14"
+                                       TextColor="Gray"/>
+                                <Label Text="{Binding EntityType}"
+                                       FontSize="12"
+                                       TextColor="LightGray"/>
+                            </VerticalStackLayout>
+                            
+                            <!-- Count -->
+                            <Label Grid.Column="2"
+                                   Text="{Binding TotalCount}"
+                                   FontSize="32"
+                                   FontAttributes="Bold"
+                                   TextColor="#512BD4"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="End"/>
+                        </Grid>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            
+            <!-- Empty state -->
+            <CollectionView.EmptyView>
+                <Label Text="No feedback received yet..."
+                       FontSize="16"
+                       TextColor="Gray"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       Margin="0,50,0,0"/>
+            </CollectionView.EmptyView>
+        </CollectionView>
+    </Grid>
+
+</ContentPage>
