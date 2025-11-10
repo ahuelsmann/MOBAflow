@@ -10,4 +10,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Sound\Sound.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Hub\" />
+    <Folder Include="Monitor\" />
+  </ItemGroup>
 </Project>

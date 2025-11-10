@@ -185,26 +185,15 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [RelayCommand(CanExecute = nameof(CanSimulateFeedback))]
-    private async void SimulateFeedback()
+    private void SimulateFeedback()
     {
         try
         {
             if (int.TryParse(SimulateInPort, out int inPort))
             {
-                // Send simulation to FeedbackApi instead of local Z21
-                using var httpClient = new System.Net.Http.HttpClient();
-                httpClient.BaseAddress = new Uri("http://localhost:5001");
-                
-                var response = await httpClient.PostAsync($"/api/feedback/simulate/{inPort}", null);
-                
-                if (response.IsSuccessStatusCode)
-                {
-                    Z21StatusText = $"Simulated feedback for InPort {inPort} via API";
-                }
-                else
-                {
-                    Z21StatusText = $"API simulation failed: {response.StatusCode}";
-                }
+                // Simulate feedback directly on local Z21 instance
+                _z21?.SimulateFeedback(inPort);
+                Z21StatusText = $"Simulated feedback for InPort {inPort}";
             }
             else
             {

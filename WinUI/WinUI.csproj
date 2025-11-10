@@ -33,9 +33,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
-    <ProjectReference Include="..\FeedbackApi\FeedbackApi.csproj">
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Converter\" />

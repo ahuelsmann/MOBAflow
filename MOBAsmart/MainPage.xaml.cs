@@ -6,28 +6,28 @@ namespace MOBAsmart;
 
 public partial class MainPage : ContentPage
 {
-    private readonly FeedbackService _feedbackService;
-    private readonly string _serverUrl;
+    private readonly Z21FeedbackService _feedbackService;
+    private readonly string _z21IpAddress;
 
     public MainPage()
     {
         InitializeComponent();
         
         // Load configuration
-        _serverUrl = LoadServerUrl();
-        _feedbackService = new FeedbackService(_serverUrl);
+        _z21IpAddress = LoadZ21IpAddress();
+        _feedbackService = new Z21FeedbackService();
         
         // Bind to the service's Statistics collection
         FeedbackList.ItemsSource = _feedbackService.Statistics;
         
-        // Show configured server URL
+        // Show configured Z21 IP address
         UpdateStatus($"Disconnected", Colors.Red);
         
         // Subscribe to connection events
         _feedbackService.ConnectionStateChanged += OnConnectionStateChanged;
     }
 
-    private static string LoadServerUrl()
+    private static string LoadZ21IpAddress()
     {
         try
         {
@@ -40,18 +40,10 @@ public partial class MainPage : ContentPage
                     .AddJsonStream(stream)
                     .Build();
                 
-                // Check if running on emulator
-#if ANDROID
-                var isEmulator = Android.OS.Build.Product?.Contains("sdk") == true;
-                var serverUrl = isEmulator 
-                    ? config["ServerUrlEmulator"] 
-                    : config["ServerUrl"];
+                var ipAddress = config["Z21IpAddress"];
                 
-                System.Diagnostics.Debug.WriteLine($"Running on {(isEmulator ? "Emulator" : "Device")}, using URL: {serverUrl}");
-                return serverUrl ?? "http://192.168.0.22:5001";
-#else
-                return config["ServerUrl"] ?? "http://192.168.0.22:5001";
-#endif
+                System.Diagnostics.Debug.WriteLine($"Loaded Z21 IP address from config: {ipAddress}");
+                return ipAddress ?? "192.168.0.111";
             }
         }
         catch (Exception ex)
@@ -59,7 +51,8 @@ public partial class MainPage : ContentPage
             System.Diagnostics.Debug.WriteLine($"Error loading config: {ex.Message}");
         }
         
-        return "http://192.168.0.22:5001";
+        // Default Z21 IP address
+        return "192.168.0.111";
     }
 
     private void OnConnectionStateChanged(object? sender, bool isConnected)
@@ -68,7 +61,7 @@ public partial class MainPage : ContentPage
         {
             if (isConnected)
             {
-                UpdateStatus($"Connected", Colors.Green);
+                UpdateStatus($"Connected to Z21", Colors.Green);
                 ConnectButton.Text = "Disconnect";
             }
             else
@@ -81,7 +74,7 @@ public partial class MainPage : ContentPage
 
     private void UpdateStatus(string message, Color color)
     {
-        StatusLabel.Text = $"{message} ({_serverUrl})";
+        StatusLabel.Text = $"{message} ({_z21IpAddress})";
         StatusLabel.TextColor = color;
     }
 
@@ -115,20 +108,21 @@ public partial class MainPage : ContentPage
 
     private async Task ConnectAsync()
     {
-        UpdateStatus("Connecting...", Colors.Orange);
+        UpdateStatus("Connecting to Z21...", Colors.Orange);
         
         try
         {
-            await _feedbackService.ConnectAsync();
+            await _feedbackService.ConnectAsync(_z21IpAddress);
+            System.Diagnostics.Debug.WriteLine($"✅ Successfully connected to Z21 at {_z21IpAddress}");
         }
-        catch (HttpRequestException)
+        catch (Exception ex)
         {
-            UpdateStatus("Server not reachable", Colors.Red);
+            UpdateStatus("Connection failed", Colors.Red);
             
 #pragma warning disable CS0618 // Type or member is obsolete
             var retry = await DisplayAlert(
                 "Connection Failed", 
-                $"Cannot reach server at {_serverUrl}\n\nMake sure:\n1. FeedbackApi is running\n2. IP address is correct\n3. Firewall allows connection",
+                $"Cannot connect to Z21 at {_z21IpAddress}\n\nMake sure:\n1. Z21 is powered on\n2. IP address is correct\n3. Device is in the same network\n\nError: {ex.Message}",
                 "Retry",
                 "Cancel");
 #pragma warning restore CS0618
@@ -138,17 +132,11 @@ public partial class MainPage : ContentPage
                 await ConnectAsync();
             }
         }
-        catch (Exception ex)
-        {
-            UpdateStatus($"Connection failed", Colors.Red);
-#pragma warning disable CS0618 // Type or member is obsolete
-            await DisplayAlert("Error", ex.Message, "OK");
-#pragma warning restore CS0618
-        }
     }
 
     private async Task DisconnectAsync()
     {
+        UpdateStatus("Disconnecting...", Colors.Orange);
         await _feedbackService.DisconnectAsync();
         UpdateStatus("Disconnected", Colors.Red);
     }
@@ -157,5 +145,6 @@ public partial class MainPage : ContentPage
     {
         base.OnDisappearing();
         _feedbackService.ConnectionStateChanged -= OnConnectionStateChanged;
+        _feedbackService.Dispose();
     }
 }
