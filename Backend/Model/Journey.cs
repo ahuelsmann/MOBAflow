@@ -2,8 +2,6 @@ namespace Moba.Backend.Model;
 
 using Enum;
 
-using System.ComponentModel.DataAnnotations;
-
 /// <summary>
 /// Represents a journey or timetable with all stops or stations.
 /// </summary>

@@ -38,11 +38,25 @@ public abstract class BaseFeedbackManager<TEntity> : IFeedbackManager where TEnt
 
     /// <summary>
     /// Handles incoming feedback events from Z21.
-    /// Calls the derived class's ProcessFeedback method for entity-specific logic.
+    /// Uses fire-and-forget pattern with proper exception handling to avoid blocking the event publisher.
+    /// Exceptions are logged to Debug output.
     /// </summary>
-    private async void OnFeedbackReceived(FeedbackResult feedback)
+    private void OnFeedbackReceived(FeedbackResult feedback)
     {
-        await ProcessFeedbackAsync(feedback);
+        // Fire-and-forget with exception handling
+        // Cannot use async void here as it would swallow exceptions
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await ProcessFeedbackAsync(feedback).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ ProcessFeedbackAsync failed for InPort {feedback.InPort}: {ex.Message}");
+                Debug.WriteLine($"   Stack trace: {ex.StackTrace}");
+            }
+        });
     }
 
     /// <summary>

@@ -102,9 +102,6 @@ public class PlatformTest
         var platforms = new List<Platform> { platform };
         var platformManager = new PlatformManager(z21, platforms);
 
-        bool workflowExecuted = false;
-        int feedbackReceived = 0;
-
         // We can't easily intercept workflow execution without modifying the code,
         // so we'll just verify the manager doesn't crash
         try

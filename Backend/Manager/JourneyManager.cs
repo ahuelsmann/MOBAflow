@@ -26,7 +26,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>
     protected override async Task ProcessFeedbackAsync(FeedbackResult feedback)
     {
         // Wait for lock (blocking) - queues feedbacks sequentially
-        await _processingLock.WaitAsync();
+        await _processingLock.WaitAsync().ConfigureAwait(false);
 
         try
         {
@@ -43,7 +43,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>
                     }
 
                     UpdateLastFeedbackTime(GetInPort(journey));
-                    await HandleFeedbackAsync(journey);
+                    await HandleFeedbackAsync(journey).ConfigureAwait(false);
                 }
             }
         }
@@ -77,7 +77,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>
                 ExecutionContext.JourneyTemplateText = journey.Text;
                 ExecutionContext.CurrentStation = currentStation;
 
-                await currentStation.Flow.StartAsync(ExecutionContext);
+                await currentStation.Flow.StartAsync(ExecutionContext).ConfigureAwait(false);
 
                 // Clear context after workflow execution
                 ExecutionContext.JourneyTemplateText = null;
@@ -90,7 +90,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>
 
             if (isLastStation)
             {
-                await HandleLastStationAsync(journey);
+                await HandleLastStationAsync(journey).ConfigureAwait(false);
             }
             else
             {

@@ -27,17 +27,17 @@ public class DataManagerTest
         Assert.That(dataManager.Cities.Count, Is.GreaterThan(0), "Cities list should contain entries");
 
         // Output für Debugging
-        TestContext.WriteLine($"Total cities loaded: {dataManager.Cities.Count}");
-        TestContext.WriteLine("\n=== List of all German cities with main stations ===\n");
+        TestContext.Out.WriteLine($"Total cities loaded: {dataManager.Cities.Count}");
+        TestContext.Out.WriteLine("\n=== List of all German cities with main stations ===\n");
 
         foreach (var city in dataManager.Cities)
         {
-            TestContext.WriteLine($"City: {city.Name}");
+            TestContext.Out.WriteLine($"City: {city.Name}");
             foreach (var station in city.Stations)
             {
-                TestContext.WriteLine($"  - Station: {station.Name}, Track: {station.Track}, Exit on Left: {station.IsExitOnLeft}");
+                TestContext.Out.WriteLine($"  - Station: {station.Name}, Track: {station.Track}, Exit on Left: {station.IsExitOnLeft}");
             }
-            TestContext.WriteLine("");
+            TestContext.Out.WriteLine("");
         }
     }
 
@@ -65,7 +65,7 @@ public class DataManagerTest
         Assert.That(cityNames, Does.Contain("Leipzig"), "Leipzig should be in the list");
         Assert.That(cityNames, Does.Contain("Dresden"), "Dresden should be in the list");
 
-        TestContext.WriteLine($"✓ All major cities are present in the dataset");
+        TestContext.Out.WriteLine($"✓ All major cities are present in the dataset");
     }
 
     [Test]
@@ -92,7 +92,7 @@ public class DataManagerTest
             }
         }
 
-        TestContext.WriteLine($"✓ All {dataManager.Cities.Count} cities have valid station data");
+        TestContext.Out.WriteLine($"✓ All {dataManager.Cities.Count} cities have valid station data");
     }
 
     [Test]
@@ -114,9 +114,9 @@ public class DataManagerTest
         Assert.That(hamburg, Is.Not.Null, "Hamburg should exist");
         Assert.That(hamburg!.Stations[0].Name, Is.EqualTo("Hamburg Hauptbahnhof"));
 
-        TestContext.WriteLine("✓ Specific station names are correct");
-        TestContext.WriteLine($"München: {munich.Stations[0].Name}");
-        TestContext.WriteLine($"Hamburg: {hamburg.Stations[0].Name}");
+        TestContext.Out.WriteLine("✓ Specific station names are correct");
+        TestContext.Out.WriteLine($"München: {munich.Stations[0].Name}");
+        TestContext.Out.WriteLine($"Hamburg: {hamburg.Stations[0].Name}");
     }
 
     [Test]
@@ -137,6 +137,7 @@ public class DataManagerTest
 
             // Assert
             Assert.That(reloadedData, Is.Not.Null);
+            Assert.That(originalData, Is.Not.Null);
             Assert.That(reloadedData!.Cities.Count, Is.EqualTo(originalData!.Cities.Count),
                 "Number of cities should match");
 
@@ -145,7 +146,7 @@ public class DataManagerTest
             Assert.That(reloadedData.Cities[0].Stations[0].Name,
                 Is.EqualTo(originalData.Cities[0].Stations[0].Name));
 
-            TestContext.WriteLine("✓ Save and load round-trip successful");
+            TestContext.Out.WriteLine("✓ Save and load round-trip successful");
         }
         finally
         {

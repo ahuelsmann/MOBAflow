@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/Solution Items/">
+    <File Path=".copilot-instructions.md" />
     <File Path=".editorconfig" />
     <File Path=".gitignore" />
     <File Path="Directory.Build.props" />
@@ -11,9 +12,7 @@
   <Project Path="Backend/Backend.csproj">
     <Deploy />
   </Project>
-  <Project Path="MOBAsmart/MOBAsmart.csproj">
-    <Deploy Solution="Debug|*" />
-  </Project>
+  <Project Path="MAUI/MAUI.csproj" />
   <Project Path="SharedUI/SharedUI.csproj" Id="e6527119-fec0-439b-bd9a-a0525ac0f93e" />
   <Project Path="Sound/Sound.csproj">
     <Deploy />

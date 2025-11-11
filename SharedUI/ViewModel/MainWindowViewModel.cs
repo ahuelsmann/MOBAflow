@@ -128,11 +128,10 @@ public partial class MainWindowViewModel : ObservableObject
                     Z21StatusText = $"Connected to {project.IpAddresses[0]}";
 
                     // Create execution context with shared dependencies
+                    // Note: SpeakerEngine will be added when audio functionality is implemented
                     var executionContext = new Moba.Backend.Model.Action.ActionExecutionContext
                     {
                         Z21 = _z21,
-                        // TODO: Add SpeakerEngine when needed
-                        // SpeakerEngine = _speakerEngine,
                         Project = project
                     };
 
@@ -388,9 +387,6 @@ public partial class MainWindowViewModel : ObservableObject
 
         // Only allow specific types (whitelist approach)
         return underlyingType == typeof(Workflow);
-        // Additional types can be added later:
-        // || underlyingType == typeof(Backend.Model.Train)
-        // || underlyingType == typeof(Backend.Model.Locomotive);
     }
 
     private static IEnumerable<object?>? GetReferenceValues(Type type, Project? contextProject)
@@ -408,9 +404,6 @@ public partial class MainWindowViewModel : ObservableObject
             // Add null option (for optional workflows)
             return new List<object?> { null }.Concat(workflows);
         }
-
-        // Additional types can be added later
-        // if (underlyingType == typeof(Backend.Model.Train)) { ... }
 
         return null;
     }
