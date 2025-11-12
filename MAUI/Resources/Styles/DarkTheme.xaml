@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    
+    <!-- 🌙 MOBAsmart Dark Theme 
+         Material Design inspired dark color scheme for Z21 control app -->
+    
+    <!-- Primary Colors (Railway Blue - adjusted for dark) -->
+    <Color x:Key="Primary">#64B5F6</Color>
+    <Color x:Key="PrimaryDark">#1976D2</Color>
+    <Color x:Key="PrimaryLight">#90CAF9</Color>
+    
+    <!-- Accent Colors (Signal Green - adjusted for dark) -->
+    <Color x:Key="Accent">#81C784</Color>
+    <Color x:Key="AccentDark">#4CAF50</Color>
+    <Color x:Key="AccentLight">#A5D6A7</Color>
+    
+    <!-- Error/Warning Colors -->
+    <Color x:Key="Error">#EF5350</Color>
+    <Color x:Key="Warning">#FFB74D</Color>
+    <Color x:Key="Success">#81C784</Color>
+    
+    <!-- Background Colors (Dark Material) -->
+    <Color x:Key="Background">#121212</Color>
+    <Color x:Key="Surface">#1E1E1E</Color>
+    <Color x:Key="SurfaceVariant">#2C2C2C</Color>
+    
+    <!-- Text Colors (Dark Theme) -->
+    <Color x:Key="TextPrimary">#FFFFFF</Color>
+    <Color x:Key="TextSecondary">#B0B0B0</Color>
+    <Color x:Key="TextDisabled">#606060</Color>
+    <Color x:Key="TextOnPrimary">#000000</Color>
+    
+    <!-- Border Colors -->
+    <Color x:Key="Border">#3C3C3C</Color>
+    <Color x:Key="Divider">#2A2A2A</Color>
+    
+    <!-- 📏 Spacing (Material Design 8dp grid) -->
+    <x:Double x:Key="SpacingXs">4</x:Double>
+    <x:Double x:Key="SpacingS">8</x:Double>
+    <x:Double x:Key="SpacingM">16</x:Double>
+    <x:Double x:Key="SpacingL">24</x:Double>
+    <x:Double x:Key="SpacingXl">32</x:Double>
+    
+    <!-- 🔤 Typography -->
+    <x:Double x:Key="FontSizeCaption">12</x:Double>
+    <x:Double x:Key="FontSizeBody">14</x:Double>
+    <x:Double x:Key="FontSizeSubtitle">16</x:Double>
+    <x:Double x:Key="FontSizeTitle">20</x:Double>
+    <x:Double x:Key="FontSizeHeadline">24</x:Double>
+    
+    <!-- 🔘 Button Styles -->
+    <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+        <Setter Property="TextColor" Value="{StaticResource TextOnPrimary}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="16,12" />
+        <Setter Property="HeightRequest" Value="48" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Disabled">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor" Value="{StaticResource SurfaceVariant}" />
+                            <Setter Property="TextColor" Value="{StaticResource TextDisabled}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+    
+    <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource Primary}" />
+        <Setter Property="BorderColor" Value="{StaticResource Primary}" />
+        <Setter Property="BorderWidth" Value="2" />
+    </Style>
+    
+    <!-- 🎯 Z21 Control Specific Styles -->
+    <Style x:Key="LocomotiveSpeedSliderStyle" TargetType="Slider">
+        <Setter Property="MinimumTrackColor" Value="{StaticResource Accent}" />
+        <Setter Property="MaximumTrackColor" Value="{StaticResource Border}" />
+        <Setter Property="ThumbColor" Value="{StaticResource AccentDark}" />
+        <Setter Property="HeightRequest" Value="48" />
+    </Style>
+    
+    <Style x:Key="InPortStatLabel" TargetType="Label">
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
+        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+    
+    <!-- 📊 Card Style (for grouping controls) -->
+    <Style x:Key="CardFrameStyle" TargetType="Frame">
+        <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />
+        <Setter Property="BorderColor" Value="{StaticResource Border}" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="{StaticResource SpacingM}" />
+        <Setter Property="HasShadow" Value="True" />
+    </Style>
+    
+</ResourceDictionary>

@@ -5,6 +5,7 @@ using System.Net.Sockets;
 namespace Moba.Backend;
 
 public delegate void Feedback(FeedbackResult feedbackContent);
+public delegate void SystemStateChanged(SystemState systemState);
 
 /// <summary>
 /// This class enables bidirectional communication via UDP with a Z21 digital control center in your network.
@@ -13,12 +14,18 @@ public delegate void Feedback(FeedbackResult feedbackContent);
 public class Z21 : IDisposable
 {
     public event Feedback? Received;
+    public event SystemStateChanged? OnSystemStateChanged;
 
     private UdpClient? _client;
     private CancellationTokenSource? _cancellationTokenSource;
     private Task? _receiverTask;
     private Task? _pingTask;
     private bool _disposed;
+
+    /// <summary>
+    /// Current system state of the Z21 (voltage, current, temperature, etc.)
+    /// </summary>
+    public SystemState CurrentSystemState { get; private set; } = new SystemState();
 
     /// <summary>
     /// Indicates whether the Z21 is currently connected.
@@ -90,7 +97,6 @@ public class Z21 : IDisposable
     }
 
     #region Basic Commands
-
     private async Task SendHandshakeAsync()
     {
         // LAN_SYSTEMSTATE_GETDATA (0x85)
@@ -122,11 +128,9 @@ public class Z21 : IDisposable
             await _client.SendAsync(sendBytes, sendBytes.Length);
         }
     }
-
     #endregion
 
     #region Track Power Control
-
     /// <summary>
     /// Turns the track power ON.
     /// LAN_X_SET_TRACK_POWER_ON (X-Header: 0x21, DB0: 0x81)
@@ -170,7 +174,6 @@ public class Z21 : IDisposable
         await SendCommandAsync(sendBytes);
         Debug.WriteLine("📊 Status request sent");
     }
-
     #endregion
 
     #region Message Receiving & Parsing
@@ -264,7 +267,7 @@ public class Z21 : IDisposable
         }
     }
 
-    private static void ParseSystemStateChange(byte[] data)
+    private void ParseSystemStateChange(byte[] data)
     {
         if (data.Length < 20) return;
 
@@ -283,6 +286,21 @@ public class Z21 : IDisposable
         Debug.WriteLine($"   Supply Voltage: {supplyVoltage} mV");
         Debug.WriteLine($"   VCC Voltage: {vccVoltage} mV");
         Debug.WriteLine($"   State: 0x{centralState:X2}, StateEx: 0x{centralStateEx:X2}");
+
+        // Update CurrentSystemState and raise event
+        CurrentSystemState = new SystemState
+        {
+            MainCurrent = mainCurrent,
+            ProgCurrent = progCurrent,
+            FilteredMainCurrent = filteredMainCurrent,
+            Temperature = temperature,
+            SupplyVoltage = supplyVoltage,
+            VccVoltage = vccVoltage,
+            CentralState = centralState,
+            CentralStateEx = centralStateEx
+        };
+
+        OnSystemStateChanged?.Invoke(CurrentSystemState);
     }
 
     #endregion

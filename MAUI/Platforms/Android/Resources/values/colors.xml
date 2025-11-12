@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary brand colors (Material Design Dark Blue) -->
+    <color name="colorPrimary">#2c3e50</color>
+    <color name="colorPrimaryDark">#1a252f</color>
+    <color name="colorAccent">#3498db</color>
+    
+    <!-- MAUI default background -->
+    <color name="maui_background_color">#121212</color>
+    
+    <!-- Additional colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+</resources>

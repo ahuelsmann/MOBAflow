@@ -12,6 +12,9 @@
     <PackageVersion Include="System.Windows.Extensions" Version="9.0.10" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageVersion Include="CommunityToolkit.Maui" Version="11.2.0" />
+    <PackageVersion Include="CommunityToolkit.Maui.MediaElement" Version="4.1.0" />
+    <PackageVersion Include="UraniumUI.Material" Version="2.10.2" />
+    <PackageVersion Include="UraniumUI.Icons.MaterialIcons" Version="2.10.2" />
     <PackageVersion Include="Microsoft.WindowsAppSDK" Version="1.8.251003001" />
     <PackageVersion Include="Microsoft.SourceLink.AzureRepos.Git" Version="8.0.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />

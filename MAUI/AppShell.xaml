@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="Moba.Smart.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:Moba.Smart"
+    Shell.FlyoutBehavior="Disabled"
+    Shell.NavBarIsVisible="True">
+
+    <Shell.Resources>
+        <Style ApplyToDerivedTypes="True" TargetType="Element">
+            <Setter Property="Shell.BackgroundColor" Value="#2c3e50" />
+            <Setter Property="Shell.ForegroundColor" Value="White" />
+            <Setter Property="Shell.TitleColor" Value="White" />
+        </Style>
+    </Shell.Resources>
+
+    <ShellContent
+        Title="MOBAsmart"
+        ContentTemplate="{DataTemplate local:MainPage}"
+        Route="MainPage" />
+
+</Shell>

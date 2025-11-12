@@ -1,6 +1,6 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <!-- Only Android target (API 16+) -->
+    <!-- Only Android target (API 36) -->
     <TargetFrameworks>net10.0-android36.0</TargetFrameworks>
     <OutputType>Exe</OutputType>
     <RootNamespace>Moba.Smart</RootNamespace>
@@ -15,15 +15,15 @@
     <!-- Versions -->
     <ApplicationDisplayVersion>1.1</ApplicationDisplayVersion>
     <ApplicationVersion>2</ApplicationVersion>
-    <!-- Android 16+ (Baklava) -->
-    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">36.0</SupportedOSPlatformVersion>
+    <!-- Android 24+ (Nougat) - recommended minimum, avoid 21 desugaring issues -->
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
   </PropertyGroup>
   <ItemGroup>
     <!-- App Icon -->
     <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
     <!-- Splash Screen -->
     <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
-    <!-- Images -->
+    <!-- Images (includes all SVG icons automatically) -->
     <MauiImage Include="Resources\Images\*" />
     <!-- Custom Fonts -->
     <MauiFont Include="Resources\Fonts\*" />
@@ -31,11 +31,21 @@
     <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Android Resources -->
+    <AndroidResource Include="Platforms\Android\Resources\**\*.xml" />
+  </ItemGroup>
+  <ItemGroup>
     <!-- MAUI Core -->
     <PackageReference Include="Microsoft.Maui.Controls" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
     <!-- CommunityToolkit.Maui (UI features: Expander, Converters, Behaviors) -->
     <PackageReference Include="CommunityToolkit.Maui" />
+    <!-- CommunityToolkit.Maui.MediaElement (Video/Audio support) -->
+    <PackageReference Include="CommunityToolkit.Maui.MediaElement" />
+    <!-- UraniumUI Material Design Components -->
+    <PackageReference Include="UraniumUI.Material" />
+    <!-- UraniumUI Material Icons -->
+    <PackageReference Include="UraniumUI.Icons.MaterialIcons" />
     <!-- Note: CommunityToolkit.Mvvm comes via SharedUI project reference -->
   </ItemGroup>
   <ItemGroup>
@@ -43,10 +53,16 @@
     <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Animation\" />
-  </ItemGroup>
-  <ItemGroup>
+    <MauiXaml Update="AppShell.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="MainPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="Resources\Styles\DarkTheme.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="Resources\Styles\LightTheme.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
   </ItemGroup>

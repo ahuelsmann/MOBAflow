@@ -2,6 +2,7 @@ namespace Moba.Smart;
 
 using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
+using UraniumUI;
 
 public static class MauiProgram
 {
@@ -11,6 +12,9 @@ public static class MauiProgram
 		builder
 			.UseMauiApp<App>()
 			.UseMauiCommunityToolkit() // ← Enable CommunityToolkit.Maui
+			.UseMauiCommunityToolkitMediaElement() // ← Enable MediaElement
+			.UseUraniumUI() // ← Enable UraniumUI Material Design
+			.UseUraniumUIMaterial() // ← Enable Material Components
 			.ConfigureFonts(fonts =>
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
