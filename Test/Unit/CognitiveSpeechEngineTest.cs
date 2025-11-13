@@ -1,5 +1,6 @@
 namespace Moba.Test.Unit;
 
+using System;
 using Sound;
 
 public class CognitiveSpeechEngineTest
@@ -9,6 +10,10 @@ public class CognitiveSpeechEngineTest
     [SetUp]
     public void Setup()
     {
+        // Ensure required environment variables are set for tests so the engine does not throw
+        Environment.SetEnvironmentVariable("SPEECH_KEY", "test-key");
+        Environment.SetEnvironmentVariable("SPEECH_REGION", "germanywestcentral");
+
         _speakerEngine = new CognitiveSpeechEngine();
 
         Assert.That(_speakerEngine, Is.Not.Null);
