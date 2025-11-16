@@ -3,16 +3,14 @@ namespace Moba.SharedUI.ViewModel;
 using Backend.Model;
 using Backend.Manager;
 using Moba.Backend.Interface;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using Service;
-
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Moba.SharedUI.Extensions;
 
 public partial class MainWindowViewModel : ObservableObject
 {
@@ -236,13 +234,13 @@ public partial class MainWindowViewModel : ObservableObject
                     catch (OperationCanceledException) { }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"⚠️ Error during Z21 shutdown: {ex.Message}");
+                        this.LogError("Error during Z21 shutdown", ex);
                     }
                 });
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"⚠️ Error scheduling Z21 shutdown: {ex.Message}");
+                this.LogError("Error scheduling Z21 shutdown", ex);
             }
         }
 

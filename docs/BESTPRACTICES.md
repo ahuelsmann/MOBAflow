@@ -55,28 +55,32 @@ public Result<User> GetUser(int userId)
 
 ### Structured Logging
 ```csharp
-// ✅ Good - Dual logging for best visibility
+// ✅ Good - Use LoggingExtensions for dual logging
+this.Log("🔊 Processing order 123");
+this.LogError("Failed to process", exception);
+this.LogWarning("Resource not found");
+
+// Alternative: Direct dual logging in services with ILogger
 Console.WriteLine($"🔊 Processing order {orderId}");
 _logger.LogInformation("Processing order {OrderId} for customer {CustomerId}", 
     orderId, customerId);
-
-// ✅ Error logging with exception
-try 
-{
-    await ProcessAsync();
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"❌ Failed to process: {ex.Message}");
-    _logger.LogError(ex, "Failed to process order {OrderId}", orderId);
-    throw;
-}
 ```
 
-**Why both Console.WriteLine AND ILogger?**
-- **Console.WriteLine**: Immediate feedback during development/debugging 🔍
-- **ILogger**: Structured, configurable, production-ready logging 📊
-- **Together**: Best of both worlds! ✨
+**LoggingExtensions - Available everywhere:**
+```csharp
+using Moba.SharedUI.Extensions;
+
+// In any class:
+this.Log("✅ Operation successful");
+this.LogError("Operation failed", exception);
+this.LogWarning("Check configuration");
+```
+
+**Why LoggingExtensions?**
+- **Extension Method**: Available on any object via `this.Log(...)`
+- **Dual Logging**: Writes to Console + Debug automatically
+- **No Dependencies**: No ILogger injection needed
+- **Emoji Support**: Visual indicators for better readability 🔊✅❌⚠️
 
 ---
 

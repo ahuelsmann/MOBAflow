@@ -6,6 +6,7 @@ using System.Collections.ObjectModel;
 using System.Net;
 using System.Collections.Generic;
 using Moba.Backend.Interface;
+using Moba.SharedUI.Extensions;
 
 /// <summary>
 /// ViewModel that connects to a Z21 and counts laps per InPort (simple demo feature).
@@ -116,7 +117,7 @@ public partial class CounterViewModel : ObservableObject
             if (!IsLocalNetworkAddress(ipAddress))
             {
                 StatusText = "Error: Z21 must be in local network (e.g., 192.168.x.x)";
-                System.Diagnostics.Debug.WriteLine($"❌ IP {ipAddress} is not in local network range");
+                this.Log($"❌ IP {ipAddress} is not in local network range");
                 return;
             }
 
@@ -140,12 +141,12 @@ public partial class CounterViewModel : ObservableObject
         {
             // Network-related errors (e.g., no route to host, network unreachable)
             StatusText = $"Network error: Cannot reach Z21. Check network connection.";
-            System.Diagnostics.Debug.WriteLine($"❌ Z21 Connection Error (Socket): {ex.Message}");
+            this.Log($"❌ Z21 Connection Error (Socket): {ex.Message}");
         }
         catch (Exception ex)
         {
             StatusText = $"Connection failed: {ex.Message}";
-            System.Diagnostics.Debug.WriteLine($"❌ Z21 Connection Error: {ex}");
+            this.Log($"❌ Z21 Connection Error: {ex}");
         }
     }
 
@@ -178,7 +179,7 @@ public partial class CounterViewModel : ObservableObject
         catch (Exception ex)
         {
             StatusText = $"Error: {ex.Message}";
-            System.Diagnostics.Debug.WriteLine($"⚠️ Z21 Disconnect Error: {ex}");
+            this.Log($"⚠️ Z21 Disconnect Error: {ex}");
         }
     }
 
@@ -199,7 +200,7 @@ public partial class CounterViewModel : ObservableObject
 
         _lastFeedbackTime.Clear();
         StatusText = "Counters reset";
-        System.Diagnostics.Debug.WriteLine("🔄 All lap counters reset to 0");
+        this.Log("🔄 All lap counters reset to 0");
     }
 
     private bool CanConnect() => !IsConnected;
@@ -251,7 +252,7 @@ public partial class CounterViewModel : ObservableObject
         // Check if feedback should be ignored based on timer (safe on any thread)
         if (ShouldIgnoreFeedback(feedbackResult.InPort))
         {
-            System.Diagnostics.Debug.WriteLine($"⏭️ Feedback for InPort {feedbackResult.InPort} ignored (timer active)");
+            this.Log($"⏭️ Feedback for InPort {feedbackResult.InPort} ignored (timer active)");
             return;
         }
 
@@ -287,7 +288,7 @@ public partial class CounterViewModel : ObservableObject
         if (stat.LastFeedbackTime.HasValue)
         {
             stat.LastLapTime = now - stat.LastFeedbackTime.Value;
-            System.Diagnostics.Debug.WriteLine($"⏱️ InPort {feedbackResult.InPort} lap time: {stat.LastLapTimeFormatted}");
+            this.Log($"⏱️ InPort {feedbackResult.InPort} lap time: {stat.LastLapTimeFormatted}");
         }
 
         // Update last feedback time
@@ -305,7 +306,7 @@ public partial class CounterViewModel : ObservableObject
         }
 
         // Note: StatusText no longer shows InPort feedback - this info is in Track Cards
-        System.Diagnostics.Debug.WriteLine($"🔔 Feedback: InPort {feedbackResult.InPort} → Count: {stat.Count}/{stat.TargetLapCount}");
+        this.Log($"🔔 Feedback: InPort {feedbackResult.InPort} → Count: {stat.Count}/{stat.TargetLapCount}");
     }
 
     /// <summary>
@@ -319,7 +320,7 @@ public partial class CounterViewModel : ObservableObject
     /// </summary>
     private void OnTargetReached(InPortStatistic stat)
     {
-        System.Diagnostics.Debug.WriteLine($"🎉 Target reached! InPort {stat.InPort}: {stat.Count} laps");
+        this.Log($"🎉 Target reached! InPort {stat.InPort}: {stat.Count} laps");
 
         // Play notification sound
         PlayNotificationSound();
@@ -341,12 +342,12 @@ public partial class CounterViewModel : ObservableObject
             var notification = Android.Media.RingtoneManager.GetDefaultUri(Android.Media.RingtoneType.Notification);
             var ringtone = Android.Media.RingtoneManager.GetRingtone(Android.App.Application.Context, notification);
             ringtone?.Play();
-            System.Diagnostics.Debug.WriteLine("🔔 Notification sound played");
+            this.Log("🔔 Notification sound played");
 #endif
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"⚠️ Failed to play notification sound: {ex.Message}");
+            this.Log($"⚠️ Failed to play notification sound: {ex.Message}");
         }
     }
 
@@ -430,17 +431,17 @@ public partial class CounterViewModel : ObservableObject
             {
                 if (IsInSameSubnet(localIP, ipAddress))
                 {
-                    System.Diagnostics.Debug.WriteLine($"✅ Z21 {ipAddress} is in same subnet as {localIP}");
+                    this.Log($"✅ Z21 {ipAddress} is in same subnet as {localIP}");
                     return true;
                 }
             }
             
-            System.Diagnostics.Debug.WriteLine($"⚠️ Z21 {ipAddress} is not in same subnet as device");
+            this.Log($"⚠️ Z21 {ipAddress} is not in same subnet as device");
             return false; // Not in same subnet → likely not reachable
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"⚠️ Network check failed: {ex.Message}");
+            this.Log($"⚠️ Network check failed: {ex.Message}");
             return false;
         }
     }
@@ -469,7 +470,7 @@ public partial class CounterViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"⚠️ Failed to get local IP addresses: {ex.Message}");
+            this.Log($"⚠️ Failed to get local IP addresses: {ex.Message}");
         }
         
         return addresses;
@@ -587,3 +588,4 @@ public partial class InPortStatistic : ObservableObject
         OnPropertyChanged(nameof(LastFeedbackTimeFormatted));
     }
 }
+
