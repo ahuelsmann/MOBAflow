@@ -12,6 +12,11 @@ builder.Services.AddTransient<CounterViewModel>();
 
 // Register Backend services (Z21 will be created per ViewModel instance)
 // Note: Z21 connection is managed by CounterViewModel, not as singleton service
+builder.Services.AddSingleton<Moba.Backend.Interface.IZ21, Moba.Backend.Z21>();
+builder.Services.AddSingleton<Moba.Backend.Interface.IJourneyManagerFactory, Moba.Backend.Manager.JourneyManagerFactory>();
+
+// Register ViewModel factories
+builder.Services.AddSingleton<Moba.SharedUI.Service.IJourneyViewModelFactory, Moba.WebApp.Service.WebJourneyViewModelFactory>();
 
 var app = builder.Build();
 

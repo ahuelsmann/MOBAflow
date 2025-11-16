@@ -2,6 +2,7 @@ namespace Moba.SharedUI.ViewModel;
 
 using Backend.Model;
 using Backend.Manager;
+using Moba.Backend.Interface;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -16,12 +17,22 @@ using System.Threading.Tasks;
 public partial class MainWindowViewModel : ObservableObject
 {
     private readonly IIoService _ioService;
-    private Backend.Z21? _z21;
+    private readonly IZ21 _z21;
+    private readonly IJourneyManagerFactory _journeyManagerFactory;
     private JourneyManager? _journeyManager;
 
-    public MainWindowViewModel(IIoService ioService)
+    // Primary ctor for DI
+    public MainWindowViewModel(IIoService ioService, IZ21 z21, IJourneyManagerFactory journeyManagerFactory)
     {
         _ioService = ioService;
+        _z21 = z21;
+        _journeyManagerFactory = journeyManagerFactory;
+    }
+
+    // Secondary ctor for tests (legacy)
+    public MainWindowViewModel(IIoService ioService)
+        : this(ioService, new Moba.Backend.Z21(), new Moba.Backend.Manager.JourneyManagerFactory())
+    {
     }
 
     [ObservableProperty]
@@ -57,7 +68,6 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private string simulateInPort = "1";
 
-    // Event for application exit
     public event EventHandler? ExitApplicationRequested;
 
     partial void OnSolutionChanged(Solution? value)
@@ -113,9 +123,6 @@ public partial class MainWindowViewModel : ObservableObject
         {
             var project = Solution.Projects[0];
 
-            // Initialize Z21 if not already done
-            _z21 ??= new Backend.Z21();
-
             if (project.IpAddresses.Count > 0)
             {
                 try
@@ -127,17 +134,14 @@ public partial class MainWindowViewModel : ObservableObject
                     IsZ21Connected = true;
                     Z21StatusText = $"Connected to {project.IpAddresses[0]}";
 
-                    // Create execution context with shared dependencies
-                    // Note: SpeakerEngine will be added when audio functionality is implemented
                     var executionContext = new Moba.Backend.Model.Action.ActionExecutionContext
                     {
-                        Z21 = _z21,
+                        Z21 = _z21 as Moba.Backend.Z21,
                         Project = project
                     };
 
-                    // Initialize JourneyManager with context
                     _journeyManager?.Dispose();
-                    _journeyManager = new JourneyManager(_z21, project.Journeys, executionContext);
+                    _journeyManager = _journeyManagerFactory.Create(_z21, project.Journeys, executionContext);
 
                     ConnectToZ21Command.NotifyCanExecuteChanged();
                     DisconnectFromZ21Command.NotifyCanExecuteChanged();
@@ -165,12 +169,7 @@ public partial class MainWindowViewModel : ObservableObject
             _journeyManager?.Dispose();
             _journeyManager = null;
 
-            if (_z21 != null)
-            {
-                await _z21.DisconnectAsync();
-                _z21.Dispose();
-                _z21 = null;
-            }
+            await _z21.DisconnectAsync();
 
             IsZ21Connected = false;
             Z21StatusText = "Disconnected";
@@ -190,8 +189,7 @@ public partial class MainWindowViewModel : ObservableObject
         {
             if (int.TryParse(SimulateInPort, out int inPort))
             {
-                // Simulate feedback directly on local Z21 instance
-                _z21?.SimulateFeedback(inPort);
+                _z21.SimulateFeedback(inPort);
                 Z21StatusText = $"Simulated feedback for InPort {inPort}";
             }
             else
@@ -215,44 +213,28 @@ public partial class MainWindowViewModel : ObservableObject
 
     public void OnWindowClosing()
     {
-        // Disconnect Z21 connection when exiting (non-blocking to avoid UI freeze)
-        if (_z21 != null)
+        if (_journeyManager != null)
         {
             try
             {
-                _journeyManager?.Dispose();
+                _journeyManager.Dispose();
+                _journeyManager = null;
 
-                var z21 = _z21; // capture local
-                _z21 = null;
+                var z21 = _z21;
 
-                // Run disconnect in background without blocking UI
                 _ = Task.Run(async () =>
                 {
-                    try
-                    {
-                        await z21.DisconnectAsync();
-                    }
-                    catch (TaskCanceledException)
-                    {
-                        // Expected during shutdown
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        // Expected during shutdown
-                    }
+                    try { await z21.DisconnectAsync(); }
+                    catch (TaskCanceledException) { }
+                    catch (OperationCanceledException) { }
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine($"⚠️ Error during Z21 shutdown: {ex.Message}");
-                    }
-                    finally
-                    {
-                        z21.Dispose();
                     }
                 });
             }
             catch (Exception ex)
             {
-                // Log other exceptions
                 System.Diagnostics.Debug.WriteLine($"⚠️ Error scheduling Z21 shutdown: {ex.Message}");
             }
         }

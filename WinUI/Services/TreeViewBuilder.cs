@@ -5,11 +5,12 @@ using SharedUI.ViewModel;
 using System.Collections.ObjectModel;
 
 /// <summary>
-/// WinUI-specific TreeView builder that creates WinUI JourneyViewModel instances
-/// to handle UI thread dispatching with DispatcherQueue.
+/// WinUI-specific TreeView builder that creates JourneyViewModel instances via factory.
 /// </summary>
 public static class TreeViewBuilder
 {
+    public static Moba.SharedUI.Service.IJourneyViewModelFactory? JourneyVmFactory { get; set; }
+
     /// <summary>
     /// Creates the TreeView structure from a Solution with WinUI-specific ViewModels.
     /// </summary>
@@ -106,15 +107,14 @@ public static class TreeViewBuilder
 
         foreach (var journey in journeys)
         {
-            // ✅ Use WinUI-specific JourneyViewModel with DispatcherQueue support
-            var journeyViewModel = new Moba.SharedUI.ViewModel.WinUI.JourneyViewModel(journey);
+            var journeyViewModel = JourneyVmFactory?.Create(journey) ?? new Moba.SharedUI.ViewModel.WinUI.JourneyViewModel(journey);
             
             var journeyNode = new TreeNodeViewModel
             {
                 DisplayName = journey.Name,
                 Icon = "\uE81D",
                 DataContext = journeyViewModel,
-                DataType = typeof(Moba.SharedUI.ViewModel.WinUI.JourneyViewModel)
+                DataType = journeyViewModel.GetType()
             };
 
             foreach (var station in journey.Stations)
