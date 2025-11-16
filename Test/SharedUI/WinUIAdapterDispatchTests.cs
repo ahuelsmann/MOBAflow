@@ -1,18 +1,23 @@
 namespace Moba.Test.SharedUI;
 
 using Moba.Backend.Model;
+using Moba.SharedUI.Service;
 
 [TestFixture]
 public class WinUIAdapterDispatchTests
 {
-    private class TestWinUiAdapter : Moba.SharedUI.ViewModel.WinUI.JourneyViewModel
+    private class TestUiDispatcher : IUiDispatcher
     {
+        private readonly ManualResetEventSlim _dispatchedEvent = new(false);
+        
         public bool Dispatched { get; private set; }
-        public TestWinUiAdapter(Journey model) : base(model) {}
-        protected override void Dispatch(Action action)
+        public ManualResetEventSlim DispatchedEvent => _dispatchedEvent;
+        
+        public void InvokeOnUi(Action action)
         {
-            Dispatched = true; // simulate that dispatch path was used
-            action();
+            Dispatched = true; // Track that dispatch was called
+            action(); // Execute the action
+            _dispatchedEvent.Set(); // Signal that dispatch happened
         }
     }
 
@@ -20,11 +25,16 @@ public class WinUIAdapterDispatchTests
     public void StateChanged_UsesDispatch()
     {
         var model = new Journey();
-        var vm = new TestWinUiAdapter(model);
+        var dispatcher = new TestUiDispatcher();
+        var vm = new Moba.SharedUI.ViewModel.WinUI.JourneyViewModel(model, dispatcher);
 
         model.CurrentCounter++;
 
-        Assert.That(vm.Dispatched, Is.True);
+        // Wait for the PropertyChanged event to be processed (max 1 second)
+        bool signaled = dispatcher.DispatchedEvent.Wait(TimeSpan.FromSeconds(1));
+        
+        Assert.That(signaled, Is.True, "Dispatch was not called within timeout");
+        Assert.That(dispatcher.Dispatched, Is.True);
         Assert.That(vm.CurrentCounter, Is.EqualTo(1u));
     }
 }
