@@ -1,6 +1,6 @@
 namespace Moba.Backend.Model.Action;
 
-using Moba.Sound;
+using Sound;
 
 /// <summary>
 /// Provides execution context and dependencies for action execution

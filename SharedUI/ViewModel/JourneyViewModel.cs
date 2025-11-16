@@ -19,7 +19,7 @@ public partial class JourneyViewModel : ObservableObject
         Stations = new ObservableCollection<Station>(model.Stations);
 
         // Subscribe to StateChanged event in model class Journey.
-        Model.StateChanged += (s, e) =>
+        Model.StateChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(CurrentCounter));
             OnPropertyChanged(nameof(CurrentPos));

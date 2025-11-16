@@ -171,10 +171,29 @@
                                             FontSize="14"
                                             Text="{Binding LapCountFormatted}"
                                             TextColor="White" />
-                                        <Label
-                                            FontSize="12"
-                                            Text="{Binding LastLapTimeFormatted, StringFormat='⏱️ Last lap: {0}'}"
-                                            TextColor="White" />
+                                        <!--  Last Lap Time (left) and Last Seen (right) in one row  -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <!--  Last Lap Time (left-aligned)  -->
+                                            <Label
+                                                Grid.Column="0"
+                                                FontSize="13"
+                                                HorizontalOptions="Start"
+                                                Text="{Binding LastLapTimeFormatted, StringFormat='⏱️ Last lap: {0}'}"
+                                                TextColor="White"
+                                                VerticalOptions="Center" />
+                                            <!--  Last Seen (right-aligned)  -->
+                                            <Label
+                                                Grid.Column="1"
+                                                FontSize="13"
+                                                HorizontalOptions="End"
+                                                Text="{Binding LastFeedbackTimeFormatted, StringFormat='🕐 Last seen: {0}'}"
+                                                TextColor="#ecf0f1"
+                                                VerticalOptions="Center" />
+                                        </Grid>
                                     </VerticalStackLayout>
                                 </Frame>
                             </DataTemplate>

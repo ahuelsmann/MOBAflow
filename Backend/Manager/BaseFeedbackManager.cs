@@ -12,7 +12,7 @@ namespace Moba.Backend.Manager;
 /// <typeparam name="TEntity">The type of entity being managed (Workflow, Journey, Platform, etc.)</typeparam>
 public abstract class BaseFeedbackManager<TEntity> : IFeedbackManager where TEntity : class
 {
-    protected readonly Z21 Z21;
+    protected readonly IZ21 Z21;
     protected readonly List<TEntity> Entities;
     protected readonly Dictionary<uint, DateTime> LastFeedbackTime = new();
     protected readonly Model.Action.ActionExecutionContext ExecutionContext;
@@ -24,7 +24,7 @@ public abstract class BaseFeedbackManager<TEntity> : IFeedbackManager where TEnt
     /// <param name="z21">Z21 command station for receiving feedback events</param>
     /// <param name="entities">List of entities to manage</param>
     /// <param name="executionContext">Optional execution context; if null, a new context with Z21 will be created</param>
-    protected BaseFeedbackManager(Z21 z21, List<TEntity> entities, Model.Action.ActionExecutionContext? executionContext = null)
+    protected BaseFeedbackManager(IZ21 z21, List<TEntity> entities, Model.Action.ActionExecutionContext? executionContext = null)
     {
         Z21 = z21;
         Entities = entities;
@@ -32,7 +32,7 @@ public abstract class BaseFeedbackManager<TEntity> : IFeedbackManager where TEnt
 
         ExecutionContext = executionContext ?? new Model.Action.ActionExecutionContext
         {
-            Z21 = z21
+            Z21 = z21 as Z21 // keep original type when available
         };
     }
 

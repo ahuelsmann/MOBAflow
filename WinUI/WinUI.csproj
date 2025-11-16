@@ -36,5 +36,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Converter\" />
+    <Folder Include="ViewModel\" />
   </ItemGroup>
 </Project>

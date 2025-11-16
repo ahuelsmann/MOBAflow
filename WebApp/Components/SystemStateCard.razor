@@ -1,0 +1,63 @@
+@using Moba.SharedUI.ViewModel
+
+<div class="system-state-card card">
+    <div class="card-header">
+        <h3>⚙️ Z21 System Status</h3>
+    </div>
+    <div class="card-body">
+        <div class="system-stats-grid">
+            <div class="system-stat">
+                <span class="stat-icon">⚡</span>
+                <div class="stat-content">
+                    <span class="stat-label">Main Current</span>
+                    <span class="stat-value">@ViewModel.MainCurrent mA</span>
+                </div>
+            </div>
+
+            <div class="system-stat">
+                <span class="stat-icon">🌡️</span>
+                <div class="stat-content">
+                    <span class="stat-label">Temperature</span>
+                    <span class="stat-value">@ViewModel.Temperature °C</span>
+                </div>
+            </div>
+
+            <div class="system-stat">
+                <span class="stat-icon">🔋</span>
+                <div class="stat-content">
+                    <span class="stat-label">Supply Voltage</span>
+                    <span class="stat-value">@(ViewModel.SupplyVoltage / 1000.0) V</span>
+                </div>
+            </div>
+
+            <div class="system-stat">
+                <span class="stat-icon">⚙️</span>
+                <div class="stat-content">
+                    <span class="stat-label">VCC Voltage</span>
+                    <span class="stat-value">@(ViewModel.VccVoltage / 1000.0) V</span>
+                </div>
+            </div>
+
+            <div class="system-stat">
+                <span class="stat-icon">📊</span>
+                <div class="stat-content">
+                    <span class="stat-label">Central State</span>
+                    <span class="stat-value mono">@ViewModel.CentralState</span>
+                </div>
+            </div>
+
+            <div class="system-stat">
+                <span class="stat-icon">📈</span>
+                <div class="stat-content">
+                    <span class="stat-label">Central State Ex</span>
+                    <span class="stat-value mono">@ViewModel.CentralStateEx</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public CounterViewModel ViewModel { get; set; } = null!;
+}

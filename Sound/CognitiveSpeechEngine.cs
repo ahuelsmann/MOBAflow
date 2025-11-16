@@ -69,7 +69,7 @@ public class CognitiveSpeechEngine : ISpeakerEngine
         }
     }
 
-    private void OutputSpeechSynthesisResult(SpeechSynthesisResult speechSynthesisResult, string text)
+    private static void OutputSpeechSynthesisResult(SpeechSynthesisResult speechSynthesisResult, string text)
     {
         switch (speechSynthesisResult.Reason)
         {

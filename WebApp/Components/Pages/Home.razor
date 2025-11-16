@@ -1,0 +1,12 @@
+@page "/"
+@inject NavigationManager Navigation
+
+<PageTitle>MOBAdash - Lap Counter</PageTitle>
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Redirect to counter page on startup
+        Navigation.NavigateTo("/counter", replace: true);
+    }
+}

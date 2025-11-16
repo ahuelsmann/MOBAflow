@@ -26,7 +26,7 @@ public class SystemSpeechEngine : ISpeakerEngine
 
         await Task.Run(() =>
         {
-            using var synthesizer = new SpeechSynthesizer();
+                using var synthesizer = new SpeechSynthesizer();
             
             // Configure output to default audio device
             synthesizer.SetOutputToDefaultAudioDevice();

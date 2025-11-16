@@ -1,8 +1,7 @@
 namespace Moba.Test.Unit;
 
-using Backend;
-using Backend.Manager;
-using Backend.Model;
+using Moba.Backend.Manager;
+using Moba.Backend.Model;
 
 public class PlatformTest
 {
@@ -78,17 +77,14 @@ public class PlatformTest
     public async Task PlatformManager_ShouldExecutePlatformWorkflow_OnFeedback()
     {
         // Arrange
-        var z21 = new Z21();
+        var z21 = new Moba.Backend.Z21();
         var workflow = new Workflow
         {
             Name = "Platform Announcement",
-            Actions =
-            [
-                new Backend.Model.Action.Command([0x01, 0x02])
-                {
-                    Name = "Test Command"
-                }
-            ]
+            Actions = new List<Moba.Backend.Model.Action.Base>
+            {
+                new Moba.Backend.Model.Action.Command(new byte[] { 0x01, 0x02 }) { Name = "Test Command" }
+            }
         };
 
         var platform = new Platform
@@ -125,17 +121,14 @@ public class PlatformTest
     public async Task PlatformManager_ShouldIgnoreFeedback_WhenTimerActive()
     {
         // Arrange
-        var z21 = new Z21();
+        var z21 = new Moba.Backend.Z21();
         var workflow = new Workflow
         {
             Name = "Platform Announcement",
-            Actions =
-            [
-                new Backend.Model.Action.Command([0x01, 0x02])
-                {
-                    Name = "Test Command"
-                }
-            ]
+            Actions = new List<Moba.Backend.Model.Action.Base>
+            {
+                new Moba.Backend.Model.Action.Command(new byte[] { 0x01, 0x02 }) { Name = "Test Command" }
+            }
         };
 
         var platform = new Platform
@@ -174,7 +167,7 @@ public class PlatformTest
     public void PlatformManager_ResetAll_ShouldClearTimers()
     {
         // Arrange
-        var z21 = new Z21();
+        var z21 = new Moba.Backend.Z21();
         var platform = new Platform
         {
             Name = "Platform 1",
@@ -202,7 +195,7 @@ public class PlatformTest
     public void PlatformManager_Dispose_ShouldUnsubscribeFromZ21()
     {
         // Arrange
-        var z21 = new Z21();
+        var z21 = new Moba.Backend.Z21();
         var platforms = new List<Platform>();
         var platformManager = new PlatformManager(z21, platforms);
 

@@ -1,0 +1,139 @@
+@page "/counter"
+@using Moba.SharedUI.ViewModel
+@inject CounterViewModel ViewModel
+@implements IDisposable
+@rendermode InteractiveServer
+
+<PageTitle>Lap Counter - MOBAdash</PageTitle>
+
+<div class="dashboard-page">
+    <div class="page-header">
+        <h2 class="page-title">Lap Counter Dashboard</h2>
+        <div class="page-actions">
+            <span class="status-indicator @(ViewModel.IsConnected ? "connected" : "disconnected")">
+                @(ViewModel.IsConnected ? "● Connected" : "○ Disconnected")
+            </span>
+        </div>
+    </div>
+
+    <div class="connection-section card">
+        <div class="card-header">
+            <h3>Z21 Connection</h3>
+        </div>
+        <div class="card-body">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Z21 IP Address:</label>
+                    <input type="text" 
+                           class="form-control" 
+                           @bind="ViewModel.Z21IpAddress" 
+                           disabled="@ViewModel.IsConnected" />
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-primary" 
+                            @onclick="ConnectAsync" 
+                            disabled="@(!ViewModel.ConnectCommand.CanExecute(null))">
+                        Connect
+                    </button>
+                    <button class="btn btn-secondary" 
+                            @onclick="DisconnectAsync" 
+                            disabled="@(!ViewModel.DisconnectCommand.CanExecute(null))">
+                        Disconnect
+                    </button>
+                </div>
+            </div>
+            <div class="status-message">
+                <span class="@GetStatusClass()">@ViewModel.StatusText</span>
+            </div>
+        </div>
+    </div>
+
+    @if (ViewModel.IsConnected)
+    {
+        <SystemStateCard ViewModel="@ViewModel" />
+
+        <div class="settings-section card">
+            <div class="card-header">
+                <h3>Settings</h3>
+            </div>
+            <div class="card-body">
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label>Target Lap Count:</label>
+                        <input type="number" 
+                               class="form-control" 
+                               @bind="ViewModel.GlobalTargetLapCount" 
+                               min="1" />
+                    </div>
+                    <div class="form-group">
+                        <label>Timer Filter:</label>
+                        <input type="checkbox" 
+                               class="form-check-input" 
+                               @bind="ViewModel.UseTimerFilter" />
+                        <span class="form-check-label">Enable (@ViewModel.TimerIntervalSeconds s)</span>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-warning" 
+                                @onclick="ResetCounters" 
+                                disabled="@(!ViewModel.ResetCountersCommand.CanExecute(null))">
+                            Reset All Counters
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tracks-section">
+            <h3 class="section-title">Track Statistics</h3>
+            <div class="cards-grid">
+                @foreach (var stat in ViewModel.Statistics)
+                {
+                    <TrackCard Statistic="@stat" />
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Subscribe to property changes for real-time updates
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        // Trigger UI re-render when ViewModel properties change
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ConnectAsync()
+    {
+        await ViewModel.ConnectCommand.ExecuteAsync(null);
+    }
+
+    private async Task DisconnectAsync()
+    {
+        await ViewModel.DisconnectCommand.ExecuteAsync(null);
+    }
+
+    private void ResetCounters()
+    {
+        ViewModel.ResetCountersCommand.Execute(null);
+    }
+
+    private string GetStatusClass()
+    {
+        if (ViewModel.StatusText.Contains("Connected"))
+            return "status-success";
+        if (ViewModel.StatusText.Contains("Error") || ViewModel.StatusText.Contains("failed"))
+            return "status-error";
+        return "status-info";
+    }
+
+    public void Dispose()
+    {
+        ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+    }
+}

@@ -1,5 +1,6 @@
 using Moba.Backend.Model;
 using Moba.Backend.Model.Enum;
+using Moba.Backend.Interface;
 
 using System.Diagnostics;
 
@@ -7,6 +8,7 @@ namespace Moba.Backend.Manager;
 
 /// <summary>
 /// Manages the execution of workflows and their actions related to a journey or stop (station) based on feedback events (track feedback points).
+/// Platform-independent: No UI thread dispatching (that's handled by platform-specific ViewModels).
 /// </summary>
 public class JourneyManager : BaseFeedbackManager<Journey>
 {
@@ -18,7 +20,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>
     /// <param name="z21">Z21 command station for receiving feedback events</param>
     /// <param name="journeys">List of journeys to manage</param>
     /// <param name="executionContext">Optional execution context; if null, a new context with Z21 will be created</param>
-    public JourneyManager(Z21 z21, List<Journey> journeys, Model.Action.ActionExecutionContext? executionContext = null)
+    public JourneyManager(IZ21 z21, List<Journey> journeys, Model.Action.ActionExecutionContext? executionContext = null)
     : base(z21, journeys, executionContext)
     {
     }

@@ -1,0 +1,55 @@
+@using Moba.SharedUI.ViewModel
+@using System.Globalization
+
+<div class="track-card" style="border-left: 4px solid @Statistic.BackgroundColorName">
+    <div class="track-header">
+        <h4 class="track-title">Track @Statistic.InPort</h4>
+        @if (Statistic.IsCompleted)
+        {
+            <span class="completion-badge">✓ Completed</span>
+        }
+    </div>
+
+    <div class="track-stats">
+        <div class="stat-item">
+            <span class="stat-label">Lap Count</span>
+            <span class="stat-value">@Statistic.LapCountFormatted</span>
+        </div>
+
+        <div class="stat-item">
+            <span class="stat-label">Last Lap Time</span>
+            <span class="stat-value">@Statistic.LastLapTimeFormatted</span>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: @GetProgressWidth()"></div>
+            </div>
+            <span class="progress-text">@GetProgressPercentage()</span>
+        </div>
+    </div>
+
+    @if (Statistic.LastFeedbackTime.HasValue)
+    {
+        <div class="track-footer">
+            <span class="last-feedback">Last seen: @Statistic.LastFeedbackTime.Value.ToLocalTime().ToString("HH:mm:ss")</span>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public InPortStatistic Statistic { get; set; } = null!;
+
+    private string GetProgressWidth()
+    {
+        var percentage = Statistic.Progress * 100;
+        return percentage.ToString("F1", CultureInfo.InvariantCulture) + "%";
+    }
+
+    private string GetProgressPercentage()
+    {
+        var percentage = Statistic.Progress * 100;
+        return percentage.ToString("F0", CultureInfo.InvariantCulture) + "%";
+    }
+}

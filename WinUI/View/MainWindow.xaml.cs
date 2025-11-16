@@ -2,7 +2,7 @@ namespace Moba.WinUI.View;
 
 using Microsoft.UI.Xaml.Controls;
 
-using SharedUI.ViewModel;
+using ViewModels;
 
 public sealed partial class MainWindow
 {
@@ -39,7 +39,7 @@ public sealed partial class MainWindow
 
     private void SolutionTreeView_SelectionChanged(TreeView sender, TreeViewSelectionChangedEventArgs args)
     {
-        if (args.AddedItems.Count > 0 && args.AddedItems[0] is TreeNodeViewModel node)
+        if (args.AddedItems.Count > 0 && args.AddedItems[0] is SharedUI.ViewModel.TreeNodeViewModel node)
         {
             ViewModel.OnNodeSelected(node);
         }

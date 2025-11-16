@@ -4,10 +4,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 
 using Moba.SharedUI.Service;
+using ViewModels;
 
 using Service;
-
-using SharedUI.ViewModel;
 
 using View;
 
@@ -54,10 +53,10 @@ public partial class App
         // Register IoService (WindowId will be set after MainWindow creation)
         services.AddSingleton<IIoService, IoService>();
 
-        // Register ViewModels
+        // Register WinUI-specific ViewModel (uses WinUI JourneyViewModel with DispatcherQueue)
         services.AddTransient<MainWindowViewModel>();
 
-        // Register Views
+        // Register Views (MainWindow expects MainWindowViewModel)
         services.AddTransient<MainWindow>();
     }
 }

@@ -12,7 +12,7 @@ public class StationManager : BaseFeedbackManager<Station>
     /// Initializes a new instance of the StationManager.
     /// </summary>
     /// <param name="z21">Z21 command station for receiving feedback events</param>
-    /// <param name="platforms">List of platforms to manage</param>
+    /// <param name="stations"></param>
     /// <param name="executionContext">Optional execution context; if null, a new context with Z21 will be created</param>
     public StationManager(Z21 z21, List<Station> stations, Model.Action.ActionExecutionContext? executionContext = null)
         : base(z21, stations, executionContext)
@@ -64,11 +64,20 @@ public class StationManager : BaseFeedbackManager<Station>
         }
     }
 
-    protected override uint GetInPort(Station entity) => entity.Flow.InPort;
+    protected override uint GetInPort(Station entity)
+    {
+        return entity.Flow?.InPort ?? throw new InvalidOperationException();
+    }
 
-    protected override bool IsUsingTimerToIgnoreFeedbacks(Station entity) => entity.Flow.IsUsingTimerToIgnoreFeedbacks;
+    protected override bool IsUsingTimerToIgnoreFeedbacks(Station entity) => entity.Flow is { IsUsingTimerToIgnoreFeedbacks: true };
 
-    protected override double GetIntervalForTimerToIgnoreFeedbacks(Station entity) => entity.Flow.IntervalForTimerToIgnoreFeedbacks;
+    protected override double GetIntervalForTimerToIgnoreFeedbacks(Station entity)
+    {
+        return entity.Flow?.IntervalForTimerToIgnoreFeedbacks ?? throw new InvalidOperationException();
+    }
 
-    protected override string GetEntityName(Station entity) => entity.Flow.Name;
+    protected override string GetEntityName(Station entity)
+    {
+        return entity.Flow?.Name ?? throw new InvalidOperationException();
+    }
 }

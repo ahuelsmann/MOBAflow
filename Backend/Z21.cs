@@ -1,17 +1,16 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using Moba.Backend.Interface;
 
 namespace Moba.Backend;
-
-public delegate void Feedback(FeedbackResult feedbackContent);
-public delegate void SystemStateChanged(SystemState systemState);
 
 /// <summary>
 /// This class enables bidirectional communication via UDP with a Z21 digital control center in your network.
 /// Implements Z21 LAN Protocol Specification V1.13.
+/// Connection is kept alive by broadcast events (no explicit keep-alive ping required).
 /// </summary>
-public class Z21 : IDisposable
+public class Z21 : IZ21
 {
     public event Feedback? Received;
     public event SystemStateChanged? OnSystemStateChanged;
@@ -19,7 +18,6 @@ public class Z21 : IDisposable
     private UdpClient? _client;
     private CancellationTokenSource? _cancellationTokenSource;
     private Task? _receiverTask;
-    private Task? _pingTask;
     private bool _disposed;
 
     /// <summary>
@@ -34,6 +32,7 @@ public class Z21 : IDisposable
 
     /// <summary>
     /// Connect to Z21.
+    /// Sets broadcast flags to receive all events, which keeps the connection alive automatically.
     /// </summary>
     /// <param name="address">IP address of the Z21.</param>
     /// <param name="cancellationToken">Enables the controlled cancellation of long-running operations.</param>
@@ -49,10 +48,9 @@ public class Z21 : IDisposable
         _receiverTask = Task.Run(() => ReceiveMessagesAsync(_cancellationTokenSource.Token), _cancellationTokenSource.Token);
 
         await SendHandshakeAsync();
-
-        _pingTask = Task.Run(() => SendPingAsync(_cancellationTokenSource.Token), _cancellationTokenSource.Token);
-
         await SetBroadcastFlagsAsync();
+        
+        Debug.WriteLine("✅ Z21 connected (broadcast events will keep connection alive)");
     }
 
     /// <summary>
@@ -65,7 +63,7 @@ public class Z21 : IDisposable
             await _cancellationTokenSource.CancelAsync();
         }
 
-        // Wait for tasks, but ignore OperationCanceledException
+        // Wait for receiver task, but ignore OperationCanceledException
         if (_receiverTask != null)
         {
             try
@@ -75,18 +73,6 @@ public class Z21 : IDisposable
             catch (OperationCanceledException)
             {
                 Debug.WriteLine("📡 Receiver task cancelled");
-            }
-        }
-
-        if (_pingTask != null)
-        {
-            try
-            {
-                await _pingTask;
-            }
-            catch (OperationCanceledException)
-            {
-                Debug.WriteLine("🏓 Ping task cancelled");
             }
         }
 
@@ -100,7 +86,7 @@ public class Z21 : IDisposable
     private async Task SendHandshakeAsync()
     {
         // LAN_SYSTEMSTATE_GETDATA (0x85)
-        byte[] sendBytes = [0x04, 0x00, 0x85, 0x00];
+        byte[] sendBytes = new byte[] { 0x04, 0x00, 0x85, 0x00 };
         if (_client != null)
         {
             await _client.SendAsync(sendBytes, sendBytes.Length);
@@ -110,21 +96,10 @@ public class Z21 : IDisposable
     private async Task SetBroadcastFlagsAsync()
     {
         // LAN_SET_BROADCASTFLAGS (0x50) - Subscribe to all events
-        byte[] sendBytes = [0x08, 0x00, 0x50, 0x00, 0xFF, 0xFF, 0xFF, 0xFF];
+        // These events keep the connection alive automatically - no explicit ping needed!
+        byte[] sendBytes = new byte[] { 0x08, 0x00, 0x50, 0x00, 0xFF, 0xFF, 0xFF, 0xFF };
         if (_client != null)
         {
-            await _client.SendAsync(sendBytes, sendBytes.Length);
-        }
-    }
-
-    private async Task SendPingAsync(CancellationToken cancellationToken)
-    {
-        while (!cancellationToken.IsCancellationRequested && _client != null)
-        {
-            await Task.Delay(60000, cancellationToken);
-
-            // LAN_GET_HWINFO (0x1A) - Keep-Alive
-            byte[] sendBytes = [0x04, 0x00, 0x1A, 0x00];
             await _client.SendAsync(sendBytes, sendBytes.Length);
         }
     }
@@ -137,7 +112,7 @@ public class Z21 : IDisposable
     /// </summary>
     public async Task SetTrackPowerOnAsync()
     {
-        byte[] sendBytes = [0x07, 0x00, 0x40, 0x00, 0x21, 0x81, 0xA0];
+        byte[] sendBytes = new byte[] { 0x07, 0x00, 0x40, 0x00, 0x21, 0x81, 0xA0 };
         await SendCommandAsync(sendBytes);
         Debug.WriteLine("🔌 Track power ON command sent");
     }
@@ -148,7 +123,7 @@ public class Z21 : IDisposable
     /// </summary>
     public async Task SetTrackPowerOffAsync()
     {
-        byte[] sendBytes = [0x07, 0x00, 0x40, 0x00, 0x21, 0x80, 0xA1];
+        byte[] sendBytes = new byte[] { 0x07, 0x00, 0x40, 0x00, 0x21, 0x80, 0xA1 };
         await SendCommandAsync(sendBytes);
         Debug.WriteLine("🔌 Track power OFF command sent");
     }
@@ -159,7 +134,7 @@ public class Z21 : IDisposable
     /// </summary>
     public async Task SetEmergencyStopAsync()
     {
-        byte[] sendBytes = [0x06, 0x00, 0x40, 0x00, 0x80, 0x80];
+        byte[] sendBytes = new byte[] { 0x06, 0x00, 0x40, 0x00, 0x80, 0x80 };
         await SendCommandAsync(sendBytes);
         Debug.WriteLine("🔴 Emergency stop command sent");
     }
@@ -170,7 +145,7 @@ public class Z21 : IDisposable
     /// </summary>
     public async Task GetStatusAsync()
     {
-        byte[] sendBytes = [0x07, 0x00, 0x40, 0x00, 0x21, 0x24, 0x05];
+        byte[] sendBytes = new byte[] { 0x07, 0x00, 0x40, 0x00, 0x21, 0x24, 0x05 };
         await SendCommandAsync(sendBytes);
         Debug.WriteLine("📊 Status request sent");
     }
@@ -324,7 +299,7 @@ public class Z21 : IDisposable
     #region Testing & Simulation
 
     /// <summary>
-    /// Simulates a feedback event for testing purposes without requiring actual Z21 hardware feedback.
+    /// Simulates a feedback event for testing purposes without requiring actual Z21 hardware.
     /// This triggers the same Received event as a real Z21 feedback message would.
     /// Only for testing in WinUI - not used in MOBAsmart.
     /// </summary>
@@ -336,14 +311,14 @@ public class Z21 : IDisposable
             throw new ArgumentOutOfRangeException(nameof(inPort), "InPort must be between 0 and 255");
         }
 
-        byte[] simulatedContent = [
+        byte[] simulatedContent = new byte[] {
             0x0F, 0x00, 0x80, 0x00,     // Header
             0x00,                       // GroupIndex
             (byte)inPort,               // InPort
             0x01,                       // Status (occupied)
             0x00, 0x00, 0x00, 0x00,     // Additional bytes
             0x00, 0x00, 0x00, 0x00      // Padding
-        ];
+        };
 
         Debug.WriteLine($"⚡ Simulating feedback for InPort {inPort}");
         Received?.Invoke(new FeedbackResult(simulatedContent));

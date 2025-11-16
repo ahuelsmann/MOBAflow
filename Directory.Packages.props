@@ -3,30 +3,31 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.15.0.120848" />
     <PackageVersion Include="NAudio" Version="2.2.1" />
-    <PackageVersion Include="Microsoft.CognitiveServices.Speech" Version="1.46.0" />
-    <PackageVersion Include="System.Speech" Version="9.0.10" />
-    <PackageVersion Include="System.Windows.Extensions" Version="9.0.10" />
+    <PackageVersion Include="Microsoft.CognitiveServices.Speech" Version="1.47.0" />
+    <PackageVersion Include="System.Speech" Version="10.0.0" />
+    <PackageVersion Include="System.Windows.Extensions" Version="10.0.0" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageVersion Include="CommunityToolkit.Maui" Version="11.2.0" />
-    <PackageVersion Include="CommunityToolkit.Maui.MediaElement" Version="4.1.0" />
-    <PackageVersion Include="UraniumUI.Material" Version="2.10.2" />
-    <PackageVersion Include="UraniumUI.Icons.MaterialIcons" Version="2.10.2" />
-    <PackageVersion Include="Microsoft.WindowsAppSDK" Version="1.8.251003001" />
+    <PackageVersion Include="CommunityToolkit.Maui" Version="13.0.0" />
+    <PackageVersion Include="CommunityToolkit.Maui.MediaElement" Version="7.0.0" />
+    <PackageVersion Include="UraniumUI.Material" Version="2.13.0" />
+    <PackageVersion Include="UraniumUI.Icons.MaterialIcons" Version="2.13.0" />
+    <PackageVersion Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
     <PackageVersion Include="Microsoft.SourceLink.AzureRepos.Git" Version="8.0.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
     <PackageVersion Include="NUnit" Version="4.4.0" />
     <PackageVersion Include="NUnit.Analyzers" Version="4.11.2" />
     <PackageVersion Include="NUnit3TestAdapter" Version="5.2.0" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0-rc.2.24524.12" />
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.Core" Version="1.2.0" />
-    <PackageVersion Include="Microsoft.Maui.Controls" Version="10.0.0-rc.2.25504.7" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0-rc.2.25502.107" />
+    <PackageVersion Include="Microsoft.Maui.Controls" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.0-rc.2.25502.107" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0-rc.2.25502.107" />
+    <PackageVersion Include="Moq" Version="4.20.72" />
   </ItemGroup>
 </Project>

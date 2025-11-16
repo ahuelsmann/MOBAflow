@@ -15,12 +15,14 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="Moq" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="NUnit.Framework" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Backend\Backend.csproj" />
+    <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\WinUI\example-solution.json" Link="TestFile\example-solution.json" CopyToOutputDirectory="PreserveNewest" />

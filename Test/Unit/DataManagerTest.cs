@@ -1,6 +1,7 @@
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
 namespace Moba.Test.Unit;
 
-using Backend.Data;
+using Moba.Backend.Data;
 
 public class DataManagerTest
 {
@@ -27,17 +28,17 @@ public class DataManagerTest
         Assert.That(dataManager.Cities.Count, Is.GreaterThan(0), "Cities list should contain entries");
 
         // Output für Debugging
-        TestContext.Out.WriteLine($"Total cities loaded: {dataManager.Cities.Count}");
-        TestContext.Out.WriteLine("\n=== List of all German cities with main stations ===\n");
+        await TestContext.Out.WriteLineAsync($"Total cities loaded: {dataManager.Cities.Count}");
+        await TestContext.Out.WriteLineAsync("\n=== List of all German cities with main stations ===\n");
 
         foreach (var city in dataManager.Cities)
         {
-            TestContext.Out.WriteLine($"City: {city.Name}");
+            await TestContext.Out.WriteLineAsync($"City: {city.Name}");
             foreach (var station in city.Stations)
             {
-                TestContext.Out.WriteLine($"  - Station: {station.Name}, Track: {station.Track}, Exit on Left: {station.IsExitOnLeft}");
+                await TestContext.Out.WriteLineAsync($"  - Station: {station.Name}, Track: {station.Track}, Exit on Left: {station.IsExitOnLeft}");
             }
-            TestContext.Out.WriteLine("");
+            await TestContext.Out.WriteLineAsync("");
         }
     }
 
@@ -65,7 +66,7 @@ public class DataManagerTest
         Assert.That(cityNames, Does.Contain("Leipzig"), "Leipzig should be in the list");
         Assert.That(cityNames, Does.Contain("Dresden"), "Dresden should be in the list");
 
-        TestContext.Out.WriteLine($"✓ All major cities are present in the dataset");
+        await TestContext.Out.WriteLineAsync($"✓ All major cities are present in the dataset");
     }
 
     [Test]
@@ -92,7 +93,7 @@ public class DataManagerTest
             }
         }
 
-        TestContext.Out.WriteLine($"✓ All {dataManager.Cities.Count} cities have valid station data");
+        await TestContext.Out.WriteLineAsync($"✓ All {dataManager.Cities.Count} cities have valid station data");
     }
 
     [Test]
@@ -114,9 +115,9 @@ public class DataManagerTest
         Assert.That(hamburg, Is.Not.Null, "Hamburg should exist");
         Assert.That(hamburg!.Stations[0].Name, Is.EqualTo("Hamburg Hauptbahnhof"));
 
-        TestContext.Out.WriteLine("✓ Specific station names are correct");
-        TestContext.Out.WriteLine($"München: {munich.Stations[0].Name}");
-        TestContext.Out.WriteLine($"Hamburg: {hamburg.Stations[0].Name}");
+        await TestContext.Out.WriteLineAsync("✓ Specific station names are correct");
+        await TestContext.Out.WriteLineAsync($"München: {munich.Stations[0].Name}");
+        await TestContext.Out.WriteLineAsync($"Hamburg: {hamburg.Stations[0].Name}");
     }
 
     [Test]
@@ -146,7 +147,7 @@ public class DataManagerTest
             Assert.That(reloadedData.Cities[0].Stations[0].Name,
                 Is.EqualTo(originalData.Cities[0].Stations[0].Name));
 
-            TestContext.Out.WriteLine("✓ Save and load round-trip successful");
+            await TestContext.Out.WriteLineAsync("✓ Save and load round-trip successful");
         }
         finally
         {

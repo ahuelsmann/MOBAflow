@@ -1,6 +1,6 @@
 namespace Moba.Test.Unit;
 
-using Backend.Model;
+using Moba.Backend.Model;
 
 public class SolutionTest
 {

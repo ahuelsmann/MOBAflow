@@ -457,8 +457,8 @@ public partial class CounterViewModel : ObservableObject
         try
         {
             // Get all network interfaces
-            var hostName = System.Net.Dns.GetHostName();
-            var hostEntry = await System.Net.Dns.GetHostEntryAsync(hostName);
+            var hostName = Dns.GetHostName();
+            var hostEntry = await Dns.GetHostEntryAsync(hostName);
             
             foreach (var address in hostEntry.AddressList)
             {
@@ -535,6 +535,14 @@ public partial class InPortStatistic : ObservableObject
         : "--:--";
 
     /// <summary>
+    /// Formatted last feedback time for display (HH:mm:ss or --:--:--).
+    /// Shows the time when the last feedback was received.
+    /// </summary>
+    public string LastFeedbackTimeFormatted => LastFeedbackTime.HasValue 
+        ? LastFeedbackTime.Value.ToLocalTime().ToString("HH:mm:ss")
+        : "--:--:--";
+
+    /// <summary>
     /// Formatted lap count for display (X/Y laps format).
     /// </summary>
     public string LapCountFormatted => $"{Count}/{TargetLapCount} laps";
@@ -574,5 +582,10 @@ public partial class InPortStatistic : ObservableObject
     partial void OnLastLapTimeChanged(TimeSpan? value)
     {
         OnPropertyChanged(nameof(LastLapTimeFormatted));
+    }
+
+    partial void OnLastFeedbackTimeChanged(DateTime? value)
+    {
+        OnPropertyChanged(nameof(LastFeedbackTimeFormatted));
     }
 }
