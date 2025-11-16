@@ -51,11 +51,14 @@ public class HealthCheckService : IDisposable
     /// </summary>
     public void StartPeriodicChecks()
     {
+        // Perform initial check immediately (even if periodic checks are disabled)
+        _ = PerformHealthCheckAsync();
+
         var enabled = _configuration.GetValue<bool>("HealthCheck:Enabled", true);
         if (!enabled)
         {
-            Console.WriteLine("ℹ️ Health checks disabled in configuration");
-            _logger.LogInformation("Health checks disabled in configuration");
+            Console.WriteLine("ℹ️ Periodic health checks disabled in configuration");
+            _logger.LogInformation("Periodic health checks disabled in configuration (initial check performed)");
             return;
         }
 
@@ -67,9 +70,6 @@ public class HealthCheckService : IDisposable
         _healthCheckTimer.Elapsed += async (sender, e) => await PerformHealthCheckAsync();
         _healthCheckTimer.AutoReset = true;
         _healthCheckTimer.Start();
-
-        // Perform initial check
-        _ = PerformHealthCheckAsync();
     }
 
     /// <summary>
@@ -97,15 +97,15 @@ public class HealthCheckService : IDisposable
             }
             else if (isHealthy)
             {
-                SpeechServiceStatus = "✅ Healthy";
+                SpeechServiceStatus = "✅ Ready";
                 IsSpeechServiceHealthy = true;
-                Console.WriteLine("✅ Azure Speech Service: Healthy");
+                Console.WriteLine("✅ Azure Speech Service: Ready");
             }
             else
             {
-                SpeechServiceStatus = "❌ Unhealthy";
+                SpeechServiceStatus = "❌ Connection Failed";
                 IsSpeechServiceHealthy = false;
-                Console.WriteLine("❌ Azure Speech Service: Unhealthy");
+                Console.WriteLine("❌ Azure Speech Service: Connection Failed");
             }
 
             // Notify if status changed

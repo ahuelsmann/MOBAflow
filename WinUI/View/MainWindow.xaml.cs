@@ -69,27 +69,31 @@ public sealed partial class MainWindow
 
     private void UpdateHealthStatus(string statusMessage, bool isHealthy)
     {
-        SpeechHealthText.Text = $"Azure Speech: {statusMessage}";
+        // Display only "Azure Speech" - status is shown via icon only
+        SpeechHealthText.Text = "Azure Speech";
         
-        // Update icon based on health status
-        if (statusMessage.Contains("✅"))
+        // Set tooltip with detailed status
+        Microsoft.UI.Xaml.Controls.ToolTipService.SetToolTip(SpeechHealthPanel, statusMessage);
+        
+        // Update icon and color based on health status
+        if (statusMessage.Contains("✅") || statusMessage.Contains("Ready"))
         {
             SpeechHealthIcon.Glyph = "\uE930"; // Checkmark circle
             SpeechHealthIcon.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
                 Microsoft.UI.Colors.Green);
         }
-        else if (statusMessage.Contains("⚠️"))
+        else if (statusMessage.Contains("⚠️") || statusMessage.Contains("Not Configured"))
         {
             SpeechHealthIcon.Glyph = "\uE7BA"; // Warning
             SpeechHealthIcon.Foreground = Microsoft.UI.Xaml.Application.Current.Resources["SystemFillColorCautionBrush"] as Microsoft.UI.Xaml.Media.Brush;
         }
-        else if (statusMessage.Contains("❌"))
+        else if (statusMessage.Contains("❌") || statusMessage.Contains("Failed"))
         {
             SpeechHealthIcon.Glyph = "\uE711"; // Error
             SpeechHealthIcon.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
                 Microsoft.UI.Colors.Red);
         }
-        else
+        else // Initializing
         {
             SpeechHealthIcon.Glyph = "\uE946"; // Sync
             SpeechHealthIcon.Foreground = Microsoft.UI.Xaml.Application.Current.Resources["SystemFillColorCautionBrush"] as Microsoft.UI.Xaml.Media.Brush;
