@@ -6,12 +6,10 @@ public partial class MainPage : ContentPage
 {
 	private readonly CounterViewModel _viewModel;
 
-	public MainPage()
+	public MainPage(CounterViewModel viewModel)
 	{
 		InitializeComponent();
-		
-		// Set ViewModel via DI (now from SharedUI)
-		_viewModel = new CounterViewModel();
+		_viewModel = viewModel;
 		BindingContext = _viewModel;
 
 		// Subscribe to TargetReached event for showing alert
