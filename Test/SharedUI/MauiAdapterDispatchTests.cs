@@ -9,7 +9,7 @@ public class MauiAdapterDispatchTests
     {
         public bool Dispatched { get; private set; }
         public TestMauiAdapter(Journey model) : base(model) {}
-        protected override void Dispatch(System.Action action)
+        protected override void Dispatch(Action action)
         {
             Dispatched = true; // simulate MainThread dispatch
             action();

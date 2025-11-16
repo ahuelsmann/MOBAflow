@@ -5,6 +5,6 @@ using Moba.SharedUI.Service;
 
 public class WebJourneyViewModelFactory : IJourneyViewModelFactory
 {
-    public Moba.SharedUI.ViewModel.JourneyViewModel Create(Journey model)
-        => new Moba.SharedUI.ViewModel.JourneyViewModel(model);
+    public SharedUI.ViewModel.JourneyViewModel Create(Journey model)
+        => new SharedUI.ViewModel.JourneyViewModel(model);
 }

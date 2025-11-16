@@ -2,16 +2,18 @@ namespace Moba.SharedUI.ViewModel.MAUI;
 
 using System;
 using Backend.Model;
+using Moba.SharedUI.Service;
 
 /// <summary>
-/// MAUI-specific JourneyViewModel adapter that dispatches property updates to the MAUI MainThread.
-/// This adapter inherits from the Shared base and only deals with UI-thread dispatching.
+/// MAUI-specific JourneyViewModel adapter that dispatches property updates via IUiDispatcher.
 /// </summary>
-public class JourneyViewModel : Moba.SharedUI.ViewModel.JourneyViewModel
+public class JourneyViewModel : ViewModel.JourneyViewModel
 {
-    public JourneyViewModel(Journey model) : base(model)
+    private readonly IUiDispatcher _dispatcher;
+
+    public JourneyViewModel(Journey model, IUiDispatcher dispatcher) : base(model)
     {
-        // Subscribe to model changes and dispatch property updates via MainThread
+        _dispatcher = dispatcher;
         Model.StateChanged += (_, _) =>
         {
             Dispatch(() =>
@@ -24,10 +26,6 @@ public class JourneyViewModel : Moba.SharedUI.ViewModel.JourneyViewModel
 
     protected virtual void Dispatch(Action action)
     {
-#if ANDROID || IOS || MACCATALYST
-        Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(action);
-#else
-        action();
-#endif
+        _dispatcher.InvokeOnUi(action);
     }
 }

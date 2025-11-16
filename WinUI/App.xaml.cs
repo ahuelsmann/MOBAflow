@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 
 using Moba.SharedUI.Service;
-using Service;
+using Moba.WinUI.Service;
 
 using View;
 
@@ -38,7 +38,7 @@ public partial class App
 
         // Wire factory for TreeViewBuilder
         var factory = _serviceProvider.GetRequiredService<IJourneyViewModelFactory>();
-        Services.TreeViewBuilder.JourneyVmFactory = factory;
+        Service.TreeViewBuilder.JourneyVmFactory = factory;
 
         // Create MainWindow
         _window = _serviceProvider.GetRequiredService<MainWindow>();
@@ -56,14 +56,14 @@ public partial class App
         services.AddSingleton<IIoService, IoService>();
 
         // Backend services
-        services.AddSingleton<Moba.Backend.Interface.IZ21, Moba.Backend.Z21>();
-        services.AddSingleton<Moba.Backend.Interface.IJourneyManagerFactory, Moba.Backend.Manager.JourneyManagerFactory>();
+        services.AddSingleton<Backend.Interface.IZ21, Backend.Z21>();
+        services.AddSingleton<Backend.Interface.IJourneyManagerFactory, Backend.Manager.JourneyManagerFactory>();
 
         // Factories
         services.AddSingleton<IJourneyViewModelFactory, WinUIJourneyViewModelFactory>();
 
         // Register WinUI-specific ViewModel (uses WinUI JourneyViewModel with DispatcherQueue)
-        services.AddTransient<Moba.SharedUI.ViewModel.WinUI.MainWindowViewModel>();
+        services.AddTransient<SharedUI.ViewModel.WinUI.MainWindowViewModel>();
 
         // Register Views (MainWindow expects MainWindowViewModel)
         services.AddTransient<MainWindow>();

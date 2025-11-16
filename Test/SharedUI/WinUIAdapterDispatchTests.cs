@@ -9,7 +9,7 @@ public class WinUIAdapterDispatchTests
     {
         public bool Dispatched { get; private set; }
         public TestWinUiAdapter(Journey model) : base(model) {}
-        protected override void Dispatch(System.Action action)
+        protected override void Dispatch(Action action)
         {
             Dispatched = true; // simulate that dispatch path was used
             action();

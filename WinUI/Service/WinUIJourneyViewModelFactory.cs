@@ -5,6 +5,8 @@ using Moba.SharedUI.Service;
 
 public class WinUIJourneyViewModelFactory : IJourneyViewModelFactory
 {
-    public Moba.SharedUI.ViewModel.JourneyViewModel Create(Journey model)
-        => new Moba.SharedUI.ViewModel.WinUI.JourneyViewModel(model);
+    private readonly UiDispatcher _dispatcher = new();
+
+    public SharedUI.ViewModel.JourneyViewModel Create(Journey model)
+        => new SharedUI.ViewModel.WinUI.JourneyViewModel(model, _dispatcher);
 }

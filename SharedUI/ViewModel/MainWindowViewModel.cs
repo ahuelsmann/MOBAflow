@@ -31,7 +31,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     // Secondary ctor for tests (legacy)
     public MainWindowViewModel(IIoService ioService)
-        : this(ioService, new Moba.Backend.Z21(), new Moba.Backend.Manager.JourneyManagerFactory())
+        : this(ioService, new Backend.Z21(), new JourneyManagerFactory())
     {
     }
 
@@ -134,9 +134,9 @@ public partial class MainWindowViewModel : ObservableObject
                     IsZ21Connected = true;
                     Z21StatusText = $"Connected to {project.IpAddresses[0]}";
 
-                    var executionContext = new Moba.Backend.Model.Action.ActionExecutionContext
+                    var executionContext = new Backend.Model.Action.ActionExecutionContext
                     {
-                        Z21 = _z21 as Moba.Backend.Z21,
+                        Z21 = _z21 as Backend.Z21,
                         Project = project
                     };
 
@@ -187,15 +187,26 @@ public partial class MainWindowViewModel : ObservableObject
     {
         try
         {
-            if (int.TryParse(SimulateInPort, out int inPort))
+            // Prefer InPort from currently selected Journey (VM or model)
+            uint? selectedInPort = null;
+            if (CurrentSelectedNode?.DataContext is JourneyViewModel jvm)
+                selectedInPort = jvm.InPort;
+            else if (CurrentSelectedNode?.DataContext is Journey jm)
+                selectedInPort = jm.InPort;
+
+            int inPort;
+            if (selectedInPort.HasValue)
             {
-                _z21.SimulateFeedback(inPort);
-                Z21StatusText = $"Simulated feedback for InPort {inPort}";
+                inPort = unchecked((int)selectedInPort.Value);
             }
-            else
+            else if (!int.TryParse(SimulateInPort, out inPort))
             {
                 Z21StatusText = "Invalid InPort number";
+                return;
             }
+
+            _z21.SimulateFeedback(inPort);
+            Z21StatusText = $"Simulated feedback for InPort {inPort}";
         }
         catch (Exception ex)
         {

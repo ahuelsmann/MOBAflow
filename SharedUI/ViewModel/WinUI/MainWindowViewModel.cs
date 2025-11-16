@@ -1,14 +1,14 @@
 namespace Moba.SharedUI.ViewModel.WinUI;
 
 using Backend.Model;
+
 using Moba.SharedUI.Service;
-using System;
 
 /// <summary>
 /// WinUI-specific MainWindowViewModel adapter in SharedUI. Does not reference WinUI-specific services.
 /// Platform project may derive from this to add DispatcherQueue-specific behavior.
 /// </summary>
-public class MainWindowViewModel : Moba.SharedUI.ViewModel.MainWindowViewModel
+public class MainWindowViewModel : ViewModel.MainWindowViewModel
 {
     private Solution? _solution;
 

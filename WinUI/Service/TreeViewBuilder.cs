@@ -1,4 +1,4 @@
-namespace Moba.WinUI.Services;
+namespace Moba.WinUI.Service;
 
 using Backend.Model;
 using SharedUI.ViewModel;
@@ -9,7 +9,7 @@ using System.Collections.ObjectModel;
 /// </summary>
 public static class TreeViewBuilder
 {
-    public static Moba.SharedUI.Service.IJourneyViewModelFactory? JourneyVmFactory { get; set; }
+    public static SharedUI.Service.IJourneyViewModelFactory? JourneyVmFactory { get; set; }
 
     /// <summary>
     /// Creates the TreeView structure from a Solution with WinUI-specific ViewModels.
@@ -107,7 +107,7 @@ public static class TreeViewBuilder
 
         foreach (var journey in journeys)
         {
-            var journeyViewModel = JourneyVmFactory?.Create(journey) ?? new Moba.SharedUI.ViewModel.WinUI.JourneyViewModel(journey);
+            var journeyViewModel = JourneyVmFactory?.Create(journey) ?? new SharedUI.ViewModel.WinUI.JourneyViewModel(journey);
             
             var journeyNode = new TreeNodeViewModel
             {

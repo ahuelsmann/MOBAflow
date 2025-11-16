@@ -1,17 +1,19 @@
 namespace Moba.SharedUI.ViewModel.WinUI;
 
 using Backend.Model;
+using Moba.SharedUI.Service;
 using System;
 
 /// <summary>
-/// Platform-agnostic adapter for WinUI-specific behavior. This lives in SharedUI but does not reference
-/// WinUI assemblies. Override `Dispatch` in platform project to dispatch to UI thread.
+/// WinUI-specific adapter hosted in SharedUI; dispatching provided via IUiDispatcher.
 /// </summary>
-public class JourneyViewModel : Moba.SharedUI.ViewModel.JourneyViewModel
+public class JourneyViewModel : ViewModel.JourneyViewModel
 {
-    public JourneyViewModel(Journey model) : base(model)
+    private readonly IUiDispatcher _dispatcher;
+
+    public JourneyViewModel(Journey model, IUiDispatcher dispatcher) : base(model)
     {
-        // Subscribe to model changes and dispatch property updates via Dispatch.
+        _dispatcher = dispatcher;
         Model.StateChanged += (_, _) =>
         {
             Dispatch(() =>
@@ -22,13 +24,8 @@ public class JourneyViewModel : Moba.SharedUI.ViewModel.JourneyViewModel
         };
     }
 
-    /// <summary>
-    /// Dispatches an action to the UI thread. Default implementation invokes directly.
-    /// Platform-specific subclass (e.g., in WinUI project) should override to use DispatcherQueue.
-    /// </summary>
-    /// <param name="action">Action to execute</param>
     protected virtual void Dispatch(Action action)
     {
-        action();
+        _dispatcher.InvokeOnUi(action);
     }
 }
