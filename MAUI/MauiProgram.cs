@@ -24,7 +24,7 @@ public static class MauiProgram
 			});
 
 		// ViewModels
-		builder.Services.AddTransient<SharedUI.ViewModel.CounterViewModel>();
+		builder.Services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
 		builder.Services.AddTransient<SharedUI.ViewModel.MAUI.JourneyViewModel>();
 
 		// Platform dispatcher

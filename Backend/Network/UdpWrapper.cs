@@ -4,18 +4,29 @@ using System.Net.Sockets;
 
 namespace Moba.Backend.Network;
 
-public class UdpReceivedEventArgs : EventArgs
-{
-    public byte[] Buffer { get; }
-    public IPEndPoint RemoteEndPoint { get; }
-
-    public UdpReceivedEventArgs(byte[] buffer, IPEndPoint remote)
-    {
-        Buffer = buffer;
-        RemoteEndPoint = remote;
-    }
-}
-
+/// <summary>
+/// Platform-independent UDP client wrapper for Z21 communication.
+/// 
+/// Purpose:
+/// - Abstracts UDP socket complexity (connect, send, receive, disconnect)
+/// - Runs a background receiver loop that fires events for incoming datagrams
+/// - Implements retry logic for sending with exponential backoff
+/// 
+/// Architecture:
+/// - Thread-safe: receiver loop runs on background thread
+/// - Events are delivered on background thread (caller must dispatch to UI thread if needed)
+/// - Backend must remain platform-independent (no MainThread, DispatcherQueue, etc.)
+/// 
+/// Usage Pattern:
+/// 1. Subscribe to Received event
+/// 2. Call ConnectAsync(ipAddress, port)
+/// 3. Handle Received events (on background thread!)
+/// 4. Platform-specific ViewModels dispatch to UI thread if needed
+/// 5. Call StopAsync() or Dispose() to cleanup
+/// 
+/// Z21 Communication Flow:
+/// UDP Socket ← ReceiverLoopAsync → Received Event → Z21.OnUdpReceived() → Parse Protocol → Fire Domain Events
+/// </summary>
 public class UdpWrapper : IUdpClientWrapper
 {
     private UdpClient? _client;
@@ -25,12 +36,17 @@ public class UdpWrapper : IUdpClientWrapper
 
     /// <summary>
     /// Raised for each received UDP datagram.
+    /// IMPORTANT: This event is raised on a background thread!
+    /// Platform-specific code must dispatch to UI thread if updating UI properties.
     /// </summary>
     public event EventHandler<UdpReceivedEventArgs>? Received;
 
     /// <summary>
     /// Connects the wrapper to the remote endpoint and starts the receiver loop.
     /// </summary>
+    /// <param name="address">Z21 IP address</param>
+    /// <param name="port">Z21 UDP port (default: 21105)</param>
+    /// <param name="cancellationToken">Token to cancel the operation</param>
     public Task ConnectAsync(IPAddress address, int port = 21105, CancellationToken cancellationToken = default)
     {
         _client = new UdpClient();
@@ -43,6 +59,10 @@ public class UdpWrapper : IUdpClientWrapper
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Background loop that continuously receives UDP datagrams and raises Received events.
+    /// Runs on a background thread until cancellation is requested or an unrecoverable error occurs.
+    /// </summary>
     private async Task ReceiverLoopAsync(CancellationToken cancellationToken)
     {
         Debug.WriteLine("UdpWrapper: Receiver loop started");
@@ -61,7 +81,7 @@ public class UdpWrapper : IUdpClientWrapper
                     break;
                 }
 
-                // Deliver data to subscribers
+                // Deliver data to subscribers (on background thread)
                 try
                 {
                     var buffer = result.Buffer;
@@ -82,8 +102,14 @@ public class UdpWrapper : IUdpClientWrapper
     }
 
     /// <summary>
-    /// Sends a datagram with simple retry/backoff.
+    /// Sends a UDP datagram with retry logic and exponential backoff.
+    /// Retries up to maxRetries times with delays: 50ms, 100ms, 200ms, etc.
     /// </summary>
+    /// <param name="data">Byte array to send to Z21</param>
+    /// <param name="cancellationToken">Token to cancel the operation</param>
+    /// <param name="maxRetries">Maximum number of retry attempts (default: 3)</param>
+    /// <exception cref="InvalidOperationException">Thrown if not connected</exception>
+    /// <exception cref="SocketException">Thrown if all retry attempts fail</exception>
     public async Task SendAsync(byte[] data, CancellationToken cancellationToken = default, int maxRetries = 3)
     {
         if (_client == null) throw new InvalidOperationException("UdpWrapper is not connected");
@@ -107,6 +133,10 @@ public class UdpWrapper : IUdpClientWrapper
         }
     }
 
+    /// <summary>
+    /// Stops the receiver loop and closes the UDP client.
+    /// Waits for the receiver task to complete gracefully.
+    /// </summary>
     public async Task StopAsync()
     {
         if (_cts != null && !_cts.IsCancellationRequested)
@@ -130,6 +160,9 @@ public class UdpWrapper : IUdpClientWrapper
         _client = null;
     }
 
+    /// <summary>
+    /// Disposes resources and cancels the receiver loop.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed) return;

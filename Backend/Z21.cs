@@ -128,6 +128,9 @@ public class Z21 : IZ21
             return;
         }
 
+        // Log all received packets for debugging
+        _logger?.LogDebug("UDP received {Length} bytes: {Payload}", content.Length, Z21Protocol.ToHex(content));
+
         if (Z21MessageParser.IsLanXHeader(content))
         {
             var xStatus = Z21MessageParser.TryParseXBusStatus(content);
@@ -142,11 +145,14 @@ public class Z21 : IZ21
         if (Z21MessageParser.IsRBusFeedback(content))
         {
             Received?.Invoke(new FeedbackResult(content));
+            _logger?.LogDebug("RBus Feedback received");
             return;
         }
 
         if (Z21MessageParser.IsSystemState(content))
         {
+            _logger?.LogInformation("📊 System State packet received, subscribers={Count}", OnSystemStateChanged?.GetInvocationList().Length ?? 0);
+            
             if (Z21MessageParser.TryParseSystemState(content, out var mainCurrent, out var progCurrent, out var filteredMainCurrent, out var temperature, out var supplyVoltage, out var vccVoltage, out var centralState, out var centralStateEx))
             {
                 CurrentSystemState = new SystemState
@@ -160,8 +166,14 @@ public class Z21 : IZ21
                     CentralState = centralState,
                     CentralStateEx = centralStateEx
                 };
+                
+                _logger?.LogInformation("📊 Invoking OnSystemStateChanged: MainCurrent={MainCurrent}mA, Temp={Temp}°C", mainCurrent, temperature);
                 OnSystemStateChanged?.Invoke(CurrentSystemState);
-                _logger?.LogDebug("System state updated");
+                _logger?.LogDebug("System state event invoked");
+            }
+            else
+            {
+                _logger?.LogWarning("Failed to parse system state packet");
             }
             return;
         }

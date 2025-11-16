@@ -8,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddTransient<CounterViewModel>();
+builder.Services.AddSingleton<CounterViewModel>();
 
 // Explicit backend registrations
 builder.Services.AddSingleton<IUdpClientWrapper, UdpWrapper>();

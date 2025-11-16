@@ -138,6 +138,10 @@ public partial class CounterViewModel : ObservableObject, IDisposable
             IsConnected = true;
             StatusText = $"Connected to {Z21IpAddress}";
 
+            // Note: No need to request system status explicitly - Z21 sends broadcasts automatically
+            // after SetBroadcastFlags (called during ConnectAsync). This reduces Z21 load.
+            this.Log("⏳ Waiting for Z21 system state broadcast...");
+
             ConnectCommand.NotifyCanExecuteChanged();
             DisconnectCommand.NotifyCanExecuteChanged();
             ResetCountersCommand.NotifyCanExecuteChanged();
@@ -234,6 +238,8 @@ public partial class CounterViewModel : ObservableObject, IDisposable
         VccVoltage = systemState.VccVoltage;
         CentralState = $"0x{systemState.CentralState:X2}";
         CentralStateEx = $"0x{systemState.CentralStateEx:X2}";
+        
+        this.Log($"📊 System state updated: MainCurrent={MainCurrent}mA, Temp={Temperature}°C, Supply={SupplyVoltage}mV");
     }
 
     /// <summary>
