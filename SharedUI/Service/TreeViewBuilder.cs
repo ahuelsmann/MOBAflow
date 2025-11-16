@@ -9,14 +9,21 @@ using ViewModel;
 /// <summary>
 /// Responsible for creating the TreeView structure from a Solution
 /// </summary>
-public static class TreeViewBuilder
+public class TreeViewBuilder
 {
+    private readonly IJourneyViewModelFactory _journeyViewModelFactory;
+
+    public TreeViewBuilder(IJourneyViewModelFactory journeyViewModelFactory)
+    {
+        _journeyViewModelFactory = journeyViewModelFactory;
+    }
+
     /// <summary>
     /// Creates the TreeView structure from a Solution
     /// </summary>
     /// <param name="solution">The Solution for which the TreeView should be created</param>
     /// <returns>An ObservableCollection with the root TreeNode</returns>
-    public static ObservableCollection<TreeNodeViewModel> BuildTreeView(Solution? solution)
+    public ObservableCollection<TreeNodeViewModel> BuildTreeView(Solution? solution)
     {
         var treeNodes = new ObservableCollection<TreeNodeViewModel>();
 
@@ -47,7 +54,7 @@ public static class TreeViewBuilder
         };
     }
 
-    private static TreeNodeViewModel CreateProjectNode(Project project, int index)
+    private TreeNodeViewModel CreateProjectNode(Project project, int index)
     {
         // Show Project name if available, otherwise "Project {index + 1}"
         var displayName = string.IsNullOrEmpty(project.Name)
@@ -104,7 +111,7 @@ public static class TreeViewBuilder
         };
     }
 
-    private static TreeNodeViewModel CreateJourneysFolder(List<Journey> journeys)
+    private TreeNodeViewModel CreateJourneysFolder(List<Journey> journeys)
     {
         var journeysFolder = new TreeNodeViewModel
         {
@@ -116,14 +123,14 @@ public static class TreeViewBuilder
         foreach (var journey in journeys)
         {
             // Wrap Journey Model in JourneyViewModel for proper UI binding
-            var journeyViewModel = new JourneyViewModel(journey);
+            var journeyViewModel = _journeyViewModelFactory.Create(journey);
             
             var journeyNode = new TreeNodeViewModel
             {
                 DisplayName = journey.Name,
                 Icon = "\uE81D", // Train icon
                 DataContext = journeyViewModel,  // ← Use ViewModel instead of Model
-                DataType = typeof(JourneyViewModel)  // ← Use ViewModel type
+                DataType = journeyViewModel.GetType()  // ← Use actual ViewModel type
             };
 
             // Stations

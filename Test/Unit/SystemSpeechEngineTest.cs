@@ -1,6 +1,7 @@
 namespace Moba.Test.Unit;
 
 using Sound;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Minimal test for Windows SAPI Text-to-Speech.
@@ -13,7 +14,10 @@ public class SystemSpeechEngineTest
     [SetUp]
     public void Setup()
     {
-        _speakerEngine = new SystemSpeechEngine();
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var logger = loggerFactory.CreateLogger<SystemSpeechEngine>();
+
+        _speakerEngine = new SystemSpeechEngine(logger);
 
         Assert.That(_speakerEngine, Is.Not.Null);
         Assert.That(_speakerEngine.Name, Is.EqualTo("System.Speech (Windows SAPI)"));

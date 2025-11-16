@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.Net;
 using System.Collections.Generic;
+using Moba.Backend.Interface;
 
 /// <summary>
 /// ViewModel that connects to a Z21 and counts laps per InPort (simple demo feature).
@@ -14,12 +15,12 @@ using System.Collections.Generic;
 /// </summary>
 public partial class CounterViewModel : ObservableObject
 {
-    private Backend.Z21? _z21;
+    private readonly IZ21 _z21;
     private readonly Dictionary<int, DateTime> _lastFeedbackTime = new();
 
-    public CounterViewModel()
+    public CounterViewModel(IZ21 z21)
     {
-        _z21 = new Backend.Z21(null, null);
+        _z21 = z21;
 
         Z21IpAddress = "192.168.0.111";
         Statistics.Add(new InPortStatistic { InPort = 1, Count = 0, TargetLapCount = GlobalTargetLapCount });
@@ -164,7 +165,7 @@ public partial class CounterViewModel : ObservableObject
                 _z21.OnSystemStateChanged -= OnSystemStateChanged;
                 await _z21.DisconnectAsync();
                 _z21.Dispose();
-                _z21 = null;
+                // do not set _z21 = null; kept via DI
             }
 
             IsConnected = false;

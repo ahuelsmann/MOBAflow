@@ -30,9 +30,9 @@ public class Audio : Base
     [SupportedOSPlatform("windows")]
     public override Task ExecuteAsync(ActionExecutionContext context)
     {
-        if (!string.IsNullOrEmpty(WaveFile))
+        if (!string.IsNullOrEmpty(WaveFile) && context.SoundPlayer != null)
         {
-            SoundManager.Play(WaveFile);
+            context.SoundPlayer.Play(WaveFile);
         }
         return Task.CompletedTask;
     }

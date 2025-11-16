@@ -1,5 +1,6 @@
 using Moba.WebApp.Components;
 using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Service;
 using Moba.Backend.Network;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +14,12 @@ builder.Services.AddTransient<CounterViewModel>();
 builder.Services.AddSingleton<IUdpClientWrapper, UdpWrapper>();
 builder.Services.AddSingleton<Moba.Backend.Interface.IZ21, Moba.Backend.Z21>();
 builder.Services.AddSingleton<Moba.Backend.Interface.IJourneyManagerFactory, Moba.Backend.Manager.JourneyManagerFactory>();
+
+// Factories
+builder.Services.AddSingleton<IJourneyViewModelFactory, Moba.WebApp.Service.WebJourneyViewModelFactory>();
+
+// TreeViewBuilder service
+builder.Services.AddSingleton<TreeViewBuilder>();
 
 var app = builder.Build();
 

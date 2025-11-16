@@ -1,6 +1,7 @@
 namespace Moba.Backend.Model.Action;
 
 using Sound;
+using Moba.Backend.Interface;
 
 /// <summary>
 /// Provides execution context and dependencies for action execution
@@ -8,14 +9,19 @@ using Sound;
 public class ActionExecutionContext
 {
     /// <summary>
-    /// Z21 command station.
+    /// Z21 command station interface.
     /// </summary>
-    public Z21? Z21 { get; set; }
+    public IZ21? Z21 { get; set; }
 
     /// <summary>
     /// Speaker engine for text-to-speech announcements.
     /// </summary>
     public ISpeakerEngine? SpeakerEngine { get; set; }
+
+    /// <summary>
+    /// Sound player for playing wave files.
+    /// </summary>
+    public ISoundPlayer? SoundPlayer { get; set; }
 
     /// <summary>
     /// Current project including journeys and their stations. A workflow with actions can be defined at a station.

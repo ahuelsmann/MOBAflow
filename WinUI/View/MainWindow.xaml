@@ -248,6 +248,7 @@
             BorderThickness="0,1,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
@@ -271,9 +272,40 @@
                     Text="{x:Bind ViewModel.Z21StatusText, Mode=OneWay}" />
             </StackPanel>
 
+            <!--  Divider  -->
+            <Border
+                Grid.Column="1"
+                Width="1"
+                Height="20"
+                Margin="8,0"
+                VerticalAlignment="Center"
+                Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+            <!--  Azure Speech Health Status  -->
+            <StackPanel
+                x:Name="SpeechHealthPanel"
+                Grid.Column="2"
+                Margin="0,0,12,0"
+                VerticalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="8">
+                <FontIcon
+                    x:Name="SpeechHealthIcon"
+                    FontSize="14"
+                    Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                    Glyph="&#xE946;" />
+                <TextBlock
+                    x:Name="SpeechHealthText"
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="Azure Speech: Checking..."
+                    ToolTipService.ToolTip="Azure Speech Service Health Status" />
+            </StackPanel>
+
             <!--  Solution Path (rechts)  -->
             <TextBlock
-                Grid.Column="2"
+                Grid.Column="3"
                 Margin="12,0"
                 VerticalAlignment="Center"
                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"

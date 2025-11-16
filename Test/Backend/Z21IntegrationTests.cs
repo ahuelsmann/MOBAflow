@@ -1,6 +1,7 @@
 using System.Net;
 using Moba.Test.Z21Simulator;
 using Moba.Backend;
+using Moba.Test.Mocks;
 
 namespace Moba.Test.Backend;
 
@@ -10,7 +11,8 @@ public class Z21IntegrationTests
     [Test]
     public async Task Z21_Receives_SimulatedFeedback_FromSimulator()
     {
-        using var z21 = new Z21(null, null);
+        var fakeUdp = new FakeUdpClientWrapper();
+        using var z21 = new Z21(fakeUdp, null);
 
         var received = new TaskCompletionSource<FeedbackResult>(TaskCreationOptions.RunContinuationsAsynchronously);
 

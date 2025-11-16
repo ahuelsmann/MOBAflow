@@ -4,6 +4,7 @@ using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
 using UraniumUI;
 using Moba.Backend.Network;
+using Moba.SharedUI.Service;
 
 public static class MauiProgram
 {
@@ -27,12 +28,18 @@ public static class MauiProgram
 		builder.Services.AddTransient<SharedUI.ViewModel.MAUI.JourneyViewModel>();
 
 		// Platform dispatcher
-		builder.Services.AddSingleton<MAUI.Service.UiDispatcher>();
+		builder.Services.AddSingleton<IUiDispatcher, MAUI.Service.UiDispatcher>();
 
         // Backend services explicit
         builder.Services.AddSingleton<IUdpClientWrapper, UdpWrapper>();
         builder.Services.AddSingleton<Backend.Interface.IZ21, Backend.Z21>();
         builder.Services.AddSingleton<Backend.Interface.IJourneyManagerFactory, Backend.Manager.JourneyManagerFactory>();
+
+        // Factories
+        builder.Services.AddSingleton<Moba.SharedUI.Service.IJourneyViewModelFactory, Moba.MAUI.Service.MauiJourneyViewModelFactory>();
+        
+        // TreeViewBuilder service
+        builder.Services.AddSingleton<SharedUI.Service.TreeViewBuilder>();
 
 		// Views
 		builder.Services.AddTransient<MainPage>();

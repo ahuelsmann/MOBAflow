@@ -2,6 +2,8 @@ namespace Moba.Test.Unit;
 
 using System;
 using Sound;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 
 public class CognitiveSpeechEngineTest
 {
@@ -10,11 +12,18 @@ public class CognitiveSpeechEngineTest
     [SetUp]
     public void Setup()
     {
-        // Ensure required environment variables are set for tests so the engine does not throw
-        Environment.SetEnvironmentVariable("SPEECH_KEY", "test-key");
-        Environment.SetEnvironmentVariable("SPEECH_REGION", "germanywestcentral");
+        // Configure SpeechOptions with test credentials
+        var options = Options.Create(new SpeechOptions
+        {
+            Key = "test-key",
+            Region = "germanywestcentral"
+        });
 
-        _speakerEngine = new CognitiveSpeechEngine();
+        // Create a simple logger factory for testing
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        var logger = loggerFactory.CreateLogger<CognitiveSpeechEngine>();
+
+        _speakerEngine = new CognitiveSpeechEngine(options, logger);
 
         Assert.That(_speakerEngine, Is.Not.Null);
         Assert.That(_speakerEngine.Name, Is.EqualTo("Microsoft.CognitiveServices.Speech"));

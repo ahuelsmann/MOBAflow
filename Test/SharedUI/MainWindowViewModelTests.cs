@@ -1,20 +1,26 @@
 using Moba.SharedUI.ViewModel;
-using Moba.SharedUI.Service;
-using Moq;
+using Moba.Backend.Model;
+using Moba.Test.TestBase;
 
 namespace Moba.Test.SharedUI;
 
-public class MainWindowViewModelTests
+public class MainWindowViewModelTests : ViewModelTestBase
 {
     [Test]
     public void CanAddProject_IncrementsProjects()
     {
-        var ioMock = new Mock<IIoService>();
-        var vm = new MainWindowViewModel(ioMock.Object);
+        // Arrange - all mocks from base class
+        var vm = new MainWindowViewModel(
+            IoServiceMock.Object, 
+            Z21Mock.Object, 
+            JourneyManagerFactoryMock.Object, 
+            TreeViewBuilder);
 
-        vm.Solution = new Moba.Backend.Model.Solution();
+        // Act
+        vm.Solution = new Solution();
         vm.AddProjectCommand.Execute(null);
 
+        // Assert
         Assert.That(vm.Solution.Projects.Count, Is.EqualTo(1));
     }
 }

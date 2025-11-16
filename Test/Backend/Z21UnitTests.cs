@@ -1,5 +1,6 @@
 using System.Net;
 using Moba.Backend;
+using Moba.Test.Mocks;
 
 namespace Moba.Test.Backend;
 
@@ -9,7 +10,8 @@ public class Z21UnitTests
     [Test]
     public void SimulateFeedback_RaisesReceivedEvent()
     {
-        using var z21 = new Z21(null, null);
+        var fakeUdp = new FakeUdpClientWrapper();
+        using var z21 = new Z21(fakeUdp, null);
 
         FeedbackResult? captured = null;
         var signaled = new TaskCompletionSource<bool>();

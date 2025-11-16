@@ -9,6 +9,22 @@
     <File Path="LICENSE" />
     <File Path="README.md" />
   </Folder>
+  <Folder Name="/Solution Items/docs/">
+    <File Path="docs/ARCHITECTURE.md" />
+    <File Path="docs/ASYNC-PATTERNS.md" />
+    <File Path="docs/Backend-Z21.md" />
+    <File Path="docs/CI.md" />
+    <File Path="docs/DI-INSTRUCTIONS.md" />
+    <File Path="docs/DI-REGISTRATION.md" />
+    <File Path="docs/ISSUE_TEMPLATE.md" />
+    <File Path="docs/PR_TEMPLATE.md" />
+    <File Path="docs/README.md" />
+    <File Path="docs/SECURITY-SECRETS.md" />
+    <File Path="docs/TESTING-SIMULATION.md" />
+    <File Path="docs/THREADING.md" />
+    <File Path="docs/UI-GUIDELINES.md" />
+    <File Path="docs/Z21-PROTOCOL.md" />
+  </Folder>
   <Project Path="Backend/Backend.csproj">
     <Deploy />
   </Project>

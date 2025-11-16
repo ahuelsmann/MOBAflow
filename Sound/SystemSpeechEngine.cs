@@ -1,4 +1,5 @@
 using System.Speech.Synthesis;
+using Microsoft.Extensions.Logging;
 
 namespace Moba.Sound;
 
@@ -8,6 +9,13 @@ namespace Moba.Sound;
 /// </summary>
 public class SystemSpeechEngine : ISpeakerEngine
 {
+    private readonly ILogger<SystemSpeechEngine> _logger;
+
+    public SystemSpeechEngine(ILogger<SystemSpeechEngine> logger)
+    {
+        _logger = logger;
+    }
+
     public string Name { get; set; } = "System.Speech (Windows SAPI)";
 
     /// <summary>
@@ -26,23 +34,25 @@ public class SystemSpeechEngine : ISpeakerEngine
 
         await Task.Run(() =>
         {
-                using var synthesizer = new SpeechSynthesizer();
+            using var synthesizer = new SpeechSynthesizer();
             
             // Configure output to default audio device
             synthesizer.SetOutputToDefaultAudioDevice();
 
             // Select voice if specified
-            if (!string.IsNullOrEmpty(voiceName))
+            if (!string.IsNullOrEmpty(voiceName) && !TrySelectVoice(synthesizer, voiceName))
             {
-                if (!TrySelectVoice(synthesizer, voiceName))
+                Console.WriteLine($"⚠️ Voice '{voiceName}' not found. Using default voice.");
+                _logger.LogWarning("Voice '{VoiceName}' not found. Using default voice.", voiceName);
+                
+                Console.WriteLine("Available voices:");
+                _logger.LogInformation("Available voices:");
+                foreach (var voice in synthesizer.GetInstalledVoices())
                 {
-                    Console.WriteLine($"Voice '{voiceName}' not found. Using default voice.");
-                    Console.WriteLine("Available voices:");
-                    foreach (var voice in synthesizer.GetInstalledVoices())
-                    {
-                        var info = voice.VoiceInfo;
-                        Console.WriteLine($"  - {info.Name} ({info.Culture.Name}, {info.Gender}, {info.Age})");
-                    }
+                    var info = voice.VoiceInfo;
+                    Console.WriteLine($"  - {info.Name} ({info.Culture.Name}, {info.Gender}, {info.Age})");
+                    _logger.LogInformation("  - {Name} ({Culture}, {Gender}, {Age})", 
+                        info.Name, info.Culture.Name, info.Gender, info.Age);
                 }
             }
 
@@ -56,13 +66,18 @@ public class SystemSpeechEngine : ISpeakerEngine
             try
             {
                 // Synthesize speech synchronously
-                Console.WriteLine($"Synthesizing speech: [{message}]");
+                Console.WriteLine($"🔊 Synthesizing speech: [{message}]");
+                _logger.LogInformation("Synthesizing speech: [{Message}]", message);
+                
                 synthesizer.Speak(message);
-                Console.WriteLine($"Speech synthesized successfully for text: [{message}]");
+                
+                Console.WriteLine($"✅ Speech synthesized successfully for text: [{message}]");
+                _logger.LogInformation("Speech synthesized successfully for text: [{Message}]", message);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ERROR during speech synthesis: {ex.Message}");
+                Console.WriteLine($"❌ ERROR during speech synthesis: {ex.Message}");
+                _logger.LogError(ex, "ERROR during speech synthesis for message: [{Message}]", message);
                 throw;
             }
         });
@@ -74,13 +89,14 @@ public class SystemSpeechEngine : ISpeakerEngine
     /// <param name="synthesizer">The speech synthesizer</param>
     /// <param name="voiceName">The voice name to search for</param>
     /// <returns>True if voice was found and selected, false otherwise</returns>
-    private static bool TrySelectVoice(SpeechSynthesizer synthesizer, string voiceName)
+    private bool TrySelectVoice(SpeechSynthesizer synthesizer, string voiceName)
     {
         // Try exact match first
         try
         {
             synthesizer.SelectVoice(voiceName);
-            Console.WriteLine($"Using voice (exact match): {voiceName}");
+            Console.WriteLine($"✅ Using voice (exact match): {voiceName}");
+            _logger.LogInformation("Using voice (exact match): {VoiceName}", voiceName);
             return true;
         }
         catch (ArgumentException)
@@ -96,7 +112,8 @@ public class SystemSpeechEngine : ISpeakerEngine
         if (matchingVoice != null)
         {
             synthesizer.SelectVoice(matchingVoice.VoiceInfo.Name);
-            Console.WriteLine($"Using voice (partial match): {matchingVoice.VoiceInfo.Name}");
+            Console.WriteLine($"✅ Using voice (partial match): {matchingVoice.VoiceInfo.Name}");
+            _logger.LogInformation("Using voice (partial match): {VoiceName}", matchingVoice.VoiceInfo.Name);
             return true;
         }
 
@@ -107,7 +124,8 @@ public class SystemSpeechEngine : ISpeakerEngine
             try
             {
                 synthesizer.SelectVoiceByHints(VoiceGender.NotSet, VoiceAge.NotSet, 0, new System.Globalization.CultureInfo("de-DE"));
-                Console.WriteLine("Using German voice (by culture)");
+                Console.WriteLine("✅ Using German voice (by culture)");
+                _logger.LogInformation("Using German voice (by culture)");
                 return true;
             }
             catch

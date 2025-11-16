@@ -19,20 +19,16 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IIoService _ioService;
     private readonly IZ21 _z21;
     private readonly IJourneyManagerFactory _journeyManagerFactory;
+    private readonly TreeViewBuilder _treeViewBuilder;
     private JourneyManager? _journeyManager;
 
     // Primary ctor for DI
-    public MainWindowViewModel(IIoService ioService, IZ21 z21, IJourneyManagerFactory journeyManagerFactory)
+    public MainWindowViewModel(IIoService ioService, IZ21 z21, IJourneyManagerFactory journeyManagerFactory, TreeViewBuilder treeViewBuilder)
     {
         _ioService = ioService;
         _z21 = z21;
         _journeyManagerFactory = journeyManagerFactory;
-    }
-
-    // Secondary ctor for tests (legacy)
-    public MainWindowViewModel(IIoService ioService)
-        : this(ioService, new Backend.Z21(null, null), new JourneyManagerFactory())
-    {
+        _treeViewBuilder = treeViewBuilder;
     }
 
     [ObservableProperty]
@@ -136,7 +132,7 @@ public partial class MainWindowViewModel : ObservableObject
 
                     var executionContext = new Backend.Model.Action.ActionExecutionContext
                     {
-                        Z21 = _z21 as Backend.Z21,
+                        Z21 = _z21,
                         Project = project
                     };
 
@@ -256,7 +252,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     private void BuildTreeView()
     {
-        TreeNodes = TreeViewBuilder.BuildTreeView(Solution);
+        TreeNodes = _treeViewBuilder.BuildTreeView(Solution);
     }
 
     public void OnNodeSelected(TreeNodeViewModel? node)

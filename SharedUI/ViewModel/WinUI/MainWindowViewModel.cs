@@ -1,7 +1,7 @@
 namespace Moba.SharedUI.ViewModel.WinUI;
 
 using Backend.Model;
-
+using Moba.Backend.Interface;
 using Moba.SharedUI.Service;
 
 /// <summary>
@@ -12,7 +12,8 @@ public class MainWindowViewModel : ViewModel.MainWindowViewModel
 {
     private Solution? _solution;
 
-    public MainWindowViewModel(IIoService ioService) : base(ioService)
+    public MainWindowViewModel(IIoService ioService, IZ21 z21, IJourneyManagerFactory journeyManagerFactory, TreeViewBuilder treeViewBuilder)
+        : base(ioService, z21, journeyManagerFactory, treeViewBuilder)
     {
     }
 
@@ -28,9 +29,6 @@ public class MainWindowViewModel : ViewModel.MainWindowViewModel
                 HasSolution = value is { Projects.Count: > 0 };
                 SaveSolutionCommand.NotifyCanExecuteChanged();
                 ConnectToZ21Command.NotifyCanExecuteChanged();
-
-                // Use the SharedUI TreeViewBuilder directly
-                TreeNodes = TreeViewBuilder.BuildTreeView(value);
             }
         }
     }

@@ -1,13 +1,28 @@
+using Moba.Backend.Interface;
 using Moba.SharedUI.ViewModel;
 
 namespace Moba.Test.SharedUI;
 
+[TestFixture]
 public class CounterViewModelTests
 {
+    private sealed class StubZ21 : IZ21
+    {
+        public event Feedback? Received;
+        public event SystemStateChanged? OnSystemStateChanged;
+        public event XBusStatusChanged? OnXBusStatusChanged;
+        public bool IsConnected { get; private set; }
+        public Task ConnectAsync(System.Net.IPAddress address, CancellationToken cancellationToken = default) { IsConnected = true; return Task.CompletedTask; }
+        public Task DisconnectAsync() { IsConnected = false; return Task.CompletedTask; }
+        public Task SendCommandAsync(byte[] sendBytes) => Task.CompletedTask;
+        public void SimulateFeedback(int inPort) => Received?.Invoke(new Moba.Backend.FeedbackResult(new byte[]{ 0x0F,0x00,0x80,0x00, 0x00, (byte)inPort, 0x01 }));
+        public void Dispose() { }
+    }
+
     [Test]
     public void CounterViewModel_InitializesStatistics()
     {
-        var vm = new CounterViewModel();
+        var vm = new CounterViewModel(new StubZ21());
         Assert.That(vm.Statistics, Is.Not.Null);
         Assert.That(vm.Statistics.Count, Is.EqualTo(3));
         Assert.That(vm.Statistics[0].InPort, Is.EqualTo(1));
@@ -16,7 +31,7 @@ public class CounterViewModelTests
     [Test]
     public void ResetCounters_ClearsCounts()
     {
-        var vm = new CounterViewModel();
+        var vm = new CounterViewModel(new StubZ21());
         vm.Statistics[0].Count = 5;
         vm.Statistics[1].Count = 3;
 
@@ -25,5 +40,12 @@ public class CounterViewModelTests
 
         Assert.That(vm.Statistics[0].Count, Is.EqualTo(0));
         Assert.That(vm.Statistics[1].Count, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void Ctor_InitializesDefaults()
+    {
+        var vm = new CounterViewModel(new StubZ21());
+        Assert.That(vm.IsNotConnected, Is.True);
     }
 }

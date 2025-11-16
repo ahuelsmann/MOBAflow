@@ -19,9 +19,9 @@ public class Z21 : IZ21
     private CancellationTokenSource? _cancellationTokenSource;
     private bool _disposed;
 
-    public Z21(IUdpClientWrapper? udp = null, ILogger<Z21>? logger = null)
+    public Z21(IUdpClientWrapper udp, ILogger<Z21>? logger = null)
     {
-        _udp = udp ?? new UdpWrapper();
+        _udp = udp;
         _udp.Received += OnUdpReceived;
         _logger = logger;
     }
