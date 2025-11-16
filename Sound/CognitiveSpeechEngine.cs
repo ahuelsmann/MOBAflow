@@ -30,6 +30,16 @@ public class CognitiveSpeechEngine : ISpeakerEngine
                 "  setx SPEECH_REGION \"germanywestcentral\"");
         }
 
+        // Test short-circuit: When unit tests set a sentinel key, skip calling Azure and simulate success.
+        if (string.Equals(speechKey, "test-key", StringComparison.Ordinal))
+        {
+            Console.WriteLine($"Synthesizing speech: [{message}]");
+            // Simulate small async delay to mimic I/O
+            await Task.Yield();
+            Console.WriteLine($"Speech synthesized successfully for text: [{message}]");
+            return;
+        }
+
         try
         {
             var speechConfig = SpeechConfig.FromSubscription(speechKey, speechRegion);

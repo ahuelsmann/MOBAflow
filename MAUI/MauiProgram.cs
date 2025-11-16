@@ -21,8 +21,12 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
 
-		// Register ViewModels (now from SharedUI)
+		// Shared services (if any)
+		// builder.Services.AddSingleton<SomeService>();
+
+		// Register SharedUI base ViewModels and MAUI adapters
 		builder.Services.AddTransient<SharedUI.ViewModel.CounterViewModel>();
+		builder.Services.AddTransient<SharedUI.ViewModel.MAUI.JourneyViewModel>();
 
 		// Register Views
 		builder.Services.AddTransient<MainPage>();

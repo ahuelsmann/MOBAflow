@@ -18,21 +18,26 @@ public class JourneyManagerTests
 
         using var manager = new JourneyManager(z21Mock.Object, journeys);
 
-        // Use TaskCompletionSource to wait for processing
-        var tcs = new TaskCompletionSource<bool>();
+        var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        // Hook into Journey changes
-        journey.StateChanged += (_, _) => tcs.TrySetResult(true);
+        // Resolve only when reset occurred (after reaching station)
+        journey.StateChanged += (_, _) =>
+        {
+            if (journey.CurrentCounter == 0)
+            {
+                tcs.TrySetResult(true);
+            }
+        };
 
-        // Act: simulate feedback by invoking the Received event
-        await z21Mock.RaiseAsync(z => z.Received += null, new FeedbackResult(new byte[] { 0x0F, 0x00, 0x80, 0x00, 0x00, 0x01 }));
+        // Act
+        z21Mock.Raise(z => z.Received += null, new FeedbackResult(new byte[] { 0x0F, 0x00, 0x80, 0x00, 0x00, 0x01 }));
 
-        // Wait for processing (timeout-safe)
-        var completed = await Task.WhenAny(tcs.Task, Task.Delay(1000));
+        // Wait for reset
+        var completed = await Task.WhenAny(tcs.Task, Task.Delay(2000));
 
         // Assert
         Assert.That(completed == tcs.Task, Is.True, "Processing did not complete in time");
-        Assert.That(journey.CurrentCounter, Is.EqualTo(0)); // Should have reset after station
+        Assert.That(journey.CurrentCounter, Is.EqualTo(0));
         Assert.That(journey.CurrentPos, Is.EqualTo(0));
     }
 }

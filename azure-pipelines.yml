@@ -1,0 +1,46 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  BuildConfiguration: 'Debug'
+
+steps:
+- task: UseDotNet@2
+  displayName: 'Use .NET 10 SDK'
+  inputs:
+    packageType: 'sdk'
+    version: '10.0.x'
+
+- task: NuGetToolInstaller@1
+  displayName: 'Install NuGet'
+
+- task: NuGetCommand@2
+  displayName: 'Restore NuGet packages'
+  inputs:
+    restoreSolution: '**/*.sln'
+
+- script: |
+    dotnet build --configuration $(BuildConfiguration)
+  displayName: 'Build solution'
+
+- script: |
+    dotnet test Test/Test.csproj --configuration $(BuildConfiguration) --logger "trx;LogFileName=test_results.trx"
+  displayName: 'Run unit tests'
+
+- task: PublishTestResults@2
+  displayName: 'Publish Test Results'
+  inputs:
+    testResultsFormat: 'VSTest'
+    testResultsFiles: '**/test_results.trx'
+    searchFolder: '$(System.DefaultWorkingDirectory)'
+    testRunTitle: 'Unit Tests'
+
+- powershell: |
+    $path = "$(Build.SourcesDirectory)\Test\bin\$(BuildConfiguration)\net10.0\TestFile"
+    if (-Not (Test-Path $path)) { Write-Error "TestFile output folder missing: $path" }
+    $files = Get-ChildItem $path -Filter *.json -ErrorAction SilentlyContinue
+    if ($files.Count -lt 2) { Write-Error "Expected test data json copied to output. Found: $($files.Count) in $path" }
+  displayName: 'Verify test data copied to output'

@@ -1,0 +1,28 @@
+{
+  "Name": "ExampleSolution",
+  "Projects": [
+    {
+      "Name": "Demo Project",
+      "Settings": {
+        "SpeechSynthesizerRate": -1,
+        "SpeechSynthesizerVolume": 90,
+        "SpeakerEngineName": "Microsoft.CognitiveServices.Speech",
+        "VoiceName": "ElkeNeural",
+        "JourneyName": "RE 78 (Porta-Express)",
+        "IsResetWindowLayoutOnStart": false
+      },
+      "SpeakerEngines": [ { "Name": "Microsoft.CognitiveServices.Speech" } ],
+      "Voices": [
+        { "Name": "ElkeNeural" },
+        { "Name": "GiselaNeural" },
+        { "Name": "KatjaNeural" },
+        { "Name": "HeddaNeural" },
+        { "Name": "KlarissaNeural" }
+      ],
+      "Trains": [ { "Name": "RE 78" } ],
+      "Workflows": [ { "Id": "00000000-0000-0000-0000-000000000001", "Name": "Platform Announcement" }, { "Id": "00000000-0000-0000-0000-000000000002", "Name": "Departure" } ],
+      "Journeys": [ { "Name": "RE 78 (Porta-Express)", "Stations": [ { "Name": "Bielefeld Hauptbahnhof", "Platforms": [] } ] } ],
+      "IpAddresses": [ "192.168.0.1", "192.168.0.2" ]
+    }
+  ]
+}

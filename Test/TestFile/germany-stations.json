@@ -1,0 +1,22 @@
+{
+  "Cities": [
+    {
+      "Name": "München",
+      "Stations": [
+        { "Name": "München Hauptbahnhof", "Track": 1, "IsExitOnLeft": false, "Platforms": [] }
+      ]
+    },
+    {
+      "Name": "Hamburg",
+      "Stations": [
+        { "Name": "Hamburg Hauptbahnhof", "Track": 1, "IsExitOnLeft": false, "Platforms": [] }
+      ]
+    },
+    {
+      "Name": "Berlin",
+      "Stations": [
+        { "Name": "Berlin Hauptbahnhof", "Track": 1, "IsExitOnLeft": false, "Platforms": [] }
+      ]
+    }
+  ]
+}
