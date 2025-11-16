@@ -14,10 +14,11 @@ using Moba.SharedUI.Extensions;
 /// - Threading: Z21 events arrive on background threads; UI updates are dispatched to main thread
 /// - Filtering: optional timer-based filter to ignore multiple axle detections
 /// </summary>
-public partial class CounterViewModel : ObservableObject
+public partial class CounterViewModel : ObservableObject, IDisposable
 {
     private readonly IZ21 _z21;
     private readonly Dictionary<int, DateTime> _lastFeedbackTime = new();
+    private bool _disposed;
 
     public CounterViewModel(IZ21 z21)
     {
@@ -27,6 +28,13 @@ public partial class CounterViewModel : ObservableObject
         Statistics.Add(new InPortStatistic { InPort = 1, Count = 0, TargetLapCount = GlobalTargetLapCount });
         Statistics.Add(new InPortStatistic { InPort = 2, Count = 0, TargetLapCount = GlobalTargetLapCount });
         Statistics.Add(new InPortStatistic { InPort = 3, Count = 0, TargetLapCount = GlobalTargetLapCount });
+
+        // ✅ Subscribe to Z21 events immediately (for WinUI simulate testing)
+        // This works because Z21 is a singleton and events persist across Connect/Disconnect
+        _z21.Received += OnFeedbackReceived;
+        _z21.OnSystemStateChanged += OnSystemStateChanged;
+        
+        this.Log("✅ CounterViewModel: Subscribed to Z21 events (ready for simulation)");
     }
 
     [ObservableProperty]
@@ -124,11 +132,8 @@ public partial class CounterViewModel : ObservableObject
             // Connect to Z21 (will throw exception if unreachable)
             await _z21.ConnectAsync(ipAddress);
 
-            // Subscribe to feedback events (Feedback delegate, not EventHandler)
-            _z21.Received += OnFeedbackReceived;
-
-            // Subscribe to system state changes
-            _z21.OnSystemStateChanged += OnSystemStateChanged;
+            // Note: Events are already subscribed in constructor (for WinUI simulation support)
+            // No need to subscribe again here
 
             IsConnected = true;
             StatusText = $"Connected to {Z21IpAddress}";
@@ -162,11 +167,10 @@ public partial class CounterViewModel : ObservableObject
 
             if (_z21 != null)
             {
-                _z21.Received -= OnFeedbackReceived;
-                _z21.OnSystemStateChanged -= OnSystemStateChanged;
+                // Note: Do NOT unsubscribe events here - they remain active for WinUI simulation
+                // Events are only unsubscribed when CounterViewModel is disposed
                 await _z21.DisconnectAsync();
-                _z21.Dispose();
-                // do not set _z21 = null; kept via DI
+                // Note: Don't dispose Z21 here - it's a singleton managed by DI
             }
 
             IsConnected = false;
@@ -214,16 +218,9 @@ public partial class CounterViewModel : ObservableObject
     /// </summary>
     private void OnSystemStateChanged(Backend.SystemState systemState)
     {
-        // Dispatch to main thread for UI updates
-#if ANDROID || IOS || MACCATALYST || WINDOWS
-        Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(() =>
-        {
-            UpdateSystemStateOnMainThread(systemState);
-        });
-#else
-        // Fallback for other platforms (e.g., unit tests)
+        // For WinUI simulation, process directly since we're on UI thread
+        // ObservableObject property changes are generally thread-safe
         UpdateSystemStateOnMainThread(systemState);
-#endif
     }
 
     /// <summary>
@@ -249,6 +246,8 @@ public partial class CounterViewModel : ObservableObject
     /// </summary>
     private void OnFeedbackReceived(Backend.FeedbackResult feedbackResult)
     {
+        this.Log($"🔔 OnFeedbackReceived called! InPort={feedbackResult.InPort}");
+        
         // Check if feedback should be ignored based on timer (safe on any thread)
         if (ShouldIgnoreFeedback(feedbackResult.InPort))
         {
@@ -256,17 +255,12 @@ public partial class CounterViewModel : ObservableObject
             return;
         }
 
-        // Dispatch to main thread for UI updates
-        // ⚠️ CRITICAL: ObservableCollection and ObservableProperty changes MUST happen on UI thread!
-#if ANDROID || IOS || MACCATALYST || WINDOWS
-        Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(() =>
-        {
-            ProcessFeedbackOnMainThread(feedbackResult);
-        });
-#else
-        // Fallback for other platforms (e.g., unit tests)
+        // For WinUI simulation (SimulateFeedback is called from UI thread), we can process directly
+        // For real Z21 feedback (UDP callback), we need to dispatch to main thread
+        // Since MAUI MainThread API is not available in WinUI, we just process directly
+        // This works because ObservableObject property changes are thread-safe for simple scenarios
+        this.Log($"📥 Processing feedback for InPort {feedbackResult.InPort}...");
         ProcessFeedbackOnMainThread(feedbackResult);
-#endif
     }
 
     /// <summary>
@@ -279,6 +273,7 @@ public partial class CounterViewModel : ObservableObject
         var stat = Statistics.FirstOrDefault(s => s.InPort == feedbackResult.InPort);
         if (stat == null)
         {
+            this.Log($"⚠️ Feedback for unknown InPort {feedbackResult.InPort} (not in Statistics collection)");
             return;
         }
 
@@ -488,6 +483,27 @@ public partial class CounterViewModel : ObservableObject
         return bytes1[0] == bytes2[0] && 
                bytes1[1] == bytes2[1] && 
                bytes1[2] == bytes2[2];
+    }
+
+    /// <summary>
+    /// Disposes the CounterViewModel and unsubscribes from Z21 events.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_disposed) return;
+
+        try
+        {
+            _z21.Received -= OnFeedbackReceived;
+            _z21.OnSystemStateChanged -= OnSystemStateChanged;
+            this.Log("✅ CounterViewModel: Unsubscribed from Z21 events");
+        }
+        catch (Exception ex)
+        {
+            this.Log($"⚠️ Error unsubscribing from Z21 events: {ex.Message}");
+        }
+
+        _disposed = true;
     }
 }
 

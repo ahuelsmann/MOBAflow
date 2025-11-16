@@ -11,7 +11,6 @@ using Moba.Backend.Network;
 using Moba.Sound;
 
 using View;
-using System.IO;
 
 public partial class App
 {
@@ -38,6 +37,11 @@ public partial class App
         var statusMessage = healthCheck.GetStatusMessage();
         System.Diagnostics.Debug.WriteLine($"Azure Speech Service: {statusMessage}");
 
+        // Initialize CounterViewModel (subscribes to Z21 feedback)
+        // This must be done after ServiceProvider is built so it can subscribe to Z21 events
+        var counterViewModel = _serviceProvider.GetRequiredService<SharedUI.ViewModel.CounterViewModel>();
+        System.Diagnostics.Debug.WriteLine("✅ CounterViewModel initialized and listening for Z21 feedback");
+
         _window = _serviceProvider.GetRequiredService<MainWindow>();
 
         var ioService = _serviceProvider.GetRequiredService<IIoService>() as IoService;
@@ -48,8 +52,11 @@ public partial class App
 
     private IConfiguration BuildConfiguration()
     {
+        // Get the directory where the executable is located
+        var basePath = AppContext.BaseDirectory;
+        
         var builder = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
+            .SetBasePath(basePath)
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
             .AddEnvironmentVariables(); // Environment variables override appsettings
@@ -105,7 +112,11 @@ public partial class App
             }
         });
         
+        // ViewModels
         services.AddTransient<SharedUI.ViewModel.WinUI.MainWindowViewModel>();
+        services.AddSingleton<SharedUI.ViewModel.CounterViewModel>(); // ← Counter für Simulate-Testing
+        
+        // Views
         services.AddTransient<MainWindow>();
     }
 }

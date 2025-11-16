@@ -1,6 +1,4 @@
-using System.Diagnostics;
 using System.Net;
-using System.Net.Sockets;
 using Moba.Backend.Interface;
 using Moba.Backend.Network;
 using Moba.Backend.Protocol;
@@ -218,8 +216,12 @@ public class Z21 : IZ21
             0x00, 0x00, 0x00, 0x00      // Padding
         };
 
-        _logger?.LogDebug("Simulating feedback for InPort {InPort}", inPort);
+        _logger?.LogInformation("🔔 SimulateFeedback: InPort={InPort}, Subscribers={Count}", inPort, Received?.GetInvocationList().Length ?? 0);
+        System.Diagnostics.Debug.WriteLine($"🔔 SimulateFeedback: InPort={inPort}, Subscribers={Received?.GetInvocationList().Length ?? 0}");
+        
         Received?.Invoke(new FeedbackResult(simulatedContent));
+        
+        System.Diagnostics.Debug.WriteLine($"✅ SimulateFeedback: Event invoked for InPort={inPort}");
     }
 
     #endregion

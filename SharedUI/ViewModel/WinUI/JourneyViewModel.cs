@@ -1,7 +1,9 @@
 namespace Moba.SharedUI.ViewModel.WinUI;
 
 using Backend.Model;
+
 using Moba.SharedUI.Service;
+
 using System;
 
 /// <summary>
@@ -11,24 +13,14 @@ public class JourneyViewModel : ViewModel.JourneyViewModel
 {
     private readonly IUiDispatcher _dispatcher;
 
-    public JourneyViewModel(Journey model, IUiDispatcher dispatcher) : base(model)
+    public JourneyViewModel(Journey model, IUiDispatcher dispatcher) : base(model, dispatcher)
     {
         _dispatcher = dispatcher;
-        Model.StateChanged += (_, _) =>
-        {
-            Dispatch(() =>
-            {
-                OnPropertyChanged(nameof(CurrentCounter));
-                OnPropertyChanged(nameof(CurrentPos));
-            });
-        };
+        // Note: StateChanged subscription is handled in base class with dispatcher
     }
 
     // Convenience ctor for tests and fallback scenarios where no platform dispatcher is available
-    public JourneyViewModel(Journey model)
-        : this(model, new ImmediateDispatcher())
-    {
-    }
+    public JourneyViewModel(Journey model) : this(model, new ImmediateDispatcher()) { }
 
     protected virtual void Dispatch(Action action)
     {

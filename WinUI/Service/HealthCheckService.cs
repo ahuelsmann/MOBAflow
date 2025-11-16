@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using Moba.Sound;
-using System.Timers;
 using Timer = System.Timers.Timer;
 
 namespace Moba.WinUI.Service;

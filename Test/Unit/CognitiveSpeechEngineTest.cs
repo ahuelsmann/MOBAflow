@@ -1,6 +1,5 @@
 namespace Moba.Test.Unit;
 
-using System;
 using Sound;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;

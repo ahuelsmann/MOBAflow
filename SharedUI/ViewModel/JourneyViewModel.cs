@@ -7,22 +7,39 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
+using Moba.SharedUI.Service;
 
 public partial class JourneyViewModel : ObservableObject
 {
     [ObservableProperty]
     private Journey model;
 
-    public JourneyViewModel(Journey model)
+    private readonly IUiDispatcher? _dispatcher;
+
+    public JourneyViewModel(Journey model, IUiDispatcher? dispatcher = null)
     {
         Model = model;
         Stations = new ObservableCollection<Station>(model.Stations);
+        _dispatcher = dispatcher;
 
         // Subscribe to StateChanged event in model class Journey.
+        // IMPORTANT: Dispatch to UI thread because event is raised from background thread (Z21 feedback)
         Model.StateChanged += (_, _) =>
         {
-            OnPropertyChanged(nameof(CurrentCounter));
-            OnPropertyChanged(nameof(CurrentPos));
+            if (_dispatcher != null)
+            {
+                _dispatcher.InvokeOnUi(() =>
+                {
+                    OnPropertyChanged(nameof(CurrentCounter));
+                    OnPropertyChanged(nameof(CurrentPos));
+                });
+            }
+            else
+            {
+                // Fallback for tests or when dispatcher is not available
+                OnPropertyChanged(nameof(CurrentCounter));
+                OnPropertyChanged(nameof(CurrentPos));
+            }
         };
     }
 

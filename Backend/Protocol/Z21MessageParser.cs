@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 namespace Moba.Backend.Protocol;
 
 public record XBusStatus(bool EmergencyStop, bool TrackOff, bool ShortCircuit, bool Programming);

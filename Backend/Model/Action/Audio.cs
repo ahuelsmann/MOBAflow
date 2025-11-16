@@ -2,8 +2,6 @@ namespace Moba.Backend.Model.Action;
 
 using Enum;
 
-using Sound;
-
 using System.Runtime.Versioning;
 
 /// <summary>
