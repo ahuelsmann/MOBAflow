@@ -2,23 +2,29 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using Moba.Backend.Interface;
+using Moba.Backend.Network;
+using Moba.Backend.Protocol;
+using Microsoft.Extensions.Logging;
 
 namespace Moba.Backend;
 
-/// <summary>
-/// This class enables bidirectional communication via UDP with a Z21 digital control center in your network.
-/// Implements Z21 LAN Protocol Specification V1.13.
-/// Connection is kept alive by broadcast events (no explicit keep-alive ping required).
-/// </summary>
 public class Z21 : IZ21
 {
     public event Feedback? Received;
     public event SystemStateChanged? OnSystemStateChanged;
+    public event XBusStatusChanged? OnXBusStatusChanged;
 
-    private UdpClient? _client;
+    private readonly IUdpClientWrapper _udp;
+    private readonly ILogger<Z21>? _logger;
     private CancellationTokenSource? _cancellationTokenSource;
-    private Task? _receiverTask;
     private bool _disposed;
+
+    public Z21(IUdpClientWrapper? udp = null, ILogger<Z21>? logger = null)
+    {
+        _udp = udp ?? new UdpWrapper();
+        _udp.Received += OnUdpReceived;
+        _logger = logger;
+    }
 
     /// <summary>
     /// Current system state of the Z21 (voltage, current, temperature, etc.)
@@ -28,7 +34,7 @@ public class Z21 : IZ21
     /// <summary>
     /// Indicates whether the Z21 is currently connected.
     /// </summary>
-    public bool IsConnected => _client != null && _cancellationTokenSource != null && !_cancellationTokenSource.Token.IsCancellationRequested;
+    public bool IsConnected => _cancellationTokenSource != null && !_cancellationTokenSource.Token.IsCancellationRequested;
 
     /// <summary>
     /// Connect to Z21.
@@ -38,19 +44,11 @@ public class Z21 : IZ21
     /// <param name="cancellationToken">Enables the controlled cancellation of long-running operations.</param>
     public async Task ConnectAsync(IPAddress address, CancellationToken cancellationToken = default)
     {
-        _client = new UdpClient();
-        _client.Connect(address, 21105);
-        _client.DontFragment = false;
-        _client.EnableBroadcast = false;
-
         _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-
-        _receiverTask = Task.Run(() => ReceiveMessagesAsync(_cancellationTokenSource.Token), _cancellationTokenSource.Token);
-
-        await SendHandshakeAsync();
-        await SetBroadcastFlagsAsync();
-        
-        Debug.WriteLine("✅ Z21 connected (broadcast events will keep connection alive)");
+        await _udp.ConnectAsync(address, Z21Protocol.DefaultPort, _cancellationTokenSource.Token).ConfigureAwait(false);
+        await SendHandshakeAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
+        await SetBroadcastFlagsAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
+        _logger?.LogInformation("Z21 connected. Broadcast events will keep connection alive");
     }
 
     /// <summary>
@@ -60,48 +58,22 @@ public class Z21 : IZ21
     {
         if (_cancellationTokenSource != null)
         {
-            await _cancellationTokenSource.CancelAsync();
+            // Cancel and dispose safely
+            _cancellationTokenSource.Cancel();
         }
-
-        // Wait for receiver task, but ignore OperationCanceledException
-        if (_receiverTask != null)
-        {
-            try
-            {
-                await _receiverTask;
-            }
-            catch (OperationCanceledException)
-            {
-                Debug.WriteLine("📡 Receiver task cancelled");
-            }
-        }
-
-        _client?.Close();
-        _client = null;
-
-        Debug.WriteLine("✅ Z21 disconnected successfully");
+        await _udp.StopAsync().ConfigureAwait(false);
+        _logger?.LogInformation("Z21 disconnected successfully");
     }
 
     #region Basic Commands
-    private async Task SendHandshakeAsync()
+    private async Task SendHandshakeAsync(CancellationToken cancellationToken = default)
     {
-        // LAN_SYSTEMSTATE_GETDATA (0x85)
-        byte[] sendBytes = new byte[] { 0x04, 0x00, 0x85, 0x00 };
-        if (_client != null)
-        {
-            await _client.SendAsync(sendBytes, sendBytes.Length);
-        }
+        await _udp.SendAsync(Z21Command.BuildHandshake(), cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task SetBroadcastFlagsAsync()
+    private async Task SetBroadcastFlagsAsync(CancellationToken cancellationToken = default)
     {
-        // LAN_SET_BROADCASTFLAGS (0x50) - Subscribe to all events
-        // These events keep the connection alive automatically - no explicit ping needed!
-        byte[] sendBytes = new byte[] { 0x08, 0x00, 0x50, 0x00, 0xFF, 0xFF, 0xFF, 0xFF };
-        if (_client != null)
-        {
-            await _client.SendAsync(sendBytes, sendBytes.Length);
-        }
+        await _udp.SendAsync(Z21Command.BuildBroadcastFlagsAll(), cancellationToken).ConfigureAwait(false);
     }
     #endregion
 
@@ -110,172 +82,93 @@ public class Z21 : IZ21
     /// Turns the track power ON.
     /// LAN_X_SET_TRACK_POWER_ON (X-Header: 0x21, DB0: 0x81)
     /// </summary>
-    public async Task SetTrackPowerOnAsync()
+    public async Task SetTrackPowerOnAsync(CancellationToken cancellationToken = default)
     {
-        byte[] sendBytes = new byte[] { 0x07, 0x00, 0x40, 0x00, 0x21, 0x81, 0xA0 };
-        await SendCommandAsync(sendBytes);
-        Debug.WriteLine("🔌 Track power ON command sent");
+        await SendCommandAsync(Z21Command.BuildTrackPowerOn(), cancellationToken).ConfigureAwait(false);
+        _logger?.LogInformation("Track power ON command sent");
     }
 
     /// <summary>
     /// Turns the track power OFF.
     /// LAN_X_SET_TRACK_POWER_OFF (X-Header: 0x21, DB0: 0x80)
     /// </summary>
-    public async Task SetTrackPowerOffAsync()
+    public async Task SetTrackPowerOffAsync(CancellationToken cancellationToken = default)
     {
-        byte[] sendBytes = new byte[] { 0x07, 0x00, 0x40, 0x00, 0x21, 0x80, 0xA1 };
-        await SendCommandAsync(sendBytes);
-        Debug.WriteLine("🔌 Track power OFF command sent");
+        await SendCommandAsync(Z21Command.BuildTrackPowerOff(), cancellationToken).ConfigureAwait(false);
+        _logger?.LogInformation("Track power OFF command sent");
     }
 
     /// <summary>
     /// Triggers an emergency stop (locomotives stop but track power remains on).
     /// LAN_X_SET_STOP (X-Header: 0x80)
     /// </summary>
-    public async Task SetEmergencyStopAsync()
+    public async Task SetEmergencyStopAsync(CancellationToken cancellationToken = default)
     {
-        byte[] sendBytes = new byte[] { 0x06, 0x00, 0x40, 0x00, 0x80, 0x80 };
-        await SendCommandAsync(sendBytes);
-        Debug.WriteLine("🔴 Emergency stop command sent");
+        await SendCommandAsync(Z21Command.BuildEmergencyStop(), cancellationToken).ConfigureAwait(false);
+        _logger?.LogInformation("Emergency stop command sent");
     }
 
     /// <summary>
     /// Requests the current Z21 status.
     /// LAN_X_GET_STATUS (X-Header: 0x21, DB0: 0x24)
     /// </summary>
-    public async Task GetStatusAsync()
+    public async Task GetStatusAsync(CancellationToken cancellationToken = default)
     {
-        byte[] sendBytes = new byte[] { 0x07, 0x00, 0x40, 0x00, 0x21, 0x24, 0x05 };
-        await SendCommandAsync(sendBytes);
-        Debug.WriteLine("📊 Status request sent");
+        await SendCommandAsync(Z21Command.BuildGetStatus(), cancellationToken).ConfigureAwait(false);
+        _logger?.LogInformation("Status request sent");
     }
     #endregion
 
     #region Message Receiving & Parsing
 
-    private async Task ReceiveMessagesAsync(CancellationToken cancellationToken)
+    private void OnUdpReceived(object? sender, UdpReceivedEventArgs e)
     {
-        while (!cancellationToken.IsCancellationRequested && _client != null)
+        var content = e.Buffer;
+        if (content.Length < 4)
         {
-            UdpReceiveResult result = await _client.ReceiveAsync(cancellationToken);
-            byte[] content = result.Buffer;
-
-            if (content.Length < 4)
-            {
-                Debug.WriteLine($"⚠ Short UDP packet received ({content.Length} bytes): {BitConverter.ToString(content)}");
-                continue;
-            }
-
-            string header = BitConverter.ToString(content, 0, 4);
-
-            Debug.WriteLine($"📨 Received: {header}");
-
-            switch (header)
-            {
-                case "07-00-40-00":
-                    ParseXBusMessage(content);
-                    break;
-                case "08-00-50-00":
-                    Debug.WriteLine("🛠 Broadcast flags set");
-                    break;
-                case "0F-00-80-00":
-                    // R-BUS Feedback event
-                    Received?.Invoke(new FeedbackResult(content));
-                    break;
-                case "14-00-84-00":
-                    Debug.WriteLine("🔄 System state changed");
-                    ParseSystemStateChange(content);
-                    break;
-                default:
-                    Debug.WriteLine($"⚠ Unknown message: {BitConverter.ToString(content)}");
-                    break;
-            }
+            _logger?.LogWarning("Short UDP packet received {Length} bytes: {Payload}", content.Length, Z21Protocol.ToHex(content));
+            return;
         }
-    }
 
-    private static void ParseXBusMessage(byte[] data)
-    {
-        if (data.Length < 6) return;
-
-        byte xHeader = data[4];
-        byte db0 = data[5];
-
-        switch (xHeader)
+        if (Z21MessageParser.IsLanXHeader(content))
         {
-            case 0x61: // Status messages
-                switch (db0)
-                {
-                    case 0x00:
-                        Debug.WriteLine("🔴 Track power OFF");
-                        break;
-                    case 0x01:
-                        Debug.WriteLine("✅ Track power ON");
-                        break;
-                    case 0x02:
-                        Debug.WriteLine("🛠 Programming mode active");
-                        break;
-                    case 0x08:
-                        Debug.WriteLine("⚡ Short circuit detected!");
-                        break;
-                    case 0x82:
-                        Debug.WriteLine("❓ Unknown X-BUS command");
-                        break;
-                }
-                break;
-
-            case 0x81: // Emergency stop
-                Debug.WriteLine("🔴 Emergency stop active");
-                break;
-
-            case 0x62: // Status changed
-                if (data.Length >= 7)
-                {
-                    byte status = data[6];
-                    bool emergencyStop = (status & 0x01) != 0;
-                    bool trackOff = (status & 0x02) != 0;
-                    bool shortCircuit = (status & 0x04) != 0;
-                    bool programming = (status & 0x20) != 0;
-
-                    Debug.WriteLine($"📊 Status: EmergencyStop={emergencyStop}, TrackOff={trackOff}, ShortCircuit={shortCircuit}, Programming={programming}");
-                }
-                break;
+            var xStatus = Z21MessageParser.TryParseXBusStatus(content);
+            if (xStatus != null)
+            {
+                OnXBusStatusChanged?.Invoke(xStatus);
+                _logger?.LogDebug("XBus Status: EmergencyStop={EmergencyStop}, TrackOff={TrackOff}, ShortCircuit={ShortCircuit}, Programming={Programming}", xStatus.EmergencyStop, xStatus.TrackOff, xStatus.ShortCircuit, xStatus.Programming);
+            }
+            return;
         }
-    }
 
-    private void ParseSystemStateChange(byte[] data)
-    {
-        if (data.Length < 20) return;
-
-        int mainCurrent = BitConverter.ToInt16(data, 4);
-        int progCurrent = BitConverter.ToInt16(data, 6);
-        int filteredMainCurrent = BitConverter.ToInt16(data, 8);
-        int temperature = BitConverter.ToInt16(data, 10);
-        int supplyVoltage = BitConverter.ToUInt16(data, 12);
-        int vccVoltage = BitConverter.ToUInt16(data, 14);
-        byte centralState = data[16];
-        byte centralStateEx = data[17];
-
-        Debug.WriteLine($"📊 SystemState:");
-        Debug.WriteLine($"   Main Current: {mainCurrent} mA");
-        Debug.WriteLine($"   Temperature: {temperature} °C");
-        Debug.WriteLine($"   Supply Voltage: {supplyVoltage} mV");
-        Debug.WriteLine($"   VCC Voltage: {vccVoltage} mV");
-        Debug.WriteLine($"   State: 0x{centralState:X2}, StateEx: 0x{centralStateEx:X2}");
-
-        // Update CurrentSystemState and raise event
-        CurrentSystemState = new SystemState
+        if (Z21MessageParser.IsRBusFeedback(content))
         {
-            MainCurrent = mainCurrent,
-            ProgCurrent = progCurrent,
-            FilteredMainCurrent = filteredMainCurrent,
-            Temperature = temperature,
-            SupplyVoltage = supplyVoltage,
-            VccVoltage = vccVoltage,
-            CentralState = centralState,
-            CentralStateEx = centralStateEx
-        };
+            Received?.Invoke(new FeedbackResult(content));
+            return;
+        }
 
-        OnSystemStateChanged?.Invoke(CurrentSystemState);
+        if (Z21MessageParser.IsSystemState(content))
+        {
+            if (Z21MessageParser.TryParseSystemState(content, out var mainCurrent, out var progCurrent, out var filteredMainCurrent, out var temperature, out var supplyVoltage, out var vccVoltage, out var centralState, out var centralStateEx))
+            {
+                CurrentSystemState = new SystemState
+                {
+                    MainCurrent = mainCurrent,
+                    ProgCurrent = progCurrent,
+                    FilteredMainCurrent = filteredMainCurrent,
+                    Temperature = temperature,
+                    SupplyVoltage = supplyVoltage,
+                    VccVoltage = vccVoltage,
+                    CentralState = centralState,
+                    CentralStateEx = centralStateEx
+                };
+                OnSystemStateChanged?.Invoke(CurrentSystemState);
+                _logger?.LogDebug("System state updated");
+            }
+            return;
+        }
+
+        _logger?.LogWarning("Unknown message: {Payload}", Z21Protocol.ToHex(content));
     }
 
     #endregion
@@ -283,15 +176,20 @@ public class Z21 : IZ21
     #region Command Sending
 
     /// <summary>
+    /// Sends a digital command to the Z21 (compat overload required by IZ21 interface).
+    /// </summary>
+    public Task SendCommandAsync(byte[] sendBytes)
+    {
+        return SendCommandAsync(sendBytes, CancellationToken.None);
+    }
+
+    /// <summary>
     /// Sends a digital command to the Z21.
     /// </summary>
     /// <param name="sendBytes">The byte sequence containing the command for the Z21.</param>
-    public async Task SendCommandAsync(byte[] sendBytes)
+    public async Task SendCommandAsync(byte[] sendBytes, CancellationToken cancellationToken = default)
     {
-        if (_client != null)
-        {
-            await _client.SendAsync(sendBytes, sendBytes.Length);
-        }
+        await _udp.SendAsync(sendBytes, cancellationToken).ConfigureAwait(false);
     }
 
     #endregion
@@ -320,7 +218,7 @@ public class Z21 : IZ21
             0x00, 0x00, 0x00, 0x00      // Padding
         };
 
-        Debug.WriteLine($"⚡ Simulating feedback for InPort {inPort}");
+        _logger?.LogDebug("Simulating feedback for InPort {InPort}", inPort);
         Received?.Invoke(new FeedbackResult(simulatedContent));
     }
 
@@ -336,18 +234,13 @@ public class Z21 : IZ21
 
     protected virtual void Dispose(bool disposing)
     {
-        if (_disposed)
-        {
-            return;
-        }
-
+        if (_disposed) return;
         if (disposing)
         {
+            try { _udp?.Dispose(); } catch { /* ignore */ }
             _cancellationTokenSource?.Cancel();
             _cancellationTokenSource?.Dispose();
-            _client?.Dispose();
         }
-
         _disposed = true;
     }
 

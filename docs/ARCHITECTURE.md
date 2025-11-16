@@ -8,12 +8,49 @@
   - IZ21, IJourneyManagerFactory as backend services
   - IJourneyViewModelFactory to instantiate platform-specific JourneyViewModel adapters
 
-## Dependency Injection
+## Dependency Flow
+```
+WinUI → SharedUI → Backend
+MAUI → SharedUI → Backend
+WebApp → SharedUI → Backend
+```
 
-- Register backend services as singletons in platform apps
-- ViewModels are transient and resolved in views/windows
-- Tree building uses a per-platform IJourneyViewModelFactory
-- Factory interfaces (IJourneyManagerFactory, IJourneyViewModelFactory) decouple creation from consumers and enable testing/mocking → recommended with DI
+## Threading Rules
+- Backend code runs on background threads as needed; it must not touch UI components.
+- UI updates are dispatched in platform ViewModels only:
+  - WinUI: `DispatcherQueue`
+  - MAUI: `MainThread.BeginInvokeOnMainThread`
+
+## DI-Based I/O Abstraction
+- All external I/O must be behind DI-injected interfaces (e.g., UDP via `IUdpClientWrapper`).
+- `Z21` receives its dependencies via constructor injection.
+- Per-app DI registration (WinUI/MAUI/WebApp). No central DI extension hosted in Backend.
+
+## Async/Await
+- Use `async`/`await` for I/O-bound work; avoid `.Result`/`.Wait()` to prevent deadlocks.
+- In Backend libraries, prefer `ConfigureAwait(false)`; in ViewModels avoid it to continue on UI thread.
+
+## Protocol and Parsing
+- Protocol constants live in `Backend/Protocol/Z21Protocol.cs`.
+- Message parsing in `Backend/Protocol/Z21MessageParser.cs` and returns DTOs (e.g., `XBusStatus`).
+- Command payloads are built via `Backend/Protocol/Z21Command.cs`.
+
+## Events
+- Prefer typed events for clarity and testability:
+  - `OnSystemStateChanged(SystemState)`
+  - `OnXBusStatusChanged(XBusStatus)`
+  - `Received(FeedbackResult)`
+
+## DI Graph (Mermaid)
+
+```mermaid
+flowchart TD
+  A[App/Host] -->|singleton| IZ21
+  A -->|singleton| IJourneyManagerFactory
+  A -->|singleton| IJourneyViewModelFactory
+  A -->|transient| MainWindowViewModel
+  A -->|transient| JourneyViewModel
+```
 
 ## Sequence: Feedback to UI
 
@@ -33,17 +70,6 @@ sequenceDiagram
     VM->>VM: Dispatch(OnPropertyChanged)
     VM-->>UI: PropertyChanged
     UI->>UI: Update bindings
-```
-
-## DI Graph (Mermaid)
-
-```mermaid
-flowchart TD
-  A[App/Host] -->|singleton| IZ21
-  A -->|singleton| IJourneyManagerFactory
-  A -->|singleton| IJourneyViewModelFactory
-  A -->|transient| MainWindowViewModel
-  A -->|transient| JourneyViewModel
 ```
 
 ## Sequence: Save Solution
@@ -86,9 +112,14 @@ sequenceDiagram
     end
 ```
 
+## Testing
+- Replace external I/O with fakes (e.g., `FakeUdpClientWrapper`) to keep tests deterministic.
+- Unit-test parsing (`Z21MessageParser`) and command building (`Z21Command`).
+- Keep tests UI-framework independent and avoid real UDP/network.
+
 ## Rules
 
-- No platform deps in Backend
-- No `new` of services in UI; resolve from DI
-- Platform adapters only dispatch/wire services
+- No platform deps in Backend.
+- No `new` of services in UI; resolve from DI or platform factories.
+- Platform adapters only dispatch/wire services.
 

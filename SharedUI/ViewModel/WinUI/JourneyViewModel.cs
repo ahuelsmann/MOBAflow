@@ -24,8 +24,20 @@ public class JourneyViewModel : ViewModel.JourneyViewModel
         };
     }
 
+    // Convenience ctor for tests and fallback scenarios where no platform dispatcher is available
+    public JourneyViewModel(Journey model)
+        : this(model, new ImmediateDispatcher())
+    {
+    }
+
     protected virtual void Dispatch(Action action)
     {
         _dispatcher.InvokeOnUi(action);
+    }
+
+    // Internal simple dispatcher that executes immediately on the current thread.
+    private sealed class ImmediateDispatcher : IUiDispatcher
+    {
+        public void InvokeOnUi(Action action) => action();
     }
 }

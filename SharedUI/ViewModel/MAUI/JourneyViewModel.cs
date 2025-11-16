@@ -24,8 +24,19 @@ public class JourneyViewModel : ViewModel.JourneyViewModel
         };
     }
 
+    // Convenience ctor for tests and non-UI execution contexts
+    public JourneyViewModel(Journey model)
+        : this(model, new ImmediateDispatcher())
+    {
+    }
+
     protected virtual void Dispatch(Action action)
     {
         _dispatcher.InvokeOnUi(action);
+    }
+
+    private sealed class ImmediateDispatcher : IUiDispatcher
+    {
+        public void InvokeOnUi(Action action) => action();
     }
 }

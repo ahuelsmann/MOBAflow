@@ -31,7 +31,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     // Secondary ctor for tests (legacy)
     public MainWindowViewModel(IIoService ioService)
-        : this(ioService, new Backend.Z21(), new JourneyManagerFactory())
+        : this(ioService, new Backend.Z21(null, null), new JourneyManagerFactory())
     {
     }
 

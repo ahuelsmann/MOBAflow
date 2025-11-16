@@ -1,8 +1,9 @@
 namespace Moba.Test.Unit;
 
-using Moba.Backend.Manager;
 using Moba.Backend.Model;
+using Moba.Backend.Manager;
 
+[TestFixture]
 public class PlatformTest
 {
     [Test]
@@ -77,7 +78,7 @@ public class PlatformTest
     public async Task PlatformManager_ShouldExecutePlatformWorkflow_OnFeedback()
     {
         // Arrange
-        var z21 = new Moba.Backend.Z21();
+        var z21 = new Moba.Backend.Z21(null, null);
         var workflow = new Workflow
         {
             Name = "Platform Announcement",
@@ -121,7 +122,7 @@ public class PlatformTest
     public async Task PlatformManager_ShouldIgnoreFeedback_WhenTimerActive()
     {
         // Arrange
-        var z21 = new Moba.Backend.Z21();
+        var z21 = new Moba.Backend.Z21(null, null);
         var workflow = new Workflow
         {
             Name = "Platform Announcement",
@@ -167,7 +168,7 @@ public class PlatformTest
     public void PlatformManager_ResetAll_ShouldClearTimers()
     {
         // Arrange
-        var z21 = new Moba.Backend.Z21();
+        var z21 = new Moba.Backend.Z21(null, null);
         var platform = new Platform
         {
             Name = "Platform 1",
@@ -195,7 +196,7 @@ public class PlatformTest
     public void PlatformManager_Dispose_ShouldUnsubscribeFromZ21()
     {
         // Arrange
-        var z21 = new Moba.Backend.Z21();
+        var z21 = new Moba.Backend.Z21(null, null);
         var platforms = new List<Platform>();
         var platformManager = new PlatformManager(z21, platforms);
 
@@ -207,5 +208,36 @@ public class PlatformTest
 
         // Assert - no exception thrown
         Assert.Pass("Dispose executed successfully and is idempotent");
+    }
+
+    [Test]
+    public void Platform_Ctor()
+    {
+        var z21 = new Moba.Backend.Z21(null, null);
+        Assert.That(z21, Is.Not.Null);
+    }
+
+    [Test]
+    public void Platform_Properties_Defaults()
+    {
+        var z21 = new Moba.Backend.Z21(null, null);
+        Assert.That(z21.IsConnected, Is.False);
+    }
+
+    [Test]
+    public void Platform_Name_Set_Get()
+    {
+        var z21 = new Moba.Backend.Z21(null, null);
+        var platform = new Platform();
+        platform.Name = "P1";
+        Assert.That(platform.Name, Is.EqualTo("P1"));
+    }
+
+    [Test]
+    public void Platform_InPort_Set_Get()
+    {
+        var platform = new Platform();
+        platform.InPort = 5;
+        Assert.That(platform.InPort, Is.EqualTo(5u));
     }
 }

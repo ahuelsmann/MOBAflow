@@ -4,11 +4,13 @@ namespace Moba.Backend.Interface;
 
 public delegate void Feedback(FeedbackResult feedbackContent);
 public delegate void SystemStateChanged(SystemState systemState);
+public delegate void XBusStatusChanged(Moba.Backend.Protocol.XBusStatus status);
 
 public interface IZ21 : IDisposable
 {
     event Feedback? Received;
     event SystemStateChanged? OnSystemStateChanged;
+    event XBusStatusChanged? OnXBusStatusChanged;
 
     bool IsConnected { get; }
 

@@ -12,24 +12,11 @@
     <OutputPath>$(BaseOutputPath)$(Configuration)\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
   </PropertyGroup>
   <PropertyGroup>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Remove="Converter\**" />
-    <Compile Remove="ViewModel\**" />
-    <Content Remove="Converter\**" />
-    <Content Remove="ViewModel\**" />
-    <EmbeddedResource Remove="Converter\**" />
-    <EmbeddedResource Remove="ViewModel\**" />
-    <None Remove="Converter\**" />
-    <None Remove="ViewModel\**" />
-    <Page Remove="Converter\**" />
-    <Page Remove="ViewModel\**" />
-    <PRIResource Remove="Converter\**" />
-    <PRIResource Remove="ViewModel\**" />
-  </ItemGroup>
   <ItemGroup>
     <None Remove="germany-stations.json" />
   </ItemGroup>
@@ -47,5 +34,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
+  </ItemGroup>
+  <!-- Mark generated manifest as a build output so Fast Up-to-Date check does not warn -->
+  <ItemGroup>
+    <UpToDateCheckBuilt Include="$(IntermediateOutputPath)Manifests\app.manifest" />
   </ItemGroup>
 </Project>

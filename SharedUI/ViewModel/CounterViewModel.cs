@@ -7,9 +7,10 @@ using System.Net;
 using System.Collections.Generic;
 
 /// <summary>
-/// ViewModel for lap counter functionality.
-/// Connects directly to Z21 via UDP and tracks laps per InPort.
-/// Implements timer-based feedback filtering to handle multiple axle detections from the same train pass.
+/// ViewModel that connects to a Z21 and counts laps per InPort (simple demo feature).
+/// - Platform usage: used by MAUI and Web to demonstrate UDP-driven workflows
+/// - Threading: Z21 events arrive on background threads; UI updates are dispatched to main thread
+/// - Filtering: optional timer-based filter to ignore multiple axle detections
 /// </summary>
 public partial class CounterViewModel : ObservableObject
 {
@@ -18,10 +19,9 @@ public partial class CounterViewModel : ObservableObject
 
     public CounterViewModel()
     {
-        // Initialize with default IP and 3 InPorts
+        _z21 = new Backend.Z21(null, null);
+
         Z21IpAddress = "192.168.0.111";
-        
-        // Setup 3 parallel tracks (InPorts 1, 2, 3)
         Statistics.Add(new InPortStatistic { InPort = 1, Count = 0, TargetLapCount = GlobalTargetLapCount });
         Statistics.Add(new InPortStatistic { InPort = 2, Count = 0, TargetLapCount = GlobalTargetLapCount });
         Statistics.Add(new InPortStatistic { InPort = 3, Count = 0, TargetLapCount = GlobalTargetLapCount });
@@ -118,9 +118,6 @@ public partial class CounterViewModel : ObservableObject
                 System.Diagnostics.Debug.WriteLine($"❌ IP {ipAddress} is not in local network range");
                 return;
             }
-
-            // Create Z21 instance
-            _z21 = new Backend.Z21();
 
             // Connect to Z21 (will throw exception if unreachable)
             await _z21.ConnectAsync(ipAddress);

@@ -3,6 +3,7 @@ namespace Moba.Smart;
 using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
 using UraniumUI;
+using Moba.Backend.Network;
 
 public static class MauiProgram
 {
@@ -27,6 +28,11 @@ public static class MauiProgram
 
 		// Platform dispatcher
 		builder.Services.AddSingleton<MAUI.Service.UiDispatcher>();
+
+        // Backend services explicit
+        builder.Services.AddSingleton<IUdpClientWrapper, UdpWrapper>();
+        builder.Services.AddSingleton<Backend.Interface.IZ21, Backend.Z21>();
+        builder.Services.AddSingleton<Backend.Interface.IJourneyManagerFactory, Backend.Manager.JourneyManagerFactory>();
 
 		// Views
 		builder.Services.AddTransient<MainPage>();
