@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 
 using Moba.SharedUI.Service;
-using ViewModels;
+using Moba.SharedUI.ViewModel.WinUI;
 
 using Service;
 

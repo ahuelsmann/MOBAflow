@@ -107,14 +107,14 @@ public static class TreeViewBuilder
         foreach (var journey in journeys)
         {
             // ✅ Use WinUI-specific JourneyViewModel with DispatcherQueue support
-            var journeyViewModel = new ViewModels.Journey.JourneyViewModel(journey);
+            var journeyViewModel = new Moba.SharedUI.ViewModel.WinUI.JourneyViewModel(journey);
             
             var journeyNode = new TreeNodeViewModel
             {
                 DisplayName = journey.Name,
                 Icon = "\uE81D",
                 DataContext = journeyViewModel,
-                DataType = typeof(ViewModels.Journey.JourneyViewModel)
+                DataType = typeof(Moba.SharedUI.ViewModel.WinUI.JourneyViewModel)
             };
 
             foreach (var station in journey.Stations)

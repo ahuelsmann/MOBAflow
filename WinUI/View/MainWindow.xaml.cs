@@ -1,8 +1,7 @@
 namespace Moba.WinUI.View;
 
 using Microsoft.UI.Xaml.Controls;
-
-using ViewModels;
+using Moba.SharedUI.ViewModel.WinUI;
 
 public sealed partial class MainWindow
 {

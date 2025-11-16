@@ -4,6 +4,11 @@
     <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="TestFile\**" />
+    <EmbeddedResource Remove="TestFile\**" />
+    <None Remove="TestFile\**" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="coverlet.collector">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -23,12 +28,5 @@
   <ItemGroup>
     <ProjectReference Include="..\Backend\Backend.csproj" />
     <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\WinUI\example-solution.json" Link="TestFile\example-solution.json" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="..\WinUI\germany-stations.json" Link="TestFile\germany-stations.json" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="TestFile\" />
   </ItemGroup>
 </Project>

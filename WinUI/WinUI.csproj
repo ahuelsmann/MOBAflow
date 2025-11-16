@@ -17,6 +17,20 @@
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Converter\**" />
+    <Compile Remove="ViewModel\**" />
+    <Content Remove="Converter\**" />
+    <Content Remove="ViewModel\**" />
+    <EmbeddedResource Remove="Converter\**" />
+    <EmbeddedResource Remove="ViewModel\**" />
+    <None Remove="Converter\**" />
+    <None Remove="ViewModel\**" />
+    <Page Remove="Converter\**" />
+    <Page Remove="ViewModel\**" />
+    <PRIResource Remove="Converter\**" />
+    <PRIResource Remove="ViewModel\**" />
+  </ItemGroup>
+  <ItemGroup>
     <None Remove="germany-stations.json" />
   </ItemGroup>
   <ItemGroup>
@@ -33,9 +47,5 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Converter\" />
-    <Folder Include="ViewModel\" />
   </ItemGroup>
 </Project>

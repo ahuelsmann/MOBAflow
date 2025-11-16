@@ -1,0 +1,37 @@
+namespace Moba.SharedUI.ViewModel.WinUI;
+
+using Backend.Model;
+using Moba.SharedUI.Service;
+using System;
+
+/// <summary>
+/// WinUI-specific MainWindowViewModel adapter in SharedUI. Does not reference WinUI-specific services.
+/// Platform project may derive from this to add DispatcherQueue-specific behavior.
+/// </summary>
+public class MainWindowViewModel : Moba.SharedUI.ViewModel.MainWindowViewModel
+{
+    private Solution? _solution;
+
+    public MainWindowViewModel(IIoService ioService) : base(ioService)
+    {
+    }
+
+    public new Solution? Solution
+    {
+        get => _solution;
+        set
+        {
+            if (SetProperty(ref _solution, value))
+            {
+                base.Solution = value;
+
+                HasSolution = value is { Projects.Count: > 0 };
+                SaveSolutionCommand.NotifyCanExecuteChanged();
+                ConnectToZ21Command.NotifyCanExecuteChanged();
+
+                // Use the SharedUI TreeViewBuilder directly
+                TreeNodes = TreeViewBuilder.BuildTreeView(value);
+            }
+        }
+    }
+}
