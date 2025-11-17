@@ -6,33 +6,19 @@ using Moba.SharedUI.Service;
 
 /// <summary>
 /// MAUI-specific JourneyViewModel adapter that dispatches property updates via IUiDispatcher.
+/// No additional event subscription needed - base class handles it.
 /// </summary>
 public class JourneyViewModel : ViewModel.JourneyViewModel
 {
-    private readonly IUiDispatcher _dispatcher;
-
-    public JourneyViewModel(Journey model, IUiDispatcher dispatcher) : base(model)
+    public JourneyViewModel(Journey model, IUiDispatcher dispatcher) : base(model, dispatcher)
     {
-        _dispatcher = dispatcher;
-        Model.StateChanged += (_, _) =>
-        {
-            Dispatch(() =>
-            {
-                OnPropertyChanged(nameof(CurrentCounter));
-                OnPropertyChanged(nameof(CurrentPos));
-            });
-        };
+        // Base class handles StateChanged event subscription with dispatcher
     }
 
     // Convenience ctor for tests and non-UI execution contexts
     public JourneyViewModel(Journey model)
         : this(model, new ImmediateDispatcher())
     {
-    }
-
-    protected virtual void Dispatch(Action action)
-    {
-        _dispatcher.InvokeOnUi(action);
     }
 
     private sealed class ImmediateDispatcher : IUiDispatcher

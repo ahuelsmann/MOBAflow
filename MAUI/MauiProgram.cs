@@ -23,12 +23,13 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
 
-		// ViewModels
+		// Platform services (MUST be registered before ViewModels that depend on them)
+		builder.Services.AddSingleton<IUiDispatcher, MAUI.Service.UiDispatcher>();
+		builder.Services.AddSingleton<INotificationService, MAUI.Service.NotificationService>();
+
+		// ViewModels (CounterViewModel now requires IUiDispatcher and optional INotificationService)
 		builder.Services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
 		builder.Services.AddTransient<SharedUI.ViewModel.MAUI.JourneyViewModel>();
-
-		// Platform dispatcher
-		builder.Services.AddSingleton<IUiDispatcher, MAUI.Service.UiDispatcher>();
 
         // Backend services explicit
         builder.Services.AddSingleton<IUdpClientWrapper, UdpWrapper>();

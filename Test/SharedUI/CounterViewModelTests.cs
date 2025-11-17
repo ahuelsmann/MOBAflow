@@ -1,5 +1,6 @@
 using Moba.Backend.Interface;
 using Moba.SharedUI.ViewModel;
+using Moba.SharedUI.Service;
 
 namespace Moba.Test.SharedUI;
 
@@ -19,10 +20,18 @@ public class CounterViewModelTests
         public void Dispose() { }
     }
 
+    /// <summary>
+    /// Test dispatcher that executes actions immediately on the current thread (no marshalling).
+    /// </summary>
+    private sealed class TestUiDispatcher : IUiDispatcher
+    {
+        public void InvokeOnUi(Action action) => action();
+    }
+
     [Test]
     public void CounterViewModel_InitializesStatistics()
     {
-        var vm = new CounterViewModel(new StubZ21());
+        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), notificationService: null);
         Assert.That(vm.Statistics, Is.Not.Null);
         Assert.That(vm.Statistics.Count, Is.EqualTo(3));
         Assert.That(vm.Statistics[0].InPort, Is.EqualTo(1));
@@ -31,7 +40,7 @@ public class CounterViewModelTests
     [Test]
     public void ResetCounters_ClearsCounts()
     {
-        var vm = new CounterViewModel(new StubZ21());
+        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), notificationService: null);
         vm.Statistics[0].Count = 5;
         vm.Statistics[1].Count = 3;
 
@@ -45,7 +54,7 @@ public class CounterViewModelTests
     [Test]
     public void Ctor_InitializesDefaults()
     {
-        var vm = new CounterViewModel(new StubZ21());
+        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), notificationService: null);
         Assert.That(vm.IsNotConnected, Is.True);
     }
 }

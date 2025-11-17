@@ -1,5 +1,8 @@
 namespace Moba.SharedUI.ViewModel;
 
+using Backend.Model;
+using Backend.Model.Enum;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
@@ -7,22 +10,27 @@ using System.Net;
 using System.Collections.Generic;
 using Moba.Backend.Interface;
 using Moba.SharedUI.Extensions;
+using Moba.SharedUI.Service;
 
 /// <summary>
 /// ViewModel that connects to a Z21 and counts laps per InPort (simple demo feature).
 /// - Platform usage: used by MAUI and Web to demonstrate UDP-driven workflows
-/// - Threading: Z21 events arrive on background threads; UI updates are dispatched to main thread
+/// - Threading: Z21 events arrive on background threads; UI updates are dispatched to main thread via IUiDispatcher
 /// - Filtering: optional timer-based filter to ignore multiple axle detections
 /// </summary>
 public partial class CounterViewModel : ObservableObject, IDisposable
 {
     private readonly IZ21 _z21;
+    private readonly IUiDispatcher _dispatcher;
+    private readonly INotificationService? _notificationService;
     private readonly Dictionary<int, DateTime> _lastFeedbackTime = new();
     private bool _disposed;
 
-    public CounterViewModel(IZ21 z21)
+    public CounterViewModel(IZ21 z21, IUiDispatcher dispatcher, INotificationService? notificationService = null)
     {
         _z21 = z21;
+        _dispatcher = dispatcher;
+        _notificationService = notificationService;
 
         Z21IpAddress = "192.168.0.111";
         Statistics.Add(new InPortStatistic { InPort = 1, Count = 0, TargetLapCount = GlobalTargetLapCount });
@@ -218,19 +226,17 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     /// <summary>
     /// Handles Z21 system state changes and updates UI properties.
     /// IMPORTANT: This method is called from a background thread (UDP callback),
-    /// so all UI updates must be dispatched to the main thread.
+    /// so all UI updates must be dispatched to the main thread via IUiDispatcher.
     /// </summary>
     private void OnSystemStateChanged(Backend.SystemState systemState)
     {
-        // For WinUI simulation, process directly since we're on UI thread
-        // ObservableObject property changes are generally thread-safe
-        UpdateSystemStateOnMainThread(systemState);
+        _dispatcher.InvokeOnUi(() => UpdateSystemState(systemState));
     }
 
     /// <summary>
     /// Updates system state properties on the main thread (UI thread).
     /// </summary>
-    private void UpdateSystemStateOnMainThread(Backend.SystemState systemState)
+    private void UpdateSystemState(Backend.SystemState systemState)
     {
         MainCurrent = systemState.MainCurrent;
         Temperature = systemState.Temperature;
@@ -248,7 +254,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     /// Tracks lap times and checks for target completion.
     /// Backend uses Feedback delegate: void Feedback(FeedbackResult feedbackContent)
     /// IMPORTANT: This method is called from a background thread (UDP callback),
-    /// so all UI updates must be dispatched to the main thread.
+    /// so all UI updates must be dispatched to the main thread via IUiDispatcher.
     /// </summary>
     private void OnFeedbackReceived(Backend.FeedbackResult feedbackResult)
     {
@@ -261,19 +267,15 @@ public partial class CounterViewModel : ObservableObject, IDisposable
             return;
         }
 
-        // For WinUI simulation (SimulateFeedback is called from UI thread), we can process directly
-        // For real Z21 feedback (UDP callback), we need to dispatch to main thread
-        // Since MAUI MainThread API is not available in WinUI, we just process directly
-        // This works because ObservableObject property changes are thread-safe for simple scenarios
-        this.Log($"📥 Processing feedback for InPort {feedbackResult.InPort}...");
-        ProcessFeedbackOnMainThread(feedbackResult);
+        // ✅ Dispatch UI updates to main thread
+        _dispatcher.InvokeOnUi(() => ProcessFeedback(feedbackResult));
     }
 
     /// <summary>
     /// Processes feedback on the main thread (UI thread).
-    /// This method is safe to call from OnFeedbackReceived via MainThread.BeginInvokeOnMainThread.
+    /// This method is safe to call from OnFeedbackReceived via IUiDispatcher.
     /// </summary>
-    private void ProcessFeedbackOnMainThread(Backend.FeedbackResult feedbackResult)
+    private void ProcessFeedback(Backend.FeedbackResult feedbackResult)
     {
         // Find the statistic for this InPort
         var stat = Statistics.FirstOrDefault(s => s.InPort == feedbackResult.InPort);
@@ -317,39 +319,17 @@ public partial class CounterViewModel : ObservableObject, IDisposable
 
     /// <summary>
     /// Called when a track reaches its target lap count.
-    /// Plays notification sound and raises event for UI to show alert.
+    /// Plays notification sound (if service available) and raises event for UI to show alert.
     /// </summary>
     private void OnTargetReached(InPortStatistic stat)
     {
         this.Log($"🎉 Target reached! InPort {stat.InPort}: {stat.Count} laps");
 
-        // Play notification sound
-        PlayNotificationSound();
+        // Play notification sound if service is available (optional, MAUI/WinUI)
+        _notificationService?.PlayNotificationSound();
 
         // Raise event for UI (MAUI MainPage can subscribe)
         TargetReached?.Invoke(this, stat);
-    }
-
-    /// <summary>
-    /// Plays a notification sound when target is reached.
-    /// Uses system default notification sound.
-    /// </summary>
-    private void PlayNotificationSound()
-    {
-        try
-        {
-#if ANDROID
-            // Android: Play default notification sound
-            var notification = Android.Media.RingtoneManager.GetDefaultUri(Android.Media.RingtoneType.Notification);
-            var ringtone = Android.Media.RingtoneManager.GetRingtone(Android.App.Application.Context, notification);
-            ringtone?.Play();
-            this.Log("🔔 Notification sound played");
-#endif
-        }
-        catch (Exception ex)
-        {
-            this.Log($"⚠️ Failed to play notification sound: {ex.Message}");
-        }
     }
 
     /// <summary>

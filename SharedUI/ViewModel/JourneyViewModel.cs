@@ -22,25 +22,31 @@ public partial class JourneyViewModel : ObservableObject
         Stations = new ObservableCollection<Station>(model.Stations);
         _dispatcher = dispatcher;
 
-        // Subscribe to StateChanged event in model class Journey.
-        // IMPORTANT: Dispatch to UI thread because event is raised from background thread (Z21 feedback)
-        Model.StateChanged += (_, _) =>
+        // ✅ Subscribe to StateChanged event ONLY if dispatcher is available
+        // Platform-specific derived classes (WinUI, MAUI) will provide dispatcher
+        // Base class fallback: Direct property changes (for WebApp/Tests without dispatcher)
+        if (_dispatcher != null)
         {
-            if (_dispatcher != null)
+            Model.StateChanged += (_, _) =>
             {
-                _dispatcher.InvokeOnUi(() =>
-                {
-                    OnPropertyChanged(nameof(CurrentCounter));
-                    OnPropertyChanged(nameof(CurrentPos));
-                });
-            }
-            else
-            {
-                // Fallback for tests or when dispatcher is not available
-                OnPropertyChanged(nameof(CurrentCounter));
-                OnPropertyChanged(nameof(CurrentPos));
-            }
-        };
+                _dispatcher.InvokeOnUi(() => OnModelStateChanged());
+            };
+        }
+        else
+        {
+            // Fallback for tests or WebApp (no dispatcher)
+            Model.StateChanged += (_, _) => OnModelStateChanged();
+        }
+    }
+
+    /// <summary>
+    /// Called when the underlying Journey model's state changes.
+    /// Platform-specific derived classes can override this for additional logic.
+    /// </summary>
+    protected virtual void OnModelStateChanged()
+    {
+        OnPropertyChanged(nameof(CurrentCounter));
+        OnPropertyChanged(nameof(CurrentPos));
     }
 
     public uint InPort

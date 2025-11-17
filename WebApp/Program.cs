@@ -8,8 +8,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddSingleton<CounterViewModel>();
-
 // Explicit backend registrations
 builder.Services.AddSingleton<IUdpClientWrapper, UdpWrapper>();
 builder.Services.AddSingleton<Moba.Backend.Interface.IZ21, Moba.Backend.Z21>();
@@ -20,6 +18,10 @@ builder.Services.AddSingleton<IJourneyViewModelFactory, Moba.WebApp.Service.WebJ
 
 // TreeViewBuilder service
 builder.Services.AddSingleton<TreeViewBuilder>();
+
+// ⚠️ Note: Blazor Server doesn't use IUiDispatcher (InvokeAsync on ComponentBase instead)
+// CounterViewModel is NOT registered here as it requires IUiDispatcher (MAUI/WinUI only)
+// For Blazor, use separate ViewModel or handle UI updates differently
 
 var app = builder.Build();
 

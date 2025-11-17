@@ -1,31 +1,22 @@
 namespace Moba.SharedUI.ViewModel.WinUI;
 
-using Backend.Model;
-
-using Moba.SharedUI.Service;
-
 using System;
+using Backend.Model;
+using Moba.SharedUI.Service;
 
 /// <summary>
 /// WinUI-specific adapter hosted in SharedUI; dispatching provided via IUiDispatcher.
+/// No additional event subscription needed - base class handles it.
 /// </summary>
 public class JourneyViewModel : ViewModel.JourneyViewModel
 {
-    private readonly IUiDispatcher _dispatcher;
-
     public JourneyViewModel(Journey model, IUiDispatcher dispatcher) : base(model, dispatcher)
     {
-        _dispatcher = dispatcher;
-        // Note: StateChanged subscription is handled in base class with dispatcher
+        // Base class handles StateChanged event subscription with dispatcher
     }
 
     // Convenience ctor for tests and fallback scenarios where no platform dispatcher is available
     public JourneyViewModel(Journey model) : this(model, new ImmediateDispatcher()) { }
-
-    protected virtual void Dispatch(Action action)
-    {
-        _dispatcher.InvokeOnUi(action);
-    }
 
     // Internal simple dispatcher that executes immediately on the current thread.
     private sealed class ImmediateDispatcher : IUiDispatcher

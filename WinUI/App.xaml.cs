@@ -83,8 +83,9 @@ public partial class App
         services.AddSingleton<Backend.Interface.IZ21, Backend.Z21>();
         services.AddSingleton<Backend.Interface.IJourneyManagerFactory, Backend.Manager.JourneyManagerFactory>();
 
-        // Dispatcher + factory via DI
+        // Dispatcher + Notification + factory via DI
         services.AddSingleton<IUiDispatcher, UiDispatcher>();
+        services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<IJourneyViewModelFactory, WinUIJourneyViewModelFactory>();
         
         // TreeViewBuilder service
@@ -112,9 +113,9 @@ public partial class App
             }
         });
         
-        // ViewModels
+        // ViewModels - CounterViewModel now requires IUiDispatcher and optional INotificationService
         services.AddTransient<SharedUI.ViewModel.WinUI.MainWindowViewModel>();
-        services.AddSingleton<SharedUI.ViewModel.CounterViewModel>(); // ← Counter für Simulate-Testing
+        services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
         
         // Views
         services.AddTransient<MainWindow>();

@@ -2,11 +2,35 @@
 
 - Backend remains platform-independent (no UI thread dispatching).
 - SharedUI holds base ViewModels and thin platform adapters in subfolders:
-  - `SharedUI/ViewModel/WinUI`
-  - `SharedUI/ViewModel/MAUI`
+  - `SharedUI/ViewModel/WinUI` → `Moba.SharedUI.ViewModel.WinUI`
+  - `SharedUI/ViewModel/MAUI` → `Moba.SharedUI.ViewModel.MAUI`
 - Platform projects (WinUI, MAUI, WebApp) wire DI and factories:
   - IZ21, IJourneyManagerFactory as backend services
   - IJourneyViewModelFactory to instantiate platform-specific JourneyViewModel adapters
+
+## Namespace Conventions
+
+All projects follow strict namespace-to-folder mapping:
+
+| Project | RootNamespace | Example File | Namespace |
+|---------|---------------|--------------|-----------|
+| Backend | `Moba.Backend` | `Manager\JourneyManager.cs` | `Moba.Backend.Manager` |
+| SharedUI | `Moba.SharedUI` | `ViewModel\JourneyViewModel.cs` | `Moba.SharedUI.ViewModel` |
+| SharedUI | `Moba.SharedUI` | `ViewModel\WinUI\JourneyViewModel.cs` | `Moba.SharedUI.ViewModel.WinUI` |
+| WinUI | `Moba.WinUI` | `Service\IoService.cs` | `Moba.WinUI.Service` |
+| MAUI | `Moba.MAUI` | `Service\UiDispatcher.cs` | `Moba.MAUI.Service` |
+| WebApp | `Moba.WebApp` | `Service\WebJourneyViewModelFactory.cs` | `Moba.WebApp.Service` |
+| Sound | `Moba.Sound` | `SoundManager.cs` | `Moba.Sound` |
+
+**Using Directives:** Always use absolute namespaces:
+```csharp
+// ✅ CORRECT
+using Moba.Backend.Model;
+using Moba.SharedUI.Service;
+
+// ❌ WRONG
+using Backend.Model;  // Ambiguous!
+```
 
 ## Dependency Flow
 ```

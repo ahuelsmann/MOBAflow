@@ -1,15 +1,15 @@
 namespace Moba.Test.SharedUI;
 
 using Moba.Backend.Model;
+using Moba.SharedUI.Service;
 
 [TestFixture]
 public class MauiAdapterDispatchTests
 {
-    private class TestMauiAdapter : Moba.SharedUI.ViewModel.MAUI.JourneyViewModel
+    private class TestDispatcher : IUiDispatcher
     {
         public bool Dispatched { get; private set; }
-        public TestMauiAdapter(Journey model) : base(model) {}
-        protected override void Dispatch(Action action)
+        public void InvokeOnUi(Action action)
         {
             Dispatched = true; // simulate MainThread dispatch
             action();
@@ -17,14 +17,15 @@ public class MauiAdapterDispatchTests
     }
 
     [Test]
-    public void StateChanged_UsesDispatch()
+    public void StateChanged_UsesDispatcher()
     {
         var model = new Journey();
-        var vm = new TestMauiAdapter(model);
+        var dispatcher = new TestDispatcher();
+        var vm = new Moba.SharedUI.ViewModel.MAUI.JourneyViewModel(model, dispatcher);
 
         model.CurrentCounter++;
 
-        Assert.That(vm.Dispatched, Is.True);
+        Assert.That(dispatcher.Dispatched, Is.True);
         Assert.That(vm.CurrentCounter, Is.EqualTo(1u));
     }
 }
