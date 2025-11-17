@@ -11,7 +11,7 @@
     <Window.SystemBackdrop>
         <MicaBackdrop />
     </Window.SystemBackdrop>
-    <Grid>
+    <Grid PreviewKeyDown="OnKeyDown">
         <Grid.Resources>
             <view:PropertyDataTemplateSelector x:Key="PropertyTemplateSelector">
                 <view:PropertyDataTemplateSelector.TextBoxTemplate>
@@ -115,6 +115,17 @@
                         Label="Save" />
                     <AppBarSeparator />
                     <AppBarButton
+                        Command="{x:Bind ViewModel.UndoCommand}"
+                        Icon="Undo"
+                        Label="Undo"
+                        ToolTipService.ToolTip="Undo last change (Ctrl+Z)" />
+                    <AppBarButton
+                        Command="{x:Bind ViewModel.RedoCommand}"
+                        Icon="Redo"
+                        Label="Redo"
+                        ToolTipService.ToolTip="Redo last undone change (Ctrl+Y)" />
+                    <AppBarSeparator />
+                    <AppBarButton
                         Command="{x:Bind ViewModel.AddProjectCommand}"
                         Icon="Add"
                         IsEnabled="{x:Bind ViewModel.HasSolution, Mode=OneWay}"
@@ -159,6 +170,8 @@
                         <ColumnDefinition Width="350" MinWidth="250" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" MinWidth="400" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="300" MinWidth="200" />
                     </Grid.ColumnDefinitions>
 
                     <!--  TreeView: Solution Explorer  -->
@@ -179,10 +192,25 @@
                             Padding="8"
                             HorizontalScrollBarVisibility="Auto"
                             VerticalScrollBarVisibility="Auto">
-                            <TreeView ItemsSource="{x:Bind ViewModel.TreeNodes, Mode=OneWay}" SelectionChanged="SolutionTreeView_SelectionChanged">
+                            <TreeView 
+                                ItemsSource="{x:Bind ViewModel.TreeNodes, Mode=OneWay}" 
+                                SelectionChanged="SolutionTreeView_SelectionChanged"
+                                RightTapped="TreeView_RightTapped"
+                                AllowDrop="True"
+                                CanDragItems="True"
+                                CanReorderItems="True"
+                                DragItemsCompleted="TreeView_DragItemsCompleted">
                                 <TreeView.ItemTemplate>
                                     <DataTemplate x:DataType="vm:TreeNodeViewModel">
-                                        <TreeViewItem ItemsSource="{x:Bind Children, Mode=OneWay}">
+                                        <TreeViewItem 
+                                            IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}"
+                                            ItemsSource="{x:Bind Children, Mode=OneWay}">
+                                            <TreeViewItem.ContextFlyout>
+                                                <MenuFlyout>
+                                                    <MenuFlyoutItem Text="Move Up" Click="MoveStationUp_Click" />
+                                                    <MenuFlyoutItem Text="Move Down" Click="MoveStationDown_Click" />
+                                                </MenuFlyout>
+                                            </TreeViewItem.ContextFlyout>
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <FontIcon FontSize="16" Glyph="{x:Bind Icon, Mode=OneWay}" />
                                                 <TextBlock Text="{x:Bind DisplayName, Mode=OneWay}" TextWrapping="NoWrap" />
@@ -234,6 +262,65 @@
                                 </ItemsRepeater.ItemTemplate>
                             </ItemsRepeater>
                         </ScrollViewer>
+                    </Grid>
+
+                    <!--  Splitter  -->
+                    <Border
+                        Grid.Column="3"
+                        Width="1"
+                        Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+                    <!--  City Browser  -->
+                    <Grid Grid.Column="4" Background="{ThemeResource LayerFillColorDefaultBrush}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock
+                            Grid.Row="0"
+                            Margin="16,12"
+                            Style="{StaticResource SubtitleTextBlockStyle}"
+                            Text="Cities" />
+
+                        <Button
+                            Grid.Row="1"
+                            Margin="16,0,16,8"
+                            HorizontalAlignment="Stretch"
+                            Command="{x:Bind ViewModel.LoadCitiesFromFileCommand}"
+                            Content="Load Cities" />
+
+                        <ListView
+                            Grid.Row="2"
+                            Margin="8,0"
+                            ItemsSource="{x:Bind ViewModel.AvailableCities, Mode=OneWay}"
+                            SelectedItem="{x:Bind ViewModel.SelectedCity, Mode=TwoWay}">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Padding="8" Spacing="4">
+                                        <TextBlock
+                                            FontWeight="SemiBold"
+                                            Text="{Binding Name}"
+                                            TextWrapping="NoWrap" />
+                                        <TextBlock
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Text="{Binding Stations[0].Name}"
+                                            TextWrapping="NoWrap" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+
+                        <Button
+                            Grid.Row="3"
+                            Margin="16,8,16,16"
+                            HorizontalAlignment="Stretch"
+                            Command="{x:Bind ViewModel.AddStationToJourneyCommand}"
+                            Content="Add to Journey"
+                            ToolTipService.ToolTip="Select a city and a journey to add the station" />
                     </Grid>
                 </Grid>
             </Grid>

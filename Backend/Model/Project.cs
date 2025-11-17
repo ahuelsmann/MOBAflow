@@ -21,6 +21,7 @@ public class Project
         Journeys = [];
         IpAddresses = [];
         Settings = new Settings();
+        Cities = [];
     }
 
     [Display(Name = "Project Name")]
@@ -36,4 +37,9 @@ public class Project
     public List<Journey> Journeys { get; set; }
     public List<string> IpAddresses { get; set; }
     public Settings Settings { get; set; }
+    
+    /// <summary>
+    /// List of cities with their stations available for adding to journeys.
+    /// </summary>
+    public List<Data.City> Cities { get; set; }
 }

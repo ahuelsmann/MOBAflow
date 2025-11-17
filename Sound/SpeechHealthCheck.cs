@@ -1,6 +1,7 @@
+using Microsoft.CognitiveServices.Speech;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.CognitiveServices.Speech;
+using Moba.Common.Extensions;
 
 namespace Moba.Sound;
 
@@ -32,13 +33,11 @@ public class SpeechHealthCheck
 
         if (!isConfigured)
         {
-            Console.WriteLine("⚠️ Azure Speech Service is not configured. Set SPEECH_KEY and SPEECH_REGION.");
-            _logger.LogWarning("Azure Speech Service is not configured. Set SPEECH_KEY and SPEECH_REGION.");
+            this.LogWarning("Azure Speech Service is not configured. Set SPEECH_KEY and SPEECH_REGION.", _logger);
         }
         else
         {
-            Console.WriteLine($"✅ Azure Speech Service is configured for region: {speechRegion}");
-            _logger.LogInformation("Azure Speech Service is configured for region: {Region}", speechRegion);
+            this.Log($"✅ Azure Speech Service is configured for region: {speechRegion}", _logger);
         }
 
         return isConfigured;
@@ -52,8 +51,7 @@ public class SpeechHealthCheck
     {
         if (!IsConfigured())
         {
-            Console.WriteLine("⚠️ Cannot test connectivity - service not configured");
-            _logger.LogWarning("Cannot test connectivity - service not configured");
+            this.LogWarning("Cannot test connectivity - service not configured", _logger);
             return false;
         }
 
@@ -63,15 +61,13 @@ public class SpeechHealthCheck
         // Test mode short-circuit
         if (string.Equals(speechKey, "test-key", StringComparison.Ordinal))
         {
-            Console.WriteLine("✅ Connectivity test skipped (test mode)");
-            _logger.LogInformation("Connectivity test skipped (test mode)");
+            this.Log("✅ Connectivity test skipped (test mode)", _logger);
             return true;
         }
 
         try
         {
-            Console.WriteLine("🔍 Testing Azure Speech Service connectivity...");
-            _logger.LogInformation("Testing Azure Speech Service connectivity...");
+            this.Log("🔍 Testing Azure Speech Service connectivity...", _logger);
 
             var config = SpeechConfig.FromSubscription(speechKey!, speechRegion!);
             
@@ -79,22 +75,15 @@ public class SpeechHealthCheck
             using var synthesizer = new SpeechSynthesizer(config, null);
             
             // If we can create the config and synthesizer, credentials are likely valid
-            Console.WriteLine("✅ Azure Speech Service connectivity test passed");
-            _logger.LogInformation("✅ Azure Speech Service connectivity test passed");
+            this.Log("✅ Azure Speech Service connectivity test passed", _logger);
             return true;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Azure Speech Service connectivity test failed: {ex.Message}");
-            _logger.LogError(ex, "❌ Azure Speech Service connectivity test failed");
-            Console.WriteLine("Possible causes:");
-            Console.WriteLine("  - Invalid or expired API key");
-            Console.WriteLine($"  - Incorrect region: {speechRegion}");
-            Console.WriteLine("  - Network/Firewall blocking Azure services");
-            _logger.LogError("Possible causes:");
-            _logger.LogError("  - Invalid or expired API key");
-            _logger.LogError("  - Incorrect region: {Region}", speechRegion);
-            _logger.LogError("  - Network/Firewall blocking Azure services");
+            this.LogError(
+                $"Azure Speech Service connectivity test failed. Possible causes: Invalid/expired API key, Incorrect region ({speechRegion}), Network/Firewall blocking Azure services",
+                ex,
+                _logger);
             return false;
         }
     }

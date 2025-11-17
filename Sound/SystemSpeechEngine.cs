@@ -1,5 +1,6 @@
 using System.Speech.Synthesis;
 using Microsoft.Extensions.Logging;
+using Moba.Common.Extensions;
 
 namespace Moba.Sound;
 
@@ -42,17 +43,13 @@ public class SystemSpeechEngine : ISpeakerEngine
             // Select voice if specified
             if (!string.IsNullOrEmpty(voiceName) && !TrySelectVoice(synthesizer, voiceName))
             {
-                Console.WriteLine($"⚠️ Voice '{voiceName}' not found. Using default voice.");
-                _logger.LogWarning("Voice '{VoiceName}' not found. Using default voice.", voiceName);
+                this.LogWarning($"Voice '{voiceName}' not found. Using default voice.", _logger);
                 
-                Console.WriteLine("Available voices:");
-                _logger.LogInformation("Available voices:");
+                this.Log("Available voices:", _logger);
                 foreach (var voice in synthesizer.GetInstalledVoices())
                 {
                     var info = voice.VoiceInfo;
-                    Console.WriteLine($"  - {info.Name} ({info.Culture.Name}, {info.Gender}, {info.Age})");
-                    _logger.LogInformation("  - {Name} ({Culture}, {Gender}, {Age})", 
-                        info.Name, info.Culture.Name, info.Gender, info.Age);
+                    this.Log($"  - {info.Name} ({info.Culture.Name}, {info.Gender}, {info.Age})", _logger);
                 }
             }
 
@@ -66,18 +63,15 @@ public class SystemSpeechEngine : ISpeakerEngine
             try
             {
                 // Synthesize speech synchronously
-                Console.WriteLine($"🔊 Synthesizing speech: [{message}]");
-                _logger.LogInformation("Synthesizing speech: [{Message}]", message);
+                this.Log($"🔊 Synthesizing speech: [{message}]", _logger);
                 
                 synthesizer.Speak(message);
                 
-                Console.WriteLine($"✅ Speech synthesized successfully for text: [{message}]");
-                _logger.LogInformation("Speech synthesized successfully for text: [{Message}]", message);
+                this.Log($"✅ Speech synthesized successfully for text: [{message}]", _logger);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ ERROR during speech synthesis: {ex.Message}");
-                _logger.LogError(ex, "ERROR during speech synthesis for message: [{Message}]", message);
+                this.LogError($"ERROR during speech synthesis for message: [{message}]", ex, _logger);
                 throw;
             }
         });
@@ -95,8 +89,7 @@ public class SystemSpeechEngine : ISpeakerEngine
         try
         {
             synthesizer.SelectVoice(voiceName);
-            Console.WriteLine($"✅ Using voice (exact match): {voiceName}");
-            _logger.LogInformation("Using voice (exact match): {VoiceName}", voiceName);
+            this.Log($"✅ Using voice (exact match): {voiceName}", _logger);
             return true;
         }
         catch (ArgumentException)
@@ -112,8 +105,7 @@ public class SystemSpeechEngine : ISpeakerEngine
         if (matchingVoice != null)
         {
             synthesizer.SelectVoice(matchingVoice.VoiceInfo.Name);
-            Console.WriteLine($"✅ Using voice (partial match): {matchingVoice.VoiceInfo.Name}");
-            _logger.LogInformation("Using voice (partial match): {VoiceName}", matchingVoice.VoiceInfo.Name);
+            this.Log($"✅ Using voice (partial match): {matchingVoice.VoiceInfo.Name}", _logger);
             return true;
         }
 
@@ -124,8 +116,7 @@ public class SystemSpeechEngine : ISpeakerEngine
             try
             {
                 synthesizer.SelectVoiceByHints(VoiceGender.NotSet, VoiceAge.NotSet, 0, new System.Globalization.CultureInfo("de-DE"));
-                Console.WriteLine("✅ Using German voice (by culture)");
-                _logger.LogInformation("Using German voice (by culture)");
+                this.Log("✅ Using German voice (by culture)", _logger);
                 return true;
             }
             catch

@@ -1,7 +1,8 @@
 using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Moba.Common.Extensions;
 
 namespace Moba.Sound;
 
@@ -40,8 +41,11 @@ public class CognitiveSpeechEngine : ISpeakerEngine
 
         if (string.IsNullOrEmpty(speechKey) || string.IsNullOrEmpty(speechRegion))
         {
-            Console.WriteLine("❌ Azure Speech credentials not configured");
-            _logger.LogError("Azure Speech credentials not configured. Please set SPEECH_KEY and SPEECH_REGION.");
+            this.LogError(
+                "Azure Speech credentials not configured. Please set SPEECH_KEY and SPEECH_REGION via SpeechOptions or environment variables. " +
+                "On Windows: setx SPEECH_KEY \"your-key\" and setx SPEECH_REGION \"germanywestcentral\"",
+                new InvalidOperationException("Azure Speech credentials missing"),
+                _logger);
             throw new InvalidOperationException(
                 "Please configure Azure Speech credentials via SpeechOptions or environment variables SPEECH_KEY and SPEECH_REGION.\n" +
                 "You can set them in Windows:\n" +
@@ -52,12 +56,9 @@ public class CognitiveSpeechEngine : ISpeakerEngine
         // Test short-circuit: When unit tests set a sentinel key, skip calling Azure and simulate success.
         if (string.Equals(speechKey, "test-key", StringComparison.Ordinal))
         {
-            Console.WriteLine($"🔊 Synthesizing speech (test mode): [{message}]");
-            _logger.LogInformation("Synthesizing speech (test mode): [{Message}]", message);
-            // Simulate small async delay to mimic I/O
+            this.Log($"🔊 Synthesizing speech (test mode): [{message}]", _logger);
             await Task.Yield();
-            Console.WriteLine($"✅ Speech synthesized successfully (test mode) for text: [{message}]");
-            _logger.LogInformation("Speech synthesized successfully (test mode) for text: [{Message}]", message);
+            this.Log($"✅ Speech synthesized successfully (test mode) for text: [{message}]", _logger);
             return;
         }
 
@@ -85,20 +86,17 @@ public class CognitiveSpeechEngine : ISpeakerEngine
             // ✅ FIX: Pass audioConfig to SpeechSynthesizer
             using var speechSynthesizer = new SpeechSynthesizer(speechConfig, audioConfig);
             
-            Console.WriteLine($"🔊 Synthesizing speech via Azure: [{message}]");
-            _logger.LogInformation("🔊 Synthesizing speech via Azure: [{Message}]", message);
+            this.Log($"🔊 Synthesizing speech via Azure: [{message}]", _logger);
             
             var speechSynthesisResult = await speechSynthesizer.SpeakSsmlAsync(ssml);
             OutputSpeechSynthesisResult(speechSynthesisResult, message);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Azure Speech Service Error: {ex.Message}");
-            _logger.LogError(ex, "Azure Speech Service Error for message: [{Message}]", message);
-            _logger.LogError("   This might be caused by:");
-            _logger.LogError("   - Invalid or expired API key");
-            _logger.LogError("   - Network/Firewall blocking Azure services");
-            _logger.LogError("   - Incorrect region (should be: {Region})", speechRegion);
+            this.LogError(
+                $"Azure Speech Service Error for message: [{message}]. Possible causes: Invalid/expired API key, Network/Firewall blocking Azure services, Incorrect region ({speechRegion})",
+                ex,
+                _logger);
             throw;
         }
     }
@@ -108,34 +106,30 @@ public class CognitiveSpeechEngine : ISpeakerEngine
         switch (speechSynthesisResult.Reason)
         {
             case ResultReason.SynthesizingAudioCompleted:
-                Console.WriteLine($"✅ Speech synthesized for text: [{text}]");
-                _logger.LogInformation("✅ Speech synthesized for text: [{Text}]", text);
+                this.Log($"✅ Speech synthesized for text: [{text}]", _logger);
                 break;
 
             case ResultReason.Canceled:
                 var cancellation = SpeechSynthesisCancellationDetails.FromResult(speechSynthesisResult);
-                Console.WriteLine($"❌ CANCELED: Reason={cancellation.Reason}");
-                _logger.LogWarning("❌ CANCELED: Reason={Reason}", cancellation.Reason);
+                this.LogWarning($"CANCELED: Reason={cancellation.Reason}", _logger);
 
                 if (cancellation.Reason == CancellationReason.Error)
                 {
-                    Console.WriteLine($"   ErrorCode: {cancellation.ErrorCode}");
-                    Console.WriteLine($"   ErrorDetails: {cancellation.ErrorDetails}");
-                    _logger.LogError("   ErrorCode: {ErrorCode}", cancellation.ErrorCode);
-                    _logger.LogError("   ErrorDetails: {ErrorDetails}", cancellation.ErrorDetails);
+                    this.LogError(
+                        $"ErrorCode: {cancellation.ErrorCode}, ErrorDetails: {cancellation.ErrorDetails}",
+                        new InvalidOperationException(cancellation.ErrorDetails),
+                        _logger);
                     
                     // Provide helpful troubleshooting hints based on error code
                     var errorCodeString = cancellation.ErrorCode.ToString();
                     if (errorCodeString.Contains("Connection", StringComparison.OrdinalIgnoreCase))
                     {
-                        Console.WriteLine("   💡 Check your internet connection and firewall settings");
-                        _logger.LogWarning("   💡 Check your internet connection and firewall settings");
+                        this.LogWarning("💡 Check your internet connection and firewall settings", _logger);
                     }
                     else if (errorCodeString.Contains("Forbidden", StringComparison.OrdinalIgnoreCase) || 
                              errorCodeString.Contains("Unauthorized", StringComparison.OrdinalIgnoreCase))
                     {
-                        Console.WriteLine("   💡 Check your SPEECH_KEY - it might be invalid or expired");
-                        _logger.LogWarning("   💡 Check your SPEECH_KEY - it might be invalid or expired");
+                        this.LogWarning("💡 Check your SPEECH_KEY - it might be invalid or expired", _logger);
                     }
                 }
                 break;

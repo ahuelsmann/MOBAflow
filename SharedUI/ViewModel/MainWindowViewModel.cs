@@ -1,16 +1,21 @@
 namespace Moba.SharedUI.ViewModel;
 
-using Backend.Model;
+using Backend.Data;
 using Backend.Manager;
-using Moba.Backend.Interface;
+using Backend.Model;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
+using Moba.Backend.Interface;
+using Moba.SharedUI.Extensions;
+
 using Service;
+
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using Moba.SharedUI.Extensions;
 
 public partial class MainWindowViewModel : ObservableObject
 {
@@ -19,6 +24,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IJourneyManagerFactory _journeyManagerFactory;
     private readonly TreeViewBuilder _treeViewBuilder;
     private JourneyManager? _journeyManager;
+    private readonly UndoRedoManager _undoRedoManager;
 
     // Primary ctor for DI
     public MainWindowViewModel(IIoService ioService, IZ21 z21, IJourneyManagerFactory journeyManagerFactory, TreeViewBuilder treeViewBuilder)
@@ -27,6 +33,10 @@ public partial class MainWindowViewModel : ObservableObject
         _z21 = z21;
         _journeyManagerFactory = journeyManagerFactory;
         _treeViewBuilder = treeViewBuilder;
+        
+        // Initialize undo/redo manager with temp directory
+        var historyPath = Path.Combine(Path.GetTempPath(), "MOBAflow", "History");
+        _undoRedoManager = new UndoRedoManager(historyPath);
     }
 
     [ObservableProperty]
@@ -62,6 +72,18 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private string simulateInPort = "1";
 
+    [ObservableProperty]
+    private ObservableCollection<Backend.Data.City> availableCities = [];
+
+    [ObservableProperty]
+    private Backend.Data.City? selectedCity;
+
+    [ObservableProperty]
+    private bool canUndo;
+
+    [ObservableProperty]
+    private bool canRedo;
+
     public event EventHandler? ExitApplicationRequested;
 
     partial void OnSolutionChanged(Solution? value)
@@ -70,6 +92,119 @@ public partial class MainWindowViewModel : ObservableObject
         SaveSolutionCommand.NotifyCanExecuteChanged();
         ConnectToZ21Command.NotifyCanExecuteChanged();
         BuildTreeView();
+        LoadCities();
+        
+        // Save initial state
+        if (value != null)
+        {
+            _ = _undoRedoManager.SaveStateImmediateAsync(value);
+            UpdateUndoRedoState();
+        }
+    }
+
+    private void LoadCities()
+    {
+        AvailableCities.Clear();
+        
+        if (Solution?.Projects.Count > 0)
+        {
+            var firstProject = Solution.Projects[0];
+            foreach (var city in firstProject.Cities)
+            {
+                AvailableCities.Add(city);
+            }
+        }
+    }
+
+    [RelayCommand]
+    private async Task LoadCitiesFromFileAsync()
+    {
+        if (Solution?.Projects.Count == 0) return;
+
+        var (dataManager, path, error) = await _ioService.LoadDataManagerAsync();
+        
+        if (dataManager != null && Solution.Projects.Count > 0)
+        {
+            var firstProject = Solution.Projects[0];
+            firstProject.Cities.Clear();
+            firstProject.Cities.AddRange(dataManager.Cities);
+            LoadCities();
+
+            // Save state for undo/redo
+            await _undoRedoManager.SaveStateImmediateAsync(Solution);
+            UpdateUndoRedoState();
+        }
+        else if (!string.IsNullOrEmpty(error))
+        {
+            throw new InvalidOperationException($"Failed to load cities: {error}");
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanAddStationToJourney))]
+    private void AddStationToJourney()
+    {
+        if (SelectedCity == null || CurrentSelectedNode?.DataContext is not JourneyViewModel journeyVM)
+            return;
+
+        // Take the first station from the selected city
+        if (SelectedCity.Stations.Count > 0)
+        {
+            var stationToCopy = SelectedCity.Stations[0];
+            
+            // Create a new Station instance (deep copy)
+            var newStation = new Station
+            {
+                Name = stationToCopy.Name,
+                Track = stationToCopy.Track,
+                IsExitOnLeft = stationToCopy.IsExitOnLeft,
+                NumberOfLapsToStop = 2, // Default for journey
+                Number = (uint)journeyVM.Model.Stations.Count + 1
+            };
+
+            // Add to Journey model
+            journeyVM.Model.Stations.Add(newStation);
+            
+            // Add to ViewModel
+            var stationVM = new StationViewModel(newStation);
+            journeyVM.Stations.Add(stationVM);
+
+            // Add to TreeView without rebuilding entire tree
+            var stationNode = new TreeNodeViewModel
+            {
+                DisplayName = stationVM.Name,
+                Icon = "\uE80F", // Location icon
+                DataContext = stationVM,
+                DataType = typeof(StationViewModel)
+            };
+
+            // Find the Journey node in the tree and add the station node
+            if (CurrentSelectedNode != null)
+            {
+                CurrentSelectedNode.Children.Add(stationNode);
+            }
+
+            // Save state for undo/redo
+            if (Solution != null)
+            {
+                _ = _undoRedoManager.SaveStateImmediateAsync(Solution);
+                UpdateUndoRedoState();
+            }
+        }
+    }
+
+    private bool CanAddStationToJourney()
+    {
+        return SelectedCity != null && CurrentSelectedNode?.DataContext is JourneyViewModel;
+    }
+
+    partial void OnSelectedCityChanged(Backend.Data.City? value)
+    {
+        AddStationToJourneyCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnCurrentSelectedNodeChanged(TreeNodeViewModel? value)
+    {
+        AddStationToJourneyCommand.NotifyCanExecuteChanged();
     }
 
     [RelayCommand]
@@ -108,6 +243,10 @@ public partial class MainWindowViewModel : ObservableObject
         if (Solution == null) return;
         Solution.Projects.Add(new Project());
         BuildTreeView();
+
+        // Save state for undo/redo
+        _ = _undoRedoManager.SaveStateImmediateAsync(Solution);
+        UpdateUndoRedoState();
     }
 
     [RelayCommand(CanExecute = nameof(CanConnectToZ21))]
@@ -250,7 +389,78 @@ public partial class MainWindowViewModel : ObservableObject
 
     private void BuildTreeView()
     {
+        // Save current expansion states
+        var expansionStates = new Dictionary<string, bool>();
+        SaveExpansionStates(TreeNodes, expansionStates, "");
+
+        // Rebuild tree
         TreeNodes = _treeViewBuilder.BuildTreeView(Solution);
+
+        // Restore expansion states
+        RestoreExpansionStates(TreeNodes, expansionStates, "");
+
+        // Subscribe to ModelChanged events for all JourneyViewModels
+        SubscribeToJourneyChanges(TreeNodes);
+    }
+
+    private void SubscribeToJourneyChanges(ObservableCollection<TreeNodeViewModel> nodes)
+    {
+        foreach (var node in nodes)
+        {
+            if (node.DataContext is JourneyViewModel journeyVM)
+            {
+                // Unsubscribe first to avoid double subscription
+                journeyVM.ModelChanged -= OnJourneyModelChanged;
+                journeyVM.ModelChanged += OnJourneyModelChanged;
+            }
+
+            if (node.Children.Count > 0)
+            {
+                SubscribeToJourneyChanges(node.Children);
+            }
+        }
+    }
+
+    private void OnJourneyModelChanged(object? sender, EventArgs e)
+    {
+        // A Journey was modified (Station added/deleted/reordered)
+        if (Solution != null)
+        {
+            _ = _undoRedoManager.SaveStateImmediateAsync(Solution);
+            UpdateUndoRedoState();
+        }
+    }
+
+    private void SaveExpansionStates(ObservableCollection<TreeNodeViewModel> nodes, Dictionary<string, bool> states, string path)
+    {
+        foreach (var node in nodes)
+        {
+            var nodePath = string.IsNullOrEmpty(path) ? node.DisplayName : $"{path}/{node.DisplayName}";
+            states[nodePath] = node.IsExpanded;
+
+            if (node.Children.Count > 0)
+            {
+                SaveExpansionStates(node.Children, states, nodePath);
+            }
+        }
+    }
+
+    private void RestoreExpansionStates(ObservableCollection<TreeNodeViewModel> nodes, Dictionary<string, bool> states, string path)
+    {
+        foreach (var node in nodes)
+        {
+            var nodePath = string.IsNullOrEmpty(path) ? node.DisplayName : $"{path}/{node.DisplayName}";
+            
+            if (states.TryGetValue(nodePath, out var isExpanded))
+            {
+                node.IsExpanded = isExpanded;
+            }
+
+            if (node.Children.Count > 0)
+            {
+                RestoreExpansionStates(node.Children, states, nodePath);
+            }
+        }
     }
 
     public void OnNodeSelected(TreeNodeViewModel? node)
@@ -306,6 +516,51 @@ public partial class MainWindowViewModel : ObservableObject
     private void OnPropertyValueChanged(object? sender, EventArgs e)
     {
         CurrentSelectedNode?.RefreshDisplayName();
+        
+        // Throttled auto-save after property changes
+        if (Solution != null)
+        {
+            _undoRedoManager.SaveStateThrottled(Solution);
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanUndo))]
+    private async Task UndoAsync()
+    {
+        var previousSolution = await _undoRedoManager.UndoAsync();
+        if (previousSolution != null)
+        {
+            Solution = previousSolution;
+            UpdateUndoRedoState();
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRedo))]
+    private async Task RedoAsync()
+    {
+        var nextSolution = await _undoRedoManager.RedoAsync();
+        if (nextSolution != null)
+        {
+            Solution = nextSolution;
+            UpdateUndoRedoState();
+        }
+    }
+
+    private void UpdateUndoRedoState()
+    {
+        try
+        {
+            CanUndo = _undoRedoManager.CanUndo;
+            CanRedo = _undoRedoManager.CanRedo;
+            UndoCommand.NotifyCanExecuteChanged();
+            RedoCommand.NotifyCanExecuteChanged();
+        }
+        catch
+        {
+            // Ignore errors during initial state update
+            CanUndo = false;
+            CanRedo = false;
+        }
     }
 
     // Finds the parent Project of a TreeNode (e.g., for a Station or Platform)
@@ -318,25 +573,69 @@ public partial class MainWindowViewModel : ObservableObject
         if (Solution == null || node.DataContext == null)
             return null;
 
-        // Handle JourneyViewModel - extract the Model
+        // Handle ViewModels - extract the Model first
         var dataContext = node.DataContext;
-        if (dataContext is JourneyViewModel journeyVm)
-        {
-            return Solution.Projects.FirstOrDefault(p => p.Journeys.Contains(journeyVm.Model));
-        }
 
-        // Type-check once, then search in projects
-        return dataContext switch
+        // Extract Model from ViewModel
+        Journey? journeyModel = dataContext switch
         {
-            Station station => Solution.Projects.FirstOrDefault(p => ContainsStation(p, station)),
-            Platform platform => Solution.Projects.FirstOrDefault(p => ContainsPlatform(p, platform)),
-            Workflow workflow => Solution.Projects.FirstOrDefault(p => p.Workflows.Contains(workflow)),
-            Journey journey => Solution.Projects.FirstOrDefault(p => p.Journeys.Contains(journey)),
-            Train train => Solution.Projects.FirstOrDefault(p => p.Trains.Contains(train)),
-            Locomotive loco => Solution.Projects.FirstOrDefault(p => p.Locomotives.Contains(loco)),
-            Settings setting => Solution.Projects.FirstOrDefault(p => p.Settings == setting),
-            _ => null
+            JourneyViewModel journeyVm => journeyVm.Model,
+            _ => dataContext as Journey
         };
+
+        Station? stationModel = dataContext switch
+        {
+            StationViewModel stationVm => stationVm.Model,
+            _ => dataContext as Station
+        };
+
+        Platform? platformModel = dataContext switch
+        {
+            PlatformViewModel platformVm => platformVm.Model,
+            _ => dataContext as Platform
+        };
+
+        Workflow? workflowModel = dataContext switch
+        {
+            WorkflowViewModel workflowVm => workflowVm.Model,
+            _ => dataContext as Workflow
+        };
+
+        Train? trainModel = dataContext switch
+        {
+            TrainViewModel trainVm => trainVm.Model,
+            _ => dataContext as Train
+        };
+
+        Locomotive? locomotiveModel = dataContext switch
+        {
+            LocomotiveViewModel locoVm => locoVm.Model,
+            _ => dataContext as Locomotive
+        };
+
+        // Now search in projects with the extracted models
+        if (journeyModel != null)
+            return Solution.Projects.FirstOrDefault(p => p.Journeys.Contains(journeyModel));
+
+        if (stationModel != null)
+            return Solution.Projects.FirstOrDefault(p => ContainsStation(p, stationModel));
+
+        if (platformModel != null)
+            return Solution.Projects.FirstOrDefault(p => ContainsPlatform(p, platformModel));
+
+        if (workflowModel != null)
+            return Solution.Projects.FirstOrDefault(p => p.Workflows.Contains(workflowModel));
+
+        if (trainModel != null)
+            return Solution.Projects.FirstOrDefault(p => p.Trains.Contains(trainModel));
+
+        if (locomotiveModel != null)
+            return Solution.Projects.FirstOrDefault(p => p.Locomotives.Contains(locomotiveModel));
+
+        if (dataContext is Settings setting)
+            return Solution.Projects.FirstOrDefault(p => p.Settings == setting);
+
+        return null;
     }
 
     // Checks if a Station is contained in one of the Project's Journeys
@@ -373,7 +672,8 @@ public partial class MainWindowViewModel : ObservableObject
         var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
 
         // Only allow specific types (whitelist approach)
-        return underlyingType == typeof(Workflow);
+        return underlyingType == typeof(Workflow)
+            || underlyingType == typeof(Train);
     }
 
     private static IEnumerable<object?>? GetReferenceValues(Type type, Project? contextProject)
@@ -390,6 +690,18 @@ public partial class MainWindowViewModel : ObservableObject
 
             // Add null option (for optional workflows)
             return new List<object?> { null }.Concat(workflows);
+        }
+
+        if (underlyingType == typeof(Train))
+        {
+            if (contextProject == null)
+                return new List<object?> { null };
+
+            // Only Trains from the CURRENT Project
+            var trains = contextProject.Trains.Cast<object>().ToList();
+
+            // Add null option (for optional trains)
+            return new List<object?> { null }.Concat(trains);
         }
 
         return null;

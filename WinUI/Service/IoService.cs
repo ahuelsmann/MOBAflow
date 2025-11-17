@@ -1,5 +1,6 @@
 namespace Moba.WinUI.Service;
 
+using Backend.Data;
 using Backend.Model;
 
 using Microsoft.Windows.Storage.Pickers;
@@ -8,6 +9,7 @@ using Moba.SharedUI.Service;
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 public class IoService : IIoService
@@ -64,5 +66,34 @@ public class IoService : IIoService
 
         await Solution.SaveAsync(path!, solution);
         return (true, path, null);
+    }
+
+    public async Task<(DataManager? dataManager, string? path, string? error)> LoadDataManagerAsync()
+    {
+        // Try to load default germany-stations.json from application directory
+        var appDirectory = AppContext.BaseDirectory;
+        var defaultPath = Path.Combine(appDirectory, "germany-stations.json");
+
+        if (File.Exists(defaultPath))
+        {
+            var dataManager = await DataManager.LoadAsync(defaultPath);
+            return (dataManager, defaultPath, null);
+        }
+
+        // If default file not found, open file picker
+        if (_windowId == null)
+            throw new InvalidOperationException("WindowId must be set before using IoService");
+
+        var picker = new FileOpenPicker(_windowId.Value)
+        {
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+            FileTypeFilter = { ".json" }
+        };
+
+        var result = await picker.PickSingleFileAsync();
+        if (result == null) return (null, null, "No file selected");
+
+        var dm = await DataManager.LoadAsync(result.Path);
+        return (dm, result.Path, null);
     }
 }

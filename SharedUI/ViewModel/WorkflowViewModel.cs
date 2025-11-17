@@ -5,8 +5,10 @@ using Action;
 using Backend;
 using Backend.Model;
 using Backend.Model.Action;
+using Backend.Model.Enum;
 
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 using Sound;
 
@@ -59,6 +61,43 @@ public partial class WorkflowViewModel : ObservableObject
     }
 
     public ObservableCollection<object> Actions { get; }
+
+    [RelayCommand]
+    private void AddAction(ActionType actionType)
+    {
+        Base newAction = actionType switch
+        {
+            ActionType.Announcement => new Announcement("New announcement text"),
+            ActionType.Sound => new Audio("path/to/sound.wav"),
+            ActionType.Command => new Command(Array.Empty<byte>()),
+            _ => throw new ArgumentException($"Unsupported action type: {actionType}")
+        };
+
+        Model.Actions.Add(newAction);
+
+        var actionVM = CreateViewModelForAction(newAction);
+        Actions.Add(actionVM);
+    }
+
+    [RelayCommand]
+    private void DeleteAction(object actionVM)
+    {
+        if (actionVM == null) return;
+
+        Base? actionModel = actionVM switch
+        {
+            AnnouncementViewModel avm => avm.Model,
+            AudioViewModel audvm => audvm.Model,
+            CommandViewModel cvm => cvm.Model,
+            _ => null
+        };
+
+        if (actionModel != null)
+        {
+            Model.Actions.Remove(actionModel);
+            Actions.Remove(actionVM);
+        }
+    }
 
     public async Task StartAsync(Journey journey, Station station)
     {

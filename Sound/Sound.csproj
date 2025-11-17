@@ -15,4 +15,10 @@
     <PackageReference Include="System.Speech" />
     <PackageReference Include="System.Windows.Extensions" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Extensions\" />
+  </ItemGroup>
 </Project>

@@ -133,31 +133,16 @@ public class TreeViewBuilder
                 DataType = journeyViewModel.GetType()  // ← Use actual ViewModel type
             };
 
-            // Stations
-            foreach (var station in journey.Stations)
+            // Stations - use ViewModels from JourneyViewModel
+            foreach (var stationVM in journeyViewModel.Stations)
             {
                 var stationNode = new TreeNodeViewModel
                 {
-                    DisplayName = station.Name,
+                    DisplayName = stationVM.Name,
                     Icon = "\uE80F", // Location icon
-                    DataContext = station,
-                    DataType = typeof(Station)
+                    DataContext = stationVM,  // ← Use StationViewModel
+                    DataType = typeof(StationViewModel)
                 };
-
-                // Platforms under Station
-                if (station.Platforms.Count > 0)
-                {
-                    foreach (var platform in station.Platforms)
-                    {
-                        stationNode.Children.Add(new TreeNodeViewModel
-                        {
-                            DisplayName = platform.Name,
-                            Icon = "\uE81E", // Map pin icon for platform
-                            DataContext = platform,
-                            DataType = typeof(Platform)
-                        });
-                    }
-                }
 
                 journeyNode.Children.Add(stationNode);
             }
@@ -179,12 +164,15 @@ public class TreeViewBuilder
 
         foreach (var workflow in workflows)
         {
+            // Create WorkflowViewModel (without dependencies for now, as we're just displaying)
+            var workflowVM = new WorkflowViewModel(workflow);
+
             workflowsFolder.Children.Add(new TreeNodeViewModel
             {
                 DisplayName = workflow.Name,
                 Icon = "\uE9D9", // Flow icon
-                DataContext = workflow,
-                DataType = typeof(Workflow)
+                DataContext = workflowVM,  // ← Use WorkflowViewModel
+                DataType = typeof(WorkflowViewModel)
             });
         }
 
@@ -202,12 +190,14 @@ public class TreeViewBuilder
 
         foreach (var loco in locomotives)
         {
+            var locoVM = new LocomotiveViewModel(loco);
+
             locomotivesFolder.Children.Add(new TreeNodeViewModel
             {
                 DisplayName = loco.Name,
                 Icon = "\uE81D",
-                DataContext = loco,
-                DataType = loco.GetType()
+                DataContext = locoVM,  // ← Use LocomotiveViewModel
+                DataType = typeof(LocomotiveViewModel)
             });
         }
 
@@ -225,13 +215,41 @@ public class TreeViewBuilder
 
         foreach (var train in trains)
         {
-            trainsFolder.Children.Add(new TreeNodeViewModel
+            var trainVM = new TrainViewModel(train);
+
+            var trainNode = new TreeNodeViewModel
             {
                 DisplayName = train.Name,
                 Icon = "\uE81D",
-                DataContext = train,
-                DataType = train.GetType()
-            });
+                DataContext = trainVM,  // ← Use TrainViewModel
+                DataType = typeof(TrainViewModel)
+            };
+
+            // Add Locomotives under Train
+            foreach (var locoVM in trainVM.Locomotives)
+            {
+                trainNode.Children.Add(new TreeNodeViewModel
+                {
+                    DisplayName = locoVM.Name,
+                    Icon = "\uE81D",
+                    DataContext = locoVM,
+                    DataType = typeof(LocomotiveViewModel)
+                });
+            }
+
+            // Add Wagons under Train
+            foreach (var wagonVM in trainVM.Wagons)
+            {
+                trainNode.Children.Add(new TreeNodeViewModel
+                {
+                    DisplayName = wagonVM.Name,
+                    Icon = "\uE7C1", // Box icon for wagon
+                    DataContext = wagonVM,
+                    DataType = typeof(WagonViewModel)
+                });
+            }
+
+            trainsFolder.Children.Add(trainNode);
         }
 
         return trainsFolder;

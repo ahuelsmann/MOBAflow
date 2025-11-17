@@ -1,25 +1,5 @@
 namespace Moba.Backend;
 
-/// <summary>
-/// Represents the result of an operation that can succeed or fail.
-/// Provides a type-safe alternative to throwing exceptions for expected errors.
-/// Use this pattern when an operation can fail for business reasons (not technical errors).
-/// </summary>
-/// <typeparam name="T">The type of the success value</typeparam>
-/// <example>
-/// <code>
-/// public Result&lt;User&gt; GetUser(int userId)
-/// {
-///     if (userId &lt;= 0)
-///         return Result&lt;User&gt;.Failure("Invalid user ID");
-///     
-///     var user = _repository.FindById(userId);
-///     return user != null
-///         ? Result&lt;User&gt;.Success(user)
-///         : Result&lt;User&gt;.Failure("User not found");
-/// }
-/// </code>
-/// </example>
 public record Result<T>
 {
     /// <summary>
@@ -103,22 +83,6 @@ public record Result<T>
     }
 }
 
-/// <summary>
-/// Non-generic result for operations that don't return a value.
-/// Use this when you only need to indicate success or failure without a result value.
-/// </summary>
-/// <example>
-/// <code>
-/// public Result DeleteUser(int userId)
-/// {
-///     if (userId &lt;= 0)
-///         return Result.Failure("Invalid user ID");
-///     
-///     _repository.Delete(userId);
-///     return Result.Success();
-/// }
-/// </code>
-/// </example>
 public record Result
 {
     /// <summary>
@@ -126,12 +90,12 @@ public record Result
     /// Will be null if <see cref="IsSuccess"/> is true.
     /// </summary>
     public string? Error { get; init; }
-    
+
     /// <summary>
     /// Indicates whether the operation was successful.
     /// </summary>
     public bool IsSuccess => Error == null;
-    
+
     /// <summary>
     /// Indicates whether the operation failed.
     /// </summary>
@@ -142,7 +106,7 @@ public record Result
     /// </summary>
     /// <returns>A successful Result</returns>
     public static Result Success() => new();
-    
+
     /// <summary>
     /// Creates a failed result with an error message.
     /// </summary>

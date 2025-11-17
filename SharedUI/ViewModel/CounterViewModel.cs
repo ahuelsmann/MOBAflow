@@ -1,16 +1,15 @@
 namespace Moba.SharedUI.ViewModel;
 
-using Backend.Model;
-using Backend.Model.Enum;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Collections.ObjectModel;
-using System.Net;
-using System.Collections.Generic;
+
 using Moba.Backend.Interface;
 using Moba.SharedUI.Extensions;
 using Moba.SharedUI.Service;
+
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Net;
 
 /// <summary>
 /// ViewModel that connects to a Z21 and counts laps per InPort (simple demo feature).

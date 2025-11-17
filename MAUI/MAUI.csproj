@@ -51,6 +51,7 @@
   <ItemGroup>
     <!-- SharedUI provides ViewModels and CommunityToolkit.Mvvm -->
     <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
+    <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
   <ItemGroup>
     <MauiXaml Update="AppShell.xaml">

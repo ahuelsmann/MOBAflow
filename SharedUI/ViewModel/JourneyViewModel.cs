@@ -4,10 +4,12 @@ using Backend.Model;
 using Backend.Model.Enum;
 
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+
+using Moba.SharedUI.Service;
 
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
-using Moba.SharedUI.Service;
 
 public partial class JourneyViewModel : ObservableObject
 {
@@ -16,11 +18,28 @@ public partial class JourneyViewModel : ObservableObject
 
     private readonly IUiDispatcher? _dispatcher;
 
+    /// <summary>
+    /// Event fired when the Journey model is modified and should be saved.
+    /// </summary>
+    public event EventHandler? ModelChanged;
+
     public JourneyViewModel(Journey model, IUiDispatcher? dispatcher = null)
     {
         Model = model;
-        Stations = new ObservableCollection<Station>(model.Stations);
         _dispatcher = dispatcher;
+
+        // Sort stations by Number before wrapping in ViewModels
+        var sortedStations = model.Stations.OrderBy(s => s.Number).ToList();
+        model.Stations.Clear();
+        foreach (var station in sortedStations)
+        {
+            model.Stations.Add(station);
+        }
+
+        // Wrap existing stations in ViewModels
+        Stations = new ObservableCollection<StationViewModel>(
+            model.Stations.Select(s => new StationViewModel(s, dispatcher))
+        );
 
         // ✅ Subscribe to StateChanged event ONLY if dispatcher is available
         // Platform-specific derived classes (WinUI, MAUI) will provide dispatcher
@@ -86,7 +105,7 @@ public partial class JourneyViewModel : ObservableObject
         set => SetProperty(Model.Train, value, Model, (m, v) => m.Train = v);
     }
 
-    public ObservableCollection<Station> Stations { get; }
+    public ObservableCollection<StationViewModel> Stations { get; }
 
     public uint CurrentCounter
     {
@@ -116,5 +135,69 @@ public partial class JourneyViewModel : ObservableObject
     {
         get => Model.FirstPos;
         set => SetProperty(Model.FirstPos, value, Model, (m, v) => m.FirstPos = v);
+    }
+
+    [RelayCommand]
+    private void AddStation()
+    {
+        var newStation = new Station { Name = "New Station" };
+        Model.Stations.Add(newStation);
+
+        var stationVM = new StationViewModel(newStation, _dispatcher);
+        Stations.Add(stationVM);
+
+        // Renumber all stations
+        RenumberStations();
+
+        // Notify that model changed
+        ModelChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private void DeleteStation(StationViewModel stationVM)
+    {
+        if (stationVM == null) return;
+
+        Model.Stations.Remove(stationVM.Model);
+        Stations.Remove(stationVM);
+
+        // Renumber remaining stations
+        RenumberStations();
+
+        // Notify that model changed
+        ModelChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Renumbers all stations in the journey sequentially starting from 1.
+    /// Should be called after adding, deleting, or reordering stations.
+    /// </summary>
+    public void RenumberStations()
+    {
+        for (int i = 0; i < Stations.Count; i++)
+        {
+            Stations[i].Number = (uint)(i + 1);
+        }
+    }
+
+    /// <summary>
+    /// Handles station reordering after drag & drop.
+    /// Call this method when stations are reordered in the UI.
+    /// </summary>
+    [RelayCommand]
+    public void StationsReordered()
+    {
+        // Update Model.Stations to match ViewModel order
+        Model.Stations.Clear();
+        foreach (var stationVM in Stations)
+        {
+            Model.Stations.Add(stationVM.Model);
+        }
+
+        // Renumber based on new order
+        RenumberStations();
+
+        // Notify that model changed
+        ModelChanged?.Invoke(this, EventArgs.Empty);
     }
 }
