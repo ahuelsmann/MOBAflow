@@ -27,7 +27,12 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly UndoRedoManager _undoRedoManager;
 
     // Primary ctor for DI
-    public MainWindowViewModel(IIoService ioService, IZ21 z21, IJourneyManagerFactory journeyManagerFactory, TreeViewBuilder treeViewBuilder)
+    public MainWindowViewModel(
+        IIoService ioService, 
+        IZ21 z21, 
+        IJourneyManagerFactory journeyManagerFactory, 
+        TreeViewBuilder treeViewBuilder,
+        Solution solution)
     {
         _ioService = ioService;
         _z21 = z21;
@@ -37,6 +42,10 @@ public partial class MainWindowViewModel : ObservableObject
         // Initialize undo/redo manager with temp directory
         var historyPath = Path.Combine(Path.GetTempPath(), "MOBAflow", "History");
         _undoRedoManager = new UndoRedoManager(historyPath);
+
+        // Use injected Solution from DI container
+        // This allows for better testability and centralized configuration
+        Solution = solution;
     }
 
     [ObservableProperty]
@@ -49,7 +58,7 @@ public partial class MainWindowViewModel : ObservableObject
     private bool hasSolution;
 
     [ObservableProperty]
-    private Solution? solution;
+    private Solution solution = null!; // Initialized in constructor
 
     [ObservableProperty]
     private ObservableCollection<TreeNodeViewModel> treeNodes = [];
@@ -94,19 +103,16 @@ public partial class MainWindowViewModel : ObservableObject
         BuildTreeView();
         LoadCities();
         
-        // Save initial state
-        if (value != null)
-        {
-            _ = _undoRedoManager.SaveStateImmediateAsync(value);
-            UpdateUndoRedoState();
-        }
+        // Save initial state (e.g., when loading from file or after Undo/Redo)
+        _ = _undoRedoManager.SaveStateImmediateAsync(value!);
+        UpdateUndoRedoState();
     }
 
     private void LoadCities()
     {
         AvailableCities.Clear();
         
-        if (Solution?.Projects.Count > 0)
+        if (Solution.Projects.Count > 0)
         {
             var firstProject = Solution.Projects[0];
             foreach (var city in firstProject.Cities)
@@ -119,7 +125,7 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private async Task LoadCitiesFromFileAsync()
     {
-        if (Solution?.Projects.Count == 0) return;
+        if (Solution.Projects.Count == 0) return;
 
         var (dataManager, path, error) = await _ioService.LoadDataManagerAsync();
         
@@ -184,11 +190,8 @@ public partial class MainWindowViewModel : ObservableObject
             }
 
             // Save state for undo/redo
-            if (Solution != null)
-            {
-                _ = _undoRedoManager.SaveStateImmediateAsync(Solution);
-                UpdateUndoRedoState();
-            }
+            _ = _undoRedoManager.SaveStateImmediateAsync(Solution);
+            UpdateUndoRedoState();
         }
     }
 
@@ -235,7 +238,6 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanSaveSolution))]
     private async Task SaveSolutionAsync()
     {
-        if (Solution == null) return;
         var (success, path, error) = await _ioService.SaveAsync(Solution, CurrentSolutionPath);
         if (success && path != null)
         {
@@ -250,7 +252,6 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void AddProject()
     {
-        if (Solution == null) return;
         Solution.Projects.Add(new Project());
         BuildTreeView();
 
@@ -262,7 +263,7 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanConnectToZ21))]
     private async Task ConnectToZ21Async()
     {
-        if (Solution?.Projects.Count > 0)
+        if (Solution.Projects.Count > 0)
         {
             var project = Solution.Projects[0];
 
@@ -357,9 +358,9 @@ public partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    private bool CanSaveSolution() => Solution != null;
+    private bool CanSaveSolution() => true; // Solution is always initialized
 
-    private bool CanConnectToZ21() => Solution != null && !IsZ21Connected;
+    private bool CanConnectToZ21() => !IsZ21Connected;
 
     private bool CanDisconnectFromZ21() => IsZ21Connected;
 
@@ -434,11 +435,8 @@ public partial class MainWindowViewModel : ObservableObject
     private void OnJourneyModelChanged(object? sender, EventArgs e)
     {
         // A Journey was modified (Station added/deleted/reordered)
-        if (Solution != null)
-        {
-            _ = _undoRedoManager.SaveStateImmediateAsync(Solution);
-            UpdateUndoRedoState();
-        }
+        _ = _undoRedoManager.SaveStateImmediateAsync(Solution);
+        UpdateUndoRedoState();
     }
 
     private void SaveExpansionStates(ObservableCollection<TreeNodeViewModel> nodes, Dictionary<string, bool> states, string path)
@@ -528,10 +526,7 @@ public partial class MainWindowViewModel : ObservableObject
         CurrentSelectedNode?.RefreshDisplayName();
         
         // Throttled auto-save after property changes
-        if (Solution != null)
-        {
-            _undoRedoManager.SaveStateThrottled(Solution);
-        }
+        _undoRedoManager.SaveStateThrottled(Solution);
     }
 
     [RelayCommand(CanExecute = nameof(CanUndo))]
@@ -580,7 +575,7 @@ public partial class MainWindowViewModel : ObservableObject
         if (node.DataContext is Project project)
             return project;
 
-        if (Solution == null || node.DataContext == null)
+        if (node.DataContext == null)
             return null;
 
         // Handle ViewModels - extract the Model first

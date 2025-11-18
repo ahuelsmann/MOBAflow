@@ -10,8 +10,13 @@ using Moba.SharedUI.Service;
 /// </summary>
 public class MainWindowViewModel : ViewModel.MainWindowViewModel
 {
-    public MainWindowViewModel(IIoService ioService, IZ21 z21, IJourneyManagerFactory journeyManagerFactory, TreeViewBuilder treeViewBuilder)
-        : base(ioService, z21, journeyManagerFactory, treeViewBuilder)
+    public MainWindowViewModel(
+        IIoService ioService, 
+        IZ21 z21, 
+        IJourneyManagerFactory journeyManagerFactory, 
+        TreeViewBuilder treeViewBuilder,
+        Solution solution)
+        : base(ioService, z21, journeyManagerFactory, treeViewBuilder, solution)
     {
     }
 }

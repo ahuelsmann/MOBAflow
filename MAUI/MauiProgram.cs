@@ -44,6 +44,9 @@ public static class MauiProgram
         // Note: MAUI doesn't have IIoService yet - using simplified approach
         builder.Services.AddSingleton(sp => new Backend.Data.DataManager());
 
+        // ✅ Solution as Singleton (initialized empty, can be loaded later by user)
+        builder.Services.AddSingleton<Backend.Model.Solution>(sp => new Backend.Model.Solution());
+
         // ✅ All ViewModel Factories (MAUI-specific) - NEW NAMESPACES
         builder.Services.AddSingleton<SharedUI.Interface.IJourneyViewModelFactory, MAUI.Factory.MauiJourneyViewModelFactory>();
         builder.Services.AddSingleton<SharedUI.Interface.IStationViewModelFactory, MAUI.Factory.MauiStationViewModelFactory>();

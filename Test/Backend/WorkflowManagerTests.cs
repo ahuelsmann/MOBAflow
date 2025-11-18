@@ -298,13 +298,13 @@ public class WorkflowManagerTests
         var executionOrder = new List<string>();
         var lockObject = new object();
 
-        var action = new TestAction(() =>
+        var action = new TestAction(async () =>
         {
             lock (lockObject)
             {
                 executionOrder.Add($"Start-{DateTime.UtcNow.Ticks}");
             }
-            Thread.Sleep(100); // Simulate work
+            await Task.Delay(100); // Simulate work (use Task.Delay instead of Thread.Sleep)
             lock (lockObject)
             {
                 executionOrder.Add($"End-{DateTime.UtcNow.Ticks}");
@@ -338,11 +338,18 @@ public class WorkflowManagerTests
 /// </summary>
 file class TestAction : Moba.Backend.Model.Action.Base
 {
-    private readonly Action _callback;
+    private readonly Func<Task> _callback;
 
-    public TestAction(Action callback)
+    public TestAction(Func<Task> callback)
     {
         _callback = callback;
+        Name = "TestAction";
+    }
+
+    // Support synchronous callbacks too
+    public TestAction(Action callback)
+    {
+        _callback = () => { callback(); return Task.CompletedTask; };
         Name = "TestAction";
     }
 
@@ -350,7 +357,6 @@ file class TestAction : Moba.Backend.Model.Action.Base
 
     public override Task ExecuteAsync(Moba.Backend.Model.Action.ActionExecutionContext context)
     {
-        _callback();
-        return Task.CompletedTask;
+        return _callback();
     }
 }

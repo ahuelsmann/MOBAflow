@@ -43,7 +43,7 @@ public class WindowsSoundPlayer : ISoundPlayer
         {
             Console.WriteLine($"❌ Failed to play sound file: {waveFile} - Error: {ex.Message}");
             _logger.LogError(ex, "Failed to play sound file: {WaveFile}", waveFile);
-            throw;
+            throw new InvalidOperationException($"Failed to play sound file: {waveFile}", ex);
         }
     }
 }

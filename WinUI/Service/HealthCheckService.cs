@@ -147,10 +147,21 @@ public class HealthCheckService : IDisposable
 
     public void Dispose()
     {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
         if (_disposed) return;
 
-        StopPeriodicChecks();
-        _healthCheckTimer?.Dispose();
+        if (disposing)
+        {
+            // Dispose managed resources
+            StopPeriodicChecks();
+            _healthCheckTimer?.Dispose();
+        }
+
         _disposed = true;
     }
 }

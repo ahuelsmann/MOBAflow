@@ -219,8 +219,8 @@ public class PlatformTest
     public void Platform_Ctor()
     {
         var fakeUdp = new FakeUdpClientWrapper();
-        var z21 = new Moba.Backend.Z21(fakeUdp, null);
-        Assert.That(z21, Is.Not.Null);
+        _ = new Moba.Backend.Z21(fakeUdp, null);
+        Assert.Pass("Z21 constructed successfully");
     }
 
     [Test]

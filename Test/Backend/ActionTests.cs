@@ -1,3 +1,5 @@
+#pragma warning disable CA1416 // Platform-specific API - tests may use Windows-only sound APIs
+
 using Moq;
 using Moba.Backend.Model;
 using Moba.Backend.Model.Action;

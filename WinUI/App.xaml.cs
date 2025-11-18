@@ -44,7 +44,7 @@ public partial class App
 
         // Initialize CounterViewModel (subscribes to Z21 feedback)
         // This must be done after ServiceProvider is built so it can subscribe to Z21 events
-        var counterViewModel = _serviceProvider.GetRequiredService<SharedUI.ViewModel.CounterViewModel>();
+        _ = _serviceProvider.GetRequiredService<SharedUI.ViewModel.CounterViewModel>();
         System.Diagnostics.Debug.WriteLine("✅ CounterViewModel initialized and listening for Z21 feedback");
 
         // ✅ Load DataManager (master data: Cities, etc.)
@@ -92,7 +92,7 @@ public partial class App
         }
     }
 
-    private IConfiguration BuildConfiguration()
+    private static IConfiguration BuildConfiguration()
     {
         // Get the directory where the executable is located
         var basePath = AppContext.BaseDirectory;
@@ -132,6 +132,9 @@ public partial class App
             var (dataManager, _, _) = ioService.LoadDataManagerAsync().GetAwaiter().GetResult();
             return dataManager ?? new Backend.Data.DataManager();
         });
+
+        // ✅ Solution as Singleton (initialized empty, can be loaded later by user)
+        services.AddSingleton<Backend.Model.Solution>(sp => new Backend.Model.Solution());
 
         // Dispatcher + Notification + factories via DI
         services.AddSingleton<IUiDispatcher, UiDispatcher>();

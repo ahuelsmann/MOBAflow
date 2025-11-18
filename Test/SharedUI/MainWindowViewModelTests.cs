@@ -10,14 +10,15 @@ public class MainWindowViewModelTests : ViewModelTestBase
     public void CanAddProject_IncrementsProjects()
     {
         // Arrange - all mocks from base class
+        var solution = new Solution(); // Create empty solution for DI injection
         var vm = new MainWindowViewModel(
             IoServiceMock.Object, 
             Z21Mock.Object, 
             JourneyManagerFactoryMock.Object, 
-            TreeViewBuilder);
+            TreeViewBuilder,
+            solution);
 
         // Act
-        vm.Solution = new Solution();
         vm.AddProjectCommand.Execute(null);
 
         // Assert

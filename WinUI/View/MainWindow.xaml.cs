@@ -32,7 +32,7 @@ public sealed partial class MainWindow
             _healthCheckService.StartPeriodicChecks();
             
             // Initial status display
-            UpdateHealthStatus(_healthCheckService.SpeechServiceStatus, _healthCheckService.IsSpeechServiceHealthy);
+            UpdateHealthStatus(_healthCheckService.SpeechServiceStatus);
         }
 
         // Navigate to Overview page on startup
@@ -100,31 +100,30 @@ public sealed partial class MainWindow
         // Called after drag & drop reorder is complete
         // Sync ViewModel with TreeView order and trigger save
         
-        if (args.Items.Count > 0 && args.Items[0] is SharedUI.ViewModel.TreeNodeViewModel draggedNode)
+        if (args.Items.Count > 0 && 
+            args.Items[0] is SharedUI.ViewModel.TreeNodeViewModel draggedNode &&
+            draggedNode.DataContext is SharedUI.ViewModel.StationViewModel)
         {
             // If a Station was dragged, find its parent Journey
-            if (draggedNode.DataContext is SharedUI.ViewModel.StationViewModel)
+            var journeyVM = ViewModel.FindParentJourneyViewModel(draggedNode);
+            if (journeyVM != null)
             {
-                var journeyVM = ViewModel.FindParentJourneyViewModel(draggedNode);
-                if (journeyVM != null)
+                // Find the parent Journey node in TreeView
+                var journeyNode = FindTreeNodeForViewModel(ViewModel.TreeNodes, journeyVM);
+                if (journeyNode != null)
                 {
-                    // Find the parent Journey node in TreeView
-                    var journeyNode = FindTreeNodeForViewModel(ViewModel.TreeNodes, journeyVM);
-                    if (journeyNode != null)
+                    // Sync ViewModel.Stations with TreeView order
+                    journeyVM.Stations.Clear();
+                    foreach (var child in journeyNode.Children)
                     {
-                        // Sync ViewModel.Stations with TreeView order
-                        journeyVM.Stations.Clear();
-                        foreach (var child in journeyNode.Children)
+                        if (child.DataContext is SharedUI.ViewModel.StationViewModel stationVM)
                         {
-                            if (child.DataContext is SharedUI.ViewModel.StationViewModel stationVM)
-                            {
-                                journeyVM.Stations.Add(stationVM);
-                            }
+                            journeyVM.Stations.Add(stationVM);
                         }
-
-                        // Trigger reorder logic (renumber + save)
-                        journeyVM.StationsReorderedCommand.Execute(null);
                     }
+
+                    // Trigger reorder logic (renumber + save)
+                    journeyVM.StationsReorderedCommand.Execute(null);
                 }
             }
         }
@@ -182,11 +181,11 @@ public sealed partial class MainWindow
         // Update UI on dispatcher thread
         DispatcherQueue.TryEnqueue(() =>
         {
-            UpdateHealthStatus(e.StatusMessage, e.IsHealthy);
+            UpdateHealthStatus(e.StatusMessage);
         });
     }
 
-    private void UpdateHealthStatus(string statusMessage, bool isHealthy)
+    private void UpdateHealthStatus(string statusMessage)
     {
         // Display only "Azure Speech" - status is shown via icon only
         SpeechHealthText.Text = "Azure Speech";
@@ -295,12 +294,11 @@ public sealed partial class MainWindow
                     System.Diagnostics.Debug.WriteLine($"❌ Cannot navigate: Solution={ViewModel.Solution != null}, Projects={ViewModel.Solution?.Projects.Count ?? 0}");
                     
                     // Show InfoBar or ContentDialog to inform user
-                    ShowNoSolutionDialog();
+                    _ = ShowNoSolutionDialogAsync();
                 }
                 break;
 
             case "explorer":
-            default:
                 // Show legacy content (TreeView + PropertyGrid)
                 ContentFrame.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
                 LegacyContent.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
@@ -308,7 +306,7 @@ public sealed partial class MainWindow
         }
     }
 
-    private async void ShowNoSolutionDialog()
+    private async Task ShowNoSolutionDialogAsync()
     {
         var dialog = new ContentDialog
         {
