@@ -2,8 +2,9 @@ namespace Moba.WinUI.View;
 
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using Moba.SharedUI.ViewModel.WinUI;
+using Moba.SharedUI.ViewModel;
 using Moba.WinUI.Service;
+using MainWindowViewModel = Moba.SharedUI.ViewModel.WinUI.MainWindowViewModel;
 
 public sealed partial class MainWindow
 {
@@ -17,8 +18,8 @@ public sealed partial class MainWindow
 
         InitializeComponent();
 
-        // Set first nav item as selected
-        MainNavigation.SelectedItem = MainNavigation.MenuItems[1]; // Solution Explorer
+        // Set first nav item as selected (Overview)
+        MainNavigation.SelectedItem = MainNavigation.MenuItems[0]; // Overview
 
         ViewModel.ExitApplicationRequested += OnExitApplicationRequested;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
@@ -32,6 +33,33 @@ public sealed partial class MainWindow
             
             // Initial status display
             UpdateHealthStatus(_healthCheckService.SpeechServiceStatus, _healthCheckService.IsSpeechServiceHealthy);
+        }
+
+        // Navigate to Overview page on startup
+        NavigateToOverview();
+    }
+
+    /// <summary>
+    /// Navigate to Overview page (Lap Counter Dashboard).
+    /// </summary>
+    private void NavigateToOverview()
+    {
+        try
+        {
+            var counterViewModel = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<CounterViewModel>(
+                ((App)Microsoft.UI.Xaml.Application.Current).Services);
+            
+            var overviewPage = new OverviewPage(counterViewModel);
+            ContentFrame.Content = overviewPage;
+            ContentFrame.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+            LegacyContent.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ Failed to navigate to Overview: {ex.Message}");
+            // Fallback: Show legacy content
+            ContentFrame.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+            LegacyContent.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
         }
     }
 
@@ -242,6 +270,11 @@ public sealed partial class MainWindow
 
         switch (tag)
         {
+            case "overview":
+                // Navigate to OverviewPage (Lap Counter Dashboard)
+                NavigateToOverview();
+                break;
+
             case "configuration":
                 // Navigate to ProjectConfigurationPage
                 if (ViewModel.Solution != null && ViewModel.Solution.Projects.Count > 0)
@@ -266,7 +299,6 @@ public sealed partial class MainWindow
                 }
                 break;
 
-            case "overview":
             case "explorer":
             default:
                 // Show legacy content (TreeView + PropertyGrid)

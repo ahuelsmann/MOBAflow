@@ -18,6 +18,11 @@ public partial class App
     private ServiceProvider? _serviceProvider;
     private IConfiguration? _configuration;
 
+    /// <summary>
+    /// Gets the service provider for DI resolution (e.g., in MainWindow for page navigation).
+    /// </summary>
+    public IServiceProvider Services => _serviceProvider!;
+
     public App()
     {
         InitializeComponent();
