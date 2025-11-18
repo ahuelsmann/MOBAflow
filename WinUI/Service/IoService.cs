@@ -43,6 +43,27 @@ public class IoService : IIoService
         return (sol, result.Path, null);
     }
 
+    /// <summary>
+    /// Loads a solution from a specific path without showing a file picker.
+    /// Used for auto-loading or programmatic loading.
+    /// </summary>
+    public async Task<(Solution? solution, string? path, string? error)> LoadFromPathAsync(string filePath)
+    {
+        try
+        {
+            if (!File.Exists(filePath))
+                return (null, null, $"File not found: {filePath}");
+
+            var sol = new Solution();
+            sol = await sol.LoadAsync(filePath);
+            return (sol, filePath, null);
+        }
+        catch (Exception ex)
+        {
+            return (null, null, $"Error loading solution: {ex.Message}");
+        }
+    }
+
     public async Task<(bool success, string? path, string? error)> SaveAsync(Solution solution, string? currentPath)
     {
         if (_windowId == null)

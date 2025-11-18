@@ -17,6 +17,9 @@ public sealed partial class MainWindow
 
         InitializeComponent();
 
+        // Set first nav item as selected
+        MainNavigation.SelectedItem = MainNavigation.MenuItems[1]; // Solution Explorer
+
         ViewModel.ExitApplicationRequested += OnExitApplicationRequested;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
         Closed += MainWindow_Closed;
@@ -226,5 +229,63 @@ public sealed partial class MainWindow
         }
 
         e.Handled = handled;
+    }
+
+    private void NavigationView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
+    {
+        if (args.InvokedItemContainer?.Tag is not string tag) return;
+
+        // Debug: Log all navigation attempts
+        System.Diagnostics.Debug.WriteLine($"NavigationView_ItemInvoked called with tag: {tag}");
+        System.Diagnostics.Debug.WriteLine($"ViewModel.Solution is null: {ViewModel.Solution == null}");
+        System.Diagnostics.Debug.WriteLine($"ViewModel.Solution.Projects.Count: {ViewModel.Solution?.Projects.Count ?? -1}");
+
+        switch (tag)
+        {
+            case "configuration":
+                // Navigate to ProjectConfigurationPage
+                if (ViewModel.Solution != null && ViewModel.Solution.Projects.Count > 0)
+                {
+                    var project = ViewModel.Solution.Projects[0];
+                    var configViewModel = new SharedUI.ViewModel.ProjectConfigurationPageViewModel(project);
+                    
+                    // Debug output
+                    System.Diagnostics.Debug.WriteLine($"✅ Navigating to ProjectConfigurationPage with {project.Journeys.Count} journeys, {project.Workflows.Count} workflows, {project.Trains.Count} trains");
+                    
+                    ContentFrame.Navigate(typeof(ProjectConfigurationPage), configViewModel);
+                    ContentFrame.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+                    LegacyContent.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+                }
+                else
+                {
+                    // Debug: No solution loaded
+                    System.Diagnostics.Debug.WriteLine($"❌ Cannot navigate: Solution={ViewModel.Solution != null}, Projects={ViewModel.Solution?.Projects.Count ?? 0}");
+                    
+                    // Show InfoBar or ContentDialog to inform user
+                    ShowNoSolutionDialog();
+                }
+                break;
+
+            case "overview":
+            case "explorer":
+            default:
+                // Show legacy content (TreeView + PropertyGrid)
+                ContentFrame.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+                LegacyContent.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+                break;
+        }
+    }
+
+    private async void ShowNoSolutionDialog()
+    {
+        var dialog = new ContentDialog
+        {
+            Title = "No Solution Loaded",
+            Content = "Please load a solution first before accessing Project Configuration.",
+            CloseButtonText = "OK",
+            XamlRoot = Content.XamlRoot
+        };
+        
+        await dialog.ShowAsync();
     }
 }

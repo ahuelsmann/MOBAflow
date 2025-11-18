@@ -47,6 +47,12 @@ public partial class TrainViewModel : ObservableObject
         set => SetProperty(Model.Name, value, Model, (m, v) => m.Name = v);
     }
 
+    public string Description
+    {
+        get => Model.Description ?? string.Empty;
+        set => SetProperty(Model.Description, value, Model, (m, v) => m.Description = v);
+    }
+
     public TrainType TrainType
     {
         get => Model.TrainType;

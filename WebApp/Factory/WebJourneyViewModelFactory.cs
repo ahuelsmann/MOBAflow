@@ -2,7 +2,7 @@ namespace Moba.WebApp.Factory;
 
 using Moba.Backend.Model;
 using Moba.SharedUI.Service;
-using Moba.SharedUI.Service.Interface;
+using Moba.SharedUI.Interface;
 
 /// <summary>
 /// Blazor-specific factory for creating JourneyViewModel instances

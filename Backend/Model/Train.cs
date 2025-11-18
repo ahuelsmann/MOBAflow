@@ -10,6 +10,7 @@ public class Train
     public Train()
     {
         Name = "New Train";
+        Description = string.Empty;
         Wagons = [];
         Locomotives = [];
         TrainType = TrainType.None;
@@ -18,6 +19,7 @@ public class Train
 
     public bool IsDoubleTraction { get; set; }
     public string Name { get; set; }
+    public string Description { get; set; }
     public TrainType TrainType { get; set; }
     public ServiceType ServiceType { get; set; }
     public List<Locomotive> Locomotives { get; set; }

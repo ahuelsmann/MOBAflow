@@ -210,15 +210,25 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private async Task LoadSolutionAsync()
     {
+        System.Diagnostics.Debug.WriteLine("📂 LoadSolutionAsync START");
         (Solution? _solution, string? path, string? error) = await _ioService.LoadAsync();
+        
+        System.Diagnostics.Debug.WriteLine($"LoadAsync returned: solution={_solution != null}, path={path}, error={error}");
+        
         if (!string.IsNullOrEmpty(error))
         {
             throw new InvalidOperationException($"Failed to load solution with error {error}");
         }
         if (_solution != null)
         {
+            System.Diagnostics.Debug.WriteLine($"✅ Setting Solution with {_solution.Projects.Count} projects");
             Solution = _solution;
             CurrentSolutionPath = path;
+            System.Diagnostics.Debug.WriteLine($"✅ Solution set. HasSolution={HasSolution}, Projects={Solution?.Projects.Count}");
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine("❌ _solution is null - user cancelled or error");
         }
     }
 

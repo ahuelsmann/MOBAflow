@@ -84,7 +84,9 @@
 
         <NavigationView
             Grid.Row="0"
+            x:Name="MainNavigation"
             IsSettingsVisible="False"
+            ItemInvoked="NavigationView_ItemInvoked"
             PaneDisplayMode="Left">
             <NavigationView.MenuItems>
                 <NavigationViewItem
@@ -95,9 +97,22 @@
                     Content="Solution Explorer"
                     Icon="Folder"
                     Tag="explorer" />
+                <NavigationViewItem
+                    Content="Project Configuration"
+                    Tag="configuration">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE8F9;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
             </NavigationView.MenuItems>
 
+            <!--  Content area with Frame and Legacy content  -->
             <Grid>
+                <!--  Frame for page navigation  -->
+                <Frame x:Name="ContentFrame" Visibility="Collapsed" />
+
+                <!--  Legacy content (Overview/Explorer)  -->
+                <Grid x:Name="LegacyContent" Visibility="Visible">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
@@ -323,6 +338,7 @@
                             ToolTipService.ToolTip="Select a city and a journey to add the station" />
                     </Grid>
                 </Grid>
+            </Grid>
             </Grid>
         </NavigationView>
 

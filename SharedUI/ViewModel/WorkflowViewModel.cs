@@ -42,6 +42,12 @@ public partial class WorkflowViewModel : ObservableObject
         set => SetProperty(Model.Name, value, Model, (m, v) => m.Name = v);
     }
 
+    public string Description
+    {
+        get => Model.Description ?? string.Empty;
+        set => SetProperty(Model.Description, value, Model, (m, v) => m.Description = v);
+    }
+
     public uint InPort
     {
         get => Model.InPort;

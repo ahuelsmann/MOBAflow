@@ -89,7 +89,7 @@ public class ActionTests
         var audio = new Audio("test.wav");
 
         // Assert
-        Assert.That(audio.Type, Is.EqualTo(Model.Enum.ActionType.Sound));
+        Assert.That(audio.Type, Is.EqualTo(Moba.Backend.Model.Enum.ActionType.Sound));
     }
 
     #endregion
@@ -100,12 +100,12 @@ public class ActionTests
     public async Task Command_ExecutesSuccessfully_WithValidBytes()
     {
         // Arrange
-        var z21Mock = new Mock<Backend.Interface.IZ21>();
+        var z21Mock = new Mock<Moba.Backend.Interface.IZ21>();
         var commandBytes = new byte[] { 0x01, 0x02, 0x03 };
         var command = new Command(commandBytes) { Name = "Test Command" };
         var context = new ActionExecutionContext
         {
-            Z21 = z21Mock.Object as Backend.Z21
+            Z21 = z21Mock.Object as Moba.Backend.Z21
         };
 
         // Act
@@ -119,11 +119,11 @@ public class ActionTests
     public async Task Command_DoesNotExecute_WhenBytesAreNull()
     {
         // Arrange
-        var z21Mock = new Mock<Backend.Interface.IZ21>();
+        var z21Mock = new Mock<Moba.Backend.Interface.IZ21>();
         var command = new Command(null!) { Name = "Null Command" };
         var context = new ActionExecutionContext
         {
-            Z21 = z21Mock.Object as Backend.Z21
+            Z21 = z21Mock.Object as Moba.Backend.Z21
         };
 
         // Act
@@ -137,11 +137,11 @@ public class ActionTests
     public async Task Command_DoesNotExecute_WhenBytesAreEmpty()
     {
         // Arrange
-        var z21Mock = new Mock<Backend.Interface.IZ21>();
+        var z21Mock = new Mock<Moba.Backend.Interface.IZ21>();
         var command = new Command(Array.Empty<byte>()) { Name = "Empty Command" };
         var context = new ActionExecutionContext
         {
-            Z21 = z21Mock.Object as Backend.Z21
+            Z21 = z21Mock.Object as Moba.Backend.Z21
         };
 
         // Act
@@ -172,7 +172,7 @@ public class ActionTests
         var command = new Command(new byte[] { 0x01 });
 
         // Assert
-        Assert.That(command.Type, Is.EqualTo(Model.Enum.ActionType.Command));
+        Assert.That(command.Type, Is.EqualTo(Moba.Backend.Model.Enum.ActionType.Command));
     }
 
     #endregion
@@ -356,7 +356,7 @@ public class ActionTests
         var announcement = new Announcement("Test");
 
         // Assert
-        Assert.That(announcement.Type, Is.EqualTo(Model.Enum.ActionType.Announcement));
+        Assert.That(announcement.Type, Is.EqualTo(Moba.Backend.Model.Enum.ActionType.Announcement));
     }
 
     #endregion

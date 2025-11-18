@@ -166,7 +166,7 @@ public partial class App
         });
         
         // ViewModels - CounterViewModel now requires IUiDispatcher and optional INotificationService
-        services.AddTransient<SharedUI.ViewModel.WinUI.MainWindowViewModel>();
+        services.AddSingleton<SharedUI.ViewModel.WinUI.MainWindowViewModel>();
         services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
         
         // Views

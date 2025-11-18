@@ -92,6 +92,12 @@ public partial class JourneyViewModel : ObservableObject
         set => SetProperty(Model.Name, value, Model, (m, v) => m.Name = v);
     }
 
+    public string Description
+    {
+        get => Model.Description ?? string.Empty;
+        set => SetProperty(Model.Description, value, Model, (m, v) => m.Description = v);
+    }
+
     [Display(Name = "Text-to-speech template")]
     public string? Text
     {
@@ -106,6 +112,16 @@ public partial class JourneyViewModel : ObservableObject
     }
 
     public ObservableCollection<StationViewModel> Stations { get; }
+
+    // Enum values for ComboBox binding
+    public IEnumerable<BehaviorOnLastStop> BehaviorOnLastStopValues =>
+        Enum.GetValues<BehaviorOnLastStop>();
+
+    public BehaviorOnLastStop BehaviorOnLastStop
+    {
+        get => Model.OnLastStop;
+        set => SetProperty(Model.OnLastStop, value, Model, (m, v) => m.OnLastStop = v);
+    }
 
     public uint CurrentCounter
     {

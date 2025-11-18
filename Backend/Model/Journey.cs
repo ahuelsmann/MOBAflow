@@ -13,6 +13,7 @@ public class Journey
     public Journey()
     {
         Name = "New Journey";
+        Description = string.Empty;
         Text = string.Empty;
         NextJourney = string.Empty;
         OnLastStop = BehaviorOnLastStop.None;
@@ -20,6 +21,8 @@ public class Journey
     }
 
     public string Name { get; set; }
+
+    public string Description { get; set; }
 
     public string? Text { get; set; }
 
