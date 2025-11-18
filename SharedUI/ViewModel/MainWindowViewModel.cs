@@ -706,4 +706,38 @@ public partial class MainWindowViewModel : ObservableObject
 
         return null;
     }
+
+    /// <summary>
+    /// Finds the parent JourneyViewModel for a given TreeNode (e.g., for a StationViewModel).
+    /// Used by UI for context menu operations and drag & drop.
+    /// </summary>
+    /// <param name="node">The tree node to search from</param>
+    /// <returns>The parent JourneyViewModel if found, otherwise null</returns>
+    public JourneyViewModel? FindParentJourneyViewModel(TreeNodeViewModel? node)
+    {
+        if (node == null) return null;
+
+        // Search in entire tree for parent journey
+        return FindJourneyViewModelRecursive(TreeNodes, node);
+    }
+
+    private JourneyViewModel? FindJourneyViewModelRecursive(
+        ObservableCollection<TreeNodeViewModel> nodes,
+        TreeNodeViewModel targetNode)
+    {
+        foreach (var node in nodes)
+        {
+            // Check if this node's children contain the target
+            if (node.Children.Contains(targetNode) && node.DataContext is JourneyViewModel journeyVM)
+            {
+                return journeyVM;
+            }
+
+            // Recurse into children
+            var result = FindJourneyViewModelRecursive(node.Children, targetNode);
+            if (result != null) return result;
+        }
+
+        return null;
+    }
 }

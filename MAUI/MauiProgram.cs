@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 using Moba.Backend.Network;
 using Moba.SharedUI.Service;
-using Moba.SharedUI.Service.Interface; // ✅ Factory interfaces
+using Moba.SharedUI.Interface; // ✅ Factory interfaces
 
 using UraniumUI;
 
@@ -45,12 +45,12 @@ public static class MauiProgram
         builder.Services.AddSingleton(sp => new Backend.Data.DataManager());
 
         // ✅ All ViewModel Factories (MAUI-specific) - NEW NAMESPACES
-        builder.Services.AddSingleton<SharedUI.Service.Interface.IJourneyViewModelFactory, MAUI.Factory.MauiJourneyViewModelFactory>();
-        builder.Services.AddSingleton<SharedUI.Service.Interface.IStationViewModelFactory, MAUI.Factory.MauiStationViewModelFactory>();
-        builder.Services.AddSingleton<SharedUI.Service.Interface.IWorkflowViewModelFactory, MAUI.Factory.MauiWorkflowViewModelFactory>();
-        builder.Services.AddSingleton<SharedUI.Service.Interface.ILocomotiveViewModelFactory, MAUI.Factory.MauiLocomotiveViewModelFactory>();
-        builder.Services.AddSingleton<SharedUI.Service.Interface.ITrainViewModelFactory, MAUI.Factory.MauiTrainViewModelFactory>();
-        builder.Services.AddSingleton<SharedUI.Service.Interface.IWagonViewModelFactory, MAUI.Factory.MauiWagonViewModelFactory>();
+        builder.Services.AddSingleton<SharedUI.Interface.IJourneyViewModelFactory, MAUI.Factory.MauiJourneyViewModelFactory>();
+        builder.Services.AddSingleton<SharedUI.Interface.IStationViewModelFactory, MAUI.Factory.MauiStationViewModelFactory>();
+        builder.Services.AddSingleton<SharedUI.Interface.IWorkflowViewModelFactory, MAUI.Factory.MauiWorkflowViewModelFactory>();
+        builder.Services.AddSingleton<SharedUI.Interface.ILocomotiveViewModelFactory, MAUI.Factory.MauiLocomotiveViewModelFactory>();
+        builder.Services.AddSingleton<SharedUI.Interface.ITrainViewModelFactory, MAUI.Factory.MauiTrainViewModelFactory>();
+        builder.Services.AddSingleton<SharedUI.Interface.IWagonViewModelFactory, MAUI.Factory.MauiWagonViewModelFactory>();
 
         // TreeViewBuilder service (now with all factories)
         builder.Services.AddSingleton<SharedUI.Service.TreeViewBuilder>();

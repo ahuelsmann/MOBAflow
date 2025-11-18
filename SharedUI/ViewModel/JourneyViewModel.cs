@@ -200,4 +200,44 @@ public partial class JourneyViewModel : ObservableObject
         // Notify that model changed
         ModelChanged?.Invoke(this, EventArgs.Empty);
     }
+
+    /// <summary>
+    /// Moves a station up in the journey (decreases its position by 1).
+    /// </summary>
+    /// <param name="station">The station to move up</param>
+    [RelayCommand]
+    private void MoveStationUp(StationViewModel station)
+    {
+        if (station == null) return;
+
+        var currentIndex = Stations.IndexOf(station);
+        if (currentIndex > 0)
+        {
+            // Move in ViewModel collection
+            Stations.Move(currentIndex, currentIndex - 1);
+
+            // Trigger reorder logic (updates Model + renumbers)
+            StationsReorderedCommand.Execute(null);
+        }
+    }
+
+    /// <summary>
+    /// Moves a station down in the journey (increases its position by 1).
+    /// </summary>
+    /// <param name="station">The station to move down</param>
+    [RelayCommand]
+    private void MoveStationDown(StationViewModel station)
+    {
+        if (station == null) return;
+
+        var currentIndex = Stations.IndexOf(station);
+        if (currentIndex < Stations.Count - 1)
+        {
+            // Move in ViewModel collection
+            Stations.Move(currentIndex, currentIndex + 1);
+
+            // Trigger reorder logic (updates Model + renumbers)
+            StationsReorderedCommand.Execute(null);
+        }
+    }
 }

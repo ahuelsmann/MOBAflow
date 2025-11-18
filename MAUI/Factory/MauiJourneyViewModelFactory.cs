@@ -1,8 +1,8 @@
-namespace Moba.MAUI.Factory;
+﻿namespace Moba.MAUI.Factory;
 
 using Moba.Backend.Model;
 using Moba.SharedUI.Service;
-using Moba.SharedUI.Service.Interface;
+using Moba.SharedUI.Interface;
 
 /// <summary>
 /// MAUI-specific factory for creating JourneyViewModel instances with UI dispatcher

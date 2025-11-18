@@ -35,6 +35,14 @@
     <AndroidResource Include="Platforms\Android\Resources\**\*.xml" />
   </ItemGroup>
   <ItemGroup>
+    <AndroidResource Remove="Service\Factory\**" />
+    <Compile Remove="Service\Factory\**" />
+    <EmbeddedResource Remove="Service\Factory\**" />
+    <MauiCss Remove="Service\Factory\**" />
+    <MauiXaml Remove="Service\Factory\**" />
+    <None Remove="Service\Factory\**" />
+  </ItemGroup>
+  <ItemGroup>
     <!-- MAUI Core -->
     <PackageReference Include="Microsoft.Maui.Controls" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
@@ -66,8 +74,5 @@
     <MauiXaml Update="Resources\Styles\LightTheme.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Service\Factory\" />
   </ItemGroup>
 </Project>

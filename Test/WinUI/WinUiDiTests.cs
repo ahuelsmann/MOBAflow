@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moba.Backend.Interface;
 using Moba.Backend.Network;
 using Moba.SharedUI.Service;
-using Moba.SharedUI.Service.Interface; // ✅ Factory interfaces
+using Moba.SharedUI.Interface; // ✅ Factory interfaces
 
 [TestFixture]
 public class ServiceRegistrationTests

@@ -25,7 +25,7 @@ public class DataManager
                 Formatting = Formatting.Indented,
             };
             string json = JsonConvert.SerializeObject(solution, settings);
-            await File.WriteAllTextAsync(path, json);
+            await File.WriteAllTextAsync(path, json).ConfigureAwait(false);
         }
     }
 
@@ -38,7 +38,7 @@ public class DataManager
     {
         if (!string.IsNullOrEmpty(path) && File.Exists(path))
         {
-            string json = await File.ReadAllTextAsync(path);
+            string json = await File.ReadAllTextAsync(path).ConfigureAwait(false);
             if (!string.IsNullOrEmpty(json))
             {
                 var temp = JsonConvert.DeserializeObject<DataManager>(json);

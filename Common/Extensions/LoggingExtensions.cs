@@ -25,10 +25,10 @@ public static class LoggingExtensions
     {
         // Console.WriteLine: visible in tests, CI/CD, containers
         Console.WriteLine(message);
-        
+
         // Debug.WriteLine: visible in Visual Studio Output Window
         System.Diagnostics.Debug.WriteLine(message);
-        
+
         // Structured logging via ILogger
         logger?.LogInformation("{Message}", message);
     }
@@ -46,10 +46,10 @@ public static class LoggingExtensions
         var errorMessage = $"❌ {message}: {exception.Message}";
         Console.WriteLine(errorMessage);
         System.Diagnostics.Debug.WriteLine(errorMessage);
-        
+
         // Log full exception details to Debug only (not to Console to avoid clutter)
         System.Diagnostics.Debug.WriteLine($"   Exception: {exception}");
-        
+
         // Structured logging with exception
         logger?.LogError(exception, "{Message}", message);
     }
@@ -66,7 +66,7 @@ public static class LoggingExtensions
         var warningMessage = $"⚠️ {message}";
         Console.WriteLine(warningMessage);
         System.Diagnostics.Debug.WriteLine(warningMessage);
-        
+
         // Structured logging
         logger?.LogWarning("{Message}", message);
     }

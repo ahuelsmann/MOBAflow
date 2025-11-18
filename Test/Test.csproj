@@ -2,6 +2,10 @@
   <PropertyGroup>
     <RootNamespace>Moba.Test</RootNamespace>
     <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Skip tests that trigger MAUI/Android SDK on machines without Android SDK -->
+    <DefineConstants Condition="'$(ANDROID_SDK_ROOT)' == ''">$(DefineConstants);SKIP_ANDROID_TESTS</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="TestFile\**" />

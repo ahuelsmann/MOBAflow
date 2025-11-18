@@ -18,6 +18,14 @@
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Service\Factory\**" />
+    <Content Remove="Service\Factory\**" />
+    <EmbeddedResource Remove="Service\Factory\**" />
+    <None Remove="Service\Factory\**" />
+    <Page Remove="Service\Factory\**" />
+    <PRIResource Remove="Service\Factory\**" />
+  </ItemGroup>
+  <ItemGroup>
     <None Remove="germany-stations.json" />
   </ItemGroup>
   <ItemGroup>
@@ -49,8 +57,5 @@
   <!-- Mark generated manifest as a build output so Fast Up-to-Date check does not warn -->
   <ItemGroup>
     <UpToDateCheckBuilt Include="$(IntermediateOutputPath)Manifests\app.manifest" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Service\Factory\" />
   </ItemGroup>
 </Project>

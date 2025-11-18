@@ -133,12 +133,12 @@ public partial class App
         services.AddSingleton<INotificationService, NotificationService>();
         
         // ✅ All ViewModel Factories (WinUI-specific) - NEW NAMESPACES
-        services.AddSingleton<SharedUI.Service.Interface.IJourneyViewModelFactory, WinUI.Factory.WinUIJourneyViewModelFactory>();
-        services.AddSingleton<SharedUI.Service.Interface.IStationViewModelFactory, WinUI.Factory.WinUIStationViewModelFactory>();
-        services.AddSingleton<SharedUI.Service.Interface.IWorkflowViewModelFactory, WinUI.Factory.WinUIWorkflowViewModelFactory>();
-        services.AddSingleton<SharedUI.Service.Interface.ILocomotiveViewModelFactory, WinUI.Factory.WinUILocomotiveViewModelFactory>();
-        services.AddSingleton<SharedUI.Service.Interface.ITrainViewModelFactory, WinUI.Factory.WinUITrainViewModelFactory>();
-        services.AddSingleton<SharedUI.Service.Interface.IWagonViewModelFactory, WinUI.Factory.WinUIWagonViewModelFactory>();
+        services.AddSingleton<SharedUI.Interface.IJourneyViewModelFactory, WinUI.Factory.WinUIJourneyViewModelFactory>();
+        services.AddSingleton<SharedUI.Interface.IStationViewModelFactory, WinUI.Factory.WinUIStationViewModelFactory>();
+        services.AddSingleton<SharedUI.Interface.IWorkflowViewModelFactory, WinUI.Factory.WinUIWorkflowViewModelFactory>();
+        services.AddSingleton<SharedUI.Interface.ILocomotiveViewModelFactory, WinUI.Factory.WinUILocomotiveViewModelFactory>();
+        services.AddSingleton<SharedUI.Interface.ITrainViewModelFactory, WinUI.Factory.WinUITrainViewModelFactory>();
+        services.AddSingleton<SharedUI.Interface.IWagonViewModelFactory, WinUI.Factory.WinUIWagonViewModelFactory>();
         
         // TreeViewBuilder service (now with all factories)
         services.AddSingleton<SharedUI.Service.TreeViewBuilder>();

@@ -1,3 +1,4 @@
+#if !SKIP_ANDROID_TESTS
 namespace Moba.Test.SharedUI;
 
 using Moba.Backend.Model;
@@ -29,3 +30,4 @@ public class MauiAdapterDispatchTests
         Assert.That(vm.CurrentCounter, Is.EqualTo(1u));
     }
 }
+#endif

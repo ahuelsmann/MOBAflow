@@ -5,7 +5,7 @@ using Backend.Model;
 using System.Collections.ObjectModel;
 
 using ViewModel;
-using Moba.SharedUI.Service.Interface; // ✅ Add Interface namespace
+using Moba.SharedUI.Interface; // ✅ Updated namespace
 
 /// <summary>
 /// Responsible for creating the TreeView structure from a Solution

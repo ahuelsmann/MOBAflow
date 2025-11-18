@@ -67,31 +67,55 @@ public sealed partial class MainWindow
     private void TreeView_DragItemsCompleted(TreeView sender, TreeViewDragItemsCompletedEventArgs args)
     {
         // Called after drag & drop reorder is complete
-        // Find which Journey was reordered and trigger save
+        // Sync ViewModel with TreeView order and trigger save
         
         if (args.Items.Count > 0 && args.Items[0] is SharedUI.ViewModel.TreeNodeViewModel draggedNode)
         {
             // If a Station was dragged, find its parent Journey
             if (draggedNode.DataContext is SharedUI.ViewModel.StationViewModel)
             {
-                var journeyNode = FindParentJourneyNode(draggedNode);
-                if (journeyNode?.DataContext is SharedUI.ViewModel.JourneyViewModel journeyVM)
+                var journeyVM = ViewModel.FindParentJourneyViewModel(draggedNode);
+                if (journeyVM != null)
                 {
-                    // Sync ViewModel.Stations with TreeView order
-                    journeyVM.Stations.Clear();
-                    foreach (var child in journeyNode.Children)
+                    // Find the parent Journey node in TreeView
+                    var journeyNode = FindTreeNodeForViewModel(ViewModel.TreeNodes, journeyVM);
+                    if (journeyNode != null)
                     {
-                        if (child.DataContext is SharedUI.ViewModel.StationViewModel stationVM)
+                        // Sync ViewModel.Stations with TreeView order
+                        journeyVM.Stations.Clear();
+                        foreach (var child in journeyNode.Children)
                         {
-                            journeyVM.Stations.Add(stationVM);
+                            if (child.DataContext is SharedUI.ViewModel.StationViewModel stationVM)
+                            {
+                                journeyVM.Stations.Add(stationVM);
+                            }
                         }
-                    }
 
-                    // Trigger reorder logic (renumber + save)
-                    journeyVM.StationsReorderedCommand.Execute(null);
+                        // Trigger reorder logic (renumber + save)
+                        journeyVM.StationsReorderedCommand.Execute(null);
+                    }
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Finds the TreeNode that contains the specified ViewModel in its DataContext.
+    /// </summary>
+    private SharedUI.ViewModel.TreeNodeViewModel? FindTreeNodeForViewModel(
+        System.Collections.ObjectModel.ObservableCollection<SharedUI.ViewModel.TreeNodeViewModel> nodes,
+        object viewModel)
+    {
+        foreach (var node in nodes)
+        {
+            if (node.DataContext == viewModel)
+                return node;
+
+            var result = FindTreeNodeForViewModel(node.Children, viewModel);
+            if (result != null) return result;
+        }
+
+        return null;
     }
 
     private void MoveStationUp_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
@@ -100,18 +124,11 @@ public sealed partial class MainWindow
             return;
 
         // Find parent JourneyViewModel
-        var journeyNode = FindParentJourneyNode(ViewModel.CurrentSelectedNode);
-        if (journeyNode?.DataContext is not SharedUI.ViewModel.JourneyViewModel journeyVM)
-            return;
-
-        var currentIndex = journeyVM.Stations.IndexOf(stationVM);
-        if (currentIndex > 0)
+        var journeyVM = ViewModel.FindParentJourneyViewModel(ViewModel.CurrentSelectedNode);
+        if (journeyVM != null)
         {
-            // Move in ViewModel
-            journeyVM.Stations.Move(currentIndex, currentIndex - 1);
-
-            // Trigger reorder logic
-            journeyVM.StationsReorderedCommand.Execute(null);
+            // Use ViewModel command
+            journeyVM.MoveStationUpCommand.Execute(stationVM);
         }
     }
 
@@ -121,47 +138,12 @@ public sealed partial class MainWindow
             return;
 
         // Find parent JourneyViewModel
-        var journeyNode = FindParentJourneyNode(ViewModel.CurrentSelectedNode);
-        if (journeyNode?.DataContext is not SharedUI.ViewModel.JourneyViewModel journeyVM)
-            return;
-
-        var currentIndex = journeyVM.Stations.IndexOf(stationVM);
-        if (currentIndex < journeyVM.Stations.Count - 1)
+        var journeyVM = ViewModel.FindParentJourneyViewModel(ViewModel.CurrentSelectedNode);
+        if (journeyVM != null)
         {
-            // Move in ViewModel
-            journeyVM.Stations.Move(currentIndex, currentIndex + 1);
-
-            // Trigger reorder logic
-            journeyVM.StationsReorderedCommand.Execute(null);
+            // Use ViewModel command
+            journeyVM.MoveStationDownCommand.Execute(stationVM);
         }
-    }
-
-    private SharedUI.ViewModel.TreeNodeViewModel? FindParentJourneyNode(SharedUI.ViewModel.TreeNodeViewModel? node)
-    {
-        if (node == null) return null;
-
-        // Search in entire tree for parent
-        return FindJourneyNodeRecursive(ViewModel.TreeNodes, node);
-    }
-
-    private SharedUI.ViewModel.TreeNodeViewModel? FindJourneyNodeRecursive(
-        System.Collections.ObjectModel.ObservableCollection<SharedUI.ViewModel.TreeNodeViewModel> nodes, 
-        SharedUI.ViewModel.TreeNodeViewModel targetNode)
-    {
-        foreach (var node in nodes)
-        {
-            // Check if this node's children contain the target
-            if (node.Children.Contains(targetNode) && node.DataContext is SharedUI.ViewModel.JourneyViewModel)
-            {
-                return node;
-            }
-
-            // Recurse into children
-            var result = FindJourneyNodeRecursive(node.Children, targetNode);
-            if (result != null) return result;
-        }
-
-        return null;
     }
 
     private void OnHealthStatusChanged(object? sender, HealthStatusChangedEventArgs e)

@@ -25,7 +25,7 @@ public class WorkflowManager : BaseFeedbackManager<Workflow>
     protected override async Task ProcessFeedbackAsync(FeedbackResult feedback)
     {
         // Wait for lock (blocking) - queues feedbacks sequentially
-        await _processingLock.WaitAsync();
+        await _processingLock.WaitAsync().ConfigureAwait(false);
 
         try
         {
@@ -42,7 +42,7 @@ public class WorkflowManager : BaseFeedbackManager<Workflow>
                     }
 
                     UpdateLastFeedbackTime(GetInPort(workflow));
-                    await HandleFeedbackAsync(workflow);
+                    await HandleFeedbackAsync(workflow).ConfigureAwait(false);
                 }
             }
         }
@@ -56,7 +56,7 @@ public class WorkflowManager : BaseFeedbackManager<Workflow>
     {
         Debug.WriteLine($"▶ Executing workflow '{workflow.Name}'");
 
-        await workflow.StartAsync(ExecutionContext);
+        await workflow.StartAsync(ExecutionContext).ConfigureAwait(false);
 
         Debug.WriteLine($"✅ Workflow '{workflow.Name}' completed");
     }

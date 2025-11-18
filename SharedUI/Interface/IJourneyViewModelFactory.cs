@@ -1,4 +1,4 @@
-namespace Moba.SharedUI.Service.Interface;
+namespace Moba.SharedUI.Interface;
 
 using Moba.Backend.Model;
 using Moba.SharedUI.ViewModel;

@@ -1,3 +1,4 @@
+#if !SKIP_ANDROID_TESTS
 namespace Moba.Test.SharedUI;
 
 using Moba.Backend.Model;
@@ -20,3 +21,4 @@ public class MauiJourneyViewModelTests
         Assert.Pass();
     }
 }
+#endif

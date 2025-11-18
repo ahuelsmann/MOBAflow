@@ -59,7 +59,7 @@ public class Workflow
         {
             Debug.WriteLine($"  🔧 Executing action: {action.Name} ({action.Type})");
 
-            await action.ExecuteAsync(context);
+            await action.ExecuteAsync(context).ConfigureAwait(false);
         }
 
         Debug.WriteLine($"✅ Workflow '{Name}' completed successfully");
