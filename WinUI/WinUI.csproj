@@ -50,4 +50,7 @@
   <ItemGroup>
     <UpToDateCheckBuilt Include="$(IntermediateOutputPath)Manifests\app.manifest" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Service\Factory\" />
+  </ItemGroup>
 </Project>

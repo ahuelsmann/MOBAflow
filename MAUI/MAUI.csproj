@@ -67,4 +67,7 @@
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Service\Factory\" />
+  </ItemGroup>
 </Project>

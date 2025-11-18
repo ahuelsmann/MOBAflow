@@ -42,12 +42,49 @@ public partial class App
         var counterViewModel = _serviceProvider.GetRequiredService<SharedUI.ViewModel.CounterViewModel>();
         System.Diagnostics.Debug.WriteLine("✅ CounterViewModel initialized and listening for Z21 feedback");
 
+        // ✅ Load DataManager (master data: Cities, etc.)
+        _ = LoadDataManagerAsync();
+
         _window = _serviceProvider.GetRequiredService<MainWindow>();
 
         var ioService = _serviceProvider.GetRequiredService<IIoService>() as IoService;
         ioService?.SetWindowId(_window.AppWindow.Id);
 
         _window.Activate();
+    }
+
+    /// <summary>
+    /// Loads master data (DataManager) from disk asynchronously.
+    /// DataManager is registered as singleton in DI container for access across the app.
+    /// </summary>
+    private async Task LoadDataManagerAsync()
+    {
+        try
+        {
+            var ioService = _serviceProvider!.GetRequiredService<IIoService>();
+            var (dataManager, path, error) = await ioService.LoadDataManagerAsync();
+
+            if (error != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"⚠️ DataManager konnte nicht geladen werden: {error}");
+                System.Diagnostics.Debug.WriteLine("ℹ️ Es wird ein leerer DataManager verwendet.");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"✅ DataManager erfolgreich geladen aus: {path ?? "Standard-Pfad"}");
+                
+                // Optional: Log statistics
+                if (dataManager != null)
+                {
+                    var cityCount = dataManager.Cities?.Count ?? 0;
+                    System.Diagnostics.Debug.WriteLine($"📊 DataManager enthält {cityCount} Städte");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ Fehler beim Laden des DataManagers: {ex.Message}");
+        }
     }
 
     private IConfiguration BuildConfiguration()
@@ -83,12 +120,27 @@ public partial class App
         services.AddSingleton<Backend.Interface.IZ21, Backend.Z21>();
         services.AddSingleton<Backend.Interface.IJourneyManagerFactory, Backend.Manager.JourneyManagerFactory>();
 
-        // Dispatcher + Notification + factory via DI
+        // ✅ DataManager as Singleton (master data loaded on startup)
+        services.AddSingleton(sp =>
+        {
+            var ioService = sp.GetRequiredService<IIoService>();
+            var (dataManager, _, _) = ioService.LoadDataManagerAsync().GetAwaiter().GetResult();
+            return dataManager ?? new Backend.Data.DataManager();
+        });
+
+        // Dispatcher + Notification + factories via DI
         services.AddSingleton<IUiDispatcher, UiDispatcher>();
         services.AddSingleton<INotificationService, NotificationService>();
-        services.AddSingleton<IJourneyViewModelFactory, WinUIJourneyViewModelFactory>();
         
-        // TreeViewBuilder service
+        // ✅ All ViewModel Factories (WinUI-specific) - NEW NAMESPACES
+        services.AddSingleton<SharedUI.Service.Interface.IJourneyViewModelFactory, WinUI.Factory.WinUIJourneyViewModelFactory>();
+        services.AddSingleton<SharedUI.Service.Interface.IStationViewModelFactory, WinUI.Factory.WinUIStationViewModelFactory>();
+        services.AddSingleton<SharedUI.Service.Interface.IWorkflowViewModelFactory, WinUI.Factory.WinUIWorkflowViewModelFactory>();
+        services.AddSingleton<SharedUI.Service.Interface.ILocomotiveViewModelFactory, WinUI.Factory.WinUILocomotiveViewModelFactory>();
+        services.AddSingleton<SharedUI.Service.Interface.ITrainViewModelFactory, WinUI.Factory.WinUITrainViewModelFactory>();
+        services.AddSingleton<SharedUI.Service.Interface.IWagonViewModelFactory, WinUI.Factory.WinUIWagonViewModelFactory>();
+        
+        // TreeViewBuilder service (now with all factories)
         services.AddSingleton<SharedUI.Service.TreeViewBuilder>();
 
         // Sound services

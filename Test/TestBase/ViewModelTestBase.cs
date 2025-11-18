@@ -2,6 +2,7 @@ using Moq;
 using Moba.Backend.Interface;
 using Moba.Backend.Model;
 using Moba.SharedUI.Service;
+using Moba.SharedUI.Service.Interface; // ✅ Factory interfaces
 using Moba.SharedUI.ViewModel;
 
 namespace Moba.Test.TestBase;
@@ -33,7 +34,32 @@ public abstract class ViewModelTestBase
     protected Mock<IJourneyViewModelFactory> JourneyViewModelFactoryMock { get; private set; } = null!;
 
     /// <summary>
-    /// TreeViewBuilder instance configured with mocked factory.
+    /// Mock for IStationViewModelFactory interface
+    /// </summary>
+    protected Mock<IStationViewModelFactory> StationViewModelFactoryMock { get; private set; } = null!;
+
+    /// <summary>
+    /// Mock for IWorkflowViewModelFactory interface
+    /// </summary>
+    protected Mock<IWorkflowViewModelFactory> WorkflowViewModelFactoryMock { get; private set; } = null!;
+
+    /// <summary>
+    /// Mock for ILocomotiveViewModelFactory interface
+    /// </summary>
+    protected Mock<ILocomotiveViewModelFactory> LocomotiveViewModelFactoryMock { get; private set; } = null!;
+
+    /// <summary>
+    /// Mock for ITrainViewModelFactory interface
+    /// </summary>
+    protected Mock<ITrainViewModelFactory> TrainViewModelFactoryMock { get; private set; } = null!;
+
+    /// <summary>
+    /// Mock for IWagonViewModelFactory interface
+    /// </summary>
+    protected Mock<IWagonViewModelFactory> WagonViewModelFactoryMock { get; private set; } = null!;
+
+    /// <summary>
+    /// TreeViewBuilder instance configured with mocked factories.
     /// Ready to use in tests that need tree structure building.
     /// </summary>
     protected TreeViewBuilder TreeViewBuilder { get; private set; } = null!;
@@ -48,15 +74,48 @@ public abstract class ViewModelTestBase
         Z21Mock = new Mock<IZ21>();
         JourneyManagerFactoryMock = new Mock<IJourneyManagerFactory>();
         IoServiceMock = new Mock<IIoService>();
-        JourneyViewModelFactoryMock = new Mock<IJourneyViewModelFactory>();
         
-        // Configure default return for IJourneyViewModelFactory
+        // Initialize all ViewModel factory mocks
+        JourneyViewModelFactoryMock = new Mock<IJourneyViewModelFactory>();
+        StationViewModelFactoryMock = new Mock<IStationViewModelFactory>();
+        WorkflowViewModelFactoryMock = new Mock<IWorkflowViewModelFactory>();
+        LocomotiveViewModelFactoryMock = new Mock<ILocomotiveViewModelFactory>();
+        TrainViewModelFactoryMock = new Mock<ITrainViewModelFactory>();
+        WagonViewModelFactoryMock = new Mock<IWagonViewModelFactory>();
+        
+        // Configure default returns for all ViewModel factories
         JourneyViewModelFactoryMock
             .Setup(f => f.Create(It.IsAny<Journey>()))
             .Returns((Journey model) => new JourneyViewModel(model));
+
+        StationViewModelFactoryMock
+            .Setup(f => f.Create(It.IsAny<Station>()))
+            .Returns((Station model) => new StationViewModel(model));
+
+        WorkflowViewModelFactoryMock
+            .Setup(f => f.Create(It.IsAny<Workflow>()))
+            .Returns((Workflow model) => new WorkflowViewModel(model));
+
+        LocomotiveViewModelFactoryMock
+            .Setup(f => f.Create(It.IsAny<Locomotive>()))
+            .Returns((Locomotive model) => new LocomotiveViewModel(model));
+
+        TrainViewModelFactoryMock
+            .Setup(f => f.Create(It.IsAny<Train>()))
+            .Returns((Train model) => new TrainViewModel(model));
+
+        WagonViewModelFactoryMock
+            .Setup(f => f.Create(It.IsAny<Wagon>()))
+            .Returns((Wagon model) => new WagonViewModel(model));
         
-        // TreeViewBuilder with mocked factory
-        TreeViewBuilder = new TreeViewBuilder(JourneyViewModelFactoryMock.Object);
+        // TreeViewBuilder with all mocked factories
+        TreeViewBuilder = new TreeViewBuilder(
+            JourneyViewModelFactoryMock.Object,
+            StationViewModelFactoryMock.Object,
+            WorkflowViewModelFactoryMock.Object,
+            LocomotiveViewModelFactoryMock.Object,
+            TrainViewModelFactoryMock.Object,
+            WagonViewModelFactoryMock.Object);
         
         // Configure default IoService behavior (returns empty solution)
         IoServiceMock
@@ -75,10 +134,15 @@ public abstract class ViewModelTestBase
     [TearDown]
     public virtual void BaseTearDown()
     {
-        // Reset mocks to clean state
+        // Reset all mocks to clean state
         Z21Mock?.Reset();
         JourneyManagerFactoryMock?.Reset();
         IoServiceMock?.Reset();
         JourneyViewModelFactoryMock?.Reset();
+        StationViewModelFactoryMock?.Reset();
+        WorkflowViewModelFactoryMock?.Reset();
+        LocomotiveViewModelFactoryMock?.Reset();
+        TrainViewModelFactoryMock?.Reset();
+        WagonViewModelFactoryMock?.Reset();
     }
 }

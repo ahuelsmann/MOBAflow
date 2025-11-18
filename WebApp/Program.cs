@@ -1,8 +1,10 @@
 using Moba.WebApp.Components;
 using Moba.SharedUI.ViewModel;
 using Moba.SharedUI.Service;
+using Moba.SharedUI.Service.Interface; // ✅ Factory interfaces
 using Moba.Backend.Network;
 using Moba.WebApp.Service;
+using Moba.WebApp.Factory; // ✅ WebApp factories
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,10 +22,18 @@ builder.Services.AddSingleton<IUdpClientWrapper, UdpWrapper>();
 builder.Services.AddSingleton<Moba.Backend.Interface.IZ21, Moba.Backend.Z21>();
 builder.Services.AddSingleton<Moba.Backend.Interface.IJourneyManagerFactory, Moba.Backend.Manager.JourneyManagerFactory>();
 
-// Factories
-builder.Services.AddSingleton<IJourneyViewModelFactory, Moba.WebApp.Service.WebJourneyViewModelFactory>();
+// ✅ DataManager as Singleton (master data - simplified for Blazor Server)
+builder.Services.AddSingleton(sp => new Moba.Backend.Data.DataManager());
 
-// TreeViewBuilder service
+// ✅ All ViewModel Factories (Blazor-specific) - NEW NAMESPACES
+builder.Services.AddSingleton<IJourneyViewModelFactory, WebJourneyViewModelFactory>();
+builder.Services.AddSingleton<IStationViewModelFactory, WebStationViewModelFactory>();
+builder.Services.AddSingleton<IWorkflowViewModelFactory, WebWorkflowViewModelFactory>();
+builder.Services.AddSingleton<ILocomotiveViewModelFactory, WebLocomotiveViewModelFactory>();
+builder.Services.AddSingleton<ITrainViewModelFactory, WebTrainViewModelFactory>();
+builder.Services.AddSingleton<IWagonViewModelFactory, WebWagonViewModelFactory>();
+
+// TreeViewBuilder service (now with all factories)
 builder.Services.AddSingleton<TreeViewBuilder>();
 
 var app = builder.Build();

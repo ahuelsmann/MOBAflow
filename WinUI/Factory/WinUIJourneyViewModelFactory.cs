@@ -1,8 +1,12 @@
-namespace Moba.WinUI.Service;
+namespace Moba.WinUI.Factory;
 
 using Moba.Backend.Model;
 using Moba.SharedUI.Service;
+using Moba.SharedUI.Service.Interface;
 
+/// <summary>
+/// WinUI-specific factory for creating JourneyViewModel instances with UI dispatcher
+/// </summary>
 public class WinUIJourneyViewModelFactory : IJourneyViewModelFactory
 {
     private readonly IUiDispatcher _dispatcher;

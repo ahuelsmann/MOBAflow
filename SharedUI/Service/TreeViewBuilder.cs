@@ -5,6 +5,7 @@ using Backend.Model;
 using System.Collections.ObjectModel;
 
 using ViewModel;
+using Moba.SharedUI.Service.Interface; // ✅ Add Interface namespace
 
 /// <summary>
 /// Responsible for creating the TreeView structure from a Solution
@@ -12,10 +13,26 @@ using ViewModel;
 public class TreeViewBuilder
 {
     private readonly IJourneyViewModelFactory _journeyViewModelFactory;
+    private readonly IStationViewModelFactory _stationViewModelFactory;
+    private readonly IWorkflowViewModelFactory _workflowViewModelFactory;
+    private readonly ILocomotiveViewModelFactory _locomotiveViewModelFactory;
+    private readonly ITrainViewModelFactory _trainViewModelFactory;
+    private readonly IWagonViewModelFactory _wagonViewModelFactory;
 
-    public TreeViewBuilder(IJourneyViewModelFactory journeyViewModelFactory)
+    public TreeViewBuilder(
+        IJourneyViewModelFactory journeyViewModelFactory,
+        IStationViewModelFactory stationViewModelFactory,
+        IWorkflowViewModelFactory workflowViewModelFactory,
+        ILocomotiveViewModelFactory locomotiveViewModelFactory,
+        ITrainViewModelFactory trainViewModelFactory,
+        IWagonViewModelFactory wagonViewModelFactory)
     {
         _journeyViewModelFactory = journeyViewModelFactory;
+        _stationViewModelFactory = stationViewModelFactory;
+        _workflowViewModelFactory = workflowViewModelFactory;
+        _locomotiveViewModelFactory = locomotiveViewModelFactory;
+        _trainViewModelFactory = trainViewModelFactory;
+        _wagonViewModelFactory = wagonViewModelFactory;
     }
 
     /// <summary>
@@ -122,7 +139,7 @@ public class TreeViewBuilder
 
         foreach (var journey in journeys)
         {
-            // Wrap Journey Model in JourneyViewModel for proper UI binding
+            // Wrap Journey Model in JourneyViewModel for proper UI binding (using Factory)
             var journeyViewModel = _journeyViewModelFactory.Create(journey);
             
             var journeyNode = new TreeNodeViewModel
@@ -153,7 +170,7 @@ public class TreeViewBuilder
         return journeysFolder;
     }
 
-    private static TreeNodeViewModel CreateWorkflowsFolder(List<Workflow> workflows)
+    private TreeNodeViewModel CreateWorkflowsFolder(List<Workflow> workflows)
     {
         var workflowsFolder = new TreeNodeViewModel
         {
@@ -164,8 +181,8 @@ public class TreeViewBuilder
 
         foreach (var workflow in workflows)
         {
-            // Create WorkflowViewModel (without dependencies for now, as we're just displaying)
-            var workflowVM = new WorkflowViewModel(workflow);
+            // ✅ Use Factory instead of direct instantiation
+            var workflowVM = _workflowViewModelFactory.Create(workflow);
 
             workflowsFolder.Children.Add(new TreeNodeViewModel
             {
@@ -179,7 +196,7 @@ public class TreeViewBuilder
         return workflowsFolder;
     }
 
-    private static TreeNodeViewModel CreateLocomotivesFolder(List<Locomotive> locomotives)
+    private TreeNodeViewModel CreateLocomotivesFolder(List<Locomotive> locomotives)
     {
         var locomotivesFolder = new TreeNodeViewModel
         {
@@ -190,7 +207,8 @@ public class TreeViewBuilder
 
         foreach (var loco in locomotives)
         {
-            var locoVM = new LocomotiveViewModel(loco);
+            // ✅ Use Factory instead of direct instantiation
+            var locoVM = _locomotiveViewModelFactory.Create(loco);
 
             locomotivesFolder.Children.Add(new TreeNodeViewModel
             {
@@ -204,7 +222,7 @@ public class TreeViewBuilder
         return locomotivesFolder;
     }
 
-    private static TreeNodeViewModel CreateTrainsFolder(List<Train> trains)
+    private TreeNodeViewModel CreateTrainsFolder(List<Train> trains)
     {
         var trainsFolder = new TreeNodeViewModel
         {
@@ -215,7 +233,8 @@ public class TreeViewBuilder
 
         foreach (var train in trains)
         {
-            var trainVM = new TrainViewModel(train);
+            // ✅ Use Factory instead of direct instantiation
+            var trainVM = _trainViewModelFactory.Create(train);
 
             var trainNode = new TreeNodeViewModel
             {
@@ -225,9 +244,11 @@ public class TreeViewBuilder
                 DataType = typeof(TrainViewModel)
             };
 
-            // Add Locomotives under Train
-            foreach (var locoVM in trainVM.Locomotives)
+            // Add Locomotives under Train (use Factory for each)
+            foreach (var loco in train.Locomotives)
             {
+                var locoVM = _locomotiveViewModelFactory.Create(loco);
+                
                 trainNode.Children.Add(new TreeNodeViewModel
                 {
                     DisplayName = locoVM.Name,
@@ -237,9 +258,11 @@ public class TreeViewBuilder
                 });
             }
 
-            // Add Wagons under Train
-            foreach (var wagonVM in trainVM.Wagons)
+            // Add Wagons under Train (use Factory for each)
+            foreach (var wagon in train.Wagons)
             {
+                var wagonVM = _wagonViewModelFactory.Create(wagon);
+                
                 trainNode.Children.Add(new TreeNodeViewModel
                 {
                     DisplayName = wagonVM.Name,
