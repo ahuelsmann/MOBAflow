@@ -100,11 +100,14 @@ public sealed partial class MainWindow
         // Called after drag & drop reorder is complete
         // Sync ViewModel with TreeView order and trigger save
         
-        if (args.Items.Count > 0 && 
-            args.Items[0] is SharedUI.ViewModel.TreeNodeViewModel draggedNode &&
-            draggedNode.DataContext is SharedUI.ViewModel.StationViewModel)
+        if (args.Items.Count == 0) return;
+        
+        var draggedNode = args.Items[0] as SharedUI.ViewModel.TreeNodeViewModel;
+        if (draggedNode == null) return;
+
+        // Handle Station reordering in Journey
+        if (draggedNode.DataContext is SharedUI.ViewModel.StationViewModel)
         {
-            // If a Station was dragged, find its parent Journey
             var journeyVM = ViewModel.FindParentJourneyViewModel(draggedNode);
             if (journeyVM != null)
             {
@@ -124,7 +127,74 @@ public sealed partial class MainWindow
 
                     // Trigger reorder logic (renumber + save)
                     journeyVM.StationsReorderedCommand.Execute(null);
+                    
+                    System.Diagnostics.Debug.WriteLine($"✅ Stations reordered in Journey '{journeyVM.Name}'");
                 }
+            }
+        }
+        // Handle Action reordering in Workflow
+        else if (draggedNode.DataType == typeof(Backend.Model.Action.Base))
+        {
+            // Find parent Workflow
+            var workflowNode = FindParentNodeByType(ViewModel.TreeNodes, draggedNode, typeof(Backend.Model.Workflow));
+            if (workflowNode?.DataContext is Backend.Model.Workflow workflow)
+            {
+                // Sync Workflow.Actions with TreeView order
+                workflow.Actions.Clear();
+                foreach (var child in workflowNode.Children)
+                {
+                    if (child.DataContext is Backend.Model.Action.Base action)
+                    {
+                        workflow.Actions.Add(action);
+                    }
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"✅ Actions reordered in Workflow '{workflow.Name}'");
+                ViewModel.RefreshTreeView();
+            }
+        }
+        // Handle Locomotive reordering in Train
+        else if (draggedNode.DataContext is SharedUI.ViewModel.LocomotiveViewModel)
+        {
+            var trainNode = FindParentNodeByType(ViewModel.TreeNodes, draggedNode, typeof(Backend.Model.Train));
+            if (trainNode?.DataContext is SharedUI.ViewModel.TrainViewModel trainVM)
+            {
+                // Sync ViewModel.Locomotives with TreeView order
+                trainVM.Locomotives.Clear();
+                foreach (var child in trainNode.Children)
+                {
+                    if (child.DataContext is SharedUI.ViewModel.LocomotiveViewModel locomotiveVM)
+                    {
+                        trainVM.Locomotives.Add(locomotiveVM);
+                    }
+                }
+
+                // Trigger reorder logic
+                trainVM.LocomotivesReorderedCommand.Execute(null);
+                
+                System.Diagnostics.Debug.WriteLine($"✅ Locomotives reordered in Train '{trainVM.Name}'");
+            }
+        }
+        // Handle Wagon reordering in Train
+        else if (draggedNode.DataContext is SharedUI.ViewModel.WagonViewModel)
+        {
+            var trainNode = FindParentNodeByType(ViewModel.TreeNodes, draggedNode, typeof(Backend.Model.Train));
+            if (trainNode?.DataContext is SharedUI.ViewModel.TrainViewModel trainVM)
+            {
+                // Sync ViewModel.Wagons with TreeView order
+                trainVM.Wagons.Clear();
+                foreach (var child in trainNode.Children)
+                {
+                    if (child.DataContext is SharedUI.ViewModel.WagonViewModel wagonVM)
+                    {
+                        trainVM.Wagons.Add(wagonVM);
+                    }
+                }
+
+                // Trigger reorder logic
+                trainVM.WagonsReorderedCommand.Execute(null);
+                
+                System.Diagnostics.Debug.WriteLine($"✅ Wagons reordered in Train '{trainVM.Name}'");
             }
         }
     }
@@ -142,6 +212,30 @@ public sealed partial class MainWindow
                 return node;
 
             var result = FindTreeNodeForViewModel(node.Children, viewModel);
+            if (result != null) return result;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Finds a parent node of a specific type in the tree hierarchy.
+    /// </summary>
+    private SharedUI.ViewModel.TreeNodeViewModel? FindParentNodeByType(
+        System.Collections.ObjectModel.ObservableCollection<SharedUI.ViewModel.TreeNodeViewModel> nodes,
+        SharedUI.ViewModel.TreeNodeViewModel targetNode,
+        Type parentType)
+    {
+        foreach (var node in nodes)
+        {
+            // Check if this node is the parent we're looking for
+            if (node.Children.Contains(targetNode) && node.DataType == parentType)
+            {
+                return node;
+            }
+
+            // Recurse into children
+            var result = FindParentNodeByType(node.Children, targetNode, parentType);
             if (result != null) return result;
         }
 
@@ -274,6 +368,30 @@ public sealed partial class MainWindow
                 NavigateToOverview();
                 break;
 
+            case "editor":
+                // Navigate to EditorPage
+                try
+                {
+                    var editorViewModel = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<SharedUI.ViewModel.EditorPageViewModel>(
+                        ((App)Microsoft.UI.Xaml.Application.Current).Services);
+                    
+                    var editorPage = new EditorPage(editorViewModel);
+                    
+                    System.Diagnostics.Debug.WriteLine($"✅ Navigating to EditorPage");
+                    
+                    ContentFrame.Content = editorPage;
+                    ContentFrame.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+                    LegacyContent.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ Failed to navigate to EditorPage: {ex.Message}");
+                    // Fallback: Show legacy content
+                    ContentFrame.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+                    LegacyContent.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+                }
+                break;
+
             case "configuration":
                 // Navigate to ProjectConfigurationPage
                 if (ViewModel.Solution != null && ViewModel.Solution.Projects.Count > 0)
@@ -317,5 +435,159 @@ public sealed partial class MainWindow
         };
         
         await dialog.ShowAsync();
+    }
+
+    // Context Menu Handlers
+    private void ContextMenu_Opening(object sender, object e)
+    {
+        if (sender is not MenuFlyout menuFlyout) return;
+        
+        // Get the TreeViewItem from the MenuFlyout's target
+        var target = menuFlyout.Target as Microsoft.UI.Xaml.FrameworkElement;
+        var treeViewItem = FindParent<TreeViewItem>(target);
+        var node = treeViewItem?.Tag as TreeNodeViewModel;
+        
+        if (node == null) return;
+
+        // Hide all menu items first
+        foreach (var item in menuFlyout.Items)
+        {
+            if (item is MenuFlyoutItem menuItem)
+            {
+                menuItem.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+            }
+        }
+
+        // Show relevant menu items based on node type
+        var dataType = node.DataType;
+        
+        if (dataType == typeof(Backend.Model.Journey))
+        {
+            FindMenuItemByName(menuFlyout, "AddStationMenuItem").Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+            FindMenuItemByName(menuFlyout, "DeleteJourneyMenuItem").Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+        }
+        else if (dataType == typeof(Backend.Model.Workflow))
+        {
+            FindMenuItemByName(menuFlyout, "AddActionMenuItem").Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+            FindMenuItemByName(menuFlyout, "DeleteWorkflowMenuItem").Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+        }
+        else if (dataType == typeof(Backend.Model.Train))
+        {
+            FindMenuItemByName(menuFlyout, "AddLocomotiveMenuItem").Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+            FindMenuItemByName(menuFlyout, "AddWagonMenuItem").Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+            FindMenuItemByName(menuFlyout, "DeleteTrainMenuItem").Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+        }
+        else if (dataType == typeof(Backend.Model.Station))
+        {
+            FindMenuItemByName(menuFlyout, "MoveStationUpMenuItem").Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+            FindMenuItemByName(menuFlyout, "MoveStationDownMenuItem").Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+            FindMenuItemByName(menuFlyout, "DeleteStationMenuItem").Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+        }
+    }
+
+    private MenuFlyoutItem FindMenuItemByName(MenuFlyout menuFlyout, string name)
+    {
+        foreach (var item in menuFlyout.Items)
+        {
+            if (item is MenuFlyoutItem menuItem && menuItem.Name == name)
+            {
+                return menuItem;
+            }
+        }
+        return new MenuFlyoutItem(); // Return dummy to avoid null checks
+    }
+
+    private static T? FindParent<T>(Microsoft.UI.Xaml.DependencyObject? child) where T : Microsoft.UI.Xaml.DependencyObject
+    {
+        if (child == null) return null;
+        
+        var parent = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(child);
+        
+        while (parent != null)
+        {
+            if (parent is T typedParent)
+                return typedParent;
+                
+            parent = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(parent);
+        }
+        
+        return null;
+    }
+
+    private void AddStation_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        if (ViewModel.CurrentSelectedNode?.DataContext is not Backend.Model.Journey)
+            return;
+
+        System.Diagnostics.Debug.WriteLine("Add Station - Navigate to Editor page");
+    }
+
+    private void DeleteJourney_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        if (ViewModel.CurrentSelectedNode?.DataContext is not Backend.Model.Journey)
+            return;
+
+        System.Diagnostics.Debug.WriteLine("Delete Journey - Will be implemented in Editor page");
+    }
+
+    private void AddAction_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        if (ViewModel.CurrentSelectedNode?.DataContext is not Backend.Model.Workflow)
+            return;
+
+        System.Diagnostics.Debug.WriteLine("Add Action - Navigate to Editor page");
+    }
+
+    private void DeleteWorkflow_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        if (ViewModel.CurrentSelectedNode?.DataContext is not Backend.Model.Workflow)
+            return;
+
+        System.Diagnostics.Debug.WriteLine("Delete Workflow - Will be implemented in Editor page");
+    }
+
+    private void AddLocomotive_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        if (ViewModel.CurrentSelectedNode?.DataContext is not Backend.Model.Train)
+            return;
+
+        System.Diagnostics.Debug.WriteLine("Add Locomotive - Navigate to Editor page");
+    }
+
+    private void AddWagon_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        if (ViewModel.CurrentSelectedNode?.DataContext is not Backend.Model.Train)
+            return;
+
+        System.Diagnostics.Debug.WriteLine("Add Wagon - Navigate to Editor page");
+    }
+
+    private void DeleteTrain_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        if (ViewModel.CurrentSelectedNode?.DataContext is not Backend.Model.Train)
+            return;
+
+        System.Diagnostics.Debug.WriteLine("Delete Train - Will be implemented in Editor page");
+    }
+
+    private void DeleteStation_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        if (ViewModel.CurrentSelectedNode?.DataContext is not Backend.Model.Station station)
+            return;
+
+        // Find parent Journey in Solution
+        if (ViewModel.Solution?.Projects.Count > 0)
+        {
+            var project = ViewModel.Solution.Projects[0];
+            foreach (var journey in project.Journeys)
+            {
+                if (journey.Stations.Contains(station))
+                {
+                    journey.Stations.Remove(station);
+                    ViewModel.RefreshTreeView();
+                    break;
+                }
+            }
+        }
     }
 }

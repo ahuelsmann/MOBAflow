@@ -13,7 +13,11 @@
         <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     </Page.Resources>
 
-    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+    <ScrollViewer 
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
+        HorizontalScrollBarVisibility="Disabled" 
+        VerticalScrollBarVisibility="Auto">
         <StackPanel
             MaxWidth="1200"
             Padding="24"

@@ -18,10 +18,6 @@
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
   </PropertyGroup>
   <ItemGroup>
-    <None Remove="germany-stations.json" />
-    <None Remove="View\OverviewPage.xaml" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -50,10 +46,5 @@
   <!-- Mark generated manifest as a build output so Fast Up-to-Date check does not warn -->
   <ItemGroup>
     <UpToDateCheckBuilt Include="$(IntermediateOutputPath)Manifests\app.manifest" />
-  </ItemGroup>
-  <ItemGroup>
-    <Page Update="View\OverviewPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
   </ItemGroup>
 </Project>

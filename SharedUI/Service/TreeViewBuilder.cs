@@ -277,4 +277,53 @@ public class TreeViewBuilder
 
         return trainsFolder;
     }
+
+    /// <summary>
+    /// Updates an existing TreeNode's display name based on its DataContext.
+    /// Used for real-time sync when properties change.
+    /// </summary>
+    public void UpdateNodeDisplayName(TreeNodeViewModel node)
+    {
+        if (node?.DataContext == null) return;
+
+        // Update display name based on DataContext type
+        var name = node.DataContext switch
+        {
+            JourneyViewModel jvm => jvm.Name,
+            StationViewModel svm => svm.Name,
+            WorkflowViewModel wvm => wvm.Name,
+            TrainViewModel tvm => tvm.Name,
+            LocomotiveViewModel lvm => lvm.Name,
+            WagonViewModel wvm => wvm.Name,
+            Journey j => j.Name,
+            Station s => s.Name,
+            Workflow w => w.Name,
+            Train t => t.Name,
+            Locomotive l => l.Name,
+            Wagon w => w.Name,
+            _ => node.DisplayName
+        };
+
+        if (!string.IsNullOrEmpty(name))
+        {
+            node.DisplayName = name;
+        }
+    }
+
+    /// <summary>
+    /// Recursively updates all display names in a tree structure.
+    /// Useful after loading a solution or making bulk changes.
+    /// </summary>
+    public void UpdateAllDisplayNames(ObservableCollection<TreeNodeViewModel> nodes)
+    {
+        foreach (var node in nodes)
+        {
+            UpdateNodeDisplayName(node);
+            
+            if (node.Children.Count > 0)
+            {
+                UpdateAllDisplayNames(node.Children);
+            }
+        }
+    }
 }

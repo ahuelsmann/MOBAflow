@@ -150,6 +150,14 @@ public partial class App
         
         // TreeViewBuilder service (now with all factories)
         services.AddSingleton<SharedUI.Service.TreeViewBuilder>();
+        
+        // ValidationService for delete operations
+        services.AddSingleton<SharedUI.Service.ValidationService>(sp =>
+        {
+            var solution = sp.GetRequiredService<Backend.Model.Solution>();
+            var project = solution.Projects.FirstOrDefault() ?? new Backend.Model.Project { Name = "(No Project Loaded)" };
+            return new SharedUI.Service.ValidationService(project);
+        });
 
         // Sound services
         services.AddSingleton<ISoundPlayer, WindowsSoundPlayer>();
@@ -176,6 +184,15 @@ public partial class App
         // ViewModels - CounterViewModel now requires IUiDispatcher and optional INotificationService
         services.AddSingleton<SharedUI.ViewModel.WinUI.MainWindowViewModel>();
         services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
+        
+        // Editor ViewModels
+        services.AddTransient<SharedUI.ViewModel.EditorPageViewModel>(sp =>
+        {
+            var solution = sp.GetRequiredService<Backend.Model.Solution>();
+            var project = solution.Projects.FirstOrDefault() ?? new Backend.Model.Project { Name = "(No Project Loaded)" };
+            var validationService = sp.GetRequiredService<SharedUI.Service.ValidationService>();
+            return new SharedUI.ViewModel.EditorPageViewModel(project, validationService);
+        });
         
         // Views
         services.AddTransient<MainWindow>();

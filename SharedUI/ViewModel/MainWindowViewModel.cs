@@ -744,4 +744,38 @@ public partial class MainWindowViewModel : ObservableObject
 
         return null;
     }
+
+    /// <summary>
+    /// Finds a JourneyViewModel by its model instance.
+    /// </summary>
+    public JourneyViewModel? FindJourneyViewModel(Journey journey)
+    {
+        return FindJourneyViewModelByModelRecursive(TreeNodes, journey);
+    }
+
+    private JourneyViewModel? FindJourneyViewModelByModelRecursive(
+        ObservableCollection<TreeNodeViewModel> nodes,
+        Journey journey)
+    {
+        foreach (var node in nodes)
+        {
+            if (node.DataContext is JourneyViewModel journeyVM && journeyVM.Model == journey)
+            {
+                return journeyVM;
+            }
+
+            var result = FindJourneyViewModelByModelRecursive(node.Children, journey);
+            if (result != null) return result;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Refreshes the TreeView without losing expansion state.
+    /// </summary>
+    public void RefreshTreeView()
+    {
+        BuildTreeView();
+    }
 }
