@@ -1,7 +1,6 @@
 namespace Moba.Test.SharedUI;
 
 using Moba.Backend.Model;
-using Moba.SharedUI.Service;
 using Moba.SharedUI.Interface; // ✅ Factory interfaces
 
 [TestFixture]

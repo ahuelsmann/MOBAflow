@@ -86,7 +86,7 @@ public class PlatformTest
             Name = "Platform Announcement",
             Actions = new List<Moba.Backend.Model.Action.Base>
             {
-                new Moba.Backend.Model.Action.Command(new byte[] { 0x01, 0x02 }) { Name = "Test Command" }
+                new Moba.Backend.Model.Action.Command([0x01, 0x02]) { Name = "Test Command" }
             }
         };
 
@@ -131,7 +131,7 @@ public class PlatformTest
             Name = "Platform Announcement",
             Actions = new List<Moba.Backend.Model.Action.Base>
             {
-                new Moba.Backend.Model.Action.Command(new byte[] { 0x01, 0x02 }) { Name = "Test Command" }
+                new Moba.Backend.Model.Action.Command([0x01, 0x02]) { Name = "Test Command" }
             }
         };
 

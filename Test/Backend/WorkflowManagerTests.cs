@@ -1,11 +1,6 @@
 using Moq;
 using Moba.Backend.Manager;
-using Moba.Backend.Interface;
-using Moba.Backend.Model;
-using Moba.Backend;
 using Moba.Test.Mocks;
-using Moba.Backend.Model.Action;
-using Moba.Backend.Model.Enum;
 
 namespace Moba.Test.Backend;
 
@@ -84,7 +79,7 @@ public class WorkflowManagerTests
         await Task.Delay(200);
 
         // Assert
-        Assert.That(executionOrder, Is.EqualTo(new[] { 1, 2, 3 }), "Actions should execute in order");
+        Assert.That(executionOrder, Is.EqualTo([1, 2, 3]), "Actions should execute in order");
     }
 
     [Test]

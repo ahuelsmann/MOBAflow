@@ -221,14 +221,14 @@ public class Z21 : IZ21
             throw new ArgumentOutOfRangeException(nameof(inPort), "InPort must be between 0 and 255");
         }
 
-        byte[] simulatedContent = new byte[] {
+        byte[] simulatedContent = [
             0x0F, 0x00, 0x80, 0x00,     // Header
             0x00,                       // GroupIndex
             (byte)inPort,               // InPort
             0x01,                       // Status (occupied)
             0x00, 0x00, 0x00, 0x00,     // Additional bytes
             0x00, 0x00, 0x00, 0x00      // Padding
-        };
+        ];
 
         _logger?.LogInformation("🔔 SimulateFeedback: InPort={InPort}, Subscribers={Count}", inPort, Received?.GetInvocationList().Length ?? 0);
         System.Diagnostics.Debug.WriteLine($"🔔 SimulateFeedback: InPort={inPort}, Subscribers={Received?.GetInvocationList().Length ?? 0}");

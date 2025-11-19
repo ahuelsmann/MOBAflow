@@ -1,7 +1,3 @@
-using Moba.Backend.Model;
-using Moba.Backend.Model.Action;
-using Moba.Backend.Model.Enum;
-
 namespace Moba.Test.Backend;
 
 /// <summary>
@@ -113,7 +109,7 @@ public class WorkflowTests
         await workflow.StartAsync();
 
         // Assert
-        Assert.That(executionOrder, Is.EqualTo(new[] { 1, 2, 3 }), 
+        Assert.That(executionOrder, Is.EqualTo([1, 2, 3]), 
             "Actions should execute in the order they were added");
     }
 
@@ -243,13 +239,13 @@ public class WorkflowTests
         await workflow.StartAsync();
 
         // Assert
-        Assert.That(executionLog, Is.EqualTo(new[] 
-        { 
+        Assert.That(executionLog, Is.EqualTo(
+        [
             "Action1-Start", 
             "Action1-End", 
             "Action2-Start", 
             "Action2-End" 
-        }), "Actions should execute sequentially");
+        ]), "Actions should execute sequentially");
     }
 
     [Test]

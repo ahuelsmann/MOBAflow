@@ -1,5 +1,4 @@
 using Moba.SharedUI.ViewModel;
-using Moba.Backend.Model;
 
 namespace Moba.Test.SharedUI;
 

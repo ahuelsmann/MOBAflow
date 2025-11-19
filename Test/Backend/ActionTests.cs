@@ -1,8 +1,6 @@
 #pragma warning disable CA1416 // Platform-specific API - tests may use Windows-only sound APIs
 
 using Moq;
-using Moba.Backend.Model;
-using Moba.Backend.Model.Action;
 using Moba.Sound;
 
 namespace Moba.Test.Backend;
@@ -107,7 +105,7 @@ public class ActionTests
         var command = new Command(commandBytes) { Name = "Test Command" };
         var context = new ActionExecutionContext
         {
-            Z21 = z21Mock.Object as Moba.Backend.Z21
+            Z21 = z21Mock.Object // Direct assignment, no cast needed
         };
 
         // Act
@@ -125,7 +123,7 @@ public class ActionTests
         var command = new Command(null!) { Name = "Null Command" };
         var context = new ActionExecutionContext
         {
-            Z21 = z21Mock.Object as Moba.Backend.Z21
+            Z21 = z21Mock.Object // Direct assignment, no cast needed
         };
 
         // Act
@@ -143,7 +141,7 @@ public class ActionTests
         var command = new Command(Array.Empty<byte>()) { Name = "Empty Command" };
         var context = new ActionExecutionContext
         {
-            Z21 = z21Mock.Object as Moba.Backend.Z21
+            Z21 = z21Mock.Object // Direct assignment, no cast needed
         };
 
         // Act
@@ -157,7 +155,7 @@ public class ActionTests
     public async Task Command_DoesNotCrash_WhenZ21IsNull()
     {
         // Arrange
-        var command = new Command(new byte[] { 0x01 });
+        var command = new Command([0x01]);
         var context = new ActionExecutionContext
         {
             Z21 = null
@@ -171,7 +169,7 @@ public class ActionTests
     public void Command_Type_IsCommand()
     {
         // Arrange
-        var command = new Command(new byte[] { 0x01 });
+        var command = new Command([0x01]);
 
         // Assert
         Assert.That(command.Type, Is.EqualTo(Moba.Backend.Model.Enum.ActionType.Command));
@@ -369,7 +367,7 @@ public class ActionTests
     public void Action_NameProperty_IsSettable()
     {
         // Arrange
-        var command = new Command(new byte[] { 0x01 });
+        var command = new Command([0x01]);
 
         // Act
         command.Name = "Custom Name";
@@ -392,7 +390,7 @@ public class ActionTests
     public void Command_InitializesWithDefaultName()
     {
         // Arrange & Act
-        var command = new Command(new byte[] { 0x01 });
+        var command = new Command([0x01]);
 
         // Assert
         Assert.That(command.Name, Is.EqualTo("New Command"));

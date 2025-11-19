@@ -4,7 +4,6 @@ using Backend.Model;
 
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -208,12 +207,17 @@ public class UndoRedoManager
     }
 
     /// <summary>
-    /// Clears all history files.
+    /// Clears all history files and disposes auto-save timer.
     /// </summary>
     public void ClearHistory()
     {
         lock (_lock)
         {
+            // Cancel and dispose auto-save timer
+            _autoSaveCts?.Cancel();
+            _autoSaveCts?.Dispose();
+            _autoSaveCts = null;
+            
             foreach (var filename in _history)
             {
                 DeleteHistoryFile(filename);
