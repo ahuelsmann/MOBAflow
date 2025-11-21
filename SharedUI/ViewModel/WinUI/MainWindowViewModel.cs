@@ -12,8 +12,8 @@ public class MainWindowViewModel : ViewModel.MainWindowViewModel
 {
     private Solution? _solution;
 
-    public MainWindowViewModel(IIoService ioService, IZ21 z21, IJourneyManagerFactory journeyManagerFactory, TreeViewBuilder treeViewBuilder)
-        : base(ioService, z21, journeyManagerFactory, treeViewBuilder)
+    public MainWindowViewModel(IIoService ioService, IZ21 z21, IJourneyManagerFactory journeyManagerFactory, TreeViewBuilder treeViewBuilder, IUiDispatcher uiDispatcher)
+        : base(ioService, z21, journeyManagerFactory, treeViewBuilder, uiDispatcher)
     {
     }
 

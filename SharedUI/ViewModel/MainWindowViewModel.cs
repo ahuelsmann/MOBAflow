@@ -23,20 +23,25 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IZ21 _z21;
     private readonly IJourneyManagerFactory _journeyManagerFactory;
     private readonly TreeViewBuilder _treeViewBuilder;
+    private readonly IUiDispatcher _uiDispatcher;
     private JourneyManager? _journeyManager;
     private readonly UndoRedoManager _undoRedoManager;
 
     // Primary ctor for DI
-    public MainWindowViewModel(IIoService ioService, IZ21 z21, IJourneyManagerFactory journeyManagerFactory, TreeViewBuilder treeViewBuilder)
+    public MainWindowViewModel(IIoService ioService, IZ21 z21, IJourneyManagerFactory journeyManagerFactory, TreeViewBuilder treeViewBuilder, IUiDispatcher uiDispatcher)
     {
         _ioService = ioService;
         _z21 = z21;
         _journeyManagerFactory = journeyManagerFactory;
         _treeViewBuilder = treeViewBuilder;
+        _uiDispatcher = uiDispatcher;
         
         // Initialize undo/redo manager with temp directory
         var historyPath = Path.Combine(Path.GetTempPath(), "MOBAflow", "History");
         _undoRedoManager = new UndoRedoManager(historyPath);
+        
+        // ✅ Subscribe to Z21 system state events (for status display)
+        _z21.OnSystemStateChanged += OnZ21SystemStateChanged;
     }
 
     [ObservableProperty]
@@ -383,10 +388,33 @@ public partial class MainWindowViewModel : ObservableObject
             }
         }
 
+        // ✅ Unsubscribe from Z21 events
+        _z21.OnSystemStateChanged -= OnZ21SystemStateChanged;
+
         // Trigger event so the view can close the application
         ExitApplicationRequested?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// Handles Z21 system state changes and updates UI status.
+    /// IMPORTANT: Called from background thread (UDP callback), dispatches to UI thread via IUiDispatcher.
+    /// </summary>
+    private void OnZ21SystemStateChanged(Backend.SystemState systemState)
+    {
+        _uiDispatcher.InvokeOnUi(() => UpdateZ21SystemState(systemState));
+    }
+
+    /// <summary>
+    /// Updates Z21 system state on UI thread.
+    /// </summary>
+    private void UpdateZ21SystemState(Backend.SystemState systemState)
+    {
+        // Update status text with key metrics
+        Z21StatusText = $"Connected | Current: {systemState.MainCurrent}mA | Temp: {systemState.Temperature}°C";
+        
+        this.Log($"📊 Z21 System State: Current={systemState.MainCurrent}mA, Temp={systemState.Temperature}°C, Voltage={systemState.SupplyVoltage}mV");
+    }
+    
     private void BuildTreeView()
     {
         // Save current expansion states
@@ -593,7 +621,7 @@ public partial class MainWindowViewModel : ObservableObject
         {
             PlatformViewModel platformVm => platformVm.Model,
             _ => dataContext as Platform
-        };
+        });
 
         Workflow? workflowModel = dataContext switch
         {
