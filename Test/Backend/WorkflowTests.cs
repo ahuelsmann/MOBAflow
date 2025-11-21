@@ -1,7 +1,3 @@
-using Moba.Backend.Model;
-using Moba.Backend.Model.Action;
-using Moba.Backend.Model.Enum;
-
 namespace Moba.Test.Backend;
 
 /// <summary>
@@ -84,7 +80,7 @@ public class WorkflowTests
         var workflow = new Workflow
         {
             Name = "Single Action Workflow",
-            Actions = new List<Model.Action.Base> { testAction }
+            Actions = new List<Moba.Backend.Model.Action.Base> { testAction }
         };
 
         // Act
@@ -106,14 +102,14 @@ public class WorkflowTests
         var workflow = new Workflow
         {
             Name = "Multi Action Workflow",
-            Actions = new List<Model.Action.Base> { action1, action2, action3 }
+            Actions = new List<Moba.Backend.Model.Action.Base> { action1, action2, action3 }
         };
 
         // Act
         await workflow.StartAsync();
 
         // Assert
-        Assert.That(executionOrder, Is.EqualTo(new[] { 1, 2, 3 }), 
+        Assert.That(executionOrder, Is.EqualTo([1, 2, 3]), 
             "Actions should execute in the order they were added");
     }
 
@@ -121,15 +117,15 @@ public class WorkflowTests
     public async Task StartAsync_PassesExecutionContext_ToActions()
     {
         // Arrange
-        Model.Action.ActionExecutionContext? receivedContext = null;
+        Moba.Backend.Model.Action.ActionExecutionContext? receivedContext = null;
         var testAction = new TestActionWithContext(ctx => receivedContext = ctx);
 
         var workflow = new Workflow
         {
-            Actions = new List<Model.Action.Base> { testAction }
+            Actions = new List<Moba.Backend.Model.Action.Base> { testAction }
         };
 
-        var context = new Model.Action.ActionExecutionContext();
+        var context = new Moba.Backend.Model.Action.ActionExecutionContext();
 
         // Act
         await workflow.StartAsync(context);
@@ -143,12 +139,12 @@ public class WorkflowTests
     public async Task StartAsync_CreatesDefaultContext_WhenNoneProvided()
     {
         // Arrange
-        Model.Action.ActionExecutionContext? receivedContext = null;
+        Moba.Backend.Model.Action.ActionExecutionContext? receivedContext = null;
         var testAction = new TestActionWithContext(ctx => receivedContext = ctx);
 
         var workflow = new Workflow
         {
-            Actions = new List<Model.Action.Base> { testAction }
+            Actions = new List<Moba.Backend.Model.Action.Base> { testAction }
         };
 
         // Act
@@ -171,7 +167,7 @@ public class WorkflowTests
 
         var workflow = new Workflow
         {
-            Actions = new List<Model.Action.Base> { action1, action2, action3 }
+            Actions = new List<Moba.Backend.Model.Action.Base> { action1, action2, action3 }
         };
 
         // Act & Assert
@@ -202,7 +198,7 @@ public class WorkflowTests
 
         var workflow = new Workflow
         {
-            Actions = new List<Model.Action.Base> { action1, action2 }
+            Actions = new List<Moba.Backend.Model.Action.Base> { action1, action2 }
         };
 
         // Act
@@ -236,20 +232,20 @@ public class WorkflowTests
 
         var workflow = new Workflow
         {
-            Actions = new List<Model.Action.Base> { action1, action2 }
+            Actions = new List<Moba.Backend.Model.Action.Base> { action1, action2 }
         };
 
         // Act
         await workflow.StartAsync();
 
         // Assert
-        Assert.That(executionLog, Is.EqualTo(new[] 
-        { 
+        Assert.That(executionLog, Is.EqualTo(
+        [
             "Action1-Start", 
             "Action1-End", 
             "Action2-Start", 
             "Action2-End" 
-        }), "Actions should execute sequentially");
+        ]), "Actions should execute sequentially");
     }
 
     [Test]
@@ -274,13 +270,13 @@ public class WorkflowTests
         var actionExecuted = false;
         var workflow = new Workflow
         {
-            Actions = new List<Model.Action.Base> 
+            Actions = new List<Moba.Backend.Model.Action.Base> 
             { 
                 new TestAction(() => actionExecuted = true) 
             }
         };
 
-        var emptyContext = new Model.Action.ActionExecutionContext();
+        var emptyContext = new Moba.Backend.Model.Action.ActionExecutionContext();
 
         // Act
         await workflow.StartAsync(emptyContext);

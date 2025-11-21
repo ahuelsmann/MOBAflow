@@ -84,7 +84,9 @@
 
         <NavigationView
             Grid.Row="0"
+            x:Name="MainNavigation"
             IsSettingsVisible="False"
+            ItemInvoked="NavigationView_ItemInvoked"
             PaneDisplayMode="Left">
             <NavigationView.MenuItems>
                 <NavigationViewItem
@@ -92,18 +94,26 @@
                     Icon="Home"
                     Tag="overview" />
                 <NavigationViewItem
-                    Content="Solution Explorer"
+                    Content="Explorer"
                     Icon="Folder"
                     Tag="explorer" />
+                <NavigationViewItem
+                    Content="Editor"
+                    Tag="editor">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE70F;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
             </NavigationView.MenuItems>
 
+            <!--  Content area with Toolbar and Pages  -->
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <!--  Toolbar  -->
+                <!--  Toolbar - Always visible across all views  -->
                 <CommandBar Grid.Row="0" DefaultLabelPosition="Right">
                     <AppBarButton
                         Command="{x:Bind ViewModel.LoadSolutionCommand}"
@@ -164,8 +174,13 @@
                     </AppBarElementContainer>
                 </CommandBar>
 
-                <!--  Content Area  -->
+                <!--  Content Grid  -->
                 <Grid Grid.Row="1">
+                <!--  Frame for page navigation  -->
+                <Frame x:Name="ContentFrame" Visibility="Collapsed" />
+
+                <!--  Legacy content (Explorer)  -->
+                <Grid x:Name="LegacyContent" Visibility="Visible">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="350" MinWidth="250" />
                         <ColumnDefinition Width="Auto" />
@@ -185,7 +200,7 @@
                             Grid.Row="0"
                             Margin="16,12"
                             Style="{StaticResource SubtitleTextBlockStyle}"
-                            Text="Solution Explorer" />
+                            Text="Explorer" />
 
                         <ScrollViewer
                             Grid.Row="1"
@@ -193,6 +208,7 @@
                             HorizontalScrollBarVisibility="Auto"
                             VerticalScrollBarVisibility="Auto">
                             <TreeView 
+                                x:Name="SolutionTreeView"
                                 ItemsSource="{x:Bind ViewModel.TreeNodes, Mode=OneWay}" 
                                 SelectionChanged="SolutionTreeView_SelectionChanged"
                                 RightTapped="TreeView_RightTapped"
@@ -204,11 +220,107 @@
                                     <DataTemplate x:DataType="vm:TreeNodeViewModel">
                                         <TreeViewItem 
                                             IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}"
-                                            ItemsSource="{x:Bind Children, Mode=OneWay}">
+                                            ItemsSource="{x:Bind Children, Mode=OneWay}"
+                                            Tag="{x:Bind}">
                                             <TreeViewItem.ContextFlyout>
-                                                <MenuFlyout>
-                                                    <MenuFlyoutItem Text="Move Up" Click="MoveStationUp_Click" />
-                                                    <MenuFlyoutItem Text="Move Down" Click="MoveStationDown_Click" />
+                                                <MenuFlyout Opening="ContextMenu_Opening">
+                                                    <!--  Journey Context Menu  -->
+                                                    <MenuFlyoutItem 
+                                                        x:Name="AddStationMenuItem"
+                                                        Text="Add Station"
+                                                        Click="AddStation_Click"
+                                                        Visibility="Collapsed">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <FontIcon Glyph="&#xE710;" />
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
+                                                    <MenuFlyoutItem 
+                                                        x:Name="DeleteJourneyMenuItem"
+                                                        Text="Delete Journey"
+                                                        Click="DeleteJourney_Click"
+                                                        Visibility="Collapsed">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <FontIcon Glyph="&#xE74D;" />
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
+                                    
+                                                    <!--  Workflow Context Menu  -->
+                                                    <MenuFlyoutItem 
+                                                        x:Name="AddActionMenuItem"
+                                                        Text="Add Action"
+                                                        Click="AddAction_Click"
+                                                        Visibility="Collapsed">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <FontIcon Glyph="&#xE710;" />
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
+                                                    <MenuFlyoutItem 
+                                                        x:Name="DeleteWorkflowMenuItem"
+                                                        Text="Delete Workflow"
+                                                        Click="DeleteWorkflow_Click"
+                                                        Visibility="Collapsed">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <FontIcon Glyph="&#xE74D;" />
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
+                                    
+                                                    <!--  Train Context Menu  -->
+                                                    <MenuFlyoutItem 
+                                                        x:Name="AddLocomotiveMenuItem"
+                                                        Text="Add Locomotive"
+                                                        Click="AddLocomotive_Click"
+                                                        Visibility="Collapsed">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <FontIcon Glyph="&#xE710;" />
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
+                                                    <MenuFlyoutItem 
+                                                        x:Name="AddWagonMenuItem"
+                                                        Text="Add Wagon"
+                                                        Click="AddWagon_Click"
+                                                        Visibility="Collapsed">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <FontIcon Glyph="&#xE710;" />
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
+                                                    <MenuFlyoutItem 
+                                                        x:Name="DeleteTrainMenuItem"
+                                                        Text="Delete Train"
+                                                        Click="DeleteTrain_Click"
+                                                        Visibility="Collapsed">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <FontIcon Glyph="&#xE74D;" />
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
+                                    
+                                                    <!--  Station Context Menu  -->
+                                                    <MenuFlyoutItem 
+                                                        x:Name="MoveStationUpMenuItem"
+                                                        Text="Move Up"
+                                                        Click="MoveStationUp_Click"
+                                                        Visibility="Collapsed">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <FontIcon Glyph="&#xE70E;" />
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
+                                                    <MenuFlyoutItem 
+                                                        x:Name="MoveStationDownMenuItem"
+                                                        Text="Move Down"
+                                                        Click="MoveStationDown_Click"
+                                                        Visibility="Collapsed">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <FontIcon Glyph="&#xE70D;" />
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
+                                                    <MenuFlyoutItem 
+                                                        x:Name="DeleteStationMenuItem"
+                                                        Text="Delete Station"
+                                                        Click="DeleteStation_Click"
+                                                        Visibility="Collapsed">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <FontIcon Glyph="&#xE74D;" />
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
                                                 </MenuFlyout>
                                             </TreeViewItem.ContextFlyout>
                                             <StackPanel Orientation="Horizontal" Spacing="8">
@@ -323,6 +435,7 @@
                             ToolTipService.ToolTip="Select a city and a journey to add the station" />
                     </Grid>
                 </Grid>
+            </Grid>
             </Grid>
         </NavigationView>
 

@@ -1,8 +1,7 @@
 namespace Moba.Test.SharedUI;
 
 using Moba.Backend.Model;
-using Moba.SharedUI.Service;
-using Moba.SharedUI.Service.Interface; // ✅ Factory interfaces
+using Moba.SharedUI.Interface; // ✅ Factory interfaces
 
 [TestFixture]
 public class JourneyViewModelFactoryTests

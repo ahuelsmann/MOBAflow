@@ -47,6 +47,12 @@ public partial class TrainViewModel : ObservableObject
         set => SetProperty(Model.Name, value, Model, (m, v) => m.Name = v);
     }
 
+    public string Description
+    {
+        get => Model.Description ?? string.Empty;
+        set => SetProperty(Model.Description, value, Model, (m, v) => m.Description = v);
+    }
+
     public TrainType TrainType
     {
         get => Model.TrainType;
@@ -99,5 +105,61 @@ public partial class TrainViewModel : ObservableObject
 
         Model.Wagons.Remove(wagonVM.Model);
         Wagons.Remove(wagonVM);
+    }
+
+    /// <summary>
+    /// Renumbers all locomotives in the train composition.
+    /// </summary>
+    private void RenumberLocomotives()
+    {
+        for (int i = 0; i < Locomotives.Count; i++)
+        {
+            Locomotives[i].Pos = (uint)(i + 1);
+        }
+    }
+
+    /// <summary>
+    /// Renumbers all wagons in the train composition.
+    /// </summary>
+    private void RenumberWagons()
+    {
+        for (int i = 0; i < Wagons.Count; i++)
+        {
+            Wagons[i].Pos = (uint)(i + 1);
+        }
+    }
+
+    /// <summary>
+    /// Handles locomotive reordering after drag & drop.
+    /// </summary>
+    [RelayCommand]
+    public void LocomotivesReordered()
+    {
+        // Update Model.Locomotives to match ViewModel order
+        Model.Locomotives.Clear();
+        foreach (var locomotiveVM in Locomotives)
+        {
+            Model.Locomotives.Add(locomotiveVM.Model);
+        }
+
+        // Renumber based on new order
+        RenumberLocomotives();
+    }
+
+    /// <summary>
+    /// Handles wagon reordering after drag & drop.
+    /// </summary>
+    [RelayCommand]
+    public void WagonsReordered()
+    {
+        // Update Model.Wagons to match ViewModel order
+        Model.Wagons.Clear();
+        foreach (var wagonVM in Wagons)
+        {
+            Model.Wagons.Add(wagonVM.Model);
+        }
+
+        // Renumber based on new order
+        RenumberWagons();
     }
 }

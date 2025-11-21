@@ -18,6 +18,11 @@ public partial class App
     private ServiceProvider? _serviceProvider;
     private IConfiguration? _configuration;
 
+    /// <summary>
+    /// Gets the service provider for DI resolution (e.g., in MainWindow for page navigation).
+    /// </summary>
+    public IServiceProvider Services => _serviceProvider!;
+
     public App()
     {
         InitializeComponent();
@@ -39,7 +44,7 @@ public partial class App
 
         // Initialize CounterViewModel (subscribes to Z21 feedback)
         // This must be done after ServiceProvider is built so it can subscribe to Z21 events
-        var counterViewModel = _serviceProvider.GetRequiredService<SharedUI.ViewModel.CounterViewModel>();
+        _ = _serviceProvider.GetRequiredService<SharedUI.ViewModel.CounterViewModel>();
         System.Diagnostics.Debug.WriteLine("✅ CounterViewModel initialized and listening for Z21 feedback");
 
         // ✅ Load DataManager (master data: Cities, etc.)
@@ -87,7 +92,7 @@ public partial class App
         }
     }
 
-    private IConfiguration BuildConfiguration()
+    private static IConfiguration BuildConfiguration()
     {
         // Get the directory where the executable is located
         var basePath = AppContext.BaseDirectory;
@@ -128,6 +133,9 @@ public partial class App
             return dataManager ?? new Backend.Data.DataManager();
         });
 
+        // ✅ Solution as Singleton (initialized empty, can be loaded later by user)
+        services.AddSingleton<Backend.Model.Solution>(sp => new Backend.Model.Solution());
+
         // Dispatcher + Notification + factories via DI
         services.AddSingleton<IUiDispatcher, UiDispatcher>();
         services.AddSingleton<INotificationService, NotificationService>();
@@ -142,6 +150,14 @@ public partial class App
         
         // TreeViewBuilder service (now with all factories)
         services.AddSingleton<SharedUI.Service.TreeViewBuilder>();
+        
+        // ValidationService for delete operations
+        services.AddSingleton<SharedUI.Service.ValidationService>(sp =>
+        {
+            var solution = sp.GetRequiredService<Backend.Model.Solution>();
+            var project = solution.Projects.FirstOrDefault() ?? new Backend.Model.Project { Name = "(No Project Loaded)" };
+            return new SharedUI.Service.ValidationService(project);
+        });
 
         // Sound services
         services.AddSingleton<ISoundPlayer, WindowsSoundPlayer>();
@@ -166,8 +182,17 @@ public partial class App
         });
         
         // ViewModels - CounterViewModel now requires IUiDispatcher and optional INotificationService
-        services.AddTransient<SharedUI.ViewModel.WinUI.MainWindowViewModel>();
+        services.AddSingleton<SharedUI.ViewModel.WinUI.MainWindowViewModel>();
         services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
+        
+        // Editor ViewModels
+        services.AddTransient<SharedUI.ViewModel.EditorPageViewModel>(sp =>
+        {
+            var solution = sp.GetRequiredService<Backend.Model.Solution>();
+            var project = solution.Projects.FirstOrDefault() ?? new Backend.Model.Project { Name = "(No Project Loaded)" };
+            var validationService = sp.GetRequiredService<SharedUI.Service.ValidationService>();
+            return new SharedUI.ViewModel.EditorPageViewModel(project, validationService);
+        });
         
         // Views
         services.AddTransient<MainWindow>();

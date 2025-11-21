@@ -12,6 +12,7 @@ public class ServiceRegistrationTests
     private class DummyIoService : IIoService
     {
         public Task<(Moba.Backend.Model.Solution? solution, string? path, string? error)> LoadAsync() => Task.FromResult<(Moba.Backend.Model.Solution?, string?, string?)>((new Moba.Backend.Model.Solution(), null, null));
+        public Task<(Moba.Backend.Model.Solution? solution, string? path, string? error)> LoadFromPathAsync(string filePath) => Task.FromResult<(Moba.Backend.Model.Solution?, string?, string?)>((new Moba.Backend.Model.Solution(), filePath, null));
         public Task<(bool success, string? path, string? error)> SaveAsync(Moba.Backend.Model.Solution solution, string? currentPath) => Task.FromResult<(bool, string?, string?)>((true, currentPath ?? "test.json", null));
         public Task<(Moba.Backend.Data.DataManager? dataManager, string? path, string? error)> LoadDataManagerAsync() => Task.FromResult<(Moba.Backend.Data.DataManager?, string?, string?)>((new Moba.Backend.Data.DataManager(), null, null));
     }
@@ -64,6 +65,9 @@ public class ServiceRegistrationTests
         services.AddSingleton<IZ21, Moba.Backend.Z21>();
         services.AddSingleton<IJourneyManagerFactory, Moba.Backend.Manager.JourneyManagerFactory>();
         
+        // ✅ Solution as Singleton (required by MainWindowViewModel)
+        services.AddSingleton<Moba.Backend.Model.Solution>(sp => new Moba.Backend.Model.Solution());
+        
         // All ViewModel factories (using dummy implementations for testing)
         services.AddSingleton<IJourneyViewModelFactory, DummyJourneyFactory>();
         services.AddSingleton<IStationViewModelFactory, DummyStationFactory>();
@@ -82,6 +86,7 @@ public class ServiceRegistrationTests
         Assert.That(sp.GetService<IUdpClientWrapper>(), Is.Not.Null);
         Assert.That(sp.GetService<IZ21>(), Is.Not.Null);
         Assert.That(sp.GetService<IJourneyManagerFactory>(), Is.Not.Null);
+        Assert.That(sp.GetService<Moba.Backend.Model.Solution>(), Is.Not.Null);
         Assert.That(sp.GetService<IJourneyViewModelFactory>(), Is.Not.Null);
         Assert.That(sp.GetService<IStationViewModelFactory>(), Is.Not.Null);
         Assert.That(sp.GetService<IWorkflowViewModelFactory>(), Is.Not.Null);

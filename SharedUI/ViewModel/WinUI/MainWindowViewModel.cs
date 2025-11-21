@@ -10,26 +10,13 @@ using Moba.SharedUI.Service;
 /// </summary>
 public class MainWindowViewModel : ViewModel.MainWindowViewModel
 {
-    private Solution? _solution;
-
-    public MainWindowViewModel(IIoService ioService, IZ21 z21, IJourneyManagerFactory journeyManagerFactory, TreeViewBuilder treeViewBuilder, IUiDispatcher uiDispatcher)
-        : base(ioService, z21, journeyManagerFactory, treeViewBuilder, uiDispatcher)
+    public MainWindowViewModel(
+        IIoService ioService, 
+        IZ21 z21, 
+        IJourneyManagerFactory journeyManagerFactory, 
+        TreeViewBuilder treeViewBuilder,
+        Solution solution)
+        : base(ioService, z21, journeyManagerFactory, treeViewBuilder, solution)
     {
-    }
-
-    public new Solution? Solution
-    {
-        get => _solution;
-        set
-        {
-            if (SetProperty(ref _solution, value))
-            {
-                base.Solution = value;
-
-                HasSolution = value is { Projects.Count: > 0 };
-                SaveSolutionCommand.NotifyCanExecuteChanged();
-                ConnectToZ21Command.NotifyCanExecuteChanged();
-            }
-        }
     }
 }

@@ -1,5 +1,3 @@
-using Moba.Backend;
-
 namespace Moba.Test.Backend;
 
 /// <summary>

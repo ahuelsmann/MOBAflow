@@ -1,3 +1,4 @@
+using System.Runtime.Versioning;
 using System.Speech.Synthesis;
 using Microsoft.Extensions.Logging;
 using Moba.Common.Extensions;
@@ -8,6 +9,7 @@ namespace Moba.Sound;
 /// Windows-native Text-to-Speech implementation using System.Speech (SAPI).
 /// Only works on Windows platforms. Provides offline TTS without cloud dependencies.
 /// </summary>
+[SupportedOSPlatform("windows")]
 public class SystemSpeechEngine : ISpeakerEngine
 {
     private readonly ILogger<SystemSpeechEngine> _logger;
@@ -46,10 +48,15 @@ public class SystemSpeechEngine : ISpeakerEngine
                 this.LogWarning($"Voice '{voiceName}' not found. Using default voice.", _logger);
                 
                 this.Log("Available voices:", _logger);
-                foreach (var voice in synthesizer.GetInstalledVoices())
+                
+                // Use Select() instead of foreach for better performance
+                var voiceDescriptions = synthesizer.GetInstalledVoices()
+                    .Select(voice => voice.VoiceInfo)
+                    .Select(info => $"  - {info.Name} ({info.Culture.Name}, {info.Gender}, {info.Age})");
+                
+                foreach (var description in voiceDescriptions)
                 {
-                    var info = voice.VoiceInfo;
-                    this.Log($"  - {info.Name} ({info.Culture.Name}, {info.Gender}, {info.Age})", _logger);
+                    this.Log(description, _logger);
                 }
             }
 

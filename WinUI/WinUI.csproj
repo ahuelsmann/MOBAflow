@@ -18,17 +18,6 @@
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Service\Factory\**" />
-    <Content Remove="Service\Factory\**" />
-    <EmbeddedResource Remove="Service\Factory\**" />
-    <None Remove="Service\Factory\**" />
-    <Page Remove="Service\Factory\**" />
-    <PRIResource Remove="Service\Factory\**" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="germany-stations.json" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

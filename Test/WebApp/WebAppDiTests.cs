@@ -56,6 +56,9 @@ public class WebAppDiTests
         services.AddSingleton<IZ21, Moba.Backend.Z21>();
         services.AddSingleton<IJourneyManagerFactory, Moba.Backend.Manager.JourneyManagerFactory>();
         
+        // ✅ Solution as Singleton (required by MainWindowViewModel)
+        services.AddSingleton<Moba.Backend.Model.Solution>(sp => new Moba.Backend.Model.Solution());
+        
         // All ViewModel factories (using dummy implementations for testing)
         services.AddSingleton<IJourneyViewModelFactory, DummyJourneyFactory>();
         services.AddSingleton<IStationViewModelFactory, DummyStationFactory>();
@@ -73,6 +76,7 @@ public class WebAppDiTests
         Assert.That(sp.GetService<IUdpClientWrapper>(), Is.Not.Null);
         Assert.That(sp.GetService<IZ21>(), Is.Not.Null);
         Assert.That(sp.GetService<IJourneyManagerFactory>(), Is.Not.Null);
+        Assert.That(sp.GetService<Moba.Backend.Model.Solution>(), Is.Not.Null);
         Assert.That(sp.GetService<IJourneyViewModelFactory>(), Is.Not.Null);
         Assert.That(sp.GetService<IStationViewModelFactory>(), Is.Not.Null);
         Assert.That(sp.GetService<IWorkflowViewModelFactory>(), Is.Not.Null);

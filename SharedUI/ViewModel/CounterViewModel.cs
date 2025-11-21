@@ -4,7 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using Moba.Backend.Interface;
-using Moba.SharedUI.Extensions;
+using Moba.Common.Extensions;
 using Moba.SharedUI.Service;
 
 using System.Collections.Generic;
@@ -475,18 +475,36 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     /// </summary>
     public void Dispose()
     {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Disposes resources (managed and unmanaged).
+    /// </summary>
+    /// <param name="disposing">True if called from Dispose(), false if called from finalizer</param>
+    protected virtual void Dispose(bool disposing)
+    {
         if (_disposed) return;
 
-        try
+        if (disposing)
         {
-            _z21.Received -= OnFeedbackReceived;
-            _z21.OnSystemStateChanged -= OnSystemStateChanged;
-            this.Log("✅ CounterViewModel: Unsubscribed from Z21 events");
+            // Dispose managed resources
+            try
+            {
+                _z21.Received -= OnFeedbackReceived;
+                _z21.OnSystemStateChanged -= OnSystemStateChanged;
+                this.Log("✅ CounterViewModel: Unsubscribed from Z21 events");
+            }
+            catch (Exception ex)
+            {
+                this.Log($"⚠️ Error unsubscribing from Z21 events: {ex.Message}");
+            }
+
+            _lastFeedbackTime.Clear();
         }
-        catch (Exception ex)
-        {
-            this.Log($"⚠️ Error unsubscribing from Z21 events: {ex.Message}");
-        }
+
+        // No unmanaged resources to dispose
 
         _disposed = true;
     }

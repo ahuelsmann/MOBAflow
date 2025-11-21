@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging;
 
 using Moba.Backend.Network;
 using Moba.SharedUI.Service;
-using Moba.SharedUI.Interface; // ✅ Factory interfaces
 
 using UraniumUI;
 
@@ -43,6 +42,9 @@ public static class MauiProgram
         // ✅ DataManager as Singleton (master data loaded on first access)
         // Note: MAUI doesn't have IIoService yet - using simplified approach
         builder.Services.AddSingleton(sp => new Backend.Data.DataManager());
+
+        // ✅ Solution as Singleton (initialized empty, can be loaded later by user)
+        builder.Services.AddSingleton<Backend.Model.Solution>(sp => new Backend.Model.Solution());
 
         // ✅ All ViewModel Factories (MAUI-specific) - NEW NAMESPACES
         builder.Services.AddSingleton<SharedUI.Interface.IJourneyViewModelFactory, MAUI.Factory.MauiJourneyViewModelFactory>();

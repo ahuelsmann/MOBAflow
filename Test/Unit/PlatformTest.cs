@@ -86,7 +86,7 @@ public class PlatformTest
             Name = "Platform Announcement",
             Actions = new List<Moba.Backend.Model.Action.Base>
             {
-                new Moba.Backend.Model.Action.Command(new byte[] { 0x01, 0x02 }) { Name = "Test Command" }
+                new Moba.Backend.Model.Action.Command([0x01, 0x02]) { Name = "Test Command" }
             }
         };
 
@@ -131,7 +131,7 @@ public class PlatformTest
             Name = "Platform Announcement",
             Actions = new List<Moba.Backend.Model.Action.Base>
             {
-                new Moba.Backend.Model.Action.Command(new byte[] { 0x01, 0x02 }) { Name = "Test Command" }
+                new Moba.Backend.Model.Action.Command([0x01, 0x02]) { Name = "Test Command" }
             }
         };
 
@@ -219,8 +219,8 @@ public class PlatformTest
     public void Platform_Ctor()
     {
         var fakeUdp = new FakeUdpClientWrapper();
-        var z21 = new Moba.Backend.Z21(fakeUdp, null);
-        Assert.That(z21, Is.Not.Null);
+        _ = new Moba.Backend.Z21(fakeUdp, null);
+        Assert.Pass("Z21 constructed successfully");
     }
 
     [Test]

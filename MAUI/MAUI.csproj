@@ -15,8 +15,8 @@
     <!-- Versions -->
     <ApplicationDisplayVersion>1.1</ApplicationDisplayVersion>
     <ApplicationVersion>2</ApplicationVersion>
-    <!-- Android 24+ (Nougat) - recommended minimum, avoid 21 desugaring issues -->
-    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
+    <!-- Android 26+ (Oreo) - required for MediaElement support -->
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">26.0</SupportedOSPlatformVersion>
   </PropertyGroup>
   <ItemGroup>
     <!-- App Icon -->

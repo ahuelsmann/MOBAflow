@@ -43,27 +43,29 @@ public record Result<T>
     /// <summary>
     /// Maps the result value to a new type if successful.
     /// If the result is a failure, propagates the error to the new result type.
+    /// Note: null values are considered valid success values.
     /// </summary>
     /// <typeparam name="TNew">The type to map to</typeparam>
     /// <param name="mapper">The function to transform the value</param>
     /// <returns>A new Result with the mapped value or the same error</returns>
     public Result<TNew> Map<TNew>(Func<T, TNew> mapper)
     {
-        return IsSuccess && Value != null
-            ? Result<TNew>.Success(mapper(Value))
+        return IsSuccess
+            ? Result<TNew>.Success(mapper(Value!))
             : Result<TNew>.Failure(Error ?? "Unknown error");
     }
 
     /// <summary>
     /// Executes an action if the result is successful.
+    /// Note: action will execute even if Value is null (null is a valid success value).
     /// </summary>
     /// <param name="action">The action to execute with the success value</param>
     /// <returns>The same Result instance for method chaining</returns>
     public Result<T> OnSuccess(Action<T> action)
     {
-        if (IsSuccess && Value != null)
+        if (IsSuccess)
         {
-            action(Value);
+            action(Value!);
         }
         return this;
     }

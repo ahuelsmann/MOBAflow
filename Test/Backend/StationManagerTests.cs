@@ -1,9 +1,5 @@
 using Moba.Backend.Manager;
-using Moba.Backend.Model;
-using Moba.Backend;
 using Moba.Test.Mocks;
-using Moba.Backend.Model.Action;
-using Moba.Backend.Model.Enum;
 
 namespace Moba.Test.Backend;
 
@@ -28,6 +24,7 @@ public class StationManagerTests
     public void TearDown()
     {
         _z21?.Dispose();
+        _fakeUdp?.Dispose();
     }
 
     [Test]
@@ -41,7 +38,7 @@ public class StationManagerTests
         {
             Name = "Station Workflow",
             InPort = 20,
-            Actions = new List<Model.Action.Base> { testAction }
+            Actions = new List<Moba.Backend.Model.Action.Base> { testAction }
         };
 
         var station = new Station
@@ -90,7 +87,7 @@ public class StationManagerTests
         {
             Name = "Test Workflow",
             InPort = 22,
-            Actions = new List<Model.Action.Base> { new TestAction(() => actionExecuted = true) }
+            Actions = new List<Moba.Backend.Model.Action.Base> { new TestAction(() => actionExecuted = true) }
         };
 
         var station = new Station
@@ -121,7 +118,7 @@ public class StationManagerTests
             InPort = 23,
             IsUsingTimerToIgnoreFeedbacks = true,
             IntervalForTimerToIgnoreFeedbacks = 1.0,
-            Actions = new List<Model.Action.Base> { new TestAction(() => executionCount++) }
+            Actions = new List<Moba.Backend.Model.Action.Base> { new TestAction(() => executionCount++) }
         };
 
         var station = new Station
@@ -155,7 +152,7 @@ public class StationManagerTests
             InPort = 24,
             IsUsingTimerToIgnoreFeedbacks = true,
             IntervalForTimerToIgnoreFeedbacks = 0.5, // 500ms
-            Actions = new List<Model.Action.Base> { new TestAction(() => executionCount++) }
+            Actions = new List<Moba.Backend.Model.Action.Base> { new TestAction(() => executionCount++) }
         };
 
         var station = new Station
@@ -191,14 +188,14 @@ public class StationManagerTests
         {
             Name = "Workflow1",
             InPort = 25,
-            Actions = new List<Model.Action.Base> { new TestAction(() => station1Executed = true) }
+            Actions = new List<Moba.Backend.Model.Action.Base> { new TestAction(() => station1Executed = true) }
         };
 
         var workflow2 = new Workflow
         {
             Name = "Workflow2",
             InPort = 25, // Same InPort
-            Actions = new List<Model.Action.Base> { new TestAction(() => station2Executed = true) }
+            Actions = new List<Moba.Backend.Model.Action.Base> { new TestAction(() => station2Executed = true) }
         };
 
         var station1 = new Station { Name = "Station1", Flow = workflow1 };
@@ -226,7 +223,7 @@ public class StationManagerTests
             InPort = 26,
             IsUsingTimerToIgnoreFeedbacks = true,
             IntervalForTimerToIgnoreFeedbacks = 10.0,
-            Actions = new List<Model.Action.Base> { new TestAction(() => { }) }
+            Actions = new List<Moba.Backend.Model.Action.Base> { new TestAction(() => { }) }
         };
 
         var station = new Station { Name = "Test Station", Flow = workflow };
@@ -250,7 +247,7 @@ public class StationManagerTests
         {
             Name = "Test Workflow",
             InPort = 27,
-            Actions = new List<Model.Action.Base> { new TestAction(() => { }) }
+            Actions = new List<Moba.Backend.Model.Action.Base> { new TestAction(() => { }) }
         };
 
         var station = new Station { Name = "Test Station", Flow = workflow };
@@ -274,7 +271,7 @@ public class StationManagerTests
         {
             Name = "Faulty Workflow",
             InPort = 28,
-            Actions = new List<Model.Action.Base> { faultyAction }
+            Actions = new List<Moba.Backend.Model.Action.Base> { faultyAction }
         };
 
         var station = new Station { Name = "Faulty Station", Flow = workflow };
@@ -315,7 +312,7 @@ public class StationManagerTests
         {
             Name = "Multi-Action Workflow",
             InPort = 30,
-            Actions = new List<Model.Action.Base> { action1, action2, action3 }
+            Actions = new List<Moba.Backend.Model.Action.Base> { action1, action2, action3 }
         };
 
         var station = new Station { Name = "Multi-Action Station", Flow = workflow };
@@ -327,7 +324,7 @@ public class StationManagerTests
         await Task.Delay(200);
 
         // Assert
-        Assert.That(executionOrder, Is.EqualTo(new[] { 1, 2, 3 }), 
+        Assert.That(executionOrder, Is.EqualTo([1, 2, 3]), 
             "Actions should execute in order");
     }
 }

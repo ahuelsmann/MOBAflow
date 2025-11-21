@@ -1,11 +1,6 @@
 using Moq;
 using Moba.Backend.Manager;
-using Moba.Backend.Interface;
-using Moba.Backend.Model;
-using Moba.Backend;
 using Moba.Test.Mocks;
-using Moba.Backend.Model.Action;
-using Moba.Backend.Model.Enum;
 
 namespace Moba.Test.Backend;
 
@@ -32,6 +27,7 @@ public class WorkflowManagerTests
     public void TearDown()
     {
         _z21?.Dispose();
+        _fakeUdp?.Dispose();
     }
 
     [Test]
@@ -45,7 +41,7 @@ public class WorkflowManagerTests
         {
             Name = "TestWorkflow",
             InPort = 10,
-            Actions = new List<Model.Action.Base> { testAction }
+            Actions = new List<Moba.Backend.Model.Action.Base> { testAction }
         };
 
         var workflows = new List<Workflow> { workflow };
@@ -72,7 +68,7 @@ public class WorkflowManagerTests
         {
             Name = "MultiActionWorkflow",
             InPort = 11,
-            Actions = new List<Model.Action.Base> { action1, action2, action3 }
+            Actions = new List<Moba.Backend.Model.Action.Base> { action1, action2, action3 }
         };
 
         var workflows = new List<Workflow> { workflow };
@@ -83,7 +79,7 @@ public class WorkflowManagerTests
         await Task.Delay(200);
 
         // Assert
-        Assert.That(executionOrder, Is.EqualTo(new[] { 1, 2, 3 }), "Actions should execute in order");
+        Assert.That(executionOrder, Is.EqualTo([1, 2, 3]), "Actions should execute in order");
     }
 
     [Test]
@@ -97,7 +93,7 @@ public class WorkflowManagerTests
         {
             Name = "TestWorkflow",
             InPort = 10,
-            Actions = new List<Model.Action.Base> { testAction }
+            Actions = new List<Moba.Backend.Model.Action.Base> { testAction }
         };
 
         var workflows = new List<Workflow> { workflow };
@@ -124,7 +120,7 @@ public class WorkflowManagerTests
             InPort = 12,
             IsUsingTimerToIgnoreFeedbacks = true,
             IntervalForTimerToIgnoreFeedbacks = 1.0, // 1 second
-            Actions = new List<Model.Action.Base> { testAction }
+            Actions = new List<Moba.Backend.Model.Action.Base> { testAction }
         };
 
         var workflows = new List<Workflow> { workflow };
@@ -154,7 +150,7 @@ public class WorkflowManagerTests
             InPort = 13,
             IsUsingTimerToIgnoreFeedbacks = true,
             IntervalForTimerToIgnoreFeedbacks = 0.5, // 500ms
-            Actions = new List<Model.Action.Base> { testAction }
+            Actions = new List<Moba.Backend.Model.Action.Base> { testAction }
         };
 
         var workflows = new List<Workflow> { workflow };
@@ -184,14 +180,14 @@ public class WorkflowManagerTests
         {
             Name = "Workflow1",
             InPort = 14,
-            Actions = new List<Model.Action.Base> { new TestAction(() => workflow1Executed = true) }
+            Actions = new List<Moba.Backend.Model.Action.Base> { new TestAction(() => workflow1Executed = true) }
         };
 
         var workflow2 = new Workflow
         {
             Name = "Workflow2",
             InPort = 14, // Same InPort
-            Actions = new List<Model.Action.Base> { new TestAction(() => workflow2Executed = true) }
+            Actions = new List<Moba.Backend.Model.Action.Base> { new TestAction(() => workflow2Executed = true) }
         };
 
         var workflows = new List<Workflow> { workflow1, workflow2 };
@@ -216,7 +212,7 @@ public class WorkflowManagerTests
             InPort = 15,
             IsUsingTimerToIgnoreFeedbacks = true,
             IntervalForTimerToIgnoreFeedbacks = 10.0,
-            Actions = new List<Model.Action.Base> { new TestAction(() => { }) }
+            Actions = new List<Moba.Backend.Model.Action.Base> { new TestAction(() => { }) }
         };
 
         var workflows = new List<Workflow> { workflow };
@@ -239,7 +235,7 @@ public class WorkflowManagerTests
         {
             Name = "TestWorkflow",
             InPort = 16,
-            Actions = new List<Model.Action.Base> { new TestAction(() => { }) }
+            Actions = new List<Moba.Backend.Model.Action.Base> { new TestAction(() => { }) }
         };
 
         var workflows = new List<Workflow> { workflow };
@@ -262,7 +258,7 @@ public class WorkflowManagerTests
         {
             Name = "FaultyWorkflow",
             InPort = 17,
-            Actions = new List<Model.Action.Base> { faultyAction }
+            Actions = new List<Moba.Backend.Model.Action.Base> { faultyAction }
         };
 
         var workflows = new List<Workflow> { workflow };
@@ -297,13 +293,13 @@ public class WorkflowManagerTests
         var executionOrder = new List<string>();
         var lockObject = new object();
 
-        var action = new TestAction(() =>
+        var action = new TestAction(async () =>
         {
             lock (lockObject)
             {
                 executionOrder.Add($"Start-{DateTime.UtcNow.Ticks}");
             }
-            Thread.Sleep(100); // Simulate work
+            await Task.Delay(100); // Simulate work (use Task.Delay instead of Thread.Sleep)
             lock (lockObject)
             {
                 executionOrder.Add($"End-{DateTime.UtcNow.Ticks}");
@@ -314,7 +310,7 @@ public class WorkflowManagerTests
         {
             Name = "SlowWorkflow",
             InPort = 19,
-            Actions = new List<Model.Action.Base> { action }
+            Actions = new List<Moba.Backend.Model.Action.Base> { action }
         };
 
         var workflows = new List<Workflow> { workflow };
@@ -337,11 +333,18 @@ public class WorkflowManagerTests
 /// </summary>
 file class TestAction : Moba.Backend.Model.Action.Base
 {
-    private readonly Action _callback;
+    private readonly Func<Task> _callback;
 
-    public TestAction(Action callback)
+    public TestAction(Func<Task> callback)
     {
         _callback = callback;
+        Name = "TestAction";
+    }
+
+    // Support synchronous callbacks too
+    public TestAction(Action callback)
+    {
+        _callback = () => { callback(); return Task.CompletedTask; };
         Name = "TestAction";
     }
 
@@ -349,7 +352,6 @@ file class TestAction : Moba.Backend.Model.Action.Base
 
     public override Task ExecuteAsync(Moba.Backend.Model.Action.ActionExecutionContext context)
     {
-        _callback();
-        return Task.CompletedTask;
+        return _callback();
     }
 }

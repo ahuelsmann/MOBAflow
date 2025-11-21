@@ -1,4 +1,3 @@
-using Moba.Backend;
 using Moba.Test.Mocks;
 
 namespace Moba.Test.Backend;
@@ -23,7 +22,7 @@ public class Z21UnitTests
         z21.SimulateFeedback(7);
 
         // wait briefly
-        var completed = Task.WhenAny(signaled.Task, Task.Delay(500)).Result;
+        _ = Task.WhenAny(signaled.Task, Task.Delay(500)).Result;
         Assert.That(signaled.Task.IsCompleted, Is.True, "Received event was not raised");
         Assert.That(captured, Is.Not.Null);
         Assert.That(captured!.InPort, Is.EqualTo(7u));
