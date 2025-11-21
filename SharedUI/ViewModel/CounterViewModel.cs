@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -22,16 +23,41 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     private readonly IZ21 _z21;
     private readonly IUiDispatcher _dispatcher;
     private readonly INotificationService? _notificationService;
+    private readonly Backend.Model.Solution _solution;
     private readonly Dictionary<int, DateTime> _lastFeedbackTime = new();
     private bool _disposed;
 
-    public CounterViewModel(IZ21 z21, IUiDispatcher dispatcher, INotificationService? notificationService = null)
+    public CounterViewModel(IZ21 z21, IUiDispatcher dispatcher, Backend.Model.Solution solution, INotificationService? notificationService = null)
     {
         _z21 = z21;
         _dispatcher = dispatcher;
+        _solution = solution;
         _notificationService = notificationService;
 
-        Z21IpAddress = "192.168.0.111";
+        // ✅ Initialize available IP addresses from Solution.Settings
+        AvailableIpAddresses = new ObservableCollection<string>(_solution.Settings.IpAddresses);
+
+        // ✅ Load Z21 IP from Solution.Settings
+        if (!string.IsNullOrEmpty(_solution.Settings.CurrentIpAddress))
+        {
+            Z21IpAddress = _solution.Settings.CurrentIpAddress;
+            this.Log($"✅ Loaded Z21 IP from Solution.Settings: {Z21IpAddress}");
+        }
+        else if (_solution.Settings.IpAddresses.Count > 0)
+        {
+            Z21IpAddress = _solution.Settings.IpAddresses[0];
+            _solution.Settings.CurrentIpAddress = Z21IpAddress; // Set as current
+            this.Log($"✅ Loaded first Z21 IP from IpAddresses: {Z21IpAddress}");
+        }
+        else
+        {
+            Z21IpAddress = Backend.Z21Constants.DefaultIpAddress; // Fallback for new/empty solutions
+            _solution.Settings.CurrentIpAddress = Z21IpAddress;
+            _solution.Settings.IpAddresses.Add(Z21IpAddress);
+            AvailableIpAddresses.Add(Z21IpAddress);
+            this.Log($"⚠️ No IP in Solution.Settings - using default: {Backend.Z21Constants.DefaultIpAddress}");
+        }
+
         Statistics.Add(new InPortStatistic { InPort = 1, Count = 0, TargetLapCount = GlobalTargetLapCount });
         Statistics.Add(new InPortStatistic { InPort = 2, Count = 0, TargetLapCount = GlobalTargetLapCount });
         Statistics.Add(new InPortStatistic { InPort = 3, Count = 0, TargetLapCount = GlobalTargetLapCount });
@@ -40,13 +66,45 @@ public partial class CounterViewModel : ObservableObject, IDisposable
         // This works because Z21 is a singleton and events persist across Connect/Disconnect
         _z21.Received += OnFeedbackReceived;
         _z21.OnSystemStateChanged += OnSystemStateChanged;
-        
+
         this.Log("✅ CounterViewModel: Subscribed to Z21 events (ready for simulation)");
     }
 
+    /// <summary>
+    /// Current Z21 IP address for connection. Synced with Solution.Settings.CurrentIpAddress.
+    /// </summary>
     [ObservableProperty]
-    private string z21IpAddress = "192.168.0.111";
+    private string z21IpAddress = Backend.Z21Constants.DefaultIpAddress;
 
+    /// <summary>
+    /// Available Z21 IP addresses from Solution.Settings for ComboBox/Picker binding.
+    /// </summary>
+    public ObservableCollection<string> AvailableIpAddresses { get; }
+
+    /// <summary>
+    /// Syncs IP address changes back to Solution.Settings and adds new IPs to history.
+    /// </summary>
+    partial void OnZ21IpAddressChanged(string value)
+    {
+        // Sync selected IP back to Solution.Settings.CurrentIpAddress
+        if (!string.IsNullOrEmpty(value) && _solution.Settings.CurrentIpAddress != value)
+        {
+            _solution.Settings.CurrentIpAddress = value;
+            this.Log($"✅ CurrentIpAddress updated in Solution.Settings: {value}");
+
+            // Add to history if not already present
+            if (!_solution.Settings.IpAddresses.Contains(value))
+            {
+                _solution.Settings.IpAddresses.Add(value);
+                AvailableIpAddresses.Add(value);
+                this.Log($"✅ Added new IP to history: {value}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Indicates whether the Z21 is currently connected.
+    /// </summary>
     [ObservableProperty]
     private bool isConnected;
 
@@ -59,44 +117,78 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     {
         // Notify UI about inverse property change
         OnPropertyChanged(nameof(IsNotConnected));
-        
+
         // Update command states
         ConnectCommand.NotifyCanExecuteChanged();
         DisconnectCommand.NotifyCanExecuteChanged();
         ResetCountersCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>
+    /// Current status message for display (e.g., "Connected", "Connecting...", "Error: ...").
+    /// </summary>
     [ObservableProperty]
     private string statusText = "Disconnected";
 
+    /// <summary>
+    /// Collection of lap statistics for all configured tracks (InPorts).
+    /// </summary>
     [ObservableProperty]
     private ObservableCollection<InPortStatistic> statistics = [];
 
+    /// <summary>
+    /// Enables/disables timer-based filtering to ignore multiple axle detections from the same train.
+    /// </summary>
     [ObservableProperty]
     private bool useTimerFilter = true;
 
+    /// <summary>
+    /// Timer interval in seconds for filtering multiple feedback events (default: 5.0 seconds).
+    /// </summary>
     [ObservableProperty]
     private double timerIntervalSeconds = 5.0;
 
+    /// <summary>
+    /// Global target lap count for all tracks. Changing this updates all track targets.
+    /// </summary>
     [ObservableProperty]
     private int globalTargetLapCount = 10;
 
     // Z21 System State Properties
+    
+    /// <summary>
+    /// Main track current in milliamperes (mA).
+    /// </summary>
     [ObservableProperty]
     private int mainCurrent;
 
+    /// <summary>
+    /// Z21 internal temperature in degrees Celsius (°C).
+    /// </summary>
     [ObservableProperty]
     private int temperature;
 
+    /// <summary>
+    /// Z21 supply voltage in millivolts (mV).
+    /// </summary>
     [ObservableProperty]
     private int supplyVoltage;
 
+    /// <summary>
+    /// Z21 VCC voltage in millivolts (mV).
+    /// </summary>
     [ObservableProperty]
     private int vccVoltage;
 
+    /// <summary>
+    /// Z21 central state as hexadecimal string (e.g., "0x00").
+    /// </summary>
     [ObservableProperty]
     private string centralState = "0x00";
 
+    /// <summary>
+    /// Z21 extended central state as hexadecimal string (e.g., "0x00").
+    /// </summary>
     [ObservableProperty]
     private string centralStateEx = "0x00";
 
@@ -243,7 +335,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
         VccVoltage = systemState.VccVoltage;
         CentralState = $"0x{systemState.CentralState:X2}";
         CentralStateEx = $"0x{systemState.CentralStateEx:X2}";
-        
+
         this.Log($"📊 System state updated: MainCurrent={MainCurrent}mA, Temp={Temperature}°C, Supply={SupplyVoltage}mV");
     }
 
@@ -258,7 +350,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     private void OnFeedbackReceived(Backend.FeedbackResult feedbackResult)
     {
         this.Log($"🔔 OnFeedbackReceived called! InPort={feedbackResult.InPort}");
-        
+
         // Check if feedback should be ignored based on timer (safe on any thread)
         if (ShouldIgnoreFeedback(feedbackResult.InPort))
         {
@@ -369,105 +461,20 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     private bool IsLocalNetworkAddress(IPAddress ipAddress)
     {
         var bytes = ipAddress.GetAddressBytes();
-        
+
         // 192.168.x.x (most common for home networks)
         if (bytes[0] == 192 && bytes[1] == 168)
             return true;
-        
+
         // 10.x.x.x (corporate networks)
         if (bytes[0] == 10)
             return true;
-        
+
         // 172.16.x.x - 172.31.x.x (less common)
         if (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31)
             return true;
-        
+
         return false;
-    }
-
-    /// <summary>
-    /// Checks if Z21 is reachable by attempting a UDP connection test.
-    /// Uses a timeout to avoid hanging when outside network.
-    /// </summary>
-    private async Task<bool> IsZ21ReachableAsync(IPAddress ipAddress)
-    {
-        try
-        {
-            // Simple UDP reachability test with timeout
-            using var udpClient = new System.Net.Sockets.UdpClient();
-            udpClient.Client.SendTimeout = 2000; // 2 seconds timeout
-            udpClient.Client.ReceiveTimeout = 2000;
-            
-            // Try to connect to Z21 port (21105)
-            var endpoint = new IPEndPoint(ipAddress, 21105);
-            
-            // Note: UDP doesn't have a "connect" in the TCP sense,
-            // but we can try to send a small packet and see if it fails immediately
-            // For now, we just check if we can create the client (basic validation)
-            
-            // Better approach: Check if we're on same subnet as Z21
-            var localIPs = await GetLocalIPAddressesAsync();
-            foreach (var localIP in localIPs)
-            {
-                if (IsInSameSubnet(localIP, ipAddress))
-                {
-                    this.Log($"✅ Z21 {ipAddress} is in same subnet as {localIP}");
-                    return true;
-                }
-            }
-            
-            this.Log($"⚠️ Z21 {ipAddress} is not in same subnet as device");
-            return false; // Not in same subnet → likely not reachable
-        }
-        catch (Exception ex)
-        {
-            this.Log($"⚠️ Network check failed: {ex.Message}");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Gets all local IP addresses of the device.
-    /// </summary>
-    private async Task<List<IPAddress>> GetLocalIPAddressesAsync()
-    {
-        var addresses = new List<IPAddress>();
-        
-        try
-        {
-            // Get all network interfaces
-            var hostName = Dns.GetHostName();
-            var hostEntry = await Dns.GetHostEntryAsync(hostName);
-            
-            foreach (var address in hostEntry.AddressList)
-            {
-                // Only IPv4 addresses
-                if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-                {
-                    addresses.Add(address);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            this.Log($"⚠️ Failed to get local IP addresses: {ex.Message}");
-        }
-        
-        return addresses;
-    }
-
-    /// <summary>
-    /// Checks if two IP addresses are in the same subnet (assuming /24 subnet mask).
-    /// </summary>
-    private bool IsInSameSubnet(IPAddress ip1, IPAddress ip2)
-    {
-        var bytes1 = ip1.GetAddressBytes();
-        var bytes2 = ip2.GetAddressBytes();
-        
-        // Check first 3 octets (assumes /24 subnet, typical for home networks)
-        return bytes1[0] == bytes2[0] && 
-               bytes1[1] == bytes2[1] && 
-               bytes1[2] == bytes2[2];
     }
 
     /// <summary>
@@ -548,15 +555,15 @@ public partial class InPortStatistic : ObservableObject
     /// <summary>
     /// Formatted last lap time for display (mm:ss or --:--).
     /// </summary>
-    public string LastLapTimeFormatted => LastLapTime.HasValue 
-        ? $"{LastLapTime.Value.Minutes:D2}:{LastLapTime.Value.Seconds:D2}" 
+    public string LastLapTimeFormatted => LastLapTime.HasValue
+        ? $"{LastLapTime.Value.Minutes:D2}:{LastLapTime.Value.Seconds:D2}"
         : "--:--";
 
     /// <summary>
     /// Formatted last feedback time for display (HH:mm:ss or --:--:--).
     /// Shows the time when the last feedback was received.
     /// </summary>
-    public string LastFeedbackTimeFormatted => LastFeedbackTime.HasValue 
+    public string LastFeedbackTimeFormatted => LastFeedbackTime.HasValue
         ? LastFeedbackTime.Value.ToLocalTime().ToString("HH:mm:ss")
         : "--:--:--";
 

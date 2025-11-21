@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel.WinUI;
 
 using Backend.Model;
@@ -15,8 +16,9 @@ public class MainWindowViewModel : ViewModel.MainWindowViewModel
         IZ21 z21, 
         IJourneyManagerFactory journeyManagerFactory, 
         TreeViewBuilder treeViewBuilder,
+        IUiDispatcher uiDispatcher,
         Solution solution)
-        : base(ioService, z21, journeyManagerFactory, treeViewBuilder, solution)
+        : base(ioService, z21, journeyManagerFactory, treeViewBuilder, uiDispatcher, solution)
     {
     }
 }

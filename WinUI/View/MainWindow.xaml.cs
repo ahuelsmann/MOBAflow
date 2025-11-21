@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
 using Microsoft.UI.Xaml.Controls;
@@ -10,11 +11,13 @@ public sealed partial class MainWindow
 {
     public MainWindowViewModel ViewModel { get; }
     private readonly HealthCheckService? _healthCheckService;
+    private readonly Moba.SharedUI.Service.IUiDispatcher _uiDispatcher;
 
-    public MainWindow(MainWindowViewModel viewModel, HealthCheckService healthCheckService)
+    public MainWindow(MainWindowViewModel viewModel, HealthCheckService healthCheckService, Moba.SharedUI.Service.IUiDispatcher uiDispatcher)
     {
         ViewModel = viewModel;
         _healthCheckService = healthCheckService;
+        _uiDispatcher = uiDispatcher;
 
         InitializeComponent();
 
@@ -272,8 +275,8 @@ public sealed partial class MainWindow
 
     private void OnHealthStatusChanged(object? sender, HealthStatusChangedEventArgs e)
     {
-        // Update UI on dispatcher thread
-        DispatcherQueue.TryEnqueue(() =>
+        // Update UI on dispatcher thread using IUiDispatcher
+        _uiDispatcher.InvokeOnUi(() =>
         {
             UpdateHealthStatus(e.StatusMessage);
         });

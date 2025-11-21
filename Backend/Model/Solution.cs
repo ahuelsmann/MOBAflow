@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Model;
 
 using Converter;
@@ -13,11 +14,17 @@ public class Solution
     public Solution()
     {
         Projects = [];
+        Settings = new Settings();
     }
 
     public string Name { get; set; } = string.Empty;
 
     public List<Project> Projects { get; set; }
+
+    /// <summary>
+    /// Global settings for the entire solution (Z21 configuration, speech settings, etc.)
+    /// </summary>
+    public Settings Settings { get; set; }
 
     /// <summary>
     /// Save the solution.
@@ -69,6 +76,9 @@ public class Solution
                 {
                     temp.Name = path;
 
+                    // ✅ Migrate old solutions: Move Settings and IpAddresses from Project to Solution
+                    MigrateSettingsToSolution(temp);
+
                     // Restore workflow references in stations and platforms
                     RestoreWorkflowReferences(temp);
 
@@ -77,6 +87,52 @@ public class Solution
             }
         }
         return null;
+    }
+
+    /// <summary>
+    /// Migrates settings from Project to Solution level for backward compatibility with old JSON files.
+    /// </summary>
+    private static void MigrateSettingsToSolution(Solution solution)
+    {
+        System.Diagnostics.Debug.WriteLine("🔄 MigrateSettingsToSolution START");
+
+        // If Solution already has Settings with IP addresses, no migration needed
+        if (solution.Settings.IpAddresses.Count > 0)
+        {
+            System.Diagnostics.Debug.WriteLine("  ✅ Solution already has Settings with IPs - skipping migration");
+            return;
+        }
+
+        // Check if first project has old Settings/IpAddresses
+        if (solution.Projects.Count > 0)
+        {
+            var firstProject = solution.Projects[0];
+
+            // Migrate IpAddresses
+            if (firstProject.IpAddresses.Count > 0)
+            {
+                System.Diagnostics.Debug.WriteLine($"  🔄 Migrating {firstProject.IpAddresses.Count} IP addresses from Project to Solution");
+                solution.Settings.IpAddresses = firstProject.IpAddresses;
+                solution.Settings.CurrentIpAddress = firstProject.IpAddresses[0];
+                System.Diagnostics.Debug.WriteLine($"  ✅ CurrentIpAddress set to: {solution.Settings.CurrentIpAddress}");
+            }
+
+            // Migrate Settings
+            if (firstProject.Settings != null)
+            {
+                System.Diagnostics.Debug.WriteLine("  🔄 Migrating Settings from Project to Solution");
+                solution.Settings.SpeechKey = firstProject.Settings.SpeechKey;
+                solution.Settings.SpeechRegion = firstProject.Settings.SpeechRegion;
+                solution.Settings.SpeechSynthesizerRate = firstProject.Settings.SpeechSynthesizerRate;
+                solution.Settings.SpeechSynthesizerVolume = firstProject.Settings.SpeechSynthesizerVolume;
+                solution.Settings.SpeakerEngineName = firstProject.Settings.SpeakerEngineName;
+                solution.Settings.VoiceName = firstProject.Settings.VoiceName;
+                solution.Settings.IsResetWindowLayoutOnStart = firstProject.Settings.IsResetWindowLayoutOnStart;
+                System.Diagnostics.Debug.WriteLine("  ✅ Settings migrated successfully");
+            }
+        }
+
+        System.Diagnostics.Debug.WriteLine("🔄 MigrateSettingsToSolution END");
     }
 
     /// <summary>

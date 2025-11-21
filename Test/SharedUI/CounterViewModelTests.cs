@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Moba.SharedUI.ViewModel;
 using Moba.SharedUI.Service;
 
@@ -30,7 +31,8 @@ public class CounterViewModelTests
     [Test]
     public void CounterViewModel_InitializesStatistics()
     {
-        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), notificationService: null);
+        var solution = new Backend.Model.Solution();
+        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), solution, notificationService: null);
         Assert.That(vm.Statistics, Is.Not.Null);
         Assert.That(vm.Statistics.Count, Is.EqualTo(3));
         Assert.That(vm.Statistics[0].InPort, Is.EqualTo(1));
@@ -39,7 +41,8 @@ public class CounterViewModelTests
     [Test]
     public void ResetCounters_ClearsCounts()
     {
-        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), notificationService: null);
+        var solution = new Backend.Model.Solution();
+        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), solution, notificationService: null);
         vm.Statistics[0].Count = 5;
         vm.Statistics[1].Count = 3;
 
@@ -53,7 +56,8 @@ public class CounterViewModelTests
     [Test]
     public void Ctor_InitializesDefaults()
     {
-        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), notificationService: null);
+        var solution = new Backend.Model.Solution();
+        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), solution, notificationService: null);
         Assert.That(vm.IsNotConnected, Is.True);
     }
 }

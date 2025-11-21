@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
 namespace Moba.Test.Unit;
 

@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Moba.SharedUI.ViewModel;
 using Moba.Test.TestBase;
 
@@ -15,6 +16,7 @@ public class MainWindowViewModelTests : ViewModelTestBase
             Z21Mock.Object, 
             JourneyManagerFactoryMock.Object, 
             TreeViewBuilder,
+            UiDispatcherMock.Object,
             solution);
 
         // Act

@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Model;
 
 using Sound;
@@ -35,7 +36,19 @@ public class Project
     public List<Train> Trains { get; set; }
     public List<Workflow> Workflows { get; set; }
     public List<Journey> Journeys { get; set; }
+    
+    /// <summary>
+    /// DEPRECATED: IP addresses have been moved to Solution.Settings.IpAddresses.
+    /// This property is kept for backward compatibility during JSON deserialization.
+    /// </summary>
+    [Obsolete("Use Solution.Settings.IpAddresses instead. This property is only used for migration from old JSON files.")]
     public List<string> IpAddresses { get; set; }
+    
+    /// <summary>
+    /// DEPRECATED: Settings have been moved to Solution.Settings.
+    /// This property is kept for backward compatibility during JSON deserialization.
+    /// </summary>
+    [Obsolete("Use Solution.Settings instead. This property is only used for migration from old JSON files.")]
     public Settings Settings { get; set; }
     
     /// <summary>

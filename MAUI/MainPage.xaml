@@ -19,13 +19,14 @@
                         Text="Z21 Connection"
                         TextColor="White" />
                     <HorizontalStackLayout Spacing="10">
-                        <Entry
-                            x:Name="IpAddressEntry"
+                        <Picker
+                            x:Name="IpAddressPicker"
+                            Title="Select Z21 IP"
                             HorizontalOptions="FillAndExpand"
-                            Placeholder="192.168.0.111"
-                            PlaceholderColor="LightGray"
-                            Text="{Binding Z21IpAddress}"
-                            TextColor="White" />
+                            ItemsSource="{Binding AvailableIpAddresses}"
+                            SelectedItem="{Binding Z21IpAddress}"
+                            TextColor="White"
+                            TitleColor="LightGray" />
                         <ImageButton
                             Padding="12"
                             BackgroundColor="#27ae60"

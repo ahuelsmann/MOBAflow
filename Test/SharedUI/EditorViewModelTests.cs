@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
 using Moba.Backend.Model;
@@ -47,7 +48,6 @@ public class EditorViewModelTests
         // Arrange
         var editor = new JourneyEditorViewModel(_project, _validationService);
         editor.AddJourneyCommand.Execute(null);
-        var journeyToDelete = editor.SelectedJourney;
         var initialCount = editor.Journeys.Count;
 
         // Act

@@ -66,11 +66,15 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <TextBox
+                        <ComboBox
                             Grid.Column="0"
+                            HorizontalAlignment="Stretch"
                             Header="Z21 IP Address"
+                            IsEditable="True"
                             IsEnabled="{x:Bind ViewModel.IsNotConnected, Mode=OneWay}"
+                            ItemsSource="{x:Bind ViewModel.AvailableIpAddresses, Mode=OneWay}"
                             PlaceholderText="192.168.0.111"
+                            SelectedItem="{x:Bind ViewModel.Z21IpAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                             Text="{x:Bind ViewModel.Z21IpAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
                         <Button

@@ -1,6 +1,21 @@
 {
-  "Name": "C:\\Repos\\ahuelsmann\\MOBAflow\\artifacts\\Debug\\example-solution.json",
-  "Projects": [
+"Name": "C:\\Repos\\ahuelsmann\\MOBAflow\\artifacts\\Debug\\example-solution.json",
+"Settings": {
+  "CurrentIpAddress": "192.168.0.111",
+  "IpAddresses": [
+    "192.168.0.111",
+    "192.168.0.222",
+    "127.0.0.1"
+  ],
+  "SpeechKey": "b29427debf254c88bef939dbab94f162",
+  "SpeechRegion": "germanywestcentral",
+  "SpeechSynthesizerRate": 0,
+    "SpeechSynthesizerVolume": 90,
+    "SpeakerEngineName": "Microsoft.CognitiveServices.Speech",
+    "VoiceName": "ElkeNeural",
+    "IsResetWindowLayoutOnStart": false
+  },
+"Projects": [
     {
       "Name": "myMOBA",
       "SpeakerEngines": [
@@ -234,21 +249,7 @@
             }
           ]
         }
-      ],
-      "IpAddresses": [
-        "192.168.0.111",
-        "127.0.0.1"
-      ],
-      "Settings": {
-        "SpeechKey": "b29427debf254c88bef939dbab94f162",
-        "SpeechRegion": "germanywestcentral",
-        "SpeechSynthesizerRate": 0,
-        "SpeechSynthesizerVolume": 90,
-        "SpeakerEngineName": "Microsoft.CognitiveServices.Speech",
-        "VoiceName": "ElkeNeural",
-        "JourneyName": "RE 78 (Porta-Express)",
-        "IsResetWindowLayoutOnStart": false
-      }
+      ]
     }
   ]
 }

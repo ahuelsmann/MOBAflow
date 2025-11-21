@@ -194,3 +194,14 @@ indent_size = 2
 [*.md]
 max_line_length = off
 trim_trailing_whitespace = false
+
+#### Async/Await Configuration ####
+
+# CA2007: Consider calling ConfigureAwait on the awaited task
+# Library code (Backend, Common, Sound) should use ConfigureAwait(false)
+# UI code (SharedUI, MAUI, WinUI, WebApp) can skip ConfigureAwait or use ConfigureAwait(true)
+dotnet_diagnostic.CA2007.severity = none
+
+# File header template
+file_header_template = Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+

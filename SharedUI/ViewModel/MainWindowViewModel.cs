@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Manager;
@@ -32,6 +33,7 @@ public partial class MainWindowViewModel : ObservableObject
         IZ21 z21, 
         IJourneyManagerFactory journeyManagerFactory, 
         TreeViewBuilder treeViewBuilder,
+        IUiDispatcher uiDispatcher,
         Solution solution)
     {
         _ioService = ioService;
@@ -44,53 +46,101 @@ public partial class MainWindowViewModel : ObservableObject
         var historyPath = Path.Combine(Path.GetTempPath(), "MOBAflow", "History");
         _undoRedoManager = new UndoRedoManager(historyPath);
 
+        // Subscribe to Z21 events
+        _z21.OnSystemStateChanged += OnZ21SystemStateChanged;
+
         // Use injected Solution from DI container
         // This allows for better testability and centralized configuration
         Solution = solution;
     }
 
+    /// <summary>
+    /// Application window title.
+    /// </summary>
     [ObservableProperty]
     private string title = "MOBAflow";
 
+    /// <summary>
+    /// Current path to the loaded solution file (null if no solution is loaded).
+    /// </summary>
     [ObservableProperty]
     private string? currentSolutionPath;
 
+    /// <summary>
+    /// Indicates whether a valid solution with at least one project is loaded.
+    /// </summary>
     [ObservableProperty]
     private bool hasSolution;
 
+    /// <summary>
+    /// The currently loaded solution containing all projects, journeys, and configuration.
+    /// </summary>
     [ObservableProperty]
     private Solution solution = null!; // Initialized in constructor
 
+    /// <summary>
+    /// Tree view nodes representing the solution structure (projects, journeys, stations, etc.).
+    /// </summary>
     [ObservableProperty]
     private ObservableCollection<TreeNodeViewModel> treeNodes = [];
 
+    /// <summary>
+    /// Property grid items for the currently selected tree node.
+    /// </summary>
     [ObservableProperty]
     private ObservableCollection<PropertyViewModel> properties = [];
 
+    /// <summary>
+    /// Type name of the currently selected tree node (e.g., "JourneyViewModel", "StationViewModel").
+    /// </summary>
     [ObservableProperty]
     private string selectedNodeType = string.Empty;
 
+    /// <summary>
+    /// Currently selected tree node (used for property grid and context menu operations).
+    /// </summary>
     [ObservableProperty]
     private TreeNodeViewModel? currentSelectedNode;
 
+    /// <summary>
+    /// Indicates whether the Z21 is currently connected.
+    /// </summary>
     [ObservableProperty]
     private bool isZ21Connected;
 
+    /// <summary>
+    /// Current Z21 connection status text (e.g., "Connected to 192.168.0.111", "Disconnected").
+    /// </summary>
     [ObservableProperty]
     private string z21StatusText = "Disconnected";
 
+    /// <summary>
+    /// InPort number for simulation (testing Z21 feedback without physical hardware).
+    /// </summary>
     [ObservableProperty]
     private string simulateInPort = "1";
 
+    /// <summary>
+    /// Available cities with stations (loaded from master data).
+    /// </summary>
     [ObservableProperty]
     private ObservableCollection<Backend.Data.City> availableCities = [];
 
+    /// <summary>
+    /// Currently selected city for adding stations to journeys.
+    /// </summary>
     [ObservableProperty]
     private Backend.Data.City? selectedCity;
 
+    /// <summary>
+    /// Indicates whether undo operation is available.
+    /// </summary>
     [ObservableProperty]
     private bool canUndo;
 
+    /// <summary>
+    /// Indicates whether redo operation is available.
+    /// </summary>
     [ObservableProperty]
     private bool canRedo;
 
@@ -128,7 +178,7 @@ public partial class MainWindowViewModel : ObservableObject
     {
         if (Solution.Projects.Count == 0) return;
 
-        var (dataManager, path, error) = await _ioService.LoadDataManagerAsync();
+        var (dataManager, _, error) = await _ioService.LoadDataManagerAsync();
         
         if (dataManager != null && Solution.Projects.Count > 0)
         {
@@ -264,21 +314,22 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanConnectToZ21))]
     private async Task ConnectToZ21Async()
     {
-        if (Solution.Projects.Count > 0)
+        // ✅ Use IP from Solution.Settings
+        if (!string.IsNullOrEmpty(Solution.Settings.CurrentIpAddress))
         {
-            var project = Solution.Projects[0];
-
-            if (project.IpAddresses.Count > 0)
+            try
             {
-                try
+                Z21StatusText = "Connecting...";
+                var address = System.Net.IPAddress.Parse(Solution.Settings.CurrentIpAddress);
+                await _z21.ConnectAsync(address);
+
+                IsZ21Connected = true;
+                Z21StatusText = $"Connected to {Solution.Settings.CurrentIpAddress}";
+
+                // Create execution context (requires first project)
+                if (Solution.Projects.Count > 0)
                 {
-                    Z21StatusText = "Connecting...";
-                    var address = System.Net.IPAddress.Parse(project.IpAddresses[0]);
-                    await _z21.ConnectAsync(address);
-
-                    IsZ21Connected = true;
-                    Z21StatusText = $"Connected to {project.IpAddresses[0]}";
-
+                    var project = Solution.Projects[0];
                     var executionContext = new Backend.Model.Action.ActionExecutionContext
                     {
                         Z21 = _z21,
@@ -287,20 +338,20 @@ public partial class MainWindowViewModel : ObservableObject
 
                     _journeyManager?.Dispose();
                     _journeyManager = _journeyManagerFactory.Create(_z21, project.Journeys, executionContext);
+                }
 
-                    ConnectToZ21Command.NotifyCanExecuteChanged();
-                    DisconnectFromZ21Command.NotifyCanExecuteChanged();
-                    SimulateFeedbackCommand.NotifyCanExecuteChanged();
-                }
-                catch (Exception ex)
-                {
-                    Z21StatusText = $"Connection failed: {ex.Message}";
-                }
+                ConnectToZ21Command.NotifyCanExecuteChanged();
+                DisconnectFromZ21Command.NotifyCanExecuteChanged();
+                SimulateFeedbackCommand.NotifyCanExecuteChanged();
             }
-            else
+            catch (Exception ex)
             {
-                Z21StatusText = "No IP address configured";
+                Z21StatusText = $"Connection failed: {ex.Message}";
             }
+        }
+        else
+        {
+            Z21StatusText = "No IP address configured in Solution.Settings";
         }
     }
 
@@ -622,7 +673,7 @@ public partial class MainWindowViewModel : ObservableObject
         {
             PlatformViewModel platformVm => platformVm.Model,
             _ => dataContext as Platform
-        });
+        };
 
         Workflow? workflowModel = dataContext switch
         {

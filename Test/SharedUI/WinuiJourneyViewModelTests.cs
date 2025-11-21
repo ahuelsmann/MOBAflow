@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
 using Moba.Backend.Model;
@@ -10,7 +11,6 @@ public class WinuiJourneyViewModelTests
     public void StateChanged_RaisesPropertyChanged_Dispatches()
     {
         var model = new Journey();
-        var vm = new Moba.SharedUI.ViewModel.WinUI.JourneyViewModel(model);
 
         // Act
         model.CurrentCounter++;

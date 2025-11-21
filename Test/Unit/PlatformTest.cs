@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Unit;
 
 using Moba.Backend.Model;
@@ -235,7 +236,6 @@ public class PlatformTest
     public void Platform_Name_Set_Get()
     {
         var fakeUdp = new FakeUdpClientWrapper();
-        var z21 = new Moba.Backend.Z21(fakeUdp, null);
         var platform = new Platform();
         platform.Name = "P1";
         Assert.That(platform.Name, Is.EqualTo("P1"));

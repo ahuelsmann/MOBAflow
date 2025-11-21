@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Moba.Backend.Interface;
 using Moba.Backend.Model;
 using Moba.Backend.Model.Enum;

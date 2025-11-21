@@ -1,8 +1,12 @@
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Protocol;
 
 public static class Z21Protocol
 {
-    public const int DefaultPort = 21105;
+    /// <summary>
+    /// Default UDP port for Z21 communication.
+    /// </summary>
+    public const int DefaultPort = Z21Constants.DefaultPort;
 
     // Top-level headers (first two bytes = length, next two bytes = header)
     public static class Header

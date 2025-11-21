@@ -1,7 +1,9 @@
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Moq;
 using Moba.SharedUI.Service;
 using Moba.SharedUI.Interface; // ✅ Factory interfaces
 using Moba.SharedUI.ViewModel;
+using Moba.Backend.Interface; // ✅ IUiDispatcher
 
 namespace Moba.Test.TestBase;
 
@@ -57,6 +59,11 @@ public abstract class ViewModelTestBase
     protected Mock<IWagonViewModelFactory> WagonViewModelFactoryMock { get; private set; } = null!;
 
     /// <summary>
+    /// Mock for IUiDispatcher interface (UI thread dispatching)
+    /// </summary>
+    protected Mock<IUiDispatcher> UiDispatcherMock { get; private set; } = null!;
+
+    /// <summary>
     /// TreeViewBuilder instance configured with mocked factories.
     /// Ready to use in tests that need tree structure building.
     /// </summary>
@@ -72,6 +79,12 @@ public abstract class ViewModelTestBase
         Z21Mock = new Mock<IZ21>();
         JourneyManagerFactoryMock = new Mock<IJourneyManagerFactory>();
         IoServiceMock = new Mock<IIoService>();
+        UiDispatcherMock = new Mock<IUiDispatcher>();
+        
+        // Configure UiDispatcher to execute actions immediately (synchronous for tests)
+        UiDispatcherMock
+            .Setup(d => d.InvokeOnUi(It.IsAny<Action>()))
+            .Callback<Action>(action => action());
         
         // Initialize all ViewModel factory mocks
         JourneyViewModelFactoryMock = new Mock<IJourneyViewModelFactory>();
@@ -136,6 +149,7 @@ public abstract class ViewModelTestBase
         Z21Mock?.Reset();
         JourneyManagerFactoryMock?.Reset();
         IoServiceMock?.Reset();
+        UiDispatcherMock?.Reset();
         JourneyViewModelFactoryMock?.Reset();
         StationViewModelFactoryMock?.Reset();
         WorkflowViewModelFactoryMock?.Reset();
