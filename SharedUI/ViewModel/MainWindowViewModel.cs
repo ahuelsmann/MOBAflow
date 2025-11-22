@@ -148,6 +148,13 @@ public partial class MainWindowViewModel : ObservableObject
 
     partial void OnSolutionChanged(Solution? value)
     {
+        // Ensure Solution always has at least one project
+        if (value != null && value.Projects.Count == 0)
+        {
+            value.Projects.Add(new Project { Name = "(Untitled Project)" });
+            System.Diagnostics.Debug.WriteLine("⚠️ Solution had no projects, added empty project");
+        }
+        
         HasSolution = value is { Projects.Count: > 0 };
         SaveSolutionCommand.NotifyCanExecuteChanged();
         ConnectToZ21Command.NotifyCanExecuteChanged();
@@ -314,17 +321,25 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanConnectToZ21))]
     private async Task ConnectToZ21Async()
     {
-        // ✅ Use IP from Solution.Settings
+        // ✅ Use IP and Port from Solution.Settings
         if (!string.IsNullOrEmpty(Solution.Settings.CurrentIpAddress))
         {
             try
             {
                 Z21StatusText = "Connecting...";
                 var address = System.Net.IPAddress.Parse(Solution.Settings.CurrentIpAddress);
-                await _z21.ConnectAsync(address);
+                
+                // Parse port from Settings.DefaultPort, fallback to 21105 if not set or invalid
+                int port = 21105; // Default fallback
+                if (!string.IsNullOrEmpty(Solution.Settings.DefaultPort) && int.TryParse(Solution.Settings.DefaultPort, out var parsedPort))
+                {
+                    port = parsedPort;
+                }
+                
+                await _z21.ConnectAsync(address, port);
 
                 IsZ21Connected = true;
-                Z21StatusText = $"Connected to {Solution.Settings.CurrentIpAddress}";
+                Z21StatusText = $"Connected to {Solution.Settings.CurrentIpAddress}:{port}";
 
                 // Create execution context (requires first project)
                 if (Solution.Projects.Count > 0)
@@ -713,7 +728,7 @@ public partial class MainWindowViewModel : ObservableObject
             return Solution.Projects.FirstOrDefault(p => p.Locomotives.Contains(locomotiveModel));
 
         if (dataContext is Settings setting)
-            return Solution.Projects.FirstOrDefault(p => p.Settings == setting);
+            return Solution.Settings == setting ? Solution.Projects.FirstOrDefault() : null;
 
         return null;
     }

@@ -5,8 +5,9 @@ public static class Z21Protocol
 {
     /// <summary>
     /// Default UDP port for Z21 communication.
+    /// This value should be read from Settings.DefaultPort in the application.
     /// </summary>
-    public const int DefaultPort = Z21Constants.DefaultPort;
+    public const int DefaultPort = 21105;
 
     // Top-level headers (first two bytes = length, next two bytes = header)
     public static class Header

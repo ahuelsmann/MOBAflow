@@ -62,7 +62,7 @@ public class TreeViewBuilder
 
     private static TreeNodeViewModel CreateSolutionNode(Solution solution)
     {
-        return new TreeNodeViewModel
+        var solutionNode = new TreeNodeViewModel
         {
             DisplayName = "Solution",
             Icon = "\uE8F1", // Solution icon
@@ -70,6 +70,11 @@ public class TreeViewBuilder
             DataContext = solution,
             DataType = typeof(Solution)
         };
+
+        // ✅ Settings as direct child of Solution (global settings)
+        solutionNode.Children.Add(CreateSettingNode(solution.Settings));
+
+        return solutionNode;
     }
 
     private TreeNodeViewModel CreateProjectNode(Project project, int index)
@@ -88,8 +93,7 @@ public class TreeViewBuilder
             DataType = typeof(Project)
         };
 
-        // Settings as first child element
-        projectNode.Children.Add(CreateSettingNode(project.Settings));
+        // ✅ Settings removed from Project (now at Solution level)
 
         // Journeys
         if (project.Journeys.Count > 0)

@@ -50,7 +50,8 @@ public partial class AnnouncementViewModel : ObservableObject
 
         if (_speakerEngine != null)
         {
-            string? voiceName = _project?.Settings.VoiceName;
+            // ✅ Use first voice from Project.Voices or null (speaker engine will use default)
+            string? voiceName = _project?.Voices.FirstOrDefault()?.Name;
             await _speakerEngine.AnnouncementAsync(message, voiceName);
         }
         else

@@ -25,9 +25,9 @@ public class ValidationResult
     /// <summary>
     /// Creates a failed validation result with an error message.
     /// </summary>
-    public static ValidationResult Failure(string errorMessage) => new ValidationResult 
-    { 
-        IsValid = false, 
-        ErrorMessage = errorMessage 
+    public static ValidationResult Failure(string errorMessage) => new ValidationResult
+    {
+        IsValid = false,
+        ErrorMessage = errorMessage
     };
 }

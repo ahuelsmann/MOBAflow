@@ -18,11 +18,13 @@ public class Settings
         IpAddresses = [];
     }
 
-    // Z21 Configuration
     [Display(Name = "Current Z21 IP Address")]
     public string? CurrentIpAddress { get; set; }
 
-    [Display(Name = "Z21 IP Address History")]
+    [Display(Name = "Default port of current Z21")]
+    public string? DefaultPort { get; set; }
+
+    [Display(Name = "List of ip addresses")]
     public List<string> IpAddresses { get; set; }
 
     // Azure Speech Configuration

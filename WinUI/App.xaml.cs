@@ -134,8 +134,22 @@ public partial class App
             return dataManager ?? new Backend.Data.DataManager();
         });
 
-        // ✅ Solution as Singleton (initialized empty, can be loaded later by user)
-        services.AddSingleton<Backend.Model.Solution>(sp => new Backend.Model.Solution());
+        // ✅ Solution as Singleton (initialized with one empty project for immediate use)
+        services.AddSingleton<Backend.Model.Solution>(sp =>
+        {
+            var solution = new Backend.Model.Solution
+            {
+                Name = "New Solution"
+            };
+            
+            // Add one empty project so navigation works immediately
+            solution.Projects.Add(new Backend.Model.Project
+            {
+                Name = "(Untitled Project)"
+            });
+            
+            return solution;
+        });
 
         // Dispatcher + Notification + factories via DI
         services.AddSingleton<IUiDispatcher, UiDispatcher>();
@@ -190,9 +204,8 @@ public partial class App
         services.AddTransient<SharedUI.ViewModel.EditorPageViewModel>(sp =>
         {
             var solution = sp.GetRequiredService<Backend.Model.Solution>();
-            var project = solution.Projects.FirstOrDefault() ?? new Backend.Model.Project { Name = "(No Project Loaded)" };
             var validationService = sp.GetRequiredService<SharedUI.Service.ValidationService>();
-            return new SharedUI.ViewModel.EditorPageViewModel(project, validationService);
+            return new SharedUI.ViewModel.EditorPageViewModel(solution, validationService);
         });
         
         // Views

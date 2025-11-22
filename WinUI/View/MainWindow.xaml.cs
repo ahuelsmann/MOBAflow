@@ -359,11 +359,6 @@ public sealed partial class MainWindow
     {
         if (args.InvokedItemContainer?.Tag is not string tag) return;
 
-        // Debug: Log all navigation attempts
-        System.Diagnostics.Debug.WriteLine($"NavigationView_ItemInvoked called with tag: {tag}");
-        System.Diagnostics.Debug.WriteLine($"ViewModel.Solution is null: {ViewModel.Solution == null}");
-        System.Diagnostics.Debug.WriteLine($"ViewModel.Solution.Projects.Count: {ViewModel.Solution?.Projects.Count ?? -1}");
-
         switch (tag)
         {
             case "overview":
@@ -375,47 +370,68 @@ public sealed partial class MainWindow
                 // Navigate to EditorPage
                 try
                 {
+                    System.Diagnostics.Debug.WriteLine($"🔍 Attempting to navigate to EditorPage...");
+                    System.Diagnostics.Debug.WriteLine($"   Solution: {ViewModel.Solution != null}");
+                    System.Diagnostics.Debug.WriteLine($"   Projects: {ViewModel.Solution?.Projects.Count ?? 0}");
+                    
                     var editorViewModel = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<SharedUI.ViewModel.EditorPageViewModel>(
                         ((App)Microsoft.UI.Xaml.Application.Current).Services);
                     
+                    System.Diagnostics.Debug.WriteLine($"✅ EditorPageViewModel resolved from DI");
+                    System.Diagnostics.Debug.WriteLine($"   ProjectName: {editorViewModel.ProjectName}");
+                    
                     var editorPage = new EditorPage(editorViewModel);
                     
-                    System.Diagnostics.Debug.WriteLine($"✅ Navigating to EditorPage");
+                    System.Diagnostics.Debug.WriteLine($"✅ EditorPage created");
                     
                     ContentFrame.Content = editorPage;
                     ContentFrame.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
                     LegacyContent.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+                    
+                    System.Diagnostics.Debug.WriteLine($"✅ Navigation to EditorPage complete");
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"❌ Failed to navigate to EditorPage: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"❌ Failed to navigate to EditorPage:");
+                    System.Diagnostics.Debug.WriteLine($"   Exception Type: {ex.GetType().Name}");
+                    System.Diagnostics.Debug.WriteLine($"   Message: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"   StackTrace: {ex.StackTrace}");
+                    if (ex.InnerException != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"   Inner Exception: {ex.InnerException.Message}");
+                    }
+                    
                     // Fallback: Show legacy content
                     ContentFrame.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
                     LegacyContent.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+                    
+                    // Show error dialog to user
+                    _ = ShowErrorDialogAsync("Navigation Error", $"Failed to open Editor: {ex.Message}");
                 }
                 break;
 
             case "configuration":
                 // Navigate to ProjectConfigurationPage
-                if (ViewModel.Solution != null && ViewModel.Solution.Projects.Count > 0)
+                try
                 {
                     var project = ViewModel.Solution.Projects[0];
                     var configViewModel = new SharedUI.ViewModel.ProjectConfigurationPageViewModel(project);
                     
-                    // Debug output
                     System.Diagnostics.Debug.WriteLine($"✅ Navigating to ProjectConfigurationPage with {project.Journeys.Count} journeys, {project.Workflows.Count} workflows, {project.Trains.Count} trains");
                     
                     ContentFrame.Navigate(typeof(ProjectConfigurationPage), configViewModel);
                     ContentFrame.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
                     LegacyContent.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
                 }
-                else
+                catch (Exception ex)
                 {
-                    // Debug: No solution loaded
-                    System.Diagnostics.Debug.WriteLine($"❌ Cannot navigate: Solution={ViewModel.Solution != null}, Projects={ViewModel.Solution?.Projects.Count ?? 0}");
+                    System.Diagnostics.Debug.WriteLine($"❌ Failed to navigate to ProjectConfigurationPage: {ex.Message}");
                     
-                    // Show InfoBar or ContentDialog to inform user
-                    _ = ShowNoSolutionDialogAsync();
+                    // Fallback: Show legacy content
+                    ContentFrame.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+                    LegacyContent.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+                    
+                    _ = ShowErrorDialogAsync("Navigation Error", $"Failed to open Project Configuration: {ex.Message}");
                 }
                 break;
 
@@ -433,6 +449,19 @@ public sealed partial class MainWindow
         {
             Title = "No Solution Loaded",
             Content = "Please load a solution first before accessing Project Configuration.",
+            CloseButtonText = "OK",
+            XamlRoot = Content.XamlRoot
+        };
+        
+        await dialog.ShowAsync();
+    }
+
+    private async Task ShowErrorDialogAsync(string title, string message)
+    {
+        var dialog = new ContentDialog
+        {
+            Title = title,
+            Content = message,
             CloseButtonText = "OK",
             XamlRoot = Content.XamlRoot
         };

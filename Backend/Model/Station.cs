@@ -21,6 +21,7 @@ public class Station
     public uint NumberOfLapsToStop { get; set; } = 2;
     public DateTime? Arrival { get; set; }
     public DateTime? Departure { get; set; }
+    public uint InPort { get; set; }
     public uint Track { get; set; } = 1;
     public bool IsExitOnLeft { get; set; }
     public string TransferConnections { get; set; } = string.Empty; // (Umsteigemöglichkeiten)

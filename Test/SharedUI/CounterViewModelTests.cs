@@ -13,7 +13,7 @@ public class CounterViewModelTests
         public event SystemStateChanged? OnSystemStateChanged;
         public event XBusStatusChanged? OnXBusStatusChanged;
         public bool IsConnected { get; private set; }
-        public Task ConnectAsync(System.Net.IPAddress address, CancellationToken cancellationToken = default) { IsConnected = true; return Task.CompletedTask; }
+        public Task ConnectAsync(System.Net.IPAddress address, int port = 21105, CancellationToken cancellationToken = default) { IsConnected = true; return Task.CompletedTask; }
         public Task DisconnectAsync() { IsConnected = false; return Task.CompletedTask; }
         public Task SendCommandAsync(byte[] sendBytes) => Task.CompletedTask;
         public void SimulateFeedback(int inPort) => Received?.Invoke(new Moba.Backend.FeedbackResult([0x0F,0x00,0x80,0x00, 0x00, (byte)inPort, 0x01]));
@@ -31,7 +31,7 @@ public class CounterViewModelTests
     [Test]
     public void CounterViewModel_InitializesStatistics()
     {
-        var solution = new Backend.Model.Solution();
+        var solution = new Moba.Backend.Model.Solution();
         var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), solution, notificationService: null);
         Assert.That(vm.Statistics, Is.Not.Null);
         Assert.That(vm.Statistics.Count, Is.EqualTo(3));
@@ -41,7 +41,7 @@ public class CounterViewModelTests
     [Test]
     public void ResetCounters_ClearsCounts()
     {
-        var solution = new Backend.Model.Solution();
+        var solution = new Moba.Backend.Model.Solution();
         var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), solution, notificationService: null);
         vm.Statistics[0].Count = 5;
         vm.Statistics[1].Count = 3;
@@ -56,7 +56,7 @@ public class CounterViewModelTests
     [Test]
     public void Ctor_InitializesDefaults()
     {
-        var solution = new Backend.Model.Solution();
+        var solution = new Moba.Backend.Model.Solution();
         var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), solution, notificationService: null);
         Assert.That(vm.IsNotConnected, Is.True);
     }

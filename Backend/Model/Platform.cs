@@ -24,15 +24,15 @@ public class Platform
     public string Name { get; set; }
 
     /// <summary>
-    /// Track number assigned to this platform.
-    /// </summary>
-    public uint Track { get; set; }
-
-    /// <summary>
     /// R-BUS port assignment for this platform's feedback point.
     /// When this feedback is triggered, the platform workflow will be executed.
     /// </summary>
     public uint InPort { get; set; }
+
+    /// <summary>
+    /// Track number assigned to this platform.
+    /// </summary>
+    public uint Track { get; set; }
 
     /// <summary>
     /// Workflow containing actions (announcements, commands, sounds) to be executed 

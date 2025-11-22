@@ -13,7 +13,7 @@ public class UdpReceivedEventArgs : EventArgs
     /// The received UDP datagram payload.
     /// </summary>
     public byte[] Buffer { get; }
-    
+
     /// <summary>
     /// The remote endpoint (IP address and port) that sent the datagram.
     /// </summary>

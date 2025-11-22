@@ -42,14 +42,15 @@ public class Z21 : IZ21
     /// Sets broadcast flags to receive all events, which keeps the connection alive automatically.
     /// </summary>
     /// <param name="address">IP address of the Z21.</param>
+    /// <param name="port">UDP port of the Z21 (default: 21105).</param>
     /// <param name="cancellationToken">Enables the controlled cancellation of long-running operations.</param>
-    public async Task ConnectAsync(IPAddress address, CancellationToken cancellationToken = default)
+    public async Task ConnectAsync(IPAddress address, int port = Z21Protocol.DefaultPort, CancellationToken cancellationToken = default)
     {
         _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        await _udp.ConnectAsync(address, Z21Protocol.DefaultPort, _cancellationTokenSource.Token).ConfigureAwait(false);
+        await _udp.ConnectAsync(address, port, _cancellationTokenSource.Token).ConfigureAwait(false);
         await SendHandshakeAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
         await SetBroadcastFlagsAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
-        _logger?.LogInformation("Z21 connected. Broadcast events will keep connection alive");
+        _logger?.LogInformation("Z21 connected to {Address}:{Port}. Broadcast events will keep connection alive", address, port);
     }
 
     /// <summary>
@@ -60,7 +61,7 @@ public class Z21 : IZ21
         if (_cancellationTokenSource != null)
         {
             // Cancel and dispose safely
-            _cancellationTokenSource.Cancel();
+            await _cancellationTokenSource.CancelAsync();
         }
         await _udp.StopAsync().ConfigureAwait(false);
         _logger?.LogInformation("Z21 disconnected successfully");
@@ -155,7 +156,7 @@ public class Z21 : IZ21
         if (Z21MessageParser.IsSystemState(content))
         {
             _logger?.LogInformation("📊 System State packet received, subscribers={Count}", OnSystemStateChanged?.GetInvocationList().Length ?? 0);
-            
+
             if (Z21MessageParser.TryParseSystemState(content, out var mainCurrent, out var progCurrent, out var filteredMainCurrent, out var temperature, out var supplyVoltage, out var vccVoltage, out var centralState, out var centralStateEx))
             {
                 CurrentSystemState = new SystemState
@@ -169,7 +170,7 @@ public class Z21 : IZ21
                     CentralState = centralState,
                     CentralStateEx = centralStateEx
                 };
-                
+
                 _logger?.LogInformation("📊 Invoking OnSystemStateChanged: MainCurrent={MainCurrent}mA, Temp={Temp}°C", mainCurrent, temperature);
                 OnSystemStateChanged?.Invoke(CurrentSystemState);
                 _logger?.LogDebug("System state event invoked");
@@ -233,9 +234,9 @@ public class Z21 : IZ21
 
         _logger?.LogInformation("🔔 SimulateFeedback: InPort={InPort}, Subscribers={Count}", inPort, Received?.GetInvocationList().Length ?? 0);
         System.Diagnostics.Debug.WriteLine($"🔔 SimulateFeedback: InPort={inPort}, Subscribers={Received?.GetInvocationList().Length ?? 0}");
-        
+
         Received?.Invoke(new FeedbackResult(simulatedContent));
-        
+
         System.Diagnostics.Debug.WriteLine($"✅ SimulateFeedback: Event invoked for InPort={inPort}");
     }
 

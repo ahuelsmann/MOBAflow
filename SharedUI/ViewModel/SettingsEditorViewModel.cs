@@ -6,7 +6,7 @@ using Moba.Backend.Model;
 
 /// <summary>
 /// ViewModel for the Settings tab in the Editor.
-/// Form editor for Project Settings (Speech, Voices, etc.).
+/// Form editor for Solution Settings (Z21, Speech, Voices, etc.).
 /// </summary>
 public partial class SettingsEditorViewModel : ObservableObject
 {
@@ -21,9 +21,9 @@ public partial class SettingsEditorViewModel : ObservableObject
     [ObservableProperty]
     private string _voiceName;
 
-    public SettingsEditorViewModel(Project project)
+    public SettingsEditorViewModel(Solution solution)
     {
-        _settings = project.Settings;
+        _settings = solution.Settings;
         _speechKey = _settings.SpeechKey ?? string.Empty;
         _speechRegion = _settings.SpeechRegion ?? string.Empty;
         _voiceName = _settings.VoiceName ?? "de-DE-KatjaNeural";

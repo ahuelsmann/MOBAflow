@@ -15,7 +15,7 @@ public interface IZ21 : IDisposable
 
     bool IsConnected { get; }
 
-    Task ConnectAsync(IPAddress address, CancellationToken cancellationToken = default);
+    Task ConnectAsync(IPAddress address, int port = 21105, CancellationToken cancellationToken = default);
     Task DisconnectAsync();
 
     Task SendCommandAsync(byte[] sendBytes);

@@ -142,7 +142,7 @@ public class UdpWrapper : IUdpClientWrapper
     {
         if (_cts != null && !_cts.IsCancellationRequested)
         {
-            _cts.Cancel();
+            await _cts.CancelAsync();
             try
             {
                 if (_receiverTask != null)

@@ -30,8 +30,9 @@ public class SolutionTest
 
         var project = solution.Projects[0];
 
-        Assert.That(project.Settings, Is.Not.Null, "Settings sollte nicht null sein");
-        Assert.That(project.Settings.SpeechSynthesizerVolume, Is.EqualTo(90));
+        // ✅ Settings are at Solution level, not Project level
+        Assert.That(solution.Settings, Is.Not.Null, "Settings sollte nicht null sein");
+        Assert.That(solution.Settings.SpeechSynthesizerVolume, Is.EqualTo(90));
 
         Assert.That(project.SpeakerEngines.Count, Is.EqualTo(1));
         Assert.That(project.SpeakerEngines[0].Name, Is.EqualTo("Microsoft.CognitiveServices.Speech"));
@@ -48,7 +49,8 @@ public class SolutionTest
         Assert.That(project.Journeys.Count, Is.EqualTo(1));
         Assert.That(project.Journeys[0].Name, Is.EqualTo("RE 78 (Porta-Express)"));
 
-        Assert.That(project.IpAddresses.Count, Is.EqualTo(2));
-        Assert.That(project.IpAddresses[0], Is.EqualTo("192.168.0.1"));
+        // ✅ IpAddresses are in Solution.Settings, not Project
+        Assert.That(solution.Settings.IpAddresses.Count, Is.EqualTo(2));
+        Assert.That(solution.Settings.IpAddresses[0], Is.EqualTo("192.168.0.1"));
     }
 }

@@ -51,11 +51,12 @@ public partial class CounterViewModel : ObservableObject, IDisposable
         }
         else
         {
-            Z21IpAddress = Backend.Z21Constants.DefaultIpAddress; // Fallback for new/empty solutions
+            // ✅ Fallback for new/empty solutions - use hardcoded default
+            Z21IpAddress = "192.168.0.111"; // Default Z21 IP address
             _solution.Settings.CurrentIpAddress = Z21IpAddress;
             _solution.Settings.IpAddresses.Add(Z21IpAddress);
             AvailableIpAddresses.Add(Z21IpAddress);
-            this.Log($"⚠️ No IP in Solution.Settings - using default: {Backend.Z21Constants.DefaultIpAddress}");
+            this.Log($"⚠️ No IP in Solution.Settings - using default: 192.168.0.111");
         }
 
         Statistics.Add(new InPortStatistic { InPort = 1, Count = 0, TargetLapCount = GlobalTargetLapCount });
@@ -74,7 +75,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     /// Current Z21 IP address for connection. Synced with Solution.Settings.CurrentIpAddress.
     /// </summary>
     [ObservableProperty]
-    private string z21IpAddress = Backend.Z21Constants.DefaultIpAddress;
+    private string z21IpAddress = "192.168.0.111"; // Default Z21 IP address
 
     /// <summary>
     /// Available Z21 IP addresses from Solution.Settings for ComboBox/Picker binding.

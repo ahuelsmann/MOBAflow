@@ -11,6 +11,7 @@ using Moba.SharedUI.Service;
 public partial class EditorPageViewModel : ObservableObject
 {
     private readonly Project _project;
+    private readonly Solution _solution;
 
     [ObservableProperty]
     private int _selectedTabIndex;
@@ -22,17 +23,29 @@ public partial class EditorPageViewModel : ObservableObject
     public WagonEditorViewModel WagonEditor { get; }
     public SettingsEditorViewModel SettingsEditor { get; }
 
-    public EditorPageViewModel(Project project, ValidationService? validationService = null)
+    public EditorPageViewModel(Solution solution, ValidationService? validationService = null)
     {
-        _project = project;
+        _solution = solution;
+        
+        // Get first project or create a temporary empty one (defensive programming)
+        if (solution.Projects.Count == 0)
+        {
+            System.Diagnostics.Debug.WriteLine("⚠️ EditorPageViewModel: Solution has no projects, creating temporary empty project");
+            _project = new Project { Name = "(Untitled Project)" };
+            solution.Projects.Add(_project);
+        }
+        else
+        {
+            _project = solution.Projects[0];
+        }
         
         // Initialize all tab ViewModels with ValidationService
-        JourneyEditor = new JourneyEditorViewModel(project, validationService);
-        WorkflowEditor = new WorkflowEditorViewModel(project, validationService);
-        TrainEditor = new TrainEditorViewModel(project, validationService);
-        LocomotiveEditor = new LocomotiveEditorViewModel(project, validationService);
-        WagonEditor = new WagonEditorViewModel(project, validationService);
-        SettingsEditor = new SettingsEditorViewModel(project);
+        JourneyEditor = new JourneyEditorViewModel(_project, validationService);
+        WorkflowEditor = new WorkflowEditorViewModel(_project, validationService);
+        TrainEditor = new TrainEditorViewModel(_project, validationService);
+        LocomotiveEditor = new LocomotiveEditorViewModel(_project, validationService);
+        WagonEditor = new WagonEditorViewModel(_project, validationService);
+        SettingsEditor = new SettingsEditorViewModel(_solution); // ✅ Pass Solution for Settings
     }
 
     /// <summary>

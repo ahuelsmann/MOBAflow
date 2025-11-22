@@ -2,9 +2,9 @@
 "Name": "C:\\Repos\\ahuelsmann\\MOBAflow\\artifacts\\Debug\\example-solution.json",
 "Settings": {
   "CurrentIpAddress": "192.168.0.111",
+  "DefaultPort": "21105",
   "IpAddresses": [
     "192.168.0.111",
-    "192.168.0.222",
     "127.0.0.1"
   ],
   "SpeechKey": "b29427debf254c88bef939dbab94f162",
