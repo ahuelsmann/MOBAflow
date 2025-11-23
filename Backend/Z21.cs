@@ -18,6 +18,7 @@ public class Z21 : IZ21
     private readonly IUdpClientWrapper _udp;
     private readonly ILogger<Z21>? _logger;
     private CancellationTokenSource? _cancellationTokenSource;
+    private Timer? _keepaliveTimer;
     private bool _disposed;
 
     public Z21(IUdpClientWrapper udp, ILogger<Z21>? logger = null)
@@ -40,6 +41,7 @@ public class Z21 : IZ21
     /// <summary>
     /// Connect to Z21.
     /// Sets broadcast flags to receive all events, which keeps the connection alive automatically.
+    /// Also starts a keepalive timer that sends periodic status requests every 30 seconds.
     /// </summary>
     /// <param name="address">IP address of the Z21.</param>
     /// <param name="port">UDP port of the Z21 (default: 21105).</param>
@@ -50,7 +52,11 @@ public class Z21 : IZ21
         await _udp.ConnectAsync(address, port, _cancellationTokenSource.Token).ConfigureAwait(false);
         await SendHandshakeAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
         await SetBroadcastFlagsAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
-        _logger?.LogInformation("Z21 connected to {Address}:{Port}. Broadcast events will keep connection alive", address, port);
+        
+        // Start keepalive timer to prevent Z21 timeout/crash
+        StartKeepaliveTimer();
+        
+        _logger?.LogInformation("Z21 connected to {Address}:{Port}. Keepalive timer started (30s interval)", address, port);
     }
 
     /// <summary>
@@ -58,6 +64,9 @@ public class Z21 : IZ21
     /// </summary>
     public async Task DisconnectAsync()
     {
+        // Stop keepalive timer
+        StopKeepaliveTimer();
+        
         if (_cancellationTokenSource != null)
         {
             // Cancel and dispose safely
@@ -66,6 +75,68 @@ public class Z21 : IZ21
         await _udp.StopAsync().ConfigureAwait(false);
         _logger?.LogInformation("Z21 disconnected successfully");
     }
+
+    #region Keepalive Management
+    
+    /// <summary>
+    /// Starts a timer that sends periodic status requests to keep the Z21 connection alive.
+    /// The Z21 expects regular communication; without it, the connection may timeout after 60 seconds
+    /// and the Z21 may become unstable or crash when multiple inactive clients accumulate.
+    /// </summary>
+    private void StartKeepaliveTimer()
+    {
+        // Ensure any existing timer is stopped first
+        StopKeepaliveTimer();
+        
+        _keepaliveTimer = new Timer(
+            async _ => await SendKeepaliveAsync().ConfigureAwait(false),
+            null,
+            TimeSpan.FromSeconds(30),  // First keepalive after 30 seconds
+            TimeSpan.FromSeconds(30)); // Subsequent keepalives every 30 seconds
+        
+        _logger?.LogDebug("Keepalive timer started (30s interval)");
+    }
+    
+    /// <summary>
+    /// Stops the keepalive timer.
+    /// </summary>
+    private void StopKeepaliveTimer()
+    {
+        if (_keepaliveTimer != null)
+        {
+            _keepaliveTimer.Dispose();
+            _keepaliveTimer = null;
+            _logger?.LogDebug("Keepalive timer stopped");
+        }
+    }
+    
+    /// <summary>
+    /// Sends a keepalive message (LAN_X_GET_STATUS) to the Z21.
+    /// This prevents the Z21 from timing out inactive connections.
+    /// </summary>
+    private async Task SendKeepaliveAsync()
+    {
+        if (_cancellationTokenSource == null || _cancellationTokenSource.Token.IsCancellationRequested)
+        {
+            return;
+        }
+        
+        try
+        {
+            await GetStatusAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
+            _logger?.LogTrace("Keepalive sent successfully");
+        }
+        catch (OperationCanceledException)
+        {
+            // Normal during shutdown, don't log
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning("Keepalive failed: {Message}", ex.Message);
+        }
+    }
+    
+    #endregion
 
     #region Basic Commands
     private async Task SendHandshakeAsync(CancellationToken cancellationToken = default)
@@ -255,6 +326,7 @@ public class Z21 : IZ21
         if (_disposed) return;
         if (disposing)
         {
+            StopKeepaliveTimer();
             try { _udp?.Dispose(); } catch { /* ignore */ }
             _cancellationTokenSource?.Cancel();
             _cancellationTokenSource?.Dispose();
