@@ -15,7 +15,6 @@ public partial class EditorPageViewModel : ObservableObject
 {
     private readonly Solution _solution;
     private readonly ValidationService? _validationService;
-    private readonly Project _project;
 
     [ObservableProperty]
     private int _selectedTabIndex;
@@ -128,7 +127,6 @@ public partial class EditorPageViewModel : ObservableObject
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanDeleteProject))]
     private void DeleteProject()
-    public EditorPageViewModel(Solution solution, ValidationService? validationService = null)
     {
         if (SelectedProject == null) return;
 
@@ -146,28 +144,8 @@ public partial class EditorPageViewModel : ObservableObject
     {
         System.Diagnostics.Debug.WriteLine($"🔄 OnSelectedProjectChanged - New project: {value?.Name ?? "null"}");
         InitializeEditors();
+        DeleteProjectCommand.NotifyCanExecuteChanged();
         // Note: InitializeEditors() already calls OnPropertyChanged for all editors
-        _solution = solution;
-        
-        // Get first project or create a temporary empty one (defensive programming)
-        if (solution.Projects.Count == 0)
-        {
-            System.Diagnostics.Debug.WriteLine("⚠️ EditorPageViewModel: Solution has no projects, creating temporary empty project");
-            _project = new Project { Name = "(Untitled Project)" };
-            solution.Projects.Add(_project);
-        }
-        else
-        {
-            _project = solution.Projects[0];
-        }
-        
-        // Initialize all tab ViewModels with ValidationService
-        JourneyEditor = new JourneyEditorViewModel(_project, validationService);
-        WorkflowEditor = new WorkflowEditorViewModel(_project, validationService);
-        TrainEditor = new TrainEditorViewModel(_project, validationService);
-        LocomotiveEditor = new LocomotiveEditorViewModel(_project, validationService);
-        WagonEditor = new WagonEditorViewModel(_project, validationService);
-        SettingsEditor = new SettingsEditorViewModel(_solution); // ✅ Pass Solution for Settings
     }
 
     /// <summary>
@@ -175,3 +153,4 @@ public partial class EditorPageViewModel : ObservableObject
     /// </summary>
     public string ProjectName => _selectedProject?.Name ?? "(No Project Loaded)";
 }
+
