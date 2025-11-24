@@ -16,15 +16,13 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!--  Page Title  -->
         <TextBlock
             Grid.Row="0"
             Margin="16,12"
             Style="{StaticResource SubtitleTextBlockStyle}"
             Text="Project Configuration" />
 
-        <!--  Pivot for different entity types  -->
-        <Pivot Grid.Row="1" Margin="0,0,0,0">
+        <Pivot Grid.Row="1">
             <!--  Journeys Tab  -->
             <PivotItem Header="Journeys">
                 <Grid>
@@ -33,7 +31,6 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <!--  Toolbar  -->
                     <StackPanel
                         Grid.Row="0"
                         Margin="16,8"
@@ -50,92 +47,68 @@
                             ToolTipService.ToolTip="Delete Journey" />
                     </StackPanel>
 
-                    <!--  Journeys ListView  -->
                     <ListView
                         Grid.Row="1"
                         Margin="16,0"
                         ItemsSource="{x:Bind ViewModel.Journeys, Mode=OneWay}"
                         SelectedItem="{Binding SelectedJourney, Mode=TwoWay}"
                         SelectionMode="Single">
-                        <!--  Header  -->
-                        <ListView.Header>
-                            <Grid
-                                Padding="8,4"
-                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-                                BorderThickness="0,0,0,1">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="200" />
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="150" />
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    Grid.Column="0"
-                                    FontWeight="SemiBold"
-                                    Text="Name" />
-                                <TextBlock
-                                    Grid.Column="1"
-                                    FontWeight="SemiBold"
-                                    Text="InPort" />
-                                <TextBlock
-                                    Grid.Column="2"
-                                    FontWeight="SemiBold"
-                                    Text="Behavior on Last Stop" />
-                                <TextBlock
-                                    Grid.Column="3"
-                                    FontWeight="SemiBold"
-                                    Text="Train" />
-                                <TextBlock
-                                    Grid.Column="4"
-                                    FontWeight="SemiBold"
-                                    Text="Description" />
-                            </Grid>
-                        </ListView.Header>
-
-                        <!--  Row Template  -->
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="vm:JourneyViewModel">
-                                <Grid Padding="8,4">
+                        <ListView.HeaderTemplate>
+                            <DataTemplate>
+                                <Grid Padding="12,8" Background="{ThemeResource SystemBaseLowColor}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="200" />
                                         <ColumnDefinition Width="100" />
                                         <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="150" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-
-                                    <TextBox
-                                        Grid.Column="0"
-                                        Margin="0,0,4,0"
-                                        Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-
-                                    <TextBox
-                                        Grid.Column="1"
-                                        Margin="0,0,4,0"
-                                        Text="{Binding InPort, Mode=TwoWay}" />
-
-                                    <ComboBox
+                                    <TextBlock Grid.Column="0" Text="Name" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                    <TextBlock Grid.Column="1" Text="InPort" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                    <TextBlock Grid.Column="2" Text="Behavior on Last Stop" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                    <TextBlock Grid.Column="3" Text="Train" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                    <TextBlock Grid.Column="4" Text="Description" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.HeaderTemplate>
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Padding" Value="0" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:JourneyViewModel">
+                                <Grid Height="48" Padding="12,0" AutomationProperties.Name="{x:Bind Name}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="200" />
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock 
+                                        Grid.Column="0" 
+                                        Text="{x:Bind Name, Mode=OneWay}" 
+                                        VerticalAlignment="Center"
+                                        Style="{ThemeResource BaseTextBlockStyle}" />
+                                    <TextBlock 
+                                        Grid.Column="1" 
+                                        Text="{x:Bind InPort, Mode=OneWay}" 
+                                        VerticalAlignment="Center" />
+                                    <TextBlock
                                         Grid.Column="2"
-                                        Margin="0,0,4,0"
-                                        HorizontalAlignment="Stretch"
-                                        ItemsSource="{Binding BehaviorOnLastStopValues}"
-                                        SelectedItem="{Binding BehaviorOnLastStop, Mode=TwoWay}" />
-
-                                    <ComboBox
+                                        Text="{x:Bind BehaviorOnLastStop, Mode=OneWay}"
+                                        VerticalAlignment="Center" />
+                                    <TextBlock
                                         Grid.Column="3"
-                                        Margin="0,0,4,0"
-                                        HorizontalAlignment="Stretch"
-                                        DisplayMemberPath="Name"
-                                        ItemsSource="{Binding ElementName=PageRoot, Path=DataContext.AvailableTrains}"
-                                        PlaceholderText="(None)"
-                                        SelectedItem="{Binding Train, Mode=TwoWay}" />
-
-                                    <TextBox
+                                        Text="{x:Bind Train.Name, Mode=OneWay}"
+                                        VerticalAlignment="Center" />
+                                    <TextBlock
                                         Grid.Column="4"
-                                        Text="{Binding Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                        TextWrapping="Wrap" />
+                                        Text="{x:Bind Description, Mode=OneWay}"
+                                        TextWrapping="Wrap"
+                                        VerticalAlignment="Center" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -152,7 +125,6 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <!--  Journey Selector  -->
                     <StackPanel
                         Grid.Row="0"
                         Margin="16,8"
@@ -167,7 +139,6 @@
                             SelectedItem="{Binding SelectedJourney, Mode=TwoWay}" />
                     </StackPanel>
 
-                    <!--  Toolbar  -->
                     <StackPanel
                         Grid.Row="1"
                         Margin="16,8"
@@ -184,64 +155,15 @@
                             ToolTipService.ToolTip="Delete Station" />
                     </StackPanel>
 
-                    <!--  Stations ListView  -->
                     <ListView
                         Grid.Row="2"
                         Margin="16,0"
                         ItemsSource="{Binding SelectedJourney.Stations, Mode=OneWay}"
                         SelectedItem="{Binding SelectedStation, Mode=TwoWay}"
                         SelectionMode="Single">
-                        <!--  Header  -->
-                        <ListView.Header>
-                            <Grid
-                                Padding="8,4"
-                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-                                BorderThickness="0,0,0,1">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="200" />
-                                    <ColumnDefinition Width="80" />
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="100" />
-                                    <ColumnDefinition Width="150" />
-                                    <ColumnDefinition Width="100" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    Grid.Column="0"
-                                    FontWeight="SemiBold"
-                                    Text="Name" />
-                                <TextBlock
-                                    Grid.Column="1"
-                                    FontWeight="SemiBold"
-                                    Text="Number" />
-                                <TextBlock
-                                    Grid.Column="2"
-                                    FontWeight="SemiBold"
-                                    Text="Laps to Stop" />
-                                <TextBlock
-                                    Grid.Column="3"
-                                    FontWeight="SemiBold"
-                                    Text="Arrival" />
-                                <TextBlock
-                                    Grid.Column="4"
-                                    FontWeight="SemiBold"
-                                    Text="Departure" />
-                                <TextBlock
-                                    Grid.Column="5"
-                                    FontWeight="SemiBold"
-                                    Text="Workflow" />
-                                <TextBlock
-                                    Grid.Column="6"
-                                    FontWeight="SemiBold"
-                                    Text="Exit on Left" />
-                            </Grid>
-                        </ListView.Header>
-
-                        <!--  Row Template  -->
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="vm:StationViewModel">
-                                <Grid Padding="8,4">
+                        <ListView.HeaderTemplate>
+                            <DataTemplate>
+                                <Grid Padding="12,8" Background="{ThemeResource SystemBaseLowColor}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="200" />
                                         <ColumnDefinition Width="80" />
@@ -249,47 +171,67 @@
                                         <ColumnDefinition Width="100" />
                                         <ColumnDefinition Width="100" />
                                         <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="120" />
                                     </Grid.ColumnDefinitions>
-
-                                    <TextBox
-                                        Grid.Column="0"
-                                        Margin="0,0,4,0"
-                                        Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-
-                                    <TextBox
-                                        Grid.Column="1"
-                                        Margin="0,0,4,0"
-                                        Text="{Binding Number, Mode=TwoWay}" />
-
-                                    <TextBox
-                                        Grid.Column="2"
-                                        Margin="0,0,4,0"
-                                        Text="{Binding NumberOfLapsToStop, Mode=TwoWay}" />
-
-                                    <TextBox
-                                        Grid.Column="3"
-                                        Margin="0,0,4,0"
-                                        Text="{Binding Arrival, Mode=TwoWay}" />
-
-                                    <TextBox
-                                        Grid.Column="4"
-                                        Margin="0,0,4,0"
-                                        Text="{Binding Departure, Mode=TwoWay}" />
-
-                                    <ComboBox
+                                    <TextBlock Grid.Column="0" Text="Name" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                    <TextBlock Grid.Column="1" Text="Number" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                    <TextBlock Grid.Column="2" Text="Laps to Stop" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                    <TextBlock Grid.Column="3" Text="Arrival" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                    <TextBlock Grid.Column="4" Text="Departure" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                    <TextBlock Grid.Column="5" Text="Workflow" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                    <TextBlock Grid.Column="6" Text="Exit on Left" HorizontalAlignment="Left" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.HeaderTemplate>
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Padding" Value="0" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:StationViewModel">
+                                <Grid Height="48" Padding="12,0,12,0" AutomationProperties.Name="{x:Bind Name}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="200" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="120" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock 
+                                        Grid.Column="0" 
+                                        Text="{x:Bind Name, Mode=OneWay}" 
+                                        VerticalAlignment="Center"
+                                        Style="{ThemeResource BaseTextBlockStyle}" />
+                                    <TextBlock 
+                                        Grid.Column="1" 
+                                        Text="{x:Bind Number, Mode=OneWay}" 
+                                        VerticalAlignment="Center" />
+                                    <TextBlock 
+                                        Grid.Column="2" 
+                                        Text="{x:Bind NumberOfLapsToStop, Mode=OneWay}" 
+                                        VerticalAlignment="Center" />
+                                    <TextBlock 
+                                        Grid.Column="3" 
+                                        Text="{x:Bind Arrival, Mode=OneWay}" 
+                                        VerticalAlignment="Center" />
+                                    <TextBlock 
+                                        Grid.Column="4" 
+                                        Text="{x:Bind Departure, Mode=OneWay}" 
+                                        VerticalAlignment="Center" />
+                                    <TextBlock
                                         Grid.Column="5"
-                                        Margin="0,0,4,0"
-                                        HorizontalAlignment="Stretch"
-                                        DisplayMemberPath="Name"
-                                        ItemsSource="{Binding ElementName=PageRoot, Path=DataContext.AvailableWorkflows}"
-                                        PlaceholderText="(None)"
-                                        SelectedItem="{Binding Flow, Mode=TwoWay}" />
-
+                                        Text="{x:Bind Flow.Name, Mode=OneWay}"
+                                        VerticalAlignment="Center" />
                                     <CheckBox
                                         Grid.Column="6"
                                         HorizontalAlignment="Center"
-                                        IsChecked="{Binding IsExitOnLeft, Mode=TwoWay}" />
+                                        VerticalAlignment="Center"
+                                        IsChecked="{x:Bind IsExitOnLeft, Mode=OneWay}"
+                                        IsEnabled="False" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -305,7 +247,6 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <!--  Toolbar  -->
                     <StackPanel
                         Grid.Row="0"
                         Margin="16,8"
@@ -322,53 +263,47 @@
                             ToolTipService.ToolTip="Delete Workflow" />
                     </StackPanel>
 
-                    <!--  Workflows ListView  -->
                     <ListView
                         Grid.Row="1"
                         Margin="16,0"
                         ItemsSource="{x:Bind ViewModel.Workflows, Mode=OneWay}"
                         SelectedItem="{Binding SelectedWorkflow, Mode=TwoWay}"
                         SelectionMode="Single">
-                        <!--  Header  -->
-                        <ListView.Header>
-                            <Grid
-                                Padding="8,4"
-                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-                                BorderThickness="0,0,0,1">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="250" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    Grid.Column="0"
-                                    FontWeight="SemiBold"
-                                    Text="Name" />
-                                <TextBlock
-                                    Grid.Column="1"
-                                    FontWeight="SemiBold"
-                                    Text="Description" />
-                            </Grid>
-                        </ListView.Header>
-
-                        <!--  Row Template  -->
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="vm:WorkflowViewModel">
-                                <Grid Padding="8,4">
+                        <ListView.HeaderTemplate>
+                            <DataTemplate>
+                                <Grid Padding="12,8" Background="{ThemeResource SystemBaseLowColor}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="250" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-
-                                    <TextBox
-                                        Grid.Column="0"
-                                        Margin="0,0,4,0"
-                                        Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-
-                                    <TextBox
+                                    <TextBlock Grid.Column="0" Text="Name" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                    <TextBlock Grid.Column="1" Text="Description" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.HeaderTemplate>
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Padding" Value="0" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:WorkflowViewModel">
+                                <Grid Height="48" Padding="12,0" AutomationProperties.Name="{x:Bind Name}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="250" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock 
+                                        Grid.Column="0" 
+                                        Text="{x:Bind Name, Mode=OneWay}" 
+                                        VerticalAlignment="Center"
+                                        Style="{ThemeResource BaseTextBlockStyle}" />
+                                    <TextBlock
                                         Grid.Column="1"
-                                        Text="{Binding Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                        TextWrapping="Wrap" />
+                                        Text="{x:Bind Description, Mode=OneWay}"
+                                        TextWrapping="Wrap"
+                                        VerticalAlignment="Center" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -384,7 +319,6 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <!--  Toolbar  -->
                     <StackPanel
                         Grid.Row="0"
                         Margin="16,8"
@@ -401,57 +335,82 @@
                             ToolTipService.ToolTip="Delete Train" />
                     </StackPanel>
 
-                    <!--  Trains ListView  -->
                     <ListView
                         Grid.Row="1"
                         Margin="16,0"
                         ItemsSource="{x:Bind ViewModel.Trains, Mode=OneWay}"
                         SelectedItem="{Binding SelectedTrain, Mode=TwoWay}"
                         SelectionMode="Single">
-                        <!--  Header  -->
-                        <ListView.Header>
-                            <Grid
-                                Padding="8,4"
-                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-                                BorderThickness="0,0,0,1">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="250" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    Grid.Column="0"
-                                    FontWeight="SemiBold"
-                                    Text="Name" />
-                                <TextBlock
-                                    Grid.Column="1"
-                                    FontWeight="SemiBold"
-                                    Text="Description" />
-                            </Grid>
-                        </ListView.Header>
-
-                        <!--  Row Template  -->
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="vm:TrainViewModel">
-                                <Grid Padding="8,4">
+                        <ListView.HeaderTemplate>
+                            <DataTemplate>
+                                <Grid Padding="12,8" Background="{ThemeResource SystemBaseLowColor}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="250" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-
-                                    <TextBox
-                                        Grid.Column="0"
-                                        Margin="0,0,4,0"
-                                        Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-
-                                    <TextBox
+                                    <TextBlock Grid.Column="0" Text="Name" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                    <TextBlock Grid.Column="1" Text="Description" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.HeaderTemplate>
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Padding" Value="0" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:TrainViewModel">
+                                <Grid Height="48" Padding="12,0" AutomationProperties.Name="{x:Bind Name}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="250" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock 
+                                        Grid.Column="0" 
+                                        Text="{x:Bind Name, Mode=OneWay}" 
+                                        VerticalAlignment="Center"
+                                        Style="{ThemeResource BaseTextBlockStyle}" />
+                                    <TextBlock
                                         Grid.Column="1"
-                                        Text="{Binding Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                        TextWrapping="Wrap" />
+                                        Text="{x:Bind Description, Mode=OneWay}"
+                                        TextWrapping="Wrap"
+                                        VerticalAlignment="Center" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
+                </Grid>
+            </PivotItem>
+
+            <!--  Application Settings Tab  -->
+            <PivotItem Header="Application">
+                <Grid Margin="16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock
+                        Grid.Row="0"
+                        Margin="0,0,0,16"
+                        Style="{StaticResource SubtitleTextBlockStyle}"
+                        Text="Application Settings" />
+
+                    <StackPanel Grid.Row="1" Spacing="16">
+                        <CheckBox
+                            x:Name="AutoLoadCheckBox"
+                            Content="Auto-load last solution on startup"
+                            IsChecked="{Binding AutoLoadEnabled, Mode=TwoWay}"
+                            ToolTipService.ToolTip="Automatically load the last opened solution when the application starts" />
+
+                        <TextBlock
+                            Margin="32,0,0,0"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="When enabled, the last opened solution will be automatically loaded on application startup. This saves you from manually opening the same solution every time."
+                            TextWrapping="Wrap" />
+                    </StackPanel>
                 </Grid>
             </PivotItem>
         </Pivot>

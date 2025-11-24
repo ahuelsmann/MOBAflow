@@ -1,3 +1,4 @@
+using System.Linq;
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
@@ -443,7 +444,9 @@ public sealed partial class MainWindow
                 try
                 {
                     var project = ViewModel.Solution.Projects[0];
-                    var configViewModel = new SharedUI.ViewModel.ProjectConfigurationPageViewModel(project);
+                    var preferencesService = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<SharedUI.Service.IPreferencesService>(
+                        ((App)Microsoft.UI.Xaml.Application.Current).Services);
+                    var configViewModel = new SharedUI.ViewModel.ProjectConfigurationPageViewModel(project, preferencesService);
                     
                     System.Diagnostics.Debug.WriteLine($"✅ Navigating to ProjectConfigurationPage with {project.Journeys.Count} journeys, {project.Workflows.Count} workflows, {project.Trains.Count} trains");
                     
@@ -464,9 +467,26 @@ public sealed partial class MainWindow
                 break;
 
             case "explorer":
-                // Show legacy content (TreeView + PropertyGrid)
-                ContentFrame.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
-                LegacyContent.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+                // Navigate to ExplorerPage
+                try
+                {
+                    var explorerPage = new ExplorerPage(ViewModel);
+                    ContentFrame.Content = explorerPage;
+                    ContentFrame.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+                    LegacyContent.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+                    
+                    System.Diagnostics.Debug.WriteLine($"✅ Navigated to ExplorerPage with {ViewModel.TreeNodes.Count} root nodes");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ Failed to navigate to ExplorerPage: {ex.Message}");
+                    
+                    // Fallback: Show legacy content
+                    ContentFrame.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+                    LegacyContent.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+                    
+                    _ = ShowErrorDialogAsync("Navigation Error", $"Failed to open Explorer: {ex.Message}");
+                }
                 break;
         }
     }
@@ -639,14 +659,10 @@ public sealed partial class MainWindow
         if (ViewModel.Solution?.Projects.Count > 0)
         {
             var project = ViewModel.Solution.Projects[0];
-            foreach (var journey in project.Journeys)
+            foreach (var journey in project.Journeys.Where(journey => journey.Stations.Contains(station)))
             {
-                if (journey.Stations.Contains(station))
-                {
-                    journey.Stations.Remove(station);
-                    ViewModel.RefreshTreeView();
-                    break;
-                }
+                journey.Stations.Remove(station);
+                ViewModel.RefreshTreeView();
             }
         }
     }

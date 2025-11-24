@@ -51,12 +51,57 @@ public partial class App
         // ✅ Load DataManager (master data: Cities, etc.)
         _ = LoadDataManagerAsync();
 
+        // ✅ Try to auto-load last solution
+        _ = TryAutoLoadLastSolutionAsync();
+
         _window = _serviceProvider.GetRequiredService<MainWindow>();
 
         var ioService = _serviceProvider.GetRequiredService<IIoService>() as IoService;
         ioService?.SetWindowId(_window.AppWindow.Id);
 
         _window.Activate();
+    }
+
+    /// <summary>
+    /// Attempts to auto-load the last opened solution on startup.
+    /// If successful, updates the Solution singleton in DI container.
+    /// </summary>
+    private async Task TryAutoLoadLastSolutionAsync()
+    {
+        try
+        {
+            var ioService = _serviceProvider!.GetRequiredService<IIoService>() as IoService;
+            if (ioService == null) return;
+
+            var (solution, path, error) = await ioService.TryAutoLoadLastSolutionAsync();
+
+            if (solution != null && path != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"✅ Auto-loaded last solution from: {path}");
+                System.Diagnostics.Debug.WriteLine($"📊 Solution contains {solution.Projects.Count} projects");
+
+                // Update the Solution singleton
+                var existingSolution = _serviceProvider.GetRequiredService<Backend.Model.Solution>();
+                existingSolution.UpdateFrom(solution);
+
+                // Update MainWindowViewModel with the loaded path
+                var mainWindowViewModel = _serviceProvider.GetRequiredService<SharedUI.ViewModel.WinUI.MainWindowViewModel>();
+                mainWindowViewModel.CurrentSolutionPath = path;
+            }
+            else if (error != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"⚠️ Could not auto-load last solution: {error}");
+                System.Diagnostics.Debug.WriteLine("ℹ️ Using empty solution instead");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("ℹ️ No previous solution to auto-load (or auto-load disabled)");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ Error during auto-load: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -118,6 +163,10 @@ public partial class App
             builder.AddDebug();
             builder.SetMinimumLevel(LogLevel.Information);
         });
+
+        // Preferences service (must be registered before IoService)
+        services.AddSingleton<PreferencesService>();
+        services.AddSingleton<SharedUI.Service.IPreferencesService>(sp => sp.GetRequiredService<PreferencesService>());
 
         services.AddSingleton<IIoService, IoService>();
 

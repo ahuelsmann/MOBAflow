@@ -16,6 +16,12 @@ using System.Threading.Tasks;
 public class IoService : IIoService
 {
     private Microsoft.UI.WindowId? _windowId;
+    private readonly IPreferencesService _preferencesService;
+
+    public IoService(IPreferencesService preferencesService)
+    {
+        _preferencesService = preferencesService;
+    }
 
     /// <summary>
     /// Sets the WindowId for the file pickers. Must be called before using the service.
@@ -41,6 +47,10 @@ public class IoService : IIoService
 
         var sol = new Solution();
         sol = await sol.LoadAsync(result.Path);
+        
+        // Save last solution path to preferences
+        _preferencesService.LastSolutionPath = result.Path;
+        
         return (sol, result.Path, null);
     }
 
@@ -57,11 +67,61 @@ public class IoService : IIoService
 
             var sol = new Solution();
             sol = await sol.LoadAsync(filePath);
+            
+            // Save last solution path to preferences
+            _preferencesService.LastSolutionPath = filePath;
+            
             return (sol, filePath, null);
         }
         catch (Exception ex)
         {
             return (null, null, $"Error loading solution: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Attempts to auto-load the last opened solution if auto-load is enabled.
+    /// Returns null if auto-load is disabled, no previous solution exists, or the file is no longer available.
+    /// </summary>
+    public async Task<(Solution? solution, string? path, string? error)> TryAutoLoadLastSolutionAsync()
+    {
+        try
+        {
+            // Check if auto-load is enabled
+            if (!_preferencesService.AutoLoadLastSolution)
+            {
+                System.Diagnostics.Debug.WriteLine("ℹ️ Auto-load is disabled in preferences");
+                return (null, null, null);
+            }
+
+            // Check if there's a last solution path
+            var lastPath = _preferencesService.LastSolutionPath;
+            if (string.IsNullOrEmpty(lastPath))
+            {
+                System.Diagnostics.Debug.WriteLine("ℹ️ No previous solution path found");
+                return (null, null, null);
+            }
+
+            // Check if the file still exists
+            if (!File.Exists(lastPath))
+            {
+                System.Diagnostics.Debug.WriteLine($"⚠️ Last solution file not found: {lastPath}");
+                return (null, null, $"Last solution file not found: {lastPath}");
+            }
+
+            System.Diagnostics.Debug.WriteLine($"🔄 Auto-loading last solution: {lastPath}");
+            
+            // Load the solution
+            var sol = new Solution();
+            sol = await sol.LoadAsync(lastPath);
+            
+            System.Diagnostics.Debug.WriteLine($"✅ Auto-loaded solution with {sol.Projects.Count} projects");
+            return (sol, lastPath, null);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ Failed to auto-load last solution: {ex.Message}");
+            return (null, null, $"Failed to auto-load: {ex.Message}");
         }
     }
 
@@ -87,6 +147,10 @@ public class IoService : IIoService
         }
 
         await Solution.SaveAsync(path!, solution);
+        
+        // Save last solution path to preferences
+        _preferencesService.LastSolutionPath = path;
+        
         return (true, path, null);
     }
 

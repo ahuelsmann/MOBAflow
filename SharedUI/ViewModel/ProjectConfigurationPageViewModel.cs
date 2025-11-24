@@ -6,6 +6,8 @@ using Backend.Model;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using Moba.SharedUI.Service;
+
 using System.Collections.ObjectModel;
 using System.Linq;
 
@@ -16,10 +18,12 @@ using System.Linq;
 public partial class ProjectConfigurationPageViewModel : ObservableObject
 {
     private readonly Project _project;
+    private readonly IPreferencesService? _preferencesService;
 
-    public ProjectConfigurationPageViewModel(Project project)
+    public ProjectConfigurationPageViewModel(Project project, IPreferencesService? preferencesService = null)
     {
         _project = project ?? throw new ArgumentNullException(nameof(project));
+        _preferencesService = preferencesService;
 
         // Wrap model collections in ViewModels
         Journeys = new ObservableCollection<JourneyViewModel>(
@@ -37,6 +41,12 @@ public partial class ProjectConfigurationPageViewModel : ObservableObject
         // Available values for ComboBoxes
         AvailableWorkflows = new ObservableCollection<Workflow>(_project.Workflows);
         AvailableTrains = new ObservableCollection<Train>(_project.Trains);
+
+        // Load preferences
+        if (_preferencesService != null)
+        {
+            AutoLoadEnabled = _preferencesService.AutoLoadLastSolution;
+        }
     }
 
     #region Collections
@@ -51,6 +61,22 @@ public partial class ProjectConfigurationPageViewModel : ObservableObject
     public ObservableCollection<Workflow> AvailableWorkflows { get; }
 
     public ObservableCollection<Train> AvailableTrains { get; }
+
+    #endregion
+
+    #region Application Settings
+
+    [ObservableProperty]
+    private bool autoLoadEnabled = true;
+
+    partial void OnAutoLoadEnabledChanged(bool value)
+    {
+        if (_preferencesService != null)
+        {
+            _preferencesService.AutoLoadLastSolution = value;
+            System.Diagnostics.Debug.WriteLine($"✅ Auto-load setting changed to: {value}");
+        }
+    }
 
     #endregion
 

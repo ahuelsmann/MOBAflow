@@ -295,6 +295,9 @@ public partial class MainWindowViewModel : ObservableObject
             // because the Solution reference didn't change (only its content)
             HasSolution = Solution.Projects.Count > 0;
             SaveSolutionCommand.NotifyCanExecuteChanged();
+              ConnectToZ21Command.NotifyCanExecuteChanged();
+              BuildTreeView();
+              LoadCities();
             ConnectToZ21Command.NotifyCanExecuteChanged();
             BuildTreeView();
             LoadCities();
