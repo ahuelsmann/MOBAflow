@@ -72,6 +72,27 @@ public sealed partial class MainWindow
         {
             Z21StatusIcon.Glyph = ViewModel.IsZ21Connected ? "\uE8EB" : "\uF384";
         }
+        else if (e.PropertyName == nameof(MainWindowViewModel.Solution))
+        {
+            // Solution was loaded - refresh EditorPageViewModel if it exists
+            System.Diagnostics.Debug.WriteLine("🔄 Solution changed - refreshing EditorPageViewModel");
+            
+            try
+            {
+                var editorViewModel = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<SharedUI.ViewModel.EditorPageViewModel>(
+                    ((App)Microsoft.UI.Xaml.Application.Current).Services);
+                
+                if (editorViewModel != null)
+                {
+                    editorViewModel.Refresh();
+                    System.Diagnostics.Debug.WriteLine("✅ EditorPageViewModel refreshed after Solution change");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"⚠️ Failed to refresh EditorPageViewModel: {ex.Message}");
+            }
+        }
     }
 
     private void MainWindow_Closed(object sender, Microsoft.UI.Xaml.WindowEventArgs args)
@@ -367,7 +388,7 @@ public sealed partial class MainWindow
                 break;
 
             case "editor":
-                // Navigate to EditorPage
+                // Navigate to EditorPage (using Singleton ViewModel)
                 try
                 {
                     System.Diagnostics.Debug.WriteLine($"🔍 Attempting to navigate to EditorPage...");
@@ -377,12 +398,19 @@ public sealed partial class MainWindow
                     var editorViewModel = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<SharedUI.ViewModel.EditorPageViewModel>(
                         ((App)Microsoft.UI.Xaml.Application.Current).Services);
                     
-                    System.Diagnostics.Debug.WriteLine($"✅ EditorPageViewModel resolved from DI");
-                    System.Diagnostics.Debug.WriteLine($"   ProjectName: {editorViewModel.ProjectName}");
+                    System.Diagnostics.Debug.WriteLine($"🔄 Navigating to EditorPage - refreshing data first");
+                    System.Diagnostics.Debug.WriteLine($"   Solution has {ViewModel.Solution?.Projects.Count ?? 0} projects");
+                    if (ViewModel.Solution?.Projects.Count > 0)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"   First project has {ViewModel.Solution.Projects[0].Journeys.Count} journeys");
+                    }
+                    
+                    // Always refresh EditorPageViewModel before navigating
+                    editorViewModel.Refresh();
                     
                     var editorPage = new EditorPage(editorViewModel);
                     
-                    System.Diagnostics.Debug.WriteLine($"✅ EditorPage created");
+                    System.Diagnostics.Debug.WriteLine($"✅ Navigating to EditorPage (Singleton ViewModel)");
                     
                     ContentFrame.Content = editorPage;
                     ContentFrame.Visibility = Microsoft.UI.Xaml.Visibility.Visible;

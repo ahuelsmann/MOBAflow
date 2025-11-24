@@ -272,24 +272,45 @@ public partial class MainWindowViewModel : ObservableObject
     private async Task LoadSolutionAsync()
     {
         System.Diagnostics.Debug.WriteLine("📂 LoadSolutionAsync START");
-        (Solution? _solution, string? path, string? error) = await _ioService.LoadAsync();
+        (Solution? loadedSolution, string? path, string? error) = await _ioService.LoadAsync();
         
-        System.Diagnostics.Debug.WriteLine($"LoadAsync returned: solution={_solution != null}, path={path}, error={error}");
+        System.Diagnostics.Debug.WriteLine($"LoadAsync returned: solution={loadedSolution != null}, path={path}, error={error}");
         
         if (!string.IsNullOrEmpty(error))
         {
             throw new InvalidOperationException($"Failed to load solution with error {error}");
         }
-        if (_solution != null)
+        if (loadedSolution != null)
         {
-            System.Diagnostics.Debug.WriteLine($"✅ Setting Solution with {_solution.Projects.Count} projects");
-            Solution = _solution;
+            System.Diagnostics.Debug.WriteLine($"✅ Updating Solution with {loadedSolution.Projects.Count} projects");
+            
+            // ✅ CRITICAL: Update the existing Solution instance instead of replacing it
+            // This ensures all ViewModels that have a reference to Solution see the changes
+            Solution.UpdateFrom(loadedSolution);
+            
+            // Update CurrentSolutionPath
             CurrentSolutionPath = path;
-            System.Diagnostics.Debug.WriteLine($"✅ Solution set. HasSolution={HasSolution}, Projects={Solution?.Projects.Count}");
+            
+            // ✅ Manually trigger the same logic as OnSolutionChanged
+            // because the Solution reference didn't change (only its content)
+            HasSolution = Solution.Projects.Count > 0;
+            SaveSolutionCommand.NotifyCanExecuteChanged();
+            ConnectToZ21Command.NotifyCanExecuteChanged();
+            BuildTreeView();
+            LoadCities();
+            
+            // Save initial state for undo/redo
+            await _undoRedoManager.SaveStateImmediateAsync(Solution);
+            UpdateUndoRedoState();
+            
+            // Notify that Solution content has changed (for EditorPageViewModel)
+            OnPropertyChanged(nameof(Solution));
+            
+            System.Diagnostics.Debug.WriteLine($"✅ Solution updated. HasSolution={HasSolution}, Projects={Solution?.Projects.Count}");
         }
         else
         {
-            System.Diagnostics.Debug.WriteLine("❌ _solution is null - user cancelled or error");
+            System.Diagnostics.Debug.WriteLine("❌ loadedSolution is null - user cancelled or error");
         }
     }
 
@@ -625,7 +646,19 @@ public partial class MainWindowViewModel : ObservableObject
         var previousSolution = await _undoRedoManager.UndoAsync();
         if (previousSolution != null)
         {
-            Solution = previousSolution;
+            // ✅ Update the existing Solution instance instead of replacing it
+            Solution.UpdateFrom(previousSolution);
+            
+            // Manually trigger the same logic as OnSolutionChanged
+            HasSolution = Solution.Projects.Count > 0;
+            SaveSolutionCommand.NotifyCanExecuteChanged();
+            ConnectToZ21Command.NotifyCanExecuteChanged();
+            BuildTreeView();
+            LoadCities();
+            
+            // Notify that Solution content has changed
+            OnPropertyChanged(nameof(Solution));
+            
             UpdateUndoRedoState();
         }
     }
@@ -636,7 +669,19 @@ public partial class MainWindowViewModel : ObservableObject
         var nextSolution = await _undoRedoManager.RedoAsync();
         if (nextSolution != null)
         {
-            Solution = nextSolution;
+            // ✅ Update the existing Solution instance instead of replacing it
+            Solution.UpdateFrom(nextSolution);
+            
+            // Manually trigger the same logic as OnSolutionChanged
+            HasSolution = Solution.Projects.Count > 0;
+            SaveSolutionCommand.NotifyCanExecuteChanged();
+            ConnectToZ21Command.NotifyCanExecuteChanged();
+            BuildTreeView();
+            LoadCities();
+            
+            // Notify that Solution content has changed
+            OnPropertyChanged(nameof(Solution));
+            
             UpdateUndoRedoState();
         }
     }

@@ -26,6 +26,9 @@ public partial class JourneyEditorViewModel : ObservableObject
     private ObservableCollection<Station> _stations;
 
     [ObservableProperty]
+    private Station? _selectedStation;
+
+    [ObservableProperty]
     private string? _validationError;
 
     public JourneyEditorViewModel(Project project, ValidationService? validationService = null)
@@ -91,6 +94,29 @@ public partial class JourneyEditorViewModel : ObservableObject
         ValidationError = null;
     }
 
+    [RelayCommand(CanExecute = nameof(CanDeleteStation))]
+    private void DeleteStation()
+    {
+        if (SelectedJourney == null || SelectedStation == null) return;
+
+        // Remove from Journey model
+        SelectedJourney.Stations.Remove(SelectedStation);
+        
+        // Remove from ViewModel collection
+        Stations.Remove(SelectedStation);
+        
+        // Renumber remaining stations
+        for (int i = 0; i < SelectedJourney.Stations.Count; i++)
+        {
+            SelectedJourney.Stations[i].Number = (uint)(i + 1);
+        }
+        
+        SelectedStation = null;
+        ValidationError = null;
+    }
+
+    private bool CanDeleteStation() => SelectedStation != null && SelectedJourney != null;
+
     partial void OnSelectedJourneyChanged(Journey? value)
     {
         // Update Stations collection when Journey selection changes
@@ -103,5 +129,15 @@ public partial class JourneyEditorViewModel : ObservableObject
             }
         }
         ValidationError = null;
+        
+        // Notify commands that CanExecute might have changed
+        DeleteJourneyCommand.NotifyCanExecuteChanged();
+        DeleteStationCommand.NotifyCanExecuteChanged();
+    }
+    
+    partial void OnSelectedStationChanged(Station? value)
+    {
+        // Notify Delete command that CanExecute might have changed
+        DeleteStationCommand.NotifyCanExecuteChanged();
     }
 }

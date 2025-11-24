@@ -166,7 +166,7 @@ public partial class App
         // TreeViewBuilder service (now with all factories)
         services.AddSingleton<SharedUI.Service.TreeViewBuilder>();
         
-        // ValidationService for delete operations
+        // ValidationService for delete operations (uses Solution singleton)
         services.AddSingleton<SharedUI.Service.ValidationService>(sp =>
         {
             var solution = sp.GetRequiredService<Backend.Model.Solution>();
@@ -200,8 +200,8 @@ public partial class App
         services.AddSingleton<SharedUI.ViewModel.WinUI.MainWindowViewModel>();
         services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
         
-        // Editor ViewModels
-        services.AddTransient<SharedUI.ViewModel.EditorPageViewModel>(sp =>
+        // Editor ViewModels - Singleton to share same Solution instance
+        services.AddSingleton<SharedUI.ViewModel.EditorPageViewModel>(sp =>
         {
             var solution = sp.GetRequiredService<Backend.Model.Solution>();
             var validationService = sp.GetRequiredService<SharedUI.Service.ValidationService>();

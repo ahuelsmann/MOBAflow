@@ -141,5 +141,8 @@ public partial class WorkflowEditorViewModel : ObservableObject
             }
         }
         ValidationError = null;
+        
+        // Notify Delete command that CanExecute might have changed
+        DeleteWorkflowCommand.NotifyCanExecuteChanged();
     }
 }

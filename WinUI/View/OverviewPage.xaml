@@ -13,403 +13,405 @@
         <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     </Page.Resources>
 
-    <ScrollViewer 
+    <ScrollViewer
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
-        HorizontalScrollBarVisibility="Disabled" 
+        HorizontalScrollBarVisibility="Disabled"
         VerticalScrollBarVisibility="Auto">
-        <StackPanel
-            MaxWidth="1200"
-            Padding="24"
-            Spacing="16">
+        <Grid Padding="24">
+            <StackPanel
+                MaxWidth="1200"
+                HorizontalAlignment="Left"
+                Spacing="16">
 
-            <!--  Page Header  -->
-            <StackPanel Spacing="8">
-                <TextBlock
-                    FontWeight="Bold"
-                    Style="{StaticResource TitleTextBlockStyle}"
-                    Text="Lap Counter Dashboard" />
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <FontIcon
-                        FontSize="14"
-                        Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                        Glyph="&#xE8EB;" />
+                <!--  Page Header  -->
+                <StackPanel Spacing="8">
                     <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Style="{StaticResource BodyTextBlockStyle}"
-                        Text="{x:Bind ViewModel.StatusText, Mode=OneWay}" />
-                </StackPanel>
-            </StackPanel>
-
-            <!--  Z21 Connection Section  -->
-            <Expander
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Stretch"
-                Header="Z21 Connection"
-                IsExpanded="True">
-                <Expander.HeaderTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon FontSize="16" Glyph="&#xE8EB;" />
-                            <TextBlock
-                                VerticalAlignment="Center"
-                                FontWeight="SemiBold"
-                                Text="{Binding}" />
-                        </StackPanel>
-                    </DataTemplate>
-                </Expander.HeaderTemplate>
-                <StackPanel Padding="16,12" Spacing="12">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <ComboBox
-                            Grid.Column="0"
-                            HorizontalAlignment="Stretch"
-                            Header="Z21 IP Address"
-                            IsEditable="True"
-                            IsEnabled="{x:Bind ViewModel.IsNotConnected, Mode=OneWay}"
-                            ItemsSource="{x:Bind ViewModel.AvailableIpAddresses, Mode=OneWay}"
-                            PlaceholderText="192.168.0.111"
-                            SelectedItem="{x:Bind ViewModel.Z21IpAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            Text="{x:Bind ViewModel.Z21IpAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-
-                        <Button
-                            Grid.Column="1"
-                            MinWidth="100"
-                            Margin="8,24,0,0"
-                            Command="{x:Bind ViewModel.ConnectCommand}"
-                            Content="Connect"
-                            Style="{StaticResource AccentButtonStyle}" />
-
-                        <Button
-                            Grid.Column="2"
-                            MinWidth="100"
-                            Margin="8,24,0,0"
-                            Command="{x:Bind ViewModel.DisconnectCommand}"
-                            Content="Disconnect" />
-                    </Grid>
-
-                    <InfoBar
-                        IsClosable="False"
-                        IsOpen="True"
-                        Message="{x:Bind ViewModel.StatusText, Mode=OneWay}">
-                        <InfoBar.Style>
-                            <Style TargetType="InfoBar">
-                                <Setter Property="Severity" Value="Informational" />
-                            </Style>
-                        </InfoBar.Style>
-                    </InfoBar>
-                </StackPanel>
-            </Expander>
-
-            <!--  Z21 System State Section (only visible when connected)  -->
-            <Expander
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Stretch"
-                Header="Z21 System State"
-                IsExpanded="False"
-                Visibility="{x:Bind ViewModel.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                <Expander.HeaderTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon FontSize="16" Glyph="&#xE945;" />
-                            <TextBlock
-                                VerticalAlignment="Center"
-                                FontWeight="SemiBold"
-                                Text="{Binding}" />
-                        </StackPanel>
-                    </DataTemplate>
-                </Expander.HeaderTemplate>
-                <Grid
-                    Padding="16,12"
-                    ColumnSpacing="24"
-                    RowSpacing="12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <TextBlock
-                        Grid.Row="0"
-                        Grid.Column="0"
-                        VerticalAlignment="Center"
-                        Text="Main Current:" />
-                    <TextBlock
-                        Grid.Row="0"
-                        Grid.Column="1"
-                        VerticalAlignment="Center"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                        Text="{x:Bind ViewModel.MainCurrent, Mode=OneWay}" />
-                    <TextBlock
-                        Grid.Row="0"
-                        Grid.Column="1"
-                        Margin="40,0,0,0"
-                        VerticalAlignment="Center"
-                        Text=" mA" />
-
-                    <TextBlock
-                        Grid.Row="0"
-                        Grid.Column="2"
-                        VerticalAlignment="Center"
-                        Text="Temperature:" />
-                    <TextBlock
-                        Grid.Row="0"
-                        Grid.Column="3"
-                        VerticalAlignment="Center"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                        Text="{x:Bind ViewModel.Temperature, Mode=OneWay}" />
-                    <TextBlock
-                        Grid.Row="0"
-                        Grid.Column="3"
-                        Margin="40,0,0,0"
-                        VerticalAlignment="Center"
-                        Text=" °C" />
-
-                    <TextBlock
-                        Grid.Row="1"
-                        Grid.Column="0"
-                        VerticalAlignment="Center"
-                        Text="Supply Voltage:" />
-                    <TextBlock
-                        Grid.Row="1"
-                        Grid.Column="1"
-                        VerticalAlignment="Center"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                        Text="{x:Bind ViewModel.SupplyVoltage, Mode=OneWay}" />
-                    <TextBlock
-                        Grid.Row="1"
-                        Grid.Column="1"
-                        Margin="40,0,0,0"
-                        VerticalAlignment="Center"
-                        Text=" mV" />
-
-                    <TextBlock
-                        Grid.Row="1"
-                        Grid.Column="2"
-                        VerticalAlignment="Center"
-                        Text="VCC Voltage:" />
-                    <TextBlock
-                        Grid.Row="1"
-                        Grid.Column="3"
-                        VerticalAlignment="Center"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                        Text="{x:Bind ViewModel.VccVoltage, Mode=OneWay}" />
-                    <TextBlock
-                        Grid.Row="1"
-                        Grid.Column="3"
-                        Margin="40,0,0,0"
-                        VerticalAlignment="Center"
-                        Text=" mV" />
-
-                    <TextBlock
-                        Grid.Row="2"
-                        Grid.Column="0"
-                        VerticalAlignment="Center"
-                        Text="Central State:" />
-                    <TextBlock
-                        Grid.Row="2"
-                        Grid.Column="1"
-                        VerticalAlignment="Center"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                        Text="{x:Bind ViewModel.CentralState, Mode=OneWay}" />
-
-                    <TextBlock
-                        Grid.Row="2"
-                        Grid.Column="2"
-                        VerticalAlignment="Center"
-                        Text="State Ex:" />
-                    <TextBlock
-                        Grid.Row="2"
-                        Grid.Column="3"
-                        VerticalAlignment="Center"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                        Text="{x:Bind ViewModel.CentralStateEx, Mode=OneWay}" />
-                </Grid>
-            </Expander>
-
-            <!--  Settings Section (only visible when connected)  -->
-            <Expander
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Stretch"
-                Header="Settings"
-                IsExpanded="False"
-                Visibility="{x:Bind ViewModel.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                <Expander.HeaderTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon FontSize="16" Glyph="&#xE713;" />
-                            <TextBlock
-                                VerticalAlignment="Center"
-                                FontWeight="SemiBold"
-                                Text="{Binding}" />
-                        </StackPanel>
-                    </DataTemplate>
-                </Expander.HeaderTemplate>
-                <Grid
-                    Padding="16,12"
-                    ColumnSpacing="24"
-                    RowSpacing="12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <TextBlock
-                        Grid.Row="0"
-                        Grid.Column="0"
-                        VerticalAlignment="Center"
-                        Text="Target Lap Count:" />
-                    <NumberBox
-                        Grid.Row="0"
-                        Grid.Column="1"
-                        Width="150"
-                        HorizontalAlignment="Left"
-                        Minimum="1"
-                        SpinButtonPlacementMode="Inline"
-                        Value="{x:Bind ViewModel.GlobalTargetLapCount, Mode=TwoWay}" />
-
-                    <CheckBox
-                        Grid.Row="1"
-                        Grid.Column="0"
-                        Grid.ColumnSpan="2"
-                        Content="Use Timer Filter"
-                        IsChecked="{x:Bind ViewModel.UseTimerFilter, Mode=TwoWay}" />
-
-                    <StackPanel
-                        Grid.Row="2"
-                        Grid.Column="0"
-                        Grid.ColumnSpan="2"
-                        Spacing="4"
-                        Visibility="{x:Bind ViewModel.UseTimerFilter, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <TextBlock Text="{x:Bind ViewModel.TimerIntervalSeconds, Mode=OneWay}" />
-                        <Slider
-                            Maximum="10"
-                            Minimum="1"
-                            StepFrequency="0.5"
-                            TickFrequency="1"
-                            TickPlacement="BottomRight"
-                            Value="{x:Bind ViewModel.TimerIntervalSeconds, Mode=TwoWay}" />
+                        FontWeight="Bold"
+                        Style="{StaticResource TitleTextBlockStyle}"
+                        Text="Lap Counter Dashboard" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon
+                            FontSize="14"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Glyph="&#xE8EB;" />
                         <TextBlock
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Style="{StaticResource CaptionTextBlockStyle}"
-                            Text="Prevents multiple counts from the same train pass (e.g., 16-axle train)"
-                            TextWrapping="Wrap" />
+                            Style="{StaticResource BodyTextBlockStyle}"
+                            Text="{x:Bind ViewModel.StatusText, Mode=OneWay}" />
                     </StackPanel>
-                </Grid>
-            </Expander>
-
-            <!--  Track Statistics Section (only visible when connected)  -->
-            <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <FontIcon FontSize="18" Glyph="&#xE9D9;" />
-                    <TextBlock
-                        FontWeight="SemiBold"
-                        Style="{StaticResource SubtitleTextBlockStyle}"
-                        Text="Track Statistics" />
                 </StackPanel>
 
-                <ItemsRepeater ItemsSource="{x:Bind ViewModel.Statistics, Mode=OneWay}">
-                    <ItemsRepeater.ItemTemplate>
-                        <DataTemplate x:DataType="vm:InPortStatistic">
-                            <Border
-                                Margin="0,0,0,12"
-                                Padding="16"
-                                Background="{x:Bind BackgroundColorName, Mode=OneWay, Converter={StaticResource HexColorToBrushConverter}}"
-                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                BorderThickness="1"
-                                CornerRadius="8">
-                                <Grid RowSpacing="8">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
-
-                                    <TextBlock
-                                        Grid.Row="0"
-                                        FontWeight="Bold"
-                                        Foreground="White"
-                                        Style="{StaticResource SubtitleTextBlockStyle}"
-                                        Text="{x:Bind InPort, Mode=OneWay}" />
-
-                                    <TextBlock
-                                        Grid.Row="1"
-                                        Foreground="White"
-                                        Style="{StaticResource BodyTextBlockStyle}"
-                                        Text="{x:Bind LapCountFormatted, Mode=OneWay}" />
-
-                                    <ProgressBar
-                                        Grid.Row="2"
-                                        Maximum="1"
-                                        ShowError="False"
-                                        ShowPaused="False"
-                                        Value="{x:Bind Progress, Mode=OneWay}" />
-
-                                    <Grid Grid.Row="3" ColumnSpacing="16">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-
-                                        <StackPanel
-                                            Grid.Column="0"
-                                            Orientation="Horizontal"
-                                            Spacing="4">
-                                            <TextBlock Foreground="White" Text="⏱️ Last lap:" />
-                                            <TextBlock
-                                                FontWeight="SemiBold"
-                                                Foreground="White"
-                                                Text="{x:Bind LastLapTimeFormatted, Mode=OneWay}" />
-                                        </StackPanel>
-
-                                        <StackPanel
-                                            Grid.Column="1"
-                                            Orientation="Horizontal"
-                                            Spacing="4">
-                                            <TextBlock Foreground="White" Text="🕐 Last seen:" />
-                                            <TextBlock
-                                                FontWeight="SemiBold"
-                                                Foreground="White"
-                                                Text="{x:Bind LastFeedbackTimeFormatted, Mode=OneWay}" />
-                                        </StackPanel>
-                                    </Grid>
-                                </Grid>
-                            </Border>
+                <!--  Z21 Connection Section  -->
+                <Expander
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    Header="Z21 Connection"
+                    IsExpanded="True">
+                    <Expander.HeaderTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon FontSize="16" Glyph="&#xE8EB;" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontWeight="SemiBold"
+                                    Text="{Binding}" />
+                            </StackPanel>
                         </DataTemplate>
-                    </ItemsRepeater.ItemTemplate>
-                </ItemsRepeater>
+                    </Expander.HeaderTemplate>
+                    <StackPanel Padding="16,12" Spacing="12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                <!--  Reset Button  -->
-                <Button
-                    MinWidth="200"
-                    HorizontalAlignment="Center"
-                    Command="{x:Bind ViewModel.ResetCountersCommand}"
-                    Content="Reset All Counters" />
+                            <ComboBox
+                                Grid.Column="0"
+                                HorizontalAlignment="Stretch"
+                                Header="Z21 IP Address"
+                                IsEditable="True"
+                                IsEnabled="{x:Bind ViewModel.IsNotConnected, Mode=OneWay}"
+                                ItemsSource="{x:Bind ViewModel.AvailableIpAddresses, Mode=OneWay}"
+                                PlaceholderText="192.168.0.111"
+                                SelectedItem="{x:Bind ViewModel.Z21IpAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                Text="{x:Bind ViewModel.Z21IpAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <Button
+                                Grid.Column="1"
+                                MinWidth="100"
+                                Margin="8,24,0,0"
+                                Command="{x:Bind ViewModel.ConnectCommand}"
+                                Content="Connect"
+                                Style="{StaticResource AccentButtonStyle}" />
+
+                            <Button
+                                Grid.Column="2"
+                                MinWidth="100"
+                                Margin="8,24,0,0"
+                                Command="{x:Bind ViewModel.DisconnectCommand}"
+                                Content="Disconnect" />
+                        </Grid>
+
+                        <InfoBar
+                            IsClosable="False"
+                            IsOpen="True"
+                            Message="{x:Bind ViewModel.StatusText, Mode=OneWay}">
+                            <InfoBar.Style>
+                                <Style TargetType="InfoBar">
+                                    <Setter Property="Severity" Value="Informational" />
+                                </Style>
+                            </InfoBar.Style>
+                        </InfoBar>
+                    </StackPanel>
+                </Expander>
+
+                <!--  Z21 System State Section (only visible when connected)  -->
+                <Expander
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    Header="Z21 System State"
+                    IsExpanded="False"
+                    Visibility="{x:Bind ViewModel.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Expander.HeaderTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon FontSize="16" Glyph="&#xE945;" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontWeight="SemiBold"
+                                    Text="{Binding}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </Expander.HeaderTemplate>
+                    <Grid
+                        Padding="16,12"
+                        ColumnSpacing="24"
+                        RowSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            VerticalAlignment="Center"
+                            Text="Main Current:" />
+                        <TextBlock
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Text="{x:Bind ViewModel.MainCurrent, Mode=OneWay}" />
+                        <TextBlock
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Margin="40,0,0,0"
+                            VerticalAlignment="Center"
+                            Text=" mA" />
+
+                        <TextBlock
+                            Grid.Row="0"
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            Text="Temperature:" />
+                        <TextBlock
+                            Grid.Row="0"
+                            Grid.Column="3"
+                            VerticalAlignment="Center"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Text="{x:Bind ViewModel.Temperature, Mode=OneWay}" />
+                        <TextBlock
+                            Grid.Row="0"
+                            Grid.Column="3"
+                            Margin="40,0,0,0"
+                            VerticalAlignment="Center"
+                            Text=" °C" />
+
+                        <TextBlock
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            VerticalAlignment="Center"
+                            Text="Supply Voltage:" />
+                        <TextBlock
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Text="{x:Bind ViewModel.SupplyVoltage, Mode=OneWay}" />
+                        <TextBlock
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Margin="40,0,0,0"
+                            VerticalAlignment="Center"
+                            Text=" mV" />
+
+                        <TextBlock
+                            Grid.Row="1"
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            Text="VCC Voltage:" />
+                        <TextBlock
+                            Grid.Row="1"
+                            Grid.Column="3"
+                            VerticalAlignment="Center"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Text="{x:Bind ViewModel.VccVoltage, Mode=OneWay}" />
+                        <TextBlock
+                            Grid.Row="1"
+                            Grid.Column="3"
+                            Margin="40,0,0,0"
+                            VerticalAlignment="Center"
+                            Text=" mV" />
+
+                        <TextBlock
+                            Grid.Row="2"
+                            Grid.Column="0"
+                            VerticalAlignment="Center"
+                            Text="Central State:" />
+                        <TextBlock
+                            Grid.Row="2"
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Text="{x:Bind ViewModel.CentralState, Mode=OneWay}" />
+
+                        <TextBlock
+                            Grid.Row="2"
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            Text="State Ex:" />
+                        <TextBlock
+                            Grid.Row="2"
+                            Grid.Column="3"
+                            VerticalAlignment="Center"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Text="{x:Bind ViewModel.CentralStateEx, Mode=OneWay}" />
+                    </Grid>
+                </Expander>
+
+                <!--  Settings Section (only visible when connected)  -->
+                <Expander
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    Header="Settings"
+                    IsExpanded="False"
+                    Visibility="{x:Bind ViewModel.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Expander.HeaderTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon FontSize="16" Glyph="&#xE713;" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontWeight="SemiBold"
+                                    Text="{Binding}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </Expander.HeaderTemplate>
+                    <Grid
+                        Padding="16,12"
+                        ColumnSpacing="24"
+                        RowSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            VerticalAlignment="Center"
+                            Text="Target Lap Count:" />
+                        <NumberBox
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Width="150"
+                            HorizontalAlignment="Left"
+                            Minimum="1"
+                            SpinButtonPlacementMode="Inline"
+                            Value="{x:Bind ViewModel.GlobalTargetLapCount, Mode=TwoWay}" />
+
+                        <CheckBox
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="2"
+                            Content="Use Timer Filter"
+                            IsChecked="{x:Bind ViewModel.UseTimerFilter, Mode=TwoWay}" />
+
+                        <StackPanel
+                            Grid.Row="2"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="2"
+                            Spacing="4"
+                            Visibility="{x:Bind ViewModel.UseTimerFilter, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="{x:Bind ViewModel.TimerIntervalSeconds, Mode=OneWay}" />
+                            <Slider
+                                Maximum="10"
+                                Minimum="1"
+                                StepFrequency="0.5"
+                                TickFrequency="1"
+                                TickPlacement="BottomRight"
+                                Value="{x:Bind ViewModel.TimerIntervalSeconds, Mode=TwoWay}" />
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Prevents multiple counts from the same train pass (e.g., 16-axle train)"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Grid>
+                </Expander>
+
+                <!--  Track Statistics Section (only visible when connected)  -->
+                <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontSize="18" Glyph="&#xE9D9;" />
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Style="{StaticResource SubtitleTextBlockStyle}"
+                            Text="Track Statistics" />
+                    </StackPanel>
+
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.Statistics, Mode=OneWay}">
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="vm:InPortStatistic">
+                                <Border
+                                    Margin="0,0,0,12"
+                                    Padding="16"
+                                    Background="{x:Bind BackgroundColorName, Mode=OneWay, Converter={StaticResource HexColorToBrushConverter}}"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="8">
+                                    <Grid RowSpacing="8">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock
+                                            Grid.Row="0"
+                                            FontWeight="Bold"
+                                            Foreground="White"
+                                            Style="{StaticResource SubtitleTextBlockStyle}"
+                                            Text="{x:Bind InPort, Mode=OneWay}" />
+
+                                        <TextBlock
+                                            Grid.Row="1"
+                                            Foreground="White"
+                                            Style="{StaticResource BodyTextBlockStyle}"
+                                            Text="{x:Bind LapCountFormatted, Mode=OneWay}" />
+
+                                        <ProgressBar
+                                            Grid.Row="2"
+                                            Maximum="1"
+                                            ShowError="False"
+                                            ShowPaused="False"
+                                            Value="{x:Bind Progress, Mode=OneWay}" />
+
+                                        <Grid Grid.Row="3" ColumnSpacing="16">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel
+                                                Grid.Column="0"
+                                                Orientation="Horizontal"
+                                                Spacing="4">
+                                                <TextBlock Foreground="White" Text="⏱️ Last lap:" />
+                                                <TextBlock
+                                                    FontWeight="SemiBold"
+                                                    Foreground="White"
+                                                    Text="{x:Bind LastLapTimeFormatted, Mode=OneWay}" />
+                                            </StackPanel>
+
+                                            <StackPanel
+                                                Grid.Column="1"
+                                                Orientation="Horizontal"
+                                                Spacing="4">
+                                                <TextBlock Foreground="White" Text="🕐 Last seen:" />
+                                                <TextBlock
+                                                    FontWeight="SemiBold"
+                                                    Foreground="White"
+                                                    Text="{x:Bind LastFeedbackTimeFormatted, Mode=OneWay}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+
+                    <!--  Reset Button  -->
+                    <Button
+                        MinWidth="200"
+                        HorizontalAlignment="Center"
+                        Command="{x:Bind ViewModel.ResetCountersCommand}"
+                        Content="Reset All Counters" />
+                </StackPanel>
+
             </StackPanel>
-
-        </StackPanel>
+        </Grid>
     </ScrollViewer>
 </Page>

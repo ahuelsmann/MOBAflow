@@ -13,7 +13,10 @@
         </Grid.RowDefinitions>
 
         <!--  Page Header  -->
-        <StackPanel Grid.Row="0" Margin="24,16,24,8" Spacing="8">
+        <StackPanel
+            Grid.Row="0"
+            Margin="24,16,24,8"
+            Spacing="8">
             <TextBlock
                 FontWeight="Bold"
                 Style="{StaticResource TitleTextBlockStyle}"
@@ -51,7 +54,11 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Margin="0,0,0,8" Style="{StaticResource SubtitleTextBlockStyle}" Text="Journeys" />
+                        <TextBlock
+                            Grid.Row="0"
+                            Margin="0,0,0,8"
+                            Style="{StaticResource SubtitleTextBlockStyle}"
+                            Text="Journeys" />
 
                         <ListView
                             Grid.Row="1"
@@ -64,13 +71,27 @@
                             </ListView.ItemTemplate>
                         </ListView>
 
-                        <StackPanel Grid.Row="2" Margin="0,8,0,0" Orientation="Horizontal" Spacing="8">
-                            <Button Command="{x:Bind ViewModel.JourneyEditor.AddJourneyCommand}" Content="Add" Style="{StaticResource AccentButtonStyle}" />
-                            <Button Command="{x:Bind ViewModel.JourneyEditor.DeleteJourneyCommand}" Content="Delete" />
+                        <StackPanel
+                            Grid.Row="2"
+                            Margin="0,8,0,0"
+                            Orientation="Horizontal"
+                            Spacing="8">
+                            <Button
+                                Command="{x:Bind ViewModel.JourneyEditor.AddJourneyCommand}"
+                                Content="+"
+                                Style="{StaticResource AccentButtonStyle}"
+                                ToolTipService.ToolTip="Add Journey" />
+                            <Button
+                                Command="{x:Bind ViewModel.JourneyEditor.DeleteJourneyCommand}"
+                                Content="-"
+                                ToolTipService.ToolTip="Delete Journey" />
                         </StackPanel>
                     </Grid>
 
-                    <Border Grid.Column="1" Width="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                    <Border
+                        Grid.Column="1"
+                        Width="1"
+                        Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
                     <!--  Detail: Stations  -->
                     <Grid Grid.Column="2" Padding="16">
@@ -80,9 +101,16 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Margin="0,0,0,8" Style="{StaticResource SubtitleTextBlockStyle}" Text="Stations" />
+                        <TextBlock
+                            Grid.Row="0"
+                            Margin="0,0,0,8"
+                            Style="{StaticResource SubtitleTextBlockStyle}"
+                            Text="Stations" />
 
-                        <ListView Grid.Row="1" ItemsSource="{x:Bind ViewModel.JourneyEditor.Stations, Mode=OneWay}">
+                        <ListView
+                            Grid.Row="1"
+                            ItemsSource="{x:Bind ViewModel.JourneyEditor.Stations, Mode=OneWay}"
+                            SelectedItem="{x:Bind ViewModel.JourneyEditor.SelectedStation, Mode=TwoWay}">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock Padding="8" Text="{Binding Name}" />
@@ -90,7 +118,21 @@
                             </ListView.ItemTemplate>
                         </ListView>
 
-                        <Button Grid.Row="2" Margin="0,8,0,0" Command="{x:Bind ViewModel.JourneyEditor.AddStationCommand}" Content="Add Station" />
+                        <StackPanel
+                            Grid.Row="2"
+                            Margin="0,8,0,0"
+                            Orientation="Horizontal"
+                            Spacing="8">
+                            <Button
+                                Command="{x:Bind ViewModel.JourneyEditor.AddStationCommand}"
+                                Content="+"
+                                Style="{StaticResource AccentButtonStyle}"
+                                ToolTipService.ToolTip="Add Station" />
+                            <Button
+                                Command="{x:Bind ViewModel.JourneyEditor.DeleteStationCommand}"
+                                Content="-"
+                                ToolTipService.ToolTip="Delete Station" />
+                        </StackPanel>
                     </Grid>
                 </Grid>
             </TabViewItem>
@@ -114,7 +156,11 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Margin="0,0,0,8" Style="{StaticResource SubtitleTextBlockStyle}" Text="Workflows" />
+                        <TextBlock
+                            Grid.Row="0"
+                            Margin="0,0,0,8"
+                            Style="{StaticResource SubtitleTextBlockStyle}"
+                            Text="Workflows" />
 
                         <ListView
                             Grid.Row="1"
@@ -127,13 +173,27 @@
                             </ListView.ItemTemplate>
                         </ListView>
 
-                        <StackPanel Grid.Row="2" Margin="0,8,0,0" Orientation="Horizontal" Spacing="8">
-                            <Button Command="{x:Bind ViewModel.WorkflowEditor.AddWorkflowCommand}" Content="Add" Style="{StaticResource AccentButtonStyle}" />
-                            <Button Command="{x:Bind ViewModel.WorkflowEditor.DeleteWorkflowCommand}" Content="Delete" />
+                        <StackPanel
+                            Grid.Row="2"
+                            Margin="0,8,0,0"
+                            Orientation="Horizontal"
+                            Spacing="8">
+                            <Button
+                                Command="{x:Bind ViewModel.WorkflowEditor.AddWorkflowCommand}"
+                                Content="+"
+                                Style="{StaticResource AccentButtonStyle}"
+                                ToolTipService.ToolTip="Add Workflow" />
+                            <Button
+                                Command="{x:Bind ViewModel.WorkflowEditor.DeleteWorkflowCommand}"
+                                Content="-"
+                                ToolTipService.ToolTip="Delete Workflow" />
                         </StackPanel>
                     </Grid>
 
-                    <Border Grid.Column="1" Width="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                    <Border
+                        Grid.Column="1"
+                        Width="1"
+                        Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
                     <Grid Grid.Column="2" Padding="16">
                         <Grid.RowDefinitions>
@@ -142,7 +202,11 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Margin="0,0,0,8" Style="{StaticResource SubtitleTextBlockStyle}" Text="Actions" />
+                        <TextBlock
+                            Grid.Row="0"
+                            Margin="0,0,0,8"
+                            Style="{StaticResource SubtitleTextBlockStyle}"
+                            Text="Actions" />
 
                         <ListView Grid.Row="1" ItemsSource="{x:Bind ViewModel.WorkflowEditor.Actions, Mode=OneWay}">
                             <ListView.ItemTemplate>
@@ -152,10 +216,23 @@
                             </ListView.ItemTemplate>
                         </ListView>
 
-                        <StackPanel Grid.Row="2" Margin="0,8,0,0" Orientation="Horizontal" Spacing="8">
-                            <Button Command="{x:Bind ViewModel.WorkflowEditor.AddAnnouncementCommand}" Content="Announcement" />
-                            <Button Command="{x:Bind ViewModel.WorkflowEditor.AddCommandCommand}" Content="Command" />
-                            <Button Command="{x:Bind ViewModel.WorkflowEditor.AddAudioCommand}" Content="Audio" />
+                        <StackPanel
+                            Grid.Row="2"
+                            Margin="0,8,0,0"
+                            Orientation="Horizontal"
+                            Spacing="8">
+                            <Button
+                                Command="{x:Bind ViewModel.WorkflowEditor.AddAnnouncementCommand}"
+                                Content="Announcement"
+                                ToolTipService.ToolTip="Add Announcement Action" />
+                            <Button
+                                Command="{x:Bind ViewModel.WorkflowEditor.AddCommandCommand}"
+                                Content="Command"
+                                ToolTipService.ToolTip="Add Command Action" />
+                            <Button
+                                Command="{x:Bind ViewModel.WorkflowEditor.AddAudioCommand}"
+                                Content="Audio"
+                                ToolTipService.ToolTip="Add Audio Action" />
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -173,7 +250,11 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Margin="0,0,0,8" Style="{StaticResource SubtitleTextBlockStyle}" Text="Trains" />
+                    <TextBlock
+                        Grid.Row="0"
+                        Margin="0,0,0,8"
+                        Style="{StaticResource SubtitleTextBlockStyle}"
+                        Text="Trains" />
 
                     <ListView
                         Grid.Row="1"
@@ -186,11 +267,28 @@
                         </ListView.ItemTemplate>
                     </ListView>
 
-                    <StackPanel Grid.Row="2" Margin="0,8,0,0" Orientation="Horizontal" Spacing="8">
-                        <Button Command="{x:Bind ViewModel.TrainEditor.AddTrainCommand}" Content="Add" Style="{StaticResource AccentButtonStyle}" />
-                        <Button Command="{x:Bind ViewModel.TrainEditor.DeleteTrainCommand}" Content="Delete" />
-                        <Button Command="{x:Bind ViewModel.TrainEditor.AddLocomotiveToCompositionCommand}" Content="Add Loco" />
-                        <Button Command="{x:Bind ViewModel.TrainEditor.AddWagonToCompositionCommand}" Content="Add Wagon" />
+                    <StackPanel
+                        Grid.Row="2"
+                        Margin="0,8,0,0"
+                        Orientation="Horizontal"
+                        Spacing="8">
+                        <Button
+                            Command="{x:Bind ViewModel.TrainEditor.AddTrainCommand}"
+                            Content="+"
+                            Style="{StaticResource AccentButtonStyle}"
+                            ToolTipService.ToolTip="Add Train" />
+                        <Button
+                            Command="{x:Bind ViewModel.TrainEditor.DeleteTrainCommand}"
+                            Content="-"
+                            ToolTipService.ToolTip="Delete Train" />
+                        <Button
+                            Command="{x:Bind ViewModel.TrainEditor.AddLocomotiveToCompositionCommand}"
+                            Content="Add Loco"
+                            ToolTipService.ToolTip="Add Locomotive to Train Composition" />
+                        <Button
+                            Command="{x:Bind ViewModel.TrainEditor.AddWagonToCompositionCommand}"
+                            Content="Add Wagon"
+                            ToolTipService.ToolTip="Add Wagon to Train Composition" />
                     </StackPanel>
                 </Grid>
             </TabViewItem>
@@ -207,7 +305,11 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Margin="0,0,0,8" Style="{StaticResource SubtitleTextBlockStyle}" Text="Locomotives Library" />
+                    <TextBlock
+                        Grid.Row="0"
+                        Margin="0,0,0,8"
+                        Style="{StaticResource SubtitleTextBlockStyle}"
+                        Text="Locomotives Library" />
 
                     <ListView
                         Grid.Row="1"
@@ -220,9 +322,20 @@
                         </ListView.ItemTemplate>
                     </ListView>
 
-                    <StackPanel Grid.Row="2" Margin="0,8,0,0" Orientation="Horizontal" Spacing="8">
-                        <Button Command="{x:Bind ViewModel.LocomotiveEditor.AddLocomotiveCommand}" Content="Add" Style="{StaticResource AccentButtonStyle}" />
-                        <Button Command="{x:Bind ViewModel.LocomotiveEditor.DeleteLocomotiveCommand}" Content="Delete" />
+                    <StackPanel
+                        Grid.Row="2"
+                        Margin="0,8,0,0"
+                        Orientation="Horizontal"
+                        Spacing="8">
+                        <Button
+                            Command="{x:Bind ViewModel.LocomotiveEditor.AddLocomotiveCommand}"
+                            Content="+"
+                            Style="{StaticResource AccentButtonStyle}"
+                            ToolTipService.ToolTip="Add Locomotive" />
+                        <Button
+                            Command="{x:Bind ViewModel.LocomotiveEditor.DeleteLocomotiveCommand}"
+                            Content="-"
+                            ToolTipService.ToolTip="Delete Locomotive" />
                     </StackPanel>
                 </Grid>
             </TabViewItem>
@@ -239,7 +352,11 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Margin="0,0,0,8" Style="{StaticResource SubtitleTextBlockStyle}" Text="Wagons Library" />
+                    <TextBlock
+                        Grid.Row="0"
+                        Margin="0,0,0,8"
+                        Style="{StaticResource SubtitleTextBlockStyle}"
+                        Text="Wagons Library" />
 
                     <ListView
                         Grid.Row="1"
@@ -252,10 +369,24 @@
                         </ListView.ItemTemplate>
                     </ListView>
 
-                    <StackPanel Grid.Row="2" Margin="0,8,0,0" Orientation="Horizontal" Spacing="8">
-                        <Button Command="{x:Bind ViewModel.WagonEditor.AddPassengerWagonCommand}" Content="Add Passenger" Style="{StaticResource AccentButtonStyle}" />
-                        <Button Command="{x:Bind ViewModel.WagonEditor.AddGoodsWagonCommand}" Content="Add Goods" />
-                        <Button Command="{x:Bind ViewModel.WagonEditor.DeleteWagonCommand}" Content="Delete" />
+                    <StackPanel
+                        Grid.Row="2"
+                        Margin="0,8,0,0"
+                        Orientation="Horizontal"
+                        Spacing="8">
+                        <Button
+                            Command="{x:Bind ViewModel.WagonEditor.AddPassengerWagonCommand}"
+                            Content="+"
+                            Style="{StaticResource AccentButtonStyle}"
+                            ToolTipService.ToolTip="Add Passenger Wagon" />
+                        <Button
+                            Command="{x:Bind ViewModel.WagonEditor.AddGoodsWagonCommand}"
+                            Content="Add Goods"
+                            ToolTipService.ToolTip="Add Goods Wagon" />
+                        <Button
+                            Command="{x:Bind ViewModel.WagonEditor.DeleteWagonCommand}"
+                            Content="-"
+                            ToolTipService.ToolTip="Delete Wagon" />
                     </StackPanel>
                 </Grid>
             </TabViewItem>
@@ -266,29 +397,126 @@
                     <FontIconSource Glyph="&#xE713;" />
                 </TabViewItem.IconSource>
                 <ScrollViewer>
-                    <StackPanel Padding="16" MaxWidth="600" Spacing="16">
-                        <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Project Settings" />
+                    <StackPanel
+                        MaxWidth="800"
+                        Padding="16"
+                        Spacing="24">
 
-                        <TextBox
-                            Header="Speech Key"
-                            PlaceholderText="Enter Azure Speech API Key"
-                            Text="{x:Bind ViewModel.SettingsEditor.SpeechKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <!--  Z21 Configuration  -->
+                        <StackPanel Spacing="12">
+                            <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Z21 Configuration" />
 
-                        <TextBox
-                            Header="Speech Region"
-                            PlaceholderText="e.g. westeurope"
-                            Text="{x:Bind ViewModel.SettingsEditor.SpeechRegion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBox
+                                Header="Current IP Address"
+                                PlaceholderText="e.g. 192.168.0.111"
+                                Text="{x:Bind ViewModel.SettingsEditor.CurrentIpAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <TextBox.Description>
+                                    <TextBlock Text="IP address of your Z21 digital command station" />
+                                </TextBox.Description>
+                            </TextBox>
 
-                        <TextBox
-                            Header="Voice Name"
-                            PlaceholderText="e.g. de-DE-KatjaNeural"
-                            Text="{x:Bind ViewModel.SettingsEditor.VoiceName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Configure your Z21 digital command station IP address for model railway control."
+                                TextWrapping="Wrap" />
+                        </StackPanel>
 
-                        <TextBlock
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Style="{StaticResource CaptionTextBlockStyle}"
-                            Text="Configure Azure Cognitive Services Speech API credentials for text-to-speech announcements."
-                            TextWrapping="Wrap" />
+                        <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+                        <!--  Azure Speech Configuration  -->
+                        <StackPanel Spacing="12">
+                            <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Azure Speech Service" />
+
+                            <TextBox
+                                Header="Speech Key"
+                                PlaceholderText="Enter Azure Speech API Key"
+                                Text="{x:Bind ViewModel.SettingsEditor.SpeechKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <TextBox.Description>
+                                    <TextBlock Text="Your Azure Cognitive Services Speech API key" />
+                                </TextBox.Description>
+                            </TextBox>
+
+                            <TextBox
+                                Header="Speech Region"
+                                PlaceholderText="e.g. westeurope"
+                                Text="{x:Bind ViewModel.SettingsEditor.SpeechRegion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <TextBox.Description>
+                                    <TextBlock Text="Azure region where your Speech service is deployed" />
+                                </TextBox.Description>
+                            </TextBox>
+
+                            <TextBox
+                                Header="Voice Name"
+                                PlaceholderText="e.g. de-DE-KatjaNeural"
+                                Text="{x:Bind ViewModel.SettingsEditor.VoiceName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <TextBox.Description>
+                                    <TextBlock Text="Neural voice to use for text-to-speech (TTS)" />
+                                </TextBox.Description>
+                            </TextBox>
+
+                            <TextBox
+                                Header="Speaker Engine Name"
+                                PlaceholderText="e.g. AzureCognitiveSpeech"
+                                Text="{x:Bind ViewModel.SettingsEditor.SpeakerEngineName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <TextBox.Description>
+                                    <TextBlock Text="Speech engine implementation to use" />
+                                </TextBox.Description>
+                            </TextBox>
+
+                            <NumberBox
+                                Header="Speech Rate"
+                                Maximum="10"
+                                Minimum="-10"
+                                Value="{x:Bind ViewModel.SettingsEditor.SpeechSynthesizerRate, Mode=TwoWay}">
+                                <NumberBox.Description>
+                                    <TextBlock Text="Speech speed (-10 slow, 0 normal, +10 fast)" />
+                                </NumberBox.Description>
+                            </NumberBox>
+
+                            <NumberBox
+                                Header="Speech Volume"
+                                Maximum="100"
+                                Minimum="0"
+                                Value="{x:Bind ViewModel.SettingsEditor.SpeechSynthesizerVolume, Mode=TwoWay}">
+                                <NumberBox.Description>
+                                    <TextBlock Text="Speech volume (0-100%)" />
+                                </NumberBox.Description>
+                            </NumberBox>
+
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Configure Azure Cognitive Services Speech API for text-to-speech announcements in station workflows."
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+                        <!--  Application Settings  -->
+                        <StackPanel Spacing="12">
+                            <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Application Behavior" />
+
+                            <StackPanel Spacing="4">
+                                <ToggleSwitch
+                                    Header="Reset Window Layout On Start"
+                                    IsOn="{x:Bind ViewModel.SettingsEditor.IsResetWindowLayoutOnStart, Mode=TwoWay}"
+                                    OffContent="Keep layout"
+                                    OnContent="Reset layout" />
+                                <TextBlock
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="Reset window size and position to defaults on application startup"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Configure application startup and behavior settings."
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+
                     </StackPanel>
                 </ScrollViewer>
             </TabViewItem>

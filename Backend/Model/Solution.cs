@@ -87,6 +87,82 @@ public class Solution
     }
 
     /// <summary>
+    /// Updates the current Solution instance with data from another Solution.
+    /// This is used to update the DI singleton without replacing the reference.
+    /// </summary>
+    /// <param name="source">The source solution to copy data from</param>
+    public void UpdateFrom(Solution source)
+    {
+        System.Diagnostics.Debug.WriteLine($"🔄 Solution.UpdateFrom START - Source has {source.Projects.Count} projects");
+        
+        // Clear existing data
+        Projects.Clear();
+        
+        // Copy all projects from source
+        foreach (var project in source.Projects)
+        {
+            Projects.Add(project);
+        }
+        
+        // Copy name and settings
+        Name = source.Name;
+        Settings = source.Settings;
+        
+        System.Diagnostics.Debug.WriteLine($"✅ Solution.UpdateFrom END - Now have {Projects.Count} projects");
+        
+        if (Projects.Count > 0)
+        {
+            System.Diagnostics.Debug.WriteLine($"   First project: {Projects[0].Name}, Journeys: {Projects[0].Journeys.Count}");
+        }
+    }
+
+    /// <summary>
+    /// Migrates settings from Project to Solution level for backward compatibility with old JSON files.
+    /// </summary>
+    private static void MigrateSettingsToSolution(Solution solution)
+    {
+        System.Diagnostics.Debug.WriteLine("🔄 MigrateSettingsToSolution START");
+
+        // If Solution already has Settings with IP addresses, no migration needed
+        if (solution.Settings.IpAddresses.Count > 0)
+        {
+            System.Diagnostics.Debug.WriteLine("  ✅ Solution already has Settings with IPs - skipping migration");
+            return;
+        }
+
+        // Check if first project has old Settings/IpAddresses
+        if (solution.Projects.Count > 0)
+        {
+            var firstProject = solution.Projects[0];
+
+            // Migrate IpAddresses
+            if (firstProject.IpAddresses.Count > 0)
+            {
+                System.Diagnostics.Debug.WriteLine($"  🔄 Migrating {firstProject.IpAddresses.Count} IP addresses from Project to Solution");
+                solution.Settings.IpAddresses = firstProject.IpAddresses;
+                solution.Settings.CurrentIpAddress = firstProject.IpAddresses[0];
+                System.Diagnostics.Debug.WriteLine($"  ✅ CurrentIpAddress set to: {solution.Settings.CurrentIpAddress}");
+            }
+
+            // Migrate Settings
+            if (firstProject.Settings != null)
+            {
+                System.Diagnostics.Debug.WriteLine("  🔄 Migrating Settings from Project to Solution");
+                solution.Settings.SpeechKey = firstProject.Settings.SpeechKey;
+                solution.Settings.SpeechRegion = firstProject.Settings.SpeechRegion;
+                solution.Settings.SpeechSynthesizerRate = firstProject.Settings.SpeechSynthesizerRate;
+                solution.Settings.SpeechSynthesizerVolume = firstProject.Settings.SpeechSynthesizerVolume;
+                solution.Settings.SpeakerEngineName = firstProject.Settings.SpeakerEngineName;
+                solution.Settings.VoiceName = firstProject.Settings.VoiceName;
+                solution.Settings.IsResetWindowLayoutOnStart = firstProject.Settings.IsResetWindowLayoutOnStart;
+                System.Diagnostics.Debug.WriteLine("  ✅ Settings migrated successfully");
+            }
+        }
+
+        System.Diagnostics.Debug.WriteLine("🔄 MigrateSettingsToSolution END");
+    }
+
+    /// <summary>
     /// Restores workflow references in stations and platforms after loading
     /// </summary>
     private static void RestoreWorkflowReferences(Solution solution)

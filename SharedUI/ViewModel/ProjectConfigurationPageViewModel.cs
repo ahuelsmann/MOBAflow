@@ -68,6 +68,35 @@ public partial class ProjectConfigurationPageViewModel : ObservableObject
     [ObservableProperty]
     private TrainViewModel? selectedTrain;
 
+    partial void OnSelectedJourneyChanged(JourneyViewModel? value)
+    {
+        System.Diagnostics.Debug.WriteLine($"🔄 SelectedJourney changed to: {value?.Name ?? "null"}");
+        DeleteJourneyCommand.NotifyCanExecuteChanged();
+        AddStationCommand.NotifyCanExecuteChanged();
+        System.Diagnostics.Debug.WriteLine($"   CanDeleteJourney is now: {CanDeleteJourney()}");
+    }
+
+    partial void OnSelectedStationChanged(StationViewModel? value)
+    {
+        System.Diagnostics.Debug.WriteLine($"🔄 SelectedStation changed to: {value?.Name ?? "null"}");
+        DeleteStationCommand.NotifyCanExecuteChanged();
+        System.Diagnostics.Debug.WriteLine($"   CanDeleteStation is now: {CanDeleteStation()}");
+    }
+
+    partial void OnSelectedWorkflowChanged(WorkflowViewModel? value)
+    {
+        System.Diagnostics.Debug.WriteLine($"🔄 SelectedWorkflow changed to: {value?.Name ?? "null"}");
+        DeleteWorkflowCommand.NotifyCanExecuteChanged();
+        System.Diagnostics.Debug.WriteLine($"   CanDeleteWorkflow is now: {CanDeleteWorkflow()}");
+    }
+
+    partial void OnSelectedTrainChanged(TrainViewModel? value)
+    {
+        System.Diagnostics.Debug.WriteLine($"🔄 SelectedTrain changed to: {value?.Name ?? "null"}");
+        DeleteTrainCommand.NotifyCanExecuteChanged();
+        System.Diagnostics.Debug.WriteLine($"   CanDeleteTrain is now: {CanDeleteTrain()}");
+    }
+
     #endregion
 
     #region Journey Commands
@@ -82,25 +111,23 @@ public partial class ProjectConfigurationPageViewModel : ObservableObject
         Journeys.Add(journeyVM);
     }
 
-    [RelayCommand]
-    private void DeleteJourney(JourneyViewModel? journeyVM)
+    [RelayCommand(CanExecute = nameof(CanDeleteJourney))]
+    private void DeleteJourney()
     {
-        if (journeyVM == null) return;
-
-        _project.Journeys.Remove(journeyVM.Model);
-        Journeys.Remove(journeyVM);
-
-        if (SelectedJourney == journeyVM)
-        {
-            SelectedJourney = null;
-        }
+        if (SelectedJourney == null) return;
+        
+        _project.Journeys.Remove(SelectedJourney.Model);
+        Journeys.Remove(SelectedJourney);
+        SelectedJourney = null;
     }
+
+    private bool CanDeleteJourney() => SelectedJourney != null;
 
     #endregion
 
     #region Station Commands
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanAddStation))]
     private void AddStation()
     {
         if (SelectedJourney == null) return;
@@ -117,22 +144,22 @@ public partial class ProjectConfigurationPageViewModel : ObservableObject
         SelectedJourney.Stations.Add(stationVM);
     }
 
-    [RelayCommand]
-    private void DeleteStation(StationViewModel? stationVM)
-    {
-        if (stationVM == null || SelectedJourney == null) return;
+    private bool CanAddStation() => SelectedJourney != null;
 
-        SelectedJourney.Model.Stations.Remove(stationVM.Model);
-        SelectedJourney.Stations.Remove(stationVM);
+    [RelayCommand(CanExecute = nameof(CanDeleteStation))]
+    private void DeleteStation()
+    {
+        if (SelectedStation == null || SelectedJourney == null) return;
+
+        SelectedJourney.Model.Stations.Remove(SelectedStation.Model);
+        SelectedJourney.Stations.Remove(SelectedStation);
 
         // Renumber remaining stations
         SelectedJourney.RenumberStations();
-
-        if (SelectedStation == stationVM)
-        {
-            SelectedStation = null;
-        }
+        SelectedStation = null;
     }
+
+    private bool CanDeleteStation() => SelectedStation != null;
 
     #endregion
 
@@ -151,15 +178,15 @@ public partial class ProjectConfigurationPageViewModel : ObservableObject
         AvailableWorkflows.Add(newWorkflow);
     }
 
-    [RelayCommand]
-    private void DeleteWorkflow(WorkflowViewModel? workflowVM)
+    [RelayCommand(CanExecute = nameof(CanDeleteWorkflow))]
+    private void DeleteWorkflow()
     {
-        if (workflowVM == null) return;
+        if (SelectedWorkflow == null) return;
 
         // Check if workflow is referenced by any station
         bool isReferenced = _project.Journeys
             .SelectMany(j => j.Stations)
-            .Any(s => s.Flow == workflowVM.Model);
+            .Any(s => s.Flow == SelectedWorkflow.Model);
 
         if (isReferenced)
         {
@@ -168,17 +195,15 @@ public partial class ProjectConfigurationPageViewModel : ObservableObject
             return;
         }
 
-        _project.Workflows.Remove(workflowVM.Model);
-        Workflows.Remove(workflowVM);
+        _project.Workflows.Remove(SelectedWorkflow.Model);
+        Workflows.Remove(SelectedWorkflow);
 
         // Update reference collection
-        AvailableWorkflows.Remove(workflowVM.Model);
-
-        if (SelectedWorkflow == workflowVM)
-        {
-            SelectedWorkflow = null;
-        }
+        AvailableWorkflows.Remove(SelectedWorkflow.Model);
+        SelectedWorkflow = null;
     }
+
+    private bool CanDeleteWorkflow() => SelectedWorkflow != null;
 
     #endregion
 
@@ -197,13 +222,13 @@ public partial class ProjectConfigurationPageViewModel : ObservableObject
         AvailableTrains.Add(newTrain);
     }
 
-    [RelayCommand]
-    private void DeleteTrain(TrainViewModel? trainVM)
+    [RelayCommand(CanExecute = nameof(CanDeleteTrain))]
+    private void DeleteTrain()
     {
-        if (trainVM == null) return;
+        if (SelectedTrain == null) return;
 
         // Check if train is referenced by any journey
-        bool isReferenced = _project.Journeys.Any(j => j.Train == trainVM.Model);
+        bool isReferenced = _project.Journeys.Any(j => j.Train == SelectedTrain.Model);
 
         if (isReferenced)
         {
@@ -212,17 +237,15 @@ public partial class ProjectConfigurationPageViewModel : ObservableObject
             return;
         }
 
-        _project.Trains.Remove(trainVM.Model);
-        Trains.Remove(trainVM);
+        _project.Trains.Remove(SelectedTrain.Model);
+        Trains.Remove(SelectedTrain);
 
         // Update reference collection
-        AvailableTrains.Remove(trainVM.Model);
-
-        if (SelectedTrain == trainVM)
-        {
-            SelectedTrain = null;
-        }
+        AvailableTrains.Remove(SelectedTrain.Model);
+        SelectedTrain = null;
     }
+
+    private bool CanDeleteTrain() => SelectedTrain != null;
 
     #endregion
 }

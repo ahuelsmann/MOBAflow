@@ -71,4 +71,12 @@ public partial class LocomotiveEditorViewModel : ObservableObject
     }
 
     private bool CanDeleteLocomotive() => SelectedLocomotive != null;
+    
+    partial void OnSelectedLocomotiveChanged(Locomotive? value)
+    {
+        ValidationError = null;
+        
+        // Notify Delete command that CanExecute might have changed
+        DeleteLocomotiveCommand.NotifyCanExecuteChanged();
+    }
 }

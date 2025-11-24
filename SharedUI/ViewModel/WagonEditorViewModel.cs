@@ -99,4 +99,12 @@ public partial class WagonEditorViewModel : ObservableObject
     }
 
     private bool CanDeleteWagon() => SelectedWagon != null;
+    
+    partial void OnSelectedWagonChanged(Wagon? value)
+    {
+        ValidationError = null;
+        
+        // Notify Delete command that CanExecute might have changed
+        DeleteWagonCommand.NotifyCanExecuteChanged();
+    }
 }
