@@ -17,6 +17,23 @@
     <ApplicationVersion>2</ApplicationVersion>
     <!-- Android 26+ (Oreo) - required for MediaElement support -->
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">26.0</SupportedOSPlatformVersion>
+    <!-- Android Build Performance -->
+    <AndroidUseAapt2>true</AndroidUseAapt2>
+    <AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
+    <AndroidLinkTool>r8</AndroidLinkTool>
+    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+    <!-- Fast deployment for Debug builds -->
+    <EmbedAssembliesIntoApk Condition="'$(Configuration)' == 'Debug'">false</EmbedAssembliesIntoApk>
+    <AndroidUseSharedRuntime Condition="'$(Configuration)' == 'Debug'">true</AndroidUseSharedRuntime>
+    <!-- FastDebug Configuration - Maximum speed -->
+    <EmbedAssembliesIntoApk Condition="'$(Configuration)' == 'FastDebug'">false</EmbedAssembliesIntoApk>
+    <AndroidUseSharedRuntime Condition="'$(Configuration)' == 'FastDebug'">true</AndroidUseSharedRuntime>
+    <AndroidLinkMode Condition="'$(Configuration)' == 'FastDebug'">None</AndroidLinkMode>
+    <!-- Release optimizations -->
+    <EmbedAssembliesIntoApk Condition="'$(Configuration)' == 'Release'">true</EmbedAssembliesIntoApk>
+    <AndroidUseSharedRuntime Condition="'$(Configuration)' == 'Release'">false</AndroidUseSharedRuntime>
+    <AndroidLinkMode Condition="'$(Configuration)' == 'Release'">Full</AndroidLinkMode>
+    <AndroidPackageFormat Condition="'$(Configuration)' == 'Release'">aab</AndroidPackageFormat>
   </PropertyGroup>
   <ItemGroup>
     <!-- App Icon -->
@@ -33,14 +50,6 @@
   <ItemGroup>
     <!-- Android Resources -->
     <AndroidResource Include="Platforms\Android\Resources\**\*.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidResource Remove="Service\Factory\**" />
-    <Compile Remove="Service\Factory\**" />
-    <EmbeddedResource Remove="Service\Factory\**" />
-    <MauiCss Remove="Service\Factory\**" />
-    <MauiXaml Remove="Service\Factory\**" />
-    <None Remove="Service\Factory\**" />
   </ItemGroup>
   <ItemGroup>
     <!-- MAUI Core -->

@@ -107,6 +107,10 @@ dotnet_diagnostic.CA1822.severity = none
 dotnet_diagnostic.CA1859.severity = suggestion
 dotnet_code_quality.ca1062.api_surface = public
 
+# Build Performance: Reduce background analysis
+dotnet_analyzer_diagnostic.category-Performance.severity = warning
+dotnet_code_quality.api_surface = public
+
 #### Naming conventions ####
 # Interfaces should be prefixed with I
 dotnet_naming_rule.interface_should_be_begins_with_i.severity = suggestion
