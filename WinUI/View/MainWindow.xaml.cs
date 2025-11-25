@@ -659,10 +659,26 @@ public sealed partial class MainWindow
         if (ViewModel.Solution?.Projects.Count > 0)
         {
             var project = ViewModel.Solution.Projects[0];
-            foreach (var journey in project.Journeys.Where(journey => journey.Stations.Contains(station)))
+            foreach (var journey in project.Journeys)
             {
-                journey.Stations.Remove(station);
-                ViewModel.RefreshTreeView();
+                if (journey.Stations.Contains(station))
+                {
+                    journey.Stations.Remove(station);
+                    ViewModel.RefreshTreeView();
+                    break;
+                }
+            }
+        }
+    }
+
+    private async void TrackPower_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        if (sender is Microsoft.UI.Xaml.Controls.AppBarToggleButton toggleButton)
+        {
+            // Execute the command with the new state
+            if (ViewModel.SetTrackPowerCommand.CanExecute(toggleButton.IsChecked))
+            {
+                await ViewModel.SetTrackPowerCommand.ExecuteAsync(toggleButton.IsChecked);
             }
         }
     }

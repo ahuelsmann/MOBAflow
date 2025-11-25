@@ -20,5 +20,28 @@ public interface IZ21 : IDisposable
 
     Task SendCommandAsync(byte[] sendBytes);
 
+    /// <summary>
+    /// Turns the track power ON.
+    /// LAN_X_SET_TRACK_POWER_ON (X-Header: 0x21, DB0: 0x81)
+    /// </summary>
+    Task SetTrackPowerOnAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Turns the track power OFF.
+    /// LAN_X_SET_TRACK_POWER_OFF (X-Header: 0x21, DB0: 0x80)
+    /// </summary>
+    Task SetTrackPowerOffAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Triggers an emergency stop (locomotives stop but track power remains on).
+    /// LAN_X_SET_STOP (X-Header: 0x80)
+    /// </summary>
+    Task SetEmergencyStopAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Requests the current status from the Z21.
+    /// </summary>
+    Task GetStatusAsync(CancellationToken cancellationToken = default);
+
     void SimulateFeedback(int inPort);
 }

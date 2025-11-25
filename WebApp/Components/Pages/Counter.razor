@@ -46,6 +46,20 @@
                     </button>
                 </div>
             </div>
+            <div class="form-row track-power-section">
+                <div class="form-group">
+                    <label>⚡ Track Power:</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" 
+                               id="trackPowerSwitch" 
+                               @bind="ViewModel.IsTrackPowerOn" 
+                               @onclick="ToggleTrackPowerAsync"
+                               disabled="@(!ViewModel.IsConnected)" />
+                        <label for="trackPowerSwitch" class="slider"></label>
+                        <span class="track-power-label">@(ViewModel.IsTrackPowerOn ? "ON" : "OFF")</span>
+                    </div>
+                </div>
+            </div>
             <div class="status-message">
                 <span class="@GetStatusClass()">@ViewModel.StatusText</span>
             </div>
@@ -134,6 +148,14 @@
         if (ViewModel.StatusText.Contains("Error") || ViewModel.StatusText.Contains("failed"))
             return "status-error";
         return "status-info";
+    }
+
+    private async Task ToggleTrackPowerAsync()
+    {
+        if (ViewModel.SetTrackPowerCommand.CanExecute(ViewModel.IsTrackPowerOn))
+        {
+            await ViewModel.SetTrackPowerCommand.ExecuteAsync(ViewModel.IsTrackPowerOn);
+        }
     }
 
     public void Dispose()

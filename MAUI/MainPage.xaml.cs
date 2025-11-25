@@ -32,4 +32,12 @@ public partial class MainPage : ContentPage
             );
         });
     }
+
+    private async void TrackPowerSwitch_Toggled(object sender, ToggledEventArgs e)
+    {
+        if (_viewModel.SetTrackPowerCommand.CanExecute(e.Value))
+        {
+            await _viewModel.SetTrackPowerCommand.ExecuteAsync(e.Value);
+        }
+    }
 }

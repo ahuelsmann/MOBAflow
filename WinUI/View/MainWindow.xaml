@@ -161,6 +161,17 @@
                         </AppBarButton.Icon>
                     </AppBarButton>
                     <AppBarSeparator />
+                    <AppBarToggleButton
+                        Click="TrackPower_Click"
+                        IsChecked="{x:Bind ViewModel.IsTrackPowerOn, Mode=TwoWay}"
+                        IsEnabled="{x:Bind ViewModel.IsZ21Connected, Mode=OneWay}"
+                        Label="Track Power"
+                        ToolTipService.ToolTip="Toggle Track Power ON/OFF">
+                        <AppBarToggleButton.Icon>
+                            <FontIcon Glyph="&#xE945;" />
+                        </AppBarToggleButton.Icon>
+                    </AppBarToggleButton>
+                    <AppBarSeparator />
                     <AppBarButton
                         Command="{x:Bind ViewModel.SimulateFeedbackCommand}"
                         Label="Simulate"

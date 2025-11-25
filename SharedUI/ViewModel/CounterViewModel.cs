@@ -110,6 +110,12 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     private bool isConnected;
 
     /// <summary>
+    /// Indicates whether the track power is currently ON.
+    /// </summary>
+    [ObservableProperty]
+    private bool isTrackPowerOn;
+
+    /// <summary>
     /// Helper property for UI binding (inverse of IsConnected).
     /// </summary>
     public bool IsNotConnected => !IsConnected;
@@ -123,6 +129,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
         ConnectCommand.NotifyCanExecuteChanged();
         DisconnectCommand.NotifyCanExecuteChanged();
         ResetCountersCommand.NotifyCanExecuteChanged();
+        SetTrackPowerCommand.NotifyCanExecuteChanged();
     }
 
     /// <summary>
@@ -183,7 +190,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
 
     /// <summary>
     /// Z21 central state as hexadecimal string (e.g., "0x00").
-    /// </summary>
+    /// </summary]
     [ObservableProperty]
     private string centralState = "0x00";
 
@@ -245,6 +252,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
             ConnectCommand.NotifyCanExecuteChanged();
             DisconnectCommand.NotifyCanExecuteChanged();
             ResetCountersCommand.NotifyCanExecuteChanged();
+            SetTrackPowerCommand.NotifyCanExecuteChanged();
         }
         catch (System.Net.Sockets.SocketException ex)
         {
@@ -278,11 +286,13 @@ public partial class CounterViewModel : ObservableObject, IDisposable
             }
 
             IsConnected = false;
+            IsTrackPowerOn = false;
             StatusText = "Disconnected";
 
             ConnectCommand.NotifyCanExecuteChanged();
             DisconnectCommand.NotifyCanExecuteChanged();
             ResetCountersCommand.NotifyCanExecuteChanged();
+            SetTrackPowerCommand.NotifyCanExecuteChanged();
         }
         catch (Exception ex)
         {
@@ -314,6 +324,35 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     private bool CanConnect() => !IsConnected;
     private bool CanDisconnect() => IsConnected;
     private bool CanResetCounters() => IsConnected;
+    private bool CanToggleTrackPower() => IsConnected;
+
+    /// <summary>
+    /// Sets the track power ON or OFF.
+    /// </summary>
+    /// <param name="turnOn">True to turn ON the track power, false to turn it OFF.</param>
+    [RelayCommand(CanExecute = nameof(CanToggleTrackPower))]
+    private async Task SetTrackPowerAsync(bool turnOn)
+    {
+        try
+        {
+            if (turnOn)
+            {
+                await _z21.SetTrackPowerOnAsync();
+                StatusText = "Track power ON";
+                IsTrackPowerOn = true;
+            }
+            else
+            {
+                await _z21.SetTrackPowerOffAsync();
+                StatusText = "Track power OFF";
+                IsTrackPowerOn = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Track power error: {ex.Message}";
+        }
+    }
 
     /// <summary>
     /// Handles Z21 system state changes and updates UI properties.

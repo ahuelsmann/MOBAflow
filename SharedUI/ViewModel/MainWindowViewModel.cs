@@ -109,6 +109,12 @@ public partial class MainWindowViewModel : ObservableObject
     private bool isZ21Connected;
 
     /// <summary>
+    /// Indicates whether the track power is currently ON.
+    /// </summary>
+    [ObservableProperty]
+    private bool isTrackPowerOn;
+
+    /// <summary>
     /// Current Z21 connection status text (e.g., "Connected to 192.168.0.111", "Disconnected").
     /// </summary>
     [ObservableProperty]
@@ -382,6 +388,7 @@ public partial class MainWindowViewModel : ObservableObject
                 ConnectToZ21Command.NotifyCanExecuteChanged();
                 DisconnectFromZ21Command.NotifyCanExecuteChanged();
                 SimulateFeedbackCommand.NotifyCanExecuteChanged();
+                SetTrackPowerCommand.NotifyCanExecuteChanged();
             }
             catch (Exception ex)
             {
@@ -407,9 +414,11 @@ public partial class MainWindowViewModel : ObservableObject
             await _z21.DisconnectAsync();
 
             IsZ21Connected = false;
+            IsTrackPowerOn = false;
             Z21StatusText = "Disconnected";
             ConnectToZ21Command.NotifyCanExecuteChanged();
             SimulateFeedbackCommand.NotifyCanExecuteChanged();
+            SetTrackPowerCommand.NotifyCanExecuteChanged();
         }
         catch (Exception ex)
         {
@@ -456,6 +465,32 @@ public partial class MainWindowViewModel : ObservableObject
     private bool CanDisconnectFromZ21() => IsZ21Connected;
 
     private bool CanSimulateFeedback() => IsZ21Connected;
+
+    [RelayCommand(CanExecute = nameof(CanToggleTrackPower))]
+    private async Task SetTrackPowerAsync(bool turnOn)
+    {
+        try
+        {
+            if (turnOn)
+            {
+                await _z21.SetTrackPowerOnAsync();
+                Z21StatusText = "Track power ON";
+                IsTrackPowerOn = true;
+            }
+            else
+            {
+                await _z21.SetTrackPowerOffAsync();
+                Z21StatusText = "Track power OFF";
+                IsTrackPowerOn = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Z21StatusText = $"Track power error: {ex.Message}";
+        }
+    }
+
+    private bool CanToggleTrackPower() => IsZ21Connected;
 
     public void OnWindowClosing()
     {
