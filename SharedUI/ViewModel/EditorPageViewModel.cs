@@ -3,8 +3,10 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Moba.Backend.Model;
 using Moba.SharedUI.Service;
+
 using System.Collections.ObjectModel;
 
 /// <summary>
@@ -36,13 +38,13 @@ public partial class EditorPageViewModel : ObservableObject
     {
         _solution = solution;
         _validationService = validationService;
-        
+
         // Initialize Projects collection
         _projects = new ObservableCollection<Project>(solution.Projects);
-        
+
         // Select first project by default
         _selectedProject = solution.Projects.FirstOrDefault();
-        
+
         // Initialize all tab ViewModels
         InitializeEditors();
     }
@@ -54,47 +56,47 @@ public partial class EditorPageViewModel : ObservableObject
     public void Refresh()
     {
         System.Diagnostics.Debug.WriteLine($"🔄 EditorPageViewModel.Refresh() called - Solution has {_solution.Projects.Count} projects");
-        
+
         if (_solution.Projects.Count > 0)
         {
             var firstProject = _solution.Projects[0];
             System.Diagnostics.Debug.WriteLine($"   First project: {firstProject.Name}, Journeys: {firstProject.Journeys.Count}");
-            
+
             if (firstProject.Journeys.Count > 0)
             {
                 System.Diagnostics.Debug.WriteLine($"   First journey: {firstProject.Journeys[0].Name}");
             }
         }
-        
+
         // Update Projects collection from Solution
         Projects.Clear();
         foreach (var project in _solution.Projects)
         {
             Projects.Add(project);
         }
-        
+
         // Force re-initialization by setting to null first, then to first project
         _selectedProject = null;
         SelectedProject = _solution.Projects.FirstOrDefault();
-        
+
         System.Diagnostics.Debug.WriteLine($"✅ EditorPageViewModel.Refresh() complete - SelectedProject: {SelectedProject?.Name}");
     }
 
     private void InitializeEditors()
     {
         var project = _selectedProject ?? new Project { Name = "(No Project Loaded)" };
-        
+
         System.Diagnostics.Debug.WriteLine($"🔄 InitializeEditors called - Project: {project.Name}, Journeys: {project.Journeys.Count}");
-        
+
         JourneyEditor = new JourneyEditorViewModel(project, _validationService);
         WorkflowEditor = new WorkflowEditorViewModel(project, _validationService);
         TrainEditor = new TrainEditorViewModel(project, _validationService);
         LocomotiveEditor = new LocomotiveEditorViewModel(project, _validationService);
         WagonEditor = new WagonEditorViewModel(project, _validationService);
-        
+
         // ✅ Settings are now at Solution level, not Project level
         SettingsEditor = new SettingsEditorViewModel(_solution.Settings);
-        
+
         // Notify UI that all editors have been recreated
         OnPropertyChanged(nameof(JourneyEditor));
         OnPropertyChanged(nameof(WorkflowEditor));
@@ -102,7 +104,7 @@ public partial class EditorPageViewModel : ObservableObject
         OnPropertyChanged(nameof(LocomotiveEditor));
         OnPropertyChanged(nameof(WagonEditor));
         OnPropertyChanged(nameof(SettingsEditor));
-        
+
         System.Diagnostics.Debug.WriteLine($"✅ InitializeEditors complete - JourneyEditor.Journeys.Count: {JourneyEditor.Journeys.Count}");
     }
 
@@ -116,7 +118,7 @@ public partial class EditorPageViewModel : ObservableObject
         {
             Name = "New Project"
         };
-        
+
         _solution.Projects.Add(newProject);
         Projects.Add(newProject);
         SelectedProject = newProject;
@@ -153,4 +155,3 @@ public partial class EditorPageViewModel : ObservableObject
     /// </summary>
     public string ProjectName => _selectedProject?.Name ?? "(No Project Loaded)";
 }
-
