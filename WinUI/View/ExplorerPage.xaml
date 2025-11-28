@@ -1,12 +1,77 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <Page
     x:Class="Moba.WinUI.View.ExplorerPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:data="using:Moba.Backend.Data"
+    xmlns:local="using:Moba.WinUI.View"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:Moba.SharedUI.ViewModel"
     mc:Ignorable="d">
+
+    <Page.Resources>
+        <!--  Property Template Selector  -->
+        <local:PropertyDataTemplateSelector x:Key="PropertyTemplateSelector">
+            <local:PropertyDataTemplateSelector.TextBoxTemplate>
+                <DataTemplate x:DataType="vm:PropertyViewModel">
+                    <StackPanel Margin="0,0,0,16" Spacing="4">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{x:Bind Name}"
+                            TextWrapping="NoWrap" />
+                        <TextBox
+                            HorizontalAlignment="Stretch"
+                            Text="{x:Bind Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </DataTemplate>
+            </local:PropertyDataTemplateSelector.TextBoxTemplate>
+            <local:PropertyDataTemplateSelector.CheckBoxTemplate>
+                <DataTemplate x:DataType="vm:PropertyViewModel">
+                    <StackPanel Margin="0,0,0,16" Spacing="4">
+                        <CheckBox
+                            Content="{x:Bind Name}"
+                            FontWeight="SemiBold"
+                            IsChecked="{x:Bind BoolValue, Mode=TwoWay}" />
+                    </StackPanel>
+                </DataTemplate>
+            </local:PropertyDataTemplateSelector.CheckBoxTemplate>
+            <local:PropertyDataTemplateSelector.ComboBoxTemplate>
+                <DataTemplate x:DataType="vm:PropertyViewModel">
+                    <StackPanel Margin="0,0,0,16" Spacing="4">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{x:Bind Name}"
+                            TextWrapping="NoWrap" />
+                        <ComboBox
+                            HorizontalAlignment="Stretch"
+                            ItemsSource="{x:Bind EnumValues}"
+                            SelectedItem="{x:Bind EnumValue, Mode=TwoWay}" />
+                    </StackPanel>
+                </DataTemplate>
+            </local:PropertyDataTemplateSelector.ComboBoxTemplate>
+            <local:PropertyDataTemplateSelector.ReferenceComboBoxTemplate>
+                <DataTemplate x:DataType="vm:PropertyViewModel">
+                    <StackPanel Margin="0,0,0,16" Spacing="4">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{x:Bind Name}"
+                            TextWrapping="NoWrap" />
+                        <ComboBox
+                            HorizontalAlignment="Stretch"
+                            DisplayMemberPath="Name"
+                            ItemsSource="{x:Bind ReferenceValues}"
+                            PlaceholderText="(None)"
+                            SelectedItem="{x:Bind ReferenceValue, Mode=TwoWay}" />
+                    </StackPanel>
+                </DataTemplate>
+            </local:PropertyDataTemplateSelector.ReferenceComboBoxTemplate>
+        </local:PropertyDataTemplateSelector>
+    </Page.Resources>
 
     <Grid Background="{ThemeResource LayerFillColorDefaultBrush}">
         <Grid.ColumnDefinitions>
@@ -22,11 +87,22 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <TextBlock
+            <Border
                 Grid.Row="0"
-                Margin="16,12"
-                Style="{StaticResource SubtitleTextBlockStyle}"
-                Text="Explorer" />
+                Padding="16,12"
+                Background="{StaticResource RailwayPrimaryBrush}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon
+                        FontSize="20"
+                        Foreground="White"
+                        Glyph="&#xE8F4;" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Foreground="White"
+                        Style="{StaticResource SubtitleTextBlockStyle}"
+                        Text="Solution Explorer" />
+                </StackPanel>
+            </Border>
 
             <ScrollViewer
                 Grid.Row="1"
@@ -38,14 +114,11 @@
                     AllowDrop="True"
                     CanDragItems="True"
                     CanReorderItems="True"
-                    ItemsSource="{x:Bind ViewModel.TreeNodes, Mode=OneWay}"
-                    SelectionChanged="SolutionTreeView_SelectionChanged">
+                    ItemInvoked="SolutionTreeView_ItemInvoked"
+                    ItemsSource="{x:Bind ViewModel.TreeNodes, Mode=OneWay}">
                     <TreeView.ItemTemplate>
                         <DataTemplate x:DataType="vm:TreeNodeViewModel">
-                            <TreeViewItem
-                                IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}"
-                                ItemsSource="{x:Bind Children, Mode=OneWay}"
-                                Tag="{x:Bind}">
+                            <TreeViewItem IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}" ItemsSource="{x:Bind Children, Mode=OneWay}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon FontSize="16" Glyph="{x:Bind Icon, Mode=OneWay}" />
                                     <TextBlock Text="{x:Bind DisplayName, Mode=OneWay}" TextWrapping="NoWrap" />
@@ -57,65 +130,165 @@
             </ScrollViewer>
         </Grid>
 
+        <!--  MIDDLE: Interactive Horizontal Splitter between TreeView and Properties/Cities  -->
         <Border
+            x:Name="HorizontalSplitter"
             Grid.Column="1"
-            Width="1"
-            Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+            Background="{StaticResource RailwayPrimaryBrush}"
+            Opacity="0.3"
+            PointerEntered="HorizontalSplitter_PointerEntered"
+            PointerExited="HorizontalSplitter_PointerExited"
+            PointerMoved="HorizontalSplitter_PointerMoved"
+            PointerPressed="HorizontalSplitter_PointerPressed"
+            PointerReleased="HorizontalSplitter_PointerReleased">
+            <Rectangle
+                Width="2"
+                HorizontalAlignment="Center"
+                Fill="{StaticResource RailwayPrimaryBrush}" />
+        </Border>
 
-        <!--  Properties Panel with Cities  -->
+        <!--  RIGHT: Properties + Cities (Side by Side with Vertical Splitter)  -->
         <Grid Grid.Column="2">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <!--  Properties Section (Left, Resizable)  -->
+                <ColumnDefinition Width="*" MinWidth="300" />
 
-            <!--  Properties Header  -->
-            <Grid Grid.Row="0" Padding="16,16,16,8">
-                <TextBlock
-                    Style="{StaticResource SubtitleTextBlockStyle}"
-                    Text="Properties" />
-            </Grid>
+                <!--  Vertical Splitter (same width as horizontal: 2px visible, 8px hitbox)  -->
+                <ColumnDefinition Width="8" />
 
-            <!--  Properties Content  -->
-            <ScrollViewer Grid.Row="1" Padding="16,0" VerticalScrollBarVisibility="Auto">
-                <StackPanel Spacing="16">
-                    <StackPanel Spacing="4">
-                        <TextBlock
-                            FontWeight="SemiBold"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="Project"
-                            Style="{ThemeResource CaptionTextBlockStyle}" />
-                        <TextBlock
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="Project Name"
-                            Style="{ThemeResource BodyTextBlockStyle}" />
-                        <TextBox
-                            HorizontalAlignment="Stretch"
-                            PlaceholderText="(Untitled Project)"
-                            Text="{x:Bind ViewModel.Solution.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    </StackPanel>
-                </StackPanel>
-            </ScrollViewer>
+                <!--  Cities Section (Right, Resizable)  -->
+                <ColumnDefinition
+                    Width="350"
+                    MinWidth="250"
+                    MaxWidth="500" />
+            </Grid.ColumnDefinitions>
 
-            <!--  Cities Section  -->
-            <Grid Grid.Row="2" Padding="16" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
+            <!--  LEFT: Properties Section  -->
+            <Grid Grid.Column="0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <TextBlock
+                <!--  Properties Header  -->
+                <Border
                     Grid.Row="0"
-                    Margin="0,0,0,12"
-                    Style="{StaticResource SubtitleTextBlockStyle}"
-                    Text="Cities" />
+                    Padding="16,12"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="0,0,0,1">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon
+                            FontSize="18"
+                            Foreground="{StaticResource RailwaySecondaryBrush}"
+                            Glyph="&#xE8B7;" />
+                        <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Properties" />
+                    </StackPanel>
+                </Border>
 
-                <Button
+                <!--  Properties Content  -->
+                <ScrollViewer
                     Grid.Row="1"
-                    HorizontalAlignment="Stretch"
-                    Content="Load Cities"
-                    Style="{StaticResource AccentButtonStyle}" />
+                    Padding="16"
+                    VerticalScrollBarVisibility="Auto">
+                    <!--  Properties List  -->
+                    <ItemsControl ItemTemplateSelector="{StaticResource PropertyTemplateSelector}" ItemsSource="{x:Bind ViewModel.Properties, Mode=OneWay}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Spacing="8" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+
+            <!--  MIDDLE: Interactive Vertical Splitter  -->
+            <Border
+                x:Name="VerticalSplitter"
+                Grid.Column="1"
+                Background="Transparent"
+                Opacity="1.0"
+                PointerEntered="Splitter_PointerEntered"
+                PointerExited="Splitter_PointerExited"
+                PointerMoved="Splitter_PointerMoved"
+                PointerPressed="Splitter_PointerPressed"
+                PointerReleased="Splitter_PointerReleased">
+                <Rectangle
+                    Width="2"
+                    HorizontalAlignment="Center"
+                    Fill="{StaticResource RailwaySecondaryBrush}"
+                    Opacity="0.3" />
+            </Border>
+
+            <!--  RIGHT: Cities Section  -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!--  Cities Header  -->
+                <Border
+                    Grid.Row="0"
+                    Padding="16,12"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="0,0,0,1">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel
+                            Grid.Column="0"
+                            Orientation="Horizontal"
+                            Spacing="8">
+                            <FontIcon
+                                FontSize="18"
+                                Foreground="{StaticResource RailwayAccentBrush}"
+                                Glyph="&#xE81D;" />
+                            <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Cities" />
+                        </StackPanel>
+
+                        <Button
+                            Grid.Column="1"
+                            Padding="12,6"
+                            Click="LoadCitiesButton_Click"
+                            Content="Load" />
+                    </Grid>
+                </Border>
+
+                <!--  Cities List  -->
+                <ListView
+                    x:Name="CitiesListView"
+                    Grid.Row="1"
+                    Padding="8"
+                    ItemsSource="{x:Bind ViewModel.AvailableCities, Mode=OneWay}"
+                    SelectionMode="Single">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="data:City">
+                            <Grid Padding="8,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <FontIcon
+                                    Grid.Column="0"
+                                    Margin="0,0,8,0"
+                                    FontSize="16"
+                                    Foreground="{StaticResource RailwayAccentBrush}"
+                                    Glyph="&#xE81D;" />
+
+                                <TextBlock
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    Text="{x:Bind Name}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
             </Grid>
         </Grid>
     </Grid>

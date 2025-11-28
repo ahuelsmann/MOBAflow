@@ -59,15 +59,30 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="200" />
                                         <ColumnDefinition Width="100" />
-                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="220" />
                                         <ColumnDefinition Width="150" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Name" Style="{ThemeResource CaptionTextBlockStyle}" />
-                                    <TextBlock Grid.Column="1" Text="InPort" Style="{ThemeResource CaptionTextBlockStyle}" />
-                                    <TextBlock Grid.Column="2" Text="Behavior on Last Stop" Style="{ThemeResource CaptionTextBlockStyle}" />
-                                    <TextBlock Grid.Column="3" Text="Train" Style="{ThemeResource CaptionTextBlockStyle}" />
-                                    <TextBlock Grid.Column="4" Text="Description" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                    <TextBlock
+                                        Grid.Column="0"
+                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                        Text="Name" />
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                        Text="InPort" />
+                                    <TextBlock
+                                        Grid.Column="2"
+                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                        Text="Behavior on Last Stop" />
+                                    <TextBlock
+                                        Grid.Column="3"
+                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                        Text="Train" />
+                                    <TextBlock
+                                        Grid.Column="4"
+                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                        Text="Description" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.HeaderTemplate>
@@ -79,36 +94,39 @@
                         </ListView.ItemContainerStyle>
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="vm:JourneyViewModel">
-                                <Grid Height="48" Padding="12,0" AutomationProperties.Name="{x:Bind Name}">
+                                <Grid
+                                    Height="48"
+                                    Padding="12,0"
+                                    AutomationProperties.Name="{x:Bind Name}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="200" />
                                         <ColumnDefinition Width="100" />
-                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="220" />
                                         <ColumnDefinition Width="150" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock 
-                                        Grid.Column="0" 
-                                        Text="{x:Bind Name, Mode=OneWay}" 
+                                    <TextBlock
+                                        Grid.Column="0"
                                         VerticalAlignment="Center"
-                                        Style="{ThemeResource BaseTextBlockStyle}" />
-                                    <TextBlock 
-                                        Grid.Column="1" 
-                                        Text="{x:Bind InPort, Mode=OneWay}" 
-                                        VerticalAlignment="Center" />
+                                        Style="{ThemeResource BaseTextBlockStyle}"
+                                        Text="{x:Bind Name, Mode=OneWay}" />
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        VerticalAlignment="Center"
+                                        Text="{x:Bind InPort, Mode=OneWay}" />
                                     <TextBlock
                                         Grid.Column="2"
-                                        Text="{x:Bind BehaviorOnLastStop, Mode=OneWay}"
-                                        VerticalAlignment="Center" />
+                                        VerticalAlignment="Center"
+                                        Text="{x:Bind BehaviorOnLastStop, Mode=OneWay}" />
                                     <TextBlock
                                         Grid.Column="3"
-                                        Text="{x:Bind Train.Name, Mode=OneWay}"
-                                        VerticalAlignment="Center" />
+                                        VerticalAlignment="Center"
+                                        Text="{x:Bind Train.Name, Mode=OneWay}" />
                                     <TextBlock
                                         Grid.Column="4"
+                                        VerticalAlignment="Center"
                                         Text="{x:Bind Description, Mode=OneWay}"
-                                        TextWrapping="Wrap"
-                                        VerticalAlignment="Center" />
+                                        TextWrapping="Wrap" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -130,20 +148,6 @@
                         Margin="16,8"
                         Orientation="Horizontal"
                         Spacing="8">
-                        <TextBlock VerticalAlignment="Center" Text="Journey:" />
-                        <ComboBox
-                            Width="200"
-                            DisplayMemberPath="Name"
-                            ItemsSource="{x:Bind ViewModel.Journeys, Mode=OneWay}"
-                            PlaceholderText="Select a Journey"
-                            SelectedItem="{Binding SelectedJourney, Mode=TwoWay}" />
-                    </StackPanel>
-
-                    <StackPanel
-                        Grid.Row="1"
-                        Margin="16,8"
-                        Orientation="Horizontal"
-                        Spacing="8">
                         <Button
                             Command="{x:Bind ViewModel.AddStationCommand}"
                             Content="+"
@@ -154,6 +158,13 @@
                             Content="-"
                             ToolTipService.ToolTip="Delete Station" />
                     </StackPanel>
+
+                    <!--  Stations Section - Station controls without Journey selector  -->
+                    <StackPanel
+                        Grid.Row="1"
+                        Margin="16,8"
+                        Orientation="Horizontal"
+                        Spacing="8" />
 
                     <ListView
                         Grid.Row="2"
@@ -173,13 +184,35 @@
                                         <ColumnDefinition Width="150" />
                                         <ColumnDefinition Width="120" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Name" Style="{ThemeResource CaptionTextBlockStyle}" />
-                                    <TextBlock Grid.Column="1" Text="Number" Style="{ThemeResource CaptionTextBlockStyle}" />
-                                    <TextBlock Grid.Column="2" Text="Laps to Stop" Style="{ThemeResource CaptionTextBlockStyle}" />
-                                    <TextBlock Grid.Column="3" Text="Arrival" Style="{ThemeResource CaptionTextBlockStyle}" />
-                                    <TextBlock Grid.Column="4" Text="Departure" Style="{ThemeResource CaptionTextBlockStyle}" />
-                                    <TextBlock Grid.Column="5" Text="Workflow" Style="{ThemeResource CaptionTextBlockStyle}" />
-                                    <TextBlock Grid.Column="6" Text="Exit on Left" HorizontalAlignment="Left" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                    <TextBlock
+                                        Grid.Column="0"
+                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                        Text="Name" />
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                        Text="Number" />
+                                    <TextBlock
+                                        Grid.Column="2"
+                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                        Text="Laps to Stop" />
+                                    <TextBlock
+                                        Grid.Column="3"
+                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                        Text="Arrival" />
+                                    <TextBlock
+                                        Grid.Column="4"
+                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                        Text="Departure" />
+                                    <TextBlock
+                                        Grid.Column="5"
+                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                        Text="Workflow" />
+                                    <TextBlock
+                                        Grid.Column="6"
+                                        HorizontalAlignment="Left"
+                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                        Text="Exit on Left" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.HeaderTemplate>
@@ -191,7 +224,10 @@
                         </ListView.ItemContainerStyle>
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="vm:StationViewModel">
-                                <Grid Height="48" Padding="12,0,12,0" AutomationProperties.Name="{x:Bind Name}">
+                                <Grid
+                                    Height="48"
+                                    Padding="12,0,12,0"
+                                    AutomationProperties.Name="{x:Bind Name}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="200" />
                                         <ColumnDefinition Width="80" />
@@ -201,31 +237,31 @@
                                         <ColumnDefinition Width="150" />
                                         <ColumnDefinition Width="120" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock 
-                                        Grid.Column="0" 
-                                        Text="{x:Bind Name, Mode=OneWay}" 
+                                    <TextBlock
+                                        Grid.Column="0"
                                         VerticalAlignment="Center"
-                                        Style="{ThemeResource BaseTextBlockStyle}" />
-                                    <TextBlock 
-                                        Grid.Column="1" 
-                                        Text="{x:Bind Number, Mode=OneWay}" 
-                                        VerticalAlignment="Center" />
-                                    <TextBlock 
-                                        Grid.Column="2" 
-                                        Text="{x:Bind NumberOfLapsToStop, Mode=OneWay}" 
-                                        VerticalAlignment="Center" />
-                                    <TextBlock 
-                                        Grid.Column="3" 
-                                        Text="{x:Bind Arrival, Mode=OneWay}" 
-                                        VerticalAlignment="Center" />
-                                    <TextBlock 
-                                        Grid.Column="4" 
-                                        Text="{x:Bind Departure, Mode=OneWay}" 
-                                        VerticalAlignment="Center" />
+                                        Style="{ThemeResource BaseTextBlockStyle}"
+                                        Text="{x:Bind Name, Mode=OneWay}" />
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        VerticalAlignment="Center"
+                                        Text="{x:Bind Number, Mode=OneWay}" />
+                                    <TextBlock
+                                        Grid.Column="2"
+                                        VerticalAlignment="Center"
+                                        Text="{x:Bind NumberOfLapsToStop, Mode=OneWay}" />
+                                    <TextBlock
+                                        Grid.Column="3"
+                                        VerticalAlignment="Center"
+                                        Text="{x:Bind Arrival, Mode=OneWay}" />
+                                    <TextBlock
+                                        Grid.Column="4"
+                                        VerticalAlignment="Center"
+                                        Text="{x:Bind Departure, Mode=OneWay}" />
                                     <TextBlock
                                         Grid.Column="5"
-                                        Text="{x:Bind Flow.Name, Mode=OneWay}"
-                                        VerticalAlignment="Center" />
+                                        VerticalAlignment="Center"
+                                        Text="{x:Bind Flow.Name, Mode=OneWay}" />
                                     <CheckBox
                                         Grid.Column="6"
                                         HorizontalAlignment="Center"
@@ -276,8 +312,14 @@
                                         <ColumnDefinition Width="250" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Name" Style="{ThemeResource CaptionTextBlockStyle}" />
-                                    <TextBlock Grid.Column="1" Text="Description" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                    <TextBlock
+                                        Grid.Column="0"
+                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                        Text="Name" />
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                        Text="Description" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.HeaderTemplate>
@@ -289,21 +331,24 @@
                         </ListView.ItemContainerStyle>
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="vm:WorkflowViewModel">
-                                <Grid Height="48" Padding="12,0" AutomationProperties.Name="{x:Bind Name}">
+                                <Grid
+                                    Height="48"
+                                    Padding="12,0"
+                                    AutomationProperties.Name="{x:Bind Name}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="250" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock 
-                                        Grid.Column="0" 
-                                        Text="{x:Bind Name, Mode=OneWay}" 
+                                    <TextBlock
+                                        Grid.Column="0"
                                         VerticalAlignment="Center"
-                                        Style="{ThemeResource BaseTextBlockStyle}" />
+                                        Style="{ThemeResource BaseTextBlockStyle}"
+                                        Text="{x:Bind Name, Mode=OneWay}" />
                                     <TextBlock
                                         Grid.Column="1"
+                                        VerticalAlignment="Center"
                                         Text="{x:Bind Description, Mode=OneWay}"
-                                        TextWrapping="Wrap"
-                                        VerticalAlignment="Center" />
+                                        TextWrapping="Wrap" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -348,8 +393,14 @@
                                         <ColumnDefinition Width="250" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Name" Style="{ThemeResource CaptionTextBlockStyle}" />
-                                    <TextBlock Grid.Column="1" Text="Description" Style="{ThemeResource CaptionTextBlockStyle}" />
+                                    <TextBlock
+                                        Grid.Column="0"
+                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                        Text="Name" />
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                        Text="Description" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.HeaderTemplate>
@@ -361,21 +412,24 @@
                         </ListView.ItemContainerStyle>
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="vm:TrainViewModel">
-                                <Grid Height="48" Padding="12,0" AutomationProperties.Name="{x:Bind Name}">
+                                <Grid
+                                    Height="48"
+                                    Padding="12,0"
+                                    AutomationProperties.Name="{x:Bind Name}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="250" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock 
-                                        Grid.Column="0" 
-                                        Text="{x:Bind Name, Mode=OneWay}" 
+                                    <TextBlock
+                                        Grid.Column="0"
                                         VerticalAlignment="Center"
-                                        Style="{ThemeResource BaseTextBlockStyle}" />
+                                        Style="{ThemeResource BaseTextBlockStyle}"
+                                        Text="{x:Bind Name, Mode=OneWay}" />
                                     <TextBlock
                                         Grid.Column="1"
+                                        VerticalAlignment="Center"
                                         Text="{x:Bind Description, Mode=OneWay}"
-                                        TextWrapping="Wrap"
-                                        VerticalAlignment="Center" />
+                                        TextWrapping="Wrap" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>

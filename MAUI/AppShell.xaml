@@ -9,7 +9,7 @@
 
     <Shell.Resources>
         <Style ApplyToDerivedTypes="True" TargetType="Element">
-            <Setter Property="Shell.BackgroundColor" Value="#2c3e50" />
+            <Setter Property="Shell.BackgroundColor" Value="{StaticResource RailwayPrimary}" />
             <Setter Property="Shell.ForegroundColor" Value="White" />
             <Setter Property="Shell.TitleColor" Value="White" />
         </Style>

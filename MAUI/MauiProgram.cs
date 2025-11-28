@@ -30,6 +30,7 @@ public static class MauiProgram
         // Platform services (MUST be registered before ViewModels that depend on them)
         builder.Services.AddSingleton<IUiDispatcher, MAUI.Service.UiDispatcher>();
         builder.Services.AddSingleton<INotificationService, MAUI.Service.NotificationService>();
+        builder.Services.AddSingleton<SharedUI.Service.IBackgroundService, MAUI.Service.BackgroundService>();
 
         // ViewModels (CounterViewModel now requires IUiDispatcher and optional INotificationService)
         builder.Services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();

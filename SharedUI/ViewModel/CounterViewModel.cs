@@ -67,6 +67,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
         // This works because Z21 is a singleton and events persist across Connect/Disconnect
         _z21.Received += OnFeedbackReceived;
         _z21.OnSystemStateChanged += OnSystemStateChanged;
+        _z21.OnXBusStatusChanged += OnXBusStatusChanged;
 
         this.Log("✅ CounterViewModel: Subscribed to Z21 events (ready for simulation)");
     }
@@ -171,7 +172,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     private int mainCurrent;
 
     /// <summary>
-    /// Z21 internal temperature in degrees Celsius (°C).
+    /// Z21 internal temperature in degrees Celsius.
     /// </summary>
     [ObservableProperty]
     private int temperature;
@@ -365,6 +366,23 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
+    /// Handles Z21 XBus status changes (track power, emergency stop, etc.).
+    /// This is called when GetStatusAsync() response arrives or when track power changes.
+    /// IMPORTANT: This method is called from a background thread (UDP callback),
+    /// so all UI updates must be dispatched to the main thread via IUiDispatcher.
+    /// </summary>
+    private void OnXBusStatusChanged(Backend.Protocol.XBusStatus xBusStatus)
+    {
+        _dispatcher.InvokeOnUi(() =>
+        {
+            // TrackOff=true means power is OFF, so invert it
+            IsTrackPowerOn = !xBusStatus.TrackOff;
+            
+            this.Log($"📊 XBus status updated: TrackPowerOn={IsTrackPowerOn}, EmergencyStop={xBusStatus.EmergencyStop}, ShortCircuit={xBusStatus.ShortCircuit}");
+        });
+    }
+
+    /// <summary>
     /// Updates system state properties on the main thread (UI thread).
     /// </summary>
     private void UpdateSystemState(Backend.SystemState systemState)
@@ -375,8 +393,11 @@ public partial class CounterViewModel : ObservableObject, IDisposable
         VccVoltage = systemState.VccVoltage;
         CentralState = $"0x{systemState.CentralState:X2}";
         CentralStateEx = $"0x{systemState.CentralStateEx:X2}";
+        
+        // Update track power status from Z21 (reflects external changes, e.g., from Z21 app)
+        IsTrackPowerOn = systemState.IsTrackPowerOn;
 
-        this.Log($"📊 System state updated: MainCurrent={MainCurrent}mA, Temp={Temperature}°C, Supply={SupplyVoltage}mV");
+        this.Log($"📊 System state updated: MainCurrent={MainCurrent}mA, Temp={Temperature}C, Supply={SupplyVoltage}mV, TrackPower={IsTrackPowerOn}");
     }
 
     /// <summary>
@@ -541,6 +562,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
             {
                 _z21.Received -= OnFeedbackReceived;
                 _z21.OnSystemStateChanged -= OnSystemStateChanged;
+                _z21.OnXBusStatusChanged -= OnXBusStatusChanged;
                 this.Log("✅ CounterViewModel: Unsubscribed from Z21 events");
             }
             catch (Exception ex)

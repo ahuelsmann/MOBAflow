@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<linker>
+  <!-- Preserve all MAUI assemblies -->
+  <assembly fullname="Microsoft.Maui" preserve="all"/>
+  <assembly fullname="Microsoft.Maui.Controls" preserve="all"/>
+  <assembly fullname="Microsoft.Maui.Graphics" preserve="all"/>
+  <assembly fullname="Microsoft.Maui.Essentials" preserve="all"/>
+  
+  <!-- Preserve Platform-specific types -->
+  <assembly fullname="Microsoft.Maui">
+    <type fullname="Microsoft.Maui.PlatformDispatcher" preserve="all"/>
+    <type fullname="Microsoft.Maui.Platform.*" preserve="all"/>
+  </assembly>
+  
+  <!-- Preserve all CommunityToolkit assemblies -->
+  <assembly fullname="CommunityToolkit.Maui" preserve="all"/>
+  <assembly fullname="CommunityToolkit.Maui.Core" preserve="all"/>
+  <assembly fullname="CommunityToolkit.Maui.MediaElement" preserve="all"/>
+  
+  <!-- Preserve UraniumUI -->
+  <assembly fullname="UraniumUI" preserve="all"/>
+  <assembly fullname="UraniumUI.Material" preserve="all"/>
+  
+  <!-- Preserve your assemblies -->
+  <assembly fullname="Moba.MAUI" preserve="all"/>
+  <assembly fullname="Moba.SharedUI" preserve="all"/>
+  <assembly fullname="Moba.Backend" preserve="all"/>
+</linker>

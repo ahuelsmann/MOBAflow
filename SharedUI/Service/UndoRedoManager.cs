@@ -16,6 +16,7 @@ public class UndoRedoManager
     private readonly string _historyDirectory;
     private readonly List<string> _history = [];
     private int _currentIndex = -1;
+    private int _savedStateIndex = -1; // Track which index was last saved
     private readonly int _maxHistorySize = 50;
     private CancellationTokenSource? _autoSaveCts;
     private Solution? _pendingSolution;
@@ -99,6 +100,7 @@ public class UndoRedoManager
 
             _history.Add(fileToSave);
             _currentIndex = _history.Count - 1;
+            _savedStateIndex = _currentIndex; // Update last saved index
         }
 
         // Save outside of lock (async I/O)
@@ -225,6 +227,7 @@ public class UndoRedoManager
             }
             _history.Clear();
             _currentIndex = -1;
+            _savedStateIndex = -1; // Reset saved state tracking
         }
     }
 
@@ -244,9 +247,42 @@ public class UndoRedoManager
     }
 
     /// <summary>
-    /// Gets history statistics for debugging.
+    /// Marks the current state as saved (e.g., after successful file save).
     /// </summary>
-    public (int totalStates, int currentIndex, bool canUndo, bool canRedo) GetHistoryInfo()
+    public void MarkCurrentAsSaved()
+    {
+        lock (_lock)
+        {
+            _savedStateIndex = _currentIndex;
+        }
+    }
+
+    /// <summary>
+    /// Checks if the current state is the same as the last saved state.
+    /// </summary>
+    public bool IsCurrentStateSaved()
+    {
+        lock (_lock)
+        {
+            return _currentIndex == _savedStateIndex && _savedStateIndex >= 0;
+        }
+    }
+
+    /// <summary>
+    /// Gets history statistics for debugging (full version).
+    /// </summary>
+    public (int totalStates, int currentIndex, int savedIndex, bool canUndo, bool canRedo, bool isSaved) GetHistoryInfo()
+    {
+        lock (_lock)
+        {
+            return (_history.Count, _currentIndex, _savedStateIndex, CanUndo, CanRedo, IsCurrentStateSaved());
+        }
+    }
+
+    /// <summary>
+    /// Gets basic history statistics (compatibility method for old tests).
+    /// </summary>
+    public (int totalStates, int currentIndex, bool canUndo, bool canRedo) GetBasicHistoryInfo()
     {
         lock (_lock)
         {

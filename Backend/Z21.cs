@@ -242,7 +242,7 @@ public class Z21 : IZ21
                     CentralStateEx = centralStateEx
                 };
 
-                _logger?.LogInformation("📊 Invoking OnSystemStateChanged: MainCurrent={MainCurrent}mA, Temp={Temp}°C", mainCurrent, temperature);
+                _logger?.LogInformation("📊 Invoking OnSystemStateChanged: MainCurrent={MainCurrent}mA, Temp={Temp}C", mainCurrent, temperature);
                 OnSystemStateChanged?.Invoke(CurrentSystemState);
                 _logger?.LogDebug("System state event invoked");
             }

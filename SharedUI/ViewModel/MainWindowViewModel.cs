@@ -78,6 +78,9 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private Solution solution = null!; // Initialized in constructor
 
+    [ObservableProperty]
+    private bool hasUnsavedChanges = false;
+
     /// <summary>
     /// Tree view nodes representing the solution structure (projects, journeys, stations, etc.).
     /// </summary>
@@ -154,21 +157,31 @@ public partial class MainWindowViewModel : ObservableObject
 
     partial void OnSolutionChanged(Solution? value)
     {
+        // ✅ NULL-Check: value könnte während Initialization null sein
+        if (value == null)
+        {
+            HasSolution = false;
+            TreeNodes.Clear();
+            Properties.Clear();
+            AvailableCities.Clear();
+            return;
+        }
+        
         // Ensure Solution always has at least one project
-        if (value != null && value.Projects.Count == 0)
+        if (value.Projects.Count == 0)
         {
             value.Projects.Add(new Project { Name = "(Untitled Project)" });
             System.Diagnostics.Debug.WriteLine("⚠️ Solution had no projects, added empty project");
         }
         
-        HasSolution = value is { Projects.Count: > 0 };
+        HasSolution = value.Projects.Count > 0;
         SaveSolutionCommand.NotifyCanExecuteChanged();
         ConnectToZ21Command.NotifyCanExecuteChanged();
         BuildTreeView();
         LoadCities();
         
         // Save initial state (e.g., when loading from file or after Undo/Redo)
-        _ = _undoRedoManager.SaveStateImmediateAsync(value!);
+        _ = _undoRedoManager.SaveStateImmediateAsync(value);
         UpdateUndoRedoState();
     }
 
@@ -176,12 +189,16 @@ public partial class MainWindowViewModel : ObservableObject
     {
         AvailableCities.Clear();
         
-        if (Solution.Projects.Count > 0)
+        // ✅ NULL-Check: Solution könnte während des Initialisierungsprozesses noch null sein
+        if (Solution?.Projects?.Count > 0)
         {
             var firstProject = Solution.Projects[0];
-            foreach (var city in firstProject.Cities)
+            if (firstProject?.Cities != null)
             {
-                AvailableCities.Add(city);
+                foreach (var city in firstProject.Cities)
+                {
+                    AvailableCities.Add(city);
+                }
             }
         }
     }
@@ -227,8 +244,8 @@ public partial class MainWindowViewModel : ObservableObject
                 Name = stationToCopy.Name,
                 Track = stationToCopy.Track,
                 IsExitOnLeft = stationToCopy.IsExitOnLeft,
-                NumberOfLapsToStop = 2, // Default for journey
-                Number = (uint)journeyVM.Model.Stations.Count + 1
+                NumberOfLapsToStop = 2 // Default for journey
+                , Number = (uint)journeyVM.Model.Stations.Count + 1
             };
 
             // Add to Journey model
@@ -293,24 +310,26 @@ public partial class MainWindowViewModel : ObservableObject
             // ✅ CRITICAL: Update the existing Solution instance instead of replacing it
             // This ensures all ViewModels that have a reference to Solution see the changes
             Solution.UpdateFrom(loadedSolution);
-            
-            // Update CurrentSolutionPath
+
+            // Update current path and mark as saved
             CurrentSolutionPath = path;
+            HasUnsavedChanges = false;
+
+            // ✅ Clear old undo/redo history for loaded solution
+            _undoRedoManager.ClearHistory();
             
+            // ✅ Save initial state for loaded solution
+            await _undoRedoManager.SaveStateImmediateAsync(Solution);
+            _undoRedoManager.MarkCurrentAsSaved(); // Mark as saved immediately
+            UpdateUndoRedoState();
+
             // ✅ Manually trigger the same logic as OnSolutionChanged
-            // because the Solution reference didn't change (only its content)
+            //because the Solution reference didn't change (only its content)
             HasSolution = Solution.Projects.Count > 0;
             SaveSolutionCommand.NotifyCanExecuteChanged();
-              ConnectToZ21Command.NotifyCanExecuteChanged();
-              BuildTreeView();
-              LoadCities();
             ConnectToZ21Command.NotifyCanExecuteChanged();
             BuildTreeView();
             LoadCities();
-            
-            // Save initial state for undo/redo
-            await _undoRedoManager.SaveStateImmediateAsync(Solution);
-            UpdateUndoRedoState();
             
             // Notify that Solution content has changed (for EditorPageViewModel)
             OnPropertyChanged(nameof(Solution));
@@ -330,6 +349,10 @@ public partial class MainWindowViewModel : ObservableObject
         if (success && path != null)
         {
             CurrentSolutionPath = path;
+            HasUnsavedChanges = false; // Mark as saved
+            
+            // ✅ Mark current undo/redo state as saved
+            _undoRedoManager.MarkCurrentAsSaved();
         }
         else if (!string.IsNullOrEmpty(error))
         {
@@ -352,7 +375,7 @@ public partial class MainWindowViewModel : ObservableObject
     private async Task ConnectToZ21Async()
     {
         // ✅ Use IP and Port from Solution.Settings
-        if (!string.IsNullOrEmpty(Solution.Settings.CurrentIpAddress))
+        if (Solution?.Settings != null && !string.IsNullOrEmpty(Solution.Settings.CurrentIpAddress))
         {
             try
             {
@@ -365,9 +388,8 @@ public partial class MainWindowViewModel : ObservableObject
                 {
                     port = parsedPort;
                 }
-                
-                await _z21.ConnectAsync(address, port);
 
+                await _z21.ConnectAsync(address, port);
                 IsZ21Connected = true;
                 Z21StatusText = $"Connected to {Solution.Settings.CurrentIpAddress}:{port}";
 
@@ -541,14 +563,41 @@ public partial class MainWindowViewModel : ObservableObject
     /// </summary>
     private void UpdateZ21SystemState(Backend.SystemState systemState)
     {
-        // Update status text with key metrics
-        Z21StatusText = $"Connected | Current: {systemState.MainCurrent}mA | Temp: {systemState.Temperature}°C";
+        // ✅ Synchronize track power status with Z21 actual state
+        IsTrackPowerOn = systemState.IsTrackPowerOn;
         
-        this.Log($"📊 Z21 System State: Current={systemState.MainCurrent}mA, Temp={systemState.Temperature}°C, Voltage={systemState.SupplyVoltage}mV");
+        // Update status text with key metrics (using simple C instead of ° symbol to avoid encoding issues)
+        var statusParts = new List<string>
+        {
+            "Connected",
+            $"Current: {systemState.MainCurrent}mA",
+            $"Temp: {systemState.Temperature}C"  // ✅ Use plain C instead of °C to avoid UTF-8 encoding issues
+        };
+
+        // Add warnings for special states
+        if (systemState.IsEmergencyStop)
+            statusParts.Add("WARNING: EMERGENCY STOP");
+        
+        if (systemState.IsShortCircuit)
+            statusParts.Add("WARNING: SHORT CIRCUIT");
+        
+        if (systemState.IsProgrammingMode)
+            statusParts.Add("Programming");
+
+        Z21StatusText = string.Join(" | ", statusParts);
+        
+        this.Log($"Z21 System State: TrackPower={systemState.IsTrackPowerOn}, Current={systemState.MainCurrent}mA, Temp={systemState.Temperature}C, Voltage={systemState.SupplyVoltage}mV");
     }
     
     private void BuildTreeView()
     {
+        // ✅ NULL-Check: Solution könnte während Initialization null sein
+        if (Solution == null)
+        {
+            TreeNodes.Clear();
+            return;
+        }
+        
         // Save current expansion states
         var expansionStates = new Dictionary<string, bool>();
         SaveExpansionStates(TreeNodes, expansionStates, "");
@@ -586,6 +635,9 @@ public partial class MainWindowViewModel : ObservableObject
         // A Journey was modified (Station added/deleted/reordered)
         _ = _undoRedoManager.SaveStateImmediateAsync(Solution);
         UpdateUndoRedoState();
+        
+        // ✅ Mark as having unsaved changes
+        HasUnsavedChanges = true;
     }
 
     private void SaveExpansionStates(ObservableCollection<TreeNodeViewModel> nodes, Dictionary<string, bool> states, string path)
@@ -676,13 +728,16 @@ public partial class MainWindowViewModel : ObservableObject
         
         // Throttled auto-save after property changes
         _undoRedoManager.SaveStateThrottled(Solution);
+        
+        // ✅ Mark as having unsaved changes
+        HasUnsavedChanges = true;
     }
 
     [RelayCommand(CanExecute = nameof(CanUndo))]
     private async Task UndoAsync()
     {
         var previousSolution = await _undoRedoManager.UndoAsync();
-        if (previousSolution != null)
+        if (previousSolution != null && Solution != null)
         {
             // ✅ Update the existing Solution instance instead of replacing it
             Solution.UpdateFrom(previousSolution);
@@ -698,6 +753,9 @@ public partial class MainWindowViewModel : ObservableObject
             OnPropertyChanged(nameof(Solution));
             
             UpdateUndoRedoState();
+            
+            // ✅ Check if we're back at saved state
+            HasUnsavedChanges = !_undoRedoManager.IsCurrentStateSaved();
         }
     }
 
@@ -705,7 +763,7 @@ public partial class MainWindowViewModel : ObservableObject
     private async Task RedoAsync()
     {
         var nextSolution = await _undoRedoManager.RedoAsync();
-        if (nextSolution != null)
+        if (nextSolution != null && Solution != null)
         {
             // ✅ Update the existing Solution instance instead of replacing it
             Solution.UpdateFrom(nextSolution);
@@ -721,6 +779,9 @@ public partial class MainWindowViewModel : ObservableObject
             OnPropertyChanged(nameof(Solution));
             
             UpdateUndoRedoState();
+            
+            // ✅ Check if we're back at saved state
+            HasUnsavedChanges = !_undoRedoManager.IsCurrentStateSaved();
         }
     }
 
@@ -951,5 +1012,83 @@ public partial class MainWindowViewModel : ObservableObject
     public void RefreshTreeView()
     {
         BuildTreeView();
+    }
+
+    [RelayCommand]
+    private async Task NewSolutionAsync()
+    {
+        System.Diagnostics.Debug.WriteLine("📄 NewSolutionAsync START");
+        
+        var (success, userCancelled, error) = await _ioService.NewSolutionAsync(HasUnsavedChanges);
+        
+        if (userCancelled)
+        {
+            System.Diagnostics.Debug.WriteLine("ℹ️ User cancelled new solution creation");
+            return;
+        }
+        
+        if (!success)
+        {
+            // Check if user wants to save first
+            if (error == "SAVE_REQUESTED")
+            {
+                System.Diagnostics.Debug.WriteLine("💾 Saving current solution before creating new one");
+                
+                // Execute save command
+                if (SaveSolutionCommand.CanExecute(null))
+                {
+                    await SaveSolutionCommand.ExecuteAsync(null);
+                }
+                
+                // After save, create new solution
+                System.Diagnostics.Debug.WriteLine("📄 Creating new solution after save");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Failed to create new solution: {error}");
+                return;
+            }
+        }
+        
+        // Create a new empty Solution
+        var newSolution = new Solution
+        {
+            Name = "New Solution"
+        };
+        
+        // Add a default project
+        newSolution.Projects.Add(new Project
+        {
+            Name = "New Project",
+            Journeys = new System.Collections.Generic.List<Journey>(),
+            Workflows = new System.Collections.Generic.List<Workflow>(),
+            Trains = new System.Collections.Generic.List<Train>()
+        });
+        
+        System.Diagnostics.Debug.WriteLine($"✅ Updating Solution with new empty solution");
+        
+        // Update the existing Solution singleton instance
+        Solution.UpdateFrom(newSolution);
+        
+        // Clear the current path (unsaved new solution)
+        CurrentSolutionPath = null;
+        
+        // ✅ Clear old undo/redo history for new solution
+        _undoRedoManager.ClearHistory();
+        
+        // ✅ Save initial state for new solution
+        await _undoRedoManager.SaveStateImmediateAsync(Solution);
+        UpdateUndoRedoState();
+        
+        // Mark as having unsaved changes (new solution not yet saved)
+        HasUnsavedChanges = true;
+        
+        // Rebuild TreeView
+        SaveSolutionCommand.NotifyCanExecuteChanged();
+        ConnectToZ21Command.NotifyCanExecuteChanged();
+        BuildTreeView();
+        LoadCities();
+        
+        System.Diagnostics.Debug.WriteLine("✅ NewSolutionAsync COMPLETE");
     }
 }

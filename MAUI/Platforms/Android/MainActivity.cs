@@ -2,6 +2,7 @@
 using Android.App;
 using Android.Content.PM;
 using Android.Views;
+using AndroidResource = Android.Resource;
 
 namespace Moba.Smart.Platforms.Android;
 
@@ -17,7 +18,7 @@ public class MainActivity : MauiAppCompatActivity
     {
         base.OnCreate(savedInstanceState);
         
-        // Switch to MainTheme after splash screen
-        SetTheme(Resource.Style.MainTheme);
+        // Switch to MainTheme after splash screen (defined in Resources/values/styles.xml)
+        SetTheme(Microsoft.Maui.Resource.Style.MainTheme);
     }
 }

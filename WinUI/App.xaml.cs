@@ -57,7 +57,7 @@ public partial class App
         _window = _serviceProvider.GetRequiredService<MainWindow>();
 
         var ioService = _serviceProvider.GetRequiredService<IIoService>() as IoService;
-        ioService?.SetWindowId(_window.AppWindow.Id);
+        ioService?.SetWindowId(_window.AppWindow.Id, _window.Content.XamlRoot);
 
         _window.Activate();
     }
@@ -81,12 +81,26 @@ public partial class App
                 System.Diagnostics.Debug.WriteLine($"📊 Solution contains {solution.Projects.Count} projects");
 
                 // Update the Solution singleton
-                var existingSolution = _serviceProvider.GetRequiredService<Backend.Model.Solution>();
+                var existingSolution = _serviceProvider!.GetRequiredService<Backend.Model.Solution>();
                 existingSolution.UpdateFrom(solution);
 
-                // Update MainWindowViewModel with the loaded path
-                var mainWindowViewModel = _serviceProvider.GetRequiredService<SharedUI.ViewModel.WinUI.MainWindowViewModel>();
+                // Update MainWindowViewModel with the loaded path and trigger UI update
+                var mainWindowViewModel = _serviceProvider!.GetRequiredService<SharedUI.ViewModel.WinUI.MainWindowViewModel>();
                 mainWindowViewModel.CurrentSolutionPath = path;
+                mainWindowViewModel.HasUnsavedChanges = false;
+                
+                // ✅ Manually trigger BuildTreeView since Solution reference didn't change
+                mainWindowViewModel.HasSolution = existingSolution.Projects.Count > 0;
+                mainWindowViewModel.SaveSolutionCommand.NotifyCanExecuteChanged();
+                mainWindowViewModel.ConnectToZ21Command.NotifyCanExecuteChanged();
+                
+                // ✅ Trigger OnSolutionChanged logic manually
+                // Force UI update by temporarily setting Solution to null and back
+                var tempSolution = mainWindowViewModel.Solution;
+                mainWindowViewModel.Solution = null;
+                mainWindowViewModel.Solution = tempSolution;
+                
+                System.Diagnostics.Debug.WriteLine("✅ TreeView updated after auto-load");
             }
             else if (error != null)
             {

@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 public class IoService : IIoService
 {
     private Microsoft.UI.WindowId? _windowId;
+    private Microsoft.UI.Xaml.XamlRoot? _xamlRoot;
     private readonly IPreferencesService _preferencesService;
 
     public IoService(IPreferencesService preferencesService)
@@ -24,11 +25,12 @@ public class IoService : IIoService
     }
 
     /// <summary>
-    /// Sets the WindowId for the file pickers. Must be called before using the service.
+    /// Sets the WindowId and XamlRoot for the file pickers and dialogs. Must be called before using the service.
     /// </summary>
-    public void SetWindowId(Microsoft.UI.WindowId windowId)
+    public void SetWindowId(Microsoft.UI.WindowId windowId, Microsoft.UI.Xaml.XamlRoot? xamlRoot = null)
     {
         _windowId = windowId;
+        _xamlRoot = xamlRoot;
     }
 
     public async Task<(Solution? solution, string? path, string? error)> LoadAsync()
@@ -109,14 +111,20 @@ public class IoService : IIoService
                 return (null, null, $"Last solution file not found: {lastPath}");
             }
 
-            System.Diagnostics.Debug.WriteLine($"🔄 Auto-loading last solution: {lastPath}");
+            System.Diagnostics.Debug.WriteLine($"📄 Auto-loading last solution: {lastPath}");
             
             // Load the solution
             var sol = new Solution();
-            sol = await sol.LoadAsync(lastPath);
+            var loadedSolution = await sol.LoadAsync(lastPath!); // lastPath is guaranteed non-null here
             
-            System.Diagnostics.Debug.WriteLine($"✅ Auto-loaded solution with {sol.Projects.Count} projects");
-            return (sol, lastPath, null);
+            if (loadedSolution == null)
+            {
+                System.Diagnostics.Debug.WriteLine($"⚠️ Failed to load solution from {lastPath}");
+                return (null, null, $"Failed to load solution from {lastPath}");
+            }
+            
+            System.Diagnostics.Debug.WriteLine($"✅ Auto-loaded solution with {loadedSolution.Projects.Count} projects");
+            return (loadedSolution, lastPath, null);
         }
         catch (Exception ex)
         {
@@ -181,5 +189,61 @@ public class IoService : IIoService
 
         var dm = await DataManager.LoadAsync(result.Path);
         return (dm, result.Path, null);
+    }
+
+    /// <summary>
+    /// Creates a new empty solution.
+    /// Prompts user for confirmation if unsaved changes exist.
+    /// </summary>
+    public async Task<(bool success, bool userCancelled, string? error)> NewSolutionAsync(bool hasUnsavedChanges)
+    {
+        try
+        {
+            // Check if there are unsaved changes
+            if (hasUnsavedChanges)
+            {
+                if (_windowId == null)
+                    throw new InvalidOperationException("WindowId must be set before using IoService");
+
+                var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
+                {
+                    Title = "Unsaved Changes",
+                    Content = "You have unsaved changes in the current solution. Do you want to save before creating a new solution?",
+                    PrimaryButtonText = "Save",
+                    SecondaryButtonText = "Don't Save",
+                    CloseButtonText = "Cancel",
+                    DefaultButton = Microsoft.UI.Xaml.Controls.ContentDialogButton.Primary,
+                    XamlRoot = _xamlRoot
+                };
+
+                var result = await dialog.ShowAsync();
+
+                if (result == Microsoft.UI.Xaml.Controls.ContentDialogResult.None)
+                {
+                    // User cancelled
+                    System.Diagnostics.Debug.WriteLine("ℹ️ User cancelled new solution creation");
+                    return (false, true, null);
+                }
+
+                if (result == Microsoft.UI.Xaml.Controls.ContentDialogResult.Primary)
+                {
+                    // User wants to save - return and let ViewModel handle save
+                    System.Diagnostics.Debug.WriteLine("💾 User wants to save before creating new solution");
+                    return (false, false, "SAVE_REQUESTED");
+                }
+
+                // result == Secondary: Don't Save - continue with new solution
+                System.Diagnostics.Debug.WriteLine("⚠️ User chose not to save - creating new solution");
+            }
+            
+            System.Diagnostics.Debug.WriteLine("📄 Creating new empty solution");
+            
+            return (true, false, null);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ Failed to create new solution: {ex.Message}");
+            return (false, false, $"Failed to create new solution: {ex.Message}");
+        }
     }
 }

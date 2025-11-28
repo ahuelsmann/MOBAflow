@@ -4,332 +4,228 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-    Title="MOBAsmart - Monitor">
-    <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="15">
-            <!--  Connection Section  -->
-            <Frame
-                Padding="15"
-                BackgroundColor="#2c3e50"
-                CornerRadius="8">
-                <VerticalStackLayout Spacing="10">
-                    <Label
-                        FontAttributes="Bold"
-                        FontSize="18"
-                        Text="Z21 Connection"
-                        TextColor="White" />
-                    <HorizontalStackLayout Spacing="10">
-                        <Picker
-                            x:Name="IpAddressPicker"
-                            Title="Select Z21 IP"
-                            HorizontalOptions="FillAndExpand"
-                            ItemsSource="{Binding AvailableIpAddresses}"
-                            SelectedItem="{Binding Z21IpAddress}"
-                            TextColor="White"
-                            TitleColor="LightGray" />
-                        <ImageButton
-                            Padding="12"
-                            BackgroundColor="#27ae60"
-                            Command="{Binding ConnectCommand}"
-                            CornerRadius="5"
-                            HeightRequest="50"
-                            Source="icon_connect.png"
-                            WidthRequest="60" />
-                        <ImageButton
-                            Padding="12"
-                            BackgroundColor="#e74c3c"
-                            Command="{Binding DisconnectCommand}"
-                            CornerRadius="5"
-                            HeightRequest="50"
-                            Source="icon_disconnect.png"
-                            WidthRequest="60" />
-                    </HorizontalStackLayout>
-                    <HorizontalStackLayout Spacing="10" Margin="0,10,0,0">
-                        <Label
-                            Text="⚡ Track Power"
-                            TextColor="White"
-                            VerticalOptions="Center"
-                            FontAttributes="Bold" />
-                        <Switch
-                            IsToggled="{Binding IsTrackPowerOn}"
-                            IsEnabled="{Binding IsConnected}"
-                            OnColor="#27ae60"
-                            ThumbColor="White"
-                            Toggled="TrackPowerSwitch_Toggled" />
-                    </HorizontalStackLayout>
+    Title="MOBAsmart"
+    BackgroundColor="{DynamicResource SurfaceBackground}">
 
-                    <Label
-                        FontSize="14"
-                        Text="{Binding StatusText}"
-                        TextColor="White" />
+    <ScrollView>
+        <VerticalStackLayout Padding="0" Spacing="0">
+
+            <!--  Header with App Title  -->
+            <Frame Style="{DynamicResource ElevatedCard}" Margin="16,16,16,8">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                    <VerticalStackLayout Grid.Column="0" Spacing="4">
+                        <Label Text="MOBAsmart" Style="{DynamicResource HeadlineMedium}" />
+                        <Label Text="Railway Control Dashboard" Style="{DynamicResource BodySmall}" TextColor="{DynamicResource TextDisabled}" />
+                    </VerticalStackLayout>
+                    <Label Grid.Column="1" 
+                           Text="🚂" 
+                           FontSize="48"
+                           VerticalOptions="Center" />
+                </Grid>
+            </Frame>
+
+            <!--  Connection Status Card  -->
+            <Frame Style="{DynamicResource ElevatedCard}">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                    <!--  Status Icon  -->
+                    <Border Grid.Column="0"
+                            WidthRequest="56"
+                            HeightRequest="56"
+                            StrokeThickness="0"
+                            BackgroundColor="{DynamicResource RailwayPrimary}"
+                            StrokeShape="RoundRectangle 12"
+                            VerticalOptions="Center">
+                        <Label Text="📡" 
+                               FontSize="32"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
+                    </Border>
+
+                    <!--  Content  -->
+                    <VerticalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
+                        <Label Text="Connection Status" Style="{DynamicResource TitleMedium}" />
+                        <Label Text="{Binding StatusText}" 
+                               Style="{DynamicResource BodyMedium}" />
+                        <Label Text="{Binding Z21IpAddress, StringFormat='IP: {0}'}" 
+                               Style="{DynamicResource LabelSmall}" />
+                    </VerticalStackLayout>
+
+                    <!--  Status Indicator  -->
+                    <BoxView Grid.Column="2"
+                             WidthRequest="16"
+                             HeightRequest="16"
+                             CornerRadius="8"
+                             BackgroundColor="{DynamicResource RailwayAccent}"
+                             IsVisible="{Binding IsConnected}"
+                             VerticalOptions="Center" />
+                </Grid>
+            </Frame>
+
+            <!--  Connection Controls Card  -->
+            <Frame Style="{DynamicResource FilledCard}">
+                <VerticalStackLayout Spacing="16">
+                    <Label Text="Connection Controls" Style="{DynamicResource TitleSmall}" />
+
+                    <!--  IP Address Picker  -->
+                    <Border BackgroundColor="{DynamicResource SurfaceHighlight}"
+                            StrokeThickness="0"
+                            Padding="12"
+                            StrokeShape="RoundRectangle 12">
+                        <Picker Title="Select Z21 IP Address"
+                                ItemsSource="{Binding AvailableIpAddresses}"
+                                SelectedItem="{Binding Z21IpAddress}"
+                                TextColor="{DynamicResource TextPrimary}"
+                                TitleColor="{DynamicResource TextSecondary}" />
+                    </Border>
+
+                    <!--  Connect/Disconnect Buttons  -->
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                        <Button Grid.Column="0"
+                                Text="Connect"
+                                Style="{DynamicResource AccentButton}"
+                                Command="{Binding ConnectCommand}"
+                                IsEnabled="{Binding IsNotConnected}" />
+                        <Button Grid.Column="1"
+                                Text="Disconnect"
+                                Style="{DynamicResource DangerButton}"
+                                Command="{Binding DisconnectCommand}"
+                                IsEnabled="{Binding IsConnected}" />
+                    </Grid>
+
+                    <!--  Track Power Control  -->
+                    <Border BackgroundColor="{DynamicResource SurfaceDark}"
+                            StrokeThickness="0"
+                            Padding="16"
+                            StrokeShape="RoundRectangle 12">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <Label Grid.Column="0" 
+                                   Text="⚡" 
+                                   FontSize="24"
+                                   VerticalOptions="Center" />
+                            <Label Grid.Column="1" 
+                                   Text="Track Power" 
+                                   Style="{DynamicResource BodyLarge}"
+                                   VerticalOptions="Center" />
+                            <Switch Grid.Column="2" 
+                                    x:Name="TrackPowerSwitch"
+                                    IsToggled="{Binding IsTrackPowerOn}"
+                                    Toggled="TrackPowerSwitch_Toggled"
+                                    OnColor="{DynamicResource RailwayAccent}"
+                                    ThumbColor="White"
+                                    VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
                 </VerticalStackLayout>
             </Frame>
-            <!--  Timer Filter Section (Collapsible)  -->
-            <Frame
-                Padding="15"
-                BackgroundColor="#34495e"
-                CornerRadius="8">
+
+            <!--  Lap Counters Card  -->
+            <Frame Style="{DynamicResource ElevatedCard}">
+                <VerticalStackLayout Spacing="16">
+                    <Label Text="Lap Counters" Style="{DynamicResource TitleMedium}" />
+
+                    <!--  Counters List  -->
+                    <CollectionView ItemsSource="{Binding Statistics}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border BackgroundColor="{DynamicResource SurfaceElevated}"
+                                        StrokeThickness="0"
+                                        Padding="16"
+                                        Margin="0,0,0,12"
+                                        StrokeShape="RoundRectangle 16">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                                        <!--  Counter Icon  -->
+                                        <Border Grid.Column="0"
+                                                WidthRequest="48"
+                                                HeightRequest="48"
+                                                StrokeThickness="0"
+                                                BackgroundColor="{DynamicResource RailwayPrimary}"
+                                                StrokeShape="RoundRectangle 12">
+                                            <Label Text="{Binding Count}" 
+                                                   FontSize="20"
+                                                   FontAttributes="Bold"
+                                                   TextColor="White"
+                                                   HorizontalOptions="Center"
+                                                   VerticalOptions="Center" />
+                                        </Border>
+
+                                        <!--  Content  -->
+                                        <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
+                                            <Label Text="{Binding InPort, StringFormat='Track {0}'}" 
+                                                   Style="{DynamicResource TitleSmall}" />
+                                            <Label Text="{Binding LapCountFormatted}" 
+                                                   Style="{DynamicResource LabelSmall}" />
+                                            <Label Text="{Binding LastLapTimeFormatted, StringFormat='Last: {0}'}" 
+                                                   Style="{DynamicResource LabelSmall}"
+                                                   TextColor="{DynamicResource RailwaySecondary}" />
+                                        </VerticalStackLayout>
+
+                                        <!--  Progress Indicator  -->
+                                        <ProgressBar Grid.Column="2"
+                                                     Progress="{Binding Progress}"
+                                                     ProgressColor="{DynamicResource RailwayAccent}"
+                                                     WidthRequest="60"
+                                                     VerticalOptions="Center"
+                                                     Rotation="270" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                    <!--  Reset Button  -->
+                    <Button Text="Reset All Counters" 
+                            Style="{DynamicResource OutlinedButton}"
+                            Command="{Binding ResetCountersCommand}" />
+                </VerticalStackLayout>
+            </Frame>
+
+            <!--  System Information Expander  -->
+            <Frame Style="{DynamicResource FilledCard}">
                 <toolkit:Expander>
                     <toolkit:Expander.Header>
-                        <HorizontalStackLayout Spacing="10">
-                            <Label
-                                FontAttributes="Bold"
-                                FontSize="18"
-                                Text="⚙️ Timer Filter"
-                                TextColor="White"
-                                VerticalOptions="Center" />
-                        </HorizontalStackLayout>
+                        <Grid ColumnDefinitions="Auto,*,Auto" Padding="0">
+                            <Label Grid.Column="0" 
+                                   Text="ℹ️" 
+                                   FontSize="24"
+                                   VerticalOptions="Center" />
+                            <Label Grid.Column="1" 
+                                   Text="System Information" 
+                                   Style="{DynamicResource TitleMedium}"
+                                   VerticalOptions="Center"
+                                   Margin="12,0,0,0" />
+                        </Grid>
                     </toolkit:Expander.Header>
+
                     <toolkit:Expander.Content>
-                        <VerticalStackLayout Padding="0,10,0,0" Spacing="10">
-                            <HorizontalStackLayout Spacing="10">
-                                <Label
-                                    Text="Enable Filter"
-                                    TextColor="White"
-                                    VerticalOptions="Center" />
-                                <Switch
-                                    IsToggled="{Binding UseTimerFilter}"
-                                    OnColor="#27ae60"
-                                    ThumbColor="White" />
-                            </HorizontalStackLayout>
-                            <VerticalStackLayout IsVisible="{Binding UseTimerFilter}" Spacing="5">
-                                <HorizontalStackLayout Spacing="10">
-                                    <Label
-                                        Text="Interval (seconds):"
-                                        TextColor="White"
-                                        VerticalOptions="Center" />
-                                    <Label
-                                        FontAttributes="Bold"
-                                        Text="{Binding TimerIntervalSeconds, StringFormat='{0:F1}s'}"
-                                        TextColor="#3498db"
-                                        VerticalOptions="Center" />
-                                </HorizontalStackLayout>
-                                <Slider
-                                    Maximum="10"
-                                    MaximumTrackColor="Gray"
-                                    Minimum="1"
-                                    MinimumTrackColor="#3498db"
-                                    ThumbColor="White"
-                                    Value="{Binding TimerIntervalSeconds}" />
-                                <Label
-                                    FontSize="12"
-                                    LineBreakMode="WordWrap"
-                                    Text="Prevents multiple counts from the same train pass (e.g., 16-axle train)"
-                                    TextColor="LightGray" />
+                        <VerticalStackLayout Spacing="16" Padding="0,16,0,0">
+                            <!--  Status Info  -->
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="Status" Style="{DynamicResource LabelLarge}" TextColor="{DynamicResource RailwaySecondary}" />
+                                <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
+                                    <Label Grid.Row="0" Grid.Column="0" Text="Temperature:" Style="{DynamicResource BodyMedium}" />
+                                    <Label Grid.Row="0" Grid.Column="1" Text="{Binding Temperature, StringFormat='{0} °C'}" Style="{DynamicResource BodyMedium}" TextColor="{DynamicResource RailwaySecondary}" />
+
+                                    <Label Grid.Row="1" Grid.Column="0" Text="Supply Voltage:" Style="{DynamicResource BodyMedium}" />
+                                    <Label Grid.Row="1" Grid.Column="1" Text="{Binding SupplyVoltage, StringFormat='{0} mV'}" Style="{DynamicResource BodyMedium}" TextColor="{DynamicResource RailwaySecondary}" />
+
+                                    <Label Grid.Row="2" Grid.Column="0" Text="VCC Voltage:" Style="{DynamicResource BodyMedium}" />
+                                    <Label Grid.Row="2" Grid.Column="1" Text="{Binding VccVoltage, StringFormat='{0} mV'}" Style="{DynamicResource BodyMedium}" TextColor="{DynamicResource RailwaySecondary}" />
+
+                                    <Label Grid.Row="3" Grid.Column="0" Text="State:" Style="{DynamicResource BodyMedium}" />
+                                    <Label Grid.Row="3" Grid.Column="1" Text="{Binding CentralState}" Style="{DynamicResource BodyMedium}" TextColor="{DynamicResource RailwaySecondary}" />
+
+                                    <Label Grid.Row="4" Grid.Column="0" Text="StateEx:" Style="{DynamicResource BodyMedium}" />
+                                    <Label Grid.Row="4" Grid.Column="1" Text="{Binding CentralStateEx}" Style="{DynamicResource BodyMedium}" TextColor="{DynamicResource RailwaySecondary}" />
+                                </Grid>
                             </VerticalStackLayout>
                         </VerticalStackLayout>
                     </toolkit:Expander.Content>
                 </toolkit:Expander>
             </Frame>
-            <!--  Target Laps Section (Collapsible)  -->
-            <Frame
-                Padding="15"
-                BackgroundColor="#34495e"
-                CornerRadius="8">
-                <toolkit:Expander>
-                    <toolkit:Expander.Header>
-                        <HorizontalStackLayout Spacing="10">
-                            <Label
-                                FontAttributes="Bold"
-                                FontSize="18"
-                                Text="🎯 Target Laps"
-                                TextColor="White"
-                                VerticalOptions="Center" />
-                        </HorizontalStackLayout>
-                    </toolkit:Expander.Header>
-                    <toolkit:Expander.Content>
-                        <VerticalStackLayout Padding="0,10,0,0" Spacing="10">
-                            <HorizontalStackLayout Spacing="10">
-                                <Entry
-                                    x:Name="TargetEntry"
-                                    HorizontalOptions="FillAndExpand"
-                                    Keyboard="Numeric"
-                                    Placeholder="10"
-                                    PlaceholderColor="LightGray"
-                                    Text="{Binding GlobalTargetLapCount}"
-                                    TextColor="White" />
-                            </HorizontalStackLayout>
-                        </VerticalStackLayout>
-                    </toolkit:Expander.Content>
-                </toolkit:Expander>
-            </Frame>
-            <!--  Statistics Section with Material Design Colors  -->
-            <Frame
-                Padding="15"
-                BackgroundColor="#2c3e50"
-                CornerRadius="8">
-                <VerticalStackLayout Spacing="10">
-                    <Label
-                        FontAttributes="Bold"
-                        FontSize="18"
-                        Text="📊 Lap Statistics"
-                        TextColor="White" />
-                    <CollectionView ItemsSource="{Binding Statistics}">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate>
-                                <!--  Material Design Red 400 → Green 400 after first lap  -->
-                                <Frame
-                                    Margin="0,5"
-                                    Padding="10"
-                                    BackgroundColor="{Binding BackgroundColorName}"
-                                    BorderColor="White"
-                                    CornerRadius="5"
-                                    HasShadow="True">
-                                    <VerticalStackLayout Spacing="5">
-                                        <Label
-                                            FontAttributes="Bold"
-                                            FontSize="16"
-                                            Text="{Binding InPort, StringFormat='Track {0}'}"
-                                            TextColor="White" />
-                                        <Label
-                                            FontSize="14"
-                                            Text="{Binding LapCountFormatted}"
-                                            TextColor="White" />
-                                        <!--  Last Lap Time (left) and Last Seen (right) in one row  -->
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <!--  Last Lap Time (left-aligned)  -->
-                                            <Label
-                                                Grid.Column="0"
-                                                FontSize="13"
-                                                HorizontalOptions="Start"
-                                                Text="{Binding LastLapTimeFormatted, StringFormat='⏱️ Last lap: {0}'}"
-                                                TextColor="White"
-                                                VerticalOptions="Center" />
-                                            <!--  Last Seen (right-aligned)  -->
-                                            <Label
-                                                Grid.Column="1"
-                                                FontSize="13"
-                                                HorizontalOptions="End"
-                                                Text="{Binding LastFeedbackTimeFormatted, StringFormat='🕐 Last seen: {0}'}"
-                                                TextColor="#ecf0f1"
-                                                VerticalOptions="Center" />
-                                        </Grid>
-                                    </VerticalStackLayout>
-                                </Frame>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-                </VerticalStackLayout>
-            </Frame>
-            <!--  Z21 System State Section (Collapsible)  -->
-            <Frame
-                Padding="15"
-                BackgroundColor="#34495e"
-                CornerRadius="8">
-                <toolkit:Expander>
-                    <toolkit:Expander.Header>
-                        <HorizontalStackLayout Spacing="10">
-                            <Label
-                                FontAttributes="Bold"
-                                FontSize="18"
-                                Text="⚡ Z21 System State"
-                                TextColor="White"
-                                VerticalOptions="Center" />
-                        </HorizontalStackLayout>
-                    </toolkit:Expander.Header>
 
-                    <toolkit:Expander.Content>
-                        <VerticalStackLayout Padding="0,10,0,0" Spacing="10">
-                            <!--  Main Current  -->
-                            <HorizontalStackLayout Spacing="10">
-                                <Label
-                                    Text="Main Current:"
-                                    TextColor="White"
-                                    VerticalOptions="Center"
-                                    WidthRequest="150" />
-                                <Label
-                                    FontAttributes="Bold"
-                                    Text="{Binding MainCurrent, StringFormat='{0} mA'}"
-                                    TextColor="#3498db"
-                                    VerticalOptions="Center" />
-                            </HorizontalStackLayout>
+            <!--  Footer Spacer  -->
+            <BoxView HeightRequest="16" Color="Transparent" />
 
-                            <!--  Temperature  -->
-                            <HorizontalStackLayout Spacing="10">
-                                <Label
-                                    Text="Temperature:"
-                                    TextColor="White"
-                                    VerticalOptions="Center"
-                                    WidthRequest="150" />
-                                <Label
-                                    FontAttributes="Bold"
-                                    Text="{Binding Temperature, StringFormat='{0} °C'}"
-                                    TextColor="#3498db"
-                                    VerticalOptions="Center" />
-                            </HorizontalStackLayout>
-
-                            <!--  Supply Voltage  -->
-                            <HorizontalStackLayout Spacing="10">
-                                <Label
-                                    Text="Supply Voltage:"
-                                    TextColor="White"
-                                    VerticalOptions="Center"
-                                    WidthRequest="150" />
-                                <Label
-                                    FontAttributes="Bold"
-                                    Text="{Binding SupplyVoltage, StringFormat='{0} mV'}"
-                                    TextColor="#3498db"
-                                    VerticalOptions="Center" />
-                            </HorizontalStackLayout>
-
-                            <!--  VCC Voltage  -->
-                            <HorizontalStackLayout Spacing="10">
-                                <Label
-                                    Text="VCC Voltage:"
-                                    TextColor="White"
-                                    VerticalOptions="Center"
-                                    WidthRequest="150" />
-                                <Label
-                                    FontAttributes="Bold"
-                                    Text="{Binding VccVoltage, StringFormat='{0} mV'}"
-                                    TextColor="#3498db"
-                                    VerticalOptions="Center" />
-                            </HorizontalStackLayout>
-
-                            <!--  Central State  -->
-                            <HorizontalStackLayout Spacing="10">
-                                <Label
-                                    Text="State:"
-                                    TextColor="White"
-                                    VerticalOptions="Center"
-                                    WidthRequest="150" />
-                                <Label
-                                    FontAttributes="Bold"
-                                    Text="{Binding CentralState}"
-                                    TextColor="#3498db"
-                                    VerticalOptions="Center" />
-                            </HorizontalStackLayout>
-
-                            <!--  Central State Ex  -->
-                            <HorizontalStackLayout Spacing="10">
-                                <Label
-                                    Text="StateEx:"
-                                    TextColor="White"
-                                    VerticalOptions="Center"
-                                    WidthRequest="150" />
-                                <Label
-                                    FontAttributes="Bold"
-                                    Text="{Binding CentralStateEx}"
-                                    TextColor="#3498db"
-                                    VerticalOptions="Center" />
-                            </HorizontalStackLayout>
-                        </VerticalStackLayout>
-                    </toolkit:Expander.Content>
-                </toolkit:Expander>
-            </Frame>
-            <!--  Control Buttons  -->
-            <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
-                <Button
-                    BackgroundColor="#e74c3c"
-                    Command="{Binding ResetCountersCommand}"
-                    Text="Reset"
-                    TextColor="White"
-                    WidthRequest="120" />
-            </HorizontalStackLayout>
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

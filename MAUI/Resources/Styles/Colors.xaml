@@ -1,13 +1,56 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <?xaml-comp compile="true" ?>
-<ResourceDictionary 
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
-    <!-- Colors for Dark Mode -->
-    <Color x:Key="Primary">#512BD4</Color>
-    <Color x:Key="Secondary">#DFD8F7</Color>
-    <Color x:Key="Tertiary">#2B0B98</Color>
+    <!--  Modern Railway Theme Colors - Material Design 3 Inspired  -->
+
+    <!--  Primary Colors (Railway Blue - Represents trains, tracks)  -->
+    <Color x:Key="RailwayPrimary">#1976D2</Color>
+    <Color x:Key="RailwayPrimaryDark">#0D47A1</Color>
+    <Color x:Key="RailwayPrimaryLight">#42A5F5</Color>
+
+    <!--  Secondary Colors (Signal Orange - Represents action, alerts)  -->
+    <Color x:Key="RailwaySecondary">#FF6F00</Color>
+    <Color x:Key="RailwaySecondaryDark">#E65100</Color>
+    <Color x:Key="RailwaySecondaryLight">#FF9800</Color>
+
+    <!--  Accent/Success (Signal Green - Go, Connected)  -->
+    <Color x:Key="RailwayAccent">#00C853</Color>
+    <Color x:Key="RailwayAccentDark">#00A344</Color>
+    <Color x:Key="RailwayAccentLight">#69F0AE</Color>
+
+    <!--  Danger/Error (Stop Red)  -->
+    <Color x:Key="RailwayDanger">#D32F2F</Color>
+    <Color x:Key="RailwayDangerDark">#B71C1C</Color>
+    <Color x:Key="RailwayDangerLight">#EF5350</Color>
+
+    <!--  Warning (Caution Yellow)  -->
+    <Color x:Key="RailwayWarning">#FFA000</Color>
+    <Color x:Key="RailwayWarningDark">#FF8F00</Color>
+    <Color x:Key="RailwayWarningLight">#FFB300</Color>
+
+    <!--  Surface Colors (Dark Mode)  -->
+    <Color x:Key="SurfaceBackground">#121212</Color>
+    <Color x:Key="SurfaceDark">#1E1E1E</Color>
+    <Color x:Key="SurfaceCard">#2D2D30</Color>
+    <Color x:Key="SurfaceElevated">#383838</Color>
+    <Color x:Key="SurfaceHighlight">#404040</Color>
+
+    <!--  Text Colors  -->
+    <Color x:Key="TextPrimary">#FFFFFF</Color>
+    <Color x:Key="TextSecondary">#B0B0B0</Color>
+    <Color x:Key="TextDisabled">#707070</Color>
+    <Color x:Key="TextOnPrimary">#FFFFFF</Color>
+    <Color x:Key="TextOnSecondary">#000000</Color>
+
+    <!--  Divider & Border  -->
+    <Color x:Key="Divider">#3D3D3D</Color>
+    <Color x:Key="BorderColor">#4D4D4D</Color>
+
+    <!--  Legacy Colors (for backward compatibility)  -->
+    <Color x:Key="Primary">#1976D2</Color>
+    <Color x:Key="Secondary">#FF6F00</Color>
+    <Color x:Key="Tertiary">#00C853</Color>
 
     <Color x:Key="White">White</Color>
     <Color x:Key="Black">Black</Color>
@@ -20,8 +63,8 @@
     <Color x:Key="Gray900">#212121</Color>
     <Color x:Key="Gray950">#141414</Color>
 
-    <!-- Dark Mode Colors -->
-    <Color x:Key="PageBackgroundColor">#1E1E1E</Color>
+    <!--  Named Surface Colors (for backward compatibility)  -->
+    <Color x:Key="PageBackgroundColor">#121212</Color>
     <Color x:Key="FrameBackgroundColor">#2D2D30</Color>
 
 </ResourceDictionary>

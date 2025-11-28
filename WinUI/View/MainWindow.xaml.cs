@@ -11,15 +11,22 @@ using MainWindowViewModel = Moba.SharedUI.ViewModel.WinUI.MainWindowViewModel;
 public sealed partial class MainWindow
 {
     public MainWindowViewModel ViewModel { get; }
-    private readonly HealthCheckService? _healthCheckService;
+    public CounterViewModel CounterViewModel { get; }
+    
+    private readonly HealthCheckService _healthCheckService;
     private readonly Moba.SharedUI.Service.IUiDispatcher _uiDispatcher;
 
-    public MainWindow(MainWindowViewModel viewModel, HealthCheckService healthCheckService, Moba.SharedUI.Service.IUiDispatcher uiDispatcher)
+    public MainWindow(
+        MainWindowViewModel viewModel, 
+        CounterViewModel counterViewModel,
+        HealthCheckService healthCheckService, 
+        Moba.SharedUI.Service.IUiDispatcher uiDispatcher)
     {
         ViewModel = viewModel;
+        CounterViewModel = counterViewModel;
         _healthCheckService = healthCheckService;
         _uiDispatcher = uiDispatcher;
-
+        
         InitializeComponent();
 
         // Set first nav item as selected (Overview)
@@ -349,6 +356,22 @@ public sealed partial class MainWindow
 
         switch (e.Key)
         {
+            case Windows.System.VirtualKey.N:
+                if (ViewModel.NewSolutionCommand.CanExecute(null))
+                {
+                    ViewModel.NewSolutionCommand.Execute(null);
+                    handled = true;
+                }
+                break;
+
+            case Windows.System.VirtualKey.O:
+                if (ViewModel.LoadSolutionCommand.CanExecute(null))
+                {
+                    ViewModel.LoadSolutionCommand.Execute(null);
+                    handled = true;
+                }
+                break;
+
             case Windows.System.VirtualKey.Z:
                 if (ViewModel.UndoCommand.CanExecute(null))
                 {
@@ -676,9 +699,9 @@ public sealed partial class MainWindow
         if (sender is Microsoft.UI.Xaml.Controls.AppBarToggleButton toggleButton)
         {
             // Execute the command with the new state
-            if (ViewModel.SetTrackPowerCommand.CanExecute(toggleButton.IsChecked))
+            if (CounterViewModel.SetTrackPowerCommand.CanExecute(toggleButton.IsChecked))
             {
-                await ViewModel.SetTrackPowerCommand.ExecuteAsync(toggleButton.IsChecked);
+                await CounterViewModel.SetTrackPowerCommand.ExecuteAsync(toggleButton.IsChecked);
             }
         }
     }

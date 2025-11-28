@@ -53,7 +53,7 @@ public class UndoRedoManagerTests
     public void Constructor_InitializesWithEmptyHistory()
     {
         // Act
-        var (totalStates, currentIndex, canUndo, canRedo) = _manager.GetHistoryInfo();
+        var (totalStates, currentIndex, canUndo, canRedo) = _manager.GetBasicHistoryInfo();
 
         // Assert
         Assert.That(totalStates, Is.EqualTo(0));
@@ -88,7 +88,7 @@ public class UndoRedoManagerTests
 
         // Act
         await _manager.SaveStateImmediateAsync(solution);
-        var (totalStates, currentIndex, canUndo, canRedo) = _manager.GetHistoryInfo();
+        var (totalStates, currentIndex, canUndo, canRedo) = _manager.GetBasicHistoryInfo();
 
         // Assert
         Assert.That(totalStates, Is.EqualTo(1));
@@ -110,7 +110,7 @@ public class UndoRedoManagerTests
         await _manager.SaveStateImmediateAsync(solution2);
         await _manager.SaveStateImmediateAsync(solution3);
 
-        var (totalStates, currentIndex, canUndo, canRedo) = _manager.GetHistoryInfo();
+        var (totalStates, currentIndex, canUndo, canRedo) = _manager.GetBasicHistoryInfo();
 
         // Assert
         Assert.That(totalStates, Is.EqualTo(3));
@@ -138,7 +138,7 @@ public class UndoRedoManagerTests
         var solution4 = CreateTestSolution("Solution 4");
         await _manager.SaveStateImmediateAsync(solution4);
 
-        var (totalStates, _, _, _) = _manager.GetHistoryInfo();
+        var (totalStates, _, _, _) = _manager.GetBasicHistoryInfo();
 
         // Assert
         Assert.That(totalStates, Is.EqualTo(2), 
@@ -165,7 +165,7 @@ public class UndoRedoManagerTests
         await Task.Delay(100);
 
         // Act
-        var (totalStates, currentIndex, _, _) = _manager.GetHistoryInfo();
+        var (totalStates, currentIndex, _, _) = _manager.GetBasicHistoryInfo();
         var files = Directory.GetFiles(_testDirectory, "history_*.json");
 
         // Assert
@@ -290,7 +290,7 @@ public class UndoRedoManagerTests
 
         // Act
         _manager.ClearHistory();
-        var (totalStates, currentIndex, canUndo, canRedo) = _manager.GetHistoryInfo();
+        var (totalStates, currentIndex, canUndo, canRedo) = _manager.GetBasicHistoryInfo();
 
         // Assert
         Assert.That(totalStates, Is.EqualTo(0));
@@ -329,7 +329,7 @@ public class UndoRedoManagerTests
         await Task.Delay(500);
 
         // Assert
-        var (totalStates, _, _, _) = _manager.GetHistoryInfo();
+        var (totalStates, _, _, _) = _manager.GetBasicHistoryInfo();
         Assert.That(totalStates, Is.EqualTo(10), 
             "All concurrent saves should be recorded safely");
     }

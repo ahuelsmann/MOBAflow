@@ -177,7 +177,7 @@
                             Grid.Column="3"
                             Margin="40,0,0,0"
                             VerticalAlignment="Center"
-                            Text=" °C" />
+                            Text=" C" />
 
                         <TextBlock
                             Grid.Row="1"
@@ -379,22 +379,30 @@
                                                 Grid.Column="0"
                                                 Orientation="Horizontal"
                                                 Spacing="4">
-                                                <TextBlock Foreground="White" Text="⏱️ Last lap:" />
+                                                <FontIcon
+                                                    FontSize="12"
+                                                    Foreground="White"
+                                                    Glyph="&#xE916;" />
+                                                <TextBlock Foreground="White" Text="Last lap:" />
                                                 <TextBlock
                                                     FontWeight="SemiBold"
                                                     Foreground="White"
-                                                    Text="{x:Bind LastLapTimeFormatted, Mode=OneWay}" />
+                                                    Text="{Binding LastLapTimeFormatted, Mode=OneWay}" />
                                             </StackPanel>
 
                                             <StackPanel
                                                 Grid.Column="1"
                                                 Orientation="Horizontal"
                                                 Spacing="4">
-                                                <TextBlock Foreground="White" Text="🕐 Last seen:" />
+                                                <FontIcon
+                                                    FontSize="12"
+                                                    Foreground="White"
+                                                    Glyph="&#xE890;" />
+                                                <TextBlock Foreground="White" Text="Last seen:" />
                                                 <TextBlock
                                                     FontWeight="SemiBold"
                                                     Foreground="White"
-                                                    Text="{x:Bind LastFeedbackTimeFormatted, Mode=OneWay}" />
+                                                    Text="{Binding LastFeedbackTimeFormatted, Mode=OneWay}" />
                                             </StackPanel>
                                         </Grid>
                                     </Grid>
