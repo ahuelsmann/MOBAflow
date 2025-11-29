@@ -29,16 +29,6 @@ builder.Services.AddSingleton(sp => new Moba.Backend.Data.DataManager());
 // ✅ Solution as Singleton (initialized empty, can be loaded later by user)
 builder.Services.AddSingleton<Moba.Backend.Model.Solution>(sp => new Moba.Backend.Model.Solution());
 
-// ✅ All ViewModel Factories (Blazor-specific) - NEW NAMESPACES
-builder.Services.AddSingleton<IJourneyViewModelFactory, WebJourneyViewModelFactory>();
-builder.Services.AddSingleton<IStationViewModelFactory, WebStationViewModelFactory>();
-builder.Services.AddSingleton<IWorkflowViewModelFactory, WebWorkflowViewModelFactory>();
-builder.Services.AddSingleton<ILocomotiveViewModelFactory, WebLocomotiveViewModelFactory>();
-builder.Services.AddSingleton<ITrainViewModelFactory, WebTrainViewModelFactory>();
-builder.Services.AddSingleton<IWagonViewModelFactory, WebWagonViewModelFactory>();
-
-// TreeViewBuilder service (now with all factories)
-builder.Services.AddSingleton<TreeViewBuilder>();
 
 var app = builder.Build();
 

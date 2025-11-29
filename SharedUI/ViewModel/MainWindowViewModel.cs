@@ -25,13 +25,12 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly TreeViewBuilder _treeViewBuilder;
     private readonly IUiDispatcher _uiDispatcher;
     private JourneyManager? _journeyManager;
-    private readonly UndoRedoManager _undoRedoManager;
 
     // Primary ctor for DI
     public MainWindowViewModel(
-        IIoService ioService, 
-        IZ21 z21, 
-        IJourneyManagerFactory journeyManagerFactory, 
+        IIoService ioService,
+        IZ21 z21,
+        IJourneyManagerFactory journeyManagerFactory,
         TreeViewBuilder treeViewBuilder,
         IUiDispatcher uiDispatcher,
         Solution solution)
@@ -41,10 +40,6 @@ public partial class MainWindowViewModel : ObservableObject
         _journeyManagerFactory = journeyManagerFactory;
         _treeViewBuilder = treeViewBuilder;
         _uiDispatcher = uiDispatcher;
-        
-        // Initialize undo/redo manager with temp directory
-        var historyPath = Path.Combine(Path.GetTempPath(), "MOBAflow", "History");
-        _undoRedoManager = new UndoRedoManager(historyPath);
 
         // Subscribe to Z21 events
         _z21.OnSystemStateChanged += OnZ21SystemStateChanged;
@@ -78,6 +73,12 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private Solution solution = null!; // Initialized in constructor
 
+    /// <summary>
+    /// ViewModel wrapper for Solution that provides hierarchical collections for TreeView binding.
+    /// </summary>
+    [ObservableProperty]
+    private SolutionViewModel? solutionViewModel;
+
     [ObservableProperty]
     private bool hasUnsavedChanges = false;
 
@@ -107,7 +108,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     /// <summary>
     /// Indicates whether the Z21 is currently connected.
-    /// </summary>
+    /// </summary]
     [ObservableProperty]
     private bool isZ21Connected;
 
@@ -119,7 +120,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     /// <summary>
     /// Current Z21 connection status text (e.g., "Connected to 192.168.0.111", "Disconnected").
-    /// </summary>
+    /// </summary]
     [ObservableProperty]
     private string z21StatusText = "Disconnected";
 
@@ -131,27 +132,15 @@ public partial class MainWindowViewModel : ObservableObject
 
     /// <summary>
     /// Available cities with stations (loaded from master data).
-    /// </summary>
+    /// </summary]
     [ObservableProperty]
     private ObservableCollection<Backend.Data.City> availableCities = [];
 
     /// <summary>
     /// Currently selected city for adding stations to journeys.
-    /// </summary>
+    /// </summary]
     [ObservableProperty]
     private Backend.Data.City? selectedCity;
-
-    /// <summary>
-    /// Indicates whether undo operation is available.
-    /// </summary>
-    [ObservableProperty]
-    private bool canUndo;
-
-    /// <summary>
-    /// Indicates whether redo operation is available.
-    /// </summary>
-    [ObservableProperty]
-    private bool canRedo;
 
     public event EventHandler? ExitApplicationRequested;
 
@@ -164,31 +153,31 @@ public partial class MainWindowViewModel : ObservableObject
             TreeNodes.Clear();
             Properties.Clear();
             AvailableCities.Clear();
+            SolutionViewModel = null;
             return;
         }
-        
+
         // Ensure Solution always has at least one project
         if (value.Projects.Count == 0)
         {
             value.Projects.Add(new Project { Name = "(Untitled Project)" });
             System.Diagnostics.Debug.WriteLine("⚠️ Solution had no projects, added empty project");
         }
-        
+
+        // ✅ Create SolutionViewModel wrapper for hierarchical TreeView binding
+        SolutionViewModel = new SolutionViewModel(value, _uiDispatcher);
+
         HasSolution = value.Projects.Count > 0;
         SaveSolutionCommand.NotifyCanExecuteChanged();
         ConnectToZ21Command.NotifyCanExecuteChanged();
         BuildTreeView();
         LoadCities();
-        
-        // Save initial state (e.g., when loading from file or after Undo/Redo)
-        _ = _undoRedoManager.SaveStateImmediateAsync(value);
-        UpdateUndoRedoState();
     }
 
     private void LoadCities()
     {
         AvailableCities.Clear();
-        
+
         // ✅ NULL-Check: Solution könnte während des Initialisierungsprozesses noch null sein
         if (Solution?.Projects?.Count > 0)
         {
@@ -209,17 +198,13 @@ public partial class MainWindowViewModel : ObservableObject
         if (Solution.Projects.Count == 0) return;
 
         var (dataManager, _, error) = await _ioService.LoadDataManagerAsync();
-        
+
         if (dataManager != null && Solution.Projects.Count > 0)
         {
             var firstProject = Solution.Projects[0];
             firstProject.Cities.Clear();
             firstProject.Cities.AddRange(dataManager.Cities);
             LoadCities();
-
-            // Save state for undo/redo
-            await _undoRedoManager.SaveStateImmediateAsync(Solution);
-            UpdateUndoRedoState();
         }
         else if (!string.IsNullOrEmpty(error))
         {
@@ -237,20 +222,20 @@ public partial class MainWindowViewModel : ObservableObject
         if (SelectedCity.Stations.Count > 0)
         {
             var stationToCopy = SelectedCity.Stations[0];
-            
+
             // Create a new Station instance (deep copy)
             var newStation = new Station
             {
                 Name = stationToCopy.Name,
                 Track = stationToCopy.Track,
                 IsExitOnLeft = stationToCopy.IsExitOnLeft,
-                NumberOfLapsToStop = 2 // Default for journey
-                , Number = (uint)journeyVM.Model.Stations.Count + 1
+                NumberOfLapsToStop = 2,
+                Number = (uint)journeyVM.Model.Stations.Count + 1
             };
 
             // Add to Journey model
             journeyVM.Model.Stations.Add(newStation);
-            
+
             // Add to ViewModel
             var stationVM = new StationViewModel(newStation);
             journeyVM.Stations.Add(stationVM);
@@ -270,9 +255,10 @@ public partial class MainWindowViewModel : ObservableObject
                 CurrentSelectedNode.Children.Add(stationNode);
             }
 
-            // Save state for undo/redo
-            _ = _undoRedoManager.SaveStateImmediateAsync(Solution);
-            UpdateUndoRedoState();
+            // ✅ Note: JourneyViewModel.Stations already updated, no SolutionViewModel refresh needed
+            // TreeView auto-updates through TreeNode.Children.Add()
+
+            HasUnsavedChanges = true;
         }
     }
 
@@ -296,9 +282,9 @@ public partial class MainWindowViewModel : ObservableObject
     {
         System.Diagnostics.Debug.WriteLine("📂 LoadSolutionAsync START");
         (Solution? loadedSolution, string? path, string? error) = await _ioService.LoadAsync();
-        
+
         System.Diagnostics.Debug.WriteLine($"LoadAsync returned: solution={loadedSolution != null}, path={path}, error={error}");
-        
+
         if (!string.IsNullOrEmpty(error))
         {
             throw new InvalidOperationException($"Failed to load solution with error {error}");
@@ -306,34 +292,29 @@ public partial class MainWindowViewModel : ObservableObject
         if (loadedSolution != null)
         {
             System.Diagnostics.Debug.WriteLine($"✅ Updating Solution with {loadedSolution.Projects.Count} projects");
-            
+
             // ✅ CRITICAL: Update the existing Solution instance instead of replacing it
             // This ensures all ViewModels that have a reference to Solution see the changes
             Solution.UpdateFrom(loadedSolution);
+
+            // ✅ Refresh SolutionViewModel to sync with model changes
+            SolutionViewModel?.Refresh();
 
             // Update current path and mark as saved
             CurrentSolutionPath = path;
             HasUnsavedChanges = false;
 
-            // ✅ Clear old undo/redo history for loaded solution
-            _undoRedoManager.ClearHistory();
-            
-            // ✅ Save initial state for loaded solution
-            await _undoRedoManager.SaveStateImmediateAsync(Solution);
-            _undoRedoManager.MarkCurrentAsSaved(); // Mark as saved immediately
-            UpdateUndoRedoState();
-
             // ✅ Manually trigger the same logic as OnSolutionChanged
-            //because the Solution reference didn't change (only its content)
+            // because the Solution reference didn't change (only its content)
             HasSolution = Solution.Projects.Count > 0;
             SaveSolutionCommand.NotifyCanExecuteChanged();
             ConnectToZ21Command.NotifyCanExecuteChanged();
             BuildTreeView();
             LoadCities();
-            
+
             // Notify that Solution content has changed (for EditorPageViewModel)
             OnPropertyChanged(nameof(Solution));
-            
+
             System.Diagnostics.Debug.WriteLine($"✅ Solution updated. HasSolution={HasSolution}, Projects={Solution?.Projects.Count}");
         }
         else
@@ -349,10 +330,7 @@ public partial class MainWindowViewModel : ObservableObject
         if (success && path != null)
         {
             CurrentSolutionPath = path;
-            HasUnsavedChanges = false; // Mark as saved
-            
-            // ✅ Mark current undo/redo state as saved
-            _undoRedoManager.MarkCurrentAsSaved();
+            HasUnsavedChanges = false;
         }
         else if (!string.IsNullOrEmpty(error))
         {
@@ -364,11 +342,12 @@ public partial class MainWindowViewModel : ObservableObject
     private void AddProject()
     {
         Solution.Projects.Add(new Project());
+        
+        // ✅ Refresh SolutionViewModel to sync new project
+        SolutionViewModel?.Refresh();
+        
         BuildTreeView();
-
-        // Save state for undo/redo
-        _ = _undoRedoManager.SaveStateImmediateAsync(Solution);
-        UpdateUndoRedoState();
+        HasUnsavedChanges = true;
     }
 
     [RelayCommand(CanExecute = nameof(CanConnectToZ21))]
@@ -381,7 +360,7 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 Z21StatusText = "Connecting...";
                 var address = System.Net.IPAddress.Parse(Solution.Settings.CurrentIpAddress);
-                
+
                 // Parse port from Settings.DefaultPort, fallback to 21105 if not set or invalid
                 int port = 21105; // Default fallback
                 if (!string.IsNullOrEmpty(Solution.Settings.DefaultPort) && int.TryParse(Solution.Settings.DefaultPort, out var parsedPort))
@@ -409,7 +388,7 @@ public partial class MainWindowViewModel : ObservableObject
 
                 ConnectToZ21Command.NotifyCanExecuteChanged();
                 DisconnectFromZ21Command.NotifyCanExecuteChanged();
-                SimulateFeedbackCommand.NotifyCanExecuteChanged();
+                // SimulateFeedbackCommand is always enabled, no need to notify
                 SetTrackPowerCommand.NotifyCanExecuteChanged();
             }
             catch (Exception ex)
@@ -439,7 +418,6 @@ public partial class MainWindowViewModel : ObservableObject
             IsTrackPowerOn = false;
             Z21StatusText = "Disconnected";
             ConnectToZ21Command.NotifyCanExecuteChanged();
-            SimulateFeedbackCommand.NotifyCanExecuteChanged();
             SetTrackPowerCommand.NotifyCanExecuteChanged();
         }
         catch (Exception ex)
@@ -448,17 +426,52 @@ public partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanSimulateFeedback))]
+    [RelayCommand]
     private void SimulateFeedback()
     {
         try
         {
+            System.Diagnostics.Debug.WriteLine("🔔 SimulateFeedback START");
+            System.Diagnostics.Debug.WriteLine($"   Solution: {Solution != null}");
+            System.Diagnostics.Debug.WriteLine($"   Projects: {Solution?.Projects.Count ?? 0}");
+            System.Diagnostics.Debug.WriteLine($"   CurrentSelectedNode: {CurrentSelectedNode != null}");
+            System.Diagnostics.Debug.WriteLine($"   DataContext Type: {CurrentSelectedNode?.DataContext?.GetType().Name ?? "null"}");
+            
+            // ✅ Ensure JourneyManager exists (create if needed for simulation)
+            if (_journeyManager == null && Solution?.Projects.Count > 0)
+            {
+                var project = Solution.Projects[0];
+                System.Diagnostics.Debug.WriteLine($"   Creating JourneyManager with {project.Journeys.Count} journeys");
+                
+                var executionContext = new Backend.Model.Action.ActionExecutionContext
+                {
+                    Z21 = _z21,
+                    Project = project
+                };
+                _journeyManager = _journeyManagerFactory.Create(_z21, project.Journeys, executionContext);
+                System.Diagnostics.Debug.WriteLine($"✅ JourneyManager created for simulation with {project.Journeys.Count} journeys");
+            }
+            else if (_journeyManager != null)
+            {
+                System.Diagnostics.Debug.WriteLine("✅ JourneyManager already exists");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("⚠️ No solution or projects available for simulation");
+            }
+
             // Prefer InPort from currently selected Journey (VM or model)
             uint? selectedInPort = null;
             if (CurrentSelectedNode?.DataContext is JourneyViewModel jvm)
+            {
                 selectedInPort = jvm.InPort;
+                System.Diagnostics.Debug.WriteLine($"📍 Using InPort {selectedInPort} from selected JourneyViewModel");
+            }
             else if (CurrentSelectedNode?.DataContext is Journey jm)
+            {
                 selectedInPort = jm.InPort;
+                System.Diagnostics.Debug.WriteLine($"📍 Using InPort {selectedInPort} from selected Journey model");
+            }
 
             int inPort;
             if (selectedInPort.HasValue)
@@ -468,15 +481,24 @@ public partial class MainWindowViewModel : ObservableObject
             else if (!int.TryParse(SimulateInPort, out inPort))
             {
                 Z21StatusText = "Invalid InPort number";
+                System.Diagnostics.Debug.WriteLine($"❌ Invalid InPort: {SimulateInPort}");
                 return;
             }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"📍 Using InPort {inPort} from text field");
+            }
 
+            System.Diagnostics.Debug.WriteLine($"🔔 Simulating feedback for InPort {inPort}");
             _z21.SimulateFeedback(inPort);
             Z21StatusText = $"Simulated feedback for InPort {inPort}";
+            System.Diagnostics.Debug.WriteLine($"✅ SimulateFeedback COMPLETE");
         }
         catch (Exception ex)
         {
             Z21StatusText = $"Error: {ex.Message}";
+            System.Diagnostics.Debug.WriteLine($"❌ SimulateFeedback error: {ex}");
+            System.Diagnostics.Debug.WriteLine($"   StackTrace: {ex.StackTrace}");
         }
     }
 
@@ -486,7 +508,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     private bool CanDisconnectFromZ21() => IsZ21Connected;
 
-    private bool CanSimulateFeedback() => IsZ21Connected;
+    private bool CanSimulateFeedback() => true; // Always enabled
 
     [RelayCommand(CanExecute = nameof(CanToggleTrackPower))]
     private async Task SetTrackPowerAsync(bool turnOn)
@@ -565,7 +587,7 @@ public partial class MainWindowViewModel : ObservableObject
     {
         // ✅ Synchronize track power status with Z21 actual state
         IsTrackPowerOn = systemState.IsTrackPowerOn;
-        
+
         // Update status text with key metrics (using simple C instead of ° symbol to avoid encoding issues)
         var statusParts = new List<string>
         {
@@ -577,39 +599,133 @@ public partial class MainWindowViewModel : ObservableObject
         // Add warnings for special states
         if (systemState.IsEmergencyStop)
             statusParts.Add("WARNING: EMERGENCY STOP");
-        
+
         if (systemState.IsShortCircuit)
             statusParts.Add("WARNING: SHORT CIRCUIT");
-        
+
         if (systemState.IsProgrammingMode)
             statusParts.Add("Programming");
 
         Z21StatusText = string.Join(" | ", statusParts);
-        
+
         this.Log($"Z21 System State: TrackPower={systemState.IsTrackPowerOn}, Current={systemState.MainCurrent}mA, Temp={systemState.Temperature}C, Voltage={systemState.SupplyVoltage}mV");
     }
-    
+
     private void BuildTreeView()
     {
         // ✅ NULL-Check: Solution könnte während Initialization null sein
-        if (Solution == null)
+        if (Solution == null || SolutionViewModel == null)
         {
             TreeNodes.Clear();
             return;
         }
-        
-        // Save current expansion states
+
+        System.Diagnostics.Debug.WriteLine($"🔧 BuildTreeView START - Current TreeNodes count: {TreeNodes.Count}");
+
+        // ✅ ALWAYS save current expansion states before rebuild (even if TreeNodes is empty)
         var expansionStates = new Dictionary<string, bool>();
-        SaveExpansionStates(TreeNodes, expansionStates, "");
+        if (TreeNodes.Count > 0)
+        {
+            SaveExpansionStates(TreeNodes, expansionStates, "");
+            System.Diagnostics.Debug.WriteLine($"💾 Saved {expansionStates.Count} expansion states");
+            System.Diagnostics.Debug.WriteLine($"💾 Expanded nodes: {expansionStates.Count(x => x.Value)}");
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine($"ℹ️ No previous TreeNodes to save expansion states from");
+        }
 
-        // Rebuild tree
-        TreeNodes = _treeViewBuilder.BuildTreeView(Solution);
+        // Save path to currently selected node (so we can restore it after rebuild)
+        string? selectedNodePath = null;
+        if (CurrentSelectedNode != null)
+        {
+            selectedNodePath = GetNodePath(TreeNodes, CurrentSelectedNode, "");
+            System.Diagnostics.Debug.WriteLine($"💾 Saving selected node path: {selectedNodePath}");
+        }
 
-        // Restore expansion states
-        RestoreExpansionStates(TreeNodes, expansionStates, "");
+        // ✅ Rebuild tree using SolutionViewModel (uses existing ViewModels!)
+        TreeNodes = _treeViewBuilder.BuildTreeView(SolutionViewModel);
+
+        System.Diagnostics.Debug.WriteLine($"🏗️ Rebuilt tree - New TreeNodes count: {TreeNodes.Count}");
+
+        // ✅ If we have saved expansion states, restore them (otherwise keep defaults)
+        if (expansionStates.Count > 0)
+        {
+            // First, collapse all nodes that TreeViewBuilder set to expanded
+            CollapseAllNodes(TreeNodes);
+            System.Diagnostics.Debug.WriteLine($"📁 Collapsed all nodes before restore");
+
+            // Then restore the saved expansion states
+            RestoreExpansionStates(TreeNodes, expansionStates, "");
+            System.Diagnostics.Debug.WriteLine($"✅ Restore complete");
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine($"ℹ️ No saved expansion states - keeping TreeViewBuilder defaults");
+        }
+
+        // Restore selected node (if it still exists after rebuild)
+        if (!string.IsNullOrEmpty(selectedNodePath))
+        {
+            var restoredNode = FindNodeByPath(TreeNodes, selectedNodePath, "");
+            if (restoredNode != null)
+            {
+                CurrentSelectedNode = restoredNode;
+
+                // ✅ Expand all parent nodes to make the selected node visible
+                ExpandParentNodes(restoredNode);
+
+                System.Diagnostics.Debug.WriteLine($"✅ Restored selected node: {selectedNodePath}");
+            }
+            else
+            {
+                CurrentSelectedNode = null;
+                Properties.Clear();
+                System.Diagnostics.Debug.WriteLine($"⚠️ Could not restore selected node: {selectedNodePath}");
+            }
+        }
 
         // Subscribe to ModelChanged events for all JourneyViewModels
         SubscribeToJourneyChanges(TreeNodes);
+    }
+
+    /// <summary>
+    /// Expands all parent nodes of a given node to make it visible in the tree.
+    /// </summary>
+    private void ExpandParentNodes(TreeNodeViewModel targetNode)
+    {
+        var parent = FindParentNodeInTree(TreeNodes, targetNode);
+        while (parent != null)
+        {
+            parent.IsExpanded = true;
+            System.Diagnostics.Debug.WriteLine($"📂 Expanded parent: {parent.DisplayName}");
+            parent = FindParentNodeInTree(TreeNodes, parent);
+        }
+    }
+
+    /// <summary>
+    /// Finds the parent of a given node in the tree.
+    /// </summary>
+    private TreeNodeViewModel? FindParentNodeInTree(ObservableCollection<TreeNodeViewModel> nodes, TreeNodeViewModel targetNode)
+    {
+        foreach (var node in nodes)
+        {
+            if (node.Children.Contains(targetNode))
+            {
+                return node;
+            }
+
+            if (node.Children.Count > 0)
+            {
+                var parent = FindParentNodeInTree(node.Children, targetNode);
+                if (parent != null)
+                {
+                    return parent;
+                }
+            }
+        }
+
+        return null;
     }
 
     private void SubscribeToJourneyChanges(ObservableCollection<TreeNodeViewModel> nodes)
@@ -633,43 +749,169 @@ public partial class MainWindowViewModel : ObservableObject
     private void OnJourneyModelChanged(object? sender, EventArgs e)
     {
         // A Journey was modified (Station added/deleted/reordered)
-        _ = _undoRedoManager.SaveStateImmediateAsync(Solution);
-        UpdateUndoRedoState();
-        
-        // ✅ Mark as having unsaved changes
         HasUnsavedChanges = true;
     }
 
     private void SaveExpansionStates(ObservableCollection<TreeNodeViewModel> nodes, Dictionary<string, bool> states, string path)
     {
-        foreach (var node in nodes)
+        // Group nodes by DataType to get correct indices per type
+        var nodesByType = nodes.GroupBy(n => n.DataType?.Name ?? "Unknown").ToList();
+        
+        for (int i = 0; i < nodes.Count; i++)
         {
-            var nodePath = string.IsNullOrEmpty(path) ? node.DisplayName : $"{path}/{node.DisplayName}";
-            states[nodePath] = node.IsExpanded;
+            var node = nodes[i];
+            var typeName = node.DataType?.Name ?? "Unknown";
+            
+            // Find index among siblings of the same type
+            var siblingsOfSameType = nodes.Where(n => (n.DataType?.Name ?? "Unknown") == typeName).ToList();
+            var indexInType = siblingsOfSameType.IndexOf(node);
+            
+            // ✅ Use DataType + index within same type for stable identification
+            var nodeKey = $"{typeName}[{indexInType}]";
+            if (!string.IsNullOrEmpty(path))
+            {
+                nodeKey = $"{path}/{nodeKey}";
+            }
+            
+            states[nodeKey] = node.IsExpanded;
+
+            if (node.IsExpanded)
+            {
+                System.Diagnostics.Debug.WriteLine($"💾 Saving expanded: {nodeKey}");
+            }
 
             if (node.Children.Count > 0)
             {
-                SaveExpansionStates(node.Children, states, nodePath);
+                SaveExpansionStates(node.Children, states, nodeKey);
             }
         }
     }
 
     private void RestoreExpansionStates(ObservableCollection<TreeNodeViewModel> nodes, Dictionary<string, bool> states, string path)
     {
+        // Group nodes by DataType to get correct indices per type
+        var nodesByType = nodes.GroupBy(n => n.DataType?.Name ?? "Unknown").ToList();
+        
+        for (int i = 0; i < nodes.Count; i++)
+        {
+            var node = nodes[i];
+            var typeName = node.DataType?.Name ?? "Unknown";
+            
+            // Find index among siblings of the same type
+            var siblingsOfSameType = nodes.Where(n => (n.DataType?.Name ?? "Unknown") == typeName).ToList();
+            var indexInType = siblingsOfSameType.IndexOf(node);
+            
+            // ✅ Use DataType + index within same type for stable identification
+            var nodeKey = $"{typeName}[{indexInType}]";
+            if (!string.IsNullOrEmpty(path))
+            {
+                nodeKey = $"{path}/{nodeKey}";
+            }
+
+            if (states.TryGetValue(nodeKey, out var isExpanded))
+            {
+                // ✅ Set IsExpanded and explicitly notify (triggers PropertyChanged via ObservableProperty)
+                node.IsExpanded = isExpanded;
+
+                if (isExpanded)
+                {
+                    System.Diagnostics.Debug.WriteLine($"✅ Restoring expanded: {nodeKey} (IsExpanded={node.IsExpanded})");
+                }
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"⚠️ No saved state for: {nodeKey}");
+            }
+
+            // ✅ Restore children BEFORE expanding parent (important for WinUI!)
+            if (node.Children.Count > 0)
+            {
+                RestoreExpansionStates(node.Children, states, nodeKey);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets a stable key for a node based on its type and index in the parent's children.
+    /// This is more robust than using DisplayName, which can change.
+    /// </summary>
+    private string GetNodeKey(TreeNodeViewModel node, int index, string parentPath)
+    {
+        // Use DataType name + index as the identifier
+        var typeName = node.DataType?.Name ?? "Unknown";
+        var key = $"{typeName}[{index}]";
+
+        return string.IsNullOrEmpty(parentPath) ? key : $"{parentPath}/{key}";
+    }
+
+    /// <summary>
+    /// Collapses all nodes in the tree (used before restoring saved expansion states).
+    /// </summary>
+    private void CollapseAllNodes(ObservableCollection<TreeNodeViewModel> nodes)
+    {
         foreach (var node in nodes)
         {
-            var nodePath = string.IsNullOrEmpty(path) ? node.DisplayName : $"{path}/{node.DisplayName}";
-            
-            if (states.TryGetValue(nodePath, out var isExpanded))
-            {
-                node.IsExpanded = isExpanded;
-            }
+            node.IsExpanded = false;
 
             if (node.Children.Count > 0)
             {
-                RestoreExpansionStates(node.Children, states, nodePath);
+                CollapseAllNodes(node.Children);
             }
         }
+    }
+
+    /// <summary>
+    /// Gets the hierarchical path to a specific node (e.g., "Project1/Journeys/Journey1").
+    /// </summary>
+    private string GetNodePath(ObservableCollection<TreeNodeViewModel> nodes, TreeNodeViewModel targetNode, string currentPath)
+    {
+        foreach (var node in nodes)
+        {
+            // Check if this is the target node
+            if (node == targetNode)
+            {
+                return currentPath + node.DisplayName;
+            }
+
+            // Recurse into children
+            if (node.Children.Count > 0)
+            {
+                var childPath = GetNodePath(node.Children, targetNode, currentPath + node.DisplayName + "/");
+                if (!string.IsNullOrEmpty(childPath))
+                {
+                    return childPath;
+                }
+            }
+        }
+
+        return string.Empty; // Not found
+    }
+
+    /// <summary>
+    /// Finds a node by its hierarchical path (e.g., "Project1/Journeys/Journey1").
+    /// </summary>
+    private TreeNodeViewModel? FindNodeByPath(ObservableCollection<TreeNodeViewModel> nodes, string targetPath, string currentPath)
+    {
+        foreach (var node in nodes)
+        {
+            var nodePath = string.IsNullOrEmpty(currentPath) ? node.DisplayName : $"{currentPath}/{node.DisplayName}";
+
+            if (nodePath == targetPath)
+            {
+                return node;
+            }
+
+            if (node.Children.Count > 0 && targetPath.StartsWith(nodePath + "/"))
+            {
+                var childNode = FindNodeByPath(node.Children, targetPath, nodePath);
+                if (childNode != null)
+                {
+                    return childNode;
+                }
+            }
+        }
+
+        return null;
     }
 
     public void OnNodeSelected(TreeNodeViewModel? node)
@@ -725,81 +967,7 @@ public partial class MainWindowViewModel : ObservableObject
     private void OnPropertyValueChanged(object? sender, EventArgs e)
     {
         CurrentSelectedNode?.RefreshDisplayName();
-        
-        // Throttled auto-save after property changes
-        _undoRedoManager.SaveStateThrottled(Solution);
-        
-        // ✅ Mark as having unsaved changes
         HasUnsavedChanges = true;
-    }
-
-    [RelayCommand(CanExecute = nameof(CanUndo))]
-    private async Task UndoAsync()
-    {
-        var previousSolution = await _undoRedoManager.UndoAsync();
-        if (previousSolution != null && Solution != null)
-        {
-            // ✅ Update the existing Solution instance instead of replacing it
-            Solution.UpdateFrom(previousSolution);
-            
-            // Manually trigger the same logic as OnSolutionChanged
-            HasSolution = Solution.Projects.Count > 0;
-            SaveSolutionCommand.NotifyCanExecuteChanged();
-            ConnectToZ21Command.NotifyCanExecuteChanged();
-            BuildTreeView();
-            LoadCities();
-            
-            // Notify that Solution content has changed
-            OnPropertyChanged(nameof(Solution));
-            
-            UpdateUndoRedoState();
-            
-            // ✅ Check if we're back at saved state
-            HasUnsavedChanges = !_undoRedoManager.IsCurrentStateSaved();
-        }
-    }
-
-    [RelayCommand(CanExecute = nameof(CanRedo))]
-    private async Task RedoAsync()
-    {
-        var nextSolution = await _undoRedoManager.RedoAsync();
-        if (nextSolution != null && Solution != null)
-        {
-            // ✅ Update the existing Solution instance instead of replacing it
-            Solution.UpdateFrom(nextSolution);
-            
-            // Manually trigger the same logic as OnSolutionChanged
-            HasSolution = Solution.Projects.Count > 0;
-            SaveSolutionCommand.NotifyCanExecuteChanged();
-            ConnectToZ21Command.NotifyCanExecuteChanged();
-            BuildTreeView();
-            LoadCities();
-            
-            // Notify that Solution content has changed
-            OnPropertyChanged(nameof(Solution));
-            
-            UpdateUndoRedoState();
-            
-            // ✅ Check if we're back at saved state
-            HasUnsavedChanges = !_undoRedoManager.IsCurrentStateSaved();
-        }
-    }
-
-    private void UpdateUndoRedoState()
-    {
-        try
-        {
-            CanUndo = _undoRedoManager.CanUndo;
-            CanRedo = _undoRedoManager.CanRedo;
-            UndoCommand.NotifyCanExecuteChanged();
-            RedoCommand.NotifyCanExecuteChanged();
-        }
-        catch
-        {
-            // Ignore errors during initial state update
-            CanUndo = false;
-            CanRedo = false;
-        }
     }
 
     // Finds the parent Project of a TreeNode (e.g., for a Station or Platform)
@@ -1070,15 +1238,11 @@ public partial class MainWindowViewModel : ObservableObject
         // Update the existing Solution singleton instance
         Solution.UpdateFrom(newSolution);
         
+        // ✅ Refresh SolutionViewModel to sync with new solution
+        SolutionViewModel?.Refresh();
+        
         // Clear the current path (unsaved new solution)
         CurrentSolutionPath = null;
-        
-        // ✅ Clear old undo/redo history for new solution
-        _undoRedoManager.ClearHistory();
-        
-        // ✅ Save initial state for new solution
-        await _undoRedoManager.SaveStateImmediateAsync(Solution);
-        UpdateUndoRedoState();
         
         // Mark as having unsaved changes (new solution not yet saved)
         HasUnsavedChanges = true;

@@ -1,4 +1,5 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+using Moba.SharedUI.ViewModel;
 using Moba.Test.TestBase;
 
 namespace Moba.Test.SharedUI;
@@ -13,8 +14,10 @@ public class TreeViewBuilderTests : ViewModelTestBase
         var project = new Project { Name = "P1" };
         solution.Projects.Add(project);
 
+        var solutionViewModel = new SolutionViewModel(solution);
+
         // Act - TreeViewBuilder from base class
-        var tree = TreeViewBuilder.BuildTreeView(solution);
+        var tree = TreeViewBuilder.BuildTreeView(solutionViewModel);
 
         // Assert
         Assert.That(tree, Is.Not.Null);

@@ -214,19 +214,14 @@ public partial class App
             return solution;
         });
 
-        // Dispatcher + Notification + factories via DI
+        // Dispatcher + Notification services
         services.AddSingleton<IUiDispatcher, UiDispatcher>();
         services.AddSingleton<INotificationService, NotificationService>();
         
-        // ✅ All ViewModel Factories (WinUI-specific) - NEW NAMESPACES
-        services.AddSingleton<SharedUI.Interface.IJourneyViewModelFactory, WinUI.Factory.WinUIJourneyViewModelFactory>();
-        services.AddSingleton<SharedUI.Interface.IStationViewModelFactory, WinUI.Factory.WinUIStationViewModelFactory>();
-        services.AddSingleton<SharedUI.Interface.IWorkflowViewModelFactory, WinUI.Factory.WinUIWorkflowViewModelFactory>();
-        services.AddSingleton<SharedUI.Interface.ILocomotiveViewModelFactory, WinUI.Factory.WinUILocomotiveViewModelFactory>();
-        services.AddSingleton<SharedUI.Interface.ITrainViewModelFactory, WinUI.Factory.WinUITrainViewModelFactory>();
-        services.AddSingleton<SharedUI.Interface.IWagonViewModelFactory, WinUI.Factory.WinUIWagonViewModelFactory>();
+        // ⚠️ ViewModel Factories removed - ViewModels now created directly by SolutionViewModel/ProjectViewModel
+        // Factories are no longer needed after TreeView migration to hierarchical ViewModels
         
-        // TreeViewBuilder service (now with all factories)
+        // TreeViewBuilder service - still needed for flat TreeNodeViewModel structure
         services.AddSingleton<SharedUI.Service.TreeViewBuilder>();
         
         // ValidationService for delete operations (uses Solution singleton)

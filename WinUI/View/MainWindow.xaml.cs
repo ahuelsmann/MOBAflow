@@ -373,19 +373,13 @@ public sealed partial class MainWindow
                 break;
 
             case Windows.System.VirtualKey.Z:
-                if (ViewModel.UndoCommand.CanExecute(null))
-                {
-                    ViewModel.UndoCommand.Execute(null);
-                    handled = true;
-                }
+                // Undo removed - will be reimplemented later
+                handled = true;
                 break;
 
             case Windows.System.VirtualKey.Y:
-                if (ViewModel.RedoCommand.CanExecute(null))
-                {
-                    ViewModel.RedoCommand.Execute(null);
-                    handled = true;
-                }
+                // Redo removed - will be reimplemented later
+                handled = true;
                 break;
 
             case Windows.System.VirtualKey.S:

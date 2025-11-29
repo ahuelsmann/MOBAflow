@@ -120,13 +120,7 @@ public abstract class ViewModelTestBase
             .Returns((Wagon model) => new WagonViewModel(model));
         
         // TreeViewBuilder with all mocked factories
-        TreeViewBuilder = new TreeViewBuilder(
-            JourneyViewModelFactoryMock.Object,
-            StationViewModelFactoryMock.Object,
-            WorkflowViewModelFactoryMock.Object,
-            LocomotiveViewModelFactoryMock.Object,
-            TrainViewModelFactoryMock.Object,
-            WagonViewModelFactoryMock.Object);
+        TreeViewBuilder = new TreeViewBuilder();
         
         // Configure default IoService behavior (returns empty solution)
         IoServiceMock

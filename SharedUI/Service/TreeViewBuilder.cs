@@ -2,285 +2,218 @@
 namespace Moba.SharedUI.Service;
 
 using Backend.Model;
-
 using System.Collections.ObjectModel;
-
 using ViewModel;
-using Moba.SharedUI.Interface; // ✅ Updated namespace
 
 /// <summary>
-/// Responsible for creating the TreeView structure from a Solution
+/// Responsible for creating the TreeView structure from a SolutionViewModel.
+/// ViewModels are provided by SolutionViewModel, not created here.
 /// </summary>
 public class TreeViewBuilder
 {
-    private readonly IJourneyViewModelFactory _journeyViewModelFactory;
-    private readonly IStationViewModelFactory _stationViewModelFactory;
-    private readonly IWorkflowViewModelFactory _workflowViewModelFactory;
-    private readonly ILocomotiveViewModelFactory _locomotiveViewModelFactory;
-    private readonly ITrainViewModelFactory _trainViewModelFactory;
-    private readonly IWagonViewModelFactory _wagonViewModelFactory;
-
-    public TreeViewBuilder(
-        IJourneyViewModelFactory journeyViewModelFactory,
-        IStationViewModelFactory stationViewModelFactory,
-        IWorkflowViewModelFactory workflowViewModelFactory,
-        ILocomotiveViewModelFactory locomotiveViewModelFactory,
-        ITrainViewModelFactory trainViewModelFactory,
-        IWagonViewModelFactory wagonViewModelFactory)
-    {
-        _journeyViewModelFactory = journeyViewModelFactory;
-        _stationViewModelFactory = stationViewModelFactory;
-        _workflowViewModelFactory = workflowViewModelFactory;
-        _locomotiveViewModelFactory = locomotiveViewModelFactory;
-        _trainViewModelFactory = trainViewModelFactory;
-        _wagonViewModelFactory = wagonViewModelFactory;
-    }
-
     /// <summary>
-    /// Creates the TreeView structure from a Solution
+    /// Creates the TreeView structure from a SolutionViewModel.
+    /// Uses ViewModels from SolutionViewModel instead of creating new ones.
     /// </summary>
-    /// <param name="solution">The Solution for which the TreeView should be created</param>
-    /// <returns>An ObservableCollection with the root TreeNode</returns>
-    public ObservableCollection<TreeNodeViewModel> BuildTreeView(Solution? solution)
+    /// <param name="solutionViewModel">The solution ViewModel containing hierarchical ViewModels</param>
+    /// <returns>Observable collection of root tree nodes</returns>
+    public ObservableCollection<TreeNodeViewModel> BuildTreeView(SolutionViewModel? solutionViewModel)
     {
-        var treeNodes = new ObservableCollection<TreeNodeViewModel>();
+        if (solutionViewModel == null)
+            return new ObservableCollection<TreeNodeViewModel>();
 
-        if (solution == null)
-            return treeNodes;
+        var rootNodes = new ObservableCollection<TreeNodeViewModel>();
 
-        var solutionNode = CreateSolutionNode(solution);
-
-        foreach (var project in solution.Projects)
+        // Create Solution root node
+        var solutionNode = new TreeNodeViewModel
         {
-            var projectNode = CreateProjectNode(project, solution.Projects.IndexOf(project));
+            DisplayName = solutionViewModel.Name,
+            Icon = "\uE8F1", // Folder icon
+            DataContext = solutionViewModel.Model,
+            DataType = typeof(Solution),
+            IsExpanded = true
+        };
+
+        // Add Projects
+        foreach (var projectVM in solutionViewModel.Projects)
+        {
+            var projectNode = CreateProjectNode(projectVM);
             solutionNode.Children.Add(projectNode);
         }
 
-        treeNodes.Add(solutionNode);
-        return treeNodes;
+        rootNodes.Add(solutionNode);
+        return rootNodes;
     }
 
-    private static TreeNodeViewModel CreateSolutionNode(Solution solution)
+    private TreeNodeViewModel CreateProjectNode(ProjectViewModel projectVM)
     {
-        var solutionNode = new TreeNodeViewModel
-        {
-            DisplayName = "Solution",
-            Icon = "\uE8F1", // Solution icon
-            IsExpanded = true,
-            DataContext = solution,
-            DataType = typeof(Solution)
-        };
-
-        // ✅ Settings as direct child of Solution (global settings)
-        solutionNode.Children.Add(CreateSettingNode(solution.Settings));
-
-        return solutionNode;
-    }
-
-    private TreeNodeViewModel CreateProjectNode(Project project, int index)
-    {
-        // Show Project name if available, otherwise "Project {index + 1}"
-        var displayName = string.IsNullOrEmpty(project.Name)
-                 ? $"Project {index + 1}"
-                 : project.Name;
-
         var projectNode = new TreeNodeViewModel
         {
-            DisplayName = displayName,
-            Icon = "\uE8B7", // Folder icon
-            IsExpanded = true,
-            DataContext = project,
-            DataType = typeof(Project)
+            DisplayName = projectVM.Name,
+            Icon = "\uE8F1", // Project icon
+            DataContext = projectVM.Model,
+            DataType = typeof(Project),
+            IsExpanded = true
         };
 
-        // ✅ Settings removed from Project (now at Solution level)
-
-        // Journeys
-        if (project.Journeys.Count > 0)
+        // Journeys Folder
+        if (projectVM.Journeys.Count > 0)
         {
-            projectNode.Children.Add(CreateJourneysFolder(project.Journeys));
+            projectNode.Children.Add(CreateJourneysFolder(projectVM.Journeys));
         }
 
-        // Workflows
-        if (project.Workflows.Count > 0)
+        // Workflows Folder
+        if (projectVM.Workflows.Count > 0)
         {
-            projectNode.Children.Add(CreateWorkflowsFolder(project.Workflows));
+            projectNode.Children.Add(CreateWorkflowsFolder(projectVM.Workflows));
         }
 
-        // Locomotives
-        if (project.Locomotives.Count > 0)
+        // Trains Folder
+        if (projectVM.Trains.Count > 0)
         {
-            projectNode.Children.Add(CreateLocomotivesFolder(project.Locomotives));
+            projectNode.Children.Add(CreateTrainsFolder(projectVM.Trains));
         }
 
-        // Trains
-        if (project.Trains.Count > 0)
+        // Settings Node
+        if (projectVM.Model.Name != null)
         {
-            projectNode.Children.Add(CreateTrainsFolder(project.Trains));
+            projectNode.Children.Add(CreateSettingsNode(projectVM.Model));
         }
 
         return projectNode;
     }
 
-    private static TreeNodeViewModel CreateSettingNode(Settings settings)
+    private TreeNodeViewModel CreateJourneysFolder(ObservableCollection<JourneyViewModel> journeys)
     {
-        return new TreeNodeViewModel
+        var folderNode = new TreeNodeViewModel
+        {
+            DisplayName = "Journeys",
+            Icon = "\uE8B7", // Train icon
+            DataContext = null,
+            DataType = null,
+            IsExpanded = true
+        };
+
+        foreach (var journeyVM in journeys)
+        {
+            folderNode.Children.Add(CreateJourneyNode(journeyVM));
+        }
+
+        return folderNode;
+    }
+
+    private TreeNodeViewModel CreateJourneyNode(JourneyViewModel journeyVM)
+    {
+        var journeyNode = new TreeNodeViewModel
+        {
+            DisplayName = journeyVM.Name,
+            Icon = "\uE8B7",
+            DataContext = journeyVM,
+            DataType = typeof(JourneyViewModel),
+            IsExpanded = false
+        };
+
+        // Add Stations
+        foreach (var stationVM in journeyVM.Stations)
+        {
+            journeyNode.Children.Add(CreateStationNode(stationVM));
+        }
+
+        return journeyNode;
+    }
+
+    private TreeNodeViewModel CreateStationNode(StationViewModel stationVM)
+    {
+        var stationNode = new TreeNodeViewModel
+        {
+            DisplayName = stationVM.Name,
+            Icon = "\uE80F", // Location icon
+            DataContext = stationVM,
+            DataType = typeof(StationViewModel),
+            IsExpanded = false
+        };
+
+        return stationNode;
+    }
+
+    private TreeNodeViewModel CreateWorkflowsFolder(ObservableCollection<WorkflowViewModel> workflows)
+    {
+        var folderNode = new TreeNodeViewModel
+        {
+            DisplayName = "Workflows",
+            Icon = "\uE9D5", // Flow icon
+            DataContext = null,
+            DataType = null,
+            IsExpanded = false
+        };
+
+        foreach (var workflowVM in workflows)
+        {
+            folderNode.Children.Add(CreateWorkflowNode(workflowVM));
+        }
+
+        return folderNode;
+    }
+
+    private TreeNodeViewModel CreateWorkflowNode(WorkflowViewModel workflowVM)
+    {
+        var workflowNode = new TreeNodeViewModel
+        {
+            DisplayName = workflowVM.Name,
+            Icon = "\uE9D5",
+            DataContext = workflowVM,
+            DataType = typeof(WorkflowViewModel),
+            IsExpanded = false
+        };
+
+        return workflowNode;
+    }
+
+    private TreeNodeViewModel CreateTrainsFolder(ObservableCollection<TrainViewModel> trains)
+    {
+        var folderNode = new TreeNodeViewModel
+        {
+            DisplayName = "Trains",
+            Icon = "\uE7C0", // Train icon
+            DataContext = null,
+            DataType = null,
+            IsExpanded = false
+        };
+
+        foreach (var trainVM in trains)
+        {
+            folderNode.Children.Add(CreateTrainNode(trainVM));
+        }
+
+        return folderNode;
+    }
+
+    private TreeNodeViewModel CreateTrainNode(TrainViewModel trainVM)
+    {
+        var trainNode = new TreeNodeViewModel
+        {
+            DisplayName = trainVM.Name,
+            Icon = "\uE7C0",
+            DataContext = trainVM,
+            DataType = typeof(TrainViewModel),
+            IsExpanded = false
+        };
+
+        return trainNode;
+    }
+
+    private TreeNodeViewModel CreateSettingsNode(Project project)
+    {
+        var settingsNode = new TreeNodeViewModel
         {
             DisplayName = "Settings",
             Icon = "\uE713", // Settings icon
-            DataContext = settings,
-            DataType = typeof(Settings)
-        };
-    }
-
-    private TreeNodeViewModel CreateJourneysFolder(List<Journey> journeys)
-    {
-        var journeysFolder = new TreeNodeViewModel
-        {
-            DisplayName = "Journeys",
-            Icon = "\uE8B7",
-            IsExpanded = true
-        };
-
-        foreach (var journey in journeys)
-        {
-            // Wrap Journey Model in JourneyViewModel for proper UI binding (using Factory)
-            var journeyViewModel = _journeyViewModelFactory.Create(journey);
-            
-            var journeyNode = new TreeNodeViewModel
-            {
-                DisplayName = journey.Name,
-                Icon = "\uE81D", // Train icon
-                DataContext = journeyViewModel,  // ← Use ViewModel instead of Model
-                DataType = journeyViewModel.GetType()  // ← Use actual ViewModel type
-            };
-
-            // Stations - use ViewModels from JourneyViewModel
-            foreach (var stationVM in journeyViewModel.Stations)
-            {
-                var stationNode = new TreeNodeViewModel
-                {
-                    DisplayName = stationVM.Name,
-                    Icon = "\uE80F", // Location icon
-                    DataContext = stationVM,  // ← Use StationViewModel
-                    DataType = typeof(StationViewModel)
-                };
-
-                journeyNode.Children.Add(stationNode);
-            }
-
-            journeysFolder.Children.Add(journeyNode);
-        }
-
-        return journeysFolder;
-    }
-
-    private TreeNodeViewModel CreateWorkflowsFolder(List<Workflow> workflows)
-    {
-        var workflowsFolder = new TreeNodeViewModel
-        {
-            DisplayName = "Workflows",
-            Icon = "\uE8B7",
-            IsExpanded = true
-        };
-
-        foreach (var workflow in workflows)
-        {
-            // ✅ Use Factory instead of direct instantiation
-            var workflowVM = _workflowViewModelFactory.Create(workflow);
-
-            workflowsFolder.Children.Add(new TreeNodeViewModel
-            {
-                DisplayName = workflow.Name,
-                Icon = "\uE9D9", // Flow icon
-                DataContext = workflowVM,  // ← Use WorkflowViewModel
-                DataType = typeof(WorkflowViewModel)
-            });
-        }
-
-        return workflowsFolder;
-    }
-
-    private TreeNodeViewModel CreateLocomotivesFolder(List<Locomotive> locomotives)
-    {
-        var locomotivesFolder = new TreeNodeViewModel
-        {
-            DisplayName = "Locomotives",
-            Icon = "\uE8B7",
+            DataContext = project,
+            DataType = typeof(Project),
             IsExpanded = false
         };
 
-        foreach (var loco in locomotives)
-        {
-            // ✅ Use Factory instead of direct instantiation
-            var locoVM = _locomotiveViewModelFactory.Create(loco);
-
-            locomotivesFolder.Children.Add(new TreeNodeViewModel
-            {
-                DisplayName = loco.Name,
-                Icon = "\uE81D",
-                DataContext = locoVM,  // ← Use LocomotiveViewModel
-                DataType = typeof(LocomotiveViewModel)
-            });
-        }
-
-        return locomotivesFolder;
-    }
-
-    private TreeNodeViewModel CreateTrainsFolder(List<Train> trains)
-    {
-        var trainsFolder = new TreeNodeViewModel
-        {
-            DisplayName = "Trains",
-            Icon = "\uE8B7",
-            IsExpanded = false
-        };
-
-        foreach (var train in trains)
-        {
-            // ✅ Use Factory instead of direct instantiation
-            var trainVM = _trainViewModelFactory.Create(train);
-
-            var trainNode = new TreeNodeViewModel
-            {
-                DisplayName = train.Name,
-                Icon = "\uE81D",
-                DataContext = trainVM,  // ← Use TrainViewModel
-                DataType = typeof(TrainViewModel)
-            };
-
-            // Add Locomotives under Train (use Factory for each)
-            foreach (var loco in train.Locomotives)
-            {
-                var locoVM = _locomotiveViewModelFactory.Create(loco);
-                
-                trainNode.Children.Add(new TreeNodeViewModel
-                {
-                    DisplayName = locoVM.Name,
-                    Icon = "\uE81D",
-                    DataContext = locoVM,
-                    DataType = typeof(LocomotiveViewModel)
-                });
-            }
-
-            // Add Wagons under Train (use Factory for each)
-            foreach (var wagon in train.Wagons)
-            {
-                var wagonVM = _wagonViewModelFactory.Create(wagon);
-                
-                trainNode.Children.Add(new TreeNodeViewModel
-                {
-                    DisplayName = wagonVM.Name,
-                    Icon = "\uE7C1", // Box icon for wagon
-                    DataContext = wagonVM,
-                    DataType = typeof(WagonViewModel)
-                });
-            }
-
-            trainsFolder.Children.Add(trainNode);
-        }
-
-        return trainsFolder;
+        return settingsNode;
     }
 
     /// <summary>

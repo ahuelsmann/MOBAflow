@@ -25,7 +25,7 @@ public class UndoRedoManager
     public UndoRedoManager(string historyDirectory)
     {
         _historyDirectory = historyDirectory;
-        
+
         // Create history directory if it doesn't exist
         if (!Directory.Exists(_historyDirectory))
         {
@@ -41,20 +41,20 @@ public class UndoRedoManager
         lock (_lock)
         {
             _pendingSolution = solution;
-            
+
             // Cancel previous auto-save timer
             _autoSaveCts?.Cancel();
             _autoSaveCts = new CancellationTokenSource();
-            
+
             var token = _autoSaveCts.Token;
-            
+
             // Wait 1 second, then save
             _ = Task.Run(async () =>
             {
                 try
                 {
                     await Task.Delay(1000, token);
-                    
+
                     if (!token.IsCancellationRequested && _pendingSolution != null)
                     {
                         await SaveStateImmediateAsync(_pendingSolution);
@@ -74,7 +74,7 @@ public class UndoRedoManager
     public async Task SaveStateImmediateAsync(Solution solution)
     {
         string fileToSave;
-        
+
         lock (_lock)
         {
             // Remove any "future" history after current position
@@ -90,7 +90,7 @@ public class UndoRedoManager
             // Create new history file
             var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff");
             fileToSave = Path.Combine(_historyDirectory, $"history_{timestamp}.json");
-            
+
             // Remove oldest history if limit reached
             if (_history.Count >= _maxHistorySize)
             {
@@ -141,18 +141,18 @@ public class UndoRedoManager
     public async Task<Solution?> UndoAsync()
     {
         string? filename;
-        
+
         lock (_lock)
         {
             if (!CanUndo) return null;
             _currentIndex--;
-            
+
             if (_currentIndex < 0 || _currentIndex >= _history.Count)
             {
                 _currentIndex++; // Revert
                 return null;
             }
-            
+
             filename = _history[_currentIndex];
         }
 
@@ -178,18 +178,18 @@ public class UndoRedoManager
     public async Task<Solution?> RedoAsync()
     {
         string? filename;
-        
+
         lock (_lock)
         {
             if (!CanRedo) return null;
             _currentIndex++;
-            
+
             if (_currentIndex < 0 || _currentIndex >= _history.Count)
             {
                 _currentIndex--; // Revert
                 return null;
             }
-            
+
             filename = _history[_currentIndex];
         }
 
@@ -220,7 +220,7 @@ public class UndoRedoManager
             _autoSaveCts?.Cancel();
             _autoSaveCts?.Dispose();
             _autoSaveCts = null;
-            
+
             foreach (var filename in _history)
             {
                 DeleteHistoryFile(filename);

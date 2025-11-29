@@ -7,13 +7,12 @@ using Service;
 using System.Collections.ObjectModel;
 
 /// <summary>
-/// ViewModel wrapper for Solution model that maintains a hierarchical collection structure
-/// for TreeView binding. This is the root of the TreeView hierarchy.
-/// Must be manually refreshed when model changes (models don't fire events).
+/// ViewModel wrapper for Project model that maintains a hierarchical collection structure
+/// for TreeView binding. Must be manually refreshed when model changes (models don't fire events).
 /// </summary>
-public partial class SolutionViewModel : ObservableObject
+public partial class ProjectViewModel : ObservableObject
 {
-    public Solution Model { get; }
+    public Project Model { get; }
     
     private readonly IUiDispatcher? _dispatcher;
     
@@ -21,13 +20,24 @@ public partial class SolutionViewModel : ObservableObject
     private string _name = string.Empty;
     
     /// <summary>
-    /// Hierarchical collection of Project ViewModels.
-    /// Manually synced with Model.Projects via Refresh().
-    /// This is bound directly to TreeView.ItemsSource.
+    /// Hierarchical collection of Journey ViewModels.
+    /// Manually synced with Model.Journeys via Refresh().
     /// </summary>
-    public ObservableCollection<ProjectViewModel> Projects { get; } = new();
+    public ObservableCollection<JourneyViewModel> Journeys { get; } = new();
     
-    public SolutionViewModel(Solution model, IUiDispatcher? dispatcher = null)
+    /// <summary>
+    /// Hierarchical collection of Workflow ViewModels.
+    /// Manually synced with Model.Workflows via Refresh().
+    /// </summary>
+    public ObservableCollection<WorkflowViewModel> Workflows { get; } = new();
+    
+    /// <summary>
+    /// Hierarchical collection of Train ViewModels.
+    /// Manually synced with Model.Trains via Refresh().
+    /// </summary>
+    public ObservableCollection<TrainViewModel> Trains { get; } = new();
+    
+    public ProjectViewModel(Project model, IUiDispatcher? dispatcher = null)
     {
         Model = model;
         _dispatcher = dispatcher;
@@ -41,8 +51,10 @@ public partial class SolutionViewModel : ObservableObject
     {
         Name = Model.Name;
         
-        // Smart sync: Only update if collections actually changed
-        SyncCollection(Model.Projects, Projects, p => new ProjectViewModel(p, _dispatcher));
+        // Smart sync: Reuse existing ViewModels where possible
+        SyncCollection(Model.Journeys, Journeys, j => new JourneyViewModel(j, _dispatcher));
+        SyncCollection(Model.Workflows, Workflows, w => new WorkflowViewModel(w));
+        SyncCollection(Model.Trains, Trains, t => new TrainViewModel(t, _dispatcher));
     }
     
     /// <summary>
@@ -88,12 +100,6 @@ public partial class SolutionViewModel : ObservableObject
             {
                 // Reorder if needed
                 vmCollection.Move(vmCollection.IndexOf(existingVm), i);
-            }
-            
-            // If ViewModel has Refresh method, call it
-            if (existingVm is ProjectViewModel pvm)
-            {
-                pvm.Refresh();
             }
         }
     }
