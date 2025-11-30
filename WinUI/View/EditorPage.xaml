@@ -63,7 +63,7 @@
                         <ListView
                             Grid.Row="1"
                             ItemsSource="{x:Bind ViewModel.JourneyEditor.Journeys, Mode=OneWay}"
-                            SelectedItem="{x:Bind ViewModel.JourneyEditor.SelectedJourney, Mode=TwoWay}">
+                            SelectedItem="{x:Bind ViewModel.SelectedJourney, Mode=TwoWay}">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock Padding="8" Text="{Binding Name}" />
@@ -110,7 +110,7 @@
                         <ListView
                             Grid.Row="1"
                             ItemsSource="{x:Bind ViewModel.JourneyEditor.Stations, Mode=OneWay}"
-                            SelectedItem="{x:Bind ViewModel.JourneyEditor.SelectedStation, Mode=TwoWay}">
+                            SelectedItem="{x:Bind ViewModel.SelectedStation, Mode=TwoWay}">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock Padding="8" Text="{Binding Name}" />
@@ -165,7 +165,7 @@
                         <ListView
                             Grid.Row="1"
                             ItemsSource="{x:Bind ViewModel.WorkflowEditor.Workflows, Mode=OneWay}"
-                            SelectedItem="{x:Bind ViewModel.WorkflowEditor.SelectedWorkflow, Mode=TwoWay}">
+                            SelectedItem="{x:Bind ViewModel.SelectedWorkflow, Mode=TwoWay}">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock Padding="8" Text="{Binding Name}" />
@@ -259,7 +259,7 @@
                     <ListView
                         Grid.Row="1"
                         ItemsSource="{x:Bind ViewModel.TrainEditor.Trains, Mode=OneWay}"
-                        SelectedItem="{x:Bind ViewModel.TrainEditor.SelectedTrain, Mode=TwoWay}">
+                        SelectedItem="{x:Bind ViewModel.SelectedTrain, Mode=TwoWay}">
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Padding="8" Text="{Binding Name}" />

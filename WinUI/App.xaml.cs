@@ -5,12 +5,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
-
 using Moba.SharedUI.Service;
 using Moba.WinUI.Service;
 using Moba.Backend.Network;
 using Moba.Sound;
-
+using Serilog;
+using Serilog.Events;
 using View;
 
 public partial class App
@@ -27,6 +27,34 @@ public partial class App
     public App()
     {
         InitializeComponent();
+        
+        // Configure Serilog before anything else
+        ConfigureSerilog();
+    }
+    
+    private void ConfigureSerilog()
+    {
+        var logsPath = System.IO.Path.Combine(AppContext.BaseDirectory, "logs");
+        System.IO.Directory.CreateDirectory(logsPath);
+        
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+            .MinimumLevel.Override("System", LogEventLevel.Warning)
+            .Enrich.FromLogContext()
+            .Enrich.WithProperty("Application", "MOBAflow")
+            .WriteTo.Debug(
+                outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}")
+            .WriteTo.File(
+                path: System.IO.Path.Combine(logsPath, "mobaflow-.log"),
+                outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}",
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 7,
+                buffered: false)
+            .CreateLogger();
+            
+        Log.Information("=== MOBAflow Starting ===");
+        Log.Information("Log file location: {LogPath}", logsPath);
     }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
@@ -171,11 +199,12 @@ public partial class App
         // Register configuration
         services.AddSingleton(_configuration!);
 
-        // Logging from configuration
+        // Logging from Serilog
         services.AddLogging(builder =>
         {
-            builder.AddDebug();
-            builder.SetMinimumLevel(LogLevel.Information);
+            builder.ClearProviders();
+            builder.AddSerilog(dispose: true);
+            builder.SetMinimumLevel(LogLevel.Debug);
         });
 
         // Preferences service (must be registered before IoService)
@@ -263,7 +292,8 @@ public partial class App
         {
             var solution = sp.GetRequiredService<Backend.Model.Solution>();
             var validationService = sp.GetRequiredService<SharedUI.Service.ValidationService>();
-            return new SharedUI.ViewModel.EditorPageViewModel(solution, validationService);
+            var mainWindowViewModel = sp.GetRequiredService<SharedUI.ViewModel.WinUI.MainWindowViewModel>();
+            return new SharedUI.ViewModel.EditorPageViewModel(solution, validationService, mainWindowViewModel);
         });
         
         // Views

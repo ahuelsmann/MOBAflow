@@ -1,9 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Moq;
-using Moba.SharedUI.Service;
-using Moba.SharedUI.Interface; // ✅ Factory interfaces
-using Moba.SharedUI.ViewModel;
 using Moba.Backend.Interface; // ✅ IUiDispatcher
+using Moba.SharedUI.Service;
 
 namespace Moba.Test.TestBase;
 
@@ -27,36 +25,6 @@ public abstract class ViewModelTestBase
     /// Mock for IIoService interface (file operations)
     /// </summary>
     protected Mock<IIoService> IoServiceMock { get; private set; } = null!;
-
-    /// <summary>
-    /// Mock for IJourneyViewModelFactory interface
-    /// </summary>
-    protected Mock<IJourneyViewModelFactory> JourneyViewModelFactoryMock { get; private set; } = null!;
-
-    /// <summary>
-    /// Mock for IStationViewModelFactory interface
-    /// </summary>
-    protected Mock<IStationViewModelFactory> StationViewModelFactoryMock { get; private set; } = null!;
-
-    /// <summary>
-    /// Mock for IWorkflowViewModelFactory interface
-    /// </summary>
-    protected Mock<IWorkflowViewModelFactory> WorkflowViewModelFactoryMock { get; private set; } = null!;
-
-    /// <summary>
-    /// Mock for ILocomotiveViewModelFactory interface
-    /// </summary>
-    protected Mock<ILocomotiveViewModelFactory> LocomotiveViewModelFactoryMock { get; private set; } = null!;
-
-    /// <summary>
-    /// Mock for ITrainViewModelFactory interface
-    /// </summary>
-    protected Mock<ITrainViewModelFactory> TrainViewModelFactoryMock { get; private set; } = null!;
-
-    /// <summary>
-    /// Mock for IWagonViewModelFactory interface
-    /// </summary>
-    protected Mock<IWagonViewModelFactory> WagonViewModelFactoryMock { get; private set; } = null!;
 
     /// <summary>
     /// Mock for IUiDispatcher interface (UI thread dispatching)
@@ -86,39 +54,6 @@ public abstract class ViewModelTestBase
             .Setup(d => d.InvokeOnUi(It.IsAny<Action>()))
             .Callback<Action>(action => action());
         
-        // Initialize all ViewModel factory mocks
-        JourneyViewModelFactoryMock = new Mock<IJourneyViewModelFactory>();
-        StationViewModelFactoryMock = new Mock<IStationViewModelFactory>();
-        WorkflowViewModelFactoryMock = new Mock<IWorkflowViewModelFactory>();
-        LocomotiveViewModelFactoryMock = new Mock<ILocomotiveViewModelFactory>();
-        TrainViewModelFactoryMock = new Mock<ITrainViewModelFactory>();
-        WagonViewModelFactoryMock = new Mock<IWagonViewModelFactory>();
-        
-        // Configure default returns for all ViewModel factories
-        JourneyViewModelFactoryMock
-            .Setup(f => f.Create(It.IsAny<Journey>()))
-            .Returns((Journey model) => new JourneyViewModel(model));
-
-        StationViewModelFactoryMock
-            .Setup(f => f.Create(It.IsAny<Station>()))
-            .Returns((Station model) => new StationViewModel(model));
-
-        WorkflowViewModelFactoryMock
-            .Setup(f => f.Create(It.IsAny<Workflow>()))
-            .Returns((Workflow model) => new WorkflowViewModel(model));
-
-        LocomotiveViewModelFactoryMock
-            .Setup(f => f.Create(It.IsAny<Locomotive>()))
-            .Returns((Locomotive model) => new LocomotiveViewModel(model));
-
-        TrainViewModelFactoryMock
-            .Setup(f => f.Create(It.IsAny<Train>()))
-            .Returns((Train model) => new TrainViewModel(model));
-
-        WagonViewModelFactoryMock
-            .Setup(f => f.Create(It.IsAny<Wagon>()))
-            .Returns((Wagon model) => new WagonViewModel(model));
-        
         // TreeViewBuilder with all mocked factories
         TreeViewBuilder = new TreeViewBuilder();
         
@@ -144,11 +79,5 @@ public abstract class ViewModelTestBase
         JourneyManagerFactoryMock?.Reset();
         IoServiceMock?.Reset();
         UiDispatcherMock?.Reset();
-        JourneyViewModelFactoryMock?.Reset();
-        StationViewModelFactoryMock?.Reset();
-        WorkflowViewModelFactoryMock?.Reset();
-        LocomotiveViewModelFactoryMock?.Reset();
-        TrainViewModelFactoryMock?.Reset();
-        WagonViewModelFactoryMock?.Reset();
     }
 }

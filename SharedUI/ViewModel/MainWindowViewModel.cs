@@ -101,10 +101,39 @@ public partial class MainWindowViewModel : ObservableObject
     private string selectedNodeType = string.Empty;
 
     /// <summary>
-    /// Currently selected tree node (used for property grid and context menu operations).
+    /// The currently selected node in the TreeView.
+    /// This is the root selection property that all views observe.
     /// </summary>
     [ObservableProperty]
     private TreeNodeViewModel? currentSelectedNode;
+    
+    /// <summary>
+    /// Currently selected Journey across all views (Explorer, Editor, Configuration).
+    /// Synchronized when TreeView selection changes to a Journey node.
+    /// </summary>
+    [ObservableProperty]
+    private JourneyViewModel? selectedJourney;
+    
+    /// <summary>
+    /// Currently selected Station across all views.
+    /// Synchronized when TreeView selection changes to a Station node.
+    /// </summary>
+    [ObservableProperty]
+    private StationViewModel? selectedStation;
+    
+    /// <summary>
+    /// Currently selected Workflow across all views.
+    /// Synchronized when TreeView selection changes to a Workflow node.
+    /// </summary>
+    [ObservableProperty]
+    private WorkflowViewModel? selectedWorkflow;
+    
+    /// <summary>
+    /// Currently selected Train across all views.
+    /// Synchronized when TreeView selection changes to a Train node.
+    /// </summary>
+    [ObservableProperty]
+    private TrainViewModel? selectedTrain;
 
     /// <summary>
     /// Indicates whether the Z21 is currently connected.
@@ -925,11 +954,38 @@ public partial class MainWindowViewModel : ObservableObject
 
         Properties.Clear();
         CurrentSelectedNode = node;
+        
+        // ✅ Reset all typed selections
+        SelectedJourney = null;
+        SelectedStation = null;
+        SelectedWorkflow = null;
+        SelectedTrain = null;
 
         if (node?.DataContext == null || node.DataType == null)
         {
             SelectedNodeType = string.Empty;
             return;
+        }
+        
+        // ✅ Set typed selection based on DataContext type
+        switch (node.DataContext)
+        {
+            case JourneyViewModel jvm:
+                SelectedJourney = jvm;
+                System.Diagnostics.Debug.WriteLine($"✅ SelectedJourney set: {jvm.Name}");
+                break;
+            case StationViewModel svm:
+                SelectedStation = svm;
+                System.Diagnostics.Debug.WriteLine($"✅ SelectedStation set: {svm.Name}");
+                break;
+            case WorkflowViewModel wvm:
+                SelectedWorkflow = wvm;
+                System.Diagnostics.Debug.WriteLine($"✅ SelectedWorkflow set: {wvm.Name}");
+                break;
+            case TrainViewModel tvm:
+                SelectedTrain = tvm;
+                System.Diagnostics.Debug.WriteLine($"✅ SelectedTrain set: {tvm.Name}");
+                break;
         }
 
         SelectedNodeType = node.DataType.Name;

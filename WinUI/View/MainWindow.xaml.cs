@@ -463,7 +463,7 @@ public sealed partial class MainWindow
                     var project = ViewModel.Solution.Projects[0];
                     var preferencesService = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<SharedUI.Service.IPreferencesService>(
                         ((App)Microsoft.UI.Xaml.Application.Current).Services);
-                    var configViewModel = new SharedUI.ViewModel.ProjectConfigurationPageViewModel(project, preferencesService);
+                    var configViewModel = new SharedUI.ViewModel.ProjectConfigurationPageViewModel(project, preferencesService, ViewModel);
                     
                     System.Diagnostics.Debug.WriteLine($"✅ Navigating to ProjectConfigurationPage with {project.Journeys.Count} journeys, {project.Workflows.Count} workflows, {project.Trains.Count} trains");
                     

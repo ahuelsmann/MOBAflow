@@ -42,4 +42,9 @@
     <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="MAUI\" />
+    <Folder Include="WebApp\" />
+    <Folder Include="WinUI\" />
+  </ItemGroup>
 </Project>

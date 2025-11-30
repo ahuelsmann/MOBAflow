@@ -14,16 +14,31 @@ using System.Linq;
 /// <summary>
 /// ViewModel for the Project Configuration page.
 /// Provides CRUD operations for Journeys, Stations, Workflows, and Trains.
+/// Exposes MainWindowViewModel selection properties for cross-view synchronization.
 /// </summary>
 public partial class ProjectConfigurationPageViewModel : ObservableObject
 {
     private readonly Project _project;
     private readonly IPreferencesService? _preferencesService;
+    private readonly WinUI.MainWindowViewModel? _mainWindowViewModel;
 
-    public ProjectConfigurationPageViewModel(Project project, IPreferencesService? preferencesService = null)
+    public ProjectConfigurationPageViewModel(Project project, IPreferencesService? preferencesService = null, WinUI.MainWindowViewModel? mainWindowViewModel = null)
     {
         _project = project ?? throw new ArgumentNullException(nameof(project));
         _preferencesService = preferencesService;
+        _mainWindowViewModel = mainWindowViewModel;
+        
+        // ✅ Subscribe to MainWindowViewModel selection changes
+        if (_mainWindowViewModel != null)
+        {
+            _mainWindowViewModel.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(_mainWindowViewModel.SelectedJourney))
+                    OnPropertyChanged(nameof(SelectedJourney));
+                else if (e.PropertyName == nameof(_mainWindowViewModel.SelectedStation))
+                    OnPropertyChanged(nameof(SelectedStation));
+            };
+        }
 
         // Wrap model collections in ViewModels
         Journeys = new ObservableCollection<JourneyViewModel>(
@@ -80,21 +95,56 @@ public partial class ProjectConfigurationPageViewModel : ObservableObject
 
     #endregion
 
-    #region Selected Items
+    #region Selected Items - Delegated to MainWindowViewModel for cross-view synchronization
 
-    [ObservableProperty]
-    private JourneyViewModel? selectedJourney;
+    public JourneyViewModel? SelectedJourney
+    {
+        get => _mainWindowViewModel?.SelectedJourney;
+        set
+        {
+            if (_mainWindowViewModel != null && _mainWindowViewModel.SelectedJourney != value)
+            {
+                _mainWindowViewModel.SelectedJourney = value;
+                OnSelectedJourneyChanged(value);
+            }
+        }
+    }
 
-    [ObservableProperty]
-    private StationViewModel? selectedStation;
+    public StationViewModel? SelectedStation
+    {
+        get => _mainWindowViewModel?.SelectedStation;
+        set
+        {
+            if (_mainWindowViewModel != null && _mainWindowViewModel.SelectedStation != value)
+            {
+                _mainWindowViewModel.SelectedStation = value;
+                OnSelectedStationChanged(value);
+            }
+        }
+    }
 
-    [ObservableProperty]
-    private WorkflowViewModel? selectedWorkflow;
+    public WorkflowViewModel? SelectedWorkflow
+    {
+        get => _mainWindowViewModel?.SelectedWorkflow;
+        set
+        {
+            if (_mainWindowViewModel != null)
+                _mainWindowViewModel.SelectedWorkflow = value;
+        }
+    }
 
-    [ObservableProperty]
-    private TrainViewModel? selectedTrain;
+    public TrainViewModel? SelectedTrain
+    {
+        get => _mainWindowViewModel?.SelectedTrain;
+        set
+        {
+            if (_mainWindowViewModel != null)
+                _mainWindowViewModel.SelectedTrain = value;
+        }
+    }
 
-    partial void OnSelectedJourneyChanged(JourneyViewModel? value)
+    // Partial methods for side effects when selection changes
+    private void OnSelectedJourneyChanged(JourneyViewModel? value)
     {
         System.Diagnostics.Debug.WriteLine($"🔄 SelectedJourney changed to: {value?.Name ?? "null"}");
         DeleteJourneyCommand.NotifyCanExecuteChanged();
@@ -102,21 +152,21 @@ public partial class ProjectConfigurationPageViewModel : ObservableObject
         System.Diagnostics.Debug.WriteLine($"   CanDeleteJourney is now: {CanDeleteJourney()}");
     }
 
-    partial void OnSelectedStationChanged(StationViewModel? value)
+    private void OnSelectedStationChanged(StationViewModel? value)
     {
         System.Diagnostics.Debug.WriteLine($"🔄 SelectedStation changed to: {value?.Name ?? "null"}");
         DeleteStationCommand.NotifyCanExecuteChanged();
         System.Diagnostics.Debug.WriteLine($"   CanDeleteStation is now: {CanDeleteStation()}");
     }
 
-    partial void OnSelectedWorkflowChanged(WorkflowViewModel? value)
+    private void OnSelectedWorkflowChanged(WorkflowViewModel? value)
     {
         System.Diagnostics.Debug.WriteLine($"🔄 SelectedWorkflow changed to: {value?.Name ?? "null"}");
         DeleteWorkflowCommand.NotifyCanExecuteChanged();
         System.Diagnostics.Debug.WriteLine($"   CanDeleteWorkflow is now: {CanDeleteWorkflow()}");
     }
 
-    partial void OnSelectedTrainChanged(TrainViewModel? value)
+    private void OnSelectedTrainChanged(TrainViewModel? value)
     {
         System.Diagnostics.Debug.WriteLine($"🔄 SelectedTrain changed to: {value?.Name ?? "null"}");
         DeleteTrainCommand.NotifyCanExecuteChanged();

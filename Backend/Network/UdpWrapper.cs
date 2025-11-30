@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using Microsoft.Extensions.Logging;
 
 namespace Moba.Backend.Network;
 
@@ -30,17 +31,33 @@ namespace Moba.Backend.Network;
 /// </summary>
 public class UdpWrapper : IUdpClientWrapper
 {
+    public event EventHandler<UdpReceivedEventArgs>? Received;
+
     private UdpClient? _client;
     private CancellationTokenSource? _cts;
     private Task? _receiverTask;
     private bool _disposed;
+    private readonly ILogger<UdpWrapper>? _logger;
+    
+    // Performance tracking
+    private int _totalSendCount = 0;
+    private int _totalRetryCount = 0;
+    private int _totalReceiveCount = 0;
+    private readonly System.Diagnostics.Stopwatch _performanceTimer = System.Diagnostics.Stopwatch.StartNew();
+    private readonly object _statsLock = new object();
+
+    public UdpWrapper(ILogger<UdpWrapper>? logger = null)
+    {
+        _logger = logger;
+        _logger?.LogInformation("UdpWrapper initialized");
+    }
 
     /// <summary>
     /// Raised for each received UDP datagram.
     /// IMPORTANT: This event is raised on a background thread!
     /// Platform-specific code must dispatch to UI thread if updating UI properties.
     /// </summary>
-    public event EventHandler<UdpReceivedEventArgs>? Received;
+    public event EventHandler<UdpReceivedEventArgs>? ReceivedEvent;
 
     /// <summary>
     /// Connects the wrapper to the remote endpoint and starts the receiver loop.
@@ -66,6 +83,7 @@ public class UdpWrapper : IUdpClientWrapper
     /// </summary>
     private async Task ReceiverLoopAsync(CancellationToken cancellationToken)
     {
+        _logger?.LogInformation("🔄 UDP Receiver loop started");
         Debug.WriteLine("UdpWrapper: Receiver loop started");
 
         try
@@ -76,30 +94,38 @@ public class UdpWrapper : IUdpClientWrapper
                 try
                 {
                     result = await _client.ReceiveAsync(cancellationToken).ConfigureAwait(false);
+                    
+                    lock (_statsLock)
+                    {
+                        _totalReceiveCount++;
+                    }
+                    
+                    _logger?.LogDebug("📥 Received {Length} bytes from {Endpoint}: {Data}", 
+                        result.Buffer.Length, 
+                        result.RemoteEndPoint, 
+                        BitConverter.ToString(result.Buffer).Replace("-", " "));
                 }
                 catch (OperationCanceledException)
                 {
+                    _logger?.LogDebug("Receiver loop cancelled");
+                    break;
+                }
+                catch (SocketException ex)
+                {
+                    _logger?.LogError("❌ Socket error in receiver loop: {Error}", ex.Message);
+                    Debug.WriteLine($"UdpWrapper: Socket error: {ex.Message}");
                     break;
                 }
 
-                // Deliver data to subscribers (on background thread)
-                try
-                {
-                    var buffer = result.Buffer;
-                    Received?.Invoke(this, new UdpReceivedEventArgs(buffer, result.RemoteEndPoint));
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"UdpWrapper: Exception delivering received datagram: {ex.Message}");
-                }
+                Received?.Invoke(this, new UdpReceivedEventArgs(result.Buffer, result.RemoteEndPoint));
             }
         }
-        catch (Exception ex)
+        finally
         {
-            Debug.WriteLine($"UdpWrapper: Receiver loop failed: {ex.Message}");
+            _logger?.LogInformation("🛑 UDP Receiver loop stopped. Stats: {SendCount} sends, {RetryCount} retries, {ReceiveCount} receives", 
+                _totalSendCount, _totalRetryCount, _totalReceiveCount);
+            Debug.WriteLine("UdpWrapper: Receiver loop stopped");
         }
-
-        Debug.WriteLine("UdpWrapper: Receiver loop stopped");
     }
 
     /// <summary>
@@ -115,18 +141,53 @@ public class UdpWrapper : IUdpClientWrapper
     {
         if (_client == null) throw new InvalidOperationException("UdpWrapper is not connected");
 
+        var sendStartTime = Stopwatch.StartNew();
         int attempt = 0;
         int delayMs = 50;
+        
+        lock (_statsLock)
+        {
+            _totalSendCount++;
+            
+            // Log performance stats every 10 sends
+            if (_totalSendCount % 10 == 0)
+            {
+                var elapsedSeconds = _performanceTimer.Elapsed.TotalSeconds;
+                var sendsPerSecond = _totalSendCount / elapsedSeconds;
+                var retriesPerSecond = _totalRetryCount / elapsedSeconds;
+                
+                _logger?.LogInformation(
+                    "📊 UDP Performance: {SendCount} total sends, {RetryCount} retries, {SendRate:F2} sends/sec, {RetryRate:F2} retries/sec, {ReceiveCount} receives",
+                    _totalSendCount, _totalRetryCount, sendsPerSecond, retriesPerSecond, _totalReceiveCount);
+            }
+        }
+        
+        _logger?.LogDebug("📤 Sending {Length} bytes (attempt 1/{MaxRetries}): {Data}", 
+            data.Length, maxRetries, BitConverter.ToString(data).Replace("-", " "));
+        
         while (true)
         {
             try
             {
-                await _client.SendAsync(data, data.Length).ConfigureAwait(false);
+                await _client.SendAsync(data, cancellationToken).ConfigureAwait(false);
+                
+                sendStartTime.Stop();
+                _logger?.LogDebug("✅ Send successful in {ElapsedMs}ms", sendStartTime.ElapsedMilliseconds);
+                
                 return;
             }
             catch (SocketException ex) when (attempt < maxRetries)
             {
                 attempt++;
+                
+                lock (_statsLock)
+                {
+                    _totalRetryCount++;
+                }
+                
+                _logger?.LogWarning("⚠️ Send attempt {Attempt}/{MaxRetries} failed: {Error}. Retrying in {DelayMs}ms", 
+                    attempt, maxRetries, ex.Message, delayMs);
+                
                 Debug.WriteLine($"UdpWrapper: Send attempt {attempt} failed: {ex.Message}. Retrying in {delayMs}ms");
                 await Task.Delay(delayMs, cancellationToken).ConfigureAwait(false);
                 delayMs *= 2;
