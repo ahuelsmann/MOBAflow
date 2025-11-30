@@ -2,10 +2,20 @@
 namespace Moba.Backend.Manager;
 
 using Moba.Backend.Interface;
-using Moba.Backend.Model;
+using Moba.Backend.Services;
+using Moba.Domain;
 
 public class JourneyManagerFactory : IJourneyManagerFactory
 {
-    public JourneyManager Create(IZ21 z21, List<Journey> journeys, Model.Action.ActionExecutionContext? context = null)
-        => new JourneyManager(z21, journeys, context);
+    private readonly WorkflowService _workflowService;
+
+    public JourneyManagerFactory(WorkflowService workflowService)
+    {
+        _workflowService = workflowService;
+    }
+
+    public JourneyManager Create(IZ21 z21, List<Journey> journeys, ActionExecutionContext? context = null)
+    {
+        return new JourneyManager(z21, journeys, _workflowService, context);
+    }
 }

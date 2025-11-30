@@ -1,5 +1,6 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Moba.Backend.Model;
+using Moba.Domain;
+using Moba.Backend.Services;
 
 using System.Diagnostics;
 
@@ -11,16 +12,23 @@ namespace Moba.Backend.Manager;
 public class WorkflowManager : BaseFeedbackManager<Workflow>
 {
     private readonly SemaphoreSlim _processingLock = new(1, 1);
+    private readonly WorkflowService _workflowService;
 
     /// <summary>
     /// Initializes a new instance of the WorkflowManager class.
     /// </summary>
     /// <param name="z21">Z21 command station for receiving feedback events</param>
     /// <param name="workflows">List of workflows to manage</param>
+    /// <param name="workflowService">Service for executing workflows</param>
     /// <param name="executionContext">Optional execution context; if null, a new context with Z21 will be created</param>
-    public WorkflowManager(Z21 z21, List<Workflow> workflows, Model.Action.ActionExecutionContext? executionContext = null)
+    public WorkflowManager(
+        Z21 z21, 
+        List<Workflow> workflows, 
+        WorkflowService workflowService,
+        Services.ActionExecutionContext? executionContext = null)
     : base(z21, workflows, executionContext)
     {
+        _workflowService = workflowService;
     }
 
     protected override async Task ProcessFeedbackAsync(FeedbackResult feedback)
@@ -57,7 +65,8 @@ public class WorkflowManager : BaseFeedbackManager<Workflow>
     {
         Debug.WriteLine($"▶ Executing workflow '{workflow.Name}'");
 
-        await workflow.StartAsync(ExecutionContext).ConfigureAwait(false);
+        // ✅ Use WorkflowService instead of workflow.StartAsync()
+        await _workflowService.ExecuteAsync(workflow, ExecutionContext).ConfigureAwait(false);
 
         Debug.WriteLine($"✅ Workflow '{workflow.Name}' completed");
     }

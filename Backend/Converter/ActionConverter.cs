@@ -2,7 +2,7 @@
 namespace Moba.Backend.Converter;
 
 using Moba.Backend.Model.Action;
-using Moba.Backend.Model.Enum;
+using Moba.Domain.Enum;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -33,7 +33,7 @@ public class ActionConverter : JsonConverter<Base>
 
         Base? action = type switch
         {
-            ActionType.Sound => jo.ToObject<Audio>(newSerializer),
+            ActionType.Audio => jo.ToObject<Audio>(newSerializer),
             ActionType.Command => jo.ToObject<Command>(newSerializer),
             ActionType.Announcement => jo.ToObject<Announcement>(newSerializer),
             _ => null

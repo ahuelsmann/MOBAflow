@@ -1,5 +1,6 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Moba.Backend.Interface;
+using Moba.Backend.Services;
 
 using System.Diagnostics;
 
@@ -16,7 +17,7 @@ public abstract class BaseFeedbackManager<TEntity> : IFeedbackManager where TEnt
     protected readonly IZ21 Z21;
     protected readonly List<TEntity> Entities;
     protected readonly Dictionary<uint, DateTime> LastFeedbackTime = new();
-    protected readonly Model.Action.ActionExecutionContext ExecutionContext;
+    protected readonly ActionExecutionContext? ExecutionContext;
     protected bool Disposed;
 
     /// <summary>
@@ -25,15 +26,15 @@ public abstract class BaseFeedbackManager<TEntity> : IFeedbackManager where TEnt
     /// <param name="z21">Z21 command station for receiving feedback events</param>
     /// <param name="entities">List of entities to manage</param>
     /// <param name="executionContext">Optional execution context; if null, a new context with Z21 will be created</param>
-    protected BaseFeedbackManager(IZ21 z21, List<TEntity> entities, Model.Action.ActionExecutionContext? executionContext = null)
+    protected BaseFeedbackManager(IZ21 z21, List<TEntity> entities, ActionExecutionContext? executionContext = null)
     {
         Z21 = z21;
         Entities = entities;
         Z21.Received += OnFeedbackReceived;
 
-        ExecutionContext = executionContext ?? new Model.Action.ActionExecutionContext
+        ExecutionContext = executionContext ?? new ActionExecutionContext
         {
-            Z21 = z21 as Z21 // keep original type when available
+            Z21 = z21
         };
     }
 

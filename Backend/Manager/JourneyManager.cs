@@ -1,7 +1,8 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Moba.Backend.Interface;
-using Moba.Backend.Model;
-using Moba.Backend.Model.Enum;
+using Moba.Backend.Services;
+using Moba.Domain;
+using Moba.Domain.Enum;
 
 using System.Diagnostics;
 
@@ -14,16 +15,23 @@ namespace Moba.Backend.Manager;
 public class JourneyManager : BaseFeedbackManager<Journey>
 {
     private readonly SemaphoreSlim _processingLock = new(1, 1);
+    private readonly WorkflowService _workflowService;
 
     /// <summary>
     /// Initializes a new instance of the JourneyManager class.
     /// </summary>
     /// <param name="z21">Z21 command station for receiving feedback events</param>
     /// <param name="journeys">List of journeys to manage</param>
+    /// <param name="workflowService">Service for executing workflows</param>
     /// <param name="executionContext">Optional execution context; if null, a new context with Z21 will be created</param>
-    public JourneyManager(IZ21 z21, List<Journey> journeys, Model.Action.ActionExecutionContext? executionContext = null)
+    public JourneyManager(
+        IZ21 z21, 
+        List<Journey> journeys, 
+        WorkflowService workflowService,
+        ActionExecutionContext? executionContext = null)
     : base(z21, journeys, executionContext)
     {
+        _workflowService = workflowService;
     }
 
     protected override async Task ProcessFeedbackAsync(FeedbackResult feedback)
@@ -80,7 +88,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>
                 ExecutionContext.JourneyTemplateText = journey.Text;
                 ExecutionContext.CurrentStation = currentStation;
 
-                await currentStation.Flow.StartAsync(ExecutionContext).ConfigureAwait(false);
+                await _workflowService.ExecuteAsync(currentStation.Flow, ExecutionContext).ConfigureAwait(false);
 
                 // Clear context after workflow execution
                 ExecutionContext.JourneyTemplateText = null;

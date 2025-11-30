@@ -1,23 +1,34 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Backend.Manager;
-
-using Model;
+using Moba.Domain;
+using Moba.Backend.Services;
 
 using System.Diagnostics;
 
+namespace Moba.Backend.Manager;
+
+/// <summary>
+/// Manages the execution of workflows and their actions related to a station based on feedback events (track feedback points).
+/// </summary>
 public class StationManager : BaseFeedbackManager<Station>
 {
     private readonly SemaphoreSlim _processingLock = new(1, 1);
+    private readonly WorkflowService _workflowService;
 
     /// <summary>
-    /// Initializes a new instance of the StationManager.
+    /// Initializes a new instance of the StationManager class.
     /// </summary>
     /// <param name="z21">Z21 command station for receiving feedback events</param>
-    /// <param name="stations"></param>
+    /// <param name="stations">List of stations to manage</param>
+    /// <param name="workflowService">Service for executing workflows</param>
     /// <param name="executionContext">Optional execution context; if null, a new context with Z21 will be created</param>
-    public StationManager(Z21 z21, List<Station> stations, Model.Action.ActionExecutionContext? executionContext = null)
-        : base(z21, stations, executionContext)
+    public StationManager(
+        Z21 z21, 
+        List<Station> stations, 
+        WorkflowService workflowService,
+        ActionExecutionContext? executionContext = null)
+    : base(z21, stations, executionContext)
     {
+        _workflowService = workflowService;
     }
 
     protected override async Task ProcessFeedbackAsync(FeedbackResult feedback)
@@ -54,15 +65,8 @@ public class StationManager : BaseFeedbackManager<Station>
     {
         Debug.WriteLine($"▶ Executing station workflow for '{station.Name}'");
 
-        if (station.Flow != null)
-        {
-            await station.Flow.StartAsync(ExecutionContext);
-            Debug.WriteLine($"✅ Station workflow '{station.Name}' completed");
-        }
-        else
-        {
-            Debug.WriteLine($"⚠ Station '{station.Name}' has no workflow assigned");
-        }
+        await _workflowService.ExecuteAsync(station.Flow, ExecutionContext);
+        Debug.WriteLine($"✅ Station workflow '{station.Name}' completed");
     }
 
     protected override uint GetInPort(Station entity)

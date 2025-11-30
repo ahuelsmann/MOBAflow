@@ -1,30 +1,34 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Moba.Backend.Model;
+using Moba.Domain;
+using Moba.Backend.Services;
 
 using System.Diagnostics;
 
 namespace Moba.Backend.Manager;
 
 /// <summary>
-/// Manages the execution of platform workflows based on feedback events (track feedback points).
-/// Represents the platform perspective: announcements from the platform's point of view
-/// (e.g., "Attention on platform 3. The InterCity from Koblenz to Hamburg is now arriving.").
-/// Unlike JourneyManager (train perspective) and WorkflowManager (generic workflows),
-/// PlatformManager is specifically designed for station/platform-centric announcements.
+/// Manages the execution of workflows and their actions related to a platform based on feedback events (track feedback points).
 /// </summary>
 public class PlatformManager : BaseFeedbackManager<Platform>
 {
     private readonly SemaphoreSlim _processingLock = new(1, 1);
+    private readonly WorkflowService _workflowService;
 
     /// <summary>
-    /// Initializes a new instance of the PlatformManager.
+    /// Initializes a new instance of the PlatformManager class.
     /// </summary>
     /// <param name="z21">Z21 command station for receiving feedback events</param>
     /// <param name="platforms">List of platforms to manage</param>
+    /// <param name="workflowService">Service for executing workflows</param>
     /// <param name="executionContext">Optional execution context; if null, a new context with Z21 will be created</param>
-    public PlatformManager(Z21 z21, List<Platform> platforms, Model.Action.ActionExecutionContext? executionContext = null)
+    public PlatformManager(
+        Z21 z21, 
+        List<Platform> platforms, 
+        WorkflowService workflowService,
+        ActionExecutionContext? executionContext = null)
     : base(z21, platforms, executionContext)
     {
+        _workflowService = workflowService;
     }
 
     protected override async Task ProcessFeedbackAsync(FeedbackResult feedback)
@@ -67,7 +71,7 @@ public class PlatformManager : BaseFeedbackManager<Platform>
 
         if (platform.Flow != null)
         {
-            await platform.Flow.StartAsync(ExecutionContext);
+            await _workflowService.ExecuteAsync(platform.Flow, ExecutionContext);
             Debug.WriteLine($"✅ Platform workflow '{platform.Name}' completed");
         }
         else
