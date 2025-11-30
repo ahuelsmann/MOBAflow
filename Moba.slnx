@@ -29,7 +29,7 @@
     <Deploy />
   </Project>
   <Project Path="Common/Common.csproj" />
-  <Project Path="MAUI/MAUI.csproj" />
+  <Project Path="MAUI/MAUI.csproj" />`r`n
   <Project Path="SharedUI/SharedUI.csproj" Id="e6527119-fec0-439b-bd9a-a0525ac0f93e" />
   <Project Path="Sound/Sound.csproj">
     <Deploy />

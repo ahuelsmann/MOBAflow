@@ -1,8 +1,6 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Model;
 
-using Sound;
-
 using System.ComponentModel.DataAnnotations;
 
 /// <summary>
@@ -26,7 +24,7 @@ public class Project
     [Display(Name = "Project Name")]
     public string Name { get; set; } = string.Empty;
 
-    public List<CognitiveSpeechEngine> SpeakerEngines { get; set; }
+    public List<SpeakerEngineConfiguration> SpeakerEngines { get; set; }
     public List<Voice> Voices { get; set; }
     public List<Locomotive> Locomotives { get; set; }
     public List<PassengerWagon> PassengerWagons { get; set; }
