@@ -114,7 +114,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>
     {
         Debug.WriteLine($"🏁 Last station of journey '{journey.Name}' reached");
 
-        switch (journey.OnLastStop)
+        switch (journey.BehaviorOnLastStop)
         {
             case BehaviorOnLastStop.BeginAgainFromFistStop:
                 Debug.WriteLine("🔄 Journey will restart from beginning");
@@ -122,16 +122,15 @@ public class JourneyManager : BaseFeedbackManager<Journey>
                 break;
 
             case BehaviorOnLastStop.GotoJourney:
-                Debug.WriteLine($"➡ Switching to journey: {journey.NextJourney}");
-                var nextJourney = Entities.FirstOrDefault(j => j.Name == journey.NextJourney);
-                if (nextJourney != null)
+                if (journey.NextJourney != null)
                 {
-                    nextJourney.CurrentPos = nextJourney.FirstPos;
-                    Debug.WriteLine($"✅ Journey '{nextJourney.Name}' activated at position {nextJourney.FirstPos}");
+                    Debug.WriteLine($"➡ Switching to journey: {journey.NextJourney.Name}");
+                    journey.NextJourney.CurrentPos = journey.NextJourney.FirstPos;
+                    Debug.WriteLine($"✅ Journey '{journey.NextJourney.Name}' activated at position {journey.NextJourney.FirstPos}");
                 }
                 else
                 {
-                    Debug.WriteLine($"⚠ Journey '{journey.NextJourney}' not found");
+                    Debug.WriteLine($"⚠ NextJourney not set");
                 }
                 break;
 

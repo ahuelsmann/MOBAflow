@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.Service;
 
-using Backend.Data;
-using Backend.Model;
+using Moba.Backend.Data;
+using Moba.Domain;
 
 using System.Threading.Tasks;
 

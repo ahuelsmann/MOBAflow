@@ -2,7 +2,7 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
-using Moba.Backend.Model;
+using Moba.Domain;
 using System.Collections.ObjectModel;
 
 /// <summary>

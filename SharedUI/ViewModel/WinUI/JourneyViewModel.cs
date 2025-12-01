@@ -2,7 +2,7 @@
 namespace Moba.SharedUI.ViewModel.WinUI;
 
 using System;
-using Backend.Model;
+using Moba.Domain;
 using Moba.SharedUI.Service;
 
 /// <summary>

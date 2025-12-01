@@ -1,48 +1,37 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Converter;
 
-using Moba.Backend.Model.Action;
+using Moba.Domain;
 using Moba.Domain.Enum;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-public class ActionConverter : JsonConverter<Base>
+/// <summary>
+/// JSON converter for WorkflowAction - handles Parameters dictionary serialization.
+/// </summary>
+public class ActionConverter : JsonConverter<WorkflowAction>
 {
-    public override Base? ReadJson(JsonReader reader, Type objectType, Base? existingValue, bool hasExistingValue, JsonSerializer serializer)
+    public override WorkflowAction? ReadJson(JsonReader reader, Type objectType, WorkflowAction? existingValue, bool hasExistingValue, JsonSerializer serializer)
     {
+        if (reader.TokenType == JsonToken.Null)
+            return null;
+
         JObject jo = JObject.Load(reader);
 
-        ActionType? type = jo["Type"]?.ToObject<ActionType>();
-
-        var newSerializer = new JsonSerializer
+        var action = new WorkflowAction
         {
-            ContractResolver = serializer.ContractResolver,
-            Formatting = serializer.Formatting,
-            NullValueHandling = serializer.NullValueHandling,
-            DefaultValueHandling = serializer.DefaultValueHandling
-        };
-
-        foreach (var converter in serializer.Converters)
-        {
-            if (converter.GetType() != typeof(ActionConverter))
-            {
-                newSerializer.Converters.Add(converter);
-            }
-        }
-
-        Base? action = type switch
-        {
-            ActionType.Audio => jo.ToObject<Audio>(newSerializer),
-            ActionType.Command => jo.ToObject<Command>(newSerializer),
-            ActionType.Announcement => jo.ToObject<Announcement>(newSerializer),
-            _ => null
+            Id = jo["Id"]?.ToObject<Guid>() ?? Guid.NewGuid(),
+            Name = jo["Name"]?.ToObject<string>() ?? string.Empty,
+            Number = jo["Number"]?.ToObject<int>() ?? 0,
+            Type = jo["Type"]?.ToObject<ActionType>() ?? ActionType.Command,
+            Parameters = jo["Parameters"]?.ToObject<Dictionary<string, object>>()
         };
 
         return action;
     }
 
-    public override void WriteJson(JsonWriter writer, Base? value, JsonSerializer serializer)
+    public override void WriteJson(JsonWriter writer, WorkflowAction? value, JsonSerializer serializer)
     {
         if (value == null)
         {
@@ -50,22 +39,15 @@ public class ActionConverter : JsonConverter<Base>
             return;
         }
 
-        var newSerializer = new JsonSerializer
+        var jo = new JObject
         {
-            ContractResolver = serializer.ContractResolver,
-            Formatting = serializer.Formatting,
-            NullValueHandling = serializer.NullValueHandling,
-            DefaultValueHandling = serializer.DefaultValueHandling
+            ["Id"] = JToken.FromObject(value.Id),
+            ["Name"] = value.Name,
+            ["Number"] = value.Number,
+            ["Type"] = JToken.FromObject(value.Type),
+            ["Parameters"] = value.Parameters != null ? JToken.FromObject(value.Parameters) : null
         };
 
-        foreach (var converter in serializer.Converters)
-        {
-            if (converter.GetType() != typeof(ActionConverter))
-            {
-                newSerializer.Converters.Add(converter);
-            }
-        }
-
-        newSerializer.Serialize(writer, value);
+        jo.WriteTo(writer);
     }
 }

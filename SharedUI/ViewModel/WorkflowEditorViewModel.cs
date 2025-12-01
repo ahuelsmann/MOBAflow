@@ -3,11 +3,10 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Moba.Backend.Model;
-using Moba.Backend.Model.Action;
+using Moba.Domain;
+using Moba.Domain.Enum;
 using Moba.SharedUI.Service;
 using System.Collections.ObjectModel;
-using BackendAction = Moba.Backend.Model.Action.Base;
 
 /// <summary>
 /// ViewModel for the Workflows tab in the Editor.

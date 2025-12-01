@@ -2,8 +2,8 @@
 namespace Moba.SharedUI.ViewModel.Action;
 
 using Backend;
-using Backend.Model;
-using Backend.Model.Action;
+using Moba.Domain;
+using Moba.Domain.Enum;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 

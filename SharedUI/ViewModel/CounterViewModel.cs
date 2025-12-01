@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 
 using Moba.Backend.Interface;
 using Moba.Common.Extensions;
+using Moba.Domain;
 using Moba.SharedUI.Service;
 
 using System.Collections.Generic;
@@ -23,11 +24,11 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     private readonly IZ21 _z21;
     private readonly IUiDispatcher _dispatcher;
     private readonly INotificationService? _notificationService;
-    private readonly Backend.Model.Solution _solution;
+    private readonly Solution _solution;
     private readonly Dictionary<int, DateTime> _lastFeedbackTime = new();
     private bool _disposed;
 
-    public CounterViewModel(IZ21 z21, IUiDispatcher dispatcher, Backend.Model.Solution solution, INotificationService? notificationService = null)
+    public CounterViewModel(IZ21 z21, IUiDispatcher dispatcher, Solution solution, INotificationService? notificationService = null)
     {
         _z21 = z21;
         _dispatcher = dispatcher;

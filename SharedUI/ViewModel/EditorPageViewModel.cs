@@ -4,7 +4,7 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using Moba.Backend.Model;
+using Moba.Domain;
 using Moba.SharedUI.Service;
 
 using System.Collections.ObjectModel;
