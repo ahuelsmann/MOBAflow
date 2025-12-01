@@ -46,7 +46,6 @@
   <ItemGroup>
     <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
-    <ProjectReference Include="..\Domain\Domain.csproj" />
   </ItemGroup>
   <!-- Mark generated manifest as a build output so Fast Up-to-Date check does not warn -->
   <ItemGroup>

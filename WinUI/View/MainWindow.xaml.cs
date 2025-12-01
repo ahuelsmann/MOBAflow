@@ -4,6 +4,7 @@ namespace Moba.WinUI.View;
 
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Moba.Domain;
 using Moba.SharedUI.ViewModel;
 using Moba.WinUI.Service;
 using MainWindowViewModel = Moba.SharedUI.ViewModel.WinUI.MainWindowViewModel;

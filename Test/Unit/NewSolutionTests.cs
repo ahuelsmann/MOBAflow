@@ -1,4 +1,4 @@
-using Moba.Backend.Model;
+using Moba.Domain;
 
 namespace Moba.Test.Unit;
 

@@ -2,7 +2,7 @@
 #if !SKIP_ANDROID_TESTS
 namespace Moba.Test.SharedUI;
 
-using Moba.Backend.Model;
+using Moba.Domain;
 using NUnit.Framework;
 
 [TestFixture]

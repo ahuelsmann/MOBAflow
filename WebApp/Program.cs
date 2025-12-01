@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Moba.WebApp.Components;
-using Moba.SharedUI.ViewModel;
-using Moba.SharedUI.Service;
 using Moba.Backend.Network;
+using Moba.SharedUI.Service;
+using Moba.SharedUI.ViewModel;
+using Moba.WebApp.Components;
 using Moba.WebApp.Service;
 
 var builder = WebApplication.CreateBuilder(args);
