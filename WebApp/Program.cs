@@ -25,7 +25,7 @@ builder.Services.AddSingleton<Moba.Backend.Interface.IJourneyManagerFactory, Mob
 builder.Services.AddSingleton(sp => new Moba.Backend.Data.DataManager());
 
 // ✅ Solution as Singleton (initialized empty, can be loaded later by user)
-builder.Services.AddSingleton<Moba.Backend.Model.Solution>(sp => new Moba.Backend.Model.Solution());
+builder.Services.AddSingleton<Moba.Domain.Solution>(sp => new Moba.Domain.Solution());
 
 
 var app = builder.Build();
