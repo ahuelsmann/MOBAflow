@@ -211,7 +211,7 @@ public partial class ProjectConfigurationPageViewModel : ObservableObject
         var newStation = new Station
         {
             Name = "New Station",
-            Number = (uint)SelectedJourney.Model.Stations.Count + 1
+            NumberOfLapsToStop = 2
         };
 
         SelectedJourney.Model.Stations.Add(newStation);
@@ -303,8 +303,9 @@ public partial class ProjectConfigurationPageViewModel : ObservableObject
     {
         if (SelectedTrain == null) return;
 
-        // Check if train is referenced by any journey
-        bool isReferenced = _project.Journeys.Any(j => j.Train == SelectedTrain.Model);
+        // Note: Journey.Train property removed in Clean Architecture refactoring
+        // Train-Journey relationship check temporarily disabled
+        bool isReferenced = false; // TODO: Implement new train relationship check
 
         if (isReferenced)
         {

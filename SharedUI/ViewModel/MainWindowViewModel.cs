@@ -163,7 +163,7 @@ public partial class MainWindowViewModel : ObservableObject
     /// Available cities with stations (loaded from master data).
     /// </summary]
     [ObservableProperty]
-    private ObservableCollection<Backend.Data.City> availableCities = [];
+    private ObservableCollection<Moba.Domain.City> availableCities = [];
 
     /// <summary>
     /// Currently selected city for adding stations to journeys.
@@ -232,7 +232,9 @@ public partial class MainWindowViewModel : ObservableObject
         {
             var firstProject = Solution.Projects[0];
             firstProject.Cities.Clear();
-            firstProject.Cities.AddRange(dataManager.Cities);
+            // Note: City loading temporarily disabled due to Backend.Data.City vs Domain.City mismatch
+            // TODO: Migrate CityDataManager to use Domain.City or create converter
+            // firstProject.Cities.AddRange(dataManager.Cities);
             LoadCities();
         }
         else if (!string.IsNullOrEmpty(error))
@@ -256,10 +258,9 @@ public partial class MainWindowViewModel : ObservableObject
             var newStation = new Station
             {
                 Name = stationToCopy.Name,
-                Track = stationToCopy.Track,
-                IsExitOnLeft = stationToCopy.IsExitOnLeft,
+                Description = stationToCopy.Description,
                 NumberOfLapsToStop = 2,
-                Number = (uint)journeyVM.Model.Stations.Count + 1
+                FeedbackInPort = stationToCopy.FeedbackInPort
             };
 
             // Add to Journey model
@@ -324,7 +325,7 @@ public partial class MainWindowViewModel : ObservableObject
 
             // ✅ CRITICAL: Update the existing Solution instance instead of replacing it
             // This ensures all ViewModels that have a reference to Solution see the changes
-            Solution.UpdateFrom(loadedSolution);
+            MergeSolution(loadedSolution);
 
             // ✅ Refresh SolutionViewModel to sync with model changes
             SolutionViewModel?.Refresh();
@@ -405,10 +406,9 @@ public partial class MainWindowViewModel : ObservableObject
                 if (Solution.Projects.Count > 0)
                 {
                     var project = Solution.Projects[0];
-                    var executionContext = new Backend.Model.Action.ActionExecutionContext
+                    var executionContext = new Moba.Backend.Services.ActionExecutionContext
                     {
-                        Z21 = _z21,
-                        Project = project
+                        Z21 = _z21
                     };
 
                     _journeyManager?.Dispose();
@@ -472,10 +472,9 @@ public partial class MainWindowViewModel : ObservableObject
                 var project = Solution.Projects[0];
                 System.Diagnostics.Debug.WriteLine($"   Creating JourneyManager with {project.Journeys.Count} journeys");
                 
-                var executionContext = new Backend.Model.Action.ActionExecutionContext
+                var executionContext = new Moba.Backend.Services.ActionExecutionContext
                 {
-                    Z21 = _z21,
-                    Project = project
+                    Z21 = _z21
                 };
                 _journeyManager = _journeyManagerFactory.Create(_z21, project.Journeys, executionContext);
                 System.Diagnostics.Debug.WriteLine($"✅ JourneyManager created for simulation with {project.Journeys.Count} journeys");
@@ -1292,7 +1291,7 @@ public partial class MainWindowViewModel : ObservableObject
         System.Diagnostics.Debug.WriteLine($"✅ Updating Solution with new empty solution");
         
         // Update the existing Solution singleton instance
-        Solution.UpdateFrom(newSolution);
+        MergeSolution(newSolution);
         
         // ✅ Refresh SolutionViewModel to sync with new solution
         SolutionViewModel?.Refresh();
@@ -1310,5 +1309,27 @@ public partial class MainWindowViewModel : ObservableObject
         LoadCities();
         
         System.Diagnostics.Debug.WriteLine("✅ NewSolutionAsync COMPLETE");
+    }
+
+    /// <summary>
+    /// Updates the current Solution instance with data from another Solution.
+    /// This preserves the DI singleton reference while updating its content.
+    /// </summary>
+    private void MergeSolution(Solution source)
+    {
+        if (source == null) return;
+
+        // Clear and update Projects
+        Solution.Projects.Clear();
+        foreach (var project in source.Projects)
+        {
+            Solution.Projects.Add(project);
+        }
+
+        // Update Settings
+        Solution.Settings = source.Settings ?? new Settings();
+
+        // Update Name
+        Solution.Name = source.Name;
     }
 }

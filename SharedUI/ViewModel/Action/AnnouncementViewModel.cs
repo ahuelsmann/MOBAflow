@@ -4,69 +4,50 @@ namespace Moba.SharedUI.ViewModel.Action;
 using Moba.Domain;
 using Moba.Domain.Enum;
 
-using CommunityToolkit.Mvvm.ComponentModel;
-
-using Sound;
-
-using System.Diagnostics;
-
-public partial class AnnouncementViewModel : ObservableObject
+/// <summary>
+/// ViewModel for TTS Announcement actions.
+/// Wraps WorkflowAction with typed properties for Message, VoiceName, etc.
+/// </summary>
+public class AnnouncementViewModel : WorkflowActionViewModel
 {
-    private readonly ISpeakerEngine? _speakerEngine;
-    private readonly Project? _project;
-
-    [ObservableProperty]
-    private Announcement model;
-
-    public AnnouncementViewModel(Announcement model, ISpeakerEngine? speakerEngine = null, Project? project = null)
+    public AnnouncementViewModel(WorkflowAction action) 
+        : base(action, ActionType.Announcement)
     {
-        Model = model;
-        _speakerEngine = speakerEngine;
-        _project = project;
     }
 
-    public string? TextToSpeak
+    /// <summary>
+    /// Text to be spoken (supports templates: {JourneyName}, {StationName}).
+    /// </summary>
+    public string Message
     {
-        get => Model.TextToSpeak;
-        set => SetProperty(Model.TextToSpeak, value, Model, (m, v) => m.TextToSpeak = v);
+        get => GetParameter<string>("Message") ?? string.Empty;
+        set => SetParameter("Message", value);
     }
 
-    public string Name
+    /// <summary>
+    /// Azure TTS voice name (e.g., "de-DE-KatjaNeural").
+    /// </summary>
+    public string VoiceName
     {
-        get => Model.Name;
-        set => SetProperty(Model.Name, value, Model, (m, v) => m.Name = v);
+        get => GetParameter<string>("VoiceName") ?? "de-DE-KatjaNeural";
+        set => SetParameter("VoiceName", value);
     }
 
-    public async Task ExecuteAsync(Journey journey, Station station)
+    /// <summary>
+    /// Speech rate (-50% to +200%).
+    /// </summary>
+    public int Rate
     {
-        if (string.IsNullOrEmpty(Model.TextToSpeak))
-        {
-            return;
-        }
-
-        string message = ReplaceAnnouncementPlaceholders(Model.TextToSpeak, station, journey);
-
-        Debug.WriteLine($"📢 Ansage: {message}");
-
-        if (_speakerEngine != null)
-        {
-            // ✅ Use first voice from Project.Voices or null (speaker engine will use default)
-            string? voiceName = _project?.Voices.FirstOrDefault()?.Name;
-            await _speakerEngine.AnnouncementAsync(message, voiceName);
-        }
-        else
-        {
-            Debug.WriteLine("⚠ ISpeakerEngine nicht verfügbar - Ansage nur als Debug-Output");
-        }
+        get => GetParameter<int>("Rate");
+        set => SetParameter("Rate", value);
     }
 
-    private static string ReplaceAnnouncementPlaceholders(string text, Station station, Journey journey)
+    /// <summary>
+    /// Volume (0.0 - 1.0).
+    /// </summary>
+    public double Volume
     {
-        return text
-            .Replace("{StationName}", station.Name)
-            .Replace("{Track}", station.Track.ToString())
-            .Replace("{ExitSide}", station.IsExitOnLeft ? "links" : "rechts")
-            .Replace("{TrainName}", journey.Train?.Name ?? "Unbekannt")
-            .Replace("{CurrentLap}", journey.CurrentCounter.ToString());
+        get => GetParameter<double>("Volume");
+        set => SetParameter("Volume", value);
     }
 }

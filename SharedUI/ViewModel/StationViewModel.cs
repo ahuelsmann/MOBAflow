@@ -30,46 +30,28 @@ public partial class StationViewModel : ObservableObject
         set => SetProperty(Model.Name, value, Model, (m, v) => m.Name = v);
     }
 
-    public uint Number
+    public string? Description
     {
-        get => Model.Number;
-        set => SetProperty(Model.Number, value, Model, (m, v) => m.Number = v);
+        get => Model.Description;
+        set => SetProperty(Model.Description, value, Model, (m, v) => m.Description = v);
     }
 
-    public uint NumberOfLapsToStop
+    public int? FeedbackInPort
+    {
+        get => Model.FeedbackInPort;
+        set => SetProperty(Model.FeedbackInPort, value, Model, (m, v) => m.FeedbackInPort = v);
+    }
+
+    public int NumberOfLapsToStop
     {
         get => Model.NumberOfLapsToStop;
         set => SetProperty(Model.NumberOfLapsToStop, value, Model, (m, v) => m.NumberOfLapsToStop = v);
     }
 
-    public DateTime? Arrival
+    public List<Platform> Platforms
     {
-        get => Model.Arrival;
-        set => SetProperty(Model.Arrival, value, Model, (m, v) => m.Arrival = v);
-    }
-
-    public DateTime? Departure
-    {
-        get => Model.Departure;
-        set => SetProperty(Model.Departure, value, Model, (m, v) => m.Departure = v);
-    }
-
-    public uint Track
-    {
-        get => Model.Track;
-        set => SetProperty(Model.Track, value, Model, (m, v) => m.Track = v);
-    }
-
-    public bool IsExitOnLeft
-    {
-        get => Model.IsExitOnLeft;
-        set => SetProperty(Model.IsExitOnLeft, value, Model, (m, v) => m.IsExitOnLeft = v);
-    }
-
-    public string TransferConnections
-    {
-        get => Model.TransferConnections;
-        set => SetProperty(Model.TransferConnections, value, Model, (m, v) => m.TransferConnections = v);
+        get => Model.Platforms;
+        set => SetProperty(Model.Platforms, value, Model, (m, v) => m.Platforms = v);
     }
 
     public Workflow? Flow

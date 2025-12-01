@@ -29,13 +29,8 @@ public partial class JourneyViewModel : ObservableObject
         Model = model;
         _dispatcher = dispatcher;
 
-        // Sort stations by Number before wrapping in ViewModels
-        var sortedStations = model.Stations.OrderBy(s => s.Number).ToList();
-        model.Stations.Clear();
-        foreach (var station in sortedStations)
-        {
-            model.Stations.Add(station);
-        }
+        // Note: Station.Number removed in Clean Architecture - stations are ordered by list position
+        // No sorting needed as list order is the source of truth
 
         // Wrap existing stations in ViewModels
         Stations = new ObservableCollection<StationViewModel>(
@@ -43,20 +38,9 @@ public partial class JourneyViewModel : ObservableObject
         );
 
         // ✅ Subscribe to StateChanged event ONLY if dispatcher is available
-        // Platform-specific derived classes (WinUI, MAUI) will provide dispatcher
-        // Base class fallback: Direct property changes (for WebApp/Tests without dispatcher)
-        if (_dispatcher != null)
-        {
-            Model.StateChanged += (_, _) =>
-            {
-                _dispatcher.InvokeOnUi(() => OnModelStateChanged());
-            };
-        }
-        else
-        {
-            // Fallback for tests or WebApp (no dispatcher)
-            Model.StateChanged += (_, _) => OnModelStateChanged();
-        }
+        // Note: Journey.StateChanged event removed in Clean Architecture refactoring
+        // Journey is now a POCO without events
+        // State changes are tracked via ObservableObject notifications in this ViewModel
     }
 
     /// <summary>
@@ -106,11 +90,8 @@ public partial class JourneyViewModel : ObservableObject
         set => SetProperty(Model.Text, value, Model, (m, v) => m.Text = v);
     }
 
-    public Train? Train
-    {
-        get => Model.Train;
-        set => SetProperty(Model.Train, value, Model, (m, v) => m.Train = v);
-    }
+    // Note: Train property removed - Journey in Domain model no longer has direct Train reference
+    // Train-Journey relationship is now managed at Solution/Project level
 
     public ObservableCollection<StationViewModel> Stations { get; }
 
@@ -118,37 +99,31 @@ public partial class JourneyViewModel : ObservableObject
     public IEnumerable<BehaviorOnLastStop> BehaviorOnLastStopValues =>
         Enum.GetValues<BehaviorOnLastStop>();
 
-    public BehaviorOnLastStop BehaviorOnLastStop
-    {
-        get => Model.OnLastStop;
-        set => SetProperty(Model.OnLastStop, value, Model, (m, v) => m.OnLastStop = v);
-    }
-
-    public uint CurrentCounter
+    public int CurrentCounter
     {
         get => Model.CurrentCounter;
         set => SetProperty(Model.CurrentCounter, value, Model, (m, v) => m.CurrentCounter = v);
     }
 
-    public uint CurrentPos
+    public int CurrentPos
     {
         get => Model.CurrentPos;
         set => SetProperty(Model.CurrentPos, value, Model, (m, v) => m.CurrentPos = v);
     }
 
-    public BehaviorOnLastStop OnLastStop
+    public BehaviorOnLastStop BehaviorOnLastStop
     {
-        get => Model.OnLastStop;
-        set => SetProperty(Model.OnLastStop, value, Model, (m, v) => m.OnLastStop = v);
+        get => Model.BehaviorOnLastStop;
+        set => SetProperty(Model.BehaviorOnLastStop, value, Model, (m, v) => m.BehaviorOnLastStop = v);
     }
 
-    public string? NextJourney
+    public Journey? NextJourney
     {
         get => Model.NextJourney;
         set => SetProperty(Model.NextJourney, value, Model, (m, v) => m.NextJourney = v);
     }
 
-    public uint FirstPos
+    public int FirstPos
     {
         get => Model.FirstPos;
         set => SetProperty(Model.FirstPos, value, Model, (m, v) => m.FirstPos = v);
@@ -191,10 +166,9 @@ public partial class JourneyViewModel : ObservableObject
     /// </summary>
     public void RenumberStations()
     {
-        for (int i = 0; i < Stations.Count; i++)
-        {
-            Stations[i].Number = (uint)(i + 1);
-        }
+        // Note: Station.Number property removed in Clean Architecture refactoring
+        // Stations are now identified by their position in the Stations list
+        // This method is kept for API compatibility but does nothing
     }
 
     /// <summary>

@@ -4,6 +4,7 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Moba.Domain;
+using Moba.Domain.Enum;
 using Moba.SharedUI.Service;
 using System.Collections.ObjectModel;
 
@@ -45,7 +46,7 @@ public partial class JourneyEditorViewModel : ObservableObject
         var newJourney = new Journey
         {
             Name = "New Journey",
-            OnLastStop = Backend.Model.Enum.BehaviorOnLastStop.None
+            BehaviorOnLastStop = BehaviorOnLastStop.None
         };
         
         _project.Journeys.Add(newJourney);
@@ -86,7 +87,7 @@ public partial class JourneyEditorViewModel : ObservableObject
         var newStation = new Station
         {
             Name = "New Station",
-            Number = (uint)(SelectedJourney.Stations.Count + 1)
+            NumberOfLapsToStop = 2
         };
 
         SelectedJourney.Stations.Add(newStation);
@@ -105,11 +106,8 @@ public partial class JourneyEditorViewModel : ObservableObject
         // Remove from ViewModel collection
         Stations.Remove(SelectedStation);
         
-        // Renumber remaining stations
-        for (int i = 0; i < SelectedJourney.Stations.Count; i++)
-        {
-            SelectedJourney.Stations[i].Number = (uint)(i + 1);
-        }
+        // Note: Station.Number property removed in Clean Architecture refactoring
+        // Stations are now identified by their position in the list
         
         SelectedStation = null;
         ValidationError = null;

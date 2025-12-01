@@ -4,31 +4,41 @@ namespace Moba.SharedUI.ViewModel.Action;
 using Moba.Domain;
 using Moba.Domain.Enum;
 
-using CommunityToolkit.Mvvm.ComponentModel;
-
-using System.Diagnostics;
-
-public partial class AudioViewModel : ObservableObject
+/// <summary>
+/// ViewModel for Audio playback actions.
+/// Wraps WorkflowAction with typed properties for FilePath, Volume.
+/// </summary>
+public class AudioViewModel : WorkflowActionViewModel
 {
-    [ObservableProperty]
-    private Audio model;
-
-    public AudioViewModel(Audio model)
+    public AudioViewModel(WorkflowAction action) 
+        : base(action, ActionType.Audio)
     {
-        Model = model;
     }
 
-    public string Name
+    /// <summary>
+    /// Path to audio file (relative or absolute).
+    /// </summary>
+    public string FilePath
     {
-        get => Model.Name;
-        set => SetProperty(Model.Name, value, Model, (m, v) => m.Name = v);
+        get => GetParameter<string>("FilePath") ?? string.Empty;
+        set => SetParameter("FilePath", value);
     }
 
-#pragma warning disable S2325 // Methods and properties that don't access instance data should be static
-    public async Task ExecuteAsync(Journey journey, Station station)
+    /// <summary>
+    /// Volume (0.0 - 1.0).
+    /// </summary>
+    public double Volume
     {
-        Debug.WriteLine("🔔 Sound wird abgespielt");
-        await Task.CompletedTask;
+        get => GetParameter<double>("Volume");
+        set => SetParameter("Volume", value);
     }
-#pragma warning restore S2325
+
+    /// <summary>
+    /// Loop playback.
+    /// </summary>
+    public bool Loop
+    {
+        get => GetParameter<bool>("Loop");
+        set => SetParameter("Loop", value);
+    }
 }

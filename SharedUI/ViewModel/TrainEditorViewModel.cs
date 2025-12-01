@@ -4,6 +4,7 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Moba.Domain;
+using Moba.Domain.Enum;
 using Moba.SharedUI.Service;
 using System.Collections.ObjectModel;
 
@@ -105,7 +106,7 @@ public partial class TrainEditorViewModel : ObservableObject
         {
             Name = "New Passenger Wagon",
             Pos = (uint)(SelectedTrain.Wagons.Count + 1),
-            WagonClass = Backend.Model.Enum.PassengerClass.Second
+            WagonClass = PassengerClass.Second
         };
 
         SelectedTrain.Wagons.Add(newWagon);

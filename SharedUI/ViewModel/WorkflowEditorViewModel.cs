@@ -23,12 +23,12 @@ public partial class WorkflowEditorViewModel : ObservableObject
     [ObservableProperty]
     private Workflow? _selectedWorkflow;
 
-    private ObservableCollection<BackendAction> _actions;
+    private ObservableCollection<Action.WorkflowActionViewModel> _actions;
     
     /// <summary>
     /// Gets the Actions collection for the selected Workflow.
     /// </summary>
-    public ObservableCollection<BackendAction> Actions
+    public ObservableCollection<Action.WorkflowActionViewModel> Actions
     {
         get => _actions;
         set => SetProperty(ref _actions, value);
@@ -42,7 +42,7 @@ public partial class WorkflowEditorViewModel : ObservableObject
         _project = project;
         _validationService = validationService;
         _workflows = new ObservableCollection<Workflow>(project.Workflows);
-        _actions = new ObservableCollection<BackendAction>();
+        _actions = new ObservableCollection<Action.WorkflowActionViewModel>();
     }
 
     [RelayCommand]
@@ -88,13 +88,21 @@ public partial class WorkflowEditorViewModel : ObservableObject
     {
         if (SelectedWorkflow == null) return;
 
-        var newAction = new Announcement("New Announcement")
+        var newAction = new WorkflowAction
         {
-            Name = "New Announcement"
+            Name = "New Announcement",
+            Number = SelectedWorkflow.Actions.Count + 1,
+            Type = ActionType.Announcement,
+            Parameters = new Dictionary<string, object>
+            {
+                ["Message"] = "Enter announcement text",
+                ["VoiceName"] = "de-DE-KatjaNeural"
+            }
         };
 
         SelectedWorkflow.Actions.Add(newAction);
-        Actions.Add(newAction);
+        var viewModel = CreateActionViewModel(newAction);
+        Actions.Add(viewModel);
     }
 
     [RelayCommand]
@@ -102,13 +110,20 @@ public partial class WorkflowEditorViewModel : ObservableObject
     {
         if (SelectedWorkflow == null) return;
 
-        var newAction = new Command(new byte[] { 0x00 })
+        var newAction = new WorkflowAction
         {
-            Name = "New Command"
+            Name = "New Command",
+            Number = SelectedWorkflow.Actions.Count + 1,
+            Type = ActionType.Command,
+            Parameters = new Dictionary<string, object>
+            {
+                ["Bytes"] = new byte[] { 0x00 }
+            }
         };
 
         SelectedWorkflow.Actions.Add(newAction);
-        Actions.Add(newAction);
+        var viewModel = CreateActionViewModel(newAction);
+        Actions.Add(viewModel);
     }
 
     [RelayCommand]
@@ -116,13 +131,20 @@ public partial class WorkflowEditorViewModel : ObservableObject
     {
         if (SelectedWorkflow == null) return;
 
-        var newAction = new Audio("sound.wav")
+        var newAction = new WorkflowAction
         {
-            Name = "New Audio"
+            Name = "New Audio",
+            Number = SelectedWorkflow.Actions.Count + 1,
+            Type = ActionType.Audio,
+            Parameters = new Dictionary<string, object>
+            {
+                ["FilePath"] = "sound.wav"
+            }
         };
 
         SelectedWorkflow.Actions.Add(newAction);
-        Actions.Add(newAction);
+        var viewModel = CreateActionViewModel(newAction);
+        Actions.Add(viewModel);
     }
 
     partial void OnSelectedWorkflowChanged(Workflow? value)
@@ -133,15 +155,27 @@ public partial class WorkflowEditorViewModel : ObservableObject
         {
             foreach (var action in value.Actions)
             {
-                if (action is BackendAction backendAction)
-                {
-                    Actions.Add(backendAction);
-                }
+                var viewModel = CreateActionViewModel(action);
+                Actions.Add(viewModel);
             }
         }
         ValidationError = null;
         
         // Notify Delete command that CanExecute might have changed
         DeleteWorkflowCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// Creates the appropriate ViewModel wrapper for a WorkflowAction based on its Type.
+    /// </summary>
+    private Action.WorkflowActionViewModel CreateActionViewModel(WorkflowAction action)
+    {
+        return action.Type switch
+        {
+            ActionType.Command => new Action.CommandViewModel(action),
+            ActionType.Audio => new Action.AudioViewModel(action),
+            ActionType.Announcement => new Action.AnnouncementViewModel(action),
+            _ => throw new ArgumentException($"Unknown action type: {action.Type}")
+        };
     }
 }

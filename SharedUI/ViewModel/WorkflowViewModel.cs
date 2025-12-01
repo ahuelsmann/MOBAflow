@@ -17,12 +17,12 @@ public partial class WorkflowViewModel : ObservableObject
 {
     private readonly ISpeakerEngine? _speakerEngine;
     private readonly Project? _project;
-    private readonly Z21? _z21;
+    private readonly IZ21? _z21;
 
     [ObservableProperty]
     private Workflow model;
 
-    public WorkflowViewModel(Workflow model, ISpeakerEngine? speakerEngine = null, Project? project = null, Z21? z21 = null)
+    public WorkflowViewModel(Workflow model, ISpeakerEngine? speakerEngine = null, Project? project = null, IZ21? z21 = null)
     {
         Model = model;
         _speakerEngine = speakerEngine;
@@ -69,11 +69,39 @@ public partial class WorkflowViewModel : ObservableObject
     [RelayCommand]
     private void AddAction(ActionType actionType)
     {
-        Base newAction = actionType switch
+        WorkflowAction newAction = actionType switch
         {
-            ActionType.Announcement => new Announcement("New announcement text"),
-            ActionType.Sound => new Audio("path/to/sound.wav"),
-            ActionType.Command => new Command(Array.Empty<byte>()),
+            ActionType.Announcement => new WorkflowAction
+            {
+                Name = "New Announcement",
+                Number = Model.Actions.Count + 1,
+                Type = ActionType.Announcement,
+                Parameters = new Dictionary<string, object>
+                {
+                    ["Message"] = "New announcement text",
+                    ["VoiceName"] = "de-DE-KatjaNeural"
+                }
+            },
+            ActionType.Audio => new WorkflowAction
+            {
+                Name = "New Audio",
+                Number = Model.Actions.Count + 1,
+                Type = ActionType.Audio,
+                Parameters = new Dictionary<string, object>
+                {
+                    ["FilePath"] = "path/to/sound.wav"
+                }
+            },
+            ActionType.Command => new WorkflowAction
+            {
+                Name = "New Command",
+                Number = Model.Actions.Count + 1,
+                Type = ActionType.Command,
+                Parameters = new Dictionary<string, object>
+                {
+                    ["Bytes"] = Array.Empty<byte>()
+                }
+            },
             _ => throw new ArgumentException($"Unsupported action type: {actionType}")
         };
 
@@ -88,11 +116,11 @@ public partial class WorkflowViewModel : ObservableObject
     {
         if (actionVM == null) return;
 
-        Base? actionModel = actionVM switch
+        WorkflowAction? actionModel = actionVM switch
         {
-            AnnouncementViewModel avm => avm.Model,
-            AudioViewModel audvm => audvm.Model,
-            CommandViewModel cvm => cvm.Model,
+            Action.AnnouncementViewModel avm => avm.ToWorkflowAction(),
+            Action.AudioViewModel audvm => audvm.ToWorkflowAction(),
+            Action.CommandViewModel cvm => cvm.ToWorkflowAction(),
             _ => null
         };
 
@@ -117,19 +145,19 @@ public partial class WorkflowViewModel : ObservableObject
         {
             switch (actionVM)
             {
-                case AnnouncementViewModel announcement:
+                case Action.AnnouncementViewModel announcement:
                     System.Diagnostics.Debug.WriteLine($"🎬 Führe Action aus: Announcement - {announcement.Name}");
-                    await announcement.ExecuteAsync(journey, station);
+                    // Note: ExecuteAsync removed - execution now handled by WorkflowService
                     break;
 
-                case AudioViewModel audio:
-                    System.Diagnostics.Debug.WriteLine($"🎬 Führe Action aus: Sound - {audio.Name}");
-                    await audio.ExecuteAsync(journey, station);
+                case Action.AudioViewModel audio:
+                    System.Diagnostics.Debug.WriteLine($"🎬 Führe Action aus: Audio - {audio.Name}");
+                    // Note: ExecuteAsync removed - execution now handled by WorkflowService
                     break;
 
-                case CommandViewModel command:
+                case Action.CommandViewModel command:
                     System.Diagnostics.Debug.WriteLine($"🎬 Führe Action aus: Command - {command.Name}");
-                    await command.ExecuteAsync(journey, station);
+                    // Note: ExecuteAsync removed - execution now handled by WorkflowService
                     break;
 
                 default:
@@ -141,14 +169,14 @@ public partial class WorkflowViewModel : ObservableObject
         System.Diagnostics.Debug.WriteLine($"✅ Workflow '{Model.Name}' abgeschlossen");
     }
 
-    private object CreateViewModelForAction(Base action)
+    private object CreateViewModelForAction(WorkflowAction action)
     {
-        return action switch
+        return action.Type switch
         {
-            Announcement announcement => new AnnouncementViewModel(announcement, _speakerEngine, _project),
-            Audio gong => new AudioViewModel(gong),
-            Command command => new CommandViewModel(command, _z21),
-            _ => throw new NotSupportedException($"Action-Typ {action.GetType().Name} wird nicht unterstützt")
+            ActionType.Announcement => new Action.AnnouncementViewModel(action),
+            ActionType.Audio => new Action.AudioViewModel(action),
+            ActionType.Command => new Action.CommandViewModel(action),
+            _ => throw new NotSupportedException($"Action-Typ {action.Type} wird nicht unterstützt")
         };
     }
 }

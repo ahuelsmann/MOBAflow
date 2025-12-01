@@ -1,5 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using CommunityToolkit.Mvvm.ComponentModel;
+using Moba.Domain;
+using Moba.Domain.Enum;
 
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -220,7 +222,7 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
                 System.Diagnostics.Debug.WriteLine($"ReferenceValue GET: {value.GetType().Name} - {value}");
 
                 // Check if Workflow
-                if (value is Backend.Model.Workflow workflow)
+                if (value is Workflow workflow)
                 {
                     System.Diagnostics.Debug.WriteLine($"Workflow: Id={workflow.Id}, Name={workflow.Name}");
                 }
@@ -236,7 +238,7 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
 
                 // Debug: Log what is being set
                 System.Diagnostics.Debug.WriteLine($"ReferenceValue SET: {value?.GetType().Name ?? "null"}");
-                if (value is Backend.Model.Workflow workflow)
+                if (value is Workflow workflow)
                 {
                     System.Diagnostics.Debug.WriteLine($"  Workflow: Id={workflow.Id}, Name={workflow.Name}");
                 }

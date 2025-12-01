@@ -28,7 +28,7 @@ public class ValidationService
 
         // Check if any Journey references this Journey as NextJourney
         var referencingJourney = _project.Journeys
-            .FirstOrDefault(j => j.NextJourney == journey.Name);
+            .FirstOrDefault(j => j.NextJourney == journey);
 
         if (referencingJourney != null)
         {
@@ -86,15 +86,9 @@ public class ValidationService
         if (train == null)
             return ValidationResult.Failure("Train is null");
 
-        // Check if any Journey uses this Train
-        var referencingJourney = _project.Journeys
-            .FirstOrDefault(j => j.Train?.Name == train.Name);
-
-        if (referencingJourney != null)
-        {
-            return ValidationResult.Failure(
-                $"Train '{train.Name}' cannot be deleted because it is assigned to Journey '{referencingJourney.Name}'.");
-        }
+        // Note: Journey.Train property removed in Clean Architecture refactoring
+        // Train-Journey relationship validation removed (trains are now referenced differently)
+        // TODO: Implement proper train usage validation once new Train relationship is defined
 
         return ValidationResult.Success();
     }

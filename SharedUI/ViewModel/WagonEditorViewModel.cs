@@ -4,6 +4,7 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Moba.Domain;
+using Moba.Domain.Enum;
 using Moba.SharedUI.Service;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -44,7 +45,7 @@ public partial class WagonEditorViewModel : ObservableObject
         {
             Name = "New Passenger Wagon",
             Manufacturer = "Unknown",
-            WagonClass = Backend.Model.Enum.PassengerClass.Second
+            WagonClass = PassengerClass.Second
         };
         
         _project.PassengerWagons.Add(newWagon);

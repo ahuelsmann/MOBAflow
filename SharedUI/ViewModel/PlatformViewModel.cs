@@ -29,7 +29,7 @@ public partial class PlatformViewModel : ObservableObject
         set => SetProperty(Model.Name, value, Model, (m, v) => m.Name = v);
     }
 
-    public uint Track
+    public string? Track
     {
         get => Model.Track;
         set => SetProperty(Model.Track, value, Model, (m, v) => m.Track = v);

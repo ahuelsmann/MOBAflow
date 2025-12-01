@@ -1,81 +1,53 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel.Action;
 
-using Backend;
 using Moba.Domain;
 using Moba.Domain.Enum;
 
-using CommunityToolkit.Mvvm.ComponentModel;
-
-using System.Diagnostics;
-
-public partial class CommandViewModel : ObservableObject
+/// <summary>
+/// ViewModel for Z21 Command actions (loco control).
+/// Wraps WorkflowAction with typed properties for Address, Speed, Direction.
+/// </summary>
+public class CommandViewModel : WorkflowActionViewModel
 {
-    private readonly Z21? _z21;
-
-    [ObservableProperty]
-    private Command model;
-
-    public CommandViewModel(Command model, Z21? z21 = null)
+    public CommandViewModel(WorkflowAction action) 
+        : base(action, ActionType.Command)
     {
-        Model = model;
-        _z21 = z21;
     }
 
-    public string Name
+    /// <summary>
+    /// Locomotive address (DCC address).
+    /// </summary>
+    public int Address
     {
-        get => Model.Name;
-        set => SetProperty(Model.Name, value, Model, (m, v) => m.Name = v);
+        get => GetParameter<int>("Address");
+        set => SetParameter("Address", value);
     }
 
+    /// <summary>
+    /// Speed (0-127 for DCC).
+    /// </summary>
+    public int Speed
+    {
+        get => GetParameter<int>("Speed");
+        set => SetParameter("Speed", value);
+    }
+
+    /// <summary>
+    /// Direction: "Forward" or "Backward".
+    /// </summary>
+    public string Direction
+    {
+        get => GetParameter<string>("Direction") ?? "Forward";
+        set => SetParameter("Direction", value);
+    }
+
+    /// <summary>
+    /// Raw command bytes (optional, for advanced users).
+    /// </summary>
     public byte[]? Bytes
     {
-        get => Model.Bytes;
-        set
-        {
-            if (SetProperty(Model.Bytes, value, Model, (m, v) => m.Bytes = v))
-            {
-                OnPropertyChanged(nameof(BytesString));
-            }
-        }
-    }
-
-    public string? BytesString
-    {
-        get => Model.Bytes != null ? BitConverter.ToString(Model.Bytes) : null;
-        set
-        {
-            if (!string.IsNullOrEmpty(value))
-            {
-                try
-                {
-                    var bytes = value.Split('-').Select(b => Convert.ToByte(b, 16)).ToArray();
-                    Bytes = bytes;
-                }
-                catch
-                {
-                    Debug.WriteLine($"⚠ Ungültiges Byte-Format: {value}");
-                }
-            }
-        }
-    }
-
-    public async Task ExecuteAsync(Journey journey, Station station)
-    {
-        if (Model.Bytes == null || Model.Bytes.Length == 0)
-        {
-            return;
-        }
-
-        Debug.WriteLine($"📤 Sende Command an Z21: {BitConverter.ToString(Model.Bytes)}");
-
-        if (_z21 != null)
-        {
-            await _z21.SendCommandAsync(Model.Bytes);
-        }
-        else
-        {
-            Debug.WriteLine("⚠ Z21 nicht verfügbar - Command nicht gesendet");
-        }
+        get => GetParameter<byte[]>("Bytes");
+        set => SetParameter("Bytes", value);
     }
 }
