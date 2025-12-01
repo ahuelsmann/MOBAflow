@@ -45,7 +45,7 @@ public static class MauiProgram
         builder.Services.AddSingleton(sp => new Backend.Data.DataManager());
 
         // ✅ Solution as Singleton (initialized empty, can be loaded later by user)
-        builder.Services.AddSingleton<Backend.Model.Solution>(sp => new Backend.Model.Solution());
+        builder.Services.AddSingleton<Domain.Solution>(sp => new Domain.Solution());
 
         // Dispatcher service (MAUI-specific)
         builder.Services.AddSingleton<IUiDispatcher, UiDispatcher>();

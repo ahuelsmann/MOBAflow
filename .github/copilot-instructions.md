@@ -15,6 +15,7 @@ description: MOBAflow coding standards, architecture rules, and platform-specifi
 
 | Project | Purpose | Framework |
 |---------|---------|-----------|
+| **Domain** | Pure POCOs - Domain models (NO dependencies!) | `net10.0` |
 | **Backend** | Z21 protocol, business logic (platform-independent!) | `net10.0` |
 | **SharedUI** | Base ViewModels, shared UI logic | `net10.0` |
 | **WinUI** | Windows desktop app | `net10.0-windows10.0.17763.0` |
@@ -33,9 +34,9 @@ description: MOBAflow coding standards, architecture rules, and platform-specifi
 
 ### Dependency Flow
 ```
-WinUI   ──→ SharedUI ──→ Backend
-MAUI    ──→ SharedUI ──→ Backend
-WebApp  ──→ SharedUI ──→ Backend
+WinUI   ──→ SharedUI ──→ Backend ──→ Domain
+MAUI    ──→ SharedUI ──→ Backend ──→ Domain
+WebApp  ──→ SharedUI ──→ Backend ──→ Domain
 ```
 
 ---
@@ -227,14 +228,15 @@ Test/
 ## 📚 Additional Documentation
 
 - **Architecture**: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - System design, layer separation
+- **Clean Architecture**: [docs/CLEAN-ARCHITECTURE-FINAL-STATUS.md](docs/CLEAN-ARCHITECTURE-FINAL-STATUS.md) - Clean Architecture implementation status
 - **DI Details**: [docs/DI-INSTRUCTIONS.md](docs/DI-INSTRUCTIONS.md) - Full dependency injection guidelines
 - **Threading**: [docs/THREADING.md](docs/THREADING.md) - UI thread dispatching patterns
-- **Async Patterns**: [docs/ASYNC-PATTERNS.md](docs/ASYNC-PATTERNS.md) - async/await best practices
 - **Best Practices**: [docs/BESTPRACTICES.md](docs/BESTPRACTICES.md) - C# coding standards
 - **UX Guidelines**: [docs/UX-GUIDELINES.md](docs/UX-GUIDELINES.md) - Detailed usability patterns
+- **MAUI Guidelines**: [docs/MAUI-GUIDELINES.md](docs/MAUI-GUIDELINES.md) - MAUI-specific development guidelines
 - **Z21 Protocol**: [docs/Z21-PROTOCOL.md](docs/Z21-PROTOCOL.md) - Z21 communication reference
-- **Solution State**: [docs/SOLUTION-INSTANCE-ANALYSIS.md](docs/SOLUTION-INSTANCE-ANALYSIS.md) - Singleton pattern verification
-- **Undo/Redo Integration**: [docs/UNDO-REDO-INTEGRATION-ANALYSIS.md](docs/UNDO-REDO-INTEGRATION-ANALYSIS.md) - HasUnsavedChanges tracking
+- **Build Status**: [docs/BUILD-ERRORS-STATUS.md](docs/BUILD-ERRORS-STATUS.md) - Current build status and known issues
+- **Testing**: [docs/TESTING-SIMULATION.md](docs/TESTING-SIMULATION.md) - Testing with fakes and simulation
 
 ---
 
