@@ -14,7 +14,9 @@ public sealed partial class MainWindow
     public MainWindowViewModel ViewModel { get; }
     public CounterViewModel CounterViewModel { get; }
     
+#pragma warning disable CS8618 // Field is initialized in constructor via DI
     private readonly HealthCheckService _healthCheckService;
+#pragma warning restore CS8618
     private readonly Moba.SharedUI.Service.IUiDispatcher _uiDispatcher;
 
     public MainWindow(

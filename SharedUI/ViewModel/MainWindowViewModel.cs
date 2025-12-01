@@ -323,9 +323,17 @@ public partial class MainWindowViewModel : ObservableObject
         {
             System.Diagnostics.Debug.WriteLine($"✅ Updating Solution with {loadedSolution.Projects.Count} projects");
 
-            // ✅ CRITICAL: Update the existing Solution instance instead of replacing it
+            // ✅ CRITICAL: Update the existing Solution instance's content
             // This ensures all ViewModels that have a reference to Solution see the changes
-            MergeSolution(loadedSolution);
+            Solution.Projects.Clear();
+            foreach (var project in loadedSolution.Projects)
+            {
+                Solution.Projects.Add(project);
+            }
+            
+            // Update Settings and Name
+            Solution.Settings = loadedSolution.Settings ?? new Settings();
+            Solution.Name = loadedSolution.Name;
 
             // ✅ Refresh SolutionViewModel to sync with model changes
             SolutionViewModel?.Refresh();
@@ -1273,14 +1281,16 @@ public partial class MainWindowViewModel : ObservableObject
             }
         }
         
-        // Create a new empty Solution
-        var newSolution = new Solution
-        {
-            Name = "New Solution"
-        };
+        // ✅ CORRECT: Mutate existing DI singleton instance instead of creating new one
+        // This ensures all services with Solution dependencies see the changes
+        System.Diagnostics.Debug.WriteLine($"✅ Clearing existing Solution (DI singleton)");
+        
+        // Clear existing data
+        Solution.Projects.Clear();
+        Solution.Name = "New Solution";
         
         // Add a default project
-        newSolution.Projects.Add(new Project
+        Solution.Projects.Add(new Project
         {
             Name = "New Project",
             Journeys = new System.Collections.Generic.List<Journey>(),
@@ -1288,12 +1298,10 @@ public partial class MainWindowViewModel : ObservableObject
             Trains = new System.Collections.Generic.List<Train>()
         });
         
-        System.Diagnostics.Debug.WriteLine($"✅ Updating Solution with new empty solution");
+        // Reset settings
+        Solution.Settings = new Settings();
         
-        // Update the existing Solution singleton instance
-        MergeSolution(newSolution);
-        
-        // ✅ Refresh SolutionViewModel to sync with new solution
+        // ✅ Refresh SolutionViewModel to sync with cleared solution
         SolutionViewModel?.Refresh();
         
         // Clear the current path (unsaved new solution)
@@ -1311,25 +1319,4 @@ public partial class MainWindowViewModel : ObservableObject
         System.Diagnostics.Debug.WriteLine("✅ NewSolutionAsync COMPLETE");
     }
 
-    /// <summary>
-    /// Updates the current Solution instance with data from another Solution.
-    /// This preserves the DI singleton reference while updating its content.
-    /// </summary>
-    private void MergeSolution(Solution source)
-    {
-        if (source == null) return;
-
-        // Clear and update Projects
-        Solution.Projects.Clear();
-        foreach (var project in source.Projects)
-        {
-            Solution.Projects.Add(project);
-        }
-
-        // Update Settings
-        Solution.Settings = source.Settings ?? new Settings();
-
-        // Update Name
-        Solution.Name = source.Name;
-    }
 }

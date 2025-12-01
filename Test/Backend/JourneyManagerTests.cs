@@ -1,6 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Moq;
 using Moba.Backend.Manager;
+using Moba.Backend.Services;
+using Moba.Backend.Interface;
+using Moba.Domain;
 
 namespace Moba.Test.Backend;
 
@@ -11,7 +14,18 @@ public class JourneyManagerTests
     {
         // Arrange
         var z21Mock = new Mock<IZ21>();
-        var journey = new Journey { Name = "J1", InPort = 1, Stations = new List<Station> { new Station { Name = "S1", NumberOfLapsToStop = 1 } } };
+        var actionExecutorMock = new Mock<ActionExecutor>(z21Mock.Object);
+        var workflowService = new WorkflowService(actionExecutorMock.Object, z21Mock.Object);
+        
+        var journey = new Journey 
+        { 
+            Name = "J1", 
+            InPort = 1, 
+            Stations = new List<Station> 
+            { 
+                new Station { Name = "S1", NumberOfLapsToStop = 1 } 
+            } 
+        };
         var journeys = new List<Journey> { journey };
 
         var executionContext = new ActionExecutionContext
@@ -19,33 +33,32 @@ public class JourneyManagerTests
             Z21 = z21Mock.Object
         };
 
-        // TODO: Fix constructor - needs WorkflowService instead of ActionExecutionContext
-        // using var manager = new JourneyManager(z21Mock.Object, journeys, workflowService);
-        return;  // Test disabled until WorkflowService mock is available
+        using var manager = new JourneyManager(z21Mock.Object, journeys, workflowService, executionContext);
 
         var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        // TODO: StateChanged event removed - needs alternative notification mechanism
-        /*
-        journey.StateChanged += (_, _) =>
+        // Monitor journey property changes via polling (since StateChanged event removed)
+        var cancellationToken = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        var monitorTask = Task.Run(async () =>
         {
-            if (journey.CurrentCounter == 0)
+            while (!cancellationToken.Token.IsCancellationRequested)
             {
-                tcs.TrySetResult(true);
+                if (journey.CurrentCounter == 0 && journey.CurrentPos == 0)
+                {
+                    tcs.TrySetResult(true);
+                    return;
+                }
+                await Task.Delay(50, cancellationToken.Token);
             }
-        };
+        }, cancellationToken.Token);
 
         // Act - Simulate feedback by calling Z21's Received event
         z21Mock.Raise(z => z.Received += null, new FeedbackResult([0x0F, 0x00, 0x80, 0x00, 0x00, 0x01]));
 
         // Wait for reset with timeout
-        var completed = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(2));
-
-        // Assert
-        Assert.That(completed, Is.True);
-        Assert.That(journey.CurrentCounter, Is.EqualTo(0));
-        */
         var completed = await Task.WhenAny(tcs.Task, Task.Delay(2000));
+
+        cancellationToken.Cancel();
 
         // Assert
         Assert.That(completed == tcs.Task, Is.True, "Processing did not complete in time");
