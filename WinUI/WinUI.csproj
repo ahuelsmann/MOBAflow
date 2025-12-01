@@ -15,6 +15,20 @@
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Controls\**" />
+    <Compile Remove="Factory\**" />
+    <Content Remove="Controls\**" />
+    <Content Remove="Factory\**" />
+    <EmbeddedResource Remove="Controls\**" />
+    <EmbeddedResource Remove="Factory\**" />
+    <None Remove="Controls\**" />
+    <None Remove="Factory\**" />
+    <Page Remove="Controls\**" />
+    <Page Remove="Factory\**" />
+    <PRIResource Remove="Controls\**" />
+    <PRIResource Remove="Factory\**" />
+  </ItemGroup>
+  <ItemGroup>
     <Page Remove="Styles\ModernStyles.xaml" />
     <Page Remove="Styles\RailwayColors.xaml" />
   </ItemGroup>
@@ -58,9 +72,12 @@
     <None Update="Styles\RailwayColors.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
+    <None Update="View\SettingsPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Controls\" />
-    <Folder Include="Factory\" />
+    <Folder Include="Resources\" />
+    <Folder Include="Selectors\" />
   </ItemGroup>
 </Project>

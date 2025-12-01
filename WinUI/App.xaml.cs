@@ -1,14 +1,17 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using System;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
+
+using Moba.Common.Configuration;
 
 namespace Moba.WinUI;
 
 /// <summary>
 /// Provides application-specific behavior to supplement the default Application class.
 /// </summary>
-public partial class App : Application
+public partial class App
 {
     private Window? _window;
 
@@ -39,22 +42,50 @@ public partial class App : Application
     {
         var services = new ServiceCollection();
 
+        // Load appsettings.json configuration
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .Build();
+
+        // Register IConfiguration
+        services.AddSingleton<IConfiguration>(configuration);
+
+        // Register AppSettings with IOptions pattern
+        services.Configure<AppSettings>(configuration);
+        services.AddSingleton(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value);
+
         // Backend Services (Interfaces are in Backend.Interface and Backend.Network)
         services.AddSingleton<Backend.Interface.IZ21, Backend.Z21>();
         services.AddSingleton<Backend.Network.IUdpClientWrapper, Backend.Network.UdpWrapper>();
-        services.AddSingleton<Domain.Solution>();
+        services.AddSingleton<Backend.Interface.IJourneyManagerFactory, Backend.Manager.JourneyManagerFactory>();
+        
+        // Domain.Solution - Pure POCO, no Settings initialization needed
+        services.AddSingleton<Domain.Solution>(sp => new Domain.Solution());
 
         // WinUI Services (Interfaces are in SharedUI.Service)
         services.AddSingleton<SharedUI.Service.IIoService, Service.IoService>();
         services.AddSingleton<SharedUI.Service.INotificationService, Service.NotificationService>();
         services.AddSingleton<SharedUI.Service.IPreferencesService, Service.PreferencesService>();
         services.AddSingleton<SharedUI.Service.IUiDispatcher, Service.UiDispatcher>();
+        services.AddSingleton<SharedUI.Service.ICityLibraryService, Service.CityLibraryService>();
+        services.AddSingleton<SharedUI.Service.ISettingsService, Service.SettingsService>();
         services.AddSingleton<Service.HealthCheckService>();
 
         // ViewModels
         services.AddSingleton<SharedUI.ViewModel.WinUI.MainWindowViewModel>();
         services.AddTransient<SharedUI.ViewModel.WinUI.JourneyViewModel>();
         services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
+        services.AddSingleton<SharedUI.ViewModel.SettingsPageViewModel>();
+        services.AddSingleton<SharedUI.ViewModel.EditorPageViewModel>(sp =>
+        {
+            var solution = sp.GetRequiredService<Domain.Solution>();
+            var settings = sp.GetRequiredService<AppSettings>();
+            var validationService = sp.GetRequiredService<SharedUI.Service.ValidationService>();
+            var cityLibraryService = sp.GetRequiredService<SharedUI.Service.ICityLibraryService>();
+            var mainWindowViewModel = sp.GetRequiredService<SharedUI.ViewModel.WinUI.MainWindowViewModel>();
+            return new SharedUI.ViewModel.EditorPageViewModel(solution, settings, validationService, cityLibraryService, mainWindowViewModel);
+        });
 
         return services.BuildServiceProvider();
     }
@@ -69,7 +100,7 @@ public partial class App : Application
         var counterViewModel = Services.GetRequiredService<SharedUI.ViewModel.CounterViewModel>();
         var healthCheckService = Services.GetRequiredService<Service.HealthCheckService>();
         var uiDispatcher = Services.GetRequiredService<SharedUI.Service.IUiDispatcher>();
-        
+
         _window = new View.MainWindow(mainWindowViewModel, counterViewModel, healthCheckService, uiDispatcher);
         _window.Activate();
     }

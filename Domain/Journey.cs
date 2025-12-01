@@ -13,7 +13,7 @@ public class Journey
     {
         Name = "New Journey";
         Description = string.Empty;
-        Stations = [];
+        Stations = new List<Station>();
         Text = string.Empty;
     }
 
@@ -29,12 +29,31 @@ public class Journey
     /// <summary>
     /// Current position tracking (managed by JourneyService)
     /// </summary>
-    public int CurrentPos { get; set; }
-    
+    private int _currentPos;
+    private int _currentCounter;
+
+    public int CurrentPos
+    {
+        get => _currentPos;
+        set
+        {
+            _currentPos = value;
+            StateChanged?.Invoke();
+        }
+    }
+
     /// <summary>
     /// Current counter for lap tracking (managed by JourneyService)
     /// </summary>
-    public int CurrentCounter { get; set; }
+    public int CurrentCounter
+    {
+        get => _currentCounter;
+        set
+        {
+            _currentCounter = value;
+            StateChanged?.Invoke();
+        }
+    }
     
     /// <summary>
     /// Callback/Action to execute when last station is reached
@@ -50,4 +69,10 @@ public class Journey
     /// First position index (default: 0)
     /// </summary>
     public int FirstPos { get; set; }
+
+    /// <summary>
+    /// Event raised when the journey's runtime state changes (CurrentPos/CurrentCounter).
+    /// Platform-specific ViewModels can subscribe to this to update UI via dispatcher.
+    /// </summary>
+    public event Action? StateChanged;
 }

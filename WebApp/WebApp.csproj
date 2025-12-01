@@ -7,14 +7,17 @@
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Factory\**" />
+    <Content Remove="Factory\**" />
+    <EmbeddedResource Remove="Factory\**" />
+    <None Remove="Factory\**" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Backend\Backend.csproj" />
     <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Factory\" />
   </ItemGroup>
 </Project>

@@ -9,7 +9,7 @@ public class Station
     public Station()
     {
         Name = "New Station";
-        Platforms = [];
+        Platforms = new List<Platform>();
     }
 
     public string Name { get; set; }

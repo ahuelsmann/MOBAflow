@@ -36,7 +36,8 @@ public class CounterViewModelTests
     public void CounterViewModel_InitializesStatistics()
     {
         var solution = new Domain.Solution();
-        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), solution, notificationService: null);
+        var settings = new Common.Configuration.AppSettings();
+        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), settings, solution, notificationService: null);
         Assert.That(vm.Statistics, Is.Not.Null);
         Assert.That(vm.Statistics.Count, Is.EqualTo(3));
         Assert.That(vm.Statistics[0].InPort, Is.EqualTo(1));
@@ -46,7 +47,8 @@ public class CounterViewModelTests
     public void ResetCounters_ClearsCounts()
     {
         var solution = new Domain.Solution();
-        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), solution, notificationService: null);
+        var settings = new Common.Configuration.AppSettings();
+        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), settings, solution, notificationService: null);
         vm.Statistics[0].Count = 5;
         vm.Statistics[1].Count = 3;
 
@@ -61,7 +63,8 @@ public class CounterViewModelTests
     public void Ctor_InitializesDefaults()
     {
         var solution = new Domain.Solution();
-        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), solution, notificationService: null);
+        var settings = new Common.Configuration.AppSettings();
+        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), settings, solution, notificationService: null);
         Assert.That(vm.IsNotConnected, Is.True);
     }
 }

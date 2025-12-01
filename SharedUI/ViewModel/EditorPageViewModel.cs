@@ -4,7 +4,9 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using Moba.Common.Configuration;
 using Moba.Domain;
+using Moba.Domain.Enum;
 using Moba.SharedUI.Service;
 
 using System.Collections.ObjectModel;
@@ -17,7 +19,9 @@ using System.Collections.ObjectModel;
 public partial class EditorPageViewModel : ObservableObject
 {
     private readonly Solution _solution;
+    private readonly AppSettings _settings;
     private readonly ValidationService? _validationService;
+    private readonly ICityLibraryService? _cityLibraryService;
     private readonly WinUI.MainWindowViewModel? _mainWindowViewModel;
 
     [ObservableProperty]
@@ -28,6 +32,21 @@ public partial class EditorPageViewModel : ObservableObject
 
     [ObservableProperty]
     private Project? _selectedProject;
+    
+    /// <summary>
+    /// Available ColorScheme enum values for ComboBox binding.
+    /// </summary>
+    public Array ColorSchemeValues => Enum.GetValues(typeof(ColorScheme));
+    
+    /// <summary>
+    /// Available PassengerClass enum values for ComboBox binding.
+    /// </summary>
+    public Array PassengerClassValues => Enum.GetValues(typeof(PassengerClass));
+    
+    /// <summary>
+    /// Available CargoType enum values for ComboBox binding.
+    /// </summary>
+    public Array CargoTypeValues => Enum.GetValues(typeof(CargoType));
     
     // ✅ Expose MainWindowViewModel selection properties for binding with setters
     public JourneyViewModel? SelectedJourney
@@ -78,10 +97,12 @@ public partial class EditorPageViewModel : ObservableObject
     public WagonEditorViewModel WagonEditor { get; private set; }
     public SettingsEditorViewModel SettingsEditor { get; private set; }
 
-    public EditorPageViewModel(Solution solution, ValidationService? validationService = null, WinUI.MainWindowViewModel? mainWindowViewModel = null)
+    public EditorPageViewModel(Solution solution, AppSettings settings, ValidationService? validationService = null, ICityLibraryService? cityLibraryService = null, WinUI.MainWindowViewModel? mainWindowViewModel = null)
     {
         _solution = solution;
+        _settings = settings;
         _validationService = validationService;
+        _cityLibraryService = cityLibraryService;
         _mainWindowViewModel = mainWindowViewModel;
 
         // Initialize Projects collection
@@ -162,12 +183,12 @@ public partial class EditorPageViewModel : ObservableObject
         var previouslySelectedTrainModel = _mainWindowViewModel?.SelectedTrain?.Model;
 
         // Initialize all editor sub-ViewModels with the selected project
-        JourneyEditor = new JourneyEditorViewModel(_selectedProject, _validationService);
+        JourneyEditor = new JourneyEditorViewModel(_selectedProject, _validationService, _cityLibraryService);
         WorkflowEditor = new WorkflowEditorViewModel(_selectedProject, _validationService);
         TrainEditor = new TrainEditorViewModel(_selectedProject, _validationService);
         LocomotiveEditor = new LocomotiveEditorViewModel(_selectedProject);
         WagonEditor = new WagonEditorViewModel(_selectedProject);
-        SettingsEditor = new SettingsEditorViewModel(_solution.Settings);
+        SettingsEditor = new SettingsEditorViewModel(_settings);
 
         // Notify UI that all editors have been recreated
         OnPropertyChanged(nameof(JourneyEditor));

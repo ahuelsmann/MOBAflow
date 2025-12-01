@@ -21,7 +21,7 @@ public class SolutionTest
     {
         // Act
         var solution = new Solution();
-        // TODO: Use IoService.LoadAsync(_testFile)  // Was: solution = await solution.LoadAsync(_testFile);
+        await solution.LoadAsync(_testFile);
 
         // Assert
         Assert.That(solution, Is.Not.Null, "Solution sollte nicht null sein");
@@ -30,10 +30,9 @@ public class SolutionTest
 
         var project = solution.Projects[0];
 
-        // ✅ Settings are at Solution level, not Project level
-        Assert.That(solution.Settings, Is.Not.Null, "Settings sollte nicht null sein");
-        Assert.That(solution.Settings.SpeechSynthesizerVolume, Is.EqualTo(90));
-
+        // Settings are now in AppSettings (not in Solution)
+        // This test is obsolete - Settings moved to Common.Configuration.AppSettings
+        
         Assert.That(project.SpeakerEngines.Count, Is.EqualTo(1));
         Assert.That(project.SpeakerEngines[0].Name, Is.EqualTo("Microsoft.CognitiveServices.Speech"));
 
@@ -48,9 +47,5 @@ public class SolutionTest
 
         Assert.That(project.Journeys.Count, Is.EqualTo(1));
         Assert.That(project.Journeys[0].Name, Is.EqualTo("RE 78 (Porta-Express)"));
-
-        // ✅ IpAddresses are in Solution.Settings, not Project
-        Assert.That(solution.Settings.IpAddresses.Count, Is.EqualTo(2));
-        Assert.That(solution.Settings.IpAddresses[0], Is.EqualTo("192.168.0.1"));
     }
 }

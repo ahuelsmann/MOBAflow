@@ -43,7 +43,8 @@ public class SolutionInstanceTests
         loadedSolution.Projects.Add(new Project { Name = "Test Project" });
         
         // Act
-        // TODO: Use SolutionService.UpdateFrom(loadedSolution, originalSolution)  // Was: originalSolution.UpdateFrom(loadedSolution);
+        // Apply loaded data to the original instance
+        originalSolution.UpdateFrom(loadedSolution);
         
         // Assert
         Assert.That(originalSolution, Is.SameAs(originalReference), 
@@ -68,7 +69,7 @@ public class SolutionInstanceTests
         newSolution.Projects.Add(new Project { Name = "New Project" });
         
         // Act
-        // TODO: Use SolutionService.UpdateFrom(newSolution, existingSolution)  // Was: existingSolution.UpdateFrom(newSolution);
+        existingSolution.UpdateFrom(newSolution);
         
         // Assert
         Assert.That(existingSolution.Projects.Count, Is.EqualTo(1), 
@@ -80,26 +81,10 @@ public class SolutionInstanceTests
     [Test]
     public void UpdateFrom_ShouldCopySettings()
     {
-        // Arrange
-        var originalSolution = new Solution();
-        var newSolution = new Solution
-        {
-            Settings = new Settings
-            {
-                CurrentIpAddress = "192.168.0.111",
-                DefaultPort = "21105"
-            }
-        };
+        // This test is obsolete - Settings moved to AppSettings
+        // SolutionService.MergeSolution no longer handles Settings
         
-        // Act
-        // TODO: Use SolutionService.UpdateFrom(newSolution, originalSolution)  // Was: originalSolution.UpdateFrom(newSolution);
-        
-        // Assert
-        Assert.That(originalSolution.Settings, Is.Not.Null, 
-            "UpdateFrom should copy Settings");
-        Assert.That(originalSolution.Settings?.CurrentIpAddress, 
-            Is.EqualTo("192.168.0.111"), 
-            "UpdateFrom should copy Settings properties");
+        Assert.Pass("Settings moved to Common.Configuration.AppSettings - test obsolete");
     }
     
     [Test]
@@ -119,7 +104,7 @@ public class SolutionInstanceTests
         // Simulate UpdateFrom (as happens when loading a file)
         var loadedSolution = new Solution();
         loadedSolution.Projects.Add(new Project { Name = "Shared Project" });
-        // TODO: Use SolutionService.UpdateFrom(loadedSolution, solutionForViewModel1)  // Was: solutionForViewModel1.UpdateFrom(loadedSolution);
+        solutionForViewModel1.UpdateFrom(loadedSolution);
         
         // Assert
         Assert.That(solutionForViewModel1, Is.SameAs(solutionForViewModel2), 

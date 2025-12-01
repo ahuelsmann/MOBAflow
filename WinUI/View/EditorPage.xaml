@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:domain="using:Moba.Domain"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
@@ -128,6 +129,51 @@
                                 Content="+"
                                 Style="{StaticResource AccentButtonStyle}"
                                 ToolTipService.ToolTip="Add Station" />
+                            <Button Content="📍 Add from City">
+                                <Button.Flyout>
+                                    <Flyout>
+                                        <StackPanel Width="350" Spacing="12">
+                                            <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Select City from Library" />
+
+                                            <TextBox PlaceholderText="Search cities..." Text="{x:Bind ViewModel.JourneyEditor.CitySearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                                <TextBox.Description>
+                                                    <TextBlock Text="Type to filter German railway stations" />
+                                                </TextBox.Description>
+                                            </TextBox>
+
+                                            <ListView
+                                                x:Name="CityListView"
+                                                Height="400"
+                                                ItemsSource="{x:Bind ViewModel.JourneyEditor.AvailableCities, Mode=OneWay}"
+                                                SelectionMode="Single">
+                                                <ListView.ItemTemplate>
+                                                    <DataTemplate x:DataType="domain:City">
+                                                        <StackPanel Padding="8,4" Tapped="CityItem_Tapped">
+                                                            <TextBlock FontWeight="SemiBold" Text="{x:Bind Name}" />
+                                                            <TextBlock
+                                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                                Text="{x:Bind Stations[0].Name}" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ListView.ItemTemplate>
+                                                <ListView.ItemContainerStyle>
+                                                    <Style TargetType="ListViewItem">
+                                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                                    </Style>
+                                                </ListView.ItemContainerStyle>
+                                            </ListView>
+
+                                            <Button
+                                                HorizontalAlignment="Stretch"
+                                                Command="{x:Bind ViewModel.JourneyEditor.AddStationFromCityCommand}"
+                                                CommandParameter="{Binding SelectedItem, ElementName=CityListView}"
+                                                Content="Add Selected Station"
+                                                Style="{StaticResource AccentButtonStyle}" />
+                                        </StackPanel>
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
                             <Button
                                 Command="{x:Bind ViewModel.JourneyEditor.DeleteStationCommand}"
                                 Content="-"

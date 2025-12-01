@@ -27,6 +27,16 @@ public partial class WagonEditorViewModel : ObservableObject
     [ObservableProperty]
     private string? _validationError;
 
+    /// <summary>
+    /// Returns SelectedWagon as PassengerWagon if it is one, otherwise null.
+    /// </summary>
+    public PassengerWagon? SelectedPassengerWagon => SelectedWagon as PassengerWagon;
+
+    /// <summary>
+    /// Returns SelectedWagon as GoodsWagon if it is one, otherwise null.
+    /// </summary>
+    public GoodsWagon? SelectedGoodsWagon => SelectedWagon as GoodsWagon;
+
     public WagonEditorViewModel(Project project, ValidationService? validationService = null)
     {
         _project = project;
@@ -104,6 +114,10 @@ public partial class WagonEditorViewModel : ObservableObject
     partial void OnSelectedWagonChanged(Wagon? value)
     {
         ValidationError = null;
+        
+        // Notify type-specific properties
+        OnPropertyChanged(nameof(SelectedPassengerWagon));
+        OnPropertyChanged(nameof(SelectedGoodsWagon));
         
         // Notify Delete command that CanExecute might have changed
         DeleteWagonCommand.NotifyCanExecuteChanged();

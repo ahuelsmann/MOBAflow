@@ -13,6 +13,13 @@ using System.Diagnostics;
 /// </summary>
 public class ActionExecutor
 {
+    private readonly Moba.Backend.Interface.IZ21? _z21;
+
+    // ctor to allow tests to provide IZ21 when creating mocks
+    public ActionExecutor(Moba.Backend.Interface.IZ21? z21 = null)
+    {
+        _z21 = z21;
+    }
     /// <summary>
     /// Executes a WorkflowAction based on its type.
     /// </summary>
@@ -93,6 +100,7 @@ public class ActionExecutor
     /// <summary>
     /// Executes a text-to-speech announcement action.
     /// Parameters: Message (string), VoiceName (string, optional)
+    /// Supports template placeholders: {StationName}, {JourneyName}
     /// </summary>
     private async Task ExecuteAnnouncementAsync(WorkflowAction action, ActionExecutionContext context)
     {
@@ -104,8 +112,48 @@ public class ActionExecutor
             ? action.Parameters["VoiceName"].ToString() 
             : null;
 
+        // ✅ Replace template placeholders with actual values
+        message = ReplaceTemplatePlaceholders(message, context);
+
         await context.SpeakerEngine.AnnouncementAsync(message, voiceName);
 
         Debug.WriteLine($"    ✓ Announcement: {message} (Voice: {voiceName ?? "default"})");
+    }
+
+    /// <summary>
+    /// Replaces template placeholders in announcement messages with actual values from context.
+    /// Supported placeholders:
+    /// - {StationName} - Current station name
+    /// - {JourneyName} - Journey template text
+    /// - {ExitSide} - Exit side (left/right) based on Station.IsExitOnLeft
+    /// </summary>
+    private string ReplaceTemplatePlaceholders(string message, ActionExecutionContext context)
+    {
+        if (string.IsNullOrEmpty(message))
+            return message;
+
+        // Replace {StationName}
+        if (context.CurrentStation != null && message.Contains("{StationName}", StringComparison.OrdinalIgnoreCase))
+        {
+            message = message.Replace("{StationName}", context.CurrentStation.Name, StringComparison.OrdinalIgnoreCase);
+            Debug.WriteLine($"    → Replaced {{StationName}} with '{context.CurrentStation.Name}'");
+        }
+
+        // Replace {JourneyName}
+        if (!string.IsNullOrEmpty(context.JourneyTemplateText) && message.Contains("{JourneyName}", StringComparison.OrdinalIgnoreCase))
+        {
+            message = message.Replace("{JourneyName}", context.JourneyTemplateText, StringComparison.OrdinalIgnoreCase);
+            Debug.WriteLine($"    → Replaced {{JourneyName}} with '{context.JourneyTemplateText}'");
+        }
+
+        // Replace {ExitSide}
+        if (context.CurrentStation != null && message.Contains("{ExitSide}", StringComparison.OrdinalIgnoreCase))
+        {
+            var exitSide = context.CurrentStation.IsExitOnLeft ? "links" : "rechts";
+            message = message.Replace("{ExitSide}", exitSide, StringComparison.OrdinalIgnoreCase);
+            Debug.WriteLine($"    → Replaced {{ExitSide}} with '{exitSide}'");
+        }
+
+        return message;
     }
 }

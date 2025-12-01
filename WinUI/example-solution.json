@@ -1,20 +1,5 @@
 {
 "Name": "C:\\Repos\\ahuelsmann\\MOBAflow\\artifacts\\Debug\\example-solution.json",
-"Settings": {
-  "CurrentIpAddress": "192.168.0.111",
-  "DefaultPort": "21105",
-  "IpAddresses": [
-    "192.168.0.111",
-    "127.0.0.1"
-  ],
-  "SpeechKey": "b29427debf254c88bef939dbab94f162",
-  "SpeechRegion": "germanywestcentral",
-  "SpeechSynthesizerRate": 0,
-    "SpeechSynthesizerVolume": 90,
-    "SpeakerEngineName": "Microsoft.CognitiveServices.Speech",
-    "VoiceName": "ElkeNeural",
-    "IsResetWindowLayoutOnStart": false
-  },
 "Projects": [
     {
       "Name": "myMOBA",

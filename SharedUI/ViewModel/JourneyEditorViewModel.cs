@@ -16,6 +16,7 @@ public partial class JourneyEditorViewModel : ObservableObject
 {
     private readonly Project _project;
     private readonly ValidationService? _validationService;
+    private readonly ICityLibraryService? _cityLibraryService;
 
     [ObservableProperty]
     private ObservableCollection<Journey> _journeys;
@@ -32,12 +33,43 @@ public partial class JourneyEditorViewModel : ObservableObject
     [ObservableProperty]
     private string? _validationError;
 
-    public JourneyEditorViewModel(Project project, ValidationService? validationService = null)
+    [ObservableProperty]
+    private ObservableCollection<City> _availableCities = [];
+
+    [ObservableProperty]
+    private string _citySearchText = string.Empty;
+
+    /// <summary>
+    /// Available behavior options for when the journey reaches the last station.
+    /// </summary>
+    public Array BehaviorOptions => Enum.GetValues(typeof(BehaviorOnLastStop));
+
+    public JourneyEditorViewModel(Project project, ValidationService? validationService = null, ICityLibraryService? cityLibraryService = null)
     {
         _project = project;
         _validationService = validationService;
+        _cityLibraryService = cityLibraryService;
         _journeys = new ObservableCollection<Journey>(project.Journeys);
         _stations = new ObservableCollection<Station>();
+
+        // Load city library asynchronously
+        _ = LoadCitiesAsync();
+    }
+
+    private async Task LoadCitiesAsync()
+    {
+        if (_cityLibraryService == null) return;
+
+        var cities = await _cityLibraryService.LoadCitiesAsync();
+        AvailableCities = new ObservableCollection<City>(cities);
+    }
+
+    partial void OnCitySearchTextChanged(string value)
+    {
+        if (_cityLibraryService == null) return;
+
+        var filtered = _cityLibraryService.FilterCities(value);
+        AvailableCities = new ObservableCollection<City>(filtered);
     }
 
     [RelayCommand]
@@ -79,7 +111,9 @@ public partial class JourneyEditorViewModel : ObservableObject
 
     private bool CanDeleteJourney() => SelectedJourney != null;
 
-    [RelayCommand]
+    private bool CanAddStation() => SelectedJourney != null;
+
+    [RelayCommand(CanExecute = nameof(CanAddStation))]
     private void AddStation()
     {
         if (SelectedJourney == null) return;
@@ -93,6 +127,32 @@ public partial class JourneyEditorViewModel : ObservableObject
         SelectedJourney.Stations.Add(newStation);
         Stations.Add(newStation);
         ValidationError = null;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanAddStation))]
+    private void AddStationFromCity(City city)
+    {
+        if (SelectedJourney == null || city == null) return;
+
+        // Create Station from City's first station (Hauptbahnhof)
+        var cityStation = city.Stations.FirstOrDefault();
+        if (cityStation == null) return;
+
+        var newStation = new Station
+        {
+            Name = cityStation.Name,
+            Track = cityStation.Track,
+            NumberOfLapsToStop = 1,
+            Description = $"From {city.Name}",
+            IsExitOnLeft = cityStation.IsExitOnLeft
+        };
+
+        SelectedJourney.Stations.Add(newStation);
+        Stations.Add(newStation);
+        SelectedStation = newStation; // Select newly added station
+        ValidationError = null;
+
+        System.Diagnostics.Debug.WriteLine($"✅ Added station from city: {city.Name} → {newStation.Name}");
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteStation))]

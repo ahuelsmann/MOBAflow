@@ -44,12 +44,27 @@ public sealed partial class EditorPage : Page
             e.PropertyName == nameof(EditorPageViewModel.WagonEditor) ||
             e.PropertyName == nameof(EditorPageViewModel.SettingsEditor))
         {
-            System.Diagnostics.Debug.WriteLine($"🔄 EditorPage: {e.PropertyName} changed - updating bindings");
+            System.Diagnostics.Debug.WriteLine($"📄 EditorPage: {e.PropertyName} changed - updating bindings");
             
             // Force x:Bind to re-evaluate all bindings
             Bindings.Update();
             
             System.Diagnostics.Debug.WriteLine($"✅ EditorPage: Bindings updated");
+        }
+    }
+
+    private void CityItem_Tapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
+    {
+        if (sender is Microsoft.UI.Xaml.FrameworkElement element && element.DataContext is Moba.Domain.City city)
+        {
+            ViewModel.JourneyEditor.AddStationFromCityCommand.Execute(city);
+            
+            // Close the flyout
+            if (element.FindName("CityListView") is Microsoft.UI.Xaml.Controls.ListView listView)
+            {
+                var flyout = Microsoft.UI.Xaml.Controls.Primitives.FlyoutBase.GetAttachedFlyout(listView);
+                flyout?.Hide();
+            }
         }
     }
 }

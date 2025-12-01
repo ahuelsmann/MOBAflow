@@ -25,9 +25,8 @@ public class SolutionService
         // Clear existing data
         target.Projects.Clear();
 
-        // Copy name and settings
+        // Copy name (settings are global and stored in app configuration)
         target.Name = source.Name;
-        target.Settings = source.Settings;
 
         // Deep copy projects (to avoid reference sharing)
         foreach (var sourceProject in source.Projects)

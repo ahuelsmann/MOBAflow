@@ -145,40 +145,73 @@ public ObservableCollection<ProjectViewModel> TreeRoot => SolutionViewModel?.Pro
 
 ---
 
-#### **Option B: Community Toolkit TreeView (Recommended - Phase 2)**
+#### **Option B: Smart TreeViewNode Reuse (Recommended - Phase 2)**
 
-**Package**: `CommunityToolkit.WinUI.Controls.TreeView`
+**Reality Check**: Community Toolkit hat **KEIN** hierarchisches TreeView für WinUI 3!
 
-**Features**:
-- True hierarchical data templates
-- No `TreeViewNode` wrapper needed
-- Better performance
-- More WPF-like API
+**What exists**:
+- `CommunityToolkit.WinUI.Controls.HeaderedTreeView` - Only adds Header property
+- Still uses `TreeViewNode` wrapper internally
+- No `HierarchicalDataTemplate` support
 
-**Example**:
-```xaml
-<controls:TreeView ItemsSource="{x:Bind ViewModel.Solution.Projects}">
-    <controls:TreeView.ItemTemplate>
-        <controls:HierarchicalDataTemplate ItemsSource="{Binding Journeys}">
-            <StackPanel Orientation="Horizontal">
-                <SymbolIcon Symbol="Folder"/>
-                <TextBlock Text="{Binding Name}" Margin="8,0"/>
-            </StackPanel>
-        </controls:HierarchicalDataTemplate>
-    </controls:TreeView.ItemTemplate>
-</controls:TreeView>
+**Alternative Approach**: Smart Node Caching
+
+**Concept**:
+```csharp
+public class MainWindowViewModel
+{
+    // Cache TreeViewNodes for reuse
+    private Dictionary<object, TreeViewNode> _nodeCache = new();
+    
+    public ObservableCollection<TreeViewNode> TreeRoot
+    {
+        get
+        {
+            if (SolutionViewModel == null) return [];
+            
+            var nodes = new ObservableCollection<TreeViewNode>();
+            foreach (var project in SolutionViewModel.Projects)
+            {
+                nodes.Add(GetOrCreateNode(project));
+            }
+            return nodes;
+        }
+    }
+    
+    private TreeViewNode GetOrCreateNode(object dataContext)
+    {
+        // ✅ Reuse existing node if available
+        if (_nodeCache.TryGetValue(dataContext, out var node))
+            return node;
+        
+        // Create new node only when needed
+        node = new TreeViewNode { Content = dataContext };
+        _nodeCache[dataContext] = node;
+        
+        // Subscribe to collection changes for dynamic children
+        if (dataContext is ProjectViewModel projectVM)
+        {
+            projectVM.Journeys.CollectionChanged += (s, e) => 
+                UpdateNodeChildren(node, projectVM.Journeys);
+        }
+        
+        return node;
+    }
+}
 ```
 
 **Advantages**:
-- ✅ All benefits of Option A
-- ✅ Cleaner XAML
-- ✅ Better documentation
-- ✅ Community maintained
+- ✅ ~80% code reduction (TreeViewBuilder eliminated)
+- ✅ Selection preserved (node instances stay same)
+- ✅ Expansion state preserved automatically
+- ✅ Better performance (node reuse)
+- ✅ No external dependencies
+- ✅ Works with native WinUI TreeView
 
 **Challenges**:
-- External dependency
-- May have bugs or missing features
-- Need to migrate existing TreeView code
+- Must implement cache invalidation logic
+- Still need `TreeViewNode` wrapper (WinUI API requirement)
+- Need to sync node children with ViewModel collections
 
 ---
 
@@ -210,11 +243,11 @@ Create custom control that:
 |-----------|-------------|----------------|----------------|-----------|
 | TreeViewBuilder | ~200 | 0 | 0 | -200 |
 | State Management | ~150 | 0 | 0 | -150 |
-| TreeNodeViewModel | ~100 | 0 | 0 | -100 |
-| MainWindowViewModel | ~200 | ~50 | ~30 | -150/-170 |
-| **Total** | **~650** | **~50** | **~30** | **-600/-620** |
+| TreeNodeViewModel | ~100 | 0 | ~50 (Cache logic) | -100/-50 |
+| MainWindowViewModel | ~200 | ~50 | ~80 | -150/-120 |
+| **Total** | **~650** | **~50** | **~130** | **-600/-520** |
 
-**Net Reduction**: **~92-95% less code!**
+**Net Reduction**: **~80-92% less code!**
 
 ---
 
@@ -267,20 +300,22 @@ Create custom control that:
 
 ---
 
-### Phase 2: Community Toolkit (0.5 days)
+### Phase 2: Smart Node Caching (1 day)
 
 **Steps**:
-1. Install `CommunityToolkit.WinUI.Controls.TreeView`
+1. Implement `_nodeCache` Dictionary in `MainWindowViewModel`
 
-2. Replace native `TreeView` with Community Toolkit version
+2. Create `GetOrCreateNode()` method with cache logic
 
-3. Simplify XAML using `HierarchicalDataTemplate`
+3. Subscribe to ViewModel collection changes
 
-4. Test all functionality
+4. Implement cache invalidation (when Solution changes)
 
-**Risk**: Medium - External dependency
+5. Test selection/expansion preservation
 
-**Effort**: ~4 hours
+**Risk**: Medium - Need careful cache management
+
+**Effort**: ~6-8 hours
 
 ---
 
@@ -345,24 +380,43 @@ public void OnNodeSelected(object? dataContext)
 }
 ```
 
-### After (Option B):
+### After (Option B - Smart Caching):
 
-```xaml
-<!-- ✅ XAML - Community Toolkit -->
-<controls:TreeView ItemsSource="{x:Bind ViewModel.Solution.Projects}">
-    <controls:TreeView.ItemTemplate>
-        <controls:HierarchicalDataTemplate ItemsSource="{Binding Journeys}">
-            <TextBlock Text="{Binding Name}"/>
-            
-            <!-- Nested templates for children -->
-            <controls:HierarchicalDataTemplate.ItemTemplate>
-                <controls:HierarchicalDataTemplate ItemsSource="{Binding Stations}">
-                    <TextBlock Text="{Binding Name}"/>
-                </controls:HierarchicalDataTemplate>
-            </controls:HierarchicalDataTemplate.ItemTemplate>
-        </controls:HierarchicalDataTemplate>
-    </controls:TreeView.ItemTemplate>
-</controls:TreeView>
+```csharp
+// ✅ MainWindowViewModel - Smart Node Reuse
+private Dictionary<object, TreeViewNode> _nodeCache = new();
+
+public ObservableCollection<TreeViewNode> TreeRoot
+{
+    get
+    {
+        if (SolutionViewModel == null) return [];
+        
+        var nodes = new ObservableCollection<TreeViewNode>();
+        foreach (var project in SolutionViewModel.Projects)
+        {
+            nodes.Add(GetOrCreateNode(project));
+        }
+        return nodes;
+    }
+}
+
+private TreeViewNode GetOrCreateNode(object dataContext)
+{
+    if (_nodeCache.TryGetValue(dataContext, out var node))
+    {
+        // ✅ Reuse existing node - selection/expansion preserved!
+        return node;
+    }
+    
+    node = new TreeViewNode { Content = dataContext };
+    _nodeCache[dataContext] = node;
+    
+    // Auto-update children when ViewModel collections change
+    SubscribeToCollectionChanges(node, dataContext);
+    
+    return node;
+}
 ```
 
 ---
@@ -412,15 +466,17 @@ The hierarchical structure already exists in:
 
 | Criteria | Option A | Option B | Option C |
 |----------|----------|----------|----------|
-| **Effort** | Medium (1-2d) | Low (0.5d) | High (2-3d) |
+| **Effort** | Medium (1-2d) | Medium (1d) | High (2-3d) |
 | **Risk** | Low | Medium | High |
-| **Code Reduction** | -600 LOC | -620 LOC | -620 LOC |
-| **Performance** | ✅ Great | ✅ Great | ✅ Excellent |
-| **Maintainability** | ✅ Good | ✅ Excellent | ⚠️ Complex |
+| **Code Reduction** | -600 LOC | -520 LOC | -620 LOC |
+| **Performance** | ✅ Great | ✅ Excellent | ✅ Excellent |
+| **Maintainability** | ✅ Good | ✅ Very Good | ⚠️ Complex |
 | **Flexibility** | ⚠️ Limited | ✅ Good | ✅ Full Control |
-| **Dependencies** | None | +1 Package | None |
+| **Dependencies** | None | None | None |
+| **Selection Preserved** | ⚠️ Manual | ✅ Automatic | ✅ Automatic |
+| **Expansion Preserved** | ⚠️ Manual | ✅ Automatic | ✅ Automatic |
 
-**Recommendation**: **Start with Option A, migrate to Option B later**
+**Recommendation**: **Start with Option A, then Option B for optimization**
 
 ---
 

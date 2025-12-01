@@ -32,12 +32,6 @@ public abstract class ViewModelTestBase
     protected Mock<IUiDispatcher> UiDispatcherMock { get; private set; } = null!;
 
     /// <summary>
-    /// TreeViewBuilder instance configured with mocked factories.
-    /// Ready to use in tests that need tree structure building.
-    /// </summary>
-    protected TreeViewBuilder TreeViewBuilder { get; private set; } = null!;
-
-    /// <summary>
     /// Initializes all common mocks and services before each test.
     /// Called automatically by NUnit before each test method.
     /// </summary>
@@ -53,9 +47,6 @@ public abstract class ViewModelTestBase
         UiDispatcherMock
             .Setup(d => d.InvokeOnUi(It.IsAny<Action>()))
             .Callback<Action>(action => action());
-        
-        // TreeViewBuilder with all mocked factories
-        TreeViewBuilder = new TreeViewBuilder();
         
         // Configure default IoService behavior (returns empty solution)
         IoServiceMock

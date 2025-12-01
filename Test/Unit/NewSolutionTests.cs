@@ -54,7 +54,7 @@ public class NewSolutionTests
         });
         
         // Act
-        // TODO: Use SolutionService.UpdateFrom(newSolution, existingSolution)  // Was: existingSolution.UpdateFrom(newSolution);
+        existingSolution.UpdateFrom(newSolution);
         
         // Assert
         Assert.That(existingSolution.Name, Is.EqualTo("New Solution"));
@@ -75,7 +75,7 @@ public class NewSolutionTests
         newSolution.Projects.Add(new Project { Name = "New Project" });
         
         // Act
-        // TODO: Use SolutionService.UpdateFrom(newSolution, singletonSolution)  // Was: singletonSolution.UpdateFrom(newSolution);
+        singletonSolution.UpdateFrom(newSolution);
         
         // Assert
         Assert.That(singletonSolution, Is.SameAs(originalReference), 
@@ -101,7 +101,7 @@ public class NewSolutionTests
         newSolution.Projects.Add(new Project { Name = "New Project" });
         
         // Act
-        // TODO: Use SolutionService.UpdateFrom(newSolution, solution)  // Was: solution.UpdateFrom(newSolution);
+        solution.UpdateFrom(newSolution);
         
         // Assert
         Assert.That(solution.Projects.Count, Is.EqualTo(1), 

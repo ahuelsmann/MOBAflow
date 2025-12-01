@@ -2,16 +2,17 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
-using Moba.Domain;
+using Moba.Common.Configuration;
 using System.Collections.ObjectModel;
 
 /// <summary>
 /// ViewModel for the Settings tab in the Editor.
-/// Form editor for Solution Settings (Z21, Speech, Application behavior, etc.).
+/// Form editor for Application Settings (Z21, Speech, Application behavior, etc.).
+/// Settings are stored in appsettings.json (not in Solution).
 /// </summary>
 public partial class SettingsEditorViewModel : ObservableObject
 {
-    private readonly Settings _settings;
+    private readonly AppSettings _settings;
 
     // Z21 Configuration
     [ObservableProperty]
@@ -43,35 +44,35 @@ public partial class SettingsEditorViewModel : ObservableObject
     [ObservableProperty]
     private bool _isResetWindowLayoutOnStart;
 
-    public SettingsEditorViewModel(Settings settings)
+    public SettingsEditorViewModel(AppSettings settings)
     {
         _settings = settings;
         
         // Initialize Z21 Configuration
-        _currentIpAddress = _settings.CurrentIpAddress ?? "192.168.0.111";
-        _ipAddressHistory = new ObservableCollection<string>(_settings.IpAddresses);
+        _currentIpAddress = _settings.Z21.CurrentIpAddress;
+        _ipAddressHistory = new ObservableCollection<string>(_settings.Z21.RecentIpAddresses);
         
         // Initialize Azure Speech Configuration
-        _speechKey = _settings.SpeechKey ?? string.Empty;
-        _speechRegion = _settings.SpeechRegion ?? "westeurope";
-        _speechSynthesizerRate = _settings.SpeechSynthesizerRate;
-        _speechSynthesizerVolume = _settings.SpeechSynthesizerVolume;
-        _speakerEngineName = _settings.SpeakerEngineName ?? "AzureCognitiveSpeech";
-        _voiceName = _settings.VoiceName ?? "de-DE-KatjaNeural";
+        _speechKey = _settings.Speech.Key;
+        _speechRegion = _settings.Speech.Region;
+        _speechSynthesizerRate = _settings.Speech.Rate;
+        _speechSynthesizerVolume = _settings.Speech.Volume;
+        _speakerEngineName = _settings.Speech.SpeakerEngineName ?? "AzureCognitiveSpeech";
+        _voiceName = _settings.Speech.VoiceName ?? "de-DE-KatjaNeural";
         
         // Initialize Application Settings
-        _isResetWindowLayoutOnStart = _settings.IsResetWindowLayoutOnStart;
+        _isResetWindowLayoutOnStart = _settings.Application.ResetWindowLayoutOnStart;
     }
 
     // Z21 Configuration Change Handlers
     partial void OnCurrentIpAddressChanged(string value)
     {
-        _settings.CurrentIpAddress = value;
+        _settings.Z21.CurrentIpAddress = value;
         
         // Add to history if not already present
-        if (!string.IsNullOrWhiteSpace(value) && !_settings.IpAddresses.Contains(value))
+        if (!string.IsNullOrWhiteSpace(value) && !_settings.Z21.RecentIpAddresses.Contains(value))
         {
-            _settings.IpAddresses.Add(value);
+            _settings.Z21.RecentIpAddresses.Add(value);
             IpAddressHistory.Add(value);
         }
     }
@@ -79,38 +80,38 @@ public partial class SettingsEditorViewModel : ObservableObject
     // Azure Speech Configuration Change Handlers
     partial void OnSpeechKeyChanged(string value)
     {
-        _settings.SpeechKey = value;
+        _settings.Speech.Key = value;
     }
 
     partial void OnSpeechRegionChanged(string value)
     {
-        _settings.SpeechRegion = value;
+        _settings.Speech.Region = value;
     }
 
     partial void OnSpeechSynthesizerRateChanged(int value)
     {
-        _settings.SpeechSynthesizerRate = value;
+        _settings.Speech.Rate = value;
     }
 
     partial void OnSpeechSynthesizerVolumeChanged(uint value)
     {
-        _settings.SpeechSynthesizerVolume = value;
+        _settings.Speech.Volume = value;
     }
 
     partial void OnSpeakerEngineNameChanged(string value)
     {
-        _settings.SpeakerEngineName = value;
+        _settings.Speech.SpeakerEngineName = value;
     }
 
     partial void OnVoiceNameChanged(string value)
     {
-        _settings.VoiceName = value;
+        _settings.Speech.VoiceName = value;
     }
 
     // Application Settings Change Handlers
     partial void OnIsResetWindowLayoutOnStartChanged(bool value)
     {
-        _settings.IsResetWindowLayoutOnStart = value;
+        _settings.Application.ResetWindowLayoutOnStart = value;
     }
 }
 

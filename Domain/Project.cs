@@ -11,15 +11,15 @@ public class Project
 {
     public Project()
     {
-        SpeakerEngines = [];
-        Voices = [];
-        Locomotives = [];
-        PassengerWagons = [];
-        GoodsWagons = [];
-        Trains = [];
-        Workflows = [];
-        Journeys = [];
-        Cities = [];
+        SpeakerEngines = new List<SpeakerEngineConfiguration>();
+        Voices = new List<Voice>();
+        Locomotives = new List<Locomotive>();
+        PassengerWagons = new List<PassengerWagon>();
+        GoodsWagons = new List<GoodsWagon>();
+        Trains = new List<Train>();
+        Workflows = new List<Workflow>();
+        Journeys = new List<Journey>();
+        Cities = new List<City>();
     }
 
     public string Name { get; set; } = string.Empty;

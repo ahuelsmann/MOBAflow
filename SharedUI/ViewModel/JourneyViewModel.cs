@@ -37,10 +37,11 @@ public partial class JourneyViewModel : ObservableObject
             model.Stations.Select(s => new StationViewModel(s, dispatcher))
         );
 
-        // ✅ Subscribe to StateChanged event ONLY if dispatcher is available
-        // Note: Journey.StateChanged event removed in Clean Architecture refactoring
-        // Journey is now a POCO without events
-        // State changes are tracked via ObservableObject notifications in this ViewModel
+        // Subscribe to Journey.StateChanged and dispatch UI updates when a dispatcher is provided
+        if (_dispatcher != null)
+        {
+            model.StateChanged += () => _dispatcher.InvokeOnUi(() => OnModelStateChanged());
+        }
     }
 
     /// <summary>

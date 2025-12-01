@@ -12,8 +12,8 @@ public class Train
     {
         Name = "New Train";
         Description = string.Empty;
-        Wagons = [];
-        Locomotives = [];
+        Wagons = new List<Wagon>();
+        Locomotives = new List<Locomotive>();
         TrainType = TrainType.None;
         ServiceType = ServiceType.None;
     }

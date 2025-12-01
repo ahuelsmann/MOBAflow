@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel.WinUI;
 
+using Moba.Common.Configuration;
 using Moba.Domain;
 using Moba.Backend.Interface;
 using Moba.SharedUI.Service;
@@ -15,10 +16,10 @@ public class MainWindowViewModel : ViewModel.MainWindowViewModel
         IIoService ioService, 
         IZ21 z21, 
         IJourneyManagerFactory journeyManagerFactory, 
-        TreeViewBuilder treeViewBuilder,
         IUiDispatcher uiDispatcher,
+        AppSettings settings,
         Solution solution)
-        : base(ioService, z21, journeyManagerFactory, treeViewBuilder, uiDispatcher, solution)
+        : base(ioService, z21, journeyManagerFactory, uiDispatcher, settings, solution)
     {
     }
 }

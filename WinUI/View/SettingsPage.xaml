@@ -1,0 +1,263 @@
+<Page
+    x:Class="Moba.WinUI.View.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <ScrollViewer>
+        <StackPanel
+            MaxWidth="1000"
+            Padding="40,24,40,40"
+            Spacing="8">
+
+            <!--  Page Header  -->
+            <TextBlock
+                Margin="0,0,0,24"
+                Style="{StaticResource TitleTextBlockStyle}"
+                Text="Settings" />
+
+            <!--  Z21 Connection Section  -->
+            <Expander
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                Header="Z21 Connection"
+                IsExpanded="True">
+                <Expander.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon FontSize="20" Glyph="&#xE968;" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Style="{StaticResource SubtitleTextBlockStyle}"
+                                Text="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </Expander.HeaderTemplate>
+
+                <StackPanel Padding="56,16,0,16" Spacing="16">
+                    <TextBox
+                        MaxWidth="400"
+                        HorizontalAlignment="Left"
+                        Header="IP Address"
+                        PlaceholderText="192.168.0.111"
+                        Text="{x:Bind ViewModel.Z21IpAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        <TextBox.Description>
+                            <TextBlock Text="IP address of your Z21 digital command station" />
+                        </TextBox.Description>
+                    </TextBox>
+
+                    <TextBox
+                        MaxWidth="200"
+                        HorizontalAlignment="Left"
+                        Header="Port"
+                        PlaceholderText="21105"
+                        Text="{x:Bind ViewModel.Z21Port, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        <TextBox.Description>
+                            <TextBlock Text="Z21 communication port (default: 21105)" />
+                        </TextBox.Description>
+                    </TextBox>
+                </StackPanel>
+            </Expander>
+
+            <!--  City Library Section  -->
+            <Expander
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                Header="City Library">
+                <Expander.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon FontSize="20" Glyph="&#xE80F;" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Style="{StaticResource SubtitleTextBlockStyle}"
+                                Text="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </Expander.HeaderTemplate>
+
+                <StackPanel Padding="56,16,0,16" Spacing="16">
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox
+                            Grid.Column="0"
+                            Header="Station Data File"
+                            PlaceholderText="germany-stations.json"
+                            Text="{x:Bind ViewModel.CityLibraryPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBox.Description>
+                                <TextBlock Text="Path to JSON file with city/station master data" />
+                            </TextBox.Description>
+                        </TextBox>
+
+                        <Button
+                            Grid.Column="1"
+                            Margin="0,0,0,28"
+                            VerticalAlignment="Bottom"
+                            Command="{x:Bind ViewModel.BrowseCityLibraryCommand}"
+                            Content="📁 Browse" />
+                    </Grid>
+
+                    <CheckBox Content="Auto-reload when file changes" IsChecked="{x:Bind ViewModel.CityLibraryAutoReload, Mode=TwoWay}" />
+                </StackPanel>
+            </Expander>
+
+            <!--  Speech Synthesis Section  -->
+            <Expander
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                Header="Speech Synthesis">
+                <Expander.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon FontSize="20" Glyph="&#xE8BD;" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Style="{StaticResource SubtitleTextBlockStyle}"
+                                Text="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </Expander.HeaderTemplate>
+
+                <StackPanel Padding="56,16,0,16" Spacing="16">
+                    <TextBox
+                        MaxWidth="500"
+                        HorizontalAlignment="Left"
+                        Header="Azure Speech Key"
+                        PlaceholderText="Enter your Azure Speech API key"
+                        Text="{x:Bind ViewModel.SpeechKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <TextBox
+                        MaxWidth="300"
+                        HorizontalAlignment="Left"
+                        Header="Azure Region"
+                        PlaceholderText="germanywestcentral"
+                        Text="{x:Bind ViewModel.SpeechRegion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        <TextBox.Description>
+                            <TextBlock Text="Azure region for Speech Service" />
+                        </TextBox.Description>
+                    </TextBox>
+
+                    <Slider
+                        Width="400"
+                        HorizontalAlignment="Left"
+                        Header="Speech Rate"
+                        Maximum="10"
+                        Minimum="-10"
+                        StepFrequency="1"
+                        Value="{x:Bind ViewModel.SpeechRate, Mode=TwoWay}" />
+
+                    <Slider
+                        Width="400"
+                        HorizontalAlignment="Left"
+                        Header="Speech Volume"
+                        Maximum="100"
+                        Minimum="0"
+                        StepFrequency="5"
+                        Value="{x:Bind ViewModel.SpeechVolume, Mode=TwoWay}" />
+                </StackPanel>
+            </Expander>
+
+            <!--  Application Behavior Section  -->
+            <Expander
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                Header="Application Behavior">
+                <Expander.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon FontSize="20" Glyph="&#xE713;" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Style="{StaticResource SubtitleTextBlockStyle}"
+                                Text="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </Expander.HeaderTemplate>
+
+                <StackPanel Padding="56,16,0,16" Spacing="16">
+                    <StackPanel>
+                        <CheckBox Content="Reset window layout on startup" IsChecked="{x:Bind ViewModel.ResetWindowLayoutOnStart, Mode=TwoWay}" />
+                        <TextBlock Text="Reset window size and position to defaults when application starts" TextWrapping="Wrap" Style="{StaticResource CaptionTextBlockStyle}" Margin="28,0,0,0" />
+                    </StackPanel>
+
+                    <StackPanel>
+                        <CheckBox Content="Auto-load last solution" IsChecked="{x:Bind ViewModel.AutoLoadLastSolution, Mode=TwoWay}" />
+                        <TextBlock Text="Automatically load the last opened solution on startup" TextWrapping="Wrap" Style="{StaticResource CaptionTextBlockStyle}" Margin="28,0,0,0" />
+                    </StackPanel>
+                </StackPanel>
+            </Expander>
+
+            <!--  Health Check Section  -->
+            <Expander
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                Header="Health Check">
+                <Expander.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon FontSize="20" Glyph="&#xE95E;" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Style="{StaticResource SubtitleTextBlockStyle}"
+                                Text="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </Expander.HeaderTemplate>
+
+                <StackPanel Padding="56,16,0,16" Spacing="16">
+                    <CheckBox Content="Enable Z21 connection health checks" IsChecked="{x:Bind ViewModel.HealthCheckEnabled, Mode=TwoWay}" />
+
+                    <NumberBox
+                        Width="300"
+                        HorizontalAlignment="Left"
+                        Header="Health Check Interval (seconds)"
+                        Maximum="300"
+                        Minimum="10"
+                        SpinButtonPlacementMode="Inline"
+                        Value="{x:Bind ViewModel.HealthCheckIntervalSeconds, Mode=TwoWay}">
+                        <NumberBox.Description>
+                            <TextBlock Text="How often to check Z21 connection status" />
+                        </NumberBox.Description>
+                    </NumberBox>
+                </StackPanel>
+            </Expander>
+
+            <!--  Save/Reset Buttons  -->
+            <StackPanel
+                Margin="0,24,0,0"
+                HorizontalAlignment="Right"
+                Orientation="Horizontal"
+                Spacing="12">
+                <Button Command="{x:Bind ViewModel.ResetToDefaultsCommand}" Content="Reset to Defaults" />
+                <Button
+                    Command="{x:Bind ViewModel.SaveSettingsCommand}"
+                    Content="Save Settings"
+                    Style="{StaticResource AccentButtonStyle}" />
+            </StackPanel>
+
+            <!--  Status Bar  -->
+            <InfoBar
+                Title="Settings Saved"
+                Margin="0,16,0,0"
+                IsClosable="True"
+                IsOpen="{x:Bind ViewModel.ShowSuccessMessage, Mode=OneWay}"
+                Message="Your settings have been saved successfully."
+                Severity="Success" />
+
+            <InfoBar
+                Title="Error Saving Settings"
+                Margin="0,8,0,0"
+                IsClosable="True"
+                IsOpen="{x:Bind ViewModel.ShowErrorMessage, Mode=OneWay}"
+                Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                Severity="Error" />
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>

@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using Moba.Backend.Interface;
+using Moba.Common.Configuration;
 using Moba.Common.Extensions;
 using Moba.Domain;
 using Moba.SharedUI.Service;
@@ -24,40 +25,42 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     private readonly IZ21 _z21;
     private readonly IUiDispatcher _dispatcher;
     private readonly INotificationService? _notificationService;
+    private readonly AppSettings _settings;
     private readonly Solution _solution;
     private readonly Dictionary<int, DateTime> _lastFeedbackTime = new();
     private bool _disposed;
 
-    public CounterViewModel(IZ21 z21, IUiDispatcher dispatcher, Solution solution, INotificationService? notificationService = null)
+    public CounterViewModel(IZ21 z21, IUiDispatcher dispatcher, AppSettings settings, Solution solution, INotificationService? notificationService = null)
     {
         _z21 = z21;
         _dispatcher = dispatcher;
+        _settings = settings;
         _solution = solution;
         _notificationService = notificationService;
 
-        // ✅ Initialize available IP addresses from Solution.Settings
-        AvailableIpAddresses = new ObservableCollection<string>(_solution.Settings.IpAddresses);
+        // ✅ Initialize available IP addresses from AppSettings
+        AvailableIpAddresses = new ObservableCollection<string>(_settings.Z21.RecentIpAddresses);
 
-        // ✅ Load Z21 IP from Solution.Settings
-        if (!string.IsNullOrEmpty(_solution.Settings.CurrentIpAddress))
+        // ✅ Load Z21 IP from AppSettings
+        if (!string.IsNullOrEmpty(_settings.Z21.CurrentIpAddress))
         {
-            Z21IpAddress = _solution.Settings.CurrentIpAddress;
-            this.Log($"✅ Loaded Z21 IP from Solution.Settings: {Z21IpAddress}");
+            Z21IpAddress = _settings.Z21.CurrentIpAddress;
+            this.Log($"✅ Loaded Z21 IP from AppSettings: {Z21IpAddress}");
         }
-        else if (_solution.Settings.IpAddresses.Count > 0)
+        else if (_settings.Z21.RecentIpAddresses.Count > 0)
         {
-            Z21IpAddress = _solution.Settings.IpAddresses[0];
-            _solution.Settings.CurrentIpAddress = Z21IpAddress; // Set as current
-            this.Log($"✅ Loaded first Z21 IP from IpAddresses: {Z21IpAddress}");
+            Z21IpAddress = _settings.Z21.RecentIpAddresses[0];
+            _settings.Z21.CurrentIpAddress = Z21IpAddress; // Set as current
+            this.Log($"✅ Loaded first Z21 IP from RecentIpAddresses: {Z21IpAddress}");
         }
         else
         {
             // ✅ Fallback for new/empty solutions - use hardcoded default
             Z21IpAddress = "192.168.0.111"; // Default Z21 IP address
-            _solution.Settings.CurrentIpAddress = Z21IpAddress;
-            _solution.Settings.IpAddresses.Add(Z21IpAddress);
+            _settings.Z21.CurrentIpAddress = Z21IpAddress;
+            _settings.Z21.RecentIpAddresses.Add(Z21IpAddress);
             AvailableIpAddresses.Add(Z21IpAddress);
-            this.Log($"⚠️ No IP in Solution.Settings - using default: 192.168.0.111");
+            this.Log($"⚠️ No IP in AppSettings - using default: 192.168.0.111");
         }
 
         Statistics.Add(new InPortStatistic { InPort = 1, Count = 0, TargetLapCount = GlobalTargetLapCount });
@@ -90,15 +93,15 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     partial void OnZ21IpAddressChanged(string value)
     {
         // Sync selected IP back to Solution.Settings.CurrentIpAddress
-        if (!string.IsNullOrEmpty(value) && _solution.Settings.CurrentIpAddress != value)
+        if (!string.IsNullOrEmpty(value) && _settings.Z21.CurrentIpAddress != value)
         {
-            _solution.Settings.CurrentIpAddress = value;
-            this.Log($"✅ CurrentIpAddress updated in Solution.Settings: {value}");
+            _settings.Z21.CurrentIpAddress = value;
+            this.Log($"✅ CurrentIpAddress updated in AppSettings: {value}");
 
             // Add to history if not already present
-            if (!_solution.Settings.IpAddresses.Contains(value))
+            if (!_settings.Z21.RecentIpAddresses.Contains(value))
             {
-                _solution.Settings.IpAddresses.Add(value);
+                _settings.Z21.RecentIpAddresses.Add(value);
                 AvailableIpAddresses.Add(value);
                 this.Log($"✅ Added new IP to history: {value}");
             }

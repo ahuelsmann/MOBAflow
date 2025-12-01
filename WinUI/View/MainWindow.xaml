@@ -12,71 +12,6 @@
         <MicaBackdrop />
     </Window.SystemBackdrop>
     <Grid PreviewKeyDown="OnKeyDown">
-        <Grid.Resources>
-            <view:PropertyDataTemplateSelector x:Key="PropertyTemplateSelector">
-                <view:PropertyDataTemplateSelector.TextBoxTemplate>
-                    <DataTemplate x:DataType="vm:PropertyViewModel">
-                        <StackPanel Margin="0,0,0,16" Spacing="4">
-                            <TextBlock
-                                FontWeight="SemiBold"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{x:Bind Name}"
-                                TextWrapping="NoWrap" />
-
-                            <TextBox
-                                HorizontalAlignment="Stretch"
-                                Text="{x:Bind Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                TextWrapping="Wrap" />
-                        </StackPanel>
-                    </DataTemplate>
-                </view:PropertyDataTemplateSelector.TextBoxTemplate>
-                <view:PropertyDataTemplateSelector.CheckBoxTemplate>
-                    <DataTemplate x:DataType="vm:PropertyViewModel">
-                        <StackPanel Margin="0,0,0,16" Spacing="4">
-                            <CheckBox
-                                Content="{x:Bind Name}"
-                                FontWeight="SemiBold"
-                                IsChecked="{x:Bind BoolValue, Mode=TwoWay}" />
-                        </StackPanel>
-                    </DataTemplate>
-                </view:PropertyDataTemplateSelector.CheckBoxTemplate>
-                <view:PropertyDataTemplateSelector.ComboBoxTemplate>
-                    <DataTemplate x:DataType="vm:PropertyViewModel">
-                        <StackPanel Margin="0,0,0,16" Spacing="4">
-                            <TextBlock
-                                FontWeight="SemiBold"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{x:Bind Name}"
-                                TextWrapping="NoWrap" />
-
-                            <ComboBox
-                                HorizontalAlignment="Stretch"
-                                ItemsSource="{x:Bind EnumValues}"
-                                SelectedItem="{x:Bind EnumValue, Mode=TwoWay}" />
-                        </StackPanel>
-                    </DataTemplate>
-                </view:PropertyDataTemplateSelector.ComboBoxTemplate>
-                <view:PropertyDataTemplateSelector.ReferenceComboBoxTemplate>
-                    <DataTemplate x:DataType="vm:PropertyViewModel">
-                        <StackPanel Margin="0,0,0,16" Spacing="4">
-                            <TextBlock
-                                FontWeight="SemiBold"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{x:Bind Name}"
-                                TextWrapping="NoWrap" />
-
-                            <ComboBox
-                                HorizontalAlignment="Stretch"
-                                DisplayMemberPath="Name"
-                                ItemsSource="{x:Bind ReferenceValues}"
-                                PlaceholderText="(None)"
-                                SelectedItem="{x:Bind ReferenceValue, Mode=TwoWay}" />
-                        </StackPanel>
-                    </DataTemplate>
-                </view:PropertyDataTemplateSelector.ReferenceComboBoxTemplate>
-            </view:PropertyDataTemplateSelector>
-        </Grid.Resources>
-
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
@@ -93,10 +28,6 @@
                     Content="Overview"
                     Icon="Home"
                     Tag="overview" />
-                <NavigationViewItem
-                    Content="Explorer"
-                    Icon="Folder"
-                    Tag="explorer" />
                 <NavigationViewItem Content="Editor" Tag="editor">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE70F;" />
@@ -105,6 +36,14 @@
                 <NavigationViewItem Content="Configuration" Tag="configuration">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE713;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
+                <NavigationViewItemSeparator />
+
+                <NavigationViewItem Content="Settings" Tag="settings">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE115;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
             </NavigationView.MenuItems>
@@ -180,264 +119,7 @@
                 <!--  Content Grid  -->
                 <Grid Grid.Row="1">
                     <!--  Frame for page navigation  -->
-                    <Frame x:Name="ContentFrame" Visibility="Collapsed" />
-
-                    <!--  Legacy content (Explorer)  -->
-                    <Grid x:Name="LegacyContent" Visibility="Visible">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="350" MinWidth="250" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" MinWidth="400" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="300" MinWidth="200" />
-                        </Grid.ColumnDefinitions>
-
-                        <!--  TreeView: Solution Explorer  -->
-                        <Grid Grid.Column="0" Background="{ThemeResource LayerFillColorDefaultBrush}">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-
-                            <TextBlock
-                                Grid.Row="0"
-                                Margin="16,12"
-                                Style="{StaticResource SubtitleTextBlockStyle}"
-                                Text="Explorer" />
-
-                            <ScrollViewer
-                                Grid.Row="1"
-                                Padding="8"
-                                HorizontalScrollBarVisibility="Auto"
-                                VerticalScrollBarVisibility="Auto">
-                                <TreeView
-                                    x:Name="SolutionTreeView"
-                                    AllowDrop="True"
-                                    CanDragItems="True"
-                                    CanReorderItems="True"
-                                    DragItemsCompleted="TreeView_DragItemsCompleted"
-                                    ItemsSource="{x:Bind ViewModel.TreeNodes, Mode=OneWay}"
-                                    RightTapped="TreeView_RightTapped"
-                                    SelectionChanged="SolutionTreeView_SelectionChanged">
-                                    <TreeView.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:TreeNodeViewModel">
-                                            <TreeViewItem
-                                                IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}"
-                                                ItemsSource="{x:Bind Children, Mode=OneWay}"
-                                                Tag="{x:Bind}">
-                                                <TreeViewItem.ContextFlyout>
-                                                    <MenuFlyout Opening="ContextMenu_Opening">
-                                                        <!--  Journey Context Menu  -->
-                                                        <MenuFlyoutItem
-                                                            x:Name="AddStationMenuItem"
-                                                            Click="AddStation_Click"
-                                                            Text="Add Station"
-                                                            Visibility="Collapsed">
-                                                            <MenuFlyoutItem.Icon>
-                                                                <FontIcon Glyph="&#xE710;" />
-                                                            </MenuFlyoutItem.Icon>
-                                                        </MenuFlyoutItem>
-                                                        <MenuFlyoutItem
-                                                            x:Name="DeleteJourneyMenuItem"
-                                                            Click="DeleteJourney_Click"
-                                                            Text="Delete Journey"
-                                                            Visibility="Collapsed">
-                                                            <MenuFlyoutItem.Icon>
-                                                                <FontIcon Glyph="&#xE74D;" />
-                                                            </MenuFlyoutItem.Icon>
-                                                        </MenuFlyoutItem>
-
-                                                        <!--  Workflow Context Menu  -->
-                                                        <MenuFlyoutItem
-                                                            x:Name="AddActionMenuItem"
-                                                            Click="AddAction_Click"
-                                                            Text="Add Action"
-                                                            Visibility="Collapsed">
-                                                            <MenuFlyoutItem.Icon>
-                                                                <FontIcon Glyph="&#xE710;" />
-                                                            </MenuFlyoutItem.Icon>
-                                                        </MenuFlyoutItem>
-                                                        <MenuFlyoutItem
-                                                            x:Name="DeleteWorkflowMenuItem"
-                                                            Click="DeleteWorkflow_Click"
-                                                            Text="Delete Workflow"
-                                                            Visibility="Collapsed">
-                                                            <MenuFlyoutItem.Icon>
-                                                                <FontIcon Glyph="&#xE74D;" />
-                                                            </MenuFlyoutItem.Icon>
-                                                        </MenuFlyoutItem>
-
-                                                        <!--  Train Context Menu  -->
-                                                        <MenuFlyoutItem
-                                                            x:Name="AddLocomotiveMenuItem"
-                                                            Click="AddLocomotive_Click"
-                                                            Text="Add Locomotive"
-                                                            Visibility="Collapsed">
-                                                            <MenuFlyoutItem.Icon>
-                                                                <FontIcon Glyph="&#xE710;" />
-                                                            </MenuFlyoutItem.Icon>
-                                                        </MenuFlyoutItem>
-                                                        <MenuFlyoutItem
-                                                            x:Name="AddWagonMenuItem"
-                                                            Click="AddWagon_Click"
-                                                            Text="Add Wagon"
-                                                            Visibility="Collapsed">
-                                                            <MenuFlyoutItem.Icon>
-                                                                <FontIcon Glyph="&#xE710;" />
-                                                            </MenuFlyoutItem.Icon>
-                                                        </MenuFlyoutItem>
-                                                        <MenuFlyoutItem
-                                                            x:Name="DeleteTrainMenuItem"
-                                                            Click="DeleteTrain_Click"
-                                                            Text="Delete Train"
-                                                            Visibility="Collapsed">
-                                                            <MenuFlyoutItem.Icon>
-                                                                <FontIcon Glyph="&#xE74D;" />
-                                                            </MenuFlyoutItem.Icon>
-                                                        </MenuFlyoutItem>
-
-                                                        <!--  Station Context Menu  -->
-                                                        <MenuFlyoutItem
-                                                            x:Name="MoveStationUpMenuItem"
-                                                            Click="MoveStationUp_Click"
-                                                            Text="Move Up"
-                                                            Visibility="Collapsed">
-                                                            <MenuFlyoutItem.Icon>
-                                                                <FontIcon Glyph="&#xE70E;" />
-                                                            </MenuFlyoutItem.Icon>
-                                                        </MenuFlyoutItem>
-                                                        <MenuFlyoutItem
-                                                            x:Name="MoveStationDownMenuItem"
-                                                            Click="MoveStationDown_Click"
-                                                            Text="Move Down"
-                                                            Visibility="Collapsed">
-                                                            <MenuFlyoutItem.Icon>
-                                                                <FontIcon Glyph="&#xE70D;" />
-                                                            </MenuFlyoutItem.Icon>
-                                                        </MenuFlyoutItem>
-                                                        <MenuFlyoutItem
-                                                            x:Name="DeleteStationMenuItem"
-                                                            Click="DeleteStation_Click"
-                                                            Text="Delete Station"
-                                                            Visibility="Collapsed">
-                                                            <MenuFlyoutItem.Icon>
-                                                                <FontIcon Glyph="&#xE74D;" />
-                                                            </MenuFlyoutItem.Icon>
-                                                        </MenuFlyoutItem>
-                                                    </MenuFlyout>
-                                                </TreeViewItem.ContextFlyout>
-                                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                                    <FontIcon FontSize="16" Glyph="{x:Bind Icon, Mode=OneWay}" />
-                                                    <TextBlock Text="{x:Bind DisplayName, Mode=OneWay}" TextWrapping="NoWrap" />
-                                                </StackPanel>
-                                            </TreeViewItem>
-                                        </DataTemplate>
-                                    </TreeView.ItemTemplate>
-                                </TreeView>
-                            </ScrollViewer>
-                        </Grid>
-
-                        <!--  Splitter  -->
-                        <Border
-                            Grid.Column="1"
-                            Width="1"
-                            Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
-                        <!--  Property Grid  -->
-                        <Grid Grid.Column="2" Background="{ThemeResource LayerFillColorDefaultBrush}">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-
-                            <StackPanel
-                                Grid.Row="0"
-                                Margin="16,12"
-                                Spacing="4">
-                                <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Properties" />
-                                <TextBlock
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Style="{StaticResource CaptionTextBlockStyle}"
-                                    Text="{x:Bind ViewModel.SelectedNodeType, Mode=OneWay}" />
-                            </StackPanel>
-
-                            <ScrollViewer
-                                Grid.Row="1"
-                                Padding="16,0,16,16"
-                                HorizontalScrollBarVisibility="Disabled"
-                                VerticalScrollBarVisibility="Auto">
-                                <ItemsRepeater ItemsSource="{x:Bind ViewModel.Properties, Mode=OneWay}">
-                                    <ItemsRepeater.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:PropertyViewModel">
-                                            <ContentControl
-                                                HorizontalContentAlignment="Stretch"
-                                                Content="{x:Bind}"
-                                                ContentTemplateSelector="{StaticResource PropertyTemplateSelector}" />
-                                        </DataTemplate>
-                                    </ItemsRepeater.ItemTemplate>
-                                </ItemsRepeater>
-                            </ScrollViewer>
-                        </Grid>
-
-                        <!--  Splitter  -->
-                        <Border
-                            Grid.Column="3"
-                            Width="1"
-                            Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
-                        <!--  City Browser  -->
-                        <Grid Grid.Column="4" Background="{ThemeResource LayerFillColorDefaultBrush}">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-
-                            <TextBlock
-                                Grid.Row="0"
-                                Margin="16,12"
-                                Style="{StaticResource SubtitleTextBlockStyle}"
-                                Text="Cities" />
-
-                            <Button
-                                Grid.Row="1"
-                                Margin="16,0,16,8"
-                                HorizontalAlignment="Stretch"
-                                Command="{x:Bind ViewModel.LoadCitiesFromFileCommand}"
-                                Content="Load Cities" />
-
-                            <ListView
-                                Grid.Row="2"
-                                Margin="8,0"
-                                ItemsSource="{x:Bind ViewModel.AvailableCities, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.SelectedCity, Mode=TwoWay}">
-                                <ListView.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Padding="8" Spacing="4">
-                                            <TextBlock
-                                                FontWeight="SemiBold"
-                                                Text="{Binding Name}"
-                                                TextWrapping="NoWrap" />
-                                            <TextBlock
-                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                Style="{StaticResource CaptionTextBlockStyle}"
-                                                Text="{Binding Stations[0].Name}"
-                                                TextWrapping="NoWrap" />
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ListView.ItemTemplate>
-                            </ListView>
-
-                            <Button
-                                Grid.Row="3"
-                                Margin="16,8,16,16"
-                                HorizontalAlignment="Stretch"
-                                Command="{x:Bind ViewModel.AddStationToJourneyCommand}"
-                                Content="Add to Journey"
-                                ToolTipService.ToolTip="Select a city and a journey to add the station" />
-                        </Grid>
-                    </Grid>
+                    <Frame x:Name="ContentFrame" />
                 </Grid>
             </Grid>
         </NavigationView>
