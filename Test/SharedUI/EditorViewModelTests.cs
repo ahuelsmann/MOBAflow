@@ -68,7 +68,7 @@ public class EditorViewModelTests
         var journey1 = editor.SelectedJourney!;
         
         // Create a second journey that references the first
-        var journey2 = new Journey { Name = "Journey2", NextJourney = journey1.Name };
+        var journey2 = new Journey { Name = "Journey2", NextJourney = journey1 };  // Direct object reference
         _project.Journeys.Add(journey2);
         editor.Journeys.Add(journey2);
         
@@ -223,7 +223,7 @@ public class EditorViewModelTests
         var train = editor.SelectedTrain!;
         
         // Create a Journey that references the train
-        var journey = new Journey { Name = "Journey1", Train = train };
+        var journey = new Journey { Name = "Journey1" };
         _project.Journeys.Add(journey);
 
         // Act

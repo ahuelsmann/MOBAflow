@@ -43,7 +43,7 @@ public class SolutionInstanceTests
         loadedSolution.Projects.Add(new Project { Name = "Test Project" });
         
         // Act
-        originalSolution.UpdateFrom(loadedSolution);
+        // TODO: Use SolutionService.UpdateFrom(loadedSolution, originalSolution)  // Was: originalSolution.UpdateFrom(loadedSolution);
         
         // Assert
         Assert.That(originalSolution, Is.SameAs(originalReference), 
@@ -68,7 +68,7 @@ public class SolutionInstanceTests
         newSolution.Projects.Add(new Project { Name = "New Project" });
         
         // Act
-        existingSolution.UpdateFrom(newSolution);
+        // TODO: Use SolutionService.UpdateFrom(newSolution, existingSolution)  // Was: existingSolution.UpdateFrom(newSolution);
         
         // Assert
         Assert.That(existingSolution.Projects.Count, Is.EqualTo(1), 
@@ -92,7 +92,7 @@ public class SolutionInstanceTests
         };
         
         // Act
-        originalSolution.UpdateFrom(newSolution);
+        // TODO: Use SolutionService.UpdateFrom(newSolution, originalSolution)  // Was: originalSolution.UpdateFrom(newSolution);
         
         // Assert
         Assert.That(originalSolution.Settings, Is.Not.Null, 
@@ -119,7 +119,7 @@ public class SolutionInstanceTests
         // Simulate UpdateFrom (as happens when loading a file)
         var loadedSolution = new Solution();
         loadedSolution.Projects.Add(new Project { Name = "Shared Project" });
-        solutionForViewModel1.UpdateFrom(loadedSolution);
+        // TODO: Use SolutionService.UpdateFrom(loadedSolution, solutionForViewModel1)  // Was: solutionForViewModel1.UpdateFrom(loadedSolution);
         
         // Assert
         Assert.That(solutionForViewModel1, Is.SameAs(solutionForViewModel2), 

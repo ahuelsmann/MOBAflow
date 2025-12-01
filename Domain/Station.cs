@@ -33,4 +33,31 @@ public class Station
     /// Workflow ID for serialization/deserialization.
     /// </summary>
     public Guid? WorkflowId { get; set; }
+    
+    // --- Phase 1 Properties (Simplified Platform representation) ---
+    // TODO: Move to Platform when Phase 2 is implemented
+    
+    /// <summary>
+    /// Track/Platform number (simplified for Phase 1).
+    /// In Phase 2, this will move to Platform entity.
+    /// </summary>
+    public string? Track { get; set; }
+    
+    /// <summary>
+    /// Arrival time or track designation (simplified for Phase 1).
+    /// In Phase 2, this will move to Platform entity.
+    /// </summary>
+    public string? Arrival { get; set; }
+    
+    /// <summary>
+    /// Departure time or track designation (simplified for Phase 1).
+    /// In Phase 2, this will move to Platform entity.
+    /// </summary>
+    public string? Departure { get; set; }
+    
+    /// <summary>
+    /// Exit orientation - true if exit is on left side (simplified for Phase 1).
+    /// In Phase 2, this will move to Platform entity.
+    /// </summary>
+    public bool IsExitOnLeft { get; set; }
 }

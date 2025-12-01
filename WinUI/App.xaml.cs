@@ -39,21 +39,22 @@ public partial class App : Application
     {
         var services = new ServiceCollection();
 
-        // Backend Services
-        services.AddSingleton<Backend.IZ21, Backend.Z21>();
-        services.AddSingleton<Backend.IUdpClientWrapper, Backend.UdpClientWrapper>();
+        // Backend Services (Interfaces are in Backend.Interface and Backend.Network)
+        services.AddSingleton<Backend.Interface.IZ21, Backend.Z21>();
+        services.AddSingleton<Backend.Network.IUdpClientWrapper, Backend.Network.UdpWrapper>();
         services.AddSingleton<Domain.Solution>();
 
-        // WinUI Services
-        services.AddSingleton<Service.IIoService, Service.IoService>();
-        services.AddSingleton<Service.INotificationService, Service.NotificationService>();
-        services.AddSingleton<Service.IPreferencesService, Service.PreferencesService>();
-        services.AddSingleton<Service.IUiDispatcher, Service.UiDispatcher>();
+        // WinUI Services (Interfaces are in SharedUI.Service)
+        services.AddSingleton<SharedUI.Service.IIoService, Service.IoService>();
+        services.AddSingleton<SharedUI.Service.INotificationService, Service.NotificationService>();
+        services.AddSingleton<SharedUI.Service.IPreferencesService, Service.PreferencesService>();
+        services.AddSingleton<SharedUI.Service.IUiDispatcher, Service.UiDispatcher>();
         services.AddSingleton<Service.HealthCheckService>();
 
         // ViewModels
         services.AddSingleton<SharedUI.ViewModel.WinUI.MainWindowViewModel>();
         services.AddTransient<SharedUI.ViewModel.WinUI.JourneyViewModel>();
+        services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
 
         return services.BuildServiceProvider();
     }
@@ -64,7 +65,12 @@ public partial class App : Application
     /// <param name="args">Details about the launch request and process.</param>
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-        _window = new View.MainWindow();
+        var mainWindowViewModel = Services.GetRequiredService<SharedUI.ViewModel.WinUI.MainWindowViewModel>();
+        var counterViewModel = Services.GetRequiredService<SharedUI.ViewModel.CounterViewModel>();
+        var healthCheckService = Services.GetRequiredService<Service.HealthCheckService>();
+        var uiDispatcher = Services.GetRequiredService<SharedUI.Service.IUiDispatcher>();
+        
+        _window = new View.MainWindow(mainWindowViewModel, counterViewModel, healthCheckService, uiDispatcher);
         _window.Activate();
     }
 }

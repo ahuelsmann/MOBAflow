@@ -334,3 +334,159 @@ Solution
 3. **Backend Model** → Z21 Protocol (`IZ21`)
 4. **Z21** → UDP Network (`IUdpClientWrapper`)
 5. **Feedback** ← Events ← Backend → ViewModel → UI
+
+---
+
+# Copilot Instructions - Additional Rules
+
+## 🔧 Technical Guidelines for AI Assistant
+
+### File Encoding & Line Endings
+
+**CRITICAL**: Always ensure consistent file encoding and line endings
+
+```
+- Use UTF-8 encoding for all text files
+- Use CRLF (Windows) line endings for .cs, .xaml, .md files
+- Never mix line endings within a file
+```
+
+**Implementation**:
+- When using `create_file`: Content should have consistent CRLF line endings
+- When using `replace_string_in_file`: Match existing line ending style
+- Never use PowerShell piping in terminal for file operations (causes encoding issues)
+
+### Terminal Command Restrictions
+
+**AVOID** the following in `run_command_in_terminal`:
+
+```powershell
+# ❌ NEVER: foreach loops (user cancellation issues)
+foreach ($file in $files) { ... }
+
+# ❌ NEVER: Long-running commands with piping
+Get-Content file.txt | Where-Object { ... } | Set-Content ...
+
+# ❌ NEVER: Multiple commands in one line with semicolons
+cmd1; cmd2; cmd3
+```
+
+**INSTEAD USE**:
+
+```powershell
+# ✅ ALWAYS: Simple, direct commands
+Get-ChildItem "path" | Select-Object Name
+
+# ✅ ALWAYS: BAT files for complex operations
+# Create a .bat file and execute it
+
+# ✅ ALWAYS: Direct file operations
+Move-Item "source" "destination" -Force
+```
+
+**Best Practice**:
+1. For file operations with multiple files → Create a `.bat` file
+2. For simple queries → Use direct PowerShell commands
+3. For encoding-sensitive operations → Use `[System.IO.File]::WriteAllText()` with explicit encoding
+
+### Documentation Cleanup Automation
+
+**RULE**: After each session, automatically archive completed documentation
+
+**Trigger**: When session summary is created or major task completed
+
+**Action**:
+1. Identify documentation files with patterns:
+   - `SESSION-SUMMARY-*.md` (except current)
+   - `*-COMPLETE.md` (completed tasks)
+   - `*-FIX.md` (completed fixes)
+   - `*-MIGRATION.md` (completed migrations)
+   - `*-STATUS.md` (old status reports, except BUILD-ERRORS-STATUS.md)
+
+2. Move to `docs/archive/` using `.bat` file approach
+
+3. Update `docs/DOCS-STRUCTURE-FINAL.md` if needed
+
+**Exception**: Keep these files:
+- Current session summary
+- BUILD-ERRORS-STATUS.md
+- CLEAN-ARCHITECTURE-FINAL-STATUS.md
+- Any *-PLAN.md for ongoing work
+
+### Build & Test Verification
+
+**MANDATORY** before completing any code changes:
+
+```
+1. Run `run_build` to verify compilation
+2. Check for compiler warnings (should be 0)
+3. If tests affected:
+   - Verify test stubs updated
+   - Run affected tests if possible
+4. Document known issues in BUILD-ERRORS-STATUS.md
+```
+
+**If build fails**:
+1. Record observation with error details
+2. Fix critical errors (DI, namespaces)
+3. Document test errors if extensive refactoring needed
+4. Create follow-up task in TODO-*.md
+
+**Test Refactoring Rules**:
+- If > 10 test errors: Defer to dedicated session
+- If < 10 test errors: Fix immediately
+- Always document deferred test work
+
+### Session Completion Checklist
+
+Before finishing work session:
+
+- [ ] `run_build` executed (even if tests fail)
+- [ ] Build errors documented in BUILD-ERRORS-STATUS.md
+- [ ] Session summary created
+- [ ] Old session reports moved to archive
+- [ ] Copilot instructions updated if new patterns discovered
+- [ ] TODO file updated with next steps
+
+---
+
+## 🎯 Priority Rules
+
+### High Priority (Fix Immediately)
+1. DI registration errors
+2. Namespace errors
+3. Build-blocking compilation errors
+4. Production code errors
+
+### Medium Priority (Fix or Document)
+1. Test compilation errors (< 10)
+2. Warnings in production code
+3. Missing XML documentation
+
+### Low Priority (Defer to Dedicated Session)
+1. Test refactoring (> 10 errors)
+2. Performance optimizations
+3. Code cleanup tasks
+
+---
+
+## 📝 Documentation Maintenance
+
+### Monthly Tasks
+- Archive old SESSION-SUMMARY-*.md files (keep only current month)
+- Remove completed *-PLAN.md files
+- Update BUILD-ERRORS-STATUS.md
+
+### After Each Session
+- Create session summary if significant work done
+- Move completed task docs to archive
+- Update relevant documentation references
+
+### Annual Tasks
+- Review and consolidate guidelines
+- Archive old year's session summaries
+- Major documentation restructure if needed
+
+---
+
+**These rules should be followed by AI assistants to maintain code quality and documentation hygiene.**

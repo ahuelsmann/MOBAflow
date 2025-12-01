@@ -35,7 +35,7 @@ public class CounterViewModelTests
     [Test]
     public void CounterViewModel_InitializesStatistics()
     {
-        var solution = new Moba.Backend.Model.Solution();
+        var solution = new Domain.Solution();
         var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), solution, notificationService: null);
         Assert.That(vm.Statistics, Is.Not.Null);
         Assert.That(vm.Statistics.Count, Is.EqualTo(3));
@@ -45,7 +45,7 @@ public class CounterViewModelTests
     [Test]
     public void ResetCounters_ClearsCounts()
     {
-        var solution = new Moba.Backend.Model.Solution();
+        var solution = new Domain.Solution();
         var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), solution, notificationService: null);
         vm.Statistics[0].Count = 5;
         vm.Statistics[1].Count = 3;
@@ -60,7 +60,7 @@ public class CounterViewModelTests
     [Test]
     public void Ctor_InitializesDefaults()
     {
-        var solution = new Moba.Backend.Model.Solution();
+        var solution = new Domain.Solution();
         var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), solution, notificationService: null);
         Assert.That(vm.IsNotConnected, Is.True);
     }

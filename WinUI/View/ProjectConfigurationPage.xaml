@@ -1,14 +1,13 @@
 <Page
-    x:Class="Moba.WinUI.View.ProjectConfigurationPage"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="using:Moba.WinUI.Converter"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:model="using:Moba.Backend.Model"
-    xmlns:vm="using:Moba.SharedUI.ViewModel"
-    x:Name="PageRoot"
-    mc:Ignorable="d">
+x:Class="Moba.WinUI.View.ProjectConfigurationPage"
+xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+xmlns:local="using:Moba.WinUI.Converter"
+xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+xmlns:vm="using:Moba.SharedUI.ViewModel"
+x:Name="PageRoot"
+mc:Ignorable="d">
 
     <Grid Background="{ThemeResource LayerFillColorDefaultBrush}">
         <Grid.RowDefinitions>
@@ -60,7 +59,6 @@
                                         <ColumnDefinition Width="200" />
                                         <ColumnDefinition Width="100" />
                                         <ColumnDefinition Width="220" />
-                                        <ColumnDefinition Width="150" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <TextBlock
@@ -77,10 +75,6 @@
                                         Text="Behavior on Last Stop" />
                                     <TextBlock
                                         Grid.Column="3"
-                                        Style="{ThemeResource CaptionTextBlockStyle}"
-                                        Text="Train" />
-                                    <TextBlock
-                                        Grid.Column="4"
                                         Style="{ThemeResource CaptionTextBlockStyle}"
                                         Text="Description" />
                                 </Grid>
@@ -102,7 +96,6 @@
                                         <ColumnDefinition Width="200" />
                                         <ColumnDefinition Width="100" />
                                         <ColumnDefinition Width="220" />
-                                        <ColumnDefinition Width="150" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <TextBlock
@@ -120,10 +113,6 @@
                                         Text="{x:Bind BehaviorOnLastStop, Mode=OneWay}" />
                                     <TextBlock
                                         Grid.Column="3"
-                                        VerticalAlignment="Center"
-                                        Text="{x:Bind Train.Name, Mode=OneWay}" />
-                                    <TextBlock
-                                        Grid.Column="4"
                                         VerticalAlignment="Center"
                                         Text="{x:Bind Description, Mode=OneWay}"
                                         TextWrapping="Wrap" />
@@ -182,7 +171,7 @@
                                         <ColumnDefinition Width="100" />
                                         <ColumnDefinition Width="100" />
                                         <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="120" />
+                                        <ColumnDefinition Width="80" />
                                     </Grid.ColumnDefinitions>
                                     <TextBlock
                                         Grid.Column="0"
@@ -191,7 +180,7 @@
                                     <TextBlock
                                         Grid.Column="1"
                                         Style="{ThemeResource CaptionTextBlockStyle}"
-                                        Text="Number" />
+                                        Text="Track" />
                                     <TextBlock
                                         Grid.Column="2"
                                         Style="{ThemeResource CaptionTextBlockStyle}"
@@ -210,9 +199,9 @@
                                         Text="Workflow" />
                                     <TextBlock
                                         Grid.Column="6"
-                                        HorizontalAlignment="Left"
+                                        HorizontalAlignment="Center"
                                         Style="{ThemeResource CaptionTextBlockStyle}"
-                                        Text="Exit on Left" />
+                                        Text="Exit Left" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.HeaderTemplate>
@@ -235,7 +224,7 @@
                                         <ColumnDefinition Width="100" />
                                         <ColumnDefinition Width="100" />
                                         <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="120" />
+                                        <ColumnDefinition Width="80" />
                                     </Grid.ColumnDefinitions>
                                     <TextBlock
                                         Grid.Column="0"
@@ -245,7 +234,7 @@
                                     <TextBlock
                                         Grid.Column="1"
                                         VerticalAlignment="Center"
-                                        Text="{x:Bind Number, Mode=OneWay}" />
+                                        Text="{x:Bind Track, Mode=OneWay}" />
                                     <TextBlock
                                         Grid.Column="2"
                                         VerticalAlignment="Center"

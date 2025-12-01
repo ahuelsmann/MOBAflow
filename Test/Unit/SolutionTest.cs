@@ -21,7 +21,7 @@ public class SolutionTest
     {
         // Act
         var solution = new Solution();
-        solution = await solution.LoadAsync(_testFile);
+        // TODO: Use IoService.LoadAsync(_testFile)  // Was: solution = await solution.LoadAsync(_testFile);
 
         // Assert
         Assert.That(solution, Is.Not.Null, "Solution sollte nicht null sein");

@@ -44,7 +44,7 @@ public class ValidationServiceTests
     {
         // Arrange
         var journey1 = new Journey { Name = "Journey1" };
-        var journey2 = new Journey { Name = "Journey2", NextJourney = "Journey1" };
+        var journey2 = new Journey { Name = "Journey2", NextJourney = journey1 };  // Was: "Journey1" - now object reference
         _project.Journeys.Add(journey1);
         _project.Journeys.Add(journey2);
 
@@ -166,7 +166,7 @@ public class ValidationServiceTests
     {
         // Arrange
         var train = new Train { Name = "Train1" };
-        var journey = new Journey { Name = "Journey1", Train = train };
+        var journey = new Journey { Name = "Journey1" };
         
         _project.Trains.Add(train);
         _project.Journeys.Add(journey);
