@@ -1,9 +1,11 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
+using Microsoft.UI.Xaml.Controls;
 using Moba.Backend.Data;
 using Moba.Domain;
 using Moba.SharedUI.Service;
+using Windows.Storage.Pickers;
 
 using System;
 using System.Collections.Generic;
@@ -45,7 +47,8 @@ public class IoService : IIoService
         if (result == null) return (null, null, null);
 
         var sol = new Solution();
-        sol = await sol.LoadAsync(result.Path);
+        var json = await File.ReadAllTextAsync(result.Path);
+        sol = Newtonsoft.Json.JsonConvert.DeserializeObject<Solution>(json) ?? new Solution();
         
         // Save last solution path to preferences
         _preferencesService.LastSolutionPath = result.Path;
@@ -65,7 +68,8 @@ public class IoService : IIoService
                 return (null, null, $"File not found: {filePath}");
 
             var sol = new Solution();
-            sol = await sol.LoadAsync(filePath);
+            var json = await File.ReadAllTextAsync(filePath);
+            sol = Newtonsoft.Json.JsonConvert.DeserializeObject<Solution>(json) ?? new Solution();
             
             // Save last solution path to preferences
             _preferencesService.LastSolutionPath = filePath;
@@ -112,7 +116,8 @@ public class IoService : IIoService
             
             // Load the solution
             var sol = new Solution();
-            var loadedSolution = await sol.LoadAsync(lastPath!); // lastPath is guaranteed non-null here
+            var json = await File.ReadAllTextAsync(lastPath!);
+            var loadedSolution = Newtonsoft.Json.JsonConvert.DeserializeObject<Solution>(json) ?? new Solution();
             
             if (loadedSolution == null)
             {
@@ -151,7 +156,8 @@ public class IoService : IIoService
             path = result.Path;
         }
 
-        await Solution.SaveAsync(path!, solution);
+        var json = Newtonsoft.Json.JsonConvert.SerializeObject(solution, Newtonsoft.Json.Formatting.Indented);
+        await File.WriteAllTextAsync(path!, json);
         
         // Save last solution path to preferences
         _preferencesService.LastSolutionPath = path;

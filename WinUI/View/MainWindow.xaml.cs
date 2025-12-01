@@ -166,17 +166,17 @@ public sealed partial class MainWindow
             }
         }
         // Handle Action reordering in Workflow
-        else if (draggedNode.DataType == typeof(Backend.Model.Action.Base))
+        else if (draggedNode.DataType == typeof(WorkflowAction))
         {
             // Find parent Workflow
-            var workflowNode = FindParentNodeByType(ViewModel.TreeNodes, draggedNode, typeof(Backend.Model.Workflow));
-            if (workflowNode?.DataContext is Backend.Model.Workflow workflow)
+            var workflowNode = FindParentNodeByType(ViewModel.TreeNodes, draggedNode, typeof(Workflow));
+            if (workflowNode?.DataContext is Workflow workflow)
             {
                 // Sync Workflow.Actions with TreeView order
                 workflow.Actions.Clear();
                 foreach (var child in workflowNode.Children)
                 {
-                    if (child.DataContext is Backend.Model.Action.Base action)
+                    if (child.DataContext is WorkflowAction action)
                     {
                         workflow.Actions.Add(action);
                     }
@@ -189,7 +189,7 @@ public sealed partial class MainWindow
         // Handle Locomotive reordering in Train
         else if (draggedNode.DataContext is SharedUI.ViewModel.LocomotiveViewModel)
         {
-            var trainNode = FindParentNodeByType(ViewModel.TreeNodes, draggedNode, typeof(Backend.Model.Train));
+            var trainNode = FindParentNodeByType(ViewModel.TreeNodes, draggedNode, typeof(Train));
             if (trainNode?.DataContext is SharedUI.ViewModel.TrainViewModel trainVM)
             {
                 // Sync ViewModel.Locomotives with TreeView order
@@ -211,7 +211,7 @@ public sealed partial class MainWindow
         // Handle Wagon reordering in Train
         else if (draggedNode.DataContext is SharedUI.ViewModel.WagonViewModel)
         {
-            var trainNode = FindParentNodeByType(ViewModel.TreeNodes, draggedNode, typeof(Backend.Model.Train));
+            var trainNode = FindParentNodeByType(ViewModel.TreeNodes, draggedNode, typeof(Train));
             if (trainNode?.DataContext is SharedUI.ViewModel.TrainViewModel trainVM)
             {
                 // Sync ViewModel.Wagons with TreeView order
@@ -559,23 +559,23 @@ public sealed partial class MainWindow
         // Show relevant menu items based on node type
         var dataType = node.DataType;
         
-        if (dataType == typeof(Backend.Model.Journey))
+        if (dataType == typeof(Journey))
         {
             FindMenuItemByName(menuFlyout, "AddStationMenuItem").Visibility = Microsoft.UI.Xaml.Visibility.Visible;
             FindMenuItemByName(menuFlyout, "DeleteJourneyMenuItem").Visibility = Microsoft.UI.Xaml.Visibility.Visible;
         }
-        else if (dataType == typeof(Backend.Model.Workflow))
+        else if (dataType == typeof(Workflow))
         {
             FindMenuItemByName(menuFlyout, "AddActionMenuItem").Visibility = Microsoft.UI.Xaml.Visibility.Visible;
             FindMenuItemByName(menuFlyout, "DeleteWorkflowMenuItem").Visibility = Microsoft.UI.Xaml.Visibility.Visible;
         }
-        else if (dataType == typeof(Backend.Model.Train))
+        else if (dataType == typeof(Train))
         {
             FindMenuItemByName(menuFlyout, "AddLocomotiveMenuItem").Visibility = Microsoft.UI.Xaml.Visibility.Visible;
             FindMenuItemByName(menuFlyout, "AddWagonMenuItem").Visibility = Microsoft.UI.Xaml.Visibility.Visible;
             FindMenuItemByName(menuFlyout, "DeleteTrainMenuItem").Visibility = Microsoft.UI.Xaml.Visibility.Visible;
         }
-        else if (dataType == typeof(Backend.Model.Station))
+        else if (dataType == typeof(Station))
         {
             FindMenuItemByName(menuFlyout, "MoveStationUpMenuItem").Visibility = Microsoft.UI.Xaml.Visibility.Visible;
             FindMenuItemByName(menuFlyout, "MoveStationDownMenuItem").Visibility = Microsoft.UI.Xaml.Visibility.Visible;
@@ -614,7 +614,7 @@ public sealed partial class MainWindow
 
     private void AddStation_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        if (ViewModel.CurrentSelectedNode?.DataContext is not Backend.Model.Journey)
+        if (ViewModel.CurrentSelectedNode?.DataContext is not Journey)
             return;
 
         System.Diagnostics.Debug.WriteLine("Add Station - Navigate to Editor page");
@@ -622,7 +622,7 @@ public sealed partial class MainWindow
 
     private void DeleteJourney_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        if (ViewModel.CurrentSelectedNode?.DataContext is not Backend.Model.Journey)
+        if (ViewModel.CurrentSelectedNode?.DataContext is not Journey)
             return;
 
         System.Diagnostics.Debug.WriteLine("Delete Journey - Will be implemented in Editor page");
@@ -630,7 +630,7 @@ public sealed partial class MainWindow
 
     private void AddAction_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        if (ViewModel.CurrentSelectedNode?.DataContext is not Backend.Model.Workflow)
+        if (ViewModel.CurrentSelectedNode?.DataContext is not Workflow)
             return;
 
         System.Diagnostics.Debug.WriteLine("Add Action - Navigate to Editor page");
@@ -638,7 +638,7 @@ public sealed partial class MainWindow
 
     private void DeleteWorkflow_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        if (ViewModel.CurrentSelectedNode?.DataContext is not Backend.Model.Workflow)
+        if (ViewModel.CurrentSelectedNode?.DataContext is not Workflow)
             return;
 
         System.Diagnostics.Debug.WriteLine("Delete Workflow - Will be implemented in Editor page");
@@ -646,7 +646,7 @@ public sealed partial class MainWindow
 
     private void AddLocomotive_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        if (ViewModel.CurrentSelectedNode?.DataContext is not Backend.Model.Train)
+        if (ViewModel.CurrentSelectedNode?.DataContext is not Train)
             return;
 
         System.Diagnostics.Debug.WriteLine("Add Locomotive - Navigate to Editor page");
@@ -654,7 +654,7 @@ public sealed partial class MainWindow
 
     private void AddWagon_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        if (ViewModel.CurrentSelectedNode?.DataContext is not Backend.Model.Train)
+        if (ViewModel.CurrentSelectedNode?.DataContext is not Train)
             return;
 
         System.Diagnostics.Debug.WriteLine("Add Wagon - Navigate to Editor page");
@@ -662,7 +662,7 @@ public sealed partial class MainWindow
 
     private void DeleteTrain_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        if (ViewModel.CurrentSelectedNode?.DataContext is not Backend.Model.Train)
+        if (ViewModel.CurrentSelectedNode?.DataContext is not Train)
             return;
 
         System.Diagnostics.Debug.WriteLine("Delete Train - Will be implemented in Editor page");
@@ -670,7 +670,7 @@ public sealed partial class MainWindow
 
     private void DeleteStation_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        if (ViewModel.CurrentSelectedNode?.DataContext is not Backend.Model.Station station)
+        if (ViewModel.CurrentSelectedNode?.DataContext is not Station station)
             return;
 
         // Find parent Journey in Solution
