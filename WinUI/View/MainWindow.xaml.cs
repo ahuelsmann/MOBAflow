@@ -32,6 +32,16 @@ public sealed partial class MainWindow
 
         InitializeComponent();
 
+        // Initialize IoService with WindowId (required before any file operations)
+        var ioService = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<SharedUI.Service.IIoService>(
+            ((App)Microsoft.UI.Xaml.Application.Current).Services);
+        
+        if (ioService is WinUI.Service.IoService winUiIoService)
+        {
+            winUiIoService.SetWindowId(this.AppWindow.Id, this.Content.XamlRoot);
+            System.Diagnostics.Debug.WriteLine("✅ IoService initialized with WindowId");
+        }
+
         // Set first nav item as selected (Overview)
         MainNavigation.SelectedItem = MainNavigation.MenuItems[0]; // Overview
 

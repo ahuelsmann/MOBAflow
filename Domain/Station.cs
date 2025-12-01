@@ -26,6 +26,7 @@ public class Station
     /// <summary>
     /// Reference to Workflow (by reference, resolved by WorkflowService).
     /// NOTE: This is a navigation property that gets resolved after deserialization.
+    /// Do not serialize this - use WorkflowId instead.
     /// </summary>
     public Workflow? Flow { get; set; }
     

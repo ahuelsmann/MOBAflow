@@ -104,4 +104,58 @@ public class SolutionService
 
         Debug.WriteLine($"✅ Workflow references resolved for {solution.Projects.Count} projects");
     }
+    
+    /// <summary>
+    /// Restores workflow references in stations after deserialization.
+    /// During JSON deserialization, Station.Flow contains a temporary Workflow object with only the Id.
+    /// This method replaces it with the actual Workflow reference from Project.Workflows.
+    /// </summary>
+    public static void RestoreWorkflowReferences(Solution solution)
+    {
+        Debug.WriteLine("🔄 RestoreWorkflowReferences START");
+
+        foreach (var project in solution.Projects)
+        {
+            Debug.WriteLine($"  Project: {project.Name}");
+            Debug.WriteLine($"  Workflows: {project.Workflows.Count}");
+
+            // Iterate through all Journeys and Stations
+            foreach (var journey in project.Journeys)
+            {
+                foreach (var station in journey.Stations)
+                {
+                    // ✅ Flow is now a temporary Workflow object with only the GUID (from WorkflowConverter)
+                    // Replace it with the real reference from project.Workflows
+                    if (station.Flow != null)
+                    {
+                        Workflow? matchingWorkflow = null;
+
+                        // Try to find by GUID (preferred)
+                        if (station.Flow.Id != Guid.Empty)
+                        {
+                            matchingWorkflow = project.Workflows.FirstOrDefault(w => w.Id == station.Flow.Id);
+                        }
+                        // Fallback: Find by Name (for old JSON files)
+                        else if (!string.IsNullOrEmpty(station.Flow.Name))
+                        {
+                            matchingWorkflow = project.Workflows.FirstOrDefault(w => w.Name == station.Flow.Name);
+                        }
+
+                        if (matchingWorkflow != null)
+                        {
+                            station.Flow = matchingWorkflow;
+                            Debug.WriteLine($"      ✅ {station.Name}: Flow restored to {matchingWorkflow.Name}");
+                        }
+                        else
+                        {
+                            Debug.WriteLine($"      ❌ {station.Name}: Workflow not found (Id: {station.Flow.Id})");
+                            station.Flow = null; // Reset if not found
+                        }
+                    }
+                }
+            }
+        }
+
+        Debug.WriteLine("✅ RestoreWorkflowReferences DONE");
+    }
 }

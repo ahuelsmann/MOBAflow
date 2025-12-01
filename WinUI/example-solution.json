@@ -1,6 +1,6 @@
 {
-"Name": "C:\\Repos\\ahuelsmann\\MOBAflow\\artifacts\\Debug\\example-solution.json",
-"Projects": [
+  "Name": "C:\\Repos\\ahuelsmann\\MOBAflow\\artifacts\\Debug\\example-solution.json",
+  "Projects": [
     {
       "Name": "myMOBA",
       "SpeakerEngines": [
@@ -144,8 +144,7 @@
           },
           "CurrentCounter": 0,
           "CurrentPos": 0,
-          "OnLastStop": 1,
-          "NextJourney": null,
+          "BehaviorOnLastStop": 1,
           "FirstPos": 0,
           "Stations": [
             {
@@ -157,7 +156,7 @@
               "Track": 1,
               "IsExitOnLeft": true,
               "TransferConnections": "",
-              "Flow": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+              "WorkflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "Platforms": []
             },
             {
@@ -169,7 +168,7 @@
               "Track": 1,
               "IsExitOnLeft": false,
               "TransferConnections": "",
-              "Flow": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+              "WorkflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "Platforms": []
             },
             {
@@ -181,7 +180,7 @@
               "Track": 1,
               "IsExitOnLeft": true,
               "TransferConnections": "",
-              "Flow": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+              "WorkflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "Platforms": []
             },
             {
@@ -193,7 +192,7 @@
               "Track": 1,
               "IsExitOnLeft": true,
               "TransferConnections": "",
-              "Flow": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+              "WorkflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "Platforms": []
             },
             {
@@ -205,7 +204,7 @@
               "Track": 1,
               "IsExitOnLeft": true,
               "TransferConnections": "",
-              "Flow": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+              "WorkflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "Platforms": []
             },
             {
@@ -217,7 +216,7 @@
               "Track": 1,
               "IsExitOnLeft": true,
               "TransferConnections": "",
-              "Flow": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+              "WorkflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "Platforms": []
             },
             {
@@ -229,7 +228,7 @@
               "Track": 1,
               "IsExitOnLeft": true,
               "TransferConnections": "",
-              "Flow": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+              "WorkflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "Platforms": []
             }
           ]

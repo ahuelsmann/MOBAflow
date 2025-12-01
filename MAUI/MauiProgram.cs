@@ -35,9 +35,15 @@ public static class MauiProgram
         builder.Services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
         builder.Services.AddTransient<SharedUI.ViewModel.MAUI.JourneyViewModel>();
 
-        // Backend services explicit
+        // Backend services - Register in dependency order
         builder.Services.AddSingleton<IUdpClientWrapper, UdpWrapper>();
         builder.Services.AddSingleton<Backend.Interface.IZ21, Backend.Z21>();
+        builder.Services.AddSingleton<Backend.Services.ActionExecutor>(sp =>
+        {
+            var z21 = sp.GetRequiredService<Backend.Interface.IZ21>();
+            return new Backend.Services.ActionExecutor(z21);
+        });
+        builder.Services.AddSingleton<Backend.Services.WorkflowService>();
         builder.Services.AddSingleton<Backend.Interface.IJourneyManagerFactory, Backend.Manager.JourneyManagerFactory>();
 
         // ✅ DataManager as Singleton (master data loaded on first access)
@@ -46,9 +52,6 @@ public static class MauiProgram
 
         // ✅ Solution as Singleton (initialized empty, can be loaded later by user)
         builder.Services.AddSingleton<Domain.Solution>(sp => new Domain.Solution());
-
-        // Dispatcher service (MAUI-specific)
-        builder.Services.AddSingleton<IUiDispatcher, UiDispatcher>();
 
         // Views
         builder.Services.AddTransient<MainPage>();

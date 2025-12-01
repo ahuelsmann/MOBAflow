@@ -55,9 +55,23 @@ public partial class App
         services.Configure<AppSettings>(configuration);
         services.AddSingleton(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value);
 
+        // Register SpeechOptions (Sound service configuration)
+        services.Configure<Sound.SpeechOptions>(configuration.GetSection("Speech"));
+
+        // Logging (required by HealthCheckService and SpeechHealthCheck)
+        services.AddLogging();
+
         // Backend Services (Interfaces are in Backend.Interface and Backend.Network)
         services.AddSingleton<Backend.Interface.IZ21, Backend.Z21>();
         services.AddSingleton<Backend.Network.IUdpClientWrapper, Backend.Network.UdpWrapper>();
+        
+        // Backend Services - Register in dependency order
+        services.AddSingleton<Backend.Services.ActionExecutor>(sp =>
+        {
+            var z21 = sp.GetRequiredService<Backend.Interface.IZ21>();
+            return new Backend.Services.ActionExecutor(z21);
+        });
+        services.AddSingleton<Backend.Services.WorkflowService>();
         services.AddSingleton<Backend.Interface.IJourneyManagerFactory, Backend.Manager.JourneyManagerFactory>();
         
         // Domain.Solution - Pure POCO, no Settings initialization needed
@@ -70,7 +84,19 @@ public partial class App
         services.AddSingleton<SharedUI.Service.IUiDispatcher, Service.UiDispatcher>();
         services.AddSingleton<SharedUI.Service.ICityLibraryService, Service.CityLibraryService>();
         services.AddSingleton<SharedUI.Service.ISettingsService, Service.SettingsService>();
+        
+        // Sound Services (required by HealthCheckService)
+        services.AddSingleton<Sound.SpeechHealthCheck>();
         services.AddSingleton<Service.HealthCheckService>();
+
+        // SharedUI Services
+        services.AddSingleton<SharedUI.Service.ValidationService>(sp =>
+        {
+            var solution = sp.GetRequiredService<Domain.Solution>();
+            // ValidationService needs the first project (simplified for now)
+            var project = solution.Projects.FirstOrDefault() ?? new Domain.Project { Name = "Default Project" };
+            return new SharedUI.Service.ValidationService(project);
+        });
 
         // ViewModels
         services.AddSingleton<SharedUI.ViewModel.WinUI.MainWindowViewModel>();

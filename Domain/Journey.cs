@@ -56,12 +56,8 @@ public class Journey
     }
     
     /// <summary>
-    /// Callback/Action to execute when last station is reached
-    /// </summary>
-    public Action? OnLastStop { get; set; }
-    
-    /// <summary>
     /// Reference to next journey (for chaining journeys)
+    /// Used when BehaviorOnLastStop == GotoJourney
     /// </summary>
     public Journey? NextJourney { get; set; }
     

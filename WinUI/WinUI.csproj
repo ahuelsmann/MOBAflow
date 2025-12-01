@@ -17,16 +17,28 @@
   <ItemGroup>
     <Compile Remove="Controls\**" />
     <Compile Remove="Factory\**" />
+    <Compile Remove="Resources\**" />
+    <Compile Remove="Selectors\**" />
     <Content Remove="Controls\**" />
     <Content Remove="Factory\**" />
+    <Content Remove="Resources\**" />
+    <Content Remove="Selectors\**" />
     <EmbeddedResource Remove="Controls\**" />
     <EmbeddedResource Remove="Factory\**" />
+    <EmbeddedResource Remove="Resources\**" />
+    <EmbeddedResource Remove="Selectors\**" />
     <None Remove="Controls\**" />
     <None Remove="Factory\**" />
+    <None Remove="Resources\**" />
+    <None Remove="Selectors\**" />
     <Page Remove="Controls\**" />
     <Page Remove="Factory\**" />
+    <Page Remove="Resources\**" />
+    <Page Remove="Selectors\**" />
     <PRIResource Remove="Controls\**" />
     <PRIResource Remove="Factory\**" />
+    <PRIResource Remove="Resources\**" />
+    <PRIResource Remove="Selectors\**" />
   </ItemGroup>
   <ItemGroup>
     <Page Remove="Styles\ModernStyles.xaml" />
@@ -75,9 +87,5 @@
     <None Update="View\SettingsPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Resources\" />
-    <Folder Include="Selectors\" />
   </ItemGroup>
 </Project>

@@ -46,9 +46,18 @@ public class IoService : IIoService
         var result = await picker.PickSingleFileAsync();
         if (result == null) return (null, null, null);
 
-        var sol = new Solution();
         var json = await File.ReadAllTextAsync(result.Path);
-        sol = Newtonsoft.Json.JsonConvert.DeserializeObject<Solution>(json) ?? new Solution();
+        
+        // Configure serialization with StationConverter for efficient workflow reference handling
+        var settings = new Newtonsoft.Json.JsonSerializerSettings
+        {
+            Converters = { new Backend.Converter.StationConverter() }
+        };
+        
+        var sol = Newtonsoft.Json.JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
+        
+        // Restore workflow references (replace temporary Workflow objects with actual references)
+        Backend.Services.SolutionService.RestoreWorkflowReferences(sol);
         
         // Save last solution path to preferences
         _preferencesService.LastSolutionPath = result.Path;
@@ -67,9 +76,18 @@ public class IoService : IIoService
             if (!File.Exists(filePath))
                 return (null, null, $"File not found: {filePath}");
 
-            var sol = new Solution();
             var json = await File.ReadAllTextAsync(filePath);
-            sol = Newtonsoft.Json.JsonConvert.DeserializeObject<Solution>(json) ?? new Solution();
+            
+            // Configure serialization with StationConverter for efficient workflow reference handling
+            var settings = new Newtonsoft.Json.JsonSerializerSettings
+            {
+                Converters = { new Backend.Converter.StationConverter() }
+            };
+            
+            var sol = Newtonsoft.Json.JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
+            
+            // Restore workflow references
+            Backend.Services.SolutionService.RestoreWorkflowReferences(sol);
             
             // Save last solution path to preferences
             _preferencesService.LastSolutionPath = filePath;
@@ -114,10 +132,18 @@ public class IoService : IIoService
 
             System.Diagnostics.Debug.WriteLine($"📄 Auto-loading last solution: {lastPath}");
             
-            // Load the solution
-            var sol = new Solution();
             var json = await File.ReadAllTextAsync(lastPath!);
-            var loadedSolution = Newtonsoft.Json.JsonConvert.DeserializeObject<Solution>(json) ?? new Solution();
+            
+            // Configure serialization with StationConverter for efficient workflow reference handling
+            var settings = new Newtonsoft.Json.JsonSerializerSettings
+            {
+                Converters = { new Backend.Converter.StationConverter() }
+            };
+            
+            var loadedSolution = Newtonsoft.Json.JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
+            
+            // Restore workflow references
+            Backend.Services.SolutionService.RestoreWorkflowReferences(loadedSolution);
             
             if (loadedSolution == null)
             {

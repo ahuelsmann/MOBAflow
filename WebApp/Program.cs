@@ -16,9 +16,15 @@ builder.Services.AddSingleton<IUiDispatcher, BlazorUiDispatcher>();
 // ViewModels (CounterViewModel now requires IUiDispatcher)
 builder.Services.AddSingleton<CounterViewModel>();
 
-// Explicit backend registrations
+// Backend services - Register in dependency order
 builder.Services.AddSingleton<IUdpClientWrapper, UdpWrapper>();
 builder.Services.AddSingleton<Moba.Backend.Interface.IZ21, Moba.Backend.Z21>();
+builder.Services.AddSingleton<Moba.Backend.Services.ActionExecutor>(sp =>
+{
+    var z21 = sp.GetRequiredService<Moba.Backend.Interface.IZ21>();
+    return new Moba.Backend.Services.ActionExecutor(z21);
+});
+builder.Services.AddSingleton<Moba.Backend.Services.WorkflowService>();
 builder.Services.AddSingleton<Moba.Backend.Interface.IJourneyManagerFactory, Moba.Backend.Manager.JourneyManagerFactory>();
 
 // ✅ DataManager as Singleton (master data - simplified for Blazor Server)
