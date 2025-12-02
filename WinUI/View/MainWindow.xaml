@@ -28,12 +28,12 @@
                     Content="Overview"
                     Icon="Home"
                     Tag="overview" />
-                <NavigationViewItem Content="Editor" Tag="editor">
+                <NavigationViewItem Content="Editor 1" Tag="editor">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE70F;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Configuration" Tag="configuration">
+                <NavigationViewItem Content="Editor 2" Tag="configuration">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE713;" />
                     </NavigationViewItem.Icon>
@@ -124,7 +124,7 @@
             </Grid>
         </NavigationView>
 
-        <!--  StatusBar - Über die gesamte Fensterbreite  -->
+        <!--  StatusBar - Ãœber die gesamte Fensterbreite  -->
         <Grid
             Grid.Row="1"
             Height="32"

@@ -103,11 +103,7 @@ public partial class App
         services.AddTransient<SharedUI.ViewModel.JourneyViewModel>();
         services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
         services.AddSingleton<SharedUI.ViewModel.SettingsPageViewModel>();
-        services.AddSingleton<SharedUI.ViewModel.EditorPageViewModel>(sp =>
-        {
-            var mainWindowViewModel = sp.GetRequiredService<SharedUI.ViewModel.MainWindowViewModel>();
-            return new SharedUI.ViewModel.EditorPageViewModel(mainWindowViewModel);
-        });
+        
 
         return services.BuildServiceProvider();
     }
@@ -126,7 +122,7 @@ public partial class App
         _window = new View.MainWindow(mainWindowViewModel, counterViewModel, healthCheckService, uiDispatcher);
         _window.Activate();
         
-        // âœ… Auto-load last solution if enabled
+        // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Auto-load last solution if enabled
         _ = AutoLoadLastSolutionAsync(mainWindowViewModel);
     }
     
@@ -140,30 +136,30 @@ public partial class App
             var preferencesService = Services.GetService<SharedUI.Service.IPreferencesService>();
             if (preferencesService == null)
             {
-                System.Diagnostics.Debug.WriteLine("âš ï¸ PreferencesService not available - skipping auto-load");
+                System.Diagnostics.Debug.WriteLine("ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â PreferencesService not available - skipping auto-load");
                 return;
             }
 
             if (!preferencesService.AutoLoadLastSolution)
             {
-                System.Diagnostics.Debug.WriteLine("â„¹ï¸ Auto-load disabled - skipping");
+                System.Diagnostics.Debug.WriteLine("ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¹ÃƒÂ¯Ã‚Â¸Ã‚Â Auto-load disabled - skipping");
                 return;
             }
 
             var lastPath = preferencesService.LastSolutionPath;
             if (string.IsNullOrEmpty(lastPath))
             {
-                System.Diagnostics.Debug.WriteLine("â„¹ï¸ No last solution path - skipping auto-load");
+                System.Diagnostics.Debug.WriteLine("ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¹ÃƒÂ¯Ã‚Â¸Ã‚Â No last solution path - skipping auto-load");
                 return;
             }
 
             if (!System.IO.File.Exists(lastPath))
             {
-                System.Diagnostics.Debug.WriteLine($"âš ï¸ Last solution file not found: {lastPath}");
+                System.Diagnostics.Debug.WriteLine($"ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Last solution file not found: {lastPath}");
                 return;
             }
 
-            System.Diagnostics.Debug.WriteLine($"ðŸ”„ Auto-loading last solution: {lastPath}");
+            System.Diagnostics.Debug.WriteLine($"ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬Å¾ Auto-loading last solution: {lastPath}");
             
             // Load the solution using IIoService
             var ioService = Services.GetRequiredService<SharedUI.Service.IIoService>();
@@ -171,7 +167,7 @@ public partial class App
             
             if (!string.IsNullOrEmpty(error))
             {
-                System.Diagnostics.Debug.WriteLine($"âŒ Auto-load failed: {error}");
+                System.Diagnostics.Debug.WriteLine($"ÃƒÂ¢Ã‚ÂÃ…â€™ Auto-load failed: {error}");
                 return;
             }
             
@@ -190,12 +186,12 @@ public partial class App
                 mainWindowViewModel.CurrentSolutionPath = path;
                 mainWindowViewModel.HasUnsavedChanges = false;
                 
-                System.Diagnostics.Debug.WriteLine("âœ… Auto-load completed successfully");
+                System.Diagnostics.Debug.WriteLine("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Auto-load completed successfully");
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"âŒ Auto-load failed: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"ÃƒÂ¢Ã‚ÂÃ…â€™ Auto-load failed: {ex.Message}");
             // Don't crash the application if auto-load fails
         }
     }
