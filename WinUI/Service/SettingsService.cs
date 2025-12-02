@@ -1,12 +1,11 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
-using Microsoft.Extensions.Options;
 using Moba.SharedUI.Service;
 using Moba.Common.Configuration;
+using Newtonsoft.Json;
 using System;
 using System.IO;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 /// <summary>
@@ -16,11 +15,6 @@ public class SettingsService : ISettingsService
 {
     private readonly AppSettings _settings;
     private readonly string _settingsFilePath;
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
 
     public SettingsService(AppSettings settings)
     {
@@ -43,7 +37,7 @@ public class SettingsService : ISettingsService
     {
         try
         {
-            var json = JsonSerializer.Serialize(settings, JsonOptions);
+            var json = JsonConvert.SerializeObject(settings, Formatting.Indented);
             await File.WriteAllTextAsync(_settingsFilePath, json);
             
             System.Diagnostics.Debug.WriteLine($"✅ Settings saved to {_settingsFilePath}");

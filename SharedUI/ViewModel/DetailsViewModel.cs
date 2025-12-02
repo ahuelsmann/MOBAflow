@@ -1,11 +1,10 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Moba.Domain;
-using Moba.Domain.Enum;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using Moba.Domain;
+using Moba.Domain.Enum;
 using Moba.SharedUI.Service;
 
 /// <summary>
@@ -25,7 +24,7 @@ public partial class DetailsViewModel : ObservableObject
         _dispatcher = dispatcher;
     }
 
-    public byte Axles
+    public uint Axles
     {
         get => Model.Axles;
         set => SetProperty(Model.Axles, value, Model, (m, v) => m.Axles = v);

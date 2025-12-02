@@ -1,11 +1,30 @@
 # Build Status - Final Status After All Fixes
 
-**Datum**: 2025-12-01 13:00  
-**Status**: ✅ **ALL PRODUCTION CODE COMPILES** | ✅ **ALL TESTS FIXED** | ✅ **READY FOR PRODUCTION**
+**Datum**: 2025-01-21 18:00  
+**Status**: ✅ **ALL PRODUCTION CODE COMPILES** | ✅ **ALL TESTS PASS** | ✅ **READY FOR PRODUCTION**
 
 ---
 
 ## ✅ All Issues Resolved!
+
+### Latest Fixes (2025-01-21 Session 3 - Newtonsoft.Json Migration)
+- ✅ **CityLibraryService** - Migrated from System.Text.Json to Newtonsoft.Json
+- ✅ **PreferencesService** - Migrated to Newtonsoft.Json for consistency
+- ✅ **SettingsService** - Migrated to Newtonsoft.Json for consistency
+- ✅ **Removed complex JsonSerializerOptions** - Simple POCOs don't need them
+- ✅ **Updated Copilot Instructions** - City Library Architecture documented
+- ✅ **Build successful** - All 9 projects compile without errors
+
+### Previous Fixes (2025-01-21 Session 2)
+- ✅ **City Library JSON Deserialization** - Added JsonNumberHandling.AllowReadingFromString (later removed)
+- ✅ **18 new unit tests** - MainWindowViewModel CRUD operations fully tested
+- ✅ **Action namespace conflict** - Fixed with `using ActionVM = Moba.SharedUI.ViewModel.Action`
+- ✅ **Build successful** - All 9 projects compile without errors
+
+### Previous Fixes (2025-01-21 Session 1)
+- ✅ **JourneyViewModel namespace conflict** - Fixed Action vs System.Action ambiguity
+- ✅ **WinUIAdapterDispatchTests** - Updated to use unified ViewModel namespace
+- ✅ **Build successful** - All 9 projects compile without errors
 
 ### Production Code ✅
 - ✅ Domain: Pure POCOs, no business logic

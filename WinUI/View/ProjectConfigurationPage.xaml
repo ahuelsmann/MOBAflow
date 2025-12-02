@@ -1,13 +1,13 @@
 <Page
-x:Class="Moba.WinUI.View.ProjectConfigurationPage"
-xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-xmlns:local="using:Moba.WinUI.Converter"
-xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-xmlns:vm="using:Moba.SharedUI.ViewModel"
-x:Name="PageRoot"
-mc:Ignorable="d">
+    x:Class="Moba.WinUI.View.ProjectConfigurationPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:Moba.WinUI.Converter"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Moba.SharedUI.ViewModel"
+    x:Name="PageRoot"
+    mc:Ignorable="d">
 
     <Grid Background="{ThemeResource LayerFillColorDefaultBrush}">
         <Grid.RowDefinitions>
@@ -36,12 +36,12 @@ mc:Ignorable="d">
                         Orientation="Horizontal"
                         Spacing="8">
                         <Button
-                            Command="{x:Bind ViewModel.AddJourneyCommand}"
+                            Command="{x:Bind ViewModel.MainWindowViewModel.AddJourneyCommand}"
                             Content="+"
                             Style="{StaticResource AccentButtonStyle}"
                             ToolTipService.ToolTip="Add Journey" />
                         <Button
-                            Command="{x:Bind ViewModel.DeleteJourneyCommand}"
+                            Command="{x:Bind ViewModel.MainWindowViewModel.DeleteJourneyCommand}"
                             Content="-"
                             ToolTipService.ToolTip="Delete Journey" />
                     </StackPanel>
@@ -49,8 +49,8 @@ mc:Ignorable="d">
                     <ListView
                         Grid.Row="1"
                         Margin="16,0"
-                        ItemsSource="{x:Bind ViewModel.Journeys, Mode=OneWay}"
-                        SelectedItem="{Binding SelectedJourney, Mode=TwoWay}"
+                        ItemsSource="{x:Bind ViewModel.MainWindowViewModel.CurrentProjectViewModel.Journeys, Mode=OneWay}"
+                        SelectedItem="{Binding MainWindowViewModel.SelectedJourney, Mode=TwoWay}"
                         SelectionMode="Single">
                         <ListView.HeaderTemplate>
                             <DataTemplate>
@@ -138,12 +138,12 @@ mc:Ignorable="d">
                         Orientation="Horizontal"
                         Spacing="8">
                         <Button
-                            Command="{x:Bind ViewModel.AddStationCommand}"
+                            Command="{x:Bind ViewModel.MainWindowViewModel.AddStationCommand}"
                             Content="+"
                             Style="{StaticResource AccentButtonStyle}"
                             ToolTipService.ToolTip="Add Station" />
                         <Button
-                            Command="{x:Bind ViewModel.DeleteStationCommand}"
+                            Command="{x:Bind ViewModel.MainWindowViewModel.DeleteStationCommand}"
                             Content="-"
                             ToolTipService.ToolTip="Delete Station" />
                     </StackPanel>
@@ -158,8 +158,8 @@ mc:Ignorable="d">
                     <ListView
                         Grid.Row="2"
                         Margin="16,0"
-                        ItemsSource="{Binding SelectedJourney.Stations, Mode=OneWay}"
-                        SelectedItem="{Binding SelectedStation, Mode=TwoWay}"
+                        ItemsSource="{Binding MainWindowViewModel.SelectedJourney.Stations, Mode=OneWay}"
+                        SelectedItem="{Binding MainWindowViewModel.SelectedStation, Mode=TwoWay}"
                         SelectionMode="Single">
                         <ListView.HeaderTemplate>
                             <DataTemplate>
@@ -278,12 +278,12 @@ mc:Ignorable="d">
                         Orientation="Horizontal"
                         Spacing="8">
                         <Button
-                            Command="{x:Bind ViewModel.AddWorkflowCommand}"
+                            Command="{x:Bind ViewModel.MainWindowViewModel.AddWorkflowCommand}"
                             Content="+"
                             Style="{StaticResource AccentButtonStyle}"
                             ToolTipService.ToolTip="Add Workflow" />
                         <Button
-                            Command="{x:Bind ViewModel.DeleteWorkflowCommand}"
+                            Command="{x:Bind ViewModel.MainWindowViewModel.DeleteWorkflowCommand}"
                             Content="-"
                             ToolTipService.ToolTip="Delete Workflow" />
                     </StackPanel>
@@ -291,8 +291,8 @@ mc:Ignorable="d">
                     <ListView
                         Grid.Row="1"
                         Margin="16,0"
-                        ItemsSource="{x:Bind ViewModel.Workflows, Mode=OneWay}"
-                        SelectedItem="{Binding SelectedWorkflow, Mode=TwoWay}"
+                        ItemsSource="{x:Bind ViewModel.MainWindowViewModel.CurrentProjectViewModel.Workflows, Mode=OneWay}"
+                        SelectedItem="{Binding MainWindowViewModel.SelectedWorkflow, Mode=TwoWay}"
                         SelectionMode="Single">
                         <ListView.HeaderTemplate>
                             <DataTemplate>
@@ -359,12 +359,12 @@ mc:Ignorable="d">
                         Orientation="Horizontal"
                         Spacing="8">
                         <Button
-                            Command="{x:Bind ViewModel.AddTrainCommand}"
+                            Command="{x:Bind ViewModel.MainWindowViewModel.AddTrainCommand}"
                             Content="+"
                             Style="{StaticResource AccentButtonStyle}"
                             ToolTipService.ToolTip="Add Train" />
                         <Button
-                            Command="{x:Bind ViewModel.DeleteTrainCommand}"
+                            Command="{x:Bind ViewModel.MainWindowViewModel.DeleteTrainCommand}"
                             Content="-"
                             ToolTipService.ToolTip="Delete Train" />
                     </StackPanel>
@@ -372,8 +372,8 @@ mc:Ignorable="d">
                     <ListView
                         Grid.Row="1"
                         Margin="16,0"
-                        ItemsSource="{x:Bind ViewModel.Trains, Mode=OneWay}"
-                        SelectedItem="{Binding SelectedTrain, Mode=TwoWay}"
+                        ItemsSource="{x:Bind ViewModel.MainWindowViewModel.CurrentProjectViewModel.Trains, Mode=OneWay}"
+                        SelectedItem="{Binding MainWindowViewModel.SelectedTrain, Mode=TwoWay}"
                         SelectionMode="Single">
                         <ListView.HeaderTemplate>
                             <DataTemplate>
@@ -426,36 +426,7 @@ mc:Ignorable="d">
                 </Grid>
             </PivotItem>
 
-            <!--  Application Settings Tab  -->
-            <PivotItem Header="Application">
-                <Grid Margin="16">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
 
-                    <TextBlock
-                        Grid.Row="0"
-                        Margin="0,0,0,16"
-                        Style="{StaticResource SubtitleTextBlockStyle}"
-                        Text="Application Settings" />
-
-                    <StackPanel Grid.Row="1" Spacing="16">
-                        <CheckBox
-                            x:Name="AutoLoadCheckBox"
-                            Content="Auto-load last solution on startup"
-                            IsChecked="{Binding AutoLoadEnabled, Mode=TwoWay}"
-                            ToolTipService.ToolTip="Automatically load the last opened solution when the application starts" />
-
-                        <TextBlock
-                            Margin="32,0,0,0"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Style="{StaticResource CaptionTextBlockStyle}"
-                            Text="When enabled, the last opened solution will be automatically loaded on application startup. This saves you from manually opening the same solution every time."
-                            TextWrapping="Wrap" />
-                    </StackPanel>
-                </Grid>
-            </PivotItem>
         </Pivot>
     </Grid>
 

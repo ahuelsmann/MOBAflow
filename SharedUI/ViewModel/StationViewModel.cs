@@ -1,10 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Moba.Domain;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using Moba.Domain;
 using Moba.SharedUI.Service;
 
 /// <summary>
@@ -36,16 +35,16 @@ public partial class StationViewModel : ObservableObject
         set => SetProperty(Model.Description, value, Model, (m, v) => m.Description = v);
     }
 
-    public int? FeedbackInPort
+    public int FeedbackInPort
     {
-        get => Model.FeedbackInPort;
-        set => SetProperty(Model.FeedbackInPort, value, Model, (m, v) => m.FeedbackInPort = v);
+        get => (int)Model.InPort;
+        set => SetProperty(Model.InPort, (uint)value, Model, (m, v) => m.InPort = v);
     }
 
     public int NumberOfLapsToStop
     {
-        get => Model.NumberOfLapsToStop;
-        set => SetProperty(Model.NumberOfLapsToStop, value, Model, (m, v) => m.NumberOfLapsToStop = v);
+        get => (int)Model.NumberOfLapsToStop;
+        set => SetProperty(Model.NumberOfLapsToStop, (uint)value, Model, (m, v) => m.NumberOfLapsToStop = v);
     }
 
     public List<Platform> Platforms
@@ -63,19 +62,19 @@ public partial class StationViewModel : ObservableObject
     // --- Phase 1 Properties (Simplified Platform representation) ---
     // TODO: Remove when Phase 2 (Platform support) is implemented
 
-    public string? Track
+    public int Track
     {
-        get => Model.Track;
-        set => SetProperty(Model.Track, value, Model, (m, v) => m.Track = v);
+        get => (int)(Model.Track ?? 1);
+        set => SetProperty(Model.Track, (uint?)value, Model, (m, v) => m.Track = v);
     }
 
-    public string? Arrival
+    public DateTime? Arrival
     {
         get => Model.Arrival;
         set => SetProperty(Model.Arrival, value, Model, (m, v) => m.Arrival = v);
     }
 
-    public string? Departure
+    public DateTime? Departure
     {
         get => Model.Departure;
         set => SetProperty(Model.Departure, value, Model, (m, v) => m.Departure = v);
@@ -88,63 +87,62 @@ public partial class StationViewModel : ObservableObject
     }
 
     // --- Adaptive Properties (Hybrid Mode Support) ---
-    
+
     /// <summary>
     /// Indicates if station uses platform-based configuration.
     /// True when Platforms list has entries, false for simple mode.
     /// </summary>
     public bool UsesPlatforms => Model.Platforms != null && Model.Platforms.Count > 0;
-    
+
     /// <summary>
-    /// Gets the effective track number.
+    /// Gets the effective track number as string for display.
     /// Returns Station.Track if no platforms, otherwise first Platform.Track.
     /// </summary>
-    public string? EffectiveTrack
+    public string EffectiveTrack
     {
         get
         {
             if (!UsesPlatforms)
-                return Model.Track;
-            
-            return Model.Platforms[0].Track;
+                return Model.Track.ToString();
+
+            return Model.Platforms[0].Track.ToString();
         }
     }
-    
+
     /// <summary>
-    /// Gets the effective arrival designation.
-    /// Returns Station.Arrival if no platforms, otherwise Platform info.
+    /// Gets the effective arrival designation as string for display.
+    /// Returns Station.Arrival formatted if no platforms, otherwise Platform info.
     /// </summary>
     public string? EffectiveArrival
     {
         get
         {
             if (!UsesPlatforms)
-                return Model.Arrival;
-            
+                return Model.Arrival?.ToString("HH:mm");
+
             // In Phase 2: Use Platform.ArrivalTime when implemented
-            // For now, show platform name or "-"
             var platform = Model.Platforms[0];
             return platform.Name ?? "-";
         }
     }
-    
+
     /// <summary>
-    /// Gets the effective departure designation.
-    /// Returns Station.Departure if no platforms, otherwise Platform info.
+    /// Gets the effective departure designation as string for display.
+    /// Returns Station.Departure formatted if no platforms, otherwise Platform info.
     /// </summary>
     public string? EffectiveDeparture
     {
         get
         {
             if (!UsesPlatforms)
-                return Model.Departure;
-            
+                return Model.Departure?.ToString("HH:mm");
+
             // In Phase 2: Use Platform.DepartureTime when implemented
             var platform = Model.Platforms[0];
             return platform.Description ?? "-";
         }
     }
-    
+
     /// <summary>
     /// Gets the effective exit orientation.
     /// Returns Station.IsExitOnLeft if no platforms, otherwise false (Phase 2 pending).
@@ -155,16 +153,16 @@ public partial class StationViewModel : ObservableObject
         {
             if (!UsesPlatforms)
                 return Model.IsExitOnLeft;
-            
+
             // In Phase 2: Use Platform.IsExitOnLeft when implemented
             return false;
         }
     }
-    
+
     /// <summary>
     /// Gets display text indicating configuration mode.
     /// </summary>
-    public string ConfigurationMode => UsesPlatforms 
-        ? $"Platform Mode ({Model.Platforms.Count} platforms)" 
+    public string ConfigurationMode => UsesPlatforms
+        ? $"Platform Mode ({Model.Platforms.Count} platforms)"
         : "Simple Mode";
 }

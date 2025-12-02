@@ -18,7 +18,7 @@ public class Locomotive
     /// <summary>
     /// The position is relevant for double traction and describes the position of the locomotive within a train.
     /// </summary>
-    public uint? Pos { get; set; }
+    public uint Pos { get; set; } = 1;
 
     public uint? DigitalAddress { get; set; }
 

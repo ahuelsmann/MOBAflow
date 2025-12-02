@@ -68,5 +68,4 @@ public class WorkflowConverter : JsonConverter<Workflow?>
     }
 
     public override bool CanRead => true;
-    public override bool CanWrite => true;
 }

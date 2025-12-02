@@ -1,12 +1,12 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Moba.Domain;
-using Moba.Domain.Enum;
-using Moba.Backend.Interface;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
+using Moba.Backend.Interface;
+using Moba.Domain;
+using Moba.Domain.Enum;
 
 using Sound;
 
@@ -74,7 +74,7 @@ public partial class WorkflowViewModel : ObservableObject
             ActionType.Announcement => new WorkflowAction
             {
                 Name = "New Announcement",
-                Number = Model.Actions.Count + 1,
+                Number = (uint)(Model.Actions.Count + 1),
                 Type = ActionType.Announcement,
                 Parameters = new Dictionary<string, object>
                 {
@@ -85,7 +85,7 @@ public partial class WorkflowViewModel : ObservableObject
             ActionType.Audio => new WorkflowAction
             {
                 Name = "New Audio",
-                Number = Model.Actions.Count + 1,
+                Number = (uint)(Model.Actions.Count + 1),
                 Type = ActionType.Audio,
                 Parameters = new Dictionary<string, object>
                 {
@@ -95,7 +95,7 @@ public partial class WorkflowViewModel : ObservableObject
             ActionType.Command => new WorkflowAction
             {
                 Name = "New Command",
-                Number = Model.Actions.Count + 1,
+                Number = (uint)(Model.Actions.Count + 1),
                 Type = ActionType.Command,
                 Parameters = new Dictionary<string, object>
                 {

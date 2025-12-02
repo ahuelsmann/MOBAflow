@@ -99,18 +99,14 @@ public partial class App
         });
 
         // ViewModels
-        services.AddSingleton<SharedUI.ViewModel.WinUI.MainWindowViewModel>();
-        services.AddTransient<SharedUI.ViewModel.WinUI.JourneyViewModel>();
+        services.AddSingleton<SharedUI.ViewModel.MainWindowViewModel>();
+        services.AddTransient<SharedUI.ViewModel.JourneyViewModel>();
         services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
         services.AddSingleton<SharedUI.ViewModel.SettingsPageViewModel>();
         services.AddSingleton<SharedUI.ViewModel.EditorPageViewModel>(sp =>
         {
-            var solution = sp.GetRequiredService<Domain.Solution>();
-            var settings = sp.GetRequiredService<AppSettings>();
-            var validationService = sp.GetRequiredService<SharedUI.Service.ValidationService>();
-            var cityLibraryService = sp.GetRequiredService<SharedUI.Service.ICityLibraryService>();
-            var mainWindowViewModel = sp.GetRequiredService<SharedUI.ViewModel.WinUI.MainWindowViewModel>();
-            return new SharedUI.ViewModel.EditorPageViewModel(solution, settings, validationService, cityLibraryService, mainWindowViewModel);
+            var mainWindowViewModel = sp.GetRequiredService<SharedUI.ViewModel.MainWindowViewModel>();
+            return new SharedUI.ViewModel.EditorPageViewModel(mainWindowViewModel);
         });
 
         return services.BuildServiceProvider();
@@ -122,12 +118,85 @@ public partial class App
     /// <param name="args">Details about the launch request and process.</param>
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-        var mainWindowViewModel = Services.GetRequiredService<SharedUI.ViewModel.WinUI.MainWindowViewModel>();
+        var mainWindowViewModel = Services.GetRequiredService<SharedUI.ViewModel.MainWindowViewModel>();
         var counterViewModel = Services.GetRequiredService<SharedUI.ViewModel.CounterViewModel>();
         var healthCheckService = Services.GetRequiredService<Service.HealthCheckService>();
         var uiDispatcher = Services.GetRequiredService<SharedUI.Service.IUiDispatcher>();
 
         _window = new View.MainWindow(mainWindowViewModel, counterViewModel, healthCheckService, uiDispatcher);
         _window.Activate();
+        
+        // âœ… Auto-load last solution if enabled
+        _ = AutoLoadLastSolutionAsync(mainWindowViewModel);
+    }
+    
+    /// <summary>
+    /// Automatically loads the last used solution if AutoLoadLastSolution preference is enabled.
+    /// </summary>
+    private async Task AutoLoadLastSolutionAsync(SharedUI.ViewModel.MainWindowViewModel mainWindowViewModel)
+    {
+        try
+        {
+            var preferencesService = Services.GetService<SharedUI.Service.IPreferencesService>();
+            if (preferencesService == null)
+            {
+                System.Diagnostics.Debug.WriteLine("âš ï¸ PreferencesService not available - skipping auto-load");
+                return;
+            }
+
+            if (!preferencesService.AutoLoadLastSolution)
+            {
+                System.Diagnostics.Debug.WriteLine("â„¹ï¸ Auto-load disabled - skipping");
+                return;
+            }
+
+            var lastPath = preferencesService.LastSolutionPath;
+            if (string.IsNullOrEmpty(lastPath))
+            {
+                System.Diagnostics.Debug.WriteLine("â„¹ï¸ No last solution path - skipping auto-load");
+                return;
+            }
+
+            if (!System.IO.File.Exists(lastPath))
+            {
+                System.Diagnostics.Debug.WriteLine($"âš ï¸ Last solution file not found: {lastPath}");
+                return;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"ðŸ”„ Auto-loading last solution: {lastPath}");
+            
+            // Load the solution using IIoService
+            var ioService = Services.GetRequiredService<SharedUI.Service.IIoService>();
+            var (loadedSolution, path, error) = await ioService.LoadFromPathAsync(lastPath);
+            
+            if (!string.IsNullOrEmpty(error))
+            {
+                System.Diagnostics.Debug.WriteLine($"âŒ Auto-load failed: {error}");
+                return;
+            }
+            
+            if (loadedSolution != null)
+            {
+                // Update the Solution singleton
+                mainWindowViewModel.Solution.Projects.Clear();
+                foreach (var project in loadedSolution.Projects)
+                {
+                    mainWindowViewModel.Solution.Projects.Add(project);
+                }
+                mainWindowViewModel.Solution.Name = loadedSolution.Name;
+                
+                // Refresh ViewModel
+                mainWindowViewModel.SolutionViewModel?.Refresh();
+                mainWindowViewModel.CurrentSolutionPath = path;
+                mainWindowViewModel.HasUnsavedChanges = false;
+                
+                System.Diagnostics.Debug.WriteLine("âœ… Auto-load completed successfully");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"âŒ Auto-load failed: {ex.Message}");
+            // Don't crash the application if auto-load fails
+        }
     }
 }

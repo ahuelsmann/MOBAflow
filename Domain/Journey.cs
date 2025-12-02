@@ -21,7 +21,7 @@ public class Journey
     public string Description { get; set; }
     public string Text { get; set; }
     public List<Station> Stations { get; set; }
-    public uint InPort { get; set; }
+    public uint InPort { get; set; } = 1;
     public bool IsUsingTimerToIgnoreFeedbacks { get; set; }
     public double IntervalForTimerToIgnoreFeedbacks { get; set; }
     public BehaviorOnLastStop BehaviorOnLastStop { get; set; }
@@ -29,10 +29,10 @@ public class Journey
     /// <summary>
     /// Current position tracking (managed by JourneyService)
     /// </summary>
-    private int _currentPos;
-    private int _currentCounter;
+    private uint _currentPos;
+    private uint _currentCounter;
 
-    public int CurrentPos
+    public uint CurrentPos
     {
         get => _currentPos;
         set
@@ -45,7 +45,7 @@ public class Journey
     /// <summary>
     /// Current counter for lap tracking (managed by JourneyService)
     /// </summary>
-    public int CurrentCounter
+    public uint CurrentCounter
     {
         get => _currentCounter;
         set
@@ -54,17 +54,17 @@ public class Journey
             StateChanged?.Invoke();
         }
     }
-    
+
     /// <summary>
     /// Reference to next journey (for chaining journeys)
     /// Used when BehaviorOnLastStop == GotoJourney
     /// </summary>
     public Journey? NextJourney { get; set; }
-    
+
     /// <summary>
     /// First position index (default: 0)
     /// </summary>
-    public int FirstPos { get; set; }
+    public uint FirstPos { get; set; }
 
     /// <summary>
     /// Event raised when the journey's runtime state changes (CurrentPos/CurrentCounter).

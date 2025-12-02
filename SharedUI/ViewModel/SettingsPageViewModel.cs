@@ -3,10 +3,11 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Moba.SharedUI.Service;
+
 using Moba.Common.Configuration;
+using Moba.SharedUI.Service;
+
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 /// <summary>
@@ -148,9 +149,9 @@ public partial class SettingsPageViewModel : ObservableObject
         {
             ShowErrorMessage = false;
             await _settingsService.SaveSettingsAsync(_settings);
-            
+
             ShowSuccessMessage = true;
-            
+
             // Auto-hide success message after 3 seconds
             await Task.Delay(3000);
             ShowSuccessMessage = false;
@@ -169,10 +170,10 @@ public partial class SettingsPageViewModel : ObservableObject
         {
             ShowErrorMessage = false;
             await _settingsService.ResetToDefaultsAsync();
-            
+
             // Reload settings from file
             var newSettings = _settingsService.GetSettings();
-            
+
             // Update all properties
             OnPropertyChanged(nameof(Z21IpAddress));
             OnPropertyChanged(nameof(Z21Port));
@@ -186,7 +187,7 @@ public partial class SettingsPageViewModel : ObservableObject
             OnPropertyChanged(nameof(AutoLoadLastSolution));
             OnPropertyChanged(nameof(HealthCheckEnabled));
             OnPropertyChanged(nameof(HealthCheckIntervalSeconds));
-            
+
             ShowSuccessMessage = true;
             await Task.Delay(3000);
             ShowSuccessMessage = false;

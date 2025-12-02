@@ -1,14 +1,14 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Moba.Domain;
-using Moba.Domain.Enum;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using Moba.Domain;
+using Moba.Domain.Enum;
 using Moba.SharedUI.Service;
 
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 
@@ -100,13 +100,13 @@ public partial class JourneyViewModel : ObservableObject
     public IEnumerable<BehaviorOnLastStop> BehaviorOnLastStopValues =>
         Enum.GetValues<BehaviorOnLastStop>();
 
-    public int CurrentCounter
+    public uint CurrentCounter
     {
         get => Model.CurrentCounter;
         set => SetProperty(Model.CurrentCounter, value, Model, (m, v) => m.CurrentCounter = v);
     }
 
-    public int CurrentPos
+    public uint CurrentPos
     {
         get => Model.CurrentPos;
         set => SetProperty(Model.CurrentPos, value, Model, (m, v) => m.CurrentPos = v);
@@ -124,7 +124,7 @@ public partial class JourneyViewModel : ObservableObject
         set => SetProperty(Model.NextJourney, value, Model, (m, v) => m.NextJourney = v);
     }
 
-    public int FirstPos
+    public uint FirstPos
     {
         get => Model.FirstPos;
         set => SetProperty(Model.FirstPos, value, Model, (m, v) => m.FirstPos = v);
@@ -231,5 +231,15 @@ public partial class JourneyViewModel : ObservableObject
             // Trigger reorder logic (updates Model + renumbers)
             StationsReorderedCommand.Execute(null);
         }
+    }
+    
+    /// <summary>
+    /// Simple immediate dispatcher for tests and non-UI contexts.
+    /// Executes actions synchronously on the current thread without platform-specific dispatching.
+    /// Used as fallback when no IUiDispatcher is provided.
+    /// </summary>
+    private sealed class ImmediateDispatcher : IUiDispatcher
+    {
+        public void InvokeOnUi(System.Action action) => action();
     }
 }

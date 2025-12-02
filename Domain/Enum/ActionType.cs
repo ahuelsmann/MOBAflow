@@ -4,6 +4,7 @@ namespace Moba.Domain.Enum;
 public enum ActionType
 {
     Announcement,
-    Command,
-    Audio, // Renamed from "Sound" for clarity
+    Command, // Digital command to the digital control unit, e.g. Z21.
+    Audio,
+    ExecutePowerShellScript,
 }

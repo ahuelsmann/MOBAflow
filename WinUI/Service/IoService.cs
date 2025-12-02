@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
-using Microsoft.UI.Xaml.Controls;
 using Moba.Backend.Data;
 using Moba.Domain;
 using Moba.SharedUI.Service;
@@ -51,7 +50,10 @@ public class IoService : IIoService
         // Configure serialization with StationConverter for efficient workflow reference handling
         var settings = new Newtonsoft.Json.JsonSerializerSettings
         {
-            Converters = { new Backend.Converter.StationConverter() }
+            Converters = {
+                new Backend.Converter.StationConverter(),
+                new Backend.Converter.ActionConverter()
+            }
         };
         
         var sol = Newtonsoft.Json.JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
@@ -81,7 +83,10 @@ public class IoService : IIoService
             // Configure serialization with StationConverter for efficient workflow reference handling
             var settings = new Newtonsoft.Json.JsonSerializerSettings
             {
-                Converters = { new Backend.Converter.StationConverter() }
+                Converters = {
+                    new Backend.Converter.StationConverter(),
+                    new Backend.Converter.ActionConverter()
+                }
             };
             
             var sol = Newtonsoft.Json.JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
@@ -137,7 +142,10 @@ public class IoService : IIoService
             // Configure serialization with StationConverter for efficient workflow reference handling
             var settings = new Newtonsoft.Json.JsonSerializerSettings
             {
-                Converters = { new Backend.Converter.StationConverter() }
+                Converters = {
+                    new Backend.Converter.StationConverter(),
+                    new Backend.Converter.ActionConverter()
+                }
             };
             
             var loadedSolution = Newtonsoft.Json.JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
@@ -182,7 +190,16 @@ public class IoService : IIoService
             path = result.Path;
         }
 
-        var json = Newtonsoft.Json.JsonConvert.SerializeObject(solution, Newtonsoft.Json.Formatting.Indented);
+        var settings = new Newtonsoft.Json.JsonSerializerSettings
+        {
+            Converters = {
+                new Backend.Converter.StationConverter(),
+                new Backend.Converter.ActionConverter()
+            },
+            Formatting = Newtonsoft.Json.Formatting.Indented
+        };
+
+        var json = Newtonsoft.Json.JsonConvert.SerializeObject(solution, settings);
         await File.WriteAllTextAsync(path!, json);
         
         // Save last solution path to preferences

@@ -6,7 +6,6 @@ public enum TrainType
     None,
     Passenger,
     Freight,
-    Mixed,
     Maintenance,
     Special,
 }

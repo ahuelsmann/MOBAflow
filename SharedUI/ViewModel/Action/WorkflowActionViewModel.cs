@@ -32,7 +32,7 @@ public abstract class WorkflowActionViewModel : ObservableObject
         set => SetProperty(_action.Name, value, _action, (a, v) => a.Name = v);
     }
 
-    public int Number
+    public uint Number
     {
         get => _action.Number;
         set => SetProperty(_action.Number, value, _action, (a, v) => a.Number = v);

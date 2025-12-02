@@ -1,10 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Moba.Domain;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using Moba.Domain;
 using Moba.SharedUI.Service;
 
 /// <summary>
@@ -29,7 +28,7 @@ public partial class PlatformViewModel : ObservableObject
         set => SetProperty(Model.Name, value, Model, (m, v) => m.Name = v);
     }
 
-    public string? Track
+    public uint Track
     {
         get => Model.Track;
         set => SetProperty(Model.Track, value, Model, (m, v) => m.Track = v);

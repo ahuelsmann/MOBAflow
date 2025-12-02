@@ -2,9 +2,9 @@
 namespace Moba.WinUI.Service;
 
 using Moba.SharedUI.Service;
+using Newtonsoft.Json;
 using System;
 using System.IO;
-using System.Text.Json;
 
 /// <summary>
 /// Service for persisting application preferences to disk.
@@ -68,7 +68,7 @@ public class PreferencesService : IPreferencesService
             if (File.Exists(_preferencesFilePath))
             {
                 var json = File.ReadAllText(_preferencesFilePath);
-                _preferences = JsonSerializer.Deserialize<Preferences>(json) ?? new Preferences();
+                _preferences = JsonConvert.DeserializeObject<Preferences>(json) ?? new Preferences();
             }
             else
             {
@@ -91,10 +91,7 @@ public class PreferencesService : IPreferencesService
     {
         try
         {
-            var json = JsonSerializer.Serialize(preferences, new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
+            var json = JsonConvert.SerializeObject(preferences, Formatting.Indented);
             File.WriteAllText(_preferencesFilePath, json);
             _preferences = preferences;
         }

@@ -1,6 +1,6 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Moq;
-using Moba.Backend.Interface; // ✅ IUiDispatcher
+// ✅ IUiDispatcher
 using Moba.SharedUI.Service;
 
 namespace Moba.Test.TestBase;

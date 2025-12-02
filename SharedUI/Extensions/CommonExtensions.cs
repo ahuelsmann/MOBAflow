@@ -24,7 +24,7 @@ public static class StringExtensions
     {
         if (value == null) return string.Empty;
         if (maxLength < 0) throw new ArgumentException("Max length must be positive", nameof(maxLength));
-        
+
         return value.Length <= maxLength ? value : value[..maxLength] + "...";
     }
 
@@ -34,7 +34,7 @@ public static class StringExtensions
     public static string ToTitleCase(this string? value)
     {
         if (value.IsNullOrEmpty()) return string.Empty;
-        
+
         var textInfo = System.Globalization.CultureInfo.CurrentCulture.TextInfo;
         return textInfo.ToTitleCase(value!.ToLower());
     }

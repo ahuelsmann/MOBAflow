@@ -168,7 +168,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     private int globalTargetLapCount = 10;
 
     // Z21 System State Properties
-    
+
     /// <summary>
     /// Main track current in milliamperes (mA).
     /// </summary>
@@ -381,7 +381,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
         {
             // TrackOff=true means power is OFF, so invert it
             IsTrackPowerOn = !xBusStatus.TrackOff;
-            
+
             this.Log($"📊 XBus status updated: TrackPowerOn={IsTrackPowerOn}, EmergencyStop={xBusStatus.EmergencyStop}, ShortCircuit={xBusStatus.ShortCircuit}");
         });
     }
@@ -397,7 +397,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
         VccVoltage = systemState.VccVoltage;
         CentralState = $"0x{systemState.CentralState:X2}";
         CentralStateEx = $"0x{systemState.CentralStateEx:X2}";
-        
+
         // Update track power status from Z21 (reflects external changes, e.g., from Z21 app)
         IsTrackPowerOn = systemState.IsTrackPowerOn;
 
@@ -680,4 +680,3 @@ public partial class InPortStatistic : ObservableObject
         OnPropertyChanged(nameof(LastFeedbackTimeFormatted));
     }
 }
-

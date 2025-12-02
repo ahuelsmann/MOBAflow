@@ -8,10 +8,10 @@ using Moba.Domain.Enum;
 /// </summary>
 public class Details
 {
-    public byte Axles { get; set; }
+    public uint Axles { get; set; } = 2; // Number of axles on a wagon
     public Epoch? Epoch { get; set; }
     public string? RailroadCompany { get; set; }
     public PowerSystem? Power { get; set; }
     public DigitalSystem? Digital { get; set; }
-    public string? Description { get; set; }
+    public string Description { get; set; } = string.Empty;
 }

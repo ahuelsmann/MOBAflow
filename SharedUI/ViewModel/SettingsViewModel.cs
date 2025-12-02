@@ -1,10 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Moba.Common.Configuration;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using Moba.Common.Configuration;
 using Moba.SharedUI.Service;
 
 /// <summary>

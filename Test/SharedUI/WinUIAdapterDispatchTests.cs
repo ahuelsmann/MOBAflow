@@ -27,7 +27,7 @@ public class WinUIAdapterDispatchTests
     {
         var model = new Journey();
         var dispatcher = new TestUiDispatcher();
-        var vm = new Moba.SharedUI.ViewModel.WinUI.JourneyViewModel(model, dispatcher);
+        var vm = new Moba.SharedUI.ViewModel.JourneyViewModel(model, dispatcher);
 
         model.CurrentCounter++;
 

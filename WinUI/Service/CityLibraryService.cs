@@ -4,11 +4,11 @@ namespace Moba.WinUI.Service;
 using Moba.Domain;
 using Moba.SharedUI.Service;
 using Moba.Common.Configuration;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 /// <summary>
@@ -51,10 +51,9 @@ public class CityLibraryService : ICityLibraryService
         try
         {
             var json = await File.ReadAllTextAsync(_jsonFilePath);
-            var data = JsonSerializer.Deserialize<CitiesData>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            
+            // Simple deserialization with Newtonsoft.Json - no complex options needed for POCOs
+            var data = JsonConvert.DeserializeObject<CitiesData>(json);
 
             _cachedCities = data?.Cities ?? [];
             System.Diagnostics.Debug.WriteLine($"✅ Loaded {_cachedCities.Count} cities from library");

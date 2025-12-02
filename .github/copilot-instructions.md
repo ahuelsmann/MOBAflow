@@ -43,6 +43,90 @@ WebApp  ──→ SharedUI ──→ Backend ──→ Domain
 
 ## 🏗️ Architecture Rules (CRITICAL!)
 
+### ✅ Domain Models MUST be Pure POCOs
+
+**The `Domain` project contains ONLY pure data classes — NO logic, NO attributes!**
+
+```csharp
+// ✅ CORRECT: Pure POCO in Domain
+namespace Moba.Domain;
+
+public class Station
+{
+    public string Name { get; set; }
+    public int Track { get; set; } = 1;
+    public DateTime? Arrival { get; set; }
+    public DateTime? Departure { get; set; }
+    public Workflow? Flow { get; set; }
+    public Guid? WorkflowId { get; set; }
+}
+
+// ❌ NEVER: Serialization attributes in Domain
+using System.Text.Json.Serialization;
+
+public class Station
+{
+    [JsonConverter(typeof(CustomConverter))]  // ❌ WRONG!
+    public string Name { get; set; }
+    
+    [JsonPropertyName("track_number")]  // ❌ WRONG!
+    public int Track { get; set; }
+}
+
+// ❌ NEVER: Validation attributes in Domain
+using System.ComponentModel.DataAnnotations;
+
+public class Station
+{
+    [Required]  // ❌ WRONG!
+    [StringLength(100)]  // ❌ WRONG!
+    public string Name { get; set; }
+}
+```
+
+**Forbidden in Domain:**
+- ❌ `[JsonConverter]`, `[JsonPropertyName]`, `[JsonIgnore]`
+- ❌ `[Required]`, `[Range]`, `[StringLength]`
+- ❌ `INotifyPropertyChanged`, `ObservableObject`
+- ❌ Business logic methods
+- ❌ Dependencies on other projects (except `System.*`)
+
+**Where to put serialization logic:**
+- **Custom Converters** → `Backend.Converters` or `Common.Converters`
+- **Validation** → `Backend.Services.ValidationService` or ViewModels
+- **Property change notifications** → `SharedUI.ViewModel.*ViewModel`
+
+**Example: Handling complex JSON serialization**
+
+```csharp
+// ✅ CORRECT: Custom converter in Backend/Common
+namespace Moba.Backend.Converters;
+
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Moba.Domain;
+
+public class WorkflowReferenceConverter : JsonConverter<Workflow?>
+{
+    public override Workflow? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        // Complex deserialization logic here
+        var workflowId = reader.GetGuid();
+        return ResolveWorkflowById(workflowId);
+    }
+    
+    public override void Write(Utf8JsonWriter writer, Workflow? value, JsonSerializerOptions options)
+    {
+        // Serialize as WorkflowId instead of full object
+        writer.WriteStringValue(value?.Id.ToString());
+    }
+}
+
+// Register in JsonSerializerOptions (NOT in Domain class!)
+var options = new JsonSerializerOptions();
+options.Converters.Add(new WorkflowReferenceConverter());
+```
+
 ### ✅ Backend Must Stay Platform-Independent
 
 **The `Backend` project MUST remain 100% platform-independent!**
@@ -75,6 +159,62 @@ public class JourneyViewModel : SharedUI.ViewModel.JourneyViewModel
 - ❌ `MainThread.BeginInvokeOnMainThread()` (MAUI)
 - ❌ `#if WINDOWS`, `#if ANDROID`
 - ❌ Any UI framework references
+
+---
+
+### ✅ City Library Architecture
+
+**City Library** (`germany-stations.json`) is **NOT part of user Solution/Project structure**:
+
+```
+📁 germany-stations.json         ← Master data (read-only)
+   └── Cities[]
+       └── Stations[]            ← Templates for Station creation
+
+📁 User Solution (.mobaflow)    ← User's project data
+   └── Projects[]
+       └── Journeys[]
+           └── Stations[]        ← Created from City templates
+```
+
+**Key Principles**:
+1. **City = Master Data** (read-only, not saved in .mobaflow)
+2. **Station = User Data** (created in Journey, saved in .mobaflow)
+3. **City → Station**: User selects City, creates Station copy in Journey
+4. **Domain.City**: Only used as selection helper, NOT in Project structure
+
+**JSON Serialization**:
+- ✅ **ALWAYS use Newtonsoft.Json** for all JSON operations
+- ❌ **NEVER use System.Text.Json** (inconsistency with StationConverter)
+- ✅ Simple POCOs: `JsonConvert.DeserializeObject<T>(json)` (no complex options!)
+- ✅ Custom converters: Only in `Backend.Converter` for complex scenarios
+
+**Example: Simple deserialization**
+```csharp
+// ✅ CORRECT: Simple Newtonsoft.Json deserialization
+var cities = JsonConvert.DeserializeObject<List<City>>(json);
+
+// ❌ WRONG: Complex System.Text.Json options
+var options = new JsonSerializerOptions { /* many options */ };
+var cities = JsonSerializer.Deserialize<List<City>>(json, options);
+```
+
+**City Library Service**:
+- Located in platform projects (WinUI/MAUI/WebApp)
+- Loads `germany-stations.json` via `AppSettings.CityLibrary.FilePath`
+- Provides `LoadCitiesAsync()` for UI selection dialogs
+- Cached after first load (master data rarely changes)
+
+**Station Creation Flow**:
+```
+1. User opens Journey Editor
+2. Clicks "Add Station from City Library"
+3. CityLibraryService.LoadCitiesAsync() → Shows selection dialog
+4. User selects "München Hauptbahnhof"
+5. Copy City.Stations[0] → Create new Station(Name, Track, etc.)
+6. Add Station to Journey.Stations
+7. Save Journey (Station is now part of .mobaflow file)
+```
 
 ---
 

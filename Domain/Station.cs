@@ -15,13 +15,13 @@ public class Station
     public string Name { get; set; }
     public string? Description { get; set; }
     public List<Platform> Platforms { get; set; }
-    public int? FeedbackInPort { get; set; }
+    public uint InPort { get; set; } = 1; 
 
     /// <summary>
     /// Number of laps before stopping at this station.
     /// Used for repeat journey functionality.
     /// </summary>
-    public int NumberOfLapsToStop { get; set; }
+    public uint NumberOfLapsToStop { get; set; }
 
     /// <summary>
     /// Reference to Workflow (by reference, resolved by WorkflowService).
@@ -29,33 +29,33 @@ public class Station
     /// Do not serialize this - use WorkflowId instead.
     /// </summary>
     public Workflow? Flow { get; set; }
-    
+
     /// <summary>
     /// Workflow ID for serialization/deserialization.
     /// </summary>
     public Guid? WorkflowId { get; set; }
-    
+
     // --- Phase 1 Properties (Simplified Platform representation) ---
     // TODO: Move to Platform when Phase 2 is implemented
-    
+
     /// <summary>
     /// Track/Platform number (simplified for Phase 1).
     /// In Phase 2, this will move to Platform entity.
     /// </summary>
-    public string? Track { get; set; }
-    
+    public uint? Track { get; set; } = 1;
+
     /// <summary>
-    /// Arrival time or track designation (simplified for Phase 1).
+    /// Arrival time (simplified for Phase 1).
     /// In Phase 2, this will move to Platform entity.
     /// </summary>
-    public string? Arrival { get; set; }
-    
+    public DateTime? Arrival { get; set; }
+
     /// <summary>
-    /// Departure time or track designation (simplified for Phase 1).
+    /// Departure time (simplified for Phase 1).
     /// In Phase 2, this will move to Platform entity.
     /// </summary>
-    public string? Departure { get; set; }
-    
+    public DateTime? Departure { get; set; }
+
     /// <summary>
     /// Exit orientation - true if exit is on left side (simplified for Phase 1).
     /// In Phase 2, this will move to Platform entity.

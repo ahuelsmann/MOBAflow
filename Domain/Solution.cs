@@ -44,7 +44,7 @@ public class Solution
         if (string.IsNullOrWhiteSpace(filePath)) throw new ArgumentException("filePath is required", nameof(filePath));
         if (!File.Exists(filePath)) throw new FileNotFoundException("Solution file not found", filePath);
 
-        using var stream = File.OpenRead(filePath);
+        await using var stream = File.OpenRead(filePath);
         var loaded = await System.Text.Json.JsonSerializer.DeserializeAsync<Solution>(stream, new System.Text.Json.JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true

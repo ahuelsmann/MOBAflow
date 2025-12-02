@@ -1,15 +1,16 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Moba.Backend.Manager;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+
 using Moba.Backend.Interface;
+using Moba.Backend.Manager;
 using Moba.Common.Configuration;
 using Moba.Common.Extensions;
 using Moba.Domain;
+using Moba.Domain.Enum;
 using Moba.SharedUI.Service;
-
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -36,19 +37,24 @@ public partial class MainWindowViewModel : ObservableObject
         IJourneyManagerFactory journeyManagerFactory,
         IUiDispatcher uiDispatcher,
         AppSettings settings,
-        Solution solution)
+        Solution solution,
+        ICityLibraryService? cityLibraryService = null)
     {
         _ioService = ioService;
         _z21 = z21;
         _journeyManagerFactory = journeyManagerFactory;
         _uiDispatcher = uiDispatcher;
         _settings = settings;
+        _cityLibraryService = cityLibraryService;
 
         // Subscribe to Z21 events
         _z21.OnSystemStateChanged += OnZ21SystemStateChanged;
 
         // Use injected Solution from DI container
         Solution = solution;
+
+        // Load city library asynchronously
+        _ = LoadCityLibraryAsync();
     }
 
     [RelayCommand]
@@ -121,6 +127,22 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private Backend.Data.City? selectedCity;
 
+    /// <summary>
+    /// Gets the currently selected project as a ProjectViewModel.
+    /// Returns null if no project is selected or SolutionViewModel is not initialized.
+    /// </summary>
+    public ProjectViewModel? CurrentProjectViewModel
+    {
+        get
+        {
+            if (SolutionViewModel == null || SolutionViewModel.Projects.Count == 0)
+                return null;
+
+            // For now, return the first project (later can be extended to support project selection)
+            return SolutionViewModel.Projects.FirstOrDefault();
+        }
+    }
+
     public event EventHandler? ExitApplicationRequested;
 
     #endregion
@@ -134,6 +156,7 @@ public partial class MainWindowViewModel : ObservableObject
             HasSolution = false;
             SolutionViewModel = null;
             AvailableCities.Clear();
+            OnPropertyChanged(nameof(CurrentProjectViewModel)); // ✅ Notify that project changed
             return;
         }
 
@@ -145,10 +168,11 @@ public partial class MainWindowViewModel : ObservableObject
 
         SolutionViewModel = new SolutionViewModel(value, _uiDispatcher);
         HasSolution = value.Projects.Count > 0;
-        
+
         SaveSolutionCommand.NotifyCanExecuteChanged();
         ConnectToZ21Command.NotifyCanExecuteChanged();
-        
+        OnPropertyChanged(nameof(CurrentProjectViewModel)); // ✅ Notify that project changed
+
         LoadCities();
     }
 
@@ -210,12 +234,12 @@ public partial class MainWindowViewModel : ObservableObject
     private async Task NewSolutionAsync()
     {
         var (success, userCancelled, error) = await _ioService.NewSolutionAsync(HasUnsavedChanges);
-        
+
         if (userCancelled)
         {
             return;
         }
-        
+
         if (!success)
         {
             if (error == "SAVE_REQUESTED")
@@ -230,11 +254,11 @@ public partial class MainWindowViewModel : ObservableObject
                 return;
             }
         }
-        
+
         // Clear existing Solution (DI singleton)
         Solution.Projects.Clear();
         Solution.Name = "New Solution";
-        
+
         // Add default project
         Solution.Projects.Add(new Project
         {
@@ -243,12 +267,12 @@ public partial class MainWindowViewModel : ObservableObject
             Workflows = new System.Collections.Generic.List<Workflow>(),
             Trains = new System.Collections.Generic.List<Train>()
         });
-        
+
         SolutionViewModel?.Refresh();
-        
+
         CurrentSolutionPath = null;
         HasUnsavedChanges = true;
-        
+
         SaveSolutionCommand.NotifyCanExecuteChanged();
         ConnectToZ21Command.NotifyCanExecuteChanged();
     }
@@ -276,7 +300,7 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 Solution.Projects.Add(project);
             }
-            
+
             Solution.Name = loadedSolution.Name;
 
             SolutionViewModel?.Refresh();
@@ -284,10 +308,10 @@ public partial class MainWindowViewModel : ObservableObject
             CurrentSolutionPath = path;
             HasUnsavedChanges = false;
             HasSolution = Solution.Projects.Count > 0;
-            
+
             SaveSolutionCommand.NotifyCanExecuteChanged();
             ConnectToZ21Command.NotifyCanExecuteChanged();
-            
+
             LoadCities();
 
             OnPropertyChanged(nameof(Solution));
@@ -362,7 +386,7 @@ public partial class MainWindowViewModel : ObservableObject
             IsZ21Connected = false;
             IsTrackPowerOn = false;
             Z21StatusText = "Disconnected";
-            
+
             ConnectToZ21Command.NotifyCanExecuteChanged();
             SetTrackPowerCommand.NotifyCanExecuteChanged();
         }
@@ -526,7 +550,7 @@ public partial class MainWindowViewModel : ObservableObject
                 Name = stationToCopy.Name,
                 Description = stationToCopy.Description,
                 NumberOfLapsToStop = 2,
-                FeedbackInPort = stationToCopy.FeedbackInPort
+                InPort = stationToCopy.InPort
             };
 
             // Add to Journey model
@@ -541,6 +565,445 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     private bool CanAddStationToJourney() => true;
+
+    #endregion
+
+    #region Journey CRUD Commands
+
+    [RelayCommand]
+    private void AddJourney()
+    {
+        if (CurrentProjectViewModel == null) return;
+
+        var newJourney = new Journey
+        {
+            Name = "New Journey",
+            BehaviorOnLastStop = BehaviorOnLastStop.None
+        };
+
+        CurrentProjectViewModel.Model.Journeys.Add(newJourney);
+
+        var journeyVM = new JourneyViewModel(newJourney);
+        CurrentProjectViewModel.Journeys.Add(journeyVM);
+        SelectedJourney = journeyVM;
+
+        HasUnsavedChanges = true;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanDeleteJourney))]
+    private void DeleteJourney()
+    {
+        if (SelectedJourney == null || CurrentProjectViewModel == null) return;
+
+        CurrentProjectViewModel.Model.Journeys.Remove(SelectedJourney.Model);
+        CurrentProjectViewModel.Journeys.Remove(SelectedJourney);
+        SelectedJourney = null;
+
+        HasUnsavedChanges = true;
+    }
+
+    private bool CanDeleteJourney() => SelectedJourney != null;
+
+    #endregion
+
+    #region Station CRUD Commands
+
+    [RelayCommand(CanExecute = nameof(CanAddStation))]
+    private void AddStation()
+    {
+        if (SelectedJourney == null) return;
+
+        var newStation = new Station
+        {
+            Name = "New Station",
+            NumberOfLapsToStop = 2
+        };
+
+        SelectedJourney.Model.Stations.Add(newStation);
+
+        var stationVM = new StationViewModel(newStation);
+        SelectedJourney.Stations.Add(stationVM);
+        SelectedStation = stationVM;
+
+        HasUnsavedChanges = true;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanDeleteStation))]
+    private void DeleteStation()
+    {
+        if (SelectedStation == null || SelectedJourney == null) return;
+
+        SelectedJourney.Model.Stations.Remove(SelectedStation.Model);
+        SelectedJourney.Stations.Remove(SelectedStation);
+        SelectedStation = null;
+
+        HasUnsavedChanges = true;
+    }
+
+    private bool CanAddStation() => SelectedJourney != null;
+    private bool CanDeleteStation() => SelectedStation != null;
+
+    #endregion
+
+    #region Workflow CRUD Commands
+
+    [RelayCommand]
+    private void AddWorkflow()
+    {
+        if (CurrentProjectViewModel == null) return;
+
+        var newWorkflow = new Workflow { Name = "New Workflow" };
+        CurrentProjectViewModel.Model.Workflows.Add(newWorkflow);
+
+        var workflowVM = new WorkflowViewModel(newWorkflow);
+        CurrentProjectViewModel.Workflows.Add(workflowVM);
+        SelectedWorkflow = workflowVM;
+
+        HasUnsavedChanges = true;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanDeleteWorkflow))]
+    private void DeleteWorkflow()
+    {
+        if (SelectedWorkflow == null || CurrentProjectViewModel == null) return;
+
+        CurrentProjectViewModel.Model.Workflows.Remove(SelectedWorkflow.Model);
+        CurrentProjectViewModel.Workflows.Remove(SelectedWorkflow);
+        SelectedWorkflow = null;
+
+        HasUnsavedChanges = true;
+    }
+
+    private bool CanDeleteWorkflow() => SelectedWorkflow != null;
+
+    #endregion
+
+    #region Train CRUD Commands
+
+    [RelayCommand]
+    private void AddTrain()
+    {
+        if (CurrentProjectViewModel == null) return;
+
+        var newTrain = new Train { Name = "New Train" };
+        CurrentProjectViewModel.Model.Trains.Add(newTrain);
+
+        var trainVM = new TrainViewModel(newTrain);
+        CurrentProjectViewModel.Trains.Add(trainVM);
+        SelectedTrain = trainVM;
+
+        HasUnsavedChanges = true;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanDeleteTrain))]
+    private void DeleteTrain()
+    {
+        if (SelectedTrain == null || CurrentProjectViewModel == null) return;
+
+        CurrentProjectViewModel.Model.Trains.Remove(SelectedTrain.Model);
+        CurrentProjectViewModel.Trains.Remove(SelectedTrain);
+        SelectedTrain = null;
+
+        HasUnsavedChanges = true;
+    }
+
+    private bool CanDeleteTrain() => SelectedTrain != null;
+
+    #endregion
+
+    #region Locomotive CRUD Commands
+
+    [ObservableProperty]
+    private LocomotiveViewModel? selectedLocomotive;
+
+    [RelayCommand]
+    private void AddLocomotive()
+    {
+        if (CurrentProjectViewModel == null) return;
+
+        var newLocomotive = new Locomotive
+        {
+            Name = "New Locomotive",
+            DigitalAddress = 3
+        };
+
+        CurrentProjectViewModel.Model.Locomotives.Add(newLocomotive);
+
+        var locomotiveVM = new LocomotiveViewModel(newLocomotive);
+        CurrentProjectViewModel.Locomotives.Add(locomotiveVM);
+        SelectedLocomotive = locomotiveVM;
+
+        HasUnsavedChanges = true;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanDeleteLocomotive))]
+    private void DeleteLocomotive()
+    {
+        if (SelectedLocomotive == null || CurrentProjectViewModel == null) return;
+
+        CurrentProjectViewModel.Model.Locomotives.Remove(SelectedLocomotive.Model);
+        CurrentProjectViewModel.Locomotives.Remove(SelectedLocomotive);
+        SelectedLocomotive = null;
+
+        HasUnsavedChanges = true;
+    }
+
+    private bool CanDeleteLocomotive() => SelectedLocomotive != null;
+
+    #endregion
+
+    #region Wagon CRUD Commands
+
+    [ObservableProperty]
+    private WagonViewModel? selectedWagon;
+
+    [RelayCommand]
+    private void AddPassengerWagon()
+    {
+        if (CurrentProjectViewModel == null) return;
+
+        var newWagon = new PassengerWagon
+        {
+            Name = "New Passenger Wagon",
+            WagonClass = PassengerClass.Second
+        };
+
+        CurrentProjectViewModel.Model.PassengerWagons.Add(newWagon);
+
+        var wagonVM = new PassengerWagonViewModel(newWagon);
+        CurrentProjectViewModel.Wagons.Add(wagonVM);
+        SelectedWagon = wagonVM;
+
+        HasUnsavedChanges = true;
+    }
+
+    [RelayCommand]
+    private void AddGoodsWagon()
+    {
+        if (CurrentProjectViewModel == null) return;
+
+        var newWagon = new GoodsWagon
+        {
+            Name = "New Goods Wagon",
+            Cargo = CargoType.General
+        };
+
+        CurrentProjectViewModel.Model.GoodsWagons.Add(newWagon);
+
+        var wagonVM = new GoodsWagonViewModel(newWagon);
+        CurrentProjectViewModel.Wagons.Add(wagonVM);
+        SelectedWagon = wagonVM;
+
+        HasUnsavedChanges = true;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanDeleteWagon))]
+    private void DeleteWagon()
+    {
+        if (SelectedWagon == null || CurrentProjectViewModel == null) return;
+
+        // Remove from appropriate model collection
+        if (SelectedWagon.Model is PassengerWagon pw)
+            CurrentProjectViewModel.Model.PassengerWagons.Remove(pw);
+        else if (SelectedWagon.Model is GoodsWagon gw)
+            CurrentProjectViewModel.Model.GoodsWagons.Remove(gw);
+
+        CurrentProjectViewModel.Wagons.Remove(SelectedWagon);
+        SelectedWagon = null;
+
+        HasUnsavedChanges = true;
+    }
+
+    private bool CanDeleteWagon() => SelectedWagon != null;
+
+    #endregion
+
+    #region Workflow Actions Commands
+
+    [RelayCommand]
+    private void AddAnnouncement()
+    {
+        if (SelectedWorkflow == null) return;
+
+        var newAction = new Domain.WorkflowAction
+        {
+            Name = "New Announcement",
+            Number = (uint)(SelectedWorkflow.Model.Actions.Count + 1),
+            Type = Domain.Enum.ActionType.Announcement,
+            Parameters = new Dictionary<string, object>
+            {
+                ["Message"] = "Enter announcement text",
+                ["VoiceName"] = "de-DE-KatjaNeural"
+            }
+        };
+
+        SelectedWorkflow.Model.Actions.Add(newAction);
+        var viewModel = new Action.AnnouncementViewModel(newAction);
+        SelectedWorkflow.Actions.Add(viewModel);
+
+        HasUnsavedChanges = true;
+    }
+
+    [RelayCommand]
+    private void AddCommand()
+    {
+        if (SelectedWorkflow == null) return;
+
+        var newAction = new Domain.WorkflowAction
+        {
+            Name = "New Command",
+            Number = (uint)(SelectedWorkflow.Model.Actions.Count + 1),
+            Type = Domain.Enum.ActionType.Command,
+            Parameters = new Dictionary<string, object>
+            {
+                ["Bytes"] = new byte[] { 0x00 }
+            }
+        };
+
+        SelectedWorkflow.Model.Actions.Add(newAction);
+        var viewModel = new Action.CommandViewModel(newAction);
+        SelectedWorkflow.Actions.Add(viewModel);
+
+        HasUnsavedChanges = true;
+    }
+
+    [RelayCommand]
+    private void AddAudio()
+    {
+        if (SelectedWorkflow == null) return;
+
+        var newAction = new Domain.WorkflowAction
+        {
+            Name = "New Audio",
+            Number = (uint)(SelectedWorkflow.Model.Actions.Count + 1),
+            Type = Domain.Enum.ActionType.Audio,
+            Parameters = new Dictionary<string, object>
+            {
+                ["FilePath"] = "sound.wav"
+            }
+        };
+
+        SelectedWorkflow.Model.Actions.Add(newAction);
+        var viewModel = new Action.AudioViewModel(newAction);
+        SelectedWorkflow.Actions.Add(viewModel);
+
+        HasUnsavedChanges = true;
+    }
+
+    #endregion
+
+    #region Train Composition Commands
+
+    [RelayCommand]
+    private void AddLocomotiveToComposition()
+    {
+        if (SelectedTrain == null) return;
+
+        // TODO: Enhance to select from global library
+        var newLocomotive = new Locomotive
+        {
+            Name = "New Locomotive",
+            DigitalAddress = 3
+        };
+
+        SelectedTrain.Model.Locomotives.Add(newLocomotive);
+        var locomotiveVM = new LocomotiveViewModel(newLocomotive);
+        SelectedTrain.Locomotives.Add(locomotiveVM);
+
+        HasUnsavedChanges = true;
+    }
+
+    [RelayCommand]
+    private void AddWagonToComposition()
+    {
+        if (SelectedTrain == null) return;
+
+        // TODO: Enhance to select from global library
+        var newWagon = new PassengerWagon
+        {
+            Name = "New Passenger Wagon",
+            WagonClass = PassengerClass.Second
+        };
+
+        SelectedTrain.Model.Wagons.Add(newWagon);
+        var wagonVM = new PassengerWagonViewModel(newWagon);
+        SelectedTrain.Wagons.Add(wagonVM);
+
+        HasUnsavedChanges = true;
+    }
+
+    #endregion
+
+    #region City Library
+
+    private readonly ICityLibraryService? _cityLibraryService;
+
+    [ObservableProperty]
+    private ObservableCollection<Domain.City> cityLibrary = [];
+
+    [ObservableProperty]
+    private string citySearchText = string.Empty;
+
+    partial void OnCitySearchTextChanged(string value)
+    {
+        if (_cityLibraryService == null) return;
+
+        var filtered = _cityLibraryService.FilterCities(value);
+        CityLibrary = new ObservableCollection<Domain.City>(filtered);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanAddStationFromCity))]
+    private void AddStationFromCity(Domain.City city)
+    {
+        if (SelectedJourney == null || city == null) return;
+
+        // Create Station from City's first station (Hauptbahnhof)
+        var cityStation = city.Stations.FirstOrDefault();
+        if (cityStation == null) return;
+
+        var newStation = new Station
+        {
+            Name = cityStation.Name,
+            Track = cityStation.Track,
+            NumberOfLapsToStop = 1,
+            Description = $"From {city.Name}",
+            IsExitOnLeft = cityStation.IsExitOnLeft
+        };
+
+        SelectedJourney.Model.Stations.Add(newStation);
+
+        var stationVM = new StationViewModel(newStation);
+        SelectedJourney.Stations.Add(stationVM);
+        SelectedStation = stationVM;
+
+        HasUnsavedChanges = true;
+
+        System.Diagnostics.Debug.WriteLine($"✅ Added station from city: {city.Name} → {newStation.Name}");
+    }
+
+    private bool CanAddStationFromCity() => SelectedJourney != null;
+
+    /// <summary>
+    /// Loads the city library from the city library service.
+    /// Call this during initialization.
+    /// </summary>
+    public async Task LoadCityLibraryAsync()
+    {
+        if (_cityLibraryService == null) return;
+
+        var cities = await _cityLibraryService.LoadCitiesAsync();
+        CityLibrary = new ObservableCollection<Domain.City>(cities);
+    }
+
+    #endregion
+
+    #region Settings
+
+    /// <summary>
+    /// Application settings - exposed for direct binding.
+    /// Settings are stored in appsettings.json (not in Solution).
+    /// </summary>
+    public AppSettings Settings => _settings;
 
     #endregion
 }

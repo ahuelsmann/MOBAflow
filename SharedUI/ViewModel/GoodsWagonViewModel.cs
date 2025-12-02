@@ -3,9 +3,6 @@ namespace Moba.SharedUI.ViewModel;
 
 using Moba.Domain;
 using Moba.Domain.Enum;
-
-using CommunityToolkit.Mvvm.ComponentModel;
-
 using Moba.SharedUI.Service;
 
 /// <summary>

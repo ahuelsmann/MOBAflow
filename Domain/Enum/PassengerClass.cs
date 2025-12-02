@@ -13,4 +13,5 @@ public enum PassengerClass
     Baggage,
     Bike,
     Mail,
+    Mixed,
 }

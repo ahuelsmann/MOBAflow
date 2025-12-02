@@ -28,12 +28,9 @@ public sealed partial class ProjectConfigurationPage : Page
             DataContext = ViewModel;
             
             // Debug output
-            System.Diagnostics.Debug.WriteLine($"📄 ProjectConfigurationPage loaded:");
-            System.Diagnostics.Debug.WriteLine($"   Journeys: {ViewModel.Journeys.Count}");
-            System.Diagnostics.Debug.WriteLine($"   Workflows: {ViewModel.Workflows.Count}");
-            System.Diagnostics.Debug.WriteLine($"   Trains: {ViewModel.Trains.Count}");
-            System.Diagnostics.Debug.WriteLine($"   DeleteJourneyCommand exists: {ViewModel.DeleteJourneyCommand != null}");
-            System.Diagnostics.Debug.WriteLine($"   CanDeleteJourney (initial): {(ViewModel.DeleteJourneyCommand?.CanExecute(null) ?? false)}");
+            System.Diagnostics.Debug.WriteLine("ProjectConfigurationPage loaded");
+            System.Diagnostics.Debug.WriteLine($"   MainWindowViewModel connected: {ViewModel.MainWindowViewModel != null}");
+            System.Diagnostics.Debug.WriteLine($"   CurrentProject: {ViewModel.MainWindowViewModel.CurrentProjectViewModel?.Name ?? "null"}");
             
             // Notify bindings to update
             Bindings.Update();

@@ -24,7 +24,7 @@ public class Workflow
     /// </summary>
     public List<WorkflowAction> Actions { get; set; }
     
-    public uint InPort { get; set; }
+    public uint InPort { get; set; } = 1;
     public bool IsUsingTimerToIgnoreFeedbacks { get; set; }
     public double IntervalForTimerToIgnoreFeedbacks { get; set; }
 }

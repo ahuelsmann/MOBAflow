@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
 using Microsoft.UI.Xaml.Controls;
@@ -7,7 +7,7 @@ using Microsoft.UI.Xaml.Input;
 using Moba.SharedUI.ViewModel;
 using Moba.WinUI.Service;
 
-using MainWindowViewModel = Moba.SharedUI.ViewModel.WinUI.MainWindowViewModel;
+using MainWindowViewModel = Moba.SharedUI.ViewModel.MainWindowViewModel;
 
 public sealed partial class MainWindow
 {
@@ -39,7 +39,7 @@ public sealed partial class MainWindow
         if (ioService is WinUI.Service.IoService winUiIoService)
         {
             winUiIoService.SetWindowId(this.AppWindow.Id, this.Content.XamlRoot);
-            System.Diagnostics.Debug.WriteLine("✅ IoService initialized with WindowId");
+            System.Diagnostics.Debug.WriteLine("âœ… IoService initialized with WindowId");
         }
 
         // Set first nav item as selected (Overview)
@@ -75,7 +75,7 @@ public sealed partial class MainWindow
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"❌ Failed to navigate to Overview: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"âŒ Failed to navigate to Overview: {ex.Message}");
         }
     }
 
@@ -88,7 +88,7 @@ public sealed partial class MainWindow
         else if (e.PropertyName == nameof(MainWindowViewModel.Solution))
         {
             // Solution was loaded - refresh EditorPageViewModel if it exists
-            System.Diagnostics.Debug.WriteLine("🔄 Solution changed - refreshing EditorPageViewModel");
+            System.Diagnostics.Debug.WriteLine("ðŸ”„ Solution changed - refreshing EditorPageViewModel");
 
             try
             {
@@ -97,13 +97,13 @@ public sealed partial class MainWindow
 
                 if (editorViewModel != null)
                 {
-                    editorViewModel.Refresh();
-                    System.Diagnostics.Debug.WriteLine("✅ EditorPageViewModel refreshed after Solution change");
+                    // âœ… No longer need Refresh() - data comes from MainWindowViewModel.SolutionViewModel
+                    System.Diagnostics.Debug.WriteLine("âœ… EditorPageViewModel connected - data automatically updated via MainWindowViewModel");
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"⚠️ Failed to refresh EditorPageViewModel: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"âš ï¸ Failed to refresh EditorPageViewModel: {ex.Message}");
             }
         }
     }
@@ -143,18 +143,18 @@ public sealed partial class MainWindow
         Microsoft.UI.Xaml.Controls.ToolTipService.SetToolTip(SpeechHealthPanel, statusMessage);
 
         // Update icon and color based on health status
-        if (statusMessage.Contains("✅") || statusMessage.Contains("Ready"))
+        if (statusMessage.Contains("âœ…") || statusMessage.Contains("Ready"))
         {
             SpeechHealthIcon.Glyph = "\uE930"; // Checkmark circle
             SpeechHealthIcon.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
                 Microsoft.UI.Colors.Green);
         }
-        else if (statusMessage.Contains("⚠️") || statusMessage.Contains("Not Configured"))
+        else if (statusMessage.Contains("âš ï¸") || statusMessage.Contains("Not Configured"))
         {
             SpeechHealthIcon.Glyph = "\uE7BA"; // Warning
             SpeechHealthIcon.Foreground = Microsoft.UI.Xaml.Application.Current.Resources["SystemFillColorCautionBrush"] as Microsoft.UI.Xaml.Media.Brush;
         }
-        else if (statusMessage.Contains("❌") || statusMessage.Contains("Failed"))
+        else if (statusMessage.Contains("âŒ") || statusMessage.Contains("Failed"))
         {
             SpeechHealthIcon.Glyph = "\uE711"; // Error
             SpeechHealthIcon.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
@@ -232,34 +232,33 @@ public sealed partial class MainWindow
                 // Navigate to EditorPage (using Singleton ViewModel)
                 try
                 {
-                    System.Diagnostics.Debug.WriteLine($"🔍 Attempting to navigate to EditorPage...");
+                    System.Diagnostics.Debug.WriteLine($"ðŸ” Attempting to navigate to EditorPage...");
                     System.Diagnostics.Debug.WriteLine($"   Solution: {ViewModel.Solution != null}");
                     System.Diagnostics.Debug.WriteLine($"   Projects: {ViewModel.Solution?.Projects.Count ?? 0}");
 
                     var editorViewModel = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<SharedUI.ViewModel.EditorPageViewModel>(
                         ((App)Microsoft.UI.Xaml.Application.Current).Services);
 
-                    System.Diagnostics.Debug.WriteLine($"🔄 Navigating to EditorPage - refreshing data first");
+                    System.Diagnostics.Debug.WriteLine($"ðŸ”„ Navigating to EditorPage - refreshing data first");
                     System.Diagnostics.Debug.WriteLine($"   Solution has {ViewModel.Solution?.Projects.Count ?? 0} projects");
                     if (ViewModel.Solution?.Projects.Count > 0)
                     {
                         System.Diagnostics.Debug.WriteLine($"   First project has {ViewModel.Solution.Projects[0].Journeys.Count} journeys");
                     }
 
-                    // Always refresh EditorPageViewModel before navigating
-                    editorViewModel.Refresh();
+                    // âœ… No longer need Refresh() - EditorPageViewModel is just a wrapper
 
                     var editorPage = new EditorPage(editorViewModel);
 
-                    System.Diagnostics.Debug.WriteLine($"✅ Navigating to EditorPage (Singleton ViewModel)");
+                    System.Diagnostics.Debug.WriteLine($"âœ… Navigating to EditorPage (Singleton ViewModel)");
 
                     ContentFrame.Content = editorPage;
 
-                    System.Diagnostics.Debug.WriteLine($"✅ Navigation to EditorPage complete");
+                    System.Diagnostics.Debug.WriteLine($"âœ… Navigation to EditorPage complete");
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"❌ Failed to navigate to EditorPage:");
+                    System.Diagnostics.Debug.WriteLine($"âŒ Failed to navigate to EditorPage:");
                     System.Diagnostics.Debug.WriteLine($"   Exception Type: {ex.GetType().Name}");
                     System.Diagnostics.Debug.WriteLine($"   Message: {ex.Message}");
                     System.Diagnostics.Debug.WriteLine($"   StackTrace: {ex.StackTrace}");
@@ -279,17 +278,15 @@ public sealed partial class MainWindow
                 try
                 {
                     var project = ViewModel.Solution.Projects[0];
-                    var preferencesService = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<SharedUI.Service.IPreferencesService>(
-                        ((App)Microsoft.UI.Xaml.Application.Current).Services);
-                    var configViewModel = new SharedUI.ViewModel.ProjectConfigurationPageViewModel(project, preferencesService, ViewModel);
+                    var configViewModel = new SharedUI.ViewModel.ProjectConfigurationPageViewModel(ViewModel);
 
-                    System.Diagnostics.Debug.WriteLine($"✅ Navigating to ProjectConfigurationPage with {project.Journeys.Count} journeys, {project.Workflows.Count} workflows, {project.Trains.Count} trains");
+                    System.Diagnostics.Debug.WriteLine($"âœ… Navigating to ProjectConfigurationPage with {project.Journeys.Count} journeys, {project.Workflows.Count} workflows, {project.Trains.Count} trains");
 
                     ContentFrame.Navigate(typeof(ProjectConfigurationPage), configViewModel);
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"❌ Failed to navigate to ProjectConfigurationPage: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"âŒ Failed to navigate to ProjectConfigurationPage: {ex.Message}");
 
                     _ = ShowErrorDialogAsync("Navigation Error", $"Failed to open Project Configuration: {ex.Message}");
                 }
@@ -305,11 +302,11 @@ public sealed partial class MainWindow
                     var settingsPage = new SettingsPage(settingsViewModel);
                     ContentFrame.Content = settingsPage;
 
-                    System.Diagnostics.Debug.WriteLine($"✅ Navigated to SettingsPage");
+                    System.Diagnostics.Debug.WriteLine($"âœ… Navigated to SettingsPage");
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"❌ Failed to navigate to SettingsPage: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"âŒ Failed to navigate to SettingsPage: {ex.Message}");
                     _ = ShowErrorDialogAsync("Navigation Error", $"Failed to open Settings: {ex.Message}");
                 }
                 break;

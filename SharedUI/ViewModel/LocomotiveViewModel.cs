@@ -1,11 +1,10 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Moba.Domain;
-using Moba.Domain.Enum;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using Moba.Domain;
+using Moba.Domain.Enum;
 using Moba.SharedUI.Service;
 
 /// <summary>
@@ -30,7 +29,7 @@ public partial class LocomotiveViewModel : ObservableObject
         set => SetProperty(Model.Name, value, Model, (m, v) => m.Name = v);
     }
 
-    public uint? Pos
+    public uint Pos
     {
         get => Model.Pos;
         set => SetProperty(Model.Pos, value, Model, (m, v) => m.Pos = v);

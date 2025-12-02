@@ -21,12 +21,19 @@ public class ActionConverter : JsonConverter<WorkflowAction>
 
         var action = new WorkflowAction
         {
-            Id = jo["Id"]?.ToObject<Guid>() ?? Guid.NewGuid(),
-            Name = jo["Name"]?.ToObject<string>() ?? string.Empty,
-            Number = jo["Number"]?.ToObject<int>() ?? 0,
-            Type = jo["Type"]?.ToObject<ActionType>() ?? ActionType.Command,
-            Parameters = jo["Parameters"]?.ToObject<Dictionary<string, object>>()
+            Id = jo["Id"]?.ToObject<Guid>(serializer) ?? Guid.NewGuid(),
+            Name = jo["Name"]?.ToObject<string>(serializer) ?? string.Empty,
+            Number = jo["Number"]?.ToObject<uint>(serializer) ?? 0,
+            Type = jo["Type"]?.ToObject<ActionType>(serializer) ?? ActionType.Command,
+            Parameters = null
         };
+
+        // Read parameters as JToken dictionary first (preserves JSON structure)
+        var paramTokens = jo["Parameters"]?.ToObject<Dictionary<string, JToken>>(serializer);
+        if (paramTokens != null)
+        {
+            action.Parameters = paramTokens.ToDictionary(kv => kv.Key, kv => (object)kv.Value);
+        }
 
         return action;
     }
