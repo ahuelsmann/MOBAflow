@@ -273,33 +273,11 @@ public sealed partial class MainWindow
                 }
                 break;
 
-            case "configuration":
-                // Navigate to ProjectConfigurationPage
-                try
-                {
-                    var project = ViewModel.Solution.Projects[0];
-                    
-
-                    System.Diagnostics.Debug.WriteLine($"ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Navigating to ProjectConfigurationPage with {project.Journeys.Count} journeys, {project.Workflows.Count} workflows, {project.Trains.Count} trains");
-
-                    ContentFrame.Navigate(typeof(EditorPage2), ViewModel);
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"ÃƒÂ¢Ã‚ÂÃ…â€™ Failed to navigate to ProjectConfigurationPage: {ex.Message}");
-
-                    _ = ShowErrorDialogAsync("Navigation Error", $"Failed to open Project Configuration: {ex.Message}");
-                }
-                break;
-
             case "settings":
-                // Navigate to SettingsPage (application-wide settings)
+                // Navigate to SettingsPage (uses MainWindowViewModel)
                 try
                 {
-                    var settingsViewModel = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<SharedUI.ViewModel.SettingsPageViewModel>(
-                        ((App)Microsoft.UI.Xaml.Application.Current).Services);
-
-                    var settingsPage = new SettingsPage(settingsViewModel);
+                    var settingsPage = new SettingsPage(ViewModel);
                     ContentFrame.Content = settingsPage;
 
                     System.Diagnostics.Debug.WriteLine($"ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Navigated to SettingsPage");
@@ -343,15 +321,13 @@ public sealed partial class MainWindow
 
     // Context menu handlers removed - editing now done in EditorPage
 
-    private async void TrackPower_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    // Minimal event handler - delegates to ViewModel Command (XAML limitation for AppBarToggleButton)
+    private void TrackPower_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
         if (sender is Microsoft.UI.Xaml.Controls.AppBarToggleButton toggleButton)
         {
-            // Use MainWindowViewModel.SetTrackPowerCommand
-            if (ViewModel.SetTrackPowerCommand.CanExecute(toggleButton.IsChecked))
-            {
-                await ViewModel.SetTrackPowerCommand.ExecuteAsync(toggleButton.IsChecked);
-            }
+            // Simply execute command with current state - no business logic here
+            CounterViewModel.SetTrackPowerCommand.Execute(toggleButton.IsChecked);
         }
     }
 }

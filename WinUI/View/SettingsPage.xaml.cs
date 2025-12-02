@@ -7,12 +7,13 @@ using Moba.SharedUI.ViewModel;
 
 /// <summary>
 /// Settings page for application-wide configuration.
+/// Uses MainWindowViewModel.Settings for data binding.
 /// </summary>
 public sealed partial class SettingsPage : Page
 {
-    public SettingsPageViewModel ViewModel { get; }
+    public MainWindowViewModel ViewModel { get; }
 
-    public SettingsPage(SettingsPageViewModel viewModel)
+    public SettingsPage(MainWindowViewModel viewModel)
     {
         ViewModel = viewModel;
         InitializeComponent();

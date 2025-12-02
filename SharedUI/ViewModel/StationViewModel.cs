@@ -21,6 +21,17 @@ public partial class StationViewModel : ObservableObject
     {
         Model = model;
         _dispatcher = dispatcher;
+        
+        // Track property changes for unsaved changes detection
+        PropertyChanged += (s, e) =>
+        {
+            // Ignore Model property changes (those are internal)
+            if (e.PropertyName != nameof(Model))
+            {
+                // Property changed - mark as modified
+                // MainWindowViewModel will listen to this
+            }
+        };
     }
 
     public string Name

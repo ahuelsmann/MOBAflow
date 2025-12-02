@@ -83,21 +83,61 @@ public class StationConverter : JsonConverter<Station>
             return;
         }
         
-        var jObject = JObject.FromObject(value, serializer);
+        writer.WriteStartObject();
         
-        // Remove Flow property (it's a navigation property - don't serialize the entire object)
-        jObject.Remove("Flow");
+        // Serialize all properties manually (except Flow)
+        writer.WritePropertyName("Name");
+        serializer.Serialize(writer, value.Name);
+        
+        if (value.Description != null)
+        {
+            writer.WritePropertyName("Description");
+            serializer.Serialize(writer, value.Description);
+        }
+        
+        writer.WritePropertyName("Platforms");
+        serializer.Serialize(writer, value.Platforms);
+        
+        writer.WritePropertyName("InPort");
+        serializer.Serialize(writer, value.InPort);
+        
+        writer.WritePropertyName("NumberOfLapsToStop");
+        serializer.Serialize(writer, value.NumberOfLapsToStop);
         
         // Write WorkflowId instead of Flow
         if (value.Flow != null)
         {
-            jObject["WorkflowId"] = value.Flow.Id.ToString();
+            writer.WritePropertyName("WorkflowId");
+            serializer.Serialize(writer, value.Flow.Id);
         }
         else if (value.WorkflowId.HasValue)
         {
-            jObject["WorkflowId"] = value.WorkflowId.Value.ToString();
+            writer.WritePropertyName("WorkflowId");
+            serializer.Serialize(writer, value.WorkflowId.Value);
         }
         
-        jObject.WriteTo(writer);
+        // Phase 1 simplified properties
+        if (value.Track.HasValue)
+        {
+            writer.WritePropertyName("Track");
+            serializer.Serialize(writer, value.Track.Value);
+        }
+        
+        if (value.Arrival.HasValue)
+        {
+            writer.WritePropertyName("Arrival");
+            serializer.Serialize(writer, value.Arrival.Value);
+        }
+        
+        if (value.Departure.HasValue)
+        {
+            writer.WritePropertyName("Departure");
+            serializer.Serialize(writer, value.Departure.Value);
+        }
+        
+        writer.WritePropertyName("IsExitOnLeft");
+        serializer.Serialize(writer, value.IsExitOnLeft);
+        
+        writer.WriteEndObject();
     }
 }

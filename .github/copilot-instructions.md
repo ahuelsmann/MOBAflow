@@ -1,632 +1,229 @@
----
-description: MOBAflow coding standards, architecture rules, and platform-specific guidelines for WinUI, MAUI, and Blazor development
----
+# MOBAflow - Consolidated Copilot Instructions
 
-# MOBAflow - Copilot Instructions
-
-> Multi-platform railway automation control system (.NET 10)
-> - **MOBAflow** (WinUI) - Desktop control center
-> - **MOBAsmart** (MAUI) - Android mobile app  
-> - **MOBAdash** (Blazor) - Web dashboard
+> **Multi-platform railway automation control system (.NET 10)**
+> - MOBAflow (WinUI) - Desktop control center
+> - MOBAsmart (MAUI) - Android mobile app
+> - MOBAdash (Blazor) - Web dashboard
 
 ---
 
-## 🗂️ Project Structure
+## 🏗️ Core Architecture
 
-| Project | Purpose | Framework |
-|---------|---------|-----------|
-| **Domain** | Pure POCOs - Domain models (NO dependencies!) | `net10.0` |
-| **Backend** | Z21 protocol, business logic (platform-independent!) | `net10.0` |
-| **SharedUI** | Base ViewModels, shared UI logic | `net10.0` |
-| **WinUI** | Windows desktop app | `net10.0-windows10.0.17763.0` |
-| **MAUI** | Android mobile app | `net10.0-android36.0` |
-| **WebApp** | Blazor Server dashboard | `net10.0` |
-| **Sound** | Audio/TTS functionality | `net10.0` |
-| **Common** | Shared utilities and helpers | `net10.0` |
-| **Test** | Unit tests | `net10.0` |
-
-### Key Paths
-- MAUI Styles: `MAUI/Resources/Styles/Styles.xaml`
-- MAUI Colors: `MAUI/Resources/Styles/Colors.xaml`
-- MAUI Entry Point: `MAUI/MauiProgram.cs`
-- WinUI Entry Point: `WinUI/App.xaml.cs`
-- Blazor Entry Point: `WebApp/Program.cs`
-
-### Dependency Flow
+### Clean Architecture Layers
 ```
-WinUI   ──→ SharedUI ──→ Backend ──→ Domain
-MAUI    ──→ SharedUI ──→ Backend ──→ Domain
-WebApp  ──→ SharedUI ──→ Backend ──→ Domain
+Domain (Pure POCOs)
+  ↑
+Backend (Platform-independent logic)
+  ↑
+SharedUI (Base ViewModels)
+  ↑
+WinUI / MAUI / Blazor (Platform-specific)
 ```
+
+**Critical Rules:**
+- ✅ **Domain:** Pure POCOs - NO attributes, NO INotifyPropertyChanged, NO logic
+- ✅ **Backend:** Platform-independent - NO DispatcherQueue, NO MainThread
+- ✅ **SharedUI:** ViewModels with CommunityToolkit.Mvvm
+- ✅ **Platform:** UI-specific code only
 
 ---
 
-## 🏗️ Architecture Rules (CRITICAL!)
+## 🎯 MVVM Best Practices
 
-### ✅ Domain Models MUST be Pure POCOs
-
-**The `Domain` project contains ONLY pure data classes — NO logic, NO attributes!**
-
+### Rule 1: Minimize Code-Behind
 ```csharp
-// ✅ CORRECT: Pure POCO in Domain
-namespace Moba.Domain;
-
-public class Station
+// ❌ WRONG: Logic in code-behind
+private void Button_Click(object sender, RoutedEventArgs e)
 {
-    public string Name { get; set; }
-    public int Track { get; set; } = 1;
-    public DateTime? Arrival { get; set; }
-    public DateTime? Departure { get; set; }
-    public Workflow? Flow { get; set; }
-    public Guid? WorkflowId { get; set; }
+    ViewModel.Property = value;
+    ViewModel.DoSomething();
 }
 
-// ❌ NEVER: Serialization attributes in Domain
-using System.Text.Json.Serialization;
+// ✅ CORRECT: Command binding in XAML
+<Button Command="{x:Bind ViewModel.DoSomethingCommand}" />
+```
 
-public class Station
+### Rule 2: Use Property Changed Notifications
+```csharp
+// ✅ CORRECT: CommunityToolkit.Mvvm
+[ObservableProperty]
+private string name;
+
+partial void OnNameChanged(string value)
 {
-    [JsonConverter(typeof(CustomConverter))]  // ❌ WRONG!
-    public string Name { get; set; }
-    
-    [JsonPropertyName("track_number")]  // ❌ WRONG!
-    public int Track { get; set; }
-}
-
-// ❌ NEVER: Validation attributes in Domain
-using System.ComponentModel.DataAnnotations;
-
-public class Station
-{
-    [Required]  // ❌ WRONG!
-    [StringLength(100)]  // ❌ WRONG!
-    public string Name { get; set; }
+    // Side effects here (NOT in code-behind!)
+    UpdateRelatedProperty();
 }
 ```
 
-**Forbidden in Domain:**
-- ❌ `[JsonConverter]`, `[JsonPropertyName]`, `[JsonIgnore]`
-- ❌ `[Required]`, `[Range]`, `[StringLength]`
-- ❌ `INotifyPropertyChanged`, `ObservableObject`
-- ❌ Business logic methods
-- ❌ Dependencies on other projects (except `System.*`)
-
-**Where to put serialization logic:**
-- **Custom Converters** → `Backend.Converters` or `Common.Converters`
-- **Validation** → `Backend.Services.ValidationService` or ViewModels
-- **Property change notifications** → `SharedUI.ViewModel.*ViewModel`
-
-**Example: Handling complex JSON serialization**
-
+### Rule 3: Acceptable Code-Behind
 ```csharp
-// ✅ CORRECT: Custom converter in Backend/Common
-namespace Moba.Backend.Converters;
+// ✅ ACCEPTABLE:
+- Constructor with DI injection
+- Window lifecycle events (delegating to ViewModel)
+- Platform-specific UI code (Window.SetTitleBar, etc.)
+- Simple event handlers for drag-and-drop (XAML limitation)
 
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using Moba.Domain;
-
-public class WorkflowReferenceConverter : JsonConverter<Workflow?>
-{
-    public override Workflow? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
-        // Complex deserialization logic here
-        var workflowId = reader.GetGuid();
-        return ResolveWorkflowById(workflowId);
-    }
-    
-    public override void Write(Utf8JsonWriter writer, Workflow? value, JsonSerializerOptions options)
-    {
-        // Serialize as WorkflowId instead of full object
-        writer.WriteStringValue(value?.Id.ToString());
-    }
-}
-
-// Register in JsonSerializerOptions (NOT in Domain class!)
-var options = new JsonSerializerOptions();
-options.Converters.Add(new WorkflowReferenceConverter());
-```
-
-### ✅ Backend Must Stay Platform-Independent
-
-**The `Backend` project MUST remain 100% platform-independent!**
-
-```csharp
-// ❌ NEVER: Platform-specific code in Backend
-namespace Moba.Backend.Manager;
-public class JourneyManager
-{
-#if WINDOWS
-    await DispatchToUIThreadAsync(...);  // ❌ BREAKS CROSS-PLATFORM!
-#endif
-}
-
-// ✅ ALWAYS: Handle threading in platform-specific ViewModels
-namespace Moba.WinUI.ViewModel;
-public class JourneyViewModel : SharedUI.ViewModel.JourneyViewModel
-{
-    private readonly DispatcherQueue _dispatcher;
-    
-    protected override void OnModelPropertyChanged()
-    {
-        _dispatcher.TryEnqueue(() => NotifyPropertyChanged());  // ✅
-    }
-}
-```
-
-**Forbidden in Backend:**
-- ❌ `DispatcherQueue` (WinUI)
-- ❌ `MainThread.BeginInvokeOnMainThread()` (MAUI)
-- ❌ `#if WINDOWS`, `#if ANDROID`
-- ❌ Any UI framework references
-
----
-
-### ✅ City Library Architecture
-
-**City Library** (`germany-stations.json`) is **NOT part of user Solution/Project structure**:
-
-```
-📁 germany-stations.json         ← Master data (read-only)
-   └── Cities[]
-       └── Stations[]            ← Templates for Station creation
-
-📁 User Solution (.mobaflow)    ← User's project data
-   └── Projects[]
-       └── Journeys[]
-           └── Stations[]        ← Created from City templates
-```
-
-**Key Principles**:
-1. **City = Master Data** (read-only, not saved in .mobaflow)
-2. **Station = User Data** (created in Journey, saved in .mobaflow)
-3. **City → Station**: User selects City, creates Station copy in Journey
-4. **Domain.City**: Only used as selection helper, NOT in Project structure
-
-**JSON Serialization**:
-- ✅ **ALWAYS use Newtonsoft.Json** for all JSON operations
-- ❌ **NEVER use System.Text.Json** (inconsistency with StationConverter)
-- ✅ Simple POCOs: `JsonConvert.DeserializeObject<T>(json)` (no complex options!)
-- ✅ Custom converters: Only in `Backend.Converter` for complex scenarios
-
-**Example: Simple deserialization**
-```csharp
-// ✅ CORRECT: Simple Newtonsoft.Json deserialization
-var cities = JsonConvert.DeserializeObject<List<City>>(json);
-
-// ❌ WRONG: Complex System.Text.Json options
-var options = new JsonSerializerOptions { /* many options */ };
-var cities = JsonSerializer.Deserialize<List<City>>(json, options);
-```
-
-**City Library Service**:
-- Located in platform projects (WinUI/MAUI/WebApp)
-- Loads `germany-stations.json` via `AppSettings.CityLibrary.FilePath`
-- Provides `LoadCitiesAsync()` for UI selection dialogs
-- Cached after first load (master data rarely changes)
-
-**Station Creation Flow**:
-```
-1. User opens Journey Editor
-2. Clicks "Add Station from City Library"
-3. CityLibraryService.LoadCitiesAsync() → Shows selection dialog
-4. User selects "München Hauptbahnhof"
-5. Copy City.Stations[0] → Create new Station(Name, Track, etc.)
-6. Add Station to Journey.Stations
-7. Save Journey (Station is now part of .mobaflow file)
-```
-
----
-
-## 📁 File Organization
-
-### One Class Per File
-- File name MUST match class name: `JourneyManager.cs` ← `class JourneyManager`
-- ❌ Never put multiple public classes in one file
-
-### Namespace Conventions
-
-**Rule:** Namespace = RootNamespace + folder structure
-
-```csharp
-// ✅ CORRECT
-// File: Backend/Manager/JourneyManager.cs
-namespace Moba.Backend.Manager;
-
-// File: WinUI/Service/IoService.cs  
-namespace Moba.WinUI.Service;
-
-// File: SharedUI/ViewModel/JourneyViewModel.cs
-namespace Moba.SharedUI.ViewModel;
-```
-
-| Project | RootNamespace | Example |
-|---------|---------------|---------|
-| Backend | `Moba.Backend` | `Moba.Backend.Manager` |
-| SharedUI | `Moba.SharedUI` | `Moba.SharedUI.ViewModel` |
-| WinUI | `Moba.WinUI` | `Moba.WinUI.Service` |
-| MAUI | `Moba.MAUI` | `Moba.MAUI.Service` |
-| WebApp | `Moba.WebApp` | `Moba.WebApp.Service` |
-| Common | `Moba.Common` | `Moba.Common.Extensions` |
-
-### Using Directives
-
-```csharp
-// ✅ ALWAYS use absolute namespaces
-using Moba.Backend.Model;
-using Moba.SharedUI.Service;
-
-// ❌ NEVER use relative namespaces
-using Backend.Model;  // Ambiguous!
+// ❌ NEVER:
+- Business logic
+- Command execution
+- Data manipulation
+- State management
 ```
 
 ---
 
 ## 💉 Dependency Injection
 
-📄 **Detailed DI Guidelines**: See [docs/DI-INSTRUCTIONS.md](docs/DI-INSTRUCTIONS.md)
-
-### Core Principles
-1. **Backend stays platform-independent** - no platform-specific APIs
-2. **All I/O abstracted** behind interfaces (`IUdpClientWrapper`, `IZ21`)
-3. **Prefer constructor injection** - avoid `new` in UI layers
-4. **DI per platform** - register explicitly in each app's entry point
-
-### Registration Example
-
+### Service Registration Pattern
 ```csharp
-// WinUI: App.xaml.cs
-services.AddSingleton<IUiDispatcher, WinUIDispatcher>();
-services.AddSingleton<IUdpClientWrapper, UdpWrapper>();
+// WinUI/App.xaml.cs
 services.AddSingleton<IZ21, Z21>();
-services.AddSingleton<Backend.Model.Solution>();
-services.AddSingleton<IJourneyViewModelFactory, WinUIJourneyViewModelFactory>();
+services.AddSingleton<IUdpClientWrapper, UdpWrapper>();
+services.AddSingleton<IUiDispatcher, WinUIDispatcher>();
+services.AddSingleton<Solution>();
+services.AddSingleton<MainWindowViewModel>();
 
-// MAUI: MauiProgram.cs  
-builder.Services.AddSingleton<IUiDispatcher, MauiDispatcher>();
-builder.Services.AddSingleton<IUdpClientWrapper, UdpWrapper>();
-builder.Services.AddSingleton<IZ21, Z21>();
-builder.Services.AddSingleton<Backend.Model.Solution>();
+// Pages receive MainWindowViewModel via constructor
+services.AddTransient<EditorPage1>();
 ```
 
-### Lifetime Selection
-- **Singleton**: Application-wide state, shared instances (`Solution`, `IZ21`)
-- **Scoped**: Per-request state (Blazor only)
-- **Transient**: Stateless, cheap to create
+**Lifetime Rules:**
+- **Singleton:** Application state, hardware abstraction (IZ21, Solution)
+- **Transient:** Pages, disposable services
+- **Scoped:** Blazor only (per-request state)
 
-### ViewModel Factory Pattern
+---
 
+## 📁 File Organization
+
+### Namespace Rules
+```
+Backend/Manager/JourneyManager.cs    → namespace Moba.Backend.Manager;
+WinUI/View/EditorPage1.xaml.cs      → namespace Moba.WinUI.View;
+SharedUI/ViewModel/JourneyViewModel  → namespace Moba.SharedUI.ViewModel;
+```
+
+**One Class Per File:** `JourneyManager.cs` contains ONLY `class JourneyManager`
+
+---
+
+## 🔄 JSON Serialization
+
+### StationConverter Pattern
 ```csharp
-// Interface in SharedUI
-public interface IJourneyViewModelFactory
+// Domain/Station.cs - PURE POCO
+public class Station
 {
-    JourneyViewModel Create(Journey model);
+    public string Name { get; set; }
+    public Workflow? Flow { get; set; }        // ← Navigation property
+    public Guid? WorkflowId { get; set; }      // ← Foreign key
 }
 
-// Platform-specific implementation in WinUI
-public class WinUIJourneyViewModelFactory : IJourneyViewModelFactory
+// Backend/Converter/StationConverter.cs
+public override void WriteJson(...)
 {
-    private readonly IUiDispatcher _dispatcher;
-    
-    public WinUIJourneyViewModelFactory(IUiDispatcher dispatcher)
-        => _dispatcher = dispatcher;
-    
-    public JourneyViewModel Create(Journey model)
-        => new WinUI.ViewModel.JourneyViewModel(model, _dispatcher);
+    // Serialize WorkflowId instead of Flow (prevent circular refs)
+    writer.WritePropertyName("WorkflowId");
+    serializer.Serialize(writer, value.Flow.Id);
 }
 ```
+
+**Key Principle:** Domain stays pure, converters handle serialization logic.
 
 ---
 
 ## 🧪 Testing
 
-### Unit Test Structure
-```
-Test/
-├── Backend/         # Backend logic tests
-├── SharedUI/        # ViewModel tests  
-├── WinUI/          # WinUI-specific tests (DI, etc.)
-├── WebApp/         # Blazor-specific tests
-└── TestBase/       # Shared test utilities
-```
-
-### Testing Checklist
-- ✅ Use `FakeUdpClientWrapper` to avoid real UDP
-- ✅ Prefer typed events over byte-array assertions
-- ✅ Update DI tests when adding services
-- ✅ Mock backend interfaces, not concrete classes
-- ✅ Tests must run without UI framework
-
----
-
-## 🚀 Pre-Commit Checklist
-
-### Build
-- [ ] `run_build` successful
-- [ ] No compiler warnings
-- [ ] All `using` statements present
-- [ ] Test stubs updated for interface changes
-
-### Technical
-- [ ] Backend has NO platform-specific code
-- [ ] UI updates dispatched correctly (MAUI: `MainThread`, WinUI: `DispatcherQueue`)
-- [ ] All I/O uses async/await
-- [ ] No `.Result` or `.Wait()` on async code
-- [ ] File names match class names
-- [ ] Namespaces follow folder structure
-- [ ] XML documentation in English
-
-### Quality
-- [ ] Responsive layout tested
-- [ ] Loading states visible for async operations
-- [ ] Error messages user-friendly
-- [ ] Keyboard navigation works
-- [ ] Unit tests pass
-
----
-
-## 📚 Additional Documentation
-
-- **Architecture**: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - System design, layer separation
-- **Clean Architecture**: [docs/CLEAN-ARCHITECTURE-FINAL-STATUS.md](docs/CLEAN-ARCHITECTURE-FINAL-STATUS.md) - Clean Architecture implementation status
-- **DI Details**: [docs/DI-INSTRUCTIONS.md](docs/DI-INSTRUCTIONS.md) - Full dependency injection guidelines
-- **Threading**: [docs/THREADING.md](docs/THREADING.md) - UI thread dispatching patterns
-- **Best Practices**: [docs/BESTPRACTICES.md](docs/BESTPRACTICES.md) - C# coding standards
-- **UX Guidelines**: [docs/UX-GUIDELINES.md](docs/UX-GUIDELINES.md) - Detailed usability patterns
-- **MAUI Guidelines**: [docs/MAUI-GUIDELINES.md](docs/MAUI-GUIDELINES.md) - MAUI-specific development guidelines
-- **Z21 Protocol**: [docs/Z21-PROTOCOL.md](docs/Z21-PROTOCOL.md) - Z21 communication reference
-- **Build Status**: [docs/BUILD-ERRORS-STATUS.md](docs/BUILD-ERRORS-STATUS.md) - Current build status and known issues
-- **Testing**: [docs/TESTING-SIMULATION.md](docs/TESTING-SIMULATION.md) - Testing with fakes and simulation
-
----
-
-## 🔄 State Management Best Practices
-
-### HasUnsavedChanges & Undo/Redo Integration
-
-**Always pair HasUnsavedChanges with UndoRedoManager:**
-
+### Fake Objects for Backend Tests
 ```csharp
-// ✅ CORRECT
-private void OnPropertyChanged()
+// Test/Fakes/FakeUdpClientWrapper.cs
+public class FakeUdpClientWrapper : IUdpClientWrapper
 {
-    _undoRedoManager.SaveStateThrottled(Solution);
-    HasUnsavedChanges = true;  // Mark as modified
-}
-
-[RelayCommand]
-private async Task UndoAsync()
-{
-    var previous = await _undoRedoManager.UndoAsync();
-    if (previous != null && Solution != null)
+    public void SimulateFeedback(int inPort)
     {
-        Solution.UpdateFrom(previous);
-        HasUnsavedChanges = !_undoRedoManager.IsCurrentStateSaved();  // Check saved state
+        Received?.Invoke(CreateFeedbackPacket(inPort));
     }
 }
 ```
 
-**Clear history on New/Load:**
+**Never:** Mock hardware in production code. Use abstractions (IZ21, IUdpClientWrapper).
 
+---
+
+## 📊 Current Status (Dec 2025)
+
+| Metric | Value |
+|--------|-------|
+| Projects | 9 |
+| Build Success | 100% |
+| Tests Passing | 104/104 (100%) |
+| Architecture Violations | 0 |
+
+---
+
+## 🚨 Common Pitfalls
+
+### 1. **Domain Pollution**
 ```csharp
-// ✅ CORRECT
-[RelayCommand]
-private async Task NewSolutionAsync()
-{
-    _undoRedoManager.ClearHistory();  // Clear old history
-    Solution.UpdateFrom(newSolution);
-    await _undoRedoManager.SaveStateImmediateAsync(Solution);
-    HasUnsavedChanges = true;
-}
+// ❌ NEVER in Domain:
+[JsonConverter(typeof(CustomConverter))]
+[Required, StringLength(100)]
+public string Name { get; set; }
+
+// ✅ ALWAYS: Pure POCOs
+public string Name { get; set; }
 ```
 
-**Mark saved state after Save:**
-
+### 2. **Platform-Specific Code in Backend**
 ```csharp
-// ✅ CORRECT
-[RelayCommand]
-private async Task SaveSolutionAsync()
-{
-    await _ioService.SaveAsync(Solution, path);
-    HasUnsavedChanges = false;
-    _undoRedoManager.MarkCurrentAsSaved();  // Mark saved point
-}
+// ❌ NEVER in Backend:
+#if WINDOWS
+    await DispatcherQueue.EnqueueAsync(...);
+#endif
+
+// ✅ ALWAYS: Use IUiDispatcher abstraction
+await _uiDispatcher.InvokeOnUiAsync(...);
 ```
 
-### NULL Checks
-
-**Always check Solution and nested properties:**
-
+### 3. **Code-Behind Logic**
 ```csharp
-// ✅ CORRECT
-if (Solution?.Settings != null && 
-    !string.IsNullOrEmpty(Solution.Settings.CurrentIpAddress))
+// ❌ NEVER:
+private void Button_Click(...)
 {
-    await _z21.ConnectAsync(Solution.Settings.CurrentIpAddress);
+    ViewModel.Property = newValue;
 }
 
-// ❌ WRONG
-if (!string.IsNullOrEmpty(Solution.Settings.CurrentIpAddress))  // Can throw!
-{
-    // ...
-}
+// ✅ ALWAYS: Command + Property binding
+<Button Command="{x:Bind ViewModel.UpdateCommand}"
+        CommandParameter="{x:Bind NewValue}" />
 ```
 
 ---
 
-## 🎯 Domain Model Overview
+## 🔧 Quick Reference
 
-### Core Entities
-```
-Solution
-├── Journeys (sequence of stations)
-│   └── Stations (stops with entry/exit tracks)
-├── Workflows (automation sequences)  
-│   └── Actions (Z21 commands)
-└── Trains
-    ├── Locomotives (with addresses)
-    └── Wagons (rolling stock)
-```
+### File Locations
+- **City Library:** `WinUI/bin/Debug/germany-stations.json` (master data)
+- **User Solutions:** `*.mobaflow` files (user projects)
+- **Settings:** `appsettings.json` (Z21 IP, Speech config)
 
-### Data Flow
-1. **User Input** (WinUI/MAUI/Blazor) → ViewModel
-2. **ViewModel** → Backend Model
-3. **Backend Model** → Z21 Protocol (`IZ21`)
-4. **Z21** → UDP Network (`IUdpClientWrapper`)
-5. **Feedback** ← Events ← Backend → ViewModel → UI
+### Key Classes
+- **MainWindowViewModel:** Central ViewModel (shared by all Pages)
+- **Solution:** Root domain object (Projects → Journeys/Workflows/Trains)
+- **IZ21:** Hardware abstraction (UDP → Z21 protocol)
+- **StationConverter:** JSON serialization (Workflow references)
 
 ---
 
-# Copilot Instructions - Additional Rules
+## 📚 Related Documentation
 
-## 🔧 Technical Guidelines for AI Assistant
-
-### File Encoding & Line Endings
-
-**CRITICAL**: Always ensure consistent file encoding and line endings
-
-```
-- Use UTF-8 encoding for all text files
-- Use CRLF (Windows) line endings for .cs, .xaml, .md files
-- Never mix line endings within a file
-```
-
-**Implementation**:
-- When using `create_file`: Content should have consistent CRLF line endings
-- When using `replace_string_in_file`: Match existing line ending style
-- Never use PowerShell piping in terminal for file operations (causes encoding issues)
-
-### Terminal Command Restrictions
-
-**AVOID** the following in `run_command_in_terminal`:
-
-```powershell
-# ❌ NEVER: foreach loops (user cancellation issues)
-foreach ($file in $files) { ... }
-
-# ❌ NEVER: Long-running commands with piping
-Get-Content file.txt | Where-Object { ... } | Set-Content ...
-
-# ❌ NEVER: Multiple commands in one line with semicolons
-cmd1; cmd2; cmd3
-```
-
-**INSTEAD USE**:
-
-```powershell
-# ✅ ALWAYS: Simple, direct commands
-Get-ChildItem "path" | Select-Object Name
-
-# ✅ ALWAYS: BAT files for complex operations
-# Create a .bat file and execute it
-
-# ✅ ALWAYS: Direct file operations
-Move-Item "source" "destination" -Force
-```
-
-**Best Practice**:
-1. For file operations with multiple files → Create a `.bat` file
-2. For simple queries → Use direct PowerShell commands
-3. For encoding-sensitive operations → Use `[System.IO.File]::WriteAllText()` with explicit encoding
-
-### Documentation Cleanup Automation
-
-**RULE**: After each session, automatically archive completed documentation
-
-**Trigger**: When session summary is created or major task completed
-
-**Action**:
-1. Identify documentation files with patterns:
-   - `SESSION-SUMMARY-*.md` (except current)
-   - `*-COMPLETE.md` (completed tasks)
-   - `*-FIX.md` (completed fixes)
-   - `*-MIGRATION.md` (completed migrations)
-   - `*-STATUS.md` (old status reports, except BUILD-ERRORS-STATUS.md)
-
-2. Move to `docs/archive/` using `.bat` file approach
-
-3. Update `docs/DOCS-STRUCTURE-FINAL.md` if needed
-
-**Exception**: Keep these files:
-- Current session summary
-- BUILD-ERRORS-STATUS.md
-- CLEAN-ARCHITECTURE-FINAL-STATUS.md
-- Any *-PLAN.md for ongoing work
-
-### Build & Test Verification
-
-**MANDATORY** before completing any code changes:
-
-```
-1. Run `run_build` to verify compilation
-2. Check for compiler warnings (should be 0)
-3. If tests affected:
-   - Verify test stubs updated
-   - Run affected tests if possible
-4. Document known issues in BUILD-ERRORS-STATUS.md
-```
-
-**If build fails**:
-1. Record observation with error details
-2. Fix critical errors (DI, namespaces)
-3. Document test errors if extensive refactoring needed
-4. Create follow-up task in TODO-*.md
-
-**Test Refactoring Rules**:
-- If > 10 test errors: Defer to dedicated session
-- If < 10 test errors: Fix immediately
-- Always document deferred test work
-
-### Session Completion Checklist
-
-Before finishing work session:
-
-- [ ] `run_build` executed (even if tests fail)
-- [ ] Build errors documented in BUILD-ERRORS-STATUS.md
-- [ ] Session summary created
-- [ ] Old session reports moved to archive
-- [ ] Copilot instructions updated if new patterns discovered
-- [ ] TODO file updated with next steps
+- **Build Status:** `docs/BUILD-ERRORS-STATUS.md`
+- **Z21 Protocol:** `docs/Z21-PROTOCOL.md`
+- **MVVM Analysis:** `docs/MVVM-ANALYSIS-MAINWINDOW-2025-12-02.md`
+- **Session Reports:** `docs/SESSION-SUMMARY-*.md` (archive after 1 month)
 
 ---
 
-## 🎯 Priority Rules
-
-### High Priority (Fix Immediately)
-1. DI registration errors
-2. Namespace errors
-3. Build-blocking compilation errors
-4. Production code errors
-
-### Medium Priority (Fix or Document)
-1. Test compilation errors (< 10)
-2. Warnings in production code
-3. Missing XML documentation
-
-### Low Priority (Defer to Dedicated Session)
-1. Test refactoring (> 10 errors)
-2. Performance optimizations
-3. Code cleanup tasks
-
----
-
-## 📝 Documentation Maintenance
-
-### Monthly Tasks
-- Archive old SESSION-SUMMARY-*.md files (keep only current month)
-- Remove completed *-PLAN.md files
-- Update BUILD-ERRORS-STATUS.md
-
-### After Each Session
-- Create session summary if significant work done
-- Move completed task docs to archive
-- Update relevant documentation references
-
-### Annual Tasks
-- Review and consolidate guidelines
-- Archive old year's session summaries
-- Major documentation restructure if needed
-
----
-
-**These rules should be followed by AI assistants to maintain code quality and documentation hygiene.**
+**Last Updated:** 2025-12-02  
+**Version:** 2.0 (Consolidated)

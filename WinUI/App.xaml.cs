@@ -102,7 +102,6 @@ public partial class App
         services.AddSingleton<SharedUI.ViewModel.MainWindowViewModel>();
         services.AddTransient<SharedUI.ViewModel.JourneyViewModel>();
         services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
-        services.AddSingleton<SharedUI.ViewModel.SettingsPageViewModel>();
         
 
         return services.BuildServiceProvider();

@@ -33,7 +33,7 @@ public static class MauiProgram
 
         // ViewModels (CounterViewModel now requires IUiDispatcher and optional INotificationService)
         builder.Services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
-        builder.Services.AddTransient<SharedUI.ViewModel.MAUI.JourneyViewModel>();
+        builder.Services.AddTransient<SharedUI.ViewModel.JourneyViewModel>();
 
         // Backend services - Register in dependency order
         builder.Services.AddSingleton<IUdpClientWrapper, UdpWrapper>();

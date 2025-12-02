@@ -28,14 +28,9 @@
                     Content="Overview"
                     Icon="Home"
                     Tag="overview" />
-                <NavigationViewItem Content="Editor 1" Tag="editor">
+                <NavigationViewItem Content="Editor" Tag="editor">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE70F;" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItem Content="Editor 2" Tag="configuration">
-                    <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE713;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
 
@@ -91,7 +86,7 @@
                     <AppBarSeparator />
                     <AppBarToggleButton
                         Click="TrackPower_Click"
-                        IsChecked="{x:Bind ViewModel.IsTrackPowerOn, Mode=TwoWay}"
+                        IsChecked="{x:Bind CounterViewModel.IsTrackPowerOn, Mode=OneWay}"
                         IsEnabled="{x:Bind ViewModel.IsZ21Connected, Mode=OneWay}"
                         Label="Track Power"
                         ToolTipService.ToolTip="Toggle Track Power ON/OFF">
@@ -124,7 +119,7 @@
             </Grid>
         </NavigationView>
 
-        <!--  StatusBar - Ãœber die gesamte Fensterbreite  -->
+        <!--  StatusBar - ÃƒÅ“ber die gesamte Fensterbreite  -->
         <Grid
             Grid.Row="1"
             Height="32"
@@ -200,3 +195,4 @@
         </Grid>
     </Grid>
 </Window>
+
