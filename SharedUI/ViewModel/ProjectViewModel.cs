@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using Moba.Domain;
 
+using Moba.SharedUI.Enum;
 using Moba.SharedUI.Interface;
 
 using System.Collections.ObjectModel;
@@ -13,14 +14,14 @@ using System.Collections.ObjectModel;
 /// ViewModel wrapper for Project model that maintains a hierarchical collection structure
 /// for TreeView binding. Must be manually refreshed when model changes (models don't fire events).
 /// </summary>
-public partial class ProjectViewModel : ObservableObject
+public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Project>
 {
     public Project Model { get; }
 
     private readonly IUiDispatcher? _dispatcher;
 
-    [ObservableProperty]
-    private string _name = string.Empty;
+    public MobaType EntityType => MobaType.Project;
+    public string Name => Model.Name;
 
     /// <summary>
     /// Hierarchical collection of Journey ViewModels.
@@ -64,8 +65,6 @@ public partial class ProjectViewModel : ObservableObject
     /// </summary>
     public void Refresh()
     {
-        Name = Model.Name;
-
         // Smart sync: Reuse existing ViewModels where possible
         SyncCollection(Model.Journeys, Journeys, j => new JourneyViewModel(j, _dispatcher));
         SyncCollection(Model.Workflows, Workflows, w => new WorkflowViewModel(w));

@@ -3,36 +3,41 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using Moba.Backend.Interface;
 using Moba.Backend.Manager;
 using Moba.Common.Configuration;
 using Moba.Common.Extensions;
 using Moba.Domain;
-using Moba.Domain.Enum;
 using Moba.SharedUI.Enum;
+using Moba.SharedUI.Helper;
 using Moba.SharedUI.Interface;
-
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 
 /// <summary>
-/// Base ViewModel for main window functionality (Z21 connection, solution management).
-/// TreeView functionality has been removed - UI binding now happens directly to SolutionViewModel.
-/// Platform-specific implementations (WinUI, MAUI) can extend this class.
+/// Core ViewModel for main window functionality.
+/// Partial classes handle: Selection, Solution, Journey, Workflow, Train, Z21, Settings.
 /// </summary>
 public partial class MainWindowViewModel : ObservableObject
 {
+    #region Fields
+
     private readonly IIoService _ioService;
     private readonly IZ21 _z21;
     private readonly IJourneyManagerFactory _journeyManagerFactory;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly AppSettings _settings;
     private readonly ISettingsService? _settingsService;
+    private readonly ICityService? _cityLibraryService;
     private JourneyManager? _journeyManager;
+    private readonly EntitySelectionManager _selectionManager;
 
-    // Primary ctor for DI
+    #endregion
+
+    #region Constructor
+
     public MainWindowViewModel(
         IIoService ioService,
         IZ21 z21,
@@ -51,13 +56,15 @@ public partial class MainWindowViewModel : ObservableObject
         _cityLibraryService = cityLibraryService;
         _settingsService = settingsService;
 
+        // Initialize EntitySelectionManager
+        _selectionManager = new EntitySelectionManager(
+            ClearOtherSelections,
+            NotifySelectionPropertiesChanged);
+
         // Subscribe to Solution changes
         Solution = solution;
-
-        // Subscribe to Z21 connection lost event
-        _z21.OnConnectionLost += HandleConnectionLost;
         
-        // ✅ Load City Library at startup (fire-and-forget)
+        // Load City Library at startup (fire-and-forget)
         if (_cityLibraryService != null)
         {
             _ = Task.Run(async () =>
@@ -75,24 +82,12 @@ public partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
-    private void AddProject()
-    {
-        // Add a simple project placeholder to the current Solution
-        var project = new Project { Name = "New Project" };
-        Solution.Projects.Add(project);
-
-        // Refresh view model and mark unsaved changes
-        SolutionViewModel?.Refresh();
-        HasUnsavedChanges = true;
-
-        SaveSolutionCommand.NotifyCanExecuteChanged();
-    }
+    #endregion
 
     #region Properties
 
     [ObservableProperty]
-    private string title = "MOBAflow";
+    private Solution solution;
 
     [ObservableProperty]
     private string? currentSolutionPath;
@@ -101,10 +96,10 @@ public partial class MainWindowViewModel : ObservableObject
     private bool hasSolution;
 
     [ObservableProperty]
-    private Solution solution = null!;
+    private SolutionViewModel? solutionViewModel;
 
     [ObservableProperty]
-    private SolutionViewModel? solutionViewModel;
+    private ProjectViewModel? selectedProject;
 
     [ObservableProperty]
     private bool hasUnsavedChanges = false;
@@ -122,10 +117,12 @@ public partial class MainWindowViewModel : ObservableObject
     private TrainViewModel? selectedTrain;
 
     /// <summary>
-    /// Returns true if any entity is currently selected (Journey, Station, Workflow, or Train).
+    /// Returns true if any entity is currently selected.
     /// Used to show/hide PropertyGrid content.
     /// </summary>
     public bool HasSelectedEntity =>
+        SolutionViewModel != null ||
+        SelectedProject != null ||
         SelectedJourney != null ||
         SelectedStation != null ||
         SelectedWorkflow != null ||
@@ -138,24 +135,44 @@ public partial class MainWindowViewModel : ObservableObject
     private MobaType currentSelectedEntityType = MobaType.None;
 
     /// <summary>
+    /// Returns true if Solution should be displayed in PropertyGrid.
+    /// </summary>
+    public bool ShowSolutionProperties => CurrentSelectedEntityType == MobaType.Solution && SolutionViewModel != null;
+
+    /// <summary>
+    /// Returns true if Project should be displayed in PropertyGrid.
+    /// </summary>
+    public bool ShowProjectProperties => 
+        CurrentSelectedEntityType == MobaType.Project && 
+        SelectedProject != null;
+
+    /// <summary>
     /// Returns true if Journey should be displayed in PropertyGrid.
     /// </summary>
-    public bool ShowJourneyProperties => CurrentSelectedEntityType == MobaType.Journey && SelectedJourney != null;
+    public bool ShowJourneyProperties => 
+        CurrentSelectedEntityType == MobaType.Journey && 
+        SelectedJourney != null;
 
     /// <summary>
     /// Returns true if Station should be displayed in PropertyGrid.
     /// </summary>
-    public bool ShowStationProperties => CurrentSelectedEntityType == MobaType.Station && SelectedStation != null;
+    public bool ShowStationProperties => 
+        CurrentSelectedEntityType == MobaType.Station && 
+        SelectedStation != null;
 
     /// <summary>
     /// Returns true if Workflow should be displayed in PropertyGrid.
     /// </summary>
-    public bool ShowWorkflowProperties => CurrentSelectedEntityType == MobaType.Workflow && SelectedWorkflow != null;
+    public bool ShowWorkflowProperties => 
+        CurrentSelectedEntityType == MobaType.Workflow && 
+        SelectedWorkflow != null;
 
     /// <summary>
     /// Returns true if Train should be displayed in PropertyGrid.
     /// </summary>
-    public bool ShowTrainProperties => CurrentSelectedEntityType == MobaType.Train && SelectedTrain != null;
+    public bool ShowTrainProperties => 
+        CurrentSelectedEntityType == MobaType.Train && 
+        SelectedTrain != null;
 
     [ObservableProperty]
     private bool isZ21Connected;
@@ -189,10 +206,14 @@ public partial class MainWindowViewModel : ObservableObject
     {
         get
         {
+            // Use SelectedProject if available, otherwise fall back to first project
+            if (SelectedProject != null)
+                return SelectedProject;
+                
             if (SolutionViewModel == null || SolutionViewModel.Projects.Count == 0)
                 return null;
 
-            // For now, return the first project (later can be extended to support project selection)
+            // For now, return the first project (backward compatibility)
             return SolutionViewModel.Projects.FirstOrDefault();
         }
     }
@@ -201,480 +222,27 @@ public partial class MainWindowViewModel : ObservableObject
 
     #endregion
 
-    #region Solution Management
-
-    partial void OnSolutionChanged(Solution? value)
-    {
-        if (value == null)
-        {
-            HasSolution = false;
-            SolutionViewModel = null;
-            AvailableCities.Clear();
-            OnPropertyChanged(nameof(CurrentProjectViewModel)); // ✅ Notify that project changed
-            return;
-        }
-
-        // Ensure Solution always has at least one project
-        if (value.Projects.Count == 0)
-        {
-            value.Projects.Add(new Project { Name = "(Untitled Project)" });
-        }
-
-        SolutionViewModel = new SolutionViewModel(value, _uiDispatcher);
-        HasSolution = value.Projects.Count > 0;
-
-        SaveSolutionCommand.NotifyCanExecuteChanged();
-        ConnectToZ21Command.NotifyCanExecuteChanged();
-        OnPropertyChanged(nameof(CurrentProjectViewModel)); // ✅ Notify that project changed
-
-        LoadCities();
-    }
-
-    private void LoadCities()
-    {
-        AvailableCities.Clear();
-
-        if (Solution?.Projects?.Count > 0)
-        {
-            var firstProject = Solution.Projects[0];
-            if (firstProject?.Cities != null)
-            {
-                foreach (var city in firstProject.Cities)
-                {
-                    AvailableCities.Add(city);
-                }
-            }
-        }
-    }
+    #region Project Management
 
     [RelayCommand]
-    private async Task LoadCitiesFromFileAsync()
+    private void AddProject()
     {
-        if (Solution.Projects.Count == 0) return;
+        // Add a simple project placeholder to the current Solution
+        var project = new Project { Name = "New Project" };
+        Solution.Projects.Add(project);
 
-        // ✅ Use ICityService instead of deprecated LoadDataManagerAsync
-        if (_cityLibraryService == null)
-        {
-            System.Diagnostics.Debug.WriteLine("❌ CityService not available");
-            return;
-        }
+        // Create ViewModel and add to SolutionViewModel
+        var projectVM = new ProjectViewModel(project);
+        SolutionViewModel?.Projects.Add(projectVM);
+        
+        // Select the newly created project
+        SelectedProject = projectVM;
 
-        try
-        {
-            // Load cities from JSON using CityService (Domain.City)
-            var cities = await _cityLibraryService.LoadCitiesAsync();
-            
-            var firstProject = Solution.Projects[0];
-            firstProject.Cities.Clear();
-            
-            // Add loaded cities to project
-            foreach (var city in cities)
-            {
-                firstProject.Cities.Add(city);
-            }
-            
-            // Refresh AvailableCities for UI binding
-            LoadCities();
-            
-            System.Diagnostics.Debug.WriteLine($"✅ Loaded {cities.Count} cities from library");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"❌ Failed to load cities: {ex.Message}");
-            throw new InvalidOperationException($"Failed to load cities: {ex.Message}");
-        }
-    }
-
-    [RelayCommand(CanExecute = nameof(CanSaveSolution))]
-    private async Task SaveSolutionAsync()
-    {
-        var (success, path, error) = await _ioService.SaveAsync(Solution, CurrentSolutionPath);
-        if (success && path != null)
-        {
-            CurrentSolutionPath = path;
-            HasUnsavedChanges = false;
-        }
-        else if (!string.IsNullOrEmpty(error))
-        {
-            throw new InvalidOperationException($"Failed to save solution: {error}");
-        }
-    }
-
-    [RelayCommand]
-    private async Task NewSolutionAsync()
-    {
-        var (success, userCancelled, error) = await _ioService.NewSolutionAsync(HasUnsavedChanges);
-
-        if (userCancelled)
-        {
-            return;
-        }
-
-        if (!success)
-        {
-            if (error == "SAVE_REQUESTED")
-            {
-                if (SaveSolutionCommand.CanExecute(null))
-                {
-                    await SaveSolutionCommand.ExecuteAsync(null);
-                }
-            }
-            else
-            {
-                return;
-            }
-        }
-
-        // Clear existing Solution (DI singleton)
-        Solution.Projects.Clear();
-        Solution.Name = "New Solution";
-
-        // Add default project
-        Solution.Projects.Add(new Project
-        {
-            Name = "New Project",
-            Journeys = new System.Collections.Generic.List<Journey>(),
-            Workflows = new System.Collections.Generic.List<Workflow>(),
-            Trains = new System.Collections.Generic.List<Train>()
-        });
-
+        // Refresh view model and mark unsaved changes
         SolutionViewModel?.Refresh();
-
-        CurrentSolutionPath = null;
         HasUnsavedChanges = true;
 
         SaveSolutionCommand.NotifyCanExecuteChanged();
-        ConnectToZ21Command.NotifyCanExecuteChanged();
-    }
-
-    [RelayCommand]
-    private async Task LoadSolutionAsync()
-    {
-        var (loadedSolution, path, error) = await _ioService.LoadAsync();
-
-        if (!string.IsNullOrEmpty(error))
-        {
-            throw new InvalidOperationException($"Failed to load solution: {error}");
-        }
-
-        if (loadedSolution != null)
-        {
-            Solution.Projects.Clear();
-            foreach (var project in loadedSolution.Projects)
-            {
-                Solution.Projects.Add(project);
-            }
-
-            Solution.Name = loadedSolution.Name;
-            SolutionViewModel?.Refresh();
-
-            CurrentSolutionPath = path;
-            HasUnsavedChanges = false;
-            HasSolution = Solution.Projects.Count > 0;
-
-            SaveSolutionCommand.NotifyCanExecuteChanged();
-            ConnectToZ21Command.NotifyCanExecuteChanged();
-            LoadCities();
-
-            OnPropertyChanged(nameof(Solution));
-        }
-    }
-
-    private bool CanSaveSolution() => true;
-
-    #endregion
-
-    #region Selection Management
-
-    partial void OnSelectedJourneyChanged(JourneyViewModel? value)
-    {
-        AddStationToJourneyCommand.NotifyCanExecuteChanged();
-
-        if (value != null)
-        {
-            ClearOtherSelections(MobaType.Journey);
-            CurrentSelectedEntityType = MobaType.Journey;
-        }
-        
-        NotifySelectionPropertiesChanged();
-    }
-
-    partial void OnSelectedStationChanged(StationViewModel? value)
-    {
-        if (value != null)
-        {
-            ClearOtherSelections(MobaType.Station);
-            CurrentSelectedEntityType = MobaType.Station;
-        }
-        
-        NotifySelectionPropertiesChanged();
-    }
-
-    partial void OnSelectedWorkflowChanged(WorkflowViewModel? value)
-    {
-        if (value != null)
-        {
-            ClearOtherSelections(MobaType.Workflow);
-            CurrentSelectedEntityType = MobaType.Workflow;
-        }
-        
-        NotifySelectionPropertiesChanged();
-    }
-
-    partial void OnSelectedTrainChanged(TrainViewModel? value)
-    {
-        if (value != null)
-        {
-            ClearOtherSelections(MobaType.Train);
-            CurrentSelectedEntityType = MobaType.Train;
-        }
-        
-        NotifySelectionPropertiesChanged();
-    }
-
-    partial void OnSelectedLocomotiveChanged(LocomotiveViewModel? value)
-    {
-        if (value != null)
-        {
-            ClearOtherSelections(MobaType.Locomotive);
-            CurrentSelectedEntityType = MobaType.Locomotive;
-        }
-        
-        NotifySelectionPropertiesChanged();
-    }
-
-    partial void OnSelectedWagonChanged(WagonViewModel? value)
-    {
-        if (value != null)
-        {
-            ClearOtherSelections(MobaType.Wagon);
-            CurrentSelectedEntityType = MobaType.Wagon;
-        }
-        
-        NotifySelectionPropertiesChanged();
-    }
-
-    /// <summary>
-    /// Clears all other selections except the specified type to prevent stacking in PropertyGrid.
-    /// Station keeps Journey selected (parent context).
-    /// </summary>
-    private void ClearOtherSelections(MobaType keepType)
-    {
-        // Keep Journey selected when Station is selected (parent context)
-        if (keepType != MobaType.Journey && keepType != MobaType.Station)
-        {
-            if (SelectedJourney != null) SelectedJourney = null;
-        }
-        
-        if (keepType != MobaType.Station)
-        {
-            if (SelectedStation != null) SelectedStation = null;
-        }
-        
-        if (keepType != MobaType.Workflow)
-        {
-            if (SelectedWorkflow != null) SelectedWorkflow = null;
-        }
-        
-        if (keepType != MobaType.Train)
-        {
-            if (SelectedTrain != null) SelectedTrain = null;
-        }
-        
-        if (keepType != MobaType.Locomotive)
-        {
-            if (SelectedLocomotive != null) SelectedLocomotive = null;
-        }
-        
-        if (keepType != MobaType.Wagon)
-        {
-            if (SelectedWagon != null) SelectedWagon = null;
-        }
-    }
-
-    /// <summary>
-    /// Notifies all selection-related properties changed (for PropertyGrid binding).
-    /// </summary>
-    private void NotifySelectionPropertiesChanged()
-    {
-        OnPropertyChanged(nameof(HasSelectedEntity));
-        OnPropertyChanged(nameof(ShowJourneyProperties));
-        OnPropertyChanged(nameof(ShowStationProperties));
-        OnPropertyChanged(nameof(ShowWorkflowProperties));
-        OnPropertyChanged(nameof(ShowTrainProperties));
-    }
-
-    #endregion
-
-    #region Z21 Connection
-
-    [RelayCommand(CanExecute = nameof(CanConnectToZ21))]
-    private async Task ConnectToZ21Async()
-    {
-        if (!string.IsNullOrEmpty(_settings.Z21.CurrentIpAddress))
-        {
-            try
-            {
-                Z21StatusText = "Connecting...";
-                var address = System.Net.IPAddress.Parse(_settings.Z21.CurrentIpAddress);
-
-                int port = 21105;
-                if (!string.IsNullOrEmpty(_settings.Z21.DefaultPort) && int.TryParse(_settings.Z21.DefaultPort, out var parsedPort))
-                {
-                    port = parsedPort;
-                }
-
-                await _z21.ConnectAsync(address, port);
-                IsZ21Connected = true;
-                Z21StatusText = $"Connected to {_settings.Z21.CurrentIpAddress}:{port}";
-
-                if (Solution.Projects.Count > 0)
-                {
-                    var project = Solution.Projects[0];
-                    var executionContext = new Moba.Backend.Services.ActionExecutionContext
-                    {
-                        Z21 = _z21
-                    };
-
-                    _journeyManager?.Dispose();
-                    _journeyManager = _journeyManagerFactory.Create(_z21, project.Journeys, executionContext);
-                }
-
-                ConnectToZ21Command.NotifyCanExecuteChanged();
-                DisconnectFromZ21Command.NotifyCanExecuteChanged();
-                SetTrackPowerCommand.NotifyCanExecuteChanged();
-            }
-            catch (Exception ex)
-            {
-                Z21StatusText = $"Connection failed: {ex.Message}";
-            }
-        }
-        else
-        {
-            Z21StatusText = "No IP address configured in AppSettings";
-        }
-    }
-
-    [RelayCommand(CanExecute = nameof(CanDisconnectFromZ21))]
-    private async Task DisconnectFromZ21Async()
-    {
-        try
-        {
-            Z21StatusText = "Disconnecting...";
-
-            _journeyManager?.Dispose();
-            _journeyManager = null;
-
-            await _z21.DisconnectAsync();
-
-            IsZ21Connected = false;
-            IsTrackPowerOn = false;
-            Z21StatusText = "Disconnected";
-
-            ConnectToZ21Command.NotifyCanExecuteChanged();
-            SetTrackPowerCommand.NotifyCanExecuteChanged();
-        }
-        catch (Exception ex)
-        {
-            Z21StatusText = $"Error: {ex.Message}";
-        }
-    }
-
-    [RelayCommand]
-    private void SimulateFeedback()
-    {
-        try
-        {
-            // Create JourneyManager if needed for simulation
-            if (_journeyManager == null && Solution?.Projects.Count > 0)
-            {
-                var project = Solution.Projects[0];
-                var executionContext = new Moba.Backend.Services.ActionExecutionContext
-                {
-                    Z21 = _z21
-                };
-                _journeyManager = _journeyManagerFactory.Create(_z21, project.Journeys, executionContext);
-            }
-
-            // Get InPort from selected journey or text field
-            uint? selectedInPort = SelectedJourney?.InPort;
-
-            int inPort;
-            if (selectedInPort.HasValue)
-            {
-                inPort = unchecked((int)selectedInPort.Value);
-            }
-            else if (!int.TryParse(SimulateInPort, out inPort))
-            {
-                Z21StatusText = "Invalid InPort number";
-                return;
-            }
-
-            _z21.SimulateFeedback(inPort);
-            Z21StatusText = $"Simulated feedback for InPort {inPort}";
-        }
-        catch (Exception ex)
-        {
-            Z21StatusText = $"Error: {ex.Message}";
-        }
-    }
-
-    [RelayCommand(CanExecute = nameof(CanToggleTrackPower))]
-    private async Task SetTrackPowerAsync(bool turnOn)
-    {
-        try
-        {
-            if (turnOn)
-            {
-                await _z21.SetTrackPowerOnAsync();
-                Z21StatusText = "Track power ON";
-                IsTrackPowerOn = true;
-            }
-            else
-            {
-                await _z21.SetTrackPowerOffAsync();
-                Z21StatusText = "Track power OFF";
-                IsTrackPowerOn = false;
-            }
-        }
-        catch (Exception ex)
-        {
-            Z21StatusText = $"Track power error: {ex.Message}";
-        }
-    }
-
-    private bool CanConnectToZ21() => !IsZ21Connected;
-    private bool CanDisconnectFromZ21() => IsZ21Connected;
-    private bool CanToggleTrackPower() => IsZ21Connected;
-
-    private void OnZ21SystemStateChanged(Backend.SystemState systemState)
-    {
-        _uiDispatcher.InvokeOnUi(() => UpdateZ21SystemState(systemState));
-    }
-
-    private void UpdateZ21SystemState(Backend.SystemState systemState)
-    {
-        IsTrackPowerOn = systemState.IsTrackPowerOn;
-
-        var statusParts = new List<string>
-        {
-            "Connected",
-            $"Current: {systemState.MainCurrent}mA",
-            $"Temp: {systemState.Temperature}C"
-        };
-
-        if (systemState.IsEmergencyStop)
-            statusParts.Add("WARNING: EMERGENCY STOP");
-
-        if (systemState.IsShortCircuit)
-            statusParts.Add("WARNING: SHORT CIRCUIT");
-
-        if (systemState.IsProgrammingMode)
-            statusParts.Add("Programming");
-
-        Z21StatusText = string.Join(" | ", statusParts);
-
-        this.Log($"Z21 System State: TrackPower={systemState.IsTrackPowerOn}, Current={systemState.MainCurrent}mA");
     }
 
     #endregion
@@ -714,414 +282,15 @@ public partial class MainWindowViewModel : ObservableObject
         ExitApplicationRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    #endregion
-
-    #region Station Management
-
-    [RelayCommand(CanExecute = nameof(CanAddStationToJourney))]
-    private void AddStationToJourney()
-    {
-        if (SelectedCity == null || SelectedJourney == null)
-            return;
-
-        // Take the first station from the selected city
-        if (SelectedCity.Stations.Count > 0)
-        {
-            var stationToCopy = SelectedCity.Stations[0];
-
-            // Create a new Station instance (deep copy)
-            var newStation = new Station
-            {
-                Name = stationToCopy.Name,
-                Description = stationToCopy.Description,
-                NumberOfLapsToStop = 2,
-                InPort = stationToCopy.InPort
-            };
-
-            // Add to Journey model
-            SelectedJourney.Model.Stations.Add(newStation);
-
-            // Add to ViewModel
-            var stationVM = new StationViewModel(newStation);
-            SelectedJourney.Stations.Add(stationVM);
-
-            HasUnsavedChanges = true;
-        }
-    }
-
-    private bool CanAddStationToJourney() => true;
-
-    #endregion
-
-    #region Journey CRUD Commands
-
     [RelayCommand]
-    private void AddJourney()
+    private void ExitApplication()
     {
-        if (CurrentProjectViewModel == null) return;
-
-        var newJourney = new Journey
-        {
-            Name = "New Journey",
-            BehaviorOnLastStop = BehaviorOnLastStop.None
-        };
-
-        CurrentProjectViewModel.Model.Journeys.Add(newJourney);
-
-        var journeyVM = new JourneyViewModel(newJourney);
-        CurrentProjectViewModel.Journeys.Add(journeyVM);
-        SelectedJourney = journeyVM;
-
-        HasUnsavedChanges = true;
-    }
-
-    [RelayCommand(CanExecute = nameof(CanDeleteJourney))]
-    private void DeleteJourney()
-    {
-        if (SelectedJourney == null || CurrentProjectViewModel == null) return;
-
-        CurrentProjectViewModel.Model.Journeys.Remove(SelectedJourney.Model);
-        CurrentProjectViewModel.Journeys.Remove(SelectedJourney);
-        SelectedJourney = null;
-
-        HasUnsavedChanges = true;
-    }
-
-    private bool CanDeleteJourney() => SelectedJourney != null;
-
-    #endregion
-
-    #region Station CRUD Commands
-
-    [RelayCommand(CanExecute = nameof(CanAddStation))]
-    private void AddStation()
-    {
-        if (SelectedJourney == null) return;
-
-        var newStation = new Station
-        {
-            Name = "New Station",
-            NumberOfLapsToStop = 2
-        };
-
-        SelectedJourney.Model.Stations.Add(newStation);
-
-        var stationVM = new StationViewModel(newStation);
-        SelectedJourney.Stations.Add(stationVM);
-        SelectedStation = stationVM;
-
-        HasUnsavedChanges = true;
-    }
-
-    [RelayCommand(CanExecute = nameof(CanDeleteStation))]
-    private void DeleteStation()
-    {
-        if (SelectedStation == null || SelectedJourney == null) return;
-
-        SelectedJourney.Model.Stations.Remove(SelectedStation.Model);
-        SelectedJourney.Stations.Remove(SelectedStation);
-        SelectedStation = null;
-
-        HasUnsavedChanges = true;
-    }
-
-    private bool CanAddStation() => SelectedJourney != null;
-    private bool CanDeleteStation() => SelectedStation != null;
-
-    #endregion
-
-    #region Workflow CRUD Commands
-
-    [RelayCommand]
-    private void AddWorkflow()
-    {
-        if (CurrentProjectViewModel == null) return;
-
-        var newWorkflow = new Workflow { Name = "New Workflow" };
-        CurrentProjectViewModel.Model.Workflows.Add(newWorkflow);
-
-        var workflowVM = new WorkflowViewModel(newWorkflow);
-        CurrentProjectViewModel.Workflows.Add(workflowVM);
-        SelectedWorkflow = workflowVM;
-
-        HasUnsavedChanges = true;
-    }
-
-    [RelayCommand(CanExecute = nameof(CanDeleteWorkflow))]
-    private void DeleteWorkflow()
-    {
-        if (SelectedWorkflow == null || CurrentProjectViewModel == null) return;
-
-        CurrentProjectViewModel.Model.Workflows.Remove(SelectedWorkflow.Model);
-        CurrentProjectViewModel.Workflows.Remove(SelectedWorkflow);
-        SelectedWorkflow = null;
-
-        HasUnsavedChanges = true;
-    }
-
-    private bool CanDeleteWorkflow() => SelectedWorkflow != null;
-
-    #endregion
-
-    #region Train CRUD Commands
-
-    [RelayCommand]
-    private void AddTrain()
-    {
-        if (CurrentProjectViewModel == null) return;
-
-        var newTrain = new Train { Name = "New Train" };
-        CurrentProjectViewModel.Model.Trains.Add(newTrain);
-
-        var trainVM = new TrainViewModel(newTrain);
-        CurrentProjectViewModel.Trains.Add(trainVM);
-        SelectedTrain = trainVM;
-
-        HasUnsavedChanges = true;
-    }
-
-    [RelayCommand(CanExecute = nameof(CanDeleteTrain))]
-    private void DeleteTrain()
-    {
-        if (SelectedTrain == null || CurrentProjectViewModel == null) return;
-
-        CurrentProjectViewModel.Model.Trains.Remove(SelectedTrain.Model);
-        CurrentProjectViewModel.Trains.Remove(SelectedTrain);
-        SelectedTrain = null;
-
-        HasUnsavedChanges = true;
-    }
-
-    private bool CanDeleteTrain() => SelectedTrain != null;
-
-    #endregion
-
-    #region Locomotive CRUD Commands
-
-    [ObservableProperty]
-    private LocomotiveViewModel? selectedLocomotive;
-
-    [RelayCommand]
-    private void AddLocomotive()
-    {
-        if (CurrentProjectViewModel == null) return;
-
-        var newLocomotive = new Locomotive
-        {
-            Name = "New Locomotive",
-            DigitalAddress = 3
-        };
-
-        CurrentProjectViewModel.Model.Locomotives.Add(newLocomotive);
-
-        var locomotiveVM = new LocomotiveViewModel(newLocomotive);
-        CurrentProjectViewModel.Locomotives.Add(locomotiveVM);
-        SelectedLocomotive = locomotiveVM;
-
-        HasUnsavedChanges = true;
-    }
-
-    [RelayCommand(CanExecute = nameof(CanDeleteLocomotive))]
-    private void DeleteLocomotive()
-    {
-        if (SelectedLocomotive == null || CurrentProjectViewModel == null) return;
-
-        CurrentProjectViewModel.Model.Locomotives.Remove(SelectedLocomotive.Model);
-        CurrentProjectViewModel.Locomotives.Remove(SelectedLocomotive);
-        SelectedLocomotive = null;
-
-        HasUnsavedChanges = true;
-    }
-
-    private bool CanDeleteLocomotive() => SelectedLocomotive != null;
-
-    #endregion
-
-    #region Wagon CRUD Commands
-
-    [ObservableProperty]
-    private WagonViewModel? selectedWagon;
-
-    [RelayCommand]
-    private void AddPassengerWagon()
-    {
-        if (CurrentProjectViewModel == null) return;
-
-        var newWagon = new PassengerWagon
-        {
-            Name = "New Passenger Wagon",
-            WagonClass = PassengerClass.Second
-        };
-
-        CurrentProjectViewModel.Model.PassengerWagons.Add(newWagon);
-
-        var wagonVM = new PassengerWagonViewModel(newWagon);
-        CurrentProjectViewModel.Wagons.Add(wagonVM);
-        SelectedWagon = wagonVM;
-
-        HasUnsavedChanges = true;
-    }
-
-    [RelayCommand]
-    private void AddGoodsWagon()
-    {
-        if (CurrentProjectViewModel == null) return;
-
-        var newWagon = new GoodsWagon
-        {
-            Name = "New Goods Wagon",
-            Cargo = CargoType.General
-        };
-
-        CurrentProjectViewModel.Model.GoodsWagons.Add(newWagon);
-
-        var wagonVM = new GoodsWagonViewModel(newWagon);
-        CurrentProjectViewModel.Wagons.Add(wagonVM);
-        SelectedWagon = wagonVM;
-
-        HasUnsavedChanges = true;
-    }
-
-    [RelayCommand(CanExecute = nameof(CanDeleteWagon))]
-    private void DeleteWagon()
-    {
-        if (SelectedWagon == null || CurrentProjectViewModel == null) return;
-
-        // Remove from appropriate model collection
-        if (SelectedWagon.Model is PassengerWagon pw)
-            CurrentProjectViewModel.Model.PassengerWagons.Remove(pw);
-        else if (SelectedWagon.Model is GoodsWagon gw)
-            CurrentProjectViewModel.Model.GoodsWagons.Remove(gw);
-
-        CurrentProjectViewModel.Wagons.Remove(SelectedWagon);
-        SelectedWagon = null;
-
-        HasUnsavedChanges = true;
-    }
-
-    private bool CanDeleteWagon() => SelectedWagon != null;
-
-    #endregion
-
-    #region Workflow Actions Commands
-
-    [RelayCommand]
-    private void AddAnnouncement()
-    {
-        if (SelectedWorkflow == null) return;
-
-        var newAction = new Domain.WorkflowAction
-        {
-            Name = "New Announcement",
-            Number = (uint)(SelectedWorkflow.Model.Actions.Count + 1),
-            Type = Domain.Enum.ActionType.Announcement,
-            Parameters = new Dictionary<string, object>
-            {
-                ["Message"] = "Enter announcement text",
-                ["VoiceName"] = "de-DE-KatjaNeural"
-            }
-        };
-
-        SelectedWorkflow.Model.Actions.Add(newAction);
-        var viewModel = new Action.AnnouncementViewModel(newAction);
-        SelectedWorkflow.Actions.Add(viewModel);
-
-        HasUnsavedChanges = true;
-    }
-
-    [RelayCommand]
-    private void AddCommand()
-    {
-        if (SelectedWorkflow == null) return;
-
-        var newAction = new Domain.WorkflowAction
-        {
-            Name = "New Command",
-            Number = (uint)(SelectedWorkflow.Model.Actions.Count + 1),
-            Type = Domain.Enum.ActionType.Command,
-            Parameters = new Dictionary<string, object>
-            {
-                ["Bytes"] = new byte[] { 0x00 }
-            }
-        };
-
-        SelectedWorkflow.Model.Actions.Add(newAction);
-        var viewModel = new Action.CommandViewModel(newAction);
-        SelectedWorkflow.Actions.Add(viewModel);
-
-        HasUnsavedChanges = true;
-    }
-
-    [RelayCommand]
-    private void AddAudio()
-    {
-        if (SelectedWorkflow == null) return;
-
-        var newAction = new Domain.WorkflowAction
-        {
-            Name = "New Audio",
-            Number = (uint)(SelectedWorkflow.Model.Actions.Count + 1),
-            Type = Domain.Enum.ActionType.Audio,
-            Parameters = new Dictionary<string, object>
-            {
-                ["FilePath"] = "sound.wav"
-            }
-        };
-
-        SelectedWorkflow.Model.Actions.Add(newAction);
-        var viewModel = new Action.AudioViewModel(newAction);
-        SelectedWorkflow.Actions.Add(viewModel);
-
-        HasUnsavedChanges = true;
-    }
-
-    #endregion
-
-    #region Train Composition Commands
-
-    [RelayCommand]
-    private void AddLocomotiveToComposition()
-    {
-        if (SelectedTrain == null) return;
-
-        // TODO: Enhance to select from global library
-        var newLocomotive = new Locomotive
-        {
-            Name = "New Locomotive",
-            DigitalAddress = 3
-        };
-
-        SelectedTrain.Model.Locomotives.Add(newLocomotive);
-        var locomotiveVM = new LocomotiveViewModel(newLocomotive);
-        SelectedTrain.Locomotives.Add(locomotiveVM);
-
-        HasUnsavedChanges = true;
-    }
-
-    [RelayCommand]
-    private void AddWagonToComposition()
-    {
-        if (SelectedTrain == null) return;
-
-        // TODO: Enhance to select from global library
-        var newWagon = new PassengerWagon
-        {
-            Name = "New Passenger Wagon",
-            WagonClass = PassengerClass.Second
-        };
-
-        SelectedTrain.Model.Wagons.Add(newWagon);
-        var wagonVM = new PassengerWagonViewModel(newWagon);
-        SelectedTrain.Wagons.Add(wagonVM);
-
-        HasUnsavedChanges = true;
+        ExitApplicationRequested?.Invoke(this, EventArgs.Empty);
     }
 
     #endregion
 
     #region City Library
-
-    private readonly ICityService? _cityLibraryService;
 
     [ObservableProperty]
     private ObservableCollection<Domain.City> cityLibrary = [];
@@ -1178,258 +347,6 @@ public partial class MainWindowViewModel : ObservableObject
 
         var cities = await _cityLibraryService.LoadCitiesAsync();
         CityLibrary = new ObservableCollection<Domain.City>(cities);
-    }
-
-    #endregion
-
-    #region Settings
-
-    /// <summary>
-    /// Application settings - exposed for direct binding.
-    /// Settings are stored in appsettings.json (not in Solution).
-    /// </summary>
-    public AppSettings Settings => _settings;
-
-    // Wrapper properties for Settings page bindings
-    public string Z21IpAddress
-    {
-        get => _settings.Z21.CurrentIpAddress;
-        set
-        {
-            if (_settings.Z21.CurrentIpAddress != value)
-            {
-                _settings.Z21.CurrentIpAddress = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    public string Z21Port
-    {
-        get => _settings.Z21.DefaultPort;
-        set
-        {
-            if (_settings.Z21.DefaultPort != value)
-            {
-                _settings.Z21.DefaultPort = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    public string CityLibraryPath
-    {
-        get => _settings.CityLibrary.FilePath;
-        set
-        {
-            if (_settings.CityLibrary.FilePath != value)
-            {
-                _settings.CityLibrary.FilePath = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    public bool CityLibraryAutoReload
-    {
-        get => _settings.CityLibrary.AutoReload;
-        set
-        {
-            if (_settings.CityLibrary.AutoReload != value)
-            {
-                _settings.CityLibrary.AutoReload = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    public string? SpeechKey
-    {
-        get => _settings.Speech.Key;
-        set
-        {
-            if (_settings.Speech.Key != value)
-            {
-                _settings.Speech.Key = value ?? string.Empty;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    public string SpeechRegion
-    {
-        get => _settings.Speech.Region;
-        set
-        {
-            if (_settings.Speech.Region != value)
-            {
-                _settings.Speech.Region = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    public int SpeechRate
-    {
-        get => _settings.Speech.Rate;
-        set
-        {
-            if (_settings.Speech.Rate != value)
-            {
-                _settings.Speech.Rate = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    public double SpeechVolume
-    {
-        get => _settings.Speech.Volume;
-        set
-        {
-            if ((uint)value != _settings.Speech.Volume)
-            {
-                _settings.Speech.Volume = (uint)value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    public bool ResetWindowLayoutOnStart
-    {
-        get => _settings.Application.ResetWindowLayoutOnStart;
-        set
-        {
-            if (_settings.Application.ResetWindowLayoutOnStart != value)
-            {
-                _settings.Application.ResetWindowLayoutOnStart = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    public bool AutoLoadLastSolution
-    {
-        get => _settings.Application.AutoLoadLastSolution;
-        set
-        {
-            if (_settings.Application.AutoLoadLastSolution != value)
-            {
-                _settings.Application.AutoLoadLastSolution = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    public bool HealthCheckEnabled
-    {
-        get => _settings.HealthCheck.Enabled;
-        set
-        {
-            if (_settings.HealthCheck.Enabled != value)
-            {
-                _settings.HealthCheck.Enabled = value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    public double HealthCheckIntervalSeconds
-    {
-        get => _settings.HealthCheck.IntervalSeconds;
-        set
-        {
-            if (_settings.HealthCheck.IntervalSeconds != (int)value)
-            {
-                _settings.HealthCheck.IntervalSeconds = (int)value;
-                OnPropertyChanged();
-            }
-        }
-    }
-
-    [ObservableProperty]
-    private bool _showSuccessMessage;
-
-    [ObservableProperty]
-    private bool _showErrorMessage;
-
-    [ObservableProperty]
-    private string? _errorMessage;
-
-    [RelayCommand]
-    private async Task SaveSettingsAsync()
-    {
-        if (_settingsService == null) return;
-
-        try
-        {
-            ShowErrorMessage = false;
-            await _settingsService.SaveSettingsAsync(_settings);
-
-            ShowSuccessMessage = true;
-
-            // Auto-hide success message after 3 seconds
-            await Task.Delay(3000);
-            ShowSuccessMessage = false;
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-            ShowErrorMessage = true;
-        }
-    }
-
-    [RelayCommand]
-    private async Task ResetToDefaultsAsync()
-    {
-        if (_settingsService == null) return;
-
-        try
-        {
-            ShowErrorMessage = false;
-            await _settingsService.ResetToDefaultsAsync();
-
-            // Notify all settings properties changed
-            OnPropertyChanged(nameof(Z21IpAddress));
-            OnPropertyChanged(nameof(Z21Port));
-            OnPropertyChanged(nameof(CityLibraryPath));
-            OnPropertyChanged(nameof(CityLibraryAutoReload));
-            OnPropertyChanged(nameof(SpeechKey));
-            OnPropertyChanged(nameof(SpeechRegion));
-            OnPropertyChanged(nameof(SpeechRate));
-            OnPropertyChanged(nameof(SpeechVolume));
-            OnPropertyChanged(nameof(ResetWindowLayoutOnStart));
-            OnPropertyChanged(nameof(AutoLoadLastSolution));
-            OnPropertyChanged(nameof(HealthCheckEnabled));
-            OnPropertyChanged(nameof(HealthCheckIntervalSeconds));
-
-            ShowSuccessMessage = true;
-            await Task.Delay(3000);
-            ShowSuccessMessage = false;
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-            ShowErrorMessage = true;
-        }
-    }
-
-    #endregion
-
-    #region Connection Lost Handling
-
-    private void HandleConnectionLost()
-    {
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            IsZ21Connected = false;
-            IsTrackPowerOn = false;
-            Z21StatusText = "Connection lost - reconnect required";
-
-            ConnectToZ21Command.NotifyCanExecuteChanged();
-            DisconnectFromZ21Command.NotifyCanExecuteChanged();
-            SetTrackPowerCommand.NotifyCanExecuteChanged();
-        });
     }
 
     #endregion

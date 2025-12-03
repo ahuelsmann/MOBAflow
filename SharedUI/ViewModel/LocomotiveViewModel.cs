@@ -5,12 +5,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using Moba.Domain;
 using Moba.Domain.Enum;
+using Moba.SharedUI.Enum;
 using Moba.SharedUI.Interface;
 
 /// <summary>
 /// ViewModel wrapper for Locomotive model.
 /// </summary>
-public partial class LocomotiveViewModel : ObservableObject
+public partial class LocomotiveViewModel : ObservableObject, IViewModelWrapper<Locomotive>
 {
     [ObservableProperty]
     private Locomotive model;
@@ -82,5 +83,7 @@ public partial class LocomotiveViewModel : ObservableObject
         get => Model.Details;
         set => SetProperty(Model.Details, value, Model, (m, v) => m.Details = v);
     }
+
+    public MobaType EntityType => MobaType.Locomotive;
 }
 

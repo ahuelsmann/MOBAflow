@@ -9,7 +9,6 @@ using Moba.Common.Configuration;
 using Moba.Common.Extensions;
 using Moba.Domain;
 using Moba.SharedUI.Interface;
-using Moba.SharedUI.Service;
 
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

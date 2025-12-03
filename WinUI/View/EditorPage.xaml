@@ -1,10 +1,13 @@
 <Page
+    x:Name="PageRoot"
     x:Class="Moba.WinUI.View.EditorPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:converter="using:Moba.WinUI.Converter"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:domain="using:Moba.Domain"
+    xmlns:viewmodel="using:Moba.SharedUI.ViewModel"
+    xmlns:local="using:Moba.WinUI.Controls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
@@ -12,6 +15,7 @@
         <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <converter:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
         <converter:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
+        <converter:DateTimeToTimeSpanConverter x:Key="DateTimeToTimeSpanConverter" />
     </Page.Resources>
 
     <Grid>
@@ -49,6 +53,109 @@
             Margin="24,0,24,24"
             TabWidthMode="Equal">
 
+            <!--  Solution/Projects Tab  -->
+            <TabViewItem Header="Solution">
+                <TabViewItem.IconSource>
+                    <FontIconSource Glyph="&#xE8F1;" />
+                </TabViewItem.IconSource>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" MinWidth="250" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="3*" MinWidth="350" />
+                    </Grid.ColumnDefinitions>
+
+                    <!--  Master: Solution (Single Item)  -->
+                    <Grid Grid.Column="0" Padding="16">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock
+                            Grid.Row="0"
+                            Margin="0,0,0,8"
+                            Style="{StaticResource SubtitleTextBlockStyle}"
+                            Text="Solution" />
+
+                        <ListView
+                            Grid.Row="1"
+                            SelectionMode="Single">
+                            <ListView.Items>
+                                <Grid Background="Transparent" Padding="8">
+                                    <TextBlock Text="{x:Bind ViewModel.Solution.Name, Mode=OneWay}" />
+                                    <Button 
+                                        Command="{x:Bind ViewModel.SelectSolutionCommand}"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch"
+                                        HorizontalContentAlignment="Stretch"
+                                        VerticalContentAlignment="Stretch"
+                                        Padding="0" />
+                                </Grid>
+                            </ListView.Items>
+                        </ListView>
+                    </Grid>
+
+                    <Border
+                        Grid.Column="1"
+                        Width="1"
+                        Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+                    <!--  Detail: Projects  -->
+                    <Grid Grid.Column="2" Padding="16">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock
+                            Grid.Row="0"
+                            Margin="0,0,0,8"
+                            Style="{StaticResource SubtitleTextBlockStyle}"
+                            Text="Projects" />
+
+                        <ListView
+                            Grid.Row="1"
+                            ItemsSource="{x:Bind ViewModel.SolutionViewModel.Projects, Mode=OneWay}"
+                            SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}"
+                            SelectionMode="Single">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="viewmodel:ProjectViewModel">
+                                    <Grid Background="Transparent">
+                                        <TextBlock Padding="8" Text="{x:Bind Name, Mode=OneWay}" />
+                                        <Button 
+                                            Command="{Binding DataContext.SelectProjectCommand, ElementName=PageRoot}"
+                                            CommandParameter="{x:Bind}"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            HorizontalAlignment="Stretch"
+                                            VerticalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch"
+                                            VerticalContentAlignment="Stretch"
+                                            Padding="0" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+
+                        <StackPanel
+                            Grid.Row="2"
+                            Margin="0,8,0,0"
+                            Orientation="Horizontal"
+                            Spacing="8">
+                            <Button
+                                Command="{x:Bind ViewModel.AddProjectCommand}"
+                                Content="+"
+                                Style="{StaticResource AccentButtonStyle}"
+                                ToolTipService.ToolTip="Add Project" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </TabViewItem>
+
             <!--  Journeys Tab  -->
             <TabViewItem Header="Journeys">
                 <TabViewItem.IconSource>
@@ -80,10 +187,23 @@
                         <ListView
                             Grid.Row="1"
                             ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.Journeys, Mode=OneWay}"
-                            SelectedItem="{x:Bind ViewModel.SelectedJourney, Mode=TwoWay}">
+                            SelectedItem="{x:Bind ViewModel.SelectedJourney, Mode=TwoWay}"
+                            SelectionMode="Single">
                             <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Padding="8" Text="{Binding Name}" />
+                                <DataTemplate x:DataType="viewmodel:JourneyViewModel">
+                                    <Grid Background="Transparent">
+                                        <TextBlock Padding="8" Text="{x:Bind Name, Mode=OneWay}" />
+                                        <Button 
+                                            Command="{Binding DataContext.SelectJourneyCommand, ElementName=PageRoot}"
+                                            CommandParameter="{x:Bind}"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            HorizontalAlignment="Stretch"
+                                            VerticalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch"
+                                            VerticalContentAlignment="Stretch"
+                                            Padding="0" />
+                                    </Grid>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>
@@ -131,10 +251,23 @@
                             DragOver="StationsListView_DragOver"
                             Drop="StationsListView_Drop"
                             ItemsSource="{x:Bind ViewModel.SelectedJourney.Stations, Mode=OneWay}"
-                            SelectedItem="{x:Bind ViewModel.SelectedStation, Mode=TwoWay}">
+                            SelectedItem="{x:Bind ViewModel.SelectedStation, Mode=TwoWay}"
+                            SelectionMode="Single">
                             <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Padding="8" Text="{Binding Name}" />
+                                <DataTemplate x:DataType="viewmodel:StationViewModel">
+                                    <Grid Background="Transparent">
+                                        <TextBlock Padding="8" Text="{x:Bind Name, Mode=OneWay}" />
+                                        <Button 
+                                            Command="{Binding DataContext.SelectStationCommand, ElementName=PageRoot}"
+                                            CommandParameter="{x:Bind}"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            HorizontalAlignment="Stretch"
+                                            VerticalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch"
+                                            VerticalContentAlignment="Stretch"
+                                            Padding="0" />
+                                    </Grid>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>
@@ -289,10 +422,23 @@
                         <ListView
                             Grid.Row="1"
                             ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.Workflows, Mode=OneWay}"
-                            SelectedItem="{x:Bind ViewModel.SelectedWorkflow, Mode=TwoWay}">
+                            SelectedItem="{x:Bind ViewModel.SelectedWorkflow, Mode=TwoWay}"
+                            SelectionMode="Single">
                             <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Padding="8" Text="{Binding Name}" />
+                                <DataTemplate x:DataType="viewmodel:WorkflowViewModel">
+                                    <Grid Background="Transparent">
+                                        <TextBlock Padding="8" Text="{x:Bind Name, Mode=OneWay}" />
+                                        <Button 
+                                            Command="{Binding DataContext.SelectWorkflowCommand, ElementName=PageRoot}"
+                                            CommandParameter="{x:Bind}"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            HorizontalAlignment="Stretch"
+                                            VerticalAlignment="Stretch"
+                                            HorizontalContentAlignment="Stretch"
+                                            VerticalContentAlignment="Stretch"
+                                            Padding="0" />
+                                    </Grid>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>
@@ -383,10 +529,23 @@
                     <ListView
                         Grid.Row="1"
                         ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.Trains, Mode=OneWay}"
-                        SelectedItem="{x:Bind ViewModel.SelectedTrain, Mode=TwoWay}">
+                        SelectedItem="{x:Bind ViewModel.SelectedTrain, Mode=TwoWay}"
+                        SelectionMode="Single">
                         <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Padding="8" Text="{Binding Name}" />
+                            <DataTemplate x:DataType="viewmodel:TrainViewModel">
+                                <Grid Background="Transparent">
+                                    <TextBlock Padding="8" Text="{x:Bind Name, Mode=OneWay}" />
+                                    <Button 
+                                        Command="{Binding DataContext.SelectTrainCommand, ElementName=PageRoot}"
+                                        CommandParameter="{x:Bind}"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch"
+                                        HorizontalContentAlignment="Stretch"
+                                        VerticalContentAlignment="Stretch"
+                                        Padding="0" />
+                                </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
@@ -438,10 +597,23 @@
                     <ListView
                         Grid.Row="1"
                         ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.Locomotives, Mode=OneWay}"
-                        SelectedItem="{x:Bind ViewModel.SelectedLocomotive, Mode=TwoWay}">
+                        SelectedItem="{x:Bind ViewModel.SelectedLocomotive, Mode=TwoWay}"
+                        SelectionMode="Single">
                         <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Padding="8" Text="{Binding Name}" />
+                            <DataTemplate x:DataType="viewmodel:LocomotiveViewModel">
+                                <Grid Background="Transparent">
+                                    <TextBlock Padding="8" Text="{x:Bind Name, Mode=OneWay}" />
+                                    <Button 
+                                        Command="{Binding DataContext.SelectLocomotiveCommand, ElementName=PageRoot}"
+                                        CommandParameter="{x:Bind}"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch"
+                                        HorizontalContentAlignment="Stretch"
+                                        VerticalContentAlignment="Stretch"
+                                        Padding="0" />
+                                </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
@@ -487,8 +659,20 @@
                         ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.Wagons, Mode=OneWay}"
                         SelectedItem="{x:Bind ViewModel.SelectedWagon, Mode=TwoWay}">
                         <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Padding="8" Text="{Binding Name}" />
+                            <DataTemplate x:DataType="viewmodel:WagonViewModel">
+                                <Grid Background="Transparent">
+                                    <TextBlock Padding="8" Text="{x:Bind Name, Mode=OneWay}" />
+                                    <Button 
+                                        Command="{Binding DataContext.SelectWagonCommand, ElementName=PageRoot}"
+                                        CommandParameter="{x:Bind}"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch"
+                                        HorizontalContentAlignment="Stretch"
+                                        VerticalContentAlignment="Stretch"
+                                        Padding="0" />
+                                </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
@@ -526,114 +710,59 @@
             Width="1"
             Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
-                <!--  PropertyGrid Panel (Always Visible)  -->
+                <!--  PropertyGrid Panel (Dynamically Generated)  -->
         <Grid
             Grid.Row="0"
             Grid.RowSpan="2"
             Grid.Column="2"
-            Padding="16,24,24,24"
+            Padding="0"
             Background="{ThemeResource LayerFillColorDefaultBrush}">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel Spacing="20">
-                    <TextBlock
-                        FontWeight="SemiBold"
-                        Style="{StaticResource SubtitleTextBlockStyle}"
-                        Text="Properties" />
-                    
-                    <!--  Journey Properties (only when Journey selected)  -->
-                    <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ShowJourneyProperties, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <TextBlock
-                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                            Style="{StaticResource BodyStrongTextBlockStyle}"
-                            Text="Journey" />
-                        
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="Name" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            <TextBox Text="{x:Bind ViewModel.SelectedJourney.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
-                        
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="InPort" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            <NumberBox SpinButtonPlacementMode="Inline" Value="{x:Bind ViewModel.SelectedJourney.InPort, Mode=TwoWay}" />
-                        </StackPanel>
-                        
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="Description" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            <TextBox AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" Text="{x:Bind ViewModel.SelectedJourney.Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
-                    </StackPanel>
-                    
-                    <!--  Station Properties (only when Station selected)  -->
-                    <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ShowStationProperties, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <TextBlock
-                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                            Style="{StaticResource BodyStrongTextBlockStyle}"
-                            Text="Station" />
-                        
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="Name" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            <TextBox Text="{x:Bind ViewModel.SelectedStation.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
-                        
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="Track/Platform" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            <NumberBox SpinButtonPlacementMode="Inline" Minimum="1" Value="{x:Bind ViewModel.SelectedStation.Track, Mode=TwoWay}" />
-                        </StackPanel>
-                    </StackPanel>
-                    
-                    <!--  Workflow Properties (only when Workflow selected)  -->
-                    <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ShowWorkflowProperties, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <TextBlock
-                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                            Style="{StaticResource BodyStrongTextBlockStyle}"
-                            Text="Workflow" />
-                        
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="Name" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            <TextBox Text="{x:Bind ViewModel.SelectedWorkflow.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
-                    </StackPanel>
-                    
-                    <!--  Train Properties (only when Train selected)  -->
-                    <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ShowTrainProperties, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <TextBlock
-                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                            Style="{StaticResource BodyStrongTextBlockStyle}"
-                            Text="Train" />
-                        
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="Name" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            <TextBox Text="{x:Bind ViewModel.SelectedTrain.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
-                    </StackPanel>
-                    
-                    <!--  Empty State (when nothing selected)  -->
-                    <StackPanel 
-                        Spacing="16" 
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Margin="0,60,0,0"
-                        Visibility="{x:Bind ViewModel.HasSelectedEntity, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}">
-                        <FontIcon
-                            FontSize="48"
-                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Glyph="&#xE946;"
-                            HorizontalAlignment="Center" />
-                        <TextBlock
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Style="{StaticResource BodyTextBlockStyle}"
-                            Text="No item selected"
-                            TextAlignment="Center" />
-                        <TextBlock
-                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Style="{StaticResource CaptionTextBlockStyle}"
-                            Text="Select an item from the left to view and edit its properties"
-                            TextAlignment="Center"
-                            TextWrapping="Wrap"
-                            MaxWidth="220" />
-                    </StackPanel>
-                </StackPanel>
-            </ScrollViewer>
+            
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            
+            <TextBlock
+                Grid.Row="0"
+                Padding="16,24,24,16"
+                FontWeight="SemiBold"
+                Style="{StaticResource SubtitleTextBlockStyle}"
+                Text="Properties" />
+            
+            <!-- Dynamic PropertyGrid that automatically shows all properties -->
+            <local:SimplePropertyGrid 
+                Grid.Row="1"
+                x:Name="PropertyGrid"
+                SelectedObject="{x:Bind CurrentSelectedObject, Mode=OneWay}"
+                Visibility="{x:Bind ViewModel.HasSelectedEntity, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                
+            <!--  Empty State (when nothing selected)  -->
+            <StackPanel 
+                Grid.Row="1"
+                Spacing="16" 
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Margin="0,60,0,0"
+                Visibility="{x:Bind ViewModel.HasSelectedEntity, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                <FontIcon
+                    FontSize="48"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Glyph="&#xE946;"
+                    HorizontalAlignment="Center" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource BodyTextBlockStyle}"
+                    Text="No item selected"
+                    TextAlignment="Center" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="Select an item from the left to view and edit its properties"
+                    TextAlignment="Center"
+                    TextWrapping="Wrap"
+                    MaxWidth="220" />
+            </StackPanel>
         </Grid>
     </Grid>
 </Page>

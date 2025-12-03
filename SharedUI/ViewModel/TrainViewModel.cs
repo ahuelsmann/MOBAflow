@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 
 using Moba.Domain;
 using Moba.Domain.Enum;
+using Moba.SharedUI.Enum;
 using Moba.SharedUI.Interface;
 
 using System.Collections.ObjectModel;
@@ -13,10 +14,12 @@ using System.Collections.ObjectModel;
 /// <summary>
 /// ViewModel wrapper for Train model with CRUD operations for Locomotives and Wagons.
 /// </summary>
-public partial class TrainViewModel : ObservableObject
+public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
 {
     [ObservableProperty]
     private Train model;
+
+    public MobaType EntityType => MobaType.Train;
 
     private readonly IUiDispatcher? _dispatcher;
 

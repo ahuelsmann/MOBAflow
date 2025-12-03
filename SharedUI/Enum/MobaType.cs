@@ -8,6 +8,8 @@ namespace Moba.SharedUI.Enum;
 public enum MobaType
 {
     None,
+    Solution,
+    Project,
     Journey,
     Station,
     Workflow,

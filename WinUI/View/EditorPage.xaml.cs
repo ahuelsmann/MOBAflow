@@ -12,12 +12,64 @@ public sealed partial class EditorPage : Page
 {
     public MainWindowViewModel ViewModel { get; }
 
+    /// <summary>
+    /// Gets the currently selected object for PropertyGrid display.
+    /// Updates automatically when selection changes.
+    /// </summary>
+    public object? CurrentSelectedObject
+    {
+        get
+        {
+            // Priority: Station > Journey > Workflow > Train > Locomotive > Wagon > Project
+            if (ViewModel.SelectedStation != null) return ViewModel.SelectedStation;
+            if (ViewModel.SelectedJourney != null) return ViewModel.SelectedJourney;
+            if (ViewModel.SelectedWorkflow != null) return ViewModel.SelectedWorkflow;
+            if (ViewModel.SelectedTrain != null) return ViewModel.SelectedTrain;
+            if (ViewModel.SelectedLocomotive != null) return ViewModel.SelectedLocomotive;
+            if (ViewModel.SelectedWagon != null) return ViewModel.SelectedWagon;
+            if (ViewModel.SelectedProject != null) return ViewModel.SelectedProject;
+            if (ViewModel.SolutionViewModel != null) return ViewModel.Solution;
+            return null;
+        }
+    }
+
     public EditorPage(MainWindowViewModel viewModel)
     {
         ViewModel = viewModel;
+        this.DataContext = viewModel; // Set DataContext for {Binding} expressions in DataTemplates
         InitializeComponent();
         
-        System.Diagnostics.Debug.WriteLine("EditorPage1 initialized with MainWindowViewModel");
+        // Subscribe to selection changes to update PropertyGrid
+        ViewModel.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName?.Contains("Selected") == true)
+            {
+                // Notify that CurrentSelectedObject changed
+                Bindings.Update();
+            }
+        };
+        
+        System.Diagnostics.Debug.WriteLine("EditorPage initialized with MainWindowViewModel and dynamic PropertyGrid");
+    }
+    
+    /// <summary>
+    /// Helper function to get the currently selected object for PropertyGrid binding.
+    /// Returns the most specific selection (Station > Journey > Workflow > Train > Project).
+    /// </summary>
+    private object? GetCurrentSelectedObject(
+        ProjectViewModel? project,
+        JourneyViewModel? journey,
+        StationViewModel? station,
+        WorkflowViewModel? workflow,
+        TrainViewModel? train)
+    {
+        // Priority: Station > Journey > Workflow > Train > Project
+        if (station != null) return station;
+        if (journey != null) return journey;
+        if (workflow != null) return workflow;
+        if (train != null) return train;
+        if (project != null) return project;
+        return null;
     }
     
     private void CityItem_Tapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)

@@ -7,17 +7,21 @@ using CommunityToolkit.Mvvm.Input;
 using Moba.Backend.Interface;
 using Moba.Domain;
 using Moba.Domain.Enum;
+using Moba.SharedUI.Enum;
+using Moba.SharedUI.Interface;
 
 using Sound;
 
 using System.Collections.ObjectModel;
 using System.Linq;
 
-public partial class WorkflowViewModel : ObservableObject
+public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Workflow>
 {
     private readonly ISpeakerEngine? _speakerEngine;
     private readonly Project? _project;
     private readonly IZ21? _z21;
+
+    public MobaType EntityType => MobaType.Workflow;
 
     [ObservableProperty]
     private Workflow model;

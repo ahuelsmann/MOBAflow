@@ -6,13 +6,14 @@ using CommunityToolkit.Mvvm.Input;
 
 using Moba.Domain;
 using Moba.Domain.Enum;
+using Moba.SharedUI.Enum;
 using Moba.SharedUI.Interface;
 
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 
-public partial class JourneyViewModel : ObservableObject
+public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Journey>
 {
     [ObservableProperty]
     private Journey model;
@@ -129,6 +130,8 @@ public partial class JourneyViewModel : ObservableObject
         get => Model.FirstPos;
         set => SetProperty(Model.FirstPos, value, Model, (m, v) => m.FirstPos = v);
     }
+
+    public MobaType EntityType => MobaType.Journey;
 
     [RelayCommand]
     private void AddStation()

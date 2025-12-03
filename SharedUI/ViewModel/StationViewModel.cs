@@ -4,13 +4,14 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using Moba.Domain;
+using Moba.SharedUI.Enum;
 using Moba.SharedUI.Interface;
 
 /// <summary>
 /// ViewModel wrapper for Station model.
 /// Note: Platforms are not yet supported in MVP (City = Station for now).
 /// </summary>
-public partial class StationViewModel : ObservableObject
+public partial class StationViewModel : ObservableObject, IViewModelWrapper<Station>
 {
     [ObservableProperty]
     private Station model;
@@ -33,6 +34,8 @@ public partial class StationViewModel : ObservableObject
             }
         };
     }
+
+    public MobaType EntityType => MobaType.Station;
 
     public string Name
     {
