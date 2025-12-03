@@ -4,7 +4,7 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using Moba.Domain;
-using Moba.SharedUI.Service;
+using Moba.SharedUI.Interface;
 
 /// <summary>
 /// ViewModel wrapper for Station model.
@@ -177,3 +177,4 @@ public partial class StationViewModel : ObservableObject
         ? $"Platform Mode ({Model.Platforms.Count} platforms)"
         : "Simple Mode";
 }
+

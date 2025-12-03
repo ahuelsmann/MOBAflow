@@ -3,7 +3,7 @@ namespace Moba.WinUI.Service;
 
 using Moba.Backend.Data;
 using Moba.Domain;
-using Moba.SharedUI.Service;
+using Moba.SharedUI.Interface;
 using Microsoft.Windows.Storage.Pickers;
 
 using System;
@@ -208,6 +208,11 @@ public class IoService : IIoService
         return (true, path, null);
     }
 
+    /// <summary>
+    /// Loads city master data using legacy Backend.Data.DataManager format.
+    /// This method is obsolete - use ICityService.LoadCitiesAsync() instead.
+    /// </summary>
+    [Obsolete("Use ICityService.LoadCitiesAsync() instead. This method loads deprecated Backend.Data.City format.")]
     public async Task<(DataManager? dataManager, string? path, string? error)> LoadDataManagerAsync()
     {
         // Try to load default germany-stations.json from application directory

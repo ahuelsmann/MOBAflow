@@ -1,6 +1,6 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Moba.Backend.Network;
-using Moba.SharedUI.Service;
+using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
 using Moba.WebApp.Components;
 using Moba.WebApp.Service;

@@ -10,7 +10,8 @@ using Moba.Common.Configuration;
 using Moba.Common.Extensions;
 using Moba.Domain;
 using Moba.Domain.Enum;
-using Moba.SharedUI.Service;
+using Moba.SharedUI.Enum;
+using Moba.SharedUI.Interface;
 
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -39,7 +40,7 @@ public partial class MainWindowViewModel : ObservableObject
         IUiDispatcher uiDispatcher,
         AppSettings settings,
         Solution solution,
-        ICityLibraryService? cityLibraryService = null,
+        ICityService? cityLibraryService = null,
         ISettingsService? settingsService = null)
     {
         _ioService = ioService;
@@ -50,14 +51,28 @@ public partial class MainWindowViewModel : ObservableObject
         _cityLibraryService = cityLibraryService;
         _settingsService = settingsService;
 
-        // Subscribe to Z21 events
-        _z21.OnSystemStateChanged += OnZ21SystemStateChanged;
-
-        // Use injected Solution from DI container
+        // Subscribe to Solution changes
         Solution = solution;
 
-        // Load city library asynchronously
-        _ = LoadCityLibraryAsync();
+        // Subscribe to Z21 connection lost event
+        _z21.OnConnectionLost += HandleConnectionLost;
+        
+        // ✅ Load City Library at startup (fire-and-forget)
+        if (_cityLibraryService != null)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await LoadCityLibraryAsync();
+                    System.Diagnostics.Debug.WriteLine($"✅ City Library loaded: {CityLibrary.Count} cities");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ Failed to load City Library: {ex.Message}");
+                }
+            });
+        }
     }
 
     [RelayCommand]
@@ -105,6 +120,42 @@ public partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private TrainViewModel? selectedTrain;
+
+    /// <summary>
+    /// Returns true if any entity is currently selected (Journey, Station, Workflow, or Train).
+    /// Used to show/hide PropertyGrid content.
+    /// </summary>
+    public bool HasSelectedEntity =>
+        SelectedJourney != null ||
+        SelectedStation != null ||
+        SelectedWorkflow != null ||
+        SelectedTrain != null;
+
+    /// <summary>
+    /// Tracks which entity type was selected last for PropertyGrid display priority.
+    /// </summary>
+    [ObservableProperty]
+    private MobaType currentSelectedEntityType = MobaType.None;
+
+    /// <summary>
+    /// Returns true if Journey should be displayed in PropertyGrid.
+    /// </summary>
+    public bool ShowJourneyProperties => CurrentSelectedEntityType == MobaType.Journey && SelectedJourney != null;
+
+    /// <summary>
+    /// Returns true if Station should be displayed in PropertyGrid.
+    /// </summary>
+    public bool ShowStationProperties => CurrentSelectedEntityType == MobaType.Station && SelectedStation != null;
+
+    /// <summary>
+    /// Returns true if Workflow should be displayed in PropertyGrid.
+    /// </summary>
+    public bool ShowWorkflowProperties => CurrentSelectedEntityType == MobaType.Workflow && SelectedWorkflow != null;
+
+    /// <summary>
+    /// Returns true if Train should be displayed in PropertyGrid.
+    /// </summary>
+    public bool ShowTrainProperties => CurrentSelectedEntityType == MobaType.Train && SelectedTrain != null;
 
     [ObservableProperty]
     private bool isZ21Connected;
@@ -201,20 +252,36 @@ public partial class MainWindowViewModel : ObservableObject
     {
         if (Solution.Projects.Count == 0) return;
 
-        var (dataManager, _, error) = await _ioService.LoadDataManagerAsync();
-
-        if (dataManager != null && Solution.Projects.Count > 0)
+        // ✅ Use ICityService instead of deprecated LoadDataManagerAsync
+        if (_cityLibraryService == null)
         {
+            System.Diagnostics.Debug.WriteLine("❌ CityService not available");
+            return;
+        }
+
+        try
+        {
+            // Load cities from JSON using CityService (Domain.City)
+            var cities = await _cityLibraryService.LoadCitiesAsync();
+            
             var firstProject = Solution.Projects[0];
             firstProject.Cities.Clear();
-            // Note: City loading temporarily disabled due to Backend.Data.City vs Domain.City mismatch
-            // TODO: Migrate CityDataManager to use Domain.City or create converter
-            // firstProject.Cities.AddRange(dataManager.Cities);
+            
+            // Add loaded cities to project
+            foreach (var city in cities)
+            {
+                firstProject.Cities.Add(city);
+            }
+            
+            // Refresh AvailableCities for UI binding
             LoadCities();
+            
+            System.Diagnostics.Debug.WriteLine($"✅ Loaded {cities.Count} cities from library");
         }
-        else if (!string.IsNullOrEmpty(error))
+        catch (Exception ex)
         {
-            throw new InvalidOperationException($"Failed to load cities: {error}");
+            System.Diagnostics.Debug.WriteLine($"❌ Failed to load cities: {ex.Message}");
+            throw new InvalidOperationException($"Failed to load cities: {ex.Message}");
         }
     }
 
@@ -280,14 +347,6 @@ public partial class MainWindowViewModel : ObservableObject
         ConnectToZ21Command.NotifyCanExecuteChanged();
     }
 
-    partial void OnSelectedJourneyChanged(JourneyViewModel? value)
-    {
-        AddStationToJourneyCommand.NotifyCanExecuteChanged();
-        
-        // Clear station selection to show Journey properties in PropertyGrid
-        SelectedStation = null;
-    }
-
     [RelayCommand]
     private async Task LoadSolutionAsync()
     {
@@ -300,7 +359,6 @@ public partial class MainWindowViewModel : ObservableObject
 
         if (loadedSolution != null)
         {
-            // Update existing Solution instance
             Solution.Projects.Clear();
             foreach (var project in loadedSolution.Projects)
             {
@@ -308,7 +366,6 @@ public partial class MainWindowViewModel : ObservableObject
             }
 
             Solution.Name = loadedSolution.Name;
-
             SolutionViewModel?.Refresh();
 
             CurrentSolutionPath = path;
@@ -317,7 +374,6 @@ public partial class MainWindowViewModel : ObservableObject
 
             SaveSolutionCommand.NotifyCanExecuteChanged();
             ConnectToZ21Command.NotifyCanExecuteChanged();
-
             LoadCities();
 
             OnPropertyChanged(nameof(Solution));
@@ -325,6 +381,128 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     private bool CanSaveSolution() => true;
+
+    #endregion
+
+    #region Selection Management
+
+    partial void OnSelectedJourneyChanged(JourneyViewModel? value)
+    {
+        AddStationToJourneyCommand.NotifyCanExecuteChanged();
+
+        if (value != null)
+        {
+            ClearOtherSelections(MobaType.Journey);
+            CurrentSelectedEntityType = MobaType.Journey;
+        }
+        
+        NotifySelectionPropertiesChanged();
+    }
+
+    partial void OnSelectedStationChanged(StationViewModel? value)
+    {
+        if (value != null)
+        {
+            ClearOtherSelections(MobaType.Station);
+            CurrentSelectedEntityType = MobaType.Station;
+        }
+        
+        NotifySelectionPropertiesChanged();
+    }
+
+    partial void OnSelectedWorkflowChanged(WorkflowViewModel? value)
+    {
+        if (value != null)
+        {
+            ClearOtherSelections(MobaType.Workflow);
+            CurrentSelectedEntityType = MobaType.Workflow;
+        }
+        
+        NotifySelectionPropertiesChanged();
+    }
+
+    partial void OnSelectedTrainChanged(TrainViewModel? value)
+    {
+        if (value != null)
+        {
+            ClearOtherSelections(MobaType.Train);
+            CurrentSelectedEntityType = MobaType.Train;
+        }
+        
+        NotifySelectionPropertiesChanged();
+    }
+
+    partial void OnSelectedLocomotiveChanged(LocomotiveViewModel? value)
+    {
+        if (value != null)
+        {
+            ClearOtherSelections(MobaType.Locomotive);
+            CurrentSelectedEntityType = MobaType.Locomotive;
+        }
+        
+        NotifySelectionPropertiesChanged();
+    }
+
+    partial void OnSelectedWagonChanged(WagonViewModel? value)
+    {
+        if (value != null)
+        {
+            ClearOtherSelections(MobaType.Wagon);
+            CurrentSelectedEntityType = MobaType.Wagon;
+        }
+        
+        NotifySelectionPropertiesChanged();
+    }
+
+    /// <summary>
+    /// Clears all other selections except the specified type to prevent stacking in PropertyGrid.
+    /// Station keeps Journey selected (parent context).
+    /// </summary>
+    private void ClearOtherSelections(MobaType keepType)
+    {
+        // Keep Journey selected when Station is selected (parent context)
+        if (keepType != MobaType.Journey && keepType != MobaType.Station)
+        {
+            if (SelectedJourney != null) SelectedJourney = null;
+        }
+        
+        if (keepType != MobaType.Station)
+        {
+            if (SelectedStation != null) SelectedStation = null;
+        }
+        
+        if (keepType != MobaType.Workflow)
+        {
+            if (SelectedWorkflow != null) SelectedWorkflow = null;
+        }
+        
+        if (keepType != MobaType.Train)
+        {
+            if (SelectedTrain != null) SelectedTrain = null;
+        }
+        
+        if (keepType != MobaType.Locomotive)
+        {
+            if (SelectedLocomotive != null) SelectedLocomotive = null;
+        }
+        
+        if (keepType != MobaType.Wagon)
+        {
+            if (SelectedWagon != null) SelectedWagon = null;
+        }
+    }
+
+    /// <summary>
+    /// Notifies all selection-related properties changed (for PropertyGrid binding).
+    /// </summary>
+    private void NotifySelectionPropertiesChanged()
+    {
+        OnPropertyChanged(nameof(HasSelectedEntity));
+        OnPropertyChanged(nameof(ShowJourneyProperties));
+        OnPropertyChanged(nameof(ShowStationProperties));
+        OnPropertyChanged(nameof(ShowWorkflowProperties));
+        OnPropertyChanged(nameof(ShowTrainProperties));
+    }
 
     #endregion
 
@@ -532,6 +710,7 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         _z21.OnSystemStateChanged -= OnZ21SystemStateChanged;
+        _z21.OnConnectionLost -= HandleConnectionLost;
         ExitApplicationRequested?.Invoke(this, EventArgs.Empty);
     }
 
@@ -942,7 +1121,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     #region City Library
 
-    private readonly ICityLibraryService? _cityLibraryService;
+    private readonly ICityService? _cityLibraryService;
 
     [ObservableProperty]
     private ObservableCollection<Domain.City> cityLibrary = [];
@@ -1233,6 +1412,24 @@ public partial class MainWindowViewModel : ObservableObject
             ErrorMessage = ex.Message;
             ShowErrorMessage = true;
         }
+    }
+
+    #endregion
+
+    #region Connection Lost Handling
+
+    private void HandleConnectionLost()
+    {
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            IsZ21Connected = false;
+            IsTrackPowerOn = false;
+            Z21StatusText = "Connection lost - reconnect required";
+
+            ConnectToZ21Command.NotifyCanExecuteChanged();
+            DisconnectFromZ21Command.NotifyCanExecuteChanged();
+            SetTrackPowerCommand.NotifyCanExecuteChanged();
+        });
     }
 
     #endregion

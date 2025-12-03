@@ -4,6 +4,7 @@ namespace Moba.WinUI.View;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 
+using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
 using Moba.WinUI.Service;
 
@@ -17,13 +18,13 @@ public sealed partial class MainWindow
 #pragma warning disable CS8618 // Field is initialized in constructor via DI
     private readonly HealthCheckService _healthCheckService;
 #pragma warning restore CS8618
-    private readonly Moba.SharedUI.Service.IUiDispatcher _uiDispatcher;
+    private readonly IUiDispatcher _uiDispatcher;
 
     public MainWindow(
         MainWindowViewModel viewModel,
         CounterViewModel counterViewModel,
         HealthCheckService healthCheckService,
-        Moba.SharedUI.Service.IUiDispatcher uiDispatcher)
+        IUiDispatcher uiDispatcher)
     {
         ViewModel = viewModel;
         CounterViewModel = counterViewModel;
@@ -33,7 +34,7 @@ public sealed partial class MainWindow
         InitializeComponent();
 
         // Initialize IoService with WindowId (required before any file operations)
-        var ioService = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<SharedUI.Service.IIoService>(
+        var ioService = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<SharedUI.Interface.IIoService>(
             ((App)Microsoft.UI.Xaml.Application.Current).Services);
         
         if (ioService is WinUI.Service.IoService winUiIoService)
@@ -248,7 +249,7 @@ public sealed partial class MainWindow
 
                     // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ No longer need Refresh() - EditorPageViewModel is just a wrapper
 
-                    var editorPage = new EditorPage1(ViewModel);
+                    var editorPage = new EditorPage(ViewModel);
 
                     System.Diagnostics.Debug.WriteLine($"ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Navigating to EditorPage (Singleton ViewModel)");
 

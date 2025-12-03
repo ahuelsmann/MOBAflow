@@ -2,7 +2,7 @@
 namespace Moba.WinUI.Service;
 
 using Moba.Domain;
-using Moba.SharedUI.Service;
+using Moba.SharedUI.Interface;
 using Moba.Common.Configuration;
 using Newtonsoft.Json;
 using System;
@@ -15,12 +15,12 @@ using System.Threading.Tasks;
 /// Service for loading city master data from germany-stations.json.
 /// Cities are read-only reference data.
 /// </summary>
-public class CityLibraryService : ICityLibraryService
+public class CityService : ICityService
 {
     private List<City>? _cachedCities;
     private readonly string _jsonFilePath;
 
-    public CityLibraryService(AppSettings settings)
+    public CityService(AppSettings settings)
     {
         // Use configured path from appsettings.json
         var configuredPath = settings.CityLibrary.FilePath;
@@ -30,7 +30,7 @@ public class CityLibraryService : ICityLibraryService
             ? configuredPath
             : Path.Combine(AppContext.BaseDirectory, configuredPath);
             
-        System.Diagnostics.Debug.WriteLine($"📚 CityLibraryService initialized with path: {_jsonFilePath}");
+        System.Diagnostics.Debug.WriteLine($"📚 CityService initialized with path: {_jsonFilePath}");
     }
 
     /// <summary>

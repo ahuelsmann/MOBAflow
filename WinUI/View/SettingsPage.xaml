@@ -1,4 +1,4 @@
-﻿<Page
+<Page
     x:Class="Moba.WinUI.View.SettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -7,12 +7,7 @@
     mc:Ignorable="d">
 
     <ScrollViewer>
-        <StackPanel
-            MaxWidth="900"
-            Margin="0,0,0,40"
-            HorizontalAlignment="Center"
-            Padding="40,24,40,0"
-            Spacing="8">
+        <StackPanel Padding="40,24,40,40" Spacing="8">
 
             <!--  Page Header  -->
             <TextBlock

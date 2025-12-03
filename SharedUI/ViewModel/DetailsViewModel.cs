@@ -5,7 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using Moba.Domain;
 using Moba.Domain.Enum;
-using Moba.SharedUI.Service;
+using Moba.SharedUI.Interface;
 
 /// <summary>
 /// ViewModel wrapper for Details model.
@@ -60,3 +60,4 @@ public partial class DetailsViewModel : ObservableObject
         set => SetProperty(Model.Description, value, Model, (m, v) => m.Description = v);
     }
 }
+

@@ -8,6 +8,7 @@ using Moba.Backend.Interface;
 using Moba.Common.Configuration;
 using Moba.Common.Extensions;
 using Moba.Domain;
+using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
 
 using System.Collections.Generic;
@@ -157,7 +158,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
 
     /// <summary>
     /// Timer interval in seconds for filtering multiple feedback events (default: 5.0 seconds).
-    /// </summary>
+    /// </summary]
     [ObservableProperty]
     private double timerIntervalSeconds = 5.0;
 
@@ -183,7 +184,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
 
     /// <summary>
     /// Z21 supply voltage in millivolts (mV).
-    /// </summary>
+    /// </summary]
     [ObservableProperty]
     private int supplyVoltage;
 

@@ -15,36 +15,6 @@
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Controls\**" />
-    <Compile Remove="Factory\**" />
-    <Compile Remove="Resources\**" />
-    <Compile Remove="Selectors\**" />
-    <Content Remove="Controls\**" />
-    <Content Remove="Factory\**" />
-    <Content Remove="Resources\**" />
-    <Content Remove="Selectors\**" />
-    <EmbeddedResource Remove="Controls\**" />
-    <EmbeddedResource Remove="Factory\**" />
-    <EmbeddedResource Remove="Resources\**" />
-    <EmbeddedResource Remove="Selectors\**" />
-    <None Remove="Controls\**" />
-    <None Remove="Factory\**" />
-    <None Remove="Resources\**" />
-    <None Remove="Selectors\**" />
-    <Page Remove="Controls\**" />
-    <Page Remove="Factory\**" />
-    <Page Remove="Resources\**" />
-    <Page Remove="Selectors\**" />
-    <PRIResource Remove="Controls\**" />
-    <PRIResource Remove="Factory\**" />
-    <PRIResource Remove="Resources\**" />
-    <PRIResource Remove="Selectors\**" />
-  </ItemGroup>
-  <ItemGroup>
-    <Page Remove="Styles\ModernStyles.xaml" />
-    <Page Remove="Styles\RailwayColors.xaml" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -76,16 +46,5 @@
   <!-- Mark generated manifest as a build output so Fast Up-to-Date check does not warn -->
   <ItemGroup>
     <UpToDateCheckBuilt Include="$(IntermediateOutputPath)Manifests\app.manifest" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="Styles\ModernStyles.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Styles\RailwayColors.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="View\SettingsPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
   </ItemGroup>
 </Project>

@@ -14,11 +14,15 @@ public class Z21 : IZ21
     public event Feedback? Received;
     public event SystemStateChanged? OnSystemStateChanged;
     public event XBusStatusChanged? OnXBusStatusChanged;
+    public event Action? OnConnectionLost;
 
     private readonly IUdpClientWrapper _udp;
     private readonly ILogger<Z21>? _logger;
     private CancellationTokenSource? _cancellationTokenSource;
     private Timer? _keepaliveTimer;
+    private int _keepAliveFailures = 0;
+    private const int MAX_KEEPALIVE_FAILURES = 3;
+    private readonly SemaphoreSlim _sendLock = new(1, 1);
     private bool _disposed;
 
     public Z21(IUdpClientWrapper udp, ILogger<Z21>? logger = null)
@@ -71,7 +75,13 @@ public class Z21 : IZ21
         {
             // Cancel and dispose safely
             await _cancellationTokenSource.CancelAsync();
+            _cancellationTokenSource.Dispose();
+            _cancellationTokenSource = null;
         }
+        
+        // Reset failure counter
+        _keepAliveFailures = 0;
+        
         await _udp.StopAsync().ConfigureAwait(false);
         _logger?.LogInformation("Z21 disconnected successfully");
     }
@@ -113,6 +123,7 @@ public class Z21 : IZ21
     /// <summary>
     /// Sends a keepalive message (LAN_X_GET_STATUS) to the Z21.
     /// This prevents the Z21 from timing out inactive connections.
+    /// Tracks failures and triggers disconnect after MAX_KEEPALIVE_FAILURES consecutive failures.
     /// </summary>
     private async Task SendKeepaliveAsync()
     {
@@ -123,30 +134,87 @@ public class Z21 : IZ21
         
         try
         {
-            await GetStatusAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
-            _logger?.LogTrace("Keepalive sent successfully");
+            // Create timeout token (5 seconds)
+            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                _cancellationTokenSource.Token, 
+                timeoutCts.Token);
+
+            await GetStatusAsync(linkedCts.Token).ConfigureAwait(false);
+            
+            // Success - reset failure counter
+            if (_keepAliveFailures > 0)
+            {
+                _logger?.LogInformation("Keep-Alive recovered after {Failures} failures", _keepAliveFailures);
+            }
+            _keepAliveFailures = 0;
+            _logger?.LogTrace("Keep-Alive sent successfully");
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (_cancellationTokenSource?.Token.IsCancellationRequested == true)
         {
             // Normal during shutdown, don't log
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning("Keepalive failed: {Message}", ex.Message);
+            _keepAliveFailures++;
+            _logger?.LogWarning("Keep-Alive failed ({Failures}/{Max}): {Message}", 
+                _keepAliveFailures, MAX_KEEPALIVE_FAILURES, ex.Message);
+
+            if (_keepAliveFailures >= MAX_KEEPALIVE_FAILURES)
+            {
+                _logger?.LogError("Z21 connection lost after {Max} failed Keep-Alives. Disconnecting...", 
+                    MAX_KEEPALIVE_FAILURES);
+                
+                // Trigger disconnect on background thread to avoid deadlock
+                _ = Task.Run(async () => await HandleConnectionLostAsync().ConfigureAwait(false));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Handles connection lost scenario - disconnects and raises event.
+    /// </summary>
+    private async Task HandleConnectionLostAsync()
+    {
+        try
+        {
+            await DisconnectAsync().ConfigureAwait(false);
+            OnConnectionLost?.Invoke();
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error during connection lost handling");
         }
     }
     
     #endregion
 
     #region Basic Commands
+    
+    /// <summary>
+    /// Thread-safe send method with SemaphoreSlim to prevent concurrent sends.
+    /// </summary>
+    private async Task SendAsync(byte[] data, CancellationToken cancellationToken = default)
+    {
+        await _sendLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await _udp.SendAsync(data).ConfigureAwait(false);
+        }
+        finally
+        {
+            _sendLock.Release();
+        }
+    }
+
     private async Task SendHandshakeAsync(CancellationToken cancellationToken = default)
     {
-        await _udp.SendAsync(Z21Command.BuildHandshake(), cancellationToken).ConfigureAwait(false);
+        await SendAsync(Z21Command.BuildHandshake(), cancellationToken).ConfigureAwait(false);
     }
 
     private async Task SetBroadcastFlagsAsync(CancellationToken cancellationToken = default)
     {
-        await _udp.SendAsync(Z21Command.BuildBroadcastFlagsAll(), cancellationToken).ConfigureAwait(false);
+        await SendAsync(Z21Command.BuildBroadcastFlagsAll(), cancellationToken).ConfigureAwait(false);
     }
     #endregion
 
@@ -274,7 +342,7 @@ public class Z21 : IZ21
     /// <param name="sendBytes">The byte sequence containing the command for the Z21.</param>
     public async Task SendCommandAsync(byte[] sendBytes, CancellationToken cancellationToken = default)
     {
-        await _udp.SendAsync(sendBytes, cancellationToken).ConfigureAwait(false);
+        await SendAsync(sendBytes, cancellationToken).ConfigureAwait(false);
     }
 
     #endregion
@@ -327,6 +395,7 @@ public class Z21 : IZ21
         if (disposing)
         {
             StopKeepaliveTimer();
+            _sendLock?.Dispose();
             try { _udp?.Dispose(); } catch { /* ignore */ }
             _cancellationTokenSource?.Cancel();
             _cancellationTokenSource?.Dispose();

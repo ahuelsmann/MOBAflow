@@ -8,11 +8,11 @@ using Moba.SharedUI.ViewModel;
 /// Editor page 1 with tabs for Journeys, Workflows, Trains, Locomotives, Wagons, and Settings.
 /// Works directly with MainWindowViewModel (no wrapper ViewModel).
 /// </summary>
-public sealed partial class EditorPage1 : Page
+public sealed partial class EditorPage : Page
 {
     public MainWindowViewModel ViewModel { get; }
 
-    public EditorPage1(MainWindowViewModel viewModel)
+    public EditorPage(MainWindowViewModel viewModel)
     {
         ViewModel = viewModel;
         InitializeComponent();
@@ -90,3 +90,4 @@ public sealed partial class EditorPage1 : Page
         }
     }
 }
+

@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Smart;
 
-using SharedUI.Service;
+using Moba.SharedUI.Interface;
 using SharedUI.ViewModel;
 
 public partial class MainPage : ContentPage

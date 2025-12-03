@@ -3,7 +3,7 @@ namespace Moba.SharedUI.ViewModel;
 
 using Moba.Domain;
 using Moba.Domain.Enum;
-using Moba.SharedUI.Service;
+using Moba.SharedUI.Interface;
 
 /// <summary>
 /// ViewModel wrapper for PassengerWagon model.
@@ -25,3 +25,4 @@ public partial class PassengerWagonViewModel : WagonViewModel
         set => SetProperty(PassengerWagonModel.WagonClass, value, PassengerWagonModel, (m, v) => m.WagonClass = v);
     }
 }
+

@@ -1,5 +1,5 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.SharedUI.Service;
+namespace Moba.SharedUI.Interface;
 
 using Moba.Domain;
 
@@ -7,7 +7,7 @@ using Moba.Domain;
 /// Service interface for loading city master data from JSON.
 /// Cities are read-only reference data (e.g., germany-stations.json).
 /// </summary>
-public interface ICityLibraryService
+public interface ICityService
 {
     /// <summary>
     /// Loads all cities from the JSON file.
@@ -24,3 +24,4 @@ public interface ICityLibraryService
     /// </summary>
     List<City> GetCachedCities();
 }
+

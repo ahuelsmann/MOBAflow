@@ -4,7 +4,7 @@ namespace Moba.Smart;
 using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
 using Moba.Backend.Network;
-using Moba.SharedUI.Service;
+using Moba.SharedUI.Interface;
 using Moba.MAUI.Service;
 
 using UraniumUI;
@@ -29,7 +29,7 @@ public static class MauiProgram
         // Platform services (MUST be registered before ViewModels that depend on them)
         builder.Services.AddSingleton<IUiDispatcher, MAUI.Service.UiDispatcher>();
         builder.Services.AddSingleton<INotificationService, MAUI.Service.NotificationService>();
-        builder.Services.AddSingleton<SharedUI.Service.IBackgroundService, MAUI.Service.BackgroundService>();
+        builder.Services.AddSingleton<SharedUI.Interface.IBackgroundService, MAUI.Service.BackgroundService>();
 
         // ViewModels (CounterViewModel now requires IUiDispatcher and optional INotificationService)
         builder.Services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();

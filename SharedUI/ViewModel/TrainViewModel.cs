@@ -6,7 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 
 using Moba.Domain;
 using Moba.Domain.Enum;
-using Moba.SharedUI.Service;
+using Moba.SharedUI.Interface;
 
 using System.Collections.ObjectModel;
 
@@ -163,3 +163,4 @@ public partial class TrainViewModel : ObservableObject
         RenumberWagons();
     }
 }
+

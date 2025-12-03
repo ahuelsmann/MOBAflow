@@ -4,7 +4,7 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using Moba.Domain;
-using Moba.SharedUI.Service;
+using Moba.SharedUI.Interface;
 
 /// <summary>
 /// ViewModel wrapper for Voice model.
@@ -35,3 +35,4 @@ public partial class VoiceViewModel : ObservableObject
         set => SetProperty(Model.ProsodyRate, value, Model, (m, v) => m.ProsodyRate = v);
     }
 }
+

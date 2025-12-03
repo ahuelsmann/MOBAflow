@@ -12,6 +12,7 @@ public interface IZ21 : IDisposable
     event Feedback? Received;
     event SystemStateChanged? OnSystemStateChanged;
     event XBusStatusChanged? OnXBusStatusChanged;
+    event Action? OnConnectionLost;
 
     bool IsConnected { get; }
 

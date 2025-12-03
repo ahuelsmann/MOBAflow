@@ -3,7 +3,7 @@ namespace Moba.SharedUI.ViewModel;
 
 using Moba.Domain;
 using Moba.Domain.Enum;
-using Moba.SharedUI.Service;
+using Moba.SharedUI.Interface;
 
 /// <summary>
 /// ViewModel wrapper for GoodsWagon model.
@@ -25,3 +25,4 @@ public partial class GoodsWagonViewModel : WagonViewModel
         set => SetProperty(GoodsWagonModel.Cargo, value, GoodsWagonModel, (m, v) => m.Cargo = v);
     }
 }
+

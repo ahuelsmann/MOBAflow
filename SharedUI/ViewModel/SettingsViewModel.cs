@@ -4,7 +4,7 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using Moba.Common.Configuration;
-using Moba.SharedUI.Service;
+using Moba.SharedUI.Interface;
 
 /// <summary>
 /// ViewModel wrapper for AppSettings configuration.
@@ -112,3 +112,4 @@ public partial class SettingsViewModel : ObservableObject
         set => SetProperty(Model.CityLibrary.AutoReload, value, Model.CityLibrary, (m, v) => m.AutoReload = v);
     }
 }
+

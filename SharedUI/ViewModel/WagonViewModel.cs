@@ -5,7 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using Moba.Domain;
 using Moba.Domain.Enum;
-using Moba.SharedUI.Service;
+using Moba.SharedUI.Interface;
 
 /// <summary>
 /// ViewModel wrapper for Wagon model.
@@ -77,3 +77,4 @@ public partial class WagonViewModel : ObservableObject
         set => SetProperty(Model.Details, value, Model, (m, v) => m.Details = v);
     }
 }
+

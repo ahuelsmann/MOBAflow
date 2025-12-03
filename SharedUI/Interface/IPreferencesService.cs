@@ -1,5 +1,5 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.SharedUI.Service;
+namespace Moba.SharedUI.Interface;
 
 /// <summary>
 /// Interface for application preferences service.
@@ -17,3 +17,4 @@ public interface IPreferencesService
     /// </summary>
     bool AutoLoadLastSolution { get; set; }
 }
+

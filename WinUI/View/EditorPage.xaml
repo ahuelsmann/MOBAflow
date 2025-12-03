@@ -1,21 +1,35 @@
 <Page
-    x:Class="Moba.WinUI.View.EditorPage1"
+    x:Class="Moba.WinUI.View.EditorPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converter="using:Moba.WinUI.Converter"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:domain="using:Moba.Domain"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
+
+    <Page.Resources>
+        <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converter:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+        <converter:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
+    </Page.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
+        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3*" MinWidth="600" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="1*" MinWidth="300" MaxWidth="400" />
+        </Grid.ColumnDefinitions>
 
         <!--  Page Header  -->
         <StackPanel
             Grid.Row="0"
+            Grid.Column="0"
             Margin="24,16,24,8"
             Spacing="8">
             <TextBlock
@@ -31,6 +45,7 @@
         <!--  TabView with Editor Tabs  -->
         <TabView
             Grid.Row="1"
+            Grid.Column="0"
             Margin="24,0,24,24"
             TabWidthMode="Equal">
 
@@ -501,136 +516,124 @@
             </TabViewItem>
 
             <!--  Settings Tab  -->
-            <TabViewItem Header="Settings">
-                <TabViewItem.IconSource>
-                    <FontIconSource Glyph="&#xE713;" />
-                </TabViewItem.IconSource>
-                <ScrollViewer>
-                    <StackPanel
-                        MaxWidth="800"
-                        Padding="16"
-                        Spacing="24">
-
-                        <!--  Z21 Configuration  -->
-                        <StackPanel Spacing="12">
-                            <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Z21 Configuration" />
-
-                            <TextBox
-                                Header="Current IP Address"
-                                PlaceholderText="e.g. 192.168.0.111"
-                                Text="{x:Bind ViewModel.Settings.Z21.CurrentIpAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                                <TextBox.Description>
-                                    <TextBlock Text="IP address of your Z21 digital command station" />
-                                </TextBox.Description>
-                            </TextBox>
-
-                            <TextBlock
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Style="{StaticResource CaptionTextBlockStyle}"
-                                Text="Configure your Z21 digital command station IP address for model railway control."
-                                TextWrapping="Wrap" />
-                        </StackPanel>
-
-                        <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
-                        <!--  Azure Speech Configuration  -->
-                        <StackPanel Spacing="12">
-                            <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Azure Speech Service" />
-
-                            <TextBox
-                                Header="Speech Key"
-                                PlaceholderText="Enter Azure Speech API Key"
-                                Text="{x:Bind ViewModel.Settings.Speech.Key, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                                <TextBox.Description>
-                                    <TextBlock Text="Your Azure Cognitive Services Speech API key" />
-                                </TextBox.Description>
-                            </TextBox>
-
-                            <TextBox
-                                Header="Speech Region"
-                                PlaceholderText="e.g. westeurope"
-                                Text="{x:Bind ViewModel.Settings.Speech.Region, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                                <TextBox.Description>
-                                    <TextBlock Text="Azure region where your Speech service is deployed" />
-                                </TextBox.Description>
-                            </TextBox>
-
-                            <TextBox
-                                Header="Voice Name"
-                                PlaceholderText="e.g. de-DE-KatjaNeural"
-                                Text="{x:Bind ViewModel.Settings.Speech.VoiceName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                                <TextBox.Description>
-                                    <TextBlock Text="Neural voice to use for text-to-speech (TTS)" />
-                                </TextBox.Description>
-                            </TextBox>
-
-                            <TextBox
-                                Header="Speaker Engine Name"
-                                PlaceholderText="e.g. AzureCognitiveSpeech"
-                                Text="{x:Bind ViewModel.Settings.Speech.SpeakerEngineName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                                <TextBox.Description>
-                                    <TextBlock Text="Speech engine implementation to use" />
-                                </TextBox.Description>
-                            </TextBox>
-
-                            <NumberBox
-                                Header="Speech Rate"
-                                Maximum="10"
-                                Minimum="-10"
-                                Value="{x:Bind ViewModel.Settings.Speech.Rate, Mode=TwoWay}">
-                                <NumberBox.Description>
-                                    <TextBlock Text="Speech speed (-10 slow, 0 normal, +10 fast)" />
-                                </NumberBox.Description>
-                            </NumberBox>
-
-                            <NumberBox
-                                Header="Speech Volume"
-                                Maximum="100"
-                                Minimum="0"
-                                Value="{x:Bind ViewModel.Settings.Speech.Volume, Mode=TwoWay}">
-                                <NumberBox.Description>
-                                    <TextBlock Text="Speech volume (0-100%)" />
-                                </NumberBox.Description>
-                            </NumberBox>
-
-                            <TextBlock
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Style="{StaticResource CaptionTextBlockStyle}"
-                                Text="Configure Azure Cognitive Services Speech API for text-to-speech announcements in station workflows."
-                                TextWrapping="Wrap" />
-                        </StackPanel>
-
-                        <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
-                        <!--  Application Settings  -->
-                        <StackPanel Spacing="12">
-                            <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Application Behavior" />
-
-                            <StackPanel Spacing="4">
-                                <ToggleSwitch
-                                    Header="Reset Window Layout On Start"
-                                    IsOn="{x:Bind ViewModel.Settings.Application.ResetWindowLayoutOnStart, Mode=TwoWay}"
-                                    OffContent="Keep layout"
-                                    OnContent="Reset layout" />
-                                <TextBlock
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Style="{StaticResource CaptionTextBlockStyle}"
-                                    Text="Reset window size and position to defaults on application startup"
-                                    TextWrapping="Wrap" />
-                            </StackPanel>
-
-                            <TextBlock
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Style="{StaticResource CaptionTextBlockStyle}"
-                                Text="Configure application startup and behavior settings."
-                                TextWrapping="Wrap" />
-                        </StackPanel>
-
-                    </StackPanel>
-                </ScrollViewer>
-            </TabViewItem>
-
         </TabView>
+        
+        <!--  Vertical Divider  -->
+        <Border
+            Grid.Row="0"
+            Grid.RowSpan="2"
+            Grid.Column="1"
+            Width="1"
+            Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+                <!--  PropertyGrid Panel (Always Visible)  -->
+        <Grid
+            Grid.Row="0"
+            Grid.RowSpan="2"
+            Grid.Column="2"
+            Padding="16,24,24,24"
+            Background="{ThemeResource LayerFillColorDefaultBrush}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="20">
+                    <TextBlock
+                        FontWeight="SemiBold"
+                        Style="{StaticResource SubtitleTextBlockStyle}"
+                        Text="Properties" />
+                    
+                    <!--  Journey Properties (only when Journey selected)  -->
+                    <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ShowJourneyProperties, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Style="{StaticResource BodyStrongTextBlockStyle}"
+                            Text="Journey" />
+                        
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Name" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBox Text="{x:Bind ViewModel.SelectedJourney.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="InPort" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <NumberBox SpinButtonPlacementMode="Inline" Value="{x:Bind ViewModel.SelectedJourney.InPort, Mode=TwoWay}" />
+                        </StackPanel>
+                        
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Description" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBox AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" Text="{x:Bind ViewModel.SelectedJourney.Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                    </StackPanel>
+                    
+                    <!--  Station Properties (only when Station selected)  -->
+                    <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ShowStationProperties, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Style="{StaticResource BodyStrongTextBlockStyle}"
+                            Text="Station" />
+                        
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Name" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBox Text="{x:Bind ViewModel.SelectedStation.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Track/Platform" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <NumberBox SpinButtonPlacementMode="Inline" Minimum="1" Value="{x:Bind ViewModel.SelectedStation.Track, Mode=TwoWay}" />
+                        </StackPanel>
+                    </StackPanel>
+                    
+                    <!--  Workflow Properties (only when Workflow selected)  -->
+                    <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ShowWorkflowProperties, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Style="{StaticResource BodyStrongTextBlockStyle}"
+                            Text="Workflow" />
+                        
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Name" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBox Text="{x:Bind ViewModel.SelectedWorkflow.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                    </StackPanel>
+                    
+                    <!--  Train Properties (only when Train selected)  -->
+                    <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.ShowTrainProperties, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Style="{StaticResource BodyStrongTextBlockStyle}"
+                            Text="Train" />
+                        
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Name" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBox Text="{x:Bind ViewModel.SelectedTrain.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                    </StackPanel>
+                    
+                    <!--  Empty State (when nothing selected)  -->
+                    <StackPanel 
+                        Spacing="16" 
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Margin="0,60,0,0"
+                        Visibility="{x:Bind ViewModel.HasSelectedEntity, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                        <FontIcon
+                            FontSize="48"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Glyph="&#xE946;"
+                            HorizontalAlignment="Center" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource BodyTextBlockStyle}"
+                            Text="No item selected"
+                            TextAlignment="Center" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="Select an item from the left to view and edit its properties"
+                            TextAlignment="Center"
+                            TextWrapping="Wrap"
+                            MaxWidth="220" />
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
     </Grid>
 </Page>
-

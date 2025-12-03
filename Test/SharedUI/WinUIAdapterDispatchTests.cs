@@ -2,7 +2,7 @@
 namespace Moba.Test.SharedUI;
 
 using Moba.Domain;
-using Moba.SharedUI.Service;
+using Moba.SharedUI.Interface;
 
 [TestFixture]
 public class WinUIAdapterDispatchTests

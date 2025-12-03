@@ -41,7 +41,7 @@ public partial class PropertyViewModel : ObservableObject, IDisposable
         // Collect enum values
         if (IsEnum)
         {
-            EnumValues = Enum.GetValues(underlyingType).Cast<object>().ToList();
+            EnumValues = System.Enum.GetValues(underlyingType).Cast<object>().ToList();
         }
 
         // If the target implements INotifyPropertyChanged, register event handler

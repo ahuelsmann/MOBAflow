@@ -1,5 +1,5 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.SharedUI.Service;
+namespace Moba.SharedUI.Interface;
 
 /// <summary>
 /// Service for playing notification sounds when user actions require attention.
@@ -12,3 +12,4 @@ public interface INotificationService
     /// </summary>
     void PlayNotificationSound();
 }
+

@@ -5,7 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using Moba.Domain;
 
-using Service;
+using Moba.SharedUI.Interface;
 
 using System.Collections.ObjectModel;
 

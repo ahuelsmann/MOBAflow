@@ -1,5 +1,5 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.SharedUI.Service;
+namespace Moba.SharedUI.Interface;
 
 using Moba.Backend.Data;
 using Moba.Domain;
@@ -18,5 +18,11 @@ public interface IIoService
     Task<(Solution? solution, string? path, string? error)> LoadAsync();
     Task<(Solution? solution, string? path, string? error)> LoadFromPathAsync(string filePath);
     Task<(bool success, string? path, string? error)> SaveAsync(Solution solution, string? currentPath);
+    
+    /// <summary>
+    /// Loads city master data using legacy Backend.Data.DataManager format.
+    /// This method is obsolete - use ICityService.LoadCitiesAsync() instead.
+    /// </summary>
+    [Obsolete("Use ICityService.LoadCitiesAsync() instead. This method loads deprecated Backend.Data.City format.")]
     Task<(DataManager? dataManager, string? path, string? error)> LoadDataManagerAsync();
 }

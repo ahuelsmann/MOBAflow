@@ -78,12 +78,12 @@ public partial class App
         services.AddSingleton<Domain.Solution>(sp => new Domain.Solution());
 
         // WinUI Services (Interfaces are in SharedUI.Service)
-        services.AddSingleton<SharedUI.Service.IIoService, Service.IoService>();
-        services.AddSingleton<SharedUI.Service.INotificationService, Service.NotificationService>();
-        services.AddSingleton<SharedUI.Service.IPreferencesService, Service.PreferencesService>();
-        services.AddSingleton<SharedUI.Service.IUiDispatcher, Service.UiDispatcher>();
-        services.AddSingleton<SharedUI.Service.ICityLibraryService, Service.CityLibraryService>();
-        services.AddSingleton<SharedUI.Service.ISettingsService, Service.SettingsService>();
+        services.AddSingleton<SharedUI.Interface.IIoService, Service.IoService>();
+        services.AddSingleton<SharedUI.Interface.INotificationService, Service.NotificationService>();
+        services.AddSingleton<SharedUI.Interface.IPreferencesService, Service.PreferencesService>();
+        services.AddSingleton<SharedUI.Interface.IUiDispatcher, Service.UiDispatcher>();
+        services.AddSingleton<SharedUI.Interface.ICityService, Service.CityService>();
+        services.AddSingleton<SharedUI.Interface.ISettingsService, Service.SettingsService>();
         
         // Sound Services (required by HealthCheckService)
         services.AddSingleton<Sound.SpeechHealthCheck>();
@@ -116,12 +116,12 @@ public partial class App
         var mainWindowViewModel = Services.GetRequiredService<SharedUI.ViewModel.MainWindowViewModel>();
         var counterViewModel = Services.GetRequiredService<SharedUI.ViewModel.CounterViewModel>();
         var healthCheckService = Services.GetRequiredService<Service.HealthCheckService>();
-        var uiDispatcher = Services.GetRequiredService<SharedUI.Service.IUiDispatcher>();
+        var uiDispatcher = Services.GetRequiredService<SharedUI.Interface.IUiDispatcher>();
 
         _window = new View.MainWindow(mainWindowViewModel, counterViewModel, healthCheckService, uiDispatcher);
         _window.Activate();
         
-        // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Auto-load last solution if enabled
+        // Ã¢Å“â€¦ Auto-load last solution if enabled
         _ = AutoLoadLastSolutionAsync(mainWindowViewModel);
     }
     
@@ -132,41 +132,41 @@ public partial class App
     {
         try
         {
-            var preferencesService = Services.GetService<SharedUI.Service.IPreferencesService>();
+            var preferencesService = Services.GetService<SharedUI.Interface.IPreferencesService>();
             if (preferencesService == null)
             {
-                System.Diagnostics.Debug.WriteLine("ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â PreferencesService not available - skipping auto-load");
+                System.Diagnostics.Debug.WriteLine("Ã¢Å¡Â Ã¯Â¸Â PreferencesService not available - skipping auto-load");
                 return;
             }
 
             if (!preferencesService.AutoLoadLastSolution)
             {
-                System.Diagnostics.Debug.WriteLine("ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¹ÃƒÂ¯Ã‚Â¸Ã‚Â Auto-load disabled - skipping");
+                System.Diagnostics.Debug.WriteLine("Ã¢â€žÂ¹Ã¯Â¸Â Auto-load disabled - skipping");
                 return;
             }
 
             var lastPath = preferencesService.LastSolutionPath;
             if (string.IsNullOrEmpty(lastPath))
             {
-                System.Diagnostics.Debug.WriteLine("ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¹ÃƒÂ¯Ã‚Â¸Ã‚Â No last solution path - skipping auto-load");
+                System.Diagnostics.Debug.WriteLine("Ã¢â€žÂ¹Ã¯Â¸Â No last solution path - skipping auto-load");
                 return;
             }
 
             if (!System.IO.File.Exists(lastPath))
             {
-                System.Diagnostics.Debug.WriteLine($"ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Last solution file not found: {lastPath}");
+                System.Diagnostics.Debug.WriteLine($"Ã¢Å¡Â Ã¯Â¸Â Last solution file not found: {lastPath}");
                 return;
             }
 
-            System.Diagnostics.Debug.WriteLine($"ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬Å¾ Auto-loading last solution: {lastPath}");
+            System.Diagnostics.Debug.WriteLine($"Ã°Å¸â€â€ž Auto-loading last solution: {lastPath}");
             
             // Load the solution using IIoService
-            var ioService = Services.GetRequiredService<SharedUI.Service.IIoService>();
+            var ioService = Services.GetRequiredService<SharedUI.Interface.IIoService>();
             var (loadedSolution, path, error) = await ioService.LoadFromPathAsync(lastPath);
             
             if (!string.IsNullOrEmpty(error))
             {
-                System.Diagnostics.Debug.WriteLine($"ÃƒÂ¢Ã‚ÂÃ…â€™ Auto-load failed: {error}");
+                System.Diagnostics.Debug.WriteLine($"Ã¢ÂÅ’ Auto-load failed: {error}");
                 return;
             }
             
@@ -185,12 +185,12 @@ public partial class App
                 mainWindowViewModel.CurrentSolutionPath = path;
                 mainWindowViewModel.HasUnsavedChanges = false;
                 
-                System.Diagnostics.Debug.WriteLine("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Auto-load completed successfully");
+                System.Diagnostics.Debug.WriteLine("Ã¢Å“â€¦ Auto-load completed successfully");
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"ÃƒÂ¢Ã‚ÂÃ…â€™ Auto-load failed: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Ã¢ÂÅ’ Auto-load failed: {ex.Message}");
             // Don't crash the application if auto-load fails
         }
     }

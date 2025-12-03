@@ -20,6 +20,8 @@
         <NavigationView
             x:Name="MainNavigation"
             Grid.Row="0"
+            CompactModeThresholdWidth="400"
+            OpenPaneLength="200"
             IsSettingsVisible="False"
             ItemInvoked="NavigationView_ItemInvoked"
             PaneDisplayMode="Left">
@@ -33,8 +35,6 @@
                         <FontIcon Glyph="&#xE70F;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-
-                <NavigationViewItemSeparator />
 
                 <NavigationViewItem Content="Settings" Tag="settings">
                     <NavigationViewItem.Icon>
@@ -68,7 +68,7 @@
                         Label="Add Project" />
                     <AppBarSeparator />
                     <AppBarButton
-                        Command="{x:Bind ViewModel.ConnectToZ21Command}"
+                        Command="{x:Bind CounterViewModel.ConnectCommand}"
                         Label="Connect Z21"
                         ToolTipService.ToolTip="Connect to Z21 Command Station">
                         <AppBarButton.Icon>
@@ -76,7 +76,7 @@
                         </AppBarButton.Icon>
                     </AppBarButton>
                     <AppBarButton
-                        Command="{x:Bind ViewModel.DisconnectFromZ21Command}"
+                        Command="{x:Bind CounterViewModel.DisconnectCommand}"
                         Label="Disconnect"
                         ToolTipService.ToolTip="Disconnect from Z21">
                         <AppBarButton.Icon>
@@ -87,7 +87,7 @@
                     <AppBarToggleButton
                         Click="TrackPower_Click"
                         IsChecked="{x:Bind CounterViewModel.IsTrackPowerOn, Mode=OneWay}"
-                        IsEnabled="{x:Bind ViewModel.IsZ21Connected, Mode=OneWay}"
+                        IsEnabled="{x:Bind CounterViewModel.IsConnected, Mode=OneWay}"
                         Label="Track Power"
                         ToolTipService.ToolTip="Toggle Track Power ON/OFF">
                         <AppBarToggleButton.Icon>
