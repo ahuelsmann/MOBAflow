@@ -51,10 +51,10 @@
             Grid.Row="1"
             Grid.Column="0"
             Margin="24,0,24,24"
-            TabWidthMode="Equal">
+            TabWidthMode="Equal" VerticalAlignment="Stretch" IsAddTabButtonVisible="False" CanDragTabs="False" CanReorderTabs="False">
 
             <!--  Solution/Projects Tab  -->
-            <TabViewItem Header="Solution">
+            <TabViewItem Header="Solution" IsClosable="False">
                 <TabViewItem.IconSource>
                     <FontIconSource Glyph="&#xE8F1;" />
                 </TabViewItem.IconSource>
@@ -157,7 +157,7 @@
             </TabViewItem>
 
             <!--  Journeys Tab  -->
-            <TabViewItem Header="Journeys">
+            <TabViewItem Header="Journeys" IsClosable="False">
                 <TabViewItem.IconSource>
                     <FontIconSource Glyph="&#xE81D;" />
                 </TabViewItem.IconSource>
@@ -395,7 +395,7 @@
             </TabViewItem>
 
             <!--  Workflows Tab  -->
-            <TabViewItem Header="Workflows">
+            <TabViewItem Header="Workflows" IsClosable="False">
                 <TabViewItem.IconSource>
                     <FontIconSource Glyph="&#xE8F5;" />
                 </TabViewItem.IconSource>
@@ -509,7 +509,7 @@
             </TabViewItem>
 
             <!--  Trains Tab  -->
-            <TabViewItem Header="Trains">
+            <TabViewItem Header="Trains" IsClosable="False">
                 <TabViewItem.IconSource>
                     <FontIconSource Glyph="&#xE7C0;" />
                 </TabViewItem.IconSource>
@@ -577,7 +577,7 @@
             </TabViewItem>
 
             <!--  Locomotives Tab  -->
-            <TabViewItem Header="Locomotives">
+            <TabViewItem Header="Locomotives" IsClosable="False">
                 <TabViewItem.IconSource>
                     <FontIconSource Glyph="&#xE7C0;" />
                 </TabViewItem.IconSource>
@@ -637,7 +637,7 @@
             </TabViewItem>
 
             <!--  Wagons Tab  -->
-            <TabViewItem Header="Wagons">
+            <TabViewItem Header="Wagons" IsClosable="False">
                 <TabViewItem.IconSource>
                     <FontIconSource Glyph="&#xE8EC;" />
                 </TabViewItem.IconSource>
@@ -766,3 +766,4 @@
         </Grid>
     </Grid>
 </Page>
+
