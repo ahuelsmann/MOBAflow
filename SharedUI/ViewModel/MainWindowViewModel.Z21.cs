@@ -7,6 +7,7 @@ using Moba.Common.Extensions;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -108,11 +109,20 @@ public partial class MainWindowViewModel
             if (_journeyManager == null && Solution?.Projects.Count > 0)
             {
                 var project = Solution.Projects[0];
+                
+                Debug.WriteLine($"🔍 [DEBUG] Creating ExecutionContext for JourneyManager");
+                
                 var executionContext = new Moba.Backend.Services.ActionExecutionContext
                 {
-                    Z21 = _z21
+                    Z21 = _z21,
+                    SpeakerEngine = null  // Will be set via MainWindowViewModel.SpeakerEngine property
                 };
+                
+                Debug.WriteLine($"   - ExecutionContext.SpeakerEngine: {executionContext.SpeakerEngine?.Name ?? "NULL (not implemented yet)"}");
+                
                 _journeyManager = _journeyManagerFactory.Create(_z21, project.Journeys, executionContext);
+                
+                Debug.WriteLine($"✅ [DEBUG] JourneyManager created");
             }
 
             // Get InPort from selected journey or text field
@@ -216,3 +226,5 @@ public partial class MainWindowViewModel
 
     #endregion
 }
+
+

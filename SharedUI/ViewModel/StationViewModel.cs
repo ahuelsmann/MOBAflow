@@ -179,5 +179,26 @@ public partial class StationViewModel : ObservableObject, IViewModelWrapper<Stat
     public string ConfigurationMode => UsesPlatforms
         ? $"Platform Mode ({Model.Platforms.Count} platforms)"
         : "Simple Mode";
+
+    // --- Runtime State Properties ---
+
+    /// <summary>
+    /// Indicates if this station is currently active in journey execution.
+    /// Used for visual highlighting in UI.
+    /// </summary>
+    [ObservableProperty]
+    private bool isCurrentStation;
+
+    /// <summary>
+    /// Gets the background color for this station based on its current state.
+    /// Returns green (#60A060) for active station, transparent otherwise.
+    /// </summary>
+    public string BackgroundColor => IsCurrentStation ? "#60A060" : "Transparent";
+
+    partial void OnIsCurrentStationChanged(bool value)
+    {
+        // Notify UI that background color has changed
+        OnPropertyChanged(nameof(BackgroundColor));
+    }
 }
 

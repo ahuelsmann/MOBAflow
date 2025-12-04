@@ -81,7 +81,7 @@ public sealed partial class SimplePropertyGrid : Control
     {
         var container = new StackPanel
         {
-            Spacing = 4,
+            Spacing = 2,
             Margin = new Thickness(0, 0, 0, 12)
         };
 
@@ -125,7 +125,7 @@ public sealed partial class SimplePropertyGrid : Control
             {
                 textBox.AcceptsReturn = true;
                 textBox.TextWrapping = TextWrapping.Wrap;
-                textBox.MinHeight = 60;
+                textBox.MinHeight = 48;
             }
             
             return textBox;
@@ -263,3 +263,4 @@ public sealed partial class SimplePropertyGrid : Control
     private object ConvertToDouble(object value) => Convert.ToDouble(value);
     private object ConvertFromDouble(object value) => Convert.ToInt32(value);
 }
+

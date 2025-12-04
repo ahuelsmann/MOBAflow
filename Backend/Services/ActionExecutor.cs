@@ -103,8 +103,18 @@ public class ActionExecutor
     /// </summary>
     private async Task ExecuteAnnouncementAsync(WorkflowAction action, ActionExecutionContext context)
     {
-        if (action.Parameters == null || context.SpeakerEngine == null)
-            throw new ArgumentException("Announcement action requires Parameters and SpeakerEngine");
+        // ✅ Graceful handling: Skip if prerequisites missing
+        if (action.Parameters == null || !action.Parameters.ContainsKey("Message"))
+        {
+            Debug.WriteLine($"    ⚠ Announcement '{action.Name}' skipped: Missing Message parameter");
+            return;
+        }
+
+        if (context.SpeakerEngine == null)
+        {
+            Debug.WriteLine($"    ⚠ Announcement '{action.Name}' skipped: No SpeakerEngine configured");
+            return;
+        }
 
         var message = action.Parameters["Message"].ToString()!;
         var voiceName = action.Parameters.ContainsKey("VoiceName") 
