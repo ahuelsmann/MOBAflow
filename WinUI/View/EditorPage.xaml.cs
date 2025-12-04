@@ -113,6 +113,19 @@ public sealed partial class EditorPage : Page
     }
 
     /// <summary>
+    /// Starts drag operation when dragging a Workflow from the selection helper.
+    /// </summary>
+    private void WorkflowListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
+    {
+        if (e.Items.Count > 0 && e.Items[0] is WorkflowViewModel workflow)
+        {
+            // Store the workflow in the data package
+            e.Data.Properties.Add("Workflow", workflow.Model);
+            e.Data.RequestedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+        }
+    }
+
+    /// <summary>
     /// Validates drag-over for Stations ListView.
     /// </summary>
     private void StationsListView_DragOver(object sender, Microsoft.UI.Xaml.DragEventArgs e)

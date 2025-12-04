@@ -360,7 +360,7 @@
                         </TextBox>
 
                         <ListView
-                            x:Name="CityLibraryListView"
+                            
                             Grid.Row="2"
                             AllowDrop="False"
                             CanDragItems="True"
@@ -715,26 +715,69 @@
             
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             
-            <TextBlock
+            <!--  Workflow Selection Helper (Expander)  -->
+            <Expander
                 Grid.Row="0"
-                Padding="16,24,24,16"
+                Header="Workflows"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                IsExpanded="False">
+                <ListView
+                    ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.Workflows, Mode=OneWay}"
+                    SelectionMode="Single"
+                    CanDragItems="True"
+                    DragItemsStarting="WorkflowListView_DragItemsStarting">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="viewmodel:WorkflowViewModel">
+                            <TextBlock Text="{x:Bind Name, Mode=OneWay}" Padding="6" />
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Expander>
+            
+            <!--  Cities Library Helper (Expander)  -->
+            <Expander
+                Grid.Row="1"
+                Header="Cities Library"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                IsExpanded="False">
+                <ListView
+                    
+                    ItemsSource="{x:Bind ViewModel.CityLibrary, Mode=OneWay}"
+                    SelectionMode="Single"
+                    CanDragItems="True"
+                    DragItemsStarting="CityListView_DragItemsStarting">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="domain:City">
+                            <TextBlock Text="{x:Bind Name}" Padding="6" />
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Expander>
+            
+            <TextBlock
+                Grid.Row="2"
+                Padding="16,6,24,4"
                 FontWeight="SemiBold"
                 Style="{StaticResource SubtitleTextBlockStyle}"
                 Text="Properties" />
             
             <!-- Dynamic PropertyGrid that automatically shows all properties -->
             <local:SimplePropertyGrid 
-                Grid.Row="1"
+                Grid.Row="3"
                 x:Name="PropertyGrid"
                 SelectedObject="{x:Bind CurrentSelectedObject, Mode=OneWay}"
                 Visibility="{x:Bind ViewModel.HasSelectedEntity, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
                 
             <!--  Empty State (when nothing selected)  -->
             <StackPanel 
-                Grid.Row="1"
+                Grid.Row="3"
                 Spacing="16" 
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
@@ -761,6 +804,7 @@
         </Grid>
     </Grid>
 </Page>
+
 
 
 
