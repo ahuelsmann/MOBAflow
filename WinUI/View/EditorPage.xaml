@@ -19,7 +19,14 @@
     </Page.Resources>
 
     <Grid>
+        <Grid.Resources>
+            <!-- Compact Sizing -->
+            <Thickness x:Key="ListViewItemContentMargin">6,4,6,4</Thickness>
+            <x:Double x:Key="ListViewItemMinHeight">32</x:Double>
+        </Grid.Resources>
+        
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
@@ -51,8 +58,38 @@
                 Text="Editor" />
         </StackPanel>
 
+        <!--  SelectorBar Navigation  -->
+        <SelectorBar
+            x:Name="EditorSelectorBar"
+            Grid.Row="1"
+            Grid.Column="0"
+            Grid.ColumnSpan="7"
+            Margin="16,8,16,8"
+            SelectionChanged="EditorSelectorBar_SelectionChanged">
+            <SelectorBarItem x:Name="SolutionSelector" Text="Solution">
+                <SelectorBarItem.Icon>
+                    <FontIcon Glyph="&#xE8F1;" />
+                </SelectorBarItem.Icon>
+            </SelectorBarItem>
+            <SelectorBarItem x:Name="JourneysSelector" Text="Journeys">
+                <SelectorBarItem.Icon>
+                    <FontIcon Glyph="&#xE81D;" />
+                </SelectorBarItem.Icon>
+            </SelectorBarItem>
+            <SelectorBarItem x:Name="WorkflowsSelector" Text="Workflows">
+                <SelectorBarItem.Icon>
+                    <FontIcon Glyph="&#xE9D9;" />
+                </SelectorBarItem.Icon>
+            </SelectorBarItem>
+            <SelectorBarItem x:Name="TrainsSelector" Text="Trains">
+                <SelectorBarItem.Icon>
+                    <FontIcon Glyph="&#xE7C0;" />
+                </SelectorBarItem.Icon>
+            </SelectorBarItem>
+        </SelectorBar>
+
         <!--  Column 0: Projects  -->
-        <Grid Grid.Row="1" Grid.Column="0" Padding="4">
+        <Grid Grid.Row="2" Grid.Column="0" Padding="4">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -91,15 +128,15 @@
             </ListView>
         </Grid>
 
-        <!--  GridSplitter between Projects and City Library  -->
+        <!--  Separator between Projects and City Library (TODO: Replace with GridSplitter when CommunityToolkit.WinUI.Controls.Sizers is installed)  -->
         <Border
-            Grid.Row="1"
+            Grid.Row="2"
             Grid.Column="1"
             Width="1"
             Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
         <!--  Column 2: City Library  -->
-        <Grid Grid.Row="1" Grid.Column="2" Padding="4">
+        <Grid Grid.Row="2" Grid.Column="2" Padding="4">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -140,15 +177,15 @@
             </ListView>
         </Grid>
 
-        <!--  GridSplitter between City Library and Workflows  -->
+        <!--  Separator between City Library and Workflows (TODO: Replace with GridSplitter)  -->
         <Border
-            Grid.Row="1"
+            Grid.Row="2"
             Grid.Column="3"
             Width="1"
             Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
         <!--  Column 4: Workflows  -->
-        <Grid Grid.Row="1" Grid.Column="4" Padding="4">
+        <Grid Grid.Row="2" Grid.Column="4" Padding="4">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -189,15 +226,15 @@
             </ListView>
         </Grid>
 
-        <!--  GridSplitter between Workflows and PropertyGrid  -->
+        <!--  Separator between Workflows and PropertyGrid (TODO: Replace with GridSplitter)  -->
         <Border
-            Grid.Row="1"
+            Grid.Row="2"
             Grid.Column="5"
             Width="1"
             Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
         <!--  Column 6: PropertyGrid  -->
-        <Grid Grid.Row="1" Grid.Column="6" Padding="4">
+        <Grid Grid.Row="2" Grid.Column="6" Padding="4">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />

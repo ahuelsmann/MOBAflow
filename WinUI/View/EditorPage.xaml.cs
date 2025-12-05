@@ -154,5 +154,21 @@ public sealed partial class EditorPage : Page
             ViewModel.AddStationFromCityCommand.Execute(city);
         }
     }
+
+    /// <summary>
+    /// Handles SelectorBar selection changes for view switching.
+    /// </summary>
+    private void EditorSelectorBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+    {
+        var selectedItem = EditorSelectorBar.SelectedItem;
+
+        // For now, we don't change anything - all columns are always visible
+        // In the future, we can conditionally show/hide columns based on selection
+        
+        // Example: Show different columns for different views
+        // if (selectedItem == SolutionSelector) { ... }
+        // if (selectedItem == JourneysSelector) { ... }
+    }
 }
+
 
