@@ -251,7 +251,7 @@
             <local:SimplePropertyGrid 
                 Grid.Row="1"
                 x:Name="PropertyGrid"
-                SelectedObject="{x:Bind CurrentSelectedObject, Mode=OneWay}"
+                SelectedObject="{x:Bind ViewModel.CurrentSelectedObject, Mode=OneWay}"
                 Visibility="{x:Bind ViewModel.HasSelectedEntity, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
 
             <!--  Empty State (when nothing selected)  -->

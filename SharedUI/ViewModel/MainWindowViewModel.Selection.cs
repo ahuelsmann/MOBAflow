@@ -57,6 +57,7 @@ public partial class MainWindowViewModel
         }
         
         OnPropertyChanged(nameof(CurrentProjectViewModel));
+        OnPropertyChanged(nameof(CurrentSelectedObject)); // Update PropertyGrid
         NotifySelectionPropertiesChanged();
     }
 
@@ -70,6 +71,7 @@ public partial class MainWindowViewModel
             CurrentSelectedEntityType = MobaType.Journey;
         }
         
+        OnPropertyChanged(nameof(CurrentSelectedObject)); // Update PropertyGrid
         NotifySelectionPropertiesChanged();
     }
 
@@ -81,6 +83,7 @@ public partial class MainWindowViewModel
             CurrentSelectedEntityType = MobaType.Station;
         }
         
+        OnPropertyChanged(nameof(CurrentSelectedObject)); // Update PropertyGrid
         NotifySelectionPropertiesChanged();
     }
 
@@ -92,6 +95,7 @@ public partial class MainWindowViewModel
             CurrentSelectedEntityType = MobaType.Workflow;
         }
         
+        OnPropertyChanged(nameof(CurrentSelectedObject)); // Update PropertyGrid
         NotifySelectionPropertiesChanged();
     }
 
@@ -103,6 +107,7 @@ public partial class MainWindowViewModel
             CurrentSelectedEntityType = MobaType.Train;
         }
         
+        OnPropertyChanged(nameof(CurrentSelectedObject)); // Update PropertyGrid
         NotifySelectionPropertiesChanged();
     }
 
@@ -114,6 +119,8 @@ public partial class MainWindowViewModel
             CurrentSelectedEntityType = MobaType.Locomotive;
         }
         
+        OnPropertyChanged(nameof(CurrentSelectedObject)); // Update PropertyGrid
+        
         NotifySelectionPropertiesChanged();
     }
 
@@ -124,6 +131,8 @@ public partial class MainWindowViewModel
             ClearOtherSelections(MobaType.Wagon);
             CurrentSelectedEntityType = MobaType.Wagon;
         }
+        
+        OnPropertyChanged(nameof(CurrentSelectedObject)); // Update PropertyGrid
         
         NotifySelectionPropertiesChanged();
     }
@@ -189,8 +198,7 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(ShowWorkflowProperties));
         OnPropertyChanged(nameof(ShowTrainProperties));
         
-        // Notify PropertyGrid to update (via CurrentSelectedObject property)
-        OnPropertyChanged(nameof(CurrentSelectedObject));
+        // Note: CurrentSelectedObject is now updated in OnSelected*Changed methods
     }
 
     /// <summary>

@@ -2,8 +2,8 @@
     x:Class="Moba.WinUI.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:Moba.WinUI"
-    xmlns:converters="using:Moba.WinUI.Converter">
+    xmlns:converters="using:Moba.WinUI.Converter"
+    xmlns:local="using:Moba.WinUI">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

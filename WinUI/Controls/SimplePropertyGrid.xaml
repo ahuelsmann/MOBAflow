@@ -8,7 +8,10 @@
             <Setter.Value>
                 <ControlTemplate TargetType="local:SimplePropertyGrid">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <StackPanel x:Name="PART_PropertiesPanel" Spacing="0" Padding="16" />
+                        <StackPanel
+                            x:Name="PART_PropertiesPanel"
+                            Padding="16"
+                            Spacing="0" />
                     </ScrollViewer>
                 </ControlTemplate>
             </Setter.Value>

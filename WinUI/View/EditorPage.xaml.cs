@@ -2,6 +2,7 @@
 namespace Moba.WinUI.View;
 
 using Microsoft.UI.Xaml.Controls;
+
 using Moba.SharedUI.ViewModel;
 
 /// <summary>
@@ -12,46 +13,15 @@ public sealed partial class EditorPage : Page
 {
     public MainWindowViewModel ViewModel { get; }
 
-    /// <summary>
-    /// Gets the currently selected object for PropertyGrid display.
-    /// Updates automatically when selection changes.
-    /// </summary>
-    public object? CurrentSelectedObject
-    {
-        get
-        {
-            // Priority: Station > Journey > Workflow > Train > Locomotive > Wagon > Project
-            if (ViewModel.SelectedStation != null) return ViewModel.SelectedStation;
-            if (ViewModel.SelectedJourney != null) return ViewModel.SelectedJourney;
-            if (ViewModel.SelectedWorkflow != null) return ViewModel.SelectedWorkflow;
-            if (ViewModel.SelectedTrain != null) return ViewModel.SelectedTrain;
-            if (ViewModel.SelectedLocomotive != null) return ViewModel.SelectedLocomotive;
-            if (ViewModel.SelectedWagon != null) return ViewModel.SelectedWagon;
-            if (ViewModel.SelectedProject != null) return ViewModel.SelectedProject;
-            if (ViewModel.SolutionViewModel != null) return ViewModel.Solution;
-            return null;
-        }
-    }
-
     public EditorPage(MainWindowViewModel viewModel)
     {
         ViewModel = viewModel;
         this.DataContext = viewModel; // Set DataContext for {Binding} expressions in DataTemplates
         InitializeComponent();
-        
-        // Subscribe to selection changes to update PropertyGrid
-        ViewModel.PropertyChanged += (s, e) =>
-        {
-            if (e.PropertyName?.Contains("Selected") == true)
-            {
-                // Notify that CurrentSelectedObject changed
-                Bindings.Update();
-            }
-        };
-        
+
         System.Diagnostics.Debug.WriteLine("EditorPage initialized with MainWindowViewModel and dynamic PropertyGrid");
     }
-    
+
     /// <summary>
     /// Helper function to get the currently selected object for PropertyGrid binding.
     /// Returns the most specific selection (Station > Journey > Workflow > Train > Project).
@@ -71,14 +41,14 @@ public sealed partial class EditorPage : Page
         if (project != null) return project;
         return null;
     }
-    
+
     private void CityItem_Tapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
     {
         if (sender is Microsoft.UI.Xaml.FrameworkElement element && element.DataContext is Moba.Domain.City city)
         {
             // Use MainWindowViewModel command directly
             ViewModel.AddStationFromCityCommand.Execute(city);
-            
+
             // Close the flyout
             if (element.FindName("CityListView") is Microsoft.UI.Xaml.Controls.ListView listView)
             {
@@ -164,11 +134,9 @@ public sealed partial class EditorPage : Page
 
         // For now, we don't change anything - all columns are always visible
         // In the future, we can conditionally show/hide columns based on selection
-        
+
         // Example: Show different columns for different views
         // if (selectedItem == SolutionSelector) { ... }
         // if (selectedItem == JourneysSelector) { ... }
     }
 }
-
-
