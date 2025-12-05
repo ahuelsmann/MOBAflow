@@ -11,12 +11,14 @@ public class Journey
 {
     public Journey()
     {
+        Id = Guid.NewGuid();
         Name = "New Journey";
         Description = string.Empty;
         Stations = new List<Station>();
         Text = string.Empty;
     }
 
+    public Guid Id { get; set; }
     public string Name { get; set; }
     public string Description { get; set; }
     public string Text { get; set; }
@@ -25,35 +27,6 @@ public class Journey
     public bool IsUsingTimerToIgnoreFeedbacks { get; set; }
     public double IntervalForTimerToIgnoreFeedbacks { get; set; }
     public BehaviorOnLastStop BehaviorOnLastStop { get; set; }
-
-    /// <summary>
-    /// Current position tracking (managed by JourneyService)
-    /// </summary>
-    private uint _currentPos;
-    private uint _currentCounter;
-
-    public uint CurrentPos
-    {
-        get => _currentPos;
-        set
-        {
-            _currentPos = value;
-            StateChanged?.Invoke();
-        }
-    }
-
-    /// <summary>
-    /// Current counter for lap tracking (managed by JourneyService)
-    /// </summary>
-    public uint CurrentCounter
-    {
-        get => _currentCounter;
-        set
-        {
-            _currentCounter = value;
-            StateChanged?.Invoke();
-        }
-    }
 
     /// <summary>
     /// Reference to next journey (for chaining journeys)
@@ -65,10 +38,4 @@ public class Journey
     /// First position index (default: 0)
     /// </summary>
     public uint FirstPos { get; set; }
-
-    /// <summary>
-    /// Event raised when the journey's runtime state changes (CurrentPos/CurrentCounter).
-    /// Platform-specific ViewModels can subscribe to this to update UI via dispatcher.
-    /// </summary>
-    public event Action? StateChanged;
 }
