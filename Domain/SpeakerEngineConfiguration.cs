@@ -1,8 +1,6 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
-
-
 /// <summary>
 /// Configuration for a speech synthesis engine.
 /// Pure data object - no logic, no dependencies.

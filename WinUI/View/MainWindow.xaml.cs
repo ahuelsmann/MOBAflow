@@ -44,7 +44,7 @@ public sealed partial class MainWindow
         if (ioService is WinUI.Service.IoService winUiIoService)
         {
             winUiIoService.SetWindowId(this.AppWindow.Id, this.Content.XamlRoot);
-            System.Diagnostics.Debug.WriteLine("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ IoService initialized with WindowId");
+            System.Diagnostics.Debug.WriteLine(" IoService initialized with WindowId");
         }
 
         // Set first nav item as selected (Overview)
@@ -80,7 +80,7 @@ public sealed partial class MainWindow
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"ÃƒÂ¢Ã‚ÂÃ…â€™ Failed to navigate to Overview: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($" Failed to navigate to Overview: {ex.Message}");
         }
     }
 
@@ -93,7 +93,7 @@ public sealed partial class MainWindow
         else if (e.PropertyName == nameof(MainWindowViewModel.Solution))
         {
             // Solution was loaded - refresh EditorPageViewModel if it exists
-            System.Diagnostics.Debug.WriteLine("ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬Å¾ Solution changed - refreshing EditorPageViewModel");
+            System.Diagnostics.Debug.WriteLine(" Solution changed - refreshing EditorPageViewModel");
 
             try
             {
@@ -103,12 +103,12 @@ public sealed partial class MainWindow
                 if (editorViewModel != null)
                 {
                     // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ No longer need Refresh() - data comes from MainWindowViewModel.SolutionViewModel
-                    System.Diagnostics.Debug.WriteLine("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ EditorPageViewModel connected - data automatically updated via MainWindowViewModel");
+                    System.Diagnostics.Debug.WriteLine(" EditorPageViewModel connected - data automatically updated via MainWindowViewModel");
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Failed to refresh EditorPageViewModel: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($" Failed to refresh EditorPageViewModel: {ex.Message}");
             }
         }
     }
@@ -237,14 +237,14 @@ public sealed partial class MainWindow
                 // Navigate to EditorPage (using Singleton ViewModel)
                 try
                 {
-                    System.Diagnostics.Debug.WriteLine($"ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â Attempting to navigate to EditorPage...");
+                    System.Diagnostics.Debug.WriteLine($" Attempting to navigate to EditorPage...");
                     System.Diagnostics.Debug.WriteLine($"   Solution: {ViewModel.Solution != null}");
                     System.Diagnostics.Debug.WriteLine($"   Projects: {ViewModel.Solution?.Projects.Count ?? 0}");
 
                     var editorViewModel = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<SharedUI.ViewModel.MainWindowViewModel>(
                         ((App)Microsoft.UI.Xaml.Application.Current).Services);
 
-                    System.Diagnostics.Debug.WriteLine($"ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬Å¾ Navigating to EditorPage - refreshing data first");
+                    System.Diagnostics.Debug.WriteLine($" Navigating to EditorPage - refreshing data first");
                     System.Diagnostics.Debug.WriteLine($"   Solution has {ViewModel.Solution?.Projects.Count ?? 0} projects");
                     if (ViewModel.Solution?.Projects.Count > 0)
                     {
@@ -255,15 +255,15 @@ public sealed partial class MainWindow
 
                     var editorPage = new EditorPage(ViewModel);
 
-                    System.Diagnostics.Debug.WriteLine($"ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Navigating to EditorPage (Singleton ViewModel)");
+                    System.Diagnostics.Debug.WriteLine($" Navigating to EditorPage (Singleton ViewModel)");
 
                     ContentFrame.Content = editorPage;
 
-                    System.Diagnostics.Debug.WriteLine($"ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Navigation to EditorPage complete");
+                    System.Diagnostics.Debug.WriteLine($" Navigation to EditorPage complete");
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"ÃƒÂ¢Ã‚ÂÃ…â€™ Failed to navigate to EditorPage:");
+                    System.Diagnostics.Debug.WriteLine($" Failed to navigate to EditorPage:");
                     System.Diagnostics.Debug.WriteLine($"   Exception Type: {ex.GetType().Name}");
                     System.Diagnostics.Debug.WriteLine($"   Message: {ex.Message}");
                     System.Diagnostics.Debug.WriteLine($"   StackTrace: {ex.StackTrace}");
@@ -271,7 +271,6 @@ public sealed partial class MainWindow
                     {
                         System.Diagnostics.Debug.WriteLine($"   Inner Exception: {ex.InnerException.Message}");
                     }
-
 
                     // Show error dialog to user
                     _ = ShowErrorDialogAsync("Navigation Error", $"Failed to open Editor: {ex.Message}");
@@ -285,11 +284,11 @@ public sealed partial class MainWindow
                     var settingsPage = new SettingsPage(ViewModel);
                     ContentFrame.Content = settingsPage;
 
-                    System.Diagnostics.Debug.WriteLine($"ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Navigated to SettingsPage");
+                    System.Diagnostics.Debug.WriteLine($" Navigated to SettingsPage");
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"ÃƒÂ¢Ã‚ÂÃ…â€™ Failed to navigate to SettingsPage: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($" Failed to navigate to SettingsPage: {ex.Message}");
                     _ = ShowErrorDialogAsync("Navigation Error", $"Failed to open Settings: {ex.Message}");
                 }
                 break;

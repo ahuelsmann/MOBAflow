@@ -196,7 +196,7 @@ public partial class MainWindowViewModel : ObservableObject
     /// Currently selected city for adding stations to journeys.
     /// </summary>
     [ObservableProperty]
-    private Backend.Data.City? selectedCity;
+    private Domain.City? selectedCity;
 
     /// <summary>
     /// Gets the currently selected project as a ProjectViewModel.

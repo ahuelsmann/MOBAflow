@@ -1,8 +1,6 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
-
-
 /// <summary>
 /// Project - Pure Data Object.
 /// Business logic (validation, persistence) belongs in Application Layer (Backend/Services).

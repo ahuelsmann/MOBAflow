@@ -33,7 +33,6 @@ builder.Services.AddSingleton(sp => new Moba.Backend.Data.DataManager());
 // ✅ Solution as Singleton (initialized empty, can be loaded later by user)
 builder.Services.AddSingleton<Moba.Domain.Solution>(sp => new Moba.Domain.Solution());
 
-
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

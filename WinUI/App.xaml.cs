@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -135,30 +135,30 @@ public partial class App
             var preferencesService = Services.GetService<SharedUI.Interface.IPreferencesService>();
             if (preferencesService == null)
             {
-                System.Diagnostics.Debug.WriteLine("Ã¢Å¡Â Ã¯Â¸Â PreferencesService not available - skipping auto-load");
+                System.Diagnostics.Debug.WriteLine(" PreferencesService not available - skipping auto-load");
                 return;
             }
 
             if (!preferencesService.AutoLoadLastSolution)
             {
-                System.Diagnostics.Debug.WriteLine("Ã¢â€žÂ¹Ã¯Â¸Â Auto-load disabled - skipping");
+                System.Diagnostics.Debug.WriteLine(" Auto-load disabled - skipping");
                 return;
             }
 
             var lastPath = preferencesService.LastSolutionPath;
             if (string.IsNullOrEmpty(lastPath))
             {
-                System.Diagnostics.Debug.WriteLine("Ã¢â€žÂ¹Ã¯Â¸Â No last solution path - skipping auto-load");
+                System.Diagnostics.Debug.WriteLine(" No last solution path - skipping auto-load");
                 return;
             }
 
             if (!System.IO.File.Exists(lastPath))
             {
-                System.Diagnostics.Debug.WriteLine($"Ã¢Å¡Â Ã¯Â¸Â Last solution file not found: {lastPath}");
+                System.Diagnostics.Debug.WriteLine($" Last solution file not found: {lastPath}");
                 return;
             }
 
-            System.Diagnostics.Debug.WriteLine($"Ã°Å¸â€â€ž Auto-loading last solution: {lastPath}");
+            System.Diagnostics.Debug.WriteLine($" Auto-loading last solution: {lastPath}");
             
             // Load the solution using IIoService
             var ioService = Services.GetRequiredService<SharedUI.Interface.IIoService>();
@@ -166,7 +166,7 @@ public partial class App
             
             if (!string.IsNullOrEmpty(error))
             {
-                System.Diagnostics.Debug.WriteLine($"Ã¢ÂÅ’ Auto-load failed: {error}");
+                System.Diagnostics.Debug.WriteLine($" Auto-load failed: {error}");
                 return;
             }
             
@@ -185,12 +185,12 @@ public partial class App
                 mainWindowViewModel.CurrentSolutionPath = path;
                 mainWindowViewModel.HasUnsavedChanges = false;
                 
-                System.Diagnostics.Debug.WriteLine("Ã¢Å“â€¦ Auto-load completed successfully");
+                System.Diagnostics.Debug.WriteLine(" Auto-load completed successfully");
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Ã¢ÂÅ’ Auto-load failed: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($" Auto-load failed: {ex.Message}");
             // Don't crash the application if auto-load fails
         }
     }

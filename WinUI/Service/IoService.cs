@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
 using Moba.Backend.Data;
@@ -116,7 +116,7 @@ public class IoService : IIoService
             // Check if auto-load is enabled
             if (!_preferencesService.AutoLoadLastSolution)
             {
-                System.Diagnostics.Debug.WriteLine("ℹ️ Auto-load is disabled in preferences");
+                System.Diagnostics.Debug.WriteLine(" Auto-load is disabled in preferences");
                 return (null, null, null);
             }
 
@@ -124,18 +124,18 @@ public class IoService : IIoService
             var lastPath = _preferencesService.LastSolutionPath;
             if (string.IsNullOrEmpty(lastPath))
             {
-                System.Diagnostics.Debug.WriteLine("ℹ️ No previous solution path found");
+                System.Diagnostics.Debug.WriteLine(" No previous solution path found");
                 return (null, null, null);
             }
 
             // Check if the file still exists
             if (!File.Exists(lastPath))
             {
-                System.Diagnostics.Debug.WriteLine($"⚠️ Last solution file not found: {lastPath}");
+                System.Diagnostics.Debug.WriteLine($" Last solution file not found: {lastPath}");
                 return (null, null, $"Last solution file not found: {lastPath}");
             }
 
-            System.Diagnostics.Debug.WriteLine($"📄 Auto-loading last solution: {lastPath}");
+            System.Diagnostics.Debug.WriteLine($" Auto-loading last solution: {lastPath}");
             
             var json = await File.ReadAllTextAsync(lastPath!);
             
@@ -155,16 +155,16 @@ public class IoService : IIoService
             
             if (loadedSolution == null)
             {
-                System.Diagnostics.Debug.WriteLine($"⚠️ Failed to load solution from {lastPath}");
+                System.Diagnostics.Debug.WriteLine($" Failed to load solution from {lastPath}");
                 return (null, null, $"Failed to load solution from {lastPath}");
             }
             
-            System.Diagnostics.Debug.WriteLine($"✅ Auto-loaded solution with {loadedSolution.Projects.Count} projects");
+            System.Diagnostics.Debug.WriteLine($" Auto-loaded solution with {loadedSolution.Projects.Count} projects");
             return (loadedSolution, lastPath, null);
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"❌ Failed to auto-load last solution: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($" Failed to auto-load last solution: {ex.Message}");
             return (null, null, $"Failed to auto-load: {ex.Message}");
         }
     }
@@ -272,28 +272,28 @@ public class IoService : IIoService
                 if (result == Microsoft.UI.Xaml.Controls.ContentDialogResult.None)
                 {
                     // User cancelled
-                    System.Diagnostics.Debug.WriteLine("ℹ️ User cancelled new solution creation");
+                    System.Diagnostics.Debug.WriteLine(" User cancelled new solution creation");
                     return (false, true, null);
                 }
 
                 if (result == Microsoft.UI.Xaml.Controls.ContentDialogResult.Primary)
                 {
                     // User wants to save - return and let ViewModel handle save
-                    System.Diagnostics.Debug.WriteLine("💾 User wants to save before creating new solution");
+                    System.Diagnostics.Debug.WriteLine(" User wants to save before creating new solution");
                     return (false, false, "SAVE_REQUESTED");
                 }
 
                 // result == Secondary: Don't Save - continue with new solution
-                System.Diagnostics.Debug.WriteLine("⚠️ User chose not to save - creating new solution");
+                System.Diagnostics.Debug.WriteLine(" User chose not to save - creating new solution");
             }
             
-            System.Diagnostics.Debug.WriteLine("📄 Creating new empty solution");
+            System.Diagnostics.Debug.WriteLine(" Creating new empty solution");
             
             return (true, false, null);
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"❌ Failed to create new solution: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($" Failed to create new solution: {ex.Message}");
             return (false, false, $"Failed to create new solution: {ex.Message}");
         }
     }

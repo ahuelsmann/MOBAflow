@@ -1,4 +1,9 @@
-﻿<Page
+$ErrorActionPreference='Stop'
+[Console]::OutputEncoding=[Text.Encoding]::UTF8
+Set-Location -Path "C:\Repos\ahuelsmann\MOBAflow"
+
+$xaml = @'
+<Page
     x:Class="Moba.WinUI.View.EditorPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -52,30 +57,28 @@
             </SelectorBarItem>
         </SelectorBar>
 
-        <!--  Content Area with Multi-Column Grids  -->
+        <!--  Content Area - All tabs with Visibility switching  -->
         <Grid Grid.Row="2">
             
-            <!--  ============================================  -->
-            <!--  ============================================  -->
-            <!--  Solution Tab: Projects + PropertyGrid  -->
-            <!--  ============================================  -->
+            <!--  Solution Content  -->
             <Grid x:Name="SolutionContent" Visibility="Collapsed">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" MinWidth="300" />
+                    <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="400" MinWidth="300" MaxWidth="600" />
+                    <ColumnDefinition Width="350" MinWidth="300" MaxWidth="500" />
                 </Grid.ColumnDefinitions>
 
-                <!--  Column 0: Projects  -->
                 <Grid Grid.Column="0" Padding="4">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
+
                     <TextBlock Grid.Row="0" Padding="16,6,24,4" FontWeight="SemiBold" Style="{StaticResource SubtitleTextBlockStyle}" Text="Projects" />
-                    <ListView Grid.Row="1" ItemsSource="{x:Bind ViewModel.SolutionViewModel.Projects, Mode=OneWay}" SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}" SelectionMode="Single">
+
+                    <ListView Grid.Row="1" ItemsSource="{x:Bind ViewModel.Solution.Projects, Mode=OneWay}" SelectedItem="{x:Bind ViewModel.CurrentProject, Mode=TwoWay}" SelectionMode="Single">
                         <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="viewmodel:ProjectViewModel">
+                            <DataTemplate x:DataType="domain:Project">
                                 <Grid Padding="6">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
@@ -91,38 +94,33 @@
 
                 <Border Grid.Column="1" Width="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
-                <!--  Column 2: PropertyGrid  -->
                 <Grid Grid.Column="2" Padding="4">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
+
                     <TextBlock Grid.Row="0" Padding="16,6,24,4" FontWeight="SemiBold" Style="{StaticResource SubtitleTextBlockStyle}" Text="Properties" />
-                    <local:SimplePropertyGrid Grid.Row="1" SelectedObject="{x:Bind ViewModel.CurrentSelectedObject, Mode=OneWay}" />
+                    <local:SimplePropertyGrid Grid.Row="1" SelectedObject="{x:Bind ViewModel.CurrentProject, Mode=OneWay}" />
                 </Grid>
             </Grid>
 
-            <!--  ============================================  -->
-            <!--  Journeys Tab: Journeys + Stations + City Library + PropertyGrid  -->
-            <!--  ============================================  -->
+            <!--  Journeys Content  -->
             <Grid x:Name="JourneysContent" Visibility="Collapsed">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="250" MinWidth="200" />
+                    <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="250" MinWidth="200" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="250" MinWidth="200" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" MinWidth="300" />
+                    <ColumnDefinition Width="350" MinWidth="300" MaxWidth="500" />
                 </Grid.ColumnDefinitions>
 
-                <!--  Column 0: Journeys  -->
                 <Grid Grid.Column="0" Padding="4">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
+
                     <TextBlock Grid.Row="0" Padding="16,6,24,4" FontWeight="SemiBold" Style="{StaticResource SubtitleTextBlockStyle}" Text="Journeys" />
+
                     <ListView Grid.Row="1" ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.Journeys, Mode=OneWay}" SelectedItem="{x:Bind ViewModel.SelectedJourney, Mode=TwoWay}" SelectionMode="Single">
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="viewmodel:JourneyViewModel">
@@ -141,87 +139,34 @@
 
                 <Border Grid.Column="1" Width="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
-                <!--  Column 2: Stations (of selected Journey)  -->
                 <Grid Grid.Column="2" Padding="4">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" Padding="16,6,24,4" FontWeight="SemiBold" Style="{StaticResource SubtitleTextBlockStyle}" Text="Stations" />
-                    <ListView Grid.Row="1" ItemsSource="{x:Bind ViewModel.SelectedJourney.Stations, Mode=OneWay}" SelectionMode="Single" AllowDrop="True" DragOver="StationListView_DragOver" Drop="StationListView_Drop">
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="viewmodel:StationViewModel">
-                                <Grid Padding="6">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <FontIcon Grid.Column="0" FontSize="16" Glyph="&#xE80F;" Margin="0,0,8,0" />
-                                    <TextBlock Grid.Column="1" Text="{x:Bind Name, Mode=OneWay}" VerticalAlignment="Center" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                </Grid>
 
-                <Border Grid.Column="3" Width="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
-                <!--  Column 4: City Library (for Drag & Drop)  -->
-                <Grid Grid.Column="4" Padding="4">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" Padding="16,6,24,4" FontWeight="SemiBold" Style="{StaticResource SubtitleTextBlockStyle}" Text="City Library" />
-                    <ListView Grid.Row="1" ItemsSource="{x:Bind ViewModel.CityLibrary, Mode=OneWay}" SelectedItem="{x:Bind ViewModel.SelectedCity, Mode=TwoWay}" SelectionMode="Single" CanDragItems="True" DragItemsStarting="CityListView_DragItemsStarting" DoubleTapped="CityListView_DoubleTapped">
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="domain:City">
-                                <Grid Padding="6">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <FontIcon Grid.Column="0" FontSize="16" Glyph="&#xE80F;" Margin="0,0,8,0" />
-                                    <TextBlock Grid.Column="1" Text="{x:Bind Name}" VerticalAlignment="Center" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                </Grid>
-
-                <Border Grid.Column="5" Width="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
-                <!--  Column 6: PropertyGrid  -->
-                <Grid Grid.Column="6" Padding="4">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" Padding="16,6,24,4" FontWeight="SemiBold" Style="{StaticResource SubtitleTextBlockStyle}" Text="Properties" />
                     <local:SimplePropertyGrid Grid.Row="1" SelectedObject="{x:Bind ViewModel.CurrentSelectedObject, Mode=OneWay}" />
                 </Grid>
             </Grid>
 
-            <!--  ============================================  -->
-            <!--  Workflows Tab: Workflows + Actions + PropertyGrid  -->
-            <!--  ============================================  -->
+            <!--  Workflows Content  -->
             <Grid x:Name="WorkflowsContent" Visibility="Collapsed">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="300" MinWidth="200" />
+                    <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="300" MinWidth="200" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" MinWidth="300" />
+                    <ColumnDefinition Width="350" MinWidth="300" MaxWidth="500" />
                 </Grid.ColumnDefinitions>
 
-                <!--  Column 0: Workflows  -->
                 <Grid Grid.Column="0" Padding="4">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
+
                     <TextBlock Grid.Row="0" Padding="16,6,24,4" FontWeight="SemiBold" Style="{StaticResource SubtitleTextBlockStyle}" Text="Workflows" />
-                    <ListView Grid.Row="1" ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.Workflows, Mode=OneWay}" SelectedItem="{x:Bind ViewModel.SelectedWorkflow, Mode=TwoWay}" SelectionMode="Single" CanDragItems="True" DragItemsStarting="WorkflowListView_DragItemsStarting">
+
+                    <ListView Grid.Row="1" ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.Workflows, Mode=OneWay}" SelectedItem="{x:Bind ViewModel.SelectedWorkflow, Mode=TwoWay}" SelectionMode="Single">
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="viewmodel:WorkflowViewModel">
                                 <Grid Padding="6">
@@ -239,45 +184,18 @@
 
                 <Border Grid.Column="1" Width="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
-                <!--  Column 2: Actions (of selected Workflow)  -->
                 <Grid Grid.Column="2" Padding="4">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" Padding="16,6,24,4" FontWeight="SemiBold" Style="{StaticResource SubtitleTextBlockStyle}" Text="Actions" />
-                    <ListView Grid.Row="1" ItemsSource="{x:Bind ViewModel.SelectedWorkflow.Actions, Mode=OneWay}" SelectionMode="Single">
-                        <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Padding="6">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <FontIcon Grid.Column="0" FontSize="16" Glyph="&#xE74E;" Margin="0,0,8,0" />
-                                    <TextBlock Grid.Column="1" Text="{Binding}" VerticalAlignment="Center" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                </Grid>
 
-                <Border Grid.Column="3" Width="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
-                <!--  Column 4: PropertyGrid  -->
-                <Grid Grid.Column="4" Padding="4">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" Padding="16,6,24,4" FontWeight="SemiBold" Style="{StaticResource SubtitleTextBlockStyle}" Text="Properties" />
                     <local:SimplePropertyGrid Grid.Row="1" SelectedObject="{x:Bind ViewModel.CurrentSelectedObject, Mode=OneWay}" />
                 </Grid>
             </Grid>
 
-            <!--  ============================================  -->
-            <!--  Trains Tab: Trains + PropertyGrid  -->
-            <!--  ============================================  -->
+            <!--  Trains Content  -->
             <Grid x:Name="TrainsContent" Visibility="Visible">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -290,7 +208,9 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
+
                     <TextBlock Grid.Row="0" Padding="16,6,24,4" FontWeight="SemiBold" Style="{StaticResource SubtitleTextBlockStyle}" Text="Trains" />
+
                     <ListView Grid.Row="1" ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.Trains, Mode=OneWay}" SelectedItem="{x:Bind ViewModel.SelectedTrain, Mode=TwoWay}" SelectionMode="Single">
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="viewmodel:TrainViewModel">
@@ -314,6 +234,7 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
+
                     <TextBlock Grid.Row="0" Padding="16,6,24,4" FontWeight="SemiBold" Style="{StaticResource SubtitleTextBlockStyle}" Text="Properties" />
                     <local:SimplePropertyGrid Grid.Row="1" SelectedObject="{x:Bind ViewModel.CurrentSelectedObject, Mode=OneWay}" />
                 </Grid>
@@ -321,11 +242,13 @@
         </Grid>
     </Grid>
 </Page>
+'@
 
-
-
-
-
-
-
-
+try {
+    Set-Content -Path "WinUI\View\EditorPage.xaml" -Value $xaml -Encoding utf8BOM
+    Write-Host "✓ Updated EditorPage.xaml with all 4 tabs (Solution, Journeys, Workflows, Trains)" -ForegroundColor Green
+    exit 0
+} catch {
+    Write-Error "✗ Failed: $_"
+    exit 1
+}

@@ -267,6 +267,127 @@ public void JourneyViewModel_ReflectsSessionStateChanges()
 
 ---
 
+## 🎨 WinUI 3 EditorPage Pattern (Dec 2025)
+
+**Principle:** Use SelectorBar for tabs with multi-column Grids inside each tab.
+
+### Architecture
+```
+SelectorBar (Solution | Journeys | Workflows | Trains)
+    ↓
+Content Area (Visibility switching)
+    ↓
+Each Tab = Multi-Column Grid with multiple ListViews + PropertyGrid
+```
+
+### Example: Journeys Tab
+```xml
+<Grid x:Name="JourneysContent" Visibility="Collapsed">
+    <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="250" />  <!-- Journeys -->
+        <ColumnDefinition Width="Auto" /> <!-- Separator -->
+        <ColumnDefinition Width="250" />  <!-- Stations -->
+        <ColumnDefinition Width="Auto" /> <!-- Separator -->
+        <ColumnDefinition Width="250" />  <!-- City Library -->
+        <ColumnDefinition Width="Auto" /> <!-- Separator -->
+        <ColumnDefinition Width="*" />    <!-- PropertyGrid -->
+    </Grid.ColumnDefinitions>
+    
+    <!-- Column 0: Journeys ListView -->
+    <ListView ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.Journeys}" 
+              SelectedItem="{x:Bind ViewModel.SelectedJourney, Mode=TwoWay}">
+        <ListView.ItemTemplate>
+            <DataTemplate x:DataType="viewmodel:JourneyViewModel">
+                <!-- Item content -->
+            </DataTemplate>
+        </ListView.ItemTemplate>
+    </ListView>
+    
+    <!-- Column 2: Stations ListView (sub-items) -->
+    <ListView ItemsSource="{x:Bind ViewModel.SelectedJourney.Stations, Mode=OneWay}"
+              AllowDrop="True" Drop="StationListView_Drop">
+        <ListView.ItemTemplate>
+            <DataTemplate x:DataType="viewmodel:StationViewModel">
+                <!-- Item content -->
+            </DataTemplate>
+        </ListView.ItemTemplate>
+    </ListView>
+    
+    <!-- Column 4: City Library (Drag source) -->
+    <ListView ItemsSource="{x:Bind ViewModel.CityLibrary}"
+              CanDragItems="True" 
+              DragItemsStarting="CityListView_DragItemsStarting">
+        <ListView.ItemTemplate>
+            <DataTemplate x:DataType="domain:City">
+                <!-- Item content -->
+            </DataTemplate>
+        </ListView.ItemTemplate>
+    </ListView>
+    
+    <!-- Column 6: PropertyGrid -->
+    <local:SimplePropertyGrid SelectedObject="{x:Bind ViewModel.SelectedJourney, Mode=OneWay}" />
+</Grid>
+```
+
+### Code-Behind Pattern
+```csharp
+// Visibility switching
+private void EditorSelectorBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+{
+    SolutionContent.Visibility = Visibility.Collapsed;
+    JourneysContent.Visibility = Visibility.Collapsed;
+    WorkflowsContent.Visibility = Visibility.Collapsed;
+    TrainsContent.Visibility = Visibility.Collapsed;
+
+    if (selectedItem == JourneysSelector)
+        JourneysContent.Visibility = Visibility.Visible;
+    // ... other tabs
+}
+
+// Drag & Drop
+private void CityListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
+{
+    if (e.Items.FirstOrDefault() is Domain.City city)
+    {
+        e.Data.SetData("City", city);
+        e.Data.RequestedOperation = DataPackageOperation.Copy;
+    }
+}
+
+private async void StationListView_Drop(object sender, DragEventArgs e)
+{
+    if (await e.DataView.GetDataAsync("City") is Domain.City city)
+    {
+        var station = new Domain.Station { Name = city.Name };
+        var stationViewModel = new StationViewModel(station);
+        ViewModel.SelectedJourney.Stations.Add(stationViewModel);
+    }
+}
+```
+
+### Critical DataTemplate Rules
+- ✅ **Match ViewModel types:**
+  - `Journeys` → `<DataTemplate x:DataType="viewmodel:JourneyViewModel">`
+  - `Stations` → `<DataTemplate x:DataType="viewmodel:StationViewModel">`
+  - `Workflows` → `<DataTemplate x:DataType="viewmodel:WorkflowViewModel">`
+  - `Trains` → `<DataTemplate x:DataType="viewmodel:TrainViewModel">`
+- ✅ **Use Mode=OneWay** for sub-collections
+- ✅ **Drag source:** `CanDragItems="True"`, `DragItemsStarting` event
+- ✅ **Drop target:** `AllowDrop="True"`, `DragOver` and `Drop` events
+
+### City Library & Stations
+**Important:** `City` and `Station` represent the same concept:
+- **City Library** (`germany-stations.json`) contains all available stations/cities
+- **Journey.Stations** is the list of stations a train visits on this journey
+- **Drag & Drop:** User drags a `City` from City Library and drops it as a new `Station` in a Journey
+- **Domain Model:** 
+  - `City` has: `Name` (e.g., "Berlin Hbf")
+  - `Station` has: `Name`, `InPort`, `Flow` (Workflow reference)
+  - When adding City → Station: Create new `Station { Name = city.Name }`
+  - Create `StationViewModel` wrapper for UI binding
+
+---
+
 ## 🧪 Testing
 
 ### Fake Objects for Backend Tests
@@ -423,6 +544,81 @@ Manager Manager  Manager
 - ✅ **Each Manager has its own SessionState** (runtime data)
 - ✅ **Managers are independent** (can run simultaneously)
 - ✅ **All inherit from** `BaseFeedbackManager<TEntity>`
+
+---
+
+## 🔧 PowerShell 7 Command Guidelines
+
+**Environment:** PowerShell 7.5.4 configured in Visual Studio
+
+All PowerShell commands MUST follow these rules:
+
+### Basic Structure
+```powershell
+$ErrorActionPreference='Stop'
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+Set-Location -Path "C:\Repos\ahuelsmann\MOBAflow"
+
+try {
+    # Your commands here
+    Write-Host "Success message" -ForegroundColor Green
+    exit 0
+} catch {
+    Write-Error "Error: $_"
+    exit 1
+}
+```
+
+### Required Practices
+1. **Always** set working directory first: `Set-Location -Path "<RepoRoot|ProjectPath>"`
+2. **Quote all paths** including those with spaces: `"C:\Program Files\..."`
+3. **Enforce UTF-8 with BOM**: Use `-Encoding utf8BOM` for XAML/XML files
+4. **Error handling**: Use try-catch with `$ErrorActionPreference='Stop'`
+5. **No interactive prompts**: Use parameters or defaults
+6. **Idempotent**: Check before creating (e.g., `if (-not (Test-Path $file))`)
+7. **Status messages**: `Write-Host` for progress, `Write-Error` for failures (**NO Unicode emojis or special characters!**)
+8. **Exit codes**: Return 0 for success, 1 for failure
+9. **Tool checks**: Verify availability with `Get-Command` before use:
+   ```powershell
+   if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
+       Write-Error "dotnet CLI not found"
+       exit 1
+   }
+   ```
+10. **Here-strings**: MUST close with `'@` on own line (no leading spaces):
+    ```powershell
+    & {
+        $content = @'
+    <Page>
+        <!-- XAML content -->
+    </Page>
+    '@
+        Set-Content -Path $file -Value $content -Encoding utf8BOM
+    }
+    ```
+
+### Cross-Platform Considerations
+- Prefer `Join-Path` over string concatenation
+- Use `$PSVersionTable.Platform` to detect OS
+- Avoid Windows-specific cmdlets when possible
+
+### Avoid
+- ❌ Here-strings without proper closing (`'@` MUST be on own line, no spaces)
+- ❌ Unquoted paths with spaces
+- ❌ Interactive prompts (`Read-Host`)
+- ❌ Hardcoded username paths (`C:\Users\JohnDoe\...`)
+- ❌ Mixing BOM and non-BOM encodings (use `utf8BOM` for XAML/XML)
+
+### PowerShell 7 Atomicity Pattern
+For complex operations, wrap in script block:
+```powershell
+& {
+    $ErrorActionPreference = 'Stop'
+    Set-Location "C:\Repos\ahuelsmann\MOBAflow"
+    # Your commands here
+    exit 0
+}
+```
 
 ---
 

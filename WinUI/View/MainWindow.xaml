@@ -126,50 +126,14 @@
                     </AppBarElementContainer>
                 </CommandBar>
 
-                <!--  Content Grid with Frame + PropertyGrid  -->
-                <Grid Grid.Row="1">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="350" MinWidth="300" MaxWidth="500" />
-                    </Grid.ColumnDefinitions>
-
-                    <!--  Frame for page navigation  -->
-                    <Frame x:Name="ContentFrame" Grid.Column="0" />
-
-                    <!--  Splitter  -->
-                    <Border 
-                        Grid.Column="1" 
-                        Width="1" 
-                        Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
-                    <!--  PropertyGrid (always visible on right)  -->
-                    <Grid Grid.Column="2" Padding="8">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-
-                        <TextBlock
-                            Grid.Row="0"
-                            Margin="8,8,8,16"
-                            FontWeight="SemiBold"
-                            Style="{StaticResource SubtitleTextBlockStyle}"
-                            Text="Properties" />
-
-                        <!-- PropertyGrid Control -->
-                        <local:SimplePropertyGrid 
-                            x:Name="GlobalPropertyGrid"
-                            Grid.Row="1"
-                            SelectedObject="{x:Bind ViewModel.CurrentSelectedObject, Mode=OneWay}" />
-                    </Grid>
-                </Grid>
+                <!--  Content Frame for page navigation  -->
+                <Frame x:Name="ContentFrame" Grid.Row="1" />
             </Grid>
         </NavigationView>
 
         <!--  StatusBar - ÃƒÅ“ber die gesamte Fensterbreite  -->
         <Grid
-            Grid.Row="1"
+            Grid.Row="2"
             Height="32"
             Background="{ThemeResource LayerFillColorDefaultBrush}"
             BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"

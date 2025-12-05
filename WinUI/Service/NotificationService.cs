@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
 using Moba.SharedUI.Interface;
@@ -15,11 +15,11 @@ public class NotificationService : INotificationService
         {
             // Play Windows system notification sound
             System.Media.SystemSounds.Asterisk.Play();
-            System.Diagnostics.Debug.WriteLine("🔔 Notification sound played");
+            System.Diagnostics.Debug.WriteLine(" Notification sound played");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"⚠️ Failed to play notification sound: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($" Failed to play notification sound: {ex.Message}");
         }
     }
 }

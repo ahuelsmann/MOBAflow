@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
 using Moba.Domain;
@@ -30,7 +30,7 @@ public class CityService : ICityService
             ? configuredPath
             : Path.Combine(AppContext.BaseDirectory, configuredPath);
             
-        System.Diagnostics.Debug.WriteLine($"📚 CityService initialized with path: {_jsonFilePath}");
+        System.Diagnostics.Debug.WriteLine($" CityService initialized with path: {_jsonFilePath}");
     }
 
     /// <summary>
@@ -43,7 +43,7 @@ public class CityService : ICityService
 
         if (!File.Exists(_jsonFilePath))
         {
-            System.Diagnostics.Debug.WriteLine($"⚠️ City library file not found: {_jsonFilePath}");
+            System.Diagnostics.Debug.WriteLine($" City library file not found: {_jsonFilePath}");
             _cachedCities = [];
             return _cachedCities;
         }
@@ -56,12 +56,12 @@ public class CityService : ICityService
             var data = JsonConvert.DeserializeObject<CitiesData>(json);
 
             _cachedCities = data?.Cities ?? [];
-            System.Diagnostics.Debug.WriteLine($"✅ Loaded {_cachedCities.Count} cities from library");
+            System.Diagnostics.Debug.WriteLine($" Loaded {_cachedCities.Count} cities from library");
             return _cachedCities;
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"❌ Failed to load city library: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($" Failed to load city library: {ex.Message}");
             _cachedCities = [];
             return _cachedCities;
         }

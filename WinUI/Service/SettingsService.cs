@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
 using Moba.SharedUI.Interface;
@@ -40,11 +40,11 @@ public class SettingsService : ISettingsService
             var json = JsonConvert.SerializeObject(settings, Formatting.Indented);
             await File.WriteAllTextAsync(_settingsFilePath, json);
             
-            System.Diagnostics.Debug.WriteLine($"✅ Settings saved to {_settingsFilePath}");
+            System.Diagnostics.Debug.WriteLine($" Settings saved to {_settingsFilePath}");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"❌ Failed to save settings: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($" Failed to save settings: {ex.Message}");
             throw;
         }
     }
