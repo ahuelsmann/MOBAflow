@@ -6,24 +6,33 @@ namespace Moba.Test.SharedUI;
 public class JourneyViewModelTests
 {
     [Test]
-    public void JourneyViewModel_ReflectsModelChanges()
+    public void JourneyViewModel_ReflectsSessionStateChanges()
     {
         // Arrange
-        var journey = new Journey();
-        journey.Name = "TestJourney";
-        journey.Stations = new List<Station>();
-        var station = new Station { Name = "Station1", NumberOfLapsToStop = 1 };
-        journey.Stations.Add(station);
+        var journey = new Journey
+        {
+            Id = Guid.NewGuid(),
+            Name = "TestJourney",
+            Stations = new List<Station>
+            {
+                new Station { Name = "Station1", NumberOfLapsToStop = 1 }
+            }
+        };
 
-        var vm = new JourneyViewModel(journey);
+        var state = new JourneySessionState
+        {
+            JourneyId = journey.Id,
+            Counter = 5,
+            CurrentPos = 1,
+            CurrentStationName = "Station1"
+        };
 
-        // Act
-        journey.CurrentCounter = 5;
-        journey.CurrentPos = 1;
+        var vm = new JourneyViewModel(journey, state);
 
-        // Assert
-        Assert.That(vm.CurrentCounter, Is.EqualTo(5u));
-        Assert.That(vm.CurrentPos, Is.EqualTo(1u));
+        // Assert - SessionState properties are exposed via ViewModel
+        Assert.That(vm.CurrentCounter, Is.EqualTo(5));
+        Assert.That(vm.CurrentPos, Is.EqualTo(1));
+        Assert.That(vm.CurrentStation, Is.EqualTo("Station1"));
     }
 
     [Test]

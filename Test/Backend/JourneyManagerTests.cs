@@ -16,8 +16,10 @@ public class JourneyManagerTests
         
         var journey = new Journey 
         { 
+            Id = Guid.NewGuid(),
             Name = "J1", 
-            InPort = 1, 
+            InPort = 1,
+            FirstPos = 0,
             Stations = new List<Station> 
             { 
                 new Station { Name = "S1", NumberOfLapsToStop = 1 } 
@@ -34,13 +36,14 @@ public class JourneyManagerTests
 
         var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        // Monitor journey property changes via polling (since StateChanged event removed)
+        // Monitor SessionState via GetState instead of journey properties
         var cancellationToken = new CancellationTokenSource(TimeSpan.FromSeconds(2));
         var monitorTask = Task.Run(async () =>
         {
             while (!cancellationToken.Token.IsCancellationRequested)
             {
-                if (journey.CurrentCounter == 0 && journey.CurrentPos == 0)
+                var state = manager.GetState(journey.Id);
+                if (state != null && state.Counter == 0 && state.CurrentPos == 0)
                 {
                     tcs.TrySetResult(true);
                     return;
@@ -59,7 +62,9 @@ public class JourneyManagerTests
 
         // Assert
         Assert.That(completed == tcs.Task, Is.True, "Processing did not complete in time");
-        Assert.That(journey.CurrentCounter, Is.EqualTo(0), "Counter should be reset after reaching target");
-        Assert.That(journey.CurrentPos, Is.EqualTo(0), "Position should be reset");
+        var finalState = manager.GetState(journey.Id);
+        Assert.That(finalState, Is.Not.Null, "SessionState should exist");
+        Assert.That(finalState!.Counter, Is.EqualTo(0), "Counter should be reset after reaching target");
+        Assert.That(finalState.CurrentPos, Is.EqualTo(0), "Position should be reset");
     }
 }

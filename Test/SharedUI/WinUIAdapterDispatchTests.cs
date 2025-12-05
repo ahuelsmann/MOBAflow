@@ -2,7 +2,11 @@
 namespace Moba.Test.SharedUI;
 
 using Moba.Domain;
+using Moba.Backend.Services;
+using Moba.Backend.Manager;
+using Moba.Backend.Interface;
 using Moba.SharedUI.Interface;
+using Moq;
 
 [TestFixture]
 public class WinUIAdapterDispatchTests
@@ -22,20 +26,49 @@ public class WinUIAdapterDispatchTests
         }
     }
 
-    [Test]
-    public void StateChanged_UsesDispatch()
+    // Test helper: JourneyManager subclass that allows triggering StationChanged
+    private class TestableJourneyManager : JourneyManager
     {
-        var model = new Journey();
-        var dispatcher = new TestUiDispatcher();
-        var vm = new Moba.SharedUI.ViewModel.JourneyViewModel(model, dispatcher);
+        public TestableJourneyManager(IZ21 z21, List<Journey> journeys, WorkflowService workflowService)
+            : base(z21, journeys, workflowService)
+        {
+        }
 
-        model.CurrentCounter++;
+        public void TriggerStationChanged(StationChangedEventArgs e)
+        {
+            OnStationChanged(e);
+        }
+    }
+
+    [Test]
+    public void StationChanged_UsesDispatch()
+    {
+        // Arrange
+        var journey = new Journey { Id = Guid.NewGuid(), FirstPos = 0 };
+        var state = new JourneySessionState { JourneyId = journey.Id };
+        var dispatcher = new TestUiDispatcher();
+        
+        // Create a testable JourneyManager
+        var z21Mock = new Mock<IZ21>();
+        var actionExecutorMock = new Mock<ActionExecutor>(z21Mock.Object);
+        var workflowService = new WorkflowService(actionExecutorMock.Object, z21Mock.Object);
+        var journeyManager = new TestableJourneyManager(z21Mock.Object, new List<Journey> { journey }, workflowService);
+
+        var vm = new Moba.SharedUI.ViewModel.JourneyViewModel(journey, state, journeyManager, dispatcher);
+
+        // Act - Trigger StationChanged event
+        journeyManager.TriggerStationChanged(new StationChangedEventArgs
+        {
+            JourneyId = journey.Id,
+            Station = new Station { Name = "Test" },
+            SessionState = state
+        });
 
         // Wait for the PropertyChanged event to be processed (max 1 second)
         bool signaled = dispatcher.DispatchedEvent.Wait(TimeSpan.FromSeconds(1));
         
+        // Assert
         Assert.That(signaled, Is.True, "Dispatch was not called within timeout");
         Assert.That(dispatcher.Dispatched, Is.True);
-        Assert.That(vm.CurrentCounter, Is.EqualTo(1u));
     }
 }

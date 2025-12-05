@@ -4,6 +4,8 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using Moba.Backend.Manager;
+using Moba.Backend.Services;
 using Moba.Domain;
 using Moba.Domain.Enum;
 using Moba.SharedUI.Enum;
@@ -15,9 +17,9 @@ using System.ComponentModel.DataAnnotations;
 
 public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Journey>
 {
-    [ObservableProperty]
-    private Journey model;
-
+    private readonly Journey _journey;
+    private readonly JourneySessionState _state;
+    private readonly JourneyManager? _journeyManager;
     private readonly IUiDispatcher? _dispatcher;
 
     /// <summary>
@@ -25,9 +27,18 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     /// </summary>
     public event EventHandler? ModelChanged;
 
-    public JourneyViewModel(Journey model, IUiDispatcher? dispatcher = null)
+    /// <summary>
+    /// Full constructor with SessionState support (for runtime journey execution).
+    /// </summary>
+    public JourneyViewModel(
+        Journey journey, 
+        JourneySessionState state,
+        JourneyManager? journeyManager = null,
+        IUiDispatcher? dispatcher = null)
     {
-        Model = model;
+        _journey = journey;
+        _state = state;
+        _journeyManager = journeyManager;
         _dispatcher = dispatcher;
 
         // Note: Station.Number removed in Clean Architecture - stations are ordered by list position
@@ -35,61 +46,72 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
 
         // Wrap existing stations in ViewModels
         Stations = new ObservableCollection<StationViewModel>(
-            model.Stations.Select(s => new StationViewModel(s, dispatcher))
+            journey.Stations.Select(s => new StationViewModel(s, dispatcher))
         );
 
-        // Subscribe to Journey.StateChanged and dispatch UI updates when a dispatcher is provided
-        if (_dispatcher != null)
+        // Subscribe to JourneyManager.StationChanged event
+        if (_journeyManager != null && _dispatcher != null)
         {
-            model.StateChanged += () => _dispatcher.InvokeOnUi(() => OnModelStateChanged());
+            _journeyManager.StationChanged += OnStationChanged;
         }
     }
 
     /// <summary>
-    /// Called when the underlying Journey model's state changes.
-    /// Platform-specific derived classes can override this for additional logic.
+    /// Simplified constructor (for UI-only scenarios like TreeView).
+    /// Creates a dummy SessionState that won't receive updates.
     /// </summary>
-    protected virtual void OnModelStateChanged()
+    public JourneyViewModel(Journey journey, IUiDispatcher? dispatcher = null)
+        : this(journey, new JourneySessionState { JourneyId = journey.Id }, null, dispatcher)
     {
-        OnPropertyChanged(nameof(CurrentCounter));
-        OnPropertyChanged(nameof(CurrentPos));
+    }
+
+    private void OnStationChanged(object? sender, Backend.Manager.StationChangedEventArgs e)
+    {
+        if (e.JourneyId != _journey.Id) return; // Only react to THIS journey
+        
+        _dispatcher?.InvokeOnUi(() =>
+        {
+            OnPropertyChanged(nameof(CurrentStation));
+            OnPropertyChanged(nameof(CurrentCounter));
+            OnPropertyChanged(nameof(CurrentPos));
+        });
     }
 
     public uint InPort
     {
-        get => Model.InPort;
-        set => SetProperty(Model.InPort, value, Model, (m, v) => m.InPort = v);
+        get => _journey.InPort;
+        set => SetProperty(_journey.InPort, value, _journey, (m, v) => m.InPort = v);
     }
 
     public bool IsUsingTimerToIgnoreFeedbacks
     {
-        get => Model.IsUsingTimerToIgnoreFeedbacks;
-        set => SetProperty(Model.IsUsingTimerToIgnoreFeedbacks, value, Model, (m, v) => m.IsUsingTimerToIgnoreFeedbacks = v);
+        get => _journey.IsUsingTimerToIgnoreFeedbacks;
+        set => SetProperty(_journey.IsUsingTimerToIgnoreFeedbacks, value, _journey, (m, v) => m.IsUsingTimerToIgnoreFeedbacks = v);
     }
 
     public double IntervalForTimerToIgnoreFeedbacks
     {
-        get => Model.IntervalForTimerToIgnoreFeedbacks;
-        set => SetProperty(Model.IntervalForTimerToIgnoreFeedbacks, value, Model, (m, v) => m.IntervalForTimerToIgnoreFeedbacks = v);
+        get => _journey.IntervalForTimerToIgnoreFeedbacks;
+        set => SetProperty(_journey.IntervalForTimerToIgnoreFeedbacks, value, _journey, (m, v) => m.IntervalForTimerToIgnoreFeedbacks = v);
     }
 
     public string Name
     {
-        get => Model.Name;
-        set => SetProperty(Model.Name, value, Model, (m, v) => m.Name = v);
+        get => _journey.Name;
+        set => SetProperty(_journey.Name, value, _journey, (m, v) => m.Name = v);
     }
 
     public string Description
     {
-        get => Model.Description ?? string.Empty;
-        set => SetProperty(Model.Description, value, Model, (m, v) => m.Description = v);
+        get => _journey.Description ?? string.Empty;
+        set => SetProperty(_journey.Description, value, _journey, (m, v) => m.Description = v);
     }
 
     [Display(Name = "Text-to-speech template")]
     public string? Text
     {
-        get => Model.Text;
-        set => SetProperty(Model.Text, value, Model, (m, v) => m.Text = v);
+        get => _journey.Text;
+        set => SetProperty(_journey.Text, value, _journey, (m, v) => m.Text = v);
     }
 
     // Note: Train property removed - Journey in Domain model no longer has direct Train reference
@@ -101,35 +123,45 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     public IEnumerable<BehaviorOnLastStop> BehaviorOnLastStopValues =>
         Enum.GetValues<BehaviorOnLastStop>();
 
-    public uint CurrentCounter
-    {
-        get => Model.CurrentCounter;
-        set => SetProperty(Model.CurrentCounter, value, Model, (m, v) => m.CurrentCounter = v);
-    }
+    /// <summary>
+    /// Current station name (runtime state).
+    /// </summary>
+    public string CurrentStation => _state.CurrentStationName ?? string.Empty;
 
-    public uint CurrentPos
-    {
-        get => Model.CurrentPos;
-        set => SetProperty(Model.CurrentPos, value, Model, (m, v) => m.CurrentPos = v);
-    }
+    /// <summary>
+    /// Current counter value (runtime state).
+    /// Read-only from ViewModel perspective - managed by JourneyManager.
+    /// </summary>
+    public int CurrentCounter => _state.Counter;
+
+    /// <summary>
+    /// Current position in journey (runtime state).
+    /// Read-only from ViewModel perspective - managed by JourneyManager.
+    /// </summary>
+    public int CurrentPos => _state.CurrentPos;
 
     public BehaviorOnLastStop BehaviorOnLastStop
     {
-        get => Model.BehaviorOnLastStop;
-        set => SetProperty(Model.BehaviorOnLastStop, value, Model, (m, v) => m.BehaviorOnLastStop = v);
+        get => _journey.BehaviorOnLastStop;
+        set => SetProperty(_journey.BehaviorOnLastStop, value, _journey, (m, v) => m.BehaviorOnLastStop = v);
     }
 
     public Journey? NextJourney
     {
-        get => Model.NextJourney;
-        set => SetProperty(Model.NextJourney, value, Model, (m, v) => m.NextJourney = v);
+        get => _journey.NextJourney;
+        set => SetProperty(_journey.NextJourney, value, _journey, (m, v) => m.NextJourney = v);
     }
 
     public uint FirstPos
     {
-        get => Model.FirstPos;
-        set => SetProperty(Model.FirstPos, value, Model, (m, v) => m.FirstPos = v);
+        get => _journey.FirstPos;
+        set => SetProperty(_journey.FirstPos, value, _journey, (m, v) => m.FirstPos = v);
     }
+
+    /// <summary>
+    /// Expose domain object for serialization and other operations.
+    /// </summary>
+    public Journey Model => _journey;
 
     public MobaType EntityType => MobaType.Journey;
 
@@ -137,7 +169,7 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     private void AddStation()
     {
         var newStation = new Station { Name = "New Station" };
-        Model.Stations.Add(newStation);
+        _journey.Stations.Add(newStation);
 
         var stationVM = new StationViewModel(newStation, _dispatcher);
         Stations.Add(stationVM);
@@ -154,7 +186,7 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     {
         if (stationVM == null) return;
 
-        Model.Stations.Remove(stationVM.Model);
+        _journey.Stations.Remove(stationVM.Model);
         Stations.Remove(stationVM);
 
         // Renumber remaining stations
@@ -182,11 +214,11 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     [RelayCommand]
     public void StationsReordered()
     {
-        // Update Model.Stations to match ViewModel order
-        Model.Stations.Clear();
+        // Update _journey.Stations to match ViewModel order
+        _journey.Stations.Clear();
         foreach (var stationVM in Stations)
         {
-            Model.Stations.Add(stationVM.Model);
+            _journey.Stations.Add(stationVM.Model);
         }
 
         // Renumber based on new order

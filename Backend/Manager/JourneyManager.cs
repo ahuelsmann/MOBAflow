@@ -11,11 +11,27 @@ namespace Moba.Backend.Manager;
 /// <summary>
 /// Manages the execution of workflows and their actions related to a journey or stop (station) based on feedback events (track feedback points).
 /// Platform-independent: No UI thread dispatching (that's handled by platform-specific ViewModels).
+/// Uses SessionState to separate runtime state from domain objects.
 /// </summary>
 public class JourneyManager : BaseFeedbackManager<Journey>
 {
     private readonly SemaphoreSlim _processingLock = new(1, 1);
     private readonly WorkflowService _workflowService;
+    private readonly Dictionary<Guid, JourneySessionState> _states = [];
+
+    /// <summary>
+    /// Event raised when a journey reaches a new station.
+    /// ViewModels can subscribe to this event to update UI.
+    /// </summary>
+    public event EventHandler<StationChangedEventArgs>? StationChanged;
+
+    /// <summary>
+    /// Raises the StationChanged event. Protected for testing purposes.
+    /// </summary>
+    protected virtual void OnStationChanged(StationChangedEventArgs e)
+    {
+        StationChanged?.Invoke(this, e);
+    }
 
     /// <summary>
     /// Initializes a new instance of the JourneyManager class.
@@ -32,6 +48,18 @@ public class JourneyManager : BaseFeedbackManager<Journey>
     : base(z21, journeys, executionContext)
     {
         _workflowService = workflowService;
+        
+        // Initialize SessionState for all journeys
+        foreach (var journey in journeys)
+        {
+            _states[journey.Id] = new JourneySessionState
+            {
+                JourneyId = journey.Id,
+                CurrentPos = (int)journey.FirstPos,
+                Counter = 0,
+                IsActive = true
+            };
+        }
     }
 
     protected override async Task ProcessFeedbackAsync(FeedbackResult feedback)
@@ -66,20 +94,35 @@ public class JourneyManager : BaseFeedbackManager<Journey>
 
     private async Task HandleFeedbackAsync(Journey journey)
     {
-        journey.CurrentCounter++;
-        Debug.WriteLine($"🔄 Journey '{journey.Name}': Round {journey.CurrentCounter}, Position {journey.CurrentPos}");
+        // Get state
+        var state = _states[journey.Id];
+        
+        state.Counter++;
+        state.LastFeedbackTime = DateTime.Now;
+        Debug.WriteLine($"🔄 Journey '{journey.Name}': Round {state.Counter}, Position {state.CurrentPos}");
 
-        if (journey.CurrentPos >= journey.Stations.Count)
+        if (state.CurrentPos >= journey.Stations.Count)
         {
             Debug.WriteLine($"⚠ CurrentPos out of Stations list bounds");
             return;
         }
 
-        var currentStation = journey.Stations[(int)journey.CurrentPos];
+        var currentStation = journey.Stations[state.CurrentPos];
 
-        if (journey.CurrentCounter >= currentStation.NumberOfLapsToStop)
+        if (state.Counter >= currentStation.NumberOfLapsToStop)
         {
             Debug.WriteLine($"🚉 Station reached: {currentStation.Name}");
+            
+            // Update SessionState with current station
+            state.CurrentStationName = currentStation.Name;
+            
+            // Fire StationChanged event (ViewModels will react)
+            OnStationChanged(new StationChangedEventArgs
+            {
+                JourneyId = journey.Id,
+                Station = currentStation,
+                SessionState = state
+            });
 
             // Execute station workflow if present
             if (currentStation.Flow != null)
@@ -95,9 +138,9 @@ public class JourneyManager : BaseFeedbackManager<Journey>
                 ExecutionContext.CurrentStation = null;
             }
 
-            journey.CurrentCounter = 0;
+            state.Counter = 0;
 
-            bool isLastStation = journey.CurrentPos == journey.Stations.Count - 1;
+            bool isLastStation = state.CurrentPos == journey.Stations.Count - 1;
 
             if (isLastStation)
             {
@@ -105,28 +148,33 @@ public class JourneyManager : BaseFeedbackManager<Journey>
             }
             else
             {
-                journey.CurrentPos++;
+                state.CurrentPos++;
             }
         }
     }
 
     private async Task HandleLastStationAsync(Journey journey)
     {
+        // Get state
+        var state = _states[journey.Id];
+        
         Debug.WriteLine($"🏁 Last station of journey '{journey.Name}' reached");
 
         switch (journey.BehaviorOnLastStop)
         {
             case BehaviorOnLastStop.BeginAgainFromFistStop:
                 Debug.WriteLine("🔄 Journey will restart from beginning");
-                journey.CurrentPos = 0;
+                state.CurrentPos = 0;
                 break;
 
             case BehaviorOnLastStop.GotoJourney:
                 if (journey.NextJourney != null)
                 {
+                    // Get next journey's state
+                    var nextState = _states[journey.NextJourney.Id];
                     Debug.WriteLine($"➡ Switching to journey: {journey.NextJourney.Name}");
-                    journey.NextJourney.CurrentPos = journey.NextJourney.FirstPos;
-                    Debug.WriteLine($"✅ Journey '{journey.NextJourney.Name}' activated at position {journey.NextJourney.FirstPos}");
+                    nextState.CurrentPos = (int)journey.NextJourney.FirstPos;
+                    Debug.WriteLine($"✅ Journey '{journey.NextJourney.Name}' activated at position {nextState.CurrentPos}");
                 }
                 else
                 {
@@ -136,6 +184,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>
 
             case BehaviorOnLastStop.None:
                 Debug.WriteLine("⏹ Journey stops");
+                state.IsActive = false;
                 break;
         }
 
@@ -146,11 +195,17 @@ public class JourneyManager : BaseFeedbackManager<Journey>
     /// Resets a specific journey to its initial state.
     /// </summary>
     /// <param name="journey">The journey to reset</param>
-    public static void Reset(Journey journey)
+    public void Reset(Journey journey)
     {
-        journey.CurrentCounter = 0;
-        journey.CurrentPos = journey.FirstPos;
-        Debug.WriteLine($"🔄 Journey '{journey.Name}' reset");
+        if (_states.TryGetValue(journey.Id, out var state))
+        {
+            state.Counter = 0;
+            state.CurrentPos = (int)journey.FirstPos;
+            state.CurrentStationName = string.Empty;
+            state.LastFeedbackTime = null;
+            state.IsActive = true;
+            Debug.WriteLine($"🔄 Journey '{journey.Name}' reset");
+        }
     }
 
     public override void ResetAll()
@@ -161,6 +216,17 @@ public class JourneyManager : BaseFeedbackManager<Journey>
         }
         base.ResetAll();
         Debug.WriteLine("🔄 All journeys reset");
+    }
+
+    /// <summary>
+    /// Gets the runtime state for a journey.
+    /// Returns null if journey is not registered.
+    /// </summary>
+    /// <param name="journeyId">The journey ID</param>
+    /// <returns>SessionState or null if not found</returns>
+    public JourneySessionState? GetState(Guid journeyId)
+    {
+        return _states.GetValueOrDefault(journeyId);
     }
 
     protected override uint GetInPort(Journey entity) => entity.InPort;

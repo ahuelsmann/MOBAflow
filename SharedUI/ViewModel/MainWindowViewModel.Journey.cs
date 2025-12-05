@@ -12,6 +12,33 @@ using Moba.SharedUI.Helper;
 /// </summary>
 public partial class MainWindowViewModel
 {
+    #region Journey Factory
+
+    /// <summary>
+    /// Creates a JourneyViewModel with SessionState.
+    /// Falls back to simplified constructor if JourneyManager is not initialized (e.g., in tests).
+    /// </summary>
+    private JourneyViewModel CreateJourneyViewModel(Journey journey)
+    {
+        // Fallback for tests or when JourneyManager not initialized
+        if (_journeyManager == null)
+        {
+            return new JourneyViewModel(journey, _uiDispatcher);
+        }
+
+        var state = _journeyManager.GetState(journey.Id);
+        
+        // If state doesn't exist yet (journey just created), create dummy state
+        if (state == null)
+        {
+            return new JourneyViewModel(journey, _uiDispatcher);
+        }
+
+        return new JourneyViewModel(journey, state, _journeyManager, _uiDispatcher);
+    }
+
+    #endregion
+
     #region Journey CRUD Commands
 
     [RelayCommand]
@@ -23,7 +50,7 @@ public partial class MainWindowViewModel
             CurrentProjectViewModel.Model.Journeys,
             CurrentProjectViewModel.Journeys,
             () => new Journey { Name = "New Journey", BehaviorOnLastStop = BehaviorOnLastStop.None },
-            model => new JourneyViewModel(model));
+            model => CreateJourneyViewModel(model));
 
         SelectedJourney = journey;
         HasUnsavedChanges = true;

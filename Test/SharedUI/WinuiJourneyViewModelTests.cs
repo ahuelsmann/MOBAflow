@@ -2,20 +2,24 @@
 namespace Moba.Test.SharedUI;
 
 using Moba.Domain;
+using Moba.Backend.Services;
 using NUnit.Framework;
 
 [TestFixture]
 public class WinuiJourneyViewModelTests
 {
     [Test]
-    public void StateChanged_RaisesPropertyChanged_Dispatches()
+    public void SessionState_CanBeModified()
     {
-        var model = new Journey();
+        var journey = new Journey { Id = Guid.NewGuid() };
+        var state = new JourneySessionState { JourneyId = journey.Id };
 
         // Act
-        model.CurrentCounter++;
-        model.CurrentPos++;
+        state.Counter++;
+        state.CurrentPos++;
 
-        Assert.Pass();
+        // Assert
+        Assert.That(state.Counter, Is.EqualTo(1));
+        Assert.That(state.CurrentPos, Is.EqualTo(1));
     }
 }
