@@ -1,4 +1,4 @@
-﻿<Window
+<Window
     x:Class="Moba.WinUI.View.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -6,6 +6,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:view="using:Moba.WinUI.View"
     xmlns:vm="using:Moba.SharedUI.ViewModel"
+    xmlns:local="using:Moba.WinUI.Controls"
     Title="MOBAflow"
     mc:Ignorable="d">
     <Window.SystemBackdrop>
@@ -125,10 +126,43 @@
                     </AppBarElementContainer>
                 </CommandBar>
 
-                <!--  Content Grid  -->
+                <!--  Content Grid with Frame + PropertyGrid  -->
                 <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="350" MinWidth="300" MaxWidth="500" />
+                    </Grid.ColumnDefinitions>
+
                     <!--  Frame for page navigation  -->
-                    <Frame x:Name="ContentFrame" />
+                    <Frame x:Name="ContentFrame" Grid.Column="0" />
+
+                    <!--  Splitter  -->
+                    <Border 
+                        Grid.Column="1" 
+                        Width="1" 
+                        Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+                    <!--  PropertyGrid (always visible on right)  -->
+                    <Grid Grid.Column="2" Padding="8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock
+                            Grid.Row="0"
+                            Margin="8,8,8,16"
+                            FontWeight="SemiBold"
+                            Style="{StaticResource SubtitleTextBlockStyle}"
+                            Text="Properties" />
+
+                        <!-- PropertyGrid Control -->
+                        <local:SimplePropertyGrid 
+                            x:Name="GlobalPropertyGrid"
+                            Grid.Row="1"
+                            SelectedObject="{x:Bind ViewModel.CurrentSelectedObject, Mode=OneWay}" />
+                    </Grid>
                 </Grid>
             </Grid>
         </NavigationView>

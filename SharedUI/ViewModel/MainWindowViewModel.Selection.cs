@@ -188,7 +188,33 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(ShowStationProperties));
         OnPropertyChanged(nameof(ShowWorkflowProperties));
         OnPropertyChanged(nameof(ShowTrainProperties));
+        
+        // Notify PropertyGrid to update (via CurrentSelectedObject property)
+        OnPropertyChanged(nameof(CurrentSelectedObject));
+    }
+
+    /// <summary>
+    /// Gets the most specific selected object for PropertyGrid display.
+    /// Priority: Station > Journey > Workflow > Train > Locomotive > Wagon > Project > Solution
+    /// </summary>
+    public object? CurrentSelectedObject
+    {
+        get
+        {
+            // Highest priority: most specific selection
+            if (SelectedStation != null) return SelectedStation;
+            if (SelectedJourney != null) return SelectedJourney;
+            if (SelectedWorkflow != null) return SelectedWorkflow;
+            if (SelectedLocomotive != null) return SelectedLocomotive;
+            if (SelectedWagon != null) return SelectedWagon;
+            if (SelectedTrain != null) return SelectedTrain;
+            if (SelectedProject != null) return SelectedProject;
+            if (SolutionViewModel != null) return SolutionViewModel;
+            
+            return null;
+        }
     }
 
     #endregion
 }
+
