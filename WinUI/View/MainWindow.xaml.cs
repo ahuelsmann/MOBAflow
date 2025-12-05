@@ -33,6 +33,10 @@ public sealed partial class MainWindow
 
         InitializeComponent();
 
+        // Enable custom TitleBar for Windows 11 style
+        ExtendsContentIntoTitleBar = true;
+        SetTitleBar(AppTitleBar);
+
         // Initialize IoService with WindowId (required before any file operations)
         var ioService = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<SharedUI.Interface.IIoService>(
             ((App)Microsoft.UI.Xaml.Application.Current).Services);
