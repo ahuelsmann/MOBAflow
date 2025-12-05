@@ -72,6 +72,11 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
 
     public ObservableCollection<WagonViewModel> Wagons { get; }
 
+    /// <summary>
+    /// Gets the primary (first) locomotive for this train, or null if no locomotives.
+    /// </summary>
+    public LocomotiveViewModel? Locomotive => Locomotives.FirstOrDefault();
+
     [RelayCommand]
     private void AddLocomotive()
     {

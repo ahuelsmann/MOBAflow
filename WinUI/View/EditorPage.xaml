@@ -1,71 +1,36 @@
 <Page
-    x:Name="PageRoot"
-    x:Class="Moba.WinUI.View.EditorPage"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:converter="using:Moba.WinUI.Converter"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:domain="using:Moba.Domain"
-    xmlns:viewmodel="using:Moba.SharedUI.ViewModel"
-    xmlns:local="using:Moba.WinUI.Controls"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d">
+x:Name="PageRoot"
+x:Class="Moba.WinUI.View.EditorPage"
+xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+mc:Ignorable="d">
 
-    <Page.Resources>
-        <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
-        <converter:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
-        <converter:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
-        <converter:DateTimeToTimeSpanConverter x:Key="DateTimeToTimeSpanConverter" />
-    </Page.Resources>
+<Grid>
+    <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
 
-    <Grid>
-        <Grid.Resources>
-            <!-- Compact Sizing -->
-            <Thickness x:Key="ListViewItemContentMargin">6,4,6,4</Thickness>
-            <x:Double x:Key="ListViewItemMinHeight">32</x:Double>
-        </Grid.Resources>
-        
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-        
-        <Grid.ColumnDefinitions>
-            <!--  Column 0: Projects  -->
-            <ColumnDefinition Width="2*" MinWidth="250" MaxWidth="350" />
-            <ColumnDefinition Width="Auto" />
-            <!--  Column 2: City Library  -->
-            <ColumnDefinition Width="1*" MinWidth="200" MaxWidth="300" />
-            <ColumnDefinition Width="Auto" />
-            <!--  Column 4: Workflows  -->
-            <ColumnDefinition Width="1*" MinWidth="200" MaxWidth="300" />
-            <ColumnDefinition Width="Auto" />
-            <!--  Column 6: PropertyGrid  -->
-            <ColumnDefinition Width="2*" MinWidth="300" />
-        </Grid.ColumnDefinitions>
+    <!--  Page Header  -->
+    <StackPanel
+        Grid.Row="0"
+        Margin="16,2,16,2"
+        Spacing="8">
+        <TextBlock
+            FontWeight="Bold"
+            Style="{StaticResource TitleTextBlockStyle}"
+            Text="Editor" />
+    </StackPanel>
 
-        <!--  Page Header  -->
-        <StackPanel
-            Grid.Row="0"
-            Grid.Column="0"
-            Grid.ColumnSpan="7"
-            Margin="16,2,16,2"
-            Spacing="8">
-            <TextBlock
-                FontWeight="Bold"
-                Style="{StaticResource TitleTextBlockStyle}"
-                Text="Editor" />
-        </StackPanel>
-
-        <!--  SelectorBar Navigation  -->
-        <SelectorBar
-            x:Name="EditorSelectorBar"
-            Grid.Row="1"
-            Grid.Column="0"
-            Grid.ColumnSpan="7"
-            Margin="16,8,16,8"
-            SelectionChanged="EditorSelectorBar_SelectionChanged">
+    <!--  SelectorBar Navigation  -->
+    <SelectorBar
+        x:Name="EditorSelectorBar"
+        Grid.Row="1"
+        Margin="16,8,16,8"
+        SelectionChanged="EditorSelectorBar_SelectionChanged">
             <SelectorBarItem x:Name="SolutionSelector" Text="Solution">
                 <SelectorBarItem.Icon>
                     <FontIcon Glyph="&#xE8F1;" />

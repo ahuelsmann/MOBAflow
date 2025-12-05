@@ -191,6 +191,9 @@ public partial class MainWindowViewModel
     private void NotifySelectionPropertiesChanged()
     {
         OnPropertyChanged(nameof(HasSelectedEntity));
+        OnPropertyChanged(nameof(HasSelectedJourney));
+        OnPropertyChanged(nameof(HasSelectedWorkflow));
+        OnPropertyChanged(nameof(HasSelectedTrain));
         OnPropertyChanged(nameof(ShowSolutionProperties));
         OnPropertyChanged(nameof(ShowProjectProperties));
         OnPropertyChanged(nameof(ShowJourneyProperties));
@@ -222,6 +225,21 @@ public partial class MainWindowViewModel
             return null;
         }
     }
+
+    /// <summary>
+    /// Gets whether a Journey is currently selected.
+    /// </summary>
+    public bool HasSelectedJourney => SelectedJourney != null;
+
+    /// <summary>
+    /// Gets whether a Workflow is currently selected.
+    /// </summary>
+    public bool HasSelectedWorkflow => SelectedWorkflow != null;
+
+    /// <summary>
+    /// Gets whether a Train is currently selected.
+    /// </summary>
+    public bool HasSelectedTrain => SelectedTrain != null;
 
     #endregion
 }

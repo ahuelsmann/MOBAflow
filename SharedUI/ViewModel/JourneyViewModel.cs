@@ -49,6 +49,9 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
             journey.Stations.Select(s => new StationViewModel(s, dispatcher))
         );
 
+        // Initialize Position property for all stations
+        RenumberStations();
+
         // Subscribe to JourneyManager.StationChanged event
         if (_journeyManager != null && _dispatcher != null)
         {
@@ -202,9 +205,11 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     /// </summary>
     public void RenumberStations()
     {
-        // Note: Station.Number property removed in Clean Architecture refactoring
-        // Stations are now identified by their position in the Stations list
-        // This method is kept for API compatibility but does nothing
+        // Update Position property in StationViewModels
+        for (int i = 0; i < Stations.Count; i++)
+        {
+            Stations[i].Position = i + 1; // 1-based position
+        }
     }
 
     /// <summary>

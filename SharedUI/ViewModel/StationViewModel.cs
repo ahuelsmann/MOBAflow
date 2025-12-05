@@ -183,6 +183,17 @@ public partial class StationViewModel : ObservableObject, IViewModelWrapper<Stat
     // --- Runtime State Properties ---
 
     /// <summary>
+    /// Position of this station in the journey (1-based index).
+    /// Used for displaying station order in UI.
+    /// </summary>
+    public int Position
+    {
+        get => _position;
+        set => SetProperty(ref _position, value);
+    }
+    private int _position;
+
+    /// <summary>
     /// Indicates if this station is currently active in journey execution.
     /// Used for visual highlighting in UI.
     /// </summary>
