@@ -227,6 +227,38 @@ Die Architektur ist jetzt **cleaner**, **testbarer** und **wartbarer**! 🎉
 
 ---
 
+## 🔮 Manager Architecture (Future Work)
+
+### Konzept: Multi-Perspective Feedback Processing
+
+Verschiedene Manager verarbeiten Z21-Feedbacks aus unterschiedlichen Perspektiven:
+
+#### 1️⃣ JourneyManager (Train Perspective) ✅ IMPLEMENTED
+- **Frage:** "Wo ist der **Zug** gerade?"
+- **Entity:** `Journey.InPort` = train sensor
+- **SessionState:** Counter, CurrentPos, CurrentStationName
+- **Trigger:** Train reaches station → Execute Station.Flow
+
+#### 2️⃣ WorkflowManager (Workflow Perspective) ⏸️ FUTURE
+- **Frage:** "Welcher **Workflow** wird ausgeführt?"
+- **Entity:** `Workflow.InPort` = trigger sensor (UNABHÄNGIG von Zügen!)
+- **SessionState:** CurrentActionIndex, StartTime, IsRunning
+- **Use Case:** Track-side automations (signals, announcements)
+
+#### 3️⃣ StationManager (Platform Perspective) ⏸️ FUTURE
+- **Frage:** "Was passiert auf **Gleis 1**?"
+- **Entity:** `Station.Platforms[].InPort` sensors
+- **SessionState:** CurrentTrain, Status, ExpectedArrival, ActualArrival
+- **Use Case:** "Achtung an Gleis 1. Ein Zug fährt durch."
+- **Future:** Delay announcements ("ICE 401 arrives 5 minutes late")
+
+**Key Principle:**
+- ✅ One Manager per Perspective
+- ✅ Managers run independently (can fire simultaneously)
+- ✅ All inherit from `BaseFeedbackManager<TEntity>`
+
+---
+
 **Archivierung:** Dieses Dokument nach 1 Monat zu `docs/archive/` verschieben.
 
 **Next Session:** Kann mit neuem Thema starten (z.B. TrainManager SessionState, oder komplett anderes Thema).

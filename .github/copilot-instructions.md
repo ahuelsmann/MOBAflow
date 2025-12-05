@@ -336,6 +336,96 @@ private void Button_Click(...)
 
 ---
 
+## 🔧 Manager Architecture (Feedback Processing)
+
+### Principle: Different Perspectives on Z21 Feedback Events
+
+MOBAflow processes track feedback from **different perspectives** using specialized Managers:
+
+```
+Z21 Feedback (InPort=5)
+        ↓
+┌───────┼────────┬────────────┐
+│       │        │            │
+Journey Workflow Station   (Future Managers)
+Manager Manager  Manager
+```
+
+### 1️⃣ JourneyManager (Train Perspective) ✅ IMPLEMENTED
+**Question:** "Where is the **train** right now?"
+
+- **Purpose:** Track train position through stations
+- **Entity:** `Journey` (with `Journey.InPort` = train sensor)
+- **SessionState:** `JourneySessionState`
+  - `Counter` - Lap counter
+  - `CurrentPos` - Current station index
+  - `CurrentStationName` - Station name
+  - `LastFeedbackTime` - Last sensor trigger
+  - `IsActive` - Journey active?
+- **Event:** `StationChanged` (when train reaches station)
+- **Trigger:** Execute `Station.Flow` workflow
+- **Future:** Delay tracking (compare `Arrival`/`Departure` times)
+
+**Example:**
+```csharp
+// Journey.InPort = 5 (train's sensor)
+// When InPort=5 triggered → Train reached next station
+// → state.Counter++ → Execute Station.Flow
+```
+
+### 2️⃣ WorkflowManager (Workflow Perspective) ⏸️ FUTURE
+**Question:** "Which **workflow** is currently executing?"
+
+- **Purpose:** Execute workflows **independent** of trains
+- **Entity:** `Workflow` (with `Workflow.InPort` = trigger sensor)
+- **SessionState:** `WorkflowSessionState` (to be created)
+  - `WorkflowId` - Workflow ID
+  - `CurrentActionIndex` - Current action
+  - `ExecutionStartTime` - Start time
+  - `IsRunning` - Execution status
+- **Event:** `WorkflowCompleted` (when workflow finishes)
+- **Trigger:** Workflow.InPort feedback (NOT tied to a train!)
+- **Use Case:** Track-side automations (signals, announcements, turnouts)
+
+**Example:**
+```csharp
+// Workflow.InPort = 3 (independent sensor)
+// When InPort=3 triggered → Execute workflow actions
+// → NOT related to any specific train!
+```
+
+### 3️⃣ StationManager (Platform Perspective) ⏸️ FUTURE
+**Question:** "What is happening on **Platform 1**?"
+
+- **Purpose:** Monitor platform status and schedules
+- **Entity:** `Station` (with `Station.Platforms[].InPort` sensors)
+- **SessionState:** `StationSessionState` (to be created)
+  - `StationId` - Station ID
+  - `CurrentTrainOnPlatform` - Train reference
+  - `PlatformStatus` - Free/Occupied/Blocked
+  - `ExpectedArrival` - Scheduled time
+  - `ActualArrival` - Real arrival time
+- **Event:** `TrainArrived`, `TrainDeparted`
+- **Trigger:** Platform-specific workflows (announcements, signals)
+- **Use Case:** "Achtung an Gleis 1. Ein Zug fährt durch."
+- **Future:** Delay announcements, schedule conflicts
+
+**Example:**
+```csharp
+// Station.Platforms[0].InPort = 7 (platform sensor)
+// When InPort=7 triggered → "Train arriving at Platform 1"
+// → Calculate delay: ActualArrival - ExpectedArrival
+// → Announce: "ICE 401 arrives 5 minutes late"
+```
+
+### Key Principle
+- ✅ **One Manager per Perspective** (Journey, Workflow, Station)
+- ✅ **Each Manager has its own SessionState** (runtime data)
+- ✅ **Managers are independent** (can run simultaneously)
+- ✅ **All inherit from** `BaseFeedbackManager<TEntity>`
+
+---
+
 ## 🔧 Quick Reference
 
 ### File Locations
@@ -361,4 +451,4 @@ private void Button_Click(...)
 ---
 
 **Last Updated:** 2025-12-05  
-**Version:** 2.1 (SessionState Pattern added)
+**Version:** 2.2 (Manager Architecture documented)
