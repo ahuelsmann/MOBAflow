@@ -33,6 +33,10 @@ public partial class MainWindowViewModel
         _selectionManager.SelectEntity(workflow, MobaType.Workflow, SelectedWorkflow, v => SelectedWorkflow = v);
 
     [RelayCommand]
+    private void SelectAction(object? action) =>
+        SelectedAction = action;
+
+    [RelayCommand]
     private void SelectTrain(TrainViewModel? train) =>
         _selectionManager.SelectEntity(train, MobaType.Train, SelectedTrain, v => SelectedTrain = v);
 
@@ -45,6 +49,15 @@ public partial class MainWindowViewModel
         _selectionManager.SelectEntity(wagon, MobaType.Wagon, SelectedWagon, v => SelectedWagon = v);
 
     #endregion
+
+    /// <summary>
+    /// Forces PropertyGrid to refresh by re-notifying CurrentSelectedObject.
+    /// Useful when clicking on already-selected items.
+    /// </summary>
+    public void RefreshPropertyGrid()
+    {
+        OnPropertyChanged(nameof(CurrentSelectedObject));
+    }
 
     #region Selection Change Handlers
 
@@ -93,6 +106,18 @@ public partial class MainWindowViewModel
         {
             ClearOtherSelections(MobaType.Workflow);
             CurrentSelectedEntityType = MobaType.Workflow;
+        }
+        
+        OnPropertyChanged(nameof(CurrentSelectedObject)); // Update PropertyGrid
+        NotifySelectionPropertiesChanged();
+    }
+
+    partial void OnSelectedActionChanged(object? value)
+    {
+        if (value != null)
+        {
+            ClearOtherSelections(MobaType.Action);
+            CurrentSelectedEntityType = MobaType.Action;
         }
         
         OnPropertyChanged(nameof(CurrentSelectedObject)); // Update PropertyGrid
@@ -164,12 +189,17 @@ public partial class MainWindowViewModel
             if (SelectedStation != null) SelectedStation = null;
         }
         
-        if (keepType != MobaType.Workflow)
+        if (keepType != MobaType.Workflow && keepType != MobaType.Action)
         {
             if (SelectedWorkflow != null) SelectedWorkflow = null;
         }
         
-        if (keepType != MobaType.Train)
+        if (keepType != MobaType.Action)
+        {
+            if (SelectedAction != null) SelectedAction = null;
+        }
+        
+        if (keepType != MobaType.Train && keepType != MobaType.Locomotive && keepType != MobaType.Wagon)
         {
             if (SelectedTrain != null) SelectedTrain = null;
         }
@@ -206,13 +236,14 @@ public partial class MainWindowViewModel
 
     /// <summary>
     /// Gets the most specific selected object for PropertyGrid display.
-    /// Priority: Station > Journey > Workflow > Train > Locomotive > Wagon > Project > Solution
+    /// Priority: Action > Station > Journey > Workflow > Locomotive > Wagon > Train > Project > Solution
     /// </summary>
     public object? CurrentSelectedObject
     {
         get
         {
             // Highest priority: most specific selection
+            if (SelectedAction != null) return SelectedAction;
             if (SelectedStation != null) return SelectedStation;
             if (SelectedJourney != null) return SelectedJourney;
             if (SelectedWorkflow != null) return SelectedWorkflow;
@@ -243,4 +274,5 @@ public partial class MainWindowViewModel
 
     #endregion
 }
+
 

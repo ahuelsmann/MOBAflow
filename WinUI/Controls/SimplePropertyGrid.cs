@@ -7,6 +7,7 @@ using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
+using System.Collections.ObjectModel;
 
 /// <summary>
 /// Simple dynamic PropertyGrid that automatically generates UI for object properties.
@@ -16,6 +17,7 @@ using System.Reflection;
 public sealed partial class SimplePropertyGrid : Control
 {
     private StackPanel? _propertiesPanel;
+    private object? _currentTargetObject; // The actual object being displayed (might be Model instead of ViewModel)
 
     public SimplePropertyGrid()
     {
@@ -39,6 +41,7 @@ public sealed partial class SimplePropertyGrid : Control
     {
         if (d is SimplePropertyGrid grid)
         {
+            System.Diagnostics.Debug.WriteLine($"🔄 SimplePropertyGrid.SelectedObject changed: {e.OldValue?.GetType().Name} → {e.NewValue?.GetType().Name}");
             grid.RefreshProperties();
         }
     }
@@ -52,29 +55,112 @@ public sealed partial class SimplePropertyGrid : Control
 
     private void RefreshProperties()
     {
-        if (_propertiesPanel == null || SelectedObject == null)
+        System.Diagnostics.Debug.WriteLine($"🔍 SimplePropertyGrid.RefreshProperties called");
+        System.Diagnostics.Debug.WriteLine($"   _propertiesPanel: {(_propertiesPanel != null ? "OK" : "NULL")}");
+        System.Diagnostics.Debug.WriteLine($"   SelectedObject: {(SelectedObject != null ? SelectedObject.GetType().Name : "NULL")}");
+
+        if (SelectedObject == null)
+        {
+            if (_propertiesPanel != null)
+            {
+                _propertiesPanel.Children.Clear();
+            }
             return;
+        }
+
+        // If panel is not yet loaded, force template application
+        if (_propertiesPanel == null)
+        {
+            ApplyTemplate();
+            _propertiesPanel = GetTemplateChild("PART_PropertiesPanel") as StackPanel;
+            
+            if (_propertiesPanel == null)
+            {
+                System.Diagnostics.Debug.WriteLine("⚠️ PropertyGrid: Template not yet applied, will retry on next change");
+                return;
+            }
+        }
 
         _propertiesPanel.Children.Clear();
 
-        var properties = SelectedObject.GetType()
+        // Check if SelectedObject is a ViewModel wrapper (has a Model property)
+        var modelProperty = SelectedObject.GetType().GetProperty("Model");
+        _currentTargetObject = SelectedObject;
+        
+        if (modelProperty != null && modelProperty.CanRead)
+        {
+            var modelValue = modelProperty.GetValue(SelectedObject);
+            if (modelValue != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"   📦 Found Model property, displaying Model properties instead of ViewModel");
+                _currentTargetObject = modelValue;
+            }
+        }
+
+        var properties = _currentTargetObject.GetType()
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.CanRead && p.CanWrite)
+            .Where(p => p.CanRead && !IsCollectionType(p.PropertyType) && IsSupportedType(p.PropertyType))
             .OrderBy(p => p.Name);
+
+        System.Diagnostics.Debug.WriteLine($"   Found {properties.Count()} properties total (from {_currentTargetObject.GetType().Name})");
 
         foreach (var property in properties)
         {
-            // Skip collections
-            if (property.PropertyType.IsGenericType && 
-                property.PropertyType.GetGenericTypeDefinition() == typeof(System.Collections.Generic.List<>))
-                continue;
+            System.Diagnostics.Debug.WriteLine($"   ✅ Creating UI for: {property.Name} ({property.PropertyType.Name})");
 
             var propertyItem = CreatePropertyItem(property);
             if (propertyItem != null)
             {
                 _propertiesPanel.Children.Add(propertyItem);
             }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"   ❌ Failed to create UI for: {property.Name}");
+            }
         }
+
+        System.Diagnostics.Debug.WriteLine($"   Total properties displayed: {_propertiesPanel.Children.Count}");
+    }
+
+    private bool IsCollectionType(Type type)
+    {
+        // Check if it's a generic collection
+        if (type.IsGenericType)
+        {
+            var genericDef = type.GetGenericTypeDefinition();
+            if (genericDef == typeof(List<>) || 
+                genericDef == typeof(ObservableCollection<>) ||
+                genericDef == typeof(IEnumerable<>) ||
+                genericDef == typeof(ICollection<>) ||
+                genericDef == typeof(IList<>))
+            {
+                return true;
+            }
+        }
+
+        // Check if it implements IEnumerable (but not string)
+        if (type != typeof(string) && typeof(System.Collections.IEnumerable).IsAssignableFrom(type))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool IsSupportedType(Type type)
+    {
+        // Handle Nullable<T>
+        var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
+
+        // Supported types that can be edited in PropertyGrid
+        return underlyingType == typeof(string) ||
+               underlyingType == typeof(int) ||
+               underlyingType == typeof(uint) ||
+               underlyingType == typeof(double) ||
+               underlyingType == typeof(float) ||
+               underlyingType == typeof(bool) ||
+               underlyingType == typeof(DateTime) ||
+               underlyingType.IsEnum;
     }
 
     private FrameworkElement? CreatePropertyItem(PropertyInfo property)
@@ -202,14 +288,30 @@ public sealed partial class SimplePropertyGrid : Control
         Func<object, object>? toTarget = null, Func<object, object>? toSource = null)
     {
         // Simple two-way binding implementation
-        // In production, use Binding with IValueConverter
         
-        var currentValue = sourceProperty.GetValue(SelectedObject);
-        if (currentValue != null && toTarget != null)
+        var currentValue = sourceProperty.GetValue(_currentTargetObject);
+        
+        // Skip if value is null and target property doesn't support null
+        if (currentValue == null)
         {
-            currentValue = toTarget(currentValue);
+            System.Diagnostics.Debug.WriteLine($"   ⚠️ Property {sourceProperty.Name} is null, skipping binding");
+            return;
         }
-        target.SetValue(targetProperty, currentValue);
+        
+        try
+        {
+            if (toTarget != null)
+            {
+                currentValue = toTarget(currentValue);
+            }
+            
+            target.SetValue(targetProperty, currentValue);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"   ❌ Failed to bind property {sourceProperty.Name}: {ex.Message}");
+            return;
+        }
 
         // Subscribe to changes
         if (target is TextBox textBox)
@@ -219,7 +321,7 @@ public sealed partial class SimplePropertyGrid : Control
                 object newValue = textBox.Text;
                 if (toSource != null)
                     newValue = toSource(newValue);
-                sourceProperty.SetValue(SelectedObject, newValue);
+                sourceProperty.SetValue(_currentTargetObject, newValue);
             };
         }
         else if (target is NumberBox numberBox)
@@ -229,13 +331,13 @@ public sealed partial class SimplePropertyGrid : Control
                 object newValue = numberBox.Value;
                 if (toSource != null)
                     newValue = toSource(newValue);
-                sourceProperty.SetValue(SelectedObject, newValue);
+                sourceProperty.SetValue(_currentTargetObject, newValue);
             };
         }
         else if (target is CheckBox checkBox)
         {
-            checkBox.Checked += (s, e) => sourceProperty.SetValue(SelectedObject, true);
-            checkBox.Unchecked += (s, e) => sourceProperty.SetValue(SelectedObject, false);
+            checkBox.Checked += (s, e) => sourceProperty.SetValue(_currentTargetObject, true);
+            checkBox.Unchecked += (s, e) => sourceProperty.SetValue(_currentTargetObject, false);
         }
         else if (target is ComboBox comboBox)
         {
@@ -244,7 +346,7 @@ public sealed partial class SimplePropertyGrid : Control
                 if (comboBox.SelectedItem != null && toSource != null)
                 {
                     var newValue = toSource(comboBox.SelectedItem);
-                    sourceProperty.SetValue(SelectedObject, newValue);
+                    sourceProperty.SetValue(_currentTargetObject, newValue);
                 }
             };
         }
@@ -263,4 +365,6 @@ public sealed partial class SimplePropertyGrid : Control
     private object ConvertToDouble(object value) => Convert.ToDouble(value);
     private object ConvertFromDouble(object value) => Convert.ToInt32(value);
 }
+
+
 

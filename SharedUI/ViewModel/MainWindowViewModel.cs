@@ -114,6 +114,9 @@ public partial class MainWindowViewModel : ObservableObject
     private WorkflowViewModel? selectedWorkflow;
 
     [ObservableProperty]
+    private object? selectedAction;
+
+    [ObservableProperty]
     private TrainViewModel? selectedTrain;
 
     /// <summary>
@@ -348,6 +351,25 @@ public partial class MainWindowViewModel : ObservableObject
         var cities = await _cityLibraryService.LoadCitiesAsync();
         CityLibrary = new ObservableCollection<Domain.City>(cities);
     }
+
+    #endregion
+
+    #region Wagon Libraries
+
+    [ObservableProperty]
+    private ObservableCollection<Domain.GoodsWagon> goodsWagonLibrary = 
+    [
+        new Domain.GoodsWagon { Name = "Goods Wagon 1", Cargo = Domain.Enum.CargoType.Container },
+        new Domain.GoodsWagon { Name = "Goods Wagon 2", Cargo = Domain.Enum.CargoType.Coal },
+        new Domain.GoodsWagon { Name = "Goods Wagon 3", Cargo = Domain.Enum.CargoType.Wood }
+    ];
+
+    [ObservableProperty]
+    private ObservableCollection<Domain.PassengerWagon> passengerWagonLibrary = 
+    [
+        new Domain.PassengerWagon { Name = "Passenger Wagon 1st Class", WagonClass = Domain.Enum.PassengerClass.First },
+        new Domain.PassengerWagon { Name = "Passenger Wagon 2nd Class", WagonClass = Domain.Enum.PassengerClass.Second }
+    ];
 
     #endregion
 }

@@ -20,8 +20,8 @@ public sealed partial class EditorPage : Page
         DataContext = viewModel;
         InitializeComponent();
 
-        // Set initial selection to Trains
-        EditorSelectorBar.SelectedItem = TrainsSelector;
+        // Set initial selection to Solution
+        EditorSelectorBar.SelectedItem = SolutionSelector;
     }
 
     /// <summary>
@@ -75,8 +75,9 @@ public sealed partial class EditorPage : Page
     {
         if (e.Items.FirstOrDefault() is SharedUI.ViewModel.WorkflowViewModel workflow)
         {
-            e.Data.SetData("Workflow", workflow);
+            e.Data.Properties.Add("Workflow", workflow);
             e.Data.RequestedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+            e.Data.SetText(workflow.Name);
         }
     }
 
@@ -85,19 +86,24 @@ public sealed partial class EditorPage : Page
         e.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
     }
 
-    private async void StationListView_Drop(object sender, DragEventArgs e)
+    private void StationListView_Drop(object sender, DragEventArgs e)
     {
-        if (await e.DataView.GetDataAsync("City") is Domain.City city)
+        // Handle City drop (create new Station)
+        if (e.DataView.Properties.TryGetValue("City", out object cityObj) && cityObj is Domain.City city)
         {
             if (ViewModel.SelectedJourney != null)
             {
-                // Add station to journey (create StationViewModel from City)
-                var station = new Domain.Station
-                {
-                    Name = city.Name
-                };
+                var station = new Domain.Station { Name = city.Name };
                 var stationViewModel = new SharedUI.ViewModel.StationViewModel(station);
                 ViewModel.SelectedJourney.Stations.Add(stationViewModel);
+            }
+        }
+        // Handle Workflow drop (assign to selected Station)
+        else if (e.DataView.Properties.TryGetValue("Workflow", out object workflowObj) && workflowObj is SharedUI.ViewModel.WorkflowViewModel workflow)
+        {
+            if (ViewModel.SelectedStation != null)
+            {
+                ViewModel.SelectedStation.WorkflowId = workflow.Model.Id;
             }
         }
     }
@@ -109,6 +115,61 @@ public sealed partial class EditorPage : Page
             var station = new Domain.Station { Name = ViewModel.SelectedCity.Name };
             var stationViewModel = new SharedUI.ViewModel.StationViewModel(station);
             ViewModel.SelectedJourney.Stations.Add(stationViewModel);
+        }
+    }
+
+    private void JourneyListView_Tapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
+    {
+        // Refresh PropertyGrid even if same Journey is clicked again
+        ViewModel.RefreshPropertyGrid();
+    }
+
+    private void GoodsWagonListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
+    {
+        if (e.Items.FirstOrDefault() is Domain.GoodsWagon goodsWagon)
+        {
+            e.Data.Properties.Add("GoodsWagon", goodsWagon);
+            e.Data.RequestedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+            e.Data.SetText(goodsWagon.Name);
+        }
+    }
+
+    private void PassengerWagonListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
+    {
+        if (e.Items.FirstOrDefault() is Domain.PassengerWagon passengerWagon)
+        {
+            e.Data.Properties.Add("PassengerWagon", passengerWagon);
+            e.Data.RequestedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+            e.Data.SetText(passengerWagon.Name);
+        }
+    }
+
+    private void WagonListView_DragOver(object sender, DragEventArgs e)
+    {
+        e.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+    }
+
+    private void WagonListView_Drop(object sender, DragEventArgs e)
+    {
+        // Handle GoodsWagon drop
+        if (e.DataView.Properties.TryGetValue("GoodsWagon", out object goodsWagonObj) &&
+            goodsWagonObj is Domain.GoodsWagon goodsWagon)
+        {
+            if (ViewModel.SelectedTrain != null)
+            {
+                var wagonViewModel = new SharedUI.ViewModel.GoodsWagonViewModel(goodsWagon);
+                ViewModel.SelectedTrain.Wagons.Add(wagonViewModel);
+            }
+        }
+        // Handle PassengerWagon drop
+        else if (e.DataView.Properties.TryGetValue("PassengerWagon", out object passengerWagonObj) &&
+                 passengerWagonObj is Domain.PassengerWagon passengerWagon)
+        {
+            if (ViewModel.SelectedTrain != null)
+            {
+                var wagonViewModel = new SharedUI.ViewModel.PassengerWagonViewModel(passengerWagon);
+                ViewModel.SelectedTrain.Wagons.Add(wagonViewModel);
+            }
         }
     }
 

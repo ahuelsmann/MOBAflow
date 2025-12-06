@@ -73,6 +73,12 @@ public partial class StationViewModel : ObservableObject, IViewModelWrapper<Stat
         set => SetProperty(Model.Flow, value, Model, (m, v) => m.Flow = v);
     }
 
+    public Guid? WorkflowId
+    {
+        get => Model.WorkflowId;
+        set => SetProperty(Model.WorkflowId, value, Model, (m, v) => m.WorkflowId = v);
+    }
+
     // --- Phase 1 Properties (Simplified Platform representation) ---
     // TODO: Remove when Phase 2 (Platform support) is implemented
 

@@ -21,7 +21,18 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
     private readonly IUiDispatcher? _dispatcher;
 
     public MobaType EntityType => MobaType.Project;
-    public string Name => Model.Name;
+
+    /// <summary>
+    /// Project name. Changes are synchronized back to Model.
+    /// </summary>
+    [ObservableProperty]
+    private string _name = string.Empty;
+
+    partial void OnNameChanged(string value)
+    {
+        // Synchronize back to Model
+        Model.Name = value;
+    }
 
     /// <summary>
     /// Hierarchical collection of Journey ViewModels.
@@ -57,6 +68,7 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
     {
         Model = model;
         _dispatcher = dispatcher;
+        _name = model.Name;  // Initialize from Model
         Refresh();
     }
 
@@ -65,6 +77,9 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
     /// </summary>
     public void Refresh()
     {
+        // Update scalar properties from Model
+        Name = Model.Name;
+        
         // Smart sync: Reuse existing ViewModels where possible
         SyncCollection(Model.Journeys, Journeys, j => new JourneyViewModel(j, _dispatcher));
         SyncCollection(Model.Workflows, Workflows, w => new WorkflowViewModel(w));

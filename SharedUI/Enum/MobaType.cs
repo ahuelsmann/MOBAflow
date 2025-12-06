@@ -13,6 +13,7 @@ public enum MobaType
     Journey,
     Station,
     Workflow,
+    Action,
     Train,
     Locomotive,
     Wagon
