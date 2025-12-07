@@ -1,0 +1,87 @@
+<!-- 
+ANLEITUNG: Ersetzen Sie die GESAMTE Journeys Grid-Section in EditorPage.xaml mit diesem Code
+Suchen Sie nach: "<!--  Column 0: Journeys  -->"
+Ersetzen Sie ALLES von dort bis zum nächsten "<Border Grid.Column="1"..."
+-->
+
+                    <!--  Column 0: Journeys  -->
+                    <Grid Grid.Column="0" Padding="4">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        
+                        <!--  Title  -->
+                        <TextBlock
+                            Grid.Row="0"
+                            Padding="16,6,24,4"
+                            FontWeight="SemiBold"
+                            Style="{StaticResource SubtitleTextBlockStyle}"
+                            Text="Journeys" />
+                        
+                        <!--  Search Box  -->
+                        <AutoSuggestBox
+                            Grid.Row="1"
+                            Margin="8,0,8,4"
+                            PlaceholderText="Search journeys..."
+                            QueryIcon="Find"
+                            Text="{x:Bind ViewModel.JourneySearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        
+                        <!--  Journeys List  -->
+                        <ListView
+                            Grid.Row="2"
+                            ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.Journeys, Mode=OneWay}"
+                            SelectedItem="{x:Bind ViewModel.SelectedJourney, Mode=TwoWay}"
+                            SelectionMode="Single"
+                            Tapped="JourneyListView_Tapped">
+                            <ListView.ContextFlyout>
+                                <MenuFlyout>
+                                    <MenuFlyoutItem
+                                        Command="{x:Bind ViewModel.AddJourneyCommand}"
+                                        Text="Add Journey">
+                                        <MenuFlyoutItem.Icon>
+                                            <FontIcon Glyph="&#xE710;" />
+                                        </MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutItem
+                                        Command="{x:Bind ViewModel.DeleteJourneyCommand}"
+                                        Text="Delete Journey">
+                                        <MenuFlyoutItem.Icon>
+                                            <FontIcon Glyph="&#xE738;" />
+                                        </MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                </MenuFlyout>
+                            </ListView.ContextFlyout>
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="viewmodel:JourneyViewModel">
+                                    <Grid Padding="6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <FontIcon
+                                            Grid.Column="0"
+                                            Margin="0,0,8,0"
+                                            FontSize="16"
+                                            Glyph="&#xE81D;" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            VerticalAlignment="Center"
+                                            Text="{x:Bind Name, Mode=OneWay}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                        
+                        <!--  Action Buttons  -->
+                        <StackPanel
+                            Grid.Row="3"
+                            Margin="8,4,8,8"
+                            Orientation="Horizontal"
+                            Spacing="4">
+                            <Button Command="{x:Bind ViewModel.AddJourneyCommand}" Content="Add" />
+                            <Button Command="{x:Bind ViewModel.DeleteJourneyCommand}" Content="Delete" />
+                        </StackPanel>
+                    </Grid>

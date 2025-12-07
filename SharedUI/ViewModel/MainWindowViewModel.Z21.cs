@@ -41,6 +41,9 @@ public partial class MainWindowViewModel
                 _z21.OnSystemStateChanged += OnZ21SystemStateChanged;
                 _z21.OnConnectionLost += HandleConnectionLost;
 
+                // Initialize Traffic Monitor
+                InitializeTrafficMonitor();
+
                 IsZ21Connected = true;
                 Z21StatusText = $"Connected to {_settings.Z21.CurrentIpAddress}:{port}";
 

@@ -124,7 +124,17 @@
                             PlaceholderText="InPort"
                             Text="{x:Bind ViewModel.SimulateInPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                     </AppBarElementContainer>
+                    <AppBarSeparator />
+                    <AppBarButton
+                        Click="ThemeToggle_Click"
+                        Label="Theme"
+                        ToolTipService.ToolTip="Toggle Dark/Light Mode">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xE771;" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
                 </CommandBar>
+
 
                 <!--  Content Frame for page navigation  -->
                 <Frame x:Name="ContentFrame" Grid.Row="1" />

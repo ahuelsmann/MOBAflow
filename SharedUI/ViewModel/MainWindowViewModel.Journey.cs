@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using Moba.Domain;
@@ -40,6 +41,45 @@ public partial class MainWindowViewModel
 
     #endregion
 
+    #region Journey Search/Filter
+
+    private string _journeySearchText = string.Empty;
+    public string JourneySearchText
+    {
+        get => _journeySearchText;
+        set
+        {
+            if (SetProperty(ref _journeySearchText, value))
+            {
+                OnPropertyChanged(nameof(FilteredJourneys));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the filtered journeys based on search text.
+    /// Returns all journeys if search is empty.
+    /// </summary>
+    public List<JourneyViewModel> FilteredJourneys
+    {
+        get
+        {
+            if (CurrentProjectViewModel == null)
+                return new List<JourneyViewModel>();
+
+            var journeys = CurrentProjectViewModel.Journeys;
+
+            if (string.IsNullOrWhiteSpace(JourneySearchText))
+                return journeys.ToList();
+
+            return journeys
+                .Where(j => j.Name.Contains(JourneySearchText, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+
+    #endregion
+
     #region Journey CRUD Commands
 
     [RelayCommand]
@@ -55,6 +95,7 @@ public partial class MainWindowViewModel
 
         SelectedJourney = journey;
         HasUnsavedChanges = true;
+        OnPropertyChanged(nameof(FilteredJourneys));
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteJourney))]
@@ -67,6 +108,8 @@ public partial class MainWindowViewModel
             CurrentProjectViewModel.Model.Journeys,
             CurrentProjectViewModel.Journeys,
             () => { SelectedJourney = null; HasUnsavedChanges = true; });
+        
+        OnPropertyChanged(nameof(FilteredJourneys));
     }
 
     private bool CanDeleteJourney() => SelectedJourney != null;
@@ -104,6 +147,26 @@ public partial class MainWindowViewModel
 
     private bool CanAddStation() => SelectedJourney != null;
     private bool CanDeleteStation() => SelectedStation != null;
+
+    [RelayCommand(CanExecute = nameof(CanResetJourneyCounter))]
+    private void ResetJourneyCounter()
+    {
+        if (SelectedJourney == null || _journeyManager == null) return;
+
+        var state = _journeyManager.GetState(SelectedJourney.Model.Id);
+        if (state != null)
+        {
+            state.Counter = 0;
+            state.CurrentPos = 0;
+            state.CurrentStationName = string.Empty;
+            state.LastFeedbackTime = null;
+            
+            // Trigger UI update
+            OnPropertyChanged(nameof(SelectedJourney));
+        }
+    }
+
+    private bool CanResetJourneyCounter() => SelectedJourney != null && _journeyManager != null;
 
     #endregion
 

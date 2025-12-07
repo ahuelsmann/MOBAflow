@@ -1,4 +1,5 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+using Moba.Backend.Service;
 using System.Net;
 
 namespace Moba.Backend.Interface;
@@ -15,6 +16,7 @@ public interface IZ21 : IDisposable
     event Action? OnConnectionLost;
 
     bool IsConnected { get; }
+    Z21TrafficMonitor? TrafficMonitor { get; }
 
     Task ConnectAsync(IPAddress address, int port = 21105, CancellationToken cancellationToken = default);
     Task DisconnectAsync();

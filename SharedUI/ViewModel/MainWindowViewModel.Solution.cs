@@ -24,6 +24,9 @@ public partial class MainWindowViewModel
             SolutionViewModel = null;
             AvailableCities.Clear();
             OnPropertyChanged(nameof(CurrentProjectViewModel));
+            OnPropertyChanged(nameof(FilteredJourneys));
+            OnPropertyChanged(nameof(FilteredWorkflows));
+            OnPropertyChanged(nameof(FilteredTrains));
             return;
         }
 

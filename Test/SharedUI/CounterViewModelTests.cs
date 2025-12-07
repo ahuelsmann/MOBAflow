@@ -14,6 +14,7 @@ public class CounterViewModelTests
         public event XBusStatusChanged? OnXBusStatusChanged;
         public event Action? OnConnectionLost;
         public bool IsConnected { get; private set; }
+        public Moba.Backend.Service.Z21TrafficMonitor? TrafficMonitor => null;
         public Task ConnectAsync(System.Net.IPAddress address, int port = 21105, CancellationToken cancellationToken = default) { IsConnected = true; return Task.CompletedTask; }
         public Task DisconnectAsync() { IsConnected = false; return Task.CompletedTask; }
         public Task SendCommandAsync(byte[] sendBytes) => Task.CompletedTask;

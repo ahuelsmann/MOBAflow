@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Moba.Backend.Interface;
 using Moba.Backend.Network;
 using Moba.Backend.Protocol;
+using Moba.Backend.Service;
 
 using System.Net;
 
@@ -18,6 +19,7 @@ public class Z21 : IZ21
 
     private readonly IUdpClientWrapper _udp;
     private readonly ILogger<Z21>? _logger;
+    private readonly Z21TrafficMonitor? _trafficMonitor;
     private CancellationTokenSource? _cancellationTokenSource;
     private Timer? _keepaliveTimer;
     private int _keepAliveFailures;
@@ -25,9 +27,13 @@ public class Z21 : IZ21
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private bool _disposed;
 
-    public Z21(IUdpClientWrapper udp, ILogger<Z21>? logger = null)
+    public Z21TrafficMonitor? TrafficMonitor => _trafficMonitor;
+
+    public Z21(IUdpClientWrapper udp, ILogger<Z21>? logger = null, Z21TrafficMonitor? trafficMonitor = null)
     {
         _udp = udp;
+        _logger = logger;
+        _trafficMonitor = trafficMonitor;
         _udp.Received += OnUdpReceived;
         _logger = logger;
     }
@@ -199,6 +205,13 @@ public class Z21 : IZ21
         await _sendLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            // Log sent packet to traffic monitor
+            _trafficMonitor?.LogSentPacket(
+                data,
+                Z21TrafficMonitor.ParsePacketType(data),
+                $"Length: {data.Length} bytes"
+            );
+
             await _udp.SendAsync(data).ConfigureAwait(false);
         }
         finally
@@ -270,6 +283,13 @@ public class Z21 : IZ21
             _logger?.LogWarning("Short UDP packet received {Length} bytes: {Payload}", content.Length, Z21Protocol.ToHex(content));
             return;
         }
+
+        // Log received packet to traffic monitor
+        _trafficMonitor?.LogReceivedPacket(
+            content,
+            Z21TrafficMonitor.ParsePacketType(content),
+            $"Length: {content.Length} bytes"
+        );
 
         // Log all received packets for debugging
         _logger?.LogDebug("UDP received {Length} bytes: {Payload}", content.Length, Z21Protocol.ToHex(content));

@@ -14,6 +14,45 @@ using Moba.SharedUI.Helper;
 /// </summary>
 public partial class MainWindowViewModel
 {
+    #region Train Search/Filter
+
+    private string _trainSearchText = string.Empty;
+    public string TrainSearchText
+    {
+        get => _trainSearchText;
+        set
+        {
+            if (SetProperty(ref _trainSearchText, value))
+            {
+                OnPropertyChanged(nameof(FilteredTrains));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the filtered trains based on search text.
+    /// Returns all trains if search is empty.
+    /// </summary>
+    public List<TrainViewModel> FilteredTrains
+    {
+        get
+        {
+            if (CurrentProjectViewModel == null)
+                return new List<TrainViewModel>();
+
+            var trains = CurrentProjectViewModel.Trains;
+
+            if (string.IsNullOrWhiteSpace(TrainSearchText))
+                return trains.ToList();
+
+            return trains
+                .Where(t => t.Name.Contains(TrainSearchText, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+
+    #endregion
+
     #region Train CRUD Commands
 
     [RelayCommand]
@@ -29,6 +68,7 @@ public partial class MainWindowViewModel
 
         SelectedTrain = train;
         HasUnsavedChanges = true;
+        OnPropertyChanged(nameof(FilteredTrains));
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteTrain))]
@@ -41,6 +81,8 @@ public partial class MainWindowViewModel
             CurrentProjectViewModel.Model.Trains,
             CurrentProjectViewModel.Trains,
             () => { SelectedTrain = null; HasUnsavedChanges = true; });
+        
+        OnPropertyChanged(nameof(FilteredTrains));
     }
 
     private bool CanDeleteTrain() => SelectedTrain != null;

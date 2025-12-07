@@ -152,9 +152,7 @@
                     <Grid Grid.Column="0" Padding="4">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
-                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <TextBlock
                             Grid.Row="0"
@@ -162,36 +160,12 @@
                             FontWeight="SemiBold"
                             Style="{StaticResource SubtitleTextBlockStyle}"
                             Text="Journeys" />
-                        <AutoSuggestBox
-                            Grid.Row="1"
-                            Margin="8,0,8,4"
-                            PlaceholderText="Search journeys..."
-                            QueryIcon="Find"
-                            Text="{x:Bind ViewModel.JourneySearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <ListView
-                            Grid.Row="2"
+                            Grid.Row="1"
                             ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.Journeys, Mode=OneWay}"
                             SelectedItem="{x:Bind ViewModel.SelectedJourney, Mode=TwoWay}"
                             SelectionMode="Single"
                             Tapped="JourneyListView_Tapped">
-                            <ListView.ContextFlyout>
-                                <MenuFlyout>
-                                    <MenuFlyoutItem
-                                        Command="{x:Bind ViewModel.AddJourneyCommand}"
-                                        Text="Add Journey">
-                                        <MenuFlyoutItem.Icon>
-                                            <FontIcon Glyph="&#xE710;" />
-                                        </MenuFlyoutItem.Icon>
-                                    </MenuFlyoutItem>
-                                    <MenuFlyoutItem
-                                        Command="{x:Bind ViewModel.DeleteJourneyCommand}"
-                                        Text="Delete Journey">
-                                        <MenuFlyoutItem.Icon>
-                                            <FontIcon Glyph="&#xE738;" />
-                                        </MenuFlyoutItem.Icon>
-                                    </MenuFlyoutItem>
-                                </MenuFlyout>
-                            </ListView.ContextFlyout>
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="viewmodel:JourneyViewModel">
                                     <Grid Padding="6">
@@ -353,9 +327,7 @@
                     <Grid Grid.Column="0" Padding="4">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
-                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <TextBlock
                             Grid.Row="0"
@@ -363,37 +335,13 @@
                             FontWeight="SemiBold"
                             Style="{StaticResource SubtitleTextBlockStyle}"
                             Text="Workflows" />
-                        <AutoSuggestBox
-                            Grid.Row="1"
-                            Margin="8,0,8,4"
-                            PlaceholderText="Search workflows..."
-                            QueryIcon="Find"
-                            Text="{x:Bind ViewModel.WorkflowSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <ListView
-                            Grid.Row="2"
+                            Grid.Row="1"
                             CanDragItems="True"
                             DragItemsStarting="WorkflowListView_DragItemsStarting"
                             ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.Workflows, Mode=OneWay}"
                             SelectedItem="{x:Bind ViewModel.SelectedWorkflow, Mode=TwoWay}"
                             SelectionMode="Single">
-                            <ListView.ContextFlyout>
-                                <MenuFlyout>
-                                    <MenuFlyoutItem
-                                        Command="{x:Bind ViewModel.AddWorkflowCommand}"
-                                        Text="Add Workflow">
-                                        <MenuFlyoutItem.Icon>
-                                            <FontIcon Glyph="&#xE710;" />
-                                        </MenuFlyoutItem.Icon>
-                                    </MenuFlyoutItem>
-                                    <MenuFlyoutItem
-                                        Command="{x:Bind ViewModel.DeleteWorkflowCommand}"
-                                        Text="Delete Workflow">
-                                        <MenuFlyoutItem.Icon>
-                                            <FontIcon Glyph="&#xE738;" />
-                                        </MenuFlyoutItem.Icon>
-                                    </MenuFlyoutItem>
-                                </MenuFlyout>
-                            </ListView.ContextFlyout>
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="viewmodel:WorkflowViewModel">
                                     <Grid Padding="6">
@@ -849,6 +797,7 @@
         </TabView>
     </Grid>
 </Page>
+
 
 
 

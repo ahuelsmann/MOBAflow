@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 
@@ -334,4 +335,25 @@ public sealed partial class MainWindow
             CounterViewModel.SetTrackPowerCommand.Execute(toggleButton.IsChecked);
         }
     }
+
+    private ElementTheme _currentTheme = ElementTheme.Default;
+    
+    private void ThemeToggle_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        // Cycle through themes: Default → Light → Dark → Default
+        _currentTheme = _currentTheme switch
+        {
+            ElementTheme.Default => ElementTheme.Light,
+            ElementTheme.Light => ElementTheme.Dark,
+            ElementTheme.Dark => ElementTheme.Default,
+            _ => ElementTheme.Default
+        };
+
+        // Apply theme to window content
+        if (Content is FrameworkElement rootElement)
+        {
+            rootElement.RequestedTheme = _currentTheme;
+        }
+    }
 }
+

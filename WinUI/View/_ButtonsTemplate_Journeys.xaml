@@ -1,0 +1,25 @@
+<!-- COPY THIS AFTER THE </ListView> CLOSING TAG IN JOURNEYS SECTION -->
+<!-- Before the </Grid> that closes Column 0 -->
+
+                        <!--  Action Buttons  -->
+                        <StackPanel
+                            Grid.Row="3"
+                            Margin="8,4,8,8"
+                            HorizontalAlignment="Stretch"
+                            Orientation="Horizontal"
+                            Spacing="4">
+                            <Button
+                                Command="{x:Bind ViewModel.AddJourneyCommand}"
+                                Content="Add">
+                                <Button.KeyboardAccelerators>
+                                    <KeyboardAccelerator Key="N" Modifiers="Control" />
+                                </Button.KeyboardAccelerators>
+                            </Button>
+                            <Button
+                                Command="{x:Bind ViewModel.DeleteJourneyCommand}"
+                                Content="Delete">
+                                <Button.KeyboardAccelerators>
+                                    <KeyboardAccelerator Key="Delete" />
+                                </Button.KeyboardAccelerators>
+                            </Button>
+                        </StackPanel>

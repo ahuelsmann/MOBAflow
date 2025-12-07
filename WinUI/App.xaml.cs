@@ -62,7 +62,14 @@ public partial class App
         services.AddLogging();
 
         // Backend Services (Interfaces are in Backend.Interface and Backend.Network)
-        services.AddSingleton<Backend.Interface.IZ21, Backend.Z21>();
+        services.AddSingleton<Backend.Service.Z21TrafficMonitor>();
+        services.AddSingleton<Backend.Interface.IZ21, Backend.Z21>(sp =>
+        {
+            var udp = sp.GetRequiredService<Backend.Network.IUdpClientWrapper>();
+            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<Backend.Z21>>();
+            var trafficMonitor = sp.GetRequiredService<Backend.Service.Z21TrafficMonitor>();
+            return new Backend.Z21(udp, logger, trafficMonitor);
+        });
         services.AddSingleton<Backend.Network.IUdpClientWrapper, Backend.Network.UdpWrapper>();
         
         // Backend Services - Register in dependency order

@@ -189,6 +189,9 @@ public partial class MainWindowViewModel
     [ObservableProperty]
     private string? _errorMessage;
 
+    [ObservableProperty]
+    private int _selectedThemeIndex = 2; // Default: Use system setting
+
     #endregion
 
     #region Settings Commands

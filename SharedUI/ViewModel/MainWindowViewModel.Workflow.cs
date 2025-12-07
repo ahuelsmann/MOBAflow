@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using Moba.Domain;
@@ -14,6 +15,45 @@ using System.Collections.Generic;
 /// </summary>
 public partial class MainWindowViewModel
 {
+    #region Workflow Search/Filter
+
+    private string _workflowSearchText = string.Empty;
+    public string WorkflowSearchText
+    {
+        get => _workflowSearchText;
+        set
+        {
+            if (SetProperty(ref _workflowSearchText, value))
+            {
+                OnPropertyChanged(nameof(FilteredWorkflows));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the filtered workflows based on search text.
+    /// Returns all workflows if search is empty.
+    /// </summary>
+    public List<WorkflowViewModel> FilteredWorkflows
+    {
+        get
+        {
+            if (CurrentProjectViewModel == null)
+                return new List<WorkflowViewModel>();
+
+            var workflows = CurrentProjectViewModel.Workflows;
+
+            if (string.IsNullOrWhiteSpace(WorkflowSearchText))
+                return workflows.ToList();
+
+            return workflows
+                .Where(w => w.Name.Contains(WorkflowSearchText, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+
+    #endregion
+
     #region Workflow CRUD Commands
 
     [RelayCommand]
@@ -29,6 +69,7 @@ public partial class MainWindowViewModel
 
         SelectedWorkflow = workflow;
         HasUnsavedChanges = true;
+        OnPropertyChanged(nameof(FilteredWorkflows));
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteWorkflow))]
@@ -41,6 +82,8 @@ public partial class MainWindowViewModel
             CurrentProjectViewModel.Model.Workflows,
             CurrentProjectViewModel.Workflows,
             () => { SelectedWorkflow = null; HasUnsavedChanges = true; });
+        
+        OnPropertyChanged(nameof(FilteredWorkflows));
     }
 
     private bool CanDeleteWorkflow() => SelectedWorkflow != null;

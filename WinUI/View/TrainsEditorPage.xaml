@@ -28,6 +28,8 @@
         <Grid Grid.Column="0" Padding="4">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
@@ -38,11 +40,53 @@
                 Style="{StaticResource SubtitleTextBlockStyle}"
                 Text="Trains" />
 
-            <ListView
+            <AutoSuggestBox
                 Grid.Row="1"
+                Margin="8,0,8,4"
+                PlaceholderText="Search trains..."
+                QueryIcon="Find"
+                Text="{x:Bind ViewModel.TrainSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+            <StackPanel
+                Grid.Row="2"
+                Margin="8,0,8,4"
+                Orientation="Horizontal"
+                Spacing="4">
+                <Button
+                    Command="{x:Bind ViewModel.AddTrainCommand}"
+                    ToolTipService.ToolTip="Add Train">
+                    <FontIcon FontSize="16" Glyph="&#xE710;" />
+                </Button>
+                <Button
+                    Command="{x:Bind ViewModel.DeleteTrainCommand}"
+                    ToolTipService.ToolTip="Delete Train">
+                    <FontIcon FontSize="16" Glyph="&#xE738;" />
+                </Button>
+            </StackPanel>
+
+            <ListView
+                Grid.Row="3"
                 ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.Trains, Mode=OneWay}"
                 SelectedItem="{x:Bind ViewModel.SelectedTrain, Mode=TwoWay}"
                 SelectionMode="Single">
+                <ListView.ContextFlyout>
+                    <MenuFlyout>
+                        <MenuFlyoutItem
+                            Command="{x:Bind ViewModel.AddTrainCommand}"
+                            Text="Add Train">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon Glyph="&#xE710;" />
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem
+                            Command="{x:Bind ViewModel.DeleteTrainCommand}"
+                            Text="Delete Train">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon Glyph="&#xE738;" />
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                    </MenuFlyout>
+                </ListView.ContextFlyout>
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="viewmodel:TrainViewModel">
                         <Grid Padding="6">
