@@ -1,8 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+using Microsoft.Extensions.Logging;
+
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
-using Microsoft.Extensions.Logging;
 
 namespace Moba.Backend.Network;
 
@@ -40,10 +41,10 @@ public class UdpWrapper : IUdpClientWrapper
     private readonly ILogger<UdpWrapper>? _logger;
     
     // Performance tracking
-    private int _totalSendCount = 0;
-    private int _totalRetryCount = 0;
-    private int _totalReceiveCount = 0;
-    private readonly System.Diagnostics.Stopwatch _performanceTimer = System.Diagnostics.Stopwatch.StartNew();
+    private int _totalSendCount;
+    private int _totalRetryCount;
+    private int _totalReceiveCount;
+    private readonly Stopwatch _performanceTimer = System.Diagnostics.Stopwatch.StartNew();
     private readonly object _statsLock = new object();
 
     public UdpWrapper(ILogger<UdpWrapper>? logger = null)
@@ -100,8 +101,8 @@ public class UdpWrapper : IUdpClientWrapper
                         _totalReceiveCount++;
                     }
                     
-                    _logger?.LogDebug("📥 Received {Length} bytes from {Endpoint}: {Data}", 
-                        result.Buffer.Length, 
+                    _logger?.LogDebug("📥 Received {Length} bytes from {Endpoint}: {Data}",
+                        result.Buffer.Length,
                         result.RemoteEndPoint, 
                         BitConverter.ToString(result.Buffer).Replace("-", " "));
                 }
@@ -122,7 +123,7 @@ public class UdpWrapper : IUdpClientWrapper
         }
         finally
         {
-            _logger?.LogInformation("🛑 UDP Receiver loop stopped. Stats: {SendCount} sends, {RetryCount} retries, {ReceiveCount} receives", 
+            _logger?.LogInformation("🛑 UDP Receiver loop stopped. Stats: {SendCount} sends, {RetryCount} retries, {ReceiveCount} receives",
                 _totalSendCount, _totalRetryCount, _totalReceiveCount);
             Debug.WriteLine("UdpWrapper: Receiver loop stopped");
         }

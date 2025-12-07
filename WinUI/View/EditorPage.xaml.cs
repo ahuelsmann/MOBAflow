@@ -37,7 +37,7 @@ public sealed partial class EditorPage : Page
 
     private void WorkflowListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {
-        if (e.Items.FirstOrDefault() is SharedUI.ViewModel.WorkflowViewModel workflow)
+        if (e.Items.FirstOrDefault() is WorkflowViewModel workflow)
         {
             e.Data.Properties.Add("Workflow", workflow);
             e.Data.RequestedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
@@ -58,12 +58,12 @@ public sealed partial class EditorPage : Page
             if (ViewModel.SelectedJourney != null)
             {
                 var station = new Domain.Station { Name = city.Name };
-                var stationViewModel = new SharedUI.ViewModel.StationViewModel(station);
+                var stationViewModel = new StationViewModel(station);
                 ViewModel.SelectedJourney.Stations.Add(stationViewModel);
             }
         }
         // Handle Workflow drop (assign to selected Station)
-        else if (e.DataView.Properties.TryGetValue("Workflow", out object workflowObj) && workflowObj is SharedUI.ViewModel.WorkflowViewModel workflow)
+        else if (e.DataView.Properties.TryGetValue("Workflow", out object workflowObj) && workflowObj is WorkflowViewModel workflow)
         {
             if (ViewModel.SelectedStation != null)
             {
@@ -77,7 +77,7 @@ public sealed partial class EditorPage : Page
         if (ViewModel.SelectedCity != null && ViewModel.SelectedJourney != null)
         {
             var station = new Domain.Station { Name = ViewModel.SelectedCity.Name };
-            var stationViewModel = new SharedUI.ViewModel.StationViewModel(station);
+            var stationViewModel = new StationViewModel(station);
             ViewModel.SelectedJourney.Stations.Add(stationViewModel);
         }
     }
@@ -94,7 +94,7 @@ public sealed partial class EditorPage : Page
 
     private void LocomotiveLibrary_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {
-        if (e.Items.FirstOrDefault() is SharedUI.ViewModel.LocomotiveViewModel locomotiveVM)
+        if (e.Items.FirstOrDefault() is LocomotiveViewModel locomotiveVM)
         {
             e.Data.Properties.Add("Locomotive", locomotiveVM.Model);
             e.Data.RequestedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
@@ -106,7 +106,7 @@ public sealed partial class EditorPage : Page
     {
         // Add selected locomotive to current train on double-click
         if (e.OriginalSource is FrameworkElement element &&
-            element.DataContext is SharedUI.ViewModel.LocomotiveViewModel locomotiveVM &&
+            element.DataContext is LocomotiveViewModel locomotiveVM &&
             ViewModel.SelectedTrain != null)
         {
             // Create a copy to avoid modifying the library object
@@ -124,7 +124,7 @@ public sealed partial class EditorPage : Page
             };
 
             ViewModel.SelectedTrain.Model.Locomotives.Add(locomotiveCopy);
-            var newLocomotiveVM = new SharedUI.ViewModel.LocomotiveViewModel(locomotiveCopy);
+            var newLocomotiveVM = new LocomotiveViewModel(locomotiveCopy);
             ViewModel.SelectedTrain.Locomotives.Add(newLocomotiveVM);
         }
     }
@@ -157,7 +157,7 @@ public sealed partial class EditorPage : Page
                 };
 
                 ViewModel.SelectedTrain.Model.Locomotives.Add(locomotiveCopy);
-                var locomotiveVM = new SharedUI.ViewModel.LocomotiveViewModel(locomotiveCopy);
+                var locomotiveVM = new LocomotiveViewModel(locomotiveCopy);
                 ViewModel.SelectedTrain.Locomotives.Add(locomotiveVM);
             }
         }
@@ -165,7 +165,7 @@ public sealed partial class EditorPage : Page
 
     private void GoodsWagonListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {
-        if (e.Items.FirstOrDefault() is SharedUI.ViewModel.GoodsWagonViewModel goodsWagonVM)
+        if (e.Items.FirstOrDefault() is GoodsWagonViewModel goodsWagonVM)
         {
             e.Data.Properties.Add("GoodsWagon", goodsWagonVM.Model);
             e.Data.RequestedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
@@ -177,7 +177,7 @@ public sealed partial class EditorPage : Page
     {
         // Add selected goods wagon to current train on double-click
         if (e.OriginalSource is FrameworkElement element &&
-            element.DataContext is SharedUI.ViewModel.GoodsWagonViewModel goodsWagonVM &&
+            element.DataContext is GoodsWagonViewModel goodsWagonVM &&
             ViewModel.SelectedTrain != null &&
             goodsWagonVM.Model is Domain.GoodsWagon goodsWagon)
         {
@@ -195,14 +195,14 @@ public sealed partial class EditorPage : Page
             };
 
             ViewModel.SelectedTrain.Model.Wagons.Add(wagonCopy);
-            var newWagonVM = new SharedUI.ViewModel.GoodsWagonViewModel(wagonCopy);
+            var newWagonVM = new GoodsWagonViewModel(wagonCopy);
             ViewModel.SelectedTrain.Wagons.Add(newWagonVM);
         }
     }
 
     private void PassengerWagonListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {
-        if (e.Items.FirstOrDefault() is SharedUI.ViewModel.PassengerWagonViewModel passengerWagonVM)
+        if (e.Items.FirstOrDefault() is PassengerWagonViewModel passengerWagonVM)
         {
             e.Data.Properties.Add("PassengerWagon", passengerWagonVM.Model);
             e.Data.RequestedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
@@ -214,7 +214,7 @@ public sealed partial class EditorPage : Page
     {
         // Add selected passenger wagon to current train on double-click
         if (e.OriginalSource is FrameworkElement element &&
-            element.DataContext is SharedUI.ViewModel.PassengerWagonViewModel passengerWagonVM &&
+            element.DataContext is PassengerWagonViewModel passengerWagonVM &&
             ViewModel.SelectedTrain != null &&
             passengerWagonVM.Model is Domain.PassengerWagon passengerWagon)
         {
@@ -232,7 +232,7 @@ public sealed partial class EditorPage : Page
             };
 
             ViewModel.SelectedTrain.Model.Wagons.Add(wagonCopy);
-            var newWagonVM = new SharedUI.ViewModel.PassengerWagonViewModel(wagonCopy);
+            var newWagonVM = new PassengerWagonViewModel(wagonCopy);
             ViewModel.SelectedTrain.Wagons.Add(newWagonVM);
         }
     }
@@ -264,7 +264,7 @@ public sealed partial class EditorPage : Page
                 };
 
                 ViewModel.SelectedTrain.Model.Wagons.Add(wagonCopy);
-                var wagonViewModel = new SharedUI.ViewModel.GoodsWagonViewModel(wagonCopy);
+                var wagonViewModel = new GoodsWagonViewModel(wagonCopy);
                 ViewModel.SelectedTrain.Wagons.Add(wagonViewModel);
             }
         }
@@ -288,7 +288,7 @@ public sealed partial class EditorPage : Page
                 };
 
                 ViewModel.SelectedTrain.Model.Wagons.Add(wagonCopy);
-                var wagonViewModel = new SharedUI.ViewModel.PassengerWagonViewModel(wagonCopy);
+                var wagonViewModel = new PassengerWagonViewModel(wagonCopy);
                 ViewModel.SelectedTrain.Wagons.Add(wagonViewModel);
             }
         }
@@ -299,7 +299,7 @@ public sealed partial class EditorPage : Page
         // Delete key removes selected locomotive from train
         if (e.Key == Windows.System.VirtualKey.Delete &&
             sender is ListView listView &&
-            listView.SelectedItem is SharedUI.ViewModel.LocomotiveViewModel locomotiveVM &&
+            listView.SelectedItem is LocomotiveViewModel locomotiveVM &&
             ViewModel.SelectedTrain != null)
         {
             ViewModel.SelectedTrain.Model.Locomotives.Remove(locomotiveVM.Model);
@@ -313,7 +313,7 @@ public sealed partial class EditorPage : Page
         // Delete key removes selected wagon from train
         if (e.Key == Windows.System.VirtualKey.Delete &&
             sender is ListView listView &&
-            listView.SelectedItem is SharedUI.ViewModel.WagonViewModel wagonVM &&
+            listView.SelectedItem is WagonViewModel wagonVM &&
             ViewModel.SelectedTrain != null)
         {
             ViewModel.SelectedTrain.Model.Wagons.Remove(wagonVM.Model);
@@ -326,7 +326,7 @@ public sealed partial class EditorPage : Page
     {
         // Remove locomotive from train via context menu
         if (sender is MenuFlyoutItem menuItem &&
-            menuItem.DataContext is SharedUI.ViewModel.LocomotiveViewModel locomotiveVM &&
+            menuItem.DataContext is LocomotiveViewModel locomotiveVM &&
             ViewModel.SelectedTrain != null)
         {
             ViewModel.SelectedTrain.Model.Locomotives.Remove(locomotiveVM.Model);
@@ -338,7 +338,7 @@ public sealed partial class EditorPage : Page
     {
         // Duplicate locomotive in train
         if (sender is MenuFlyoutItem menuItem &&
-            menuItem.DataContext is SharedUI.ViewModel.LocomotiveViewModel locomotiveVM &&
+            menuItem.DataContext is LocomotiveViewModel locomotiveVM &&
             ViewModel.SelectedTrain != null)
         {
             var locomotiveCopy = new Domain.Locomotive
@@ -355,7 +355,7 @@ public sealed partial class EditorPage : Page
             };
 
             ViewModel.SelectedTrain.Model.Locomotives.Add(locomotiveCopy);
-            var newVM = new SharedUI.ViewModel.LocomotiveViewModel(locomotiveCopy);
+            var newVM = new LocomotiveViewModel(locomotiveCopy);
             ViewModel.SelectedTrain.Locomotives.Add(newVM);
         }
     }
@@ -364,7 +364,7 @@ public sealed partial class EditorPage : Page
     {
         // Remove wagon from train via context menu
         if (sender is MenuFlyoutItem menuItem &&
-            menuItem.DataContext is SharedUI.ViewModel.WagonViewModel wagonVM &&
+            menuItem.DataContext is WagonViewModel wagonVM &&
             ViewModel.SelectedTrain != null)
         {
             ViewModel.SelectedTrain.Model.Wagons.Remove(wagonVM.Model);
@@ -376,7 +376,7 @@ public sealed partial class EditorPage : Page
     {
         // Duplicate wagon in train
         if (sender is MenuFlyoutItem menuItem &&
-            menuItem.DataContext is SharedUI.ViewModel.WagonViewModel wagonVM &&
+            menuItem.DataContext is WagonViewModel wagonVM &&
             ViewModel.SelectedTrain != null)
         {
             Domain.Wagon wagonCopy;
@@ -416,11 +416,11 @@ public sealed partial class EditorPage : Page
 
             ViewModel.SelectedTrain.Model.Wagons.Add(wagonCopy);
 
-            SharedUI.ViewModel.WagonViewModel newVM = wagonCopy switch
+            WagonViewModel newVM = wagonCopy switch
             {
-                Domain.PassengerWagon pw => new SharedUI.ViewModel.PassengerWagonViewModel(pw),
-                Domain.GoodsWagon gw => new SharedUI.ViewModel.GoodsWagonViewModel(gw),
-                _ => new SharedUI.ViewModel.WagonViewModel(wagonCopy)
+                Domain.PassengerWagon pw => new PassengerWagonViewModel(pw),
+                Domain.GoodsWagon gw => new GoodsWagonViewModel(gw),
+                _ => new WagonViewModel(wagonCopy)
             };
 
             ViewModel.SelectedTrain.Wagons.Add(newVM);

@@ -2,6 +2,7 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.Input;
+
 using Moba.SharedUI.Enum;
 
 /// <summary>
@@ -268,5 +269,3 @@ public partial class MainWindowViewModel
 
     #endregion
 }
-
-

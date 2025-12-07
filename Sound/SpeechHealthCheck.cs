@@ -2,6 +2,7 @@
 using Microsoft.CognitiveServices.Speech;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+
 using Moba.Common.Extensions;
 
 namespace Moba.Sound;

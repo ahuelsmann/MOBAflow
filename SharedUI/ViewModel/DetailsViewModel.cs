@@ -60,4 +60,3 @@ public partial class DetailsViewModel : ObservableObject
         set => SetProperty(Model.Description, value, Model, (m, v) => m.Description = v);
     }
 }
-

@@ -86,4 +86,3 @@ public partial class LocomotiveViewModel : ObservableObject, IViewModelWrapper<L
 
     public MobaType EntityType => MobaType.Locomotive;
 }
-

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -66,7 +66,7 @@ public partial class App
         services.AddSingleton<Backend.Network.IUdpClientWrapper, Backend.Network.UdpWrapper>();
         
         // Backend Services - Register in dependency order
-        services.AddSingleton<Backend.Services.ActionExecutor>(sp =>
+        services.AddSingleton(sp =>
         {
             var z21 = sp.GetRequiredService<Backend.Interface.IZ21>();
             return new Backend.Services.ActionExecutor(z21);
@@ -75,7 +75,7 @@ public partial class App
         services.AddSingleton<Backend.Interface.IJourneyManagerFactory, Backend.Manager.JourneyManagerFactory>();
         
         // Domain.Solution - Pure POCO, no Settings initialization needed
-        services.AddSingleton<Domain.Solution>(sp => new Domain.Solution());
+        services.AddSingleton(sp => new Domain.Solution());
 
         // WinUI Services (Interfaces are in SharedUI.Service)
         services.AddSingleton<SharedUI.Interface.IIoService, Service.IoService>();
@@ -90,7 +90,7 @@ public partial class App
         services.AddSingleton<Service.HealthCheckService>();
 
         // SharedUI Services
-        services.AddSingleton<SharedUI.Service.ValidationService>(sp =>
+        services.AddSingleton(sp =>
         {
             var solution = sp.GetRequiredService<Domain.Solution>();
             // ValidationService needs the first project (simplified for now)

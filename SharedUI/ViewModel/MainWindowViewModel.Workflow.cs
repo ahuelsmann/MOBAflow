@@ -2,8 +2,10 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.Input;
+
 using Moba.Domain;
 using Moba.SharedUI.Helper;
+
 using System.Collections.Generic;
 
 /// <summary>
@@ -52,7 +54,7 @@ public partial class MainWindowViewModel
     {
         if (SelectedWorkflow == null) return;
 
-        var newAction = new Domain.WorkflowAction
+        var newAction = new WorkflowAction
         {
             Name = "New Announcement",
             Number = (uint)(SelectedWorkflow.Model.Actions.Count + 1),
@@ -76,7 +78,7 @@ public partial class MainWindowViewModel
     {
         if (SelectedWorkflow == null) return;
 
-        var newAction = new Domain.WorkflowAction
+        var newAction = new WorkflowAction
         {
             Name = "New Command",
             Number = (uint)(SelectedWorkflow.Model.Actions.Count + 1),
@@ -99,7 +101,7 @@ public partial class MainWindowViewModel
     {
         if (SelectedWorkflow == null) return;
 
-        var newAction = new Domain.WorkflowAction
+        var newAction = new WorkflowAction
         {
             Name = "New Audio",
             Number = (uint)(SelectedWorkflow.Model.Actions.Count + 1),

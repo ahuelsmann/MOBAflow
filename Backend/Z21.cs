@@ -20,7 +20,7 @@ public class Z21 : IZ21
     private readonly ILogger<Z21>? _logger;
     private CancellationTokenSource? _cancellationTokenSource;
     private Timer? _keepaliveTimer;
-    private int _keepAliveFailures = 0;
+    private int _keepAliveFailures;
     private const int MAX_KEEPALIVE_FAILURES = 3;
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private bool _disposed;

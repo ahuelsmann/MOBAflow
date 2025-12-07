@@ -3,6 +3,7 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Moba.Backend.Interface;
 using Moba.Backend.Manager;
 using Moba.Common.Configuration;
@@ -11,6 +12,7 @@ using Moba.Domain;
 using Moba.SharedUI.Enum;
 using Moba.SharedUI.Helper;
 using Moba.SharedUI.Interface;
+
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -153,13 +155,13 @@ public partial class MainWindowViewModel : ObservableObject
     /// Available cities with stations (loaded from master data).
     /// </summary>
     [ObservableProperty]
-    private ObservableCollection<Domain.City> availableCities = [];
+    private ObservableCollection<City> availableCities = [];
 
     /// <summary>
     /// Currently selected city for adding stations to journeys.
     /// </summary>
     [ObservableProperty]
-    private Domain.City? selectedCity;
+    private City? selectedCity;
 
     /// <summary>
     /// Gets the currently selected project as a ProjectViewModel.
@@ -256,7 +258,7 @@ public partial class MainWindowViewModel : ObservableObject
     #region City Library
 
     [ObservableProperty]
-    private ObservableCollection<Domain.City> cityLibrary = [];
+    private ObservableCollection<City> cityLibrary = [];
 
     [ObservableProperty]
     private string citySearchText = string.Empty;
@@ -266,11 +268,11 @@ public partial class MainWindowViewModel : ObservableObject
         if (_cityLibraryService == null) return;
 
         var filtered = _cityLibraryService.FilterCities(value);
-        CityLibrary = new ObservableCollection<Domain.City>(filtered);
+        CityLibrary = new ObservableCollection<City>(filtered);
     }
 
     [RelayCommand(CanExecute = nameof(CanAddStationFromCity))]
-    private void AddStationFromCity(Domain.City city)
+    private void AddStationFromCity(City city)
     {
         if (SelectedJourney == null || city == null) return;
 
@@ -309,7 +311,7 @@ public partial class MainWindowViewModel : ObservableObject
         if (_cityLibraryService == null) return;
 
         var cities = await _cityLibraryService.LoadCitiesAsync();
-        CityLibrary = new ObservableCollection<Domain.City>(cities);
+        CityLibrary = new ObservableCollection<City>(cities);
     }
 
     #endregion
@@ -317,18 +319,18 @@ public partial class MainWindowViewModel : ObservableObject
     #region Wagon Libraries
 
     [ObservableProperty]
-    private ObservableCollection<Domain.GoodsWagon> goodsWagonLibrary = 
+    private ObservableCollection<GoodsWagon> goodsWagonLibrary = 
     [
-        new Domain.GoodsWagon { Name = "Goods Wagon 1", Cargo = Domain.Enum.CargoType.Container },
-        new Domain.GoodsWagon { Name = "Goods Wagon 2", Cargo = Domain.Enum.CargoType.Coal },
-        new Domain.GoodsWagon { Name = "Goods Wagon 3", Cargo = Domain.Enum.CargoType.Wood }
+        new GoodsWagon { Name = "Goods Wagon 1", Cargo = Domain.Enum.CargoType.Container },
+        new GoodsWagon { Name = "Goods Wagon 2", Cargo = Domain.Enum.CargoType.Coal },
+        new GoodsWagon { Name = "Goods Wagon 3", Cargo = Domain.Enum.CargoType.Wood }
     ];
 
     [ObservableProperty]
-    private ObservableCollection<Domain.PassengerWagon> passengerWagonLibrary = 
+    private ObservableCollection<PassengerWagon> passengerWagonLibrary = 
     [
-        new Domain.PassengerWagon { Name = "Passenger Wagon 1st Class", WagonClass = Domain.Enum.PassengerClass.First },
-        new Domain.PassengerWagon { Name = "Passenger Wagon 2nd Class", WagonClass = Domain.Enum.PassengerClass.Second }
+        new PassengerWagon { Name = "Passenger Wagon 1st Class", WagonClass = Domain.Enum.PassengerClass.First },
+        new PassengerWagon { Name = "Passenger Wagon 2nd Class", WagonClass = Domain.Enum.PassengerClass.Second }
     ];
 
     #endregion

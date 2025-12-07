@@ -8,7 +8,7 @@ using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
 using Moba.WinUI.Service;
 
-using MainWindowViewModel = Moba.SharedUI.ViewModel.MainWindowViewModel;
+using MainWindowViewModel = SharedUI.ViewModel.MainWindowViewModel;
 
 public sealed partial class MainWindow
 {
@@ -38,10 +38,10 @@ public sealed partial class MainWindow
         SetTitleBar(AppTitleBar);
 
         // Initialize IoService with WindowId (required before any file operations)
-        var ioService = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<SharedUI.Interface.IIoService>(
+        var ioService = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<IIoService>(
             ((App)Microsoft.UI.Xaml.Application.Current).Services);
         
-        if (ioService is WinUI.Service.IoService winUiIoService)
+        if (ioService is IoService winUiIoService)
         {
             winUiIoService.SetWindowId(this.AppWindow.Id, this.Content.XamlRoot);
             System.Diagnostics.Debug.WriteLine(" IoService initialized with WindowId");
@@ -97,7 +97,7 @@ public sealed partial class MainWindow
 
             try
             {
-                var editorViewModel = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<SharedUI.ViewModel.MainWindowViewModel>(
+                var editorViewModel = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<MainWindowViewModel>(
                     ((App)Microsoft.UI.Xaml.Application.Current).Services);
 
                 if (editorViewModel != null)
@@ -241,7 +241,7 @@ public sealed partial class MainWindow
                     System.Diagnostics.Debug.WriteLine($"   Solution: {ViewModel.Solution != null}");
                     System.Diagnostics.Debug.WriteLine($"   Projects: {ViewModel.Solution?.Projects.Count ?? 0}");
 
-                    var editorViewModel = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<SharedUI.ViewModel.MainWindowViewModel>(
+                    var editorViewModel = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<MainWindowViewModel>(
                         ((App)Microsoft.UI.Xaml.Application.Current).Services);
 
                     System.Diagnostics.Debug.WriteLine($" Navigating to EditorPage - refreshing data first");
@@ -328,7 +328,7 @@ public sealed partial class MainWindow
     // Minimal event handler - delegates to ViewModel Command (XAML limitation for AppBarToggleButton)
     private void TrackPower_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        if (sender is Microsoft.UI.Xaml.Controls.AppBarToggleButton toggleButton)
+        if (sender is AppBarToggleButton toggleButton)
         {
             // Simply execute command with current state - no business logic here
             CounterViewModel.SetTrackPowerCommand.Execute(toggleButton.IsChecked);

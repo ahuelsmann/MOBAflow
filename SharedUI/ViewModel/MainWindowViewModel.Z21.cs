@@ -47,7 +47,7 @@ public partial class MainWindowViewModel
                 if (Solution.Projects.Count > 0)
                 {
                     var project = Solution.Projects[0];
-                    var executionContext = new Moba.Backend.Services.ActionExecutionContext
+                    var executionContext = new Backend.Services.ActionExecutionContext
                     {
                         Z21 = _z21
                     };
@@ -112,7 +112,7 @@ public partial class MainWindowViewModel
                 
                 Debug.WriteLine($"🔍 [DEBUG] Creating ExecutionContext for JourneyManager");
                 
-                var executionContext = new Moba.Backend.Services.ActionExecutionContext
+                var executionContext = new Backend.Services.ActionExecutionContext
                 {
                     Z21 = _z21,
                     SpeakerEngine = null  // Will be set via MainWindowViewModel.SpeakerEngine property
@@ -226,4 +226,3 @@ public partial class MainWindowViewModel
 
     #endregion
 }
-

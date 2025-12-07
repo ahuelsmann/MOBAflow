@@ -218,4 +218,3 @@ public partial class StationViewModel : ObservableObject, IViewModelWrapper<Stat
         OnPropertyChanged(nameof(BackgroundColor));
     }
 }
-

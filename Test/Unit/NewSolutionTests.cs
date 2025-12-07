@@ -20,9 +20,9 @@ public class NewSolutionTests
         newSolution.Projects.Add(new Project
         {
             Name = "New Project",
-            Journeys = new System.Collections.Generic.List<Journey>(),
-            Workflows = new System.Collections.Generic.List<Workflow>(),
-            Trains = new System.Collections.Generic.List<Train>()
+            Journeys = new List<Journey>(),
+            Workflows = new List<Workflow>(),
+            Trains = new List<Train>()
         });
         
         // Assert
@@ -46,9 +46,9 @@ public class NewSolutionTests
         newSolution.Projects.Add(new Project
         {
             Name = "New Project",
-            Journeys = new System.Collections.Generic.List<Journey>(),
-            Workflows = new System.Collections.Generic.List<Workflow>(),
-            Trains = new System.Collections.Generic.List<Train>()
+            Journeys = new List<Journey>(),
+            Workflows = new List<Workflow>(),
+            Trains = new List<Train>()
         });
         
         // Act
@@ -116,9 +116,9 @@ public class NewSolutionTests
         solution.Projects.Add(new Project
         {
             Name = "Default Project",
-            Journeys = new System.Collections.Generic.List<Journey>(),
-            Workflows = new System.Collections.Generic.List<Workflow>(),
-            Trains = new System.Collections.Generic.List<Train>()
+            Journeys = new List<Journey>(),
+            Workflows = new List<Workflow>(),
+            Trains = new List<Train>()
         });
         
         // Assert

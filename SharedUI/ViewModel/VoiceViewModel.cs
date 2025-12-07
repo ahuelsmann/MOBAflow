@@ -35,4 +35,3 @@ public partial class VoiceViewModel : ObservableObject
         set => SetProperty(Model.ProsodyRate, value, Model, (m, v) => m.ProsodyRate = v);
     }
 }
-

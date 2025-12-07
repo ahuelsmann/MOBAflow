@@ -25,8 +25,11 @@
                 Margin="0,0,0,8"
                 Style="{StaticResource TitleTextBlockStyle}"
                 Text="Lap Counter Dashboard" />
-            
-            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,16">
+
+            <StackPanel
+                Margin="0,0,0,16"
+                Orientation="Horizontal"
+                Spacing="8">
                 <FontIcon
                     FontSize="14"
                     Foreground="{ThemeResource AccentFillColorDefaultBrush}"
@@ -46,10 +49,12 @@
                 Visibility="{x:Bind ViewModel.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Expander.HeaderTemplate>
                     <DataTemplate>
-                        <StackPanel Orientation="Horizontal" Spacing="12"><FontIcon FontSize="20" Glyph="&#xE945;" />
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon FontSize="20" Glyph="&#xE945;" />
                             <TextBlock
                                 VerticalAlignment="Center"
-                                Style="{StaticResource SubtitleTextBlockStyle}" Text="{Binding}" />
+                                Style="{StaticResource SubtitleTextBlockStyle}"
+                                Text="{Binding}" />
                         </StackPanel>
                     </DataTemplate>
                 </Expander.HeaderTemplate>
@@ -182,10 +187,12 @@
                 Visibility="{x:Bind ViewModel.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Expander.HeaderTemplate>
                     <DataTemplate>
-                        <StackPanel Orientation="Horizontal" Spacing="12"><FontIcon FontSize="20" Glyph="&#xE713;" />
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon FontSize="20" Glyph="&#xE713;" />
                             <TextBlock
                                 VerticalAlignment="Center"
-                                Style="{StaticResource SubtitleTextBlockStyle}" Text="{Binding}" />
+                                Style="{StaticResource SubtitleTextBlockStyle}"
+                                Text="{Binding}" />
                         </StackPanel>
                     </DataTemplate>
                 </Expander.HeaderTemplate>
@@ -247,8 +254,10 @@
                 </Grid>
             </Expander>
 
-            <!--  Track Statistics Section (only visible when connected)  --><StackPanel Spacing="16" Visibility="{x:Bind ViewModel.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                <StackPanel Orientation="Horizontal" Spacing="12"><FontIcon FontSize="20" Glyph="&#xE9D9;" />
+            <!--  Track Statistics Section (only visible when connected)  -->
+            <StackPanel Spacing="16" Visibility="{x:Bind ViewModel.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <FontIcon FontSize="20" Glyph="&#xE9D9;" />
                     <TextBlock
                         FontWeight="SemiBold"
                         Style="{StaticResource SubtitleTextBlockStyle}"
@@ -340,5 +349,8 @@
                     MinWidth="200"
                     HorizontalAlignment="Center"
                     Command="{x:Bind ViewModel.ResetCountersCommand}"
-                    Content="Reset All Counters" /></StackPanel></StackPanel></ScrollViewer>
+                    Content="Reset All Counters" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
 </Page>

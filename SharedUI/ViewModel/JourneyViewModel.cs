@@ -68,7 +68,7 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     {
     }
 
-    private void OnStationChanged(object? sender, Backend.Manager.StationChangedEventArgs e)
+    private void OnStationChanged(object? sender, StationChangedEventArgs e)
     {
         if (e.JourneyId != _journey.Id) return; // Only react to THIS journey
         
@@ -283,4 +283,3 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
         public void InvokeOnUi(System.Action action) => action();
     }
 }
-

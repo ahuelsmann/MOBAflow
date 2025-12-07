@@ -1,8 +1,10 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+using Microsoft.Extensions.Logging;
+
+using Moba.Common.Extensions;
+
 using System.Runtime.Versioning;
 using System.Speech.Synthesis;
-using Microsoft.Extensions.Logging;
-using Moba.Common.Extensions;
 
 namespace Moba.Sound;
 

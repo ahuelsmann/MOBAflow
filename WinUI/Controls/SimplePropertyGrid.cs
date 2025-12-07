@@ -3,11 +3,12 @@ namespace Moba.WinUI.Controls;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+
 using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
-using System.Collections.ObjectModel;
 
 /// <summary>
 /// Simple dynamic PropertyGrid that automatically generates UI for object properties.
@@ -365,6 +366,3 @@ public sealed partial class SimplePropertyGrid : Control
     private object ConvertToDouble(object value) => Convert.ToDouble(value);
     private object ConvertFromDouble(object value) => Convert.ToInt32(value);
 }
-
-
-

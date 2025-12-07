@@ -25,4 +25,3 @@ public partial class GoodsWagonViewModel : WagonViewModel
         set => SetProperty(GoodsWagonModel.Cargo, value, GoodsWagonModel, (m, v) => m.Cargo = v);
     }
 }
-

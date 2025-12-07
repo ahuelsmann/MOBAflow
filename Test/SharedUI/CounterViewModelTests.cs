@@ -21,7 +21,7 @@ public class CounterViewModelTests
         public Task SetTrackPowerOffAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task SetEmergencyStopAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task GetStatusAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
-        public void SimulateFeedback(int inPort) => Received?.Invoke(new Moba.Backend.FeedbackResult([0x0F,0x00,0x80,0x00, 0x00, (byte)inPort, 0x01]));
+        public void SimulateFeedback(int inPort) => Received?.Invoke(new FeedbackResult([0x0F,0x00,0x80,0x00, 0x00, (byte)inPort, 0x01]));
         public void Dispose() { }
     }
 
@@ -36,7 +36,7 @@ public class CounterViewModelTests
     [Test]
     public void CounterViewModel_InitializesStatistics()
     {
-        var solution = new Domain.Solution();
+        var solution = new Solution();
         var settings = new Common.Configuration.AppSettings();
         var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), settings, solution, notificationService: null);
         Assert.That(vm.Statistics, Is.Not.Null);
@@ -47,7 +47,7 @@ public class CounterViewModelTests
     [Test]
     public void ResetCounters_ClearsCounts()
     {
-        var solution = new Domain.Solution();
+        var solution = new Solution();
         var settings = new Common.Configuration.AppSettings();
         var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), settings, solution, notificationService: null);
         vm.Statistics[0].Count = 5;
@@ -63,7 +63,7 @@ public class CounterViewModelTests
     [Test]
     public void Ctor_InitializesDefaults()
     {
-        var solution = new Domain.Solution();
+        var solution = new Solution();
         var settings = new Common.Configuration.AppSettings();
         var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), settings, solution, notificationService: null);
         Assert.That(vm.IsNotConnected, Is.True);

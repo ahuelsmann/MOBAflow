@@ -80,4 +80,3 @@ public partial class WagonViewModel : ObservableObject, IViewModelWrapper<Wagon>
         set => SetProperty(Model.Details, value, Model, (m, v) => m.Details = v);
     }
 }
-

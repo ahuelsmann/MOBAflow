@@ -58,4 +58,3 @@ public partial class PlatformViewModel : ObservableObject
         set => SetProperty(Model.IntervalForTimerToIgnoreFeedbacks, value, Model, (m, v) => m.IntervalForTimerToIgnoreFeedbacks = v);
     }
 }
-

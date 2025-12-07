@@ -25,4 +25,3 @@ public partial class PassengerWagonViewModel : WagonViewModel
         set => SetProperty(PassengerWagonModel.WagonClass, value, PassengerWagonModel, (m, v) => m.WagonClass = v);
     }
 }
-

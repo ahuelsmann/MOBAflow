@@ -112,4 +112,3 @@ public partial class SettingsViewModel : ObservableObject
         set => SetProperty(Model.CityLibrary.AutoReload, value, Model.CityLibrary, (m, v) => m.AutoReload = v);
     }
 }
-

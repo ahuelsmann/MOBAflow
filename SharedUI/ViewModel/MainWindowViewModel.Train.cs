@@ -3,6 +3,7 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Moba.Domain;
 using Moba.Domain.Enum;
 using Moba.SharedUI.Helper;

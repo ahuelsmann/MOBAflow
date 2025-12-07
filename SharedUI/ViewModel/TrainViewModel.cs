@@ -171,4 +171,3 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
         RenumberWagons();
     }
 }
-

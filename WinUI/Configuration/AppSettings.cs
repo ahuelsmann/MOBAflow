@@ -86,7 +86,7 @@ public class CityLibrarySettings
     /// <summary>
     /// Enable auto-reload when file changes.
     /// </summary>
-    public bool AutoReload { get; set; } = false;
+    public bool AutoReload { get; set; }
 }
 
 /// <summary>
@@ -97,7 +97,7 @@ public class ApplicationSettings
     /// <summary>
     /// Reset window layout (size, position) on startup.
     /// </summary>
-    public bool ResetWindowLayoutOnStart { get; set; } = false;
+    public bool ResetWindowLayoutOnStart { get; set; }
 
     /// <summary>
     /// Auto-load last opened solution on startup.

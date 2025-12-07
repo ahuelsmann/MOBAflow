@@ -2,7 +2,9 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.Input;
+
 using Moba.Domain;
+
 using System;
 using System.Threading.Tasks;
 
@@ -95,9 +97,9 @@ public partial class MainWindowViewModel
         Solution.Projects.Add(new Project
         {
             Name = "New Project",
-            Journeys = new System.Collections.Generic.List<Journey>(),
-            Workflows = new System.Collections.Generic.List<Workflow>(),
-            Trains = new System.Collections.Generic.List<Train>()
+            Journeys = new List<Journey>(),
+            Workflows = new List<Workflow>(),
+            Trains = new List<Train>()
         });
 
         SolutionViewModel?.Refresh();

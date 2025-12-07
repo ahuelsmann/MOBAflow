@@ -19,7 +19,7 @@ builder.Services.AddSingleton<CounterViewModel>();
 // Backend services - Register in dependency order
 builder.Services.AddSingleton<IUdpClientWrapper, UdpWrapper>();
 builder.Services.AddSingleton<Moba.Backend.Interface.IZ21, Moba.Backend.Z21>();
-builder.Services.AddSingleton<Moba.Backend.Services.ActionExecutor>(sp =>
+builder.Services.AddSingleton(sp =>
 {
     var z21 = sp.GetRequiredService<Moba.Backend.Interface.IZ21>();
     return new Moba.Backend.Services.ActionExecutor(z21);
@@ -31,7 +31,7 @@ builder.Services.AddSingleton<Moba.Backend.Interface.IJourneyManagerFactory, Mob
 builder.Services.AddSingleton(sp => new Moba.Backend.Data.DataManager());
 
 // ✅ Solution as Singleton (initialized empty, can be loaded later by user)
-builder.Services.AddSingleton<Moba.Domain.Solution>(sp => new Moba.Domain.Solution());
+builder.Services.AddSingleton(sp => new Moba.Domain.Solution());
 
 var app = builder.Build();
 

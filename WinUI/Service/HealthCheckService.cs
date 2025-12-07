@@ -1,7 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+
 using Moba.Sound;
+
 using Timer = System.Timers.Timer;
 
 namespace Moba.WinUI.Service;
@@ -55,7 +57,7 @@ public class HealthCheckService : IDisposable
         // Perform initial check immediately (even if periodic checks are disabled)
         _ = PerformHealthCheckAsync();
 
-        var enabled = _configuration.GetValue<bool>("HealthCheck:Enabled", true);
+        var enabled = _configuration.GetValue("HealthCheck:Enabled", true);
         if (!enabled)
         {
             Console.WriteLine("ℹ️ Periodic health checks disabled in configuration");
@@ -63,7 +65,7 @@ public class HealthCheckService : IDisposable
             return;
         }
 
-        var intervalSeconds = _configuration.GetValue<int>("HealthCheck:IntervalSeconds", 60);
+        var intervalSeconds = _configuration.GetValue("HealthCheck:IntervalSeconds", 60);
         Console.WriteLine($"🔄 Starting periodic health checks every {intervalSeconds} seconds");
         _logger.LogInformation("Starting periodic health checks every {Interval} seconds", intervalSeconds);
 
