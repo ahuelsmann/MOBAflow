@@ -50,4 +50,6 @@ public class CommandViewModel : WorkflowActionViewModel
         get => GetParameter<byte[]>("Bytes");
         set => SetParameter("Bytes", value);
     }
+
+    public override string ToString() => !string.IsNullOrEmpty(Name) ? $"{Name} (Command)" : $"Command - Addr:{Address} Speed:{Speed} Dir:{Direction}";
 }

@@ -64,6 +64,16 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
     /// </summary>
     public ObservableCollection<WagonViewModel> Wagons { get; } = new();
 
+    /// <summary>
+    /// Separate collection for PassengerWagon ViewModels (for Train Tab UI).
+    /// </summary>
+    public ObservableCollection<PassengerWagonViewModel> PassengerWagons { get; } = new();
+
+    /// <summary>
+    /// Separate collection for GoodsWagon ViewModels (for Train Tab UI).
+    /// </summary>
+    public ObservableCollection<GoodsWagonViewModel> GoodsWagons { get; } = new();
+
     public ProjectViewModel(Project model, IUiDispatcher? dispatcher = null)
     {
         Model = model;
@@ -100,6 +110,10 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
                 _ => new WagonViewModel(w)
             };
         });
+
+        // Separate collections for Train Tab UI
+        SyncCollection(Model.PassengerWagons, PassengerWagons, pw => new PassengerWagonViewModel(pw));
+        SyncCollection(Model.GoodsWagons, GoodsWagons, gw => new GoodsWagonViewModel(gw));
     }
 
     /// <summary>

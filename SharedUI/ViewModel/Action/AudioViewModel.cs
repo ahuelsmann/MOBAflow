@@ -41,4 +41,6 @@ public class AudioViewModel : WorkflowActionViewModel
         get => GetParameter<bool>("Loop");
         set => SetParameter("Loop", value);
     }
+
+    public override string ToString() => !string.IsNullOrEmpty(Name) ? $"{Name} (Audio)" : $"Audio: {System.IO.Path.GetFileName(FilePath)}";
 }

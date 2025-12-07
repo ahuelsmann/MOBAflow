@@ -137,46 +137,6 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private MobaType currentSelectedEntityType = MobaType.None;
 
-    /// <summary>
-    /// Returns true if Solution should be displayed in PropertyGrid.
-    /// </summary>
-    public bool ShowSolutionProperties => CurrentSelectedEntityType == MobaType.Solution && SolutionViewModel != null;
-
-    /// <summary>
-    /// Returns true if Project should be displayed in PropertyGrid.
-    /// </summary>
-    public bool ShowProjectProperties => 
-        CurrentSelectedEntityType == MobaType.Project && 
-        SelectedProject != null;
-
-    /// <summary>
-    /// Returns true if Journey should be displayed in PropertyGrid.
-    /// </summary>
-    public bool ShowJourneyProperties => 
-        CurrentSelectedEntityType == MobaType.Journey && 
-        SelectedJourney != null;
-
-    /// <summary>
-    /// Returns true if Station should be displayed in PropertyGrid.
-    /// </summary>
-    public bool ShowStationProperties => 
-        CurrentSelectedEntityType == MobaType.Station && 
-        SelectedStation != null;
-
-    /// <summary>
-    /// Returns true if Workflow should be displayed in PropertyGrid.
-    /// </summary>
-    public bool ShowWorkflowProperties => 
-        CurrentSelectedEntityType == MobaType.Workflow && 
-        SelectedWorkflow != null;
-
-    /// <summary>
-    /// Returns true if Train should be displayed in PropertyGrid.
-    /// </summary>
-    public bool ShowTrainProperties => 
-        CurrentSelectedEntityType == MobaType.Train && 
-        SelectedTrain != null;
-
     [ObservableProperty]
     private bool isZ21Connected;
 

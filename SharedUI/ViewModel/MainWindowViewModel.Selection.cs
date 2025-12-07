@@ -224,12 +224,6 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(HasSelectedJourney));
         OnPropertyChanged(nameof(HasSelectedWorkflow));
         OnPropertyChanged(nameof(HasSelectedTrain));
-        OnPropertyChanged(nameof(ShowSolutionProperties));
-        OnPropertyChanged(nameof(ShowProjectProperties));
-        OnPropertyChanged(nameof(ShowJourneyProperties));
-        OnPropertyChanged(nameof(ShowStationProperties));
-        OnPropertyChanged(nameof(ShowWorkflowProperties));
-        OnPropertyChanged(nameof(ShowTrainProperties));
         
         // Note: CurrentSelectedObject is now updated in OnSelected*Changed methods
     }

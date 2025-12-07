@@ -50,4 +50,6 @@ public class AnnouncementViewModel : WorkflowActionViewModel
         get => GetParameter<double>("Volume");
         set => SetParameter("Volume", value);
     }
+
+    public override string ToString() => !string.IsNullOrEmpty(Name) ? $"{Name} (Announcement)" : $"Announcement: {Message}";
 }
