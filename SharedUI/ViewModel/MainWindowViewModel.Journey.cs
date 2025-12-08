@@ -26,7 +26,10 @@ public partial class MainWindowViewModel
         if (_journeyManager == null || CurrentProjectViewModel == null)
         {
             // Fallback: Create simple ViewModel without SessionState
-            return new JourneyViewModel(journey, CurrentProjectViewModel?.Model ?? new Project(), _uiDispatcher);
+            return new JourneyViewModel(
+                journey, 
+                CurrentProjectViewModel?.Model ?? new Project(), 
+                _uiDispatcher);
         }
 
         var state = _journeyManager.GetState(journey.Id);
@@ -34,10 +37,18 @@ public partial class MainWindowViewModel
         // If state doesn't exist yet (journey just created), create dummy state
         if (state == null || CurrentProjectViewModel == null)
         {
-            return new JourneyViewModel(journey, CurrentProjectViewModel?.Model ?? new Project(), _uiDispatcher);
+            return new JourneyViewModel(
+                journey, 
+                CurrentProjectViewModel?.Model ?? new Project(), 
+                _uiDispatcher);
         }
 
-        return new JourneyViewModel(journey, CurrentProjectViewModel.Model, state, _journeyManager, _uiDispatcher);
+        return new JourneyViewModel(
+            journey, 
+            CurrentProjectViewModel.Model, 
+            state, 
+            _journeyManager, 
+            _uiDispatcher);
     }
 
     #endregion
@@ -124,13 +135,17 @@ public partial class MainWindowViewModel
     {
         if (SelectedJourney == null || CurrentProjectViewModel == null) return;
 
-        var newStation = new Station { Name = "New Station", NumberOfLapsToStop = 2 };
+        // Note: This creates a placeholder station.
+        // In practice, stations should be added from City Library via drag & drop.
+        var newStation = new Station 
+        { 
+            Name = "New Station",
+            NumberOfLapsToStop = 2,
+            IsExitOnLeft = false
+        };
         
-        // Add to Project master list
-        CurrentProjectViewModel.Model.Stations.Add(newStation);
-        
-        // Add ID to Journey
-        SelectedJourney.Model.StationIds.Add(newStation.Id);
+        // Add Station directly to Journey
+        SelectedJourney.Model.Stations.Add(newStation);
         
         // Refresh Journey's Stations collection
         SelectedJourney.RefreshStations();
@@ -150,10 +165,14 @@ public partial class MainWindowViewModel
     {
         if (SelectedJourney == null || SelectedStation == null) return;
 
-        // Remove ID from Journey
-        SelectedJourney.Model.StationIds.Remove(SelectedStation.Model.Id);
+        // Find and remove Station by Id
+        var station = SelectedJourney.Model.Stations
+            .FirstOrDefault(s => s.Id == SelectedStation.Model.Id);
         
-        // Note: We don't remove from Project.Stations (might be used elsewhere)
+        if (station != null)
+        {
+            SelectedJourney.Model.Stations.Remove(station);
+        }
         
         // Refresh Journey's Stations collection
         SelectedJourney.RefreshStations();
@@ -195,29 +214,22 @@ public partial class MainWindowViewModel
         if (SelectedCity == null || SelectedJourney == null)
             return;
 
-        // Take the first station from the selected city
+        // Take the first station from the selected city (name only!)
         if (SelectedCity.Stations.Count > 0)
         {
-            var stationToCopy = SelectedCity.Stations[0];
+            var cityStation = SelectedCity.Stations[0];
 
-            // Create a new Station instance (deep copy)
+            // Create NEW Station (copy name from City Library)
             var newStation = new Station
             {
-                Name = stationToCopy.Name,
-                Description = stationToCopy.Description,
+                Name = cityStation.Name,
+                InPort = 1,  // User must configure!
                 NumberOfLapsToStop = 2,
-                InPort = stationToCopy.InPort
+                IsExitOnLeft = false
             };
 
-
-            // Add to Project master list (if not already there)
-            if (CurrentProjectViewModel != null && !CurrentProjectViewModel.Model.Stations.Any(s => s.Name == newStation.Name))
-            {
-                CurrentProjectViewModel.Model.Stations.Add(newStation);
-            }
-
-            // Add ID to Journey
-            SelectedJourney.Model.StationIds.Add(newStation.Id);
+            // Add Station directly to Journey
+            SelectedJourney.Model.Stations.Add(newStation);
             
             // Refresh Journey's Stations collection
             SelectedJourney.RefreshStations();

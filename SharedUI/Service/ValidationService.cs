@@ -41,21 +41,24 @@ public class ValidationService
 
     /// <summary>
     /// Validates if a Workflow can be deleted.
-    /// A Workflow cannot be deleted if it's assigned to any Station or Platform.
+    /// A Workflow cannot be deleted if it's assigned to any JourneyStation.
     /// </summary>
     public ValidationResult CanDeleteWorkflow(Workflow workflow)
     {
         if (workflow == null)
             return ValidationResult.Failure("Workflow is null");
 
-        // Check if any Station uses this Workflow (via WorkflowId)
-        var referencingStation = _project.Stations
-            .FirstOrDefault(s => s.WorkflowId == workflow.Id);
-
-        if (referencingStation != null)
+        // Check if any JourneyStation uses this Workflow (via WorkflowId)
+        foreach (var journey in _project.Journeys)
         {
-            return ValidationResult.Failure(
-                $"Workflow '{workflow.Name}' cannot be deleted because it is used by Station '{referencingStation.Name}'.");
+            var referencingJourneyStation = journey.Stations
+                .FirstOrDefault(js => js.WorkflowId == workflow.Id);
+
+            if (referencingJourneyStation != null)
+            {
+                return ValidationResult.Failure(
+                    $"Workflow '{workflow.Name}' cannot be deleted because it is used by a station in Journey '{journey.Name}'.");
+            }
         }
 
         // Note: Platform.Flow check removed - Platforms don't have Workflows in current architecture

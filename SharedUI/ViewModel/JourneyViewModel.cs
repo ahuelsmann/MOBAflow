@@ -192,13 +192,18 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     [RelayCommand]
     private void AddStation()
     {
-        var newStation = new Station { Name = "New Station" };
+        // Note: AddStation creates a generic station.
+        // In practice, stations should be added from City Library (drag & drop).
+        // This is mainly for testing or quick prototyping.
+        var newStation = new Station 
+        { 
+            Name = "New Station",
+            NumberOfLapsToStop = 2,
+            IsExitOnLeft = false
+        };
         
-        // Add to Project master list
-        _project.Stations.Add(newStation);
-        
-        // Add ID to Journey
-        _journey.StationIds.Add(newStation.Id);
+        // Add Station to Journey
+        _journey.Stations.Add(newStation);
 
         // Refresh collection
         RefreshStations();
@@ -212,10 +217,12 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     {
         if (stationVM == null) return;
 
-        // Remove ID from Journey
-        _journey.StationIds.Remove(stationVM.Model.Id);
-        
-        // Note: We don't remove from Project.Stations (might be used elsewhere)
+        // Find and remove Station by Id
+        var station = _journey.Stations.FirstOrDefault(s => s.Id == stationVM.Model.Id);
+        if (station != null)
+        {
+            _journey.Stations.Remove(station);
+        }
 
         // Refresh collection
         RefreshStations();
@@ -230,6 +237,9 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     /// </summary>
     public void RefreshStations()
     {
+        System.Diagnostics.Debug.WriteLine($"🔄 RefreshStations() called for Journey '{_journey.Name}'");
+        System.Diagnostics.Debug.WriteLine($"   - Stations count: {_journey.Stations.Count}");
+
         // Create or clear the collection
         if (_stations == null)
         {
@@ -240,23 +250,23 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
             _stations.Clear();
         }
 
-        // Rebuild from StationIds
+        // Rebuild from Stations (direct list - no lookup needed!)
         var index = 0;
-        foreach (var id in _journey.StationIds)
+        foreach (var station in _journey.Stations)
         {
-            var station = _project.Stations.FirstOrDefault(s => s.Id == id);
-            if (station != null)
-            {
-                var vm = new StationViewModel(station, _dispatcher);
-                vm.Position = index + 1;  // 1-based position
-                
-                // Mark current station based on SessionState
-                vm.IsCurrentStation = (index == _state.CurrentPos);
-                
-                _stations.Add(vm);
-            }
+            System.Diagnostics.Debug.WriteLine($"   - Station: {station.Name}");
+            
+            var vm = new StationViewModel(station, _project, _dispatcher);
+            vm.Position = index + 1;  // 1-based position
+            
+            // Mark current station based on SessionState
+            vm.IsCurrentStation = (index == _state.CurrentPos);
+            
+            _stations.Add(vm);
             index++;
         }
+
+        System.Diagnostics.Debug.WriteLine($"✅ RefreshStations() complete: {_stations.Count} stations loaded");
 
         // Notify UI
         OnPropertyChanged(nameof(Stations));
@@ -272,11 +282,22 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
         // Get current UI order
         var currentStations = Stations.ToList();
         
-        // Update _journey.StationIds to match ViewModel order
-        _journey.StationIds.Clear();
+        // Rebuild Stations list to match ViewModel order
+        var reorderedStations = new List<Station>();
         foreach (var stationVM in currentStations)
         {
-            _journey.StationIds.Add(stationVM.Model.Id);
+            var station = _journey.Stations.FirstOrDefault(s => s.Id == stationVM.Model.Id);
+            if (station != null)
+            {
+                reorderedStations.Add(station);
+            }
+        }
+        
+        // Replace Stations with reordered list
+        _journey.Stations.Clear();
+        foreach (var s in reorderedStations)
+        {
+            _journey.Stations.Add(s);
         }
 
         // Refresh positions (no need to rebuild entire collection)

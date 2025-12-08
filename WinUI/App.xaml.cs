@@ -21,8 +21,27 @@ public partial class App
     /// </summary>
     public App()
     {
-        Services = ConfigureServices();
-        InitializeComponent();
+        try
+        {
+            Services = ConfigureServices();
+            InitializeComponent();
+        }
+        catch (Exception ex)
+        {
+            // Log the exception before crashing
+            System.Diagnostics.Debug.WriteLine($"🚨 FATAL ERROR during App initialization:");
+            System.Diagnostics.Debug.WriteLine($"   Exception Type: {ex.GetType().Name}");
+            System.Diagnostics.Debug.WriteLine($"   Message: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"   StackTrace: {ex.StackTrace}");
+            if (ex.InnerException != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"   Inner Exception: {ex.InnerException.Message}");
+                System.Diagnostics.Debug.WriteLine($"   Inner StackTrace: {ex.InnerException.StackTrace}");
+            }
+            
+            // Re-throw to get Windows Error Reporting
+            throw;
+        }
     }
 
     /// <summary>

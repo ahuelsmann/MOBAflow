@@ -7,6 +7,7 @@
     xmlns:domain="using:Moba.Domain"
     xmlns:local="using:Moba.WinUI.Controls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:selector="using:Moba.WinUI.Selector"
     xmlns:viewmodel="using:Moba.SharedUI.ViewModel"
     x:Name="PageRoot"
     DataContext="{x:Bind ViewModel}"
@@ -19,7 +20,6 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
@@ -121,7 +121,12 @@
                             FontWeight="SemiBold"
                             Style="{StaticResource SubtitleTextBlockStyle}"
                             Text="Properties" />
-                        <ContentControl Grid.Row="1" Content="{Binding CurrentSelectedObject, Mode=OneWay}" ContentTemplateSelector="{StaticResource EntityTemplateSelector}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
+                        <ContentControl
+                            Grid.Row="1"
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Stretch"
+                            Content="{Binding CurrentSelectedObject, Mode=OneWay}"
+                            ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
                     </Grid>
                 </Grid>
             </TabViewItem>
@@ -176,16 +181,12 @@
                             Tapped="JourneyListView_Tapped">
                             <ListView.ContextFlyout>
                                 <MenuFlyout>
-                                    <MenuFlyoutItem
-                                        Command="{x:Bind ViewModel.AddJourneyCommand}"
-                                        Text="Add Journey">
+                                    <MenuFlyoutItem Command="{x:Bind ViewModel.AddJourneyCommand}" Text="Add Journey">
                                         <MenuFlyoutItem.Icon>
                                             <FontIcon Glyph="&#xE710;" />
                                         </MenuFlyoutItem.Icon>
                                     </MenuFlyoutItem>
-                                    <MenuFlyoutItem
-                                        Command="{x:Bind ViewModel.DeleteJourneyCommand}"
-                                        Text="Delete Journey">
+                                    <MenuFlyoutItem Command="{x:Bind ViewModel.DeleteJourneyCommand}" Text="Delete Journey">
                                         <MenuFlyoutItem.Icon>
                                             <FontIcon Glyph="&#xE738;" />
                                         </MenuFlyoutItem.Icon>
@@ -325,7 +326,12 @@
                             FontWeight="SemiBold"
                             Style="{StaticResource SubtitleTextBlockStyle}"
                             Text="Properties" />
-                        <ContentControl Grid.Row="1" Content="{Binding CurrentSelectedObject, Mode=OneWay}" ContentTemplateSelector="{StaticResource EntityTemplateSelector}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
+                        <ContentControl
+                            Grid.Row="1"
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Stretch"
+                            Content="{Binding CurrentSelectedObject, Mode=OneWay}"
+                            ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
                     </Grid>
                 </Grid>
             </TabViewItem>
@@ -378,16 +384,12 @@
                             SelectionMode="Single">
                             <ListView.ContextFlyout>
                                 <MenuFlyout>
-                                    <MenuFlyoutItem
-                                        Command="{x:Bind ViewModel.AddWorkflowCommand}"
-                                        Text="Add Workflow">
+                                    <MenuFlyoutItem Command="{x:Bind ViewModel.AddWorkflowCommand}" Text="Add Workflow">
                                         <MenuFlyoutItem.Icon>
                                             <FontIcon Glyph="&#xE710;" />
                                         </MenuFlyoutItem.Icon>
                                     </MenuFlyoutItem>
-                                    <MenuFlyoutItem
-                                        Command="{x:Bind ViewModel.DeleteWorkflowCommand}"
-                                        Text="Delete Workflow">
+                                    <MenuFlyoutItem Command="{x:Bind ViewModel.DeleteWorkflowCommand}" Text="Delete Workflow">
                                         <MenuFlyoutItem.Icon>
                                             <FontIcon Glyph="&#xE738;" />
                                         </MenuFlyoutItem.Icon>
@@ -479,7 +481,12 @@
                             FontWeight="SemiBold"
                             Style="{StaticResource SubtitleTextBlockStyle}"
                             Text="Properties" />
-                        <ContentControl Grid.Row="1" Content="{Binding CurrentSelectedObject, Mode=OneWay}" ContentTemplateSelector="{StaticResource EntityTemplateSelector}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
+                        <ContentControl
+                            Grid.Row="1"
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Stretch"
+                            Content="{Binding CurrentSelectedObject, Mode=OneWay}"
+                            ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
                     </Grid>
                 </Grid>
             </TabViewItem>
@@ -842,7 +849,12 @@
                             FontWeight="SemiBold"
                             Style="{StaticResource SubtitleTextBlockStyle}"
                             Text="Properties" />
-                        <ContentControl Grid.Row="1" Content="{Binding CurrentSelectedObject, Mode=OneWay}" ContentTemplateSelector="{StaticResource EntityTemplateSelector}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
+                        <ContentControl
+                            Grid.Row="1"
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Stretch"
+                            Content="{Binding CurrentSelectedObject, Mode=OneWay}"
+                            ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
                     </Grid>
                 </Grid>
             </TabViewItem>

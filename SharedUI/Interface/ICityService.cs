@@ -23,5 +23,11 @@ public interface ICityService
     /// Gets all cached cities (or empty list if not yet loaded).
     /// </summary>
     List<City> GetCachedCities();
+
+    /// <summary>
+    /// Finds a station by its ID across all cities.
+    /// Returns null if station is not found.
+    /// </summary>
+    Station? FindStationById(Guid stationId);
 }
 

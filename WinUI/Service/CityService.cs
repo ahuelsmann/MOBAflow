@@ -94,6 +94,25 @@ public class CityService : ICityService
     }
 
     /// <summary>
+    /// Finds a station by its ID across all cities.
+    /// Returns null if station is not found.
+    /// </summary>
+    public Station? FindStationById(Guid stationId)
+    {
+        if (_cachedCities == null)
+            return null;
+
+        foreach (var city in _cachedCities)
+        {
+            var station = city.Stations.FirstOrDefault(s => s.Id == stationId);
+            if (station != null)
+                return station;
+        }
+
+        return null;
+    }
+
+    /// <summary>
     /// Helper class for JSON deserialization.
     /// </summary>
     private class CitiesData

@@ -63,7 +63,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         // Subscribe to Solution changes
         Solution = solution;
-        
+
         // Load City Library at startup (fire-and-forget)
         if (_cityLibraryService != null)
         {
@@ -172,7 +172,7 @@ public partial class MainWindowViewModel : ObservableObject
             // Use SelectedProject if available, otherwise fall back to first project
             if (SelectedProject != null)
                 return SelectedProject;
-                
+
             if (SolutionViewModel == null || SolutionViewModel.Projects.Count == 0)
                 return null;
 
@@ -197,7 +197,7 @@ public partial class MainWindowViewModel : ObservableObject
         // Create ViewModel and add to SolutionViewModel
         var projectVM = new ProjectViewModel(project);
         SolutionViewModel?.Projects.Add(projectVM);
-        
+
         // Select the newly created project
         SelectedProject = projectVM;
 
@@ -274,25 +274,26 @@ public partial class MainWindowViewModel : ObservableObject
     {
         if (SelectedJourney == null || city == null) return;
 
-        // Get City's first station (Hauptbahnhof)
+        // Get City's first station (Hauptbahnhof) - only the NAME
         var cityStation = city.Stations.FirstOrDefault();
         if (cityStation == null) return;
 
-        // Create JourneyStation (junction entity with Journey-specific properties)
-        var journeyStation = new JourneyStation
+        // Create NEW Station object (copy name from City Library)
+        var newStation = new Station
         {
-            StationId = cityStation.Id,
-            IsExitOnLeft = cityStation.IsExitOnLeft,  // Copy from City's station
+            Name = cityStation.Name,
+            InPort = 1,  // User must configure InPort!
+            IsExitOnLeft = false,
             NumberOfLapsToStop = 1,
             WorkflowId = null
         };
 
         // Add JourneyStation to Journey
-        SelectedJourney.Model.JourneyStations.Add(journeyStation);
+        SelectedJourney.Model.Stations.Add(newStation);
 
         // Refresh Journey's Stations collection
         SelectedJourney.RefreshStations();
-        
+
         // Select the new station
         var stationVM = SelectedJourney.Stations.LastOrDefault();
         if (stationVM != null)
@@ -317,6 +318,8 @@ public partial class MainWindowViewModel : ObservableObject
 
         var cities = await _cityLibraryService.LoadCitiesAsync();
         CityLibrary = new ObservableCollection<City>(cities);
+
+        System.Diagnostics.Debug.WriteLine($"✅ City Library loaded: {CityLibrary.Count} cities");
     }
 
     #endregion
@@ -324,7 +327,7 @@ public partial class MainWindowViewModel : ObservableObject
     #region Wagon Libraries
 
     [ObservableProperty]
-    private ObservableCollection<GoodsWagon> goodsWagonLibrary = 
+    private ObservableCollection<GoodsWagon> goodsWagonLibrary =
     [
         new GoodsWagon { Name = "Goods Wagon 1", Cargo = Domain.Enum.CargoType.Container },
         new GoodsWagon { Name = "Goods Wagon 2", Cargo = Domain.Enum.CargoType.Coal },
@@ -332,7 +335,7 @@ public partial class MainWindowViewModel : ObservableObject
     ];
 
     [ObservableProperty]
-    private ObservableCollection<PassengerWagon> passengerWagonLibrary = 
+    private ObservableCollection<PassengerWagon> passengerWagonLibrary =
     [
         new PassengerWagon { Name = "Passenger Wagon 1st Class", WagonClass = Domain.Enum.PassengerClass.First },
         new PassengerWagon { Name = "Passenger Wagon 2nd Class", WagonClass = Domain.Enum.PassengerClass.Second }
@@ -376,10 +379,10 @@ public partial class MainWindowViewModel : ObservableObject
 
         // Add to Project master list
         CurrentProjectViewModel.Model.Locomotives.Add(locomotiveCopy);
-        
+
         // Add ID to Train
         SelectedTrain.Model.LocomotiveIds.Add(locomotiveCopy.Id);
-        
+
         // Refresh Train collections
         SelectedTrain.RefreshCollections();
         HasUnsavedChanges = true;

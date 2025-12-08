@@ -150,62 +150,25 @@ public partial class MainWindowViewModel
     private bool CanSaveSolution() => true;
 
     /// <summary>
-    /// Loads cities from the first project into AvailableCities for UI binding.
+    /// Loads cities from City Library into AvailableCities for UI binding.
+    /// Cities are master data loaded from CityService, not stored in Project.
     /// </summary>
     private void LoadCities()
     {
-        if (Solution == null || Solution.Projects.Count == 0)
-        {
-            AvailableCities.Clear();
-            return;
-        }
-
-        var cities = Solution.Projects[0].Cities;
-        AvailableCities.Clear();
-
-        foreach (var city in cities)
-        {
-            AvailableCities.Add(city);
-        }
-
-        System.Diagnostics.Debug.WriteLine($"✅ Loaded {cities.Count} cities into AvailableCities");
+        // Cities are loaded from CityLibrary, NOT from Project
+        // This method can be removed or kept as no-op for backward compatibility
+        System.Diagnostics.Debug.WriteLine("ℹ️ LoadCities called - Cities are loaded from CityLibrary on startup");
     }
 
     /// <summary>
-    /// Loads cities from JSON library into the first project using CityService.
+    /// Loads cities from JSON library using CityService.
+    /// This is now handled in MainWindowViewModel constructor.
     /// </summary>
     private async Task LoadCitiesFromCityManagerAsync()
     {
-        if (_cityLibraryService == null)
-        {
-            System.Diagnostics.Debug.WriteLine("❌ CityService not available");
-            return;
-        }
-
-        try
-        {
-            // Load cities from JSON using CityService (Domain.City)
-            var cities = await _cityLibraryService.LoadCitiesAsync();
-            
-            var firstProject = Solution.Projects[0];
-            firstProject.Cities.Clear();
-            
-            // Add loaded cities to project
-            foreach (var city in cities)
-            {
-                firstProject.Cities.Add(city);
-            }
-            
-            // Refresh AvailableCities for UI binding
-            LoadCities();
-            
-            System.Diagnostics.Debug.WriteLine($"✅ Loaded {cities.Count} cities from library");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"❌ Failed to load cities: {ex.Message}");
-            throw new InvalidOperationException($"Failed to load cities: {ex.Message}");
-        }
+        // This method is obsolete - cities are loaded via LoadCityLibraryAsync in constructor
+        await Task.CompletedTask;
+        System.Diagnostics.Debug.WriteLine("ℹ️ LoadCitiesFromCityManagerAsync called - obsolete, handled in constructor");
     }
 
     #endregion

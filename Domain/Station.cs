@@ -3,6 +3,7 @@ namespace Moba.Domain;
 
 /// <summary>
 /// Station - Pure Data Object (POCO).
+/// Represents a physical station with hardware address (InPort).
 /// </summary>
 public class Station
 {
@@ -10,45 +11,46 @@ public class Station
     {
         Id = Guid.NewGuid();
         Name = "New Station";
-        PlatformIds = [];
     }
 
     public Guid Id { get; set; }
     public string Name { get; set; }
     public string? Description { get; set; }
-    
+        
     /// <summary>
-    /// List of Platform IDs (GUID references only).
-    /// Resolved at runtime via Project.Platforms lookup.
+    /// Hardware feedback address (Z21 InPort).
+    /// Used for feedback detection on the physical model railroad.
     /// </summary>
-    public List<Guid> PlatformIds { get; set; }
-    
     public uint InPort { get; set; } = 1;
 
-    // --- Phase 1 Properties (Simplified Platform representation) ---
-    // TODO: Move to Platform when Phase 2 is implemented
+    /// <summary>
+    /// Number of laps before stopping at this station.
+    /// </summary>
+    public uint NumberOfLapsToStop { get; set; } = 1;
 
     /// <summary>
-    /// Track/Platform number (simplified for Phase 1).
-    /// In Phase 2, this will move to Platform entity.
+    /// Workflow ID for this station in this journey.
+    /// Different journeys can trigger different workflows at the same station.
+    /// </summary>
+    public Guid? WorkflowId { get; set; }
+
+    /// <summary>
+    /// Exit orientation - true if exit is on left side.
+    /// </summary>
+    public bool IsExitOnLeft { get; set; }
+
+    /// <summary>
+    /// Track/Platform number.
     /// </summary>
     public uint? Track { get; set; } = 1;
 
     /// <summary>
-    /// Arrival time (simplified for Phase 1).
-    /// In Phase 2, this will move to Platform entity.
+    /// Arrival time.
     /// </summary>
     public DateTime? Arrival { get; set; }
 
     /// <summary>
-    /// Departure time (simplified for Phase 1).
-    /// In Phase 2, this will move to Platform entity.
+    /// Departure time.
     /// </summary>
     public DateTime? Departure { get; set; }
-
-    /// <summary>
-    /// Exit orientation - true if exit is on left side (simplified for Phase 1).
-    /// In Phase 2, this will move to Platform entity.
-    /// </summary>
-    public bool IsExitOnLeft { get; set; }
 }

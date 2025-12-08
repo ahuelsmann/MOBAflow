@@ -103,30 +103,16 @@ public class JourneyManager : BaseFeedbackManager<Journey>
         state.LastFeedbackTime = DateTime.Now;
         Debug.WriteLine($"🔄 Journey '{journey.Name}': Round {state.Counter}, Position {state.CurrentPos}");
 
-        // Get current JourneyStation
-        if (state.CurrentPos >= journey.JourneyStations.Count)
+        // Get current Station directly from Journey
+        if (state.CurrentPos >= journey.Stations.Count)
         {
-            Debug.WriteLine($"⚠ CurrentPos out of JourneyStations list bounds");
+            Debug.WriteLine($"⚠ CurrentPos out of Stations list bounds");
             return;
         }
 
-        var journeyStation = journey.JourneyStations[state.CurrentPos];
-        
-        // Resolve Station from City library
-        Station? currentStation = null;
-        foreach (var city in _project.Cities)
-        {
-            currentStation = city.Stations.FirstOrDefault(s => s.Id == journeyStation.StationId);
-            if (currentStation != null) break;
-        }
-        
-        if (currentStation == null)
-        {
-            Debug.WriteLine($"⚠ Station with ID {journeyStation.StationId} not found in City library");
-            return;
-        }
+        var currentStation = journey.Stations[state.CurrentPos];
 
-        if (state.Counter >= journeyStation.NumberOfLapsToStop)
+        if (state.Counter >= currentStation.NumberOfLapsToStop)
         {
             Debug.WriteLine($"🚉 Station reached: {currentStation.Name}");
             
@@ -142,9 +128,9 @@ public class JourneyManager : BaseFeedbackManager<Journey>
             });
 
             // Execute station workflow if present
-            if (journeyStation.WorkflowId.HasValue)
+            if (currentStation.WorkflowId.HasValue)
             {
-                var workflow = _project.Workflows.FirstOrDefault(w => w.Id == journeyStation.WorkflowId.Value);
+                var workflow = _project.Workflows.FirstOrDefault(w => w.Id == currentStation.WorkflowId.Value);
                 if (workflow != null)
                 {
                     // Set template context for announcements
@@ -159,13 +145,13 @@ public class JourneyManager : BaseFeedbackManager<Journey>
                 }
                 else
                 {
-                    Debug.WriteLine($"⚠ Workflow with ID {journeyStation.WorkflowId.Value} not found");
+                    Debug.WriteLine($"⚠ Workflow with ID {currentStation.WorkflowId.Value} not found");
                 }
             }
 
             state.Counter = 0;
 
-            bool isLastStation = state.CurrentPos == journey.JourneyStations.Count - 1;
+            bool isLastStation = state.CurrentPos == journey.Stations.Count - 1;
 
             if (isLastStation)
             {

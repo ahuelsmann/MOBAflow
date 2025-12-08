@@ -5,7 +5,6 @@ using Moba.Domain.Enum;
 
 /// <summary>
 /// Journey - Pure Data Object (POCO).
-/// NO BUSINESS LOGIC! Execution logic moved to JourneyService in Backend.
 /// </summary>
 public class Journey
 {
@@ -14,7 +13,7 @@ public class Journey
         Id = Guid.NewGuid();
         Name = "New Journey";
         Description = string.Empty;
-        JourneyStations = [];
+        Stations = [];
         Text = string.Empty;
     }
 
@@ -22,15 +21,9 @@ public class Journey
     public string Name { get; set; }
     public string Description { get; set; }
     public string Text { get; set; }
-    
-    /// <summary>
-    /// Junction entities linking this Journey to Stations with Journey-specific properties.
-    /// Each JourneyStation contains StationId + IsExitOnLeft + WorkflowId + NumberOfLapsToStop.
-    /// Example: Journey1 can have "Hauptbahnhof" with IsExitOnLeft=true,
-    ///          Journey2 can have same station with IsExitOnLeft=false.
-    /// </summary>
-    public List<JourneyStation> JourneyStations { get; set; }
-    
+
+    public List<Station> Stations { get; set; }
+
     public uint InPort { get; set; } = 1;
     public bool IsUsingTimerToIgnoreFeedbacks { get; set; }
     public double IntervalForTimerToIgnoreFeedbacks { get; set; }
