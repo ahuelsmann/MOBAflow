@@ -274,27 +274,21 @@ public partial class MainWindowViewModel : ObservableObject
     {
         if (SelectedJourney == null || city == null) return;
 
-        // Create Station from City's first station (Hauptbahnhof)
+        // Get City's first station (Hauptbahnhof)
         var cityStation = city.Stations.FirstOrDefault();
         if (cityStation == null) return;
 
-        var newStation = new Station
+        // Create JourneyStation (junction entity with Journey-specific properties)
+        var journeyStation = new JourneyStation
         {
-            Name = cityStation.Name,
-            Track = cityStation.Track,
+            StationId = cityStation.Id,
+            IsExitOnLeft = cityStation.IsExitOnLeft,  // Copy from City's station
             NumberOfLapsToStop = 1,
-            Description = $"From {city.Name}",
-            IsExitOnLeft = cityStation.IsExitOnLeft
+            WorkflowId = null
         };
 
-        // Add to Project master list (if not already there)
-        if (CurrentProjectViewModel != null && !CurrentProjectViewModel.Model.Stations.Any(s => s.Id == newStation.Id))
-        {
-            CurrentProjectViewModel.Model.Stations.Add(newStation);
-        }
-
-        // Add ID to Journey
-        SelectedJourney.Model.StationIds.Add(newStation.Id);
+        // Add JourneyStation to Journey
+        SelectedJourney.Model.JourneyStations.Add(journeyStation);
 
         // Refresh Journey's Stations collection
         SelectedJourney.RefreshStations();
@@ -308,7 +302,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         HasUnsavedChanges = true;
 
-        System.Diagnostics.Debug.WriteLine($"✅ Added station from city: {city.Name} → {newStation.Name}");
+        System.Diagnostics.Debug.WriteLine($"✅ Added station from city: {city.Name} → {cityStation.Name}");
     }
 
     private bool CanAddStationFromCity() => SelectedJourney != null;
@@ -343,6 +337,57 @@ public partial class MainWindowViewModel : ObservableObject
         new PassengerWagon { Name = "Passenger Wagon 1st Class", WagonClass = Domain.Enum.PassengerClass.First },
         new PassengerWagon { Name = "Passenger Wagon 2nd Class", WagonClass = Domain.Enum.PassengerClass.Second }
     ];
+
+    #endregion
+
+    #region Drag & Drop Commands
+
+    [RelayCommand(CanExecute = nameof(CanAssignWorkflowToStation))]
+    private void AssignWorkflowToStation(WorkflowViewModel? workflow)
+    {
+        if (SelectedStation == null || workflow == null) return;
+
+        SelectedStation.WorkflowId = workflow.Model.Id;
+        HasUnsavedChanges = true;
+
+        System.Diagnostics.Debug.WriteLine($"✅ Assigned workflow '{workflow.Name}' to station '{SelectedStation.Name}'");
+    }
+
+    private bool CanAssignWorkflowToStation() => SelectedStation != null;
+
+    [RelayCommand(CanExecute = nameof(CanAddLocomotiveToTrain))]
+    private void AddLocomotiveToTrain(LocomotiveViewModel? locomotiveVM)
+    {
+        if (SelectedTrain == null || locomotiveVM == null || CurrentProjectViewModel == null) return;
+
+        // Create a copy to avoid modifying the library object
+        var locomotiveCopy = new Locomotive
+        {
+            Name = locomotiveVM.Model.Name,
+            DigitalAddress = locomotiveVM.Model.DigitalAddress,
+            Manufacturer = locomotiveVM.Model.Manufacturer,
+            ArticleNumber = locomotiveVM.Model.ArticleNumber,
+            Series = locomotiveVM.Model.Series,
+            ColorPrimary = locomotiveVM.Model.ColorPrimary,
+            ColorSecondary = locomotiveVM.Model.ColorSecondary,
+            IsPushing = locomotiveVM.Model.IsPushing,
+            Details = locomotiveVM.Model.Details
+        };
+
+        // Add to Project master list
+        CurrentProjectViewModel.Model.Locomotives.Add(locomotiveCopy);
+        
+        // Add ID to Train
+        SelectedTrain.Model.LocomotiveIds.Add(locomotiveCopy.Id);
+        
+        // Refresh Train collections
+        SelectedTrain.RefreshCollections();
+        HasUnsavedChanges = true;
+
+        System.Diagnostics.Debug.WriteLine($"✅ Added locomotive '{locomotiveCopy.Name}' to train '{SelectedTrain.Name}'");
+    }
+
+    private bool CanAddLocomotiveToTrain() => SelectedTrain != null && CurrentProjectViewModel != null;
 
     #endregion
 }

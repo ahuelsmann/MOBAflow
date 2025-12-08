@@ -55,30 +55,20 @@ public sealed partial class EditorPage : Page
         // Handle City drop (create new Station)
         if (e.DataView.Properties.TryGetValue("City", out object cityObj) && cityObj is Domain.City city)
         {
-            if (ViewModel.SelectedJourney != null)
-            {
-                var station = new Domain.Station { Name = city.Name };
-                var stationViewModel = new StationViewModel(station);
-                ViewModel.SelectedJourney.Stations.Add(stationViewModel);
-            }
+            ViewModel.AddStationFromCityCommand.Execute(city);
         }
         // Handle Workflow drop (assign to selected Station)
         else if (e.DataView.Properties.TryGetValue("Workflow", out object workflowObj) && workflowObj is WorkflowViewModel workflow)
         {
-            if (ViewModel.SelectedStation != null)
-            {
-                ViewModel.SelectedStation.WorkflowId = workflow.Model.Id;
-            }
+            ViewModel.AssignWorkflowToStationCommand.Execute(workflow);
         }
     }
     private void CityListView_DoubleTapped(object sender, Microsoft.UI.Xaml.Input.DoubleTappedRoutedEventArgs e)
     {
-        // Add selected city as station to current journey on double-click
-        if (ViewModel.SelectedCity != null && ViewModel.SelectedJourney != null)
+        // Delegate to ViewModel Command
+        if (ViewModel.SelectedCity != null)
         {
-            var station = new Domain.Station { Name = ViewModel.SelectedCity.Name };
-            var stationViewModel = new StationViewModel(station);
-            ViewModel.SelectedJourney.Stations.Add(stationViewModel);
+            ViewModel.AddStationFromCityCommand.Execute(ViewModel.SelectedCity);
         }
     }
 
@@ -104,34 +94,11 @@ public sealed partial class EditorPage : Page
 
     private void LocomotiveLibrary_DoubleTapped(object sender, Microsoft.UI.Xaml.Input.DoubleTappedRoutedEventArgs e)
     {
-        // Add selected locomotive to current train on double-click
+        // Delegate to ViewModel Command
         if (e.OriginalSource is FrameworkElement element &&
-            element.DataContext is LocomotiveViewModel locomotiveVM &&
-            ViewModel.SelectedTrain != null &&
-            ViewModel.CurrentProjectViewModel != null)
+            element.DataContext is LocomotiveViewModel locomotiveVM)
         {
-            // Create a copy to avoid modifying the library object
-            var locomotiveCopy = new Domain.Locomotive
-            {
-                Name = locomotiveVM.Model.Name,
-                DigitalAddress = locomotiveVM.Model.DigitalAddress,
-                Manufacturer = locomotiveVM.Model.Manufacturer,
-                ArticleNumber = locomotiveVM.Model.ArticleNumber,
-                Series = locomotiveVM.Model.Series,
-                ColorPrimary = locomotiveVM.Model.ColorPrimary,
-                ColorSecondary = locomotiveVM.Model.ColorSecondary,
-                IsPushing = locomotiveVM.Model.IsPushing,
-                Details = locomotiveVM.Model.Details
-            };
-
-            // Add to Project master list
-            ViewModel.CurrentProjectViewModel.Model.Locomotives.Add(locomotiveCopy);
-            
-            // Add ID to Train
-            ViewModel.SelectedTrain.Model.LocomotiveIds.Add(locomotiveCopy.Id);
-            
-            // Refresh Train collections
-            ViewModel.SelectedTrain.RefreshCollections();
+            ViewModel.AddLocomotiveToTrainCommand.Execute(locomotiveVM);
         }
     }
 

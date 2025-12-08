@@ -8,9 +8,11 @@ public class Platform
 {
     public Platform()
     {
+        Id = Guid.NewGuid();
         Name = "New Platform";
     }
 
+    public Guid Id { get; set; }
     public string Name { get; set; }
     public string? Description { get; set; }
 

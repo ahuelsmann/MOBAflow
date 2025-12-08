@@ -14,7 +14,7 @@ public class Journey
         Id = Guid.NewGuid();
         Name = "New Journey";
         Description = string.Empty;
-        StationIds = new List<Guid>();
+        JourneyStations = [];
         Text = string.Empty;
     }
 
@@ -24,9 +24,12 @@ public class Journey
     public string Text { get; set; }
     
     /// <summary>
-    /// Station IDs (resolved at runtime via Project.Stations lookup)
+    /// Junction entities linking this Journey to Stations with Journey-specific properties.
+    /// Each JourneyStation contains StationId + IsExitOnLeft + WorkflowId + NumberOfLapsToStop.
+    /// Example: Journey1 can have "Hauptbahnhof" with IsExitOnLeft=true,
+    ///          Journey2 can have same station with IsExitOnLeft=false.
     /// </summary>
-    public List<Guid> StationIds { get; set; }
+    public List<JourneyStation> JourneyStations { get; set; }
     
     public uint InPort { get; set; } = 1;
     public bool IsUsingTimerToIgnoreFeedbacks { get; set; }

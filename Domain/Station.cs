@@ -10,25 +10,20 @@ public class Station
     {
         Id = Guid.NewGuid();
         Name = "New Station";
-        Platforms = new List<Platform>();
+        PlatformIds = [];
     }
 
     public Guid Id { get; set; }
     public string Name { get; set; }
     public string? Description { get; set; }
-    public List<Platform> Platforms { get; set; }
-    public uint InPort { get; set; } = 1; 
-
+    
     /// <summary>
-    /// Number of laps before stopping at this station.
-    /// Used for repeat journey functionality.
+    /// List of Platform IDs (GUID references only).
+    /// Resolved at runtime via Project.Platforms lookup.
     /// </summary>
-    public uint NumberOfLapsToStop { get; set; }
-
-    /// <summary>
-    /// Workflow ID (resolved at runtime via Project.Workflows lookup).
-    /// </summary>
-    public Guid? WorkflowId { get; set; }
+    public List<Guid> PlatformIds { get; set; }
+    
+    public uint InPort { get; set; } = 1;
 
     // --- Phase 1 Properties (Simplified Platform representation) ---
     // TODO: Move to Platform when Phase 2 is implemented
