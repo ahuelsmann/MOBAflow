@@ -84,8 +84,8 @@ public sealed partial class EditorPage : Page
 
     private void JourneyListView_Tapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
     {
-        // Refresh PropertyGrid even if same Journey is clicked again
-        ViewModel.RefreshPropertyGrid();
+        // ContentControl automatically updates via binding to CurrentSelectedObject
+        // No manual refresh needed anymore!
     }
 
     #endregion
@@ -107,7 +107,8 @@ public sealed partial class EditorPage : Page
         // Add selected locomotive to current train on double-click
         if (e.OriginalSource is FrameworkElement element &&
             element.DataContext is LocomotiveViewModel locomotiveVM &&
-            ViewModel.SelectedTrain != null)
+            ViewModel.SelectedTrain != null &&
+            ViewModel.CurrentProjectViewModel != null)
         {
             // Create a copy to avoid modifying the library object
             var locomotiveCopy = new Domain.Locomotive
@@ -123,9 +124,14 @@ public sealed partial class EditorPage : Page
                 Details = locomotiveVM.Model.Details
             };
 
-            ViewModel.SelectedTrain.Model.Locomotives.Add(locomotiveCopy);
-            var newLocomotiveVM = new LocomotiveViewModel(locomotiveCopy);
-            ViewModel.SelectedTrain.Locomotives.Add(newLocomotiveVM);
+            // Add to Project master list
+            ViewModel.CurrentProjectViewModel.Model.Locomotives.Add(locomotiveCopy);
+            
+            // Add ID to Train
+            ViewModel.SelectedTrain.Model.LocomotiveIds.Add(locomotiveCopy.Id);
+            
+            // Refresh Train collections
+            ViewModel.SelectedTrain.RefreshCollections();
         }
     }
 
@@ -138,28 +144,32 @@ public sealed partial class EditorPage : Page
     {
         // Handle Locomotive drop from library
         if (e.DataView.Properties.TryGetValue("Locomotive", out object locoObj) &&
-            locoObj is Domain.Locomotive locomotive)
+            locoObj is Domain.Locomotive locomotive &&
+            ViewModel.SelectedTrain != null &&
+            ViewModel.CurrentProjectViewModel != null)
         {
-            if (ViewModel.SelectedTrain != null)
+            // Create a copy to avoid modifying the library object
+            var locomotiveCopy = new Domain.Locomotive
             {
-                // Create a copy to avoid modifying the library object
-                var locomotiveCopy = new Domain.Locomotive
-                {
-                    Name = locomotive.Name,
-                    DigitalAddress = locomotive.DigitalAddress,
-                    Manufacturer = locomotive.Manufacturer,
-                    ArticleNumber = locomotive.ArticleNumber,
-                    Series = locomotive.Series,
-                    ColorPrimary = locomotive.ColorPrimary,
-                    ColorSecondary = locomotive.ColorSecondary,
-                    IsPushing = locomotive.IsPushing,
-                    Details = locomotive.Details
-                };
+                Name = locomotive.Name,
+                DigitalAddress = locomotive.DigitalAddress,
+                Manufacturer = locomotive.Manufacturer,
+                ArticleNumber = locomotive.ArticleNumber,
+                Series = locomotive.Series,
+                ColorPrimary = locomotive.ColorPrimary,
+                ColorSecondary = locomotive.ColorSecondary,
+                IsPushing = locomotive.IsPushing,
+                Details = locomotive.Details
+            };
 
-                ViewModel.SelectedTrain.Model.Locomotives.Add(locomotiveCopy);
-                var locomotiveVM = new LocomotiveViewModel(locomotiveCopy);
-                ViewModel.SelectedTrain.Locomotives.Add(locomotiveVM);
-            }
+            // Add to Project master list
+            ViewModel.CurrentProjectViewModel.Model.Locomotives.Add(locomotiveCopy);
+            
+            // Add ID to Train
+            ViewModel.SelectedTrain.Model.LocomotiveIds.Add(locomotiveCopy.Id);
+            
+            // Refresh Train collections
+            ViewModel.SelectedTrain.RefreshCollections();
         }
     }
 
@@ -179,6 +189,7 @@ public sealed partial class EditorPage : Page
         if (e.OriginalSource is FrameworkElement element &&
             element.DataContext is GoodsWagonViewModel goodsWagonVM &&
             ViewModel.SelectedTrain != null &&
+            ViewModel.CurrentProjectViewModel != null &&
             goodsWagonVM.Model is Domain.GoodsWagon goodsWagon)
         {
             // Create a copy to avoid modifying the library object
@@ -194,9 +205,14 @@ public sealed partial class EditorPage : Page
                 Details = goodsWagon.Details
             };
 
-            ViewModel.SelectedTrain.Model.Wagons.Add(wagonCopy);
-            var newWagonVM = new GoodsWagonViewModel(wagonCopy);
-            ViewModel.SelectedTrain.Wagons.Add(newWagonVM);
+            // Add to Project master list
+            ViewModel.CurrentProjectViewModel.Model.GoodsWagons.Add(wagonCopy);
+            
+            // Add ID to Train
+            ViewModel.SelectedTrain.Model.WagonIds.Add(wagonCopy.Id);
+            
+            // Refresh Train collections
+            ViewModel.SelectedTrain.RefreshCollections();
         }
     }
 
@@ -216,6 +232,7 @@ public sealed partial class EditorPage : Page
         if (e.OriginalSource is FrameworkElement element &&
             element.DataContext is PassengerWagonViewModel passengerWagonVM &&
             ViewModel.SelectedTrain != null &&
+            ViewModel.CurrentProjectViewModel != null &&
             passengerWagonVM.Model is Domain.PassengerWagon passengerWagon)
         {
             // Create a copy to avoid modifying the library object
@@ -231,9 +248,14 @@ public sealed partial class EditorPage : Page
                 Details = passengerWagon.Details
             };
 
-            ViewModel.SelectedTrain.Model.Wagons.Add(wagonCopy);
-            var newWagonVM = new PassengerWagonViewModel(wagonCopy);
-            ViewModel.SelectedTrain.Wagons.Add(newWagonVM);
+            // Add to Project master list
+            ViewModel.CurrentProjectViewModel.Model.PassengerWagons.Add(wagonCopy);
+            
+            // Add ID to Train
+            ViewModel.SelectedTrain.Model.WagonIds.Add(wagonCopy.Id);
+            
+            // Refresh Train collections
+            ViewModel.SelectedTrain.RefreshCollections();
         }
     }
 
@@ -244,53 +266,60 @@ public sealed partial class EditorPage : Page
 
     private void WagonListView_Drop(object sender, DragEventArgs e)
     {
+        if (ViewModel.SelectedTrain == null || ViewModel.CurrentProjectViewModel == null)
+            return;
+
         // Handle GoodsWagon drop from library
         if (e.DataView.Properties.TryGetValue("GoodsWagon", out object goodsWagonObj) &&
             goodsWagonObj is Domain.GoodsWagon goodsWagon)
         {
-            if (ViewModel.SelectedTrain != null)
+            // Create a copy to avoid modifying the library object
+            var wagonCopy = new Domain.GoodsWagon
             {
-                // Create a copy to avoid modifying the library object
-                var wagonCopy = new Domain.GoodsWagon
-                {
-                    Name = goodsWagon.Name,
-                    Cargo = goodsWagon.Cargo,
-                    Manufacturer = goodsWagon.Manufacturer,
-                    ArticleNumber = goodsWagon.ArticleNumber,
-                    Series = goodsWagon.Series,
-                    ColorPrimary = goodsWagon.ColorPrimary,
-                    ColorSecondary = goodsWagon.ColorSecondary,
-                    Details = goodsWagon.Details
-                };
+                Name = goodsWagon.Name,
+                Cargo = goodsWagon.Cargo,
+                Manufacturer = goodsWagon.Manufacturer,
+                ArticleNumber = goodsWagon.ArticleNumber,
+                Series = goodsWagon.Series,
+                ColorPrimary = goodsWagon.ColorPrimary,
+                ColorSecondary = goodsWagon.ColorSecondary,
+                Details = goodsWagon.Details
+            };
 
-                ViewModel.SelectedTrain.Model.Wagons.Add(wagonCopy);
-                var wagonViewModel = new GoodsWagonViewModel(wagonCopy);
-                ViewModel.SelectedTrain.Wagons.Add(wagonViewModel);
-            }
+            // Add to Project master list
+            ViewModel.CurrentProjectViewModel.Model.GoodsWagons.Add(wagonCopy);
+            
+            // Add ID to Train
+            ViewModel.SelectedTrain.Model.WagonIds.Add(wagonCopy.Id);
+            
+            // Refresh Train collections
+            ViewModel.SelectedTrain.RefreshCollections();
         }
         // Handle PassengerWagon drop from library
         else if (e.DataView.Properties.TryGetValue("PassengerWagon", out object passengerWagonObj) &&
                  passengerWagonObj is Domain.PassengerWagon passengerWagon)
         {
-            if (ViewModel.SelectedTrain != null)
+            // Create a copy to avoid modifying the library object
+            var wagonCopy = new Domain.PassengerWagon
             {
-                // Create a copy to avoid modifying the library object
-                var wagonCopy = new Domain.PassengerWagon
-                {
-                    Name = passengerWagon.Name,
-                    WagonClass = passengerWagon.WagonClass,
-                    Manufacturer = passengerWagon.Manufacturer,
-                    ArticleNumber = passengerWagon.ArticleNumber,
-                    Series = passengerWagon.Series,
-                    ColorPrimary = passengerWagon.ColorPrimary,
-                    ColorSecondary = passengerWagon.ColorSecondary,
-                    Details = passengerWagon.Details
-                };
+                Name = passengerWagon.Name,
+                WagonClass = passengerWagon.WagonClass,
+                Manufacturer = passengerWagon.Manufacturer,
+                ArticleNumber = passengerWagon.ArticleNumber,
+                Series = passengerWagon.Series,
+                ColorPrimary = passengerWagon.ColorPrimary,
+                ColorSecondary = passengerWagon.ColorSecondary,
+                Details = passengerWagon.Details
+            };
 
-                ViewModel.SelectedTrain.Model.Wagons.Add(wagonCopy);
-                var wagonViewModel = new PassengerWagonViewModel(wagonCopy);
-                ViewModel.SelectedTrain.Wagons.Add(wagonViewModel);
-            }
+            // Add to Project master list
+            ViewModel.CurrentProjectViewModel.Model.PassengerWagons.Add(wagonCopy);
+            
+            // Add ID to Train
+            ViewModel.SelectedTrain.Model.WagonIds.Add(wagonCopy.Id);
+            
+            // Refresh Train collections
+            ViewModel.SelectedTrain.RefreshCollections();
         }
     }
 
@@ -302,8 +331,11 @@ public sealed partial class EditorPage : Page
             listView.SelectedItem is LocomotiveViewModel locomotiveVM &&
             ViewModel.SelectedTrain != null)
         {
-            ViewModel.SelectedTrain.Model.Locomotives.Remove(locomotiveVM.Model);
-            ViewModel.SelectedTrain.Locomotives.Remove(locomotiveVM);
+            // Remove ID from Train
+            ViewModel.SelectedTrain.Model.LocomotiveIds.Remove(locomotiveVM.Model.Id);
+            
+            // Refresh Train collections
+            ViewModel.SelectedTrain.RefreshCollections();
             e.Handled = true;
         }
     }
@@ -316,7 +348,11 @@ public sealed partial class EditorPage : Page
             listView.SelectedItem is WagonViewModel wagonVM &&
             ViewModel.SelectedTrain != null)
         {
-            ViewModel.SelectedTrain.Model.Wagons.Remove(wagonVM.Model);
+            // Remove ID from Train
+            ViewModel.SelectedTrain.Model.WagonIds.Remove(wagonVM.Model.Id);
+            
+            // Refresh Train collections
+            ViewModel.SelectedTrain.RefreshCollections();
             ViewModel.SelectedTrain.Wagons.Remove(wagonVM);
             e.Handled = true;
         }
@@ -329,8 +365,11 @@ public sealed partial class EditorPage : Page
             menuItem.DataContext is LocomotiveViewModel locomotiveVM &&
             ViewModel.SelectedTrain != null)
         {
-            ViewModel.SelectedTrain.Model.Locomotives.Remove(locomotiveVM.Model);
-            ViewModel.SelectedTrain.Locomotives.Remove(locomotiveVM);
+            // Remove ID from Train
+            ViewModel.SelectedTrain.Model.LocomotiveIds.Remove(locomotiveVM.Model.Id);
+            
+            // Refresh Train collections
+            ViewModel.SelectedTrain.RefreshCollections();
         }
     }
 
@@ -339,7 +378,8 @@ public sealed partial class EditorPage : Page
         // Duplicate locomotive in train
         if (sender is MenuFlyoutItem menuItem &&
             menuItem.DataContext is LocomotiveViewModel locomotiveVM &&
-            ViewModel.SelectedTrain != null)
+            ViewModel.SelectedTrain != null &&
+            ViewModel.CurrentProjectViewModel != null)
         {
             var locomotiveCopy = new Domain.Locomotive
             {
@@ -354,9 +394,14 @@ public sealed partial class EditorPage : Page
                 Details = locomotiveVM.Model.Details
             };
 
-            ViewModel.SelectedTrain.Model.Locomotives.Add(locomotiveCopy);
-            var newVM = new LocomotiveViewModel(locomotiveCopy);
-            ViewModel.SelectedTrain.Locomotives.Add(newVM);
+            // Add to Project master list
+            ViewModel.CurrentProjectViewModel.Model.Locomotives.Add(locomotiveCopy);
+            
+            // Add ID to Train
+            ViewModel.SelectedTrain.Model.LocomotiveIds.Add(locomotiveCopy.Id);
+            
+            // Refresh Train collections
+            ViewModel.SelectedTrain.RefreshCollections();
         }
     }
 
@@ -367,8 +412,11 @@ public sealed partial class EditorPage : Page
             menuItem.DataContext is WagonViewModel wagonVM &&
             ViewModel.SelectedTrain != null)
         {
-            ViewModel.SelectedTrain.Model.Wagons.Remove(wagonVM.Model);
-            ViewModel.SelectedTrain.Wagons.Remove(wagonVM);
+            // Remove ID from Train
+            ViewModel.SelectedTrain.Model.WagonIds.Remove(wagonVM.Model.Id);
+            
+            // Refresh Train collections
+            ViewModel.SelectedTrain.RefreshCollections();
         }
     }
 
@@ -377,7 +425,8 @@ public sealed partial class EditorPage : Page
         // Duplicate wagon in train
         if (sender is MenuFlyoutItem menuItem &&
             menuItem.DataContext is WagonViewModel wagonVM &&
-            ViewModel.SelectedTrain != null)
+            ViewModel.SelectedTrain != null &&
+            ViewModel.CurrentProjectViewModel != null)
         {
             Domain.Wagon wagonCopy;
 
@@ -394,6 +443,9 @@ public sealed partial class EditorPage : Page
                     ColorSecondary = passengerWagon.ColorSecondary,
                     Details = passengerWagon.Details
                 };
+                
+                // Add to Project master list
+                ViewModel.CurrentProjectViewModel.Model.PassengerWagons.Add((Domain.PassengerWagon)wagonCopy);
             }
             else if (wagonVM.Model is Domain.GoodsWagon goodsWagon)
             {
@@ -408,22 +460,20 @@ public sealed partial class EditorPage : Page
                     ColorSecondary = goodsWagon.ColorSecondary,
                     Details = goodsWagon.Details
                 };
+                
+                // Add to Project master list
+                ViewModel.CurrentProjectViewModel.Model.GoodsWagons.Add((Domain.GoodsWagon)wagonCopy);
             }
             else
             {
                 return; // Unknown wagon type
             }
 
-            ViewModel.SelectedTrain.Model.Wagons.Add(wagonCopy);
-
-            WagonViewModel newVM = wagonCopy switch
-            {
-                Domain.PassengerWagon pw => new PassengerWagonViewModel(pw),
-                Domain.GoodsWagon gw => new GoodsWagonViewModel(gw),
-                _ => new WagonViewModel(wagonCopy)
-            };
-
-            ViewModel.SelectedTrain.Wagons.Add(newVM);
+            // Add ID to Train
+            ViewModel.SelectedTrain.Model.WagonIds.Add(wagonCopy.Id);
+            
+            // Refresh Train collections
+            ViewModel.SelectedTrain.RefreshCollections();
         }
     }
 

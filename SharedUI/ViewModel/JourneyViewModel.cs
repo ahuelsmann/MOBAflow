@@ -22,6 +22,7 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     private readonly JourneyManager? _journeyManager;
     private readonly IUiDispatcher? _dispatcher;
     private readonly Project _project;
+    private ObservableCollection<StationViewModel>? _stations;
 
     /// <summary>
     /// Event fired when the Journey model is modified and should be saved.
@@ -43,6 +44,9 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
         _state = state;
         _journeyManager = journeyManager;
         _dispatcher = dispatcher;
+
+        // Initialize Stations collection
+        RefreshStations();
 
         // Subscribe to JourneyManager.StationChanged event
         if (_journeyManager != null && _dispatcher != null)
@@ -113,23 +117,20 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     // Train-Journey relationship is now managed at Solution/Project level
 
     /// <summary>
-    /// Stations resolved from Project.Stations using StationIds.
+    /// Stations collection resolved from Project.Stations using StationIds.
+    /// Cached for UI binding performance.
     /// </summary>
-    public ObservableCollection<StationViewModel> Stations =>
-        new ObservableCollection<StationViewModel>(
-            _journey.StationIds
-                .Select((id, index) => {
-                    var station = _project.Stations.FirstOrDefault(s => s.Id == id);
-                    if (station == null) return null;
-                    var vm = new StationViewModel(station, _dispatcher);
-                    vm.Position = index + 1;  // 1-based position
-                    // Mark current station based on SessionState
-                    vm.IsCurrentStation = (index == _state.CurrentPos);
-                    return vm;
-                })
-                .Where(vm => vm != null)
-                .Cast<StationViewModel>()
-        );
+    public ObservableCollection<StationViewModel> Stations
+    {
+        get
+        {
+            if (_stations == null)
+            {
+                RefreshStations();
+            }
+            return _stations!;
+        }
+    }
 
     // Enum values for ComboBox binding
     public IEnumerable<BehaviorOnLastStop> BehaviorOnLastStopValues =>
@@ -199,8 +200,8 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
         // Add ID to Journey
         _journey.StationIds.Add(newStation.Id);
 
-        // Notify UI to refresh collection
-        OnPropertyChanged(nameof(Stations));
+        // Refresh collection
+        RefreshStations();
 
         // Notify that model changed
         ModelChanged?.Invoke(this, EventArgs.Empty);
@@ -216,8 +217,8 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
         
         // Note: We don't remove from Project.Stations (might be used elsewhere)
 
-        // Notify UI to refresh collection
-        OnPropertyChanged(nameof(Stations));
+        // Refresh collection
+        RefreshStations();
 
         // Notify that model changed
         ModelChanged?.Invoke(this, EventArgs.Empty);
@@ -229,6 +230,35 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     /// </summary>
     public void RefreshStations()
     {
+        // Create or clear the collection
+        if (_stations == null)
+        {
+            _stations = new ObservableCollection<StationViewModel>();
+        }
+        else
+        {
+            _stations.Clear();
+        }
+
+        // Rebuild from StationIds
+        var index = 0;
+        foreach (var id in _journey.StationIds)
+        {
+            var station = _project.Stations.FirstOrDefault(s => s.Id == id);
+            if (station != null)
+            {
+                var vm = new StationViewModel(station, _dispatcher);
+                vm.Position = index + 1;  // 1-based position
+                
+                // Mark current station based on SessionState
+                vm.IsCurrentStation = (index == _state.CurrentPos);
+                
+                _stations.Add(vm);
+            }
+            index++;
+        }
+
+        // Notify UI
         OnPropertyChanged(nameof(Stations));
     }
 
@@ -249,8 +279,11 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
             _journey.StationIds.Add(stationVM.Model.Id);
         }
 
-        // Notify UI to refresh (renumbering happens in Stations property getter)
-        OnPropertyChanged(nameof(Stations));
+        // Refresh positions (no need to rebuild entire collection)
+        for (int i = 0; i < Stations.Count; i++)
+        {
+            Stations[i].Position = i + 1;
+        }
 
         // Notify that model changed
         ModelChanged?.Invoke(this, EventArgs.Empty);

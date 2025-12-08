@@ -14,25 +14,28 @@ public class JourneyManagerTests
         var actionExecutorMock = new Mock<ActionExecutor>(z21Mock.Object);
         var workflowService = new WorkflowService(actionExecutorMock.Object, z21Mock.Object);
         
+        var station = new Station { Id = Guid.NewGuid(), Name = "S1", NumberOfLapsToStop = 1 };
         var journey = new Journey 
         { 
             Id = Guid.NewGuid(),
             Name = "J1", 
             InPort = 1,
             FirstPos = 0,
-            Stations = new List<Station> 
-            { 
-                new Station { Name = "S1", NumberOfLapsToStop = 1 } 
-            } 
+            StationIds = new List<Guid> { station.Id }
         };
-        var journeys = new List<Journey> { journey };
+        
+        var project = new Project
+        {
+            Stations = new List<Station> { station },
+            Journeys = new List<Journey> { journey }
+        };
 
         var executionContext = new ActionExecutionContext
         {
             Z21 = z21Mock.Object
         };
 
-        using var manager = new JourneyManager(z21Mock.Object, journeys, workflowService, executionContext);
+        using var manager = new JourneyManager(z21Mock.Object, project, workflowService, executionContext);
 
         var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 

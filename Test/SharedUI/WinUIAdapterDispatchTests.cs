@@ -29,8 +29,8 @@ public class WinUIAdapterDispatchTests
     // Test helper: JourneyManager subclass that allows triggering StationChanged
     private class TestableJourneyManager : JourneyManager
     {
-        public TestableJourneyManager(IZ21 z21, List<Journey> journeys, WorkflowService workflowService)
-            : base(z21, journeys, workflowService)
+        public TestableJourneyManager(IZ21 z21, Project project, WorkflowService workflowService)
+            : base(z21, project, workflowService)
         {
         }
 
@@ -45,6 +45,7 @@ public class WinUIAdapterDispatchTests
     {
         // Arrange
         var journey = new Journey { Id = Guid.NewGuid(), FirstPos = 0 };
+        var project = new Project { Journeys = new List<Journey> { journey } };
         var state = new JourneySessionState { JourneyId = journey.Id };
         var dispatcher = new TestUiDispatcher();
         
@@ -52,9 +53,9 @@ public class WinUIAdapterDispatchTests
         var z21Mock = new Mock<IZ21>();
         var actionExecutorMock = new Mock<ActionExecutor>(z21Mock.Object);
         var workflowService = new WorkflowService(actionExecutorMock.Object, z21Mock.Object);
-        var journeyManager = new TestableJourneyManager(z21Mock.Object, new List<Journey> { journey }, workflowService);
+        var journeyManager = new TestableJourneyManager(z21Mock.Object, project, workflowService);
 
-        var vm = new Moba.SharedUI.ViewModel.JourneyViewModel(journey, state, journeyManager, dispatcher);
+        var vm = new Moba.SharedUI.ViewModel.JourneyViewModel(journey, project, state, journeyManager, dispatcher);
 
         // Act - Trigger StationChanged event
         journeyManager.TriggerStationChanged(new StationChangedEventArgs

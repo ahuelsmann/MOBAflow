@@ -8,47 +8,32 @@ using Moba.SharedUI.Interface;
 
 /// <summary>
 /// Generic helper for managing entity selection with hierarchy support.
-/// Eliminates code duplication in Select commands.
+/// Simplified: Just sets the entity and notifies changes.
+/// ContentControl + DataTemplateSelector handles the rest automatically.
 /// </summary>
 public class EntitySelectionManager : ObservableObject
 {
-    private readonly Action<MobaType> _clearOtherSelections;
     private readonly Action _notifySelectionPropertiesChanged;
 
-    public EntitySelectionManager(
-        Action<MobaType> clearOtherSelections,
-        Action notifySelectionPropertiesChanged)
+    public EntitySelectionManager(Action notifySelectionPropertiesChanged)
     {
-        _clearOtherSelections = clearOtherSelections;
         _notifySelectionPropertiesChanged = notifySelectionPropertiesChanged;
     }
 
     /// <summary>
-    /// Generic selection logic that works for all entity types.
-    /// Handles clearing other selections, setting entity type, and notifying changes.
+    /// Generic selection logic: Set entity and notify.
+    /// The ContentControl automatically picks the right template based on type.
     /// </summary>
-    /// <param name="entity">Entity to select (can be null to deselect).</param>
-    /// <param name="type">MobaType of the entity.</param>
-    /// <param name="currentSelected">Current selected entity for comparison.</param>
-    /// <param name="setSelected">Action to set the selected entity.</param>
     public void SelectEntity<T>(
         T? entity,
         MobaType type,
         T? currentSelected,
         Action<T?> setSelected) where T : class, ISelectableEntity
     {
-        if (entity != null)
-        {
-            _clearOtherSelections(type);
-        }
-
-        var wasAlreadySelected = ReferenceEquals(currentSelected, entity);
+        // Simply set the entity
         setSelected(entity);
 
-        // Always notify if same entity clicked again (for PropertyGrid refresh)
-        if (wasAlreadySelected || entity != null)
-        {
-            _notifySelectionPropertiesChanged();
-        }
+        // Notify PropertyGrid to refresh
+        _notifySelectionPropertiesChanged();
     }
 }

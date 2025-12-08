@@ -1,39 +1,14 @@
 <Application
-    x:Class="Moba.WinUI.App"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:converters="using:Moba.WinUI.Converter"
-    xmlns:local="using:Moba.WinUI">
+x:Class="Moba.WinUI.App"
+xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+xmlns:local="using:Moba.WinUI">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
-                <ResourceDictionary Source="/Controls/SimplePropertyGrid.xaml" />
+                <ResourceDictionary Source="/Resources/EntityTemplates.xaml" />
             </ResourceDictionary.MergedDictionaries>
-
-            <!--  Converters  -->
-            <converters:NullToBoolConverter x:Key="NullToBoolConverter" />
-            <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
-
-            <!--  Railway Theme Colors  -->
-            <Color x:Key="RailwayPrimary">#1976D2</Color>
-            <Color x:Key="RailwaySecondary">#FF6F00</Color>
-            <Color x:Key="RailwayAccent">#00C853</Color>
-            <Color x:Key="RailwayDanger">#D32F2F</Color>
-
-            <SolidColorBrush x:Key="RailwayPrimaryBrush" Color="{StaticResource RailwayPrimary}" />
-            <SolidColorBrush x:Key="RailwaySecondaryBrush" Color="{StaticResource RailwaySecondary}" />
-            <SolidColorBrush x:Key="RailwayAccentBrush" Color="{StaticResource RailwayAccent}" />
-            <SolidColorBrush x:Key="RailwayDangerBrush" Color="{StaticResource RailwayDanger}" />
-
-            <!--  Button Styles  -->
-            <Style
-                x:Key="PrimaryButton"
-                BasedOn="{StaticResource DefaultButtonStyle}"
-                TargetType="Button">
-                <Setter Property="Background" Value="{StaticResource RailwayPrimaryBrush}" />
-                <Setter Property="Foreground" Value="White" />
-            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

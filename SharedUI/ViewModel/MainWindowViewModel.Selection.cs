@@ -14,8 +14,22 @@ public partial class MainWindowViewModel
     #region Selection Commands
 
     [RelayCommand]
-    private void SelectSolution() =>
-        ClearOtherSelections(MobaType.Solution);
+    private void SelectSolution()
+    {
+        // Clear all entity selections when selecting the solution
+        SelectedProject = null;
+        SelectedJourney = null;
+        SelectedStation = null;
+        SelectedWorkflow = null;
+        SelectedAction = null;
+        SelectedTrain = null;
+        SelectedLocomotive = null;
+        SelectedWagon = null;
+        
+        CurrentSelectedEntityType = MobaType.Solution;
+        OnPropertyChanged(nameof(CurrentSelectedObject));
+        NotifySelectionPropertiesChanged();
+    }
 
     [RelayCommand]
     private void SelectProject(ProjectViewModel? project) =>
@@ -51,27 +65,17 @@ public partial class MainWindowViewModel
 
     #endregion
 
-    /// <summary>
-    /// Forces PropertyGrid to refresh by re-notifying CurrentSelectedObject.
-    /// Useful when clicking on already-selected items.
-    /// </summary>
-    public void RefreshPropertyGrid()
-    {
-        OnPropertyChanged(nameof(CurrentSelectedObject));
-    }
-
     #region Selection Change Handlers
 
     partial void OnSelectedProjectChanged(ProjectViewModel? value)
     {
         if (value != null)
         {
-            ClearOtherSelections(MobaType.Project);
             CurrentSelectedEntityType = MobaType.Project;
         }
         
         OnPropertyChanged(nameof(CurrentProjectViewModel));
-        OnPropertyChanged(nameof(CurrentSelectedObject)); // Update PropertyGrid
+        OnPropertyChanged(nameof(CurrentSelectedObject));
         NotifySelectionPropertiesChanged();
     }
 
@@ -81,11 +85,10 @@ public partial class MainWindowViewModel
 
         if (value != null)
         {
-            ClearOtherSelections(MobaType.Journey);
             CurrentSelectedEntityType = MobaType.Journey;
         }
         
-        OnPropertyChanged(nameof(CurrentSelectedObject)); // Update PropertyGrid
+        OnPropertyChanged(nameof(CurrentSelectedObject));
         NotifySelectionPropertiesChanged();
     }
 
@@ -93,11 +96,10 @@ public partial class MainWindowViewModel
     {
         if (value != null)
         {
-            ClearOtherSelections(MobaType.Station);
             CurrentSelectedEntityType = MobaType.Station;
         }
         
-        OnPropertyChanged(nameof(CurrentSelectedObject)); // Update PropertyGrid
+        OnPropertyChanged(nameof(CurrentSelectedObject));
         NotifySelectionPropertiesChanged();
     }
 
@@ -105,11 +107,10 @@ public partial class MainWindowViewModel
     {
         if (value != null)
         {
-            ClearOtherSelections(MobaType.Workflow);
             CurrentSelectedEntityType = MobaType.Workflow;
         }
         
-        OnPropertyChanged(nameof(CurrentSelectedObject)); // Update PropertyGrid
+        OnPropertyChanged(nameof(CurrentSelectedObject));
         NotifySelectionPropertiesChanged();
     }
 
@@ -117,11 +118,10 @@ public partial class MainWindowViewModel
     {
         if (value != null)
         {
-            ClearOtherSelections(MobaType.Action);
             CurrentSelectedEntityType = MobaType.Action;
         }
         
-        OnPropertyChanged(nameof(CurrentSelectedObject)); // Update PropertyGrid
+        OnPropertyChanged(nameof(CurrentSelectedObject));
         NotifySelectionPropertiesChanged();
     }
 
@@ -129,11 +129,10 @@ public partial class MainWindowViewModel
     {
         if (value != null)
         {
-            ClearOtherSelections(MobaType.Train);
             CurrentSelectedEntityType = MobaType.Train;
         }
         
-        OnPropertyChanged(nameof(CurrentSelectedObject)); // Update PropertyGrid
+        OnPropertyChanged(nameof(CurrentSelectedObject));
         NotifySelectionPropertiesChanged();
     }
 
@@ -141,12 +140,10 @@ public partial class MainWindowViewModel
     {
         if (value != null)
         {
-            ClearOtherSelections(MobaType.Locomotive);
             CurrentSelectedEntityType = MobaType.Locomotive;
         }
         
-        OnPropertyChanged(nameof(CurrentSelectedObject)); // Update PropertyGrid
-        
+        OnPropertyChanged(nameof(CurrentSelectedObject));
         NotifySelectionPropertiesChanged();
     }
 
@@ -154,12 +151,10 @@ public partial class MainWindowViewModel
     {
         if (value != null)
         {
-            ClearOtherSelections(MobaType.Wagon);
             CurrentSelectedEntityType = MobaType.Wagon;
         }
         
-        OnPropertyChanged(nameof(CurrentSelectedObject)); // Update PropertyGrid
-        
+        OnPropertyChanged(nameof(CurrentSelectedObject));
         NotifySelectionPropertiesChanged();
     }
 
@@ -168,56 +163,7 @@ public partial class MainWindowViewModel
     #region Helper Methods
 
     /// <summary>
-    /// Clears all other selections except the specified type to prevent stacking in PropertyGrid.
-    /// Station keeps Journey selected (parent context), Journey keeps Project selected.
-    /// </summary>
-    private void ClearOtherSelections(MobaType keepType)
-    {
-        // Keep Project selected when Journey or Station is selected (parent context)
-        // Keep Journey selected when Station is selected (parent context)
-        if (keepType != MobaType.Project && keepType != MobaType.Journey && keepType != MobaType.Station)
-        {
-            if (SelectedProject != null) SelectedProject = null;
-        }
-        
-        if (keepType != MobaType.Journey && keepType != MobaType.Station)
-        {
-            if (SelectedJourney != null) SelectedJourney = null;
-        }
-        
-        if (keepType != MobaType.Station)
-        {
-            if (SelectedStation != null) SelectedStation = null;
-        }
-        
-        if (keepType != MobaType.Workflow && keepType != MobaType.Action)
-        {
-            if (SelectedWorkflow != null) SelectedWorkflow = null;
-        }
-        
-        if (keepType != MobaType.Action)
-        {
-            if (SelectedAction != null) SelectedAction = null;
-        }
-        
-        if (keepType != MobaType.Train && keepType != MobaType.Locomotive && keepType != MobaType.Wagon)
-        {
-            if (SelectedTrain != null) SelectedTrain = null;
-        }
-        
-        if (keepType != MobaType.Locomotive)
-        {
-            if (SelectedLocomotive != null) SelectedLocomotive = null;
-        }
-        
-        if (keepType != MobaType.Wagon)
-        {
-            if (SelectedWagon != null) SelectedWagon = null;
-        }
-    }
-
-    /// <summary>
-    /// Notifies all selection-related properties changed (for PropertyGrid binding).
+    /// Notifies all selection-related properties changed.
     /// </summary>
     private void NotifySelectionPropertiesChanged()
     {
@@ -225,12 +171,11 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(HasSelectedJourney));
         OnPropertyChanged(nameof(HasSelectedWorkflow));
         OnPropertyChanged(nameof(HasSelectedTrain));
-        
-        // Note: CurrentSelectedObject is now updated in OnSelected*Changed methods
+        OnPropertyChanged(nameof(CurrentSelectedObject));
     }
 
     /// <summary>
-    /// Gets the most specific selected object for PropertyGrid display.
+    /// Gets the most specific selected object for display in ContentControl.
     /// Priority: Action > Station > Journey > Workflow > Locomotive > Wagon > Train > Project > Solution
     /// </summary>
     public object? CurrentSelectedObject

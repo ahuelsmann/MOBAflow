@@ -58,10 +58,8 @@ public partial class MainWindowViewModel : ObservableObject
         _cityLibraryService = cityLibraryService;
         _settingsService = settingsService;
 
-        // Initialize EntitySelectionManager
-        _selectionManager = new EntitySelectionManager(
-            ClearOtherSelections,
-            NotifySelectionPropertiesChanged);
+        // Initialize EntitySelectionManager (simplified - no more ClearOtherSelections needed)
+        _selectionManager = new EntitySelectionManager(NotifySelectionPropertiesChanged);
 
         // Subscribe to Solution changes
         Solution = solution;

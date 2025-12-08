@@ -15,11 +15,7 @@
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
   </PropertyGroup>
   <ItemGroup>
-    <Page Remove="View\EditorPage_new.xaml" />
-    <Page Remove="View\_ButtonsTemplate_Journeys.xaml" />
-    <Page Remove="View\_ButtonsTemplate_Trains.xaml" />
-    <Page Remove="View\_ButtonsTemplate_Workflows.xaml" />
-    <Page Remove="View\_COMPLETE_Journeys_Section.xaml" />
+    <Page Remove="Resources\EntityTemplates.xaml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="appsettings.json">
@@ -28,7 +24,7 @@
     <Content Include="appsettings.Development.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="example-solution.json">
+    <Content Include="example-solution-v2.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="germany-stations.json">
@@ -55,20 +51,11 @@
     <UpToDateCheckBuilt Include="$(IntermediateOutputPath)Manifests\app.manifest" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="View\EditorPage_new.xaml">
+    <None Update="Resources\EntityTemplates.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
-    <None Update="View\_ButtonsTemplate_Journeys.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="View\_ButtonsTemplate_Trains.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="View\_ButtonsTemplate_Workflows.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="View\_COMPLETE_Journeys_Section.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Controls\" />
   </ItemGroup>
 </Project>

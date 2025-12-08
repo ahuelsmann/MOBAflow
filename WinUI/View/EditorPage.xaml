@@ -121,7 +121,7 @@
                             FontWeight="SemiBold"
                             Style="{StaticResource SubtitleTextBlockStyle}"
                             Text="Properties" />
-                        <local:SimplePropertyGrid Grid.Row="1" SelectedObject="{Binding CurrentSelectedObject, Mode=OneWay}" />
+                        <ContentControl Grid.Row="1" Content="{Binding CurrentSelectedObject, Mode=OneWay}" ContentTemplateSelector="{StaticResource EntityTemplateSelector}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
                     </Grid>
                 </Grid>
             </TabViewItem>
@@ -325,7 +325,7 @@
                             FontWeight="SemiBold"
                             Style="{StaticResource SubtitleTextBlockStyle}"
                             Text="Properties" />
-                        <local:SimplePropertyGrid Grid.Row="1" SelectedObject="{Binding CurrentSelectedObject, Mode=OneWay}" />
+                        <ContentControl Grid.Row="1" Content="{Binding CurrentSelectedObject, Mode=OneWay}" ContentTemplateSelector="{StaticResource EntityTemplateSelector}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
                     </Grid>
                 </Grid>
             </TabViewItem>
@@ -479,7 +479,7 @@
                             FontWeight="SemiBold"
                             Style="{StaticResource SubtitleTextBlockStyle}"
                             Text="Properties" />
-                        <local:SimplePropertyGrid Grid.Row="1" SelectedObject="{Binding CurrentSelectedObject, Mode=OneWay}" />
+                        <ContentControl Grid.Row="1" Content="{Binding CurrentSelectedObject, Mode=OneWay}" ContentTemplateSelector="{StaticResource EntityTemplateSelector}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
                     </Grid>
                 </Grid>
             </TabViewItem>
@@ -842,13 +842,14 @@
                             FontWeight="SemiBold"
                             Style="{StaticResource SubtitleTextBlockStyle}"
                             Text="Properties" />
-                        <local:SimplePropertyGrid Grid.Row="1" SelectedObject="{Binding CurrentSelectedObject, Mode=OneWay}" />
+                        <ContentControl Grid.Row="1" Content="{Binding CurrentSelectedObject, Mode=OneWay}" ContentTemplateSelector="{StaticResource EntityTemplateSelector}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
                     </Grid>
                 </Grid>
             </TabViewItem>
         </TabView>
     </Grid>
 </Page>
+
 
 
 

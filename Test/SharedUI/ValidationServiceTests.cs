@@ -43,8 +43,8 @@ public class ValidationServiceTests
     public void CanDeleteJourney_WhenReferencedByNextJourney_ReturnsFailure()
     {
         // Arrange
-        var journey1 = new Journey { Name = "Journey1" };
-        var journey2 = new Journey { Name = "Journey2", NextJourney = journey1 };  // Was: "Journey1" - now object reference
+        var journey1 = new Journey { Id = Guid.NewGuid(), Name = "Journey1" };
+        var journey2 = new Journey { Id = Guid.NewGuid(), Name = "Journey2", NextJourneyId = journey1.Id };
         _project.Journeys.Add(journey1);
         _project.Journeys.Add(journey2);
 
@@ -91,12 +91,12 @@ public class ValidationServiceTests
     public void CanDeleteWorkflow_WhenReferencedByStation_ReturnsFailure()
     {
         // Arrange
-        var workflow = new Workflow { Name = "Workflow1" };
-        var station = new Station { Name = "Station1", Flow = workflow };
-        var journey = new Journey { Name = "Journey1" };
-        journey.Stations.Add(station);
+        var workflow = new Workflow { Id = Guid.NewGuid(), Name = "Workflow1" };
+        var station = new Station { Id = Guid.NewGuid(), Name = "Station1", WorkflowId = workflow.Id };
+        var journey = new Journey { Id = Guid.NewGuid(), Name = "Journey1", StationIds = new List<Guid> { station.Id } };
         
         _project.Workflows.Add(workflow);
+        _project.Stations.Add(station);
         _project.Journeys.Add(journey);
 
         // Act
@@ -113,13 +113,12 @@ public class ValidationServiceTests
     {
         // Arrange
         var workflow = new Workflow { Name = "Workflow1" };
-        var platform = new Platform { Name = "Platform1", Flow = workflow };
-        var station = new Station { Name = "Station1" };
-        station.Platforms.Add(platform);
-        var journey = new Journey { Name = "Journey1" };
-        journey.Stations.Add(station);
+        var platform = new Platform { Name = "Platform1", WorkflowId = workflow.Id };
+        var station = new Station { Id = Guid.NewGuid(), Name = "Station1", Platforms = new List<Platform> { platform } };
+        var journey = new Journey { Id = Guid.NewGuid(), Name = "Journey1", StationIds = new List<Guid> { station.Id } };
         
         _project.Workflows.Add(workflow);
+        _project.Stations.Add(station);
         _project.Journeys.Add(journey);
 
         // Act
@@ -214,9 +213,8 @@ public class ValidationServiceTests
     public void CanDeleteLocomotive_WhenReferencedByTrain_ReturnsFailure()
     {
         // Arrange
-        var locomotive = new Locomotive { Name = "Loco1" };
-        var train = new Train { Name = "Train1" };
-        train.Locomotives.Add(locomotive);
+        var locomotive = new Locomotive { Id = Guid.NewGuid(), Name = "Loco1" };
+        var train = new Train { Id = Guid.NewGuid(), Name = "Train1", LocomotiveIds = new List<Guid> { locomotive.Id } };
         
         _project.Locomotives.Add(locomotive);
         _project.Trains.Add(train);
@@ -264,9 +262,8 @@ public class ValidationServiceTests
     public void CanDeleteWagon_WhenReferencedByTrain_ReturnsFailure()
     {
         // Arrange
-        var wagon = new PassengerWagon { Name = "Wagon1" };
-        var train = new Train { Name = "Train1" };
-        train.Wagons.Add(wagon);
+        var wagon = new PassengerWagon { Id = Guid.NewGuid(), Name = "Wagon1" };
+        var train = new Train { Id = Guid.NewGuid(), Name = "Train1", WagonIds = new List<Guid> { wagon.Id } };
         
         _project.PassengerWagons.Add(wagon);
         _project.Trains.Add(train);
@@ -328,14 +325,14 @@ public class ValidationServiceTests
     public void CanDeleteWorkflow_WhenReferencedByMultipleStations_ReturnsFailure()
     {
         // Arrange
-        var workflow = new Workflow { Name = "Workflow1" };
-        var station1 = new Station { Name = "Station1", Flow = workflow };
-        var station2 = new Station { Name = "Station2", Flow = workflow };
-        var journey = new Journey { Name = "Journey1" };
-        journey.Stations.Add(station1);
-        journey.Stations.Add(station2);
+        var workflow = new Workflow { Id = Guid.NewGuid(), Name = "Workflow1" };
+        var station1 = new Station { Id = Guid.NewGuid(), Name = "Station1", WorkflowId = workflow.Id };
+        var station2 = new Station { Id = Guid.NewGuid(), Name = "Station2", WorkflowId = workflow.Id };
+        var journey = new Journey { Id = Guid.NewGuid(), Name = "Journey1", StationIds = new List<Guid> { station1.Id, station2.Id } };
         
         _project.Workflows.Add(workflow);
+        _project.Stations.Add(station1);
+        _project.Stations.Add(station2);
         _project.Journeys.Add(journey);
 
         // Act
@@ -351,11 +348,9 @@ public class ValidationServiceTests
     public void CanDeleteLocomotive_WhenReferencedByMultipleTrains_ReturnsFailure()
     {
         // Arrange
-        var locomotive = new Locomotive { Name = "Loco1" };
-        var train1 = new Train { Name = "Train1" };
-        var train2 = new Train { Name = "Train2" };
-        train1.Locomotives.Add(locomotive);
-        train2.Locomotives.Add(locomotive);
+        var locomotive = new Locomotive { Id = Guid.NewGuid(), Name = "Loco1" };
+        var train1 = new Train { Id = Guid.NewGuid(), Name = "Train1", LocomotiveIds = new List<Guid> { locomotive.Id } };
+        var train2 = new Train { Id = Guid.NewGuid(), Name = "Train2", LocomotiveIds = new List<Guid> { locomotive.Id } };
         
         _project.Locomotives.Add(locomotive);
         _project.Trains.Add(train1);
