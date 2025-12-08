@@ -8,10 +8,12 @@ public class Station
 {
     public Station()
     {
+        Id = Guid.NewGuid();
         Name = "New Station";
         Platforms = new List<Platform>();
     }
 
+    public Guid Id { get; set; }
     public string Name { get; set; }
     public string? Description { get; set; }
     public List<Platform> Platforms { get; set; }
@@ -24,14 +26,7 @@ public class Station
     public uint NumberOfLapsToStop { get; set; }
 
     /// <summary>
-    /// Reference to Workflow (by reference, resolved by WorkflowService).
-    /// NOTE: This is a navigation property that gets resolved after deserialization.
-    /// Do not serialize this - use WorkflowId instead.
-    /// </summary>
-    public Workflow? Flow { get; set; }
-
-    /// <summary>
-    /// Workflow ID for serialization/deserialization.
+    /// Workflow ID (resolved at runtime via Project.Workflows lookup).
     /// </summary>
     public Guid? WorkflowId { get; set; }
 

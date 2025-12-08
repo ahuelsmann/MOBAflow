@@ -17,6 +17,7 @@ public class Project
         Trains = new List<Train>();
         Workflows = new List<Workflow>();
         Journeys = new List<Journey>();
+        Stations = new List<Station>();
         Cities = new List<City>();
     }
 
@@ -30,5 +31,6 @@ public class Project
     public List<Train> Trains { get; set; }
     public List<Workflow> Workflows { get; set; }
     public List<Journey> Journeys { get; set; }
+    public List<Station> Stations { get; set; }
     public List<City> Cities { get; set; }
 }

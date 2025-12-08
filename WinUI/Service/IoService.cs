@@ -48,19 +48,15 @@ public class IoService : IIoService
 
         var json = await File.ReadAllTextAsync(result.Path);
         
-        // Configure serialization with StationConverter for efficient workflow reference handling
+        // Configure serialization with ActionConverter
         var settings = new Newtonsoft.Json.JsonSerializerSettings
         {
             Converters = {
-                new Backend.Converter.StationConverter(),
                 new Backend.Converter.ActionConverter()
             }
         };
         
         var sol = Newtonsoft.Json.JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
-        
-        // Restore workflow references (replace temporary Workflow objects with actual references)
-        Backend.Services.SolutionService.RestoreWorkflowReferences(sol);
         
         // Save last solution path to preferences
         _preferencesService.LastSolutionPath = result.Path;
@@ -81,19 +77,15 @@ public class IoService : IIoService
 
             var json = await File.ReadAllTextAsync(filePath);
             
-            // Configure serialization with StationConverter for efficient workflow reference handling
+            // Configure serialization with ActionConverter
             var settings = new Newtonsoft.Json.JsonSerializerSettings
             {
                 Converters = {
-                    new Backend.Converter.StationConverter(),
                     new Backend.Converter.ActionConverter()
                 }
             };
             
             var sol = Newtonsoft.Json.JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
-            
-            // Restore workflow references
-            Backend.Services.SolutionService.RestoreWorkflowReferences(sol);
             
             // Save last solution path to preferences
             _preferencesService.LastSolutionPath = filePath;
@@ -140,19 +132,15 @@ public class IoService : IIoService
             
             var json = await File.ReadAllTextAsync(lastPath!);
             
-            // Configure serialization with StationConverter for efficient workflow reference handling
+            // Configure serialization with ActionConverter
             var settings = new Newtonsoft.Json.JsonSerializerSettings
             {
                 Converters = {
-                    new Backend.Converter.StationConverter(),
                     new Backend.Converter.ActionConverter()
                 }
             };
             
             var loadedSolution = Newtonsoft.Json.JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
-            
-            // Restore workflow references
-            Backend.Services.SolutionService.RestoreWorkflowReferences(loadedSolution);
             
             if (loadedSolution == null)
             {
@@ -194,7 +182,6 @@ public class IoService : IIoService
         var settings = new Newtonsoft.Json.JsonSerializerSettings
         {
             Converters = {
-                new Backend.Converter.StationConverter(),
                 new Backend.Converter.ActionConverter()
             },
             Formatting = Newtonsoft.Json.Formatting.Indented

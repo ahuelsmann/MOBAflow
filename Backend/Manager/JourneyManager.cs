@@ -18,6 +18,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>
     private readonly SemaphoreSlim _processingLock = new(1, 1);
     private readonly WorkflowService _workflowService;
     private readonly Dictionary<Guid, JourneySessionState> _states = [];
+    private readonly Project _project;
 
     /// <summary>
     /// Event raised when a journey reaches a new station.
@@ -37,20 +38,21 @@ public class JourneyManager : BaseFeedbackManager<Journey>
     /// Initializes a new instance of the JourneyManager class.
     /// </summary>
     /// <param name="z21">Z21 command station for receiving feedback events</param>
-    /// <param name="journeys">List of journeys to manage</param>
+    /// <param name="project">Project containing journeys, stations, and workflows for reference resolution</param>
     /// <param name="workflowService">Service for executing workflows</param>
     /// <param name="executionContext">Optional execution context; if null, a new context with Z21 will be created</param>
     public JourneyManager(
         IZ21 z21, 
-        List<Journey> journeys, 
+        Project project,
         WorkflowService workflowService,
         ActionExecutionContext? executionContext = null)
-    : base(z21, journeys, executionContext)
+    : base(z21, project.Journeys, executionContext)
     {
+        _project = project;
         _workflowService = workflowService;
         
         // Initialize SessionState for all journeys
-        foreach (var journey in journeys)
+        foreach (var journey in project.Journeys)
         {
             _states[journey.Id] = new JourneySessionState
             {
@@ -101,13 +103,21 @@ public class JourneyManager : BaseFeedbackManager<Journey>
         state.LastFeedbackTime = DateTime.Now;
         Debug.WriteLine($"🔄 Journey '{journey.Name}': Round {state.Counter}, Position {state.CurrentPos}");
 
-        if (state.CurrentPos >= journey.Stations.Count)
+        // Resolve station by ID
+        if (state.CurrentPos >= journey.StationIds.Count)
         {
-            Debug.WriteLine($"⚠ CurrentPos out of Stations list bounds");
+            Debug.WriteLine($"⚠ CurrentPos out of StationIds list bounds");
             return;
         }
 
-        var currentStation = journey.Stations[state.CurrentPos];
+        var stationId = journey.StationIds[state.CurrentPos];
+        var currentStation = _project.Stations.FirstOrDefault(s => s.Id == stationId);
+        
+        if (currentStation == null)
+        {
+            Debug.WriteLine($"⚠ Station with ID {stationId} not found in Project.Stations");
+            return;
+        }
 
         if (state.Counter >= currentStation.NumberOfLapsToStop)
         {
@@ -125,22 +135,30 @@ public class JourneyManager : BaseFeedbackManager<Journey>
             });
 
             // Execute station workflow if present
-            if (currentStation.Flow != null)
+            if (currentStation.WorkflowId.HasValue)
             {
-                // Set template context for announcements
-                ExecutionContext.JourneyTemplateText = journey.Text;
-                ExecutionContext.CurrentStation = currentStation;
+                var workflow = _project.Workflows.FirstOrDefault(w => w.Id == currentStation.WorkflowId.Value);
+                if (workflow != null)
+                {
+                    // Set template context for announcements
+                    ExecutionContext.JourneyTemplateText = journey.Text;
+                    ExecutionContext.CurrentStation = currentStation;
 
-                await _workflowService.ExecuteAsync(currentStation.Flow, ExecutionContext).ConfigureAwait(false);
+                    await _workflowService.ExecuteAsync(workflow, ExecutionContext).ConfigureAwait(false);
 
-                // Clear context after workflow execution
-                ExecutionContext.JourneyTemplateText = null;
-                ExecutionContext.CurrentStation = null;
+                    // Clear context after workflow execution
+                    ExecutionContext.JourneyTemplateText = null;
+                    ExecutionContext.CurrentStation = null;
+                }
+                else
+                {
+                    Debug.WriteLine($"⚠ Workflow with ID {currentStation.WorkflowId.Value} not found");
+                }
             }
 
             state.Counter = 0;
 
-            bool isLastStation = state.CurrentPos == journey.Stations.Count - 1;
+            bool isLastStation = state.CurrentPos == journey.StationIds.Count - 1;
 
             if (isLastStation)
             {
@@ -168,17 +186,23 @@ public class JourneyManager : BaseFeedbackManager<Journey>
                 break;
 
             case BehaviorOnLastStop.GotoJourney:
-                if (journey.NextJourney != null)
+                if (journey.NextJourneyId.HasValue)
                 {
-                    // Get next journey's state
-                    var nextState = _states[journey.NextJourney.Id];
-                    Debug.WriteLine($"➡ Switching to journey: {journey.NextJourney.Name}");
-                    nextState.CurrentPos = (int)journey.NextJourney.FirstPos;
-                    Debug.WriteLine($"✅ Journey '{journey.NextJourney.Name}' activated at position {nextState.CurrentPos}");
+                    var nextJourney = _project.Journeys.FirstOrDefault(j => j.Id == journey.NextJourneyId.Value);
+                    if (nextJourney != null && _states.TryGetValue(nextJourney.Id, out var nextState))
+                    {
+                        Debug.WriteLine($"➡ Switching to journey: {nextJourney.Name}");
+                        nextState.CurrentPos = (int)nextJourney.FirstPos;
+                        Debug.WriteLine($"✅ Journey '{nextJourney.Name}' activated at position {nextState.CurrentPos}");
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"⚠ NextJourney with ID {journey.NextJourneyId.Value} not found or state missing");
+                    }
                 }
                 else
                 {
-                    Debug.WriteLine($"⚠ NextJourney not set");
+                    Debug.WriteLine($"⚠ NextJourneyId not set");
                 }
                 break;
 

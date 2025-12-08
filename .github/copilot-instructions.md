@@ -7,6 +7,34 @@
 
 ---
 
+## 🎯 Primary Analysis Guidelines
+
+### When Analyzing Code or Proposing Changes:
+
+1. **❗ Check for Aggregat-Design Problems**
+   - ❌ **ANTI-PATTERN**: Nested objects in Domain (e.g., `Journey.Stations = List<Station>`)
+   - ❌ **ANTI-PATTERN**: Circular references (e.g., `Journey.NextJourney → Journey`)
+   - ❌ **ANTI-PATTERN**: Redundant storage (entity in multiple lists)
+   - ✅ **CORRECT**: GUID references only (e.g., `Journey.StationIds = List<Guid>`)
+   - ✅ **CORRECT**: Single Source of Truth in Project aggregate root
+   - ✅ **CORRECT**: ViewModels resolve references at runtime
+
+2. **🏗️ Verify Clean Architecture Layers**
+   - Domain = Pure POCOs (no framework dependencies)
+   - Backend = Platform-independent (no UI thread code)
+   - ViewModels = Resolve references, handle UI threading
+   - Platform = UI-specific code only
+
+3. **📚 Consult Specific Instructions**
+   - Backend rules: `.github/instructions/backend.instructions.md`
+   - WinUI patterns: `.github/instructions/winui.instructions.md`
+   - MAUI patterns: `.github/instructions/maui.instructions.md`
+   - Blazor patterns: `.github/instructions/blazor.instructions.md`
+   - Test patterns: `.github/instructions/test.instructions.md`
+   - State management: `.github/instructions/hasunsavedchanges-patterns.instructions.md`
+
+---
+
 ## 🏗️ Core Architecture
 
 ### Clean Architecture Layers
@@ -25,6 +53,66 @@ WinUI / MAUI / Blazor (Platform-specific)
 - ✅ **Backend:** Platform-independent - NO DispatcherQueue, NO MainThread
 - ✅ **SharedUI:** ViewModels with CommunityToolkit.Mvvm
 - ✅ **Platform:** UI-specific code only
+
+### Reference-Based Domain Architecture (Dec 2025)
+
+**Principle**: Domain objects use **GUID references** instead of nested object trees.
+
+#### Aggregate Root Pattern
+```csharp
+public class Project  // ✅ Aggregate Root
+{
+    // Master lists (Single Source of Truth)
+    public List<Locomotive> Locomotives { get; set; }
+    public List<PassengerWagon> PassengerWagons { get; set; }
+    public List<GoodsWagon> GoodsWagons { get; set; }
+    public List<Station> Stations { get; set; }        // ✅ NEW (Dec 2025)
+    public List<Workflow> Workflows { get; set; }
+    public List<Journey> Journeys { get; set; }
+    public List<Train> Trains { get; set; }
+}
+```
+
+#### Reference Properties (Not Nested Objects!)
+```csharp
+// ❌ OLD: Nested objects (circular refs, JSON hell)
+public class Journey
+{
+    public List<Station> Stations { get; set; }      // ❌ Nested objects
+    public Journey? NextJourney { get; set; }         // ❌ Circular reference!
+}
+
+// ✅ NEW: GUID references (flat, clean JSON)
+public class Journey
+{
+    public List<Guid> StationIds { get; set; }       // ✅ Only IDs
+    public Guid? NextJourneyId { get; set; }          // ✅ Only ID
+}
+```
+
+#### Resolution in ViewModels
+```csharp
+public class JourneyViewModel
+{
+    private readonly Journey _journey;
+    private readonly Project _project;  // ✅ Project for lookups
+    
+    // Resolved at runtime
+    public ObservableCollection<StationViewModel> Stations =>
+        _journey.StationIds
+            .Select(id => _project.Stations.FirstOrDefault(s => s.Id == id))
+            .Where(s => s != null)
+            .Select(s => new StationViewModel(s, _project))
+            .ToObservableCollection();
+}
+```
+
+#### Key Rules
+- ✅ **All entities have `Guid Id`** (Station, Locomotive, Wagon, Train)
+- ✅ **Domain uses only IDs** (StationIds, LocomotiveIds, WorkflowId, NextJourneyId)
+- ✅ **ViewModels resolve references** via `_project.XXX.FirstOrDefault(x => x.Id == id)`
+- ✅ **No custom JSON converters** (GUIDs serialize natively)
+- ❌ **NEVER store nested objects** in Domain (breaks serialization, creates circular refs)
 
 ---
 
@@ -411,10 +499,15 @@ public class FakeUdpClientWrapper : IUdpClientWrapper
 | Metric | Value |
 |--------|-------|
 | Projects | 9 |
-| Build Success | 100% |
-| Tests Passing | 104/104 (100%) |
+| Build Success | ⚠️ IN PROGRESS (64+ errors - refactoring ViewModels) |
+| Tests Passing | ⚠️ IN PROGRESS (11+ failing - refactoring in progress) |
 | Architecture Violations | 0 |
 | SessionState Pattern | ✅ Implemented (JourneyManager) |
+| Reference-Based Domain | 🚧 72% complete (Domain + Backend done, ViewModels pending) |
+
+**Active Refactoring**: Domain → Reference-Based Architecture  
+**Status**: Domain layer complete, Backend complete, ViewModels in progress  
+**See**: `docs/REFACTORING-PLAN-REFERENCE-BASED-ARCHITECTURE.md`
 
 ---
 
@@ -639,12 +732,24 @@ For complex operations, wrap in script block:
 
 ## 📚 Related Documentation
 
+### Specific Instructions (Layer-Specific)
+- **Backend:** `.github/instructions/backend.instructions.md` (Platform independence)
+- **WinUI:** `.github/instructions/winui.instructions.md` (EditorPage patterns)
+- **MAUI:** `.github/instructions/maui.instructions.md` (Mobile-specific)
+- **Blazor:** `.github/instructions/blazor.instructions.md` (Web-specific)
+- **Tests:** `.github/instructions/test.instructions.md` (Testing patterns)
+- **State Management:** `.github/instructions/hasunsavedchanges-patterns.instructions.md`
+
+### Architecture & Design
+- **Refactoring Plan:** `docs/REFACTORING-PLAN-REFERENCE-BASED-ARCHITECTURE.md` (Active!)
 - **Build Status:** `docs/BUILD-ERRORS-STATUS.md`
 - **Z21 Protocol:** `docs/Z21-PROTOCOL.md`
 - **MVVM Analysis:** `docs/MVVM-ANALYSIS-MAINWINDOW-2025-12-02.md`
-- **Session Reports:** `docs/SESSION-SUMMARY-*.md` (archive after 1 month)
+
+### Session Reports
+- **Session Summaries:** `docs/SESSION-SUMMARY-*.md` (archive after 1 month)
 
 ---
 
-**Last Updated:** 2025-12-05  
-**Version:** 2.2 (Manager Architecture documented)
+**Last Updated:** 2025-12-08  
+**Version:** 2.3 (Aggregat-Design Guidelines + Reference-Based Architecture)

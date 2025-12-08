@@ -10,9 +10,11 @@ public class Locomotive
 {
     public Locomotive()
     {
+        Id = Guid.NewGuid();
         Name = "New Locomotive";
     }
 
+    public Guid Id { get; set; }
     public string Name { get; set; }
 
     /// <summary>

@@ -10,19 +10,29 @@ public class Train
 {
     public Train()
     {
+        Id = Guid.NewGuid();
         Name = "New Train";
         Description = string.Empty;
-        Wagons = new List<Wagon>();
-        Locomotives = new List<Locomotive>();
+        LocomotiveIds = new List<Guid>();
+        WagonIds = new List<Guid>();
         TrainType = TrainType.None;
         ServiceType = ServiceType.None;
     }
 
+    public Guid Id { get; set; }
     public bool IsDoubleTraction { get; set; }
     public string Name { get; set; }
     public string Description { get; set; }
     public TrainType TrainType { get; set; }
     public ServiceType ServiceType { get; set; }
-    public List<Locomotive> Locomotives { get; set; }
-    public List<Wagon> Wagons { get; set; }
+    
+    /// <summary>
+    /// Locomotive IDs (resolved at runtime via Project.Locomotives lookup)
+    /// </summary>
+    public List<Guid> LocomotiveIds { get; set; }
+    
+    /// <summary>
+    /// Wagon IDs (resolved at runtime via Project wagons lookup)
+    /// </summary>
+    public List<Guid> WagonIds { get; set; }
 }

@@ -14,7 +14,7 @@ public class Journey
         Id = Guid.NewGuid();
         Name = "New Journey";
         Description = string.Empty;
-        Stations = new List<Station>();
+        StationIds = new List<Guid>();
         Text = string.Empty;
     }
 
@@ -22,17 +22,22 @@ public class Journey
     public string Name { get; set; }
     public string Description { get; set; }
     public string Text { get; set; }
-    public List<Station> Stations { get; set; }
+    
+    /// <summary>
+    /// Station IDs (resolved at runtime via Project.Stations lookup)
+    /// </summary>
+    public List<Guid> StationIds { get; set; }
+    
     public uint InPort { get; set; } = 1;
     public bool IsUsingTimerToIgnoreFeedbacks { get; set; }
     public double IntervalForTimerToIgnoreFeedbacks { get; set; }
     public BehaviorOnLastStop BehaviorOnLastStop { get; set; }
 
     /// <summary>
-    /// Reference to next journey (for chaining journeys)
+    /// Reference to next journey ID (for chaining journeys)
     /// Used when BehaviorOnLastStop == GotoJourney
     /// </summary>
-    public Journey? NextJourney { get; set; }
+    public Guid? NextJourneyId { get; set; }
 
     /// <summary>
     /// First position index (default: 0)

@@ -10,9 +10,11 @@ public class Wagon
 {
     public Wagon()
     {
+        Id = Guid.NewGuid();
         Name = "New Wagon";
     }
 
+    public Guid Id { get; set; }
     public string Name { get; set; }
     public uint Pos { get; set; }
     public uint? DigitalAddress { get; set; }
