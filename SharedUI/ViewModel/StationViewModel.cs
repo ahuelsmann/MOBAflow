@@ -8,19 +8,23 @@ using Moba.SharedUI.Enum;
 using Moba.SharedUI.Interface;
 
 /// <summary>
-/// ViewModel wrapper for Station model.
-/// Note: Platforms are not yet supported in MVP (City = Station for now).
+/// ViewModel wrapper for JourneyStation (Junction Entity).
+/// Combines Station data (from City Library) with Journey-specific properties (JourneyStation).
 /// </summary>
 public partial class StationViewModel : ObservableObject, IViewModelWrapper<Station>
 {
     [ObservableProperty]
-    private Station model;
+    private Station model; // Station from City Library (Name, InPort)
 
+    private readonly JourneyStation _journeyStation; // Journey-specific data
+    private readonly Project _project; // For resolving Platform IDs
     private readonly IUiDispatcher? _dispatcher;
 
-    public StationViewModel(Station model, IUiDispatcher? dispatcher = null)
+    public StationViewModel(Station station, JourneyStation journeyStation, Project project, IUiDispatcher? dispatcher = null)
     {
-        Model = model;
+        Model = station;
+        _journeyStation = journeyStation;
+        _project = project;
         _dispatcher = dispatcher;
         
         // Track property changes for unsaved changes detection
@@ -55,49 +59,55 @@ public partial class StationViewModel : ObservableObject, IViewModelWrapper<Stat
         set => SetProperty(Model.InPort, (uint)value, Model, (m, v) => m.InPort = v);
     }
 
+    // Journey-specific properties (from JourneyStation)
     public int NumberOfLapsToStop
     {
-        get => (int)Model.NumberOfLapsToStop;
-        set => SetProperty(Model.NumberOfLapsToStop, (uint)value, Model, (m, v) => m.NumberOfLapsToStop = v);
-    }
-
-    public List<Platform> Platforms
-    {
-        get => Model.Platforms;
-        set => SetProperty(Model.Platforms, value, Model, (m, v) => m.Platforms = v);
+        get => (int)_journeyStation.NumberOfLapsToStop;
+        set => SetProperty(_journeyStation.NumberOfLapsToStop, (uint)value, _journeyStation, (m, v) => m.NumberOfLapsToStop = v);
     }
 
     public Guid? WorkflowId
     {
-        get => Model.WorkflowId;
-        set => SetProperty(Model.WorkflowId, value, Model, (m, v) => m.WorkflowId = v);
-    }
-
-    // --- Phase 1 Properties (Simplified Platform representation) ---
-    // TODO: Remove when Phase 2 (Platform support) is implemented
-
-    public int Track
-    {
-        get => (int)(Model.Track ?? 1);
-        set => SetProperty(Model.Track, (uint?)value, Model, (m, v) => m.Track = v);
-    }
-
-    public DateTime? Arrival
-    {
-        get => Model.Arrival;
-        set => SetProperty(Model.Arrival, value, Model, (m, v) => m.Arrival = v);
-    }
-
-    public DateTime? Departure
-    {
-        get => Model.Departure;
-        set => SetProperty(Model.Departure, value, Model, (m, v) => m.Departure = v);
+        get => _journeyStation.WorkflowId;
+        set => SetProperty(_journeyStation.WorkflowId, value, _journeyStation, (m, v) => m.WorkflowId = v);
     }
 
     public bool IsExitOnLeft
     {
-        get => Model.IsExitOnLeft;
-        set => SetProperty(Model.IsExitOnLeft, value, Model, (m, v) => m.IsExitOnLeft = v);
+        get => _journeyStation.IsExitOnLeft;
+        set => SetProperty(_journeyStation.IsExitOnLeft, value, _journeyStation, (m, v) => m.IsExitOnLeft = v);
+    }
+
+    // Platform references (resolved from Project.Platforms via Station.PlatformIds)
+    public List<Platform> Platforms
+    {
+        get
+        {
+            return Model.PlatformIds
+                .Select(id => _project.Platforms.FirstOrDefault(p => p.Id == id))
+                .Where(p => p != null)
+                .ToList()!;
+        }
+    }
+
+    // --- Phase 1 Properties (from JourneyStation - will move to Platform in Phase 2) ---
+
+    public int Track
+    {
+        get => (int)(_journeyStation.Track ?? 1);
+        set => SetProperty(_journeyStation.Track, (uint?)value, _journeyStation, (m, v) => m.Track = v);
+    }
+
+    public DateTime? Arrival
+    {
+        get => _journeyStation.Arrival;
+        set => SetProperty(_journeyStation.Arrival, value, _journeyStation, (m, v) => m.Arrival = v);
+    }
+
+    public DateTime? Departure
+    {
+        get => _journeyStation.Departure;
+        set => SetProperty(_journeyStation.Departure, value, _journeyStation, (m, v) => m.Departure = v);
     }
 
     // --- Adaptive Properties (Hybrid Mode Support) ---
@@ -106,67 +116,67 @@ public partial class StationViewModel : ObservableObject, IViewModelWrapper<Stat
     /// Indicates if station uses platform-based configuration.
     /// True when Platforms list has entries, false for simple mode.
     /// </summary>
-    public bool UsesPlatforms => Model.Platforms != null && Model.Platforms.Count > 0;
+    public bool UsesPlatforms => Platforms != null && Platforms.Count > 0;
 
     /// <summary>
     /// Gets the effective track number as string for display.
-    /// Returns Station.Track if no platforms, otherwise first Platform.Track.
+    /// Returns JourneyStation.Track if no platforms, otherwise first Platform.Track.
     /// </summary>
     public string EffectiveTrack
     {
         get
         {
             if (!UsesPlatforms)
-                return Model.Track.ToString();
+                return Track.ToString();
 
-            return Model.Platforms[0].Track.ToString();
+            return Platforms[0].Track.ToString();
         }
     }
 
     /// <summary>
     /// Gets the effective arrival designation as string for display.
-    /// Returns Station.Arrival formatted if no platforms, otherwise Platform info.
+    /// Returns JourneyStation.Arrival formatted if no platforms, otherwise Platform info.
     /// </summary>
     public string? EffectiveArrival
     {
         get
         {
             if (!UsesPlatforms)
-                return Model.Arrival?.ToString("HH:mm");
+                return Arrival?.ToString("HH:mm");
 
             // In Phase 2: Use Platform.ArrivalTime when implemented
-            var platform = Model.Platforms[0];
+            var platform = Platforms[0];
             return platform.Name ?? "-";
         }
     }
 
     /// <summary>
     /// Gets the effective departure designation as string for display.
-    /// Returns Station.Departure formatted if no platforms, otherwise Platform info.
+    /// Returns JourneyStation.Departure formatted if no platforms, otherwise Platform info.
     /// </summary>
     public string? EffectiveDeparture
     {
         get
         {
             if (!UsesPlatforms)
-                return Model.Departure?.ToString("HH:mm");
+                return Departure?.ToString("HH:mm");
 
             // In Phase 2: Use Platform.DepartureTime when implemented
-            var platform = Model.Platforms[0];
+            var platform = Platforms[0];
             return platform.Description ?? "-";
         }
     }
 
     /// <summary>
     /// Gets the effective exit orientation.
-    /// Returns Station.IsExitOnLeft if no platforms, otherwise false (Phase 2 pending).
+    /// Returns JourneyStation.IsExitOnLeft if no platforms, otherwise false (Phase 2 pending).
     /// </summary>
     public bool EffectiveIsExitOnLeft
     {
         get
         {
             if (!UsesPlatforms)
-                return Model.IsExitOnLeft;
+                return IsExitOnLeft;
 
             // In Phase 2: Use Platform.IsExitOnLeft when implemented
             return false;
@@ -177,7 +187,7 @@ public partial class StationViewModel : ObservableObject, IViewModelWrapper<Stat
     /// Gets display text indicating configuration mode.
     /// </summary>
     public string ConfigurationMode => UsesPlatforms
-        ? $"Platform Mode ({Model.Platforms.Count} platforms)"
+        ? $"Platform Mode ({Platforms.Count} platforms)"
         : "Simple Mode";
 
     // --- Runtime State Properties ---
