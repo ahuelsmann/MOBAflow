@@ -91,9 +91,9 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
         Name = Model.Name;
         
         // Smart sync: Reuse existing ViewModels where possible
-        SyncCollection(Model.Journeys, Journeys, j => new JourneyViewModel(j, _dispatcher));
+        SyncCollection(Model.Journeys, Journeys, j => new JourneyViewModel(j, Model, _dispatcher));
         SyncCollection(Model.Workflows, Workflows, w => new WorkflowViewModel(w));
-        SyncCollection(Model.Trains, Trains, t => new TrainViewModel(t, _dispatcher));
+        SyncCollection(Model.Trains, Trains, t => new TrainViewModel(t, Model, _dispatcher));
         SyncCollection(Model.Locomotives, Locomotives, l => new LocomotiveViewModel(l));
         
         // Wagons: Combine PassengerWagons and GoodsWagons

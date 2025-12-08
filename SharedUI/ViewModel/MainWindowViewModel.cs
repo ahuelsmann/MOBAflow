@@ -289,11 +289,24 @@ public partial class MainWindowViewModel : ObservableObject
             IsExitOnLeft = cityStation.IsExitOnLeft
         };
 
-        SelectedJourney.Model.Stations.Add(newStation);
+        // Add to Project master list (if not already there)
+        if (CurrentProjectViewModel != null && !CurrentProjectViewModel.Model.Stations.Any(s => s.Id == newStation.Id))
+        {
+            CurrentProjectViewModel.Model.Stations.Add(newStation);
+        }
 
-        var stationVM = new StationViewModel(newStation);
-        SelectedJourney.Stations.Add(stationVM);
-        SelectedStation = stationVM;
+        // Add ID to Journey
+        SelectedJourney.Model.StationIds.Add(newStation.Id);
+
+        // Refresh Journey's Stations collection
+        SelectedJourney.RefreshStations();
+        
+        // Select the new station
+        var stationVM = SelectedJourney.Stations.LastOrDefault();
+        if (stationVM != null)
+        {
+            SelectedStation = stationVM;
+        }
 
         HasUnsavedChanges = true;
 

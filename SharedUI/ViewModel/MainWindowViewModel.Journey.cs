@@ -23,20 +23,21 @@ public partial class MainWindowViewModel
     private JourneyViewModel CreateJourneyViewModel(Journey journey)
     {
         // Fallback for tests or when JourneyManager not initialized
-        if (_journeyManager == null)
+        if (_journeyManager == null || CurrentProjectViewModel == null)
         {
-            return new JourneyViewModel(journey, _uiDispatcher);
+            // Fallback: Create simple ViewModel without SessionState
+            return new JourneyViewModel(journey, CurrentProjectViewModel?.Model ?? new Project(), _uiDispatcher);
         }
 
         var state = _journeyManager.GetState(journey.Id);
         
         // If state doesn't exist yet (journey just created), create dummy state
-        if (state == null)
+        if (state == null || CurrentProjectViewModel == null)
         {
-            return new JourneyViewModel(journey, _uiDispatcher);
+            return new JourneyViewModel(journey, CurrentProjectViewModel?.Model ?? new Project(), _uiDispatcher);
         }
 
-        return new JourneyViewModel(journey, state, _journeyManager, _uiDispatcher);
+        return new JourneyViewModel(journey, CurrentProjectViewModel.Model, state, _journeyManager, _uiDispatcher);
     }
 
     #endregion
@@ -121,28 +122,44 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanAddStation))]
     private void AddStation()
     {
-        if (SelectedJourney == null) return;
+        if (SelectedJourney == null || CurrentProjectViewModel == null) return;
 
-        var station = EntityEditorHelper.AddEntity(
-            SelectedJourney.Model.Stations,
-            SelectedJourney.Stations,
-            () => new Station { Name = "New Station", NumberOfLapsToStop = 2 },
-            model => new StationViewModel(model));
+        var newStation = new Station { Name = "New Station", NumberOfLapsToStop = 2 };
+        
+        // Add to Project master list
+        CurrentProjectViewModel.Model.Stations.Add(newStation);
+        
+        // Add ID to Journey
+        SelectedJourney.Model.StationIds.Add(newStation.Id);
+        
+        // Refresh Journey's Stations collection
+        SelectedJourney.RefreshStations();
+        
+        // Select the new station
+        var stationVM = SelectedJourney.Stations.LastOrDefault();
+        if (stationVM != null)
+        {
+            SelectedStation = stationVM;
+        }
 
-        SelectedStation = station;
         HasUnsavedChanges = true;
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteStation))]
     private void DeleteStation()
     {
-        if (SelectedJourney == null) return;
+        if (SelectedJourney == null || SelectedStation == null) return;
 
-        EntityEditorHelper.DeleteEntity(
-            SelectedStation,
-            SelectedJourney.Model.Stations,
-            SelectedJourney.Stations,
-            () => { SelectedStation = null; HasUnsavedChanges = true; });
+        // Remove ID from Journey
+        SelectedJourney.Model.StationIds.Remove(SelectedStation.Model.Id);
+        
+        // Note: We don't remove from Project.Stations (might be used elsewhere)
+        
+        // Refresh Journey's Stations collection
+        SelectedJourney.RefreshStations();
+        
+        SelectedStation = null;
+        HasUnsavedChanges = true;
     }
 
     private bool CanAddStation() => SelectedJourney != null;
@@ -192,12 +209,18 @@ public partial class MainWindowViewModel
                 InPort = stationToCopy.InPort
             };
 
-            // Add to Journey model
-            SelectedJourney.Model.Stations.Add(newStation);
 
-            // Add to ViewModel
-            var stationVM = new StationViewModel(newStation);
-            SelectedJourney.Stations.Add(stationVM);
+            // Add to Project master list (if not already there)
+            if (CurrentProjectViewModel != null && !CurrentProjectViewModel.Model.Stations.Any(s => s.Name == newStation.Name))
+            {
+                CurrentProjectViewModel.Model.Stations.Add(newStation);
+            }
+
+            // Add ID to Journey
+            SelectedJourney.Model.StationIds.Add(newStation.Id);
+            
+            // Refresh Journey's Stations collection
+            SelectedJourney.RefreshStations();
 
             HasUnsavedChanges = true;
         }

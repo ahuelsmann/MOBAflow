@@ -16,6 +16,9 @@ public class JourneyManagerFactory : IJourneyManagerFactory
 
     public JourneyManager Create(IZ21 z21, List<Journey> journeys, ActionExecutionContext? context = null)
     {
-        return new JourneyManager(z21, journeys, _workflowService, context);
+        // Create a temporary Project wrapper for the journeys
+        // In production, this should receive the full Project instead
+        var project = new Project { Journeys = journeys };
+        return new JourneyManager(z21, project, _workflowService, context);
     }
 }

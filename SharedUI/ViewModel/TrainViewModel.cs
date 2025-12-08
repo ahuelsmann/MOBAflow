@@ -13,6 +13,7 @@ using System.Collections.ObjectModel;
 
 /// <summary>
 /// ViewModel wrapper for Train model with CRUD operations for Locomotives and Wagons.
+/// Uses Project for resolving locomotive/wagon references via GUID lookups.
 /// </summary>
 public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
 {
@@ -22,20 +23,13 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
     public MobaType EntityType => MobaType.Train;
 
     private readonly IUiDispatcher? _dispatcher;
+    private readonly Project _project;
 
-    public TrainViewModel(Train model, IUiDispatcher? dispatcher = null)
+    public TrainViewModel(Train model, Project project, IUiDispatcher? dispatcher = null)
     {
         Model = model;
+        _project = project;
         _dispatcher = dispatcher;
-
-        // Wrap existing locomotives and wagons in ViewModels
-        Locomotives = new ObservableCollection<LocomotiveViewModel>(
-            model.Locomotives.Select(l => new LocomotiveViewModel(l, dispatcher))
-        );
-
-        Wagons = new ObservableCollection<WagonViewModel>(
-            model.Wagons.Select(w => new WagonViewModel(w, dispatcher))
-        );
     }
 
     public bool IsDoubleTraction
@@ -68,9 +62,34 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
         set => SetProperty(Model.ServiceType, value, Model, (m, v) => m.ServiceType = v);
     }
 
-    public ObservableCollection<LocomotiveViewModel> Locomotives { get; }
+    /// <summary>
+    /// Locomotives resolved from Project.Locomotives using LocomotiveIds.
+    /// </summary>
+    public ObservableCollection<LocomotiveViewModel> Locomotives =>
+        new ObservableCollection<LocomotiveViewModel>(
+            Model.LocomotiveIds
+                .Select(id => _project.Locomotives.FirstOrDefault(l => l.Id == id))
+                .Where(l => l != null)
+                .Select(l => new LocomotiveViewModel(l!, _dispatcher))
+        );
 
-    public ObservableCollection<WagonViewModel> Wagons { get; }
+    /// <summary>
+    /// Wagons resolved from Project wagons (PassengerWagons + GoodsWagons) using WagonIds.
+    /// </summary>
+    public ObservableCollection<WagonViewModel> Wagons =>
+        new ObservableCollection<WagonViewModel>(
+            Model.WagonIds
+                .Select(id => {
+                    // Try PassengerWagons first
+                    Wagon? wagon = _project.PassengerWagons.FirstOrDefault(w => w.Id == id);
+                    // Then try GoodsWagons
+                    if (wagon == null)
+                        wagon = _project.GoodsWagons.FirstOrDefault(w => w.Id == id);
+                    return wagon;
+                })
+                .Where(w => w != null)
+                .Select(w => new WagonViewModel(w!, _dispatcher))
+        );
 
     /// <summary>
     /// Gets the primary (first) locomotive for this train, or null if no locomotives.
@@ -81,10 +100,15 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
     private void AddLocomotive()
     {
         var newLocomotive = new Locomotive { Name = "New Locomotive" };
-        Model.Locomotives.Add(newLocomotive);
-
-        var locomotiveVM = new LocomotiveViewModel(newLocomotive, _dispatcher);
-        Locomotives.Add(locomotiveVM);
+        
+        // Add to Project master list
+        _project.Locomotives.Add(newLocomotive);
+        
+        // Add ID to Train
+        Model.LocomotiveIds.Add(newLocomotive.Id);
+        
+        // Notify UI to refresh collection
+        OnPropertyChanged(nameof(Locomotives));
     }
 
     [RelayCommand]
@@ -92,18 +116,28 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
     {
         if (locomotiveVM == null) return;
 
-        Model.Locomotives.Remove(locomotiveVM.Model);
-        Locomotives.Remove(locomotiveVM);
+        // Remove ID from Train
+        Model.LocomotiveIds.Remove(locomotiveVM.Model.Id);
+        
+        // Note: We don't remove from Project.Locomotives (might be used elsewhere)
+        
+        // Notify UI to refresh collection
+        OnPropertyChanged(nameof(Locomotives));
     }
 
     [RelayCommand]
     private void AddWagon()
     {
-        var newWagon = new Wagon { Name = "New Wagon" };
-        Model.Wagons.Add(newWagon);
-
-        var wagonVM = new WagonViewModel(newWagon, _dispatcher);
-        Wagons.Add(wagonVM);
+        var newWagon = new PassengerWagon { Name = "New Wagon" };
+        
+        // Add to Project master list
+        _project.PassengerWagons.Add(newWagon);
+        
+        // Add ID to Train
+        Model.WagonIds.Add(newWagon.Id);
+        
+        // Notify UI to refresh collection
+        OnPropertyChanged(nameof(Wagons));
     }
 
     [RelayCommand]
@@ -111,8 +145,13 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
     {
         if (wagonVM == null) return;
 
-        Model.Wagons.Remove(wagonVM.Model);
-        Wagons.Remove(wagonVM);
+        // Remove ID from Train
+        Model.WagonIds.Remove(wagonVM.Model.Id);
+        
+        // Note: We don't remove from Project wagons (might be used elsewhere)
+        
+        // Notify UI to refresh collection
+        OnPropertyChanged(nameof(Wagons));
     }
 
     /// <summary>
@@ -120,9 +159,10 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
     /// </summary>
     private void RenumberLocomotives()
     {
-        for (int i = 0; i < Locomotives.Count; i++)
+        var locomotives = Locomotives.ToList();
+        for (int i = 0; i < locomotives.Count; i++)
         {
-            Locomotives[i].Pos = (uint)(i + 1);
+            locomotives[i].Pos = (uint)(i + 1);
         }
     }
 
@@ -131,43 +171,69 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
     /// </summary>
     private void RenumberWagons()
     {
-        for (int i = 0; i < Wagons.Count; i++)
+        var wagons = Wagons.ToList();
+        for (int i = 0; i < wagons.Count; i++)
         {
-            Wagons[i].Pos = (uint)(i + 1);
+            wagons[i].Pos = (uint)(i + 1);
         }
     }
 
     /// <summary>
     /// Handles locomotive reordering after drag & drop.
+    /// Updates Model.LocomotiveIds to match new UI order.
     /// </summary>
     [RelayCommand]
     public void LocomotivesReordered()
     {
-        // Update Model.Locomotives to match ViewModel order
-        Model.Locomotives.Clear();
-        foreach (var locomotiveVM in Locomotives)
+        // Get current UI order
+        var currentLocomotives = Locomotives.ToList();
+        
+        // Update Model.LocomotiveIds to match ViewModel order
+        Model.LocomotiveIds.Clear();
+        foreach (var locomotiveVM in currentLocomotives)
         {
-            Model.Locomotives.Add(locomotiveVM.Model);
+            Model.LocomotiveIds.Add(locomotiveVM.Model.Id);
         }
 
         // Renumber based on new order
         RenumberLocomotives();
+        
+        // Notify UI
+        OnPropertyChanged(nameof(Locomotives));
     }
 
     /// <summary>
     /// Handles wagon reordering after drag & drop.
+    /// Updates Model.WagonIds to match new UI order.
     /// </summary>
     [RelayCommand]
     public void WagonsReordered()
     {
-        // Update Model.Wagons to match ViewModel order
-        Model.Wagons.Clear();
-        foreach (var wagonVM in Wagons)
+        // Get current UI order
+        var currentWagons = Wagons.ToList();
+        
+        // Update Model.WagonIds to match ViewModel order
+        Model.WagonIds.Clear();
+        foreach (var wagonVM in currentWagons)
         {
-            Model.Wagons.Add(wagonVM.Model);
+            Model.WagonIds.Add(wagonVM.Model.Id);
         }
 
         // Renumber based on new order
         RenumberWagons();
+        
+        // Notify UI
+        OnPropertyChanged(nameof(Wagons));
+    }
+
+    /// <summary>
+    /// Refreshes the Locomotives and Wagons collections.
+    /// Call this after external changes to Project master lists.
+    /// </summary>
+    public void RefreshCollections()
+    {
+        OnPropertyChanged(nameof(Locomotives));
+        OnPropertyChanged(nameof(Wagons));
+        OnPropertyChanged(nameof(Locomotive));
     }
 }

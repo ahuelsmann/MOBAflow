@@ -26,9 +26,9 @@ public class ValidationService
         if (journey == null)
             return ValidationResult.Failure("Journey is null");
 
-        // Check if any Journey references this Journey as NextJourney
+        // Check if any Journey references this Journey as NextJourneyId
         var referencingJourney = _project.Journeys
-            .FirstOrDefault(j => j.NextJourney == journey);
+            .FirstOrDefault(j => j.NextJourneyId == journey.Id);
 
         if (referencingJourney != null)
         {
@@ -48,31 +48,18 @@ public class ValidationService
         if (workflow == null)
             return ValidationResult.Failure("Workflow is null");
 
-        // Check if any Station uses this Workflow
-        foreach (var journey in _project.Journeys)
+        // Check if any Station uses this Workflow (via WorkflowId)
+        var referencingStation = _project.Stations
+            .FirstOrDefault(s => s.WorkflowId == workflow.Id);
+
+        if (referencingStation != null)
         {
-            var referencingStation = journey.Stations
-                .FirstOrDefault(s => s.Flow?.Name == workflow.Name);
-
-            if (referencingStation != null)
-            {
-                return ValidationResult.Failure(
-                    $"Workflow '{workflow.Name}' cannot be deleted because it is used by Station '{referencingStation.Name}' in Journey '{journey.Name}'.");
-            }
-
-            // Check if any Platform uses this Workflow
-            foreach (var station in journey.Stations)
-            {
-                var referencingPlatform = station.Platforms
-                    .FirstOrDefault(p => p.Flow?.Name == workflow.Name);
-
-                if (referencingPlatform != null)
-                {
-                    return ValidationResult.Failure(
-                        $"Workflow '{workflow.Name}' cannot be deleted because it is used by Platform '{referencingPlatform.Name}' at Station '{station.Name}' in Journey '{journey.Name}'.");
-                }
-            }
+            return ValidationResult.Failure(
+                $"Workflow '{workflow.Name}' cannot be deleted because it is used by Station '{referencingStation.Name}'.");
         }
+
+        // Note: Platform.Flow check removed - Platforms don't have Workflows in current architecture
+        // (They might be added in Phase 2)
 
         return ValidationResult.Success();
     }
@@ -108,9 +95,9 @@ public class ValidationService
         if (locomotive == null)
             return ValidationResult.Failure("Locomotive is null");
 
-        // Check if any Train uses this Locomotive
+        // Check if any Train uses this Locomotive (via LocomotiveIds)
         var referencingTrain = _project.Trains
-            .FirstOrDefault(t => t.Locomotives.Any(l => l.Name == locomotive.Name));
+            .FirstOrDefault(t => t.LocomotiveIds.Contains(locomotive.Id));
 
         if (referencingTrain != null)
         {
@@ -130,9 +117,9 @@ public class ValidationService
         if (wagon == null)
             return ValidationResult.Failure("Wagon is null");
 
-        // Check if any Train uses this Wagon
+        // Check if any Train uses this Wagon (via WagonIds)
         var referencingTrain = _project.Trains
-            .FirstOrDefault(t => t.Wagons.Any(w => w.Name == wagon.Name));
+            .FirstOrDefault(t => t.WagonIds.Contains(wagon.Id));
 
         if (referencingTrain != null)
         {

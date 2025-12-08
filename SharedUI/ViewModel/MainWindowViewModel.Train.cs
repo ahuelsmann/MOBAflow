@@ -64,7 +64,7 @@ public partial class MainWindowViewModel
             CurrentProjectViewModel.Model.Trains,
             CurrentProjectViewModel.Trains,
             () => new Train { Name = "New Train" },
-            model => new TrainViewModel(model));
+            model => new TrainViewModel(model, CurrentProjectViewModel.Model, _uiDispatcher));
 
         SelectedTrain = train;
         HasUnsavedChanges = true;
@@ -196,18 +196,23 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private void AddLocomotiveToComposition()
     {
-        if (SelectedTrain == null) return;
+        if (SelectedTrain == null || CurrentProjectViewModel == null) return;
 
-        // TODO: Enhance to select from global library
+        // Create new locomotive
         var newLocomotive = new Locomotive
         {
             Name = "New Locomotive",
             DigitalAddress = 3
         };
 
-        SelectedTrain.Model.Locomotives.Add(newLocomotive);
-        var locomotiveVM = new LocomotiveViewModel(newLocomotive);
-        SelectedTrain.Locomotives.Add(locomotiveVM);
+        // Add to Project master list
+        CurrentProjectViewModel.Model.Locomotives.Add(newLocomotive);
+        
+        // Add ID to Train
+        SelectedTrain.Model.LocomotiveIds.Add(newLocomotive.Id);
+        
+        // Refresh TrainViewModel collections
+        SelectedTrain.RefreshCollections();
 
         HasUnsavedChanges = true;
     }
@@ -215,18 +220,23 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private void AddWagonToComposition()
     {
-        if (SelectedTrain == null) return;
+        if (SelectedTrain == null || CurrentProjectViewModel == null) return;
 
-        // TODO: Enhance to select from global library
+        // Create new wagon
         var newWagon = new PassengerWagon
         {
             Name = "New Passenger Wagon",
             WagonClass = PassengerClass.Second
         };
 
-        SelectedTrain.Model.Wagons.Add(newWagon);
-        var wagonVM = new PassengerWagonViewModel(newWagon);
-        SelectedTrain.Wagons.Add(wagonVM);
+        // Add to Project master list
+        CurrentProjectViewModel.Model.PassengerWagons.Add(newWagon);
+        
+        // Add ID to Train
+        SelectedTrain.Model.WagonIds.Add(newWagon.Id);
+        
+        // Refresh TrainViewModel collections
+        SelectedTrain.RefreshCollections();
 
         HasUnsavedChanges = true;
     }
