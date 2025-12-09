@@ -10,10 +10,7 @@ using Moba.Domain.Enum;
 /// </summary>
 public class AnnouncementViewModel : WorkflowActionViewModel
 {
-    public AnnouncementViewModel(WorkflowAction action) 
-        : base(action, ActionType.Announcement)
-    {
-    }
+    public AnnouncementViewModel(WorkflowAction action) : base(action, ActionType.Announcement) { }
 
     /// <summary>
     /// Text to be spoken (supports templates: {JourneyName}, {StationName}).

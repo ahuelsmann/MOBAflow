@@ -17,4 +17,3 @@ public interface IPreferencesService
     /// </summary>
     bool AutoLoadLastSolution { get; set; }
 }
-

@@ -10,10 +10,7 @@ using Moba.Domain.Enum;
 /// </summary>
 public class AudioViewModel : WorkflowActionViewModel
 {
-    public AudioViewModel(WorkflowAction action) 
-        : base(action, ActionType.Audio)
-    {
-    }
+    public AudioViewModel(WorkflowAction action) : base(action, ActionType.Audio) { }
 
     /// <summary>
     /// Path to audio file (relative or absolute).

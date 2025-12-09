@@ -51,8 +51,8 @@ public class WinUIAdapterDispatchTests
         
         // Create a testable JourneyManager
         var z21Mock = new Mock<IZ21>();
-        var actionExecutorMock = new Mock<ActionExecutor>(z21Mock.Object);
-        var workflowService = new WorkflowService(actionExecutorMock.Object, z21Mock.Object);
+        var actionExecutor = new ActionExecutor(z21Mock.Object);
+        var workflowService = new WorkflowService(actionExecutor);
         var journeyManager = new TestableJourneyManager(z21Mock.Object, project, workflowService);
 
         var vm = new Moba.SharedUI.ViewModel.JourneyViewModel(journey, project, state, journeyManager, dispatcher);

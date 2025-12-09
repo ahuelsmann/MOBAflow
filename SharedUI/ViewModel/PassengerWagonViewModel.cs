@@ -11,8 +11,7 @@ using Moba.SharedUI.Interface;
 /// </summary>
 public partial class PassengerWagonViewModel : WagonViewModel
 {
-    public PassengerWagonViewModel(PassengerWagon model, IUiDispatcher? dispatcher = null)
-        : base(model, dispatcher)
+    public PassengerWagonViewModel(PassengerWagon model, IUiDispatcher? dispatcher = null) : base(model, dispatcher)
     {
         PassengerWagonModel = model;
     }

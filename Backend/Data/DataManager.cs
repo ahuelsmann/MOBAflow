@@ -14,24 +14,6 @@ public class DataManager
     public List<City> Cities { get; set; }
 
     /// <summary>
-    /// Save the data.
-    /// </summary>
-    /// <param name="path">Expects the full path including file name.</param>
-    /// <param name="solution">Instance of DataManager to be saved.</param>
-    public static async Task SaveAsync(string path, DataManager? solution)
-    {
-        if (!string.IsNullOrEmpty(path) && solution != null)
-        {
-            JsonSerializerSettings settings = new()
-            {
-                Formatting = Formatting.Indented,
-            };
-            string json = JsonConvert.SerializeObject(solution, settings);
-            await File.WriteAllTextAsync(path, json).ConfigureAwait(false);
-        }
-    }
-
-    /// <summary>
     /// Load the data.
     /// </summary>
     /// <param name="path">Expects the full path including file name.</param>

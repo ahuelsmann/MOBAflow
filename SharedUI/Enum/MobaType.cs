@@ -16,5 +16,5 @@ public enum MobaType
     Action,
     Train,
     Locomotive,
-    Wagon
+    Wagon,
 }

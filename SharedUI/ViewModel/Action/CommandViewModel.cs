@@ -10,10 +10,7 @@ using Moba.Domain.Enum;
 /// </summary>
 public class CommandViewModel : WorkflowActionViewModel
 {
-    public CommandViewModel(WorkflowAction action) 
-        : base(action, ActionType.Command)
-    {
-    }
+    public CommandViewModel(WorkflowAction action) : base(action, ActionType.Command) { }
 
     /// <summary>
     /// Locomotive address (DCC address).

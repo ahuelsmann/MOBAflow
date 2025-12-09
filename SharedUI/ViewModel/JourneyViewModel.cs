@@ -118,9 +118,6 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
         set => SetProperty(_journey.Text, value, _journey, (m, v) => m.Text = v);
     }
 
-    // Note: Train property removed - Journey in Domain model no longer has direct Train reference
-    // Train-Journey relationship is now managed at Solution/Project level
-
     /// <summary>
     /// Stations collection resolved from Project.Stations using StationIds.
     /// Cached for UI binding performance.

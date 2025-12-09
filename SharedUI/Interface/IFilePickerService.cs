@@ -12,4 +12,3 @@ public interface IFilePickerService
     /// </summary>
     Task<string?> PickJsonFileAsync();
 }
-

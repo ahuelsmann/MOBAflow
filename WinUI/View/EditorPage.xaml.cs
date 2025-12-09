@@ -5,8 +5,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 using Moba.SharedUI.ViewModel;
-
-using Microsoft.UI.Xaml.Media;
 /// <summary>
 /// Editor page with TabView navigation.
 /// All editor tabs are defined as TabViewItems in XAML.

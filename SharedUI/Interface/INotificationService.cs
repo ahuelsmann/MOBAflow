@@ -12,4 +12,3 @@ public interface INotificationService
     /// </summary>
     void PlayNotificationSound();
 }
-
