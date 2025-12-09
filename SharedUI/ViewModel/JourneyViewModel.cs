@@ -76,6 +76,11 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
         });
     }
 
+    /// <summary>
+    /// Gets the unique identifier of the journey.
+    /// </summary>
+    public Guid Id => _journey.Id;
+
     public uint InPort
     {
         get => _journey.InPort;

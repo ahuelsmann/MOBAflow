@@ -139,6 +139,13 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private MobaType currentSelectedEntityType = MobaType.None;
 
+    /// <summary>
+    /// The currently selected object to display in the properties panel.
+    /// Set directly by OnSelected*Changed handlers instead of using priority hierarchy.
+    /// </summary>
+    [ObservableProperty]
+    private object? currentSelectedObject;
+
     [ObservableProperty]
     private bool isZ21Connected;
 

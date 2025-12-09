@@ -1,0 +1,140 @@
+
+## 🚫 Anti-Patterns to Avoid
+
+### **1. Priority Hierarchy in Computed Properties**
+
+**Problem:** Computed properties with if-else chains create hidden dependencies and unexpected behavior.
+
+```csharp
+// ❌ WRONG: Hidden Priority Logic
+public object? CurrentSelectedObject
+{
+    get
+    {
+        if (SelectedChild != null) return SelectedChild;    // Higher priority
+        if (SelectedParent != null) return SelectedParent;  // Lower priority
+        return null;
+    }
+}
+
+// Result: Clicking Parent when Child is selected → Still shows Child!
+```
+
+**Why it's bad:**
+- ❌ Hidden business logic in getter
+- ❌ Violates Principle of Least Astonishment
+- ❌ Hard to debug (no breakpoint in getter effective)
+- ❌ Requires manual state clearing everywhere
+
+**Solution:** Use `[ObservableProperty]` with explicit assignment in `OnChanged` handlers.
+
+```csharp
+// ✅ CORRECT: Explicit Assignment
+[ObservableProperty]
+private object? currentSelectedObject;
+
+partial void OnSelectedParentChanged(ParentViewModel? value)
+{
+    if (value != null)
+        CurrentSelectedObject = value;  // Explicit & Clear!
+}
+```
+
+---
+
+### **2. Manual State Clearing in Commands**
+
+**Problem:** Requiring manual cleanup in every command creates boilerplate and error-prone code.
+
+```csharp
+// ❌ WRONG: Manual Clearing Everywhere
+[RelayCommand]
+private void SelectParent(ParentViewModel? parent)
+{
+    SelectedChild = null;      // Manual clearing
+    SelectedGrandChild = null;  // Manual clearing
+    SelectedParent = parent;
+    OnPropertyChanged(nameof(CurrentView));
+}
+
+[RelayCommand]
+private void SelectChild(ChildViewModel? child)
+{
+    SelectedGrandChild = null;  // Manual clearing
+    SelectedChild = child;
+    OnPropertyChanged(nameof(CurrentView));
+}
+```
+
+**Why it's bad:**
+- ❌ Boilerplate code in every command
+- ❌ Easy to forget clearing (bugs!)
+- ❌ Maintenance nightmare (add new property → update all commands)
+
+**Solution:** Direct assignment automatically "replaces" previous selection.
+
+```csharp
+// ✅ CORRECT: No Manual Clearing Needed
+[RelayCommand]
+private void SelectParent(ParentViewModel? parent)
+{
+    SelectedParent = parent;  // That's it!
+}
+
+partial void OnSelectedParentChanged(ParentViewModel? value)
+{
+    if (value != null)
+        CurrentView = value;  // Automatic replacement!
+}
+```
+
+---
+
+### **3. Callback-Heavy Selection Managers**
+
+**Problem:** Over-engineering selection logic with callbacks and helper classes.
+
+```csharp
+// ❌ WRONG: Too Much Abstraction
+_selectionManager.SelectEntity(
+    entity,
+    type,
+    currentSelected,
+    setter,
+    onReselect: () => OnPropertyChanged(...),
+    clearChildren: () => { /* manual clearing */ }
+);
+```
+
+**Why it's bad:**
+- ❌ Hidden logic in helper class
+- ❌ Hard to understand control flow
+- ❌ Overkill for simple property assignment
+
+**Solution:** Keep it simple - direct property assignment.
+
+```csharp
+// ✅ CORRECT: Simple & Direct
+[RelayCommand]
+private void SelectEntity(EntityViewModel? entity)
+{
+    SelectedEntity = entity;
+}
+```
+
+---
+
+### **Pattern Recognition: Code Smells**
+
+If your selection management has:
+- ✋ **Manual clearing in every command** → Simplify to direct assignment
+- ✋ **Complex computed properties** → Use `[ObservableProperty]` + OnChanged
+- ✋ **Callback-heavy helpers** → Remove abstraction, use direct calls
+- ✋ **Priority hierarchies** → Rethink: Why do you need this?
+
+**Remember:** Simple is not simplistic. Simple is elegant. 🎯
+
+---
+
+**Last Updated:** 2025-12-09  
+**Related:** Selection Management Best Practices

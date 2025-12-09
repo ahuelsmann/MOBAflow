@@ -53,6 +53,21 @@ public class EntityTemplateSelector : DataTemplateSelector
     public DataTemplate? ActionTemplate { get; set; }
 
     /// <summary>
+    /// DataTemplate for AnnouncementViewModel
+    /// </summary>
+    public DataTemplate? AnnouncementActionTemplate { get; set; }
+
+    /// <summary>
+    /// DataTemplate for AudioViewModel
+    /// </summary>
+    public DataTemplate? AudioActionTemplate { get; set; }
+
+    /// <summary>
+    /// DataTemplate for CommandViewModel
+    /// </summary>
+    public DataTemplate? CommandActionTemplate { get; set; }
+
+    /// <summary>
     /// Fallback DataTemplate for unknown types
     /// </summary>
     public DataTemplate? DefaultTemplate { get; set; }
@@ -69,7 +84,11 @@ public class EntityTemplateSelector : DataTemplateSelector
             PassengerWagonViewModel => WagonTemplate,
             GoodsWagonViewModel => WagonTemplate,
             ProjectViewModel => ProjectTemplate,
-            Domain.WorkflowAction => ActionTemplate,
+            SharedUI.ViewModel.Action.AnnouncementViewModel => AnnouncementActionTemplate,
+            SharedUI.ViewModel.Action.AudioViewModel => AudioActionTemplate,
+            SharedUI.ViewModel.Action.CommandViewModel => CommandActionTemplate,
+            SharedUI.ViewModel.Action.WorkflowActionViewModel => ActionTemplate,  // Generic fallback
+            Domain.WorkflowAction => ActionTemplate,  // Domain object fallback
             _ => DefaultTemplate
         };
     }

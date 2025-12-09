@@ -302,3 +302,297 @@ WinUI/
 // ❌ Avoid
 <TextBlock Text="{Binding Title}" /> <!-- Runtime, slower -->
 ```
+
+
+## 🎨 DataTemplate Binding Rules (x:Bind vs Binding)
+
+### **Decision Matrix:**
+
+| Context | Binding Type | Performance | Reason |
+|---------|--------------|-------------|--------|
+| **Page/UserControl** | `{x:Bind}` ✅ | 10x faster | Compiled, Type-Safe |
+| **Inline DataTemplate (in Page)** | `{x:Bind}` ✅ | 10x faster | With x:DataType attribute |
+| **ResourceDictionary DataTemplate** | `{Binding}` ⚠️ | Slower | No Code-Behind available! |
+| **Control Template** | `{TemplateBinding}` ✅ | Fast | Template-Specific |
+
+---
+
+### **Rule 1: Page/UserControl → x:Bind**
+
+```xaml
+<!-- ✅ CORRECT: Page with x:Bind -->
+<Page x:Class="Moba.WinUI.View.EditorPage"
+      xmlns:vm="using:Moba.SharedUI.ViewModel"
+      DataContext="{x:Bind ViewModel}">
+    
+    <TextBox Header="Name" Text="{x:Bind ViewModel.Name, Mode=TwoWay}" />
+    <CheckBox Content="Active" IsChecked="{x:Bind ViewModel.IsActive, Mode=TwoWay}" />
+</Page>
+```
+
+**Why x:Bind?**
+- ✅ Compile-time type checking (errors during build)
+- ✅ 10x faster than `Binding` (no Reflection)
+- ✅ `Mode=OneTime` is default (Performance!)
+- ✅ IntelliSense support
+
+---
+
+### **Rule 2: Inline DataTemplate → x:Bind with x:DataType**
+
+```xaml
+<!-- ✅ CORRECT: Inline DataTemplate with x:DataType -->
+<ListView ItemsSource="{x:Bind ViewModel.Stations}">
+    <ListView.ItemTemplate>
+        <DataTemplate x:DataType="vm:StationViewModel">
+            <StackPanel>
+                <TextBlock Text="{x:Bind Name}" FontWeight="Bold" />
+                <TextBlock Text="{x:Bind InPort}" Foreground="Gray" />
+            </StackPanel>
+        </DataTemplate>
+    </ListView.ItemTemplate>
+</ListView>
+```
+
+**Important:** `x:DataType` is **mandatory** for x:Bind in DataTemplate!
+
+---
+
+### **Rule 3: ResourceDictionary DataTemplate → Binding**
+
+```xaml
+<!-- ❌ WRONG: ResourceDictionary with x:Bind -->
+<ResourceDictionary>
+    <DataTemplate x:Key="StationTemplate">
+        <TextBox Text="{x:Bind Name, Mode=TwoWay}" />  
+        <!-- ❌ Compiler Error WMC1119: No code-behind! -->
+    </DataTemplate>
+</ResourceDictionary>
+
+<!-- ✅ CORRECT: ResourceDictionary with Binding -->
+<ResourceDictionary>
+    <DataTemplate x:Key="StationTemplate">
+        <StackPanel Padding="16" Spacing="16">
+            <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
+            <NumberBox Header="InPort" Value="{Binding InPort, Mode=TwoWay}" />
+        </StackPanel>
+    </DataTemplate>
+</ResourceDictionary>
+```
+
+**Why Binding?**
+- ⚠️ ResourceDictionary files have **no Code-Behind**
+- ⚠️ `x:Bind` requires Code-Behind at compile-time
+- ✅ `Binding` is runtime binding (DataContext-based)
+
+---
+
+### **Compiler Error: WMC1119**
+
+```
+WMC1119: This Xaml file must have a code-behind class to use {x:Bind}
+```
+
+**Solution:**
+1. **Option A:** Use Binding instead of x:Bind
+2. **Option B:** Move DataTemplate from ResourceDictionary into Page/UserControl
+
+---
+
+### **Real-World Example: MOBAflow EntityTemplates.xaml**
+
+```xaml
+<!-- WinUI/Resources/EntityTemplates.xaml -->
+<ResourceDictionary>
+    <!-- ✅ CORRECT: Use Binding in ResourceDictionary -->
+    <DataTemplate x:Key="JourneyTemplate">
+        <ScrollViewer>
+            <StackPanel Padding="16" Spacing="16">
+                <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Journey Properties" />
+                <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
+                <NumberBox Header="InPort" Value="{Binding InPort, Mode=TwoWay}" SpinButtonPlacementMode="Inline" />
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+</ResourceDictionary>
+```
+
+**Usage in Page:**
+
+```xaml
+<!-- EditorPage.xaml -->
+<Page x:Class="Moba.WinUI.View.EditorPage">
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Resources/EntityTemplates.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Page.Resources>
+    
+    <!-- ContentControl applies template based on object type -->
+    <ContentControl Content="{x:Bind ViewModel.CurrentSelectedObject, Mode=OneWay}"
+                    ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
+</Page>
+```
+
+---
+
+### **Performance Comparison:**
+
+| Binding Type | Resolution | Type Safety | Performance |
+|--------------|------------|-------------|-------------|
+| `{x:Bind}` | Compile-time | ✅ Yes | 🚀 10x |
+| `{Binding}` | Runtime | ❌ No | ⚠️ 1x |
+| `{TemplateBinding}` | Compile-time | ✅ Yes | 🚀 10x |
+
+**Recommendation:**
+- Use `x:Bind` **always** when possible (Page, UserControl, Inline Templates)
+- Use `Binding` **only** in ResourceDictionary DataTemplates
+
+---
+
+**Last Updated:** 2025-12-09  
+**Related Error:** WMC1119
+
+
+
+## 🚫 Anti-Patterns to Avoid
+
+### **1. Priority Hierarchy in Computed Properties**
+
+**Problem:** Computed properties with if-else chains create hidden dependencies and unexpected behavior.
+
+```csharp
+// ❌ WRONG: Hidden Priority Logic
+public object? CurrentSelectedObject
+{
+    get
+    {
+        if (SelectedChild != null) return SelectedChild;    // Higher priority
+        if (SelectedParent != null) return SelectedParent;  // Lower priority
+        return null;
+    }
+}
+
+// Result: Clicking Parent when Child is selected → Still shows Child!
+```
+
+**Why it's bad:**
+- ❌ Hidden business logic in getter
+- ❌ Violates Principle of Least Astonishment
+- ❌ Hard to debug (no breakpoint in getter effective)
+- ❌ Requires manual state clearing everywhere
+
+**Solution:** Use `[ObservableProperty]` with explicit assignment in `OnChanged` handlers.
+
+```csharp
+// ✅ CORRECT: Explicit Assignment
+[ObservableProperty]
+private object? currentSelectedObject;
+
+partial void OnSelectedParentChanged(ParentViewModel? value)
+{
+    if (value != null)
+        CurrentSelectedObject = value;  // Explicit & Clear!
+}
+```
+
+---
+
+### **2. Manual State Clearing in Commands**
+
+**Problem:** Requiring manual cleanup in every command creates boilerplate and error-prone code.
+
+```csharp
+// ❌ WRONG: Manual Clearing Everywhere
+[RelayCommand]
+private void SelectParent(ParentViewModel? parent)
+{
+    SelectedChild = null;      // Manual clearing
+    SelectedGrandChild = null;  // Manual clearing
+    SelectedParent = parent;
+    OnPropertyChanged(nameof(CurrentView));
+}
+
+[RelayCommand]
+private void SelectChild(ChildViewModel? child)
+{
+    SelectedGrandChild = null;  // Manual clearing
+    SelectedChild = child;
+    OnPropertyChanged(nameof(CurrentView));
+}
+```
+
+**Why it's bad:**
+- ❌ Boilerplate code in every command
+- ❌ Easy to forget clearing (bugs!)
+- ❌ Maintenance nightmare (add new property → update all commands)
+
+**Solution:** Direct assignment automatically "replaces" previous selection.
+
+```csharp
+// ✅ CORRECT: No Manual Clearing Needed
+[RelayCommand]
+private void SelectParent(ParentViewModel? parent)
+{
+    SelectedParent = parent;  // That's it!
+}
+
+partial void OnSelectedParentChanged(ParentViewModel? value)
+{
+    if (value != null)
+        CurrentView = value;  // Automatic replacement!
+}
+```
+
+---
+
+### **3. Callback-Heavy Selection Managers**
+
+**Problem:** Over-engineering selection logic with callbacks and helper classes.
+
+```csharp
+// ❌ WRONG: Too Much Abstraction
+_selectionManager.SelectEntity(
+    entity,
+    type,
+    currentSelected,
+    setter,
+    onReselect: () => OnPropertyChanged(...),
+    clearChildren: () => { /* manual clearing */ }
+);
+```
+
+**Why it's bad:**
+- ❌ Hidden logic in helper class
+- ❌ Hard to understand control flow
+- ❌ Overkill for simple property assignment
+
+**Solution:** Keep it simple - direct property assignment.
+
+```csharp
+// ✅ CORRECT: Simple & Direct
+[RelayCommand]
+private void SelectEntity(EntityViewModel? entity)
+{
+    SelectedEntity = entity;
+}
+```
+
+---
+
+### **Pattern Recognition: Code Smells**
+
+If your selection management has:
+- ✋ **Manual clearing in every command** → Simplify to direct assignment
+- ✋ **Complex computed properties** → Use `[ObservableProperty]` + OnChanged
+- ✋ **Callback-heavy helpers** → Remove abstraction, use direct calls
+- ✋ **Priority hierarchies** → Rethink: Why do you need this?
+
+**Remember:** Simple is not simplistic. Simple is elegant. 🎯
+
+---
+
+**Last Updated:** 2025-12-09  
+**Related:** Selection Management Best Practices

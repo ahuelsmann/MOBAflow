@@ -38,6 +38,11 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
         );
     }
 
+    /// <summary>
+    /// Gets the unique identifier of the workflow.
+    /// </summary>
+    public Guid Id => Model.Id;
+
     public string Name
     {
         get => Model.Name;

@@ -23,17 +23,33 @@ public class EntitySelectionManager : ObservableObject
     /// <summary>
     /// Generic selection logic: Set entity and notify.
     /// The ContentControl automatically picks the right template based on type.
+    /// Supports re-selection callback for forcing UI refresh when selecting same item.
+    /// Clears child selections to maintain correct hierarchy (e.g., selecting Journey clears Station).
     /// </summary>
     public void SelectEntity<T>(
         T? entity,
         MobaType type,
         T? currentSelected,
-        Action<T?> setSelected) where T : class, ISelectableEntity
+        Action<T?> setSelected,
+        Action? onReselect = null,
+        Action? clearChildSelections = null) where T : class, ISelectableEntity
     {
-        // Simply set the entity
+        // Check if this is a re-selection (same entity clicked again)
+        bool isReselection = EqualityComparer<T>.Default.Equals(entity, currentSelected);
+
+        // Clear child selections BEFORE setting new selection (maintain hierarchy)
+        clearChildSelections?.Invoke();
+
+        // Set the entity (even if same, setter might do additional work)
         setSelected(entity);
 
         // Notify PropertyGrid to refresh
         _notifySelectionPropertiesChanged();
+
+        // If re-selection and callback provided, execute it
+        if (isReselection && onReselect != null)
+        {
+            onReselect();
+        }
     }
 }

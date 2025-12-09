@@ -1,0 +1,146 @@
+### **Domain Architecture**
+- ✅ **GUID References Only:** `Journey.StationIds = List<Guid>` (not `List<Station>`)
+- ✅ **Single Source of Truth:** Project aggregate root has master lists
+- ✅ **Pure POCOs:** No INotifyPropertyChanged, no attributes
+
+### **ViewModel 1:1 Property Mapping Rule**
+
+**Principle:** Every Domain property **MUST** have a corresponding ViewModel property with **the same name** and **compatible type**.
+
+#### **Rule Details:**
+
+1. **Same Name:** Domain property `InPort` → ViewModel property `InPort` (NOT `FeedbackInPort`!)
+2. **Same/Compatible Type:** 
+   - Domain `uint` → ViewModel `uint` ✅
+   - Domain `string` → ViewModel `string?` ✅ (nullable OK)
+   - Domain `List<Guid>` → ViewModel `List<Guid>` ✅
+3. **Read-Only for IDs:** `Id` property should be read-only (`public Guid Id => Model.Id;`)
+4. **Additional Runtime Properties OK:** ViewModel can have extra properties (e.g., `CurrentStation`, `IsCurrentStation`)
+
+#### **Example: Train Entity**
+
+```csharp
+// Domain/Train.cs (Pure POCO)
+public class Train
+{
+    public Guid Id { get; set; }                    // ✅ Unique identifier
+    public string Name { get; set; }                 // ✅ Editable
+    public string Description { get; set; }          // ✅ Editable
+    public TrainType TrainType { get; set; }        // ✅ Enum
+    public ServiceType ServiceType { get; set; }    // ✅ Enum
+    public bool IsDoubleTraction { get; set; }      // ✅ Boolean flag
+    public List<Guid> LocomotiveIds { get; set; }   // ✅ GUID references
+    public List<Guid> WagonIds { get; set; }        // ✅ GUID references
+}
+```
+
+```csharp
+// SharedUI/ViewModel/TrainViewModel.cs (1:1 Mapping + Resolved Collections)
+public partial class TrainViewModel : ObservableObject
+{
+    // ✅ 1:1 Property Mapping (same names!)
+    public Guid Id => Model.Id;  // Read-only
+    
+    public string Name
+    {
+        get => Model.Name;
+        set => SetProperty(Model.Name, value, Model, (m, v) => m.Name = v);
+    }
+    
+    public string Description
+    {
+        get => Model.Description;
+        set => SetProperty(Model.Description, value, Model, (m, v) => m.Description = v);
+    }
+    
+    public TrainType TrainType
+    {
+        get => Model.TrainType;
+        set => SetProperty(Model.TrainType, value, Model, (m, v) => m.TrainType = v);
+    }
+    
+    public ServiceType ServiceType
+    {
+        get => Model.ServiceType;
+        set => SetProperty(Model.ServiceType, value, Model, (m, v) => m.ServiceType = v);
+    }
+    
+    public bool IsDoubleTraction
+    {
+        get => Model.IsDoubleTraction;
+        set => SetProperty(Model.IsDoubleTraction, value, Model, (m, v) => m.IsDoubleTraction = v);
+    }
+    
+    // ✅ 1:1 Mapping for GUID Lists (direct Domain property access)
+    public List<Guid> LocomotiveIds
+    {
+        get => Model.LocomotiveIds;
+        set => SetProperty(Model.LocomotiveIds, value, Model, (m, v) => m.LocomotiveIds = v);
+    }
+    
+    public List<Guid> WagonIds
+    {
+        get => Model.WagonIds;
+        set => SetProperty(Model.WagonIds, value, Model, (m, v) => m.WagonIds = v);
+    }
+    
+    // ✅ ADDITIONAL: Resolved Collections (ViewModel-Specific Feature)
+    public ObservableCollection<LocomotiveViewModel> Locomotives =>
+        new ObservableCollection<LocomotiveViewModel>(
+            Model.LocomotiveIds
+                .Select(id => _project.Locomotives.FirstOrDefault(l => l.Id == id))
+                .Where(l => l != null)
+                .Select(l => new LocomotiveViewModel(l!, _dispatcher))
+        );
+    
+    public ObservableCollection<WagonViewModel> Wagons =>
+        new ObservableCollection<WagonViewModel>(
+            Model.WagonIds
+                .Select(id => {
+                    Wagon? wagon = _project.PassengerWagons.FirstOrDefault(w => w.Id == id);
+                    if (wagon == null)
+                        wagon = _project.GoodsWagons.FirstOrDefault(w => w.Id == id);
+                    return wagon;
+                })
+                .Where(w => w != null)
+                .Select(w => new WagonViewModel(w!, _dispatcher))
+        );
+}
+```
+
+#### **Why 1:1 Mapping?**
+
+1. **Maintainability:** Domain property rename → ViewModel breaks (compile-time error)
+2. **Testability:** Easy to verify ViewModel wraps Domain correctly
+3. **Serialization:** Domain → JSON → Domain (no circular references)
+4. **Refactoring Safety:** Breaking changes are immediately visible
+5. **Code Review:** Easy to spot missing properties
+
+#### **Anti-Pattern: Different Names**
+
+```csharp
+// ❌ WRONG: Different property name
+public class StationViewModel
+{
+    public uint FeedbackInPort => _station.InPort;  // ❌ Name mismatch!
+}
+
+// ✅ CORRECT: Same property name
+public class StationViewModel
+{
+    public uint InPort => _station.InPort;  // ✅ 1:1 mapping
+}
+```
+
+---
+
+### **ViewModel Resolution**
+```csharp
+// ✅ Resolve at runtime in ViewModel
+public ObservableCollection<StationViewModel> Stations =>
+    _journey.StationIds
+        .Select(id => _project.Stations.FirstOrDefault(s => s.Id == id))
+        .Where(s => s != null)
+        .Select(s => new StationViewModel(s, _project))
+        .ToObservableCollection();
+```

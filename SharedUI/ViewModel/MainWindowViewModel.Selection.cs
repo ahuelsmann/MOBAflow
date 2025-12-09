@@ -26,8 +26,8 @@ public partial class MainWindowViewModel
         SelectedLocomotive = null;
         SelectedWagon = null;
         
+        CurrentSelectedObject = SolutionViewModel;  // ✅ Direct assignment!
         CurrentSelectedEntityType = MobaType.Solution;
-        OnPropertyChanged(nameof(CurrentSelectedObject));
         NotifySelectionPropertiesChanged();
     }
 
@@ -36,24 +36,70 @@ public partial class MainWindowViewModel
         _selectionManager.SelectEntity(project, MobaType.Project, SelectedProject, v => SelectedProject = v);
 
     [RelayCommand]
-    private void SelectJourney(JourneyViewModel? journey) =>
-        _selectionManager.SelectEntity(journey, MobaType.Journey, SelectedJourney, v => SelectedJourney = v);
+    private void SelectJourney(JourneyViewModel? journey)
+    {
+        // ✅ Clear child selections first (Station, Action)
+        SelectedStation = null;
+        SelectedAction = null;
+        
+        SelectedJourney = journey;
+        
+        // ✅ Force update even if same journey (re-selection scenario)
+        if (journey != null)
+        {
+            CurrentSelectedObject = journey;
+            CurrentSelectedEntityType = MobaType.Journey;
+        }
+    }
 
     [RelayCommand]
-    private void SelectStation(StationViewModel? station) =>
-        _selectionManager.SelectEntity(station, MobaType.Station, SelectedStation, v => SelectedStation = v);
+    private void SelectStation(StationViewModel? station)
+    {
+        // ✅ Clear child selections first (Action)
+        SelectedAction = null;
+        
+        SelectedStation = station;
+        
+        // ✅ Force update even if same station (re-selection scenario)
+        if (station != null)
+        {
+            CurrentSelectedObject = station;
+            CurrentSelectedEntityType = MobaType.Station;
+        }
+    }
 
     [RelayCommand]
-    private void SelectWorkflow(WorkflowViewModel? workflow) =>
-        _selectionManager.SelectEntity(workflow, MobaType.Workflow, SelectedWorkflow, v => SelectedWorkflow = v);
+    private void SelectWorkflow(WorkflowViewModel? workflow)
+    {
+        // ✅ Clear child selections first (Action)
+        SelectedAction = null;
+        
+        SelectedWorkflow = workflow;
+        
+        // ✅ Force update even if same workflow (re-selection scenario)
+        if (workflow != null)
+        {
+            CurrentSelectedObject = workflow;
+            CurrentSelectedEntityType = MobaType.Workflow;
+        }
+    }
 
     [RelayCommand]
     private void SelectAction(object? action) =>
         SelectedAction = action;
 
     [RelayCommand]
-    private void SelectTrain(TrainViewModel? train) =>
-        _selectionManager.SelectEntity(train, MobaType.Train, SelectedTrain, v => SelectedTrain = v);
+    private void SelectTrain(TrainViewModel? train)
+    {
+        SelectedTrain = train;
+        
+        // ✅ Force update even if same train (re-selection scenario)
+        if (train != null)
+        {
+            CurrentSelectedObject = train;
+            CurrentSelectedEntityType = MobaType.Train;
+        }
+    }
 
     [RelayCommand]
     private void SelectLocomotive(LocomotiveViewModel? locomotive) =>
@@ -71,11 +117,11 @@ public partial class MainWindowViewModel
     {
         if (value != null)
         {
+            CurrentSelectedObject = value;  // ✅ Direct assignment!
             CurrentSelectedEntityType = MobaType.Project;
         }
         
         OnPropertyChanged(nameof(CurrentProjectViewModel));
-        OnPropertyChanged(nameof(CurrentSelectedObject));
         NotifySelectionPropertiesChanged();
     }
 
@@ -85,10 +131,10 @@ public partial class MainWindowViewModel
 
         if (value != null)
         {
+            CurrentSelectedObject = value;  // ✅ Direct assignment!
             CurrentSelectedEntityType = MobaType.Journey;
         }
         
-        OnPropertyChanged(nameof(CurrentSelectedObject));
         NotifySelectionPropertiesChanged();
     }
 
@@ -96,48 +142,44 @@ public partial class MainWindowViewModel
     {
         if (value != null)
         {
+            CurrentSelectedObject = value;  // ✅ Direct assignment!
             CurrentSelectedEntityType = MobaType.Station;
         }
         
-        OnPropertyChanged(nameof(CurrentSelectedObject));
         NotifySelectionPropertiesChanged();
-        RefreshCurrentSelectionCommand.Execute(null);  // Force refresh
     }
 
     partial void OnSelectedWorkflowChanged(WorkflowViewModel? value)
     {
         if (value != null)
         {
+            CurrentSelectedObject = value;  // ✅ Direct assignment!
             CurrentSelectedEntityType = MobaType.Workflow;
         }
         
-        OnPropertyChanged(nameof(CurrentSelectedObject));
         NotifySelectionPropertiesChanged();
-        RefreshCurrentSelectionCommand.Execute(null);  // Force refresh
     }
 
     partial void OnSelectedActionChanged(object? value)
     {
         if (value != null)
         {
+            CurrentSelectedObject = value;  // ✅ Direct assignment!
             CurrentSelectedEntityType = MobaType.Action;
         }
         
-        OnPropertyChanged(nameof(CurrentSelectedObject));
         NotifySelectionPropertiesChanged();
-        RefreshCurrentSelectionCommand.Execute(null);  // Force refresh
     }
 
     partial void OnSelectedTrainChanged(TrainViewModel? value)
     {
         if (value != null)
         {
+            CurrentSelectedObject = value;  // ✅ Direct assignment!
             CurrentSelectedEntityType = MobaType.Train;
         }
         
-        OnPropertyChanged(nameof(CurrentSelectedObject));
         NotifySelectionPropertiesChanged();
-        RefreshCurrentSelectionCommand.Execute(null);  // Force refresh
     }
 
     partial void OnSelectedLocomotiveChanged(LocomotiveViewModel? value)
@@ -187,29 +229,6 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(HasSelectedWorkflow));
         OnPropertyChanged(nameof(HasSelectedTrain));
         OnPropertyChanged(nameof(CurrentSelectedObject));
-    }
-
-    /// <summary>
-    /// Gets the most specific selected object for display in ContentControl.
-    /// Priority: Action > Station > Journey > Workflow > Locomotive > Wagon > Train > Project > Solution
-    /// </summary>
-    public object? CurrentSelectedObject
-    {
-        get
-        {
-            // Highest priority: most specific selection
-            if (SelectedAction != null) return SelectedAction;
-            if (SelectedStation != null) return SelectedStation;
-            if (SelectedJourney != null) return SelectedJourney;
-            if (SelectedWorkflow != null) return SelectedWorkflow;
-            if (SelectedLocomotive != null) return SelectedLocomotive;
-            if (SelectedWagon != null) return SelectedWagon;
-            if (SelectedTrain != null) return SelectedTrain;
-            if (SelectedProject != null) return SelectedProject;
-            if (SolutionViewModel != null) return SolutionViewModel;
-            
-            return null;
-        }
     }
 
     /// <summary>

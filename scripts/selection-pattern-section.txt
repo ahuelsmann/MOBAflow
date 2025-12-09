@@ -1,0 +1,159 @@
+
+## 🎯 Selection Management Best Practices (Dec 2025)
+
+### **Pattern: Direct Assignment in OnChanged**
+
+**Principle:** Set `CurrentSelectedObject` directly in `OnChanged` handlers instead of using computed properties with priority hierarchies.
+
+#### **✅ CORRECT: Direct Assignment**
+
+```csharp
+// MainWindowViewModel.cs
+[ObservableProperty]
+private object? currentSelectedObject;
+
+[ObservableProperty]
+private JourneyViewModel? selectedJourney;
+
+// MainWindowViewModel.Selection.cs
+partial void OnSelectedJourneyChanged(JourneyViewModel? value)
+{
+    if (value != null)
+    {
+        CurrentSelectedObject = value;  // ✅ Direct & Explicit!
+        CurrentSelectedEntityType = MobaType.Journey;
+    }
+}
+
+[RelayCommand]
+private void SelectJourney(JourneyViewModel? journey)
+{
+    SelectedJourney = journey;  // ✅ That's it! One line!
+}
+```
+
+**Why this works:**
+1. ✅ **Explicit:** Clear where `CurrentSelectedObject` is set
+2. ✅ **Simple:** No hidden logic, no manual clearing needed
+3. ✅ **Predictable:** User clicks Journey → Shows Journey (not blocked by children)
+4. ✅ **Debuggable:** Breakpoint in `OnChanged` shows flow
+
+---
+
+#### **❌ WRONG: Computed Property with Priority Hierarchy**
+
+```csharp
+// ❌ Anti-Pattern: Complex Getter
+public object? CurrentSelectedObject
+{
+    get
+    {
+        // Priority hell! Station blocks Journey!
+        if (SelectedAction != null) return SelectedAction;
+        if (SelectedStation != null) return SelectedStation;  // ❌ Blocks parent!
+        if (SelectedJourney != null) return SelectedJourney;  // Never reached!
+        if (SelectedWorkflow != null) return SelectedWorkflow;
+        // ...
+        return null;
+    }
+}
+
+// ❌ Anti-Pattern: Manual Clearing
+[RelayCommand]
+private void SelectJourney(JourneyViewModel? journey)
+{
+    // ❌ Manual state management everywhere!
+    SelectedStation = null;
+    SelectedAction = null;
+    
+    SelectedJourney = journey;
+    OnPropertyChanged(nameof(CurrentSelectedObject));
+}
+```
+
+**Why this is wrong:**
+1. ❌ **Hidden Logic:** Priority hierarchy not obvious
+2. ❌ **Complex:** Manual clearing in every command
+3. ❌ **Unpredictable:** Clicking Journey might still show Station
+4. ❌ **Hard to Debug:** Where does `CurrentSelectedObject` get set?
+
+---
+
+### **Pattern Comparison**
+
+| Aspect | Computed Property ❌ | Direct Assignment ✅ |
+|--------|---------------------|---------------------|
+| **LOC per Command** | 5-10 lines | 1 line |
+| **Manual Clearing** | Yes, everywhere | No, automatic |
+| **Hidden Logic** | Yes (priority) | No, explicit |
+| **Debuggability** | Hard | Easy |
+| **Maintainability** | Low | High |
+| **User Expectation** | Violated | Met |
+
+---
+
+### **Why We Learned This (Dec 2025)**
+
+**Problem:** Journey → Station → Journey nochmal → Properties zeigt **Station** (not Journey!)
+
+**Root Cause:** Priority Hierarchy in computed property blocked parent selection:
+```csharp
+if (SelectedStation != null) return SelectedStation;  // ❌ Always returns Station!
+if (SelectedJourney != null) return SelectedJourney;  // Never reached!
+```
+
+**Solution Evolution:**
+1. ❌ **Attempt 1:** RefreshCurrentSelection Command → Didn't clear children
+2. ❌ **Attempt 2:** EntitySelectionManager Callbacks → Too complex
+3. ❌ **Attempt 3:** Manual Child Clearing → Boilerplate everywhere
+4. ✅ **Final Solution:** Direct Assignment in OnChanged → Simple & Works!
+
+---
+
+### **KISS Principle for MVVM Properties**
+
+**Rule:** Observable properties should be simple and setable. Complex logic belongs in `OnChanged` handlers.
+
+#### **✅ DO:**
+```csharp
+[ObservableProperty]
+private ItemViewModel? selectedItem;
+
+partial void OnSelectedItemChanged(ItemViewModel? value)
+{
+    CurrentView = value;           // Explicit
+    UpdateRelatedState(value);     // Clear intent
+}
+```
+
+#### **❌ DON'T:**
+```csharp
+public object? CurrentView => A ?? B ?? C ?? D;  // Complex getter
+public object? CurrentView
+{
+    get
+    {
+        if (complex_condition) return ComputeComplex();
+        return Default;
+    }
+}
+```
+
+---
+
+### **Lesson Learned: Question Complexity**
+
+**If a solution requires:**
+- Manual state clearing in every command
+- Callbacks/Helpers for simple operations
+- Priority hierarchies
+
+→ **The design is probably wrong!** Ask: _"Can I simplify this?"_
+
+**Simple is not simplistic. Simple is elegant.** 🎯
+
+---
+
+**Date:** 2025-12-09  
+**Related Files:** `MainWindowViewModel.Selection.cs`, `MainWindowViewModel.cs`  
+**Pattern:** Direct Assignment Pattern (MVVM Best Practice)

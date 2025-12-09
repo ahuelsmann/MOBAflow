@@ -32,6 +32,11 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
         _dispatcher = dispatcher;
     }
 
+    /// <summary>
+    /// Gets the unique identifier of the train.
+    /// </summary>
+    public Guid Id => Model.Id;
+
     public bool IsDoubleTraction
     {
         get => Model.IsDoubleTraction;
@@ -60,6 +65,34 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
     {
         get => Model.ServiceType;
         set => SetProperty(Model.ServiceType, value, Model, (m, v) => m.ServiceType = v);
+    }
+
+    /// <summary>
+    /// Gets all available TrainType enum values for ComboBox binding.
+    /// </summary>
+    public IEnumerable<Domain.Enum.TrainType> TrainTypeValues => System.Enum.GetValues<Domain.Enum.TrainType>();
+
+    /// <summary>
+    /// Gets all available ServiceType enum values for ComboBox binding.
+    /// </summary>
+    public IEnumerable<Domain.Enum.ServiceType> ServiceTypeValues => System.Enum.GetValues<Domain.Enum.ServiceType>();
+
+    /// <summary>
+    /// Gets or sets the list of locomotive IDs (direct Domain property access).
+    /// </summary>
+    public List<Guid> LocomotiveIds
+    {
+        get => Model.LocomotiveIds;
+        set => SetProperty(Model.LocomotiveIds, value, Model, (m, v) => m.LocomotiveIds = v);
+    }
+
+    /// <summary>
+    /// Gets or sets the list of wagon IDs (direct Domain property access).
+    /// </summary>
+    public List<Guid> WagonIds
+    {
+        get => Model.WagonIds;
+        set => SetProperty(Model.WagonIds, value, Model, (m, v) => m.WagonIds = v);
     }
 
     /// <summary>
