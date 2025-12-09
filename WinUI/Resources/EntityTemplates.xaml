@@ -187,30 +187,41 @@
         <ScrollViewer>
             <StackPanel Padding="16" Spacing="16">
                 <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Train Properties" />
-                
+
                 <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
-                
-                <TextBox Header="Description" Text="{Binding Description, Mode=TwoWay}" TextWrapping="Wrap" AcceptsReturn="True" MinHeight="80" />
-                
-                <ComboBox Header="Train Type" 
-                          ItemsSource="{Binding TrainTypeValues}"
-                          SelectedItem="{Binding TrainType, Mode=TwoWay}"
-                          HorizontalAlignment="Stretch" />
-                
-                <ComboBox Header="Service Type" 
-                          ItemsSource="{Binding ServiceTypeValues}"
-                          SelectedItem="{Binding ServiceType, Mode=TwoWay}"
-                          HorizontalAlignment="Stretch" />
-                
+
+                <TextBox
+                    MinHeight="80"
+                    AcceptsReturn="True"
+                    Header="Description"
+                    Text="{Binding Description, Mode=TwoWay}"
+                    TextWrapping="Wrap" />
+
+                <ComboBox
+                    HorizontalAlignment="Stretch"
+                    Header="Train Type"
+                    ItemsSource="{Binding TrainTypeValues}"
+                    SelectedItem="{Binding TrainType, Mode=TwoWay}" />
+
+                <ComboBox
+                    HorizontalAlignment="Stretch"
+                    Header="Service Type"
+                    ItemsSource="{Binding ServiceTypeValues}"
+                    SelectedItem="{Binding ServiceType, Mode=TwoWay}" />
+
                 <CheckBox Content="Is Double Traction" IsChecked="{Binding IsDoubleTraction, Mode=TwoWay}" />
-                
-                <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Composition" Margin="0,16,0,0" />
-                
+
+                <TextBlock
+                    Margin="0,16,0,0"
+                    Style="{ThemeResource SubtitleTextBlockStyle}"
+                    Text="Composition" />
+
                 <StackPanel Spacing="8">
-                    <TextBlock Text="Locomotives" FontWeight="SemiBold" />
-                    <ListView ItemsSource="{Binding Locomotives, Mode=OneWay}" 
-                              SelectionMode="None"
-                              MaxHeight="200">
+                    <TextBlock FontWeight="SemiBold" Text="Locomotives" />
+                    <ListView
+                        MaxHeight="200"
+                        ItemsSource="{Binding Locomotives, Mode=OneWay}"
+                        SelectionMode="None">
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Name}" />
@@ -218,12 +229,13 @@
                         </ListView.ItemTemplate>
                     </ListView>
                 </StackPanel>
-                
+
                 <StackPanel Spacing="8">
-                    <TextBlock Text="Wagons" FontWeight="SemiBold" />
-                    <ListView ItemsSource="{Binding Wagons, Mode=OneWay}" 
-                              SelectionMode="None"
-                              MaxHeight="200">
+                    <TextBlock FontWeight="SemiBold" Text="Wagons" />
+                    <ListView
+                        MaxHeight="200"
+                        ItemsSource="{Binding Wagons, Mode=OneWay}"
+                        SelectionMode="None">
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Name}" />
@@ -249,18 +261,37 @@
         <ScrollViewer>
             <StackPanel Padding="16" Spacing="16">
                 <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Announcement Action" />
-                
+
                 <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
-                
-                <NumberBox Header="Number" Value="{Binding Number, Mode=TwoWay}" SpinButtonPlacementMode="Inline" Minimum="0" />
-                
-                <TextBox Header="Message" Text="{Binding Message, Mode=TwoWay}" TextWrapping="Wrap" AcceptsReturn="True" MinHeight="100" />
-                
+
+                <NumberBox
+                    Header="Number"
+                    Minimum="0"
+                    SpinButtonPlacementMode="Inline"
+                    Value="{Binding Number, Mode=TwoWay}" />
+
+                <TextBox
+                    MinHeight="100"
+                    AcceptsReturn="True"
+                    Header="Message"
+                    Text="{Binding Message, Mode=TwoWay}"
+                    TextWrapping="Wrap" />
+
                 <TextBox Header="Voice Name" Text="{Binding VoiceName, Mode=TwoWay}" />
-                
-                <NumberBox Header="Rate (Speech Speed)" Value="{Binding Rate, Mode=TwoWay}" SpinButtonPlacementMode="Inline" Minimum="-10" Maximum="10" />
-                
-                <Slider Header="Volume" Value="{Binding Volume, Mode=TwoWay}" Minimum="0" Maximum="1" StepFrequency="0.1" />
+
+                <NumberBox
+                    Header="Rate (Speech Speed)"
+                    Maximum="10"
+                    Minimum="-10"
+                    SpinButtonPlacementMode="Inline"
+                    Value="{Binding Rate, Mode=TwoWay}" />
+
+                <Slider
+                    Header="Volume"
+                    Maximum="1"
+                    Minimum="0"
+                    StepFrequency="0.1"
+                    Value="{Binding Volume, Mode=TwoWay}" />
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>
@@ -269,14 +300,23 @@
         <ScrollViewer>
             <StackPanel Padding="16" Spacing="16">
                 <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Audio Action" />
-                
+
                 <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
-                
-                <NumberBox Header="Number" Value="{Binding Number, Mode=TwoWay}" SpinButtonPlacementMode="Inline" Minimum="0" />
-                
+
+                <NumberBox
+                    Header="Number"
+                    Minimum="0"
+                    SpinButtonPlacementMode="Inline"
+                    Value="{Binding Number, Mode=TwoWay}" />
+
                 <TextBox Header="File Path" Text="{Binding FilePath, Mode=TwoWay}" />
-                
-                <Slider Header="Volume" Value="{Binding Volume, Mode=TwoWay}" Minimum="0" Maximum="1" StepFrequency="0.1" />
+
+                <Slider
+                    Header="Volume"
+                    Maximum="1"
+                    Minimum="0"
+                    StepFrequency="0.1"
+                    Value="{Binding Volume, Mode=TwoWay}" />
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>
@@ -285,12 +325,21 @@
         <ScrollViewer>
             <StackPanel Padding="16" Spacing="16">
                 <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Command Action" />
-                
+
                 <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
-                
-                <NumberBox Header="Number" Value="{Binding Number, Mode=TwoWay}" SpinButtonPlacementMode="Inline" Minimum="0" />
-                
-                <TextBox Header="Command String" Text="{Binding CommandString, Mode=TwoWay}" TextWrapping="Wrap" AcceptsReturn="True" MinHeight="100" />
+
+                <NumberBox
+                    Header="Number"
+                    Minimum="0"
+                    SpinButtonPlacementMode="Inline"
+                    Value="{Binding Number, Mode=TwoWay}" />
+
+                <TextBox
+                    MinHeight="100"
+                    AcceptsReturn="True"
+                    Header="Command String"
+                    Text="{Binding CommandString, Mode=TwoWay}"
+                    TextWrapping="Wrap" />
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>
@@ -300,16 +349,21 @@
         <ScrollViewer>
             <StackPanel Padding="16" Spacing="16">
                 <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Workflow Action" />
-                
+
                 <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
-                
-                <NumberBox Header="Number" Value="{Binding Number, Mode=TwoWay}" SpinButtonPlacementMode="Inline" Minimum="0" />
-                
-                <TextBlock Text="{Binding Type}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                
-                <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" 
-                           Text="(Select specific action type in Workflow for detailed properties)" 
-                           TextWrapping="Wrap" />
+
+                <NumberBox
+                    Header="Number"
+                    Minimum="0"
+                    SpinButtonPlacementMode="Inline"
+                    Value="{Binding Number, Mode=TwoWay}" />
+
+                <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{Binding Type}" />
+
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="(Select specific action type in Workflow for detailed properties)"
+                    TextWrapping="Wrap" />
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>

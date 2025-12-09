@@ -25,15 +25,11 @@ public partial class MainWindowViewModel
         SelectedTrain = null;
         SelectedLocomotive = null;
         SelectedWagon = null;
-        
+
         CurrentSelectedObject = SolutionViewModel;  // ✅ Direct assignment!
         CurrentSelectedEntityType = MobaType.Solution;
         NotifySelectionPropertiesChanged();
     }
-
-    [RelayCommand]
-    private void SelectProject(ProjectViewModel? project) =>
-        _selectionManager.SelectEntity(project, MobaType.Project, SelectedProject, v => SelectedProject = v);
 
     [RelayCommand]
     private void SelectJourney(JourneyViewModel? journey)
@@ -41,9 +37,9 @@ public partial class MainWindowViewModel
         // ✅ Clear child selections first (Station, Action)
         SelectedStation = null;
         SelectedAction = null;
-        
+
         SelectedJourney = journey;
-        
+
         // ✅ Force update even if same journey (re-selection scenario)
         if (journey != null)
         {
@@ -57,9 +53,9 @@ public partial class MainWindowViewModel
     {
         // ✅ Clear child selections first (Action)
         SelectedAction = null;
-        
+
         SelectedStation = station;
-        
+
         // ✅ Force update even if same station (re-selection scenario)
         if (station != null)
         {
@@ -73,9 +69,9 @@ public partial class MainWindowViewModel
     {
         // ✅ Clear child selections first (Action)
         SelectedAction = null;
-        
+
         SelectedWorkflow = workflow;
-        
+
         // ✅ Force update even if same workflow (re-selection scenario)
         if (workflow != null)
         {
@@ -92,7 +88,7 @@ public partial class MainWindowViewModel
     private void SelectTrain(TrainViewModel? train)
     {
         SelectedTrain = train;
-        
+
         // ✅ Force update even if same train (re-selection scenario)
         if (train != null)
         {
@@ -100,14 +96,6 @@ public partial class MainWindowViewModel
             CurrentSelectedEntityType = MobaType.Train;
         }
     }
-
-    [RelayCommand]
-    private void SelectLocomotive(LocomotiveViewModel? locomotive) =>
-        _selectionManager.SelectEntity(locomotive, MobaType.Locomotive, SelectedLocomotive, v => SelectedLocomotive = v);
-
-    [RelayCommand]
-    private void SelectWagon(WagonViewModel? wagon) =>
-        _selectionManager.SelectEntity(wagon, MobaType.Wagon, SelectedWagon, v => SelectedWagon = v);
 
     #endregion
 
@@ -120,7 +108,7 @@ public partial class MainWindowViewModel
             CurrentSelectedObject = value;  // ✅ Direct assignment!
             CurrentSelectedEntityType = MobaType.Project;
         }
-        
+
         OnPropertyChanged(nameof(CurrentProjectViewModel));
         NotifySelectionPropertiesChanged();
     }
@@ -134,7 +122,7 @@ public partial class MainWindowViewModel
             CurrentSelectedObject = value;  // ✅ Direct assignment!
             CurrentSelectedEntityType = MobaType.Journey;
         }
-        
+
         NotifySelectionPropertiesChanged();
     }
 
@@ -145,7 +133,7 @@ public partial class MainWindowViewModel
             CurrentSelectedObject = value;  // ✅ Direct assignment!
             CurrentSelectedEntityType = MobaType.Station;
         }
-        
+
         NotifySelectionPropertiesChanged();
     }
 
@@ -156,7 +144,7 @@ public partial class MainWindowViewModel
             CurrentSelectedObject = value;  // ✅ Direct assignment!
             CurrentSelectedEntityType = MobaType.Workflow;
         }
-        
+
         NotifySelectionPropertiesChanged();
     }
 
@@ -167,7 +155,7 @@ public partial class MainWindowViewModel
             CurrentSelectedObject = value;  // ✅ Direct assignment!
             CurrentSelectedEntityType = MobaType.Action;
         }
-        
+
         NotifySelectionPropertiesChanged();
     }
 
@@ -178,7 +166,7 @@ public partial class MainWindowViewModel
             CurrentSelectedObject = value;  // ✅ Direct assignment!
             CurrentSelectedEntityType = MobaType.Train;
         }
-        
+
         NotifySelectionPropertiesChanged();
     }
 
@@ -188,7 +176,7 @@ public partial class MainWindowViewModel
         {
             CurrentSelectedEntityType = MobaType.Locomotive;
         }
-        
+
         OnPropertyChanged(nameof(CurrentSelectedObject));
         NotifySelectionPropertiesChanged();
     }
@@ -199,7 +187,7 @@ public partial class MainWindowViewModel
         {
             CurrentSelectedEntityType = MobaType.Wagon;
         }
-        
+
         OnPropertyChanged(nameof(CurrentSelectedObject));
         NotifySelectionPropertiesChanged();
     }

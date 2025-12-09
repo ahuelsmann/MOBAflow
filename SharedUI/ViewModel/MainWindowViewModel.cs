@@ -34,7 +34,6 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly ISettingsService? _settingsService;
     private readonly ICityService? _cityLibraryService;
     private JourneyManager? _journeyManager;
-    private readonly EntitySelectionManager _selectionManager;
 
     #endregion
 
@@ -58,9 +57,6 @@ public partial class MainWindowViewModel : ObservableObject
         _cityLibraryService = cityLibraryService;
         _settingsService = settingsService;
 
-        // Initialize EntitySelectionManager (simplified - no more ClearOtherSelections needed)
-        _selectionManager = new EntitySelectionManager(NotifySelectionPropertiesChanged);
-
         // Subscribe to Solution changes
         Solution = solution;
 
@@ -80,6 +76,13 @@ public partial class MainWindowViewModel : ObservableObject
                 }
             });
         }
+
+        SelectedJourney.PropertyChanged += SelectedJourney_PropertyChanged;
+    }
+
+    private void SelectedJourney_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        CurrentSelectedObject = SelectedJourney;
     }
 
     #endregion
