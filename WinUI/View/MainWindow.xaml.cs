@@ -1,6 +1,8 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
+using System;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -20,17 +22,20 @@ public sealed partial class MainWindow
     private readonly HealthCheckService _healthCheckService;
 #pragma warning restore CS8618
     private readonly IUiDispatcher _uiDispatcher;
+    private readonly IServiceProvider _serviceProvider;
 
     public MainWindow(
         MainWindowViewModel viewModel,
         CounterViewModel counterViewModel,
         HealthCheckService healthCheckService,
-        IUiDispatcher uiDispatcher)
+        IUiDispatcher uiDispatcher,
+        IServiceProvider serviceProvider)
     {
         ViewModel = viewModel;
         CounterViewModel = counterViewModel;
         _healthCheckService = healthCheckService;
         _uiDispatcher = uiDispatcher;
+        _serviceProvider = serviceProvider;
 
         InitializeComponent();
 
@@ -68,22 +73,23 @@ public sealed partial class MainWindow
 
     /// <summary>
     /// Navigate to Overview page (Lap Counter Dashboard).
+    /// <summary>
+    /// Navigate to Overview page (Lap Counter Dashboard).
     /// </summary>
     private void NavigateToOverview()
     {
         try
         {
-            var counterViewModel = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<CounterViewModel>(
-                ((App)Microsoft.UI.Xaml.Application.Current).Services);
-
-            var overviewPage = new OverviewPage(counterViewModel);
+            // ✅ DI: GetRequiredService resolves dependencies automatically
+            var overviewPage = _serviceProvider.GetRequiredService<OverviewPage>();
             ContentFrame.Content = overviewPage;
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($" Failed to navigate to Overview: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"❌ Navigation to Overview failed: {ex.Message}");
         }
     }
+
 
     private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
@@ -254,7 +260,7 @@ public sealed partial class MainWindow
 
                     // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ No longer need Refresh() - EditorPageViewModel is just a wrapper
 
-                    var editorPage = new EditorPage(ViewModel);
+                    var editorPage = _serviceProvider.GetRequiredService<EditorPage>();
 
                     System.Diagnostics.Debug.WriteLine($" Navigating to EditorPage (Singleton ViewModel)");
 
@@ -282,7 +288,7 @@ public sealed partial class MainWindow
                 // Navigate to SettingsPage (uses MainWindowViewModel)
                 try
                 {
-                    var settingsPage = new SettingsPage(ViewModel);
+                    var settingsPage = _serviceProvider.GetRequiredService<SettingsPage>();
                     ContentFrame.Content = settingsPage;
 
                     System.Diagnostics.Debug.WriteLine($" Navigated to SettingsPage");

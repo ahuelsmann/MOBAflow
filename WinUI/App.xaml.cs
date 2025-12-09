@@ -128,6 +128,14 @@ public partial class App
         services.AddSingleton<SharedUI.ViewModel.MainWindowViewModel>();
         services.AddTransient<SharedUI.ViewModel.JourneyViewModel>();
         services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
+
+        // Pages (Transient = new instance per navigation)
+        services.AddTransient<View.OverviewPage>();
+        services.AddTransient<View.EditorPage>();
+        services.AddTransient<View.SettingsPage>();
+
+        // MainWindow (Singleton = one instance for app lifetime)
+        services.AddSingleton<View.MainWindow>();
         
 
         return services.BuildServiceProvider();
@@ -139,16 +147,12 @@ public partial class App
     /// <param name="args">Details about the launch request and process.</param>
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-        var mainWindowViewModel = Services.GetRequiredService<SharedUI.ViewModel.MainWindowViewModel>();
-        var counterViewModel = Services.GetRequiredService<SharedUI.ViewModel.CounterViewModel>();
-        var healthCheckService = Services.GetRequiredService<Service.HealthCheckService>();
-        var uiDispatcher = Services.GetRequiredService<SharedUI.Interface.IUiDispatcher>();
 
-        _window = new View.MainWindow(mainWindowViewModel, counterViewModel, healthCheckService, uiDispatcher);
+        _window = Services.GetRequiredService<View.MainWindow>();
         _window.Activate();
         
-        // Ã¢Å“â€¦ Auto-load last solution if enabled
-        _ = AutoLoadLastSolutionAsync(mainWindowViewModel);
+        // Auto-load last solution if enabled
+        _ = AutoLoadLastSolutionAsync(((View.MainWindow)_window).ViewModel);
     }
     
     /// <summary>

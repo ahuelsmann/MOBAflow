@@ -101,6 +101,7 @@ public partial class MainWindowViewModel
         
         OnPropertyChanged(nameof(CurrentSelectedObject));
         NotifySelectionPropertiesChanged();
+        RefreshCurrentSelectionCommand.Execute(null);  // Force refresh
     }
 
     partial void OnSelectedWorkflowChanged(WorkflowViewModel? value)
@@ -112,6 +113,7 @@ public partial class MainWindowViewModel
         
         OnPropertyChanged(nameof(CurrentSelectedObject));
         NotifySelectionPropertiesChanged();
+        RefreshCurrentSelectionCommand.Execute(null);  // Force refresh
     }
 
     partial void OnSelectedActionChanged(object? value)
@@ -123,6 +125,7 @@ public partial class MainWindowViewModel
         
         OnPropertyChanged(nameof(CurrentSelectedObject));
         NotifySelectionPropertiesChanged();
+        RefreshCurrentSelectionCommand.Execute(null);  // Force refresh
     }
 
     partial void OnSelectedTrainChanged(TrainViewModel? value)
@@ -134,6 +137,7 @@ public partial class MainWindowViewModel
         
         OnPropertyChanged(nameof(CurrentSelectedObject));
         NotifySelectionPropertiesChanged();
+        RefreshCurrentSelectionCommand.Execute(null);  // Force refresh
     }
 
     partial void OnSelectedLocomotiveChanged(LocomotiveViewModel? value)
@@ -165,6 +169,17 @@ public partial class MainWindowViewModel
     /// <summary>
     /// Notifies all selection-related properties changed.
     /// </summary>
+
+    /// <summary>
+    /// Forces a refresh of CurrentSelectedObject even if selection hasnt changed.
+    /// Used when clicking the same item again.
+    /// </summary>
+    [RelayCommand]
+    private void RefreshCurrentSelection()
+    {
+        OnPropertyChanged(nameof(CurrentSelectedObject));
+    }
+
     private void NotifySelectionPropertiesChanged()
     {
         OnPropertyChanged(nameof(HasSelectedEntity));

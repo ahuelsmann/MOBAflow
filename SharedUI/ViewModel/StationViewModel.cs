@@ -24,7 +24,7 @@ public partial class StationViewModel : ObservableObject, IViewModelWrapper<Stat
         Model = station;
         _project = project;
         _dispatcher = dispatcher;
-        
+
         // Track property changes for unsaved changes detection
         PropertyChanged += (s, e) =>
         {
@@ -51,7 +51,7 @@ public partial class StationViewModel : ObservableObject, IViewModelWrapper<Stat
         set => SetProperty(Model.Description, value, Model, (m, v) => m.Description = v);
     }
 
-    public int FeedbackInPort
+    public int InPort
     {
         get => (int)Model.InPort;
         set => SetProperty(Model.InPort, (uint)value, Model, (m, v) => m.InPort = v);

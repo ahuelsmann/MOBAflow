@@ -120,6 +120,8 @@ public partial class MainWindowViewModel : ObservableObject
     private TrainViewModel? selectedTrain;
 
     /// <summary>
+
+    /// <summary>
     /// Returns true if any entity is currently selected.
     /// Used to show/hide PropertyGrid content.
     /// </summary>

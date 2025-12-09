@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml.Controls;
 
 using Moba.SharedUI.ViewModel;
 
+using Microsoft.UI.Xaml.Media;
 /// <summary>
 /// Editor page with TabView navigation.
 /// All editor tabs are defined as TabViewItems in XAML.
@@ -445,4 +446,20 @@ public sealed partial class EditorPage : Page
     }
 
     #endregion
+
+
+    #region Properties Panel Visual States
+
+    private void PropertiesCollapseToggle_Checked(object sender, RoutedEventArgs e)
+    {
+        VisualStateManager.GoToState(this, "Collapsed", true);
+    }
+
+    private void PropertiesCollapseToggle_Unchecked(object sender, RoutedEventArgs e)
+    {
+        VisualStateManager.GoToState(this, "Expanded", true);
+    }
+
+    #endregion
+
 }

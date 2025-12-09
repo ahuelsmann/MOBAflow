@@ -89,7 +89,7 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 - ✅ **PropertyGrid Modernization** → -70% code, native WinUI 3 patterns
   - Old: SimplePropertyGrid (350 LOC, Reflection)
   - New: ContentControl + DataTemplateSelector (200 LOC XAML)
-  - See: `docs/LESSONS-LEARNED-PROPERTYGRID-REFACTORING.md`
+  - See: `docs/LEssONS-LEARNED-PROPERTYGRID-REFACTORING.md`
 
 ---
 
@@ -99,7 +99,7 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 - ❌ **Mistake:** Custom Reflection-based PropertyGrid (350 LOC)
 - ✅ **Solution:** ContentControl + DataTemplateSelector (native WinUI 3)
 - 📉 **Impact:** -480 LOC (-70%), compiled bindings, native patterns
-- 📖 **Details:** `docs/LESSONS-LEARNED-PROPERTYGRID-REFACTORING.md`
+- 📖 **Details:** `docs/LEssONS-LEARNED-PROPERTYGRID-REFACTORING.md`
 
 ### **2. Nested Objects in Domain (Dec 2025)**
 - ❌ **Mistake:** `Journey.Stations = List<Station>` (Circular refs, JSON hell)
@@ -205,6 +205,11 @@ public object? CurrentSelectedObject {
 
 ---
 
+
+
+## 📚 Deep-Dive Architecture
+
+- `docs/ARCHITECTURE-INSIGHTS-2025-12-09.md` - Journey execution flow, SessionState, ViewModel 1:1 mapping
 ## 📚 Deep-Dive Documentation (Load on Demand)
 
 ### **Layer-Specific Instructions**
@@ -217,13 +222,13 @@ public object? CurrentSelectedObject {
 
 ### **Architecture & Analysis**
 - `docs/CODE-ANALYSIS-BEST-PRACTICES.md` - Full 5-step analysis methodology
-- `docs/LESSONS-LEARNED-PROPERTYGRID-REFACTORING.md` - PropertyGrid case study
+- `docs/LEssONS-LEARNED-PROPERTYGRID-REFACTORING.md` - PropertyGrid case study
 - `docs/REFACTORING-PLAN-REFERENCE-BASED-ARCHITECTURE.md` - Ongoing refactoring
 - `docs/BUILD-ERRORS-STATUS.md` - Current build status
 - `docs/Z21-PROTOCOL.md` - Hardware protocol docs
 
 ### **Session Reports** (Archive after 1 month)
-- `docs/SESSION-SUMMARY-*.md` - Past session learnings
+- `docs/SEssION-SUMMARY-*.md` - Past session learnings
 
 ---
 
@@ -289,6 +294,44 @@ public ObservableCollection<StationViewModel> Stations =>
 
 ---
 
-**Last Updated:** 2025-12-08  
-**Version:** 3.0 (Ultra-Compact Master + Context-Aware Loading)
+## ⚡ PowerShell 7 Terminal Rules (Copilot-Specific)
 
+### ✅ Always use PowerShell 7 (pwsh)
+- Assume Visual Studio DevShell with pwsh is active.
+
+### ✅ Mandatory Session Setup
+Start every snippet with:
+```powershell
+$ErrorActionPreference='Stop'
+[Console]::OutputEncoding=[Text.Encoding]::UTF8
+[Console]::InputEncoding=[Text.Encoding]::UTF8
+$ProgressPreference='SilentlyContinue'
+if ($Psstyle) { $Psstyle.OutputRendering='Ansi' }
+```
+
+### 🔍 Regex Safety Rules for Copilot
+- **Immer Single-Quotes fuer Regex verwenden** (`'pattern'`), um String-Escapes zu vermeiden.
+- **Escape korrekt setzen**:
+  - `?` → `\?`
+  - `(` → `\(`
+  - `)` → `\)`
+  - `.` → `\.`
+- **Zeilenende matchen**: Nutze `$` fuer End-of-Line, um falsche Matches zu verhindern.
+- **Beispiel fuer sicheres Matching**:
+```powershell
+if ($line -match 'private\s+TrainViewModel\?\s+selectedTrain;') { ... }
+```
+- **Vor komplexen Ersetzungen testen**:
+```powershell
+Select-String -Pattern 'private\s+TrainViewModel\?\s+selectedTrain;' -Path $file
+```
+- **Fuer einfache Ersetzungen**:
+```powershell
+$line -replace '\)$', ', IServiceProvider serviceProvider)'
+```
+- **Nie ungetestet in Einzeiler**: Bei komplexen Patterns → erst mit `Select-String` validieren.
+
+---
+
+**Last Updated:** 2025-12-09
+**Version:** 3.1 (Ultra-Compact Master + Context-Aware Loading + PowerShell Terminal Rules + Regex Safety)

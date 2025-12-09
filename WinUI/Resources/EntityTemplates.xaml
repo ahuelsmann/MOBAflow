@@ -134,9 +134,11 @@
                     Style="{ThemeResource BaseTextBlockStyle}"
                     Text="Schedule" />
 
+                <!--  Schedule (Arrival/Departure not yet in ViewModel)  -->
+                <!--
                 <TimePicker Header="Arrival Time" Time="{Binding Arrival, Mode=TwoWay}" />
-
                 <TimePicker Header="Departure Time" Time="{Binding Departure, Mode=TwoWay}" />
+                -->
 
                 <NumberBox
                     Header="Track Number"

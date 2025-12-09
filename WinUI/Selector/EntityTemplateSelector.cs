@@ -3,6 +3,7 @@ namespace Moba.WinUI.Selector;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+
 using Moba.SharedUI.ViewModel;
 
 /// <summary>
@@ -47,6 +48,11 @@ public class EntityTemplateSelector : DataTemplateSelector
     public DataTemplate? WagonTemplate { get; set; }
 
     /// <summary>
+    /// DataTemplate for Action objects (WorkflowAction, etc.)
+    /// </summary>
+    public DataTemplate? ActionTemplate { get; set; }
+
+    /// <summary>
     /// Fallback DataTemplate for unknown types
     /// </summary>
     public DataTemplate? DefaultTemplate { get; set; }
@@ -63,6 +69,7 @@ public class EntityTemplateSelector : DataTemplateSelector
             PassengerWagonViewModel => WagonTemplate,
             GoodsWagonViewModel => WagonTemplate,
             ProjectViewModel => ProjectTemplate,
+            Domain.WorkflowAction => ActionTemplate,
             _ => DefaultTemplate
         };
     }

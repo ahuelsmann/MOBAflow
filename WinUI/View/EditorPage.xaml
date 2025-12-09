@@ -5,20 +5,68 @@
     xmlns:converter="using:Moba.WinUI.Converter"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:domain="using:Moba.Domain"
-    xmlns:local="using:Moba.WinUI.Controls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:selector="using:Moba.WinUI.Selector"
     xmlns:viewmodel="using:Moba.SharedUI.ViewModel"
     x:Name="PageRoot"
     DataContext="{x:Bind ViewModel}"
     mc:Ignorable="d">
 
     <Page.Resources>
-        <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
-        <converter:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Resources/EntityTemplates.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            
+            <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <converter:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
+            <converter:BoolToGlyphConverter x:Key="BoolToGlyphConverter" TrueValue="&#xE76B;" FalseValue="&#xE76C;" />
+        </ResourceDictionary>
     </Page.Resources>
 
     <Grid>
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="PropertiesStates">
+                                <VisualState x:Name="Expanded">
+                                    <VisualState.Setters>
+                                        <Setter Target="PropertiesContent.Visibility" Value="Visible" />
+                                    </VisualState.Setters>
+                                    <VisualState.Storyboard>
+                                        <Storyboard>
+                                            <DoubleAnimation
+                                                Storyboard.TargetName="PropertiesContent"
+                                                Storyboard.TargetProperty="Opacity"
+                                                From="0.0"
+                                                To="1.0"
+                                                Duration="0:0:0.25">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </VisualState.Storyboard>
+                                </VisualState>
+
+                                <VisualState x:Name="Collapsed">
+                                    <VisualState.Setters>
+                                        <Setter Target="PropertiesContent.Visibility" Value="Collapsed" />
+                                    </VisualState.Setters>
+                                    <VisualState.Storyboard>
+                                        <Storyboard>
+                                            <DoubleAnimation
+                                                Storyboard.TargetName="PropertiesContent"
+                                                Storyboard.TargetProperty="Opacity"
+                                                From="1.0"
+                                                To="0.0"
+                                                Duration="0:0:0.20">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseIn" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </VisualState.Storyboard>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -834,22 +882,47 @@
 
                     <Border
                         Grid.Column="11"
+                        Grid.RowSpan="2"
                         Width="1"
                         Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
-                    <!--  Column 12: PropertyGrid  -->
-                    <Grid Grid.Column="12" Padding="4">
+                    <!--  Column 12: PropertyGrid (Full-Height with Collapse)  -->
+                    <Grid x:Name="PropertiesPanel" Grid.Column="12" Grid.RowSpan="2" Padding="4">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
-                        <TextBlock
-                            Grid.Row="0"
-                            Padding="16,6,24,4"
-                            FontWeight="SemiBold"
-                            Style="{StaticResource SubtitleTextBlockStyle}"
-                            Text="Properties" />
+
+
+                        <!--  Header with Collapse Button  -->
+                        <Grid Grid.Row="0" Padding="16,6,8,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock
+                                Grid.Column="0"
+                                VerticalAlignment="Center"
+                                FontWeight="SemiBold"
+                                Style="{StaticResource SubtitleTextBlockStyle}"
+                                Text="Properties" />
+
+                            <ToggleButton
+                                x:Name="PropertiesCollapseToggle"
+                                Grid.Column="1"
+                                Width="32"
+                                Height="32"
+                                Padding="0"
+                                Checked="PropertiesCollapseToggle_Checked"
+                                Unchecked="PropertiesCollapseToggle_Unchecked"
+                                ToolTipService.ToolTip="Toggle Properties Panel">
+                                <FontIcon x:Name="PropertiesCollapseIcon" FontSize="12" Glyph="{Binding ElementName=PropertiesCollapseToggle, Path=IsChecked, Converter={StaticResource BoolToGlyphConverter}}" />
+                            </ToggleButton>
+                        </Grid>
+
                         <ContentControl
+                            x:Name="PropertiesContent"
                             Grid.Row="1"
                             HorizontalContentAlignment="Stretch"
                             VerticalContentAlignment="Stretch"
