@@ -5,6 +5,8 @@
     xmlns:converter="using:Moba.WinUI.Converter"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:domain="using:Moba.Domain"
+    xmlns:i="using:Microsoft.Xaml.Interactivity"
+    xmlns:local="using:Moba.WinUI.Behavior"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewmodel="using:Moba.SharedUI.ViewModel"
     x:Name="PageRoot"
@@ -86,11 +88,14 @@
                             Text="Projects" />
                         <ListView
                             Grid.Row="1"
+                            x:Name="ProjectsListView"
                             IsItemClickEnabled="True"
-                            ItemClick="ListView_ItemClick"
                             ItemsSource="{x:Bind ViewModel.SolutionViewModel.Projects, Mode=OneWay}"
                             SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}"
                             SelectionMode="Single">
+                            <i:Interaction.Behaviors>
+                                <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.ItemClickedCommand}" />
+                            </i:Interaction.Behaviors>
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="viewmodel:ProjectViewModel">
                                     <Grid Padding="6">
@@ -134,7 +139,7 @@
                             Grid.Row="1"
                             HorizontalContentAlignment="Stretch"
                             VerticalContentAlignment="Stretch"
-                            Content="{Binding CurrentSelectedObject, Mode=OneWay}"
+                            Content="{x:Bind ViewModel.CurrentSelectedObject, Mode=OneWay}"
                             ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
                     </Grid>
                 </Grid>
@@ -184,11 +189,14 @@
                             Text="{x:Bind ViewModel.JourneySearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <ListView
                             Grid.Row="2"
+                            x:Name="JourneysListView"
                             IsItemClickEnabled="True"
-                            ItemClick="ListView_ItemClick"
                             ItemsSource="{x:Bind ViewModel.SelectedProject.Journeys, Mode=OneWay}"
                             SelectedItem="{x:Bind ViewModel.SelectedJourney, Mode=TwoWay}"
                             SelectionMode="Single">
+                            <i:Interaction.Behaviors>
+                                <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.ItemClickedCommand}" />
+                            </i:Interaction.Behaviors>
                             <ListView.ContextFlyout>
                                 <MenuFlyout>
                                     <MenuFlyoutItem Command="{x:Bind ViewModel.AddJourneyCommand}" Text="Add Journey">
@@ -248,10 +256,12 @@
                             DragOver="StationListView_DragOver"
                             Drop="StationListView_Drop"
                             IsItemClickEnabled="True"
-                            ItemClick="ListView_ItemClick"
                             ItemsSource="{x:Bind ViewModel.SelectedJourney.Stations, Mode=OneWay}"
                             SelectedItem="{x:Bind ViewModel.SelectedStation, Mode=TwoWay}"
                             SelectionMode="Single">
+                            <i:Interaction.Behaviors>
+                                <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.ItemClickedCommand}" />
+                            </i:Interaction.Behaviors>
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="viewmodel:StationViewModel">
                                     <Grid Padding="6">
@@ -293,6 +303,7 @@
                             Text="City Library" />
                         <ListView
                             Grid.Row="1"
+                            x:Name="CityLibraryListView"
                             CanDragItems="True"
                             DoubleTapped="CityListView_DoubleTapped"
                             DragItemsStarting="CityListView_DragItemsStarting"
@@ -342,7 +353,7 @@
                             Grid.Row="1"
                             HorizontalContentAlignment="Stretch"
                             VerticalContentAlignment="Stretch"
-                            Content="{Binding CurrentSelectedObject, Mode=OneWay}"
+                            Content="{x:Bind ViewModel.CurrentSelectedObject, Mode=OneWay}"
                             ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
                     </Grid>
                 </Grid>
@@ -389,13 +400,16 @@
                             Text="{x:Bind ViewModel.WorkflowSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <ListView
                             Grid.Row="2"
+                            x:Name="WorkflowsListView"
                             CanDragItems="True"
                             DragItemsStarting="WorkflowListView_DragItemsStarting"
                             IsItemClickEnabled="True"
-                            ItemClick="ListView_ItemClick"
                             ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.Workflows, Mode=OneWay}"
                             SelectedItem="{x:Bind ViewModel.SelectedWorkflow, Mode=TwoWay}"
                             SelectionMode="Single">
+                            <i:Interaction.Behaviors>
+                                <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.ItemClickedCommand}" />
+                            </i:Interaction.Behaviors>
                             <ListView.ContextFlyout>
                                 <MenuFlyout>
                                     <MenuFlyoutItem Command="{x:Bind ViewModel.AddWorkflowCommand}" Text="Add Workflow">
@@ -451,11 +465,14 @@
                             Text="Actions" />
                         <ListView
                             Grid.Row="1"
+                            x:Name="ActionsListView"
                             IsItemClickEnabled="True"
-                            ItemClick="ListView_ItemClick"
                             ItemsSource="{x:Bind ViewModel.SelectedWorkflow.Actions, Mode=OneWay}"
                             SelectedItem="{x:Bind ViewModel.SelectedAction, Mode=TwoWay}"
                             SelectionMode="Single">
+                            <i:Interaction.Behaviors>
+                                <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.ItemClickedCommand}" />
+                            </i:Interaction.Behaviors>
                             <ListView.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Padding="6">
@@ -501,7 +518,7 @@
                             Grid.Row="1"
                             HorizontalContentAlignment="Stretch"
                             VerticalContentAlignment="Stretch"
-                            Content="{Binding CurrentSelectedObject, Mode=OneWay}"
+                            Content="{x:Bind ViewModel.CurrentSelectedObject, Mode=OneWay}"
                             ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
                     </Grid>
                 </Grid>

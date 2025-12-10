@@ -8,20 +8,6 @@
     <DefineConstants Condition="'$(ANDROID_SDK_ROOT)' == ''">$(DefineConstants);SKIP_ANDROID_TESTS</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="MAUI\**" />
-    <Compile Remove="TestFile\**" />
-    <Compile Remove="WebApp\**" />
-    <Compile Remove="WinUI\**" />
-    <EmbeddedResource Remove="MAUI\**" />
-    <EmbeddedResource Remove="TestFile\**" />
-    <EmbeddedResource Remove="WebApp\**" />
-    <EmbeddedResource Remove="WinUI\**" />
-    <None Remove="MAUI\**" />
-    <None Remove="TestFile\**" />
-    <None Remove="WebApp\**" />
-    <None Remove="WinUI\**" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="TestFile\**\*.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

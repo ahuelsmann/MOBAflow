@@ -20,7 +20,7 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 6. **Nested Objects in Domain** (`Journey.Stations = List<Station>`) → Circular refs
 7. **INotifyPropertyChanged in Domain** → Architecture violation
 8. **DispatcherQueue in Backend** → Platform dependency (use IUiDispatcher)
-9. **Click-Handlers in XAML** → Use Commands instead
+9. **Event Handlers in Code-Behind** → Use XAML Behaviors (Event-to-Command) instead
 10. **Static Collections** → Memory leak risk
 
 **Action:** If >3 Red Flags found → Deep-dive analysis required.
@@ -61,8 +61,8 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 - ❌ **NO:** Platform-specific code (DispatcherQueue, MainThread)
 
 ### **WinUI Layer (Desktop UI)**
-- ✅ **YES:** `x:Bind` (compiled), ContentControl + DataTemplateSelector, Commands, Fluent Design 2
-- ❌ **NO:** `Binding` (slow), Custom PropertyGrids (use DataTemplates!), Click-Handlers, Code-Behind logic
+- ✅ **YES:** `x:Bind` (compiled), ContentControl + DataTemplateSelector, Commands, Fluent Design 2, XAML Behaviors (Event-to-Command)
+- ❌ **NO:** `Binding` (slow), Custom PropertyGrids (use DataTemplates!), Click-Handlers in code-behind, Direct event handlers
 
 ### **MAUI Layer (Mobile UI)**
 - ✅ **YES:** MainThread.BeginInvokeOnMainThread, ContentView, MAUI-specific controls
@@ -77,19 +77,26 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 ## 🎯 Current Project Status (Dec 2025)
 
 ### **Active Refactoring**
-- ⚠️ **Reference-Based Domain Architecture** (72% complete)
-  - Domain: GUID refs ✅ | Backend: Complete ✅ | ViewModels: In progress 🚧
+- ✅ **Reference-Based Domain Architecture** (100% complete)
+  - Domain: GUID refs ✅ | Backend: Complete ✅ | ViewModels: Complete ✅
   - See: `docs/REFACTORING-PLAN-REFERENCE-BASED-ARCHITECTURE.md`
+- ✅ **Event-to-Command Migration** (100% complete)
+  - All ListViews use XAML Behaviors ✅ | Code-behind handlers removed ✅
+  - Version 3.0.0 unified namespaces ✅
 
 ### **Known Issues**
-- 🚨 **64+ Build Errors** (ViewModel refactoring in progress)
-- ⚠️ **11+ Failing Tests** (Reference resolution changes)
+- ✅ **Resolved:** Build errors fixed (Event-to-Command + namespace unification)
+- ✅ **Resolved:** ItemClick refresh issues (wiederholte Klicks funktionieren jetzt)
 
 ### **Recent Wins (Dec 2025)**
 - ✅ **PropertyGrid Modernization** → -70% code, native WinUI 3 patterns
   - Old: SimplePropertyGrid (350 LOC, Reflection)
   - New: ContentControl + DataTemplateSelector (200 LOC XAML)
   - See: `docs/LEssONS-LEARNED-PROPERTYGRID-REFACTORING.md`
+- ✅ **Event-to-Command Pattern** → -200 LOC code-behind, clean MVVM
+  - Old: `ListView_ItemClick` handlers in code-behind
+  - New: XAML Behaviors with `ItemClickedCommand`
+  - Migration to v3.0: Unified `Microsoft.Xaml.Interactivity` namespace
 
 ---
 
@@ -111,6 +118,69 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 - ❌ **Mistake:** Manual selection cleanup logic (35 LOC)
 - ✅ **Solution:** ContentControl automatic template switching
 - 📉 **Impact:** -35 LOC, automatic behavior, simpler code
+
+### **4. Event-to-Command**
+- ❌ **Mistake:** `ListView_ItemClick` code-behind handlers (complex fallback logic, 40+ LOC per handler)
+- ✅ **Solution:** Custom Behavior that directly extracts items from `ItemClickEventArgs`
+- 📉 **Impact:** -200 LOC code-behind, clean MVVM separation, reusable patterns
+- 🔧 **Pattern (v3.1 - Fixed):**
+  ```xml
+  <ListView IsItemClickEnabled="True" ItemsSource="{x:Bind ViewModel.Items, Mode=OneWay}">
+      <i:Interaction.Behaviors>
+          <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.ItemClickedCommand}" />
+      </i:Interaction.Behaviors>
+      <ListView.ItemTemplate>
+          <DataTemplate x:DataType="viewmodel:ItemViewModel">
+              <!-- Template content -->
+          </DataTemplate>
+      </ListView.ItemTemplate>
+  </ListView>
+  ```
+  
+  **Why this works:**
+  - ✅ **Direct EventArgs Extraction:** `e.ClickedItem` passed directly (no binding delays)
+  - ✅ **No Synchronization Issues:** Avoids `CommandParameter="{Binding SelectedItem, ...}"` null problems
+  - ✅ **Reusable:** One behavior for all ListView ItemClick scenarios
+  
+  **Custom Behavior Implementation:**
+  ```csharp
+  // WinUI/Behavior/ListViewItemClickBehavior.cs
+  public sealed class ListViewItemClickBehavior : Behavior<ListView>
+  {
+      public static readonly DependencyProperty CommandProperty =
+          DependencyProperty.Register(
+              nameof(Command), typeof(ICommand), typeof(ListViewItemClickBehavior),
+              new PropertyMetadata(null));
+
+      public ICommand? Command
+      {
+          get => (ICommand?)GetValue(CommandProperty);
+          set => SetValue(CommandProperty, value);
+      }
+
+      protected override void OnAttached()
+      {
+          base.OnAttached();
+          if (AssociatedObject != null)
+              AssociatedObject.ItemClick += OnListViewItemClick;
+      }
+
+      protected override void OnDetaching()
+      {
+          base.OnDetaching();
+          if (AssociatedObject != null)
+              AssociatedObject.ItemClick -= OnListViewItemClick;
+      }
+
+      private void OnListViewItemClick(object sender, ItemClickEventArgs e)
+      {
+          Command?.Execute(e.ClickedItem);  // ✅ Direct item from event
+      }
+  }
+  ```
+
+- 📖 **NuGet:** `Microsoft.Xaml.Behaviors.WinUI.Managed` Version **3.0.0** (unified namespaces, NativeAOT support)
+- ⚠️ **Breaking Change 2.x→3.x:** Namespace unified to `Microsoft.Xaml.Interactivity` (remove `xmlns:ic="...Interactions.Core"`)
 
 ---
 
@@ -205,8 +275,6 @@ public object? CurrentSelectedObject {
 
 ---
 
-
-
 ## 📚 Deep-Dive Architecture
 
 - `docs/ARCHITECTURE-INSIGHTS-2025-12-09.md` - Journey execution flow, SessionState, ViewModel 1:1 mapping
@@ -224,6 +292,7 @@ public object? CurrentSelectedObject {
 - `docs/CODE-ANALYSIS-BEST-PRACTICES.md` - Full 5-step analysis methodology
 - `docs/LEssONS-LEARNED-PROPERTYGRID-REFACTORING.md` - PropertyGrid case study
 - `docs/REFACTORING-PLAN-REFERENCE-BASED-ARCHITECTURE.md` - Ongoing refactoring
+- `docs/XAML-BEHAVIORS-EVENT-TO-COMMAND.md` - Event-to-Command pattern (XAML Behaviors v3.0)
 - `docs/BUILD-ERRORS-STATUS.md` - Current build status
 - `docs/Z21-PROTOCOL.md` - Hardware protocol docs
 
@@ -349,87 +418,6 @@ public ObservableCollection<StationViewModel> Stations =>
 
 ---
 
-
-## 🎯 Selection Management Best Practices (Dec 2025)
-
-### **Pattern: Direct Assignment in OnChanged**
-
-**Principle:** Set `CurrentSelectedObject` directly in `OnChanged` handlers instead of using computed properties with priority hierarchies.
-
-#### **✅ CORRECT: Direct Assignment**
-
-```csharp
-// MainWindowViewModel.cs
-[ObservableProperty]
-private object? currentSelectedObject;
-
-[ObservableProperty]
-private JourneyViewModel? selectedJourney;
-
-// MainWindowViewModel.Selection.cs
-partial void OnSelectedJourneyChanged(JourneyViewModel? value)
-{
-    if (value != null)
-    {
-        CurrentSelectedObject = value;  // ✅ Direct & Explicit!
-        CurrentSelectedEntityType = MobaType.Journey;
-    }
-}
-
-[RelayCommand]
-private void SelectJourney(JourneyViewModel? journey)
-{
-    SelectedJourney = journey;  // ✅ That's it! One line!
-}
-```
-
-**Why this works:**
-1. ✅ **Explicit:** Clear where `CurrentSelectedObject` is set
-2. ✅ **Simple:** No hidden logic, no manual clearing needed
-3. ✅ **Predictable:** User clicks Journey → Shows Journey (not blocked by children)
-4. ✅ **Debuggable:** Breakpoint in `OnChanged` shows flow
-
----
-
-#### **❌ WRONG: Computed Property with Priority Hierarchy**
-
-```csharp
-// ❌ Anti-Pattern: Complex Getter
-public object? CurrentSelectedObject
-{
-    get
-    {
-        // Priority hell! Station blocks Journey!
-        if (SelectedAction != null) return SelectedAction;
-        if (SelectedStation != null) return SelectedStation;  // ❌ Blocks parent!
-        if (SelectedJourney != null) return SelectedJourney;  // Never reached!
-        if (SelectedWorkflow != null) return SelectedWorkflow;
-        // ...
-        return null;
-    }
-}
-
-// ❌ Anti-Pattern: Manual Clearing
-[RelayCommand]
-private void SelectJourney(JourneyViewModel? journey)
-{
-    // ❌ Manual state management everywhere!
-    SelectedStation = null;
-    SelectedAction = null;
-    
-    SelectedJourney = journey;
-    OnPropertyChanged(nameof(CurrentSelectedObject));
-}
-```
-
-**Why this is wrong:**
-1. ❌ **Hidden Logic:** Priority hierarchy not obvious
-2. ❌ **Complex:** Manual clearing in every command
-3. ❌ **Unpredictable:** Clicking Journey might still show Station
-4. ❌ **Hard to Debug:** Where does `CurrentSelectedObject` get set?
-
----
-
 ### **Pattern Comparison**
 
 | Aspect | Computed Property ❌ | Direct Assignment ✅ |
@@ -440,24 +428,6 @@ private void SelectJourney(JourneyViewModel? journey)
 | **Debuggability** | Hard | Easy |
 | **Maintainability** | Low | High |
 | **User Expectation** | Violated | Met |
-
----
-
-### **Why We Learned This (Dec 2025)**
-
-**Problem:** Journey → Station → Journey nochmal → Properties zeigt **Station** (not Journey!)
-
-**Root Cause:** Priority Hierarchy in computed property blocked parent selection:
-```csharp
-if (SelectedStation != null) return SelectedStation;  // ❌ Always returns Station!
-if (SelectedJourney != null) return SelectedJourney;  // Never reached!
-```
-
-**Solution Evolution:**
-1. ❌ **Attempt 1:** RefreshCurrentSelection Command → Didn't clear children
-2. ❌ **Attempt 2:** EntitySelectionManager Callbacks → Too complex
-3. ❌ **Attempt 3:** Manual Child Clearing → Boilerplate everywhere
-4. ✅ **Final Solution:** Direct Assignment in OnChanged → Simple & Works!
 
 ---
 
@@ -505,11 +475,6 @@ public object? CurrentView
 
 ---
 
-**Date:** 2025-12-09  
-**Related Files:** `MainWindowViewModel.Selection.cs`, `MainWindowViewModel.cs`  
-**Pattern:** Direct Assignment Pattern (MVVM Best Practice)
-
-
 ## ⚡ PowerShell 7 Terminal Rules (Copilot-Specific)
 
 ### ✅ Always use PowerShell 7 (pwsh)
@@ -549,5 +514,5 @@ $line -replace '\)$', ', IServiceProvider serviceProvider)'
 
 ---
 
-**Last Updated:** 2025-12-09
-**Version:** 3.1 (Ultra-Compact Master + Context-Aware Loading + PowerShell Terminal Rules + Regex Safety)
+**Last Updated:** 2025-12-10
+**Version:** 3.2

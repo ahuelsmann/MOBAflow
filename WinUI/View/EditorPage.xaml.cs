@@ -3,7 +3,7 @@ namespace Moba.WinUI.View;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-
+using System;
 using SharedUI.ViewModel;
 /// <summary>
 /// Editor page with TabView navigation.
@@ -452,10 +452,4 @@ public sealed partial class EditorPage : Page
     }
 
     #endregion
-
-    private void ListView_ItemClick(object sender, ItemClickEventArgs e)
-    {
-        // Forces a “new” assignment with every click for the Properties to refresh.
-        ViewModel.CurrentSelectedObject = e.ClickedItem;
-    }
 }

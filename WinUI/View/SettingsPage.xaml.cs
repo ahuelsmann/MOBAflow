@@ -19,23 +19,4 @@ public sealed partial class SettingsPage : Page
         ViewModel = viewModel;
         InitializeComponent();
     }
-
-    private void ThemeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (sender is ComboBox comboBox && comboBox.SelectedIndex >= 0)
-        {
-            var theme = comboBox.SelectedIndex switch
-            {
-                0 => ElementTheme.Light,
-                1 => ElementTheme.Dark,
-                _ => ElementTheme.Default
-            };
-
-            // Apply theme to page content
-            if (Content is FrameworkElement contentRoot)
-            {
-                contentRoot.RequestedTheme = theme;
-            }
-        }
-    }
 }

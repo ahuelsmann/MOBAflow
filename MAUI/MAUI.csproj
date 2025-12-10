@@ -27,23 +27,23 @@
     <!-- PERFORMANCE: Skip analyzers in Debug builds -->
     <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
     <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
-    
+
     <!-- PERFORMANCE: Skip XML doc generation -->
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    
+
     <!-- PERFORMANCE: Parallel build -->
     <MaxCpuCount>0</MaxCpuCount>
-    
+
     <!-- Fast Deployment: Shared Runtime (smaller APK, faster deploy) -->
     <AndroidUseSharedRuntime>true</AndroidUseSharedRuntime>
     <AndroidLinkMode>None</AndroidLinkMode>
     <EmbedAssembliesIntoApk>false</EmbedAssembliesIntoApk>
     <AotAssemblies>false</AotAssemblies>
     <AndroidEnableProguard>false</AndroidEnableProguard>
-    
+
     <!-- Build only for target device ABI (50% faster!) -->
     <RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
-    
+
     <!-- INCREMENTAL BUILD -->
     <AndroidUseManagedDesignTimeResourceGenerator>true</AndroidUseManagedDesignTimeResourceGenerator>
     <AndroidUseIncrementalNativeLibraryBuild>true</AndroidUseIncrementalNativeLibraryBuild>
@@ -53,18 +53,18 @@
     <AndroidUseAapt2>true</AndroidUseAapt2>
     <AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
     <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
-    
+
     <!-- ⚡ NEW: Faster Java compilation -->
     <AndroidDexTool>d8</AndroidDexTool>
     <AndroidEnableD8R8>true</AndroidEnableD8R8>
-    
+
     <!-- ⚡ NEW: Skip resource shrinking in Debug -->
     <AndroidEnableSGenConcurrent>true</AndroidEnableSGenConcurrent>
     <AndroidLinkSkip>true</AndroidLinkSkip>
-    
+
     <!-- ⚡ NEW: Faster XAML compilation -->
     <XamlCTask>Compile</XamlCTask>
-    
+
     <!-- ⚡ NEW: Use incremental linker -->
     <MtouchExtraArgs>--optimize=-inline-isdirectbinding</MtouchExtraArgs>
   </PropertyGroup>
