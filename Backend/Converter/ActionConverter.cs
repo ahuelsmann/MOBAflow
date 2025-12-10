@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Converter;
 
-using Moba.Domain;
+using Domain;
 using Moba.Domain.Enum;
 
 using Newtonsoft.Json;

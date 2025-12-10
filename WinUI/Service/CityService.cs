@@ -2,8 +2,8 @@
 namespace Moba.WinUI.Service;
 
 using Moba.Common.Configuration;
-using Moba.Domain;
-using Moba.SharedUI.Interface;
+using Domain;
+using SharedUI.Interface;
 
 using Newtonsoft.Json;
 

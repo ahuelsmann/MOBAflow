@@ -3,8 +3,8 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
-using Moba.Domain;
-using Moba.SharedUI.Interface;
+using Domain;
+using Interface;
 
 /// <summary>
 /// ViewModel wrapper for Voice model.

@@ -3,9 +3,9 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.Input;
 
-using Moba.Domain;
+using Domain;
 using Moba.Domain.Enum;
-using Moba.SharedUI.Helper;
+using Helper;
 
 /// <summary>
 /// MainWindowViewModel - Journey and Station Management

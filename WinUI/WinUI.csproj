@@ -15,10 +15,6 @@
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
   </PropertyGroup>
   <ItemGroup>
-    <Page Remove="Resources\EntityTemplates_NEW.xaml" />
-    <Page Remove="Resources\StationsListSnippet.xaml" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -50,13 +46,5 @@
   <!-- Mark generated manifest as a build output so Fast Up-to-Date check does not warn -->
   <ItemGroup>
     <UpToDateCheckBuilt Include="$(IntermediateOutputPath)Manifests\app.manifest" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="Resources\EntityTemplates_NEW.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="Resources\StationsListSnippet.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
   </ItemGroup>
 </Project>

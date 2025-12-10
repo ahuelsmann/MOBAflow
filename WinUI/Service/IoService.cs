@@ -3,9 +3,9 @@ namespace Moba.WinUI.Service;
 
 using Microsoft.Windows.Storage.Pickers;
 
-using Moba.Backend.Data;
-using Moba.Domain;
-using Moba.SharedUI.Interface;
+using Backend.Data;
+using Domain;
+using SharedUI.Interface;
 
 using System;
 using System.Collections.Generic;
@@ -39,7 +39,7 @@ public class IoService : IIoService
 
         var picker = new FileOpenPicker(_windowId.Value)
         {
-            SuggestedStartLocation = Microsoft.Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
             FileTypeFilter = { ".json" }
         };
 
@@ -168,7 +168,7 @@ public class IoService : IIoService
         {
             var picker = new FileSavePicker(_windowId.Value)
             {
-                SuggestedStartLocation = Microsoft.Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
+                SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
                 SuggestedFileName = "solution",
                 DefaultFileExtension = ".json",
                 FileTypeChoices = { { "JSON", new List<string> { ".json" } } }
@@ -219,7 +219,7 @@ public class IoService : IIoService
 
         var picker = new FileOpenPicker(_windowId.Value)
         {
-            SuggestedStartLocation = Microsoft.Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary,
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
             FileTypeFilter = { ".json" }
         };
 

@@ -1,15 +1,16 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
-using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
 
-using Moba.SharedUI.Interface;
-using Moba.SharedUI.ViewModel;
-using Moba.WinUI.Service;
+using Service;
+
+using SharedUI.Interface;
+using SharedUI.ViewModel;
+
+using System;
 
 using MainWindowViewModel = SharedUI.ViewModel.MainWindowViewModel;
 
@@ -33,20 +34,20 @@ public sealed partial class MainWindow
     {
         ViewModel = viewModel;
         CounterViewModel = counterViewModel;
+
         _healthCheckService = healthCheckService;
         _uiDispatcher = uiDispatcher;
         _serviceProvider = serviceProvider;
 
         InitializeComponent();
 
-        // Enable custom TitleBar for Windows 11 style
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
 
         // Initialize IoService with WindowId (required before any file operations)
-        var ioService = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<IIoService>(
-            ((App)Microsoft.UI.Xaml.Application.Current).Services);
-        
+        var ioService = ServiceProviderServiceExtensions.GetRequiredService<IIoService>(
+            ((App)Application.Current).Services);
+
         if (ioService is IoService winUiIoService)
         {
             winUiIoService.SetWindowId(this.AppWindow.Id, this.Content.XamlRoot);
@@ -71,11 +72,6 @@ public sealed partial class MainWindow
         NavigateToOverview();
     }
 
-    /// <summary>
-    /// Navigate to Overview page (Lap Counter Dashboard).
-    /// <summary>
-    /// Navigate to Overview page (Lap Counter Dashboard).
-    /// </summary>
     private void NavigateToOverview()
     {
         try
@@ -90,37 +86,15 @@ public sealed partial class MainWindow
         }
     }
 
-
     private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(MainWindowViewModel.IsZ21Connected))
         {
             Z21StatusIcon.Glyph = ViewModel.IsZ21Connected ? "\uE8EB" : "\uF384";
         }
-        else if (e.PropertyName == nameof(MainWindowViewModel.Solution))
-        {
-            // Solution was loaded - refresh EditorPageViewModel if it exists
-            System.Diagnostics.Debug.WriteLine(" Solution changed - refreshing EditorPageViewModel");
-
-            try
-            {
-                var editorViewModel = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetService<MainWindowViewModel>(
-                    ((App)Microsoft.UI.Xaml.Application.Current).Services);
-
-                if (editorViewModel != null)
-                {
-                    // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ No longer need Refresh() - data comes from MainWindowViewModel.SolutionViewModel
-                    System.Diagnostics.Debug.WriteLine(" EditorPageViewModel connected - data automatically updated via MainWindowViewModel");
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($" Failed to refresh EditorPageViewModel: {ex.Message}");
-            }
-        }
     }
 
-    private void MainWindow_Closed(object sender, Microsoft.UI.Xaml.WindowEventArgs args)
+    private void MainWindow_Closed(object sender, WindowEventArgs args)
     {
         _healthCheckService?.StopPeriodicChecks();
         ViewModel.OnWindowClosing();
@@ -128,14 +102,8 @@ public sealed partial class MainWindow
 
     private static void OnExitApplicationRequested(object? sender, EventArgs e)
     {
-        Microsoft.UI.Xaml.Application.Current.Exit();
+        Application.Current.Exit();
     }
-
-    // TreeView event handlers removed - no longer needed
-
-    // TreeView drag & drop handlers removed - reordering now handled in EditorPage
-
-    // Station move handlers removed - now handled in EditorPage
 
     private void OnHealthStatusChanged(object? sender, HealthStatusChangedEventArgs e)
     {
@@ -152,21 +120,21 @@ public sealed partial class MainWindow
         SpeechHealthText.Text = "Azure Speech";
 
         // Set tooltip with detailed status
-        Microsoft.UI.Xaml.Controls.ToolTipService.SetToolTip(SpeechHealthPanel, statusMessage);
+        ToolTipService.SetToolTip(SpeechHealthPanel, statusMessage);
 
         // Update icon and color based on health status
-        if (statusMessage.Contains("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦") || statusMessage.Contains("Ready"))
+        if (statusMessage.Contains("Ready"))
         {
             SpeechHealthIcon.Glyph = "\uE930"; // Checkmark circle
             SpeechHealthIcon.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
                 Microsoft.UI.Colors.Green);
         }
-        else if (statusMessage.Contains("ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â") || statusMessage.Contains("Not Configured"))
+        else if ( statusMessage.Contains("Not Configured"))
         {
             SpeechHealthIcon.Glyph = "\uE7BA"; // Warning
-            SpeechHealthIcon.Foreground = Microsoft.UI.Xaml.Application.Current.Resources["SystemFillColorCautionBrush"] as Microsoft.UI.Xaml.Media.Brush;
+            SpeechHealthIcon.Foreground = Application.Current.Resources["SystemFillColorCautionBrush"] as Microsoft.UI.Xaml.Media.Brush;
         }
-        else if (statusMessage.Contains("ÃƒÂ¢Ã‚ÂÃ…â€™") || statusMessage.Contains("Failed"))
+        else if (statusMessage.Contains("Failed"))
         {
             SpeechHealthIcon.Glyph = "\uE711"; // Error
             SpeechHealthIcon.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
@@ -175,58 +143,8 @@ public sealed partial class MainWindow
         else // Initializing
         {
             SpeechHealthIcon.Glyph = "\uE946"; // Sync
-            SpeechHealthIcon.Foreground = Microsoft.UI.Xaml.Application.Current.Resources["SystemFillColorCautionBrush"] as Microsoft.UI.Xaml.Media.Brush;
+            SpeechHealthIcon.Foreground = Application.Current.Resources["SystemFillColorCautionBrush"] as Microsoft.UI.Xaml.Media.Brush;
         }
-    }
-
-    private void OnKeyDown(object sender, KeyRoutedEventArgs e)
-    {
-        // Check if Ctrl key is pressed
-        var ctrlState = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control);
-        var isCtrlPressed = (ctrlState & Windows.UI.Core.CoreVirtualKeyStates.Down) == Windows.UI.Core.CoreVirtualKeyStates.Down;
-
-        if (!isCtrlPressed) return;
-
-        bool handled = false;
-
-        switch (e.Key)
-        {
-            case Windows.System.VirtualKey.N:
-                if (ViewModel.NewSolutionCommand.CanExecute(null))
-                {
-                    ViewModel.NewSolutionCommand.Execute(null);
-                    handled = true;
-                }
-                break;
-
-            case Windows.System.VirtualKey.O:
-                if (ViewModel.LoadSolutionCommand.CanExecute(null))
-                {
-                    ViewModel.LoadSolutionCommand.Execute(null);
-                    handled = true;
-                }
-                break;
-
-            case Windows.System.VirtualKey.Z:
-                // Undo removed - will be reimplemented later
-                handled = true;
-                break;
-
-            case Windows.System.VirtualKey.Y:
-                // Redo removed - will be reimplemented later
-                handled = true;
-                break;
-
-            case Windows.System.VirtualKey.S:
-                if (ViewModel.SaveSolutionCommand.CanExecute(null))
-                {
-                    ViewModel.SaveSolutionCommand.Execute(null);
-                    handled = true;
-                }
-                break;
-        }
-
-        e.Handled = handled;
     }
 
     private void NavigationView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
@@ -236,104 +154,23 @@ public sealed partial class MainWindow
         switch (tag)
         {
             case "overview":
-                // Navigate to OverviewPage (Lap Counter Dashboard)
                 NavigateToOverview();
                 break;
 
             case "editor":
-                // Navigate to EditorPage (using Singleton ViewModel)
-                try
-                {
-                    System.Diagnostics.Debug.WriteLine($" Attempting to navigate to EditorPage...");
-                    System.Diagnostics.Debug.WriteLine($"   Solution: {ViewModel.Solution != null}");
-                    System.Diagnostics.Debug.WriteLine($"   Projects: {ViewModel.Solution?.Projects.Count ?? 0}");
-
-                    var editorViewModel = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<MainWindowViewModel>(
-                        ((App)Microsoft.UI.Xaml.Application.Current).Services);
-
-                    System.Diagnostics.Debug.WriteLine($" Navigating to EditorPage - refreshing data first");
-                    System.Diagnostics.Debug.WriteLine($"   Solution has {ViewModel.Solution?.Projects.Count ?? 0} projects");
-                    if (ViewModel.Solution?.Projects.Count > 0)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"   First project has {ViewModel.Solution.Projects[0].Journeys.Count} journeys");
-                    }
-
-                    // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ No longer need Refresh() - EditorPageViewModel is just a wrapper
-
-                    var editorPage = _serviceProvider.GetRequiredService<EditorPage>();
-
-                    System.Diagnostics.Debug.WriteLine($" Navigating to EditorPage (Singleton ViewModel)");
-
-                    ContentFrame.Content = editorPage;
-
-                    System.Diagnostics.Debug.WriteLine($" Navigation to EditorPage complete");
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($" Failed to navigate to EditorPage:");
-                    System.Diagnostics.Debug.WriteLine($"   Exception Type: {ex.GetType().Name}");
-                    System.Diagnostics.Debug.WriteLine($"   Message: {ex.Message}");
-                    System.Diagnostics.Debug.WriteLine($"   StackTrace: {ex.StackTrace}");
-                    if (ex.InnerException != null)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"   Inner Exception: {ex.InnerException.Message}");
-                    }
-
-                    // Show error dialog to user
-                    _ = ShowErrorDialogAsync("Navigation Error", $"Failed to open Editor: {ex.Message}");
-                }
+                var editorPage = _serviceProvider.GetRequiredService<EditorPage>();
+                ContentFrame.Content = editorPage;
                 break;
 
             case "settings":
-                // Navigate to SettingsPage (uses MainWindowViewModel)
-                try
-                {
-                    var settingsPage = _serviceProvider.GetRequiredService<SettingsPage>();
-                    ContentFrame.Content = settingsPage;
-
-                    System.Diagnostics.Debug.WriteLine($" Navigated to SettingsPage");
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($" Failed to navigate to SettingsPage: {ex.Message}");
-                    _ = ShowErrorDialogAsync("Navigation Error", $"Failed to open Settings: {ex.Message}");
-                }
+                var settingsPage = _serviceProvider.GetRequiredService<SettingsPage>();
+                ContentFrame.Content = settingsPage;
                 break;
-
-                // Explorer removed - functionality moved to EditorPage
         }
     }
 
-    private async Task ShowNoSolutionDialogAsync()
-    {
-        var dialog = new ContentDialog
-        {
-            Title = "No Solution Loaded",
-            Content = "Please load a solution first before accessing Project Configuration.",
-            CloseButtonText = "OK",
-            XamlRoot = Content.XamlRoot
-        };
-
-        await dialog.ShowAsync();
-    }
-
-    private async Task ShowErrorDialogAsync(string title, string message)
-    {
-        var dialog = new ContentDialog
-        {
-            Title = title,
-            Content = message,
-            CloseButtonText = "OK",
-            XamlRoot = Content.XamlRoot
-        };
-
-        await dialog.ShowAsync();
-    }
-
-    // Context menu handlers removed - editing now done in EditorPage
-
     // Minimal event handler - delegates to ViewModel Command (XAML limitation for AppBarToggleButton)
-    private void TrackPower_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private void TrackPower_Click(object sender, RoutedEventArgs e)
     {
         if (sender is AppBarToggleButton toggleButton)
         {
@@ -343,8 +180,8 @@ public sealed partial class MainWindow
     }
 
     private ElementTheme _currentTheme = ElementTheme.Default;
-    
-    private void ThemeToggle_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+
+    private void ThemeToggle_Click(object sender, RoutedEventArgs e)
     {
         // Cycle through themes: Default → Light → Dark → Default
         _currentTheme = _currentTheme switch
@@ -362,4 +199,3 @@ public sealed partial class MainWindow
         }
     }
 }
-

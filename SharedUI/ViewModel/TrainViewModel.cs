@@ -4,10 +4,10 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using Moba.Domain;
+using Domain;
 using Moba.Domain.Enum;
-using Moba.SharedUI.Enum;
-using Moba.SharedUI.Interface;
+using Enum;
+using Interface;
 
 using System.Collections.ObjectModel;
 
@@ -70,12 +70,12 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
     /// <summary>
     /// Gets all available TrainType enum values for ComboBox binding.
     /// </summary>
-    public IEnumerable<Domain.Enum.TrainType> TrainTypeValues => System.Enum.GetValues<Domain.Enum.TrainType>();
+    public IEnumerable<TrainType> TrainTypeValues => System.Enum.GetValues<TrainType>();
 
     /// <summary>
     /// Gets all available ServiceType enum values for ComboBox binding.
     /// </summary>
-    public IEnumerable<Domain.Enum.ServiceType> ServiceTypeValues => System.Enum.GetValues<Domain.Enum.ServiceType>();
+    public IEnumerable<ServiceType> ServiceTypeValues => System.Enum.GetValues<ServiceType>();
 
     /// <summary>
     /// Gets or sets the list of locomotive IDs (direct Domain property access).

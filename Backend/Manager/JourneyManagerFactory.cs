@@ -1,9 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Manager;
 
-using Moba.Backend.Interface;
-using Moba.Backend.Services;
-using Moba.Domain;
+using Interface;
+using Services;
+using Domain;
 
 public class JourneyManagerFactory : IJourneyManagerFactory
 {

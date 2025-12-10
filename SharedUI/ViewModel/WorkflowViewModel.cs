@@ -5,10 +5,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using Moba.Backend.Interface;
-using Moba.Domain;
+using Domain;
 using Moba.Domain.Enum;
-using Moba.SharedUI.Enum;
-using Moba.SharedUI.Interface;
+using Enum;
+using Interface;
 
 using Sound;
 

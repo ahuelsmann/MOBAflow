@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
-using Moba.Domain;
+using Domain;
 using Moba.Backend.Services;
 using NUnit.Framework;
 

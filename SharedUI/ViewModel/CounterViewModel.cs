@@ -5,10 +5,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using Moba.Backend.Interface;
-using Moba.Common.Configuration;
+using Common.Configuration;
 using Moba.Common.Extensions;
-using Moba.Domain;
-using Moba.SharedUI.Interface;
+using Domain;
+using Interface;
 
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

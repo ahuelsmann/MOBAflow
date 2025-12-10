@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel.Action;
 
-using Moba.Domain;
+using Domain;
 using Moba.Domain.Enum;
 
 /// <summary>
@@ -39,5 +39,5 @@ public class AudioViewModel : WorkflowActionViewModel
         set => SetParameter("Loop", value);
     }
 
-    public override string ToString() => !string.IsNullOrEmpty(Name) ? $"{Name} (Audio)" : $"Audio: {System.IO.Path.GetFileName(FilePath)}";
+    public override string ToString() => !string.IsNullOrEmpty(Name) ? $"{Name} (Audio)" : $"Audio: {Path.GetFileName(FilePath)}";
 }

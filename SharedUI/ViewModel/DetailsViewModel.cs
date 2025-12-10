@@ -3,9 +3,9 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
-using Moba.Domain;
+using Domain;
 using Moba.Domain.Enum;
-using Moba.SharedUI.Interface;
+using Interface;
 
 /// <summary>
 /// ViewModel wrapper for Details model.

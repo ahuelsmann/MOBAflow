@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.Interface;
 
-using Moba.Common.Configuration;
+using Common.Configuration;
 
 /// <summary>
 /// Service interface for reading and writing application settings.

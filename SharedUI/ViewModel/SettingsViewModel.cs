@@ -3,8 +3,8 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
-using Moba.Common.Configuration;
-using Moba.SharedUI.Interface;
+using Common.Configuration;
+using Interface;
 
 /// <summary>
 /// ViewModel wrapper for AppSettings configuration.

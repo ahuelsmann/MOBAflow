@@ -2,7 +2,7 @@
 namespace Moba.WinUI.View;
 
 using Microsoft.UI.Xaml.Controls;
-using Moba.SharedUI.ViewModel;
+using SharedUI.ViewModel;
 
 /// <summary>
 /// Overview page showing the Lap Counter Dashboard with Z21 connection and track statistics.
@@ -18,5 +18,3 @@ public sealed partial class OverviewPage : Page
         InitializeComponent();
     }
 }
-
-

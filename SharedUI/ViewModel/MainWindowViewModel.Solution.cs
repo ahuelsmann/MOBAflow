@@ -3,7 +3,7 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.Input;
 
-using Moba.Domain;
+using Domain;
 
 using System;
 using System.Threading.Tasks;

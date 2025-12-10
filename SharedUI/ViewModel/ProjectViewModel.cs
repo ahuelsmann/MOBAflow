@@ -3,10 +3,10 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
-using Moba.Domain;
+using Domain;
 
-using Moba.SharedUI.Enum;
-using Moba.SharedUI.Interface;
+using Enum;
+using Interface;
 
 using System.Collections.ObjectModel;
 

@@ -3,8 +3,8 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.Input;
 
-using Moba.Domain;
-using Moba.SharedUI.Helper;
+using Domain;
+using Helper;
 
 using System.Collections.Generic;
 

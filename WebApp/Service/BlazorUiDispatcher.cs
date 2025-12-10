@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WebApp.Service;
 
-using Moba.SharedUI.Interface;
+using SharedUI.Interface;
 
 /// <summary>
 /// Blazor Server implementation of IUiDispatcher.

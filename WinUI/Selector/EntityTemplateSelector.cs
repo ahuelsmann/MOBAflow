@@ -4,7 +4,7 @@ namespace Moba.WinUI.Selector;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-using Moba.SharedUI.ViewModel;
+using SharedUI.ViewModel;
 
 /// <summary>
 /// Selects the appropriate DataTemplate based on the type of entity.

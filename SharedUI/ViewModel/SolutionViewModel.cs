@@ -3,9 +3,9 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
-using Moba.Domain;
+using Domain;
 
-using Moba.SharedUI.Interface;
+using Interface;
 
 using System.Collections.ObjectModel;
 

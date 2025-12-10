@@ -3,7 +3,7 @@ namespace Moba.WinUI.Service;
 
 using Microsoft.UI.Dispatching;
 
-using Moba.SharedUI.Interface;
+using SharedUI.Interface;
 
 public class UiDispatcher : IUiDispatcher
 {

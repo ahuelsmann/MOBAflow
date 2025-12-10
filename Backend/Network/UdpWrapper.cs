@@ -44,7 +44,7 @@ public class UdpWrapper : IUdpClientWrapper
     private int _totalSendCount;
     private int _totalRetryCount;
     private int _totalReceiveCount;
-    private readonly Stopwatch _performanceTimer = System.Diagnostics.Stopwatch.StartNew();
+    private readonly Stopwatch _performanceTimer = Stopwatch.StartNew();
     private readonly object _statsLock = new object();
 
     public UdpWrapper(ILogger<UdpWrapper>? logger = null)

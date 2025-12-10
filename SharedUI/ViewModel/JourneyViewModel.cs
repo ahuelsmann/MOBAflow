@@ -4,12 +4,12 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using Moba.Backend.Manager;
-using Moba.Backend.Services;
-using Moba.Domain;
+using Backend.Manager;
+using Backend.Services;
+using Domain;
 using Moba.Domain.Enum;
-using Moba.SharedUI.Enum;
-using Moba.SharedUI.Interface;
+using Enum;
+using Interface;
 
 using System;
 using System.Collections.ObjectModel;

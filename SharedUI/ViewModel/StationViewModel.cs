@@ -3,9 +3,9 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
-using Moba.Domain;
-using Moba.SharedUI.Enum;
-using Moba.SharedUI.Interface;
+using Domain;
+using Enum;
+using Interface;
 
 /// <summary>
 /// ViewModel wrapper for Station.

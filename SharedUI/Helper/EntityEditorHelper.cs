@@ -4,7 +4,7 @@ namespace Moba.SharedUI.Helper;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Moba.SharedUI.Interface;
+using Interface;
 
 /// <summary>
 /// Generic helper for Add/Delete operations on entity collections.

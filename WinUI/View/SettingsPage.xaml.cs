@@ -4,7 +4,7 @@ namespace Moba.WinUI.View;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-using Moba.SharedUI.ViewModel;
+using SharedUI.ViewModel;
 
 /// <summary>
 /// Settings page for application-wide configuration.

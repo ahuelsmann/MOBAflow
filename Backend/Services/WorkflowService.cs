@@ -1,7 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Services;
 
-using Moba.Domain;
+using Interface;
+using Domain;
+
 using System.Diagnostics;
 using System.Threading.Tasks;
 

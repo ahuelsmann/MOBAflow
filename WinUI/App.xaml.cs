@@ -182,7 +182,7 @@ public partial class App
                 return;
             }
 
-            if (!System.IO.File.Exists(lastPath))
+            if (!File.Exists(lastPath))
             {
                 System.Diagnostics.Debug.WriteLine($" Last solution file not found: {lastPath}");
                 return;

@@ -9,7 +9,7 @@
     <Window.SystemBackdrop>
         <MicaBackdrop />
     </Window.SystemBackdrop>
-    <Grid PreviewKeyDown="OnKeyDown">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -132,13 +132,12 @@
                     </AppBarButton>
                 </CommandBar>
 
-
                 <!--  Content Frame for page navigation  -->
                 <Frame x:Name="ContentFrame" Grid.Row="1" />
             </Grid>
         </NavigationView>
 
-        <!--  StatusBar - ÃƒÅ“ber die gesamte Fensterbreite  -->
+        <!--  StatusBar - Over the entire width of the window  -->
         <Grid
             Grid.Row="2"
             Height="32"
@@ -214,4 +213,3 @@
         </Grid>
     </Grid>
 </Window>
-

@@ -1,16 +1,19 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using Backend.Manager;
+
+using Common.Configuration;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using Domain;
+
+using Interface;
+
 using Moba.Backend.Interface;
-using Moba.Backend.Manager;
-using Moba.Common.Configuration;
 using Moba.Common.Extensions;
-using Moba.Domain;
-using Moba.SharedUI.Enum;
-using Moba.SharedUI.Interface;
 
 using System;
 using System.Collections.ObjectModel;
@@ -120,26 +123,6 @@ public partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private TrainViewModel? selectedTrain;
-
-    /// <summary>
-
-    /// <summary>
-    /// Returns true if any entity is currently selected.
-    /// Used to show/hide PropertyGrid content.
-    /// </summary>
-    public bool HasSelectedEntity =>
-        SolutionViewModel != null ||
-        SelectedProject != null ||
-        SelectedJourney != null ||
-        SelectedStation != null ||
-        SelectedWorkflow != null ||
-        SelectedTrain != null;
-
-    /// <summary>
-    /// Tracks which entity type was selected last for PropertyGrid display priority.
-    /// </summary>
-    [ObservableProperty]
-    private MobaType currentSelectedEntityType = MobaType.None;
 
     /// <summary>
     /// The currently selected object to display in the properties panel.

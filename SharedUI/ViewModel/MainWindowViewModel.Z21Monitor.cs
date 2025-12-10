@@ -3,9 +3,7 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
-using Moba.Backend.Model;
-
+using Backend.Model;
 using System.Collections.ObjectModel;
 
 /// <summary>
