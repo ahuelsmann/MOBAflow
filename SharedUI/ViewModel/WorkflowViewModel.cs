@@ -4,11 +4,12 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using Moba.Backend.Interface;
 using Domain;
 
-using Moba.Domain.Enum;
 using Interface;
+
+using Moba.Backend.Interface;
+using Moba.Domain.Enum;
 
 using Sound;
 
@@ -17,12 +18,18 @@ using System.Linq;
 
 public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Workflow>
 {
-    private readonly ISpeakerEngine? _speakerEngine;
-    private readonly Project? _project;
-    private readonly IZ21? _z21;
-
+    #region Fields
+    // Model
     [ObservableProperty]
     private Workflow model;
+
+    // Context
+    private readonly Project? _project;
+
+    // Optional Services
+    private readonly ISpeakerEngine? _speakerEngine;
+    private readonly IZ21? _z21;
+    #endregion
 
     public WorkflowViewModel(Workflow model, ISpeakerEngine? speakerEngine = null, Project? project = null, IZ21? z21 = null)
     {

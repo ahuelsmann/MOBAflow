@@ -16,7 +16,6 @@ using System.Threading.Tasks;
 public partial class MainWindowViewModel
 {
     #region Settings Properties
-
     /// <summary>
     /// Application settings - exposed for direct binding.
     /// Settings are stored in appsettings.json (not in Solution).
@@ -191,11 +190,9 @@ public partial class MainWindowViewModel
 
     [ObservableProperty]
     private int _selectedThemeIndex = 2; // Default: Use system setting
-
     #endregion
 
     #region Settings Commands
-
     [RelayCommand]
     private async Task SaveSettingsAsync()
     {
@@ -253,6 +250,5 @@ public partial class MainWindowViewModel
             ShowErrorMessage = true;
         }
     }
-
     #endregion
 }

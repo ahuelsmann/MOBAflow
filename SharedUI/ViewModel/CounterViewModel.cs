@@ -25,14 +25,23 @@ using System.Net;
 /// </summary>
 public partial class CounterViewModel : ObservableObject, IDisposable
 {
+    #region Fields
+    // Core Services (required)
     private readonly IZ21 _z21;
     private readonly IUiDispatcher _dispatcher;
-    private readonly INotificationService? _notificationService;
-    private readonly ISettingsService? _settingsService;
+
+    // Configuration
     private readonly AppSettings _settings;
     private readonly Solution _solution;
+
+    // Optional Services
+    private readonly INotificationService? _notificationService;
+    private readonly ISettingsService? _settingsService;
+
+    // Runtime State
     private readonly Dictionary<int, DateTime> _lastFeedbackTime = new();
     private bool _disposed;
+    #endregion
 
     public CounterViewModel(
         IZ21 z21,

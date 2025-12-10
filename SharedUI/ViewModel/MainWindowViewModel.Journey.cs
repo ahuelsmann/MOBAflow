@@ -14,7 +14,6 @@ using Helper;
 public partial class MainWindowViewModel
 {
     #region Journey Factory
-
     /// <summary>
     /// Creates a JourneyViewModel with SessionState.
     /// Falls back to simplified constructor if JourneyManager is not initialized (e.g., in tests).
@@ -49,11 +48,9 @@ public partial class MainWindowViewModel
             _journeyManager, 
             _uiDispatcher);
     }
-
     #endregion
 
     #region Journey Search/Filter
-
     private string _journeySearchText = string.Empty;
     public string JourneySearchText
     {
@@ -88,11 +85,9 @@ public partial class MainWindowViewModel
                 .ToList();
         }
     }
-
     #endregion
 
     #region Journey CRUD Commands
-
     [RelayCommand]
     private void AddJourney()
     {
@@ -123,11 +118,9 @@ public partial class MainWindowViewModel
     }
 
     private bool CanDeleteJourney() => SelectedJourney != null;
-
     #endregion
 
     #region Station CRUD Commands
-
     [RelayCommand(CanExecute = nameof(CanAddStation))]
     private void AddStation()
     {
@@ -198,11 +191,9 @@ public partial class MainWindowViewModel
     }
 
     private bool CanResetJourneyCounter() => SelectedJourney != null && _journeyManager != null;
-
     #endregion
 
     #region Station Management (City Library)
-
     [RelayCommand(CanExecute = nameof(CanAddStationToJourney))]
     private void AddStationToJourney()
     {
@@ -232,6 +223,5 @@ public partial class MainWindowViewModel
     }
 
     private bool CanAddStationToJourney() => true;
-
     #endregion
 }

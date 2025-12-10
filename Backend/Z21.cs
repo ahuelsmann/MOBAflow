@@ -93,7 +93,6 @@ public class Z21 : IZ21
     }
 
     #region Keepalive Management
-    
     /// <summary>
     /// Starts a timer that sends periodic status requests to keep the Z21 connection alive.
     /// The Z21 expects regular communication; without it, the connection may timeout after 60 seconds
@@ -192,11 +191,9 @@ public class Z21 : IZ21
             _logger?.LogError(ex, "Error during connection lost handling");
         }
     }
-    
     #endregion
 
     #region Basic Commands
-    
     /// <summary>
     /// Thread-safe send method with SemaphoreSlim to prevent concurrent sends.
     /// </summary>
@@ -274,7 +271,6 @@ public class Z21 : IZ21
     #endregion
 
     #region Message Receiving & Parsing
-
     private void OnUdpReceived(object? sender, UdpReceivedEventArgs e)
     {
         var content = e.Buffer;
@@ -343,11 +339,9 @@ public class Z21 : IZ21
 
         _logger?.LogWarning("Unknown message: {Payload}", Z21Protocol.ToHex(content));
     }
-
     #endregion
 
     #region Command Sending
-
     /// <summary>
     /// Sends a digital command to the Z21 (compat overload required by IZ21 interface).
     /// </summary>
@@ -364,11 +358,9 @@ public class Z21 : IZ21
     {
         await SendAsync(sendBytes, cancellationToken).ConfigureAwait(false);
     }
-
     #endregion
 
     #region Testing & Simulation
-
     /// <summary>
     /// Simulates a feedback event for testing purposes without requiring actual Z21 hardware.
     /// This triggers the same Received event as a real Z21 feedback message would.
@@ -398,11 +390,9 @@ public class Z21 : IZ21
 
         System.Diagnostics.Debug.WriteLine($"✅ SimulateFeedback: Event invoked for InPort={inPort}");
     }
-
     #endregion
 
     #region IDisposable
-
     public void Dispose()
     {
         Dispose(true);
@@ -422,6 +412,5 @@ public class Z21 : IZ21
         }
         _disposed = true;
     }
-
     #endregion
 }

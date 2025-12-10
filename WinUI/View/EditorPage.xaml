@@ -87,8 +87,8 @@
                             Style="{StaticResource SubtitleTextBlockStyle}"
                             Text="Projects" />
                         <ListView
-                            Grid.Row="1"
                             x:Name="ProjectsListView"
+                            Grid.Row="1"
                             IsItemClickEnabled="True"
                             ItemsSource="{x:Bind ViewModel.SolutionViewModel.Projects, Mode=OneWay}"
                             SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}"
@@ -188,8 +188,8 @@
                             QueryIcon="Find"
                             Text="{x:Bind ViewModel.JourneySearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <ListView
-                            Grid.Row="2"
                             x:Name="JourneysListView"
+                            Grid.Row="2"
                             IsItemClickEnabled="True"
                             ItemsSource="{x:Bind ViewModel.SelectedProject.Journeys, Mode=OneWay}"
                             SelectedItem="{x:Bind ViewModel.SelectedJourney, Mode=TwoWay}"
@@ -302,8 +302,8 @@
                             Style="{StaticResource SubtitleTextBlockStyle}"
                             Text="City Library" />
                         <ListView
-                            Grid.Row="1"
                             x:Name="CityLibraryListView"
+                            Grid.Row="1"
                             CanDragItems="True"
                             DoubleTapped="CityListView_DoubleTapped"
                             DragItemsStarting="CityListView_DragItemsStarting"
@@ -399,8 +399,8 @@
                             QueryIcon="Find"
                             Text="{x:Bind ViewModel.WorkflowSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <ListView
-                            Grid.Row="2"
                             x:Name="WorkflowsListView"
+                            Grid.Row="2"
                             CanDragItems="True"
                             DragItemsStarting="WorkflowListView_DragItemsStarting"
                             IsItemClickEnabled="True"
@@ -464,8 +464,8 @@
                             Style="{StaticResource SubtitleTextBlockStyle}"
                             Text="Actions" />
                         <ListView
-                            Grid.Row="1"
                             x:Name="ActionsListView"
+                            Grid.Row="1"
                             IsItemClickEnabled="True"
                             ItemsSource="{x:Bind ViewModel.SelectedWorkflow.Actions, Mode=OneWay}"
                             SelectedItem="{x:Bind ViewModel.SelectedAction, Mode=TwoWay}"

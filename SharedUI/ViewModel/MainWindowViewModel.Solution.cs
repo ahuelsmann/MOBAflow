@@ -15,7 +15,6 @@ using System.Threading.Tasks;
 public partial class MainWindowViewModel
 {
     #region Solution Management
-
     partial void OnSolutionChanged(Solution? value)
     {
         if (value == null)
@@ -149,6 +148,5 @@ public partial class MainWindowViewModel
         await Task.CompletedTask;
         System.Diagnostics.Debug.WriteLine("ℹ️ LoadCitiesFromCityManagerAsync called - obsolete, handled in constructor");
     }
-
     #endregion
 }

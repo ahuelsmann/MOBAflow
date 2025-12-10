@@ -12,7 +12,4 @@
     <ProjectReference Include="..\Backend\Backend.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Enum\" />
-  </ItemGroup>
 </Project>

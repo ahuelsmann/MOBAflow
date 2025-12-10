@@ -30,4 +30,3 @@ public interface ICityService
     /// </summary>
     Station? FindStationById(Guid stationId);
 }
-

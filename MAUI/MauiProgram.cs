@@ -44,7 +44,6 @@ public static class MauiProgram
             return new Backend.Services.ActionExecutor(z21);
         });
         builder.Services.AddSingleton<Backend.Services.WorkflowService>();
-        builder.Services.AddSingleton<Backend.Interface.IJourneyManagerFactory, Backend.Manager.JourneyManagerFactory>();
 
         // ✅ DataManager as Singleton (master data loaded on first access)
         // Note: MAUI doesn't have IIoService yet - using simplified approach

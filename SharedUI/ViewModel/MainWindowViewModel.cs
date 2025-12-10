@@ -2,6 +2,7 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Manager;
+using Backend.Services;
 
 using Common.Configuration;
 
@@ -27,24 +28,28 @@ using System.Threading.Tasks;
 public partial class MainWindowViewModel : ObservableObject
 {
     #region Fields
-
+    // Core Services (required)
     private readonly IIoService _ioService;
     private readonly IZ21 _z21;
-    private readonly IJourneyManagerFactory _journeyManagerFactory;
     private readonly IUiDispatcher _uiDispatcher;
-    private readonly AppSettings _settings;
-    private readonly ISettingsService? _settingsService;
-    private readonly ICityService? _cityLibraryService;
-    private JourneyManager? _journeyManager;
+    private readonly WorkflowService _workflowService;
 
+    // Configuration
+    private readonly AppSettings _settings;
+
+    // Optional Services
+    private readonly ICityService? _cityLibraryService;
+    private readonly ISettingsService? _settingsService;
+
+    // Runtime State
+    private JourneyManager? _journeyManager;
     #endregion
 
     #region Constructor
-
     public MainWindowViewModel(
         IIoService ioService,
         IZ21 z21,
-        IJourneyManagerFactory journeyManagerFactory,
+        WorkflowService workflowService,
         IUiDispatcher uiDispatcher,
         AppSettings settings,
         Solution solution,
@@ -53,7 +58,7 @@ public partial class MainWindowViewModel : ObservableObject
     {
         _ioService = ioService;
         _z21 = z21;
-        _journeyManagerFactory = journeyManagerFactory;
+        _workflowService = workflowService;
         _uiDispatcher = uiDispatcher;
         _settings = settings;
         _cityLibraryService = cityLibraryService;
@@ -79,11 +84,9 @@ public partial class MainWindowViewModel : ObservableObject
             });
         }
     }
-
     #endregion
 
     #region Properties
-
     [ObservableProperty]
     private Solution solution;
 
@@ -145,11 +148,9 @@ public partial class MainWindowViewModel : ObservableObject
     private City? selectedCity;
 
     public event EventHandler? ExitApplicationRequested;
-
     #endregion
 
     #region Project Management
-
     [RelayCommand]
     private void AddProject()
     {
@@ -169,11 +170,9 @@ public partial class MainWindowViewModel : ObservableObject
 
         SaveSolutionCommand.NotifyCanExecuteChanged();
     }
-
     #endregion
 
     #region Lifecycle
-
     public void OnWindowClosing()
     {
         if (_journeyManager != null)
@@ -212,11 +211,9 @@ public partial class MainWindowViewModel : ObservableObject
     {
         ExitApplicationRequested?.Invoke(this, EventArgs.Empty);
     }
-
     #endregion
 
     #region City Library
-
     [ObservableProperty]
     private ObservableCollection<City> cityLibrary = [];
 
@@ -281,11 +278,9 @@ public partial class MainWindowViewModel : ObservableObject
 
         System.Diagnostics.Debug.WriteLine($"✅ City Library loaded: {CityLibrary.Count} cities");
     }
-
     #endregion
 
     #region Wagon Libraries
-
     [ObservableProperty]
     private ObservableCollection<GoodsWagon> goodsWagonLibrary =
     [
@@ -300,11 +295,9 @@ public partial class MainWindowViewModel : ObservableObject
         new PassengerWagon { Name = "Passenger Wagon 1st Class", WagonClass = Domain.Enum.PassengerClass.First },
         new PassengerWagon { Name = "Passenger Wagon 2nd Class", WagonClass = Domain.Enum.PassengerClass.Second }
     ];
-
     #endregion
 
     #region Drag & Drop Commands
-
     [RelayCommand(CanExecute = nameof(CanAssignWorkflowToStation))]
     private void AssignWorkflowToStation(WorkflowViewModel? workflow)
     {
@@ -349,6 +342,5 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     private bool CanAddLocomotiveToTrain() => SelectedTrain != null && SelectedProject != null;
-
     #endregion
 }

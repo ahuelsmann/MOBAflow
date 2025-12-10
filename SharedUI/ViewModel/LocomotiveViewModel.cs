@@ -5,8 +5,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using Domain;
 
-using Moba.Domain.Enum;
 using Interface;
+
+using Moba.Domain.Enum;
 
 /// <summary>
 /// ViewModel wrapper for Locomotive model.

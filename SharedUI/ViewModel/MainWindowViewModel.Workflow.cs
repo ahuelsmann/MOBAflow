@@ -16,7 +16,6 @@ using System.Collections.Generic;
 public partial class MainWindowViewModel
 {
     #region Workflow Search/Filter
-
     private string _workflowSearchText = string.Empty;
     public string WorkflowSearchText
     {
@@ -51,11 +50,9 @@ public partial class MainWindowViewModel
                 .ToList();
         }
     }
-
     #endregion
 
     #region Workflow CRUD Commands
-
     [RelayCommand]
     private void AddWorkflow()
     {
@@ -86,11 +83,9 @@ public partial class MainWindowViewModel
     }
 
     private bool CanDeleteWorkflow() => SelectedWorkflow != null;
-
     #endregion
 
     #region Workflow Actions Commands
-
     [RelayCommand]
     private void AddAnnouncement()
     {
@@ -154,6 +149,5 @@ public partial class MainWindowViewModel
         var viewModel = new Action.AudioViewModel(newAction);
         SelectedWorkflow.Actions.Add(viewModel);
     }
-
     #endregion
 }

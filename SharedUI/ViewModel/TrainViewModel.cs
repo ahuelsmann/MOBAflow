@@ -6,8 +6,9 @@ using CommunityToolkit.Mvvm.Input;
 
 using Domain;
 
-using Moba.Domain.Enum;
 using Interface;
+
+using Moba.Domain.Enum;
 
 using System.Collections.ObjectModel;
 

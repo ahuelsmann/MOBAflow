@@ -4,6 +4,7 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using Moba.Backend.Manager;
 using Moba.Backend.Model;
 using Moba.Common.Extensions;
 
@@ -21,7 +22,6 @@ using System.Threading.Tasks;
 public partial class MainWindowViewModel
 {
     #region Z21 Traffic Monitor
-
     [ObservableProperty]
     private ObservableCollection<Z21TrafficPacket> trafficPackets = [];
 
@@ -61,11 +61,9 @@ public partial class MainWindowViewModel
         TrafficPackets.Clear();
         _z21?.TrafficMonitor?.Clear();
     }
-
     #endregion
 
     #region Z21 Connection Commands
-
     [RelayCommand(CanExecute = nameof(CanConnectToZ21))]
     private async Task ConnectToZ21Async()
     {
@@ -103,7 +101,7 @@ public partial class MainWindowViewModel
                     };
 
                     _journeyManager?.Dispose();
-                    _journeyManager = _journeyManagerFactory.Create(_z21, project, executionContext);
+                    _journeyManager = new JourneyManager(_z21, project, _workflowService, executionContext);
                 }
 
                 ConnectToZ21Command.NotifyCanExecuteChanged();
@@ -170,7 +168,7 @@ public partial class MainWindowViewModel
                 
                 Debug.WriteLine($"   - ExecutionContext.SpeakerEngine: {executionContext.SpeakerEngine?.Name ?? "NULL (not implemented yet)"}");
                 
-                _journeyManager = _journeyManagerFactory.Create(_z21, project, executionContext);
+                _journeyManager = new JourneyManager(_z21, project, _workflowService, executionContext);
                 
                 Debug.WriteLine($"✅ [DEBUG] JourneyManager created");
             }
@@ -225,11 +223,9 @@ public partial class MainWindowViewModel
     private bool CanConnectToZ21() => !IsZ21Connected;
     private bool CanDisconnectFromZ21() => IsZ21Connected;
     private bool CanToggleTrackPower() => IsZ21Connected;
-
     #endregion
 
     #region Z21 Event Handlers
-
     private void OnZ21SystemStateChanged(Backend.SystemState systemState)
     {
         _uiDispatcher.InvokeOnUi(() => UpdateZ21SystemState(systemState));
@@ -273,6 +269,5 @@ public partial class MainWindowViewModel
             SetTrackPowerCommand.NotifyCanExecuteChanged();
         });
     }
-
     #endregion
 }

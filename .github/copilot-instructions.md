@@ -17,11 +17,11 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 3. **Code-Behind >50 LOC** (excluding constructor) → MVVM violation
 4. **Manager/Helper >100 LOC** → Could Binding/MVVM solve it?
 5. **No `x:Bind` in WinUI XAML** → Missing compiled bindings (slow!)
-6. **Nested Objects in Domain** (`Journey.Stations = List<Station>`) → Circular refs
-7. **INotifyPropertyChanged in Domain** → Architecture violation
-8. **DispatcherQueue in Backend** → Platform dependency (use IUiDispatcher)
-9. **Event Handlers in Code-Behind** → Use XAML Behaviors (Event-to-Command) instead
-10. **Static Collections** → Memory leak risk
+6. **INotifyPropertyChanged in Domain** → Architecture violation
+7. **DispatcherQueue in Backend** → Platform dependency (use IUiDispatcher)
+8. **Event Handlers in Code-Behind** → Use XAML Behaviors (Event-to-Command) instead
+   - **Exception:** Drag & Drop handlers are OK in code-behind (WinUI limitation)
+9. **Static Collections** → Memory leak risk
 
 **Action:** If >3 Red Flags found → Deep-dive analysis required.
 
@@ -50,7 +50,10 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 
 ### **Domain Layer (Pure POCOs)**
 - ✅ **YES:** Pure C# classes, GUID references (`List<Guid> StationIds`), Value Objects
-- ❌ **NO:** INotifyPropertyChanged, Attributes, Nested objects (`List<Station>`), UI code
+### **Domain Layer (Pure POCOs)**
+- ✅ **YES:** Pure C# classes, GUID references for shared entities (`List<Guid> LocomotiveIds`), Value Objects
+- ✅ **YES:** Embedded objects for owned entities (`Journey.Stations = List<Station>` - Stations belong to Journey)
+- ❌ **NO:** INotifyPropertyChanged, Attributes, UI code
 
 ### **Backend Layer (Platform-Independent)**
 - ✅ **YES:** Business logic, IUiDispatcher abstraction, SessionState (runtime data)
@@ -58,11 +61,14 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 
 ### **SharedUI Layer (ViewModels)**
 - ✅ **YES:** CommunityToolkit.Mvvm, Resolve GUID refs at runtime, Commands, ObservableProperty
+- ✅ **YES:** Direct service injection (no Factory classes - use DI directly)
 - ❌ **NO:** Platform-specific code (DispatcherQueue, MainThread)
+- ❌ **NO:** Factory classes (inject services directly, create objects with `new`)
 
 ### **WinUI Layer (Desktop UI)**
 - ✅ **YES:** `x:Bind` (compiled), ContentControl + DataTemplateSelector, Commands, Fluent Design 2, XAML Behaviors (Event-to-Command)
-- ❌ **NO:** `Binding` (slow), Custom PropertyGrids (use DataTemplates!), Click-Handlers in code-behind, Direct event handlers
+- ✅ **YES:** Drag & Drop handlers in code-behind (WinUI limitation - no good XAML Behavior support)
+- ❌ **NO:** `Binding` (slow), Custom PropertyGrids (use DataTemplates!), Business logic in code-behind
 
 ### **MAUI Layer (Mobile UI)**
 - ✅ **YES:** MainThread.BeginInvokeOnMainThread, ContentView, MAUI-specific controls
@@ -108,18 +114,12 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 - 📉 **Impact:** -480 LOC (-70%), compiled bindings, native patterns
 - 📖 **Details:** `docs/LEssONS-LEARNED-PROPERTYGRID-REFACTORING.md`
 
-### **2. Nested Objects in Domain (Dec 2025)**
-- ❌ **Mistake:** `Journey.Stations = List<Station>` (Circular refs, JSON hell)
-- ✅ **Solution:** `Journey.StationIds = List<Guid>` + ViewModel resolution
-- 📉 **Impact:** Clean JSON, no circular refs, testable
-- 📖 **Details:** `docs/REFACTORING-PLAN-REFERENCE-BASED-ARCHITECTURE.md`
-
-### **3. ClearOtherSelections Complexity**
+### **2. ClearOtherSelections Complexity**
 - ❌ **Mistake:** Manual selection cleanup logic (35 LOC)
 - ✅ **Solution:** ContentControl automatic template switching
 - 📉 **Impact:** -35 LOC, automatic behavior, simpler code
 
-### **4. Event-to-Command**
+### **3. Event-to-Command**
 - ❌ **Mistake:** `ListView_ItemClick` code-behind handlers (complex fallback logic, 40+ LOC per handler)
 - ✅ **Solution:** Custom Behavior that directly extracts items from `ItemClickEventArgs`
 - 📉 **Impact:** -200 LOC code-behind, clean MVVM separation, reusable patterns
@@ -336,8 +336,9 @@ Manager Manager  Manager
 ## 🎯 Key Principles (Always Remember)
 
 ### **Domain Architecture**
-- ✅ **GUID References Only:** `Journey.StationIds = List<Guid>` (not `List<Station>`)
-- ✅ **Single Source of Truth:** Project aggregate root has master lists
+- ✅ **GUID References for Shared Entities:** `Train.LocomotiveIds = List<Guid>` (Locomotives are shared across trains)
+- ✅ **Embedded Objects for Owned Entities:** `Journey.Stations = List<Station>` (Stations belong exclusively to one Journey)
+- ✅ **Single Source of Truth:** Project aggregate root has master lists for shared entities
 - ✅ **Pure POCOs:** No INotifyPropertyChanged, no attributes
 
 ### **ViewModel 1:1 Property Mapping Rule**
@@ -410,6 +411,37 @@ public ObservableCollection<StationViewModel> Stations =>
 - ✅ **Separate runtime data** from Domain
 - ✅ **Manager owns SessionState** (JourneyManager has JourneySessionState)
 - ✅ **ViewModels read SessionState** (read-only, subscribe to events)
+
+### **Fields Region Pattern (ViewModel)**
+
+**Rule:** Group fields logically, no empty lines after `#region` or before `#endregion`.
+
+**This applies to ALL `#region` blocks in ALL classes, not just Fields!**
+
+```csharp
+#region Fields
+// Core Services (required)
+private readonly IZ21 _z21;
+private readonly IUiDispatcher _uiDispatcher;
+
+// Configuration
+private readonly AppSettings _settings;
+
+// Optional Services
+private readonly ISettingsService? _settingsService;
+
+// Runtime State
+private JourneyManager? _journeyManager;
+#endregion
+```
+
+**Grouping order:**
+1. **Model** (if ViewModel wraps a domain object)
+2. **Core Services** (required dependencies)
+3. **Context** (Project, Solution references)
+4. **Configuration** (AppSettings, etc.)
+5. **Optional Services** (nullable dependencies)
+6. **Runtime State** (mutable state, disposable objects)
 
 ### **UI Patterns**
 - ✅ **x:Bind > Binding** (compiled vs runtime)
@@ -550,6 +582,8 @@ $env:GIT_PAGER='cat'; $env:LESS='-FRSX'; $env:LESSCHARSET='utf-8'
   # or
   Out-File $file -InputObject $text -Encoding UTF8BOM
   ```
+- **Line Endings:** Windows (CR LF) - ensure all files use `\r\n`
+- **No trailing empty lines:** No extra blank lines after the final closing brace `}`
 - Quote paths with spaces; use double quotes when interpolating variables.
 
 ---

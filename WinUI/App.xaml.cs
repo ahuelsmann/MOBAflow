@@ -98,7 +98,6 @@ public partial class App
             return new Backend.Services.ActionExecutor(z21);
         });
         services.AddSingleton<Backend.Services.WorkflowService>();
-        services.AddSingleton<Backend.Interface.IJourneyManagerFactory, Backend.Manager.JourneyManagerFactory>();
         
         // Domain.Solution - Pure POCO, no Settings initialization needed
         services.AddSingleton(sp => new Domain.Solution());

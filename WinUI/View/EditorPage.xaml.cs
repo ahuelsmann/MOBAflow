@@ -24,7 +24,6 @@ public sealed partial class EditorPage : Page
     }
 
     #region Drag & Drop Event Handlers
-
     private void CityListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {
         if (e.Items.FirstOrDefault() is Domain.City city)
@@ -70,11 +69,9 @@ public sealed partial class EditorPage : Page
             ViewModel.AddStationFromCityCommand.Execute(ViewModel.SelectedCity);
         }
     }
-
     #endregion
 
     #region Train Composition - Drag & Drop
-
     private void LocomotiveLibrary_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {
         if (e.Items.FirstOrDefault() is LocomotiveViewModel locomotiveVM)
@@ -436,11 +433,9 @@ public sealed partial class EditorPage : Page
             ViewModel.SelectedTrain.RefreshCollections();
         }
     }
-
     #endregion
 
     #region Properties Panel Visual States
-
     private void PropertiesCollapseToggle_Checked(object sender, RoutedEventArgs e)
     {
         VisualStateManager.GoToState(this, "Collapsed", true);
@@ -450,6 +445,5 @@ public sealed partial class EditorPage : Page
     {
         VisualStateManager.GoToState(this, "Expanded", true);
     }
-
     #endregion
 }

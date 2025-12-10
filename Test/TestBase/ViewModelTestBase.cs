@@ -2,6 +2,7 @@
 using Moq;
 // ✅ IUiDispatcher
 using Moba.SharedUI.Interface;
+using Moba.Backend.Services;
 
 namespace Moba.Test.TestBase;
 
@@ -17,9 +18,9 @@ public abstract class ViewModelTestBase
     protected Mock<IZ21> Z21Mock { get; private set; } = null!;
 
     /// <summary>
-    /// Mock for IJourneyManagerFactory interface
+    /// Mock for WorkflowService (used to create JourneyManager)
     /// </summary>
-    protected Mock<IJourneyManagerFactory> JourneyManagerFactoryMock { get; private set; } = null!;
+    protected Mock<WorkflowService> WorkflowServiceMock { get; private set; } = null!;
 
     /// <summary>
     /// Mock for IIoService interface (file operations)
@@ -39,7 +40,7 @@ public abstract class ViewModelTestBase
     public virtual void BaseSetUp()
     {
         Z21Mock = new Mock<IZ21>();
-        JourneyManagerFactoryMock = new Mock<IJourneyManagerFactory>();
+        WorkflowServiceMock = new Mock<WorkflowService>();
         IoServiceMock = new Mock<IIoService>();
         UiDispatcherMock = new Mock<IUiDispatcher>();
         
@@ -67,7 +68,7 @@ public abstract class ViewModelTestBase
     {
         // Reset all mocks to clean state
         Z21Mock?.Reset();
-        JourneyManagerFactoryMock?.Reset();
+        WorkflowServiceMock?.Reset();
         IoServiceMock?.Reset();
         UiDispatcherMock?.Reset();
     }

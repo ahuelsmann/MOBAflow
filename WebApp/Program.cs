@@ -25,7 +25,6 @@ builder.Services.AddSingleton(sp =>
     return new Moba.Backend.Services.ActionExecutor(z21);
 });
 builder.Services.AddSingleton<Moba.Backend.Services.WorkflowService>();
-builder.Services.AddSingleton<Moba.Backend.Interface.IJourneyManagerFactory, Moba.Backend.Manager.JourneyManagerFactory>();
 
 // ✅ DataManager as Singleton (master data - simplified for Blazor Server)
 builder.Services.AddSingleton(sp => new Moba.Backend.Data.DataManager());

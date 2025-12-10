@@ -1,14 +1,17 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using Backend.Manager;
+using Backend.Services;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using Backend.Manager;
-using Backend.Services;
 using Domain;
-using Moba.Domain.Enum;
+
 using Interface;
+
+using Moba.Domain.Enum;
 
 using System;
 using System.Collections.ObjectModel;
@@ -16,12 +19,19 @@ using System.ComponentModel.DataAnnotations;
 
 public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Journey>
 {
+    #region Fields
+    // Model
     private readonly Journey _journey;
-    private readonly JourneySessionState _state;
-    private readonly JourneyManager? _journeyManager;
-    private readonly IUiDispatcher? _dispatcher;
     private readonly Project _project;
+
+    // Services
+    private readonly IUiDispatcher? _dispatcher;
+    private readonly JourneyManager? _journeyManager;
+
+    // Runtime State
+    private readonly JourneySessionState _state;
     private ObservableCollection<StationViewModel>? _stations;
+    #endregion
 
     /// <summary>
     /// Event fired when the Journey model is modified and should be saved.

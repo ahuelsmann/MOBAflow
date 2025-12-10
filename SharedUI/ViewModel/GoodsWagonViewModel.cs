@@ -2,6 +2,7 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Domain;
+
 using Moba.Domain.Enum;
 
 /// <summary>

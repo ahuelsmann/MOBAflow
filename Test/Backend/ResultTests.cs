@@ -9,7 +9,6 @@ namespace Moba.Test.Backend;
 public class ResultTests
 {
     #region Result<T> Tests
-
     [Test]
     public void Success_CreatesSuccessResult()
     {
@@ -227,11 +226,9 @@ public class ResultTests
         Assert.That(result1, Is.EqualTo(result2));
         Assert.That(result1, Is.Not.EqualTo(result3));
     }
-
     #endregion
 
     #region Result (non-generic) Tests
-
     [Test]
     public void Result_Success_CreatesSuccessResult()
     {
@@ -270,11 +267,9 @@ public class ResultTests
         Assert.That(result3, Is.EqualTo(result4));
         Assert.That(result1, Is.Not.EqualTo(result3));
     }
-
     #endregion
 
     #region Edge Cases
-
     [Test]
     public void Map_WithNullValue_HandlesGracefully()
     {
@@ -326,11 +321,9 @@ public class ResultTests
         Assert.That(result.IsFailure, Is.True);
         Assert.That(result.Error, Is.EqualTo(string.Empty));
     }
-
     #endregion
 
     #region Real-World Usage Examples
-
     [Test]
     public void RealWorld_DatabaseQuery_Success()
     {
@@ -396,7 +389,6 @@ public class ResultTests
         Assert.That(errorLogs, Has.Count.EqualTo(1));
         Assert.That(errorLogs[0], Does.Contain("Division by zero"));
     }
-
     #endregion
 }
 
