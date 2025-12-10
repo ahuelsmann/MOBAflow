@@ -6,8 +6,8 @@ using CommunityToolkit.Mvvm.Input;
 
 using Moba.Backend.Interface;
 using Domain;
+
 using Moba.Domain.Enum;
-using Enum;
 using Interface;
 
 using Sound;
@@ -20,8 +20,6 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
     private readonly ISpeakerEngine? _speakerEngine;
     private readonly Project? _project;
     private readonly IZ21? _z21;
-
-    public MobaType EntityType => MobaType.Workflow;
 
     [ObservableProperty]
     private Workflow model;

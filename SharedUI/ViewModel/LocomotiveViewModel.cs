@@ -4,8 +4,8 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using Domain;
+
 using Moba.Domain.Enum;
-using Enum;
 using Interface;
 
 /// <summary>
@@ -16,12 +16,9 @@ public partial class LocomotiveViewModel : ObservableObject, IViewModelWrapper<L
     [ObservableProperty]
     private Locomotive model;
 
-    private readonly IUiDispatcher? _dispatcher;
-
-    public LocomotiveViewModel(Locomotive model, IUiDispatcher? dispatcher = null)
+    public LocomotiveViewModel(Locomotive model)
     {
         Model = model;
-        _dispatcher = dispatcher;
     }
 
     public string Name
@@ -83,6 +80,4 @@ public partial class LocomotiveViewModel : ObservableObject, IViewModelWrapper<L
         get => Model.Details;
         set => SetProperty(Model.Details, value, Model, (m, v) => m.Details = v);
     }
-
-    public MobaType EntityType => MobaType.Locomotive;
 }

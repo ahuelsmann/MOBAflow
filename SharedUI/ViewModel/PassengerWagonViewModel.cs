@@ -3,7 +3,6 @@ namespace Moba.SharedUI.ViewModel;
 
 using Domain;
 using Moba.Domain.Enum;
-using Interface;
 
 /// <summary>
 /// ViewModel wrapper for PassengerWagon model.
@@ -11,7 +10,7 @@ using Interface;
 /// </summary>
 public partial class PassengerWagonViewModel : WagonViewModel
 {
-    public PassengerWagonViewModel(PassengerWagon model, IUiDispatcher? dispatcher = null) : base(model, dispatcher)
+    public PassengerWagonViewModel(PassengerWagon model) : base(model)
     {
         PassengerWagonModel = model;
     }

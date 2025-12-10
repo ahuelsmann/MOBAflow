@@ -5,8 +5,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using Domain;
+
 using Moba.Domain.Enum;
-using Enum;
 using Interface;
 
 using System.Collections.ObjectModel;
@@ -20,16 +20,12 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
     [ObservableProperty]
     private Train model;
 
-    public MobaType EntityType => MobaType.Train;
-
-    private readonly IUiDispatcher? _dispatcher;
     private readonly Project _project;
 
-    public TrainViewModel(Train model, Project project, IUiDispatcher? dispatcher = null)
+    public TrainViewModel(Train model, Project project)
     {
         Model = model;
         _project = project;
-        _dispatcher = dispatcher;
     }
 
     /// <summary>
@@ -103,7 +99,7 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
             Model.LocomotiveIds
                 .Select(id => _project.Locomotives.FirstOrDefault(l => l.Id == id))
                 .Where(l => l != null)
-                .Select(l => new LocomotiveViewModel(l!, _dispatcher))
+                .Select(l => new LocomotiveViewModel(l!))
         );
 
     /// <summary>
@@ -121,7 +117,7 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
                     return wagon;
                 })
                 .Where(w => w != null)
-                .Select(w => new WagonViewModel(w!, _dispatcher))
+                .Select(w => new WagonViewModel(w!))
         );
 
     /// <summary>

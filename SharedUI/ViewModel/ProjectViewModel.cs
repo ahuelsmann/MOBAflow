@@ -5,7 +5,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using Domain;
 
-using Enum;
 using Interface;
 
 using System.Collections.ObjectModel;
@@ -19,8 +18,6 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
     public Project Model { get; }
 
     private readonly IUiDispatcher? _dispatcher;
-
-    public MobaType EntityType => MobaType.Project;
 
     /// <summary>
     /// Project name. Changes are synchronized back to Model.
@@ -84,87 +81,44 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
 
     /// <summary>
     /// Refreshes all collections from the model. Call this after model changes.
+    /// Simple rebuild approach - performance is not critical (called rarely on Load/Save).
     /// </summary>
     public void Refresh()
     {
         // Update scalar properties from Model
         Name = Model.Name;
         
-        // Smart sync: Reuse existing ViewModels where possible
-        SyncCollection(Model.Journeys, Journeys, j => new JourneyViewModel(j, Model, _dispatcher));
-        SyncCollection(Model.Workflows, Workflows, w => new WorkflowViewModel(w));
-        SyncCollection(Model.Trains, Trains, t => new TrainViewModel(t, Model, _dispatcher));
-        SyncCollection(Model.Locomotives, Locomotives, l => new LocomotiveViewModel(l));
-        
+        // Clear and rebuild all collections
+        Journeys.Clear();
+        foreach (var j in Model.Journeys)
+            Journeys.Add(new JourneyViewModel(j, Model, _dispatcher));
+
+        Workflows.Clear();
+        foreach (var w in Model.Workflows)
+            Workflows.Add(new WorkflowViewModel(w));
+
+        Trains.Clear();
+        foreach (var t in Model.Trains)
+            Trains.Add(new TrainViewModel(t, Model));
+
+        Locomotives.Clear();
+        foreach (var l in Model.Locomotives)
+            Locomotives.Add(new LocomotiveViewModel(l));
+
         // Wagons: Combine PassengerWagons and GoodsWagons
-        var allWagons = Model.PassengerWagons.Cast<Wagon>()
-            .Concat(Model.GoodsWagons.Cast<Wagon>())
-            .ToList();
-        
-        SyncCollection(allWagons, Wagons, w =>
-        {
-            return w switch
-            {
-                PassengerWagon pw => (WagonViewModel)new PassengerWagonViewModel(pw),
-                GoodsWagon gw => new GoodsWagonViewModel(gw),
-                _ => new WagonViewModel(w)
-            };
-        });
+        Wagons.Clear();
+        foreach (var pw in Model.PassengerWagons)
+            Wagons.Add(new PassengerWagonViewModel(pw));
+        foreach (var gw in Model.GoodsWagons)
+            Wagons.Add(new GoodsWagonViewModel(gw));
 
         // Separate collections for Train Tab UI
-        SyncCollection(Model.PassengerWagons, PassengerWagons, pw => new PassengerWagonViewModel(pw));
-        SyncCollection(Model.GoodsWagons, GoodsWagons, gw => new GoodsWagonViewModel(gw));
-    }
+        PassengerWagons.Clear();
+        foreach (var pw in Model.PassengerWagons)
+            PassengerWagons.Add(new PassengerWagonViewModel(pw));
 
-    /// <summary>
-    /// Smart collection sync: Updates ViewModel collection to match Model collection.
-    /// Reuses existing ViewModels where possible (by Model reference).
-    /// </summary>
-    private void SyncCollection<TModel, TViewModel>(
-        List<TModel> modelCollection,
-        ObservableCollection<TViewModel> vmCollection,
-        Func<TModel, TViewModel> createVm)
-        where TViewModel : class
-    {
-        // Remove ViewModels for models that no longer exist
-        for (int i = vmCollection.Count - 1; i >= 0; i--)
-        {
-            var vm = vmCollection[i];
-            var model = GetModel(vm);
-            if (model == null || !modelCollection.Contains((TModel)model))
-            {
-                vmCollection.RemoveAt(i);
-            }
-        }
-
-        // Add or update ViewModels for each model
-        for (int i = 0; i < modelCollection.Count; i++)
-        {
-            var model = modelCollection[i];
-            var existingVm = vmCollection.FirstOrDefault(vm => EqualityComparer<TModel>.Default.Equals((TModel)GetModel(vm)!, model));
-
-            if (existingVm == null)
-            {
-                // Insert new ViewModel at correct index
-                if (i < vmCollection.Count)
-                {
-                    vmCollection.Insert(i, createVm(model));
-                }
-                else
-                {
-                    vmCollection.Add(createVm(model));
-                }
-            }
-            else if (vmCollection.IndexOf(existingVm) != i)
-            {
-                // Reorder if needed
-                vmCollection.Move(vmCollection.IndexOf(existingVm), i);
-            }
-        }
-    }
-
-    private static object? GetModel(object vm)
-    {
-        return vm.GetType().GetProperty("Model")?.GetValue(vm);
+        GoodsWagons.Clear();
+        foreach (var gw in Model.GoodsWagons)
+            GoodsWagons.Add(new GoodsWagonViewModel(gw));
     }
 }

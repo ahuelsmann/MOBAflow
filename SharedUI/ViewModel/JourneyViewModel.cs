@@ -8,7 +8,6 @@ using Backend.Manager;
 using Backend.Services;
 using Domain;
 using Moba.Domain.Enum;
-using Enum;
 using Interface;
 
 using System;
@@ -189,8 +188,6 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     /// </summary>
     public Journey Model => _journey;
 
-    public MobaType EntityType => MobaType.Journey;
-
     [RelayCommand]
     private void AddStation()
     {
@@ -258,7 +255,7 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
         {
             System.Diagnostics.Debug.WriteLine($"   - Station: {station.Name}");
             
-            var vm = new StationViewModel(station, _project, _dispatcher);
+            var vm = new StationViewModel(station, _project);
             vm.Position = index + 1;  // 1-based position
             
             // Mark current station based on SessionState

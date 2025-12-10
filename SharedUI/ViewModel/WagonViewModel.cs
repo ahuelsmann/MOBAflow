@@ -4,8 +4,8 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using Domain;
+
 using Moba.Domain.Enum;
-using Enum;
 using Interface;
 
 /// <summary>
@@ -16,15 +16,10 @@ public partial class WagonViewModel : ObservableObject, IViewModelWrapper<Wagon>
     [ObservableProperty]
     private Wagon model;
 
-    private readonly IUiDispatcher? _dispatcher;
-
-    public WagonViewModel(Wagon model, IUiDispatcher? dispatcher = null)
+    public WagonViewModel(Wagon model)
     {
         Model = model;
-        _dispatcher = dispatcher;
     }
-
-    public MobaType EntityType => MobaType.Wagon;
 
     public string Name
     {

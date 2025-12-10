@@ -4,7 +4,7 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using Domain;
-using Enum;
+
 using Interface;
 
 /// <summary>
@@ -17,13 +17,11 @@ public partial class StationViewModel : ObservableObject, IViewModelWrapper<Stat
     private Station model; // Station with all properties
 
     private readonly Project _project; // For resolving Platform IDs
-    private readonly IUiDispatcher? _dispatcher;
 
-    public StationViewModel(Station station, Project project, IUiDispatcher? dispatcher = null)
+    public StationViewModel(Station station, Project project)
     {
         Model = station;
         _project = project;
-        _dispatcher = dispatcher;
 
         // Track property changes for unsaved changes detection
         PropertyChanged += (s, e) =>
@@ -36,8 +34,6 @@ public partial class StationViewModel : ObservableObject, IViewModelWrapper<Stat
             }
         };
     }
-
-    public MobaType EntityType => MobaType.Station;
 
     public string Name
     {

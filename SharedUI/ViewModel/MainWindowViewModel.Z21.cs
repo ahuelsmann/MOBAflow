@@ -103,7 +103,7 @@ public partial class MainWindowViewModel
                     };
 
                     _journeyManager?.Dispose();
-                    _journeyManager = _journeyManagerFactory.Create(_z21, project.Journeys, executionContext);
+                    _journeyManager = _journeyManagerFactory.Create(_z21, project, executionContext);
                 }
 
                 ConnectToZ21Command.NotifyCanExecuteChanged();
@@ -170,7 +170,7 @@ public partial class MainWindowViewModel
                 
                 Debug.WriteLine($"   - ExecutionContext.SpeakerEngine: {executionContext.SpeakerEngine?.Name ?? "NULL (not implemented yet)"}");
                 
-                _journeyManager = _journeyManagerFactory.Create(_z21, project.Journeys, executionContext);
+                _journeyManager = _journeyManagerFactory.Create(_z21, project, executionContext);
                 
                 Debug.WriteLine($"✅ [DEBUG] JourneyManager created");
             }

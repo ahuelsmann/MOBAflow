@@ -7,5 +7,11 @@ using Domain;
 
 public interface IJourneyManagerFactory
 {
-    JourneyManager Create(IZ21 z21, List<Journey> journeys, ActionExecutionContext? context = null);
+    /// <summary>
+    /// Creates a JourneyManager for the specified project.
+    /// </summary>
+    /// <param name="z21">Z21 command station interface</param>
+    /// <param name="project">Project containing journeys, stations, and workflows</param>
+    /// <param name="context">Optional execution context for action execution</param>
+    JourneyManager Create(IZ21 z21, Project project, ActionExecutionContext? context = null);
 }

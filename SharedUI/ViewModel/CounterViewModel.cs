@@ -1,14 +1,17 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using Common.Configuration;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using Moba.Backend.Interface;
-using Common.Configuration;
-using Moba.Common.Extensions;
 using Domain;
+
 using Interface;
+
+using Moba.Backend.Interface;
+using Moba.Common.Extensions;
 
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -25,17 +28,25 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     private readonly IZ21 _z21;
     private readonly IUiDispatcher _dispatcher;
     private readonly INotificationService? _notificationService;
+    private readonly ISettingsService? _settingsService;
     private readonly AppSettings _settings;
     private readonly Solution _solution;
     private readonly Dictionary<int, DateTime> _lastFeedbackTime = new();
     private bool _disposed;
 
-    public CounterViewModel(IZ21 z21, IUiDispatcher dispatcher, AppSettings settings, Solution solution, INotificationService? notificationService = null)
+    public CounterViewModel(
+        IZ21 z21,
+        IUiDispatcher dispatcher,
+        AppSettings settings,
+        Solution solution,
+        ISettingsService? settingsService = null,
+        INotificationService? notificationService = null)
     {
         _z21 = z21;
         _dispatcher = dispatcher;
         _settings = settings;
         _solution = solution;
+        _settingsService = settingsService;
         _notificationService = notificationService;
 
         // ✅ Initialize available IP addresses from AppSettings
@@ -88,11 +99,12 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     public ObservableCollection<string> AvailableIpAddresses { get; }
 
     /// <summary>
-    /// Syncs IP address changes back to Solution.Settings and adds new IPs to history.
+    /// Syncs IP address changes back to AppSettings and adds new IPs to history.
+    /// Persists changes if ISettingsService is available.
     /// </summary>
     partial void OnZ21IpAddressChanged(string value)
     {
-        // Sync selected IP back to Solution.Settings.CurrentIpAddress
+        // Sync selected IP back to AppSettings.CurrentIpAddress
         if (!string.IsNullOrEmpty(value) && _settings.Z21.CurrentIpAddress != value)
         {
             _settings.Z21.CurrentIpAddress = value;
@@ -105,6 +117,27 @@ public partial class CounterViewModel : ObservableObject, IDisposable
                 AvailableIpAddresses.Add(value);
                 this.Log($"✅ Added new IP to history: {value}");
             }
+
+            // Persist settings if service is available
+            _ = SaveSettingsAsync();
+        }
+    }
+
+    /// <summary>
+    /// Persists current settings to disk (fire-and-forget, logs errors).
+    /// </summary>
+    private async Task SaveSettingsAsync()
+    {
+        if (_settingsService == null) return;
+
+        try
+        {
+            await _settingsService.SaveSettingsAsync(_settings);
+            this.Log("✅ Settings persisted to disk");
+        }
+        catch (Exception ex)
+        {
+            this.Log($"⚠️ Failed to save settings: {ex.Message}");
         }
     }
 

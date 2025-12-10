@@ -3,9 +3,10 @@ namespace Moba.SharedUI.Interface;
 
 /// <summary>
 /// Represents a ViewModel that wraps a domain model for editing.
+/// Used by EntityEditorHelper for generic Add/Delete operations.
 /// </summary>
 /// <typeparam name="TModel">The domain model type.</typeparam>
-public interface IViewModelWrapper<TModel> : ISelectableEntity where TModel : class
+public interface IViewModelWrapper<TModel> where TModel : class
 {
     /// <summary>
     /// Gets the underlying domain model.

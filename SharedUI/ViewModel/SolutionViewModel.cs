@@ -44,65 +44,12 @@ public partial class SolutionViewModel : ObservableObject
     {
         Name = Model.Name;
 
-        // Smart sync: Only update if collections actually changed
-        SyncCollection(Model.Projects, Projects, p => new ProjectViewModel(p, _dispatcher));
-    }
-
-    /// <summary>
-    /// Smart collection sync: Updates ViewModel collection to match Model collection.
-    /// Reuses existing ViewModels where possible (by Model reference).
-    /// </summary>
-    private void SyncCollection<TModel, TViewModel>(
-        List<TModel> modelCollection,
-        ObservableCollection<TViewModel> vmCollection,
-        Func<TModel, TViewModel> createVm)
-        where TViewModel : class
-    {
-        // Remove ViewModels for models that no longer exist
-        for (int i = vmCollection.Count - 1; i >= 0; i--)
+        // Simple rebuild: Clear and recreate all ViewModels
+        // Performance is not critical here (called rarely on Load/Save)
+        Projects.Clear();
+        foreach (var project in Model.Projects)
         {
-            var vm = vmCollection[i];
-            var model = GetModel(vm);
-            if (model == null || !modelCollection.Contains((TModel)model))
-            {
-                vmCollection.RemoveAt(i);
-            }
+            Projects.Add(new ProjectViewModel(project, _dispatcher));
         }
-
-        // Add or update ViewModels for each model
-        for (int i = 0; i < modelCollection.Count; i++)
-        {
-            var model = modelCollection[i];
-            var existingVm = vmCollection.FirstOrDefault(vm => EqualityComparer<TModel>.Default.Equals((TModel)GetModel(vm)!, model));
-
-            if (existingVm == null)
-            {
-                // Insert new ViewModel at correct index
-                if (i < vmCollection.Count)
-                {
-                    vmCollection.Insert(i, createVm(model));
-                }
-                else
-                {
-                    vmCollection.Add(createVm(model));
-                }
-            }
-            else if (vmCollection.IndexOf(existingVm) != i)
-            {
-                // Reorder if needed
-                vmCollection.Move(vmCollection.IndexOf(existingVm), i);
-            }
-
-            // If ViewModel has Refresh method, call it
-            if (existingVm is ProjectViewModel pvm)
-            {
-                pvm.Refresh();
-            }
-        }
-    }
-
-    private static object? GetModel(object vm)
-    {
-        return vm.GetType().GetProperty("Model")?.GetValue(vm);
     }
 }

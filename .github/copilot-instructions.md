@@ -474,16 +474,19 @@ public object? CurrentView
 **Simple is not simplistic. Simple is elegant.** 🎯
 
 ---
-
 # ⚡ PowerShell 7 Terminal Rules (Copilot‑Specific)
 
-### 1) Always assume **PowerShell 7 (pwsh)** in Visual Studio DevShell
-- Visual Studio DevShell is active (VS environment/modules loaded).
-- Do not rely on PSReadLine (it can be disabled in this shell).
+> **Update focus:** Prevent one‑liner parser errors (e.g., `foreach` after an expression), index out‑of‑range on line slicing, and inconsistent writes. Prefer pipeline‑safe loops and idempotent edits.
 
 ---
 
-### 2) Mandatory Session Setup (prepend to every snippet)
+## 1) Always assume **PowerShell 7 (pwsh)** in Visual Studio DevShell
+- VS DevShell is active (environment/modules loaded).
+- PSReadLine may be disabled in this shell.
+
+---
+
+## 2) Mandatory Session Setup (prepend to every snippet)
 ```powershell
 $ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'
 [Console]::OutputEncoding=[Text.Encoding]::UTF8; [Console]::InputEncoding=[Text.Encoding]::UTF8
@@ -493,53 +496,39 @@ if (Get-Variable -Name PSStyle -ErrorAction SilentlyContinue) { $PSStyle.OutputR
 
 ---
 
-### 3) Git **without a pager** (prevents `:` / `(END)` / `less` stalls)
-- Preferred global setting:
-  ```bash
-  git config --global core.pager cat
-  ```
-- Or per command:
-  ```bash
-  git --no-pager diff …
-  git --no-pager log …
-  git --no-pager show …
-  ```
-- Optional for the session (when running inside pwsh):
-  ```powershell
-  $env:GIT_PAGER='cat'; $env:LESS='-FRSX'; $env:LESSCHARSET='utf-8'
-  ```
-
----
-
-### 4) Statement separation (avoid PowerShell parser errors)
-- In **one‑liners**, always separate statements with a **semicolon `;`** — especially before `if`, `foreach`, `try`, etc.
-  - ❌ `... .Count if ($count -gt 0) { ... }`
-  - ✅ `... .Count; if ($count -gt 0) { ... }`
-- For anything non‑trivial, prefer multi‑line code (one statement per line).
-
----
-
-### 5) Prefer **PowerShell‑native** commands over Unix tools
-- `head` → `Select-Object -First N`
-- `grep` → `Select-String`
-- `sed -i` → `Get-Content -Raw` + `-replace` + `Set-Content`
-- `wc -l` → `Measure-Object`
-- Avoid `&&` chains; in PowerShell use semicolons or separate lines.
-
-**Examples**
+## 3) Git **without a pager**
 ```powershell
-# Show first 100 lines of a diff without invoking a pager
-git --no-pager diff .github/copilot-instructions.md | Select-Object -First 100
-
-# Safe counting with a guard
-$count = (Select-String -Path . -Pattern 'EventTriggerBehavior' -List | Measure-Object).Count; if ($count -gt 0) { Write-Host "$count instances" }
+$env:GIT_PAGER='cat'; $env:LESS='-FRSX'; $env:LESSCHARSET='utf-8'
+# Or per command: git --no-pager diff / log / show
+# Preferred global: git config --global core.pager cat
 ```
 
 ---
 
-### 6) Regex safety rules
+## 4) One‑liner safety: separators and loops
+- Always separate statements with **`;`** in one‑liners — before `if`, `foreach`, `for`, `while`, `try`, etc.
+  - ❌ `... .Count foreach ($f in $files) { ... }`
+  - ✅ `... .Count; foreach ($f in $files) { ... }`
+- **Prefer `ForEach-Object`** over `foreach (...) {}` in one‑liners:
+  ```powershell
+  Get-ChildItem src -Filter *.cs -Recurse | ForEach-Object { $f = $_.FullName; # ... }
+  ```
+- Use the `foreach` *keyword* only in **multi‑line blocks**.
+
+---
+
+## 5) Prefer **PowerShell‑native** commands over Unix tools
+- `head` → `Select-Object -First N`
+- `grep` → `Select-String`
+- `sed -i` → `Get-Content -Raw` + `-replace` + `Set-Content`
+- `wc -l` → `Measure-Object`
+- Avoid `&&`; use semicolons or newlines.
+
+---
+
+## 6) Regex safety rules
 - Use **single quotes** for static regex: `'pattern'`
-- Escape literal special chars when needed: `\?  \(  \)  \.  \+  \*  \[  \]  \{  \}  \|`
+- Escape literal specials if needed: `\?  \(  \)  \.  \+  \*  \[  \]  \{  \}  \|`
 - For **dynamic** parts, always use `[regex]::Escape(...)`:
   ```powershell
   $pattern = 'private\s+' + [regex]::Escape('TrainViewModel?') + '\s+selectedTrain;'
@@ -553,12 +542,9 @@ $count = (Select-String -Path . -Pattern 'EventTriggerBehavior' -List | Measure-
 
 ---
 
-### 7) File I/O & encoding (project policy)
-- **Read:**
-  ```powershell
-  $text = Get-Content $file -Raw
-  ```
-- **Write:** UTF‑8 **with BOM** (as required by the pipeline)
+## 7) File I/O & encoding (project policy)
+- **Read:** `Get-Content -Raw`
+- **Write:** UTF‑8 **with BOM** (pipeline requirement)
   ```powershell
   Set-Content $file $text -Encoding UTF8BOM
   # or
@@ -566,27 +552,60 @@ $count = (Select-String -Path . -Pattern 'EventTriggerBehavior' -List | Measure-
   ```
 - Quote paths with spaces; use double quotes when interpolating variables.
 
-**Safe replace example**
+---
+
+## 8) Robust edit templates (idempotent & error‑safe)
+
+### 8.1 Insert a line **after a match** (multi‑line safe)
 ```powershell
-$text = Get-Content $file -Raw
-$text = $text -replace '\)$', ', IServiceProvider serviceProvider)'
-Set-Content $file $text -Encoding UTF8BOM
+$f = "path/to/MainWindowViewModel.cs"
+$add = 'public event EventHandler? ExitApplicationRequested;'
+$text = Get-Content $f -Raw
+if ($text -notmatch [regex]::Escape($add)) {
+  $nl   = [Environment]::NewLine
+  $text = $text -replace '(?m)(^\s*#endregion\s*$)', $nl + $add + $nl + '$1'
+  Set-Content $f $text -Encoding UTF8BOM
+  Write-Host 'Added ExitApplicationRequested event'
+} else { Write-Host 'Event already present' }
 ```
+
+### 8.2 Insert at a specific **line index** (clamped, no out‑of‑range)
+```powershell
+$f = "path/to/MainWindowViewModel.cs"
+$lines = Get-Content $f
+$idx = 145
+$idx = [math]::Min([math]::Max($idx,0), $lines.Count)   # clamp
+$newLine = 'public event EventHandler? ExitApplicationRequested;'
+$pre  = $lines | Select-Object -First $idx
+$post = $lines | Select-Object -Skip  $idx
+Set-Content $f ($pre + $newLine + $post) -Encoding UTF8BOM
+Write-Host ("Inserted line at index {0}" -f $idx)
+```
+
+### 8.3 Replace literal text (whole‑file, no regex pitfalls)
+```powershell
+$f = "path/to/MainWindowViewModel.cs"
+$sold = "[ObservableProperty]`r`nprivate City? selectedCity;`r`nregion"
+$snew = "[ObservableProperty]`r`nprivate City? selectedCity;`r`npublic event EventHandler? ExitApplicationRequested;`r`nregion"
+$text = Get-Content $f -Raw
+$text = $text.Replace($sold, $snew)  # literal replace
+Set-Content $f $text -Encoding UTF8BOM
+Write-Host 'Replaced block and added event'
+```
+
+> Use **literal** `.Replace` when you can; prefer regex only when structure demands it.
 
 ---
 
-### 8) Project root & solution fallback
+## 9) Project root & solution fallback
 ```powershell
-# Prefer the Git root
 $gitRoot = (git rev-parse --show-toplevel 2>$null); if ($gitRoot -and (Test-Path $gitRoot)) { Set-Location $gitRoot }
-
-# Fallback to first .sln in current path
 $sln = Get-ChildItem -Path . -Filter *.sln -ErrorAction SilentlyContinue | Select-Object -First 1; if ($sln) { Set-Location $sln.Directory.FullName }
 ```
 
 ---
 
-### 9) Quick reset for a “stuck” session (no need to close the terminal)
+## 10) Quick reset for a “stuck” session
 ```powershell
 try { Remove-Module PSReadLine -ErrorAction SilentlyContinue } catch {}
 $ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'
@@ -598,14 +617,16 @@ Write-Host 'Copilot terminal has been reset.' -ForegroundColor Green
 
 ---
 
-### 10) Do **not** generate
-- No reference to **`$PStyle`** (only **`$PSStyle`** is valid).
-- No Bash syntax in pwsh snippets (e.g., `&&`, `; then`, `grep/sed/awk`) unless explicitly asked to use *Git Bash*.
-- No destructive one‑liners for file edits without a prior `Select-String` validation.
+## 11) Do **not** generate
+- No reference to **`$PStyle`** (only **`$PSStyle`**).
+- No Bash syntax in pwsh snippets unless explicitly asked to use *Git Bash*.
+- No destructive one‑liners without a prior `Select-String` check.
+- Do **not** place `foreach (...) {}` after an expression in one‑liners. Use `; foreach` or `... | ForEach-Object {}`.
+- Do **not** slice arrays with `[0..N]` unless clamped; prefer `Select-Object -First / -Skip`.
 
 ---
 
-### 11) Quick copy‑and‑use examples
+## 12) Quick copy‑and‑use examples
 ```powershell
 # Diff without pager, first 100 lines
 git --no-pager diff .github/copilot-instructions.md | Select-Object -First 100
@@ -613,18 +634,11 @@ git --no-pager diff .github/copilot-instructions.md | Select-Object -First 100
 # Count matches and print if found
 $count=(Select-String -Path . -Pattern 'EventTriggerBehavior' -List | Measure-Object).Count; if ($count -gt 0) { Write-Host "$count instances" }
 
-# Targeted replace with UTF‑8 BOM writeback
-$text=Get-Content $file -Raw; $text=$text -replace '\)$', ', IServiceProvider serviceProvider)'; Set-Content $file $text -Encoding UTF8BOM
-```
-
----
-
-### 12) (Optional) Recommended VS terminal arguments (PowerShell 7, one‑liner)
-```text
--NoProfile -NonInteractive -NoExit -NoLogo -ExecutionPolicy Bypass -Command "& { Import-Module \"$env:VSAPPIDDIR\..\Tools\Microsoft.VisualStudio.DevShell.dll\"; Enter-VsDevShell -SetDefaultWindowTitle -InstallPath \"$env:VSAPPIDDIR\..\..\"; $ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'; [Console]::OutputEncoding=[Text.Encoding]::UTF8; [Console]::InputEncoding=[Text.Encoding]::UTF8; $env:POWERSHELL_TELEMETRY_OPTOUT='1'; $env:DOTNET_CLI_UI_LANGUAGE='en'; $env:TERM='xterm-256color'; try { Remove-Module PSReadLine -ErrorAction SilentlyContinue } catch {}; if (Get-Variable -Name PSStyle -ErrorAction SilentlyContinue) { $PSStyle.OutputRendering='Ansi'; Set-Variable -Name PStyle -Value $PSStyle -Scope Global }; $env:GIT_PAGER='cat'; $env:LESS='-FRSX'; $env:LESSCHARSET='utf-8'; try { $PSNativeCommandArgumentPassing='Standard' } catch {}; $gitRoot=(git rev-parse --show-toplevel 2>$null); if ($gitRoot -and (Test-Path $gitRoot)) { Set-Location $gitRoot } else { $sln=Get-ChildItem -Path . -Filter *.sln -ErrorAction SilentlyContinue | Select-Object -First 1; if ($sln) { Set-Location $sln.Directory.FullName } } }"
+# Pipeline-safe loop
+git ls-files *.cs | ForEach-Object { $f = $_; if ((Select-String -Path $f -Pattern 'INotifyPropertyChanged' -List)) { Write-Host $f } }
 ```
 
 ---
 
 **Last Updated:** 2025-12-10
-**Version:** 3.2
+**Version:** 3.3
