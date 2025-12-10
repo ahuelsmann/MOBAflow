@@ -22,29 +22,29 @@ public partial class MainWindowViewModel
     private JourneyViewModel CreateJourneyViewModel(Journey journey)
     {
         // Fallback for tests or when JourneyManager not initialized
-        if (_journeyManager == null || CurrentProjectViewModel == null)
+        if (_journeyManager == null || SelectedProject == null)
         {
             // Fallback: Create simple ViewModel without SessionState
             return new JourneyViewModel(
                 journey, 
-                CurrentProjectViewModel?.Model ?? new Project(), 
+                SelectedProject?.Model ?? new Project(), 
                 _uiDispatcher);
         }
 
         var state = _journeyManager.GetState(journey.Id);
         
         // If state doesn't exist yet (journey just created), create dummy state
-        if (state == null || CurrentProjectViewModel == null)
+        if (state == null || SelectedProject == null)
         {
             return new JourneyViewModel(
                 journey, 
-                CurrentProjectViewModel?.Model ?? new Project(), 
+                SelectedProject?.Model ?? new Project(), 
                 _uiDispatcher);
         }
 
         return new JourneyViewModel(
             journey, 
-            CurrentProjectViewModel.Model, 
+            SelectedProject.Model, 
             state, 
             _journeyManager, 
             _uiDispatcher);
@@ -75,10 +75,10 @@ public partial class MainWindowViewModel
     {
         get
         {
-            if (CurrentProjectViewModel == null)
+            if (SelectedProject == null)
                 return new List<JourneyViewModel>();
 
-            var journeys = CurrentProjectViewModel.Journeys;
+            var journeys = SelectedProject.Journeys;
 
             if (string.IsNullOrWhiteSpace(JourneySearchText))
                 return journeys.ToList();
@@ -96,11 +96,11 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private void AddJourney()
     {
-        if (CurrentProjectViewModel == null) return;
+        if (SelectedProject == null) return;
 
         var journey = EntityEditorHelper.AddEntity(
-            CurrentProjectViewModel.Model.Journeys,
-            CurrentProjectViewModel.Journeys,
+            SelectedProject.Model.Journeys,
+            SelectedProject.Journeys,
             () => new Journey { Name = "New Journey", BehaviorOnLastStop = BehaviorOnLastStop.None },
             model => CreateJourneyViewModel(model));
 
@@ -111,12 +111,12 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanDeleteJourney))]
     private void DeleteJourney()
     {
-        if (CurrentProjectViewModel == null) return;
+        if (SelectedProject == null) return;
 
         EntityEditorHelper.DeleteEntity(
             SelectedJourney,
-            CurrentProjectViewModel.Model.Journeys,
-            CurrentProjectViewModel.Journeys,
+            SelectedProject.Model.Journeys,
+            SelectedProject.Journeys,
             () => { SelectedJourney = null; });
         
         OnPropertyChanged(nameof(FilteredJourneys));
@@ -131,7 +131,7 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanAddStation))]
     private void AddStation()
     {
-        if (SelectedJourney == null || CurrentProjectViewModel == null) return;
+        if (SelectedJourney == null || SelectedProject == null) return;
 
         // Note: This creates a placeholder station.
         // In practice, stations should be added from City Library via drag & drop.

@@ -404,7 +404,7 @@
                             CanDragItems="True"
                             DragItemsStarting="WorkflowListView_DragItemsStarting"
                             IsItemClickEnabled="True"
-                            ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.Workflows, Mode=OneWay}"
+                            ItemsSource="{x:Bind ViewModel.SelectedProject.Workflows, Mode=OneWay}"
                             SelectedItem="{x:Bind ViewModel.SelectedWorkflow, Mode=TwoWay}"
                             SelectionMode="Single">
                             <i:Interaction.Behaviors>

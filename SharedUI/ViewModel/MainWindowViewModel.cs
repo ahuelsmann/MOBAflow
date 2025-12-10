@@ -144,26 +144,6 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private City? selectedCity;
 
-    /// <summary>
-    /// Gets the currently selected project as a ProjectViewModel.
-    /// Returns null if no project is selected or SolutionViewModel is not initialized.
-    /// </summary>
-    public ProjectViewModel? CurrentProjectViewModel
-    {
-        get
-        {
-            // Use SelectedProject if available, otherwise fall back to first project
-            if (SelectedProject != null)
-                return SelectedProject;
-
-            if (SolutionViewModel == null || SolutionViewModel.Projects.Count == 0)
-                return null;
-
-            // For now, return the first project (backward compatibility)
-            return SolutionViewModel.Projects.FirstOrDefault();
-        }
-    }
-
     public event EventHandler? ExitApplicationRequested;
 
     #endregion
@@ -340,7 +320,7 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanAddLocomotiveToTrain))]
     private void AddLocomotiveToTrain(LocomotiveViewModel? locomotiveVM)
     {
-        if (SelectedTrain == null || locomotiveVM == null || CurrentProjectViewModel == null) return;
+        if (SelectedTrain == null || locomotiveVM == null || SelectedProject == null) return;
 
         // Create a copy to avoid modifying the library object
         var locomotiveCopy = new Locomotive
@@ -357,7 +337,7 @@ public partial class MainWindowViewModel : ObservableObject
         };
 
         // Add to Project master list
-        CurrentProjectViewModel.Model.Locomotives.Add(locomotiveCopy);
+        SelectedProject.Model.Locomotives.Add(locomotiveCopy);
 
         // Add ID to Train
         SelectedTrain.Model.LocomotiveIds.Add(locomotiveCopy.Id);
@@ -368,7 +348,7 @@ public partial class MainWindowViewModel : ObservableObject
         System.Diagnostics.Debug.WriteLine($"✅ Added locomotive '{locomotiveCopy.Name}' to train '{SelectedTrain.Name}'");
     }
 
-    private bool CanAddLocomotiveToTrain() => SelectedTrain != null && CurrentProjectViewModel != null;
+    private bool CanAddLocomotiveToTrain() => SelectedTrain != null && SelectedProject != null;
 
     #endregion
 }

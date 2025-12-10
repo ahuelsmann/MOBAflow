@@ -38,10 +38,10 @@ public partial class MainWindowViewModel
     {
         get
         {
-            if (CurrentProjectViewModel == null)
+            if (SelectedProject == null)
                 return new List<WorkflowViewModel>();
 
-            var workflows = CurrentProjectViewModel.Workflows;
+            var workflows = SelectedProject.Workflows;
 
             if (string.IsNullOrWhiteSpace(WorkflowSearchText))
                 return workflows.ToList();
@@ -59,11 +59,11 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private void AddWorkflow()
     {
-        if (CurrentProjectViewModel == null) return;
+        if (SelectedProject == null) return;
 
         var workflow = EntityEditorHelper.AddEntity(
-            CurrentProjectViewModel.Model.Workflows,
-            CurrentProjectViewModel.Workflows,
+            SelectedProject.Model.Workflows,
+            SelectedProject.Workflows,
             () => new Workflow { Name = "New Workflow" },
             model => new WorkflowViewModel(model));
 
@@ -74,12 +74,12 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanDeleteWorkflow))]
     private void DeleteWorkflow()
     {
-        if (CurrentProjectViewModel == null) return;
+        if (SelectedProject == null) return;
 
         EntityEditorHelper.DeleteEntity(
             SelectedWorkflow,
-            CurrentProjectViewModel.Model.Workflows,
-            CurrentProjectViewModel.Workflows,
+            SelectedProject.Model.Workflows,
+            SelectedProject.Workflows,
             () => { SelectedWorkflow = null; });
 
         OnPropertyChanged(nameof(FilteredWorkflows));

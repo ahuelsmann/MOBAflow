@@ -475,42 +475,154 @@ public object? CurrentView
 
 ---
 
-## ⚡ PowerShell 7 Terminal Rules (Copilot-Specific)
+# ⚡ PowerShell 7 Terminal Rules (Copilot‑Specific)
 
-### ✅ Always use PowerShell 7 (pwsh)
-- Assume Visual Studio DevShell with pwsh is active.
+### 1) Always assume **PowerShell 7 (pwsh)** in Visual Studio DevShell
+- Visual Studio DevShell is active (VS environment/modules loaded).
+- Do not rely on PSReadLine (it can be disabled in this shell).
 
-### ✅ Mandatory Session Setup
-Start every snippet with:
+---
+
+### 2) Mandatory Session Setup (prepend to every snippet)
 ```powershell
-$ErrorActionPreference='Stop'
-[Console]::OutputEncoding=[Text.Encoding]::UTF8
-[Console]::InputEncoding=[Text.Encoding]::UTF8
-$ProgressPreference='SilentlyContinue'
-if ($Psstyle) { $Psstyle.OutputRendering='Ansi' }
+$ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'
+[Console]::OutputEncoding=[Text.Encoding]::UTF8; [Console]::InputEncoding=[Text.Encoding]::UTF8
+if (Get-Variable -Name PSStyle -ErrorAction SilentlyContinue) { $PSStyle.OutputRendering='Ansi' }
+```
+> **Important:** The variable is **`$PSStyle`** (with **S**). Do **not** use `$PStyle`.
+
+---
+
+### 3) Git **without a pager** (prevents `:` / `(END)` / `less` stalls)
+- Preferred global setting:
+  ```bash
+  git config --global core.pager cat
+  ```
+- Or per command:
+  ```bash
+  git --no-pager diff …
+  git --no-pager log …
+  git --no-pager show …
+  ```
+- Optional for the session (when running inside pwsh):
+  ```powershell
+  $env:GIT_PAGER='cat'; $env:LESS='-FRSX'; $env:LESSCHARSET='utf-8'
+  ```
+
+---
+
+### 4) Statement separation (avoid PowerShell parser errors)
+- In **one‑liners**, always separate statements with a **semicolon `;`** — especially before `if`, `foreach`, `try`, etc.
+  - ❌ `... .Count if ($count -gt 0) { ... }`
+  - ✅ `... .Count; if ($count -gt 0) { ... }`
+- For anything non‑trivial, prefer multi‑line code (one statement per line).
+
+---
+
+### 5) Prefer **PowerShell‑native** commands over Unix tools
+- `head` → `Select-Object -First N`
+- `grep` → `Select-String`
+- `sed -i` → `Get-Content -Raw` + `-replace` + `Set-Content`
+- `wc -l` → `Measure-Object`
+- Avoid `&&` chains; in PowerShell use semicolons or separate lines.
+
+**Examples**
+```powershell
+# Show first 100 lines of a diff without invoking a pager
+git --no-pager diff .github/copilot-instructions.md | Select-Object -First 100
+
+# Safe counting with a guard
+$count = (Select-String -Path . -Pattern 'EventTriggerBehavior' -List | Measure-Object).Count; if ($count -gt 0) { Write-Host "$count instances" }
 ```
 
-### 🔍 Regex Safety Rules for Copilot
-- **Immer Single-Quotes fuer Regex verwenden** (`'pattern'`), um String-Escapes zu vermeiden.
-- **Escape korrekt setzen**:
-  - `?` → `\?`
-  - `(` → `\(`
-  - `)` → `\)`
-  - `.` → `\.`
-- **Zeilenende matchen**: Nutze `$` fuer End-of-Line, um falsche Matches zu verhindern.
-- **Beispiel fuer sicheres Matching**:
+---
+
+### 6) Regex safety rules
+- Use **single quotes** for static regex: `'pattern'`
+- Escape literal special chars when needed: `\?  \(  \)  \.  \+  \*  \[  \]  \{  \}  \|`
+- For **dynamic** parts, always use `[regex]::Escape(...)`:
+  ```powershell
+  $pattern = 'private\s+' + [regex]::Escape('TrainViewModel?') + '\s+selectedTrain;'
+  if ($line -match $pattern) { ... }
+  ```
+- Anchor with `$` where appropriate to avoid over‑matching.
+- **Test before replacing:**
+  ```powershell
+  Select-String -Pattern 'private\s+TrainViewModel\?\s+selectedTrain;' -Path $file
+  ```
+
+---
+
+### 7) File I/O & encoding (project policy)
+- **Read:**
+  ```powershell
+  $text = Get-Content $file -Raw
+  ```
+- **Write:** UTF‑8 **with BOM** (as required by the pipeline)
+  ```powershell
+  Set-Content $file $text -Encoding UTF8BOM
+  # or
+  Out-File $file -InputObject $text -Encoding UTF8BOM
+  ```
+- Quote paths with spaces; use double quotes when interpolating variables.
+
+**Safe replace example**
 ```powershell
-if ($line -match 'private\s+TrainViewModel\?\s+selectedTrain;') { ... }
+$text = Get-Content $file -Raw
+$text = $text -replace '\)$', ', IServiceProvider serviceProvider)'
+Set-Content $file $text -Encoding UTF8BOM
 ```
-- **Vor komplexen Ersetzungen testen**:
+
+---
+
+### 8) Project root & solution fallback
 ```powershell
-Select-String -Pattern 'private\s+TrainViewModel\?\s+selectedTrain;' -Path $file
+# Prefer the Git root
+$gitRoot = (git rev-parse --show-toplevel 2>$null); if ($gitRoot -and (Test-Path $gitRoot)) { Set-Location $gitRoot }
+
+# Fallback to first .sln in current path
+$sln = Get-ChildItem -Path . -Filter *.sln -ErrorAction SilentlyContinue | Select-Object -First 1; if ($sln) { Set-Location $sln.Directory.FullName }
 ```
-- **Fuer einfache Ersetzungen**:
+
+---
+
+### 9) Quick reset for a “stuck” session (no need to close the terminal)
 ```powershell
-$line -replace '\)$', ', IServiceProvider serviceProvider)'
+try { Remove-Module PSReadLine -ErrorAction SilentlyContinue } catch {}
+$ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'
+[Console]::OutputEncoding=[Text.Encoding]::UTF8; [Console]::InputEncoding=[Text.Encoding]::UTF8
+if (Get-Variable -Name PSStyle -ErrorAction SilentlyContinue) { $PSStyle.OutputRendering='Ansi' }
+$env:GIT_PAGER='cat'
+Write-Host 'Copilot terminal has been reset.' -ForegroundColor Green
 ```
-- **Nie ungetestet in Einzeiler**: Bei komplexen Patterns → erst mit `Select-String` validieren.
+
+---
+
+### 10) Do **not** generate
+- No reference to **`$PStyle`** (only **`$PSStyle`** is valid).
+- No Bash syntax in pwsh snippets (e.g., `&&`, `; then`, `grep/sed/awk`) unless explicitly asked to use *Git Bash*.
+- No destructive one‑liners for file edits without a prior `Select-String` validation.
+
+---
+
+### 11) Quick copy‑and‑use examples
+```powershell
+# Diff without pager, first 100 lines
+git --no-pager diff .github/copilot-instructions.md | Select-Object -First 100
+
+# Count matches and print if found
+$count=(Select-String -Path . -Pattern 'EventTriggerBehavior' -List | Measure-Object).Count; if ($count -gt 0) { Write-Host "$count instances" }
+
+# Targeted replace with UTF‑8 BOM writeback
+$text=Get-Content $file -Raw; $text=$text -replace '\)$', ', IServiceProvider serviceProvider)'; Set-Content $file $text -Encoding UTF8BOM
+```
+
+---
+
+### 12) (Optional) Recommended VS terminal arguments (PowerShell 7, one‑liner)
+```text
+-NoProfile -NonInteractive -NoExit -NoLogo -ExecutionPolicy Bypass -Command "& { Import-Module \"$env:VSAPPIDDIR\..\Tools\Microsoft.VisualStudio.DevShell.dll\"; Enter-VsDevShell -SetDefaultWindowTitle -InstallPath \"$env:VSAPPIDDIR\..\..\"; $ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'; [Console]::OutputEncoding=[Text.Encoding]::UTF8; [Console]::InputEncoding=[Text.Encoding]::UTF8; $env:POWERSHELL_TELEMETRY_OPTOUT='1'; $env:DOTNET_CLI_UI_LANGUAGE='en'; $env:TERM='xterm-256color'; try { Remove-Module PSReadLine -ErrorAction SilentlyContinue } catch {}; if (Get-Variable -Name PSStyle -ErrorAction SilentlyContinue) { $PSStyle.OutputRendering='Ansi'; Set-Variable -Name PStyle -Value $PSStyle -Scope Global }; $env:GIT_PAGER='cat'; $env:LESS='-FRSX'; $env:LESSCHARSET='utf-8'; try { $PSNativeCommandArgumentPassing='Standard' } catch {}; $gitRoot=(git rev-parse --show-toplevel 2>$null); if ($gitRoot -and (Test-Path $gitRoot)) { Set-Location $gitRoot } else { $sln=Get-ChildItem -Path . -Filter *.sln -ErrorAction SilentlyContinue | Select-Object -First 1; if ($sln) { Set-Location $sln.Directory.FullName } } }"
+```
 
 ---
 

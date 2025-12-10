@@ -23,7 +23,7 @@ public partial class MainWindowViewModel
             HasSolution = false;
             SolutionViewModel = null;
             AvailableCities.Clear();
-            OnPropertyChanged(nameof(CurrentProjectViewModel));
+            OnPropertyChanged(nameof(SelectedProject));
             OnPropertyChanged(nameof(FilteredJourneys));
             OnPropertyChanged(nameof(FilteredWorkflows));
             return;
@@ -46,7 +46,7 @@ public partial class MainWindowViewModel
 
         SaveSolutionCommand.NotifyCanExecuteChanged();
         ConnectToZ21Command.NotifyCanExecuteChanged();
-        OnPropertyChanged(nameof(CurrentProjectViewModel));
+        OnPropertyChanged(nameof(SelectedProject));
         
         LoadCities();
     }

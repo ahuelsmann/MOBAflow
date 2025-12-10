@@ -106,7 +106,7 @@ public sealed partial class EditorPage : Page
         if (e.DataView.Properties.TryGetValue("Locomotive", out object locoObj) &&
             locoObj is Domain.Locomotive locomotive &&
             ViewModel.SelectedTrain != null &&
-            ViewModel.CurrentProjectViewModel != null)
+            ViewModel.SelectedProject != null)
         {
             // Create a copy to avoid modifying the library object
             var locomotiveCopy = new Domain.Locomotive
@@ -123,7 +123,7 @@ public sealed partial class EditorPage : Page
             };
 
             // Add to Project master list
-            ViewModel.CurrentProjectViewModel.Model.Locomotives.Add(locomotiveCopy);
+            ViewModel.SelectedProject.Model.Locomotives.Add(locomotiveCopy);
 
             // Add ID to Train
             ViewModel.SelectedTrain.Model.LocomotiveIds.Add(locomotiveCopy.Id);
@@ -149,7 +149,7 @@ public sealed partial class EditorPage : Page
         if (e.OriginalSource is FrameworkElement element &&
             element.DataContext is GoodsWagonViewModel goodsWagonVM &&
             ViewModel.SelectedTrain != null &&
-            ViewModel.CurrentProjectViewModel != null &&
+            ViewModel.SelectedProject != null &&
             goodsWagonVM.Model is Domain.GoodsWagon goodsWagon)
         {
             // Create a copy to avoid modifying the library object
@@ -166,7 +166,7 @@ public sealed partial class EditorPage : Page
             };
 
             // Add to Project master list
-            ViewModel.CurrentProjectViewModel.Model.GoodsWagons.Add(wagonCopy);
+            ViewModel.SelectedProject.Model.GoodsWagons.Add(wagonCopy);
 
             // Add ID to Train
             ViewModel.SelectedTrain.Model.WagonIds.Add(wagonCopy.Id);
@@ -192,7 +192,7 @@ public sealed partial class EditorPage : Page
         if (e.OriginalSource is FrameworkElement element &&
             element.DataContext is PassengerWagonViewModel passengerWagonVM &&
             ViewModel.SelectedTrain != null &&
-            ViewModel.CurrentProjectViewModel != null &&
+            ViewModel.SelectedProject != null &&
             passengerWagonVM.Model is Domain.PassengerWagon passengerWagon)
         {
             // Create a copy to avoid modifying the library object
@@ -209,7 +209,7 @@ public sealed partial class EditorPage : Page
             };
 
             // Add to Project master list
-            ViewModel.CurrentProjectViewModel.Model.PassengerWagons.Add(wagonCopy);
+            ViewModel.SelectedProject.Model.PassengerWagons.Add(wagonCopy);
 
             // Add ID to Train
             ViewModel.SelectedTrain.Model.WagonIds.Add(wagonCopy.Id);
@@ -226,7 +226,7 @@ public sealed partial class EditorPage : Page
 
     private void WagonListView_Drop(object sender, DragEventArgs e)
     {
-        if (ViewModel.SelectedTrain == null || ViewModel.CurrentProjectViewModel == null)
+        if (ViewModel.SelectedTrain == null || ViewModel.SelectedProject == null)
             return;
 
         // Handle GoodsWagon drop from library
@@ -247,7 +247,7 @@ public sealed partial class EditorPage : Page
             };
 
             // Add to Project master list
-            ViewModel.CurrentProjectViewModel.Model.GoodsWagons.Add(wagonCopy);
+            ViewModel.SelectedProject.Model.GoodsWagons.Add(wagonCopy);
 
             // Add ID to Train
             ViewModel.SelectedTrain.Model.WagonIds.Add(wagonCopy.Id);
@@ -273,7 +273,7 @@ public sealed partial class EditorPage : Page
             };
 
             // Add to Project master list
-            ViewModel.CurrentProjectViewModel.Model.PassengerWagons.Add(wagonCopy);
+            ViewModel.SelectedProject.Model.PassengerWagons.Add(wagonCopy);
 
             // Add ID to Train
             ViewModel.SelectedTrain.Model.WagonIds.Add(wagonCopy.Id);
@@ -339,7 +339,7 @@ public sealed partial class EditorPage : Page
         if (sender is MenuFlyoutItem menuItem &&
             menuItem.DataContext is LocomotiveViewModel locomotiveVM &&
             ViewModel.SelectedTrain != null &&
-            ViewModel.CurrentProjectViewModel != null)
+            ViewModel.SelectedProject != null)
         {
             var locomotiveCopy = new Domain.Locomotive
             {
@@ -355,7 +355,7 @@ public sealed partial class EditorPage : Page
             };
 
             // Add to Project master list
-            ViewModel.CurrentProjectViewModel.Model.Locomotives.Add(locomotiveCopy);
+            ViewModel.SelectedProject.Model.Locomotives.Add(locomotiveCopy);
 
             // Add ID to Train
             ViewModel.SelectedTrain.Model.LocomotiveIds.Add(locomotiveCopy.Id);
@@ -386,7 +386,7 @@ public sealed partial class EditorPage : Page
         if (sender is MenuFlyoutItem menuItem &&
             menuItem.DataContext is WagonViewModel wagonVM &&
             ViewModel.SelectedTrain != null &&
-            ViewModel.CurrentProjectViewModel != null)
+            ViewModel.SelectedProject != null)
         {
             Domain.Wagon wagonCopy;
 
@@ -405,7 +405,7 @@ public sealed partial class EditorPage : Page
                 };
 
                 // Add to Project master list
-                ViewModel.CurrentProjectViewModel.Model.PassengerWagons.Add((Domain.PassengerWagon)wagonCopy);
+                ViewModel.SelectedProject.Model.PassengerWagons.Add((Domain.PassengerWagon)wagonCopy);
             }
             else if (wagonVM.Model is Domain.GoodsWagon goodsWagon)
             {
@@ -422,7 +422,7 @@ public sealed partial class EditorPage : Page
                 };
 
                 // Add to Project master list
-                ViewModel.CurrentProjectViewModel.Model.GoodsWagons.Add((Domain.GoodsWagon)wagonCopy);
+                ViewModel.SelectedProject.Model.GoodsWagons.Add((Domain.GoodsWagon)wagonCopy);
             }
             else
             {
