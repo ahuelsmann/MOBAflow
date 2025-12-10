@@ -105,7 +105,6 @@ public partial class MainWindowViewModel
             model => CreateJourneyViewModel(model));
 
         SelectedJourney = journey;
-        HasUnsavedChanges = true;
         OnPropertyChanged(nameof(FilteredJourneys));
     }
 
@@ -118,7 +117,7 @@ public partial class MainWindowViewModel
             SelectedJourney,
             CurrentProjectViewModel.Model.Journeys,
             CurrentProjectViewModel.Journeys,
-            () => { SelectedJourney = null; HasUnsavedChanges = true; });
+            () => { SelectedJourney = null; });
         
         OnPropertyChanged(nameof(FilteredJourneys));
     }
@@ -155,8 +154,6 @@ public partial class MainWindowViewModel
         {
             SelectedStation = stationVM;
         }
-
-        HasUnsavedChanges = true;
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteStation))]
@@ -177,7 +174,6 @@ public partial class MainWindowViewModel
         SelectedJourney.RefreshStations();
         
         SelectedStation = null;
-        HasUnsavedChanges = true;
     }
 
     private bool CanAddStation() => SelectedJourney != null;
@@ -232,8 +228,6 @@ public partial class MainWindowViewModel
             
             // Refresh Journey's Stations collection
             SelectedJourney.RefreshStations();
-
-            HasUnsavedChanges = true;
         }
     }
 

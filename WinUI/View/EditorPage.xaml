@@ -86,6 +86,8 @@
                             Text="Projects" />
                         <ListView
                             Grid.Row="1"
+                            IsItemClickEnabled="True"
+                            ItemClick="ListView_ItemClick"
                             ItemsSource="{x:Bind ViewModel.SolutionViewModel.Projects, Mode=OneWay}"
                             SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}"
                             SelectionMode="Single">
@@ -182,10 +184,11 @@
                             Text="{x:Bind ViewModel.JourneySearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <ListView
                             Grid.Row="2"
-                            ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.Journeys, Mode=OneWay}"
+                            IsItemClickEnabled="True"
+                            ItemClick="ListView_ItemClick"
+                            ItemsSource="{x:Bind ViewModel.SelectedProject.Journeys, Mode=OneWay}"
                             SelectedItem="{x:Bind ViewModel.SelectedJourney, Mode=TwoWay}"
-                            SelectionMode="Single"
-                            Tapped="JourneyListView_Tapped">
+                            SelectionMode="Single">
                             <ListView.ContextFlyout>
                                 <MenuFlyout>
                                     <MenuFlyoutItem Command="{x:Bind ViewModel.AddJourneyCommand}" Text="Add Journey">
@@ -244,6 +247,8 @@
                             AllowDrop="True"
                             DragOver="StationListView_DragOver"
                             Drop="StationListView_Drop"
+                            IsItemClickEnabled="True"
+                            ItemClick="ListView_ItemClick"
                             ItemsSource="{x:Bind ViewModel.SelectedJourney.Stations, Mode=OneWay}"
                             SelectedItem="{x:Bind ViewModel.SelectedStation, Mode=TwoWay}"
                             SelectionMode="Single">
@@ -386,6 +391,8 @@
                             Grid.Row="2"
                             CanDragItems="True"
                             DragItemsStarting="WorkflowListView_DragItemsStarting"
+                            IsItemClickEnabled="True"
+                            ItemClick="ListView_ItemClick"
                             ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.Workflows, Mode=OneWay}"
                             SelectedItem="{x:Bind ViewModel.SelectedWorkflow, Mode=TwoWay}"
                             SelectionMode="Single">
@@ -444,6 +451,8 @@
                             Text="Actions" />
                         <ListView
                             Grid.Row="1"
+                            IsItemClickEnabled="True"
+                            ItemClick="ListView_ItemClick"
                             ItemsSource="{x:Bind ViewModel.SelectedWorkflow.Actions, Mode=OneWay}"
                             SelectedItem="{x:Bind ViewModel.SelectedAction, Mode=TwoWay}"
                             SelectionMode="Single">
@@ -497,409 +506,8 @@
                     </Grid>
                 </Grid>
             </TabViewItem>
-
-            <!--  ============================================  -->
-            <!--  Trains Tab: Trains + Locomotives + Wagons + Libraries + PropertyGrid  -->
-            <!--  ============================================  -->
-            <TabViewItem
-                x:Name="TrainsTab"
-                Header="Trains"
-                IsClosable="False">
-                <TabViewItem.IconSource>
-                    <FontIconSource Glyph="&#xE7C0;" />
-                </TabViewItem.IconSource>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="200" MinWidth="150" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="200" MinWidth="150" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="200" MinWidth="150" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="180" MinWidth="150" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="180" MinWidth="150" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="180" MinWidth="150" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" MinWidth="300" />
-                    </Grid.ColumnDefinitions>
-
-                    <!--  Column 0: Trains (Master)  -->
-                    <Grid Grid.Column="0" Padding="4">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <TextBlock
-                            Grid.Row="0"
-                            Padding="16,6,24,4"
-                            FontWeight="SemiBold"
-                            Style="{StaticResource SubtitleTextBlockStyle}"
-                            Text="Trains" />
-                        <ListView
-                            Grid.Row="1"
-                            ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.Trains, Mode=OneWay}"
-                            SelectedItem="{x:Bind ViewModel.SelectedTrain, Mode=TwoWay}"
-                            SelectionMode="Single">
-                            <ListView.ItemTemplate>
-                                <DataTemplate x:DataType="viewmodel:TrainViewModel">
-                                    <Grid Padding="6">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <FontIcon
-                                            Grid.Column="0"
-                                            Margin="0,0,8,0"
-                                            FontSize="16"
-                                            Glyph="&#xE7C0;" />
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            VerticalAlignment="Center"
-                                            Text="{x:Bind Name, Mode=OneWay}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                    </Grid>
-
-                    <Border
-                        Grid.Column="1"
-                        Width="1"
-                        Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
-                    <!--  Column 2: Locomotives (of selected Train)  -->
-                    <Grid Grid.Column="2" Padding="4">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <TextBlock
-                            Grid.Row="0"
-                            Padding="16,6,24,4"
-                            FontWeight="SemiBold"
-                            Style="{StaticResource SubtitleTextBlockStyle}"
-                            Text="Locomotives" />
-                        <ListView
-                            Grid.Row="1"
-                            AllowDrop="True"
-                            DragOver="LocomotiveListView_DragOver"
-                            Drop="LocomotiveListView_Drop"
-                            ItemsSource="{x:Bind ViewModel.SelectedTrain.Locomotives, Mode=OneWay}"
-                            KeyDown="LocomotiveListView_KeyDown"
-                            SelectionMode="Single">
-                            <ListView.ContextFlyout>
-                                <MenuFlyout>
-                                    <MenuFlyoutItem
-                                        Click="RemoveLocomotiveMenuItem_Click"
-                                        Icon="Delete"
-                                        Text="Remove">
-                                        <MenuFlyoutItem.KeyboardAccelerators>
-                                            <KeyboardAccelerator Key="Delete" />
-                                        </MenuFlyoutItem.KeyboardAccelerators>
-                                    </MenuFlyoutItem>
-                                    <MenuFlyoutItem
-                                        Click="DuplicateLocomotiveMenuItem_Click"
-                                        Icon="Copy"
-                                        Text="Duplicate">
-                                        <MenuFlyoutItem.KeyboardAccelerators>
-                                            <KeyboardAccelerator Key="D" Modifiers="Control" />
-                                        </MenuFlyoutItem.KeyboardAccelerators>
-                                    </MenuFlyoutItem>
-                                </MenuFlyout>
-                            </ListView.ContextFlyout>
-                            <ListView.ItemTemplate>
-                                <DataTemplate x:DataType="viewmodel:LocomotiveViewModel">
-                                    <Grid Padding="6">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <FontIcon
-                                            Grid.Column="0"
-                                            Margin="0,0,8,0"
-                                            FontSize="16"
-                                            Glyph="&#xE7C8;" />
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            VerticalAlignment="Center"
-                                            Text="{x:Bind Name, Mode=OneWay}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                    </Grid>
-
-                    <Border
-                        Grid.Column="3"
-                        Width="1"
-                        Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
-                    <!--  Column 4: Wagons (of selected Train)  -->
-                    <Grid Grid.Column="4" Padding="4">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <TextBlock
-                            Grid.Row="0"
-                            Padding="16,6,24,4"
-                            FontWeight="SemiBold"
-                            Style="{StaticResource SubtitleTextBlockStyle}"
-                            Text="Wagons" />
-                        <ListView
-                            Grid.Row="1"
-                            AllowDrop="True"
-                            DragOver="WagonListView_DragOver"
-                            Drop="WagonListView_Drop"
-                            ItemsSource="{x:Bind ViewModel.SelectedTrain.Wagons, Mode=OneWay}"
-                            KeyDown="TrainWagonListView_KeyDown"
-                            SelectionMode="Single">
-                            <ListView.ContextFlyout>
-                                <MenuFlyout>
-                                    <MenuFlyoutItem
-                                        Click="RemoveWagonMenuItem_Click"
-                                        Icon="Delete"
-                                        Text="Remove">
-                                        <MenuFlyoutItem.KeyboardAccelerators>
-                                            <KeyboardAccelerator Key="Delete" />
-                                        </MenuFlyoutItem.KeyboardAccelerators>
-                                    </MenuFlyoutItem>
-                                    <MenuFlyoutItem
-                                        Click="DuplicateWagonMenuItem_Click"
-                                        Icon="Copy"
-                                        Text="Duplicate">
-                                        <MenuFlyoutItem.KeyboardAccelerators>
-                                            <KeyboardAccelerator Key="D" Modifiers="Control" />
-                                        </MenuFlyoutItem.KeyboardAccelerators>
-                                    </MenuFlyoutItem>
-                                </MenuFlyout>
-                            </ListView.ContextFlyout>
-                            <ListView.ItemTemplate>
-                                <DataTemplate x:DataType="viewmodel:WagonViewModel">
-                                    <Grid Padding="6">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <FontIcon
-                                            Grid.Column="0"
-                                            Margin="0,0,8,0"
-                                            FontSize="16"
-                                            Glyph="&#xE7E8;" />
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            VerticalAlignment="Center"
-                                            Text="{x:Bind Name, Mode=OneWay}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                    </Grid>
-
-                    <Border
-                        Grid.Column="5"
-                        Width="1"
-                        Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
-                    <!--  Column 6: Locomotive Library (Drag Source)  -->
-                    <Grid Grid.Column="6" Padding="4">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <TextBlock
-                            Grid.Row="0"
-                            Padding="16,6,24,4"
-                            FontWeight="SemiBold"
-                            Style="{StaticResource SubtitleTextBlockStyle}"
-                            Text="Loco Library" />
-                        <ListView
-                            Grid.Row="1"
-                            CanDragItems="True"
-                            DoubleTapped="LocomotiveLibrary_DoubleTapped"
-                            DragItemsStarting="LocomotiveLibrary_DragItemsStarting"
-                            ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.Locomotives, Mode=OneWay}"
-                            SelectionMode="Single">
-                            <ListView.ItemTemplate>
-                                <DataTemplate x:DataType="viewmodel:LocomotiveViewModel">
-                                    <Grid Padding="4">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <FontIcon
-                                            Grid.Column="0"
-                                            Margin="0,0,6,0"
-                                            FontSize="14"
-                                            Glyph="&#xE7C8;" />
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            VerticalAlignment="Center"
-                                            FontSize="12"
-                                            Text="{x:Bind Name, Mode=OneWay}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                    </Grid>
-
-                    <Border
-                        Grid.Column="7"
-                        Width="1"
-                        Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
-                    <!--  Column 8: Passenger Wagon Library (Drag Source)  -->
-                    <Grid Grid.Column="8" Padding="4">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <TextBlock
-                            Grid.Row="0"
-                            Padding="16,6,24,4"
-                            FontWeight="SemiBold"
-                            Style="{StaticResource SubtitleTextBlockStyle}"
-                            Text="Passenger" />
-                        <ListView
-                            Grid.Row="1"
-                            CanDragItems="True"
-                            DoubleTapped="PassengerWagonLibrary_DoubleTapped"
-                            DragItemsStarting="PassengerWagonListView_DragItemsStarting"
-                            ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.PassengerWagons, Mode=OneWay}"
-                            SelectionMode="Single">
-                            <ListView.ItemTemplate>
-                                <DataTemplate x:DataType="viewmodel:PassengerWagonViewModel">
-                                    <Grid Padding="4">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <FontIcon
-                                            Grid.Column="0"
-                                            Margin="0,0,6,0"
-                                            FontSize="14"
-                                            Glyph="&#xE7E8;" />
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            VerticalAlignment="Center"
-                                            FontSize="12"
-                                            Text="{x:Bind Name, Mode=OneWay}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                    </Grid>
-
-                    <Border
-                        Grid.Column="9"
-                        Width="1"
-                        Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
-                    <!--  Column 10: Goods Wagon Library (Drag Source)  -->
-                    <Grid Grid.Column="10" Padding="4">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <TextBlock
-                            Grid.Row="0"
-                            Padding="16,6,24,4"
-                            FontWeight="SemiBold"
-                            Style="{StaticResource SubtitleTextBlockStyle}"
-                            Text="Goods" />
-                        <ListView
-                            Grid.Row="1"
-                            CanDragItems="True"
-                            DoubleTapped="GoodsWagonLibrary_DoubleTapped"
-                            DragItemsStarting="GoodsWagonListView_DragItemsStarting"
-                            ItemsSource="{x:Bind ViewModel.CurrentProjectViewModel.GoodsWagons, Mode=OneWay}"
-                            SelectionMode="Single">
-                            <ListView.ItemTemplate>
-                                <DataTemplate x:DataType="viewmodel:GoodsWagonViewModel">
-                                    <Grid Padding="4">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <FontIcon
-                                            Grid.Column="0"
-                                            Margin="0,0,6,0"
-                                            FontSize="14"
-                                            Glyph="&#xE7E8;" />
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            VerticalAlignment="Center"
-                                            FontSize="12"
-                                            Text="{x:Bind Name, Mode=OneWay}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                    </Grid>
-
-                    <Border
-                        Grid.RowSpan="2"
-                        Grid.Column="11"
-                        Width="1"
-                        Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
-                    <!--  Column 12: PropertyGrid (Full-Height with Collapse)  -->
-                    <Grid
-                        x:Name="PropertiesPanel"
-                        Grid.RowSpan="2"
-                        Grid.Column="12"
-                        Padding="4">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-
-
-                        <!--  Header with Collapse Button  -->
-                        <Grid Grid.Row="0" Padding="16,6,8,4">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-
-                            <TextBlock
-                                Grid.Column="0"
-                                VerticalAlignment="Center"
-                                FontWeight="SemiBold"
-                                Style="{StaticResource SubtitleTextBlockStyle}"
-                                Text="Properties" />
-
-                            <ToggleButton
-                                x:Name="PropertiesCollapseToggle"
-                                Grid.Column="1"
-                                Width="32"
-                                Height="32"
-                                Padding="0"
-                                Checked="PropertiesCollapseToggle_Checked"
-                                ToolTipService.ToolTip="Toggle Properties Panel"
-                                Unchecked="PropertiesCollapseToggle_Unchecked">
-                                <FontIcon
-                                    x:Name="PropertiesCollapseIcon"
-                                    FontSize="12"
-                                    Glyph="{Binding ElementName=PropertiesCollapseToggle, Path=IsChecked, Converter={StaticResource BoolToGlyphConverter}}" />
-                            </ToggleButton>
-                        </Grid>
-
-                        <ContentControl
-                            x:Name="PropertiesContent"
-                            Grid.Row="1"
-                            HorizontalContentAlignment="Stretch"
-                            VerticalContentAlignment="Stretch"
-                            Content="{Binding CurrentSelectedObject, Mode=OneWay}"
-                            ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
-                    </Grid>
-                </Grid>
-            </TabViewItem>
         </TabView>
     </Grid>
-
 
     <VisualStateManager.VisualStateGroups>
         <VisualStateGroup x:Name="PropertiesStates">
@@ -945,17 +553,3 @@
         </VisualStateGroup>
     </VisualStateManager.VisualStateGroups>
 </Page>
-
-
-
-
-
-
-
-
-
-
-
-
-
-

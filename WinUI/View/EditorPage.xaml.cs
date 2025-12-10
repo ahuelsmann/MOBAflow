@@ -5,8 +5,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 using SharedUI.ViewModel;
-
-using Microsoft.UI.Xaml.Media;
 /// <summary>
 /// Editor page with TabView navigation.
 /// All editor tabs are defined as TabViewItems in XAML.
@@ -73,12 +71,6 @@ public sealed partial class EditorPage : Page
         }
     }
 
-    private void JourneyListView_Tapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
-    {
-        // ContentControl automatically updates via binding to CurrentSelectedObject
-        // No manual refresh needed anymore!
-    }
-
     #endregion
 
     #region Train Composition - Drag & Drop
@@ -132,10 +124,10 @@ public sealed partial class EditorPage : Page
 
             // Add to Project master list
             ViewModel.CurrentProjectViewModel.Model.Locomotives.Add(locomotiveCopy);
-            
+
             // Add ID to Train
             ViewModel.SelectedTrain.Model.LocomotiveIds.Add(locomotiveCopy.Id);
-            
+
             // Refresh Train collections
             ViewModel.SelectedTrain.RefreshCollections();
         }
@@ -175,10 +167,10 @@ public sealed partial class EditorPage : Page
 
             // Add to Project master list
             ViewModel.CurrentProjectViewModel.Model.GoodsWagons.Add(wagonCopy);
-            
+
             // Add ID to Train
             ViewModel.SelectedTrain.Model.WagonIds.Add(wagonCopy.Id);
-            
+
             // Refresh Train collections
             ViewModel.SelectedTrain.RefreshCollections();
         }
@@ -218,10 +210,10 @@ public sealed partial class EditorPage : Page
 
             // Add to Project master list
             ViewModel.CurrentProjectViewModel.Model.PassengerWagons.Add(wagonCopy);
-            
+
             // Add ID to Train
             ViewModel.SelectedTrain.Model.WagonIds.Add(wagonCopy.Id);
-            
+
             // Refresh Train collections
             ViewModel.SelectedTrain.RefreshCollections();
         }
@@ -256,10 +248,10 @@ public sealed partial class EditorPage : Page
 
             // Add to Project master list
             ViewModel.CurrentProjectViewModel.Model.GoodsWagons.Add(wagonCopy);
-            
+
             // Add ID to Train
             ViewModel.SelectedTrain.Model.WagonIds.Add(wagonCopy.Id);
-            
+
             // Refresh Train collections
             ViewModel.SelectedTrain.RefreshCollections();
         }
@@ -282,10 +274,10 @@ public sealed partial class EditorPage : Page
 
             // Add to Project master list
             ViewModel.CurrentProjectViewModel.Model.PassengerWagons.Add(wagonCopy);
-            
+
             // Add ID to Train
             ViewModel.SelectedTrain.Model.WagonIds.Add(wagonCopy.Id);
-            
+
             // Refresh Train collections
             ViewModel.SelectedTrain.RefreshCollections();
         }
@@ -301,7 +293,7 @@ public sealed partial class EditorPage : Page
         {
             // Remove ID from Train
             ViewModel.SelectedTrain.Model.LocomotiveIds.Remove(locomotiveVM.Model.Id);
-            
+
             // Refresh Train collections
             ViewModel.SelectedTrain.RefreshCollections();
             e.Handled = true;
@@ -318,7 +310,7 @@ public sealed partial class EditorPage : Page
         {
             // Remove ID from Train
             ViewModel.SelectedTrain.Model.WagonIds.Remove(wagonVM.Model.Id);
-            
+
             // Refresh Train collections
             ViewModel.SelectedTrain.RefreshCollections();
             ViewModel.SelectedTrain.Wagons.Remove(wagonVM);
@@ -335,7 +327,7 @@ public sealed partial class EditorPage : Page
         {
             // Remove ID from Train
             ViewModel.SelectedTrain.Model.LocomotiveIds.Remove(locomotiveVM.Model.Id);
-            
+
             // Refresh Train collections
             ViewModel.SelectedTrain.RefreshCollections();
         }
@@ -364,10 +356,10 @@ public sealed partial class EditorPage : Page
 
             // Add to Project master list
             ViewModel.CurrentProjectViewModel.Model.Locomotives.Add(locomotiveCopy);
-            
+
             // Add ID to Train
             ViewModel.SelectedTrain.Model.LocomotiveIds.Add(locomotiveCopy.Id);
-            
+
             // Refresh Train collections
             ViewModel.SelectedTrain.RefreshCollections();
         }
@@ -382,7 +374,7 @@ public sealed partial class EditorPage : Page
         {
             // Remove ID from Train
             ViewModel.SelectedTrain.Model.WagonIds.Remove(wagonVM.Model.Id);
-            
+
             // Refresh Train collections
             ViewModel.SelectedTrain.RefreshCollections();
         }
@@ -411,7 +403,7 @@ public sealed partial class EditorPage : Page
                     ColorSecondary = passengerWagon.ColorSecondary,
                     Details = passengerWagon.Details
                 };
-                
+
                 // Add to Project master list
                 ViewModel.CurrentProjectViewModel.Model.PassengerWagons.Add((Domain.PassengerWagon)wagonCopy);
             }
@@ -428,7 +420,7 @@ public sealed partial class EditorPage : Page
                     ColorSecondary = goodsWagon.ColorSecondary,
                     Details = goodsWagon.Details
                 };
-                
+
                 // Add to Project master list
                 ViewModel.CurrentProjectViewModel.Model.GoodsWagons.Add((Domain.GoodsWagon)wagonCopy);
             }
@@ -439,7 +431,7 @@ public sealed partial class EditorPage : Page
 
             // Add ID to Train
             ViewModel.SelectedTrain.Model.WagonIds.Add(wagonCopy.Id);
-            
+
             // Refresh Train collections
             ViewModel.SelectedTrain.RefreshCollections();
         }
@@ -460,4 +452,10 @@ public sealed partial class EditorPage : Page
     }
 
     #endregion
+
+    private void ListView_ItemClick(object sender, ItemClickEventArgs e)
+    {
+        // Forces a “new” assignment with every click for the Properties to refresh.
+        ViewModel.CurrentSelectedObject = e.ClickedItem;
+    }
 }

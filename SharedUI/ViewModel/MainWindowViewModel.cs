@@ -78,13 +78,6 @@ public partial class MainWindowViewModel : ObservableObject
                 }
             });
         }
-
-        SelectedJourney.PropertyChanged += SelectedJourney_PropertyChanged;
-    }
-
-    private void SelectedJourney_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        CurrentSelectedObject = SelectedJourney;
     }
 
     #endregion
@@ -105,9 +98,6 @@ public partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private ProjectViewModel? selectedProject;
-
-    [ObservableProperty]
-    private bool hasUnsavedChanges = false;
 
     [ObservableProperty]
     private JourneyViewModel? selectedJourney;
@@ -197,7 +187,6 @@ public partial class MainWindowViewModel : ObservableObject
 
         // Refresh view model and mark unsaved changes
         SolutionViewModel?.Refresh();
-        HasUnsavedChanges = true;
 
         SaveSolutionCommand.NotifyCanExecuteChanged();
     }
@@ -295,8 +284,6 @@ public partial class MainWindowViewModel : ObservableObject
             SelectedStation = stationVM;
         }
 
-        HasUnsavedChanges = true;
-
         System.Diagnostics.Debug.WriteLine($"✅ Added station from city: {city.Name} → {cityStation.Name}");
     }
 
@@ -345,7 +332,6 @@ public partial class MainWindowViewModel : ObservableObject
         if (SelectedStation == null || workflow == null) return;
 
         SelectedStation.WorkflowId = workflow.Model.Id;
-        HasUnsavedChanges = true;
 
         System.Diagnostics.Debug.WriteLine($"✅ Assigned workflow '{workflow.Name}' to station '{SelectedStation.Name}'");
     }
@@ -379,7 +365,6 @@ public partial class MainWindowViewModel : ObservableObject
 
         // Refresh Train collections
         SelectedTrain.RefreshCollections();
-        HasUnsavedChanges = true;
 
         System.Diagnostics.Debug.WriteLine($"✅ Added locomotive '{locomotiveCopy.Name}' to train '{SelectedTrain.Name}'");
     }

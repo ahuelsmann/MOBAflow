@@ -4,6 +4,7 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.Input;
 
 using Domain;
+
 using Helper;
 
 using System.Collections.Generic;
@@ -67,7 +68,6 @@ public partial class MainWindowViewModel
             model => new WorkflowViewModel(model));
 
         SelectedWorkflow = workflow;
-        HasUnsavedChanges = true;
         OnPropertyChanged(nameof(FilteredWorkflows));
     }
 
@@ -80,8 +80,8 @@ public partial class MainWindowViewModel
             SelectedWorkflow,
             CurrentProjectViewModel.Model.Workflows,
             CurrentProjectViewModel.Workflows,
-            () => { SelectedWorkflow = null; HasUnsavedChanges = true; });
-        
+            () => { SelectedWorkflow = null; });
+
         OnPropertyChanged(nameof(FilteredWorkflows));
     }
 
@@ -111,8 +111,6 @@ public partial class MainWindowViewModel
         SelectedWorkflow.Model.Actions.Add(newAction);
         var viewModel = new Action.AnnouncementViewModel(newAction);
         SelectedWorkflow.Actions.Add(viewModel);
-
-        HasUnsavedChanges = true;
     }
 
     [RelayCommand]
@@ -134,8 +132,6 @@ public partial class MainWindowViewModel
         SelectedWorkflow.Model.Actions.Add(newAction);
         var viewModel = new Action.CommandViewModel(newAction);
         SelectedWorkflow.Actions.Add(viewModel);
-
-        HasUnsavedChanges = true;
     }
 
     [RelayCommand]
@@ -157,8 +153,6 @@ public partial class MainWindowViewModel
         SelectedWorkflow.Model.Actions.Add(newAction);
         var viewModel = new Action.AudioViewModel(newAction);
         SelectedWorkflow.Actions.Add(viewModel);
-
-        HasUnsavedChanges = true;
     }
 
     #endregion

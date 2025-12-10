@@ -26,7 +26,6 @@ public partial class MainWindowViewModel
             OnPropertyChanged(nameof(CurrentProjectViewModel));
             OnPropertyChanged(nameof(FilteredJourneys));
             OnPropertyChanged(nameof(FilteredWorkflows));
-            OnPropertyChanged(nameof(FilteredTrains));
             return;
         }
 
@@ -59,7 +58,6 @@ public partial class MainWindowViewModel
         if (success && path != null)
         {
             CurrentSolutionPath = path;
-            HasUnsavedChanges = false;
         }
         else if (!string.IsNullOrEmpty(error))
         {
@@ -70,26 +68,9 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private async Task NewSolutionAsync()
     {
-        var (success, userCancelled, error) = await _ioService.NewSolutionAsync(HasUnsavedChanges);
-
-        if (userCancelled)
+        if (SaveSolutionCommand.CanExecute(null))
         {
-            return;
-        }
-
-        if (!success)
-        {
-            if (error == "SAVE_REQUESTED")
-            {
-                if (SaveSolutionCommand.CanExecute(null))
-                {
-                    await SaveSolutionCommand.ExecuteAsync(null);
-                }
-            }
-            else
-            {
-                return;
-            }
+            await SaveSolutionCommand.ExecuteAsync(null);
         }
 
         // Clear existing Solution (DI singleton)
@@ -108,7 +89,6 @@ public partial class MainWindowViewModel
         SolutionViewModel?.Refresh();
 
         CurrentSolutionPath = null;
-        HasUnsavedChanges = true;
 
         SaveSolutionCommand.NotifyCanExecuteChanged();
         ConnectToZ21Command.NotifyCanExecuteChanged();
@@ -136,7 +116,6 @@ public partial class MainWindowViewModel
             SolutionViewModel?.Refresh();
 
             CurrentSolutionPath = path;
-            HasUnsavedChanges = false;
             HasSolution = Solution.Projects.Count > 0;
 
             SaveSolutionCommand.NotifyCanExecuteChanged();

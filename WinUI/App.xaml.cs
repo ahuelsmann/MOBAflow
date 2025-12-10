@@ -213,7 +213,6 @@ public partial class App
                 // Refresh ViewModel
                 mainWindowViewModel.SolutionViewModel?.Refresh();
                 mainWindowViewModel.CurrentSolutionPath = path;
-                mainWindowViewModel.HasUnsavedChanges = false;
                 
                 System.Diagnostics.Debug.WriteLine(" Auto-load completed successfully");
             }
