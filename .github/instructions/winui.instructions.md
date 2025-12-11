@@ -594,5 +594,72 @@ If your selection management has:
 
 ---
 
-**Last Updated:** 2025-12-09  
-**Related:** Selection Management Best Practices
+## 🎛️ CommandBar Responsive Design
+
+### Problem: CommandBar Overflow
+WinUI 3 CommandBar **does not automatically** move buttons to overflow menu when window is resized. Buttons get cut off at smaller window sizes.
+
+### Solution: Dynamic Overflow Priority
+
+```xaml
+<!-- ✅ CORRECT: Explicit overflow configuration -->
+<CommandBar OverflowButtonVisibility="Auto" DefaultLabelPosition="Right">
+    <!-- Priority 0 = Always visible (critical controls) -->
+    <AppBarButton 
+        Command="{x:Bind ViewModel.ConnectCommand}"
+        CommandBar.DynamicOverflowOrder="0"
+        Label="Connect" />
+    
+    <AppBarButton 
+        Command="{x:Bind ViewModel.DisconnectCommand}"
+        CommandBar.DynamicOverflowOrder="0"
+        Label="Disconnect" />
+    
+    <!-- Priority 1 = High priority (frequent operations) -->
+    <AppBarButton 
+        Command="{x:Bind ViewModel.LoadCommand}"
+        CommandBar.DynamicOverflowOrder="1"
+        Label="Load" />
+    
+    <!-- Priority 2 = Medium priority -->
+    <AppBarElementContainer CommandBar.DynamicOverflowOrder="2">
+        <ToggleButton IsChecked="{x:Bind ViewModel.IsDarkMode, Mode=TwoWay}" />
+    </AppBarElementContainer>
+    
+    <!-- Priority 4 = Lowest priority (developer tools) -->
+    <AppBarButton 
+        Command="{x:Bind ViewModel.SimulateCommand}"
+        CommandBar.DynamicOverflowOrder="4"
+        Label="Simulate" />
+</CommandBar>
+```
+
+### Priority Strategy
+- **Priority 0:** Critical controls that must always be visible (Connect, Disconnect, Track Power)
+- **Priority 1:** Frequent operations (Load, Save)
+- **Priority 2:** Settings/preferences (Theme Toggle)
+- **Priority 3:** Infrequent operations (Add Project)
+- **Priority 4:** Developer/debug tools (Simulate Feedback)
+
+### Key Requirements
+1. **Set `OverflowButtonVisibility="Auto"`** on CommandBar
+2. **Set `CommandBar.DynamicOverflowOrder`** on **every** button/container
+3. **Lower number = Higher priority** (stays visible longer)
+4. **AppBarSeparator** does not support DynamicOverflowOrder (automatically hidden)
+
+```csharp
+// ❌ WRONG: No overflow configuration
+<CommandBar>
+    <AppBarButton Label="Connect" />  <!-- Will be cut off! -->
+</CommandBar>
+
+// ✅ CORRECT: Explicit priority
+<CommandBar OverflowButtonVisibility="Auto">
+    <AppBarButton Label="Connect" CommandBar.DynamicOverflowOrder="0" />
+</CommandBar>
+```
+
+---
+
+**Last Updated:** 2025-12-10  
+**Related:** Selection Management Best Practices, Responsive Design

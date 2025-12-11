@@ -433,15 +433,29 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     /// </summary>
     private void UpdateSystemState(Backend.SystemState systemState)
     {
-        MainCurrent = systemState.MainCurrent;
-        Temperature = systemState.Temperature;
-        SupplyVoltage = systemState.SupplyVoltage;
-        VccVoltage = systemState.VccVoltage;
-        CentralState = $"0x{systemState.CentralState:X2}";
-        CentralStateEx = $"0x{systemState.CentralStateEx:X2}";
-
         // Update track power status from Z21 (reflects external changes, e.g., from Z21 app)
         IsTrackPowerOn = systemState.IsTrackPowerOn;
+
+        // Only update system state values when track power is ON
+        // When OFF, reset to zero to avoid showing stale values
+        if (systemState.IsTrackPowerOn)
+        {
+            MainCurrent = systemState.MainCurrent;
+            Temperature = systemState.Temperature;
+            SupplyVoltage = systemState.SupplyVoltage;
+            VccVoltage = systemState.VccVoltage;
+            CentralState = $"0x{systemState.CentralState:X2}";
+            CentralStateEx = $"0x{systemState.CentralStateEx:X2}";
+        }
+        else
+        {
+            MainCurrent = 0;
+            Temperature = 0;
+            SupplyVoltage = 0;
+            VccVoltage = 0;
+            CentralState = "0x00";
+            CentralStateEx = "0x00";
+        }
 
         this.Log($"📊 System state updated: MainCurrent={MainCurrent}mA, Temp={Temperature}C, Supply={SupplyVoltage}mV, TrackPower={IsTrackPowerOn}");
     }

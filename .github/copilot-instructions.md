@@ -103,6 +103,13 @@ Execute these checks before code reviews, refactoring, or architecture discussio
   - Old: `ListView_ItemClick` handlers in code-behind
   - New: XAML Behaviors with `ItemClickedCommand`
   - Migration to v3.0: Unified `Microsoft.Xaml.Interactivity` namespace
+- ✅ **CommandBar Overflow Support** (Dec 10) → Responsive UI at all window sizes
+  - Added: `OverflowButtonVisibility="Auto"` + `DynamicOverflowOrder` priorities
+  - Impact: Buttons automatically move to overflow menu when space is limited
+- ✅ **Event-Driven State Management** (Dec 10) → Eliminated race conditions
+  - Old: Manual state reset in commands (race conditions)
+  - New: Filter events based on state (Single Source of Truth)
+  - See: `docs/SESSION-SUMMARY-2025-12-10-UI-IMPROVEMENTS.md`
 
 ---
 
@@ -119,68 +126,36 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 - ✅ **Solution:** ContentControl automatic template switching
 - 📉 **Impact:** -35 LOC, automatic behavior, simpler code
 
-### **3. Event-to-Command**
+### **3. Manual State Override in Commands (Dec 2025)**
+- ❌ **Mistake:** Manually resetting system state values in commands (race conditions)
+- ✅ **Solution:** Filter events based on state in event handlers
+- 📉 **Impact:** Eliminated race conditions, deterministic behavior
+- 📖 **Details:** `docs/SESSION-SUMMARY-2025-12-10-UI-IMPROVEMENTS.md`
+
+**Anti-Pattern:**
+```csharp
+// ❌ WRONG: Manual override (timing issue!)
+await _z21.SetTrackPowerOffAsync();
+MainCurrent = 0;  // Race condition if Z21 sends update after this!
+```
+
+**Correct Pattern:**
+```csharp
+// ✅ CORRECT: Filter in event handler
+private void UpdateSystemState(SystemState state)
+{
+    if (state.IsTrackPowerOn)
+        MainCurrent = state.MainCurrent;  // Real values
+    else
+        MainCurrent = 0;  // Filtered based on state
+}
+```
+
+### **4. Event-to-Command** (Already Fixed - See `docs/XAML-BEHAVIORS-EVENT-TO-COMMAND.md`)
 - ❌ **Mistake:** `ListView_ItemClick` code-behind handlers (complex fallback logic, 40+ LOC per handler)
-- ✅ **Solution:** Custom Behavior that directly extracts items from `ItemClickEventArgs`
+- ✅ **Solution:** Custom `ListViewItemClickBehavior` with direct EventArgs extraction
 - 📉 **Impact:** -200 LOC code-behind, clean MVVM separation, reusable patterns
-- 🔧 **Pattern (v3.1 - Fixed):**
-  ```xml
-  <ListView IsItemClickEnabled="True" ItemsSource="{x:Bind ViewModel.Items, Mode=OneWay}">
-      <i:Interaction.Behaviors>
-          <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.ItemClickedCommand}" />
-      </i:Interaction.Behaviors>
-      <ListView.ItemTemplate>
-          <DataTemplate x:DataType="viewmodel:ItemViewModel">
-              <!-- Template content -->
-          </DataTemplate>
-      </ListView.ItemTemplate>
-  </ListView>
-  ```
-  
-  **Why this works:**
-  - ✅ **Direct EventArgs Extraction:** `e.ClickedItem` passed directly (no binding delays)
-  - ✅ **No Synchronization Issues:** Avoids `CommandParameter="{Binding SelectedItem, ...}"` null problems
-  - ✅ **Reusable:** One behavior for all ListView ItemClick scenarios
-  
-  **Custom Behavior Implementation:**
-  ```csharp
-  // WinUI/Behavior/ListViewItemClickBehavior.cs
-  public sealed class ListViewItemClickBehavior : Behavior<ListView>
-  {
-      public static readonly DependencyProperty CommandProperty =
-          DependencyProperty.Register(
-              nameof(Command), typeof(ICommand), typeof(ListViewItemClickBehavior),
-              new PropertyMetadata(null));
-
-      public ICommand? Command
-      {
-          get => (ICommand?)GetValue(CommandProperty);
-          set => SetValue(CommandProperty, value);
-      }
-
-      protected override void OnAttached()
-      {
-          base.OnAttached();
-          if (AssociatedObject != null)
-              AssociatedObject.ItemClick += OnListViewItemClick;
-      }
-
-      protected override void OnDetaching()
-      {
-          base.OnDetaching();
-          if (AssociatedObject != null)
-              AssociatedObject.ItemClick -= OnListViewItemClick;
-      }
-
-      private void OnListViewItemClick(object sender, ItemClickEventArgs e)
-      {
-          Command?.Execute(e.ClickedItem);  // ✅ Direct item from event
-      }
-  }
-  ```
-
-- 📖 **NuGet:** `Microsoft.Xaml.Behaviors.WinUI.Managed` Version **3.0.0** (unified namespaces, NativeAOT support)
-- ⚠️ **Breaking Change 2.x→3.x:** Namespace unified to `Microsoft.Xaml.Interactivity` (remove `xmlns:ic="...Interactions.Core"`)
+- 📖 **NuGet:** `Microsoft.Xaml.Behaviors.WinUI.Managed` Version **3.0.0**
 
 ---
 
@@ -266,6 +241,20 @@ public object? CurrentSelectedObject {
 }
 ```
 **No manual cleanup needed** → Template selector handles automatically.
+
+### **CommandBar Responsive Design**
+```xaml
+<!-- ✅ CORRECT: Explicit overflow configuration -->
+<CommandBar OverflowButtonVisibility="Auto" DefaultLabelPosition="Right">
+    <AppBarButton Command="{x:Bind ViewModel.ConnectCommand}"
+                  CommandBar.DynamicOverflowOrder="0"
+                  Label="Connect" />  <!-- Priority 0 = Always visible -->
+    <AppBarButton Command="{x:Bind ViewModel.LoadCommand}"
+                  CommandBar.DynamicOverflowOrder="1"
+                  Label="Load" />     <!-- Priority 1 = High priority -->
+</CommandBar>
+```
+**Key:** Lower `DynamicOverflowOrder` = Higher priority (stays visible longer)
 
 ### **Fluent Design 2**
 - ✅ **Spacing:** Padding="16" Spacing="16" (consistent 16px)
@@ -506,6 +495,7 @@ public object? CurrentView
 **Simple is not simplistic. Simple is elegant.** 🎯
 
 ---
+
 # ⚡ PowerShell 7 Terminal Rules (Copilot‑Specific)
 
 > **Update focus:** Prevent one‑liner parser errors (e.g., `foreach` after an expression), index out‑of‑range on line slicing, and inconsistent writes. Prefer pipeline‑safe loops and idempotent edits.
@@ -523,6 +513,7 @@ public object? CurrentView
 $ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'
 [Console]::OutputEncoding=[Text.Encoding]::UTF8; [Console]::InputEncoding=[Text.Encoding]::UTF8
 if (Get-Variable -Name PSStyle -ErrorAction SilentlyContinue) { $PSStyle.OutputRendering='Ansi' }
+try { $PSNativeCommandArgumentPassing = 'Standard' } catch {}
 ```
 > **Important:** The variable is **`$PSStyle`** (with **S**). Do **not** use `$PStyle`.
 
@@ -572,6 +563,28 @@ $env:GIT_PAGER='cat'; $env:LESS='-FRSX'; $env:LESSCHARSET='utf-8'
   Select-String -Pattern 'private\s+TrainViewModel\?\s+selectedTrain;' -Path $file
   ```
 
+### 6a) Here‑String rules (PowerShell)
+- **Never** start a here‑string in a **one‑liner**. The header `@'` or `@"` must be the **only token** on its line; same for the closing `'^@` / `"^@`.
+- Use **single‑quoted** here‑strings when no interpolation is needed:
+  ```powershell
+  $xaml = @'
+  <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- content -->
+  </ResourceDictionary>
+  '@
+  ```
+- Use **double‑quoted** here‑strings when interpolation is required:
+  ```powershell
+  $user = $env:USERNAME
+  $text = @"
+  Hello $user
+  "@
+  ```
+- For **one‑liners**, use these alternatives:
+  - String concatenation with explicit newlines: `+ "`n" +`
+  - Join an **array of lines** with `[Environment]::NewLine`.
+
 ---
 
 ## 7) File I/O & encoding (project policy)
@@ -582,9 +595,30 @@ $env:GIT_PAGER='cat'; $env:LESS='-FRSX'; $env:LESSCHARSET='utf-8'
   # or
   Out-File $file -InputObject $text -Encoding UTF8BOM
   ```
-- **Line Endings:** Windows (CR LF) - ensure all files use `\r\n`
-- **No trailing empty lines:** No extra blank lines after the final closing brace `}`
+- **Line Endings:** Windows (CR LF) — ensure all files use `\r\n`.
+- **No trailing empty lines:** No extra blank lines after the final closing brace `}`.
 - Quote paths with spaces; use double quotes when interpolating variables.
+
+### 7b) Normalize CRLF & ensure UTF‑8 BOM (idempotent)
+```powershell
+function Write-NormalizedUtf8Bom {
+  param(
+    [Parameter(Mandatory)] [string] $Path,
+    [Parameter(Mandatory)] [string] $Content
+  )
+  # Normalize line endings to CRLF
+  $text = [regex]::Replace($Content, '(?<!\r)\n', "`r`n")
+  # Trim excessive blank lines at EOF → keep exactly one terminal newline
+  $text = [regex]::Replace($text, '(\r?\n)+\z', "`r`n")
+  # Write with UTF‑8 BOM (pipeline requirement)
+  Set-Content -Path $Path -Value $text -Encoding UTF8BOM
+}
+```
+**Usage**
+```powershell
+$text = Get-Content $file -Raw
+Write-NormalizedUtf8Bom -Path $file -Content $text
+```
 
 ---
 
@@ -626,7 +660,6 @@ $text = $text.Replace($sold, $snew)  # literal replace
 Set-Content $f $text -Encoding UTF8BOM
 Write-Host 'Replaced block and added event'
 ```
-
 > Use **literal** `.Replace` when you can; prefer regex only when structure demands it.
 
 ---
@@ -657,6 +690,7 @@ Write-Host 'Copilot terminal has been reset.' -ForegroundColor Green
 - No destructive one‑liners without a prior `Select-String` check.
 - Do **not** place `foreach (...) {}` after an expression in one‑liners. Use `; foreach` or `... | ForEach-Object {}`.
 - Do **not** slice arrays with `[0..N]` unless clamped; prefer `Select-Object -First / -Skip`.
+- Do **not** start a **here‑string** in a one‑liner; header and terminator must be on their own lines at column 0 (no indentation).
 
 ---
 
@@ -672,7 +706,17 @@ $count=(Select-String -Path . -Pattern 'EventTriggerBehavior' -List | Measure-Ob
 git ls-files *.cs | ForEach-Object { $f = $_; if ((Select-String -Path $f -Pattern 'INotifyPropertyChanged' -List)) { Write-Host $f } }
 ```
 
+### Write XAML with BOM (safe)
+```powershell
+Set-Content -Path .\Theme.xaml -Value @'
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- content -->
+</ResourceDictionary>
+'@ -Encoding UTF8BOM
+```
+
 ---
 
-**Last Updated:** 2025-12-10
-**Version:** 3.3
+**Last Updated:** 2025-12-11
+**Version:** 3.4

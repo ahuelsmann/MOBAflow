@@ -28,8 +28,9 @@ public sealed partial class EditorPage : Page
     {
         if (e.Items.FirstOrDefault() is Domain.City city)
         {
-            e.Data.SetData("City", city);
+            e.Data.Properties.Add("City", city);
             e.Data.RequestedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+            e.Data.SetText(city.Name);
         }
     }
 

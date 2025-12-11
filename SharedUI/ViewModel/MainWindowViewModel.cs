@@ -97,6 +97,9 @@ public partial class MainWindowViewModel : ObservableObject
     private bool hasSolution;
 
     [ObservableProperty]
+    private bool isDarkMode = false;
+
+    [ObservableProperty]
     private SolutionViewModel? solutionViewModel;
 
     [ObservableProperty]

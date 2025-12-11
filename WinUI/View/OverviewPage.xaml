@@ -45,7 +45,7 @@
                 HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Stretch"
                 Header="Z21 System State"
-                IsExpanded="False"
+                IsExpanded="True"
                 Visibility="{x:Bind ViewModel.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Expander.HeaderTemplate>
                     <DataTemplate>

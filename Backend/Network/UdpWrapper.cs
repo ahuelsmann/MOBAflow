@@ -94,6 +94,13 @@ public class UdpWrapper : IUdpClientWrapper
                 UdpReceiveResult result;
                 try
                 {
+                    // Check cancellation before blocking receive
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        _logger?.LogDebug("Receiver loop cancelled before receive");
+                        break;
+                    }
+
                     result = await _client.ReceiveAsync(cancellationToken).ConfigureAwait(false);
                     
                     lock (_statsLock)
@@ -108,7 +115,7 @@ public class UdpWrapper : IUdpClientWrapper
                 }
                 catch (OperationCanceledException)
                 {
-                    _logger?.LogDebug("Receiver loop cancelled");
+                    _logger?.LogDebug("Receiver loop cancelled during receive");
                     break;
                 }
                 catch (SocketException ex)

@@ -105,6 +105,119 @@ When modifying Backend code:
 - [ ] Async/await for all I/O operations
 - [ ] No `.Result`, `.Wait()`, `.GetAwaiter().GetResult()`
 
+## 🎯 Event-Driven State Management Pattern
+
+### Anti-Pattern: Manual State Override in Commands
+
+```csharp
+// ❌ WRONG: Manual state override (race condition!)
+[RelayCommand]
+private async Task SetTrackPowerAsync(bool turnOn)
+{
+    await _z21.SetTrackPowerOffAsync();
+    IsTrackPowerOn = false;
+    
+    // ❌ Manual reset creates timing issues:
+    MainCurrent = 0;      // What if Z21 sends update after this?
+    Temperature = 0;      // Race condition!
+    SupplyVoltage = 0;    // Values may be overwritten by late events
+}
+```
+
+**Problems:**
+- **Race Condition:** Z21 could send `SystemState` update after manual reset
+- **Timing Issues:** Order of execution depends on network latency
+- **Violation of Single Source of Truth:** ViewModel "guesses" values instead of reading from Z21
+- **Hard to Test:** Non-deterministic behavior
+
+### Correct Pattern: Filter Events Based on State
+
+```csharp
+// ✅ CORRECT: Event-driven filtering
+[RelayCommand]
+private async Task SetTrackPowerAsync(bool turnOn)
+{
+    if (turnOn)
+    {
+        await _z21.SetTrackPowerOnAsync();
+        StatusText = "Track power ON";
+    }
+    else
+    {
+        await _z21.SetTrackPowerOffAsync();
+        StatusText = "Track power OFF";
+        // ✅ No manual state reset - values come from Z21 events
+    }
+}
+
+// ✅ Single source of truth: Z21 events set all values
+private void UpdateSystemState(Backend.SystemState systemState)
+{
+    // Update track power status first
+    IsTrackPowerOn = systemState.IsTrackPowerOn;
+
+    // Filter values based on power state
+    if (systemState.IsTrackPowerOn)
+    {
+        // Power ON → Show real values
+        MainCurrent = systemState.MainCurrent;
+        Temperature = systemState.Temperature;
+        SupplyVoltage = systemState.SupplyVoltage;
+        VccVoltage = systemState.VccVoltage;
+        CentralState = $"0x{systemState.CentralState:X2}";
+        CentralStateEx = $"0x{systemState.CentralStateEx:X2}";
+    }
+    else
+    {
+        // Power OFF → Reset to zero (no stale values)
+        MainCurrent = 0;
+        Temperature = 0;
+        SupplyVoltage = 0;
+        VccVoltage = 0;
+        CentralState = "0x00";
+        CentralStateEx = "0x00";
+    }
+}
+```
+
+### Why This is Better
+
+| Aspect | Manual Override ❌ | Event Filter ✅ |
+|--------|-------------------|-----------------|
+| **Responsibility** | ViewModel guesses values | Only Z21 sets values |
+| **Race Condition** | Possible | Impossible |
+| **Consistency** | Values can be overwritten | Always consistent |
+| **Timing** | Depends on command order | Event-based (deterministic) |
+| **Testability** | Hard to test timing | Easy to test (predictable) |
+
+### Execution Flow (Event-Driven)
+
+```
+1. User clicks "Track Power OFF"
+   ↓
+2. SetTrackPowerAsync(false) executes
+   ↓
+3. Z21 receives command → Turns power OFF
+   ↓
+4. Z21 sends SystemState update (IsTrackPowerOn = false)
+   ↓
+5. OnSystemStateChanged event fires
+   ↓
+6. UpdateSystemState() filters values based on IsTrackPowerOn
+   ↓
+7. UI updates → Displays 0 values ✅
+```
+
+### Key Principles
+
+1. **Single Source of Truth:** External system (Z21) owns the state
+2. **Events Only:** ViewModel reacts to events, never overrides state
+3. **Filter, Don't Override:** Apply business logic in event handlers
+4. **Commands Trigger Actions:** Commands send requests, don't set state directly
+5. **Deterministic Testing:** Event-driven flow is predictable and testable
+
+---
+
 ## 🚦 Target Frameworks
 
 Backend MUST target:

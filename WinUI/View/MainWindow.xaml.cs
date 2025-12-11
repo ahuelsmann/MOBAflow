@@ -61,6 +61,9 @@ public sealed partial class MainWindow
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
         Closed += MainWindow_Closed;
 
+        // Apply initial theme
+        ApplyTheme(ViewModel.IsDarkMode);
+
         // Subscribe to health check events
         _healthCheckService.HealthStatusChanged += OnHealthStatusChanged;
         _healthCheckService.StartPeriodicChecks();
@@ -92,6 +95,15 @@ public sealed partial class MainWindow
         {
             Z21StatusIcon.Glyph = ViewModel.IsZ21Connected ? "\uE8EB" : "\uF384";
         }
+        else if (e.PropertyName == nameof(MainWindowViewModel.IsDarkMode))
+        {
+            ApplyTheme(ViewModel.IsDarkMode);
+        }
+    }
+
+    private void ApplyTheme(bool isDarkMode)
+    {
+        RootGrid.RequestedTheme = isDarkMode ? ElementTheme.Dark : ElementTheme.Light;
     }
 
     private void MainWindow_Closed(object sender, WindowEventArgs args)
@@ -176,26 +188,6 @@ public sealed partial class MainWindow
         {
             // Simply execute command with current state - no business logic here
             CounterViewModel.SetTrackPowerCommand.Execute(toggleButton.IsChecked);
-        }
-    }
-
-    private ElementTheme _currentTheme = ElementTheme.Default;
-
-    private void ThemeToggle_Click(object sender, RoutedEventArgs e)
-    {
-        // Cycle through themes: Default → Light → Dark → Default
-        _currentTheme = _currentTheme switch
-        {
-            ElementTheme.Default => ElementTheme.Light,
-            ElementTheme.Light => ElementTheme.Dark,
-            ElementTheme.Dark => ElementTheme.Default,
-            _ => ElementTheme.Default
-        };
-
-        // Apply theme to window content
-        if (Content is FrameworkElement rootElement)
-        {
-            rootElement.RequestedTheme = _currentTheme;
         }
     }
 }
