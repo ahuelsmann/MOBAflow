@@ -104,7 +104,6 @@ public partial class App
 
         // WinUI Services (Interfaces are in SharedUI.Service)
         services.AddSingleton<SharedUI.Interface.IIoService, Service.IoService>();
-        services.AddSingleton<SharedUI.Interface.IPreferencesService, Service.PreferencesService>();
         services.AddSingleton<SharedUI.Interface.IUiDispatcher, Service.UiDispatcher>();
         services.AddSingleton<SharedUI.Interface.ICityService, Service.CityService>();
         services.AddSingleton<SharedUI.Interface.ISettingsService, Service.SettingsService>();
@@ -160,33 +159,33 @@ public partial class App
     {
         try
         {
-            var preferencesService = Services.GetService<SharedUI.Interface.IPreferencesService>();
-            if (preferencesService == null)
+            var settingsService = Services.GetService<SharedUI.Interface.ISettingsService>();
+            if (settingsService == null)
             {
-                System.Diagnostics.Debug.WriteLine(" PreferencesService not available - skipping auto-load");
+                System.Diagnostics.Debug.WriteLine("⚠️ SettingsService not available - skipping auto-load");
                 return;
             }
 
-            if (!preferencesService.AutoLoadLastSolution)
+            if (!settingsService.AutoLoadLastSolution)
             {
-                System.Diagnostics.Debug.WriteLine(" Auto-load disabled - skipping");
+                System.Diagnostics.Debug.WriteLine("ℹ️ Auto-load disabled - skipping");
                 return;
             }
 
-            var lastPath = preferencesService.LastSolutionPath;
+            var lastPath = settingsService.LastSolutionPath;
             if (string.IsNullOrEmpty(lastPath))
             {
-                System.Diagnostics.Debug.WriteLine(" No last solution path - skipping auto-load");
+                System.Diagnostics.Debug.WriteLine("ℹ️ No last solution path - skipping auto-load");
                 return;
             }
 
             if (!File.Exists(lastPath))
             {
-                System.Diagnostics.Debug.WriteLine($" Last solution file not found: {lastPath}");
+                System.Diagnostics.Debug.WriteLine($"⚠️ Last solution file not found: {lastPath}");
                 return;
             }
 
-            System.Diagnostics.Debug.WriteLine($" Auto-loading last solution: {lastPath}");
+            System.Diagnostics.Debug.WriteLine($"📂 Auto-loading last solution: {lastPath}");
             
             // Load the solution using IIoService
             var ioService = Services.GetRequiredService<SharedUI.Interface.IIoService>();
@@ -210,9 +209,13 @@ public partial class App
                 
                 // Refresh ViewModel
                 mainWindowViewModel.SolutionViewModel?.Refresh();
-                mainWindowViewModel.CurrentSolutionPath = path;
                 
-                System.Diagnostics.Debug.WriteLine(" Auto-load completed successfully");
+                // ✅ Set CurrentSolutionPath and HasSolution for StatusBar display
+                mainWindowViewModel.CurrentSolutionPath = path;
+                mainWindowViewModel.HasSolution = mainWindowViewModel.Solution.Projects.Count > 0;
+                
+                System.Diagnostics.Debug.WriteLine($"✅ Auto-load completed: {path}");
+                System.Diagnostics.Debug.WriteLine($"   Projects: {loadedSolution.Projects.Count}, HasSolution: {mainWindowViewModel.HasSolution}");
             }
         }
         catch (Exception ex)

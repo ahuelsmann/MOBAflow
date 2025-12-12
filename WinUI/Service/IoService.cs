@@ -16,11 +16,11 @@ public class IoService : IIoService
 {
     private Microsoft.UI.WindowId? _windowId;
     private Microsoft.UI.Xaml.XamlRoot? _xamlRoot;
-    private readonly IPreferencesService _preferencesService;
+    private readonly ISettingsService _settingsService;
 
-    public IoService(IPreferencesService preferencesService)
+    public IoService(ISettingsService settingsService)
     {
-        _preferencesService = preferencesService;
+        _settingsService = settingsService;
     }
 
     /// <summary>
@@ -58,8 +58,8 @@ public class IoService : IIoService
         
         var sol = Newtonsoft.Json.JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
         
-        // Save last solution path to preferences
-        _preferencesService.LastSolutionPath = result.Path;
+        // Save last solution path to settings
+        _settingsService.LastSolutionPath = result.Path;
         
         return (sol, result.Path, null);
     }
@@ -87,8 +87,8 @@ public class IoService : IIoService
             
             var sol = Newtonsoft.Json.JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
             
-            // Save last solution path to preferences
-            _preferencesService.LastSolutionPath = filePath;
+            // Save last solution path to settings
+            _settingsService.LastSolutionPath = filePath;
             
             return (sol, filePath, null);
         }
@@ -107,14 +107,14 @@ public class IoService : IIoService
         try
         {
             // Check if auto-load is enabled
-            if (!_preferencesService.AutoLoadLastSolution)
+            if (!_settingsService.AutoLoadLastSolution)
             {
-                System.Diagnostics.Debug.WriteLine(" Auto-load is disabled in preferences");
+                System.Diagnostics.Debug.WriteLine("ℹ️ Auto-load is disabled in settings");
                 return (null, null, null);
             }
 
             // Check if there's a last solution path
-            var lastPath = _preferencesService.LastSolutionPath;
+            var lastPath = _settingsService.LastSolutionPath;
             if (string.IsNullOrEmpty(lastPath))
             {
                 System.Diagnostics.Debug.WriteLine(" No previous solution path found");
@@ -190,8 +190,8 @@ public class IoService : IIoService
         var json = Newtonsoft.Json.JsonConvert.SerializeObject(solution, settings);
         await File.WriteAllTextAsync(path!, json);
         
-        // Save last solution path to preferences
-        _preferencesService.LastSolutionPath = path;
+        // Save last solution path to settings
+        _settingsService.LastSolutionPath = path;
         
         return (true, path, null);
     }
