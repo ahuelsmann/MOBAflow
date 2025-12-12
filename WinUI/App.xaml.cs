@@ -104,7 +104,6 @@ public partial class App
 
         // WinUI Services (Interfaces are in SharedUI.Service)
         services.AddSingleton<SharedUI.Interface.IIoService, Service.IoService>();
-        services.AddSingleton<SharedUI.Interface.INotificationService, Service.NotificationService>();
         services.AddSingleton<SharedUI.Interface.IPreferencesService, Service.PreferencesService>();
         services.AddSingleton<SharedUI.Interface.IUiDispatcher, Service.UiDispatcher>();
         services.AddSingleton<SharedUI.Interface.ICityService, Service.CityService>();

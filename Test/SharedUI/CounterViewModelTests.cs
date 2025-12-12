@@ -39,7 +39,7 @@ public class CounterViewModelTests
     {
         var solution = new Solution();
         var settings = new Common.Configuration.AppSettings();
-        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), settings, solution, notificationService: null);
+        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), settings, solution);
         Assert.That(vm.Statistics, Is.Not.Null);
         Assert.That(vm.Statistics.Count, Is.EqualTo(3));
         Assert.That(vm.Statistics[0].InPort, Is.EqualTo(1));
@@ -50,7 +50,7 @@ public class CounterViewModelTests
     {
         var solution = new Solution();
         var settings = new Common.Configuration.AppSettings();
-        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), settings, solution, notificationService: null);
+        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), settings, solution);
         vm.Statistics[0].Count = 5;
         vm.Statistics[1].Count = 3;
 
@@ -66,7 +66,7 @@ public class CounterViewModelTests
     {
         var solution = new Solution();
         var settings = new Common.Configuration.AppSettings();
-        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), settings, solution, notificationService: null);
+        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), settings, solution);
         Assert.That(vm.IsNotConnected, Is.True);
     }
 }

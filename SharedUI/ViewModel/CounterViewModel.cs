@@ -35,7 +35,6 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     private readonly Solution _solution;
 
     // Optional Services
-    private readonly INotificationService? _notificationService;
     private readonly ISettingsService? _settingsService;
 
     // Runtime State
@@ -48,15 +47,13 @@ public partial class CounterViewModel : ObservableObject, IDisposable
         IUiDispatcher dispatcher,
         AppSettings settings,
         Solution solution,
-        ISettingsService? settingsService = null,
-        INotificationService? notificationService = null)
+        ISettingsService? settingsService = null)
     {
         _z21 = z21;
         _dispatcher = dispatcher;
         _settings = settings;
         _solution = solution;
         _settingsService = settingsService;
-        _notificationService = notificationService;
 
         // ✅ Initialize available IP addresses from AppSettings
         AvailableIpAddresses = new ObservableCollection<string>(_settings.Z21.RecentIpAddresses);
@@ -526,14 +523,11 @@ public partial class CounterViewModel : ObservableObject, IDisposable
 
     /// <summary>
     /// Called when a track reaches its target lap count.
-    /// Plays notification sound (if service available) and raises event for UI to show alert.
+    /// Raises event for UI to show alert.
     /// </summary>
     private void OnTargetReached(InPortStatistic stat)
     {
         this.Log($"🎉 Target reached! InPort {stat.InPort}: {stat.Count} laps");
-
-        // Play notification sound if service is available (optional, MAUI/WinUI)
-        _notificationService?.PlayNotificationSound();
 
         // Raise event for UI (MAUI MainPage can subscribe)
         TargetReached?.Invoke(this, stat);
