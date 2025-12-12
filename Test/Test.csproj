@@ -8,11 +8,6 @@
     <DefineConstants Condition="'$(ANDROID_SDK_ROOT)' == ''">$(DefineConstants);SKIP_ANDROID_TESTS</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="TestFile\**\*.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="coverlet.collector">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

@@ -38,7 +38,7 @@ public partial class App
                 System.Diagnostics.Debug.WriteLine($"   Inner Exception: {ex.InnerException.Message}");
                 System.Diagnostics.Debug.WriteLine($"   Inner StackTrace: {ex.InnerException.StackTrace}");
             }
-            
+
             // Re-throw to get Windows Error Reporting
             throw;
         }
@@ -90,7 +90,7 @@ public partial class App
             return new Backend.Z21(udp, logger, trafficMonitor);
         });
         services.AddSingleton<Backend.Network.IUdpClientWrapper, Backend.Network.UdpWrapper>();
-        
+
         // Backend Services - Register in dependency order
         services.AddSingleton(sp =>
         {
@@ -98,7 +98,7 @@ public partial class App
             return new Backend.Services.ActionExecutor(z21);
         });
         services.AddSingleton<Backend.Services.WorkflowService>();
-        
+
         // Domain.Solution - Pure POCO, no Settings initialization needed
         services.AddSingleton(sp => new Domain.Solution());
 
@@ -107,7 +107,7 @@ public partial class App
         services.AddSingleton<SharedUI.Interface.IUiDispatcher, Service.UiDispatcher>();
         services.AddSingleton<SharedUI.Interface.ICityService, Service.CityService>();
         services.AddSingleton<SharedUI.Interface.ISettingsService, Service.SettingsService>();
-        
+
         // Sound Services (required by HealthCheckService)
         services.AddSingleton<Sound.SpeechHealthCheck>();
         services.AddSingleton<Service.HealthCheckService>();
@@ -133,7 +133,6 @@ public partial class App
 
         // MainWindow (Singleton = one instance for app lifetime)
         services.AddSingleton<View.MainWindow>();
-        
 
         return services.BuildServiceProvider();
     }
@@ -147,11 +146,11 @@ public partial class App
 
         _window = Services.GetRequiredService<View.MainWindow>();
         _window.Activate();
-        
+
         // Auto-load last solution if enabled
         _ = AutoLoadLastSolutionAsync(((View.MainWindow)_window).ViewModel);
     }
-    
+
     /// <summary>
     /// Automatically loads the last used solution if AutoLoadLastSolution preference is enabled.
     /// </summary>
@@ -186,17 +185,17 @@ public partial class App
             }
 
             System.Diagnostics.Debug.WriteLine($"📂 Auto-loading last solution: {lastPath}");
-            
+
             // Load the solution using IIoService
             var ioService = Services.GetRequiredService<SharedUI.Interface.IIoService>();
             var (loadedSolution, path, error) = await ioService.LoadFromPathAsync(lastPath);
-            
+
             if (!string.IsNullOrEmpty(error))
             {
                 System.Diagnostics.Debug.WriteLine($" Auto-load failed: {error}");
                 return;
             }
-            
+
             if (loadedSolution != null)
             {
                 // Update the Solution singleton
@@ -206,14 +205,14 @@ public partial class App
                     mainWindowViewModel.Solution.Projects.Add(project);
                 }
                 mainWindowViewModel.Solution.Name = loadedSolution.Name;
-                
+
                 // Refresh ViewModel
                 mainWindowViewModel.SolutionViewModel?.Refresh();
-                
+
                 // ✅ Set CurrentSolutionPath and HasSolution for StatusBar display
                 mainWindowViewModel.CurrentSolutionPath = path;
                 mainWindowViewModel.HasSolution = mainWindowViewModel.Solution.Projects.Count > 0;
-                
+
                 System.Diagnostics.Debug.WriteLine($"✅ Auto-load completed: {path}");
                 System.Diagnostics.Debug.WriteLine($"   Projects: {loadedSolution.Projects.Count}, HasSolution: {mainWindowViewModel.HasSolution}");
             }
