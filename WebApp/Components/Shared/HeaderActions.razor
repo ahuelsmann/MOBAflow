@@ -30,7 +30,7 @@
         <label class="toggle-switch">
             <input type="checkbox"
                    checked="@ViewModel.IsTrackPowerOn"
-                   @onchange="OnTrackPowerChangedAsync"
+                   @onchange="OnTrackPowerToggleAsync"
                    disabled="@(!ViewModel.IsConnected)" />
             <span class="toggle-slider"></span>
         </label>
@@ -38,7 +38,7 @@
 </div>
 
 @code {
-    private bool _isDarkTheme = true;
+private bool _isDarkTheme = false;  // Light theme is default for WebApp
 
     protected override void OnInitialized()
     {
@@ -55,7 +55,6 @@
         if (e.Value is bool isDark)
         {
             _isDarkTheme = isDark;
-            // Theme toggle is visual only - CSS handles the rest
         }
     }
 
@@ -63,17 +62,20 @@
     {
         if (e.Value is bool shouldConnect)
         {
-            if (shouldConnect && ViewModel.ConnectCommand.CanExecute(null))
+            if (shouldConnect)
                 await ViewModel.ConnectCommand.ExecuteAsync(null);
-            else if (!shouldConnect && ViewModel.DisconnectCommand.CanExecute(null))
+            else
                 await ViewModel.DisconnectCommand.ExecuteAsync(null);
         }
     }
 
-    private async Task OnTrackPowerChangedAsync(ChangeEventArgs e)
+    private async Task OnTrackPowerToggleAsync(ChangeEventArgs e)
     {
-        if (e.Value is bool isOn && ViewModel.SetTrackPowerCommand.CanExecute(isOn))
-            await ViewModel.SetTrackPowerCommand.ExecuteAsync(isOn);
+        if (e.Value is bool turnOn)
+        {
+            // Pass the desired state to the command
+            await ViewModel.SetTrackPowerCommand.ExecuteAsync(turnOn);
+        }
     }
 
     public void Dispose()

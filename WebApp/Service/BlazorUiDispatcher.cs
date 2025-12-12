@@ -5,33 +5,17 @@ using SharedUI.Interface;
 
 /// <summary>
 /// Blazor Server implementation of IUiDispatcher.
-/// Uses the current SynchronizationContext to marshal calls to the Blazor dispatcher thread.
-/// Unlike WinUI (DispatcherQueue) or MAUI (MainThread), Blazor relies on SynchronizationContext.
+/// In Blazor Server, we execute actions directly since:
+/// - The ViewModel raises PropertyChanged events
+/// - Components subscribe to PropertyChanged and call InvokeAsync(StateHasChanged)
+/// - SignalR pushes updates to the client
 /// </summary>
 public class BlazorUiDispatcher : IUiDispatcher
 {
-    private SynchronizationContext? _syncContext;
-
-    public BlazorUiDispatcher()
-    {
-        // Capture the Blazor SynchronizationContext during initialization
-        _syncContext = SynchronizationContext.Current;
-    }
-
     public void InvokeOnUi(Action action)
     {
-        // Use captured context if available, otherwise use current context
-        var syncContext = _syncContext ?? SynchronizationContext.Current;
-
-        if (syncContext != null)
-        {
-            // Post to Blazor's synchronization context
-            syncContext.Post(_ => action(), null);
-        }
-        else
-        {
-            // Fallback: execute directly (e.g., during initialization or testing)
-            action();
-        }
+        // Execute directly - Blazor components handle their own UI updates
+        // via PropertyChanged subscription and InvokeAsync(StateHasChanged)
+        action();
     }
 }

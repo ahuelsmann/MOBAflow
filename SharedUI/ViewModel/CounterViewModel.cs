@@ -293,8 +293,8 @@ public partial class CounterViewModel : ObservableObject, IDisposable
             IsConnected = true;
             StatusText = string.Empty; // Clear status after successful connection
 
-            // Explicitly request current status to trigger initial broadcast
-            await _z21.GetStatusAsync();
+            // Note: GetStatusAsync is now called inside Z21.ConnectAsync() with proper delays
+            // to prevent overwhelming the Z21 with rapid requests
 
             ConnectCommand.NotifyCanExecuteChanged();
             DisconnectCommand.NotifyCanExecuteChanged();

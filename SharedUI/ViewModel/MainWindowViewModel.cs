@@ -67,6 +67,11 @@ public partial class MainWindowViewModel : ObservableObject
         // Subscribe to Solution changes
         Solution = solution;
 
+        // ✅ Subscribe to Z21 events immediately (like CounterViewModel does)
+        // This ensures we receive status updates regardless of how connection was established
+        _z21.OnSystemStateChanged += OnZ21SystemStateChanged;
+        _z21.OnConnectionLost += HandleConnectionLost;
+
         // Load City Library at startup (fire-and-forget)
         if (_cityLibraryService != null)
         {
@@ -97,7 +102,7 @@ public partial class MainWindowViewModel : ObservableObject
     private bool hasSolution;
 
     [ObservableProperty]
-    private bool isDarkMode = false;
+    private bool isDarkMode = true;  // Dark theme is default for WinUI
 
     [ObservableProperty]
     private SolutionViewModel? solutionViewModel;

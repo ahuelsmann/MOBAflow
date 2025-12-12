@@ -82,10 +82,6 @@ public partial class MainWindowViewModel
 
                 await _z21.ConnectAsync(address, port);
 
-                // Subscribe to Z21 events
-                _z21.OnSystemStateChanged += OnZ21SystemStateChanged;
-                _z21.OnConnectionLost += HandleConnectionLost;
-
                 // Initialize Traffic Monitor
                 InitializeTrafficMonitor();
 
@@ -128,10 +124,6 @@ public partial class MainWindowViewModel
 
             _journeyManager?.Dispose();
             _journeyManager = null;
-
-            // Unsubscribe from Z21 events
-            _z21.OnSystemStateChanged -= OnZ21SystemStateChanged;
-            _z21.OnConnectionLost -= HandleConnectionLost;
 
             await _z21.DisconnectAsync();
 
@@ -233,6 +225,15 @@ public partial class MainWindowViewModel
 
     private void UpdateZ21SystemState(Backend.SystemState systemState)
     {
+        // If we're receiving system state updates, we're connected
+        if (!IsZ21Connected)
+        {
+            IsZ21Connected = true;
+            ConnectToZ21Command.NotifyCanExecuteChanged();
+            DisconnectFromZ21Command.NotifyCanExecuteChanged();
+            SetTrackPowerCommand.NotifyCanExecuteChanged();
+        }
+
         IsTrackPowerOn = systemState.IsTrackPowerOn;
 
         var statusParts = new List<string>

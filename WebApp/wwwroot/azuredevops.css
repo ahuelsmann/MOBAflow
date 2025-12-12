@@ -14,17 +14,17 @@
     --azure-error: #d13438;
     --azure-neutral: #8a8886;
 
-    /* Dark Theme (Default) - Based on Visual Studio Code Dark+ */
-    --page-bg: #1e1e1e;
-    --card-bg: #252526;
-    --card-header-bg: #2d2d2d;
-    --border-color: #3e3e42;
-    --text-primary: #cccccc;
-    --text-secondary: #969696;
-    --text-muted: #6e6e6e;
+    /* Light Theme (Default) - Based on Azure DevOps Light */
+    --page-bg: #f3f2f1;
+    --card-bg: #ffffff;
+    --card-header-bg: #fafafa;
+    --border-color: #d1d1d1;
+    --text-primary: #323130;
+    --text-secondary: #605e5c;
+    --text-muted: #8a8886;
     --top-header-bg: #2d2d2d;
-    --nav-bg: #252526;
-    --card-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    --nav-bg: #f3f2f1;
+    --card-shadow: 0 1.6px 3.6px 0 rgba(0,0,0,.132), 0 0.3px 0.9px 0 rgba(0,0,0,.108);
     
     /* Theme-Specific Aliases */
     --azure-gray-bg: var(--page-bg);
@@ -39,50 +39,11 @@
     /* Semantic Aliases */
     --card-background: var(--card-bg);
     --azure-primary: var(--azure-blue);
-    --azure-success-bg: rgba(16, 124, 16, 0.2);
-    --azure-error-bg: rgba(209, 52, 56, 0.2);
-    --azure-neutral-bg: rgba(138, 136, 134, 0.2);
-    
-    /* Widget-specific Variables */
-    --header-gradient-start: var(--card-header-bg);
-    --header-gradient-end: var(--card-header-bg);
-    --metric-bg: #2d2d2d;
-
-    /* Navigation Colors - Dark Theme */
-    --nav-text: #cccccc;
-    --nav-text-hover: #ffffff;
-    --nav-text-active: var(--azure-blue-light);
-    --nav-bg-hover: rgba(255,255,255,0.1);
-}
-
-/* Light Theme Override - Based on Azure DevOps Light */
-[data-theme="light"] {
-    /* Light Theme Colors */
-    --page-bg: #f3f2f1;
-    --card-bg: #ffffff;
-    --card-header-bg: #fafafa;
-    --border-color: #d1d1d1;
-    --text-primary: #323130;
-    --text-secondary: #605e5c;
-    --text-muted: #8a8886;
-    --top-header-bg: #ffffff;
-    --nav-bg: #f3f2f1;
-    --card-shadow: 0 1.6px 3.6px 0 rgba(0,0,0,.132), 0 0.3px 0.9px 0 rgba(0,0,0,.108);
-    
-    /* Theme-Specific Aliases */
-    --azure-gray-bg: var(--page-bg);
-    --azure-gray-card: var(--card-bg);
-    --azure-gray-border: var(--border-color);
-    --azure-gray-text: var(--text-primary);
-    --azure-gray-text-secondary: var(--text-secondary);
-    --azure-header-bg: var(--top-header-bg);
-    --azure-nav-bg: var(--nav-bg);
-    --azure-card-shadow: var(--card-shadow);
-    
     --azure-success-bg: rgba(16, 124, 16, 0.1);
     --azure-error-bg: rgba(209, 52, 56, 0.1);
     --azure-neutral-bg: rgba(138, 136, 134, 0.1);
     
+    /* Widget-specific Variables */
     --header-gradient-start: var(--card-header-bg);
     --header-gradient-end: var(--card-header-bg);
     --metric-bg: #f8f8f8;
@@ -94,47 +55,34 @@
     --nav-bg-hover: rgba(0,0,0,0.05);
 }
 
-/* Auto Light Theme based on system preference */
-@media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) {
-        --page-bg: #f3f2f1;
-        --card-bg: #ffffff;
-        --card-header-bg: #fafafa;
-        --border-color: #d1d1d1;
-        --text-primary: #323130;
-        --text-secondary: #605e5c;
-        --text-muted: #8a8886;
-        --top-header-bg: #ffffff;
-        --nav-bg: #f3f2f1;
-        --card-shadow: 0 1.6px 3.6px 0 rgba(0,0,0,.132), 0 0.3px 0.9px 0 rgba(0,0,0,.108);
-        
-        --azure-gray-bg: var(--page-bg);
-        --azure-gray-card: var(--card-bg);
-        --azure-gray-border: var(--border-color);
-        --azure-gray-text: var(--text-primary);
-        --azure-gray-text-secondary: var(--text-secondary);
-        --azure-header-bg: var(--top-header-bg);
-        --azure-nav-bg: var(--nav-bg);
-        --azure-card-shadow: var(--card-shadow);
-        
-        --azure-success-bg: rgba(16, 124, 16, 0.1);
-        --azure-error-bg: rgba(209, 52, 56, 0.1);
-        --azure-neutral-bg: rgba(138, 136, 134, 0.1);
-        
-        --header-gradient-start: var(--card-header-bg);
-        --header-gradient-end: var(--card-header-bg);
-        --metric-bg: #f8f8f8;
+/* Dark Theme Override */
+[data-theme="dark"] {
+    --page-bg: #1e1e1e;
+    --card-bg: #252526;
+    --card-header-bg: #2d2d2d;
+    --border-color: #3e3e42;
+    --text-primary: #cccccc;
+    --text-secondary: #969696;
+    --text-muted: #6e6e6e;
+    --top-header-bg: #2d2d2d;
+    --nav-bg: #252526;
+    --card-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    
+    --azure-success-bg: rgba(16, 124, 16, 0.2);
+    --azure-error-bg: rgba(209, 52, 56, 0.2);
+    --azure-neutral-bg: rgba(138, 136, 134, 0.2);
+    
+    --metric-bg: #2d2d2d;
 
-        --nav-text: #323130;
-        --nav-text-hover: #000000;
-        --nav-text-active: var(--azure-blue);
-        --nav-bg-hover: rgba(0,0,0,0.05);
-    }
+    --nav-text: #cccccc;
+    --nav-text-hover: #ffffff;
+    --nav-text-active: var(--azure-blue-light);
+    --nav-bg-hover: rgba(255,255,255,0.1);
 }
 
 /* ========================================
-   Layout Structure (Azure DevOps Style)
-   ======================================== */
+Layout Structure (Azure DevOps Style)
+======================================== */
 
 .azure-devops-layout {
     display: flex;
@@ -966,15 +914,18 @@
     border-radius: 50%;
 }
 
-.toggle-switch input:checked + .toggle-slider {
+.toggle-switch input:checked + .toggle-slider,
+.toggle-slider.slider-on {
     background-color: var(--azure-success);
 }
 
-.toggle-switch input:checked + .toggle-slider:before {
+.toggle-switch input:checked + .toggle-slider:before,
+.toggle-slider.slider-on:before {
     transform: translateX(24px);
 }
 
-.toggle-switch input:disabled + .toggle-slider {
+.toggle-switch input:disabled + .toggle-slider,
+.toggle-switch.toggle-disabled .toggle-slider {
     opacity: 0.5;
     cursor: not-allowed;
 }

@@ -60,8 +60,16 @@ public class Z21 : IZ21
     {
         _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         await _udp.ConnectAsync(address, port, _cancellationTokenSource.Token).ConfigureAwait(false);
+        
+        // Small delay between commands to prevent Z21 overload
         await SendHandshakeAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
+        await Task.Delay(50, _cancellationTokenSource.Token).ConfigureAwait(false);
+        
         await SetBroadcastFlagsAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
+        await Task.Delay(50, _cancellationTokenSource.Token).ConfigureAwait(false);
+        
+        // Request initial status
+        await GetStatusAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
         
         // Start keepalive timer to prevent Z21 timeout/crash
         StartKeepaliveTimer();
