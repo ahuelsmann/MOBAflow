@@ -1,28 +1,12 @@
 @inherits LayoutComponentBase
-@using Moba.SharedUI.ViewModel
-@inject CounterViewModel ViewModel
-@implements IDisposable
+@using Moba.WebApp.Components.Shared
 
 <div class="azure-devops-layout">
     <header class="top-header">
         <div class="header-left">
             <h1 class="app-title">MOBAdash</h1>
         </div>
-        <div class="header-actions">
-            <button class="btn btn-primary btn-sm" 
-                    @onclick="OnConnect" 
-                    disabled="@(!CanConnect)">
-                Connect
-            </button>
-            <button class="btn btn-secondary btn-sm" 
-                    @onclick="OnDisconnect" 
-                    disabled="@(!CanDisconnect)">
-                Disconnect
-            </button>
-            <span class="status-badge @(ViewModel.IsConnected ? "status-connected" : "status-disconnected")">
-                @(ViewModel.IsConnected ? "Connected" : "Disconnected")
-            </span>
-        </div>
+        <HeaderActions />
     </header>
 
     <nav class="navigation-bar">
@@ -37,39 +21,6 @@
 </div>
 
 @code {
-    private bool CanConnect => ViewModel.ConnectCommand?.CanExecute(null) ?? false;
-    private bool CanDisconnect => ViewModel.DisconnectCommand?.CanExecute(null) ?? false;
-
-    protected override void OnInitialized()
-    {
-        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
-    }
-
-    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        InvokeAsync(StateHasChanged);
-    }
-
-    private async Task OnConnect()
-    {
-        if (ViewModel.ConnectCommand?.CanExecute(null) == true)
-        {
-            await ViewModel.ConnectCommand.ExecuteAsync(null);
-        }
-    }
-
-    private async Task OnDisconnect()
-    {
-        if (ViewModel.DisconnectCommand?.CanExecute(null) == true)
-        {
-            await ViewModel.DisconnectCommand.ExecuteAsync(null);
-        }
-    }
-
-    public void Dispose()
-    {
-        ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
-    }
 }
 
 <div id="blazor-error-ui" data-nosnippet>

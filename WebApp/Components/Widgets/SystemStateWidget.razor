@@ -2,22 +2,10 @@
 
 <div class="system-widget">
     <div class="widget-header">
-        <div class="widget-title">
-            <h3>System Status</h3>
-        </div>
-        <div class="connection-badge @GetConnectionClass()">
-            @(ViewModel.IsConnected ? "Connected" : "Disconnected")
-        </div>
+        <h3>System Status</h3>
     </div>
 
     <div class="widget-body">
-        <div class="track-power-status @GetTrackPowerClass()">
-            <div class="power-indicator">
-                <span class="power-label">Track Power</span>
-            </div>
-            <div class="power-state">@(ViewModel.IsTrackPowerOn ? "ON" : "OFF")</div>
-        </div>
-
         <div class="system-metrics">
             <div class="metric-row">
                 <div class="metric">
@@ -59,27 +47,21 @@
         <div class="system-state-footer">
             <div class="state-info">
                 <span class="state-label">State:</span>
-                <span class="state-value mono">0x@ViewModel.CentralState.ToString("X2")</span>
+                <span class="state-value mono">@ViewModel.CentralState</span>
             </div>
             <div class="state-info">
                 <span class="state-label">StateEx:</span>
-                <span class="state-value mono">0x@ViewModel.CentralStateEx.ToString("X2")</span>
+                <span class="state-value mono">@ViewModel.CentralStateEx</span>
             </div>
         </div>
     </div>
 </div>
 
 @code {
-    [Parameter]
-    public CounterViewModel ViewModel { get; set; } = null!;
+[Parameter]
+public CounterViewModel ViewModel { get; set; } = null!;
 
-    private string GetConnectionClass()
-        => ViewModel.IsConnected ? "connected" : "disconnected";
-
-    private string GetTrackPowerClass()
-        => ViewModel.IsTrackPowerOn ? "power-on" : "power-off";
-
-    private string GetCurrentClass(int current)
+private string GetCurrentClass(int current)
     {
         if (current >= 3000) return "metric-critical";
         if (current >= 2000) return "metric-warning";

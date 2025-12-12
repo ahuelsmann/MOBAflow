@@ -1,79 +1,183 @@
-.page {
-    position: relative;
+.azure-devops-layout {
     display: flex;
     flex-direction: column;
+    height: 100vh;
 }
 
-main {
-    flex: 1;
+.top-header {
+    background-color: #2d2d30;
+    color: #ffffff;
+    padding: 0 1rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #3e3e42;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
-.sidebar {
-    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
-}
-
-.top-row {
-    background-color: #f7f7f7;
-    border-bottom: 1px solid #d6d5d5;
-    justify-content: flex-end;
-    height: 3.5rem;
+.header-left {
     display: flex;
     align-items: center;
 }
 
-    .top-row ::deep a, .top-row ::deep .btn-link {
-        white-space: nowrap;
-        margin-left: 1.5rem;
-        text-decoration: none;
-    }
-
-    .top-row ::deep a:hover, .top-row ::deep .btn-link:hover {
-        text-decoration: underline;
-    }
-
-    .top-row ::deep a:first-child {
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-@media (max-width: 640.98px) {
-    .top-row {
-        justify-content: space-between;
-    }
-
-    .top-row ::deep a, .top-row ::deep .btn-link {
-        margin-left: 0;
-    }
+.app-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: 0.5px;
 }
 
-@media (min-width: 641px) {
-    .page {
-        flex-direction: row;
-    }
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
 
-    .sidebar {
-        width: 250px;
-        height: 100vh;
-        position: sticky;
-        top: 0;
-    }
+.btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
 
-    .top-row {
-        position: sticky;
-        top: 0;
-        z-index: 1;
-    }
+.btn-primary {
+    background-color: #007acc;
+    color: #ffffff;
+}
 
-    .top-row.auth ::deep a:first-child {
-        flex: 1;
-        text-align: right;
-        width: 0;
-    }
+.btn-primary:hover:not(:disabled) {
+    background-color: #005a9e;
+}
 
-    .top-row, article {
-        padding-left: 2rem !important;
-        padding-right: 1.5rem !important;
-    }
+.btn-primary:disabled {
+    background-color: #3e3e42;
+    color: #6a6a6a;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background-color: #3e3e42;
+    color: #cccccc;
+    border-color: #555555;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background-color: #4e4e54;
+    color: #ffffff;
+}
+
+.btn-secondary:disabled {
+    background-color: #3e3e42;
+    color: #6a6a6a;
+    cursor: not-allowed;
+}
+
+.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+}
+
+.status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 2px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.status-connected {
+    background-color: #107c10;
+    color: #ffffff;
+}
+
+.status-disconnected {
+    background-color: #a4373a;
+    color: #ffffff;
+}
+
+.track-power-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.track-power-label {
+    font-size: 0.8125rem;
+    color: #cccccc;
+    white-space: nowrap;
+}
+
+.track-power-control input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 40px;
+    height: 22px;
+    border-radius: 11px;
+    border: 2px solid #555555;
+    background-color: #3e3e42;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    margin: 0;
+    padding: 0;
+    outline: none;
+}
+
+.track-power-control input[type="checkbox"]::before {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    top: 3px;
+    left: 3px;
+    transition: all 0.2s ease;
+}
+
+.track-power-control input[type="checkbox"]:checked {
+    background-color: #107c10;
+    border-color: #107c10;
+}
+
+.track-power-control input[type="checkbox"]:checked::before {
+    left: 23px;
+}
+
+.track-power-control input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    border-color: #555555;
+    background-color: #3e3e42;
+}
+
+.track-power-control input[type="checkbox"]:hover:not(:disabled) {
+    border-color: #666666;
+}
+
+.navigation-bar {
+    background-color: #f3f3f3;
+    border-bottom: 1px solid #e8e8e8;
+    padding: 0 1rem;
+}
+
+.main-content {
+    flex: 1;
+    overflow-y: auto;
+    background-color: #ffffff;
+}
+
+.content-area {
+    padding: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
 }
 
 #blazor-error-ui {
@@ -90,9 +194,9 @@ main {
     z-index: 1000;
 }
 
-    #blazor-error-ui .dismiss {
-        cursor: pointer;
-        position: absolute;
-        right: 0.75rem;
-        top: 0.5rem;
-    }
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}

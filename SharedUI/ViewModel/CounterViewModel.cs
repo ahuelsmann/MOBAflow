@@ -183,7 +183,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     /// Current status message for display (e.g., "Connected", "Connecting...", "Error: ...").
     /// </summary>
     [ObservableProperty]
-    private string statusText = "Disconnected";
+    private string statusText = string.Empty;
 
     /// <summary>
     /// Collection of lap statistics for all configured tracks (InPorts).
@@ -262,39 +262,39 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     /// Validates IP address format before attempting connection.
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanConnect))]
-    private async Task ConnectAsync()
+    public async Task ConnectAsync()
     {
         try
         {
-            StatusText = "Connecting...";
-
             // Parse IP address
             if (!IPAddress.TryParse(Z21IpAddress, out var ipAddress))
             {
-                StatusText = "Invalid IP address";
+                StatusText = "❌ Invalid IP format";
                 return;
             }
 
-            // ✅ Check if IP is in local network range (192.168.x.x or 10.x.x.x)
+            // Check if IP is in local network range
             if (!IsLocalNetworkAddress(ipAddress))
             {
-                StatusText = "Error: Z21 must be in local network (e.g., 192.168.x.x)";
-                this.Log($"❌ IP {ipAddress} is not in local network range");
+                StatusText = "❌ IP must be in local network";
                 return;
             }
 
-            // Connect to Z21 (will throw exception if unreachable)
-            await _z21.ConnectAsync(ipAddress);
+            // Determine port from settings (fallback 21105)
+            var port = 21105;
+            if (!string.IsNullOrEmpty(_settings.Z21.DefaultPort) && int.TryParse(_settings.Z21.DefaultPort, out var configuredPort))
+            {
+                port = configuredPort;
+            }
 
-            // Note: Events are already subscribed in constructor (for WinUI simulation support)
-            // No need to subscribe again here
+            // Connect to Z21
+            await _z21.ConnectAsync(ipAddress, port);
 
             IsConnected = true;
-            StatusText = $"Connected to {Z21IpAddress}";
+            StatusText = string.Empty; // Clear status after successful connection
 
-            // Note: No need to request system status explicitly - Z21 sends broadcasts automatically
-            // after SetBroadcastFlags (called during ConnectAsync). This reduces Z21 load.
-            this.Log("⏳ Waiting for Z21 system state broadcast...");
+            // Explicitly request current status to trigger initial broadcast
+            await _z21.GetStatusAsync();
 
             ConnectCommand.NotifyCanExecuteChanged();
             DisconnectCommand.NotifyCanExecuteChanged();
@@ -303,14 +303,11 @@ public partial class CounterViewModel : ObservableObject, IDisposable
         }
         catch (System.Net.Sockets.SocketException ex)
         {
-            // Network-related errors (e.g., no route to host, network unreachable)
-            StatusText = $"Network error: Cannot reach Z21. Check network connection.";
-            this.Log($"❌ Z21 Connection Error (Socket): {ex.Message}");
+            StatusText = $"❌ Connection failed: {ex.Message}";
         }
         catch (Exception ex)
         {
-            StatusText = $"Connection failed: {ex.Message}";
-            this.Log($"❌ Z21 Connection Error: {ex}");
+            StatusText = $"❌ Error: {ex.Message}";
         }
     }
 
@@ -318,12 +315,10 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     /// Disconnects from Z21.
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanDisconnect))]
-    private async Task DisconnectAsync()
+    public async Task DisconnectAsync()
     {
         try
         {
-            StatusText = "Disconnecting...";
-
             if (_z21 != null)
             {
                 // Note: Do NOT unsubscribe events here - they remain active for WinUI simulation
@@ -334,7 +329,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
 
             IsConnected = false;
             IsTrackPowerOn = false;
-            StatusText = "Disconnected";
+            StatusText = string.Empty; // Clear status after disconnect
 
             ConnectCommand.NotifyCanExecuteChanged();
             DisconnectCommand.NotifyCanExecuteChanged();
@@ -343,7 +338,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            StatusText = $"Error: {ex.Message}";
+            StatusText = $"❌ Disconnect error: {ex.Message}";
             this.Log($"⚠️ Z21 Disconnect Error: {ex}");
         }
     }
@@ -378,7 +373,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     /// </summary>
     /// <param name="turnOn">True to turn ON the track power, false to turn it OFF.</param>
     [RelayCommand(CanExecute = nameof(CanToggleTrackPower))]
-    private async Task SetTrackPowerAsync(bool turnOn)
+    public async Task SetTrackPowerAsync(bool turnOn)
     {
         try
         {

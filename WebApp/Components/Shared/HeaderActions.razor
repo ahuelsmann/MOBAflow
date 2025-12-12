@@ -1,0 +1,83 @@
+@rendermode InteractiveServer
+@using CommunityToolkit.Mvvm.Input
+@using Moba.SharedUI.ViewModel
+@inject CounterViewModel ViewModel
+@implements IDisposable
+
+<div class="header-actions">
+    <div class="header-toggle">
+        <span class="header-toggle-label">Theme</span>
+        <label class="toggle-switch">
+            <input type="checkbox"
+                   checked="@_isDarkTheme"
+                   @onchange="OnThemeToggle" />
+            <span class="toggle-slider"></span>
+        </label>
+    </div>
+
+    <div class="header-toggle">
+        <span class="header-toggle-label">Connection</span>
+        <label class="toggle-switch">
+            <input type="checkbox"
+                   checked="@ViewModel.IsConnected"
+                   @onchange="OnConnectionToggleAsync" />
+            <span class="toggle-slider"></span>
+        </label>
+    </div>
+
+    <div class="header-toggle">
+        <span class="header-toggle-label">Track Power</span>
+        <label class="toggle-switch">
+            <input type="checkbox"
+                   checked="@ViewModel.IsTrackPowerOn"
+                   @onchange="OnTrackPowerChangedAsync"
+                   disabled="@(!ViewModel.IsConnected)" />
+            <span class="toggle-slider"></span>
+        </label>
+    </div>
+</div>
+
+@code {
+    private bool _isDarkTheme = true;
+
+    protected override void OnInitialized()
+    {
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnThemeToggle(ChangeEventArgs e)
+    {
+        if (e.Value is bool isDark)
+        {
+            _isDarkTheme = isDark;
+            // Theme toggle is visual only - CSS handles the rest
+        }
+    }
+
+    private async Task OnConnectionToggleAsync(ChangeEventArgs e)
+    {
+        if (e.Value is bool shouldConnect)
+        {
+            if (shouldConnect && ViewModel.ConnectCommand.CanExecute(null))
+                await ViewModel.ConnectCommand.ExecuteAsync(null);
+            else if (!shouldConnect && ViewModel.DisconnectCommand.CanExecute(null))
+                await ViewModel.DisconnectCommand.ExecuteAsync(null);
+        }
+    }
+
+    private async Task OnTrackPowerChangedAsync(ChangeEventArgs e)
+    {
+        if (e.Value is bool isOn && ViewModel.SetTrackPowerCommand.CanExecute(isOn))
+            await ViewModel.SetTrackPowerCommand.ExecuteAsync(isOn);
+    }
+
+    public void Dispose()
+    {
+        ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+    }
+}

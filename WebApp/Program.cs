@@ -13,13 +13,17 @@ builder.Services.AddRazorComponents()
 // Configuration: AppSettings (required by ViewModels)
 var appSettings = new Moba.Common.Configuration.AppSettings();
 builder.Configuration.GetSection("AppSettings").Bind(appSettings);
+// Initialize Z21 settings with defaults if not configured
+if (string.IsNullOrEmpty(appSettings.Z21.CurrentIpAddress))
+{
+    appSettings.Z21.CurrentIpAddress = "192.168.0.111"; // Default Z21 IP
+    appSettings.Z21.DefaultPort = "21105"; // Default Z21 port
+    appSettings.Z21.RecentIpAddresses.Add("192.168.0.111");
+}
 builder.Services.AddSingleton(appSettings);
 
 // Blazor-specific services
 builder.Services.AddSingleton<IUiDispatcher, BlazorUiDispatcher>();
-
-// ViewModels (CounterViewModel now requires IUiDispatcher)
-builder.Services.AddSingleton<CounterViewModel>();
 
 // Backend services - Register in dependency order
 builder.Services.AddSingleton<IUdpClientWrapper, UdpWrapper>();
@@ -36,6 +40,16 @@ builder.Services.AddSingleton(sp => new Moba.Backend.Data.DataManager());
 
 // ✅ Solution as Singleton (initialized empty, can be loaded later by user)
 builder.Services.AddSingleton(sp => new Moba.Domain.Solution());
+
+// ✅ CounterViewModel as Singleton (requires all dependencies above)
+builder.Services.AddSingleton(sp =>
+{
+    var z21 = sp.GetRequiredService<Moba.Backend.Interface.IZ21>();
+    var dispatcher = sp.GetRequiredService<IUiDispatcher>();
+    var settings = sp.GetRequiredService<Moba.Common.Configuration.AppSettings>();
+    var solution = sp.GetRequiredService<Moba.Domain.Solution>();
+    return new CounterViewModel(z21, dispatcher, settings, solution);
+});
 
 var app = builder.Build();
 

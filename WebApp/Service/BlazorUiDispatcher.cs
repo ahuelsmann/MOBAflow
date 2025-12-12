@@ -10,9 +10,18 @@ using SharedUI.Interface;
 /// </summary>
 public class BlazorUiDispatcher : IUiDispatcher
 {
+    private SynchronizationContext? _syncContext;
+
+    public BlazorUiDispatcher()
+    {
+        // Capture the Blazor SynchronizationContext during initialization
+        _syncContext = SynchronizationContext.Current;
+    }
+
     public void InvokeOnUi(Action action)
     {
-        var syncContext = SynchronizationContext.Current;
+        // Use captured context if available, otherwise use current context
+        var syncContext = _syncContext ?? SynchronizationContext.Current;
 
         if (syncContext != null)
         {
