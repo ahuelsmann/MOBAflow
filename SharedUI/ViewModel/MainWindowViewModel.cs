@@ -70,6 +70,7 @@ public partial class MainWindowViewModel : ObservableObject
         // ✅ Subscribe to Z21 events immediately (like CounterViewModel does)
         // This ensures we receive status updates regardless of how connection was established
         _z21.OnSystemStateChanged += OnZ21SystemStateChanged;
+        _z21.OnVersionInfoChanged += OnZ21VersionInfoChanged;
         _z21.OnConnectionLost += HandleConnectionLost;
 
         // Load City Library at startup (fire-and-forget)
@@ -141,6 +142,18 @@ public partial class MainWindowViewModel : ObservableObject
     private string z21StatusText = "Disconnected";
 
     [ObservableProperty]
+    private string z21SerialNumber = "-";
+
+    [ObservableProperty]
+    private string z21FirmwareVersion = "-";
+
+    [ObservableProperty]
+    private string z21HardwareType = "-";
+
+    [ObservableProperty]
+    private string z21HardwareVersion = "-";
+
+    [ObservableProperty]
     private string simulateInPort = "1";
 
     /// <summary>
@@ -210,6 +223,7 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         _z21.OnSystemStateChanged -= OnZ21SystemStateChanged;
+        _z21.OnVersionInfoChanged -= OnZ21VersionInfoChanged;
         _z21.OnConnectionLost -= HandleConnectionLost;
         ExitApplicationRequested?.Invoke(this, EventArgs.Empty);
     }

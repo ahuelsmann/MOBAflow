@@ -178,6 +178,93 @@
                 </Grid>
             </Expander>
 
+            <!--  Z21 Version Info Section (only visible when connected)  -->
+            <Expander
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                Header="Versionen"
+                IsExpanded="False"
+                Visibility="{x:Bind ViewModel.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                <Expander.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon FontSize="20" Glyph="&#xE946;" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Style="{StaticResource SubtitleTextBlockStyle}"
+                                Text="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </Expander.HeaderTemplate>
+                <Grid
+                    Padding="56,16,0,16"
+                    ColumnSpacing="24"
+                    RowSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        Text="Seriennummer:" />
+                    <TextBlock
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                        Text="{x:Bind ViewModel.SerialNumber, Mode=OneWay}" />
+
+                    <TextBlock
+                        Grid.Row="0"
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        Text="Firmware Version:" />
+                    <TextBlock
+                        Grid.Row="0"
+                        Grid.Column="3"
+                        VerticalAlignment="Center"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                        Text="{x:Bind ViewModel.FirmwareVersion, Mode=OneWay}" />
+
+                    <TextBlock
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        Text="Hardware Typ:" />
+                    <TextBlock
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                        Text="{x:Bind ViewModel.HardwareType, Mode=OneWay}" />
+
+                    <TextBlock
+                        Grid.Row="1"
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        Text="Hardware Version:" />
+                    <TextBlock
+                        Grid.Row="1"
+                        Grid.Column="3"
+                        VerticalAlignment="Center"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                        Text="{x:Bind ViewModel.HardwareVersion, Mode=OneWay}" />
+                </Grid>
+            </Expander>
+
             <!--  Settings Section (only visible when connected)  -->
             <Expander
                 HorizontalAlignment="Stretch"
@@ -320,7 +407,7 @@
                                             <TextBlock
                                                 FontWeight="SemiBold"
                                                 Foreground="White"
-                                                Text="{Binding LastLapTimeFormatted, Mode=OneWay}" />
+                                                Text="{x:Bind LastLapTimeFormatted, Mode=OneWay}" />
                                         </StackPanel>
 
                                         <StackPanel
@@ -335,7 +422,7 @@
                                             <TextBlock
                                                 FontWeight="SemiBold"
                                                 Foreground="White"
-                                                Text="{Binding LastFeedbackTimeFormatted, Mode=OneWay}" />
+                                                Text="{x:Bind LastFeedbackTimeFormatted, Mode=OneWay}" />
                                         </StackPanel>
                                     </Grid>
                                 </Grid>

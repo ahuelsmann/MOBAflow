@@ -89,6 +89,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
         _z21.Received += OnFeedbackReceived;
         _z21.OnSystemStateChanged += OnSystemStateChanged;
         _z21.OnXBusStatusChanged += OnXBusStatusChanged;
+        _z21.OnVersionInfoChanged += OnVersionInfoChanged;
 
         this.Log("✅ CounterViewModel: Subscribed to Z21 events (ready for simulation)");
     }
@@ -243,6 +244,32 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     /// </summary>
     [ObservableProperty]
     private string centralStateEx = "0x00";
+
+    // Z21 Version Information Properties
+
+    /// <summary>
+    /// Z21 serial number (e.g., "101953").
+    /// </summary>
+    [ObservableProperty]
+    private string serialNumber = "-";
+
+    /// <summary>
+    /// Z21 firmware version (e.g., "V1.43").
+    /// </summary>
+    [ObservableProperty]
+    private string firmwareVersion = "-";
+
+    /// <summary>
+    /// Z21 hardware type (e.g., "Z21a", "z21start").
+    /// </summary>
+    [ObservableProperty]
+    private string hardwareType = "-";
+
+    /// <summary>
+    /// Z21 hardware version/revision (typically "0").
+    /// </summary>
+    [ObservableProperty]
+    private string hardwareVersion = "-";
 
     partial void OnGlobalTargetLapCountChanged(int value)
     {
@@ -417,6 +444,24 @@ public partial class CounterViewModel : ObservableObject, IDisposable
             IsTrackPowerOn = !xBusStatus.TrackOff;
 
             this.Log($"📊 XBus status updated: TrackPowerOn={IsTrackPowerOn}, EmergencyStop={xBusStatus.EmergencyStop}, ShortCircuit={xBusStatus.ShortCircuit}");
+        });
+    }
+
+    /// <summary>
+    /// Handles Z21 version info changes (serial number, hardware type, firmware version).
+    /// IMPORTANT: This method is called from a background thread (UDP callback),
+    /// so all UI updates must be dispatched to the main thread via IUiDispatcher.
+    /// </summary>
+    private void OnVersionInfoChanged(Backend.Z21VersionInfo versionInfo)
+    {
+        _dispatcher.InvokeOnUi(() =>
+        {
+            SerialNumber = versionInfo.SerialNumber.ToString();
+            FirmwareVersion = versionInfo.FirmwareVersion;
+            HardwareType = versionInfo.HardwareType;
+            HardwareVersion = versionInfo.HardwareVersion.ToString();
+
+            this.Log($"📌 Z21 Version Info: S/N={SerialNumber}, HW={HardwareType}, FW={FirmwareVersion}");
         });
     }
 
@@ -612,6 +657,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
                 _z21.Received -= OnFeedbackReceived;
                 _z21.OnSystemStateChanged -= OnSystemStateChanged;
                 _z21.OnXBusStatusChanged -= OnXBusStatusChanged;
+                _z21.OnVersionInfoChanged -= OnVersionInfoChanged;
                 this.Log("✅ CounterViewModel: Unsubscribed from Z21 events");
             }
             catch (Exception ex)

@@ -44,6 +44,30 @@
             </div>
         </div>
 
+        <div class="version-info">
+            <h4>Versionen</h4>
+            <div class="version-row">
+                <div class="version-item">
+                    <span class="version-label">Seriennummer:</span>
+                    <span class="version-value">@ViewModel.SerialNumber</span>
+                </div>
+                <div class="version-item">
+                    <span class="version-label">Firmware Version:</span>
+                    <span class="version-value">@ViewModel.FirmwareVersion</span>
+                </div>
+            </div>
+            <div class="version-row">
+                <div class="version-item">
+                    <span class="version-label">Hardware Typ:</span>
+                    <span class="version-value">@ViewModel.HardwareType</span>
+                </div>
+                <div class="version-item">
+                    <span class="version-label">Hardware Version:</span>
+                    <span class="version-value">@ViewModel.HardwareVersion</span>
+                </div>
+            </div>
+        </div>
+
         <div class="system-state-footer">
             <div class="state-info">
                 <span class="state-label">State:</span>
@@ -56,6 +80,44 @@
         </div>
     </div>
 </div>
+
+<style>
+    .version-info {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border-color, #e0e0e0);
+    }
+
+    .version-info h4 {
+        margin: 0 0 12px 0;
+        font-size: 0.9rem;
+        color: var(--text-secondary, #666);
+    }
+
+    .version-row {
+        display: flex;
+        gap: 24px;
+        margin-bottom: 8px;
+    }
+
+    .version-item {
+        flex: 1;
+        min-width: 120px;
+    }
+
+    .version-label {
+        display: block;
+        font-size: 0.75rem;
+        color: var(--text-secondary, #888);
+        margin-bottom: 2px;
+    }
+
+    .version-value {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-primary, #333);
+    }
+</style>
 
 @code {
 [Parameter]

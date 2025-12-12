@@ -14,6 +14,38 @@ public static class Z21MessageParser
     public static bool IsSystemState(byte[] data)
         => data.Length >= 4 && data[2] == Z21Protocol.Header.LAN_SYSTEMSTATE && data[3] == 0x00;
 
+    public static bool IsSerialNumber(byte[] data)
+        => data.Length >= 8 && data[2] == Z21Protocol.Header.LAN_GET_SERIAL_NUMBER && data[3] == 0x00;
+
+    public static bool IsHwInfo(byte[] data)
+        => data.Length >= 12 && data[2] == Z21Protocol.Header.LAN_GET_HWINFO && data[3] == 0x00;
+
+    /// <summary>
+    /// Parses the LAN_GET_SERIAL_NUMBER response.
+    /// Format: 08-00-10-00 XX-XX-XX-XX (4 bytes serial number, little-endian)
+    /// </summary>
+    public static bool TryParseSerialNumber(byte[] data, out uint serialNumber)
+    {
+        serialNumber = 0;
+        if (data.Length < 8) return false;
+        serialNumber = BitConverter.ToUInt32(data, 4);
+        return true;
+    }
+
+    /// <summary>
+    /// Parses the LAN_GET_HWINFO response.
+    /// Format: 0C-00-1A-00 TT-TT-TT-TT VV-VV-VV-VV (4 bytes HW type + 4 bytes FW version)
+    /// </summary>
+    public static bool TryParseHwInfo(byte[] data, out uint hardwareType, out uint firmwareVersion)
+    {
+        hardwareType = 0;
+        firmwareVersion = 0;
+        if (data.Length < 12) return false;
+        hardwareType = BitConverter.ToUInt32(data, 4);
+        firmwareVersion = BitConverter.ToUInt32(data, 8);
+        return true;
+    }
+
     public static XBusStatus? TryParseXBusStatus(byte[] data)
     {
         if (data.Length < 7) return null;

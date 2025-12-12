@@ -223,6 +223,19 @@ public partial class MainWindowViewModel
         _uiDispatcher.InvokeOnUi(() => UpdateZ21SystemState(systemState));
     }
 
+    private void OnZ21VersionInfoChanged(Backend.Z21VersionInfo versionInfo)
+    {
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            Z21SerialNumber = versionInfo.SerialNumber.ToString();
+            Z21FirmwareVersion = versionInfo.FirmwareVersion;
+            Z21HardwareType = versionInfo.HardwareType;
+            Z21HardwareVersion = versionInfo.HardwareVersion.ToString();
+
+            this.Log($"Z21 Version Info: S/N={Z21SerialNumber}, HW={Z21HardwareType}, FW={Z21FirmwareVersion}");
+        });
+    }
+
     private void UpdateZ21SystemState(Backend.SystemState systemState)
     {
         // If we're receiving system state updates, we're connected

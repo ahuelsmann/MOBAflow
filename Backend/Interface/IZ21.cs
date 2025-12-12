@@ -8,16 +8,24 @@ namespace Moba.Backend.Interface;
 public delegate void Feedback(FeedbackResult feedbackContent);
 public delegate void SystemStateChanged(SystemState systemState);
 public delegate void XBusStatusChanged(Protocol.XBusStatus status);
+public delegate void VersionInfoChanged(Z21VersionInfo versionInfo);
 
 public interface IZ21 : IDisposable
 {
     event Feedback? Received;
     event SystemStateChanged? OnSystemStateChanged;
     event XBusStatusChanged? OnXBusStatusChanged;
+    event VersionInfoChanged? OnVersionInfoChanged;
     event Action? OnConnectionLost;
 
     bool IsConnected { get; }
     Z21TrafficMonitor? TrafficMonitor { get; }
+
+    /// <summary>
+    /// Current version information of the Z21 (serial number, firmware, hardware).
+    /// Updated after successful connection via LAN_GET_SERIAL_NUMBER and LAN_GET_HWINFO.
+    /// </summary>
+    Z21VersionInfo? VersionInfo { get; }
 
     Task ConnectAsync(IPAddress address, int port = 21105, CancellationToken cancellationToken = default);
     Task DisconnectAsync();

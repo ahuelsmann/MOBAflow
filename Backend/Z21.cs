@@ -15,6 +15,7 @@ public class Z21 : IZ21
     public event Feedback? Received;
     public event SystemStateChanged? OnSystemStateChanged;
     public event XBusStatusChanged? OnXBusStatusChanged;
+    public event VersionInfoChanged? OnVersionInfoChanged;
     public event Action? OnConnectionLost;
 
     private readonly IUdpClientWrapper _udp;
@@ -28,6 +29,11 @@ public class Z21 : IZ21
     private bool _disposed;
 
     public Z21TrafficMonitor? TrafficMonitor => _trafficMonitor;
+
+    /// <summary>
+    /// Current version information of the Z21 (serial number, firmware, hardware).
+    /// </summary>
+    public Z21VersionInfo? VersionInfo { get; private set; }
 
     public Z21(IUdpClientWrapper udp, ILogger<Z21>? logger = null, Z21TrafficMonitor? trafficMonitor = null)
     {
@@ -71,6 +77,10 @@ public class Z21 : IZ21
         // Request initial status
         await GetStatusAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
         
+        // Request version information (serial number, hardware type, firmware version)
+        await Task.Delay(50, _cancellationTokenSource.Token).ConfigureAwait(false);
+        await RequestVersionInfoAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
+        
         // Start keepalive timer to prevent Z21 timeout/crash
         StartKeepaliveTimer();
         
@@ -79,11 +89,27 @@ public class Z21 : IZ21
 
     /// <summary>
     /// Disconnect from Z21.
+    /// Sends LAN_LOGOFF to immediately free the client slot on the Z21.
+    /// Without this, the Z21 waits 60 seconds before removing inactive clients.
     /// </summary>
     public async Task DisconnectAsync()
     {
-        // Stop keepalive timer
+        // Stop keepalive timer first
         StopKeepaliveTimer();
+        
+        // Send LAN_LOGOFF to immediately free client slot on Z21
+        // This is critical for development: without it, the Z21 keeps "zombie clients"
+        // and can hit the 20-client limit after many debug sessions
+        try
+        {
+            await _udp.SendAsync(Z21Command.BuildLogoff()).ConfigureAwait(false);
+            _logger?.LogInformation("LAN_LOGOFF sent to Z21");
+        }
+        catch (Exception ex)
+        {
+            // Don't fail disconnect if logoff fails (e.g., network already down)
+            _logger?.LogWarning("Failed to send LAN_LOGOFF: {Message}", ex.Message);
+        }
         
         if (_cancellationTokenSource != null)
         {
@@ -276,6 +302,25 @@ public class Z21 : IZ21
         await SendCommandAsync(Z21Command.BuildGetStatus(), cancellationToken).ConfigureAwait(false);
         _logger?.LogInformation("Status request sent");
     }
+
+    /// <summary>
+    /// Requests version information from Z21 (serial number, hardware type, firmware version).
+    /// </summary>
+    private async Task RequestVersionInfoAsync(CancellationToken cancellationToken = default)
+    {
+        // Initialize VersionInfo if not already done
+        VersionInfo ??= new Z21VersionInfo();
+        
+        // Request serial number
+        await SendAsync(Z21Command.BuildGetSerialNumber(), cancellationToken).ConfigureAwait(false);
+        _logger?.LogDebug("Serial number request sent");
+        
+        await Task.Delay(50, cancellationToken).ConfigureAwait(false);
+        
+        // Request hardware info (type + firmware version)
+        await SendAsync(Z21Command.BuildGetHwInfo(), cancellationToken).ConfigureAwait(false);
+        _logger?.LogDebug("Hardware info request sent");
+    }
     #endregion
 
     #region Message Receiving & Parsing
@@ -341,6 +386,33 @@ public class Z21 : IZ21
             else
             {
                 _logger?.LogWarning("Failed to parse system state packet");
+            }
+            return;
+        }
+
+        // Parse serial number response
+        if (Z21MessageParser.IsSerialNumber(content))
+        {
+            if (Z21MessageParser.TryParseSerialNumber(content, out var serialNumber))
+            {
+                VersionInfo ??= new Z21VersionInfo();
+                VersionInfo.SerialNumber = serialNumber;
+                _logger?.LogInformation("📌 Z21 Serial Number: {SerialNumber}", serialNumber);
+                OnVersionInfoChanged?.Invoke(VersionInfo);
+            }
+            return;
+        }
+
+        // Parse hardware info response
+        if (Z21MessageParser.IsHwInfo(content))
+        {
+            if (Z21MessageParser.TryParseHwInfo(content, out var hwType, out var fwVersion))
+            {
+                VersionInfo ??= new Z21VersionInfo();
+                VersionInfo.HardwareTypeCode = hwType;
+                VersionInfo.FirmwareVersionCode = fwVersion;
+                _logger?.LogInformation("📌 Z21 Hardware: {HwType}, Firmware: {FwVersion}", VersionInfo.HardwareType, VersionInfo.FirmwareVersion);
+                OnVersionInfoChanged?.Invoke(VersionInfo);
             }
             return;
         }
