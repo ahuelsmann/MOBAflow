@@ -13,7 +13,7 @@ public class BlazorUiDispatcher : IUiDispatcher
     public void InvokeOnUi(Action action)
     {
         var syncContext = SynchronizationContext.Current;
-        
+
         if (syncContext != null)
         {
             // Post to Blazor's synchronization context

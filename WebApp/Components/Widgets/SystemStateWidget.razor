@@ -1,0 +1,95 @@
+@using Moba.SharedUI.ViewModel
+
+<div class="system-widget">
+    <div class="widget-header">
+        <div class="widget-title">
+            <h3>System Status</h3>
+        </div>
+        <div class="connection-badge @GetConnectionClass()">
+            @(ViewModel.IsConnected ? "Connected" : "Disconnected")
+        </div>
+    </div>
+
+    <div class="widget-body">
+        <div class="track-power-status @GetTrackPowerClass()">
+            <div class="power-indicator">
+                <span class="power-label">Track Power</span>
+            </div>
+            <div class="power-state">@(ViewModel.IsTrackPowerOn ? "ON" : "OFF")</div>
+        </div>
+
+        <div class="system-metrics">
+            <div class="metric-row">
+                <div class="metric">
+                    <div class="metric-content">
+                        <span class="metric-value @GetCurrentClass(ViewModel.MainCurrent)">@ViewModel.MainCurrent</span>
+                        <span class="metric-unit">mA</span>
+                    </div>
+                    <span class="metric-label">Main</span>
+                </div>
+
+                <div class="metric">
+                    <div class="metric-content">
+                        <span class="metric-value @GetTemperatureClass(ViewModel.Temperature)">@ViewModel.Temperature</span>
+                        <span class="metric-unit">°C</span>
+                    </div>
+                    <span class="metric-label">Temp</span>
+                </div>
+            </div>
+
+            <div class="metric-row">
+                <div class="metric">
+                    <div class="metric-content">
+                        <span class="metric-value">@((ViewModel.SupplyVoltage / 1000.0).ToString("F1"))</span>
+                        <span class="metric-unit">V</span>
+                    </div>
+                    <span class="metric-label">Supply</span>
+                </div>
+
+                <div class="metric">
+                    <div class="metric-content">
+                        <span class="metric-value">@((ViewModel.VccVoltage / 1000.0).ToString("F1"))</span>
+                        <span class="metric-unit">V</span>
+                    </div>
+                    <span class="metric-label">VCC</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="system-state-footer">
+            <div class="state-info">
+                <span class="state-label">State:</span>
+                <span class="state-value mono">0x@ViewModel.CentralState.ToString("X2")</span>
+            </div>
+            <div class="state-info">
+                <span class="state-label">StateEx:</span>
+                <span class="state-value mono">0x@ViewModel.CentralStateEx.ToString("X2")</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public CounterViewModel ViewModel { get; set; } = null!;
+
+    private string GetConnectionClass()
+        => ViewModel.IsConnected ? "connected" : "disconnected";
+
+    private string GetTrackPowerClass()
+        => ViewModel.IsTrackPowerOn ? "power-on" : "power-off";
+
+    private string GetCurrentClass(int current)
+    {
+        if (current >= 3000) return "metric-critical";
+        if (current >= 2000) return "metric-warning";
+        return "metric-normal";
+    }
+
+    private string GetTemperatureClass(int temp)
+    {
+        if (temp >= 70) return "metric-critical";
+        if (temp >= 60) return "metric-warning";
+        return "metric-normal";
+    }
+}

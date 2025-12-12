@@ -1,0 +1,86 @@
+@using Moba.SharedUI.ViewModel
+
+<div class="connection-widget card">
+    <div class="card-header">
+        <h3>Z21 Connection</h3>
+        <div class="connection-status @(ViewModel.IsConnected ? "connected" : "disconnected")">
+            @(ViewModel.IsConnected ? "Connected" : "Disconnected")
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Z21 IP Address:</label>
+                <select class="form-control"
+                        @bind="ViewModel.Z21IpAddress"
+                        disabled="@ViewModel.IsConnected">
+                    @foreach (var ip in ViewModel.AvailableIpAddresses)
+                    {
+                        <option value="@ip">@ip</option>
+                    }
+                </select>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-primary"
+                        @onclick="ConnectAsync"
+                        disabled="@(!ViewModel.ConnectCommand.CanExecute(null))">
+                    Connect
+                </button>
+                <button class="btn btn-secondary"
+                        @onclick="DisconnectAsync"
+                        disabled="@(!ViewModel.DisconnectCommand.CanExecute(null))">
+                    Disconnect
+                </button>
+            </div>
+        </div>
+        <div class="form-row track-power-section">
+            <div class="form-group">
+                <label>Track Power:</label>
+                <div class="toggle-switch">
+                    <input type="checkbox"
+                           id="trackPowerSwitch"
+                           @bind="ViewModel.IsTrackPowerOn"
+                           @onclick="ToggleTrackPowerAsync"
+                           disabled="@(!ViewModel.IsConnected)" />
+                    <label for="trackPowerSwitch" class="slider"></label>
+                    <span class="track-power-label">@(ViewModel.IsTrackPowerOn ? "ON" : "OFF")</span>
+                </div>
+            </div>
+        </div>
+        <div class="status-message">
+            <span class="@GetStatusClass()">@ViewModel.StatusText</span>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public CounterViewModel ViewModel { get; set; } = null!;
+
+    private async Task ConnectAsync()
+    {
+        await ViewModel.ConnectCommand.ExecuteAsync(null);
+    }
+
+    private async Task DisconnectAsync()
+    {
+        await ViewModel.DisconnectCommand.ExecuteAsync(null);
+    }
+
+    private string GetStatusClass()
+    {
+        if (ViewModel.StatusText.Contains("Connected"))
+            return "status-success";
+        if (ViewModel.StatusText.Contains("Error") || ViewModel.StatusText.Contains("failed"))
+            return "status-error";
+        return "status-info";
+    }
+
+    private async Task ToggleTrackPowerAsync()
+    {
+        if (ViewModel.SetTrackPowerCommand.CanExecute(ViewModel.IsTrackPowerOn))
+        {
+            await ViewModel.SetTrackPowerCommand.ExecuteAsync(ViewModel.IsTrackPowerOn);
+        }
+    }
+}

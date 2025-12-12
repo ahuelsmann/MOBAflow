@@ -1,0 +1,46 @@
+@using Moba.SharedUI.ViewModel
+
+<div class="lap-counter-widget card">
+    <div class="card-header">
+        <h3>Lap Counter Settings</h3>
+    </div>
+    <div class="card-body">
+        <div class="settings-grid">
+            <div class="form-group">
+                <label>Target Lap Count:</label>
+                <input type="number"
+                       class="form-control"
+                       @bind="ViewModel.GlobalTargetLapCount"
+                       min="1"
+                       disabled="@(!ViewModel.IsConnected)" />
+            </div>
+            <div class="form-group">
+                <label>Timer Filter:</label>
+                <div class="filter-control">
+                    <input type="checkbox"
+                           class="form-check-input"
+                           @bind="ViewModel.UseTimerFilter"
+                           disabled="@(!ViewModel.IsConnected)" />
+                    <span class="form-check-label">Enable (@ViewModel.TimerIntervalSeconds s)</span>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-warning"
+                        @onclick="ResetCounters"
+                        disabled="@(!ViewModel.ResetCountersCommand.CanExecute(null))">
+                    Reset All Counters
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public CounterViewModel ViewModel { get; set; } = null!;
+
+    private void ResetCounters()
+    {
+        ViewModel.ResetCountersCommand.Execute(null);
+    }
+}

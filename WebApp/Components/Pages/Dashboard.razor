@@ -1,0 +1,191 @@
+@page "/"
+@page "/dashboard"
+@using Moba.SharedUI.ViewModel
+@inject CounterViewModel ViewModel
+@implements IDisposable
+@rendermode InteractiveServer
+
+<PageTitle>MOBAdash</PageTitle>
+
+<div class="dashboard-page">
+@if (!ViewModel.IsConnected)
+{
+    <div class="dashboard-welcome">
+        <h3>Welcome to MOBAdash</h3>
+        <p>Connect to your Z21 digital command station to start monitoring your railway.</p>
+    </div>
+}
+
+    <div class="dashboard-widgets">
+        @* Z21 Connection Widget (Inline) *@
+        <div class="connection-widget card">
+            <div class="card-header">
+                <h3>Z21 Connection</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Z21 IP Address:</label>
+                        <select class="form-control" disabled="@ViewModel.IsConnected">
+                            @foreach (var ip in ViewModel.AvailableIpAddresses)
+                            {
+                                <option value="@ip" selected="@(ip == ViewModel.Z21IpAddress)">@ip</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Track Power:</label>
+                        <div class="toggle-switch">
+                            <span>@(ViewModel.IsTrackPowerOn ? "ON" : "OFF")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* System Status Widget (Inline) *@
+        <div class="system-widget">
+            <div class="widget-header">
+                <h3>System Status</h3>
+            </div>
+            <div class="widget-body">
+                <div class="track-power-status @(ViewModel.IsTrackPowerOn ? "power-on" : "power-off")">
+                    <div class="power-indicator">
+                        <span class="power-label">Track Power</span>
+                    </div>
+                    <div class="power-state">@(ViewModel.IsTrackPowerOn ? "ON" : "OFF")</div>
+                </div>
+                <div class="system-metrics">
+                    <div class="metric-row">
+                        <div class="metric">
+                            <div class="metric-content">
+                                <span class="metric-value">@ViewModel.MainCurrent</span>
+                                <span class="metric-unit">mA</span>
+                            </div>
+                            <span class="metric-label">Main</span>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-content">
+                                <span class="metric-value">@ViewModel.Temperature</span>
+                                <span class="metric-unit">°C</span>
+                            </div>
+                            <span class="metric-label">Temp</span>
+                        </div>
+                    </div>
+                    <div class="metric-row">
+                        <div class="metric">
+                            <div class="metric-content">
+                                <span class="metric-value">@((ViewModel.SupplyVoltage / 1000.0).ToString("F1"))</span>
+                                <span class="metric-unit">V</span>
+                            </div>
+                            <span class="metric-label">Supply</span>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-content">
+                                <span class="metric-value">@((ViewModel.VccVoltage / 1000.0).ToString("F1"))</span>
+                                <span class="metric-unit">V</span>
+                            </div>
+                            <span class="metric-label">VCC</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Lap Counter Widget (Inline) *@
+        <div class="lap-counter-widget card">
+            <div class="card-header">
+                <h3>Lap Counter Settings</h3>
+            </div>
+            <div class="card-body">
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label>Target Lap Count:</label>
+                        <input type="number" class="form-control" value="@ViewModel.GlobalTargetLapCount" min="1" disabled="@(!ViewModel.IsConnected)" readonly />
+                    </div>
+                    <div class="form-group">
+                        <label>Timer Filter:</label>
+                        <div class="filter-control">
+                            <span>@(ViewModel.UseTimerFilter ? "Enabled" : "Disabled") (@ViewModel.TimerIntervalSeconds s)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tracks-section">
+        <h3 class="section-title">Track Statistics</h3>
+        <div class="cards-grid">
+            @foreach (var stat in ViewModel.Statistics)
+            {
+                <div class="track-card card">
+                    <div class="card-header">
+                        <div class="track-header">
+                            <h4 class="track-name">Track @stat.InPort</h4>
+                            @if (stat.IsCompleted)
+                            {
+                                <span class="status-badge completed">Completed</span>
+                            }
+                            else
+                            {
+                                <span class="status-badge in-progress">@stat.LapCountFormatted</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="track-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">InPort:</span>
+                                <span class="stat-value">@stat.InPort</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Lap Count:</span>
+                                <span class="stat-value">@stat.Count</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Target:</span>
+                                <span class="stat-value">@stat.TargetLapCount</span>
+                            </div>
+                            @if (stat.LastFeedbackTime.HasValue)
+                            {
+                                <div class="stat-item">
+                                    <span class="stat-label">Last Detected:</span>
+                                    <span class="stat-value">@stat.LastFeedbackTimeFormatted</span>
+                                </div>
+                            }
+                            @if (stat.LastLapTime.HasValue)
+                            {
+                                <div class="stat-item">
+                                    <span class="stat-label">Last Lap Time:</span>
+                                    <span class="stat-value">@stat.LastLapTimeFormatted</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Subscribe to property changes for real-time updates
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        // Trigger UI re-render when ViewModel properties change
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+    }
+}

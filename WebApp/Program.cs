@@ -10,6 +10,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// Configuration: AppSettings (required by ViewModels)
+var appSettings = new Moba.Common.Configuration.AppSettings();
+builder.Configuration.GetSection("AppSettings").Bind(appSettings);
+builder.Services.AddSingleton(appSettings);
+
 // Blazor-specific services
 builder.Services.AddSingleton<IUiDispatcher, BlazorUiDispatcher>();
 

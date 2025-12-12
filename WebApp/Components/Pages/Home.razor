@@ -1,12 +1,12 @@
-@page "/"
+@page "/home"
 @inject NavigationManager Navigation
 
-<PageTitle>MOBAdash - Lap Counter</PageTitle>
+<PageTitle>MOBAdash</PageTitle>
 
 @code {
     protected override void OnInitialized()
     {
-        // Redirect to counter page on startup
-        Navigation.NavigateTo("/counter", replace: true);
+        // Redirect to dashboard page on startup
+        Navigation.NavigateTo("/dashboard", replace: true);
     }
 }
