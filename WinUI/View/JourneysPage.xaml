@@ -61,7 +61,7 @@
                 SelectedItem="{x:Bind ViewModel.SelectedJourney, Mode=TwoWay}"
                 SelectionMode="Single">
                 <i:Interaction.Behaviors>
-                    <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.ItemClickedCommand}" />
+                    <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.JourneysPageItemClickedCommand}" />
                 </i:Interaction.Behaviors>
                 <ListView.ContextFlyout>
                     <MenuFlyout>
@@ -127,7 +127,7 @@
                 SelectedItem="{x:Bind ViewModel.SelectedStation, Mode=TwoWay}"
                 SelectionMode="Single">
                 <i:Interaction.Behaviors>
-                    <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.ItemClickedCommand}" />
+                    <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.JourneysPageItemClickedCommand}" />
                 </i:Interaction.Behaviors>
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="viewmodel:StationViewModel">
@@ -223,7 +223,7 @@
                 Grid.Row="0"
                 HorizontalContentAlignment="Stretch"
                 VerticalContentAlignment="Stretch"
-                Content="{x:Bind ViewModel.CurrentSelectedObject, Mode=OneWay}"
+                Content="{x:Bind ViewModel.JourneysPageSelectedObject, Mode=OneWay}"
                 ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
         </Grid>
     </Grid>

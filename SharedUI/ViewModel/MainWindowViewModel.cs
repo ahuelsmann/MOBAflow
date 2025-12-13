@@ -132,6 +132,27 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private object? currentSelectedObject;
 
+    /// <summary>
+    /// The currently selected object for SolutionPage properties panel.
+    /// Displays: SelectedProject
+    /// </summary>
+    [ObservableProperty]
+    private object? solutionPageSelectedObject;
+
+    /// <summary>
+    /// The currently selected object for JourneysPage properties panel.
+    /// Displays: SelectedJourney, SelectedStation
+    /// </summary>
+    [ObservableProperty]
+    private object? journeysPageSelectedObject;
+
+    /// <summary>
+    /// The currently selected object for WorkflowsPage properties panel.
+    /// Displays: SelectedWorkflow, SelectedAction
+    /// </summary>
+    [ObservableProperty]
+    private object? workflowsPageSelectedObject;
+
     [ObservableProperty]
     private bool isZ21Connected;
 

@@ -137,16 +137,5 @@ public partial class MainWindowViewModel
         // This method can be removed or kept as no-op for backward compatibility
         System.Diagnostics.Debug.WriteLine("ℹ️ LoadCities called - Cities are loaded from CityLibrary on startup");
     }
-
-    /// <summary>
-    /// Loads cities from JSON library using CityService.
-    /// This is now handled in MainWindowViewModel constructor.
-    /// </summary>
-    private async Task LoadCitiesFromCityManagerAsync()
-    {
-        // This method is obsolete - cities are loaded via LoadCityLibraryAsync in constructor
-        await Task.CompletedTask;
-        System.Diagnostics.Debug.WriteLine("ℹ️ LoadCitiesFromCityManagerAsync called - obsolete, handled in constructor");
-    }
     #endregion
 }

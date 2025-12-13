@@ -60,7 +60,7 @@
                 SelectedItem="{x:Bind ViewModel.SelectedWorkflow, Mode=TwoWay}"
                 SelectionMode="Single">
                 <i:Interaction.Behaviors>
-                    <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.ItemClickedCommand}" />
+                    <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.WorkflowsPageItemClickedCommand}" />
                 </i:Interaction.Behaviors>
                 <ListView.ContextFlyout>
                     <MenuFlyout>
@@ -123,7 +123,7 @@
                 SelectedItem="{x:Bind ViewModel.SelectedAction, Mode=TwoWay}"
                 SelectionMode="Single">
                 <i:Interaction.Behaviors>
-                    <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.ItemClickedCommand}" />
+                    <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.WorkflowsPageItemClickedCommand}" />
                 </i:Interaction.Behaviors>
                 <ListView.ItemTemplate>
                     <DataTemplate>
@@ -164,7 +164,7 @@
                 Grid.Row="0"
                 HorizontalContentAlignment="Stretch"
                 VerticalContentAlignment="Stretch"
-                Content="{x:Bind ViewModel.CurrentSelectedObject, Mode=OneWay}"
+                Content="{x:Bind ViewModel.WorkflowsPageSelectedObject, Mode=OneWay}"
                 ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
         </Grid>
     </Grid>

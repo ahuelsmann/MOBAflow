@@ -49,7 +49,7 @@
                 SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}"
                 SelectionMode="Single">
                 <i:Interaction.Behaviors>
-                    <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.ItemClickedCommand}" />
+                    <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.SolutionPageItemClickedCommand}" />
                 </i:Interaction.Behaviors>
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="viewmodel:ProjectViewModel">
@@ -88,7 +88,7 @@
                 Grid.Row="0"
                 HorizontalContentAlignment="Stretch"
                 VerticalContentAlignment="Stretch"
-                Content="{x:Bind ViewModel.CurrentSelectedObject, Mode=OneWay}"
+                Content="{x:Bind ViewModel.SolutionPageSelectedObject, Mode=OneWay}"
                 ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
         </Grid>
     </Grid>
