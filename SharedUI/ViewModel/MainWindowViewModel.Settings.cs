@@ -217,6 +217,24 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand]
+    private async Task BrowseCityLibraryAsync()
+    {
+        try
+        {
+            var path = await _ioService.BrowseForJsonFileAsync();
+            if (!string.IsNullOrEmpty(path))
+            {
+                CityLibraryPath = path;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+            ShowErrorMessage = true;
+        }
+    }
+
+    [RelayCommand]
     private async Task ResetToDefaultsAsync()
     {
         if (_settingsService == null) return;

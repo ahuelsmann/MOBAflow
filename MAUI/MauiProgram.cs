@@ -32,26 +32,25 @@ public static class MauiProgram
         builder.Services.AddSingleton<IUiDispatcher, MAUI.Service.UiDispatcher>();
         builder.Services.AddSingleton<SharedUI.Interface.IBackgroundService, MAUI.Service.BackgroundService>();
 
-        // ViewModels (CounterViewModel now requires IUiDispatcher and optional INotificationService)
+        // Configuration (AppSettings + ISettingsService)
+        builder.Services.AddSingleton<Common.Configuration.AppSettings>();
+        builder.Services.AddSingleton<ISettingsService, MAUI.Service.SettingsService>();
+
+        // ViewModels (CounterViewModel now requires IUiDispatcher and ISettingsService)
         builder.Services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
         builder.Services.AddTransient<SharedUI.ViewModel.JourneyViewModel>();
 
         // Backend services - Register in dependency order
         builder.Services.AddSingleton<IUdpClientWrapper, UdpWrapper>();
         builder.Services.AddSingleton<Backend.Interface.IZ21, Backend.Z21>();
-        builder.Services.AddSingleton<ActionExecutor>(sp =>
-        {
-            var z21 = sp.GetRequiredService<Backend.Interface.IZ21>();
-            return new Backend.Service.ActionExecutor(z21);
-        });
+        builder.Services.AddSingleton<ActionExecutor>();
         builder.Services.AddSingleton<WorkflowService>();
 
         // ✅ DataManager as Singleton (master data loaded on first access)
-        // Note: MAUI doesn't have IIoService yet - using simplified approach
-        builder.Services.AddSingleton(sp => new Backend.Data.DataManager());
+        builder.Services.AddSingleton<Backend.Data.DataManager>();
 
         // ✅ Solution as Singleton (initialized empty, can be loaded later by user)
-        builder.Services.AddSingleton<Domain.Solution>(sp => new Domain.Solution());
+        builder.Services.AddSingleton<Domain.Solution>();
 
         // Views
         builder.Services.AddTransient<MainPage>();

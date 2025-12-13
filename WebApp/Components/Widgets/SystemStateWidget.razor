@@ -67,17 +67,6 @@
                 </div>
             </div>
         </div>
-
-        <div class="system-state-footer">
-            <div class="state-info">
-                <span class="state-label">State:</span>
-                <span class="state-value mono">@ViewModel.CentralState</span>
-            </div>
-            <div class="state-info">
-                <span class="state-label">StateEx:</span>
-                <span class="state-value mono">@ViewModel.CentralStateEx</span>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -88,11 +77,11 @@
         border-top: 1px solid var(--border-color, #e0e0e0);
     }
 
-    .version-info h4 {
-        margin: 0 0 12px 0;
-        font-size: 0.9rem;
-        color: var(--text-secondary, #666);
-    }
+        .version-info h4 {
+            margin: 0 0 12px 0;
+            font-size: 0.9rem;
+            color: var(--text-secondary, #666);
+        }
 
     .version-row {
         display: flex;
@@ -120,10 +109,10 @@
 </style>
 
 @code {
-[Parameter]
-public CounterViewModel ViewModel { get; set; } = null!;
+    [Parameter]
+    public CounterViewModel ViewModel { get; set; } = null!;
 
-private string GetCurrentClass(int current)
+    private string GetCurrentClass(int current)
     {
         if (current >= 3000) return "metric-critical";
         if (current >= 2000) return "metric-warning";

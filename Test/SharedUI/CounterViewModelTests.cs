@@ -29,46 +29,53 @@ public class CounterViewModelTests
     }
 
     /// <summary>
-    /// Test dispatcher that executes actions immediately on the current thread (no marshalling).
-    /// </summary>
-    private sealed class TestUiDispatcher : IUiDispatcher
-    {
-        public void InvokeOnUi(Action action) => action();
+        /// Test dispatcher that executes actions immediately on the current thread (no marshalling).
+        /// </summary>
+        private sealed class TestUiDispatcher : IUiDispatcher
+        {
+            public void InvokeOnUi(Action action) => action();
+        }
+
+        /// <summary>
+        /// Test settings service that provides in-memory AppSettings.
+        /// </summary>
+        private sealed class TestSettingsService : ISettingsService
+        {
+            private readonly Common.Configuration.AppSettings _settings = new();
+            public Common.Configuration.AppSettings GetSettings() => _settings;
+            public Task SaveSettingsAsync(Common.Configuration.AppSettings settings) => Task.CompletedTask;
+            public Task ResetToDefaultsAsync() => Task.CompletedTask;
+            public string? LastSolutionPath { get; set; }
+            public bool AutoLoadLastSolution { get; set; }
+        }
+
+        [Test]
+        public void CounterViewModel_InitializesStatistics()
+        {
+            var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), new TestSettingsService());
+            Assert.That(vm.Statistics, Is.Not.Null);
+            Assert.That(vm.Statistics.Count, Is.EqualTo(3));
+            Assert.That(vm.Statistics[0].InPort, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void ResetCounters_ClearsCounts()
+        {
+            var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), new TestSettingsService());
+            vm.Statistics[0].Count = 5;
+            vm.Statistics[1].Count = 3;
+
+            // Execute command
+            vm.ResetCountersCommand.Execute(null);
+
+            Assert.That(vm.Statistics[0].Count, Is.EqualTo(0));
+            Assert.That(vm.Statistics[1].Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void Ctor_InitializesDefaults()
+        {
+            var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), new TestSettingsService());
+            Assert.That(vm.IsNotConnected, Is.True);
+        }
     }
-
-    [Test]
-    public void CounterViewModel_InitializesStatistics()
-    {
-        var solution = new Solution();
-        var settings = new Common.Configuration.AppSettings();
-        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), settings, solution);
-        Assert.That(vm.Statistics, Is.Not.Null);
-        Assert.That(vm.Statistics.Count, Is.EqualTo(3));
-        Assert.That(vm.Statistics[0].InPort, Is.EqualTo(1));
-    }
-
-    [Test]
-    public void ResetCounters_ClearsCounts()
-    {
-        var solution = new Solution();
-        var settings = new Common.Configuration.AppSettings();
-        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), settings, solution);
-        vm.Statistics[0].Count = 5;
-        vm.Statistics[1].Count = 3;
-
-        // Execute command
-        vm.ResetCountersCommand.Execute(null);
-
-        Assert.That(vm.Statistics[0].Count, Is.EqualTo(0));
-        Assert.That(vm.Statistics[1].Count, Is.EqualTo(0));
-    }
-
-    [Test]
-    public void Ctor_InitializesDefaults()
-    {
-        var solution = new Solution();
-        var settings = new Common.Configuration.AppSettings();
-        var vm = new CounterViewModel(new StubZ21(), new TestUiDispatcher(), settings, solution);
-        Assert.That(vm.IsNotConnected, Is.True);
-    }
-}

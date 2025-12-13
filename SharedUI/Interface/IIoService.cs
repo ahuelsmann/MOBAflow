@@ -25,4 +25,10 @@ public interface IIoService
     /// </summary>
     [Obsolete("Use ICityService.LoadCitiesAsync() instead. This method loads deprecated Backend.Data.City format.")]
     Task<(DataManager? dataManager, string? path, string? error)> LoadDataManagerAsync();
+
+    /// <summary>
+    /// Opens a file picker to browse for a JSON file.
+    /// </summary>
+    /// <returns>The selected file path, or null if cancelled.</returns>
+    Task<string?> BrowseForJsonFileAsync();
 }

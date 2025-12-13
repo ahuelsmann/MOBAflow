@@ -13,40 +13,21 @@
         <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     </Page.Resources>
 
-    <ScrollViewer
-        HorizontalAlignment="Stretch"
-        VerticalAlignment="Stretch"
-        HorizontalScrollBarVisibility="Disabled"
-        VerticalScrollBarVisibility="Auto">
-        <StackPanel Padding="40,24,40,40" Spacing="16">
+    <ScrollViewer>
+        <StackPanel Padding="40,24,40,40" Spacing="8">
 
             <!--  Page Header  -->
             <TextBlock
                 Margin="0,0,0,8"
                 Style="{StaticResource TitleTextBlockStyle}"
-                Text="Lap Counter Dashboard" />
-
-            <StackPanel
-                Margin="0,0,0,16"
-                Orientation="Horizontal"
-                Spacing="8">
-                <FontIcon
-                    FontSize="14"
-                    Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                    Glyph="&#xE8EB;" />
-                <TextBlock
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Style="{StaticResource BodyTextBlockStyle}"
-                    Text="{x:Bind ViewModel.StatusText, Mode=OneWay}" />
-            </StackPanel>
+                Text="Overview" />
 
             <!--  Z21 System State Section (only visible when connected)  -->
             <Expander
                 HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Stretch"
                 Header="Z21 System State"
-                IsExpanded="True"
-                Visibility="{x:Bind ViewModel.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                IsExpanded="True">
                 <Expander.HeaderTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal" Spacing="12">
@@ -149,32 +130,6 @@
                         Margin="40,0,0,0"
                         VerticalAlignment="Center"
                         Text=" mV" />
-
-                    <TextBlock
-                        Grid.Row="2"
-                        Grid.Column="0"
-                        VerticalAlignment="Center"
-                        Text="Central State:" />
-                    <TextBlock
-                        Grid.Row="2"
-                        Grid.Column="1"
-                        VerticalAlignment="Center"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                        Text="{x:Bind ViewModel.CentralState, Mode=OneWay}" />
-
-                    <TextBlock
-                        Grid.Row="2"
-                        Grid.Column="2"
-                        VerticalAlignment="Center"
-                        Text="State Ex:" />
-                    <TextBlock
-                        Grid.Row="2"
-                        Grid.Column="3"
-                        VerticalAlignment="Center"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                        Text="{x:Bind ViewModel.CentralStateEx, Mode=OneWay}" />
                 </Grid>
             </Expander>
 
@@ -183,8 +138,7 @@
                 HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Stretch"
                 Header="Versionen"
-                IsExpanded="False"
-                Visibility="{x:Bind ViewModel.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                IsExpanded="True">
                 <Expander.HeaderTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal" Spacing="12">
@@ -270,8 +224,7 @@
                 HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Stretch"
                 Header="Settings"
-                IsExpanded="False"
-                Visibility="{x:Bind ViewModel.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                IsExpanded="True">
                 <Expander.HeaderTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal" Spacing="12">
@@ -342,7 +295,7 @@
             </Expander>
 
             <!--  Track Statistics Section (only visible when connected)  -->
-            <StackPanel Spacing="16" Visibility="{x:Bind ViewModel.IsConnected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+            <StackPanel Spacing="16">
                 <StackPanel Orientation="Horizontal" Spacing="12">
                     <FontIcon FontSize="20" Glyph="&#xE9D9;" />
                     <TextBlock

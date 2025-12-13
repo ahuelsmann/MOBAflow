@@ -241,33 +241,39 @@
     <!--  Card Styles - Material Design 3  -->
 
     <!--  Elevated Card (with shadow)  -->
-    <Style x:Key="ElevatedCard" TargetType="Frame">
+    <Style x:Key="ElevatedCard" TargetType="Border">
         <Setter Property="BackgroundColor" Value="{StaticResource SurfaceCard}" />
-        <Setter Property="BorderColor" Value="Transparent" />
-        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="Stroke" Value="Transparent" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 16" />
         <Setter Property="Padding" Value="16" />
         <Setter Property="Margin" Value="16,8" />
-        <Setter Property="HasShadow" Value="True" />
+        <Setter Property="Shadow">
+            <Setter.Value>
+                <Shadow
+                    Brush="Black"
+                    Opacity="0.3"
+                    Radius="8"
+                    Offset="0,4" />
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <!--  Filled Card (no shadow, slight background)  -->
-    <Style x:Key="FilledCard" TargetType="Frame">
+    <Style x:Key="FilledCard" TargetType="Border">
         <Setter Property="BackgroundColor" Value="{StaticResource SurfaceElevated}" />
-        <Setter Property="BorderColor" Value="Transparent" />
-        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="Stroke" Value="Transparent" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 16" />
         <Setter Property="Padding" Value="16" />
         <Setter Property="Margin" Value="16,8" />
-        <Setter Property="HasShadow" Value="False" />
     </Style>
 
     <!--  Outlined Card (border only)  -->
-    <Style x:Key="OutlinedCard" TargetType="Frame">
+    <Style x:Key="OutlinedCard" TargetType="Border">
         <Setter Property="BackgroundColor" Value="Transparent" />
-        <Setter Property="BorderColor" Value="{StaticResource BorderColor}" />
-        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="Stroke" Value="{StaticResource BorderColor}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 16" />
         <Setter Property="Padding" Value="16" />
         <Setter Property="Margin" Value="16,8" />
-        <Setter Property="HasShadow" Value="False" />
     </Style>
 
     <!--  Button Styles - Material Design 3  -->

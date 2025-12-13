@@ -129,7 +129,9 @@ public partial class App
 
         // Pages (Transient = new instance per navigation)
         services.AddTransient<View.OverviewPage>();
-        services.AddTransient<View.EditorPage>();
+        services.AddTransient<View.SolutionPage>();
+        services.AddTransient<View.JourneysPage>();
+        services.AddTransient<View.WorkflowsPage>();
         services.AddTransient<View.SettingsPage>();
 
         // MainWindow (Singleton = one instance for app lifetime)

@@ -29,13 +29,10 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     // Core Services (required)
     private readonly IZ21 _z21;
     private readonly IUiDispatcher _dispatcher;
+    private readonly ISettingsService _settingsService;
 
-    // Configuration
+    // Configuration (derived from ISettingsService)
     private readonly AppSettings _settings;
-    private readonly Solution _solution;
-
-    // Optional Services
-    private readonly ISettingsService? _settingsService;
 
     // Runtime State
     private readonly Dictionary<int, DateTime> _lastFeedbackTime = new();
@@ -45,15 +42,12 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     public CounterViewModel(
         IZ21 z21,
         IUiDispatcher dispatcher,
-        AppSettings settings,
-        Solution solution,
-        ISettingsService? settingsService = null)
+        ISettingsService settingsService)
     {
         _z21 = z21;
         _dispatcher = dispatcher;
-        _settings = settings;
-        _solution = solution;
         _settingsService = settingsService;
+        _settings = settingsService.GetSettings();
 
         // ✅ Initialize available IP addresses from AppSettings
         AvailableIpAddresses = new ObservableCollection<string>(_settings.Z21.RecentIpAddresses);
@@ -135,8 +129,6 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     /// </summary>
     private async Task SaveSettingsAsync()
     {
-        if (_settingsService == null) return;
-
         try
         {
             await _settingsService.SaveSettingsAsync(_settings);
@@ -232,20 +224,6 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     /// </summary>
     [ObservableProperty]
     private int vccVoltage;
-
-    /// <summary>
-    /// Z21 central state as hexadecimal string (e.g., "0x00").
-    /// </summary]
-    [ObservableProperty]
-    private string centralState = "0x00";
-
-    /// <summary>
-    /// Z21 extended central state as hexadecimal string (e.g., "0x00").
-    /// </summary>
-    [ObservableProperty]
-    private string centralStateEx = "0x00";
-
-    // Z21 Version Information Properties
 
     /// <summary>
     /// Z21 serial number (e.g., "101953").
@@ -481,8 +459,6 @@ public partial class CounterViewModel : ObservableObject, IDisposable
             Temperature = systemState.Temperature;
             SupplyVoltage = systemState.SupplyVoltage;
             VccVoltage = systemState.VccVoltage;
-            CentralState = $"0x{systemState.CentralState:X2}";
-            CentralStateEx = $"0x{systemState.CentralStateEx:X2}";
         }
         else
         {
@@ -490,8 +466,6 @@ public partial class CounterViewModel : ObservableObject, IDisposable
             Temperature = 0;
             SupplyVoltage = 0;
             VccVoltage = 0;
-            CentralState = "0x00";
-            CentralStateEx = "0x00";
         }
 
         this.Log($"📊 System state updated: MainCurrent={MainCurrent}mA, Temp={Temperature}C, Supply={SupplyVoltage}mV, TrackPower={IsTrackPowerOn}");

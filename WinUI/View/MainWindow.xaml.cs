@@ -169,9 +169,19 @@ public sealed partial class MainWindow
                 NavigateToOverview();
                 break;
 
-            case "editor":
-                var editorPage = _serviceProvider.GetRequiredService<EditorPage>();
-                ContentFrame.Content = editorPage;
+            case "solution":
+                var solutionPage = _serviceProvider.GetRequiredService<SolutionPage>();
+                ContentFrame.Content = solutionPage;
+                break;
+
+            case "journeys":
+                var journeysPage = _serviceProvider.GetRequiredService<JourneysPage>();
+                ContentFrame.Content = journeysPage;
+                break;
+
+            case "workflows":
+                var workflowsPage = _serviceProvider.GetRequiredService<WorkflowsPage>();
+                ContentFrame.Content = workflowsPage;
                 break;
 
             case "settings":

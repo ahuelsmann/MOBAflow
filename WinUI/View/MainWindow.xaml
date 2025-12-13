@@ -42,12 +42,23 @@
                     Content="Overview"
                     Icon="Home"
                     Tag="overview" />
-                <NavigationViewItem Content="Editor" Tag="editor">
+                <NavigationViewItemSeparator />
+                <NavigationViewItem Content="Solution" Tag="solution">
                     <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE70F;" />
+                        <FontIcon Glyph="&#xE8B7;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-
+                <NavigationViewItem Content="Journeys" Tag="journeys">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE7C1;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Workflows" Tag="workflows">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE945;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItemSeparator />
                 <NavigationViewItem Content="Settings" Tag="settings">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE115;" />
