@@ -18,50 +18,53 @@ using System.Collections.ObjectModel;
 /// </summary>
 public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
 {
-    [ObservableProperty]
-    private Train model;
-
+    private readonly Train _model;
     private readonly Project _project;
 
     public TrainViewModel(Train model, Project project)
     {
-        Model = model;
+        _model = model;
         _project = project;
     }
 
     /// <summary>
+    /// Gets the underlying domain model (for IViewModelWrapper interface).
+    /// </summary>
+    public Train Model => _model;
+
+    /// <summary>
     /// Gets the unique identifier of the train.
     /// </summary>
-    public Guid Id => Model.Id;
+    public Guid Id => _model.Id;
 
     public bool IsDoubleTraction
     {
-        get => Model.IsDoubleTraction;
-        set => SetProperty(Model.IsDoubleTraction, value, Model, (m, v) => m.IsDoubleTraction = v);
+        get => _model.IsDoubleTraction;
+        set => SetProperty(_model.IsDoubleTraction, value, _model, (m, v) => m.IsDoubleTraction = v);
     }
 
     public string Name
     {
-        get => Model.Name;
-        set => SetProperty(Model.Name, value, Model, (m, v) => m.Name = v);
+        get => _model.Name;
+        set => SetProperty(_model.Name, value, _model, (m, v) => m.Name = v);
     }
 
     public string Description
     {
-        get => Model.Description ?? string.Empty;
-        set => SetProperty(Model.Description, value, Model, (m, v) => m.Description = v);
+        get => _model.Description ?? string.Empty;
+        set => SetProperty(_model.Description, value, _model, (m, v) => m.Description = v);
     }
 
     public TrainType TrainType
     {
-        get => Model.TrainType;
-        set => SetProperty(Model.TrainType, value, Model, (m, v) => m.TrainType = v);
+        get => _model.TrainType;
+        set => SetProperty(_model.TrainType, value, _model, (m, v) => m.TrainType = v);
     }
 
     public ServiceType ServiceType
     {
-        get => Model.ServiceType;
-        set => SetProperty(Model.ServiceType, value, Model, (m, v) => m.ServiceType = v);
+        get => _model.ServiceType;
+        set => SetProperty(_model.ServiceType, value, _model, (m, v) => m.ServiceType = v);
     }
 
     /// <summary>
@@ -79,8 +82,8 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
     /// </summary>
     public List<Guid> LocomotiveIds
     {
-        get => Model.LocomotiveIds;
-        set => SetProperty(Model.LocomotiveIds, value, Model, (m, v) => m.LocomotiveIds = v);
+        get => _model.LocomotiveIds;
+        set => SetProperty(_model.LocomotiveIds, value, _model, (m, v) => m.LocomotiveIds = v);
     }
 
     /// <summary>
@@ -88,8 +91,8 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
     /// </summary>
     public List<Guid> WagonIds
     {
-        get => Model.WagonIds;
-        set => SetProperty(Model.WagonIds, value, Model, (m, v) => m.WagonIds = v);
+        get => _model.WagonIds;
+        set => SetProperty(_model.WagonIds, value, _model, (m, v) => m.WagonIds = v);
     }
 
     /// <summary>
@@ -97,7 +100,7 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
     /// </summary>
     public ObservableCollection<LocomotiveViewModel> Locomotives =>
         new ObservableCollection<LocomotiveViewModel>(
-            Model.LocomotiveIds
+            _model.LocomotiveIds
                 .Select(id => _project.Locomotives.FirstOrDefault(l => l.Id == id))
                 .Where(l => l != null)
                 .Select(l => new LocomotiveViewModel(l!))
@@ -108,7 +111,7 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
     /// </summary>
     public ObservableCollection<WagonViewModel> Wagons =>
         new ObservableCollection<WagonViewModel>(
-            Model.WagonIds
+            _model.WagonIds
                 .Select(id => {
                     // Try PassengerWagons first
                     Wagon? wagon = _project.PassengerWagons.FirstOrDefault(w => w.Id == id);
@@ -135,7 +138,7 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
         _project.Locomotives.Add(newLocomotive);
         
         // Add ID to Train
-        Model.LocomotiveIds.Add(newLocomotive.Id);
+        _model.LocomotiveIds.Add(newLocomotive.Id);
         
         // Notify UI to refresh collection
         OnPropertyChanged(nameof(Locomotives));
@@ -147,7 +150,7 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
         if (locomotiveVM == null) return;
 
         // Remove ID from Train
-        Model.LocomotiveIds.Remove(locomotiveVM.Model.Id);
+        _model.LocomotiveIds.Remove(locomotiveVM.Model.Id);
         
         // Note: We don't remove from Project.Locomotives (might be used elsewhere)
         
@@ -164,7 +167,7 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
         _project.PassengerWagons.Add(newWagon);
         
         // Add ID to Train
-        Model.WagonIds.Add(newWagon.Id);
+        _model.WagonIds.Add(newWagon.Id);
         
         // Notify UI to refresh collection
         OnPropertyChanged(nameof(Wagons));
@@ -176,7 +179,7 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
         if (wagonVM == null) return;
 
         // Remove ID from Train
-        Model.WagonIds.Remove(wagonVM.Model.Id);
+        _model.WagonIds.Remove(wagonVM.Model.Id);
         
         // Note: We don't remove from Project wagons (might be used elsewhere)
         

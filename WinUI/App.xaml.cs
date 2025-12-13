@@ -82,12 +82,12 @@ public partial class App
         services.AddLogging();
 
         // Backend Services (Interfaces are in Backend.Interface and Backend.Network)
-        services.AddSingleton<Backend.Service.Z21TrafficMonitor>();
+        services.AddSingleton<Backend.Service.Z21Monitor>();
         services.AddSingleton<Backend.Interface.IZ21, Backend.Z21>(sp =>
         {
             var udp = sp.GetRequiredService<Backend.Network.IUdpClientWrapper>();
             var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<Backend.Z21>>();
-            var trafficMonitor = sp.GetRequiredService<Backend.Service.Z21TrafficMonitor>();
+            var trafficMonitor = sp.GetRequiredService<Backend.Service.Z21Monitor>();
             return new Backend.Z21(udp, logger, trafficMonitor);
         });
         services.AddSingleton<Backend.Network.IUdpClientWrapper, Backend.Network.UdpWrapper>();
@@ -112,15 +112,6 @@ public partial class App
         // Sound Services (required by HealthCheckService)
         services.AddSingleton<Sound.SpeechHealthCheck>();
         services.AddSingleton<Service.HealthCheckService>();
-
-        // SharedUI Services
-        services.AddSingleton(sp =>
-        {
-            var solution = sp.GetRequiredService<Domain.Solution>();
-            // ValidationService needs the first project (simplified for now)
-            var project = solution.Projects.FirstOrDefault() ?? new Domain.Project { Name = "Default Project" };
-            return new SharedUI.Service.ValidationService(project);
-        });
 
         // ViewModels
         services.AddSingleton<SharedUI.ViewModel.MainWindowViewModel>();

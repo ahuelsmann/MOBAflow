@@ -85,7 +85,6 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 ### **Active Refactoring**
 - ✅ **Reference-Based Domain Architecture** (100% complete)
   - Domain: GUID refs ✅ | Backend: Complete ✅ | ViewModels: Complete ✅
-  - See: `docs/REFACTORING-PLAN-REFERENCE-BASED-ARCHITECTURE.md`
 - ✅ **Event-to-Command Migration** (100% complete)
   - All ListViews use XAML Behaviors ✅ | Code-behind handlers removed ✅
   - Version 3.0.0 unified namespaces ✅
@@ -98,7 +97,6 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 - ✅ **PropertyGrid Modernization** → -70% code, native WinUI 3 patterns
   - Old: SimplePropertyGrid (350 LOC, Reflection)
   - New: ContentControl + DataTemplateSelector (200 LOC XAML)
-  - See: `docs/LEssONS-LEARNED-PROPERTYGRID-REFACTORING.md`
 - ✅ **Event-to-Command Pattern** → -200 LOC code-behind, clean MVVM
   - Old: `ListView_ItemClick` handlers in code-behind
   - New: XAML Behaviors with `ItemClickedCommand`
@@ -109,7 +107,6 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 - ✅ **Event-Driven State Management** (Dec 10) → Eliminated race conditions
   - Old: Manual state reset in commands (race conditions)
   - New: Filter events based on state (Single Source of Truth)
-  - See: `docs/SESSION-SUMMARY-2025-12-10-UI-IMPROVEMENTS.md`
 
 ---
 
@@ -119,7 +116,6 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 - ❌ **Mistake:** Custom Reflection-based PropertyGrid (350 LOC)
 - ✅ **Solution:** ContentControl + DataTemplateSelector (native WinUI 3)
 - 📉 **Impact:** -480 LOC (-70%), compiled bindings, native patterns
-- 📖 **Details:** `docs/LEssONS-LEARNED-PROPERTYGRID-REFACTORING.md`
 
 ### **2. ClearOtherSelections Complexity**
 - ❌ **Mistake:** Manual selection cleanup logic (35 LOC)
@@ -130,7 +126,6 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 - ❌ **Mistake:** Manually resetting system state values in commands (race conditions)
 - ✅ **Solution:** Filter events based on state in event handlers
 - 📉 **Impact:** Eliminated race conditions, deterministic behavior
-- 📖 **Details:** `docs/SESSION-SUMMARY-2025-12-10-UI-IMPROVEMENTS.md`
 
 **Anti-Pattern:**
 ```csharp
@@ -264,9 +259,6 @@ public object? CurrentSelectedObject {
 
 ---
 
-## 📚 Deep-Dive Architecture
-
-- `docs/ARCHITECTURE-INSIGHTS-2025-12-09.md` - Journey execution flow, SessionState, ViewModel 1:1 mapping
 ## 📚 Deep-Dive Documentation (Load on Demand)
 
 ### **Layer-Specific Instructions**
@@ -277,16 +269,9 @@ public object? CurrentSelectedObject {
 - `.github/instructions/test.instructions.md` - Testing guidelines
 - `.github/instructions/hasunsavedchanges-patterns.instructions.md` - State management
 
-### **Architecture & Analysis**
-- `docs/CODE-ANALYSIS-BEST-PRACTICES.md` - Full 5-step analysis methodology
-- `docs/LEssONS-LEARNED-PROPERTYGRID-REFACTORING.md` - PropertyGrid case study
-- `docs/REFACTORING-PLAN-REFERENCE-BASED-ARCHITECTURE.md` - Ongoing refactoring
+### **Architecture Documentation**
+- `docs/ARCHITECTURE-INSIGHTS-2025-12-09.md` - Journey execution flow, SessionState, ViewModel 1:1 mapping
 - `docs/XAML-BEHAVIORS-EVENT-TO-COMMAND.md` - Event-to-Command pattern (XAML Behaviors v3.0)
-- `docs/BUILD-ERRORS-STATUS.md` - Current build status
-- `docs/Z21-PROTOCOL.md` - Hardware protocol docs
-
-### **Session Reports** (Archive after 1 month)
-- `docs/SEssION-SUMMARY-*.md` - Past session learnings
 
 ---
 

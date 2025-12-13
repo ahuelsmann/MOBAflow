@@ -13,81 +13,73 @@ using Interface;
 /// </summary>
 public partial class StationViewModel : ObservableObject, IViewModelWrapper<Station>
 {
-    [ObservableProperty]
-    private Station model; // Station with all properties
-
-    private readonly Project _project; // For resolving Platform IDs
+    private readonly Station _model;
+    private readonly Project _project;
 
     public StationViewModel(Station station, Project project)
     {
-        Model = station;
+        _model = station;
         _project = project;
-
-        // Track property changes for unsaved changes detection
-        PropertyChanged += (s, e) =>
-        {
-            // Ignore Model property changes (those are internal)
-            if (e.PropertyName != nameof(Model))
-            {
-                // Property changed - mark as modified
-                // MainWindowViewModel will listen to this
-            }
-        };
     }
+
+    /// <summary>
+    /// Gets the underlying domain model (for IViewModelWrapper interface).
+    /// </summary>
+    public Station Model => _model;
 
     public string Name
     {
-        get => Model.Name;
-        set => SetProperty(Model.Name, value, Model, (m, v) => m.Name = v);
+        get => _model.Name;
+        set => SetProperty(_model.Name, value, _model, (m, v) => m.Name = v);
     }
 
     public string? Description
     {
-        get => Model.Description;
-        set => SetProperty(Model.Description, value, Model, (m, v) => m.Description = v);
+        get => _model.Description;
+        set => SetProperty(_model.Description, value, _model, (m, v) => m.Description = v);
     }
 
     public int InPort
     {
-        get => (int)Model.InPort;
-        set => SetProperty(Model.InPort, (uint)value, Model, (m, v) => m.InPort = v);
+        get => (int)_model.InPort;
+        set => SetProperty(_model.InPort, (uint)value, _model, (m, v) => m.InPort = v);
     }
 
     // Journey-specific properties (now directly from Station)
     public int NumberOfLapsToStop
     {
-        get => (int)Model.NumberOfLapsToStop;
-        set => SetProperty(Model.NumberOfLapsToStop, (uint)value, Model, (m, v) => m.NumberOfLapsToStop = v);
+        get => (int)_model.NumberOfLapsToStop;
+        set => SetProperty(_model.NumberOfLapsToStop, (uint)value, _model, (m, v) => m.NumberOfLapsToStop = v);
     }
 
     public Guid? WorkflowId
     {
-        get => Model.WorkflowId;
-        set => SetProperty(Model.WorkflowId, value, Model, (m, v) => m.WorkflowId = v);
+        get => _model.WorkflowId;
+        set => SetProperty(_model.WorkflowId, value, _model, (m, v) => m.WorkflowId = v);
     }
 
     public bool IsExitOnLeft
     {
-        get => Model.IsExitOnLeft;
-        set => SetProperty(Model.IsExitOnLeft, value, Model, (m, v) => m.IsExitOnLeft = v);
+        get => _model.IsExitOnLeft;
+        set => SetProperty(_model.IsExitOnLeft, value, _model, (m, v) => m.IsExitOnLeft = v);
     }
 
     public int Track
     {
-        get => (int)(Model.Track ?? 1);
-        set => SetProperty(Model.Track, (uint?)value, Model, (m, v) => m.Track = v);
+        get => (int)(_model.Track ?? 1);
+        set => SetProperty(_model.Track, (uint?)value, _model, (m, v) => m.Track = v);
     }
 
     public DateTime? Arrival
     {
-        get => Model.Arrival;
-        set => SetProperty(Model.Arrival, value, Model, (m, v) => m.Arrival = v);
+        get => _model.Arrival;
+        set => SetProperty(_model.Arrival, value, _model, (m, v) => m.Arrival = v);
     }
 
     public DateTime? Departure
     {
-        get => Model.Departure;
-        set => SetProperty(Model.Departure, value, Model, (m, v) => m.Departure = v);
+        get => _model.Departure;
+        set => SetProperty(_model.Departure, value, _model, (m, v) => m.Departure = v);
     }
 
     public int Position

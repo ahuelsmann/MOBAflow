@@ -8,7 +8,7 @@ using System.Collections.Concurrent;
 /// Monitors and logs Z21/UDP traffic for debugging and visualization.
 /// Stores the last N packets in a circular buffer.
 /// </summary>
-public class Z21TrafficMonitor
+public class Z21Monitor
 {
     private readonly ConcurrentQueue<Z21TrafficPacket> _packets = new();
     private const int MaxPackets = 100;

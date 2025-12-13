@@ -20,7 +20,7 @@ public class Z21 : IZ21
 
     private readonly IUdpClientWrapper _udp;
     private readonly ILogger<Z21>? _logger;
-    private readonly Z21TrafficMonitor? _trafficMonitor;
+    private readonly Z21Monitor? _trafficMonitor;
     private CancellationTokenSource? _cancellationTokenSource;
     private Timer? _keepaliveTimer;
     private int _keepAliveFailures;
@@ -28,14 +28,14 @@ public class Z21 : IZ21
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private bool _disposed;
 
-    public Z21TrafficMonitor? TrafficMonitor => _trafficMonitor;
+    public Z21Monitor? TrafficMonitor => _trafficMonitor;
 
     /// <summary>
     /// Current version information of the Z21 (serial number, firmware, hardware).
     /// </summary>
     public Z21VersionInfo? VersionInfo { get; private set; }
 
-    public Z21(IUdpClientWrapper udp, ILogger<Z21>? logger = null, Z21TrafficMonitor? trafficMonitor = null)
+    public Z21(IUdpClientWrapper udp, ILogger<Z21>? logger = null, Z21Monitor? trafficMonitor = null)
     {
         _udp = udp;
         _logger = logger;
@@ -239,7 +239,7 @@ public class Z21 : IZ21
             // Log sent packet to traffic monitor
             _trafficMonitor?.LogSentPacket(
                 data,
-                Z21TrafficMonitor.ParsePacketType(data),
+                Z21Monitor.ParsePacketType(data),
                 $"Length: {data.Length} bytes"
             );
 
@@ -336,7 +336,7 @@ public class Z21 : IZ21
         // Log received packet to traffic monitor
         _trafficMonitor?.LogReceivedPacket(
             content,
-            Z21TrafficMonitor.ParsePacketType(content),
+            Z21Monitor.ParsePacketType(content),
             $"Length: {content.Length} bytes"
         );
 

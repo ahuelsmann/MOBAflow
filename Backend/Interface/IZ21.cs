@@ -19,7 +19,7 @@ public interface IZ21 : IDisposable
     event Action? OnConnectionLost;
 
     bool IsConnected { get; }
-    Z21TrafficMonitor? TrafficMonitor { get; }
+    Z21Monitor? TrafficMonitor { get; }
 
     /// <summary>
     /// Current version information of the Z21 (serial number, firmware, hardware).

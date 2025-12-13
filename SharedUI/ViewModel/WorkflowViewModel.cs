@@ -20,8 +20,7 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
 {
     #region Fields
     // Model
-    [ObservableProperty]
-    private Workflow model;
+    private readonly Workflow _model;
 
     // Context
     private readonly Project? _project;
@@ -33,7 +32,7 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
 
     public WorkflowViewModel(Workflow model, ISpeakerEngine? speakerEngine = null, Project? project = null, IZ21? z21 = null)
     {
-        Model = model;
+        _model = model;
         _speakerEngine = speakerEngine;
         _project = project;
         _z21 = z21;
@@ -44,38 +43,43 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
     }
 
     /// <summary>
+    /// Gets the underlying domain model (for IViewModelWrapper interface).
+    /// </summary>
+    public Workflow Model => _model;
+
+    /// <summary>
     /// Gets the unique identifier of the workflow.
     /// </summary>
-    public Guid Id => Model.Id;
+    public Guid Id => _model.Id;
 
     public string Name
     {
-        get => Model.Name;
-        set => SetProperty(Model.Name, value, Model, (m, v) => m.Name = v);
+        get => _model.Name;
+        set => SetProperty(_model.Name, value, _model, (m, v) => m.Name = v);
     }
 
     public string Description
     {
-        get => Model.Description ?? string.Empty;
-        set => SetProperty(Model.Description, value, Model, (m, v) => m.Description = v);
+        get => _model.Description ?? string.Empty;
+        set => SetProperty(_model.Description, value, _model, (m, v) => m.Description = v);
     }
 
     public uint InPort
     {
-        get => Model.InPort;
-        set => SetProperty(Model.InPort, value, Model, (m, v) => m.InPort = v);
+        get => _model.InPort;
+        set => SetProperty(_model.InPort, value, _model, (m, v) => m.InPort = v);
     }
 
     public bool IsUsingTimerToIgnoreFeedbacks
     {
-        get => Model.IsUsingTimerToIgnoreFeedbacks;
-        set => SetProperty(Model.IsUsingTimerToIgnoreFeedbacks, value, Model, (m, v) => m.IsUsingTimerToIgnoreFeedbacks = v);
+        get => _model.IsUsingTimerToIgnoreFeedbacks;
+        set => SetProperty(_model.IsUsingTimerToIgnoreFeedbacks, value, _model, (m, v) => m.IsUsingTimerToIgnoreFeedbacks = v);
     }
 
     public double IntervalForTimerToIgnoreFeedbacks
     {
-        get => Model.IntervalForTimerToIgnoreFeedbacks;
-        set => SetProperty(Model.IntervalForTimerToIgnoreFeedbacks, value, Model, (m, v) => m.IntervalForTimerToIgnoreFeedbacks = v);
+        get => _model.IntervalForTimerToIgnoreFeedbacks;
+        set => SetProperty(_model.IntervalForTimerToIgnoreFeedbacks, value, _model, (m, v) => m.IntervalForTimerToIgnoreFeedbacks = v);
     }
 
     public ObservableCollection<object> Actions { get; }
@@ -88,7 +92,7 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
             ActionType.Announcement => new WorkflowAction
             {
                 Name = "New Announcement",
-                Number = (uint)(Model.Actions.Count + 1),
+                Number = (uint)(_model.Actions.Count + 1),
                 Type = ActionType.Announcement,
                 Parameters = new Dictionary<string, object>
                 {
@@ -99,7 +103,7 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
             ActionType.Audio => new WorkflowAction
             {
                 Name = "New Audio",
-                Number = (uint)(Model.Actions.Count + 1),
+                Number = (uint)(_model.Actions.Count + 1),
                 Type = ActionType.Audio,
                 Parameters = new Dictionary<string, object>
                 {
@@ -109,7 +113,7 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
             ActionType.Command => new WorkflowAction
             {
                 Name = "New Command",
-                Number = (uint)(Model.Actions.Count + 1),
+                Number = (uint)(_model.Actions.Count + 1),
                 Type = ActionType.Command,
                 Parameters = new Dictionary<string, object>
                 {
@@ -119,7 +123,7 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
             _ => throw new ArgumentException($"Unsupported action type: {actionType}")
         };
 
-        Model.Actions.Add(newAction);
+        _model.Actions.Add(newAction);
 
         var actionVM = CreateViewModelForAction(newAction);
         Actions.Add(actionVM);
@@ -140,18 +144,18 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
 
         if (actionModel != null)
         {
-            Model.Actions.Remove(actionModel);
+            _model.Actions.Remove(actionModel);
             Actions.Remove(actionVM);
         }
     }
 
     public async Task StartAsync(Journey journey, Station station)
     {
-        System.Diagnostics.Debug.WriteLine($"▶ Starte Workflow '{Model.Name}' für Station '{station.Name}'");
+        System.Diagnostics.Debug.WriteLine($"▶ Starte Workflow '{_model.Name}' für Station '{station.Name}'");
 
         if (Actions.Count == 0)
         {
-            System.Diagnostics.Debug.WriteLine($"⚠ Workflow '{Model.Name}' enthält keine Actions");
+        System.Diagnostics.Debug.WriteLine($"⚠ Workflow '{_model.Name}' enthält keine Actions");
             return;
         }
 
@@ -180,7 +184,7 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
             }
         }
 
-        System.Diagnostics.Debug.WriteLine($"✅ Workflow '{Model.Name}' abgeschlossen");
+        System.Diagnostics.Debug.WriteLine($"✅ Workflow '{_model.Name}' abgeschlossen");
     }
 
     private object CreateViewModelForAction(WorkflowAction action)
