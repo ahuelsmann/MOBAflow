@@ -2,10 +2,12 @@
 namespace Moba.Smart;
 
 using CommunityToolkit.Maui;
+
 using Microsoft.Extensions.Logging;
+
 using Moba.Backend.Network;
+using Moba.Backend.Service;
 using Moba.SharedUI.Interface;
-using Moba.MAUI.Service;
 
 using UraniumUI;
 
@@ -37,12 +39,12 @@ public static class MauiProgram
         // Backend services - Register in dependency order
         builder.Services.AddSingleton<IUdpClientWrapper, UdpWrapper>();
         builder.Services.AddSingleton<Backend.Interface.IZ21, Backend.Z21>();
-        builder.Services.AddSingleton<Backend.Services.ActionExecutor>(sp =>
+        builder.Services.AddSingleton<ActionExecutor>(sp =>
         {
             var z21 = sp.GetRequiredService<Backend.Interface.IZ21>();
-            return new Backend.Services.ActionExecutor(z21);
+            return new Backend.Service.ActionExecutor(z21);
         });
-        builder.Services.AddSingleton<Backend.Services.WorkflowService>();
+        builder.Services.AddSingleton<WorkflowService>();
 
         // ✅ DataManager as Singleton (master data loaded on first access)
         // Note: MAUI doesn't have IIoService yet - using simplified approach

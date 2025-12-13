@@ -1,6 +1,6 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Moba.SharedUI.ViewModel;
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.ViewModel;
 
 namespace Moba.Test.SharedUI;
 
@@ -12,9 +12,11 @@ public class CounterViewModelTests
         public event Feedback? Received;
         public event SystemStateChanged? OnSystemStateChanged;
         public event XBusStatusChanged? OnXBusStatusChanged;
+        public event VersionInfoChanged? OnVersionInfoChanged;
         public event Action? OnConnectionLost;
         public bool IsConnected { get; private set; }
         public Moba.Backend.Service.Z21TrafficMonitor? TrafficMonitor => null;
+        public Moba.Backend.Z21VersionInfo? VersionInfo => null;
         public Task ConnectAsync(System.Net.IPAddress address, int port = 21105, CancellationToken cancellationToken = default) { IsConnected = true; return Task.CompletedTask; }
         public Task DisconnectAsync() { IsConnected = false; return Task.CompletedTask; }
         public Task SendCommandAsync(byte[] sendBytes) => Task.CompletedTask;

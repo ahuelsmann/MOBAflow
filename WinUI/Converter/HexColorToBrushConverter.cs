@@ -7,16 +7,24 @@ using Windows.UI;
 
 /// <summary>
 /// Converter that converts a hex color string (e.g., "#66BB6A") to a SolidColorBrush.
-/// Used for dynamic background colors in track cards based on lap statistics.
+/// Supports "Transparent" as a special value.
+/// Empty string returns null (binding will use FallbackValue or default).
+/// Used for dynamic background colors in track cards and station highlighting.
 /// </summary>
 public class HexColorToBrushConverter : IValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, string language)
+    public object? Convert(object value, Type targetType, object parameter, string language)
     {
         if (value is string hexColor && !string.IsNullOrEmpty(hexColor))
         {
             try
             {
+                // Handle "Transparent" special case
+                if (hexColor.Equals("Transparent", StringComparison.OrdinalIgnoreCase))
+                {
+                    return new SolidColorBrush(Microsoft.UI.Colors.Transparent);
+                }
+
                 // Remove '#' if present
                 hexColor = hexColor.TrimStart('#');
                 
@@ -32,12 +40,12 @@ public class HexColorToBrushConverter : IValueConverter
             }
             catch
             {
-                // Fallback to default color on parse error
+                // Fallback to null on parse error
             }
         }
         
-        // Default fallback: Red 400 (no activity)
-        return new SolidColorBrush(Color.FromArgb(255, 239, 83, 80));
+        // Empty string or null = return null, XAML will use FallbackValue
+        return null;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)

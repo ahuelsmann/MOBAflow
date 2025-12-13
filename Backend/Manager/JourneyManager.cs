@@ -1,6 +1,6 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Moba.Backend.Interface;
-using Moba.Backend.Services;
+using Moba.Backend.Service;
 using Moba.Domain;
 using Moba.Domain.Enum;
 
@@ -27,11 +27,25 @@ public class JourneyManager : BaseFeedbackManager<Journey>
     public event EventHandler<StationChangedEventArgs>? StationChanged;
 
     /// <summary>
+    /// Event raised when a journey receives a feedback (counter incremented).
+    /// Fired on every feedback, not just when a station is reached.
+    /// </summary>
+    public event EventHandler<JourneyFeedbackEventArgs>? FeedbackReceived;
+
+    /// <summary>
     /// Raises the StationChanged event. Protected for testing purposes.
     /// </summary>
     protected virtual void OnStationChanged(StationChangedEventArgs e)
     {
         StationChanged?.Invoke(this, e);
+    }
+
+    /// <summary>
+    /// Raises the FeedbackReceived event.
+    /// </summary>
+    protected virtual void OnFeedbackReceived(JourneyFeedbackEventArgs e)
+    {
+        FeedbackReceived?.Invoke(this, e);
     }
 
     /// <summary>
@@ -103,6 +117,13 @@ public class JourneyManager : BaseFeedbackManager<Journey>
         state.LastFeedbackTime = DateTime.Now;
         Debug.WriteLine($"🔄 Journey '{journey.Name}': Round {state.Counter}, Position {state.CurrentPos}");
 
+        // Fire FeedbackReceived event on every feedback (for UI counter updates)
+        OnFeedbackReceived(new JourneyFeedbackEventArgs
+        {
+            JourneyId = journey.Id,
+            SessionState = state
+        });
+
         // Get current Station directly from Journey
         if (state.CurrentPos >= journey.Stations.Count)
         {
@@ -118,14 +139,6 @@ public class JourneyManager : BaseFeedbackManager<Journey>
             
             // Update SessionState with current station
             state.CurrentStationName = currentStation.Name;
-            
-            // Fire StationChanged event (ViewModels will react)
-            OnStationChanged(new StationChangedEventArgs
-            {
-                JourneyId = journey.Id,
-                Station = currentStation,
-                SessionState = state
-            });
 
             // Execute station workflow if present
             if (currentStation.WorkflowId.HasValue)
@@ -134,8 +147,8 @@ public class JourneyManager : BaseFeedbackManager<Journey>
                 if (workflow != null)
                 {
                     // Set template context for announcements
-                    ExecutionContext.JourneyTemplateText = journey.Text;
-                    ExecutionContext.CurrentStation = currentStation;
+                    ExecutionContext?.JourneyTemplateText = journey.Text;
+                    ExecutionContext?.CurrentStation = currentStation;
 
                     await _workflowService.ExecuteAsync(workflow, ExecutionContext).ConfigureAwait(false);
 
@@ -161,6 +174,14 @@ public class JourneyManager : BaseFeedbackManager<Journey>
             {
                 state.CurrentPos++;
             }
+
+            // Fire StationChanged event AFTER position update (ViewModels will react with updated CurrentPos)
+            OnStationChanged(new StationChangedEventArgs
+            {
+                JourneyId = journey.Id,
+                Station = currentStation,
+                SessionState = state
+            });
         }
     }
 

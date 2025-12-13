@@ -2,7 +2,7 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Manager;
-using Backend.Services;
+using Backend.Service;
 
 using Common.Configuration;
 
@@ -169,6 +169,12 @@ public partial class MainWindowViewModel : ObservableObject
     private City? selectedCity;
 
     public event EventHandler? ExitApplicationRequested;
+
+    partial void OnSelectedJourneyChanged(JourneyViewModel? value)
+    {
+        // Update CanExecute for journey-related commands
+        ResetJourneyCommand.NotifyCanExecuteChanged();
+    }
     #endregion
 
     #region Project Management

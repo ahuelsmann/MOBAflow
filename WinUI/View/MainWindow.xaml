@@ -113,9 +113,9 @@
                     <AppBarButton
                         Command="{x:Bind ViewModel.SimulateFeedbackCommand}"
                         Label="Simulate"
-                        ToolTipService.ToolTip="Simulate Feedback">
+                        ToolTipService.ToolTip="Simulate Feedback for selected Journey or InPort">
                         <AppBarButton.Icon>
-                            <FontIcon Glyph="&#xE945;" />
+                            <FontIcon Glyph="&#xE768;" />
                         </AppBarButton.Icon>
                     </AppBarButton>
                     <AppBarElementContainer VerticalAlignment="Center">
@@ -124,6 +124,14 @@
                             PlaceholderText="InPort"
                             Text="{x:Bind ViewModel.SimulateInPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                     </AppBarElementContainer>
+                    <AppBarButton
+                        Command="{x:Bind ViewModel.ResetJourneyCommand}"
+                        Label="Reset Journey"
+                        ToolTipService.ToolTip="Reset selected Journey to initial state">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xE72C;" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
                     <AppBarSeparator />
                     <AppBarElementContainer VerticalAlignment="Center">
                         <ToggleButton

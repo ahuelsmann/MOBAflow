@@ -2,7 +2,7 @@
 using Moq;
 // ✅ IUiDispatcher
 using Moba.SharedUI.Interface;
-using Moba.Backend.Services;
+using Moba.Backend.Service;
 
 namespace Moba.Test.TestBase;
 

@@ -1,6 +1,6 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.Backend.Services;
+namespace Moba.Backend.Service;
 
 /// <summary>
 /// Runtime state for Journey execution (not persisted to disk).
@@ -43,4 +43,17 @@ public class JourneySessionState
     /// Set to true when journey starts, false when stopped or completed.
     /// </summary>
     public bool IsActive { get; set; }
+
+    /// <summary>
+    /// Resets the session state to initial values.
+    /// </summary>
+    /// <param name="firstPos">The initial position to reset to (from Journey.FirstPos)</param>
+    public void Reset(int firstPos = 0)
+    {
+        Counter = 0;
+        CurrentPos = firstPos;
+        CurrentStationName = string.Empty;
+        LastFeedbackTime = null;
+        IsActive = true;
+    }
 }

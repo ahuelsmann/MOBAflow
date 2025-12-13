@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
 
+using Moba.Backend.Service;
 using Moba.Common.Configuration;
 
 namespace Moba.WinUI;
@@ -95,9 +96,9 @@ public partial class App
         services.AddSingleton(sp =>
         {
             var z21 = sp.GetRequiredService<Backend.Interface.IZ21>();
-            return new Backend.Services.ActionExecutor(z21);
+            return new Backend.Service.ActionExecutor(z21);
         });
-        services.AddSingleton<Backend.Services.WorkflowService>();
+        services.AddSingleton<WorkflowService>();
 
         // Domain.Solution - Pure POCO, no Settings initialization needed
         services.AddSingleton(sp => new Domain.Solution());

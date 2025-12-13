@@ -1,5 +1,6 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Moba.Backend.Network;
+using Moba.Backend.Service;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
 using Moba.WebApp.Components;
@@ -31,9 +32,9 @@ builder.Services.AddSingleton<Moba.Backend.Interface.IZ21, Moba.Backend.Z21>();
 builder.Services.AddSingleton(sp =>
 {
     var z21 = sp.GetRequiredService<Moba.Backend.Interface.IZ21>();
-    return new Moba.Backend.Services.ActionExecutor(z21);
+    return new Moba.Backend.Service.ActionExecutor(z21);
 });
-builder.Services.AddSingleton<Moba.Backend.Services.WorkflowService>();
+builder.Services.AddSingleton<WorkflowService>();
 
 // ✅ DataManager as Singleton (master data - simplified for Blazor Server)
 builder.Services.AddSingleton(sp => new Moba.Backend.Data.DataManager());

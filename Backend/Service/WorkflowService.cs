@@ -1,7 +1,8 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Backend.Services;
+namespace Moba.Backend.Service;
 
 using Interface;
+
 using Domain;
 
 using System.Diagnostics;
@@ -26,8 +27,12 @@ public class WorkflowService
     /// </summary>
     /// <param name="workflow">The workflow to execute</param>
     /// <param name="context">Execution context containing dependencies and state</param>
+    /// <exception cref="ArgumentNullException">Thrown when workflow or context is null</exception>
     public async Task ExecuteAsync(Workflow workflow, ActionExecutionContext context)
     {
+        ArgumentNullException.ThrowIfNull(workflow);
+        ArgumentNullException.ThrowIfNull(context);
+
         Debug.WriteLine($"▶ Starting workflow: {workflow.Name}");
 
         if (workflow.Actions == null || workflow.Actions.Count == 0)

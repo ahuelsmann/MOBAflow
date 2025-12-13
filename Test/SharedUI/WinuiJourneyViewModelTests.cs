@@ -2,7 +2,9 @@
 namespace Moba.Test.SharedUI;
 
 using Domain;
-using Moba.Backend.Services;
+
+using Moba.Backend.Service;
+
 using NUnit.Framework;
 
 [TestFixture]

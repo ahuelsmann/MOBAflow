@@ -27,6 +27,62 @@
                     Style="{ThemeResource SubtitleTextBlockStyle}"
                     Text="Journey Properties" />
 
+                <!--  Runtime State Section  -->
+                <StackPanel
+                    Padding="12"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="4"
+                    Spacing="8">
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{ThemeResource CaptionTextBlockStyle}"
+                        Text="RUNTIME STATE" />
+                    <Grid ColumnSpacing="16" RowSpacing="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            Text="Current Station:" />
+                        <TextBlock
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Text="{Binding CurrentStation, Mode=OneWay}" />
+
+                        <TextBlock
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            Text="Counter:" />
+                        <TextBlock
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Text="{Binding CurrentCounter, Mode=OneWay}" />
+
+                        <TextBlock
+                            Grid.Row="2"
+                            Grid.Column="0"
+                            Text="Current Position:" />
+                        <TextBlock
+                            Grid.Row="2"
+                            Grid.Column="1"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Text="{Binding CurrentPos, Mode=OneWay}" />
+                    </Grid>
+                </StackPanel>
+
                 <!--  Name  -->
                 <TextBox
                     Header="Name"

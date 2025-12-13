@@ -2,7 +2,7 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Manager;
-using Backend.Services;
+using Backend.Service;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -163,6 +163,49 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     /// Read-only from ViewModel perspective - managed by JourneyManager.
     /// </summary>
     public int CurrentPos => _state.CurrentPos;
+
+    /// <summary>
+    /// Updates the local SessionState from the JourneyManager's state and notifies UI.
+    /// Called by MainWindowViewModel when JourneyManager.StationChanged fires.
+    /// </summary>
+    /// <param name="state">The updated SessionState from JourneyManager</param>
+    public void UpdateFromSessionState(JourneySessionState state)
+    {
+        _state.Counter = state.Counter;
+        _state.CurrentPos = state.CurrentPos;
+        _state.CurrentStationName = state.CurrentStationName;
+        _state.LastFeedbackTime = state.LastFeedbackTime;
+        _state.IsActive = state.IsActive;
+
+        // Notify UI about property changes
+        OnPropertyChanged(nameof(CurrentStation));
+        OnPropertyChanged(nameof(CurrentCounter));
+        OnPropertyChanged(nameof(CurrentPos));
+    }
+
+    /// <summary>
+    /// Resets the journey to its initial state.
+    /// Clears counter, position, and station highlighting.
+    /// </summary>
+    [RelayCommand]
+    private void Reset()
+    {
+        // Reset the session state
+        _state.Reset((int)_journey.FirstPos);
+
+        // Reset IsCurrentStation for all stations
+        foreach (var stationVM in Stations)
+        {
+            stationVM.IsCurrentStation = false;
+        }
+
+        // Notify UI about property changes
+        OnPropertyChanged(nameof(CurrentStation));
+        OnPropertyChanged(nameof(CurrentCounter));
+        OnPropertyChanged(nameof(CurrentPos));
+
+        System.Diagnostics.Debug.WriteLine($"🔄 Journey '{Name}' reset to initial state");
+    }
 
     public BehaviorOnLastStop BehaviorOnLastStop
     {

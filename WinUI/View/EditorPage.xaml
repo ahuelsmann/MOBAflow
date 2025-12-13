@@ -20,6 +20,7 @@
 
             <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
             <converter:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
+            <converter:HexColorToBrushConverter x:Key="HexColorToBrushConverter" />
             <converter:BoolToGlyphConverter
                 x:Key="BoolToGlyphConverter"
                 FalseValue="&#xE76C;"
@@ -269,6 +270,16 @@
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
+
+                                        <!--  Current Station Indicator (visible only when IsCurrentStation=true)  -->
+                                        <Border
+                                            Grid.ColumnSpan="2"
+                                            Margin="-6"
+                                            Background="{ThemeResource SystemAccentColorLight2}"
+                                            CornerRadius="4"
+                                            Opacity="0.3"
+                                            Visibility="{x:Bind IsCurrentStation, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+
                                         <FontIcon
                                             Grid.Column="0"
                                             Margin="0,0,8,0"

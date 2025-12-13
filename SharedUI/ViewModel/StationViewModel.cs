@@ -106,13 +106,20 @@ public partial class StationViewModel : ObservableObject, IViewModelWrapper<Stat
 
     /// <summary>
     /// Gets the background color for this station based on its current state.
-    /// Returns green (#60A060) for active station, transparent otherwise.
+    /// Returns white (#FFFFFF) for active station, empty string (theme default) otherwise.
     /// </summary>
-    public string BackgroundColor => IsCurrentStation ? "#60A060" : "Transparent";
+    public string BackgroundColor => IsCurrentStation ? "#FFFFFF" : "";
+
+    /// <summary>
+    /// Gets the foreground (text) color for this station based on its current state.
+    /// Returns black (#000000) for active station (on white background), empty string (theme default) otherwise.
+    /// </summary>
+    public string ForegroundColor => IsCurrentStation ? "#000000" : "";
 
     partial void OnIsCurrentStationChanged(bool value)
     {
-        // Notify UI that background color has changed
+        // Notify UI that colors have changed
         OnPropertyChanged(nameof(BackgroundColor));
+        OnPropertyChanged(nameof(ForegroundColor));
     }
 }

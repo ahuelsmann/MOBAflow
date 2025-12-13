@@ -91,13 +91,15 @@ public partial class MainWindowViewModel
                 if (Solution.Projects.Count > 0)
                 {
                     var project = Solution.Projects[0];
-                    var executionContext = new Backend.Services.ActionExecutionContext
+                    var executionContext = new Backend.Service.ActionExecutionContext
                     {
                         Z21 = _z21
                     };
 
                     _journeyManager?.Dispose();
                     _journeyManager = new JourneyManager(_z21, project, _workflowService, executionContext);
+                    _journeyManager.StationChanged += OnJourneyStationChanged;
+                    _journeyManager.FeedbackReceived += OnJourneyFeedbackReceived;
                 }
 
                 ConnectToZ21Command.NotifyCanExecuteChanged();
@@ -152,7 +154,7 @@ public partial class MainWindowViewModel
                 
                 Debug.WriteLine($"🔍 [DEBUG] Creating ExecutionContext for JourneyManager");
                 
-                var executionContext = new Backend.Services.ActionExecutionContext
+                var executionContext = new Backend.Service.ActionExecutionContext
                 {
                     Z21 = _z21,
                     SpeakerEngine = null  // Will be set via MainWindowViewModel.SpeakerEngine property
@@ -161,8 +163,10 @@ public partial class MainWindowViewModel
                 Debug.WriteLine($"   - ExecutionContext.SpeakerEngine: {executionContext.SpeakerEngine?.Name ?? "NULL (not implemented yet)"}");
                 
                 _journeyManager = new JourneyManager(_z21, project, _workflowService, executionContext);
+                _journeyManager.StationChanged += OnJourneyStationChanged;
+                _journeyManager.FeedbackReceived += OnJourneyFeedbackReceived;
                 
-                Debug.WriteLine($"✅ [DEBUG] JourneyManager created");
+                Debug.WriteLine($"✅ [DEBUG] JourneyManager created with event subscriptions");
             }
 
             // Get InPort from selected journey or text field
@@ -181,6 +185,32 @@ public partial class MainWindowViewModel
 
             _z21.SimulateFeedback(inPort);
             Z21StatusText = $"Simulated feedback for InPort {inPort}";
+        }
+        catch (Exception ex)
+        {
+            Z21StatusText = $"Error: {ex.Message}";
+        }
+    }
+
+    private bool CanResetJourney() => SelectedJourney != null;
+
+    [RelayCommand(CanExecute = nameof(CanResetJourney))]
+    private void ResetJourney()
+    {
+        if (SelectedJourney == null) return;
+
+        try
+        {
+            // Delegate to JourneyViewModel.ResetCommand
+            SelectedJourney.ResetCommand.Execute(null);
+
+            // Also reset in JourneyManager if available
+            if (_journeyManager != null)
+            {
+                _journeyManager.Reset(SelectedJourney.Model);
+            }
+
+            Z21StatusText = $"Journey '{SelectedJourney.Name}' reset";
         }
         catch (Exception ex)
         {
@@ -281,6 +311,60 @@ public partial class MainWindowViewModel
             ConnectToZ21Command.NotifyCanExecuteChanged();
             DisconnectFromZ21Command.NotifyCanExecuteChanged();
             SetTrackPowerCommand.NotifyCanExecuteChanged();
+        });
+    }
+
+    /// <summary>
+    /// Handles JourneyManager.StationChanged events and updates the corresponding JourneyViewModel.
+    /// This bridges the gap between JourneyManager (Backend) and JourneyViewModel (UI).
+    /// </summary>
+    private void OnJourneyStationChanged(object? sender, Backend.Manager.StationChangedEventArgs e)
+    {
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            // Find the JourneyViewModel for this journey
+            var journeyVM = SelectedProject?.Journeys.FirstOrDefault(j => j.Id == e.JourneyId);
+            if (journeyVM != null)
+            {
+                // Manually notify property changes since the ViewModel's SessionState 
+                // is a dummy one and doesn't receive updates from JourneyManager
+                journeyVM.UpdateFromSessionState(e.SessionState);
+                
+                // Update IsCurrentStation for all stations in this journey
+                // This highlights the current station in the UI
+                foreach (var stationVM in journeyVM.Stations)
+                {
+                    stationVM.IsCurrentStation = stationVM.Model.Id == e.Station.Id;
+                }
+                
+                Debug.WriteLine($"📊 JourneyViewModel '{journeyVM.Name}' updated: Counter={e.SessionState.Counter}, Pos={e.SessionState.CurrentPos}, Station={e.SessionState.CurrentStationName}");
+            }
+            
+            // Update status text
+            Z21StatusText = $"Station: {e.Station.Name} | Counter: {e.SessionState.Counter} | Pos: {e.SessionState.CurrentPos}";
+        });
+    }
+
+    /// <summary>
+    /// Handles JourneyManager.FeedbackReceived events and updates the corresponding JourneyViewModel counter.
+    /// Fired on every feedback, not just when a station is reached.
+    /// </summary>
+    private void OnJourneyFeedbackReceived(object? sender, Backend.Manager.JourneyFeedbackEventArgs e)
+    {
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            // Find the JourneyViewModel for this journey
+            var journeyVM = SelectedProject?.Journeys.FirstOrDefault(j => j.Id == e.JourneyId);
+            if (journeyVM != null)
+            {
+                // Update counter in UI
+                journeyVM.UpdateFromSessionState(e.SessionState);
+                
+                Debug.WriteLine($"🔔 JourneyViewModel '{journeyVM.Name}' feedback: Counter={e.SessionState.Counter}");
+            }
+            
+            // Update status text with current counter
+            Z21StatusText = $"Feedback received | Counter: {e.SessionState.Counter} | Pos: {e.SessionState.CurrentPos}";
         });
     }
     #endregion
