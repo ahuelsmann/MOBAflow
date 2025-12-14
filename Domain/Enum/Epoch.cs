@@ -1,14 +1,15 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain.Enum;
 
+/// <summary>
+/// Railway epoch classification (European standard).
+/// </summary>
 public enum Epoch
 {
-    None,
-    I,
-    II,
-    III,
-    IV,
-    V,
-    VI,
-    VII,
+    I,      // 1835-1920
+    II,     // 1920-1945
+    III,    // 1945-1970
+    IV,     // 1970-1990
+    V,      // 1990-2006
+    VI      // 2006-present
 }
