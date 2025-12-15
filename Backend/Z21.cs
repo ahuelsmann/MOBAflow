@@ -96,19 +96,23 @@ public class Z21 : IZ21
     {
         // Stop keepalive timer first
         StopKeepaliveTimer();
-        
-        // Send LAN_LOGOFF to immediately free client slot on Z21
-        // This is critical for development: without it, the Z21 keeps "zombie clients"
-        // and can hit the 20-client limit after many debug sessions
-        try
+
+        // Only send LAN_LOGOFF if UDP is connected
+        if (_udp.IsConnected)
         {
-            await _udp.SendAsync(Z21Command.BuildLogoff()).ConfigureAwait(false);
-            _logger?.LogInformation("LAN_LOGOFF sent to Z21");
-        }
-        catch (Exception ex)
-        {
-            // Don't fail disconnect if logoff fails (e.g., network already down)
-            _logger?.LogWarning("Failed to send LAN_LOGOFF: {Message}", ex.Message);
+            // Send LAN_LOGOFF to immediately free client slot on Z21
+            // This is critical for development: without it, the Z21 keeps "zombie clients"
+            // and can hit the 20-client limit after many debug sessions
+            try
+            {
+                await _udp.SendAsync(Z21Command.BuildLogoff()).ConfigureAwait(false);
+                _logger?.LogInformation("LAN_LOGOFF sent to Z21");
+            }
+            catch (Exception ex)
+            {
+                // Don't fail disconnect if logoff fails (e.g., network already down)
+                _logger?.LogWarning("Failed to send LAN_LOGOFF: {Message}", ex.Message);
+            }
         }
         
         if (_cancellationTokenSource != null)

@@ -3,6 +3,7 @@ namespace Moba.WinUI.View;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 
 using SharedUI.ViewModel;
 
@@ -47,16 +48,26 @@ public sealed partial class JourneysPage : Page
         else if (e.DataView.Properties.TryGetValue("Workflow", out object? workflowObj) && workflowObj is WorkflowViewModel workflow)
         {
             ViewModel.AssignWorkflowToStationCommand.Execute(workflow);
-        }
-    }
+                }
+            }
 
-    private void CityListView_DoubleTapped(object sender, Microsoft.UI.Xaml.Input.DoubleTappedRoutedEventArgs e)
-    {
-        // Delegate to ViewModel Command
-        if (ViewModel.SelectedCity != null)
-        {
-            ViewModel.AddStationFromCityCommand.Execute(ViewModel.SelectedCity);
+            private void CityListView_DoubleTapped(object sender, Microsoft.UI.Xaml.Input.DoubleTappedRoutedEventArgs e)
+            {
+                // Delegate to ViewModel Command
+                if (ViewModel.SelectedCity != null)
+                {
+                    ViewModel.AddStationFromCityCommand.Execute(ViewModel.SelectedCity);
+                }
+            }
+
+            private void StationListView_DeleteKeyInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+            {
+                // Delegate to ViewModel Command
+                if (ViewModel.DeleteStationCommand.CanExecute(null))
+                {
+                    ViewModel.DeleteStationCommand.Execute(null);
+                    args.Handled = true;
+                }
+            }
+            #endregion
         }
-    }
-    #endregion
-}

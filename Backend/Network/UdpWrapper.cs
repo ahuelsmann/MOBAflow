@@ -47,6 +47,11 @@ public class UdpWrapper : IUdpClientWrapper
     private readonly Stopwatch _performanceTimer = Stopwatch.StartNew();
     private readonly object _statsLock = new object();
 
+    /// <summary>
+    /// Indicates whether the UDP wrapper is connected and ready to send/receive.
+    /// </summary>
+    public bool IsConnected => _client != null && !_disposed;
+
     public UdpWrapper(ILogger<UdpWrapper>? logger = null)
     {
         _logger = logger;

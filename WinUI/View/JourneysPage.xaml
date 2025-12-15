@@ -117,6 +117,9 @@
                 ItemsSource="{x:Bind ViewModel.SelectedJourney.Stations, Mode=OneWay}"
                 SelectedItem="{x:Bind ViewModel.SelectedStation, Mode=TwoWay}"
                 SelectionMode="Single">
+                <ListView.KeyboardAccelerators>
+                    <KeyboardAccelerator Key="Delete" Invoked="StationListView_DeleteKeyInvoked" />
+                </ListView.KeyboardAccelerators>
                 <i:Interaction.Behaviors>
                     <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.JourneysPageItemClickedCommand}" />
                 </i:Interaction.Behaviors>
