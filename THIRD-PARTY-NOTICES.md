@@ -34,7 +34,14 @@ MOBAflow uses the following open-source components. We are grateful to the devel
 - **Copyright:** © Microsoft Corporation
 - **Repository:** https://github.com/Azure-Samples/cognitive-services-speech-sdk
 - **Used in:** Sound
-- **Purpose:** Azure Text-to-Speech
+- **Purpose:** Azure Cognitive Services Text-to-Speech
+
+#### Newtonsoft.Json (MIT License)
+- **License:** MIT
+- **Copyright:** © James Newton-King
+- **Repository:** https://github.com/JamesNK/Newtonsoft.Json
+- **Used in:** Domain, Backend
+- **Purpose:** JSON serialization and deserialization
 
 ---
 
@@ -56,7 +63,7 @@ MOBAflow uses the following open-source components. We are grateful to the devel
 
 ---
 
-### Logging & Serialization
+### Logging
 
 #### Serilog (Apache-2.0 License)
 - **License:** Apache-2.0
@@ -81,6 +88,17 @@ MOBAflow uses the following open-source components. We are grateful to the devel
 
 ---
 
+### UI Libraries
+
+#### UraniumUI.Material (Apache-2.0 License)
+- **License:** Apache-2.0
+- **Copyright:** © Enis Necipoglu
+- **Repository:** https://github.com/enisn/UraniumUI
+- **Used in:** MAUI
+- **Purpose:** Material Design components for MAUI
+
+---
+
 ### Testing
 
 #### NUnit (MIT License)
@@ -99,18 +117,14 @@ MOBAflow uses the following open-source components. We are grateful to the devel
 
 ---
 
-### UI Libraries
-
-#### UraniumUI.Material (Apache-2.0 License)
-- **License:** Apache-2.0
-- **Copyright:** © Enis Necipoglu
-- **Repository:** https://github.com/enisn/UraniumUI
-- **Used in:** MAUI
-- **Purpose:** Material Design components for MAUI
-
----
-
 ### Build & DevOps
+
+#### SonarAnalyzer.CSharp (LGPL-3.0 License)
+- **License:** LGPL-3.0
+- **Copyright:** © SonarSource SA
+- **Repository:** https://github.com/SonarSource/sonar-dotnet
+- **Used in:** All projects
+- **Purpose:** Static code analysis
 
 #### Microsoft.SourceLink.AzureRepos.Git (MIT License)
 - **License:** MIT
@@ -125,6 +139,30 @@ MOBAflow uses the following open-source components. We are grateful to the devel
 - **Repository:** https://github.com/coverlet-coverage/coverlet
 - **Used in:** Test
 - **Purpose:** Code coverage collection
+
+---
+
+## Platform Frameworks
+
+### .NET 10 (LTS)
+- **License:** MIT
+- **Copyright:** © Microsoft Corporation
+- **Repository:** https://github.com/dotnet/runtime
+
+### WinUI 3 (Windows App SDK)
+- **License:** MIT
+- **Copyright:** © Microsoft Corporation
+- **Repository:** https://github.com/microsoft/WindowsAppSDK
+
+### .NET MAUI
+- **License:** MIT
+- **Copyright:** © Microsoft Corporation
+- **Repository:** https://github.com/dotnet/maui
+
+### Blazor Server
+- **License:** MIT
+- **Copyright:** © Microsoft Corporation
+- **Repository:** https://github.com/dotnet/aspnetcore
 
 ---
 
@@ -150,6 +188,47 @@ All dependencies are compatible with the **MIT License** of MOBAflow:
 - ✅ **MIT License:** Most packages (fully compatible)
 - ✅ **Apache-2.0:** Serilog, UraniumUI (permissive, compatible)
 - ✅ **BSD-3-Clause:** Moq (permissive, compatible)
+- ✅ **LGPL-3.0:** SonarAnalyzer (dev-only, not distributed)
+
+---
+
+## License Texts
+
+### MIT License
+
+```
+MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+### Apache License 2.0
+
+Serilog and UraniumUI are licensed under Apache 2.0. Full license text: https://www.apache.org/licenses/LICENSE-2.0
+
+### BSD-3-Clause License
+
+Moq is licensed under BSD-3-Clause. Full license text: https://opensource.org/licenses/BSD-3-Clause
+
+### LGPL-3.0 License
+
+SonarAnalyzer.CSharp is licensed under LGPL-3.0. Full license text: https://www.gnu.org/licenses/lgpl-3.0.html
 
 ---
 
@@ -163,6 +242,26 @@ dotnet list package --include-transitive
 
 ---
 
-**Last Updated:** 2025-12-05  
+## Updating This Document
+
+When adding new NuGet packages, please update this file with:
+1. Package name and version
+2. License type
+3. Copyright holder
+4. Repository URL
+5. Which project uses it
+6. Brief purpose description
+
+---
+
+## Acknowledgments
+
+We are grateful to all open-source maintainers whose work makes MOBAflow possible.
+
+Thank you! 🙏
+
+---
+
+**Last Updated:** 2025-12-11  
 **MOBAflow Version:** 1.0.0  
 **License:** MIT License (see [LICENSE](LICENSE))
