@@ -42,14 +42,7 @@
                     <div class="card-header">
                         <div class="track-header">
                             <h4 class="track-name">Track @stat.InPort</h4>
-                            @if (stat.IsCompleted)
-                            {
-                                <span class="status-badge completed">Completed</span>
-                            }
-                            else
-                            {
-                                <span class="status-badge in-progress">@stat.LapCountFormatted</span>
-                            }
+                            <span class="status-badge in-progress">@stat.LapCountFormatted</span>
                         </div>
                     </div>
                     <div class="card-body">

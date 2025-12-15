@@ -255,7 +255,6 @@ public partial class CounterViewModel : ObservableObject, IDisposable
         foreach (var stat in Statistics)
         {
             stat.TargetLapCount = value;
-            stat.IsCompleted = false; // Reset completion status
         }
     }
 
@@ -354,7 +353,6 @@ public partial class CounterViewModel : ObservableObject, IDisposable
         foreach (var stat in Statistics)
         {
             stat.Count = 0;
-            stat.IsCompleted = false;
             stat.LastLapTime = null;
             stat.LastFeedbackTime = null;
             stat.HasReceivedFirstLap = false; // ← Reset to red background
@@ -369,6 +367,55 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     private bool CanDisconnect() => IsConnected;
     private bool CanResetCounters() => IsConnected;
     private bool CanToggleTrackPower() => IsConnected;
+
+    /// <summary>
+    /// Performs graceful cleanup before app termination.
+    /// Disconnects from Z21 if connected, ensuring LAN_LOGOFF is sent.
+    /// Called from App.OnWindowDestroying or Android MainActivity.OnDestroy.
+    /// </summary>
+    public async Task CleanupAsync()
+    {
+        this.Log("🔄 CounterViewModel: CleanupAsync starting...");
+
+        try
+        {
+            if (IsConnected)
+            {
+                this.Log("📡 CounterViewModel: Disconnecting from Z21...");
+                await DisconnectAsync();
+                this.Log("✅ CounterViewModel: Z21 disconnect complete (LAN_LOGOFF sent)");
+            }
+            else
+            {
+                this.Log("ℹ️ CounterViewModel: Not connected, no disconnect needed");
+            }
+
+            // Persist any pending settings
+            await SaveSettingsAsync();
+        }
+        catch (Exception ex)
+        {
+            this.Log($"⚠️ CounterViewModel: Cleanup error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Toggles the connection state (connect or disconnect).
+    /// Used by Switch controls for unified connection toggle.
+    /// </summary>
+    /// <param name="connect">True to connect, false to disconnect.</param>
+    [RelayCommand]
+    public async Task SetConnectionAsync(bool connect)
+    {
+        if (connect)
+        {
+            await ConnectAsync();
+        }
+        else
+        {
+            await DisconnectAsync();
+        }
+    }
 
     /// <summary>
     /// Sets the track power ON or OFF.
@@ -524,32 +571,8 @@ public partial class CounterViewModel : ObservableObject, IDisposable
         // Increment lap count
         stat.Count++;
 
-        // Check if target reached (only trigger once)
-        if (stat.Count >= stat.TargetLapCount && !stat.IsCompleted)
-        {
-            stat.IsCompleted = true;
-            OnTargetReached(stat);
-        }
-
         // Note: StatusText no longer shows InPort feedback - this info is in Track Cards
         this.Log($"🔔 Feedback: InPort {feedbackResult.InPort} → Count: {stat.Count}/{stat.TargetLapCount}");
-    }
-
-    /// <summary>
-    /// Event raised when a track reaches its target lap count.
-    /// </summary>
-    public event EventHandler<InPortStatistic>? TargetReached;
-
-    /// <summary>
-    /// Called when a track reaches its target lap count.
-    /// Raises event for UI to show alert.
-    /// </summary>
-    private void OnTargetReached(InPortStatistic stat)
-    {
-        this.Log($"🎉 Target reached! InPort {stat.InPort}: {stat.Count} laps");
-
-        // Raise event for UI (MAUI MainPage can subscribe)
-        TargetReached?.Invoke(this, stat);
     }
 
     /// <summary>
@@ -661,9 +684,6 @@ public partial class InPortStatistic : ObservableObject
 
     [ObservableProperty]
     private int targetLapCount = 10; // Default: 10 laps
-
-    [ObservableProperty]
-    private bool isCompleted;
 
     [ObservableProperty]
     private TimeSpan? lastLapTime;

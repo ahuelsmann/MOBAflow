@@ -8,6 +8,7 @@ public partial class MainPage : ContentPage
 {
     private readonly CounterViewModel _viewModel;
     private readonly IUiDispatcher _uiDispatcher;
+    private bool _isUpdatingFromBinding;
 
     public MainPage(CounterViewModel viewModel, IUiDispatcher uiDispatcher)
     {
@@ -16,28 +17,45 @@ public partial class MainPage : ContentPage
         _uiDispatcher = uiDispatcher;
         BindingContext = _viewModel;
 
-        // Subscribe to TargetReached event for showing alert
-        _viewModel.TargetReached += OnTargetReached;
+        // Subscribe to property changes to detect binding updates
+        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
     }
 
-    private void OnTargetReached(object? sender, InPortStatistic stat)
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        // Show alert on UI thread using IUiDispatcher
-        _uiDispatcher.InvokeOnUi(async () =>
+        // Track when binding is updating the switches to avoid feedback loops
+        if (e.PropertyName == nameof(CounterViewModel.IsConnected) ||
+            e.PropertyName == nameof(CounterViewModel.IsTrackPowerOn))
         {
-            await DisplayAlertAsync(
-                "🎉 Target Reached!",
-                $"Track {stat.InPort} has completed {stat.Count} laps!\n\nLast lap: {stat.LastLapTimeFormatted}",
-                "OK"
-            );
-        });
+            _isUpdatingFromBinding = true;
+            // Reset flag after UI update completes
+            Dispatcher.Dispatch(() => _isUpdatingFromBinding = false);
+        }
     }
 
     private async void TrackPowerSwitch_Toggled(object sender, ToggledEventArgs e)
     {
-        if (_viewModel.SetTrackPowerCommand.CanExecute(e.Value))
-        {
-            await _viewModel.SetTrackPowerCommand.ExecuteAsync(e.Value);
-        }
+        // Skip if this toggle was triggered by binding update (not user action)
+        if (_isUpdatingFromBinding)
+            return;
+
+        // Skip if value already matches (prevents duplicate calls)
+        if (_viewModel.IsTrackPowerOn == e.Value)
+            return;
+
+        await _viewModel.SetTrackPowerCommand.ExecuteAsync(e.Value);
+    }
+
+    private async void ConnectionSwitch_Toggled(object sender, ToggledEventArgs e)
+    {
+        // Skip if this toggle was triggered by binding update (not user action)
+        if (_isUpdatingFromBinding)
+            return;
+
+        // Skip if value already matches (prevents duplicate calls)
+        if (_viewModel.IsConnected == e.Value)
+            return;
+
+        await _viewModel.SetConnectionCommand.ExecuteAsync(e.Value);
     }
 }

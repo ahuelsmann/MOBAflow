@@ -1,6 +1,8 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Smart;
 
+using Moba.SharedUI.ViewModel;
+
 public partial class App : Application
 {
 	private readonly IServiceProvider _services;
@@ -56,6 +58,36 @@ public partial class App : Application
 	{
 		// ✅ Create MainPage AFTER App is initialized
 		var mainPage = _services.GetRequiredService<MainPage>();
-		return new Window(mainPage);
+		var window = new Window(mainPage);
+
+		// ✅ Subscribe to lifecycle events for cleanup
+		window.Destroying += OnWindowDestroying;
+
+		return window;
+	}
+
+	/// <summary>
+	/// Called when the window is being destroyed (app closing).
+	/// Ensures Z21 disconnect and cleanup before app terminates.
+	/// </summary>
+	private async void OnWindowDestroying(object? sender, EventArgs e)
+	{
+		try
+		{
+			System.Diagnostics.Debug.WriteLine("🔄 App: OnWindowDestroying - Starting cleanup...");
+
+			// Get CounterViewModel and trigger graceful disconnect
+			var viewModel = _services.GetService<CounterViewModel>();
+			if (viewModel != null)
+			{
+				await viewModel.CleanupAsync();
+				viewModel.Dispose();
+				System.Diagnostics.Debug.WriteLine("✅ App: CounterViewModel cleanup complete");
+			}
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"⚠️ App: Cleanup error: {ex.Message}");
+		}
 	}
 }
