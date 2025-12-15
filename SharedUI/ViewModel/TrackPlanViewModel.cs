@@ -4,70 +4,147 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using Moba.Domain.TrackPlan;
+
 using System.Collections.ObjectModel;
 
 /// <summary>
-/// ViewModel for TrackPlanPage - displays physical track layout from AnyRail SVG.
-/// Shows sensor positions (InPort markers) and current train location.
+/// ViewModel for TrackPlanPage - displays physical track layout with clickable segments.
+/// Each segment can be selected and assigned an InPort for feedback sensors.
 /// </summary>
 public partial class TrackPlanViewModel : ObservableObject
 {
+    #region Fields
     private readonly MainWindowViewModel _mainViewModel;
+    private TrackLayout? _layout;
+    #endregion
 
     public TrackPlanViewModel(MainWindowViewModel mainViewModel)
     {
         _mainViewModel = mainViewModel;
 
-        // Subscribe to journey state changes
+        // Subscribe to journey and project state changes
         _mainViewModel.PropertyChanged += (s, e) =>
         {
-            if (e.PropertyName == nameof(MainWindowViewModel.SelectedJourney))
+            switch (e.PropertyName)
             {
-                OnPropertyChanged(nameof(CurrentJourneyName));
-                OnPropertyChanged(nameof(CurrentStationName));
-                OnPropertyChanged(nameof(CurrentLapDisplay));
+                case nameof(MainWindowViewModel.SelectedProject):
+                    OnPropertyChanged(nameof(AvailableJourneys));
+                    break;
+                case nameof(MainWindowViewModel.SelectedJourney):
+                    OnPropertyChanged(nameof(SelectedJourney));
+                    OnPropertyChanged(nameof(HasSelectedJourney));
+                    OnPropertyChanged(nameof(RouteStations));
+                    OnPropertyChanged(nameof(CurrentJourneyName));
+                    OnPropertyChanged(nameof(CurrentStationName));
+                    OnPropertyChanged(nameof(CurrentLapDisplay));
+                    break;
             }
         };
+
+        // Load the default layout
+        LoadDefaultLayout();
     }
 
-    #region Track Plan Properties
-    /// <summary>
-    /// Indicates whether a track plan SVG has been loaded.
-    /// </summary>
-    [ObservableProperty]
-    private bool hasTrackPlan;
+    #region Track Segments
 
     /// <summary>
-    /// Path to the loaded SVG file.
+    /// All track segments in the layout.
     /// </summary>
-    [ObservableProperty]
-    private string? trackPlanPath;
+    public ObservableCollection<TrackSegmentViewModel> Segments { get; } = [];
 
     /// <summary>
-    /// Raw SVG content for rendering.
+    /// Currently selected segment (for InPort assignment).
     /// </summary>
     [ObservableProperty]
-    private string? svgContent;
+    private TrackSegmentViewModel? selectedSegment;
+
+    /// <summary>
+    /// InPort value being entered for assignment.
+    /// NumberBox uses double, so we use double here and convert to uint when assigning.
+    /// </summary>
+    [ObservableProperty]
+    private double inPortInput;
+
+    /// <summary>
+    /// Indicates whether a track plan is loaded.
+    /// </summary>
+    public bool HasTrackPlan => Segments.Count > 0;
+
+    /// <summary>
+    /// Canvas width for the layout.
+    /// </summary>
+    public double CanvasWidth => _layout?.CanvasWidth ?? 1000;
+
+    /// <summary>
+    /// Canvas height for the layout.
+    /// </summary>
+    public double CanvasHeight => _layout?.CanvasHeight ?? 600;
+
+    /// <summary>
+    /// Name of the current layout.
+    /// </summary>
+    public string LayoutName => _layout?.Name ?? "No layout loaded";
+
+    /// <summary>
+    /// Track system description.
+    /// </summary>
+    public string TrackSystemInfo => _layout != null
+        ? $"{_layout.TrackSystem} ({_layout.Scale})"
+        : string.Empty;
+
+    /// <summary>
+    /// Number of segments with assigned InPorts.
+    /// </summary>
+    public int AssignedSensorCount => Segments.Count(s => s.HasInPort);
+
+    /// <summary>
+    /// Status text showing sensor assignment info.
+    /// </summary>
+    public string SensorStatusText => $"{AssignedSensorCount} sensors assigned";
+
     #endregion
 
-    #region Sensor Markers
-    /// <summary>
-    /// Collection of sensor markers to display on the track plan.
-    /// Positions will be set manually or from SVG metadata.
-    /// </summary>
-    public ObservableCollection<SensorMarker> SensorMarkers { get; } = new();
+    #region Journey Map
 
     /// <summary>
-    /// Status text showing active sensors.
+    /// All available journeys from the current project.
     /// </summary>
-    public string SensorStatusText => $"{SensorMarkers.Count} configured";
+    public ObservableCollection<JourneyViewModel>? AvailableJourneys =>
+        _mainViewModel.SelectedProject?.Journeys;
+
+    /// <summary>
+    /// Currently selected/active journey.
+    /// </summary>
+    public JourneyViewModel? SelectedJourney
+    {
+        get => _mainViewModel.SelectedJourney;
+        set
+        {
+            if (_mainViewModel.SelectedJourney != value)
+            {
+                _mainViewModel.SelectedJourney = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(HasSelectedJourney));
+                OnPropertyChanged(nameof(RouteStations));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Indicates whether a journey is selected.
+    /// </summary>
+    public bool HasSelectedJourney => SelectedJourney != null;
+
+    /// <summary>
+    /// Stations of the selected journey for route display.
+    /// </summary>
+    public ObservableCollection<StationViewModel>? RouteStations =>
+        SelectedJourney?.Stations;
+
     #endregion
 
-    #region Train Position
-    /// <summary>
-    /// Indicates whether the train indicator should be visible.
-    /// </summary>
-    public bool IsTrainVisible => _mainViewModel.SelectedJourney != null;
+    #region Journey Status
 
     /// <summary>
     /// Current journey name for status bar.
@@ -87,69 +164,153 @@ public partial class TrackPlanViewModel : ObservableObject
         get
         {
             var journey = _mainViewModel.SelectedJourney;
-            if (journey == null) return "-";
+            if (journey == null)
+            {
+                return "-";
+            }
+
             return $"{journey.CurrentCounter}/{journey.Stations.Count}";
         }
     }
+
     #endregion
 
     #region Commands
+
     /// <summary>
-    /// Import a track plan SVG file from AnyRail.
+    /// Selects a track segment for InPort assignment.
     /// </summary>
     [RelayCommand]
-    private async Task ImportTrackPlanAsync()
+    private void SelectSegment(TrackSegmentViewModel? segment)
     {
-        // TODO: Implement file picker and SVG loading
-        // This will be completed when AnyRail SVG structure is analyzed
-        await Task.CompletedTask;
+        // Deselect previous
+        if (SelectedSegment != null)
+        {
+            SelectedSegment.IsSelected = false;
+        }
+
+        SelectedSegment = segment;
+
+        // Select new
+        if (segment != null)
+        {
+            segment.IsSelected = true;
+            InPortInput = segment.AssignedInPort ?? double.NaN;
+        }
+        else
+        {
+            InPortInput = double.NaN;
+        }
     }
 
     /// <summary>
-    /// Add a sensor marker at a specific position.
+    /// Assigns the current InPortInput value to the selected segment.
     /// </summary>
     [RelayCommand]
-    private void AddSensorMarker(int inPort)
+    private void AssignInPort()
     {
-        // TODO: Allow user to place sensor markers on the track plan
-        SensorMarkers.Add(new SensorMarker
+        if (SelectedSegment == null || double.IsNaN(InPortInput) || InPortInput < 1 || InPortInput > 2048)
         {
-            InPort = inPort,
-            X = 100,  // Default position - will be set interactively
-            Y = 100,
-            IsActive = false
-        });
+            return;
+        }
+
+        var inPortValue = (uint)InPortInput;
+
+        // Check if InPort is already used by another segment
+        var existingSegment = Segments.FirstOrDefault(s =>
+            s.AssignedInPort == inPortValue && s != SelectedSegment);
+
+        if (existingSegment != null)
+        {
+            // Clear the previous assignment
+            existingSegment.AssignedInPort = null;
+        }
+
+        SelectedSegment.AssignedInPort = inPortValue;
+        OnPropertyChanged(nameof(AssignedSensorCount));
         OnPropertyChanged(nameof(SensorStatusText));
     }
+
+    /// <summary>
+    /// Clears the InPort assignment from the selected segment.
+    /// </summary>
+    [RelayCommand]
+    private void ClearInPort()
+    {
+        if (SelectedSegment == null)
+        {
+            return;
+        }
+
+        SelectedSegment.AssignedInPort = null;
+        InPortInput = double.NaN;
+        OnPropertyChanged(nameof(AssignedSensorCount));
+        OnPropertyChanged(nameof(SensorStatusText));
+    }
+
+    /// <summary>
+    /// Deselects the current segment.
+    /// </summary>
+    [RelayCommand]
+    private void DeselectSegment()
+    {
+        SelectSegment(null);
+    }
+
+    /// <summary>
+    /// Reloads the default layout.
+    /// </summary>
+    [RelayCommand]
+    private void ReloadLayout()
+    {
+        LoadDefaultLayout();
+    }
+
     #endregion
-}
 
-/// <summary>
-/// Represents a sensor marker on the track plan.
-/// </summary>
-public partial class SensorMarker : ObservableObject
-{
-    /// <summary>
-    /// The InPort number (feedback sensor address).
-    /// </summary>
-    [ObservableProperty]
-    private int inPort;
+    #region Private Methods
 
-    /// <summary>
-    /// X position on the track plan canvas.
-    /// </summary>
-    [ObservableProperty]
-    private double x;
+    private void LoadDefaultLayout()
+    {
+        _layout = TrackLayout.CreateHundeknochenMittelstadt();
 
-    /// <summary>
-    /// Y position on the track plan canvas.
-    /// </summary>
-    [ObservableProperty]
-    private double y;
+        Segments.Clear();
+        foreach (var segment in _layout.Segments)
+        {
+            Segments.Add(new TrackSegmentViewModel(segment));
+        }
+
+        OnPropertyChanged(nameof(HasTrackPlan));
+        OnPropertyChanged(nameof(CanvasWidth));
+        OnPropertyChanged(nameof(CanvasHeight));
+        OnPropertyChanged(nameof(LayoutName));
+        OnPropertyChanged(nameof(TrackSystemInfo));
+        OnPropertyChanged(nameof(AssignedSensorCount));
+        OnPropertyChanged(nameof(SensorStatusText));
+    }
 
     /// <summary>
-    /// Indicates whether this sensor is currently triggered.
+    /// Updates all segments based on feedback from Z21.
     /// </summary>
-    [ObservableProperty]
-    private bool isActive;
+    /// <param name="inPort">The InPort that received feedback.</param>
+    /// <param name="isOccupied">Whether the track section is occupied.</param>
+    public void UpdateFeedback(uint inPort, bool isOccupied)
+    {
+        foreach (var segment in Segments)
+        {
+            segment.UpdateFeedback(inPort, isOccupied);
+        }
+    }
+
+    #endregion
+
+    partial void OnSelectedSegmentChanged(TrackSegmentViewModel? value)
+    {
+        OnPropertyChanged(nameof(HasSelectedSegment));
+    }
+
+    /// <summary>
+    /// Indicates whether a segment is currently selected.
+    /// </summary>
+    public bool HasSelectedSegment => SelectedSegment != null;
 }

@@ -1,153 +1,169 @@
-# MOBAflow - Continue Session: Track Visualization
+# MOBAflow - Track Visualization
 
-**Erstellt:** 2025-01-XX (Büro)  
-**Für:** Zuhause-Session mit AnyRail SVG Export
-
----
-
-## 📋 Status: Grundgerüst fertig ✅
-
-### Neue Pages erstellt:
-
-| Page | Datei | Zweck |
-|------|-------|-------|
-| **Track Plan** | `WinUI/View/TrackPlanPage.xaml` | Physischer Gleisplan (Option A) |
-| **Journey Map** | `WinUI/View/JourneyMapPage.xaml` | Virtuelle Streckenansicht (Option B) |
-
-### ViewModels:
-
-| ViewModel | Datei |
-|-----------|-------|
-| `TrackPlanViewModel` | `SharedUI/ViewModel/TrackPlanViewModel.cs` |
-| `JourneyMapViewModel` | `SharedUI/ViewModel/JourneyMapViewModel.cs` |
-
-### Navigation hinzugefügt:
-- `MainWindow.xaml` - Menüeinträge für beide Pages
-- `MainWindow.xaml.cs` - Navigation Handler
-- `App.xaml.cs` - DI Registrierung
+**Aktualisiert:** 2025-01-15  
+**Gleissystem:** Piko A-Gleis (H0)  
+**Layout:** Hundeknochen Mittelstadt (266cm x 110cm)
 
 ---
 
-## 🏠 Was zuhause zu tun ist:
+## 📋 Status: In Arbeit 🔧
 
-### 1. AnyRail SVG Export bereitstellen
+### ✅ Erledigt
 
-Exportiere den Gleisplan aus AnyRail als SVG:
-- **Datei → Exportieren → SVG**
-- Speichere die Datei im Projekt oder teile den Inhalt
+- [x] **TrackPlanPage** mit kombinierter Ansicht (Track Plan + Journey Map)
+- [x] **Segment Details Panel** - immer sichtbar (wie Properties Panel)
+- [x] **InPort-Zuweisung** - NumberBox + Assign/Clear Buttons
+- [x] **Journey Map** unten integriert (Station-Route-Visualisierung)
+- [x] **Exakte Gleis-Sequenzen** aus AnyRail-Screenshot übernommen
+- [x] **Piko A-Gleis Spezifikationen** dokumentiert
 
-### 2. SVG Struktur analysieren
+### ❌ Offen (TODO für morgen)
 
-Copilot soll die SVG-Datei analysieren:
-```
-Zeig mir die ersten 100 Zeilen der AnyRail SVG-Datei
-```
-
-Wichtige Fragen:
-- Wie sind Gleise strukturiert? (`<path>`, `<line>`, `<polyline>`?)
-- Gibt es Gruppen/Layer für Weichen?
-- Sind Beschriftungen/IDs vorhanden?
-
-### 3. Sensor-Positionen definieren
-
-Deine 3 Rückmelder (InPort 1, 2, 3):
-- Wo sind sie physisch auf der Anlage?
-- Wie sollen sie im SVG markiert werden?
-
-**Option A:** Manuell X/Y Koordinaten eingeben
-**Option B:** Interaktiv per Klick auf den Gleisplan setzen
-
-### 4. SVG Rendering implementieren
-
-Mögliche Ansätze:
-- **WebView2** - SVG direkt anzeigen
-- **Win2D** - SVG zu Canvas rendern
-- **Svg.Skia** - NuGet Package für SVG Parsing
-
-### 5. Live-Updates verbinden
-
-`JourneyManager.StationChanged` Event → UI Update:
-- Aktive Station highlighten
-- Train-Icon bewegen (falls Position bekannt)
-- Sensor-Marker aktivieren bei Feedback
+- [ ] **Kurven werden nicht angezeigt** - SVG Arc Geometrie prüfen!
+- [ ] **JourneyMapPage entfernen** (obsolet, in TrackPlanPage integriert)
+- [ ] **Live-Sensor-Highlighting** bei Z21 Feedback Events
 
 ---
 
-## 📁 Benötigte Dateien von dir:
+## 🐛 Aktuelles Problem: Kurven fehlen!
 
-1. **AnyRail SVG Export** - `gleisplan.svg`
-2. **Optional:** DXF Export falls SVG nicht ausreicht
-3. **Info:** Welcher Sensor ist wo auf dem Gleisplan?
+Im Screenshot sind nur die **geraden Gleise** sichtbar, die **Kurven (R1, R2, R3)** fehlen.
 
----
+### Vermutete Ursache:
+Die SVG Arc Path-Berechnung (`AddSemicircle`) erzeugt möglicherweise ungültige Koordinaten oder die Bögen sind außerhalb des sichtbaren Canvas-Bereichs.
 
-## 🔧 Bereits implementierte Features:
-
-### TrackPlanPage:
-- [ ] SVG Container (Placeholder)
-- [x] Sensor Markers Overlay (ItemsControl mit Canvas)
-- [x] Train Position Indicator (Placeholder)
-- [x] Status Bar (Station, Lap, Journey)
-- [x] Import Button (Command vorbereitet)
-- [x] SensorMarker Model (InPort, X, Y, IsActive)
-
-### JourneyMapPage:
-- [x] Journey Selector (ComboBox)
-- [x] Horizontale Stations-Route
-- [x] Current Station Indicator
-- [x] Progress/Counter Status Bar
-- [ ] Converters für Styling (BoolToFontWeight, etc.)
+### Debug-Schritte für morgen:
+1. Koordinaten in `AddSemicircle()` loggen
+2. Prüfen ob Kurven innerhalb Canvas-Grenzen liegen (0-1000, 0-420)
+3. SVG Arc Syntax validieren: `M x1,y1 A rx,ry 0 0 sweep x2,y2`
 
 ---
 
-## ⚠️ Bekannte TODOs:
+## 🎯 Piko A-Gleis Spezifikationen (aus PDF)
 
-### Converters fehlen in XAML:
-Die folgenden Converter werden in den Templates referenziert, müssen aber noch erstellt werden:
-- `BoolToColorConverter`
-- `BoolToVisibilityConverterInverted`
-- `BoolToFontWeightConverter`
-- `BoolToAccentBrushConverter`
-- `TrackNumberConverter`
-- `ExitSideConverter`
+### Kurven (30° pro Stück, 6 = 180°)
 
-### TrackPlanViewModel:
-```csharp
-// TODO in ImportTrackPlanAsync:
-// - File Picker öffnen
-// - SVG laden und parsen
-// - Gleise rendern
-```
+| Artikel | Bezeichnung | Radius | Abstand |
+|---------|-------------|--------|---------|
+| 55211 | R1 | 360.0 mm | - |
+| 55212 | R2 | 421.9 mm | 61.9 mm |
+| 55213 | R3 | 483.8 mm | 61.9 mm |
+| 55214 | R4 | 545.6 mm | 61.9 mm |
 
----
+### Geraden
 
-## 💡 Prompt für Copilot zuhause:
+| Artikel | Bezeichnung | Länge |
+|---------|-------------|-------|
+| 55200 | G239 | 239 mm |
+| 55201 | G231 | 231 mm |
+| 55202 | G62 | 62 mm |
+| 55203 | G119 | 119 mm |
 
-```
-Ich habe die AnyRail SVG Datei. Hier ist der Inhalt:
-[SVG-Inhalt einfügen oder Datei angeben]
+### Weichen
 
-Analysiere die Struktur und implementiere:
-1. SVG Rendering in TrackPlanPage
-2. Sensor-Marker Positionierung
-3. Die fehlenden Converter
-```
+| Artikel | Bezeichnung | Länge | Winkel |
+|---------|-------------|-------|--------|
+| 55220 | WL (Links) | 239 mm | 15° |
+| 55221 | WR (Rechts) | 239 mm | 15° |
+| 55224 | W3 (3-Wege) | 239 mm | 15° |
+| 55226 | DKW | 239 mm | 15° |
 
 ---
 
-## 🎯 Ziel der Visualisierung:
+## 🗺️ Exakte Gleis-Sequenzen (aus AnyRail-Screenshot)
+
+### Obere Station (4 Gleise)
+
+| Gleis | Links | Gerade Strecke | Rechts |
+|-------|-------|----------------|--------|
+| **1** | R3 | WR - G231 - G231 - G231 - G239 - G231 - WL | R3 |
+| **2** | R2 | G231 - W3 - WR - G231 - G231 - W3 - G231 | R2 |
+| **3** | R1 | WL - G231 - G231 - DKW - G231 - G231 - WR | R1 |
+| **4** | - | G62 - G231 - G231 - G62 - G119 - G239 - WR - G119 - G62 - G231 - G62 | - |
+
+### Untere Station (3 Gleise)
+
+| Gleis | Links | Gerade Strecke | Rechts |
+|-------|-------|----------------|--------|
+| **5** | R1 | G231 - G239 - G231 - G239 - G231 - G239 - G231 | R1 |
+| **6** | R2 | G231 - G239 - G231 - G239 - G231 - G239 - G231 | R2 |
+| **7** | R3 | G231 - G239 - G231 - G239 - G231 - G239 - G231 | R3 |
+
+### G62 Extensions
+- Links und rechts am äußersten Ring (Gleis 1 oben, Gleis 7 unten)
+
+---
+
+## 🏗️ Architektur
+
+### Dateien
+
+| Datei | Status | Zweck |
+|-------|--------|-------|
+| `Domain/TrackPlan/TrackLayout.cs` | ✅ | Factory für Hundeknochen-Layout |
+| `Domain/TrackPlan/TrackSegment.cs` | ✅ | Einzelnes Gleissegment |
+| `Domain/TrackPlan/TrackSegmentType.cs` | ✅ | Enum: Straight, Curve, Switch, etc. |
+| `SharedUI/ViewModel/TrackPlanViewModel.cs` | ✅ | ViewModel mit Journey-Integration |
+| `SharedUI/ViewModel/TrackSegmentViewModel.cs` | ✅ | ViewModel für einzelnes Segment |
+| `WinUI/View/TrackPlanPage.xaml` | ✅ | UI mit Canvas + Journey Map |
+| `WinUI/View/JourneyMapPage.xaml` | ❌ TODO: Entfernen | Obsolet |
+
+### UI-Layout
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                      Track Plan (AnyRail SVG)                   │
-│                                                                 │
-│         ╔═══════════════════════════════════════╗               │
-│         ║                                       ║               │
-│         ║    ┌─────────────────────┐            ║               │
-│         ║    │   BAHNHOF           │ ← [1]      ║  ← InPort 1   │
-│    ═════╬════│   🚂 RE 78          │════════════╬═══            │
-│         ║    └─────────────────────┘   [2]      ║  ← InPort 2   │
-│         ║                                       ║               │
+│  🚂 Track Plan                                    [Reload]      │
+│  Piko A-Gleis (H0)                                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                 │ Segment       │
+│  ╭─────────────────────────────────────────╮    │ Details       │
+│  │         TRACK PLAN (Canvas)             │    ├───────────────┤
+│  │  [Kurven fehlen noch!]                  │    │ Name: ...     │
+│  │  ════════════════════════════════════   │    │ Code: G231    │
+│  │  ════════════════════════════════════   │    │ Layer: ...    │
+│  │  ════════════════════════════════════   │    ├───────────────┤
+│  │  ════════════════════════════════════   │    │ InPort: [___] │
+│  │                                         │    │ [Assign][Clear│
+│  │  ════════════════════════════════════   │    │               │
+│  │  ════════════════════════════════════   │    │               │
+│  │  ════════════════════════════════════   │    │               │
+│  ╰─────────────────────────────────────────╯    │               │
+├─────────────────────────────────────────────────────────────────┤
+│  🚂 Journey: [Dropdown]                                         │
+│  ●────────●────────●────────●────────●                          │
+│  Station1  Station2  Station3  Station4                         │
+├─────────────────────────────────────────────────────────────────┤
+│  Station: ... | Lap: 2/6 | Journey: RE78 | 0 sensors assigned  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📝 Nächste Schritte (Morgen)
+
+1. **Kurven-Bug fixen**
+   - `AddSemicircle()` debuggen
+   - Koordinaten validieren
+   - SVG Arc Syntax prüfen
+
+2. **JourneyMapPage.xaml entfernen**
+   - Aus Navigation entfernen
+   - Datei löschen
+
+3. **Live-Integration testen**
+   - Z21 Feedback → Segment-Highlighting
+   - Journey Station → Journey Map aktualisieren
+
+---
+
+## 💡 Hinweise
+
+- **Canvas-Größe:** 1000 x 420 px
+- **Kurven-Zentren:** Links X=140, Rechts X=860
+- **Center Y:** 210 (Mitte des Canvas)
+- **Kurvenradien:** R1=65px, R2=88px, R3=110px (skaliert)
+
+Gute Nacht! 🌙
 │         ╚═══════════════[3]═════════════════════╝  ← InPort 3   │
 │                                                                 │
 ├─────────────────────────────────────────────────────────────────┤
