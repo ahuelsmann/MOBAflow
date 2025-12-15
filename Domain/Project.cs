@@ -17,6 +17,7 @@ public class Project
         Trains = new List<Train>();
         Workflows = new List<Workflow>();
         Journeys = new List<Journey>();
+        FeedbackPoints = new List<FeedbackPointOnTrack>();
     }
 
     public string Name { get; set; } = string.Empty;
@@ -29,4 +30,5 @@ public class Project
     public List<Train> Trains { get; set; }
     public List<Workflow> Workflows { get; set; }
     public List<Journey> Journeys { get; set; }
+    public List<FeedbackPointOnTrack> FeedbackPoints { get; set; }
 }

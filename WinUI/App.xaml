@@ -3,19 +3,19 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:converter="using:Moba.WinUI.Converter">
-  <Application.Resources>
-    <ResourceDictionary>
-      <ResourceDictionary.MergedDictionaries>
-        <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
-        <ResourceDictionary Source="/Resources/EntityTemplates.xaml" />
-      </ResourceDictionary.MergedDictionaries>
-      <!--  Global Converters  -->
-      <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
-      <converter:HexColorToBrushConverter x:Key="HexColorToBrushConverter" />
-      <converter:BoolToFontWeightConverter x:Key="BoolToFontWeightConverter" />
-      <converter:BoolToAccentBrushConverter x:Key="BoolToAccentBrushConverter" />
-      <converter:TrackNumberConverter x:Key="TrackNumberConverter" />
-      <converter:ExitSideConverter x:Key="ExitSideConverter" />
-    </ResourceDictionary>
-  </Application.Resources>
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+                <ResourceDictionary Source="/Resources/EntityTemplates.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <!--  Global Converters  -->
+            <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <converter:HexColorToBrushConverter x:Key="HexColorToBrushConverter" />
+            <converter:BoolToFontWeightConverter x:Key="BoolToFontWeightConverter" />
+            <converter:BoolToAccentBrushConverter x:Key="BoolToAccentBrushConverter" />
+            <converter:TrackNumberConverter x:Key="TrackNumberConverter" />
+            <converter:ExitSideConverter x:Key="ExitSideConverter" />
+        </ResourceDictionary>
+    </Application.Resources>
 </Application>

@@ -36,7 +36,7 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 | **Backend Work** | `.github/instructions/backend.instructions.md` | *Manager.cs, *Service.cs, SessionState, IUiDispatcher, JourneyManager |
 | **WinUI UI** | `.github/instructions/winui.instructions.md` | .xaml, EditorPage, ContentControl, x:Bind, DataTemplate, SelectorBar |
 | **ViewModel** | `.github/instructions/winui.instructions.md` | *ViewModel.cs, ObservableProperty, RelayCommand, MVVM |
-| **Domain Entities** | Inline rules below | Journey, Station, Train, Locomotive, Workflow (check: GUID refs?) |
+| **Domain Entities** | Inline rules below | Journey, Station, Train, Locomotive, Workflow, FeedbackPointOnTrack (check: GUID refs?) |
 | **Tests** | `.github/instructions/test.instructions.md` | Test.csproj, [Test], FakeUdpClient, NUnit |
 | **State Management** | `.github/instructions/hasunsavedchanges-patterns.instructions.md` | UndoRedo, HasUnsavedChanges, StateManager |
 | **MAUI Mobile** | `.github/instructions/maui.instructions.md` | .razor, MainThread, MOBAsmart |
@@ -49,10 +49,9 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 ## 🏗️ Architecture Quick Reference (Ultra-Compact)
 
 ### **Domain Layer (Pure POCOs)**
-- ✅ **YES:** Pure C# classes, GUID references (`List<Guid> StationIds`), Value Objects
-### **Domain Layer (Pure POCOs)**
 - ✅ **YES:** Pure C# classes, GUID references for shared entities (`List<Guid> LocomotiveIds`), Value Objects
 - ✅ **YES:** Embedded objects for owned entities (`Journey.Stations = List<Station>` - Stations belong to Journey)
+- ✅ **YES:** Natural keys where appropriate (`FeedbackPointOnTrack.InPort` as unique ID - each value once per project)
 - ❌ **NO:** INotifyPropertyChanged, Attributes, UI code
 
 ### **Backend Layer (Platform-Independent)**
