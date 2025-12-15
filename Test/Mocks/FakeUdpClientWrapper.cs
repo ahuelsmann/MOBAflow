@@ -9,6 +9,7 @@ public sealed class FakeUdpClientWrapper : IUdpClientWrapper
     public event EventHandler<UdpReceivedEventArgs>? Received;
 
     public bool Connected { get; private set; }
+    public bool IsConnected => Connected;
     public List<byte[]> SentPayloads { get; } = new();
 
     public Task ConnectAsync(IPAddress address, int port = 21105, CancellationToken cancellationToken = default)

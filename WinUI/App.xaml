@@ -12,6 +12,10 @@
       <!--  Global Converters  -->
       <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
       <converter:HexColorToBrushConverter x:Key="HexColorToBrushConverter" />
+      <converter:BoolToFontWeightConverter x:Key="BoolToFontWeightConverter" />
+      <converter:BoolToAccentBrushConverter x:Key="BoolToAccentBrushConverter" />
+      <converter:TrackNumberConverter x:Key="TrackNumberConverter" />
+      <converter:ExitSideConverter x:Key="ExitSideConverter" />
     </ResourceDictionary>
   </Application.Resources>
 </Application>

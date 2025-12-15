@@ -2,6 +2,7 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 using Domain;
 
@@ -55,7 +56,36 @@ public partial class StationViewModel : ObservableObject, IViewModelWrapper<Stat
     public Guid? WorkflowId
     {
         get => _model.WorkflowId;
-        set => SetProperty(_model.WorkflowId, value, _model, (m, v) => m.WorkflowId = v);
+        set
+        {
+            if (SetProperty(_model.WorkflowId, value, _model, (m, v) => m.WorkflowId = v))
+            {
+                OnPropertyChanged(nameof(WorkflowName));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the name of the assigned workflow, or a placeholder if none is assigned.
+    /// </summary>
+    public string WorkflowName
+    {
+        get
+        {
+            if (_model.WorkflowId == null) return "(Drop workflow here)";
+            var workflow = _project.Workflows.FirstOrDefault(w => w.Id == _model.WorkflowId);
+            return workflow?.Name ?? "(Unknown workflow)";
+        }
+    }
+
+    /// <summary>
+    /// Command to assign a workflow to this station via drag & drop.
+    /// </summary>
+    [RelayCommand]
+    private void AssignWorkflow(WorkflowViewModel? workflow)
+    {
+        if (workflow == null) return;
+        WorkflowId = workflow.Model.Id;
     }
 
     public bool IsExitOnLeft

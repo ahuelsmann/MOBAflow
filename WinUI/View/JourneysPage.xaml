@@ -17,7 +17,9 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="250" MinWidth="200" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" MinWidth="200" />
+            <ColumnDefinition Width="200" MinWidth="150" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="200" MinWidth="150" />
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition
                 Width="350"
@@ -208,8 +210,54 @@
             Width="1"
             Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
-        <!--  Column 6: Properties Panel  -->
+        <!--  Column 6: Workflow Library (for Drag & Drop to Stations)  -->
         <Grid Grid.Column="6" Padding="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <TextBlock
+                Grid.Row="0"
+                Padding="8,0,0,8"
+                FontWeight="SemiBold"
+                Style="{StaticResource SubtitleTextBlockStyle}"
+                Text="Workflow Library" />
+            <ListView
+                x:Name="WorkflowLibraryListView"
+                Grid.Row="1"
+                CanDragItems="True"
+                DragItemsStarting="WorkflowListView_DragItemsStarting"
+                ItemsSource="{x:Bind ViewModel.SelectedProject.Workflows, Mode=OneWay}"
+                SelectionMode="Single">
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="viewmodel:WorkflowViewModel">
+                        <Grid Padding="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <FontIcon
+                                Grid.Column="0"
+                                Margin="0,0,8,0"
+                                FontSize="16"
+                                Glyph="&#xE9D5;" />
+                            <TextBlock
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Text="{x:Bind Name, Mode=OneWay}" />
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Grid>
+
+        <Border
+            Grid.Column="7"
+            Width="1"
+            Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+        <!--  Column 8: Properties Panel  -->
+        <Grid Grid.Column="8" Padding="8">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>

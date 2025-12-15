@@ -72,30 +72,6 @@
       ],
       "Workflows": [
         {
-          "Id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
-          "Name": "Platform Announcement",
-          "Description": "",
-          "Actions": [
-            {
-              "Id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-              "Name": "Attention Signal",
-              "Number": 0,
-              "Type": 2,
-              "Parameters": {}
-            },
-            {
-              "Id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
-              "Name": "Departure Announcement",
-              "Number": 0,
-              "Type": 0,
-              "Parameters": {}
-            }
-          ],
-          "InPort": 2,
-          "IsUsingTimerToIgnoreFeedbacks": true,
-          "IntervalForTimerToIgnoreFeedbacks": 3.0
-        },
-        {
           "Id": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
           "Name": "Arrival Main Station",
           "Description": "",
@@ -108,7 +84,7 @@
               "Parameters": {}
             }
           ],
-          "InPort": 11,
+          "InPort": 0,
           "IsUsingTimerToIgnoreFeedbacks": false,
           "IntervalForTimerToIgnoreFeedbacks": 0.0
         }
@@ -126,7 +102,7 @@
               "Description": null,
               "InPort": 0,
               "NumberOfLapsToStop": 2,
-              "WorkflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+              "WorkflowId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
               "IsExitOnLeft": true,
               "Track": 1,
               "Arrival": null,
@@ -138,7 +114,7 @@
               "Description": null,
               "InPort": 0,
               "NumberOfLapsToStop": 2,
-              "WorkflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+              "WorkflowId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
               "IsExitOnLeft": false,
               "Track": 1,
               "Arrival": null,
@@ -150,7 +126,7 @@
               "Description": null,
               "InPort": 0,
               "NumberOfLapsToStop": 2,
-              "WorkflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+              "WorkflowId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
               "IsExitOnLeft": true,
               "Track": 1,
               "Arrival": null,
@@ -162,7 +138,7 @@
               "Description": null,
               "InPort": 0,
               "NumberOfLapsToStop": 2,
-              "WorkflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+              "WorkflowId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
               "IsExitOnLeft": true,
               "Track": 1,
               "Arrival": null,
@@ -174,7 +150,7 @@
               "Description": null,
               "InPort": 0,
               "NumberOfLapsToStop": 2,
-              "WorkflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+              "WorkflowId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
               "IsExitOnLeft": true,
               "Track": 1,
               "Arrival": null,
@@ -186,7 +162,7 @@
               "Description": null,
               "InPort": 0,
               "NumberOfLapsToStop": 2,
-              "WorkflowId": null,
+              "WorkflowId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
               "IsExitOnLeft": false,
               "Track": 1,
               "Arrival": null,

@@ -32,6 +32,16 @@ public sealed partial class JourneysPage : Page
         }
     }
 
+    private void WorkflowListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
+    {
+        if (e.Items.FirstOrDefault() is WorkflowViewModel workflow)
+        {
+            e.Data.Properties.Add("Workflow", workflow);
+            e.Data.RequestedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Link;
+            e.Data.SetText(workflow.Name);
+        }
+    }
+
     private void StationListView_DragOver(object sender, DragEventArgs e)
     {
         e.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
