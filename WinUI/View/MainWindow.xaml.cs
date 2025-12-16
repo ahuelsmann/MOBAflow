@@ -184,6 +184,11 @@ public sealed partial class MainWindow
                 ContentFrame.Content = workflowsPage;
                 break;
 
+            case "trackplan":
+                var trackPlanPage = _serviceProvider.GetRequiredService<TrackPlanPage>();
+                ContentFrame.Content = trackPlanPage;
+                break;
+
             case "journeymap":
                 var journeyMapPage = _serviceProvider.GetRequiredService<JourneyMapPage>();
                 ContentFrame.Content = journeyMapPage;
