@@ -87,12 +87,25 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 - ✅ **Event-to-Command Migration** (100% complete)
   - All ListViews use XAML Behaviors ✅ | Code-behind handlers removed ✅
   - Version 3.0.0 unified namespaces ✅
+- ✅ **AnyRail Import** (100% complete)
+  - XML parsing ✅ | SVG path generation ✅ | Article code detection ✅
 
 ### **Known Issues**
 - ✅ **Resolved:** Build errors fixed (Event-to-Command + namespace unification)
 - ✅ **Resolved:** ItemClick refresh issues (wiederholte Klicks funktionieren jetzt)
+- ✅ **Resolved:** AnyRail curves direction (sweep-flag corrected)
 
 ### **Recent Wins (Dec 2025)**
+- ✅ **AnyRail Track Plan Import** (Dec 11) → Full XML import with article code detection
+  - Old: Manual track layout factory methods (400+ LOC)
+  - New: AnyRail XML import with automatic geometry parsing
+  - **Files:** `Domain/TrackPlan/AnyRailLayout.cs`, `TrackPlanViewModel.cs`
+  - **Features:**
+    - Parse AnyRail XML (lines, arcs, endpoints, connections)
+    - Generate SVG path data for WinUI rendering
+    - Detect article codes from geometry (R1/R2/R3 from radius, G62/G119/G231 from length)
+    - Support for: Straight, Curve, WL, WR, DWW (3-way), DKW (double slip)
+  - **Legacy Cleanup:** Removed `TrackLayout.CreateHundeknochenMittelstadt()` (400 LOC → 47 LOC)
 - ✅ **PropertyGrid Modernization** → -70% code, native WinUI 3 patterns
   - Old: SimplePropertyGrid (350 LOC, Reflection)
   - New: ContentControl + DataTemplateSelector (200 LOC XAML)
@@ -111,17 +124,22 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 
 ## 🚨 Past Mistakes (Never Repeat!)
 
-### **1. PropertyGrid Anti-Pattern (Dec 2025)**
+### **1. Manual Track Layout Factory Methods (Dec 2025)**
+- ❌ **Mistake:** Hand-coded track layout with hardcoded coordinates (400+ LOC)
+- ✅ **Solution:** Import from AnyRail XML (structured data with exact geometry)
+- 📉 **Impact:** -350 LOC, precise rendering, maintainable
+
+### **2. PropertyGrid Anti-Pattern (Dec 2025)**
 - ❌ **Mistake:** Custom Reflection-based PropertyGrid (350 LOC)
 - ✅ **Solution:** ContentControl + DataTemplateSelector (native WinUI 3)
 - 📉 **Impact:** -480 LOC (-70%), compiled bindings, native patterns
 
-### **2. ClearOtherSelections Complexity**
+### **3. ClearOtherSelections Complexity**
 - ❌ **Mistake:** Manual selection cleanup logic (35 LOC)
 - ✅ **Solution:** ContentControl automatic template switching
 - 📉 **Impact:** -35 LOC, automatic behavior, simpler code
 
-### **3. Manual State Override in Commands (Dec 2025)**
+### **4. Manual State Override in Commands (Dec 2025)**
 - ❌ **Mistake:** Manually resetting system state values in commands (race conditions)
 - ✅ **Solution:** Filter events based on state in event handlers
 - 📉 **Impact:** Eliminated race conditions, deterministic behavior
@@ -145,11 +163,40 @@ private void UpdateSystemState(SystemState state)
 }
 ```
 
-### **4. Event-to-Command** (Already Fixed - See `docs/XAML-BEHAVIORS-EVENT-TO-COMMAND.md`)
+### **5. Event-to-Command** (Already Fixed - See `docs/XAML-BEHAVIORS-EVENT-TO-COMMAND.md`)
 - ❌ **Mistake:** `ListView_ItemClick` code-behind handlers (complex fallback logic, 40+ LOC per handler)
 - ✅ **Solution:** Custom `ListViewItemClickBehavior` with direct EventArgs extraction
 - 📉 **Impact:** -200 LOC code-behind, clean MVVM separation, reusable patterns
 - 📖 **NuGet:** `Microsoft.Xaml.Behaviors.WinUI.Managed` Version **3.0.0**
+
+---
+
+## 🛤️ Track Plan Import (AnyRail)
+
+### **Architecture**
+```
+AnyRail XML → AnyRailLayout.Parse() → AnyRailPart[] → TrackSegmentViewModel[]
+                                           ↓
+                              GetArticleCode() (R1/R2/R3, G62/G119/G231)
+                              ToPathData() (SVG M/L/A commands)
+```
+
+### **Article Code Detection (from Geometry)**
+| Type | Detection Method | Values |
+|------|------------------|--------|
+| **Curve** | `arc.Radius` | R1 (<600), R2 (<700), R3 (<800), R9 (>1000) |
+| **Straight** | Line length | G62 (<100), G119 (<200), G231 (>200) |
+| **Turnout** | `part.Type` | WL, WR, DWW, DKW |
+
+### **SVG Arc Sweep-Flag**
+- `sweep = 0` for all curves (curves outward from center)
+- AnyRail `direction` attribute is in degrees (0-360) but not used for sweep
+
+### **Key Files**
+- `Domain/TrackPlan/AnyRailLayout.cs` - XML parser + article code detection
+- `Domain/TrackPlan/TrackLayout.cs` - Minimal POCO (47 LOC)
+- `SharedUI/ViewModel/TrackPlanViewModel.cs` - Import command + conversion
+- `WinUI/View/TrackPlanPage.xaml` - Viewbox + Path rendering
 
 ---
 

@@ -304,4 +304,23 @@ public class IoService : IIoService
         var result = await picker.PickSingleFileAsync();
         return result?.Path;
     }
+
+    /// <summary>
+    /// Opens a file picker to browse for an XML file (e.g., AnyRail layout).
+    /// </summary>
+    /// <returns>The selected file path, or null if cancelled.</returns>
+    public async Task<string?> BrowseForXmlFileAsync()
+    {
+        if (_windowId == null)
+            throw new InvalidOperationException("WindowId must be set before using IoService");
+
+        var picker = new FileOpenPicker(_windowId.Value)
+        {
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+            FileTypeFilter = { ".xml" }
+        };
+
+        var result = await picker.PickSingleFileAsync();
+        return result?.Path;
+    }
 }

@@ -11,4 +11,9 @@ public interface IFilePickerService
     /// Opens a file picker for JSON files and returns the selected file path or null if cancelled.
     /// </summary>
     Task<string?> PickJsonFileAsync();
+
+    /// <summary>
+    /// Opens a file picker for XML files and returns the selected file path or null if cancelled.
+    /// </summary>
+    Task<string?> PickXmlFileAsync();
 }

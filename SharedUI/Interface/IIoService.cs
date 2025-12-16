@@ -31,4 +31,10 @@ public interface IIoService
     /// </summary>
     /// <returns>The selected file path, or null if cancelled.</returns>
     Task<string?> BrowseForJsonFileAsync();
+
+    /// <summary>
+    /// Opens a file picker to browse for an XML file (e.g., AnyRail layout).
+    /// </summary>
+    /// <returns>The selected file path, or null if cancelled.</returns>
+    Task<string?> BrowseForXmlFileAsync();
 }
