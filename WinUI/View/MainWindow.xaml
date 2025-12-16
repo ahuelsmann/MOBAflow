@@ -59,11 +59,6 @@
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItemSeparator />
-                <NavigationViewItem Content="Track Plan" Tag="trackplan">
-                    <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE809;" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
                 <NavigationViewItem Content="Journey Map" Tag="journeymap">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE81D;" />

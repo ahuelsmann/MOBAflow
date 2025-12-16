@@ -117,7 +117,6 @@ public partial class App
         services.AddSingleton<SharedUI.ViewModel.MainWindowViewModel>();
         services.AddTransient<SharedUI.ViewModel.JourneyViewModel>();
         services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
-        services.AddSingleton<SharedUI.ViewModel.TrackPlanViewModel>();
         services.AddSingleton<SharedUI.ViewModel.JourneyMapViewModel>();
 
         // Pages (Transient = new instance per navigation)
@@ -126,7 +125,6 @@ public partial class App
         services.AddTransient<View.JourneysPage>();
         services.AddTransient<View.WorkflowsPage>();
         services.AddTransient<View.SettingsPage>();
-        services.AddTransient<View.TrackPlanPage>();
         services.AddTransient<View.JourneyMapPage>();
 
         // MainWindow (Singleton = one instance for app lifetime)
