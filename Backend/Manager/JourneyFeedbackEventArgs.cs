@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-using Moba.Backend.Service;
-
 namespace Moba.Backend.Manager;
+
+using Service;
 
 /// <summary>
 /// Event arguments for the FeedbackReceived event in JourneyManager.

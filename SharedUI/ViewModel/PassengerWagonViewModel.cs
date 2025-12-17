@@ -2,14 +2,13 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Domain;
-
-using Moba.Domain.Enum;
+using Domain.Enum;
 
 /// <summary>
 /// ViewModel wrapper for PassengerWagon model.
 /// Extends WagonViewModel with passenger-specific properties.
 /// </summary>
-public partial class PassengerWagonViewModel : WagonViewModel
+public class PassengerWagonViewModel : WagonViewModel
 {
     #region Fields
     // Model (specialized type)

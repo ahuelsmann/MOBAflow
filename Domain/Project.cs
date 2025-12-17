@@ -1,6 +1,8 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
+using TrackPlan;
+
 /// <summary>
 /// Project - Pure Data Object.
 /// Business logic (validation, persistence) belongs in Application Layer (Backend/Services).
@@ -9,15 +11,15 @@ public class Project
 {
     public Project()
     {
-        SpeakerEngines = new List<SpeakerEngineConfiguration>();
-        Voices = new List<Voice>();
-        Locomotives = new List<Locomotive>();
-        PassengerWagons = new List<PassengerWagon>();
-        GoodsWagons = new List<GoodsWagon>();
-        Trains = new List<Train>();
-        Workflows = new List<Workflow>();
-        Journeys = new List<Journey>();
-        FeedbackPoints = new List<FeedbackPointOnTrack>();
+        SpeakerEngines = [];
+        Voices = [];
+        Locomotives = [];
+        PassengerWagons = [];
+        GoodsWagons = [];
+        Trains = [];
+        Workflows = [];
+        Journeys = [];
+        FeedbackPoints = [];
     }
 
     public string Name { get; set; } = string.Empty;
@@ -31,4 +33,9 @@ public class Project
     public List<Workflow> Workflows { get; set; }
     public List<Journey> Journeys { get; set; }
     public List<FeedbackPointOnTrack> FeedbackPoints { get; set; }
+
+    /// <summary>
+    /// Track layout for this project (segments, connections, work surface size).
+    /// </summary>
+    public TrackLayout? TrackLayout { get; set; }
 }

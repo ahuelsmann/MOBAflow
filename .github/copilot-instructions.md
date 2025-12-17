@@ -2,6 +2,27 @@
 
 > **Multi-platform railway automation control system (.NET 10)**  
 > MOBAflow (WinUI) | MOBAsmart (MAUI) | MOBAdash (Blazor)
+> 
+> **Last Updated:** 2025-12-11 | **Version:** 3.5 | **Build Status:** ✅ Passing
+
+---
+
+## 🎯 Current Session Status (Dec 11, 2025)
+
+### ✅ Completed This Session
+- ✅ **MAUI Null-Safety Warnings** (CS8602/CS8604) - Fixed in BackgroundService.cs
+- ✅ **WinUI Button Styling** - Compact symbol buttons with `MinWidth="0"`
+- ✅ **RedundantStringInterpolation** - 3x fixed (CounterViewModel, ActionExecutor, App.xaml.cs)
+- ✅ **MergeIntoPattern** - 4x fixed (UdpWrapper, Z21MessageParser)
+- ✅ **ArrangeObjectCreationWhenTypeEvident** - 2x fixed (`new object()` → `new()`)
+- ✅ **Collection Expression Syntax** - 3x fixed (Domain/Project.cs, Solution.cs, Train.cs)
+- ✅ **Primary Constructor Migration** - WorkflowService, SoundManager, SpeechHealthCheck
+- ✅ **Code Cleanup** - Minor warning reductions
+
+### 📊 ReSharper Warnings Progress
+- **Start:** 653 warnings
+- **Current:** ~640 warnings (estimated, after 9+ fixes)
+- **Target:** <100 warnings (Phase 2)
 
 ---
 
@@ -22,6 +43,7 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 8. **Event Handlers in Code-Behind** → Use XAML Behaviors (Event-to-Command) instead
    - **Exception:** Drag & Drop handlers are OK in code-behind (WinUI limitation)
 9. **Static Collections** → Memory leak risk
+10. **Primary Constructors with Interface Implementation** → May cause DI issues (revert to traditional)
 
 **Action:** If >3 Red Flags found → Deep-dive analysis required.
 
@@ -41,6 +63,7 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 | **State Management** | `.github/instructions/hasunsavedchanges-patterns.instructions.md` | UndoRedo, HasUnsavedChanges, StateManager |
 | **MAUI Mobile** | `.github/instructions/maui.instructions.md` | .razor, MainThread, MOBAsmart |
 | **Blazor Web** | `.github/instructions/blazor.instructions.md` | .razor, MOBAdash, @code |
+| **Warnings/Cleanup** | Inline section below | ReSharper, warnings, refactor, cleanup |
 
 **Execution:** Before answering, scan keywords → Execute `get_file(<instruction_file>)` → Apply rules.
 
@@ -748,6 +771,3 @@ Set-Content -Path .\Theme.xaml -Value @'
 ```
 
 ---
-
-**Last Updated:** 2025-12-11
-**Version:** 3.4

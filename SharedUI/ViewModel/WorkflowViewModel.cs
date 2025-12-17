@@ -1,20 +1,16 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using Action;
+using Backend.Interface;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using Domain;
-
+using Domain.Enum;
 using Interface;
-
-using Moba.Backend.Interface;
-using Moba.Domain.Enum;
-
 using Sound;
-
 using System.Collections.ObjectModel;
-using System.Linq;
+using System.Diagnostics;
 
 public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Workflow>
 {
@@ -60,7 +56,7 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
 
     public string Description
     {
-        get => _model.Description ?? string.Empty;
+        get => _model.Description;
         set => SetProperty(_model.Description, value, _model, (m, v) => m.Description = v);
     }
 
@@ -132,13 +128,11 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
     [RelayCommand]
     private void DeleteAction(object actionVM)
     {
-        if (actionVM == null) return;
-
         WorkflowAction? actionModel = actionVM switch
         {
-            Action.AnnouncementViewModel avm => avm.ToWorkflowAction(),
-            Action.AudioViewModel audvm => audvm.ToWorkflowAction(),
-            Action.CommandViewModel cvm => cvm.ToWorkflowAction(),
+            AnnouncementViewModel avm => avm.ToWorkflowAction(),
+            AudioViewModel audvm => audvm.ToWorkflowAction(),
+            CommandViewModel cvm => cvm.ToWorkflowAction(),
             _ => null
         };
 
@@ -149,51 +143,52 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
         }
     }
 
-    public async Task StartAsync(Journey journey, Station station)
+    public Task StartAsync(Journey journey, Station station)
     {
-        System.Diagnostics.Debug.WriteLine($"▶ Starte Workflow '{_model.Name}' für Station '{station.Name}'");
+        Debug.WriteLine($"▶ Starte Workflow '{_model.Name}' für Station '{station.Name}'");
 
         if (Actions.Count == 0)
         {
-        System.Diagnostics.Debug.WriteLine($"⚠ Workflow '{_model.Name}' enthält keine Actions");
-            return;
+            Debug.WriteLine($"⚠ Workflow '{_model.Name}' enthält keine Actions");
+            return Task.CompletedTask;
         }
 
         foreach (var actionVM in Actions)
         {
             switch (actionVM)
             {
-                case Action.AnnouncementViewModel announcement:
-                    System.Diagnostics.Debug.WriteLine($"🎬 Führe Action aus: Announcement - {announcement.Name}");
+                case AnnouncementViewModel announcement:
+                    Debug.WriteLine($"🎬 Führe Action aus: Announcement - {announcement.Name}");
                     // Note: ExecuteAsync removed - execution now handled by WorkflowService
                     break;
 
-                case Action.AudioViewModel audio:
-                    System.Diagnostics.Debug.WriteLine($"🎬 Führe Action aus: Audio - {audio.Name}");
+                case AudioViewModel audio:
+                    Debug.WriteLine($"🎬 Führe Action aus: Audio - {audio.Name}");
                     // Note: ExecuteAsync removed - execution now handled by WorkflowService
                     break;
 
-                case Action.CommandViewModel command:
-                    System.Diagnostics.Debug.WriteLine($"🎬 Führe Action aus: Command - {command.Name}");
+                case CommandViewModel command:
+                    Debug.WriteLine($"🎬 Führe Action aus: Command - {command.Name}");
                     // Note: ExecuteAsync removed - execution now handled by WorkflowService
                     break;
 
                 default:
-                    System.Diagnostics.Debug.WriteLine($"⚠ Unbekannter Action-ViewModel-Typ: {actionVM.GetType().Name}");
+                    Debug.WriteLine($"⚠ Unbekannter Action-ViewModel-Typ: {actionVM.GetType().Name}");
                     break;
             }
         }
 
-        System.Diagnostics.Debug.WriteLine($"✅ Workflow '{_model.Name}' abgeschlossen");
+        Debug.WriteLine($"✅ Workflow '{_model.Name}' abgeschlossen");
+        return Task.CompletedTask;
     }
 
     private object CreateViewModelForAction(WorkflowAction action)
     {
         return action.Type switch
         {
-            ActionType.Announcement => new Action.AnnouncementViewModel(action),
-            ActionType.Audio => new Action.AudioViewModel(action),
-            ActionType.Command => new Action.CommandViewModel(action),
+            ActionType.Announcement => new AnnouncementViewModel(action),
+            ActionType.Audio => new AudioViewModel(action),
+            ActionType.Command => new CommandViewModel(action),
             _ => throw new NotSupportedException($"Action-Typ {action.Type} wird nicht unterstützt")
         };
     }

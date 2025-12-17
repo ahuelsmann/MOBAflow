@@ -1,6 +1,8 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
+using System.Text.Json;
+
 /// <summary>
 /// Solution contains project collection.
 /// </summary>
@@ -9,7 +11,7 @@ public class Solution
     public Solution()
     {
         Name = "New Solution";
-        Projects = new List<Project>();
+        Projects = [];
     }
 
     public string Name { get; set; }
@@ -27,12 +29,10 @@ public class Solution
 
         // Replace projects while keeping the same List instance
         Projects.Clear();
-        if (other.Projects != null)
+
+        foreach (var p in other.Projects)
         {
-            foreach (var p in other.Projects)
-            {
-                Projects.Add(p);
-            }
+            Projects.Add(p);
         }
     }
 
@@ -45,7 +45,7 @@ public class Solution
         if (!File.Exists(filePath)) throw new FileNotFoundException("Solution file not found", filePath);
 
         await using var stream = File.OpenRead(filePath);
-        var loaded = await System.Text.Json.JsonSerializer.DeserializeAsync<Solution>(stream, new System.Text.Json.JsonSerializerOptions
+        var loaded = await JsonSerializer.DeserializeAsync<Solution>(stream, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
         });

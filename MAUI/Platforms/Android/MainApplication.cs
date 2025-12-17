@@ -1,8 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Android.App;
-using Android.Runtime;
 
-namespace Moba.Smart.Platforms.Android;
+namespace Moba.MAUI.Platforms.Android;
+
+using global::Android.App;
+using global::Android.Runtime;
 
 [Application]
 public class MainApplication : MauiApplication

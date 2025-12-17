@@ -1,11 +1,12 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
+using Domain;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-
 using SharedUI.ViewModel;
+using Windows.ApplicationModel.DataTransfer;
 
 /// <summary>
 /// Journeys page displaying journeys, stations, and city library with properties panel.
@@ -24,10 +25,10 @@ public sealed partial class JourneysPage : Page
     #region Drag & Drop Event Handlers
     private void CityListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {
-        if (e.Items.FirstOrDefault() is Domain.City city)
+        if (e.Items.FirstOrDefault() is City city)
         {
             e.Data.Properties.Add("City", city);
-            e.Data.RequestedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+            e.Data.RequestedOperation = DataPackageOperation.Copy;
             e.Data.SetText(city.Name);
         }
     }
@@ -37,20 +38,20 @@ public sealed partial class JourneysPage : Page
         if (e.Items.FirstOrDefault() is WorkflowViewModel workflow)
         {
             e.Data.Properties.Add("Workflow", workflow);
-            e.Data.RequestedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Link;
+            e.Data.RequestedOperation = DataPackageOperation.Link;
             e.Data.SetText(workflow.Name);
         }
     }
 
     private void StationListView_DragOver(object sender, DragEventArgs e)
     {
-        e.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+        e.AcceptedOperation = DataPackageOperation.Copy;
     }
 
     private void StationListView_Drop(object sender, DragEventArgs e)
     {
         // Handle City drop (create new Station)
-        if (e.DataView.Properties.TryGetValue("City", out object? cityObj) && cityObj is Domain.City city)
+        if (e.DataView.Properties.TryGetValue("City", out object? cityObj) && cityObj is City city)
         {
             ViewModel.AddStationFromCityCommand.Execute(city);
         }
@@ -61,7 +62,7 @@ public sealed partial class JourneysPage : Page
                 }
             }
 
-            private void CityListView_DoubleTapped(object sender, Microsoft.UI.Xaml.Input.DoubleTappedRoutedEventArgs e)
+            private void CityListView_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
             {
                 // Delegate to ViewModel Command
                 if (ViewModel.SelectedCity != null)

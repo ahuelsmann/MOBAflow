@@ -1,12 +1,13 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+
+namespace Moba.Sound;
+
+using Common.Extensions;
 using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-
-using Moba.Common.Extensions;
-
-namespace Moba.Sound;
 
 // https://learn.microsoft.com/de-de/azure/ai-services/speech-service/get-started-text-to-speech?tabs=windows%2Cterminal&pivots=programming-language-csharp
 public class CognitiveSpeechEngine : ISpeakerEngine
@@ -25,7 +26,7 @@ public class CognitiveSpeechEngine : ISpeakerEngine
     public CognitiveSpeechEngine()
     {
         _options = new SpeechOptions();
-        _logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<CognitiveSpeechEngine>.Instance;
+        _logger = NullLogger<CognitiveSpeechEngine>.Instance;
     }
 
     public string Name { get; set; } = "Microsoft.CognitiveServices.Speech";

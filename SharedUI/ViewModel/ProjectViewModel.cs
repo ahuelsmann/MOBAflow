@@ -2,11 +2,8 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
-
 using Domain;
-
 using Interface;
-
 using System.Collections.ObjectModel;
 
 /// <summary>
@@ -24,7 +21,7 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
     
     // Properties (ObservableProperty fields)
     [ObservableProperty]
-    private string _name = string.Empty;
+    private string _name;
     #endregion
 
     partial void OnNameChanged(string value)

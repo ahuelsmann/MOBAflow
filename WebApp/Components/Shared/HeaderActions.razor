@@ -1,7 +1,7 @@
 @rendermode InteractiveServer
-@using CommunityToolkit.Mvvm.Input
-@using Moba.SharedUI.ViewModel
 @inject CounterViewModel ViewModel
+@using System.ComponentModel
+@using Moba.SharedUI.ViewModel
 @implements IDisposable
 
 <div class="header-actions">
@@ -38,14 +38,14 @@
 </div>
 
 @code {
-private bool _isDarkTheme = false;  // Light theme is default for WebApp
+private bool _isDarkTheme;  // Light theme is default for WebApp
 
     protected override void OnInitialized()
     {
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
     }
 
-    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         InvokeAsync(StateHasChanged);
     }

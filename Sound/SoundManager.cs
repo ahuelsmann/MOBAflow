@@ -1,23 +1,18 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Microsoft.Extensions.Logging;
-
-using System.Media;
-using System.Runtime.Versioning;
 
 namespace Moba.Sound;
+
+using Microsoft.Extensions.Logging;
+using System.Media;
+using System.Runtime.Versioning;
 
 /// <summary>
 /// Windows-specific implementation of ISoundPlayer using System.Media.SoundPlayer.
 /// </summary>
 [SupportedOSPlatform("windows")]
-public class WindowsSoundPlayer : ISoundPlayer
+public class WindowsSoundPlayer(ILogger<WindowsSoundPlayer> logger) : ISoundPlayer
 {
-    private readonly ILogger<WindowsSoundPlayer> _logger;
-
-    public WindowsSoundPlayer(ILogger<WindowsSoundPlayer> logger)
-    {
-        _logger = logger;
-    }
+    private readonly ILogger<WindowsSoundPlayer> _logger = logger;
 
     /// <summary>
     /// Plays a wave file from the specified path.

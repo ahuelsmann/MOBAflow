@@ -2,7 +2,7 @@
 namespace Moba.SharedUI.ViewModel.Action;
 
 using Domain;
-using Moba.Domain.Enum;
+using Domain.Enum;
 
 /// <summary>
 /// ViewModel for Z21 Command actions (loco control).

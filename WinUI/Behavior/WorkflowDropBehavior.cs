@@ -1,14 +1,12 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Microsoft.UI.Xaml;
-using Microsoft.Xaml.Interactivity;
-
-using Moba.SharedUI.ViewModel;
-
-using System.Windows.Input;
-
-using Windows.ApplicationModel.DataTransfer;
 
 namespace Moba.WinUI.Behavior;
+
+using Microsoft.UI.Xaml;
+using Microsoft.Xaml.Interactivity;
+using SharedUI.ViewModel;
+using System.Windows.Input;
+using Windows.ApplicationModel.DataTransfer;
 
 /// <summary>
 /// Behavior that enables drop functionality for Workflow assignment.

@@ -1,25 +1,18 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using Backend.Interface;
 using Backend.Manager;
 using Backend.Service;
-
 using Common.Configuration;
-
+using Common.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using Domain;
-
+using Domain.Enum;
 using Interface;
-
-using Moba.Backend.Interface;
-using Moba.Common.Extensions;
-
-using System;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Diagnostics;
 
 /// <summary>
 /// Core ViewModel for main window functionality.
@@ -81,11 +74,11 @@ public partial class MainWindowViewModel : ObservableObject
                 try
                 {
                     await LoadCityLibraryAsync();
-                    System.Diagnostics.Debug.WriteLine($"✅ City Library loaded: {CityLibrary.Count} cities");
+                    Debug.WriteLine($"✅ City Library loaded: {CityLibrary.Count} cities");
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"❌ Failed to load City Library: {ex.Message}");
+                    Debug.WriteLine($"❌ Failed to load City Library: {ex.Message}");
                 }
             });
         }
@@ -331,7 +324,7 @@ public partial class MainWindowViewModel : ObservableObject
             SelectedStation = stationVM;
         }
 
-        System.Diagnostics.Debug.WriteLine($"✅ Added station from city: {city.Name} → {cityStation.Name}");
+        Debug.WriteLine($"✅ Added station from city: {city.Name} → {cityStation.Name}");
     }
 
     private bool CanAddStationFromCity() => SelectedJourney != null;
@@ -347,7 +340,7 @@ public partial class MainWindowViewModel : ObservableObject
         var cities = await _cityLibraryService.LoadCitiesAsync();
         CityLibrary = new ObservableCollection<City>(cities);
 
-        System.Diagnostics.Debug.WriteLine($"✅ City Library loaded: {CityLibrary.Count} cities");
+        Debug.WriteLine($"✅ City Library loaded: {CityLibrary.Count} cities");
     }
     #endregion
 
@@ -355,16 +348,16 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<GoodsWagon> goodsWagonLibrary =
     [
-        new GoodsWagon { Name = "Goods Wagon 1", Cargo = Domain.Enum.CargoType.Container },
-        new GoodsWagon { Name = "Goods Wagon 2", Cargo = Domain.Enum.CargoType.Coal },
-        new GoodsWagon { Name = "Goods Wagon 3", Cargo = Domain.Enum.CargoType.Wood }
+        new GoodsWagon { Name = "Goods Wagon 1", Cargo = CargoType.Container },
+        new GoodsWagon { Name = "Goods Wagon 2", Cargo = CargoType.Coal },
+        new GoodsWagon { Name = "Goods Wagon 3", Cargo = CargoType.Wood }
     ];
 
     [ObservableProperty]
     private ObservableCollection<PassengerWagon> passengerWagonLibrary =
     [
-        new PassengerWagon { Name = "Passenger Wagon 1st Class", WagonClass = Domain.Enum.PassengerClass.First },
-        new PassengerWagon { Name = "Passenger Wagon 2nd Class", WagonClass = Domain.Enum.PassengerClass.Second }
+        new PassengerWagon { Name = "Passenger Wagon 1st Class", WagonClass = PassengerClass.First },
+        new PassengerWagon { Name = "Passenger Wagon 2nd Class", WagonClass = PassengerClass.Second }
     ];
     #endregion
 
@@ -376,7 +369,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         SelectedStation.WorkflowId = workflow.Model.Id;
 
-        System.Diagnostics.Debug.WriteLine($"✅ Assigned workflow '{workflow.Name}' to station '{SelectedStation.Name}'");
+        Debug.WriteLine($"✅ Assigned workflow '{workflow.Name}' to station '{SelectedStation.Name}'");
     }
 
     private bool CanAssignWorkflowToStation() => SelectedStation != null;
@@ -409,7 +402,7 @@ public partial class MainWindowViewModel : ObservableObject
         // Refresh Train collections
         SelectedTrain.RefreshCollections();
 
-        System.Diagnostics.Debug.WriteLine($"✅ Added locomotive '{locomotiveCopy.Name}' to train '{SelectedTrain.Name}'");
+        Debug.WriteLine($"✅ Added locomotive '{locomotiveCopy.Name}' to train '{SelectedTrain.Name}'");
     }
 
     private bool CanAddLocomotiveToTrain() => SelectedTrain != null && SelectedProject != null;

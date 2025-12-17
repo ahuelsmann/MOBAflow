@@ -4,8 +4,8 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using AndroidX.Core.App;
-using Microsoft.Maui.ApplicationModel;
-using Moba.Smart.Platforms.Android; // ← Add MainActivity reference
+
+// ← Add MainActivity reference
 
 namespace Moba.MAUI.Platforms.Android.Services;
 
@@ -13,7 +13,7 @@ namespace Moba.MAUI.Platforms.Android.Services;
 /// Android Foreground Service to keep Z21 UDP connection alive in background.
 /// Shows persistent notification while running.
 /// </summary>
-[global::Android.App.Service(ForegroundServiceType = global::Android.Content.PM.ForegroundService.TypeDataSync)]
+[Service(ForegroundServiceType = global::Android.Content.PM.ForegroundService.TypeDataSync)]
 public class Z21BackgroundService : global::Android.App.Service
 {
     private const int NOTIFICATION_ID = 1001;
@@ -57,7 +57,7 @@ public class Z21BackgroundService : global::Android.App.Service
 
     private Notification BuildNotification(string title, string message)
     {
-        var intent = new Intent(this, typeof(Moba.Smart.Platforms.Android.MainActivity));
+        var intent = new Intent(this, typeof(MainActivity));
         intent.SetFlags(ActivityFlags.SingleTop);
         
         var pendingIntent = PendingIntent.GetActivity(

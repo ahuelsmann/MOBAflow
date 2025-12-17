@@ -1,26 +1,20 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+
+namespace Moba.Sound;
+
+using Common.Extensions;
 using Microsoft.CognitiveServices.Speech;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-
-using Moba.Common.Extensions;
-
-namespace Moba.Sound;
 
 /// <summary>
 /// Health check service for Azure Cognitive Speech Services.
 /// Verifies configuration and connectivity to Azure Speech API.
 /// </summary>
-public class SpeechHealthCheck
+public class SpeechHealthCheck(IOptions<SpeechOptions> options, ILogger<SpeechHealthCheck> logger)
 {
-    private readonly SpeechOptions _options;
-    private readonly ILogger<SpeechHealthCheck> _logger;
-
-    public SpeechHealthCheck(IOptions<SpeechOptions> options, ILogger<SpeechHealthCheck> logger)
-    {
-        _options = options.Value;
-        _logger = logger;
-    }
+    private readonly SpeechOptions _options = options.Value;
+    private readonly ILogger<SpeechHealthCheck> _logger = logger;
 
     /// <summary>
     /// Checks if Azure Speech Service is properly configured.
@@ -49,12 +43,12 @@ public class SpeechHealthCheck
     /// Performs a simple connectivity test to Azure Speech Service.
     /// </summary>
     /// <returns>True if connection test succeeds, false otherwise</returns>
-    public async Task<bool> TestConnectivityAsync()
+    public Task<bool> TestConnectivityAsync()
     {
         if (!IsConfigured())
         {
             this.LogWarning("Cannot test connectivity - service not configured", _logger);
-            return false;
+            return Task.FromResult(false);
         }
 
         string? speechKey = _options.Key ?? Environment.GetEnvironmentVariable("SPEECH_KEY");
@@ -64,7 +58,7 @@ public class SpeechHealthCheck
         if (string.Equals(speechKey, "test-key", StringComparison.Ordinal))
         {
             this.Log("✅ Connectivity test skipped (test mode)", _logger);
-            return true;
+            return Task.FromResult(true);
         }
 
         try
@@ -78,7 +72,7 @@ public class SpeechHealthCheck
             
             // If we can create the config and synthesizer, credentials are likely valid
             this.Log("✅ Azure Speech Service connectivity test passed", _logger);
-            return true;
+            return Task.FromResult(true);
         }
         catch (Exception ex)
         {
@@ -86,7 +80,7 @@ public class SpeechHealthCheck
                 $"Azure Speech Service connectivity test failed. Possible causes: Invalid/expired API key, Incorrect region ({speechRegion}), Network/Firewall blocking Azure services",
                 ex,
                 _logger);
-            return false;
+            return Task.FromResult(false);
         }
     }
 

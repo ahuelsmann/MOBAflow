@@ -1,13 +1,11 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using Action;
 using CommunityToolkit.Mvvm.Input;
-
 using Domain;
-
+using Domain.Enum;
 using Helper;
-
-using System.Collections.Generic;
 
 /// <summary>
 /// MainWindowViewModel - Workflow Management
@@ -95,7 +93,7 @@ public partial class MainWindowViewModel
         {
             Name = "New Announcement",
             Number = (uint)(SelectedWorkflow.Model.Actions.Count + 1),
-            Type = Domain.Enum.ActionType.Announcement,
+            Type = ActionType.Announcement,
             Parameters = new Dictionary<string, object>
             {
                 ["Message"] = "Enter announcement text",
@@ -104,7 +102,7 @@ public partial class MainWindowViewModel
         };
 
         SelectedWorkflow.Model.Actions.Add(newAction);
-        var viewModel = new Action.AnnouncementViewModel(newAction);
+        var viewModel = new AnnouncementViewModel(newAction);
         SelectedWorkflow.Actions.Add(viewModel);
     }
 
@@ -117,7 +115,7 @@ public partial class MainWindowViewModel
         {
             Name = "New Command",
             Number = (uint)(SelectedWorkflow.Model.Actions.Count + 1),
-            Type = Domain.Enum.ActionType.Command,
+            Type = ActionType.Command,
             Parameters = new Dictionary<string, object>
             {
                 ["Bytes"] = new byte[] { 0x00 }
@@ -125,7 +123,7 @@ public partial class MainWindowViewModel
         };
 
         SelectedWorkflow.Model.Actions.Add(newAction);
-        var viewModel = new Action.CommandViewModel(newAction);
+        var viewModel = new CommandViewModel(newAction);
         SelectedWorkflow.Actions.Add(viewModel);
     }
 
@@ -138,7 +136,7 @@ public partial class MainWindowViewModel
         {
             Name = "New Audio",
             Number = (uint)(SelectedWorkflow.Model.Actions.Count + 1),
-            Type = Domain.Enum.ActionType.Audio,
+            Type = ActionType.Audio,
             Parameters = new Dictionary<string, object>
             {
                 ["FilePath"] = "sound.wav"
@@ -146,7 +144,7 @@ public partial class MainWindowViewModel
         };
 
         SelectedWorkflow.Model.Actions.Add(newAction);
-        var viewModel = new Action.AudioViewModel(newAction);
+        var viewModel = new AudioViewModel(newAction);
         SelectedWorkflow.Actions.Add(viewModel);
     }
     #endregion

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage
-    x:Class="Moba.Smart.MainPage"
+    x:Class="Moba.MAUI.MainPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
@@ -11,8 +11,11 @@
         <VerticalStackLayout Padding="12,8" Spacing="8">
 
             <!--  Header with Status Indicator  -->
-            <Grid ColumnDefinitions="*,Auto" Margin="4,8,4,4">
-                <VerticalStackLayout Grid.Column="0" Spacing="0" VerticalOptions="Center">
+            <Grid Margin="4,8,4,4" ColumnDefinitions="*,Auto">
+                <VerticalStackLayout
+                    Grid.Column="0"
+                    Spacing="0"
+                    VerticalOptions="Center">
                     <Label
                         FontAttributes="Bold"
                         FontSize="24"
@@ -137,8 +140,14 @@
                 StrokeThickness="0">
                 <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
                     <!--  Temperature  -->
-                    <HorizontalStackLayout Grid.Column="0" HorizontalOptions="Center" Spacing="6">
-                        <Label FontSize="16" Text="🌡️" VerticalOptions="Center" />
+                    <HorizontalStackLayout
+                        Grid.Column="0"
+                        HorizontalOptions="Center"
+                        Spacing="6">
+                        <Label
+                            FontSize="16"
+                            Text="🌡️"
+                            VerticalOptions="Center" />
                         <Label
                             FontAttributes="Bold"
                             FontSize="14"
@@ -147,8 +156,14 @@
                             VerticalOptions="Center" />
                     </HorizontalStackLayout>
                     <!--  Supply Voltage  -->
-                    <HorizontalStackLayout Grid.Column="1" HorizontalOptions="Center" Spacing="6">
-                        <Label FontSize="16" Text="🔌" VerticalOptions="Center" />
+                    <HorizontalStackLayout
+                        Grid.Column="1"
+                        HorizontalOptions="Center"
+                        Spacing="6">
+                        <Label
+                            FontSize="16"
+                            Text="🔌"
+                            VerticalOptions="Center" />
                         <Label
                             FontAttributes="Bold"
                             FontSize="14"
@@ -157,8 +172,14 @@
                             VerticalOptions="Center" />
                     </HorizontalStackLayout>
                     <!--  VCC  -->
-                    <HorizontalStackLayout Grid.Column="2" HorizontalOptions="Center" Spacing="6">
-                        <Label FontSize="16" Text="⚡" VerticalOptions="Center" />
+                    <HorizontalStackLayout
+                        Grid.Column="2"
+                        HorizontalOptions="Center"
+                        Spacing="6">
+                        <Label
+                            FontSize="16"
+                            Text="⚡"
+                            VerticalOptions="Center" />
                         <Label
                             FontAttributes="Bold"
                             FontSize="14"
@@ -246,7 +267,10 @@
                                                     Text="{Binding InPort, StringFormat='Track {0}'}"
                                                     VerticalOptions="Center" />
                                                 <!--  Lap Time  -->
-                                                <HorizontalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
+                                                <HorizontalStackLayout
+                                                    Grid.Column="1"
+                                                    Spacing="4"
+                                                    VerticalOptions="Center">
                                                     <Label
                                                         FontSize="11"
                                                         Text="Lap:"
@@ -260,7 +284,10 @@
                                                         VerticalOptions="Center" />
                                                 </HorizontalStackLayout>
                                                 <!--  Feedback Time  -->
-                                                <HorizontalStackLayout Grid.Column="2" Spacing="4" VerticalOptions="Center">
+                                                <HorizontalStackLayout
+                                                    Grid.Column="2"
+                                                    Spacing="4"
+                                                    VerticalOptions="Center">
                                                     <Label
                                                         FontSize="11"
                                                         Text="@"

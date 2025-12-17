@@ -7,54 +7,12 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!--  Header with Toolbar  -->
-        <Grid Grid.Row="0" Padding="24,16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-
-            <StackPanel
-                Grid.Column="0"
-                Orientation="Horizontal"
-                Spacing="12">
-                <FontIcon FontSize="24" Glyph="&#xE809;" />
-                <StackPanel>
-                    <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Track Plan Editor" />
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Style="{StaticResource CaptionTextBlockStyle}"
-                        Text="Piko A-Gleis • Drag &amp; Drop • Snap-to-Connect" />
-                </StackPanel>
-            </StackPanel>
-
-            <!--  Toolbar  -->
-            <StackPanel
-                Grid.Column="1"
-                Orientation="Horizontal"
-                Spacing="8">
-                <Button Command="{x:Bind ViewModel.BrowseAndLoadAnyRailLayoutCommand}" ToolTipService.ToolTip="Import AnyRail XML layout">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="16" Glyph="&#xE8E5;" />
-                        <TextBlock Text="Import" />
-                    </StackPanel>
-                </Button>
-                <Button Command="{x:Bind ViewModel.ExportToAnyRailCommand}" ToolTipService.ToolTip="Export to AnyRail XML">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="16" Glyph="&#xE74E;" />
-                        <TextBlock Text="Export" />
-                    </StackPanel>
-                </Button>
-            </StackPanel>
-        </Grid>
-
         <!--  Main Content: Library + Canvas + Properties  -->
-        <Grid Grid.Row="1" Margin="24,0">
+        <Grid Grid.Row="0" Margin="24,16,24,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="240" />
                 <ColumnDefinition Width="*" />
@@ -134,7 +92,9 @@
                             DragOver="TrackCanvas_DragOver"
                             Drop="TrackCanvas_Drop"
                             PointerMoved="TrackCanvas_PointerMoved_Drag"
-                            PointerReleased="TrackCanvas_PointerReleased">
+                            PointerPressed="TrackCanvas_PointerPressed_Pan"
+                            PointerReleased="TrackCanvas_PointerReleased"
+                            RightTapped="TrackCanvas_RightTapped">
 
                             <!--  Snap Preview Line  -->
                             <Path
@@ -220,16 +180,17 @@
                                                 StrokeThickness="14"
                                                 Visibility="{x:Bind IsTriggered, Mode=OneWay}" />
 
+
                                             <!--  InPort Label (if assigned)  -->
                                             <Border
                                                 Canvas.Left="{x:Bind LabelX, Mode=OneWay}"
                                                 Canvas.Top="{x:Bind InPortLabelY, Mode=OneWay}"
-                                                Padding="4,2"
+                                                Padding="5,2"
                                                 Background="{ThemeResource AccentFillColorDefaultBrush}"
                                                 CornerRadius="3"
                                                 Visibility="{x:Bind HasInPort, Mode=OneWay}">
                                                 <TextBlock
-                                                    FontSize="9"
+                                                    FontSize="11"
                                                     FontWeight="Bold"
                                                     Foreground="White"
                                                     Text="{x:Bind InPortDisplayText, Mode=OneWay}" />
@@ -239,13 +200,14 @@
                                             <Border
                                                 Canvas.Left="{x:Bind LabelX, Mode=OneWay}"
                                                 Canvas.Top="{x:Bind LabelY, Mode=OneWay}"
-                                                Padding="3,1"
+                                                Padding="4,2"
                                                 Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                                CornerRadius="2">
+                                                CornerRadius="3"
+                                                Opacity="0.9">
                                                 <TextBlock
-                                                    FontSize="8"
+                                                    FontSize="10"
                                                     FontWeight="SemiBold"
-                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                                                     Text="{x:Bind ArticleCode, Mode=OneWay}" />
                                             </Border>
                                         </Canvas>
@@ -352,96 +314,79 @@
                                     </StackPanel>
                                 </StackPanel>
 
-                                <!--  Rotation  -->
-                                <StackPanel Spacing="4">
-                                    <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Rotation" />
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <TextBlock FontWeight="SemiBold" Text="{x:Bind ViewModel.SelectedSegment.Rotation, Mode=OneWay}" />
-                                        <TextBlock Text="°" />
-                                    </StackPanel>
+                                <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+                                <!--  InPort Assignment  -->
+                                <NumberBox
+                                    Header="InPort"
+                                    Maximum="2048"
+                                    Minimum="1"
+                                    PlaceholderText="1-2048"
+                                    SpinButtonPlacementMode="Inline"
+                                    Value="{x:Bind ViewModel.InPortInput, Mode=TwoWay}" />
+
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button
+                                        Command="{x:Bind ViewModel.AssignInPortCommand}"
+                                        Content="Assign"
+                                        Style="{StaticResource AccentButtonStyle}" />
+                                    <Button Command="{x:Bind ViewModel.ClearInPortCommand}" Content="Clear" />
                                 </StackPanel>
+
+                                <!--  Current Assignment Info  -->
+                                <Border
+                                    Padding="8"
+                                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                    CornerRadius="4"
+                                    Visibility="{x:Bind ViewModel.SelectedSegment.HasInPort, Mode=OneWay}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <FontIcon
+                                            FontSize="14"
+                                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                                            Glyph="&#xE701;" />
+                                        <TextBlock>
+                                            <Run Text="InPort" />
+                                            <Run FontWeight="Bold" Text="{x:Bind ViewModel.SelectedSegment.AssignedInPort, Mode=OneWay}" />
+                                            <Run Text="assigned" />
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
 
                                 <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
-                                <!--  Rotation Buttons  -->
-                                <StackPanel Spacing="8">
-                                    <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Rotate Segment" />
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <Button Command="{x:Bind ViewModel.RotateLeftCommand}" ToolTipService.ToolTip="Rotate 15° left">
-                                            <FontIcon FontSize="16" Glyph="&#xE76F;" />
-                                        </Button>
-                                        <Button Command="{x:Bind ViewModel.RotateRightCommand}" ToolTipService.ToolTip="Rotate 15° right">
-                                            <FontIcon FontSize="16" Glyph="&#xE76C;" />
-                                        </Button>
-                                    </StackPanel>
-                                </StackPanel>
+                                <!--  Canvas Size Configuration  -->
+                                <TextBlock
+                                    FontWeight="SemiBold"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="Work Surface" />
 
-                                <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                                <NumberBox
+                                    Header="Width (mm)"
+                                    LargeChange="100"
+                                    Maximum="10000"
+                                    Minimum="500"
+                                    SmallChange="50"
+                                    SpinButtonPlacementMode="Inline"
+                                    Value="{x:Bind ViewModel.CanvasWidthMm, Mode=TwoWay}" />
 
-                                <!--  Feedback Sensor (InPort Assignment)  -->
-                                <StackPanel Spacing="8">
-                                    <TextBlock
-                                        FontWeight="SemiBold"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Text="Feedback Sensor" />
-
-                                    <NumberBox
-                                        Header="InPort"
-                                        Maximum="2048"
-                                        Minimum="1"
-                                        PlaceholderText="1-2048"
-                                        SpinButtonPlacementMode="Inline"
-                                        Value="{x:Bind ViewModel.InPortInput, Mode=TwoWay}" />
-
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <Button
-                                            Command="{x:Bind ViewModel.AssignInPortCommand}"
-                                            Content="Assign"
-                                            Style="{StaticResource AccentButtonStyle}" />
-                                        <Button Command="{x:Bind ViewModel.ClearInPortCommand}" Content="Clear" />
-                                    </StackPanel>
-
-                                    <!--  Current Assignment Info  -->
-                                    <Border
-                                        Padding="8"
-                                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                        CornerRadius="4"
-                                        Visibility="{x:Bind ViewModel.SelectedSegment.HasInPort, Mode=OneWay}">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <FontIcon
-                                                FontSize="14"
-                                                Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                                                Glyph="&#xE701;" />
-                                            <TextBlock>
-                                                <Run Text="InPort" />
-                                                <Run FontWeight="Bold" Text="{x:Bind ViewModel.SelectedSegment.AssignedInPort, Mode=OneWay}" />
-                                                <Run Text="assigned" />
-                                            </TextBlock>
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
+                                <NumberBox
+                                    Header="Height (mm)"
+                                    LargeChange="100"
+                                    Maximum="5000"
+                                    Minimum="300"
+                                    SmallChange="50"
+                                    SpinButtonPlacementMode="Inline"
+                                    Value="{x:Bind ViewModel.CanvasHeightMm, Mode=TwoWay}" />
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
-
-                    <!--  Action Buttons  -->
-                    <StackPanel Grid.Row="2" Spacing="8">
-                        <Button
-                            HorizontalAlignment="Stretch"
-                            Command="{x:Bind ViewModel.DeleteSelectedSegmentCommand}"
-                            Content="Delete Segment" />
-                        <Button
-                            HorizontalAlignment="Stretch"
-                            Command="{x:Bind ViewModel.ClearCanvasCommand}"
-                            Content="Clear All" />
-                    </StackPanel>
                 </Grid>
             </Border>
         </Grid>
 
         <!--  Status Bar  -->
         <Border
-            Grid.Row="2"
+            Grid.Row="1"
             Padding="24,8"
             Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
             <Grid>
@@ -502,7 +447,7 @@
                     Grid.Column="3"
                     FontSize="11"
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                    Text="Del: Delete  •  R: Rotate  •  Esc: Deselect" />
+                    Text="Del: Delete  •  Ctrl+A: Select All  •  Esc: Deselect  •  Right-Click: Pan" />
             </Grid>
         </Border>
     </Grid>

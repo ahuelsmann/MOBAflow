@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Unit;
 
-using Sound;
 using Microsoft.Extensions.Logging;
+using Sound;
 
 /// <summary>
 /// Minimal test for Windows SAPI Text-to-Speech.
@@ -25,10 +25,11 @@ public class SystemSpeechEngineTest
     }
 
     [Test]
-    public async Task OutputSpeech_MinimalTest()
+    public Task OutputSpeech_MinimalTest()
     {
         // Minimal test to verify that Windows SAPI TTS works
         Assert.DoesNotThrowAsync(async () => 
             await _speakerEngine.AnnouncementAsync("Test Nachricht.", null));
+        return Task.CompletedTask;
     }
 }

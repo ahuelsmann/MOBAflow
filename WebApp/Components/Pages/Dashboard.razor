@@ -1,7 +1,8 @@
 @page "/"
 @page "/dashboard"
-@using Moba.SharedUI.ViewModel
 @inject CounterViewModel ViewModel
+@using System.ComponentModel
+@using Moba.SharedUI.ViewModel
 @implements IDisposable
 @rendermode InteractiveServer
 
@@ -88,7 +89,7 @@
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
     }
 
-    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         // Trigger UI re-render when ViewModel properties change
         InvokeAsync(StateHasChanged);

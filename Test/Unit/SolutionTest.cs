@@ -1,8 +1,6 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Unit;
 
-using Domain;
-
 public class SolutionTest
 {
     private string _testFile = string.Empty;
@@ -25,7 +23,7 @@ public class SolutionTest
 
         // Assert
         Assert.That(solution, Is.Not.Null, "Solution sollte nicht null sein");
-        Assert.That(solution!.Projects, Is.Not.Null, "Projects sollte nicht null sein");
+        Assert.That(solution.Projects, Is.Not.Null, "Projects sollte nicht null sein");
         Assert.That(solution.Projects.Count, Is.EqualTo(1), "Es sollte genau ein Projekt vorhanden sein");
 
         var project = solution.Projects[0];

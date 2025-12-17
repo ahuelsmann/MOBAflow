@@ -1,14 +1,14 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Microsoft.Extensions.Logging;
-
-using Moba.Backend.Interface;
-using Moba.Backend.Network;
-using Moba.Backend.Protocol;
-using Moba.Backend.Service;
-
-using System.Net;
 
 namespace Moba.Backend;
+
+using Interface;
+using Microsoft.Extensions.Logging;
+using Network;
+using Protocol;
+using Service;
+using System.Diagnostics;
+using System.Net;
 
 public class Z21 : IZ21
 {
@@ -47,7 +47,7 @@ public class Z21 : IZ21
     /// <summary>
     /// Current system state of the Z21 (voltage, current, temperature, etc.)
     /// </summary>
-    public SystemState CurrentSystemState { get; private set; } = new SystemState();
+    public SystemState CurrentSystemState { get; private set; } = new();
 
     /// <summary>
     /// Indicates whether the Z21 is currently connected.
@@ -142,7 +142,7 @@ public class Z21 : IZ21
         StopKeepaliveTimer();
         
         _keepaliveTimer = new Timer(
-            async _ => await SendKeepaliveAsync().ConfigureAwait(false),
+            _ => _ = SendKeepaliveAsync(),
             null,
             TimeSpan.FromSeconds(30),  // First keepalive after 30 seconds
             TimeSpan.FromSeconds(30)); // Subsequent keepalives every 30 seconds
@@ -468,11 +468,11 @@ public class Z21 : IZ21
         ];
 
         _logger?.LogInformation("🔔 SimulateFeedback: InPort={InPort}, Subscribers={Count}", inPort, Received?.GetInvocationList().Length ?? 0);
-        System.Diagnostics.Debug.WriteLine($"🔔 SimulateFeedback: InPort={inPort}, Subscribers={Received?.GetInvocationList().Length ?? 0}");
+        Debug.WriteLine($"🔔 SimulateFeedback: InPort={inPort}, Subscribers={Received?.GetInvocationList().Length ?? 0}");
 
         Received?.Invoke(new FeedbackResult(simulatedContent));
 
-        System.Diagnostics.Debug.WriteLine($"✅ SimulateFeedback: Event invoked for InPort={inPort}");
+        Debug.WriteLine($"✅ SimulateFeedback: Event invoked for InPort={inPort}");
     }
     #endregion
 
@@ -489,8 +489,8 @@ public class Z21 : IZ21
         if (disposing)
         {
             StopKeepaliveTimer();
-            _sendLock?.Dispose();
-            try { _udp?.Dispose(); } catch { /* ignore */ }
+            _sendLock.Dispose();
+            try { _udp.Dispose(); } catch { /* ignore */ }
             _cancellationTokenSource?.Cancel();
             _cancellationTokenSource?.Dispose();
         }

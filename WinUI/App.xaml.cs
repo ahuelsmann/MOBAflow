@@ -30,7 +30,7 @@ public partial class App
         catch (Exception ex)
         {
             // Log the exception before crashing
-            System.Diagnostics.Debug.WriteLine($"🚨 FATAL ERROR during App initialization:");
+            System.Diagnostics.Debug.WriteLine("🚨 FATAL ERROR during App initialization:");
             System.Diagnostics.Debug.WriteLine($"   Exception Type: {ex.GetType().Name}");
             System.Diagnostics.Debug.WriteLine($"   Message: {ex.Message}");
             System.Diagnostics.Debug.WriteLine($"   StackTrace: {ex.StackTrace}");
@@ -82,12 +82,12 @@ public partial class App
         services.AddLogging();
 
         // Backend Services (Interfaces are in Backend.Interface and Backend.Network)
-        services.AddSingleton<Backend.Service.Z21Monitor>();
+        services.AddSingleton<Z21Monitor>();
         services.AddSingleton<Backend.Interface.IZ21, Backend.Z21>(sp =>
         {
             var udp = sp.GetRequiredService<Backend.Network.IUdpClientWrapper>();
             var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<Backend.Z21>>();
-            var trafficMonitor = sp.GetRequiredService<Backend.Service.Z21Monitor>();
+            var trafficMonitor = sp.GetRequiredService<Z21Monitor>();
             return new Backend.Z21(udp, logger, trafficMonitor);
         });
         services.AddSingleton<Backend.Network.IUdpClientWrapper, Backend.Network.UdpWrapper>();
@@ -96,7 +96,7 @@ public partial class App
         services.AddSingleton(sp =>
         {
             var z21 = sp.GetRequiredService<Backend.Interface.IZ21>();
-            return new Backend.Service.ActionExecutor(z21);
+            return new ActionExecutor(z21);
         });
         services.AddSingleton<WorkflowService>();
 

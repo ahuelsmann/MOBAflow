@@ -45,7 +45,7 @@ public class UdpWrapper : IUdpClientWrapper
     private int _totalRetryCount;
     private int _totalReceiveCount;
     private readonly Stopwatch _performanceTimer = Stopwatch.StartNew();
-    private readonly object _statsLock = new object();
+    private readonly object _statsLock = new();
 
     /// <summary>
     /// Indicates whether the UDP wrapper is connected and ready to send/receive.
@@ -214,7 +214,7 @@ public class UdpWrapper : IUdpClientWrapper
     /// </summary>
     public async Task StopAsync()
     {
-        if (_cts != null && !_cts.IsCancellationRequested)
+        if (_cts is { IsCancellationRequested: false })
         {
             await _cts.CancelAsync();
             try

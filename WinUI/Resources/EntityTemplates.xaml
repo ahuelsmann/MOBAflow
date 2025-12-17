@@ -2,10 +2,8 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:behavior="using:Moba.WinUI.Behavior"
-    xmlns:domain="using:Moba.Domain"
     xmlns:i="using:Microsoft.Xaml.Interactivity"
-    xmlns:selector="using:Moba.WinUI.Selector"
-    xmlns:vm="using:Moba.SharedUI.ViewModel">
+    xmlns:selector="using:Moba.WinUI.Selector">
 
     <!--  EntityTemplateSelector  -->
     <selector:EntityTemplateSelector

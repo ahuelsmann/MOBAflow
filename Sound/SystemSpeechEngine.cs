@@ -1,12 +1,12 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Microsoft.Extensions.Logging;
-
-using Moba.Common.Extensions;
-
-using System.Runtime.Versioning;
-using System.Speech.Synthesis;
 
 namespace Moba.Sound;
+
+using Common.Extensions;
+using Microsoft.Extensions.Logging;
+using System.Globalization;
+using System.Runtime.Versioning;
+using System.Speech.Synthesis;
 
 /// <summary>
 /// Windows-native Text-to-Speech implementation using System.Speech (SAPI).
@@ -125,7 +125,7 @@ public class SystemSpeechEngine : ISpeakerEngine
         {
             try
             {
-                synthesizer.SelectVoiceByHints(VoiceGender.NotSet, VoiceAge.NotSet, 0, new System.Globalization.CultureInfo("de-DE"));
+                synthesizer.SelectVoiceByHints(VoiceGender.NotSet, VoiceAge.NotSet, 0, new CultureInfo("de-DE"));
                 this.Log("✅ Using German voice (by culture)", _logger);
                 return true;
             }

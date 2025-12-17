@@ -1,13 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using Common.Configuration;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
-using Common.Configuration;
-
-using System;
-using System.Threading.Tasks;
 
 /// <summary>
 /// MainWindowViewModel - Settings Management

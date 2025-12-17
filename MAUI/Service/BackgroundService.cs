@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
-using Moba.SharedUI.Interface;
+using SharedUI.Interface;
 
 #if ANDROID
 using Android.Content;
@@ -21,17 +21,23 @@ public class BackgroundService : IBackgroundService
     public Task StartAsync(string title, string message)
     {
 #if ANDROID
-        var intent = new Intent(Platform.CurrentActivity, typeof(Platforms.Android.Services.Z21BackgroundService));
+        var activity = Platform.CurrentActivity;
+        if (activity == null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var intent = new Intent(activity, typeof(Platforms.Android.Services.Z21BackgroundService));
         intent.PutExtra("title", title);
         intent.PutExtra("message", message);
 
-        if (global::Android.OS.Build.VERSION.SdkInt >= global::Android.OS.BuildVersionCodes.O)
+        if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.O)
         {
-            Platform.CurrentActivity?.StartForegroundService(intent);
+            activity.StartForegroundService(intent);
         }
         else
         {
-            Platform.CurrentActivity?.StartService(intent);
+            activity.StartService(intent);
         }
 
         _isRunning = true;
@@ -42,9 +48,15 @@ public class BackgroundService : IBackgroundService
     public Task StopAsync()
     {
 #if ANDROID
-        var intent = new Intent(Platform.CurrentActivity, typeof(Platforms.Android.Services.Z21BackgroundService));
+        var activity = Platform.CurrentActivity;
+        if (activity == null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var intent = new Intent(activity, typeof(Platforms.Android.Services.Z21BackgroundService));
         intent.SetAction("STOP_SERVICE");
-        Platform.CurrentActivity?.StartService(intent);
+        activity.StartService(intent);
 
         _isRunning = false;
 #endif

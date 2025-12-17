@@ -2,7 +2,6 @@
 namespace Moba.Backend.Converter;
 
 using Domain;
-
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 

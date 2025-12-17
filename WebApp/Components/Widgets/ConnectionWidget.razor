@@ -1,4 +1,4 @@
-@using CommunityToolkit.Mvvm.Input
+@using System.ComponentModel
 @using Moba.SharedUI.ViewModel
 @implements IDisposable
 
@@ -32,7 +32,7 @@
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
     }
 
-    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         InvokeAsync(StateHasChanged);
     }

@@ -1,9 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Unit;
 
-using Sound;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Sound;
 
 public class CognitiveSpeechEngineTest
 {
@@ -30,9 +30,10 @@ public class CognitiveSpeechEngineTest
     }
 
     [Test]
-    public async Task OutputSpeech()
+    public Task OutputSpeech()
     {
         Assert.DoesNotThrowAsync(async () => 
             await _speakerEngine.AnnouncementAsync("Nächster Halt Bielefeld Hauptbahnhof. Ausstieg in Fahrtrichtung rechts.", "ElkeNeural"));
+        return Task.CompletedTask;
     }
 }

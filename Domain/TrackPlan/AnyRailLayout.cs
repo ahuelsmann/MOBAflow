@@ -2,6 +2,7 @@
 namespace Moba.Domain.TrackPlan;
 
 using System.Globalization;
+using System.Text;
 using System.Xml.Linq;
 
 /// <summary>
@@ -157,7 +158,7 @@ public class AnyRailPart
     /// <returns>SVG path data string (M, L, A commands).</returns>
     public string ToPathData()
     {
-        var sb = new System.Text.StringBuilder();
+        var sb = new StringBuilder();
 
         // Process lines
         // Note: XAML Path uses space-separated coordinates: "M x y L x y"

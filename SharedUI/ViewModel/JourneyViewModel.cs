@@ -8,14 +8,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using Domain;
+using Domain.Enum;
 
 using Interface;
 
-using Moba.Domain.Enum;
-
-using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Journey>
 {
@@ -76,7 +75,7 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     private void OnStationChanged(object? sender, StationChangedEventArgs e)
     {
         if (e.JourneyId != _journey.Id) return; // Only react to THIS journey
-        
+
         _dispatcher?.InvokeOnUi(() =>
         {
             OnPropertyChanged(nameof(CurrentStation));
@@ -116,7 +115,7 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
 
     public string Description
     {
-        get => _journey.Description ?? string.Empty;
+        get => _journey.Description;
         set => SetProperty(_journey.Description, value, _journey, (m, v) => m.Description = v);
     }
 
@@ -150,7 +149,7 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     /// <summary>
     /// Current station name (runtime state).
     /// </summary>
-    public string CurrentStation => _state.CurrentStationName ?? string.Empty;
+    public string CurrentStation => _state.CurrentStationName;
 
     /// <summary>
     /// Current counter value (runtime state).
@@ -204,7 +203,7 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
         OnPropertyChanged(nameof(CurrentCounter));
         OnPropertyChanged(nameof(CurrentPos));
 
-        System.Diagnostics.Debug.WriteLine($"🔄 Journey '{Name}' reset to initial state");
+        Debug.WriteLine($"🔄 Journey '{Name}' reset to initial state");
     }
 
     public BehaviorOnLastStop BehaviorOnLastStop
@@ -225,8 +224,8 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     /// <summary>
     /// Next Journey resolved from Project (for UI display).
     /// </summary>
-    public Journey? NextJourney => 
-        _journey.NextJourneyId.HasValue 
+    public Journey? NextJourney =>
+        _journey.NextJourneyId.HasValue
             ? _project.Journeys.FirstOrDefault(j => j.Id == _journey.NextJourneyId.Value)
             : null;
 
@@ -247,13 +246,13 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
         // Note: AddStation creates a generic station.
         // In practice, stations should be added from City Library (drag & drop).
         // This is mainly for testing or quick prototyping.
-        var newStation = new Station 
-        { 
+        var newStation = new Station
+        {
             Name = "New Station",
             NumberOfLapsToStop = 2,
             IsExitOnLeft = false
         };
-        
+
         // Add Station to Journey
         _journey.Stations.Add(newStation);
 
@@ -267,8 +266,6 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     [RelayCommand]
     private void DeleteStation(StationViewModel stationVM)
     {
-        if (stationVM == null) return;
-
         // Find and remove Station by Id
         var station = _journey.Stations.FirstOrDefault(s => s.Id == stationVM.Model.Id);
         if (station != null)
@@ -289,8 +286,8 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     /// </summary>
     public void RefreshStations()
     {
-        System.Diagnostics.Debug.WriteLine($"🔄 RefreshStations() called for Journey '{_journey.Name}'");
-        System.Diagnostics.Debug.WriteLine($"   - Stations count: {_journey.Stations.Count}");
+        Debug.WriteLine($"🔄 RefreshStations() called for Journey '{_journey.Name}'");
+        Debug.WriteLine($"   - Stations count: {_journey.Stations.Count}");
 
         // Create or clear the collection
         if (_stations == null)
@@ -306,19 +303,19 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
         var index = 0;
         foreach (var station in _journey.Stations)
         {
-            System.Diagnostics.Debug.WriteLine($"   - Station: {station.Name}");
-            
+            Debug.WriteLine($"   - Station: {station.Name}");
+
             var vm = new StationViewModel(station, _project);
             vm.Position = index + 1;  // 1-based position
-            
+
             // Mark current station based on SessionState
             vm.IsCurrentStation = (index == _state.CurrentPos);
-            
+
             _stations.Add(vm);
             index++;
         }
 
-        System.Diagnostics.Debug.WriteLine($"✅ RefreshStations() complete: {_stations.Count} stations loaded");
+        Debug.WriteLine($"✅ RefreshStations() complete: {_stations.Count} stations loaded");
 
         // Notify UI
         OnPropertyChanged(nameof(Stations));
@@ -333,7 +330,7 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     {
         // Get current UI order
         var currentStations = Stations.ToList();
-        
+
         // Rebuild Stations list to match ViewModel order
         var reorderedStations = new List<Station>();
         foreach (var stationVM in currentStations)
@@ -344,7 +341,7 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
                 reorderedStations.Add(station);
             }
         }
-        
+
         // Replace Stations with reordered list
         _journey.Stations.Clear();
         foreach (var s in reorderedStations)
@@ -369,8 +366,6 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     [RelayCommand]
     private void MoveStationUp(StationViewModel station)
     {
-        if (station == null) return;
-
         var currentIndex = Stations.IndexOf(station);
         if (currentIndex > 0)
         {
@@ -389,8 +384,6 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     [RelayCommand]
     private void MoveStationDown(StationViewModel station)
     {
-        if (station == null) return;
-
         var currentIndex = Stations.IndexOf(station);
         if (currentIndex < Stations.Count - 1)
         {
@@ -400,15 +393,5 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
             // Trigger reorder logic (updates Model + renumbers)
             StationsReorderedCommand.Execute(null);
         }
-    }
-    
-    /// <summary>
-    /// Simple immediate dispatcher for tests and non-UI contexts.
-    /// Executes actions synchronously on the current thread without platform-specific dispatching.
-    /// Used as fallback when no IUiDispatcher is provided.
-    /// </summary>
-    private sealed class ImmediateDispatcher : IUiDispatcher
-    {
-        public void InvokeOnUi(System.Action action) => action();
     }
 }

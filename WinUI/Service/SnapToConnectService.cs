@@ -2,12 +2,9 @@
 namespace Moba.WinUI.Service;
 
 using SharedUI.ViewModel;
-
-using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
-
 using Windows.Foundation;
 
 /// <summary>
@@ -55,7 +52,7 @@ public class SnapToConnectService
             // End point: outgoing connection (angle points OUT of the track)
             endpoints.Add(new TrackEndpoint(endPoint, angle, segment, false));
             
-            System.Diagnostics.Debug.WriteLine($"📍 Endpoints for {segment.ArticleCode}: Start=({startPoint.X:F0},{startPoint.Y:F0}), End=({endPoint.X:F0},{endPoint.Y:F0})");
+            Debug.WriteLine($"📍 Endpoints for {segment.ArticleCode}: Start=({startPoint.X:F0},{startPoint.Y:F0}), End=({endPoint.X:F0},{endPoint.Y:F0})");
         }
         
         return endpoints;
@@ -118,7 +115,7 @@ public class SnapToConnectService
 
         if (bestTarget != null)
         {
-            System.Diagnostics.Debug.WriteLine($"🎯 Snap target found: ({bestTarget.Position.X:F0},{bestTarget.Position.Y:F0}) distance={minDistance:F0}px");
+            Debug.WriteLine($"🎯 Snap target found: ({bestTarget.Position.X:F0},{bestTarget.Position.Y:F0}) distance={minDistance:F0}px");
             return (bestTarget.Position, bestTarget.Angle);
         }
 

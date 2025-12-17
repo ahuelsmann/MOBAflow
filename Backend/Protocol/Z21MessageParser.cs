@@ -6,13 +6,13 @@ public record XBusStatus(bool EmergencyStop, bool TrackOff, bool ShortCircuit, b
 public static class Z21MessageParser
 {
     public static bool IsLanXHeader(byte[] data)
-        => data.Length >= 4 && data[2] == Z21Protocol.Header.LAN_X_HEADER && data[3] == 0x00;
+        => data is { Length: >= 4 } && data[2] == Z21Protocol.Header.LAN_X_HEADER && data[3] == 0x00;
 
     public static bool IsRBusFeedback(byte[] data)
-        => data.Length >= 4 && data[2] == Z21Protocol.Header.LAN_RBUS_DATACHANGED && data[3] == 0x00;
+        => data is { Length: >= 4 } && data[2] == Z21Protocol.Header.LAN_RBUS_DATACHANGED && data[3] == 0x00;
 
     public static bool IsSystemState(byte[] data)
-        => data.Length >= 4 && data[2] == Z21Protocol.Header.LAN_SYSTEMSTATE && data[3] == 0x00;
+        => data is { Length: >= 4 } && data[2] == Z21Protocol.Header.LAN_SYSTEMSTATE && data[3] == 0x00;
 
     public static bool IsSerialNumber(byte[] data)
         => data.Length >= 8 && data[2] == Z21Protocol.Header.LAN_GET_SERIAL_NUMBER && data[3] == 0x00;

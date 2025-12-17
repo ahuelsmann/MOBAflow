@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Converter;
 
+using Microsoft.UI;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
 using Windows.UI;
@@ -22,7 +23,7 @@ public class HexColorToBrushConverter : IValueConverter
                 // Handle "Transparent" special case
                 if (hexColor.Equals("Transparent", StringComparison.OrdinalIgnoreCase))
                 {
-                    return new SolidColorBrush(Microsoft.UI.Colors.Transparent);
+                    return new SolidColorBrush(Colors.Transparent);
                 }
 
                 // Remove '#' if present

@@ -1,19 +1,16 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using Backend;
+using Backend.Manager;
+using Backend.Model;
+using Backend.Service;
+using Common.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
-using Moba.Backend.Manager;
-using Moba.Backend.Model;
-using Moba.Common.Extensions;
-
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Net;
-using System.Threading.Tasks;
 
 /// <summary>
 /// MainWindowViewModel - Z21 Connection and Control
@@ -27,7 +24,7 @@ public partial class MainWindowViewModel
 
     private void InitializeTrafficMonitor()
     {
-        if (_z21?.TrafficMonitor != null)
+        if (_z21.TrafficMonitor != null)
         {
             _z21.TrafficMonitor.PacketLogged += OnTrafficPacketLogged;
 
@@ -59,7 +56,7 @@ public partial class MainWindowViewModel
     private void ClearTrafficMonitor()
     {
         TrafficPackets.Clear();
-        _z21?.TrafficMonitor?.Clear();
+        _z21.TrafficMonitor?.Clear();
     }
     #endregion
 
@@ -91,7 +88,7 @@ public partial class MainWindowViewModel
                 if (Solution.Projects.Count > 0)
                 {
                     var project = Solution.Projects[0];
-                    var executionContext = new Backend.Service.ActionExecutionContext
+                    var executionContext = new ActionExecutionContext
                     {
                         Z21 = _z21
                     };
@@ -148,13 +145,13 @@ public partial class MainWindowViewModel
         try
         {
             // Create JourneyManager if needed for simulation
-            if (_journeyManager == null && Solution?.Projects.Count > 0)
+            if (_journeyManager == null && Solution.Projects.Count > 0)
             {
                 var project = Solution.Projects[0];
                 
-                Debug.WriteLine($"🔍 [DEBUG] Creating ExecutionContext for JourneyManager");
+                Debug.WriteLine("🔍 [DEBUG] Creating ExecutionContext for JourneyManager");
                 
-                var executionContext = new Backend.Service.ActionExecutionContext
+                var executionContext = new ActionExecutionContext
                 {
                     Z21 = _z21,
                     SpeakerEngine = null  // Will be set via MainWindowViewModel.SpeakerEngine property
@@ -166,7 +163,7 @@ public partial class MainWindowViewModel
                 _journeyManager.StationChanged += OnJourneyStationChanged;
                 _journeyManager.FeedbackReceived += OnJourneyFeedbackReceived;
                 
-                Debug.WriteLine($"✅ [DEBUG] JourneyManager created with event subscriptions");
+                Debug.WriteLine("✅ [DEBUG] JourneyManager created with event subscriptions");
             }
 
             // Get InPort from selected journey or text field
@@ -248,12 +245,12 @@ public partial class MainWindowViewModel
     #endregion
 
     #region Z21 Event Handlers
-    private void OnZ21SystemStateChanged(Backend.SystemState systemState)
+    private void OnZ21SystemStateChanged(SystemState systemState)
     {
         _uiDispatcher.InvokeOnUi(() => UpdateZ21SystemState(systemState));
     }
 
-    private void OnZ21VersionInfoChanged(Backend.Z21VersionInfo versionInfo)
+    private void OnZ21VersionInfoChanged(Z21VersionInfo versionInfo)
     {
         _uiDispatcher.InvokeOnUi(() =>
         {
@@ -266,7 +263,7 @@ public partial class MainWindowViewModel
         });
     }
 
-    private void UpdateZ21SystemState(Backend.SystemState systemState)
+    private void UpdateZ21SystemState(SystemState systemState)
     {
         // If we're receiving system state updates, we're connected
         if (!IsZ21Connected)
@@ -318,7 +315,7 @@ public partial class MainWindowViewModel
     /// Handles JourneyManager.StationChanged events and updates the corresponding JourneyViewModel.
     /// This bridges the gap between JourneyManager (Backend) and JourneyViewModel (UI).
     /// </summary>
-    private void OnJourneyStationChanged(object? sender, Backend.Manager.StationChangedEventArgs e)
+    private void OnJourneyStationChanged(object? sender, StationChangedEventArgs e)
     {
         _uiDispatcher.InvokeOnUi(() =>
         {
@@ -349,7 +346,7 @@ public partial class MainWindowViewModel
     /// Handles JourneyManager.FeedbackReceived events and updates the corresponding JourneyViewModel counter.
     /// Fired on every feedback, not just when a station is reached.
     /// </summary>
-    private void OnJourneyFeedbackReceived(object? sender, Backend.Manager.JourneyFeedbackEventArgs e)
+    private void OnJourneyFeedbackReceived(object? sender, JourneyFeedbackEventArgs e)
     {
         _uiDispatcher.InvokeOnUi(() =>
         {

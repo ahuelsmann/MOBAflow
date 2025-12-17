@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Selector;
 
+using Domain;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-
 using SharedUI.ViewModel;
+using SharedUI.ViewModel.Action;
 
 /// <summary>
 /// Selects the appropriate DataTemplate based on the type of entity.
@@ -84,11 +85,11 @@ public class EntityTemplateSelector : DataTemplateSelector
             PassengerWagonViewModel => WagonTemplate,
             GoodsWagonViewModel => WagonTemplate,
             ProjectViewModel => ProjectTemplate,
-            SharedUI.ViewModel.Action.AnnouncementViewModel => AnnouncementActionTemplate,
-            SharedUI.ViewModel.Action.AudioViewModel => AudioActionTemplate,
-            SharedUI.ViewModel.Action.CommandViewModel => CommandActionTemplate,
-            SharedUI.ViewModel.Action.WorkflowActionViewModel => ActionTemplate,  // Generic fallback
-            Domain.WorkflowAction => ActionTemplate,  // Domain object fallback
+            AnnouncementViewModel => AnnouncementActionTemplate,
+            AudioViewModel => AudioActionTemplate,
+            CommandViewModel => CommandActionTemplate,
+            WorkflowActionViewModel => ActionTemplate,  // Generic fallback
+            WorkflowAction => ActionTemplate,  // Domain object fallback
             _ => DefaultTemplate
         };
     }

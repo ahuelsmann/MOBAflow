@@ -1,9 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Smart;
+namespace Moba.MAUI;
 
-using Moba.SharedUI.ViewModel;
+using SharedUI.ViewModel;
 
-public partial class App : Application
+public partial class App
 {
 	private readonly IServiceProvider _services;
 
@@ -19,7 +19,7 @@ public partial class App : Application
 
 	private void LoadEssentialResources()
 	{
-		var resources = Resources ?? new ResourceDictionary();
+		var resources = Resources;
 		
 		// Surface colors
 		resources["SurfaceBackground"] = Color.FromArgb("#121212");

@@ -9,7 +9,7 @@ using CommunityToolkit.Mvvm.Input;
 using Interface;
 
 using Moba.Backend.Interface;
-using Moba.Common.Extensions;
+using Common.Extensions;
 
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -69,7 +69,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
             _settings.Z21.CurrentIpAddress = Z21IpAddress;
             _settings.Z21.RecentIpAddresses.Add(Z21IpAddress);
             AvailableIpAddresses.Add(Z21IpAddress);
-            this.Log($"⚠️ No IP in AppSettings - using default: 192.168.0.111");
+            this.Log("⚠️ No IP in AppSettings - using default: 192.168.0.111");
         }
 
         Statistics.Add(new InPortStatistic { InPort = 1, Count = 0, TargetLapCount = GlobalTargetLapCount });
@@ -187,7 +187,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
 
     /// <summary>
     /// Timer interval in seconds for filtering multiple feedback events (default: 5.0 seconds).
-    /// </summary]
+    /// </summary>
     [ObservableProperty]
     private double timerIntervalSeconds = 5.0;
 
@@ -213,7 +213,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
 
     /// <summary>
     /// Z21 supply voltage in millivolts (mV).
-    /// </summary]
+    /// </summary>
     [ObservableProperty]
     private int supplyVoltage;
 
@@ -318,13 +318,10 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     {
         try
         {
-            if (_z21 != null)
-            {
-                // Note: Do NOT unsubscribe events here - they remain active for WinUI simulation
-                // Events are only unsubscribed when CounterViewModel is disposed
-                await _z21.DisconnectAsync();
-                // Note: Don't dispose Z21 here - it's a singleton managed by DI
-            }
+            // Note: Do NOT unsubscribe events here - they remain active for WinUI simulation
+            // Events are only unsubscribed when CounterViewModel is disposed
+            await _z21.DisconnectAsync();
+            // Note: Don't dispose Z21 here - it's a singleton managed by DI
 
             IsConnected = false;
             IsTrackPowerOn = false;

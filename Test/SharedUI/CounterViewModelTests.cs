@@ -1,8 +1,12 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Moba.SharedUI.Interface;
-using Moba.SharedUI.ViewModel;
 
 namespace Moba.Test.SharedUI;
+
+using Common.Configuration;
+using Moba.Backend.Service;
+using Moba.SharedUI.Interface;
+using Moba.SharedUI.ViewModel;
+using System.Net;
 
 [TestFixture]
 public class CounterViewModelTests
@@ -15,9 +19,9 @@ public class CounterViewModelTests
         public event VersionInfoChanged? OnVersionInfoChanged;
         public event Action? OnConnectionLost;
         public bool IsConnected { get; private set; }
-        public Moba.Backend.Service.Z21Monitor? TrafficMonitor => null;
-        public Moba.Backend.Z21VersionInfo? VersionInfo => null;
-        public Task ConnectAsync(System.Net.IPAddress address, int port = 21105, CancellationToken cancellationToken = default) { IsConnected = true; return Task.CompletedTask; }
+        public Z21Monitor? TrafficMonitor => null;
+        public Z21VersionInfo? VersionInfo => null;
+        public Task ConnectAsync(IPAddress address, int port = 21105, CancellationToken cancellationToken = default) { IsConnected = true; return Task.CompletedTask; }
         public Task DisconnectAsync() { IsConnected = false; return Task.CompletedTask; }
         public Task SendCommandAsync(byte[] sendBytes) => Task.CompletedTask;
         public Task SetTrackPowerOnAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
@@ -41,9 +45,9 @@ public class CounterViewModelTests
         /// </summary>
         private sealed class TestSettingsService : ISettingsService
         {
-            private readonly Common.Configuration.AppSettings _settings = new();
-            public Common.Configuration.AppSettings GetSettings() => _settings;
-            public Task SaveSettingsAsync(Common.Configuration.AppSettings settings) => Task.CompletedTask;
+            private readonly AppSettings _settings = new();
+            public AppSettings GetSettings() => _settings;
+            public Task SaveSettingsAsync(AppSettings settings) => Task.CompletedTask;
             public Task ResetToDefaultsAsync() => Task.CompletedTask;
             public string? LastSolutionPath { get; set; }
             public bool AutoLoadLastSolution { get; set; }

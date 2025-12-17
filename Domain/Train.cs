@@ -13,8 +13,8 @@ public class Train
         Id = Guid.NewGuid();
         Name = "New Train";
         Description = string.Empty;
-        LocomotiveIds = new List<Guid>();
-        WagonIds = new List<Guid>();
+        LocomotiveIds = [];
+        WagonIds = [];
         TrainType = TrainType.None;
         ServiceType = ServiceType.None;
     }

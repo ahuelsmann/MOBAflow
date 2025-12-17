@@ -1,4 +1,4 @@
-﻿<Page
+<Page
     x:Class="Moba.WinUI.View.WorkflowsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -43,7 +43,6 @@
                 QueryIcon="Find"
                 Text="{x:Bind ViewModel.WorkflowSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             <ListView
-                x:Name="WorkflowsListView"
                 Grid.Row="2"
                 CanDragItems="True"
                 DragItemsStarting="WorkflowListView_DragItemsStarting"
@@ -108,7 +107,6 @@
                 Style="{StaticResource SubtitleTextBlockStyle}"
                 Text="Actions" />
             <ListView
-                x:Name="ActionsListView"
                 Grid.Row="1"
                 IsItemClickEnabled="True"
                 ItemsSource="{x:Bind ViewModel.SelectedWorkflow.Actions, Mode=OneWay}"

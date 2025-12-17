@@ -9,7 +9,7 @@ using Moba.Domain.Enum;
 /// ViewModel wrapper for GoodsWagon model.
 /// Extends WagonViewModel with freight-specific properties.
 /// </summary>
-public partial class GoodsWagonViewModel : WagonViewModel
+public class GoodsWagonViewModel : WagonViewModel
 {
     #region Fields
     // Model (specialized type)

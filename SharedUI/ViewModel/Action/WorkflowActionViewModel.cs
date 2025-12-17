@@ -3,7 +3,7 @@ namespace Moba.SharedUI.ViewModel.Action;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using Domain;
-using Moba.Domain.Enum;
+using Domain.Enum;
 
 /// <summary>
 /// Base class for Action ViewModels that wrap WorkflowAction.
@@ -13,7 +13,7 @@ public abstract class WorkflowActionViewModel : ObservableObject
 {
     #region Fields
     // Model
-    protected readonly WorkflowAction _action;
+    private readonly WorkflowAction _action;
     #endregion
 
     protected WorkflowActionViewModel(WorkflowAction action, ActionType type)

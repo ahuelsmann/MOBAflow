@@ -1,26 +1,30 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
-
-using Moba.SharedUI.ViewModel;
-using Moba.WinUI.Service;
-
-using System.ComponentModel;
-
-using Windows.Foundation;
 
 namespace Moba.WinUI.View;
+
+using Microsoft.UI.Input;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Service;
+using SharedUI.ViewModel;
+using System.ComponentModel;
+using System.Diagnostics;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.Foundation;
+using Windows.System;
+using Windows.UI.Core;
 
 /// <summary>
 /// Track Plan Editor Page - Interactive drag & drop track planning.
 /// Code-behind handles drag & drop operations (WinUI limitation - no good XAML Behavior support).
 /// </summary>
-public sealed partial class TrackPlanEditorPage : Page, INotifyPropertyChanged
+public sealed partial class TrackPlanEditorPage : INotifyPropertyChanged
 {
     #region Fields
     private readonly SnapToConnectService _snapService;
-    private Point _lastMousePosition;
     private string _zoomLevelText = "100%";
     #endregion
 
@@ -66,27 +70,30 @@ public sealed partial class TrackPlanEditorPage : Page, INotifyPropertyChanged
     #region Keyboard Shortcuts
     private void Page_KeyDown(object sender, KeyRoutedEventArgs e)
     {
+        // Check for Ctrl modifier
+        var ctrlPressed = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control)
+            .HasFlag(CoreVirtualKeyStates.Down);
+
         switch (e.Key)
         {
-            case Windows.System.VirtualKey.Delete:
-                if (ViewModel.DeleteSelectedSegmentCommand.CanExecute(null))
-                    ViewModel.DeleteSelectedSegmentCommand.Execute(null);
+            case VirtualKey.Delete:
+                // Delete selected segment(s)
+                if (ViewModel.DeleteSelectedCommand.CanExecute(null))
+                    ViewModel.DeleteSelectedCommand.Execute(null);
                 e.Handled = true;
                 break;
                 
-            case Windows.System.VirtualKey.R:
-                if (ViewModel.RotateRightCommand.CanExecute(null))
-                    ViewModel.RotateRightCommand.Execute(null);
+            case VirtualKey.A when ctrlPressed:
+                // Ctrl+A: Select all
+                if (ViewModel.SelectAllCommand.CanExecute(null))
+                    ViewModel.SelectAllCommand.Execute(null);
                 e.Handled = true;
                 break;
                 
-            case Windows.System.VirtualKey.Escape:
-                // Deselect current segment
-                if (ViewModel.SelectedSegment != null)
-                {
-                    ViewModel.SelectedSegment.IsSelected = false;
-                    ViewModel.SelectedSegment = null;
-                }
+            case VirtualKey.Escape:
+                // Deselect all segments
+                if (ViewModel.DeselectAllCommand.CanExecute(null))
+                    ViewModel.DeselectAllCommand.Execute(null);
                 e.Handled = true;
                 break;
         }
@@ -94,9 +101,10 @@ public sealed partial class TrackPlanEditorPage : Page, INotifyPropertyChanged
     #endregion
 
     #region Zoom Controls
-    private void ZoomSlider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    private void ZoomSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
     {
         if (CanvasScrollViewer == null) return;
+
         
         var zoomFactor = (float)(e.NewValue / 100.0);
         CanvasScrollViewer.ChangeView(null, null, zoomFactor);
@@ -120,31 +128,31 @@ public sealed partial class TrackPlanEditorPage : Page, INotifyPropertyChanged
     /// </summary>
     private void TrackLibrary_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {
-        System.Diagnostics.Debug.WriteLine($"🔵 DragItemsStarting: Items.Count={e.Items.Count}");
+        Debug.WriteLine($"🔵 DragItemsStarting: Items.Count={e.Items.Count}");
         
         if (e.Items.Count > 0)
         {
             var item = e.Items[0];
-            System.Diagnostics.Debug.WriteLine($"🔵 First item type: {item?.GetType().Name}");
+            Debug.WriteLine($"🔵 First item type: {item?.GetType().Name}");
             
             if (item is TrackTemplateViewModel template)
             {
-                System.Diagnostics.Debug.WriteLine($"✅ Template found: {template.ArticleCode}");
+                Debug.WriteLine($"✅ Template found: {template.ArticleCode}");
                 
                 // Store template in drag data
                 e.Data.Properties.Add("TrackTemplate", template);
-                e.Data.RequestedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Link;
+                e.Data.RequestedOperation = DataPackageOperation.Link;
                 
-                System.Diagnostics.Debug.WriteLine($"✅ Drag operation set to LINK");
+                Debug.WriteLine("✅ Drag operation set to LINK");
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"❌ Item is not TrackTemplateViewModel: {item?.GetType().Name}");
+                Debug.WriteLine($"❌ Item is not TrackTemplateViewModel: {item?.GetType().Name}");
             }
         }
         else
         {
-            System.Diagnostics.Debug.WriteLine($"❌ No items in drag");
+            Debug.WriteLine("❌ No items in drag");
         }
     }
 
@@ -153,12 +161,12 @@ public sealed partial class TrackPlanEditorPage : Page, INotifyPropertyChanged
     /// </summary>
     private void TrackCanvas_DragOver(object sender, DragEventArgs e)
     {
-        System.Diagnostics.Debug.WriteLine($"🟡 DragOver - AllowedOperations: {e.AllowedOperations}");
+        Debug.WriteLine($"🟡 DragOver - AllowedOperations: {e.AllowedOperations}");
         
         // Always accept Link operation for app-internal drag & drop
-        e.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Link;
+        e.AcceptedOperation = DataPackageOperation.Link;
         
-        System.Diagnostics.Debug.WriteLine($"✅ DragOver - AcceptedOperation set to LINK");
+        Debug.WriteLine("✅ DragOver - AcceptedOperation set to LINK");
         
         // Update snap preview during drag
         var position = e.GetPosition(TrackCanvas);
@@ -168,21 +176,21 @@ public sealed partial class TrackPlanEditorPage : Page, INotifyPropertyChanged
     /// <summary>
     /// Handle drop event on canvas (add track segment at drop position with snap-to-connect).
     /// </summary>
-    private async void TrackCanvas_Drop(object sender, DragEventArgs e)
+    private void TrackCanvas_Drop(object sender, DragEventArgs e)
     {
-        System.Diagnostics.Debug.WriteLine($"🟢 DROP EVENT FIRED!");
+        Debug.WriteLine("🟢 DROP EVENT FIRED!");
         
         // Get drop position relative to canvas
         var position = e.GetPosition(TrackCanvas);
-        System.Diagnostics.Debug.WriteLine($"📍 Drop position: {position.X}, {position.Y}");
+        Debug.WriteLine($"📍 Drop position: {position.X}, {position.Y}");
 
         // Get dragged template
         bool hasTrackTemplate = e.DataView.Properties.TryGetValue("TrackTemplate", out var templateObj);
-        System.Diagnostics.Debug.WriteLine($"🔍 DataView.Properties contains 'TrackTemplate': {hasTrackTemplate}");
+        Debug.WriteLine($"🔍 DataView.Properties contains 'TrackTemplate': {hasTrackTemplate}");
         
         if (hasTrackTemplate && templateObj is TrackTemplateViewModel template)
         {
-            System.Diagnostics.Debug.WriteLine($"✅ TEMPLATE FOUND: {template.ArticleCode}");
+            Debug.WriteLine($"✅ TEMPLATE FOUND: {template.ArticleCode}");
             
             // Determine position (snap or drop position)
             double x = position.X;
@@ -217,7 +225,7 @@ public sealed partial class TrackPlanEditorPage : Page, INotifyPropertyChanged
                     if (targetSegment != null) break;
                 }
                 
-                System.Diagnostics.Debug.WriteLine($"✅ Snapping to: ({x:F0}, {y:F0})");
+                Debug.WriteLine($"✅ Snapping to: ({x:F0}, {y:F0})");
             }
             
             // Add segment at the correct position (with PathData starting at that position)
@@ -231,13 +239,13 @@ public sealed partial class TrackPlanEditorPage : Page, INotifyPropertyChanged
                 ViewModel.CreateConnection(newSegment, true, targetSegment, targetIsStart, x, y);
             }
             
-            System.Diagnostics.Debug.WriteLine($"✅ Segment placed at: ({x:F0}, {y:F0})");
+            Debug.WriteLine($"✅ Segment placed at: ({x:F0}, {y:F0})");
         }
         else
         {
-            System.Diagnostics.Debug.WriteLine($"❌ Template not found in drop data");
-            System.Diagnostics.Debug.WriteLine($"   templateObj is TrackTemplateViewModel: {templateObj is TrackTemplateViewModel}");
-            System.Diagnostics.Debug.WriteLine($"   templateObj type: {templateObj?.GetType().Name ?? "null"}");
+            Debug.WriteLine("❌ Template not found in drop data");
+            Debug.WriteLine($"   templateObj is TrackTemplateViewModel: {templateObj is TrackTemplateViewModel}");
+            Debug.WriteLine($"   templateObj type: {templateObj?.GetType().Name ?? "null"}");
         }
         
         // Hide snap preview
@@ -259,7 +267,7 @@ public sealed partial class TrackPlanEditorPage : Page, INotifyPropertyChanged
             if (snapTarget.HasValue)
             {
                 // Create line geometry directly instead of parsing
-                var lineGeometry = new Microsoft.UI.Xaml.Media.LineGeometry
+                var lineGeometry = new LineGeometry
                 {
                     StartPoint = position,
                     EndPoint = snapTarget.Value
@@ -267,7 +275,7 @@ public sealed partial class TrackPlanEditorPage : Page, INotifyPropertyChanged
                 
                 SnapPreviewPath.Data = lineGeometry;
                 SnapPreviewPath.Visibility = Visibility.Visible;
-                System.Diagnostics.Debug.WriteLine($"✅ Snap preview shown from {position} to {snapTarget.Value}");
+                Debug.WriteLine($"✅ Snap preview shown from {position} to {snapTarget.Value}");
             }
             else
             {
@@ -276,8 +284,56 @@ public sealed partial class TrackPlanEditorPage : Page, INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"❌ UpdateSnapPreview Exception: {ex.Message}");
+            Debug.WriteLine($"❌ UpdateSnapPreview Exception: {ex.Message}");
             SnapPreviewPath.Visibility = Visibility.Collapsed;
+        }
+    }
+    #endregion
+
+    #region Right-Click Pan
+    private bool _isPanning;
+    private Point _panStartPosition;
+    private double _panStartHorizontalOffset;
+    private double _panStartVerticalOffset;
+
+    private void TrackCanvas_PointerPressed_Pan(object sender, PointerRoutedEventArgs e)
+    {
+        var pointer = e.GetCurrentPoint(TrackCanvas);
+        
+        // Right-click starts panning
+        if (pointer.Properties.IsRightButtonPressed)
+        {
+            _isPanning = true;
+            _panStartPosition = pointer.Position;
+            _panStartHorizontalOffset = CanvasScrollViewer.HorizontalOffset;
+            _panStartVerticalOffset = CanvasScrollViewer.VerticalOffset;
+            TrackCanvas.CapturePointer(e.Pointer);
+            e.Handled = true;
+        }
+    }
+
+    private void TrackCanvas_PointerMoved_Pan(PointerRoutedEventArgs e)
+    {
+        if (!_isPanning) return;
+
+        var currentPosition = e.GetCurrentPoint(TrackCanvas).Position;
+        var deltaX = currentPosition.X - _panStartPosition.X;
+        var deltaY = currentPosition.Y - _panStartPosition.Y;
+
+        // Scroll the canvas (invert delta for natural panning feel)
+        CanvasScrollViewer.ChangeView(
+            _panStartHorizontalOffset - deltaX,
+            _panStartVerticalOffset - deltaY,
+            null,
+            disableAnimation: true);
+    }
+
+    private void TrackCanvas_PointerReleased_Pan(PointerRoutedEventArgs e)
+    {
+        if (_isPanning)
+        {
+            _isPanning = false;
+            TrackCanvas.ReleasePointerCapture(e.Pointer);
         }
     }
     #endregion
@@ -309,13 +365,13 @@ public sealed partial class TrackPlanEditorPage : Page, INotifyPropertyChanged
             // Capture pointer on the CANVAS (not the element) for reliable drag tracking
             TrackCanvas.CapturePointer(e.Pointer);
             
-            System.Diagnostics.Debug.WriteLine($"🔵 Segment selected: {segment.ArticleCode} at ({segment.CenterX}, {segment.CenterY})");
+            Debug.WriteLine($"🔵 Segment selected: {segment.ArticleCode} at ({segment.CenterX}, {segment.CenterY})");
             e.Handled = true;
         }
     }
     
     /// <summary>
-    /// Handle pointer move on canvas for dragging selected segment.
+    /// Handle pointer move on canvas for dragging selected segment or panning.
     /// Connected segments move together as a group.
     /// </summary>
     private void TrackCanvas_PointerMoved_Drag(object sender, PointerRoutedEventArgs e)
@@ -326,6 +382,14 @@ public sealed partial class TrackPlanEditorPage : Page, INotifyPropertyChanged
         var mmX = currentPosition.X * 2;
         var mmY = currentPosition.Y * 2;
         MousePositionText = $"X: {mmX:F0}mm  Y: {mmY:F0}mm";
+        
+        // Handle right-click panning
+        if (_isPanning)
+        {
+            TrackCanvas_PointerMoved_Pan(e);
+            e.Handled = true;
+            return;
+        }
         
         if (_draggingSegment != null && e.Pointer.IsInContact)
         {
@@ -347,7 +411,7 @@ public sealed partial class TrackPlanEditorPage : Page, INotifyPropertyChanged
             if (snapTarget.HasValue)
             {
                 // Show snap preview
-                var lineGeometry = new Microsoft.UI.Xaml.Media.LineGeometry
+                var lineGeometry = new LineGeometry
                 {
                     StartPoint = new Point(_draggingSegment.CenterX, _draggingSegment.CenterY),
                     EndPoint = snapTarget.Value
@@ -360,20 +424,28 @@ public sealed partial class TrackPlanEditorPage : Page, INotifyPropertyChanged
                 SnapPreviewPath.Visibility = Visibility.Collapsed;
             }
             
-            System.Diagnostics.Debug.WriteLine($"📍 Dragging to ({_draggingSegment.CenterX:F0}, {_draggingSegment.CenterY:F0})");
+            Debug.WriteLine($"📍 Dragging to ({_draggingSegment.CenterX:F0}, {_draggingSegment.CenterY:F0})");
             e.Handled = true;
         }
     }
     
     
     /// <summary>
-    /// Handle pointer release on canvas - end drag and snap if applicable.
+    /// Handle pointer release on canvas - end drag/pan and snap if applicable.
     /// </summary>
     private void TrackCanvas_PointerReleased(object sender, PointerRoutedEventArgs e)
     {
+        // Handle panning release
+        if (_isPanning)
+        {
+            TrackCanvas_PointerReleased_Pan(e);
+            e.Handled = true;
+            return;
+        }
+        
         if (_draggingSegment != null)
         {
-            var currentPosition = e.GetCurrentPoint(TrackCanvas).Position;
+            _ = e.GetCurrentPoint(TrackCanvas).Position;
             
             // Try to snap to nearby segment endpoint
             var snapResult = _snapService.FindSnapEndpoint(
@@ -390,16 +462,25 @@ public sealed partial class TrackPlanEditorPage : Page, INotifyPropertyChanged
                 // Move segment to snap position (updates both position and PathData)
                 _draggingSegment.MoveBy(deltaX, deltaY);
                 
-                System.Diagnostics.Debug.WriteLine($"✅ Snapped segment to ({snapResult.Value.SnapPosition.X:F0}, {snapResult.Value.SnapPosition.Y:F0})");
+                Debug.WriteLine($"✅ Snapped segment to ({snapResult.Value.SnapPosition.X:F0}, {snapResult.Value.SnapPosition.Y:F0})");
             }
             
             TrackCanvas.ReleasePointerCapture(e.Pointer);
             _draggingSegment = null;
             SnapPreviewPath.Visibility = Visibility.Collapsed;
             
-            System.Diagnostics.Debug.WriteLine($"🔵 Drag ended");
+            Debug.WriteLine("🔵 Drag ended");
             e.Handled = true;
         }
+    }
+
+    /// <summary>
+    /// Handle right-click on canvas to start panning.
+    /// </summary>
+    private void TrackCanvas_RightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        // Prevent context menu
+        e.Handled = true;
     }
     #endregion
 }

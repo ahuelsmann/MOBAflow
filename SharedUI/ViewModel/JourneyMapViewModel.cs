@@ -9,7 +9,7 @@ using System.Collections.ObjectModel;
 /// ViewModel for JourneyMapPage - displays virtual route with station progress.
 /// Shows schematic station-to-station visualization with current position indicator.
 /// </summary>
-public partial class JourneyMapViewModel : ObservableObject
+public class JourneyMapViewModel : ObservableObject
 {
     #region Fields
     // Context

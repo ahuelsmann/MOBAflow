@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Moba.Domain.TrackPlan;
+using Domain.TrackPlan;
 
 /// <summary>
 /// ViewModel wrapper for TrackTemplate (from PikoATrackLibrary).

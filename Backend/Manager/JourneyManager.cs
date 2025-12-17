@@ -1,12 +1,12 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Moba.Backend.Interface;
-using Moba.Backend.Service;
-using Moba.Domain;
-using Moba.Domain.Enum;
-
-using System.Diagnostics;
 
 namespace Moba.Backend.Manager;
+
+using Domain;
+using Domain.Enum;
+using Interface;
+using Service;
+using System.Diagnostics;
 
 /// <summary>
 /// Manages the execution of workflows and their actions related to a journey or stop (station) based on feedback events (track feedback points).
@@ -56,7 +56,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>
     /// <param name="workflowService">Service for executing workflows</param>
     /// <param name="executionContext">Optional execution context; if null, a new context with Z21 will be created</param>
     public JourneyManager(
-        IZ21 z21, 
+        IZ21 z21,
         Project project,
         WorkflowService workflowService,
         ActionExecutionContext? executionContext = null)
@@ -64,7 +64,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>
     {
         _project = project;
         _workflowService = workflowService;
-        
+
         // Initialize SessionState for all journeys
         foreach (var journey in project.Journeys)
         {
@@ -112,7 +112,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>
     {
         // Get state
         var state = _states[journey.Id];
-        
+
         state.Counter++;
         state.LastFeedbackTime = DateTime.Now;
         Debug.WriteLine($"🔄 Journey '{journey.Name}': Round {state.Counter}, Position {state.CurrentPos}");
@@ -127,7 +127,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>
         // Get current Station directly from Journey
         if (state.CurrentPos >= journey.Stations.Count)
         {
-            Debug.WriteLine($"⚠ CurrentPos out of Stations list bounds");
+            Debug.WriteLine("⚠ CurrentPos out of Stations list bounds");
             return;
         }
 
@@ -136,7 +136,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>
         if (state.Counter >= currentStation.NumberOfLapsToStop)
         {
             Debug.WriteLine($"🚉 Station reached: {currentStation.Name}");
-            
+
             // Update SessionState with current station
             state.CurrentStationName = currentStation.Name;
 
@@ -150,11 +150,12 @@ public class JourneyManager : BaseFeedbackManager<Journey>
                     ExecutionContext?.JourneyTemplateText = journey.Text;
                     ExecutionContext?.CurrentStation = currentStation;
 
-                    await _workflowService.ExecuteAsync(workflow, ExecutionContext).ConfigureAwait(false);
+                    if (ExecutionContext != null)
+                        await _workflowService.ExecuteAsync(workflow, ExecutionContext).ConfigureAwait(false);
 
                     // Clear context after workflow execution
-                    ExecutionContext.JourneyTemplateText = null;
-                    ExecutionContext.CurrentStation = null;
+                    ExecutionContext?.JourneyTemplateText = null;
+                    ExecutionContext?.CurrentStation = null;
                 }
                 else
                 {
@@ -189,7 +190,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>
     {
         // Get state
         var state = _states[journey.Id];
-        
+
         Debug.WriteLine($"🏁 Last station of journey '{journey.Name}' reached");
 
         switch (journey.BehaviorOnLastStop)
@@ -216,7 +217,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>
                 }
                 else
                 {
-                    Debug.WriteLine($"⚠ NextJourneyId not set");
+                    Debug.WriteLine("⚠ NextJourneyId not set");
                 }
                 break;
 

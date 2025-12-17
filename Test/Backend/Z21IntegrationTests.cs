@@ -1,7 +1,8 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Moba.Test.Mocks;
 
 namespace Moba.Test.Backend;
+
+using Mocks;
 
 [TestFixture]
 public class Z21IntegrationTests
@@ -10,11 +11,11 @@ public class Z21IntegrationTests
     public async Task Z21_Receives_SimulatedFeedback_FromSimulator()
     {
         var fakeUdp = new FakeUdpClientWrapper();
-        using var z21 = new Z21(fakeUdp, null);
+        using var z21 = new Z21(fakeUdp);
 
         var received = new TaskCompletionSource<FeedbackResult>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        z21.Received += (f) => received.TrySetResult(f);
+        z21.Received += f => received.TrySetResult(f);
 
         // Use internal simulation helper for deterministic test
         z21.SimulateFeedback(5);

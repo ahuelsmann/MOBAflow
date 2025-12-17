@@ -1,16 +1,14 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-
 using Service;
-
 using SharedUI.Interface;
 using SharedUI.ViewModel;
-
-using System;
-
+using System.ComponentModel;
+using System.Diagnostics;
 using MainWindowViewModel = SharedUI.ViewModel.MainWindowViewModel;
 
 public sealed partial class MainWindow
@@ -18,6 +16,7 @@ public sealed partial class MainWindow
     #region Fields
     public MainWindowViewModel ViewModel { get; }
     public CounterViewModel CounterViewModel { get; }
+    public TrackPlanEditorViewModel TrackPlanEditorViewModel { get; }
 
     private readonly NavigationService _navigationService;
     private readonly HealthCheckService _healthCheckService;
@@ -27,6 +26,7 @@ public sealed partial class MainWindow
     public MainWindow(
         MainWindowViewModel viewModel,
         CounterViewModel counterViewModel,
+        TrackPlanEditorViewModel trackPlanEditorViewModel,
         NavigationService navigationService,
         HealthCheckService healthCheckService,
         IUiDispatcher uiDispatcher,
@@ -34,6 +34,7 @@ public sealed partial class MainWindow
     {
         ViewModel = viewModel;
         CounterViewModel = counterViewModel;
+        TrackPlanEditorViewModel = trackPlanEditorViewModel;
         _navigationService = navigationService;
         _healthCheckService = healthCheckService;
         _uiDispatcher = uiDispatcher;
@@ -43,11 +44,18 @@ public sealed partial class MainWindow
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
 
+        // Maximize window on startup
+        var appWindow = AppWindow;
+        if (appWindow.Presenter is OverlappedPresenter presenter)
+        {
+            presenter.Maximize();
+        }
+
         // Initialize IoService with WindowId (required before any file operations)
         if (ioService is IoService winUiIoService)
         {
-            winUiIoService.SetWindowId(this.AppWindow.Id, this.Content.XamlRoot);
-            System.Diagnostics.Debug.WriteLine("✅ IoService initialized with WindowId");
+            winUiIoService.SetWindowId(AppWindow.Id, Content.XamlRoot);
+            Debug.WriteLine("✅ IoService initialized with WindowId");
         }
 
         // Initialize NavigationService with ContentFrame
@@ -76,7 +84,7 @@ public sealed partial class MainWindow
     }
 
     #region Event Handlers
-    private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(MainWindowViewModel.IsZ21Connected))
         {
@@ -95,7 +103,7 @@ public sealed partial class MainWindow
 
     private void MainWindow_Closed(object sender, WindowEventArgs args)
     {
-        _healthCheckService?.StopPeriodicChecks();
+        _healthCheckService.StopPeriodicChecks();
         ViewModel.OnWindowClosing();
     }
 
@@ -122,9 +130,9 @@ public sealed partial class MainWindow
     }
 
     // Minimal event handler - delegates to ViewModel Command (XAML limitation for AppBarToggleButton)
-    private void TrackPower_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private void TrackPower_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Microsoft.UI.Xaml.Controls.AppBarToggleButton toggleButton)
+        if (sender is AppBarToggleButton toggleButton)
         {
             // Simply execute command with current state - no business logic here
             CounterViewModel.SetTrackPowerCommand.Execute(toggleButton.IsChecked);

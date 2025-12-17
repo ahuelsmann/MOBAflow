@@ -1,12 +1,10 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
-using Domain;
 using Moba.Backend.Manager;
-using Moba.Backend.Interface;
+using Moba.Backend.Service;
 using Moba.SharedUI.Interface;
 using Moq;
-using Moba.Backend.Service;
 
 [TestFixture]
 public class WinUIAdapterDispatchTests
@@ -54,8 +52,6 @@ public class WinUIAdapterDispatchTests
         var actionExecutor = new ActionExecutor(z21Mock.Object);
         var workflowService = new WorkflowService(actionExecutor);
         var journeyManager = new TestableJourneyManager(z21Mock.Object, project, workflowService);
-
-        var vm = new Moba.SharedUI.ViewModel.JourneyViewModel(journey, project, state, journeyManager, dispatcher);
 
         // Act - Trigger StationChanged event
         journeyManager.TriggerStationChanged(new StationChangedEventArgs

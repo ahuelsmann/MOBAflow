@@ -1,9 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-using Moba.Backend.Service;
-using Moba.Domain;
-
 namespace Moba.Backend.Manager;
+
+using Domain;
+using Service;
 
 /// <summary>
 /// Event arguments for the StationChanged event in JourneyManager.

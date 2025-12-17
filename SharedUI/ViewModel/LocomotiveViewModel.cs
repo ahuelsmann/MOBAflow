@@ -2,12 +2,9 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
-
 using Domain;
-
+using Domain.Enum;
 using Interface;
-
-using Moba.Domain.Enum;
 
 /// <summary>
 /// ViewModel wrapper for Locomotive model with throttle control operations.

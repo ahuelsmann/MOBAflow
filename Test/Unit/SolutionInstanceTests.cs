@@ -1,6 +1,6 @@
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Moba.Test.Unit;
+
+using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Verifies that Solution instance management is correct across the application.

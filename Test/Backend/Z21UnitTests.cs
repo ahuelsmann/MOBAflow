@@ -1,8 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Moba.Test.Mocks;
-using System.Net;
 
 namespace Moba.Test.Backend;
+
+using Mocks;
+using System.Net;
 
 [TestFixture]
 public class Z21UnitTests
@@ -11,12 +12,12 @@ public class Z21UnitTests
     public void SimulateFeedback_RaisesReceivedEvent()
     {
         var fakeUdp = new FakeUdpClientWrapper();
-        using var z21 = new Z21(fakeUdp, null);
+        using var z21 = new Z21(fakeUdp);
 
         FeedbackResult? captured = null;
         var signaled = new TaskCompletionSource<bool>();
 
-        z21.Received += (f) => {
+        z21.Received += f => {
             captured = f;
             signaled.TrySetResult(true);
         };
@@ -34,10 +35,10 @@ public class Z21UnitTests
     public async Task ConnectAsync_StartsKeepaliveTimer()
     {
         var fakeUdp = new FakeUdpClientWrapper();
-        using var z21 = new Z21(fakeUdp, null);
+        using var z21 = new Z21(fakeUdp);
 
         var address = IPAddress.Parse("192.168.0.111");
-        await z21.ConnectAsync(address, 21105);
+        await z21.ConnectAsync(address);
 
         Assert.That(z21.IsConnected, Is.True);
 
@@ -51,10 +52,10 @@ public class Z21UnitTests
     public async Task DisconnectAsync_StopsKeepaliveTimer()
     {
         var fakeUdp = new FakeUdpClientWrapper();
-        using var z21 = new Z21(fakeUdp, null);
+        using var z21 = new Z21(fakeUdp);
 
         var address = IPAddress.Parse("192.168.0.111");
-        await z21.ConnectAsync(address, 21105);
+        await z21.ConnectAsync(address);
         Assert.That(z21.IsConnected, Is.True);
 
         await z21.DisconnectAsync();
@@ -71,10 +72,10 @@ public class Z21UnitTests
     public async Task KeepaliveTimer_SendsPeriodicStatusRequests()
     {
         var fakeUdp = new FakeUdpClientWrapper();
-        using var z21 = new Z21(fakeUdp, null);
+        using var z21 = new Z21(fakeUdp);
 
         var address = IPAddress.Parse("192.168.0.111");
-        await z21.ConnectAsync(address, 21105);
+        await z21.ConnectAsync(address);
 
         // Clear initial handshake messages
         fakeUdp.SentPayloads.Clear();
@@ -94,10 +95,10 @@ public class Z21UnitTests
     public void Dispose_StopsKeepaliveTimer()
     {
         var fakeUdp = new FakeUdpClientWrapper();
-        var z21 = new Z21(fakeUdp, null);
+        var z21 = new Z21(fakeUdp);
 
         var address = IPAddress.Parse("192.168.0.111");
-        z21.ConnectAsync(address, 21105).Wait();
+        z21.ConnectAsync(address).Wait();
 
         z21.Dispose();
 

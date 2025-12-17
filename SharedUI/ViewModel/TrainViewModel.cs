@@ -3,13 +3,9 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using Domain;
-
+using Domain.Enum;
 using Interface;
-
-using Moba.Domain.Enum;
-
 using System.Collections.ObjectModel;
 
 /// <summary>
@@ -56,7 +52,7 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
 
     public string Description
     {
-        get => _model.Description ?? string.Empty;
+        get => _model.Description;
         set => SetProperty(_model.Description, value, _model, (m, v) => m.Description = v);
     }
 
@@ -75,12 +71,12 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
     /// <summary>
     /// Gets all available TrainType enum values for ComboBox binding.
     /// </summary>
-    public IEnumerable<TrainType> TrainTypeValues => System.Enum.GetValues<TrainType>();
+    public IEnumerable<TrainType> TrainTypeValues => Enum.GetValues<TrainType>();
 
     /// <summary>
     /// Gets all available ServiceType enum values for ComboBox binding.
     /// </summary>
-    public IEnumerable<ServiceType> ServiceTypeValues => System.Enum.GetValues<ServiceType>();
+    public IEnumerable<ServiceType> ServiceTypeValues => Enum.GetValues<ServiceType>();
 
     /// <summary>
     /// Gets or sets the list of locomotive IDs (direct Domain property access).
@@ -152,8 +148,6 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
     [RelayCommand]
     private void DeleteLocomotive(LocomotiveViewModel locomotiveVM)
     {
-        if (locomotiveVM == null) return;
-
         // Remove ID from Train
         _model.LocomotiveIds.Remove(locomotiveVM.Model.Id);
         
@@ -181,8 +175,6 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
     [RelayCommand]
     private void DeleteWagon(WagonViewModel wagonVM)
     {
-        if (wagonVM == null) return;
-
         // Remove ID from Train
         _model.WagonIds.Remove(wagonVM.Model.Id);
         

@@ -3,9 +3,7 @@ namespace Moba.WinUI.Service;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
-
-using System;
-
+using System.Diagnostics;
 using View;
 
 /// <summary>
@@ -60,7 +58,7 @@ public class NavigationService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"❌ Navigation to '{tag}' failed: {ex.Message}");
+            Debug.WriteLine($"❌ Navigation to '{tag}' failed: {ex.Message}");
         }
     }
 

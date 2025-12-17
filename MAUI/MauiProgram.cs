@@ -1,14 +1,18 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Smart;
+namespace Moba.MAUI;
 
+using Backend;
+using Backend.Data;
+using Backend.Interface;
+using Backend.Network;
+using Backend.Service;
+using Common.Configuration;
 using CommunityToolkit.Maui;
-
+using Domain;
 using Microsoft.Extensions.Logging;
-
-using Moba.Backend.Network;
-using Moba.Backend.Service;
-using Moba.SharedUI.Interface;
-
+using Service;
+using SharedUI.Interface;
+using SharedUI.ViewModel;
 using UraniumUI;
 
 public static class MauiProgram
@@ -29,28 +33,28 @@ public static class MauiProgram
             });
 
         // Platform services (MUST be registered before ViewModels that depend on them)
-        builder.Services.AddSingleton<IUiDispatcher, MAUI.Service.UiDispatcher>();
-        builder.Services.AddSingleton<SharedUI.Interface.IBackgroundService, MAUI.Service.BackgroundService>();
+        builder.Services.AddSingleton<IUiDispatcher, UiDispatcher>();
+        builder.Services.AddSingleton<IBackgroundService, BackgroundService>();
 
         // Configuration (AppSettings + ISettingsService)
-        builder.Services.AddSingleton<Common.Configuration.AppSettings>();
-        builder.Services.AddSingleton<ISettingsService, MAUI.Service.SettingsService>();
+        builder.Services.AddSingleton<AppSettings>();
+        builder.Services.AddSingleton<ISettingsService, SettingsService>();
 
         // ViewModels (CounterViewModel now requires IUiDispatcher and ISettingsService)
-        builder.Services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
-        builder.Services.AddTransient<SharedUI.ViewModel.JourneyViewModel>();
+        builder.Services.AddSingleton<CounterViewModel>();
+        builder.Services.AddTransient<JourneyViewModel>();
 
         // Backend services - Register in dependency order
         builder.Services.AddSingleton<IUdpClientWrapper, UdpWrapper>();
-        builder.Services.AddSingleton<Backend.Interface.IZ21, Backend.Z21>();
+        builder.Services.AddSingleton<IZ21, Z21>();
         builder.Services.AddSingleton<ActionExecutor>();
         builder.Services.AddSingleton<WorkflowService>();
 
         // ✅ DataManager as Singleton (master data loaded on first access)
-        builder.Services.AddSingleton<Backend.Data.DataManager>();
+        builder.Services.AddSingleton<DataManager>();
 
         // ✅ Solution as Singleton (initialized empty, can be loaded later by user)
-        builder.Services.AddSingleton<Domain.Solution>();
+        builder.Services.AddSingleton<Solution>();
 
         // Views
         builder.Services.AddTransient<MainPage>();

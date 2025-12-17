@@ -1,6 +1,12 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+
+using Moba.Backend;
+using Moba.Backend.Data;
+using Moba.Backend.Interface;
 using Moba.Backend.Network;
 using Moba.Backend.Service;
+using Moba.Common.Configuration;
+using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
 using Moba.WebApp.Components;
@@ -12,7 +18,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 // Configuration: AppSettings (required by ViewModels)
-var appSettings = new Moba.Common.Configuration.AppSettings();
+var appSettings = new AppSettings();
 builder.Configuration.GetSection("AppSettings").Bind(appSettings);
 // Initialize Z21 settings with defaults if not configured
 if (string.IsNullOrEmpty(appSettings.Z21.CurrentIpAddress))
@@ -29,15 +35,15 @@ builder.Services.AddSingleton<IUiDispatcher, BlazorUiDispatcher>();
 
 // Backend services - Register in dependency order
 builder.Services.AddSingleton<IUdpClientWrapper, UdpWrapper>();
-builder.Services.AddSingleton<Moba.Backend.Interface.IZ21, Moba.Backend.Z21>();
+builder.Services.AddSingleton<IZ21, Z21>();
 builder.Services.AddSingleton<ActionExecutor>();
 builder.Services.AddSingleton<WorkflowService>();
 
 // ✅ DataManager as Singleton (master data - simplified for Blazor Server)
-builder.Services.AddSingleton<Moba.Backend.Data.DataManager>();
+builder.Services.AddSingleton<DataManager>();
 
 // ✅ Solution as Singleton (initialized empty, can be loaded later by user)
-builder.Services.AddSingleton<Moba.Domain.Solution>();
+builder.Services.AddSingleton<Solution>();
 
 // ✅ CounterViewModel as Singleton (DI resolves IZ21, IUiDispatcher, ISettingsService automatically)
 builder.Services.AddSingleton<CounterViewModel>();

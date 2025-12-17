@@ -78,7 +78,7 @@ public class ActionExecutor
         }
         else
         {
-            Debug.WriteLine($"    ⚠ Command skipped: No valid bytes");
+            Debug.WriteLine("    ⚠ Command skipped: No valid bytes");
         }
     }
 
@@ -119,8 +119,8 @@ public class ActionExecutor
         }
 
         var message = action.Parameters["Message"].ToString()!;
-        var voiceName = action.Parameters.ContainsKey("VoiceName") 
-            ? action.Parameters["VoiceName"].ToString() 
+        var voiceName = action.Parameters.TryGetValue("VoiceName", out var voice)
+            ? voice.ToString()
             : null;
 
         // ✅ Replace template placeholders with actual values

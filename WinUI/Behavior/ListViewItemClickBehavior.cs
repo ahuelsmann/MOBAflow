@@ -1,10 +1,10 @@
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.Xaml.Interactivity;
-using System.Windows.Input;
-
 namespace Moba.WinUI.Behavior
 {
+    using Microsoft.UI.Xaml;
+    using Microsoft.UI.Xaml.Controls;
+    using Microsoft.Xaml.Interactivity;
+    using System.Windows.Input;
+
     /// <summary>
     /// Custom behavior for ListView ItemClick that passes the clicked item directly.
     /// This avoids the issue where CommandParameter binding returns null.

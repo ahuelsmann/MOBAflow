@@ -1,10 +1,12 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Moq;
+
 // ✅ IUiDispatcher
-using Moba.SharedUI.Interface;
-using Moba.Backend.Service;
 
 namespace Moba.Test.TestBase;
+
+using Moba.Backend.Service;
+using Moba.SharedUI.Interface;
+using Moq;
 
 /// <summary>
 /// Base class for ViewModel tests that provides common mock dependencies.
@@ -43,17 +45,17 @@ public abstract class ViewModelTestBase
         WorkflowServiceMock = new Mock<WorkflowService>();
         IoServiceMock = new Mock<IIoService>();
         UiDispatcherMock = new Mock<IUiDispatcher>();
-        
+
         // Configure UiDispatcher to execute actions immediately (synchronous for tests)
         UiDispatcherMock
             .Setup(d => d.InvokeOnUi(It.IsAny<Action>()))
             .Callback<Action>(action => action());
-        
+
         // Configure default IoService behavior (returns empty solution)
         IoServiceMock
             .Setup(s => s.LoadAsync())
             .ReturnsAsync((new Solution(), null as string, null as string));
-        
+
         IoServiceMock
             .Setup(s => s.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()))
             .ReturnsAsync((true, "test.json", null as string));
@@ -67,9 +69,9 @@ public abstract class ViewModelTestBase
     public virtual void BaseTearDown()
     {
         // Reset all mocks to clean state
-        Z21Mock?.Reset();
-        WorkflowServiceMock?.Reset();
-        IoServiceMock?.Reset();
-        UiDispatcherMock?.Reset();
+        Z21Mock.Reset();
+        WorkflowServiceMock.Reset();
+        IoServiceMock.Reset();
+        UiDispatcherMock.Reset();
     }
 }

@@ -2,11 +2,8 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.Input;
-
 using Domain;
-
-using System;
-using System.Threading.Tasks;
+using System.Diagnostics;
 
 /// <summary>
 /// MainWindowViewModel - Solution and Project Management
@@ -135,7 +132,7 @@ public partial class MainWindowViewModel
     {
         // Cities are loaded from CityLibrary, NOT from Project
         // This method can be removed or kept as no-op for backward compatibility
-        System.Diagnostics.Debug.WriteLine("ℹ️ LoadCities called - Cities are loaded from CityLibrary on startup");
+        Debug.WriteLine("ℹ️ LoadCities called - Cities are loaded from CityLibrary on startup");
     }
     #endregion
 }

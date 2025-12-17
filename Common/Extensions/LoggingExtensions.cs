@@ -1,7 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Microsoft.Extensions.Logging;
 
 namespace Moba.Common.Extensions;
+
+using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 /// <summary>
 /// Extension methods for unified logging across the application.
@@ -28,7 +30,7 @@ public static class LoggingExtensions
         Console.WriteLine(message);
 
         // Debug.WriteLine: visible in Visual Studio Output Window
-        System.Diagnostics.Debug.WriteLine(message);
+        Debug.WriteLine(message);
 
         // Structured logging via ILogger
         logger?.LogInformation("{Message}", message);
@@ -46,10 +48,10 @@ public static class LoggingExtensions
     {
         var errorMessage = $"❌ {message}: {exception.Message}";
         Console.WriteLine(errorMessage);
-        System.Diagnostics.Debug.WriteLine(errorMessage);
+        Debug.WriteLine(errorMessage);
 
         // Log full exception details to Debug only (not to Console to avoid clutter)
-        System.Diagnostics.Debug.WriteLine($"   Exception: {exception}");
+        Debug.WriteLine($"   Exception: {exception}");
 
         // Structured logging with exception
         logger?.LogError(exception, "{Message}", message);
@@ -66,7 +68,7 @@ public static class LoggingExtensions
     {
         var warningMessage = $"⚠️ {message}";
         Console.WriteLine(warningMessage);
-        System.Diagnostics.Debug.WriteLine(warningMessage);
+        Debug.WriteLine(warningMessage);
 
         // Structured logging
         logger?.LogWarning("{Message}", message);

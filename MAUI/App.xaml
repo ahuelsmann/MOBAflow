@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Application
-    x:Class="Moba.Smart.App"
+    x:Class="Moba.MAUI.App"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:Moba.Smart">
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
     <Application.Resources>
         <ResourceDictionary>
-
             <!--  ⚠️ CRITICAL: Define essential colors INLINE to ensure they're available at startup  -->
             <Color x:Key="SurfaceBackground">#121212</Color>
             <Color x:Key="SurfaceCard">#2D2D30</Color>

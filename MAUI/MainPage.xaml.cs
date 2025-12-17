@@ -1,20 +1,17 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Smart;
+namespace Moba.MAUI;
 
-using Moba.SharedUI.Interface;
 using SharedUI.ViewModel;
 
-public partial class MainPage : ContentPage
+public partial class MainPage
 {
     private readonly CounterViewModel _viewModel;
-    private readonly IUiDispatcher _uiDispatcher;
     private bool _isUpdatingFromBinding;
 
-    public MainPage(CounterViewModel viewModel, IUiDispatcher uiDispatcher)
+    public MainPage(CounterViewModel viewModel)
     {
         InitializeComponent();
         _viewModel = viewModel;
-        _uiDispatcher = uiDispatcher;
         BindingContext = _viewModel;
 
         // Subscribe to property changes to detect binding updates

@@ -2,23 +2,16 @@
 namespace Moba.Backend.Service;
 
 using Domain;
-
 using System.Diagnostics;
-using System.Threading.Tasks;
 
 /// <summary>
 /// Workflow execution service.
 /// Orchestrates the execution of workflows and their actions.
 /// Platform-independent: No UI thread dispatching.
 /// </summary>
-public class WorkflowService
+public class WorkflowService(ActionExecutor actionExecutor)
 {
-    private readonly ActionExecutor _actionExecutor;
-
-    public WorkflowService(ActionExecutor actionExecutor)
-    {
-        _actionExecutor = actionExecutor;
-    }
+    private readonly ActionExecutor _actionExecutor = actionExecutor;
 
     /// <summary>
     /// Executes a workflow with all its actions sequentially.
@@ -33,7 +26,7 @@ public class WorkflowService
 
         Debug.WriteLine($"▶ Starting workflow: {workflow.Name}");
 
-        if (workflow.Actions == null || workflow.Actions.Count == 0)
+        if (workflow.Actions.Count == 0)
         {
             Debug.WriteLine($"⚠ Workflow '{workflow.Name}' has no actions");
             return;

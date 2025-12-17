@@ -1,8 +1,8 @@
-using System.Windows.Input;
-using CommunityToolkit.Mvvm.Input;
-
 namespace Moba.SharedUI.ViewModel
 {
+    using CommunityToolkit.Mvvm.Input;
+    using System.Windows.Input;
+
     public partial class MainWindowViewModel
     {
         private ICommand? _itemClickedCommand;

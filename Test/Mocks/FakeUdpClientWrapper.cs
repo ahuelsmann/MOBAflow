@@ -1,8 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using System.Net;
-using Moba.Backend.Network;
 
 namespace Moba.Test.Mocks;
+
+using Moba.Backend.Network;
+using System.Net;
 
 public sealed class FakeUdpClientWrapper : IUdpClientWrapper
 {

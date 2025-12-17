@@ -1,15 +1,13 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
-using Microsoft.UI.Xaml.Controls;
-
 using SharedUI.ViewModel;
 
 /// <summary>
 /// Settings page for application-wide configuration.
 /// Uses MainWindowViewModel.Settings for data binding.
 /// </summary>
-public sealed partial class SettingsPage : Page
+public sealed partial class SettingsPage
 {
     public MainWindowViewModel ViewModel { get; }
 

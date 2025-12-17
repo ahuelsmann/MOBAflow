@@ -142,7 +142,7 @@ public class ResultTests
         var actionExecuted = false;
 
         // Act
-        result.OnSuccess(v => actionExecuted = true);
+        result.OnSuccess(_ => actionExecuted = true);
 
         // Assert
         Assert.That(actionExecuted, Is.False);

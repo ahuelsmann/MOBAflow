@@ -3,12 +3,11 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
-using Moba.Domain.TrackPlan;
-using Moba.SharedUI.Interface;
-
+using Domain.TrackPlan;
+using Interface;
 using System.Collections.ObjectModel;
-using System.IO;
+using System.Diagnostics;
+using System.Globalization;
 
 /// <summary>
 /// ViewModel for TrackPlanEditorPage - interactive drag & drop track plan editor.
@@ -134,15 +133,51 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         }
     }
 
+    #region Canvas Size (configurable work surface)
     /// <summary>
-    /// Canvas width in pixels.
+    /// Scale factor: 1 pixel = 0.5mm (so 2400mm = 1200px).
     /// </summary>
-    public double CanvasWidth => 1200;
+    public const double PixelsPerMm = 0.5;
 
     /// <summary>
-    /// Canvas height in pixels.
+    /// Canvas width in mm (real-world dimensions).
     /// </summary>
-    public double CanvasHeight => 800;
+    [ObservableProperty]
+    private double canvasWidthMm = 2400;
+
+    /// <summary>
+    /// Canvas height in mm (real-world dimensions).
+    /// </summary>
+    [ObservableProperty]
+    private double canvasHeightMm = 1600;
+
+    /// <summary>
+    /// Canvas width in pixels (for rendering).
+    /// </summary>
+    public double CanvasWidth => CanvasWidthMm * PixelsPerMm;
+
+    /// <summary>
+    /// Canvas height in pixels (for rendering).
+    /// </summary>
+    public double CanvasHeight => CanvasHeightMm * PixelsPerMm;
+
+    /// <summary>
+    /// Display text for canvas dimensions.
+    /// </summary>
+    public string CanvasSizeDisplay => $"{CanvasWidthMm:F0} × {CanvasHeightMm:F0} mm";
+
+    partial void OnCanvasWidthMmChanged(double value)
+    {
+        OnPropertyChanged(nameof(CanvasWidth));
+        OnPropertyChanged(nameof(CanvasSizeDisplay));
+    }
+
+    partial void OnCanvasHeightMmChanged(double value)
+    {
+        OnPropertyChanged(nameof(CanvasHeight));
+        OnPropertyChanged(nameof(CanvasSizeDisplay));
+    }
+    #endregion
 
     /// <summary>
     /// Number of segments with assigned InPorts.
@@ -153,6 +188,52 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     /// Status text for sensor assignments.
     /// </summary>
     public string SensorStatusText => $"{AssignedSensorCount} of {PlacedSegments.Count} segments have sensors";
+    #endregion
+
+    #region Selection
+    /// <summary>
+    /// Select all segments on the canvas (Ctrl+A).
+    /// </summary>
+    [RelayCommand]
+    private void SelectAll()
+    {
+        foreach (var segment in PlacedSegments)
+        {
+            segment.IsSelected = true;
+        }
+        Debug.WriteLine($"✅ Selected all {PlacedSegments.Count} segments");
+    }
+
+    /// <summary>
+    /// Deselect all segments.
+    /// </summary>
+    [RelayCommand]
+    private void DeselectAll()
+    {
+        foreach (var segment in PlacedSegments)
+        {
+            segment.IsSelected = false;
+        }
+        SelectedSegment = null;
+    }
+
+    /// <summary>
+    /// Delete all selected segments.
+    /// </summary>
+    [RelayCommand]
+    private void DeleteSelected()
+    {
+        var selectedSegments = PlacedSegments.Where(s => s.IsSelected).ToList();
+        foreach (var segment in selectedSegments)
+        {
+            RemoveConnectionsForSegment(segment);
+            PlacedSegments.Remove(segment);
+        }
+        SelectedSegment = null;
+        OnPropertyChanged(nameof(AssignedSensorCount));
+        OnPropertyChanged(nameof(SensorStatusText));
+        Debug.WriteLine($"🗑️ Deleted {selectedSegments.Count} segments");
+    }
     #endregion
 
     #region InPort Assignment
@@ -181,7 +262,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         OnPropertyChanged(nameof(AssignedSensorCount));
         OnPropertyChanged(nameof(SensorStatusText));
         
-        System.Diagnostics.Debug.WriteLine($"📡 InPort {inPortValue} assigned to {SelectedSegment.ArticleCode}");
+        Debug.WriteLine($"📡 InPort {inPortValue} assigned to {SelectedSegment.ArticleCode}");
     }
 
     /// <summary>
@@ -198,7 +279,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         OnPropertyChanged(nameof(AssignedSensorCount));
         OnPropertyChanged(nameof(SensorStatusText));
         
-        System.Diagnostics.Debug.WriteLine($"🗑️ InPort cleared from {SelectedSegment.ArticleCode}");
+        Debug.WriteLine($"🗑️ InPort cleared from {SelectedSegment.ArticleCode}");
     }
     #endregion
 
@@ -224,10 +305,10 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         var pathData = GeneratePathData(template, x, y);
         
         // DEBUG: Output to help diagnose visibility issues
-        System.Diagnostics.Debug.WriteLine($"Adding segment: {template.ArticleCode}");
-        System.Diagnostics.Debug.WriteLine($"  Type: {template.Type}, Length: {template.Length}mm, Radius: {template.Radius}mm");
-        System.Diagnostics.Debug.WriteLine($"  PathData: {pathData}");
-        System.Diagnostics.Debug.WriteLine($"  Position: {x}, {y}");
+        Debug.WriteLine($"Adding segment: {template.ArticleCode}");
+        Debug.WriteLine($"  Type: {template.Type}, Length: {template.Length}mm, Radius: {template.Radius}mm");
+        Debug.WriteLine($"  PathData: {pathData}");
+        Debug.WriteLine($"  Position: {x}, {y}");
 
         // Create new segment at the specified position
         var segment = new TrackSegment
@@ -247,7 +328,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         PlacedSegments.Add(viewModel);
         SelectedSegment = viewModel;
         
-        System.Diagnostics.Debug.WriteLine($"  Segment added successfully. Total segments: {PlacedSegments.Count}");
+        Debug.WriteLine($"  Segment added successfully. Total segments: {PlacedSegments.Count}");
     }
 
     /// <summary>
@@ -314,7 +395,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     private static string GeneratePathData(TrackTemplateViewModel template, double x, double y)
     {
         const double scale = 0.5; // 1mm = 0.5px (smaller for better fit)
-        var ic = System.Globalization.CultureInfo.InvariantCulture;
+        var ic = CultureInfo.InvariantCulture;
 
         if (template.Type == TrackType.Straight)
         {
@@ -322,7 +403,8 @@ public partial class TrackPlanEditorViewModel : ObservableObject
             var length = template.Length * scale;
             return string.Format(ic, "M {0:F2},{1:F2} L {2:F2},{3:F2}", x, y, x + length, y);
         }
-        else if (template.Type == TrackType.Curve)
+
+        if (template.Type == TrackType.Curve)
         {
             // Arc path at position (x, y)
             var radius = template.Radius * scale;
@@ -333,7 +415,8 @@ public partial class TrackPlanEditorViewModel : ObservableObject
             // Arc command: A rx,ry rotation large-arc-flag sweep-flag x,y
             return string.Format(ic, "M {0:F2},{1:F2} A {2:F2},{3:F2} 0 0 1 {4:F2},{5:F2}", x, y, radius, radius, endX, endY);
         }
-        else if (template.Type is TrackType.TurnoutLeft or TrackType.TurnoutRight)
+
+        if (template.Type is TrackType.TurnoutLeft or TrackType.TurnoutRight)
         {
             // Simple turnout at position (x, y)
             var length = template.Length * scale;
@@ -381,7 +464,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         segment1.SetConnectionState(segment1IsStart, true, segment2.Id);
         segment2.SetConnectionState(segment2IsStart, true, segment1.Id);
 
-        System.Diagnostics.Debug.WriteLine($"🔗 Connection created: {segment1.ArticleCode} <-> {segment2.ArticleCode}");
+        Debug.WriteLine($"🔗 Connection created: {segment1.ArticleCode} <-> {segment2.ArticleCode}");
     }
 
     /// <summary>
@@ -476,7 +559,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
             connection.ConnectionY += deltaY;
         }
 
-        System.Diagnostics.Debug.WriteLine($"📦 Moved group of {group.Count} segments");
+        Debug.WriteLine($"📦 Moved group of {group.Count} segments");
     }
     #endregion
 
@@ -541,7 +624,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         OnPropertyChanged(nameof(AssignedSensorCount));
         OnPropertyChanged(nameof(SensorStatusText));
 
-        System.Diagnostics.Debug.WriteLine($"📂 Imported AnyRail layout: {PlacedSegments.Count} segments");
+        Debug.WriteLine($"📂 Imported AnyRail layout: {PlacedSegments.Count} segments");
     }
 
     /// <summary>
@@ -565,7 +648,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     /// </summary>
     public void ExportToAnyRail(string xmlPath)
     {
-        var ic = System.Globalization.CultureInfo.InvariantCulture;
+        var ic = CultureInfo.InvariantCulture;
         
         using var writer = new StreamWriter(xmlPath);
         writer.WriteLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
@@ -598,7 +681,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         writer.WriteLine("  </parts>");
         writer.WriteLine("</layout>");
 
-        System.Diagnostics.Debug.WriteLine($"💾 Exported track plan to: {xmlPath}");
+        Debug.WriteLine($"💾 Exported track plan to: {xmlPath}");
     }
 
     private static string GetAnyRailType(TrackSegmentViewModel segment)

@@ -2,8 +2,10 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
-
-using Moba.Domain.TrackPlan;
+using Domain.TrackPlan;
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
 
 /// <summary>
 /// ViewModel wrapper for TrackSegment (track plan visualization).
@@ -126,7 +128,6 @@ public partial class TrackSegmentViewModel : ObservableObject
             if (ArticleCode.StartsWith("R"))
             {
                 // Curves: move label towards the inner arc
-                var midY = (StartPointY + EndPointY) / 2;
                 // Offset by a bit for better centering on arc
                 return midX - 8;
             }
@@ -174,14 +175,14 @@ public partial class TrackSegmentViewModel : ObservableObject
         if (string.IsNullOrEmpty(pathData))
             return points;
 
-        var ic = System.Globalization.CultureInfo.InvariantCulture;
-        var regex = new System.Text.RegularExpressions.Regex(@"(-?\d+\.?\d*),(-?\d+\.?\d*)");
+        var ic = CultureInfo.InvariantCulture;
+        var regex = new Regex(@"(-?\d+\.?\d*),(-?\d+\.?\d*)");
         var matches = regex.Matches(pathData);
 
-        foreach (System.Text.RegularExpressions.Match match in matches)
+        foreach (Match match in matches)
         {
-            if (double.TryParse(match.Groups[1].Value, System.Globalization.NumberStyles.Float, ic, out var x) &&
-                double.TryParse(match.Groups[2].Value, System.Globalization.NumberStyles.Float, ic, out var y))
+            if (double.TryParse(match.Groups[1].Value, NumberStyles.Float, ic, out var x) &&
+                double.TryParse(match.Groups[2].Value, NumberStyles.Float, ic, out var y))
             {
                 points.Add((x, y));
             }
@@ -393,8 +394,8 @@ public partial class TrackSegmentViewModel : ObservableObject
         if (string.IsNullOrEmpty(pathData))
             return pathData;
 
-        var ic = System.Globalization.CultureInfo.InvariantCulture;
-        var result = new System.Text.StringBuilder();
+        var ic = CultureInfo.InvariantCulture;
+        var result = new StringBuilder();
         var parts = pathData.Split(' ');
         
         for (int i = 0; i < parts.Length; i++)
@@ -406,8 +407,8 @@ public partial class TrackSegmentViewModel : ObservableObject
             {
                 var coords = part.Split(',');
                 if (coords.Length == 2 && 
-                    double.TryParse(coords[0], System.Globalization.NumberStyles.Float, ic, out var x) &&
-                    double.TryParse(coords[1], System.Globalization.NumberStyles.Float, ic, out var y))
+                    double.TryParse(coords[0], NumberStyles.Float, ic, out var x) &&
+                    double.TryParse(coords[1], NumberStyles.Float, ic, out var y))
                 {
                     // Move the coordinate
                     result.Append(string.Format(ic, "{0:F2},{1:F2}", x + deltaX, y + deltaY));

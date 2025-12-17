@@ -1,9 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
-using Moba.Common.Configuration;
-using Moba.SharedUI.Interface;
-
+using Common.Configuration;
+using SharedUI.Interface;
+using System.Diagnostics;
 using System.Text.Json;
 
 /// <summary>
@@ -36,11 +36,11 @@ public class SettingsService : ISettingsService
         {
             var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
             await File.WriteAllTextAsync(_settingsFilePath, json);
-            System.Diagnostics.Debug.WriteLine($"✅ MAUI Settings saved to {_settingsFilePath}");
+            Debug.WriteLine($"✅ MAUI Settings saved to {_settingsFilePath}");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"❌ Failed to save settings: {ex.Message}");
+            Debug.WriteLine($"❌ Failed to save settings: {ex.Message}");
             throw;
         }
     }

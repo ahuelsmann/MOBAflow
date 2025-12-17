@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Moba.Backend.Service;
-
-using System.Net;
 
 namespace Moba.Backend.Interface;
 
+using Protocol;
+using Service;
+using System.Net;
+
 public delegate void Feedback(FeedbackResult feedbackContent);
 public delegate void SystemStateChanged(SystemState systemState);
-public delegate void XBusStatusChanged(Protocol.XBusStatus status);
+public delegate void XBusStatusChanged(XBusStatus status);
 public delegate void VersionInfoChanged(Z21VersionInfo versionInfo);
 
 public interface IZ21 : IDisposable

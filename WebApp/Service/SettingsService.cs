@@ -1,8 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WebApp.Service;
 
-using Moba.Common.Configuration;
-using Moba.SharedUI.Interface;
+using Common.Configuration;
+using SharedUI.Interface;
+using System.Diagnostics;
 
 /// <summary>
 /// Blazor-specific settings service for reading and writing application settings.
@@ -31,7 +32,7 @@ public class SettingsService : ISettingsService
     {
         // In Blazor Server, we typically don't write to appsettings.json
         // Settings changes are kept in memory for the current session
-        System.Diagnostics.Debug.WriteLine("⚠️ Blazor Server: Settings saved to memory only");
+        Debug.WriteLine("⚠️ Blazor Server: Settings saved to memory only");
         return Task.CompletedTask;
     }
 

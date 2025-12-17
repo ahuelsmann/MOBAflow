@@ -1,12 +1,12 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-
-using Moba.Sound;
 
 using Timer = System.Timers.Timer;
 
 namespace Moba.WinUI.Service;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Sound;
 
 /// <summary>
 /// Centralized health check service that monitors Azure Speech Service and other dependencies.

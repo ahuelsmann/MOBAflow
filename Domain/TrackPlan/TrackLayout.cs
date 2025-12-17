@@ -2,8 +2,8 @@
 namespace Moba.Domain.TrackPlan;
 
 /// <summary>
-/// Represents a complete track layout with all segments.
-/// Layouts are typically imported from AnyRail XML files.
+/// Represents a complete track layout with all segments and connections.
+/// Can be saved/loaded as part of a Project (JSON serialization).
 /// </summary>
 public class TrackLayout
 {
@@ -15,7 +15,7 @@ public class TrackLayout
     /// <summary>
     /// Display name for this layout.
     /// </summary>
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "Untitled Layout";
 
     /// <summary>
     /// Description of the layout.
@@ -33,17 +33,22 @@ public class TrackLayout
     public string Scale { get; set; } = "H0";
 
     /// <summary>
-    /// Canvas width for rendering (from AnyRail layout width).
+    /// Width of the layout work surface in mm.
     /// </summary>
-    public double CanvasWidth { get; set; } = 1000;
+    public double WidthMm { get; set; } = 2400;
 
     /// <summary>
-    /// Canvas height for rendering (from AnyRail layout height).
+    /// Height of the layout work surface in mm.
     /// </summary>
-    public double CanvasHeight { get; set; } = 600;
+    public double HeightMm { get; set; } = 1600;
 
     /// <summary>
     /// All track segments in this layout.
     /// </summary>
     public List<TrackSegment> Segments { get; set; } = [];
+
+    /// <summary>
+    /// All connections between track segments.
+    /// </summary>
+    public List<TrackConnection> Connections { get; set; } = [];
 }

@@ -2,7 +2,6 @@
 namespace Moba.WinUI.View;
 
 using Microsoft.UI.Xaml.Controls;
-
 using SharedUI.ViewModel;
 
 /// <summary>

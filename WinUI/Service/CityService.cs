@@ -1,17 +1,11 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
-using Moba.Common.Configuration;
+using Common.Configuration;
 using Domain;
-using SharedUI.Interface;
-
 using Newtonsoft.Json;
-
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+using SharedUI.Interface;
+using System.Diagnostics;
 
 /// <summary>
 /// Service for loading city master data from germany-stations.json.
@@ -32,7 +26,7 @@ public class CityService : ICityService
             ? configuredPath
             : Path.Combine(AppContext.BaseDirectory, configuredPath);
             
-        System.Diagnostics.Debug.WriteLine($" CityService initialized with path: {_jsonFilePath}");
+        Debug.WriteLine($" CityService initialized with path: {_jsonFilePath}");
     }
 
     /// <summary>
@@ -45,7 +39,7 @@ public class CityService : ICityService
 
         if (!File.Exists(_jsonFilePath))
         {
-            System.Diagnostics.Debug.WriteLine($" City library file not found: {_jsonFilePath}");
+            Debug.WriteLine($" City library file not found: {_jsonFilePath}");
             _cachedCities = [];
             return _cachedCities;
         }
@@ -58,12 +52,12 @@ public class CityService : ICityService
             var data = JsonConvert.DeserializeObject<CitiesData>(json);
 
             _cachedCities = data?.Cities ?? [];
-            System.Diagnostics.Debug.WriteLine($" Loaded {_cachedCities.Count} cities from library");
+            Debug.WriteLine($" Loaded {_cachedCities.Count} cities from library");
             return _cachedCities;
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($" Failed to load city library: {ex.Message}");
+            Debug.WriteLine($" Failed to load city library: {ex.Message}");
             _cachedCities = [];
             return _cachedCities;
         }

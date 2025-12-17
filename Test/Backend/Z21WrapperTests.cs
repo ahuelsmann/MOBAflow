@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using System.Net;
-
-using Moba.Test.Mocks;
-using Moba.Test.TestData;
 
 namespace Moba.Test.Backend;
+
+using Moba.Backend.Protocol;
+using Mocks;
+using System.Net;
+using TestData;
 
 [TestFixture]
 public class Z21WrapperTests
@@ -13,7 +14,7 @@ public class Z21WrapperTests
     public async Task ConnectAsync_UsesWrapper_AndSendsHandshakeAndBroadcast()
     {
         var fake = new FakeUdpClientWrapper();
-        var z21 = new Z21(fake, null);
+        var z21 = new Z21(fake);
 
         await z21.ConnectAsync(IPAddress.Loopback);
 
@@ -30,7 +31,7 @@ public class Z21WrapperTests
     public void Received_RaisesFeedback_ForRBusPacket()
     {
         var fake = new FakeUdpClientWrapper();
-        var z21 = new Z21(fake, null);
+        var z21 = new Z21(fake);
 
         FeedbackResult? captured = null;
         using var signal = new ManualResetEventSlim(false);
@@ -47,8 +48,8 @@ public class Z21WrapperTests
     public void XBusStatusChanged_IsRaised_WhenStatusPacketArrives()
     {
         var fake = new FakeUdpClientWrapper();
-        var z21 = new Z21(fake, null);
-        Moba.Backend.Protocol.XBusStatus? status = null;
+        var z21 = new Z21(fake);
+        XBusStatus? status = null;
         using var signal = new ManualResetEventSlim(false);
         z21.OnXBusStatusChanged += s => { status = s; signal.Set(); };
 

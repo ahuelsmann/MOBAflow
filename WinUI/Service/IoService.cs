@@ -1,21 +1,20 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
+using Backend.Converter;
 using Domain;
-
+using Microsoft.UI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.Storage.Pickers;
-
+using Newtonsoft.Json;
 using SharedUI.Interface;
-
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
+using System.Diagnostics;
 
 public class IoService : IIoService
 {
-    private Microsoft.UI.WindowId? _windowId;
-    private Microsoft.UI.Xaml.XamlRoot? _xamlRoot;
+    private WindowId? _windowId;
+    private XamlRoot? _xamlRoot;
     private readonly ISettingsService _settingsService;
 
     public IoService(ISettingsService settingsService)
@@ -26,7 +25,7 @@ public class IoService : IIoService
     /// <summary>
     /// Sets the WindowId and XamlRoot for the file pickers and dialogs. Must be called before using the service.
     /// </summary>
-    public void SetWindowId(Microsoft.UI.WindowId windowId, Microsoft.UI.Xaml.XamlRoot? xamlRoot = null)
+    public void SetWindowId(WindowId windowId, XamlRoot? xamlRoot = null)
     {
         _windowId = windowId;
         _xamlRoot = xamlRoot;
@@ -49,14 +48,14 @@ public class IoService : IIoService
         var json = await File.ReadAllTextAsync(result.Path);
         
         // Configure serialization with ActionConverter
-        var settings = new Newtonsoft.Json.JsonSerializerSettings
+        var settings = new JsonSerializerSettings
         {
             Converters = {
-                new Backend.Converter.ActionConverter()
+                new ActionConverter()
             }
         };
         
-        var sol = Newtonsoft.Json.JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
+        var sol = JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
         
         // Save last solution path to settings
         _settingsService.LastSolutionPath = result.Path;
@@ -78,14 +77,14 @@ public class IoService : IIoService
             var json = await File.ReadAllTextAsync(filePath);
             
             // Configure serialization with ActionConverter
-            var settings = new Newtonsoft.Json.JsonSerializerSettings
+            var settings = new JsonSerializerSettings
             {
                 Converters = {
-                    new Backend.Converter.ActionConverter()
+                    new ActionConverter()
                 }
             };
             
-            var sol = Newtonsoft.Json.JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
+            var sol = JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
             
             // Save last solution path to settings
             _settingsService.LastSolutionPath = filePath;
@@ -109,7 +108,7 @@ public class IoService : IIoService
             // Check if auto-load is enabled
             if (!_settingsService.AutoLoadLastSolution)
             {
-                System.Diagnostics.Debug.WriteLine("ℹ️ Auto-load is disabled in settings");
+                Debug.WriteLine("ℹ️ Auto-load is disabled in settings");
                 return (null, null, null);
             }
 
@@ -117,43 +116,37 @@ public class IoService : IIoService
             var lastPath = _settingsService.LastSolutionPath;
             if (string.IsNullOrEmpty(lastPath))
             {
-                System.Diagnostics.Debug.WriteLine(" No previous solution path found");
+                Debug.WriteLine(" No previous solution path found");
                 return (null, null, null);
             }
 
             // Check if the file still exists
             if (!File.Exists(lastPath))
             {
-                System.Diagnostics.Debug.WriteLine($" Last solution file not found: {lastPath}");
+                Debug.WriteLine($" Last solution file not found: {lastPath}");
                 return (null, null, $"Last solution file not found: {lastPath}");
             }
 
-            System.Diagnostics.Debug.WriteLine($" Auto-loading last solution: {lastPath}");
+            Debug.WriteLine($" Auto-loading last solution: {lastPath}");
             
-            var json = await File.ReadAllTextAsync(lastPath!);
+            var json = await File.ReadAllTextAsync(lastPath);
             
             // Configure serialization with ActionConverter
-            var settings = new Newtonsoft.Json.JsonSerializerSettings
+            var settings = new JsonSerializerSettings
             {
                 Converters = {
-                    new Backend.Converter.ActionConverter()
+                    new ActionConverter()
                 }
             };
             
-            var loadedSolution = Newtonsoft.Json.JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
-            
-            if (loadedSolution == null)
-            {
-                System.Diagnostics.Debug.WriteLine($" Failed to load solution from {lastPath}");
-                return (null, null, $"Failed to load solution from {lastPath}");
-            }
-            
-            System.Diagnostics.Debug.WriteLine($" Auto-loaded solution with {loadedSolution.Projects.Count} projects");
+            var loadedSolution = JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
+
+            Debug.WriteLine($" Auto-loaded solution with {loadedSolution.Projects.Count} projects");
             return (loadedSolution, lastPath, null);
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($" Failed to auto-load last solution: {ex.Message}");
+            Debug.WriteLine($" Failed to auto-load last solution: {ex.Message}");
             return (null, null, $"Failed to auto-load: {ex.Message}");
         }
     }
@@ -179,15 +172,15 @@ public class IoService : IIoService
             path = result.Path;
         }
 
-        var settings = new Newtonsoft.Json.JsonSerializerSettings
+        var settings = new JsonSerializerSettings
         {
             Converters = {
-                new Backend.Converter.ActionConverter()
+                new ActionConverter()
             },
-            Formatting = Newtonsoft.Json.Formatting.Indented
+            Formatting = Formatting.Indented
         };
 
-        var json = Newtonsoft.Json.JsonConvert.SerializeObject(solution, settings);
+        var json = JsonConvert.SerializeObject(solution, settings);
         await File.WriteAllTextAsync(path!, json);
         
         // Save last solution path to settings
@@ -196,7 +189,6 @@ public class IoService : IIoService
         return (true, path, null);
     }
 
-    /// <summary>
     /// <summary>
     /// Creates a new empty solution.
     /// Prompts user for confirmation if unsaved changes exist.
@@ -211,44 +203,44 @@ public class IoService : IIoService
                 if (_windowId == null)
                     throw new InvalidOperationException("WindowId must be set before using IoService");
 
-                var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
+                var dialog = new ContentDialog
                 {
                     Title = "Unsaved Changes",
                     Content = "You have unsaved changes in the current solution. Do you want to save before creating a new solution?",
                     PrimaryButtonText = "Save",
                     SecondaryButtonText = "Don't Save",
                     CloseButtonText = "Cancel",
-                    DefaultButton = Microsoft.UI.Xaml.Controls.ContentDialogButton.Primary,
+                    DefaultButton = ContentDialogButton.Primary,
                     XamlRoot = _xamlRoot
                 };
 
                 var result = await dialog.ShowAsync();
 
-                if (result == Microsoft.UI.Xaml.Controls.ContentDialogResult.None)
+                if (result == ContentDialogResult.None)
                 {
                     // User cancelled
-                    System.Diagnostics.Debug.WriteLine(" User cancelled new solution creation");
+                    Debug.WriteLine(" User cancelled new solution creation");
                     return (false, true, null);
                 }
 
-                if (result == Microsoft.UI.Xaml.Controls.ContentDialogResult.Primary)
+                if (result == ContentDialogResult.Primary)
                 {
                     // User wants to save - return and let ViewModel handle save
-                    System.Diagnostics.Debug.WriteLine(" User wants to save before creating new solution");
+                    Debug.WriteLine(" User wants to save before creating new solution");
                     return (false, false, "SAVE_REQUESTED");
                 }
 
                 // result == Secondary: Don't Save - continue with new solution
-                System.Diagnostics.Debug.WriteLine(" User chose not to save - creating new solution");
+                Debug.WriteLine(" User chose not to save - creating new solution");
             }
             
-            System.Diagnostics.Debug.WriteLine(" Creating new empty solution");
+            Debug.WriteLine(" Creating new empty solution");
             
             return (true, false, null);
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($" Failed to create new solution: {ex.Message}");
+            Debug.WriteLine($" Failed to create new solution: {ex.Message}");
             return (false, false, $"Failed to create new solution: {ex.Message}");
         }
     }
