@@ -10,6 +10,10 @@ using Moba.Domain.Enum;
 /// </summary>
 public class AudioViewModel : WorkflowActionViewModel
 {
+    #region Fields
+    // (No additional fields - inherits from WorkflowActionViewModel)
+    #endregion
+
     public AudioViewModel(WorkflowAction action) : base(action, ActionType.Audio) { }
 
     /// <summary>

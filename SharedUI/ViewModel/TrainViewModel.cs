@@ -18,8 +18,13 @@ using System.Collections.ObjectModel;
 /// </summary>
 public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
 {
+    #region Fields
+    // Model
     private readonly Train _model;
+    
+    // Context
     private readonly Project _project;
+    #endregion
 
     public TrainViewModel(Train model, Project project)
     {

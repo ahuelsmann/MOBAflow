@@ -11,12 +11,15 @@ using Moba.Domain.Enum;
 /// </summary>
 public partial class GoodsWagonViewModel : WagonViewModel
 {
+    #region Fields
+    // Model (specialized type)
+    private GoodsWagon GoodsWagonModel { get; }
+    #endregion
+
     public GoodsWagonViewModel(GoodsWagon model) : base(model)
     {
         GoodsWagonModel = model;
     }
-
-    private GoodsWagon GoodsWagonModel { get; }
 
     public CargoType Cargo
     {

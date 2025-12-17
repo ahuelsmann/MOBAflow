@@ -11,7 +11,10 @@ using Moba.Domain.Enum;
 /// </summary>
 public abstract class WorkflowActionViewModel : ObservableObject
 {
+    #region Fields
+    // Model
     protected readonly WorkflowAction _action;
+    #endregion
 
     protected WorkflowActionViewModel(WorkflowAction action, ActionType type)
     {

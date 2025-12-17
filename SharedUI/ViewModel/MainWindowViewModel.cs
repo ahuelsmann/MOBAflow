@@ -100,10 +100,32 @@ public partial class MainWindowViewModel : ObservableObject
     private string? currentSolutionPath;
 
     [ObservableProperty]
+    private bool isDarkMode = true;  // Dark theme is default for WinUI
+
+    /// <summary>
+    /// Indicates whether a solution with projects is currently loaded.
+    /// </summary>
+    [ObservableProperty]
     private bool hasSolution;
 
+    /// <summary>
+    /// Health status message for Speech Service (Azure).
+    /// Updated by HealthCheckService via event.
+    /// </summary>
     [ObservableProperty]
-    private bool isDarkMode = true;  // Dark theme is default for WinUI
+    private string speechHealthStatus = "Initializing...";
+
+    /// <summary>
+    /// Icon glyph for Speech Service health status.
+    /// </summary>
+    [ObservableProperty]
+    private string speechHealthIcon = "\uE946"; // Sync
+
+    /// <summary>
+    /// Color for Speech Service health status icon.
+    /// </summary>
+    [ObservableProperty]
+    private string speechHealthColor = "SystemFillColorCautionBrush";
 
     [ObservableProperty]
     private SolutionViewModel? solutionViewModel;

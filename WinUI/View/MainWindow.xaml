@@ -59,7 +59,7 @@
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItemSeparator />
-                <NavigationViewItem Content="Track Plan" Tag="trackplan">
+                <NavigationViewItem Content="Track Plan" Tag="trackplaneditor">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE809;" />
                     </NavigationViewItem.Icon>

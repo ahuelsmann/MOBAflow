@@ -1,0 +1,37 @@
+# Test Template: Run NUnit Tests
+# Reusable template for running unit tests
+
+parameters:
+  - name: testProjects
+    type: string
+    default: '**/Test.csproj'
+  - name: configuration
+    type: string
+    default: 'Release'
+  - name: testRunTitle
+    type: string
+    default: 'Unit Tests'
+
+steps:
+  - task: DotNetCoreCLI@2
+    displayName: 'Run Tests'
+    inputs:
+      command: 'test'
+      projects: '${{ parameters.testProjects }}'
+      arguments: '--configuration ${{ parameters.configuration }} --no-build --logger trx --results-directory $(Agent.TempDirectory)/TestResults --collect:"XPlat Code Coverage"'
+      publishTestResults: false
+
+  - task: PublishTestResults@2
+    displayName: 'Publish Test Results'
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFormat: 'VSTest'
+      testResultsFiles: '$(Agent.TempDirectory)/TestResults/*.trx'
+      mergeTestResults: true
+      testRunTitle: '${{ parameters.testRunTitle }}'
+
+  - task: PublishCodeCoverageResults@2
+    displayName: 'Publish Code Coverage'
+    condition: succeededOrFailed()
+    inputs:
+      summaryFileLocation: '$(Agent.TempDirectory)/TestResults/**/coverage.cobertura.xml'

@@ -6,18 +6,26 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Moba.Domain.TrackPlan;
 
 /// <summary>
-/// ViewModel wrapper for a TrackSegment.
-/// Provides selection state and feedback visualization for UI binding.
+/// ViewModel wrapper for TrackSegment (track plan visualization).
+/// Handles UI state (selection, triggering) and feedback integration.
 /// </summary>
 public partial class TrackSegmentViewModel : ObservableObject
 {
+    #region Fields
+    // Model
     private readonly TrackSegment _segment;
+    #endregion
 
     public TrackSegmentViewModel(TrackSegment segment)
     {
         ArgumentNullException.ThrowIfNull(segment);
         _segment = segment;
     }
+
+    /// <summary>
+    /// Access to underlying domain model (for editing in TrackPlanEditorViewModel).
+    /// </summary>
+    public TrackSegment Model => _segment;
 
     #region Domain Properties (1:1 mapping)
 
@@ -57,6 +65,16 @@ public partial class TrackSegmentViewModel : ObservableObject
     public double CenterY => _segment.CenterY;
 
     /// <summary>
+    /// X coordinate rounded for display.
+    /// </summary>
+    public string CenterXDisplay => CenterX.ToString("F1");
+
+    /// <summary>
+    /// Y coordinate rounded for display.
+    /// </summary>
+    public string CenterYDisplay => CenterY.ToString("F1");
+
+    /// <summary>
     /// Rotation angle in degrees.
     /// </summary>
     public double Rotation => _segment.Rotation;
@@ -73,8 +91,168 @@ public partial class TrackSegmentViewModel : ObservableObject
 
     #endregion
 
-    #region ViewModel Properties (UI state)
+    #region Computed Properties (for UI binding)
+    
+    /// <summary>
+    /// Start point X coordinate (extracted from PathData).
+    /// </summary>
+    public double StartPointX => GetStartPoint().X;
 
+    /// <summary>
+    /// Start point Y coordinate (extracted from PathData).
+    /// </summary>
+    public double StartPointY => GetStartPoint().Y;
+
+    /// <summary>
+    /// End point X coordinate (extracted from PathData).
+    /// </summary>
+    public double EndPointX => GetEndPoint().X;
+
+    /// <summary>
+    /// End point Y coordinate (extracted from PathData).
+    /// </summary>
+    public double EndPointY => GetEndPoint().Y;
+
+    /// <summary>
+    /// Label X position (centered on track).
+    /// For curves, offset slightly towards the curve center.
+    /// </summary>
+    public double LabelX
+    {
+        get
+        {
+            var midX = (StartPointX + EndPointX) / 2;
+            // For curves (R1-R9), adjust position slightly
+            if (ArticleCode.StartsWith("R"))
+            {
+                // Curves: move label towards the inner arc
+                var midY = (StartPointY + EndPointY) / 2;
+                // Offset by a bit for better centering on arc
+                return midX - 8;
+            }
+            return midX - 12;
+        }
+    }
+
+    /// <summary>
+    /// Label Y position (centered on track, slightly above).
+    /// </summary>
+    public double LabelY
+    {
+        get
+        {
+            var midY = (StartPointY + EndPointY) / 2;
+            // For curves, position below the midpoint
+            if (ArticleCode.StartsWith("R"))
+            {
+                return midY + 2;
+            }
+            return midY - 6;
+        }
+    }
+
+    /// <summary>
+    /// InPort label Y position (above the article code label).
+    /// </summary>
+    public double InPortLabelY => LabelY - 14;
+
+    private (double X, double Y) GetStartPoint()
+    {
+        var coords = ExtractCoordinates(PathData);
+        return coords.Count > 0 ? coords[0] : (CenterX, CenterY);
+    }
+
+    private (double X, double Y) GetEndPoint()
+    {
+        var coords = ExtractCoordinates(PathData);
+        return coords.Count > 1 ? coords[^1] : (CenterX, CenterY);
+    }
+
+    private static List<(double X, double Y)> ExtractCoordinates(string? pathData)
+    {
+        var points = new List<(double X, double Y)>();
+        if (string.IsNullOrEmpty(pathData))
+            return points;
+
+        var ic = System.Globalization.CultureInfo.InvariantCulture;
+        var regex = new System.Text.RegularExpressions.Regex(@"(-?\d+\.?\d*),(-?\d+\.?\d*)");
+        var matches = regex.Matches(pathData);
+
+        foreach (System.Text.RegularExpressions.Match match in matches)
+        {
+            if (double.TryParse(match.Groups[1].Value, System.Globalization.NumberStyles.Float, ic, out var x) &&
+                double.TryParse(match.Groups[2].Value, System.Globalization.NumberStyles.Float, ic, out var y))
+            {
+                points.Add((x, y));
+            }
+        }
+
+        return points;
+    }
+    #endregion
+
+    #region Connection State
+    /// <summary>
+    /// Indicates whether the start endpoint is connected to another segment.
+    /// </summary>
+    [ObservableProperty]
+    private bool isStartConnected;
+
+    /// <summary>
+    /// Indicates whether the end endpoint is connected to another segment.
+    /// </summary>
+    [ObservableProperty]
+    private bool isEndConnected;
+
+    /// <summary>
+    /// ID of the segment connected at the start endpoint.
+    /// </summary>
+    public string? StartConnectedSegmentId { get; private set; }
+
+    /// <summary>
+    /// ID of the segment connected at the end endpoint.
+    /// </summary>
+    public string? EndConnectedSegmentId { get; private set; }
+
+    /// <summary>
+    /// Visibility for start endpoint circle (hidden when connected).
+    /// </summary>
+    public bool ShowStartEndpoint => !IsStartConnected;
+
+    /// <summary>
+    /// Visibility for end endpoint circle (hidden when connected).
+    /// </summary>
+    public bool ShowEndEndpoint => !IsEndConnected;
+
+    partial void OnIsStartConnectedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowStartEndpoint));
+    }
+
+    partial void OnIsEndConnectedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowEndEndpoint));
+    }
+
+    /// <summary>
+    /// Set the connection state for an endpoint.
+    /// </summary>
+    public void SetConnectionState(bool isStart, bool isConnected, string? connectedSegmentId)
+    {
+        if (isStart)
+        {
+            IsStartConnected = isConnected;
+            StartConnectedSegmentId = connectedSegmentId;
+        }
+        else
+        {
+            IsEndConnected = isConnected;
+            EndConnectedSegmentId = connectedSegmentId;
+        }
+    }
+    #endregion
+
+    #region ViewModel Properties (UI state)
     /// <summary>
     /// Indicates whether this segment is currently selected in the UI.
     /// </summary>
@@ -147,6 +325,108 @@ public partial class TrackSegmentViewModel : ObservableObject
         {
             IsTriggered = isOccupied;
         }
+    }
+
+    /// <summary>
+    /// Set rotation angle and notify UI.
+    /// </summary>
+    public void SetRotation(double rotation)
+    {
+        _segment.Rotation = rotation;
+        OnPropertyChanged(nameof(Rotation));
+    }
+
+    /// <summary>
+    /// Set position and notify UI.
+    /// Also updates PathData to reflect new position.
+    /// </summary>
+    public void SetPosition(double centerX, double centerY)
+    {
+        _segment.CenterX = centerX;
+        _segment.CenterY = centerY;
+        OnPropertyChanged(nameof(CenterX));
+        OnPropertyChanged(nameof(CenterY));
+    }
+
+    /// <summary>
+    /// Update PathData with new coordinates (for absolute positioning).
+    /// </summary>
+    public void SetPathData(string pathData)
+    {
+        _segment.PathData = pathData;
+        OnPropertyChanged(nameof(PathData));
+    }
+
+    /// <summary>
+    /// Move the segment by delta and update PathData.
+    /// </summary>
+    public void MoveBy(double deltaX, double deltaY)
+    {
+        // Update position
+        _segment.CenterX += deltaX;
+        _segment.CenterY += deltaY;
+        
+        // Update PathData by adjusting all coordinates
+        var newPathData = MovePathData(_segment.PathData, deltaX, deltaY);
+        _segment.PathData = newPathData;
+        
+        OnPropertyChanged(nameof(CenterX));
+        OnPropertyChanged(nameof(CenterY));
+        OnPropertyChanged(nameof(CenterXDisplay));
+        OnPropertyChanged(nameof(CenterYDisplay));
+        OnPropertyChanged(nameof(PathData));
+        
+        // Also notify computed properties that depend on PathData
+        OnPropertyChanged(nameof(StartPointX));
+        OnPropertyChanged(nameof(StartPointY));
+        OnPropertyChanged(nameof(EndPointX));
+        OnPropertyChanged(nameof(EndPointY));
+        OnPropertyChanged(nameof(LabelX));
+        OnPropertyChanged(nameof(LabelY));
+    }
+
+    /// <summary>
+    /// Move all coordinates in PathData by delta.
+    /// </summary>
+    private static string MovePathData(string pathData, double deltaX, double deltaY)
+    {
+        if (string.IsNullOrEmpty(pathData))
+            return pathData;
+
+        var ic = System.Globalization.CultureInfo.InvariantCulture;
+        var result = new System.Text.StringBuilder();
+        var parts = pathData.Split(' ');
+        
+        for (int i = 0; i < parts.Length; i++)
+        {
+            var part = parts[i];
+            
+            // Check if this is a coordinate pair (contains comma)
+            if (part.Contains(','))
+            {
+                var coords = part.Split(',');
+                if (coords.Length == 2 && 
+                    double.TryParse(coords[0], System.Globalization.NumberStyles.Float, ic, out var x) &&
+                    double.TryParse(coords[1], System.Globalization.NumberStyles.Float, ic, out var y))
+                {
+                    // Move the coordinate
+                    result.Append(string.Format(ic, "{0:F2},{1:F2}", x + deltaX, y + deltaY));
+                }
+                else
+                {
+                    result.Append(part);
+                }
+            }
+            else
+            {
+                result.Append(part);
+            }
+            
+            if (i < parts.Length - 1)
+                result.Append(' ');
+        }
+        
+        return result.ToString();
     }
 
     partial void OnIsSelectedChanged(bool value)

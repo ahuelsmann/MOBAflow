@@ -1,0 +1,29 @@
+# Build Template: .NET Solution
+# Reusable template for building .NET projects
+
+parameters:
+  - name: projects
+    type: string
+    default: '**/*.sln'
+  - name: configuration
+    type: string
+    default: 'Release'
+  - name: restorePackages
+    type: boolean
+    default: true
+
+steps:
+  - ${{ if eq(parameters.restorePackages, true) }}:
+    - task: DotNetCoreCLI@2
+      displayName: 'Restore NuGet Packages'
+      inputs:
+        command: 'restore'
+        projects: '${{ parameters.projects }}'
+        feedsToUse: 'select'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Build Projects'
+    inputs:
+      command: 'build'
+      projects: '${{ parameters.projects }}'
+      arguments: '--configuration ${{ parameters.configuration }} ${{ if eq(parameters.restorePackages, true) }}--no-restore${{ endif }}'

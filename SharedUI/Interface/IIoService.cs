@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.Interface;
 
-using Backend.Data;
 using Domain;
 
 using System.Threading.Tasks;
@@ -18,13 +17,6 @@ public interface IIoService
     Task<(Solution? solution, string? path, string? error)> LoadAsync();
     Task<(Solution? solution, string? path, string? error)> LoadFromPathAsync(string filePath);
     Task<(bool success, string? path, string? error)> SaveAsync(Solution solution, string? currentPath);
-    
-    /// <summary>
-    /// Loads city master data using legacy Backend.Data.DataManager format.
-    /// This method is obsolete - use ICityService.LoadCitiesAsync() instead.
-    /// </summary>
-    [Obsolete("Use ICityService.LoadCitiesAsync() instead. This method loads deprecated Backend.Data.City format.")]
-    Task<(DataManager? dataManager, string? path, string? error)> LoadDataManagerAsync();
 
     /// <summary>
     /// Opens a file picker to browse for a JSON file.
@@ -37,4 +29,11 @@ public interface IIoService
     /// </summary>
     /// <returns>The selected file path, or null if cancelled.</returns>
     Task<string?> BrowseForXmlFileAsync();
+
+    /// <summary>
+    /// Opens a file save picker for saving an XML file.
+    /// </summary>
+    /// <param name="suggestedFileName">Suggested file name</param>
+    /// <returns>The selected file path, or null if cancelled.</returns>
+    Task<string?> SaveXmlFileAsync(string suggestedFileName);
 }

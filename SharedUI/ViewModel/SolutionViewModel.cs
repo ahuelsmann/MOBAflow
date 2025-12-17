@@ -14,14 +14,19 @@ using System.Collections.ObjectModel;
 /// for TreeView binding. This is the root of the TreeView hierarchy.
 /// Must be manually refreshed when model changes (models don't fire events).
 /// </summary>
-public partial class SolutionViewModel : ObservableObject
+public partial class SolutionViewModel : ObservableObject, IViewModelWrapper<Solution>
 {
+    #region Fields
+    // Model
     public Solution Model { get; }
-
+    
+    // Optional Services
     private readonly IUiDispatcher? _dispatcher;
-
+    
+    // Properties
     [ObservableProperty]
     private string _name = string.Empty;
+    #endregion
 
     /// <summary>
     /// Hierarchical collection of Project ViewModels.

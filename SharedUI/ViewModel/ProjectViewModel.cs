@@ -15,15 +15,17 @@ using System.Collections.ObjectModel;
 /// </summary>
 public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Project>
 {
+    #region Fields
+    // Model
     public Project Model { get; }
-
+    
+    // Optional Services
     private readonly IUiDispatcher? _dispatcher;
-
-    /// <summary>
-    /// Project name. Changes are synchronized back to Model.
-    /// </summary>
+    
+    // Properties (ObservableProperty fields)
     [ObservableProperty]
     private string _name = string.Empty;
+    #endregion
 
     partial void OnNameChanged(string value)
     {

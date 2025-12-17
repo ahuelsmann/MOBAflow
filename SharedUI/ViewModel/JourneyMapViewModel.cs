@@ -11,7 +11,10 @@ using System.Collections.ObjectModel;
 /// </summary>
 public partial class JourneyMapViewModel : ObservableObject
 {
+    #region Fields
+    // Context
     private readonly MainWindowViewModel _mainViewModel;
+    #endregion
 
     public JourneyMapViewModel(MainWindowViewModel mainViewModel)
     {

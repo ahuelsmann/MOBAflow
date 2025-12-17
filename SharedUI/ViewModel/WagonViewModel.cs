@@ -14,8 +14,11 @@ using Moba.Domain.Enum;
 /// </summary>
 public partial class WagonViewModel : ObservableObject, IViewModelWrapper<Wagon>
 {
+    #region Fields
+    // Model (ObservableProperty - mutable reference)
     [ObservableProperty]
     private Wagon model;
+    #endregion
 
     public WagonViewModel(Wagon model)
     {

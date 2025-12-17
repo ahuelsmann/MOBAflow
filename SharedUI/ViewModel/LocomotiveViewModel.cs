@@ -10,12 +10,15 @@ using Interface;
 using Moba.Domain.Enum;
 
 /// <summary>
-/// ViewModel wrapper for Locomotive model.
+/// ViewModel wrapper for Locomotive model with throttle control operations.
 /// </summary>
 public partial class LocomotiveViewModel : ObservableObject, IViewModelWrapper<Locomotive>
 {
+    #region Fields
+    // Model
     [ObservableProperty]
     private Locomotive model;
+    #endregion
 
     public LocomotiveViewModel(Locomotive model)
     {

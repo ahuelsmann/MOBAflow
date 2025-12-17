@@ -108,6 +108,8 @@ public partial class App
         services.AddSingleton<SharedUI.Interface.IUiDispatcher, Service.UiDispatcher>();
         services.AddSingleton<SharedUI.Interface.ICityService, Service.CityService>();
         services.AddSingleton<SharedUI.Interface.ISettingsService, Service.SettingsService>();
+        services.AddSingleton<Service.NavigationService>();
+        services.AddSingleton<Service.SnapToConnectService>();
 
         // Sound Services (required by HealthCheckService)
         services.AddSingleton<Sound.SpeechHealthCheck>();
@@ -117,7 +119,7 @@ public partial class App
         services.AddSingleton<SharedUI.ViewModel.MainWindowViewModel>();
         services.AddTransient<SharedUI.ViewModel.JourneyViewModel>();
         services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
-        services.AddSingleton<SharedUI.ViewModel.TrackPlanViewModel>();
+        services.AddSingleton<SharedUI.ViewModel.TrackPlanEditorViewModel>();
         services.AddSingleton<SharedUI.ViewModel.JourneyMapViewModel>();
 
         // Pages (Transient = new instance per navigation)
@@ -125,8 +127,9 @@ public partial class App
         services.AddTransient<View.SolutionPage>();
         services.AddTransient<View.JourneysPage>();
         services.AddTransient<View.WorkflowsPage>();
+
         services.AddTransient<View.SettingsPage>();
-        services.AddTransient<View.TrackPlanPage>();
+        services.AddTransient<View.TrackPlanEditorPage>();
         services.AddTransient<View.JourneyMapPage>();
 
         // MainWindow (Singleton = one instance for app lifetime)

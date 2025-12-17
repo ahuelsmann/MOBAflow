@@ -1,0 +1,21 @@
+# Azure DevOps Pipelines - Shared Variables
+# Used across all pipeline templates
+
+variables:
+  # .NET Configuration
+  dotnetVersion: '10.0.x'
+  buildConfiguration: 'Release'
+  buildPlatform: 'x64'
+  
+  # Solution paths
+  solution: '**/*.sln'
+  testProject: '**/Test.csproj'
+  
+  # WinUI specific
+  winuiProject: '**/WinUI.csproj'
+  
+  # MAUI specific  
+  mauiProject: '**/MAUI.csproj'
+  
+  # Blazor/WebApp specific
+  webAppProject: '**/WebApp.csproj'

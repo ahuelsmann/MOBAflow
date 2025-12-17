@@ -10,6 +10,10 @@ using Moba.Domain.Enum;
 /// </summary>
 public class AnnouncementViewModel : WorkflowActionViewModel
 {
+    #region Fields
+    // (No additional fields - inherits from WorkflowActionViewModel)
+    #endregion
+
     public AnnouncementViewModel(WorkflowAction action) : base(action, ActionType.Announcement) { }
 
     /// <summary>

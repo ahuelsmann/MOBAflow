@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -16,28 +15,28 @@ using MainWindowViewModel = SharedUI.ViewModel.MainWindowViewModel;
 
 public sealed partial class MainWindow
 {
+    #region Fields
     public MainWindowViewModel ViewModel { get; }
     public CounterViewModel CounterViewModel { get; }
 
-#pragma warning disable CS8618 // Field is initialized in constructor via DI
+    private readonly NavigationService _navigationService;
     private readonly HealthCheckService _healthCheckService;
-#pragma warning restore CS8618
     private readonly IUiDispatcher _uiDispatcher;
-    private readonly IServiceProvider _serviceProvider;
+    #endregion
 
     public MainWindow(
         MainWindowViewModel viewModel,
         CounterViewModel counterViewModel,
+        NavigationService navigationService,
         HealthCheckService healthCheckService,
         IUiDispatcher uiDispatcher,
-        IServiceProvider serviceProvider)
+        IIoService ioService)
     {
         ViewModel = viewModel;
         CounterViewModel = counterViewModel;
-
+        _navigationService = navigationService;
         _healthCheckService = healthCheckService;
         _uiDispatcher = uiDispatcher;
-        _serviceProvider = serviceProvider;
 
         InitializeComponent();
 
@@ -45,18 +44,19 @@ public sealed partial class MainWindow
         SetTitleBar(AppTitleBar);
 
         // Initialize IoService with WindowId (required before any file operations)
-        var ioService = ServiceProviderServiceExtensions.GetRequiredService<IIoService>(
-            ((App)Application.Current).Services);
-
         if (ioService is IoService winUiIoService)
         {
             winUiIoService.SetWindowId(this.AppWindow.Id, this.Content.XamlRoot);
-            System.Diagnostics.Debug.WriteLine(" IoService initialized with WindowId");
+            System.Diagnostics.Debug.WriteLine("✅ IoService initialized with WindowId");
         }
 
-        // Set first nav item as selected (Overview)
-        MainNavigation.SelectedItem = MainNavigation.MenuItems[0]; // Overview
+        // Initialize NavigationService with ContentFrame
+        _navigationService.Initialize(ContentFrame);
 
+        // Set first nav item as selected (Overview)
+        MainNavigation.SelectedItem = MainNavigation.MenuItems[0];
+
+        // Subscribe to ViewModel events
         ViewModel.ExitApplicationRequested += OnExitApplicationRequested;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
         Closed += MainWindow_Closed;
@@ -64,31 +64,18 @@ public sealed partial class MainWindow
         // Apply initial theme
         ApplyTheme(ViewModel.IsDarkMode);
 
-        // Subscribe to health check events
+        // Subscribe to health check events and start monitoring
         _healthCheckService.HealthStatusChanged += OnHealthStatusChanged;
         _healthCheckService.StartPeriodicChecks();
 
-        // Initial status display
-        UpdateHealthStatus(_healthCheckService.SpeechServiceStatus);
+        // Initial health status
+        ViewModel.UpdateHealthStatus(_healthCheckService.SpeechServiceStatus);
 
         // Navigate to Overview page on startup
-        NavigateToOverview();
+        _navigationService.NavigateToOverview();
     }
 
-    private void NavigateToOverview()
-    {
-        try
-        {
-            // ✅ DI: GetRequiredService resolves dependencies automatically
-            var overviewPage = _serviceProvider.GetRequiredService<OverviewPage>();
-            ContentFrame.Content = overviewPage;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"❌ Navigation to Overview failed: {ex.Message}");
-        }
-    }
-
+    #region Event Handlers
     private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(MainWindowViewModel.IsZ21Connected))
@@ -119,95 +106,29 @@ public sealed partial class MainWindow
 
     private void OnHealthStatusChanged(object? sender, HealthStatusChangedEventArgs e)
     {
-        // Update UI on dispatcher thread using IUiDispatcher
+        // Update ViewModel on UI thread
         _uiDispatcher.InvokeOnUi(() =>
         {
-            UpdateHealthStatus(e.StatusMessage);
+            ViewModel.UpdateHealthStatus(e.StatusMessage);
         });
-    }
-
-    private void UpdateHealthStatus(string statusMessage)
-    {
-        // Display only "Azure Speech" - status is shown via icon only
-        SpeechHealthText.Text = "Azure Speech";
-
-        // Set tooltip with detailed status
-        ToolTipService.SetToolTip(SpeechHealthPanel, statusMessage);
-
-        // Update icon and color based on health status
-        if (statusMessage.Contains("Ready"))
-        {
-            SpeechHealthIcon.Glyph = "\uE930"; // Checkmark circle
-            SpeechHealthIcon.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                Microsoft.UI.Colors.Green);
-        }
-        else if ( statusMessage.Contains("Not Configured"))
-        {
-            SpeechHealthIcon.Glyph = "\uE7BA"; // Warning
-            SpeechHealthIcon.Foreground = Application.Current.Resources["SystemFillColorCautionBrush"] as Microsoft.UI.Xaml.Media.Brush;
-        }
-        else if (statusMessage.Contains("Failed"))
-        {
-            SpeechHealthIcon.Glyph = "\uE711"; // Error
-            SpeechHealthIcon.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                Microsoft.UI.Colors.Red);
-        }
-        else // Initializing
-        {
-            SpeechHealthIcon.Glyph = "\uE946"; // Sync
-            SpeechHealthIcon.Foreground = Application.Current.Resources["SystemFillColorCautionBrush"] as Microsoft.UI.Xaml.Media.Brush;
-        }
     }
 
     private void NavigationView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
     {
-        if (args.InvokedItemContainer?.Tag is not string tag) return;
-
-        switch (tag)
+        if (args.InvokedItemContainer?.Tag is string tag)
         {
-            case "overview":
-                NavigateToOverview();
-                break;
-
-            case "solution":
-                var solutionPage = _serviceProvider.GetRequiredService<SolutionPage>();
-                ContentFrame.Content = solutionPage;
-                break;
-
-            case "journeys":
-                var journeysPage = _serviceProvider.GetRequiredService<JourneysPage>();
-                ContentFrame.Content = journeysPage;
-                break;
-
-            case "workflows":
-                var workflowsPage = _serviceProvider.GetRequiredService<WorkflowsPage>();
-                ContentFrame.Content = workflowsPage;
-                break;
-
-            case "trackplan":
-                var trackPlanPage = _serviceProvider.GetRequiredService<TrackPlanPage>();
-                ContentFrame.Content = trackPlanPage;
-                break;
-
-            case "journeymap":
-                var journeyMapPage = _serviceProvider.GetRequiredService<JourneyMapPage>();
-                ContentFrame.Content = journeyMapPage;
-                break;
-
-            case "settings":
-                var settingsPage = _serviceProvider.GetRequiredService<SettingsPage>();
-                ContentFrame.Content = settingsPage;
-                break;
+            _navigationService.NavigateToPage(tag);
         }
     }
 
     // Minimal event handler - delegates to ViewModel Command (XAML limitation for AppBarToggleButton)
-    private void TrackPower_Click(object sender, RoutedEventArgs e)
+    private void TrackPower_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        if (sender is AppBarToggleButton toggleButton)
+        if (sender is Microsoft.UI.Xaml.Controls.AppBarToggleButton toggleButton)
         {
             // Simply execute command with current state - no business logic here
             CounterViewModel.SetTrackPowerCommand.Execute(toggleButton.IsChecked);
         }
     }
+    #endregion
 }

@@ -6,8 +6,6 @@ using Common.Configuration;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using Domain;
-
 using Interface;
 
 using Moba.Backend.Interface;

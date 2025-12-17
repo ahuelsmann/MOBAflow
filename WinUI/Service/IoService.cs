@@ -1,10 +1,10 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
+using Domain;
+
 using Microsoft.Windows.Storage.Pickers;
 
-using Backend.Data;
-using Domain;
 using SharedUI.Interface;
 
 using System;
@@ -197,39 +197,6 @@ public class IoService : IIoService
     }
 
     /// <summary>
-    /// Loads city master data using legacy Backend.Data.DataManager format.
-    /// This method is obsolete - use ICityService.LoadCitiesAsync() instead.
-    /// </summary>
-    [Obsolete("Use ICityService.LoadCitiesAsync() instead. This method loads deprecated Backend.Data.City format.")]
-    public async Task<(DataManager? dataManager, string? path, string? error)> LoadDataManagerAsync()
-    {
-        // Try to load default germany-stations.json from application directory
-        var appDirectory = AppContext.BaseDirectory;
-        var defaultPath = Path.Combine(appDirectory, "germany-stations.json");
-
-        if (File.Exists(defaultPath))
-        {
-            var dataManager = await DataManager.LoadAsync(defaultPath);
-            return (dataManager, defaultPath, null);
-        }
-
-        // If default file not found, open file picker
-        if (_windowId == null)
-            throw new InvalidOperationException("WindowId must be set before using IoService");
-
-        var picker = new FileOpenPicker(_windowId.Value)
-        {
-            SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
-            FileTypeFilter = { ".json" }
-        };
-
-        var result = await picker.PickSingleFileAsync();
-        if (result == null) return (null, null, "No file selected");
-
-        var dm = await DataManager.LoadAsync(result.Path);
-        return (dm, result.Path, null);
-    }
-
     /// <summary>
     /// Creates a new empty solution.
     /// Prompts user for confirmation if unsaved changes exist.
@@ -321,6 +288,26 @@ public class IoService : IIoService
         };
 
         var result = await picker.PickSingleFileAsync();
+        return result?.Path;
+    }
+
+    /// <summary>
+    /// Opens a file save picker for saving an XML file.
+    /// </summary>
+    public async Task<string?> SaveXmlFileAsync(string suggestedFileName)
+    {
+        if (_windowId == null)
+            throw new InvalidOperationException("WindowId must be set before using IoService");
+
+        var picker = new FileSavePicker(_windowId.Value)
+        {
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+            SuggestedFileName = suggestedFileName,
+            DefaultFileExtension = ".xml",
+            FileTypeChoices = { { "XML Files", new List<string> { ".xml" } } }
+        };
+
+        var result = await picker.PickSaveFileAsync();
         return result?.Path;
     }
 }
