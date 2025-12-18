@@ -5,7 +5,7 @@
 > **Multi-platform system (.NET 10)**  
 > MOBAflow (WinUI) | MOBAsmart (MAUI) | MOBAdash (Blazor)
 > 
-> **Last Updated:** 2025-12-11 | **Version:** 3.5 | **Build Status:** ✅ Passing
+> **Last Updated:** 2025-12-18 | **Version:** 3.6
 
 ---
 
@@ -767,39 +767,5 @@ Use this in **Visual Studio → Tools → Options → Environment → Terminal �
 - Do **not** place `foreach (...) {}` after an expression in one‑liners. Use `; foreach` or `... | ForEach-Object {}`.
 - Do **not** slice arrays with `[0..N]` unless clamped; prefer `Select-Object -First / -Skip`.
 - Do **not** start a **here‑string** in a one‑liner; header and terminator must be on their own lines at column 0 (no indentation).
-
----
-
-## 11) Do **not** generate
-- No reference to **`$PStyle`** (only **`$PSStyle`**).
-- No Bash syntax in pwsh snippets unless explicitly asked to use *Git Bash*.
-- No destructive one‑liners without a prior `Select-String` check.
-- Do **not** place `foreach (...) {}` after an expression in one‑liners. Use `; foreach` or `... | ForEach-Object {}`.
-- Do **not** slice arrays with `[0..N]` unless clamped; prefer `Select-Object -First / -Skip`.
-- Do **not** start a **here‑string** in a one‑liner; header and terminator must be on their own lines at column 0 (no indentation).
-
----
-
-## 12) Quick copy‑and‑use examples
-```powershell
-# Diff without pager, first 100 lines
-git --no-pager diff .github/copilot-instructions.md | Select-Object -First 100
-
-# Count matches and print if found
-$count=(Select-String -Path . -Pattern 'EventTriggerBehavior' -List | Measure-Object).Count; if ($count -gt 0) { Write-Host "$count instances" }
-
-# Pipeline-safe loop
-git ls-files *.cs | ForEach-Object { $f = $_; if ((Select-String -Path $f -Pattern 'INotifyPropertyChanged' -List)) { Write-Host $f } }
-```
-
-### Write XAML with BOM (safe)
-```powershell
-Set-Content -Path .\Theme.xaml -Value @'
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <!-- content -->
-</ResourceDictionary>
-'@ -Encoding UTF8BOM
-```
 
 ---
