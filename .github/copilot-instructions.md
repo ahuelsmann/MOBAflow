@@ -90,7 +90,10 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 ### **WinUI Layer (Desktop UI)**
 - ✅ **YES:** `x:Bind` (compiled), ContentControl + DataTemplateSelector, Commands, Fluent Design 2, XAML Behaviors (Event-to-Command)
 - ✅ **YES:** Drag & Drop handlers in code-behind (WinUI limitation - no good XAML Behavior support)
+- ✅ **YES:** ListView with custom ItemTemplate for grid-like layouts (native, performant)
 - ❌ **NO:** `Binding` (slow), Custom PropertyGrids (use DataTemplates!), Business logic in code-behind
+- ❌ **NO:** Third-party DataGrid packages (most are incompatible with WinUI 3 + .NET 10)
+- ⚠️ **BEFORE adding packages:** Verify WinUI 3 AND .NET 10 compatibility on NuGet.org
 
 ### **MAUI Layer (Mobile UI)**
 - ✅ **YES:** MainThread.BeginInvokeOnMainThread, ContentView, MAUI-specific controls
@@ -99,6 +102,23 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 ### **Test Layer**
 - ✅ **YES:** Fake objects (FakeUdpClient), Dependency Injection, NUnit
 - ❌ **NO:** Mocks in production code, Hardware in tests, Static dependencies
+
+### **Package Management (Central)**
+- ✅ **YES:** All package versions in `Directory.Packages.props` (Central Package Management enabled)
+- ✅ **YES:** When adding NuGet packages, ALWAYS update BOTH:
+  1. Project file (`.csproj`) → `<PackageReference Include="PackageName" />` (no Version attribute)
+  2. `Directory.Packages.props` → `<PackageVersion Include="PackageName" Version="X.Y.Z" />`
+- ✅ **YES:** BEFORE adding: Check package compatibility with target framework (.NET 10, WinUI 3)
+- ❌ **NO:** Version attributes in project files (managed centrally)
+- ⚠️ **CRITICAL:** Forgetting `Directory.Packages.props` will cause build failures!
+- ⚠️ **CRITICAL:** Adding incompatible packages will cause restore failures!
+
+### **Code Changes & Validation**
+- ✅ **YES:** Make minimal modifications to achieve the goal
+- ✅ **YES:** Always validate changes using `run_build` tool after edits
+- ✅ **YES:** Run build BEFORE declaring task complete
+- ❌ **NO:** Skip build validation to save time
+- ⚠️ **CRITICAL:** Build validation catches errors immediately (package issues, syntax errors, missing references)
 
 ---
 
