@@ -28,6 +28,7 @@ public class CounterViewModelTests
         public Task SetTrackPowerOffAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task SetEmergencyStopAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task GetStatusAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task RecoverConnectionAsync(IPAddress address, int port = 21105, CancellationToken cancellationToken = default) { IsConnected = true; return Task.CompletedTask; }
         public void SimulateFeedback(int inPort) => Received?.Invoke(new FeedbackResult([0x0F,0x00,0x80,0x00, 0x00, (byte)inPort, 0x01]));
         public void Dispose() { }
     }

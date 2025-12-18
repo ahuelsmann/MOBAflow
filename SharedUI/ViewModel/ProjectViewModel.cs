@@ -2,8 +2,11 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
+
 using Domain;
+
 using Interface;
+
 using System.Collections.ObjectModel;
 
 /// <summary>
@@ -15,13 +18,16 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
     #region Fields
     // Model
     public Project Model { get; }
-    
+
     // Optional Services
     private readonly IUiDispatcher? _dispatcher;
-    
+
     // Properties (ObservableProperty fields)
     [ObservableProperty]
     private string _name;
+
+    [ObservableProperty]
+    private int _count;//=> Journeys.Count;
     #endregion
 
     partial void OnNameChanged(string value)
@@ -82,6 +88,12 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
         _dispatcher = dispatcher;
         _name = model.Name;  // Initialize from Model
         Refresh();
+        Journeys.CollectionChanged += Journeys_CollectionChanged;
+    }
+
+    private void Journeys_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        Count = Journeys.Count;
     }
 
     /// <summary>
@@ -92,7 +104,7 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
     {
         // Update scalar properties from Model
         Name = Model.Name;
-        
+
         // Clear and rebuild all collections
         Journeys.Clear();
         foreach (var j in Model.Journeys)

@@ -53,8 +53,22 @@ public interface IZ21 : IDisposable
 
     /// <summary>
     /// Requests the current status from the Z21.
+    /// LAN_X_GET_STATUS (X-Header: 0x21, DB0: 0x24)
     /// </summary>
     Task GetStatusAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Attempts to recover a non-responsive Z21 by sending a recovery byte sequence.
+    /// Sends: Emergency Stop, LOGOFF, GET_SERIAL_NUMBER, Handshake, Broadcast Flags, Get Status.
+    /// If not connected, establishes connection to specified address first.
+    /// </summary>
+    /// <param name="address">IP address of Z21</param>
+    /// <param name="port">UDP port (default: 21105)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    Task RecoverConnectionAsync(IPAddress address, int port = 21105, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Simulates a feedback event for testing purposes (WinUI only).
+    /// </summary>
     void SimulateFeedback(int inPort);
 }

@@ -378,6 +378,12 @@
             <StackPanel Padding="16" Spacing="16">
                 <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Project Properties" />
                 <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
+
+                <NumberBox
+                    Header="Journey Count"
+                    IsEnabled="False"
+                    SpinButtonPlacementMode="Compact"
+                    Value="{Binding Count, Mode=OneWay}" />
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>

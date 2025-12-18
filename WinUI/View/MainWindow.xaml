@@ -129,6 +129,11 @@
                             <FontIcon Glyph="&#xE945;" />
                         </AppBarToggleButton.Icon>
                     </AppBarToggleButton>
+                    <AppBarButton
+                        Command="{x:Bind CounterViewModel.RecoverZ21Command}"
+                        Icon="Repair"
+                        Label="Recover"
+                        ToolTipService.ToolTip="Recover unresponsive Z21 without hardware restart" />
                     <AppBarSeparator />
                     <!--  Simulation  -->
                     <AppBarButton

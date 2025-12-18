@@ -219,7 +219,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
 
     /// <summary>
     /// Z21 VCC voltage in millivolts (mV).
-    /// </summary>
+    /// </summary]
     [ObservableProperty]
     private int vccVoltage;
 
@@ -358,10 +358,59 @@ public partial class CounterViewModel : ObservableObject, IDisposable
         this.Log("🔄 All lap counters reset to 0");
     }
 
+    /// <summary>
+    /// Attempts to recover a non-responsive Z21 by sending a recovery byte sequence.
+    /// Useful when Z21 stops responding without requiring a hardware restart.
+    /// Works even if connection is closed - will establish new connection to configured IP address.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanRecoverZ21))]
+    private async Task RecoverZ21Async()
+    {
+        try
+        {
+            // Get IP address from settings
+            if (!IPAddress.TryParse(Z21IpAddress, out var ipAddress))
+            {
+                StatusText = "❌ Invalid IP format in settings";
+                this.Log($"❌ Recovery failed: Invalid IP address '{Z21IpAddress}'");
+                return;
+            }
+            
+            // Parse port (default 21105)
+            var port = 21105;
+            if (!string.IsNullOrEmpty(_settings.Z21.DefaultPort) && int.TryParse(_settings.Z21.DefaultPort, out var configuredPort))
+            {
+                port = configuredPort;
+            }
+            
+            StatusText = "🔄 Recovering Z21...";
+            this.Log($"🔄 Attempting Z21 recovery to {ipAddress}:{port}");
+            
+            await _z21.RecoverConnectionAsync(ipAddress, port);
+            
+            // Update connection state after successful recovery
+            IsConnected = true;
+            StatusText = "✅ Z21 recovery completed";
+            this.Log("✅ Z21 recovery sequence completed successfully");
+            
+            // Notify commands to update their state
+            ConnectCommand.NotifyCanExecuteChanged();
+            DisconnectCommand.NotifyCanExecuteChanged();
+            ResetCountersCommand.NotifyCanExecuteChanged();
+            SetTrackPowerCommand.NotifyCanExecuteChanged();
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"❌ Recovery failed: {ex.Message}";
+            this.Log($"❌ Z21 recovery failed: {ex.Message}");
+        }
+    }
+
     private bool CanConnect() => !IsConnected;
     private bool CanDisconnect() => IsConnected;
     private bool CanResetCounters() => IsConnected;
     private bool CanToggleTrackPower() => IsConnected;
+    private bool CanRecoverZ21() => true; // Always enabled - recovery works even when connection appears dead
 
     /// <summary>
     /// Performs graceful cleanup before app termination.
