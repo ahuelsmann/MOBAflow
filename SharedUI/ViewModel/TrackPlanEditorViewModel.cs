@@ -605,12 +605,14 @@ public partial class TrackPlanEditorViewModel : ObservableObject
 
             var center = part.GetCenter();
             var articleCode = part.GetArticleCode();
+            var trackType = part.GetTrackSegmentType();
+            
             var segment = new TrackSegment
             {
                 Id = part.Id,
                 Name = $"{articleCode} ({part.Id})",
                 ArticleCode = articleCode,
-                Type = TrackSegmentType.Straight,
+                Type = trackType,
                 PathData = pathData,
                 CenterX = center.X,
                 CenterY = center.Y,

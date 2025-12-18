@@ -1,6 +1,36 @@
 # Third-Party Notices
 
-MOBAflow uses the following open-source components. We are grateful to the developers and contributors of these projects.
+MOBAflow uses the following open-source components and third-party formats. We are grateful to the developers and contributors of these projects.
+
+---
+
+## External Software & Formats
+
+### AnyRail
+- **Developer:** Carsten Kühling, Paco Ahlqvist
+- **Website:** [anyRail.com](https://www.anyrail.com)
+- **License:** Proprietary
+- **Copyright:** © Carsten Kühling, Paco Ahlqvist
+- **Usage:** MOBAflow supports importing track plan files saved in AnyRail's XML format.
+- **Legal Notice:** MOBAflow does **not** include, distribute, or modify AnyRail itself. MOBAflow is an **independent** project and is **not** affiliated with, endorsed by, or sponsored by AnyRail or its developers.
+- **Basis:** Interoperability - users may export their own track layouts from AnyRail and import them into MOBAflow for integration with our model railroad automation system.
+
+### Piko A-Gleis
+- **Manufacturer:** Piko GmbH
+- **Website:** [piko.de](https://www.piko.de)
+- **License:** Public Domain (Standard Model Railroad Nomenclature)
+- **Copyright:** © Piko GmbH
+- **Usage:** Track article codes (G231, G119, G62, R1, R2, R3, WL, WR, DWW, DKW) are standard Piko nomenclature.
+- **Basis:** Public domain standard specifications used in the model railroad hobby community.
+
+### Roco Z21
+- **Manufacturer:** Roco (Fleischmann)
+- **Website:** [roco.cc](https://www.roco.cc)
+- **License:** Proprietary Hardware
+- **Copyright:** © Roco (Fleischmann)
+- **Usage:** MOBAflow communicates with Roco Z21 Digital Command Station via standard UDP protocols.
+- **Legal Notice:** MOBAflow is an independent control application. It is not affiliated with Roco or Fleischmann.
+- **Basis:** Standard UDP protocol (publicly documented for interoperability).
 
 ---
 

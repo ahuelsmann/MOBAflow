@@ -153,6 +153,39 @@ public class AnyRailPart
     }
 
     /// <summary>
+    /// Determines the TrackSegmentType based on the part's AnyRail type and geometry.
+    /// Maps AnyRail types to Piko A-Gleis track segment types.
+    /// </summary>
+    /// <returns>Corresponding TrackSegmentType.</returns>
+    public TrackSegmentType GetTrackSegmentType()
+    {
+        return Type switch
+        {
+            "Straight" => TrackSegmentType.Straight,
+            "Curve" => TrackSegmentType.Curve,
+            "RightRegularTurnout" => TrackSegmentType.TurnoutRight,
+            "LeftRegularTurnout" => TrackSegmentType.TurnoutLeft,
+            "ThreewayTurnout" => TrackSegmentType.ThreeWaySwitch,
+            "DoubleSlipswitch" => TrackSegmentType.DoubleCrossover,
+            // Curved turnouts (determined by geometry if not explicit in type)
+            _ => DetermineTypeFromGeometry()
+        };
+    }
+
+    /// <summary>
+    /// Fallback: Determine track type from geometry (lines vs arcs).
+    /// </summary>
+    private TrackSegmentType DetermineTypeFromGeometry()
+    {
+        // If mostly arcs, it's a curve
+        if (Arcs.Count > Lines.Count)
+            return TrackSegmentType.Curve;
+
+        // Otherwise assume straight
+        return TrackSegmentType.Straight;
+    }
+
+    /// <summary>
     /// Generates SVG path data string for this part's drawing elements.
     /// </summary>
     /// <returns>SVG path data string (M, L, A commands).</returns>

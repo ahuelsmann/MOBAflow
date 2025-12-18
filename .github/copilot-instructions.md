@@ -1,6 +1,8 @@
 # MOBAflow - Master Instructions (Ultra-Compact)
 
-> **Multi-platform railway automation control system (.NET 10)**  
+> Model railway application (MOBA) with focus on use of track feedback points. 
+> Journeys (with stops or stations) can be linked to feedback points so that any actions within the application can then be performed based on the feedbacks.
+> **Multi-platform system (.NET 10)**  
 > MOBAflow (WinUI) | MOBAsmart (MAUI) | MOBAdash (Blazor)
 > 
 > **Last Updated:** 2025-12-11 | **Version:** 3.5 | **Build Status:** ✅ Passing
@@ -215,6 +217,13 @@ private void UpdateSystemState(SystemState state)
 ---
 
 ## 🛤️ Track Plan Import (AnyRail)
+
+### **⚖️ Legal Compliance (IMPORTANT)**
+- ✅ **AnyRail:** Proprietary software by Carsten Kühling & Paco Ahlqvist
+- ✅ **MOBAflow:** Supports import of **user-exported** AnyRail XML files (fair use / interoperability)
+- ✅ **Transparency:** See [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md) for legal disclaimers
+- ❌ **NOT:** Distributing, modifying, or replicating AnyRail
+- ⚠️ **When documenting:** Always mention "AnyRail is a third-party tool. MOBAflow is independent and not affiliated with AnyRail."
 
 ### **Architecture**
 ```
