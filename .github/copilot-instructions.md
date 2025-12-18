@@ -579,9 +579,9 @@ public object? CurrentView
 
 ---
 
-# ⚡ PowerShell 7 Terminal Rules (Copilot‑Specific)
+# ⚡ PowerShell 7 Terminal Rules (Copilot‑Specific) — Clean Version
 
-> **Update focus:** Prevent one‑liner parser errors (e.g., `foreach` after an expression), index out‑of‑range on line slicing, and inconsistent writes. Prefer pipeline‑safe loops and idempotent edits.
+> **Focus:** Avoid one‑liner parser errors (e.g., `foreach` directly after an expression), prevent `Select-String -Recurse` misuse, ensure UTF‑8 BOM + CRLF, and use pipeline‑safe loops and idempotent edits.
 
 ---
 
@@ -616,9 +616,9 @@ $env:GIT_PAGER='cat'; $env:LESS='-FRSX'; $env:LESSCHARSET='utf-8'
   - ❌ `... .Count foreach ($f in $files) { ... }`
   - ✅ `... .Count; foreach ($f in $files) { ... }`
 - **Prefer `ForEach-Object`** over `foreach (...) {}` in one‑liners:
-  ```powershell
-  Get-ChildItem src -Filter *.cs -Recurse | ForEach-Object { $f = $_.FullName; # ... }
-  ```
+```powershell
+Get-ChildItem src -Filter *.cs -Recurse | ForEach-Object { $f = $_.FullName; # ... }
+```
 - Use the `foreach` *keyword* only in **multi‑line blocks**.
 
 ---
@@ -636,48 +636,70 @@ $env:GIT_PAGER='cat'; $env:LESS='-FRSX'; $env:LESSCHARSET='utf-8'
 - Use **single quotes** for static regex: `'pattern'`
 - Escape literal specials if needed: `\?  \(  \)  \.  \+  \*  \[  \]  \{  \}  \|`
 - For **dynamic** parts, always use `[regex]::Escape(...)`:
-  ```powershell
-  $pattern = 'private\s+' + [regex]::Escape('TrainViewModel?') + '\s+selectedTrain;'
-  if ($line -match $pattern) { ... }
-  ```
+```powershell
+$pattern = 'private\s+' + [regex]::Escape('TrainViewModel?') + '\s+selectedTrain;'
+if ($line -match $pattern) { ... }
+```
 - Anchor with `$` where appropriate to avoid over‑matching.
 - **Test before replacing:**
-  ```powershell
-  Select-String -Pattern 'private\s+TrainViewModel\?\s+selectedTrain;' -Path $file
-  ```
+```powershell
+Select-String -Pattern 'private\s+TrainViewModel\?\s+selectedTrain;' -Path $file
+```
 
-### 6a) Here‑String rules (PowerShell)
-- **Never** start a here‑string in a **one‑liner**. The header `@'` or `@"` must be the **only token** on its line; same for the closing `'^@` / `"^@`.
+---
+
+## 6a) Here‑String rules (PowerShell)
+- **Never** start a here‑string in a **one‑liner**. The header `@'` or `@"` must be the **only token** on its line; same for the closing `'^@` / `"^@` — **no indentation**.
 - Use **single‑quoted** here‑strings when no interpolation is needed:
-  ```powershell
-  $xaml = @'
-  <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <!-- content -->
-  </ResourceDictionary>
-  '@
-  ```
+```powershell
+# Single-quoted here-string (no interpolation)
+$xaml = @'
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- content -->
+</ResourceDictionary>
+'@
+```
 - Use **double‑quoted** here‑strings when interpolation is required:
-  ```powershell
-  $user = $env:USERNAME
-  $text = @"
-  Hello $user
-  "@
-  ```
+```powershell
+# Double-quoted here-string (allows interpolation)
+$user = $env:USERNAME
+$text = @"
+Hello $user
+"@
+```
 - For **one‑liners**, use these alternatives:
   - String concatenation with explicit newlines: `+ "`n" +`
   - Join an **array of lines** with `[Environment]::NewLine`.
 
 ---
 
+## 6b) File search rule (Select‑String)
+Do **not** use `-Recurse` with **Select-String** (it has no such parameter). To search recursively, **enumerate files first**, then pass the list to `-Path`:
+```powershell
+# Build file list first (exclude bin/obj), then search
+$files = Get-ChildItem -Path . -Filter *.cs -Recurse -File |
+         Where-Object { $_.FullName -notmatch '\\(?:bin|obj)\\' } |
+         Select-Object -ExpandProperty FullName
+
+Select-String -Path $files -Pattern 'your-regex'
+```
+Alternatively, search only **Git‑tracked** files (often faster & cleaner):
+```powershell
+$files = git ls-files "*.cs"
+Select-String -Path $files -Pattern 'your-regex'
+```
+
+---
+
 ## 7) File I/O & encoding (project policy)
 - **Read:** `Get-Content -Raw`
 - **Write:** UTF‑8 **with BOM** (pipeline requirement)
-  ```powershell
-  Set-Content $file $text -Encoding UTF8BOM
-  # or
-  Out-File $file -InputObject $text -Encoding UTF8BOM
-  ```
+```powershell
+Set-Content $file $text -Encoding UTF8BOM
+# or
+Out-File $file -InputObject $text -Encoding UTF8BOM
+```
 - **Line Endings:** Windows (CR LF) — ensure all files use `\r\n`.
 - **No trailing empty lines:** No extra blank lines after the final closing brace `}`.
 - Quote paths with spaces; use double quotes when interpolating variables.
@@ -705,65 +727,46 @@ Write-NormalizedUtf8Bom -Path $file -Content $text
 
 ---
 
-## 8) Robust edit templates (idempotent & error‑safe)
-
-### 8.1 Insert a line **after a match** (multi‑line safe)
+## 8) Quick copy‑and‑use examples
 ```powershell
-$f = "path/to/MainWindowViewModel.cs"
-$add = 'public event EventHandler? ExitApplicationRequested;'
-$text = Get-Content $f -Raw
-if ($text -notmatch [regex]::Escape($add)) {
-  $nl   = [Environment]::NewLine
-  $text = $text -replace '(?m)(^\s*#endregion\s*$)', $nl + $add + $nl + '$1'
-  Set-Content $f $text -Encoding UTF8BOM
-  Write-Host 'Added ExitApplicationRequested event'
-} else { Write-Host 'Event already present' }
+# Diff without pager, first 100 lines
+git --no-pager diff .github/copilot-instructions.md | Select-Object -First 100
+
+# Count matches and print if found
+$count=(Select-String -Path . -Pattern 'EventTriggerBehavior' -List | Measure-Object).Count; if ($count -gt 0) { Write-Host "$count instances" }
+
+# Pipeline-safe loop
+git ls-files *.cs | ForEach-Object { $f = $_; if ((Select-String -Path $f -Pattern 'INotifyPropertyChanged' -List)) { Write-Host $f } }
 ```
 
-### 8.2 Insert at a specific **line index** (clamped, no out‑of‑range)
+### Write XAML with BOM (safe)
 ```powershell
-$f = "path/to/MainWindowViewModel.cs"
-$lines = Get-Content $f
-$idx = 145
-$idx = [math]::Min([math]::Max($idx,0), $lines.Count)   # clamp
-$newLine = 'public event EventHandler? ExitApplicationRequested;'
-$pre  = $lines | Select-Object -First $idx
-$post = $lines | Select-Object -Skip  $idx
-Set-Content $f ($pre + $newLine + $post) -Encoding UTF8BOM
-Write-Host ("Inserted line at index {0}" -f $idx)
-```
-
-### 8.3 Replace literal text (whole‑file, no regex pitfalls)
-```powershell
-$f = "path/to/MainWindowViewModel.cs"
-$sold = "[ObservableProperty]`r`nprivate City? selectedCity;`r`nregion"
-$snew = "[ObservableProperty]`r`nprivate City? selectedCity;`r`npublic event EventHandler? ExitApplicationRequested;`r`nregion"
-$text = Get-Content $f -Raw
-$text = $text.Replace($sold, $snew)  # literal replace
-Set-Content $f $text -Encoding UTF8BOM
-Write-Host 'Replaced block and added event'
-```
-> Use **literal** `.Replace` when you can; prefer regex only when structure demands it.
-
----
-
-## 9) Project root & solution fallback
-```powershell
-$gitRoot = (git rev-parse --show-toplevel 2>$null); if ($gitRoot -and (Test-Path $gitRoot)) { Set-Location $gitRoot }
-$sln = Get-ChildItem -Path . -Filter *.sln -ErrorAction SilentlyContinue | Select-Object -First 1; if ($sln) { Set-Location $sln.Directory.FullName }
+Set-Content -Path .\Theme.xaml -Value @'
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- content -->
+</ResourceDictionary>
+'@ -Encoding UTF8BOM
 ```
 
 ---
 
-## 10) Quick reset for a “stuck” session
-```powershell
-try { Remove-Module PSReadLine -ErrorAction SilentlyContinue } catch {}
-$ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'
-[Console]::OutputEncoding=[Text.Encoding]::UTF8; [Console]::InputEncoding=[Text.Encoding]::UTF8
-if (Get-Variable -Name PSStyle -ErrorAction SilentlyContinue) { $PSStyle.OutputRendering='Ansi' }
-$env:GIT_PAGER='cat'
-Write-Host 'Copilot terminal has been reset.' -ForegroundColor Green
+## 9) (Optional) Recommended VS Terminal Arguments (PowerShell 7)
+Use this in **Visual Studio → Tools → Options → Environment → Terminal → PowerShell 7 → Arguments**.
+
+```text
+-NoProfile -NonInteractive -NoExit -NoLogo -ExecutionPolicy Bypass -Command "& { Import-Module \"$env:VSAPPIDDIR\..\Tools\Microsoft.VisualStudio.DevShell.dll\"; Enter-VsDevShell -SetDefaultWindowTitle -InstallPath \"$env:VSAPPIDDIR\..\..\"; $ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'; [Console]::OutputEncoding=[Text.Encoding]::UTF8; [Console]::InputEncoding=[Text.Encoding]::UTF8; $env:POWERSHELL_TELEMETRY_OPTOUT='1'; $env:DOTNET_CLI_TELEMETRY_OPTOUT='1'; $env:DOTNET_CLI_UI_LANGUAGE='en'; $env:TERM='xterm-256color'; try { Remove-Module PSReadLine -ErrorAction SilentlyContinue } catch {}; if (Get-Variable -Name PSStyle -ErrorAction SilentlyContinue) { $PSStyle.OutputRendering='Ansi'; Set-Variable -Name PStyle -Value $PSStyle -Scope Global }; $env:GIT_PAGER='cat'; $env:LESS='-FRSX'; $env:LESSCHARSET='utf-8'; try { $PSNativeCommandArgumentPassing='Standard' } catch {}; try { $ErrorView='ConciseView' } catch {}; $gitRoot=(git rev-parse --show-toplevel 2>$null); if ($gitRoot -and (Test-Path $gitRoot)) { Set-Location $gitRoot } else { $sln=Get-ChildItem -Path . -Filter *.sln -ErrorAction SilentlyContinue | Select-Object -First 1; if ($sln) { Set-Location $sln.Directory.FullName } } }"
 ```
+
+---
+
+## 10) Do **not** generate
+- No reference to **`$PStyle`** (only **`$PSStyle`**).
+- No Bash syntax in pwsh snippets unless explicitly asked to use *Git Bash*.
+- No destructive one‑liners without a prior `Select-String` check.
+- Do **not** place `foreach (...) {}` after an expression in one‑liners. Use `; foreach` or `... | ForEach-Object {}`.
+- Do **not** slice arrays with `[0..N]` unless clamped; prefer `Select-Object -First / -Skip`.
+- Do **not** start a **here‑string** in a one‑liner; header and terminator must be on their own lines at column 0 (no indentation).
 
 ---
 

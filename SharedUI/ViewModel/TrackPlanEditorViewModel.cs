@@ -26,8 +26,32 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         _mainViewModel = mainViewModel;
         _ioService = ioService;
 
+        // Subscribe to Solution events for persistence
+        _mainViewModel.SolutionSaving += OnSolutionSaving;
+        _mainViewModel.SolutionLoaded += OnSolutionLoaded;
+        _mainViewModel.PropertyChanged += OnMainViewModelPropertyChanged;
+
         // Load track library
         LoadTrackLibrary();
+    }
+
+    private void OnSolutionSaving(object? sender, EventArgs e)
+    {
+        SyncToProject();
+    }
+
+    private void OnSolutionLoaded(object? sender, EventArgs e)
+    {
+        LoadFromProject();
+    }
+
+    private void OnMainViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        // When SelectedProject changes, load the track layout
+        if (e.PropertyName == nameof(MainWindowViewModel.SelectedProject))
+        {
+            LoadFromProject();
+        }
     }
 
     #region Track Library (Toolbar)
@@ -559,11 +583,70 @@ public partial class TrackPlanEditorViewModel : ObservableObject
             connection.ConnectionY += deltaY;
         }
 
-        Debug.WriteLine($"📦 Moved group of {group.Count} segments");
-    }
-    #endregion
+            Debug.WriteLine($"📦 Moved group of {group.Count} segments");
+        }
 
-    #region AnyRail Import/Export
+        /// <summary>
+        /// Automatically detect and create connections between segments based on matching endpoints.
+        /// Used after AnyRail XML import to restore track connectivity.
+        /// </summary>
+        /// <param name="tolerance">Maximum distance (in pixels) for endpoints to be considered connected.</param>
+        public void AutoConnectFromEndpoints(double tolerance = 1.0)
+        {
+            var segments = PlacedSegments.ToList();
+            int connectionsCreated = 0;
+
+            for (int i = 0; i < segments.Count; i++)
+            {
+                var seg1 = segments[i];
+                var seg1Start = (seg1.StartPointX, seg1.StartPointY);
+                var seg1End = (seg1.EndPointX, seg1.EndPointY);
+
+                for (int j = i + 1; j < segments.Count; j++)
+                {
+                    var seg2 = segments[j];
+                    var seg2Start = (seg2.StartPointX, seg2.StartPointY);
+                    var seg2End = (seg2.EndPointX, seg2.EndPointY);
+
+                    // Check all 4 combinations of endpoints
+                    if (PointsMatch(seg1Start, seg2Start, tolerance))
+                    {
+                        CreateConnection(seg1, true, seg2, true, seg1Start.Item1, seg1Start.Item2);
+                        connectionsCreated++;
+                    }
+                    else if (PointsMatch(seg1Start, seg2End, tolerance))
+                    {
+                        CreateConnection(seg1, true, seg2, false, seg1Start.Item1, seg1Start.Item2);
+                        connectionsCreated++;
+                    }
+                    else if (PointsMatch(seg1End, seg2Start, tolerance))
+                    {
+                        CreateConnection(seg1, false, seg2, true, seg1End.Item1, seg1End.Item2);
+                        connectionsCreated++;
+                    }
+                    else if (PointsMatch(seg1End, seg2End, tolerance))
+                    {
+                        CreateConnection(seg1, false, seg2, false, seg1End.Item1, seg1End.Item2);
+                        connectionsCreated++;
+                    }
+                }
+            }
+
+            Debug.WriteLine($"🔗 AutoConnect: Created {connectionsCreated} connections from endpoint matching");
+        }
+
+        /// <summary>
+        /// Check if two points are within tolerance distance of each other.
+        /// </summary>
+        private static bool PointsMatch((double X, double Y) p1, (double X, double Y) p2, double tolerance)
+        {
+            var dx = p1.X - p2.X;
+            var dy = p1.Y - p2.Y;
+            return dx * dx + dy * dy <= tolerance * tolerance;
+        }
+        #endregion
+
+        #region AnyRail Import/Export
     /// <summary>
     /// Current loaded AnyRail layout (if imported).
     /// </summary>
@@ -620,13 +703,16 @@ public partial class TrackPlanEditorViewModel : ObservableObject
                 Layer = "Default"
             };
 
-            PlacedSegments.Add(new TrackSegmentViewModel(segment));
-        }
+                PlacedSegments.Add(new TrackSegmentViewModel(segment));
+            }
 
-        OnPropertyChanged(nameof(AssignedSensorCount));
-        OnPropertyChanged(nameof(SensorStatusText));
+            // Automatically detect and create connections based on matching endpoints
+            AutoConnectFromEndpoints();
 
-        Debug.WriteLine($"📂 Imported AnyRail layout: {PlacedSegments.Count} segments");
+            OnPropertyChanged(nameof(AssignedSensorCount));
+            OnPropertyChanged(nameof(SensorStatusText));
+
+            Debug.WriteLine($"📂 Imported AnyRail layout: {PlacedSegments.Count} segments");
     }
 
     /// <summary>
@@ -686,19 +772,102 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         Debug.WriteLine($"💾 Exported track plan to: {xmlPath}");
     }
 
-    private static string GetAnyRailType(TrackSegmentViewModel segment)
-    {
-        return segment.ArticleCode switch
+        private static string GetAnyRailType(TrackSegmentViewModel segment)
         {
-            var s when s.StartsWith("G") => "Straight",
-            var s when s.StartsWith("R") => "Curve",
-            "WL" => "LeftRegularTurnout",
-            "WR" => "RightRegularTurnout",
-            "DKW" => "DoubleSlip",
-            "DWW" => "ThreeWay",
-            _ => "Straight"
-        };
+            return segment.ArticleCode switch
+            {
+                var s when s.StartsWith("G") => "Straight",
+                var s when s.StartsWith("R") => "Curve",
+                "WL" => "LeftRegularTurnout",
+                "WR" => "RightRegularTurnout",
+                "DKW" => "DoubleSlip",
+                "DWW" => "ThreeWay",
+                _ => "Straight"
+            };
+        }
+        #endregion
+
+        #region Project Persistence
+        /// <summary>
+        /// Sync current track layout to the selected Project for JSON persistence.
+        /// Call this before saving the Solution.
+        /// </summary>
+        public void SyncToProject()
+        {
+            var project = _mainViewModel.SelectedProject?.Model;
+            if (project == null)
+            {
+                Debug.WriteLine("⚠️ SyncToProject: No project selected");
+                return;
+            }
+
+            // Create or update TrackLayout
+            project.TrackLayout ??= new TrackLayout();
+
+            project.TrackLayout.WidthMm = CanvasWidthMm;
+            project.TrackLayout.HeightMm = CanvasHeightMm;
+
+            // Convert ViewModels to Domain models
+            project.TrackLayout.Segments.Clear();
+            foreach (var vm in PlacedSegments)
+            {
+                project.TrackLayout.Segments.Add(vm.Model);
+            }
+
+            // Copy connections
+            project.TrackLayout.Connections.Clear();
+            project.TrackLayout.Connections.AddRange(Connections);
+
+            Debug.WriteLine($"💾 SyncToProject: {project.TrackLayout.Segments.Count} segments, {project.TrackLayout.Connections.Count} connections");
+        }
+
+        /// <summary>
+        /// Load track layout from the selected Project.
+        /// Call this when a Project is selected or Solution is loaded.
+        /// </summary>
+        public void LoadFromProject()
+        {
+            var project = _mainViewModel.SelectedProject?.Model;
+            if (project?.TrackLayout == null)
+            {
+                Debug.WriteLine("📂 LoadFromProject: No track layout in project");
+                return;
+            }
+
+            var layout = project.TrackLayout;
+
+            // Clear existing data
+            PlacedSegments.Clear();
+            Connections.Clear();
+
+            // Update canvas size
+            CanvasWidthMm = layout.WidthMm;
+            CanvasHeightMm = layout.HeightMm;
+
+            // Load segments
+            foreach (var segment in layout.Segments)
+            {
+                PlacedSegments.Add(new TrackSegmentViewModel(segment));
+            }
+
+            // Load connections
+            Connections.AddRange(layout.Connections);
+
+            // Restore connection states on ViewModels
+            foreach (var connection in Connections)
+            {
+                var seg1 = PlacedSegments.FirstOrDefault(s => s.Id == connection.Segment1Id);
+                var seg2 = PlacedSegments.FirstOrDefault(s => s.Id == connection.Segment2Id);
+
+                seg1?.SetConnectionState(connection.Segment1IsStart, true, connection.Segment2Id);
+                seg2?.SetConnectionState(connection.Segment2IsStart, true, connection.Segment1Id);
+            }
+
+            OnPropertyChanged(nameof(AssignedSensorCount));
+            OnPropertyChanged(nameof(SensorStatusText));
+
+            Debug.WriteLine($"📂 LoadFromProject: {PlacedSegments.Count} segments, {Connections.Count} connections");
+        }
+        #endregion
     }
-    #endregion
-}
 

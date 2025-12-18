@@ -11,6 +11,18 @@ using System.Diagnostics;
 /// </summary>
 public partial class MainWindowViewModel
 {
+    #region Solution Events
+    /// <summary>
+    /// Raised before saving the Solution. Subscribers should sync their data to Domain models.
+    /// </summary>
+    public event EventHandler? SolutionSaving;
+
+    /// <summary>
+    /// Raised after loading a Solution. Subscribers should load their data from Domain models.
+    /// </summary>
+    public event EventHandler? SolutionLoaded;
+    #endregion
+
     #region Solution Management
     partial void OnSolutionChanged(Solution? value)
     {
@@ -50,6 +62,9 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanSaveSolution))]
     private async Task SaveSolutionAsync()
     {
+        // Notify subscribers to sync their data before saving
+        SolutionSaving?.Invoke(this, EventArgs.Empty);
+
         var (success, path, error) = await _ioService.SaveAsync(Solution, CurrentSolutionPath);
         if (success && path != null)
         {
@@ -114,13 +129,16 @@ public partial class MainWindowViewModel
             CurrentSolutionPath = path;
             HasSolution = Solution.Projects.Count > 0;
 
-            SaveSolutionCommand.NotifyCanExecuteChanged();
-            ConnectToZ21Command.NotifyCanExecuteChanged();
-            LoadCities();
+                    SaveSolutionCommand.NotifyCanExecuteChanged();
+                    ConnectToZ21Command.NotifyCanExecuteChanged();
+                    LoadCities();
 
-            OnPropertyChanged(nameof(Solution));
-        }
-    }
+                    OnPropertyChanged(nameof(Solution));
+
+                    // Notify subscribers to load their data after loading
+                    SolutionLoaded?.Invoke(this, EventArgs.Empty);
+                }
+            }
 
     private bool CanSaveSolution() => true;
 

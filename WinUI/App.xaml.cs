@@ -116,8 +116,10 @@ public partial class App
         services.AddSingleton<Service.HealthCheckService>();
 
         // ViewModels
+        // Note: Wrapper ViewModels (SolutionViewModel, ProjectViewModel, JourneyViewModel, etc.)
+        // are created with 'new' at runtime because they wrap Domain models.
+        // Only "standalone" ViewModels that don't wrap models are registered here.
         services.AddSingleton<SharedUI.ViewModel.MainWindowViewModel>();
-        services.AddTransient<SharedUI.ViewModel.JourneyViewModel>();
         services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
         services.AddSingleton<SharedUI.ViewModel.TrackPlanEditorViewModel>();
         services.AddSingleton<SharedUI.ViewModel.JourneyMapViewModel>();
