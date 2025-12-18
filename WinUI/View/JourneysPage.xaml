@@ -34,18 +34,43 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <TextBlock
-                Grid.Row="0"
-                Padding="8,0,0,8"
-                FontWeight="SemiBold"
-                Style="{StaticResource SubtitleTextBlockStyle}"
-                Text="Journeys" />
+
+            <!--  Header: Title + Actions  -->
+            <Grid Grid.Row="0" Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    Grid.Column="0"
+                    Padding="8,0,0,0"
+                    VerticalAlignment="Center"
+                    FontWeight="SemiBold"
+                    Style="{StaticResource SubtitleTextBlockStyle}"
+                    Text="Journeys" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                    <Button
+                        Command="{x:Bind ViewModel.AddJourneyCommand}"
+                        Padding="4"
+                        ToolTipService.ToolTip="Create a new journey">
+                        <FontIcon FontSize="14" Glyph="&#xE710;" />
+                    </Button>
+                    <Button
+                        Command="{x:Bind ViewModel.DeleteJourneyCommand}"
+                        Padding="4"
+                        ToolTipService.ToolTip="Remove the selected journey">
+                        <FontIcon FontSize="14" Glyph="&#xE74D;" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+
             <AutoSuggestBox
                 Grid.Row="1"
                 Margin="0,0,0,8"
                 PlaceholderText="Search journeys..."
                 QueryIcon="Find"
                 Text="{x:Bind ViewModel.JourneySearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
             <ListView
                 x:Name="JourneysListView"
                 Grid.Row="2"
@@ -103,12 +128,36 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <TextBlock
-                Grid.Row="0"
-                Padding="8,0,0,8"
-                FontWeight="SemiBold"
-                Style="{StaticResource SubtitleTextBlockStyle}"
-                Text="Stations" />
+
+            <!--  Header: Title + Actions  -->
+            <Grid Grid.Row="0" Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    Grid.Column="0"
+                    Padding="8,0,0,0"
+                    VerticalAlignment="Center"
+                    FontWeight="SemiBold"
+                    Style="{StaticResource SubtitleTextBlockStyle}"
+                    Text="Stations" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                    <Button
+                        Command="{x:Bind ViewModel.AddStationCommand}"
+                        Padding="4"
+                        ToolTipService.ToolTip="Add a new station to this journey">
+                        <FontIcon FontSize="14" Glyph="&#xE710;" />
+                    </Button>
+                    <Button
+                        Command="{x:Bind ViewModel.DeleteStationCommand}"
+                        Padding="4"
+                        ToolTipService.ToolTip="Remove the selected station">
+                        <FontIcon FontSize="14" Glyph="&#xE74D;" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+
             <ListView
                 x:Name="StationsListView"
                 Grid.Row="1"
@@ -163,20 +212,39 @@
             Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
         <!--  Column 4: City Library (for Drag & Drop)  -->
-        <Grid Grid.Column="4" Padding="8">
+        <Grid
+            Grid.Column="4"
+            Margin="8"
+            Padding="12"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            CornerRadius="8">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <TextBlock
+            <StackPanel
                 Grid.Row="0"
-                Padding="8,0,0,8"
-                FontWeight="SemiBold"
-                Style="{StaticResource SubtitleTextBlockStyle}"
-                Text="City Library" />
+                Orientation="Horizontal"
+                Spacing="6">
+                <FontIcon
+                    FontSize="14"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Glyph="&#xE8F1;" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource BodyStrongTextBlockStyle}"
+                    Text="City Library" />
+            </StackPanel>
+            <TextBlock
+                Grid.Row="1"
+                Margin="0,4,0,12"
+                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Text="Drag or double-click to add" />
             <ListView
                 x:Name="CityLibraryListView"
-                Grid.Row="1"
+                Grid.Row="2"
                 CanDragItems="True"
                 DoubleTapped="CityListView_DoubleTapped"
                 DragItemsStarting="CityListView_DragItemsStarting"
@@ -211,20 +279,39 @@
             Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
         <!--  Column 6: Workflow Library (for Drag & Drop to Stations)  -->
-        <Grid Grid.Column="6" Padding="8">
+        <Grid
+            Grid.Column="6"
+            Margin="8"
+            Padding="12"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            CornerRadius="8">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <TextBlock
+            <StackPanel
                 Grid.Row="0"
-                Padding="8,0,0,8"
-                FontWeight="SemiBold"
-                Style="{StaticResource SubtitleTextBlockStyle}"
-                Text="Workflow Library" />
+                Orientation="Horizontal"
+                Spacing="6">
+                <FontIcon
+                    FontSize="14"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Glyph="&#xE8F1;" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource BodyStrongTextBlockStyle}"
+                    Text="Workflow Library" />
+            </StackPanel>
+            <TextBlock
+                Grid.Row="1"
+                Margin="0,4,0,12"
+                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Text="Drag to station to assign" />
             <ListView
                 x:Name="WorkflowLibraryListView"
-                Grid.Row="1"
+                Grid.Row="2"
                 CanDragItems="True"
                 DragItemsStarting="WorkflowListView_DragItemsStarting"
                 ItemsSource="{x:Bind ViewModel.SelectedProject.Workflows, Mode=OneWay}"

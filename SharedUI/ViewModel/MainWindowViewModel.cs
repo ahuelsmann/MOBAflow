@@ -142,6 +142,12 @@ public partial class MainWindowViewModel : ObservableObject
     private TrainViewModel? selectedTrain;
 
     /// <summary>
+    /// The currently selected feedback point.
+    /// </summary>
+    [ObservableProperty]
+    private FeedbackPointOnTrack? selectedFeedbackPoint;
+
+    /// <summary>
     /// The currently selected object to display in the properties panel.
     /// </summary>
     [ObservableProperty]
@@ -206,10 +212,48 @@ public partial class MainWindowViewModel : ObservableObject
 
     public event EventHandler? ExitApplicationRequested;
 
+    partial void OnSelectedProjectChanged(ProjectViewModel? value)
+    {
+        // Update CanExecute for project-related commands
+        DeleteProjectCommand.NotifyCanExecuteChanged();
+        // Also update journey/workflow commands since they depend on SelectedProject
+        DeleteJourneyCommand.NotifyCanExecuteChanged();
+        DeleteWorkflowCommand.NotifyCanExecuteChanged();
+        DeleteFeedbackPointCommand.NotifyCanExecuteChanged();
+    }
+
     partial void OnSelectedJourneyChanged(JourneyViewModel? value)
     {
         // Update CanExecute for journey-related commands
+        DeleteJourneyCommand.NotifyCanExecuteChanged();
         ResetJourneyCommand.NotifyCanExecuteChanged();
+        AddStationCommand.NotifyCanExecuteChanged();
+        DeleteStationCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnSelectedStationChanged(StationViewModel? value)
+    {
+        // Update CanExecute for station-related commands
+        DeleteStationCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnSelectedWorkflowChanged(WorkflowViewModel? value)
+    {
+        // Update CanExecute for workflow-related commands
+        DeleteWorkflowCommand.NotifyCanExecuteChanged();
+        DeleteActionCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnSelectedActionChanged(object? value)
+    {
+        // Update CanExecute for action-related commands
+        DeleteActionCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnSelectedFeedbackPointChanged(FeedbackPointOnTrack? value)
+    {
+        // Update CanExecute for feedback point-related commands
+        DeleteFeedbackPointCommand.NotifyCanExecuteChanged();
     }
     #endregion
 
@@ -217,22 +261,51 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void AddProject()
     {
-        // Add a simple project placeholder to the current Solution
+        // Solution is always available (DI singleton), so is SolutionViewModel
         var project = new Project { Name = "New Project" };
         Solution.Projects.Add(project);
 
         // Create ViewModel and add to SolutionViewModel
         var projectVM = new ProjectViewModel(project);
-        SolutionViewModel?.Projects.Add(projectVM);
+        SolutionViewModel!.Projects.Add(projectVM);
 
         // Select the newly created project
         SelectedProject = projectVM;
 
-        // Refresh view model and mark unsaved changes
-        SolutionViewModel?.Refresh();
+        // Update HasSolution flag
+        HasSolution = true;
 
         SaveSolutionCommand.NotifyCanExecuteChanged();
+        DeleteProjectCommand.NotifyCanExecuteChanged();
     }
+
+    [RelayCommand(CanExecute = nameof(CanDeleteProject))]
+    private void DeleteProject()
+    {
+        if (SelectedProject == null) return;
+
+        // Remove from Domain model
+        Solution.Projects.Remove(SelectedProject.Model);
+
+        // Remove from SolutionViewModel's Projects collection
+        SolutionViewModel!.Projects.Remove(SelectedProject);
+
+        // Select first project if available, otherwise clear
+        if (SolutionViewModel.Projects.Count > 0)
+        {
+            SelectedProject = SolutionViewModel.Projects[0];
+        }
+        else
+        {
+            SelectedProject = null;
+            HasSolution = false;
+        }
+
+        SaveSolutionCommand.NotifyCanExecuteChanged();
+        DeleteProjectCommand.NotifyCanExecuteChanged();
+    }
+
+    private bool CanDeleteProject() => SelectedProject != null;
     #endregion
 
     #region Lifecycle

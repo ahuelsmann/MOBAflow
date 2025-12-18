@@ -299,16 +299,31 @@ public sealed partial class TrackPlanEditorPage : INotifyPropertyChanged
     private void TrackCanvas_PointerPressed_Pan(object sender, PointerRoutedEventArgs e)
     {
         var pointer = e.GetCurrentPoint(TrackCanvas);
-        
+
         // Right-click starts panning
         if (pointer.Properties.IsRightButtonPressed)
         {
             _isPanning = true;
-            _panStartPosition = pointer.Position;
+            // Use position relative to ScrollViewer to avoid feedback loop
+            _panStartPosition = e.GetCurrentPoint(CanvasScrollViewer).Position;
             _panStartHorizontalOffset = CanvasScrollViewer.HorizontalOffset;
             _panStartVerticalOffset = CanvasScrollViewer.VerticalOffset;
             TrackCanvas.CapturePointer(e.Pointer);
             e.Handled = true;
+            Debug.WriteLine($"🖱️ Pan started at ({_panStartPosition.X:F0}, {_panStartPosition.Y:F0})");
+        }
+        // Left-click on empty canvas area deselects segments and shows layout properties
+        else if (pointer.Properties.IsLeftButtonPressed && _draggingSegment == null)
+        {
+            // Clear all segment selections
+            foreach (var s in ViewModel.PlacedSegments)
+            {
+                if (s.IsSelected)
+                    s.IsSelected = false;
+            }
+            ViewModel.SelectedSegment = null;
+
+            Debug.WriteLine("🔵 Canvas clicked - showing layout properties");
         }
     }
 
@@ -316,16 +331,30 @@ public sealed partial class TrackPlanEditorPage : INotifyPropertyChanged
     {
         if (!_isPanning) return;
 
-        var currentPosition = e.GetCurrentPoint(TrackCanvas).Position;
+        // Use position relative to ScrollViewer (fixed reference frame)
+        var currentPosition = e.GetCurrentPoint(CanvasScrollViewer).Position;
         var deltaX = currentPosition.X - _panStartPosition.X;
         var deltaY = currentPosition.Y - _panStartPosition.Y;
 
-        // Scroll the canvas (invert delta for natural panning feel)
+        // Skip if movement is too small
+        if (Math.Abs(deltaX) < 1 && Math.Abs(deltaY) < 1) return;
+
+        // Calculate new scroll position
+        var newHorizontalOffset = _panStartHorizontalOffset - deltaX;
+        var newVerticalOffset = _panStartVerticalOffset - deltaY;
+
+        // Apply scroll
         CanvasScrollViewer.ChangeView(
-            _panStartHorizontalOffset - deltaX,
-            _panStartVerticalOffset - deltaY,
+            newHorizontalOffset,
+            newVerticalOffset,
             null,
             disableAnimation: true);
+
+        // Update start position for next delta calculation (incremental panning)
+        // This makes panning work even when scroll limits are reached
+        _panStartPosition = currentPosition;
+        _panStartHorizontalOffset = CanvasScrollViewer.HorizontalOffset;
+        _panStartVerticalOffset = CanvasScrollViewer.VerticalOffset;
     }
 
     private void TrackCanvas_PointerReleased_Pan(PointerRoutedEventArgs e)
@@ -446,29 +475,32 @@ public sealed partial class TrackPlanEditorPage : INotifyPropertyChanged
         if (_draggingSegment != null)
         {
             _ = e.GetCurrentPoint(TrackCanvas).Position;
-            
+
             // Try to snap to nearby segment endpoint
             var snapResult = _snapService.FindSnapEndpoint(
                 new Point(_draggingSegment.CenterX, _draggingSegment.CenterY), 
                 _draggingSegment.Rotation,
                 ViewModel.PlacedSegments.Where(s => s != _draggingSegment));
-            
+
             if (snapResult.HasValue)
             {
                 // Calculate delta to snap position
                 var deltaX = snapResult.Value.SnapPosition.X - _draggingSegment.CenterX;
                 var deltaY = snapResult.Value.SnapPosition.Y - _draggingSegment.CenterY;
-                
+
                 // Move segment to snap position (updates both position and PathData)
                 _draggingSegment.MoveBy(deltaX, deltaY);
-                
+
                 Debug.WriteLine($"✅ Snapped segment to ({snapResult.Value.SnapPosition.X:F0}, {snapResult.Value.SnapPosition.Y:F0})");
             }
-            
+
+            // Try to auto-connect with nearby segments (works for both new and reconnecting segments)
+            ViewModel.AutoConnectFromEndpoints(_draggingSegment);
+
             TrackCanvas.ReleasePointerCapture(e.Pointer);
             _draggingSegment = null;
             SnapPreviewPath.Visibility = Visibility.Collapsed;
-            
+
             Debug.WriteLine("🔵 Drag ended");
             e.Handled = true;
         }

@@ -169,6 +169,94 @@ public partial class TrackSegmentViewModel : ObservableObject
         return coords.Count > 1 ? coords[^1] : (CenterX, CenterY);
     }
 
+    /// <summary>
+    /// Gets all unique endpoints of this segment.
+    /// For turnouts (WL, WR, DWW, DKW), this returns all connection points (3-4 points).
+    /// For simple tracks, this returns start and end (2 points).
+    /// </summary>
+    public List<(double X, double Y)> GetAllEndpoints()
+    {
+        var coords = ExtractCoordinates(PathData);
+        if (coords.Count == 0)
+            return [(CenterX, CenterY)];
+
+        // For segments with multiple M commands (turnouts), extract all unique endpoints
+        // An endpoint is where tracks can connect - typically the start of each sub-path
+        // and the end of the last point in each sub-path
+        var endpoints = new List<(double X, double Y)>();
+
+        // Parse PathData to find all sub-path endpoints
+        var pathData = PathData ?? string.Empty;
+        var subPaths = ParseSubPaths(pathData);
+
+        foreach (var subPath in subPaths)
+        {
+            if (subPath.Count > 0)
+            {
+                endpoints.Add(subPath[0]); // Start of sub-path
+                if (subPath.Count > 1)
+                    endpoints.Add(subPath[^1]); // End of sub-path
+            }
+        }
+
+        // Remove duplicates (points within 1px tolerance)
+        var uniqueEndpoints = new List<(double X, double Y)>();
+        foreach (var ep in endpoints)
+        {
+            var isDuplicate = uniqueEndpoints.Any(existing =>
+                Math.Abs(existing.X - ep.X) < 1 && Math.Abs(existing.Y - ep.Y) < 1);
+            if (!isDuplicate)
+                uniqueEndpoints.Add(ep);
+        }
+
+        return uniqueEndpoints.Count > 0 ? uniqueEndpoints : coords;
+    }
+
+    /// <summary>
+    /// Parse PathData into separate sub-paths (each starting with M).
+    /// </summary>
+    private static List<List<(double X, double Y)>> ParseSubPaths(string pathData)
+    {
+        var subPaths = new List<List<(double X, double Y)>>();
+        var currentSubPath = new List<(double X, double Y)>();
+
+        var ic = CultureInfo.InvariantCulture;
+        var commandRegex = new Regex(@"([MLAHVCSQTZ])\s*([-\d.,\s]+)", RegexOptions.IgnoreCase);
+        var numberRegex = new Regex(@"-?\d+\.?\d*");
+
+        foreach (Match cmdMatch in commandRegex.Matches(pathData))
+        {
+            var command = cmdMatch.Groups[1].Value.ToUpperInvariant();
+            var args = cmdMatch.Groups[2].Value;
+            var numbers = numberRegex.Matches(args)
+                .Select(m => double.TryParse(m.Value, NumberStyles.Float, ic, out var v) ? v : 0)
+                .ToList();
+
+            switch (command)
+            {
+                case "M" when numbers.Count >= 2:
+                    // New sub-path starts
+                    if (currentSubPath.Count > 0)
+                        subPaths.Add(currentSubPath);
+                    currentSubPath = [(numbers[0], numbers[1])];
+                    break;
+
+                case "L" when numbers.Count >= 2:
+                    currentSubPath.Add((numbers[0], numbers[1]));
+                    break;
+
+                case "A" when numbers.Count >= 7:
+                    currentSubPath.Add((numbers[5], numbers[6]));
+                    break;
+            }
+        }
+
+        if (currentSubPath.Count > 0)
+            subPaths.Add(currentSubPath);
+
+        return subPaths;
+    }
+
     private static List<(double X, double Y)> ExtractCoordinates(string? pathData)
     {
         var points = new List<(double X, double Y)>();
@@ -176,15 +264,33 @@ public partial class TrackSegmentViewModel : ObservableObject
             return points;
 
         var ic = CultureInfo.InvariantCulture;
-        var regex = new Regex(@"(-?\d+\.?\d*),(-?\d+\.?\d*)");
-        var matches = regex.Matches(pathData);
 
-        foreach (Match match in matches)
+        // Match coordinates in SVG path format: "M x y", "L x y", "A ... x y"
+        // Supports both comma-separated (x,y) and space-separated (x y) formats
+        // Look for command letters followed by coordinates
+        var commandRegex = new Regex(@"([MLAHVCSQTZ])\s*([-\d.,\s]+)", RegexOptions.IgnoreCase);
+        var numberRegex = new Regex(@"-?\d+\.?\d*");
+
+        foreach (Match cmdMatch in commandRegex.Matches(pathData))
         {
-            if (double.TryParse(match.Groups[1].Value, NumberStyles.Float, ic, out var x) &&
-                double.TryParse(match.Groups[2].Value, NumberStyles.Float, ic, out var y))
+            var command = cmdMatch.Groups[1].Value.ToUpperInvariant();
+            var args = cmdMatch.Groups[2].Value;
+            var numbers = numberRegex.Matches(args)
+                .Select(m => double.TryParse(m.Value, NumberStyles.Float, ic, out var v) ? v : 0)
+                .ToList();
+
+            switch (command)
             {
-                points.Add((x, y));
+                case "M" or "L" when numbers.Count >= 2:
+                    // MoveTo / LineTo: x y
+                    points.Add((numbers[0], numbers[1]));
+                    break;
+
+                case "A" when numbers.Count >= 7:
+                    // Arc: rx ry x-axis-rotation large-arc sweep x y
+                    // The endpoint is at indices 5 and 6
+                    points.Add((numbers[5], numbers[6]));
+                    break;
             }
         }
 
@@ -225,12 +331,12 @@ public partial class TrackSegmentViewModel : ObservableObject
     /// </summary>
     public bool ShowEndEndpoint => !IsEndConnected;
 
-    partial void OnIsStartConnectedChanged(bool value)
+    partial void OnIsStartConnectedChanged(bool _)
     {
         OnPropertyChanged(nameof(ShowStartEndpoint));
     }
 
-    partial void OnIsEndConnectedChanged(bool value)
+    partial void OnIsEndConnectedChanged(bool _)
     {
         OnPropertyChanged(nameof(ShowEndEndpoint));
     }
@@ -388,6 +494,7 @@ public partial class TrackSegmentViewModel : ObservableObject
 
     /// <summary>
     /// Move all coordinates in PathData by delta.
+    /// Handles SVG path format: "M x y L x y A rx ry rotation large sweep x y"
     /// </summary>
     private static string MovePathData(string pathData, double deltaX, double deltaY)
     {
@@ -396,41 +503,69 @@ public partial class TrackSegmentViewModel : ObservableObject
 
         var ic = CultureInfo.InvariantCulture;
         var result = new StringBuilder();
-        var parts = pathData.Split(' ');
-        
-        for (int i = 0; i < parts.Length; i++)
+
+        // Parse SVG commands with their arguments
+        var commandRegex = new Regex(@"([MLAHVCSQTZ])\s*([-\d.\s]+)", RegexOptions.IgnoreCase);
+        var numberRegex = new Regex(@"-?\d+\.?\d*");
+
+        var lastIndex = 0;
+
+        foreach (Match cmdMatch in commandRegex.Matches(pathData))
         {
-            var part = parts[i];
-            
-            // Check if this is a coordinate pair (contains comma)
-            if (part.Contains(','))
+            // Append any text before this match (whitespace, etc.)
+            if (cmdMatch.Index > lastIndex)
             {
-                var coords = part.Split(',');
-                if (coords.Length == 2 && 
-                    double.TryParse(coords[0], NumberStyles.Float, ic, out var x) &&
-                    double.TryParse(coords[1], NumberStyles.Float, ic, out var y))
-                {
-                    // Move the coordinate
-                    result.Append(string.Format(ic, "{0:F2},{1:F2}", x + deltaX, y + deltaY));
-                }
-                else
-                {
-                    result.Append(part);
-                }
+                result.Append(pathData.AsSpan(lastIndex, cmdMatch.Index - lastIndex));
             }
-            else
+
+            var command = cmdMatch.Groups[1].Value.ToUpperInvariant();
+            var args = cmdMatch.Groups[2].Value;
+            var numbers = numberRegex.Matches(args)
+                .Select(m => double.TryParse(m.Value, NumberStyles.Float, ic, out var v) ? v : 0)
+                .ToList();
+
+            result.Append(command);
+            result.Append(' ');
+
+            switch (command)
             {
-                result.Append(part);
+                case "M" or "L" when numbers.Count >= 2:
+                    // MoveTo / LineTo: move x y coordinates
+                    result.Append(string.Format(ic, "{0:F0} {1:F0} ", numbers[0] + deltaX, numbers[1] + deltaY));
+                    break;
+
+                case "A" when numbers.Count >= 7:
+                    // Arc: rx ry x-axis-rotation large-arc sweep x y
+                    // Only move the endpoint (last two numbers), keep rx, ry, rotation, flags unchanged
+                    result.Append(string.Format(ic, "{0:F0} {1:F0} {2:F0} {3:F0} {4:F0} {5:F0} {6:F0} ",
+                        numbers[0],  // rx (unchanged)
+                        numbers[1],  // ry (unchanged)
+                        numbers[2],  // x-axis-rotation (unchanged)
+                        numbers[3],  // large-arc-flag (unchanged)
+                        numbers[4],  // sweep-flag (unchanged)
+                        numbers[5] + deltaX,  // endpoint x (moved)
+                        numbers[6] + deltaY)); // endpoint y (moved)
+                    break;
+
+                default:
+                    // Unknown command - keep original arguments
+                    result.Append(args);
+                    break;
             }
-            
-            if (i < parts.Length - 1)
-                result.Append(' ');
+
+            lastIndex = cmdMatch.Index + cmdMatch.Length;
         }
-        
-        return result.ToString();
+
+        // Append any remaining text after last match
+        if (lastIndex < pathData.Length)
+        {
+            result.Append(pathData.AsSpan(lastIndex));
+        }
+
+        return result.ToString().Trim();
     }
 
-    partial void OnIsSelectedChanged(bool value)
+    partial void OnIsSelectedChanged(bool _)
     {
         OnPropertyChanged(nameof(StrokeThickness));
     }

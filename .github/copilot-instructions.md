@@ -5,25 +5,73 @@
 > **Multi-platform system (.NET 10)**  
 > MOBAflow (WinUI) | MOBAsmart (MAUI) | MOBAdash (Blazor)
 > 
-> **Last Updated:** 2025-12-18 | **Version:** 3.6
+> **Last Updated:** 2025-12-18 | **Version:** 3.7
 
 ---
 
-## 🎯 Current Session Status (Dec 11, 2025)
+## 🎯 CORE PRINCIPLES (Always Follow!)
+
+### **1. Fluent Design First**
+- **Always** follow Microsoft Fluent Design 2 principles and best practices
+- Use native WinUI 3 controls and patterns (no custom implementations unless absolutely necessary)
+- Consistent spacing: `Padding="8"` or `Padding="16"`, `Spacing="8"` or `Spacing="16"`
+- Theme-aware colors: `{ThemeResource TextFillColorSecondaryBrush}`, `{ThemeResource DividerStrokeColorDefaultBrush}`
+- Typography: `{StaticResource SubtitleTextBlockStyle}`, `{StaticResource BodyTextBlockStyle}`
+
+### **2. Holistic Thinking - Never Implement in Isolation**
+- **When changing ONE Page, check ALL Pages** for consistency
+- **When adding a feature (e.g., Add/Delete buttons), check if it applies to other entity types**
+- **When fixing a pattern, fix it everywhere** - not just the current file
+- **Think "Application-wide"** - never "just this one page"
+
+**Checklist before ANY UI change:**
+1. Does this pattern exist on other Pages? → Apply consistently
+2. Does this feature make sense for other entities? → Implement everywhere
+3. Am I following the same layout as sibling Pages? → Match exactly
+4. Have I checked EntityTemplates.xaml for similar templates? → Reuse patterns
+
+### **3. Pattern Consistency is Non-Negotiable**
+- If JourneysPage has Add/Delete buttons → WorkflowsPage, SolutionPage, FeedbackPointsPage MUST have them too
+- If one ListView has a header layout → ALL ListViews follow the same layout
+- Deviation from established patterns = bugs + extra work + user frustration
+
+### **4. Copy Existing Code - Don't Invent**
+- Before implementing anything new: **Search for existing implementations**
+- Copy working patterns exactly, then adapt for the new entity
+- If it works on JourneysPage, it should work the same way on WorkflowsPage
+
+---
+
+## 🎯 Current Session Status (Dec 18, 2025)
 
 ### ✅ Completed This Session
-- ✅ **MAUI Null-Safety Warnings** (CS8602/CS8604) - Fixed in BackgroundService.cs
-- ✅ **WinUI Button Styling** - Compact symbol buttons with `MinWidth="0"`
-- ✅ **RedundantStringInterpolation** - 3x fixed (CounterViewModel, ActionExecutor, App.xaml.cs)
-- ✅ **MergeIntoPattern** - 4x fixed (UdpWrapper, Z21MessageParser)
-- ✅ **ArrangeObjectCreationWhenTypeEvident** - 2x fixed (`new object()` → `new()`)
-- ✅ **Collection Expression Syntax** - 3x fixed (Domain/Project.cs, Solution.cs, Train.cs)
-- ✅ **Primary Constructor Migration** - WorkflowService, SoundManager, SpeechHealthCheck
-- ✅ **Code Cleanup** - Minor warning reductions
+- ✅ **FeedbackPointsPage DI Refactoring** - Standardized to use MainWindowViewModel like all other pages
+  - Deleted `FeedbackPointsPageViewModel.cs` (unnecessary wrapper)
+  - Removed custom `CreateFeedbackPointsPage()` factory method
+  - Now uses consistent `GetRequiredService<FeedbackPointsPage>()` pattern
+  - Eliminated need for `ToObservableCollection()` workaround extension
+- ✅ **Documented DI Pattern Consistency** - Created new instruction file with lessons learned
+  - Created: `.github/instructions/di-pattern-consistency.instructions.md`
+  - Anti-pattern reference: Custom factory methods
+  - Pre-implementation checklist for new features
+  - Pattern reference table for common scenarios
+- ✅ **FeedbackPointsPage Implementation** - Full CRUD with proper ObservableCollections
+  - Created: `NullConverter.cs`, `NotNullConverter.cs`
+  - Created: `MainWindowViewModel.FeedbackPoints.cs` with AddFeedbackPoint/DeleteFeedbackPoint commands
+  - Updated: `ProjectViewModel.FeedbackPoints` from `List<>` to `ObservableCollection<>` (CRITICAL FIX)
+  - Added: `SelectedFeedbackPoint` property to `MainWindowViewModel`
+  - Bound: ListView SelectedItem to track selection
+  
+### 🚨 Critical Lessons Learned (Dec 18, 2025 - Cost Reduction)
+1. **EVERY Collection in ViewModel MUST be ObservableCollection<>** - Never use List<> for UI binding
+2. **Plan EVERY implementation** - Use the `plan` tool, never skip it
+3. **Pattern consistency is non-negotiable** - Deviation = bugs + extra prompts
+4. **Validate end-to-end** - "Build succeeds" ≠ "Feature works"
+5. **Check instructions.md EVERY prompt** - Don't assume, always verify
 
 ### 📊 ReSharper Warnings Progress
-- **Start:** 653 warnings
-- **Current:** ~640 warnings (estimated, after 9+ fixes)
+- **Previous:** ~640 warnings
+- **Current:** ~620 warnings (after FeedbackPointsPage full implementation)
 - **Target:** <100 warnings (Phase 2)
 
 ---
@@ -51,6 +99,113 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 
 ---
 
+## ✅ Existing Patterns Checklist (BEFORE Implementing New Features)
+
+**CRITICAL RULE: Check existing patterns first - never create new approaches!**
+
+### **How to Use This Checklist**
+
+Before implementing ANY new feature (Page, ViewModel, Service, etc.), execute this checklist:
+
+1. **Does this feature type already exist?**
+   - Example: "Need a new page for managing FeedbackPoints" → Check existing Pages (JourneysPage, WorkflowsPage, SettingsPage)
+   - Search similar implementations in the codebase
+
+2. **What pattern does it follow?**
+   - Example: JourneysPage + WorkflowsPage both inject `MainWindowViewModel` in constructor
+   - All Pages use: `public MainWindowViewModel ViewModel { get; }` pattern
+   - All Pages use: `DataContext="{x:Bind ViewModel}"` in XAML
+
+3. **Could I replicate this pattern?**
+   - Don't create custom factory methods for pages
+   - Don't create separate PageViewModels for simple pages
+   - Use DI consistently: `_serviceProvider.GetRequiredService<PageName>()`
+
+4. **Check these sources for patterns:**
+   - **Pages:** WinUI/View/*.xaml.cs (JourneysPage, WorkflowsPage, TrackPlanEditorPage, SettingsPage)
+   - **ViewModels:** SharedUI/ViewModel/ (MainWindowViewModel, TrackPlanEditorViewModel)
+   - **Navigation:** WinUI/Service/NavigationService.cs (how pages are created)
+   - **DI Setup:** WinUI/App.xaml.cs (how services/pages are registered)
+
+### **🔴 Anti-Pattern Examples (Don't Do This)**
+
+```csharp
+// ❌ WRONG: Custom factory method for Page creation
+private FeedbackPointsPage CreateFeedbackPointsPage()
+{
+    var page = _serviceProvider.GetRequiredService<FeedbackPointsPage>();
+    var mainWindowVm = _serviceProvider.GetRequiredService<MainWindowViewModel>();
+    if (mainWindowVm.SelectedProject?.Model != null)
+    {
+        var viewModel = new FeedbackPointsPageViewModel(mainWindowVm.SelectedProject.Model);
+        page.ViewModel = viewModel;  // ❌ Separate PageViewModel
+    }
+    return page;
+}
+
+// Navigation: "feedbackpoints" => CreateFeedbackPointsPage(),  // ❌ Inconsistent!
+```
+
+**Problems:**
+- ❌ Inconsistent with other pages (WorkflowsPage doesn't have custom factory)
+- ❌ Creates unnecessary PageViewModel wrapper
+- ❌ Requires workarounds like `ToObservableCollection()` extension
+- ❌ More code to maintain
+- ❌ Navigation pattern differs from all other pages
+
+### **✅ Correct Pattern (Copy Existing Code)**
+
+```csharp
+// ✅ CORRECT: Consistent DI registration in App.xaml.cs
+services.AddTransient<View.FeedbackPointsPage>();
+
+// ✅ CORRECT: Simple GetRequiredService like all other pages
+"feedbackpoints" => _serviceProvider.GetRequiredService<FeedbackPointsPage>(),
+
+// ✅ CORRECT: Code-behind injects MainWindowViewModel (like WorkflowsPage)
+public sealed partial class FeedbackPointsPage : Page
+{
+    public MainWindowViewModel ViewModel { get; }
+
+    public FeedbackPointsPage(MainWindowViewModel viewModel)
+    {
+        ViewModel = viewModel;
+    }
+}
+
+// ✅ CORRECT: XAML binds to MainWindowViewModel's SelectedProject
+<Page DataContext="{x:Bind ViewModel}">
+    <ListView ItemsSource="{x:Bind ViewModel.SelectedProject.FeedbackPoints, Mode=OneWay}" />
+</Page>
+```
+
+### **Pattern Reference Quick Lookup**
+
+| Need | Source File | Pattern |
+|------|------|---------|
+| **New Page UI** | WinUI/View/JourneysPage.xaml | Copy structure, adapt entity names |
+| **New Page Code-Behind** | WinUI/View/JourneysPage.xaml.cs | Inject MainWindowViewModel, no custom logic |
+| **Page Registration** | WinUI/App.xaml.cs (line ~130) | `services.AddTransient<View.PageName>()` |
+| **Navigation Entry** | WinUI/Service/NavigationService.cs (line ~45) | `"tag" => _serviceProvider.GetRequiredService<PageName>()` |
+| **ViewModel Wrapper** | SharedUI/ViewModel/JourneyViewModel.cs | 1:1 property mapping with Domain model |
+| **Entity List Template** | WinUI/Resources/EntityTemplates.xaml | DataTemplate per entity type |
+
+### **Decision Tree**
+
+```
+Implementing New Feature?
+├─ Is it a Page? 
+│  ├─ Simple (readonly or list)? → Use MainWindowViewModel directly
+│  └─ Complex (editor/designer)? → Check TrackPlanEditorViewModel pattern
+├─ Is it a Domain object wrapper?
+│  └─ Create XxxViewModel with 1:1 property mapping
+├─ Is it a singleton service?
+│  └─ Create specialized service (like WorkflowService)
+└─ NEVER: Create PageViewModel for every new page
+```
+
+---
+
 ## 🤖 Context-Aware Loading (AI: Auto-Trigger)
 
 **Pattern:** Detect keywords in user request → Load matching instruction file.
@@ -65,6 +220,8 @@ Execute these checks before code reviews, refactoring, or architecture discussio
 | **State Management** | `.github/instructions/hasunsavedchanges-patterns.instructions.md` | UndoRedo, HasUnsavedChanges, StateManager |
 | **MAUI Mobile** | `.github/instructions/maui.instructions.md` | .razor, MainThread, MOBAsmart |
 | **Blazor Web** | `.github/instructions/blazor.instructions.md` | .razor, MOBAdash, @code |
+| **DI Pattern & Pages** | `.github/instructions/di-pattern-consistency.instructions.md` | New page, factory method, inconsistent pattern, GetRequiredService, NavigationService |
+| **UI Layout Changes** | Read CORE PRINCIPLES section above! | Layout, buttons, Add/Delete, header, CommandBar, ListView, Page design |
 | **Warnings/Cleanup** | Inline section below | ReSharper, warnings, refactor, cleanup |
 
 **Execution:** Before answering, scan keywords → Execute `get_file(<instruction_file>)` → Apply rules.
@@ -208,7 +365,7 @@ private void UpdateSystemState(SystemState state)
 }
 ```
 
-### **5. Event-to-Command** (Already Fixed - See `docs/XAML-BEHAVIORS-EVENT-TO-COMMAND.md`)
+### **5. Event-to-Command** (Already Fixed - See `docs/XAML-BEHAVIORSEVENT-TO-COMMAND.md`)
 - ❌ **Mistake:** `ListView_ItemClick` code-behind handlers (complex fallback logic, 40+ LOC per handler)
 - ✅ **Solution:** Custom `ListViewItemClickBehavior` with direct EventArgs extraction
 - 📉 **Impact:** -200 LOC code-behind, clean MVVM separation, reusable patterns
@@ -329,31 +486,97 @@ public object? CurrentSelectedObject {
     get {
         if (SelectedStation != null) return SelectedStation;  // Priority
         if (SelectedJourney != null) return SelectedJourney;
-        return null;
-    }
-}
-```
-**No manual cleanup needed** → Template selector handles automatically.
+                return null;
+            }
+        }
+        ```
+        **No manual cleanup needed** → Template selector handles automatically.
 
-### **CommandBar Responsive Design**
-```xaml
-<!-- ✅ CORRECT: Explicit overflow configuration -->
-<CommandBar OverflowButtonVisibility="Auto" DefaultLabelPosition="Right">
-    <AppBarButton Command="{x:Bind ViewModel.ConnectCommand}"
-                  CommandBar.DynamicOverflowOrder="0"
-                  Label="Connect" />  <!-- Priority 0 = Always visible -->
-    <AppBarButton Command="{x:Bind ViewModel.LoadCommand}"
-                  CommandBar.DynamicOverflowOrder="1"
-                  Label="Load" />     <!-- Priority 1 = High priority -->
-</CommandBar>
-```
-**Key:** Lower `DynamicOverflowOrder` = Higher priority (stays visible longer)
+        ### **List Header Pattern (Title + Actions)**
+        ```xaml
+        <!-- ✅ CORRECT: Title and Actions on same row -->
+        <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock
+                Grid.Column="0"
+                VerticalAlignment="Center"
+                FontWeight="SemiBold"
+                Style="{StaticResource SubtitleTextBlockStyle}"
+                Text="Journeys" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                <Button Command="{x:Bind ...}" Padding="4" ToolTipService.ToolTip="Add">
+                    <FontIcon FontSize="14" Glyph="&#xE710;" />
+                </Button>
+                <Button Command="{x:Bind ...}" Padding="4" ToolTipService.ToolTip="Delete">
+                    <FontIcon FontSize="14" Glyph="&#xE74D;" />
+                </Button>
+            </StackPanel>
+        </Grid>
+        ```
+        **Key:** 
+        - Title left, Actions right (compact header)
+        - Use `Button` + `FontIcon` for desktop apps (compact, ~30% smaller than AppBarButton)
+        - Use `AppBarButton` only for touch-first apps or CommandBar
+        - `Padding="4"` + `Spacing="2"` + `FontSize="14"` for tight layout
+        - Use CommandBar only when >3 buttons with labels needed (e.g., Actions: Announcement, Command, Audio, Delete)
 
-### **Fluent Design 2**
-- ✅ **Spacing:** Padding="16" Spacing="16" (consistent 16px)
-- ✅ **Typography:** `{ThemeResource SubtitleTextBlockStyle}`
-- ✅ **Theme-Aware:** `{ThemeResource TextFillColorSecondaryBrush}`
-- ✅ **Modern Controls:** NumberBox (SpinButtonPlacementMode="Inline"), TimePicker
+        ### **CommandBar Responsive Design**
+        ```xaml
+        <!-- ✅ CORRECT: Explicit overflow configuration -->
+        <CommandBar OverflowButtonVisibility="Auto" DefaultLabelPosition="Right">
+            <AppBarButton Command="{x:Bind ViewModel.ConnectCommand}"
+                          CommandBar.DynamicOverflowOrder="0"
+                          Label="Connect" />  <!-- Priority 0 = Always visible -->
+            <AppBarButton Command="{x:Bind ViewModel.LoadCommand}"
+                          CommandBar.DynamicOverflowOrder="1"
+                          Label="Load" />     <!-- Priority 1 = High priority -->
+        </CommandBar>
+        ```
+        **Key:** Lower `DynamicOverflowOrder` = Higher priority (stays visible longer)
+
+        ### **Library/Lookup List Pattern (Read-Only)**
+        ```xaml
+        <!-- ✅ CORRECT: Visually distinct from editable lists -->
+        <Grid Padding="12"
+              Margin="8"
+              Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+              CornerRadius="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="6">
+                <FontIcon FontSize="14" Glyph="&#xE8F1;"
+                          Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="City Library"
+                           Style="{StaticResource BodyStrongTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+            <TextBlock Grid.Row="1" Margin="0,4,0,12"
+                       Text="Drag or double-click to add"
+                       Style="{StaticResource CaptionTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+            <ListView Grid.Row="2" ... />
+        </Grid>
+        ```
+        **Key:**
+        - Background: `CardBackgroundFillColorDefaultBrush` (subtle distinction)
+        - Header: Secondary color, smaller font (`BodyStrongTextBlockStyle`)
+        - Icon: Library icon `&#xE8F1;`
+        - Hint text: Tertiary color, explains interaction
+        - `Margin="8"` for breathing room around the card
+        - `Padding="12"` for comfortable inner spacing
+        - `CornerRadius="8"` for modern card appearance
+
+        ### **Fluent Design 2**
+        - ✅ **Spacing:** Padding="16" Spacing="16" (consistent 16px)
+        - ✅ **Typography:** `{ThemeResource SubtitleTextBlockStyle}`
+        - ✅ **Theme-Aware:** `{ThemeResource TextFillColorSecondaryBrush}`
+        - ✅ **Modern Controls:** NumberBox (SpinButtonPlacementMode="Inline"), TimePicker
 
 ---
 
@@ -369,7 +592,7 @@ public object? CurrentSelectedObject {
 
 ### **Architecture Documentation**
 - `docs/ARCHITECTURE-INSIGHTS-2025-12-09.md` - Journey execution flow, SessionState, ViewModel 1:1 mapping
-- `docs/XAML-BEHAVIORS-EVENT-TO-COMMAND.md` - Event-to-Command pattern (XAML Behaviors v3.0)
+- `docs/XAML-BEHAVIORSEVENT-TO-COMMAND.md` - Event-to-Command pattern (XAML Behaviors v3.0)
 
 ---
 
@@ -404,113 +627,6 @@ Manager Manager  Manager
 - **Use Case:** Delay announcements, schedule conflicts
 
 ---
-
-## 🎯 Key Principles (Always Remember)
-
-### **Domain Architecture**
-- ✅ **GUID References for Shared Entities:** `Train.LocomotiveIds = List<Guid>` (Locomotives are shared across trains)
-- ✅ **Embedded Objects for Owned Entities:** `Journey.Stations = List<Station>` (Stations belong exclusively to one Journey)
-- ✅ **Single Source of Truth:** Project aggregate root has master lists for shared entities
-- ✅ **Pure POCOs:** No INotifyPropertyChanged, no attributes
-
-### **ViewModel 1:1 Property Mapping Rule**
-
-**Principle:** Every Domain property **MUST** have a corresponding ViewModel property with **the same name** and **compatible type**.
-
-#### **Rule Details:**
-
-1. **Same Name:** Domain property `InPort` → ViewModel property `InPort` (NOT `FeedbackInPort`!)
-2. **Same/Compatible Type:** 
-   - Domain `uint` → ViewModel `uint` ✅
-   - Domain `string` → ViewModel `string?` ✅ (nullable OK)
-   - Domain `List<Guid>` → ViewModel `List<Guid>` ✅
-3. **Read-Only for IDs:** `Id` property should be read-only (`public Guid Id => Model.Id;`)
-4. **Additional Runtime Properties OK:** ViewModel can have extra properties (e.g., `CurrentStation`, `IsCurrentStation`)
-
-#### **Example: Train Entity**
-
-```csharp
-// Domain/Train.cs (Pure POCO)
-public class Train
-{
-    public Guid Id { get; set; }
-    public string Name { get; set; }
-    public TrainType TrainType { get; set; }
-    public List<Guid> LocomotiveIds { get; set; }  // ✅ GUID references
-}
-
-// SharedUI/ViewModel/TrainViewModel.cs (1:1 Mapping)
-public partial class TrainViewModel : ObservableObject
-{
-    public Guid Id => Model.Id;  // ✅ Read-only
-    public string Name { get => Model.Name; set => SetProperty(...); }
-    public TrainType TrainType { get => Model.TrainType; set => SetProperty(...); }
-    public List<Guid> LocomotiveIds { get => Model.LocomotiveIds; set => SetProperty(...); }
-    
-    // ✅ ADDITIONAL: Resolved Collections (ViewModel-Specific)
-    public ObservableCollection<LocomotiveViewModel> Locomotives => /* resolve from IDs */;
-}
-```
-
-#### **Why 1:1 Mapping?**
-
-- **Maintainability:** Domain rename → ViewModel breaks (compile-time error)
-- **Testability:** Easy to verify ViewModel wraps Domain correctly
-- **Serialization:** Domain → JSON → Domain (no circular references)
-
-#### **Anti-Pattern:**
-
-```csharp
-// ❌ WRONG: Different property name
-public uint FeedbackInPort => _station.InPort;  // ❌ Name mismatch!
-
-// ✅ CORRECT: Same property name
-public uint InPort => _station.InPort;  // ✅ 1:1 mapping
-```
-
-### **ViewModel Resolution**
-```csharp
-// ✅ Resolve at runtime in ViewModel
-public ObservableCollection<StationViewModel> Stations =>
-    _journey.StationIds
-        .Select(id => _project.Stations.FirstOrDefault(s => s.Id == id))
-        .Where(s => s != null)
-        .Select(s => new StationViewModel(s, _project))
-        .ToObservableCollection();
-```
-
-### **SessionState Pattern**
-- ✅ **Separate runtime data** from Domain
-- ✅ **Manager owns SessionState** (JourneyManager has JourneySessionState)
-- ✅ **ViewModels read SessionState** (read-only, subscribe to events)
-
-### **Fields Region Pattern (ViewModel)**
-
-**Rule:** Group fields logically, no empty lines after `#region` or before `#endregion`.
-
-**This applies to ALL `#region` blocks in ALL classes, not just Fields!**
-
-```csharp
-#region Fields
-// Core Services (required)
-private readonly IZ21 _z21;
-private readonly IUiDispatcher _uiDispatcher;
-
-// Configuration
-private readonly AppSettings _settings;
-
-// Optional Services
-private readonly ISettingsService? _settingsService;
-
-// Runtime State
-private JourneyManager? _journeyManager;
-#endregion
-```
-
-**Grouping order:**
-1. **Model** (if ViewModel wraps a domain object)
-2. **Core Services** (required dependencies)
-3. **Context** (Project, Solution references)
 4. **Configuration** (AppSettings, etc.)
 5. **Optional Services** (nullable dependencies)
 6. **Runtime State** (mutable state, disposable objects)
@@ -767,5 +883,3 @@ Use this in **Visual Studio → Tools → Options → Environment → Terminal �
 - Do **not** place `foreach (...) {}` after an expression in one‑liners. Use `; foreach` or `... | ForEach-Object {}`.
 - Do **not** slice arrays with `[0..N]` unless clamped; prefer `Select-Object -First / -Skip`.
 - Do **not** start a **here‑string** in a one‑liner; header and terminator must be on their own lines at column 0 (no indentation).
-
----

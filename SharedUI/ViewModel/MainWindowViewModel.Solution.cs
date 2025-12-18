@@ -2,7 +2,9 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
+
 using System.Diagnostics;
 
 /// <summary>
@@ -55,7 +57,7 @@ public partial class MainWindowViewModel
         SaveSolutionCommand.NotifyCanExecuteChanged();
         ConnectToZ21Command.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(SelectedProject));
-        
+
         LoadCities();
     }
 
@@ -129,16 +131,16 @@ public partial class MainWindowViewModel
             CurrentSolutionPath = path;
             HasSolution = Solution.Projects.Count > 0;
 
-                    SaveSolutionCommand.NotifyCanExecuteChanged();
-                    ConnectToZ21Command.NotifyCanExecuteChanged();
-                    LoadCities();
+            SaveSolutionCommand.NotifyCanExecuteChanged();
+            ConnectToZ21Command.NotifyCanExecuteChanged();
+            LoadCities();
 
-                    OnPropertyChanged(nameof(Solution));
+            OnPropertyChanged(nameof(Solution));
 
-                    // Notify subscribers to load their data after loading
-                    SolutionLoaded?.Invoke(this, EventArgs.Empty);
-                }
-            }
+            // Notify subscribers to load their data after loading
+            SolutionLoaded?.Invoke(this, EventArgs.Empty);
+        }
+    }
 
     private bool CanSaveSolution() => true;
 

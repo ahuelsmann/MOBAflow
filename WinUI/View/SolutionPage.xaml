@@ -26,12 +26,35 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <TextBlock
-                Grid.Row="0"
-                Padding="0,0,0,8"
-                FontWeight="SemiBold"
-                Style="{StaticResource SubtitleTextBlockStyle}"
-                Text="Projects" />
+
+            <!--  Header: Title + Actions  -->
+            <Grid Grid.Row="0" Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    FontWeight="SemiBold"
+                    Style="{StaticResource SubtitleTextBlockStyle}"
+                    Text="Projects" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                    <Button
+                        Command="{x:Bind ViewModel.AddProjectCommand}"
+                        Padding="4"
+                        ToolTipService.ToolTip="Create a new MOBA project">
+                        <FontIcon FontSize="14" Glyph="&#xE710;" />
+                    </Button>
+                    <Button
+                        Command="{x:Bind ViewModel.DeleteProjectCommand}"
+                        Padding="4"
+                        ToolTipService.ToolTip="Remove the selected project">
+                        <FontIcon FontSize="14" Glyph="&#xE74D;" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+
             <ListView
                 Grid.Row="1"
                 IsItemClickEnabled="True"

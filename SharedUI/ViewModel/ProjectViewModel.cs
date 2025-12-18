@@ -70,6 +70,12 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
     /// </summary>
     public ObservableCollection<GoodsWagonViewModel> GoodsWagons { get; } = new();
 
+    /// <summary>
+    /// Observable collection of FeedbackPoints for UI binding.
+    /// Manually synced with Model.FeedbackPoints via Refresh().
+    /// </summary>
+    public ObservableCollection<FeedbackPointOnTrack> FeedbackPoints { get; } = new();
+
     public ProjectViewModel(Project model, IUiDispatcher? dispatcher = null)
     {
         Model = model;
@@ -119,5 +125,9 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
         GoodsWagons.Clear();
         foreach (var gw in Model.GoodsWagons)
             GoodsWagons.Add(new GoodsWagonViewModel(gw));
+
+        FeedbackPoints.Clear();
+        foreach (var fp in Model.FeedbackPoints)
+            FeedbackPoints.Add(fp);
     }
 }

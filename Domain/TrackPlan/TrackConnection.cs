@@ -5,6 +5,10 @@ namespace Moba.Domain.TrackPlan;
 /// Represents a connection between two track segment endpoints.
 /// When two segments are snapped together, a connection is created.
 /// Connected segments move together as a unit.
+/// 
+/// Supports multiple connections per segment:
+/// - Simple tracks (2 endpoints): index 0 (start), 1 (end)
+/// - Turnouts (3-4 endpoints): index 0 (main), 1 (branch), 2 (branch2), 3 (branch3)
 /// </summary>
 public class TrackConnection
 {
@@ -19,9 +23,16 @@ public class TrackConnection
     public string Segment1Id { get; set; } = string.Empty;
 
     /// <summary>
-    /// Which endpoint of segment 1 is connected (true = start, false = end).
+    /// Index of the endpoint on segment 1 (0 = start/main, 1+ = other endpoints for turnouts).
     /// </summary>
-    public bool Segment1IsStart { get; set; }
+    public int Segment1EndpointIndex { get; set; } = 0;
+
+    /// <summary>
+    /// Which endpoint of segment 1 is connected (true = start, false = end).
+    /// DEPRECATED: Use Segment1EndpointIndex instead. Kept for backwards compatibility.
+    /// </summary>
+    [Obsolete("Use Segment1EndpointIndex instead")]
+    public bool Segment1IsStart { get; set; } = true;
 
     /// <summary>
     /// ID of the second connected segment.
@@ -29,9 +40,16 @@ public class TrackConnection
     public string Segment2Id { get; set; } = string.Empty;
 
     /// <summary>
-    /// Which endpoint of segment 2 is connected (true = start, false = end).
+    /// Index of the endpoint on segment 2 (0 = start/main, 1+ = other endpoints for turnouts).
     /// </summary>
-    public bool Segment2IsStart { get; set; }
+    public int Segment2EndpointIndex { get; set; } = 1;
+
+    /// <summary>
+    /// Which endpoint of segment 2 is connected (true = start, false = end).
+    /// DEPRECATED: Use Segment2EndpointIndex instead. Kept for backwards compatibility.
+    /// </summary>
+    [Obsolete("Use Segment2EndpointIndex instead")]
+    public bool Segment2IsStart { get; set; } = true;
 
     /// <summary>
     /// X coordinate of the connection point.

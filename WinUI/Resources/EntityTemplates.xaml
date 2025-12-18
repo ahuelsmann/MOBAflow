@@ -9,6 +9,7 @@
     <selector:EntityTemplateSelector
         x:Key="EntityTemplateSelector"
         DefaultTemplate="{StaticResource DefaultTemplate}"
+        FeedbackPointTemplate="{StaticResource FeedbackPointTemplate}"
         JourneyTemplate="{StaticResource JourneyTemplate}"
         ProjectTemplate="{StaticResource ProjectTemplate}"
         StationTemplate="{StaticResource StationTemplate}"
@@ -189,16 +190,19 @@
                     Margin="0,8,0,4"
                     Style="{ThemeResource BaseTextBlockStyle}"
                     Text="Workflow" />
-                <Border
-                    Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                    BorderThickness="1"
-                    CornerRadius="4">
+                <Grid Background="Transparent">
                     <i:Interaction.Behaviors>
                         <behavior:WorkflowDropBehavior Command="{Binding AssignWorkflowCommand}" />
                     </i:Interaction.Behaviors>
-                    <Grid>
+                    <!--  Dashed Border Background  -->
+                    <Rectangle
+                        RadiusX="6"
+                        RadiusY="6"
+                        Stroke="{ThemeResource AccentFillColorDefaultBrush}"
+                        StrokeDashArray="4,2"
+                        StrokeThickness="1.5" />
+                    <!--  Content  -->
+                    <Grid Margin="12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
@@ -208,21 +212,20 @@
                             Grid.Column="0"
                             Margin="0,0,8,0"
                             FontSize="16"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                             Glyph="&#xE9D5;" />
                         <TextBlock
                             Grid.Column="1"
                             VerticalAlignment="Center"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="{Binding WorkflowName, Mode=OneWay}" />
+                            Text="{Binding WorkflowName, Mode=OneWay, TargetNullValue='Drop workflow here...'}" />
                         <FontIcon
                             Grid.Column="2"
-                            FontSize="12"
-                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Glyph="&#xE8B0;"
-                            ToolTipService.ToolTip="Drag a workflow here" />
+                            FontSize="14"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Glyph="&#xE74B;"
+                            ToolTipService.ToolTip="Drag a workflow from the library" />
                     </Grid>
-                </Border>
+                </Grid>
 
                 <!--  Schedule  -->
                 <TextBlock
@@ -339,6 +342,33 @@
                         </ListView.ItemTemplate>
                     </ListView>
                 </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+
+    <!--  ============================================  -->
+    <!--  FeedbackPoint Template (Domain Object)  -->
+    <!--  ============================================  -->
+    <DataTemplate x:Key="FeedbackPointTemplate">
+        <ScrollViewer>
+            <StackPanel Padding="16" Spacing="16">
+                <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Feedback Point Properties" />
+
+                <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
+
+                <NumberBox
+                    Header="InPort"
+                    Minimum="1"
+                    SpinButtonPlacementMode="Inline"
+                    Value="{Binding InPort, Mode=TwoWay}" />
+
+                <TextBox
+                    MinHeight="80"
+                    AcceptsReturn="True"
+                    Header="Description"
+                    PlaceholderText="Optional description for this feedback point"
+                    Text="{Binding Description, Mode=TwoWay}"
+                    TextWrapping="Wrap" />
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>

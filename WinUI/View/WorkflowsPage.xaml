@@ -30,18 +30,43 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <TextBlock
-                Grid.Row="0"
-                Padding="8,0,0,8"
-                FontWeight="SemiBold"
-                Style="{StaticResource SubtitleTextBlockStyle}"
-                Text="Workflows" />
+
+            <!--  Header: Title + Actions  -->
+            <Grid Grid.Row="0" Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    Grid.Column="0"
+                    Padding="8,0,0,0"
+                    VerticalAlignment="Center"
+                    FontWeight="SemiBold"
+                    Style="{StaticResource SubtitleTextBlockStyle}"
+                    Text="Workflows" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                    <Button
+                        Command="{x:Bind ViewModel.AddWorkflowCommand}"
+                        Padding="4"
+                        ToolTipService.ToolTip="Create a new workflow">
+                        <FontIcon FontSize="14" Glyph="&#xE710;" />
+                    </Button>
+                    <Button
+                        Command="{x:Bind ViewModel.DeleteWorkflowCommand}"
+                        Padding="4"
+                        ToolTipService.ToolTip="Remove the selected workflow">
+                        <FontIcon FontSize="14" Glyph="&#xE74D;" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+
             <AutoSuggestBox
                 Grid.Row="1"
                 Margin="0,0,0,8"
                 PlaceholderText="Search workflows..."
                 QueryIcon="Find"
                 Text="{x:Bind ViewModel.WorkflowSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
             <ListView
                 Grid.Row="2"
                 CanDragItems="True"
@@ -98,6 +123,7 @@
         <Grid Grid.Column="2" Padding="8">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <TextBlock
@@ -106,8 +132,35 @@
                 FontWeight="SemiBold"
                 Style="{StaticResource SubtitleTextBlockStyle}"
                 Text="Actions" />
-            <ListView
+            <!--  CommandBar for Actions  -->
+            <CommandBar
                 Grid.Row="1"
+                DefaultLabelPosition="Right"
+                OverflowButtonVisibility="Auto">
+                <AppBarButton
+                    Command="{x:Bind ViewModel.AddAnnouncementCommand}"
+                    Icon="Comment"
+                    Label="Announcement"
+                    ToolTipService.ToolTip="Add an announcement action" />
+                <AppBarButton
+                    Command="{x:Bind ViewModel.AddCommandCommand}"
+                    Icon="Paste"
+                    Label="Command"
+                    ToolTipService.ToolTip="Add a command action" />
+                <AppBarButton
+                    Command="{x:Bind ViewModel.AddAudioCommand}"
+                    Icon="Volume"
+                    Label="Audio"
+                    ToolTipService.ToolTip="Add an audio action" />
+                <AppBarSeparator />
+                <AppBarButton
+                    Command="{x:Bind ViewModel.DeleteActionCommand}"
+                    Icon="Delete"
+                    Label="Delete"
+                    ToolTipService.ToolTip="Remove the selected action" />
+            </CommandBar>
+            <ListView
+                Grid.Row="2"
                 IsItemClickEnabled="True"
                 ItemsSource="{x:Bind ViewModel.SelectedWorkflow.Actions, Mode=OneWay}"
                 SelectedItem="{x:Bind ViewModel.SelectedAction, Mode=TwoWay}"

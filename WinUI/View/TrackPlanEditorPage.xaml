@@ -274,17 +274,79 @@
                     <TextBlock
                         Grid.Row="0"
                         Style="{StaticResource SubtitleTextBlockStyle}"
-                        Text="Segment Properties" />
+                        Text="Properties" />
 
                     <!--  Properties Content  -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                         <StackPanel Spacing="16">
-                            <!--  No Selection Placeholder  -->
-                            <TextBlock
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="Select a track segment to view and edit its properties"
-                                TextWrapping="Wrap"
-                                Visibility="{x:Bind ViewModel.HasNoSelectedSegment, Mode=OneWay}" />
+                            <!--  Layout Properties (visible when NO segment selected)  -->
+                            <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasNoSelectedSegment, Mode=OneWay}">
+                                <TextBlock
+                                    FontWeight="SemiBold"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="Track Layout" />
+
+                                <TextBox
+                                    Header="Name"
+                                    PlaceholderText="Layout name"
+                                    Text="{x:Bind ViewModel.LayoutName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <TextBox
+                                    MaxHeight="100"
+                                    AcceptsReturn="True"
+                                    Header="Description"
+                                    PlaceholderText="Optional description"
+                                    Text="{x:Bind ViewModel.LayoutDescription, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    TextWrapping="Wrap" />
+
+                                <ComboBox Header="Track System" SelectedItem="{x:Bind ViewModel.TrackSystem, Mode=TwoWay}">
+                                    <x:String>Piko A-Gleis</x:String>
+                                    <x:String>Tillig Elite</x:String>
+                                    <x:String>Roco Line</x:String>
+                                    <x:String>Märklin C-Gleis</x:String>
+                                    <x:String>Fleischmann Profi</x:String>
+                                </ComboBox>
+
+                                <ComboBox Header="Scale" SelectedItem="{x:Bind ViewModel.Scale, Mode=TwoWay}">
+                                    <x:String>H0</x:String>
+                                    <x:String>N</x:String>
+                                    <x:String>TT</x:String>
+                                    <x:String>Z</x:String>
+                                    <x:String>0</x:String>
+                                    <x:String>G</x:String>
+                                </ComboBox>
+
+                                <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+                                <TextBlock
+                                    FontWeight="SemiBold"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="Work Surface" />
+
+                                <NumberBox
+                                    Header="Width (mm)"
+                                    LargeChange="100"
+                                    Maximum="10000"
+                                    Minimum="500"
+                                    SmallChange="50"
+                                    SpinButtonPlacementMode="Inline"
+                                    Value="{x:Bind ViewModel.CanvasWidthMm, Mode=TwoWay}" />
+
+                                <NumberBox
+                                    Header="Height (mm)"
+                                    LargeChange="100"
+                                    Maximum="5000"
+                                    Minimum="300"
+                                    SmallChange="50"
+                                    SpinButtonPlacementMode="Inline"
+                                    Value="{x:Bind ViewModel.CanvasHeightMm, Mode=TwoWay}" />
+
+                                <TextBlock
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="💡 Click on a track segment to edit its properties"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
 
                             <!--  Segment Info (visible when selected)  -->
                             <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasSelectedSegment, Mode=OneWay}">
@@ -333,6 +395,12 @@
                                     <Button Command="{x:Bind ViewModel.ClearInPortCommand}" Content="Clear" />
                                 </StackPanel>
 
+                                <!--  Disconnect from connected segments  -->
+                                <Button
+                                    Command="{x:Bind ViewModel.DisconnectSelectedSegmentCommand}"
+                                    Content="Disconnect Track"
+                                    ToolTipService.ToolTip="Remove all connections to this segment for independent movement" />
+
                                 <!--  Current Assignment Info  -->
                                 <Border
                                     Padding="8"
@@ -351,32 +419,6 @@
                                         </TextBlock>
                                     </StackPanel>
                                 </Border>
-
-                                <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
-                                <!--  Canvas Size Configuration  -->
-                                <TextBlock
-                                    FontWeight="SemiBold"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="Work Surface" />
-
-                                <NumberBox
-                                    Header="Width (mm)"
-                                    LargeChange="100"
-                                    Maximum="10000"
-                                    Minimum="500"
-                                    SmallChange="50"
-                                    SpinButtonPlacementMode="Inline"
-                                    Value="{x:Bind ViewModel.CanvasWidthMm, Mode=TwoWay}" />
-
-                                <NumberBox
-                                    Header="Height (mm)"
-                                    LargeChange="100"
-                                    Maximum="5000"
-                                    Minimum="300"
-                                    SmallChange="50"
-                                    SpinButtonPlacementMode="Inline"
-                                    Value="{x:Bind ViewModel.CanvasHeightMm, Mode=TwoWay}" />
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>

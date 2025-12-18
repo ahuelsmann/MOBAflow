@@ -50,5 +50,5 @@
   <ItemGroup>
     <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
-  </ItemGroup>
-</Project>
+    </ItemGroup>
+  </Project>

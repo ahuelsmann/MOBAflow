@@ -59,6 +59,12 @@
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItemSeparator />
+                <NavigationViewItem Content="Feedback Points" Tag="feedbackpoints">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE72C;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItemSeparator />
                 <NavigationViewItem Content="Track Plan" Tag="trackplaneditor">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE809;" />

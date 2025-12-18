@@ -2,6 +2,7 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Common.Configuration;
+using Common.Extensions;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -9,7 +10,6 @@ using CommunityToolkit.Mvvm.Input;
 using Interface;
 
 using Moba.Backend.Interface;
-using Common.Extensions;
 
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -155,7 +155,7 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     /// </summary>
     public bool IsNotConnected => !IsConnected;
 
-    partial void OnIsConnectedChanged(bool value)
+    partial void OnIsConnectedChanged(bool _)
     {
         // Notify UI about inverse property change
         OnPropertyChanged(nameof(IsNotConnected));
@@ -738,24 +738,24 @@ public partial class InPortStatistic : ObservableObject
         OnPropertyChanged(nameof(LapCountFormatted));
     }
 
-    partial void OnHasReceivedFirstLapChanged(bool value)
+    partial void OnHasReceivedFirstLapChanged(bool _)
     {
         // Notify UI about background color change
         OnPropertyChanged(nameof(BackgroundColorName));
     }
 
-    partial void OnTargetLapCountChanged(int value)
+    partial void OnTargetLapCountChanged(int _)
     {
         OnPropertyChanged(nameof(Progress));
         OnPropertyChanged(nameof(LapCountFormatted));
     }
 
-    partial void OnLastLapTimeChanged(TimeSpan? value)
+    partial void OnLastLapTimeChanged(TimeSpan? _)
     {
         OnPropertyChanged(nameof(LastLapTimeFormatted));
     }
 
-    partial void OnLastFeedbackTimeChanged(DateTime? value)
+    partial void OnLastFeedbackTimeChanged(DateTime? _)
     {
         OnPropertyChanged(nameof(LastFeedbackTimeFormatted));
     }

@@ -147,5 +147,29 @@ public partial class MainWindowViewModel
         var viewModel = new AudioViewModel(newAction);
         SelectedWorkflow.Actions.Add(viewModel);
     }
+
+    [RelayCommand(CanExecute = nameof(CanDeleteAction))]
+    private void DeleteAction()
+    {
+        if (SelectedWorkflow == null || SelectedAction == null) return;
+
+        var actionVM = SelectedAction as WorkflowActionViewModel;
+        if (actionVM == null) return;
+
+        // Find and remove action from Domain model by ID
+        var action = SelectedWorkflow.Model.Actions
+            .FirstOrDefault(a => a.Id == actionVM.Id);
+        
+        if (action != null)
+        {
+            SelectedWorkflow.Model.Actions.Remove(action);
+        }
+
+        // Remove from ViewModel's ObservableCollection
+        SelectedWorkflow.Actions.Remove(actionVM);
+        SelectedAction = null;
+    }
+
+    private bool CanDeleteAction() => SelectedAction != null;
     #endregion
 }

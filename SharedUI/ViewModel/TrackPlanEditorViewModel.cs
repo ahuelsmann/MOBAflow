@@ -145,7 +145,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(HasSelectedSegment));
         OnPropertyChanged(nameof(HasNoSelectedSegment));
-        
+
         // Update InPort input when selection changes
         if (value != null)
         {
@@ -155,6 +155,9 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         {
             InPortInput = double.NaN;
         }
+
+        // Notify commands about selection change
+        DisconnectSelectedSegmentCommand.NotifyCanExecuteChanged();
     }
 
     #region Canvas Size (configurable work surface)
@@ -162,6 +165,30 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     /// Scale factor: 1 pixel = 0.5mm (so 2400mm = 1200px).
     /// </summary>
     public const double PixelsPerMm = 0.5;
+
+    /// <summary>
+    /// Layout name (persisted).
+    /// </summary>
+    [ObservableProperty]
+    private string layoutName = "Untitled Layout";
+
+    /// <summary>
+    /// Layout description (persisted).
+    /// </summary>
+    [ObservableProperty]
+    private string? layoutDescription;
+
+    /// <summary>
+    /// Track system (e.g., "Piko A-Gleis", "Tillig Elite").
+    /// </summary>
+    [ObservableProperty]
+    private string trackSystem = "Piko A-Gleis";
+
+    /// <summary>
+    /// Scale (e.g., "H0", "N", "TT").
+    /// </summary>
+    [ObservableProperty]
+    private string scale = "H0";
 
     /// <summary>
     /// Canvas width in mm (real-world dimensions).
@@ -302,9 +329,27 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         InPortInput = double.NaN;
         OnPropertyChanged(nameof(AssignedSensorCount));
         OnPropertyChanged(nameof(SensorStatusText));
-        
+
         Debug.WriteLine($"🗑️ InPort cleared from {SelectedSegment.ArticleCode}");
     }
+
+    /// <summary>
+    /// Disconnect the selected segment from all other segments.
+    /// This allows moving the segment independently.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanDisconnectSegment))]
+    private void DisconnectSelectedSegment()
+    {
+        if (SelectedSegment == null)
+            return;
+
+        RemoveConnectionsForSegment(SelectedSegment);
+        Debug.WriteLine($"🔓 Disconnected {SelectedSegment.ArticleCode} from all connections");
+    }
+
+    private bool CanDisconnectSegment() =>
+        SelectedSegment != null && 
+        (SelectedSegment.IsStartConnected || SelectedSegment.IsEndConnected);
     #endregion
 
     #region Commands
@@ -458,16 +503,57 @@ public partial class TrackPlanEditorViewModel : ObservableObject
 
     #region Connection Management
     /// <summary>
+    /// Get the endpoint index of a segment for a given endpoint coordinate.
+    /// </summary>
+    private static int GetEndpointIndex(TrackSegmentViewModel segment, (double X, double Y) endpoint)
+    {
+        var endpoints = segment.GetAllEndpoints();
+        for (int i = 0; i < endpoints.Count; i++)
+        {
+            var distance = Math.Sqrt(
+                Math.Pow(endpoints[i].X - endpoint.X, 2) +
+                Math.Pow(endpoints[i].Y - endpoint.Y, 2));
+            
+            if (distance < 1) // Within 1px tolerance
+                return i;
+        }
+        
+        // Fallback: return the closest endpoint index
+        var closest = 0;
+        var minDistance = double.MaxValue;
+        for (int i = 0; i < endpoints.Count; i++)
+        {
+            var distance = Math.Sqrt(
+                Math.Pow(endpoints[i].X - endpoint.X, 2) +
+                Math.Pow(endpoints[i].Y - endpoint.Y, 2));
+            
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                closest = i;
+            }
+        }
+        return closest;
+    }
+
+    /// <summary>
     /// Create a connection between two segments at a snap point.
+    /// Supports multiple connections per segment (e.g., turnouts with 3-4 endpoints).
     /// </summary>
     public void CreateConnection(TrackSegmentViewModel segment1, bool segment1IsStart,
                                   TrackSegmentViewModel segment2, bool segment2IsStart,
                                   double connectionX, double connectionY)
     {
-        // Check if connection already exists
+        var ep = (X: connectionX, Y: connectionY);
+        var segment1EndpointIndex = GetEndpointIndex(segment1, ep);
+        var segment2EndpointIndex = GetEndpointIndex(segment2, ep);
+
+        // Check if a connection at this specific endpoint combination already exists
         var existingConnection = Connections.FirstOrDefault(c =>
-            (c.Segment1Id == segment1.Id && c.Segment2Id == segment2.Id) ||
-            (c.Segment1Id == segment2.Id && c.Segment2Id == segment1.Id));
+            ((c.Segment1Id == segment1.Id && c.Segment2Id == segment2.Id) ||
+             (c.Segment1Id == segment2.Id && c.Segment2Id == segment1.Id)) &&
+            ((c.Segment1EndpointIndex == segment1EndpointIndex && c.Segment2EndpointIndex == segment2EndpointIndex) ||
+             (c.Segment1EndpointIndex == segment2EndpointIndex && c.Segment2EndpointIndex == segment1EndpointIndex)));
 
         if (existingConnection != null)
             return;
@@ -475,9 +561,9 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         var connection = new TrackConnection
         {
             Segment1Id = segment1.Id,
-            Segment1IsStart = segment1IsStart,
+            Segment1EndpointIndex = segment1EndpointIndex,
             Segment2Id = segment2.Id,
-            Segment2IsStart = segment2IsStart,
+            Segment2EndpointIndex = segment2EndpointIndex,
             ConnectionX = connectionX,
             ConnectionY = connectionY
         };
@@ -488,7 +574,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         segment1.SetConnectionState(segment1IsStart, true, segment2.Id);
         segment2.SetConnectionState(segment2IsStart, true, segment1.Id);
 
-        Debug.WriteLine($"🔗 Connection created: {segment1.ArticleCode} <-> {segment2.ArticleCode}");
+        Debug.WriteLine($"🔗 Connection created: {segment1.ArticleCode}[{segment1EndpointIndex}] <-> {segment2.ArticleCode}[{segment2EndpointIndex}]");
     }
 
     /// <summary>
@@ -506,9 +592,10 @@ public partial class TrackPlanEditorViewModel : ObservableObject
             var otherSegmentId = connection.Segment1Id == segment.Id 
                 ? connection.Segment2Id 
                 : connection.Segment1Id;
-            var otherIsStart = connection.Segment1Id == segment.Id 
-                ? connection.Segment2IsStart 
-                : connection.Segment1IsStart;
+            var otherEndpointIndex = connection.Segment1Id == segment.Id 
+                ? connection.Segment2EndpointIndex 
+                : connection.Segment1EndpointIndex;
+            var otherIsStart = otherEndpointIndex == 0; // Simple heuristic: index 0 = start
 
             var otherSegment = PlacedSegments.FirstOrDefault(s => s.Id == otherSegmentId);
             otherSegment?.SetConnectionState(otherIsStart, false, null);
@@ -589,50 +676,104 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         /// <summary>
         /// Automatically detect and create connections between segments based on matching endpoints.
         /// Used after AnyRail XML import to restore track connectivity.
+        /// Handles turnouts (3-4 endpoints) as well as simple tracks (2 endpoints).
         /// </summary>
-        /// <param name="tolerance">Maximum distance (in pixels) for endpoints to be considered connected.</param>
-        public void AutoConnectFromEndpoints(double tolerance = 1.0)
+        /// <param name="tolerance">Maximum distance (in pixels) for endpoints to be considered connected. Default 5.0 for rounding tolerance.</param>
+        public void AutoConnectFromEndpoints(double tolerance = 5.0)
         {
             var segments = PlacedSegments.ToList();
             int connectionsCreated = 0;
 
+            Debug.WriteLine($"🔗 AutoConnect: Checking {segments.Count} segments with tolerance {tolerance}px");
+
+            // Debug: Print first few segment endpoints to verify extraction
+            foreach (var seg in segments.Take(3))
+            {
+                var endpoints = seg.GetAllEndpoints();
+                Debug.WriteLine($"   Segment {seg.ArticleCode}: {endpoints.Count} endpoints");
+            }
+
             for (int i = 0; i < segments.Count; i++)
             {
                 var seg1 = segments[i];
-                var seg1Start = (seg1.StartPointX, seg1.StartPointY);
-                var seg1End = (seg1.EndPointX, seg1.EndPointY);
+                var seg1Endpoints = seg1.GetAllEndpoints();
 
                 for (int j = i + 1; j < segments.Count; j++)
-                {
-                    var seg2 = segments[j];
-                    var seg2Start = (seg2.StartPointX, seg2.StartPointY);
-                    var seg2End = (seg2.EndPointX, seg2.EndPointY);
+                    {
+                        var seg2 = segments[j];
+                        var seg2Endpoints = seg2.GetAllEndpoints();
 
-                    // Check all 4 combinations of endpoints
-                    if (PointsMatch(seg1Start, seg2Start, tolerance))
-                    {
-                        CreateConnection(seg1, true, seg2, true, seg1Start.Item1, seg1Start.Item2);
-                        connectionsCreated++;
+                        // Check all combinations of endpoints between the two segments
+                        foreach (var ep1 in seg1Endpoints)
+                        {
+                            foreach (var ep2 in seg2Endpoints)
+                            {
+                                if (PointsMatch(ep1, ep2, tolerance))
+                                {
+                                    // Determine if this is start or end for each segment
+                                    var seg1IsStart = IsStartEndpoint(seg1, ep1);
+                                    var seg2IsStart = IsStartEndpoint(seg2, ep2);
+
+                                    // CreateConnection handles duplicate checks now with endpoint indices
+                                    CreateConnection(seg1, seg1IsStart, seg2, seg2IsStart, ep1.X, ep1.Y);
+                                    connectionsCreated++;
+                                }
+                            }
+                        }
                     }
-                    else if (PointsMatch(seg1Start, seg2End, tolerance))
+                }
+
+                    Debug.WriteLine($"🔗 AutoConnect: Created {connectionsCreated} connections from endpoint matching");
+                }
+
+            /// <summary>
+            /// Automatically connect a specific segment to nearby segments based on endpoint proximity.
+            /// Used when dragging a segment to reconnect it after being disconnected.
+            /// </summary>
+            /// <param name="segment">The segment to connect.</param>
+            /// <param name="tolerance">Maximum distance (in pixels) for endpoints to be considered connected. Default 5.0 for rounding tolerance.</param>
+            public void AutoConnectFromEndpoints(TrackSegmentViewModel segment, double tolerance = 5.0)
+            {
+                var segmentEndpoints = segment.GetAllEndpoints();
+                int connectionsCreated = 0;
+
+                Debug.WriteLine($"🔗 AutoConnect for {segment.ArticleCode}: Checking {segmentEndpoints.Count} endpoints");
+
+                foreach (var otherSegment in PlacedSegments.Where(s => s.Id != segment.Id))
+                {
+                    var otherEndpoints = otherSegment.GetAllEndpoints();
+
+                    foreach (var ep1 in segmentEndpoints)
                     {
-                        CreateConnection(seg1, true, seg2, false, seg1Start.Item1, seg1Start.Item2);
-                        connectionsCreated++;
+                        foreach (var ep2 in otherEndpoints)
+                        {
+                            if (PointsMatch(ep1, ep2, tolerance))
+                            {
+                                var segIsStart = IsStartEndpoint(segment, ep1);
+                                var otherIsStart = IsStartEndpoint(otherSegment, ep2);
+
+                                // CreateConnection handles duplicate checks now with endpoint indices
+                                CreateConnection(segment, segIsStart, otherSegment, otherIsStart, ep1.X, ep1.Y);
+                                connectionsCreated++;
+                            }
+                        }
                     }
-                    else if (PointsMatch(seg1End, seg2Start, tolerance))
-                    {
-                        CreateConnection(seg1, false, seg2, true, seg1End.Item1, seg1End.Item2);
-                        connectionsCreated++;
-                    }
-                    else if (PointsMatch(seg1End, seg2End, tolerance))
-                    {
-                        CreateConnection(seg1, false, seg2, false, seg1End.Item1, seg1End.Item2);
-                        connectionsCreated++;
-                    }
+                }
+
+                if (connectionsCreated > 0)
+                {
+                    Debug.WriteLine($"🔗 AutoConnect: Created {connectionsCreated} connections for {segment.ArticleCode}");
                 }
             }
 
-            Debug.WriteLine($"🔗 AutoConnect: Created {connectionsCreated} connections from endpoint matching");
+            /// <summary>
+            /// Determine if an endpoint is closer to the segment's start point.
+            /// </summary>
+        private static bool IsStartEndpoint(TrackSegmentViewModel segment, (double X, double Y) endpoint)
+        {
+            var startDist = Math.Pow(segment.StartPointX - endpoint.X, 2) + Math.Pow(segment.StartPointY - endpoint.Y, 2);
+            var endDist = Math.Pow(segment.EndPointX - endpoint.X, 2) + Math.Pow(segment.EndPointY - endpoint.Y, 2);
+            return startDist <= endDist;
         }
 
         /// <summary>
@@ -734,7 +875,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     /// <summary>
     /// Export track plan to AnyRail XML format.
     /// </summary>
-    public void ExportToAnyRail(string xmlPath)
+    public void ExportToAnyRail(String xmlPath)
     {
         var ic = CultureInfo.InvariantCulture;
         
@@ -804,6 +945,11 @@ public partial class TrackPlanEditorViewModel : ObservableObject
             // Create or update TrackLayout
             project.TrackLayout ??= new TrackLayout();
 
+            // Sync layout properties
+            project.TrackLayout.Name = LayoutName;
+            project.TrackLayout.Description = LayoutDescription;
+            project.TrackLayout.TrackSystem = TrackSystem;
+            project.TrackLayout.Scale = Scale;
             project.TrackLayout.WidthMm = CanvasWidthMm;
             project.TrackLayout.HeightMm = CanvasHeightMm;
 
@@ -840,7 +986,11 @@ public partial class TrackPlanEditorViewModel : ObservableObject
             PlacedSegments.Clear();
             Connections.Clear();
 
-            // Update canvas size
+            // Load layout properties
+            LayoutName = layout.Name;
+            LayoutDescription = layout.Description;
+            TrackSystem = layout.TrackSystem;
+            Scale = layout.Scale;
             CanvasWidthMm = layout.WidthMm;
             CanvasHeightMm = layout.HeightMm;
 
@@ -859,8 +1009,10 @@ public partial class TrackPlanEditorViewModel : ObservableObject
                 var seg1 = PlacedSegments.FirstOrDefault(s => s.Id == connection.Segment1Id);
                 var seg2 = PlacedSegments.FirstOrDefault(s => s.Id == connection.Segment2Id);
 
-                seg1?.SetConnectionState(connection.Segment1IsStart, true, connection.Segment2Id);
-                seg2?.SetConnectionState(connection.Segment2IsStart, true, connection.Segment1Id);
+                var seg1IsStart = connection.Segment1EndpointIndex == 0; // Index 0 = start
+                var seg2IsStart = connection.Segment2EndpointIndex == 0; // Index 0 = start
+                seg1?.SetConnectionState(seg1IsStart, true, connection.Segment2Id);
+                seg2?.SetConnectionState(seg2IsStart, true, connection.Segment1Id);
             }
 
             OnPropertyChanged(nameof(AssignedSensorCount));
