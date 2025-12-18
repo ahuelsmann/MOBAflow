@@ -129,7 +129,7 @@ public sealed partial class MainWindow
         }
     }
 
-    // Minimal event handler - delegates to ViewModel Command (XAML limitation for AppBarToggleButton)
+    // Minimal event handler - delegates to ViewModel Command
     private void TrackPower_Click(object sender, RoutedEventArgs e)
     {
         if (sender is AppBarToggleButton toggleButton)

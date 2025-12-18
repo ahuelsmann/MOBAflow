@@ -336,9 +336,6 @@ public partial class MainWindowViewModel
                 
                 Debug.WriteLine($"📊 JourneyViewModel '{journeyVM.Name}' updated: Counter={e.SessionState.Counter}, Pos={e.SessionState.CurrentPos}, Station={e.SessionState.CurrentStationName}");
             }
-            
-            // Update status text
-            Z21StatusText = $"Station: {e.Station.Name} | Counter: {e.SessionState.Counter} | Pos: {e.SessionState.CurrentPos}";
         });
     }
 
@@ -359,9 +356,6 @@ public partial class MainWindowViewModel
                 
                 Debug.WriteLine($"🔔 JourneyViewModel '{journeyVM.Name}' feedback: Counter={e.SessionState.Counter}");
             }
-            
-            // Update status text with current counter
-            Z21StatusText = $"Feedback received | Counter: {e.SessionState.Counter} | Pos: {e.SessionState.CurrentPos}";
         });
     }
     #endregion

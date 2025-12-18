@@ -140,22 +140,30 @@ public class JourneyManager : BaseFeedbackManager<Journey>
             // Update SessionState with current station
             state.CurrentStationName = currentStation.Name;
 
-            // Execute station workflow if present
+            // ✅ Fire StationChanged event FIRST (UI updates immediately)
+            OnStationChanged(new StationChangedEventArgs
+            {
+                JourneyId = journey.Id,
+                Station = currentStation,
+                SessionState = state
+            });
+
+            // ✅ THEN execute station workflow (async announcements run after UI is updated)
             if (currentStation.WorkflowId.HasValue)
             {
                 var workflow = _project.Workflows.FirstOrDefault(w => w.Id == currentStation.WorkflowId.Value);
                 if (workflow != null)
                 {
                     // Set template context for actions (e.g., Announcement action)
-                    ExecutionContext?.JourneyTemplateText = journey.Text;
-                    ExecutionContext?.CurrentStation = currentStation;
+                    ExecutionContext.JourneyTemplateText = journey.Text;
+                    ExecutionContext.CurrentStation = currentStation;
 
                     if (ExecutionContext != null)
                         await _workflowService.ExecuteAsync(workflow, ExecutionContext).ConfigureAwait(false);
 
                     // Clear context after workflow execution
-                    ExecutionContext?.JourneyTemplateText = null;
-                    ExecutionContext?.CurrentStation = null;
+                    ExecutionContext.JourneyTemplateText = null;
+                    ExecutionContext.CurrentStation = null;
                 }
                 else
                 {
@@ -175,14 +183,6 @@ public class JourneyManager : BaseFeedbackManager<Journey>
             {
                 state.CurrentPos++;
             }
-
-            // Fire StationChanged event AFTER position update (ViewModels will react with updated CurrentPos)
-            OnStationChanged(new StationChangedEventArgs
-            {
-                JourneyId = journey.Id,
-                Station = currentStation,
-                SessionState = state
-            });
         }
     }
 

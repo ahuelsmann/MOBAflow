@@ -9,11 +9,25 @@
     <ScrollViewer>
         <StackPanel Padding="40,24,40,40" Spacing="8">
 
-            <!--  Page Header  -->
-            <TextBlock
-                Margin="0,0,0,8"
-                Style="{StaticResource TitleTextBlockStyle}"
-                Text="Settings" />
+            <!--  Page Header with Dark Mode Toggle  -->
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock
+                    Grid.Column="0"
+                    Style="{StaticResource TitleTextBlockStyle}"
+                    Text="Settings" />
+
+                <ToggleSwitch
+                    Grid.Column="1"
+                    Margin="24,0,0,0"
+                    IsOn="{x:Bind ViewModel.IsDarkMode, Mode=TwoWay}"
+                    OffContent="Light"
+                    OnContent="Dark" />
+            </Grid>
 
             <!--  Z21 Connection Section  -->
             <Expander
@@ -149,9 +163,7 @@
                     </ComboBox>
 
                     <!--  Azure Settings (only shown when Azure engine selected)  -->
-                    <StackPanel
-                        Spacing="16"
-                        Visibility="{x:Bind ViewModel.IsAzureSpeechEngineSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel Spacing="16" Visibility="{x:Bind ViewModel.IsAzureSpeechEngineSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                         <TextBox
                             MaxWidth="500"
                             HorizontalAlignment="Left"

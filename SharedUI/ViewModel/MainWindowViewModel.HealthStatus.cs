@@ -14,7 +14,8 @@ public partial class MainWindowViewModel
     /// </summary>
     public void UpdateHealthStatus(string statusMessage)
     {
-        SpeechHealthStatus = statusMessage;
+        // Prefix with "Azure Speech: " for UI display
+        SpeechHealthStatus = $"Azure Speech: {statusMessage.TrimStart('✅', '❌', '⚠', '️', '⏳', ' ')}";
 
         // Update icon and color based on status
         if (statusMessage.Contains("Ready"))

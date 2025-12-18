@@ -67,12 +67,28 @@ public class UdpWrapper : IUdpClientWrapper
 
     /// <summary>
     /// Connects the wrapper to the remote endpoint and starts the receiver loop.
+    /// If already connected, closes the existing connection first.
     /// </summary>
     /// <param name="address">Z21 IP address</param>
     /// <param name="port">Z21 UDP port (default: 21105)</param>
     /// <param name="cancellationToken">Token to cancel the operation</param>
-    public Task ConnectAsync(IPAddress address, int port = 21105, CancellationToken cancellationToken = default)
+    public async Task ConnectAsync(IPAddress address, int port = 21105, CancellationToken cancellationToken = default)
     {
+        // Check if already disposed
+        if (_disposed)
+        {
+            throw new ObjectDisposedException(nameof(UdpWrapper), "Cannot connect after disposal");
+        }
+        
+        // If already connected, stop the existing connection first
+        if (_client != null)
+        {
+            _logger?.LogInformation("Closing existing connection before reconnecting...");
+            await StopAsync().ConfigureAwait(false);
+        }
+        
+        _logger?.LogInformation("Connecting to {Address}:{Port}", address, port);
+        
         _client = new UdpClient();
         _client.Connect(address, port);
         _client.DontFragment = false;
@@ -80,7 +96,8 @@ public class UdpWrapper : IUdpClientWrapper
 
         _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         _receiverTask = Task.Run(() => ReceiverLoopAsync(_cts.Token), _cts.Token);
-        return Task.CompletedTask;
+        
+        _logger?.LogInformation("UDP client connected and receiver loop started");
     }
 
     /// <summary>
@@ -208,12 +225,17 @@ public class UdpWrapper : IUdpClientWrapper
         }
     }
 
+
     /// <summary>
     /// Stops the receiver loop and closes the UDP client.
     /// Waits for the receiver task to complete gracefully.
+    /// Allows reconnection after stop (unlike Dispose which is final).
     /// </summary>
     public async Task StopAsync()
     {
+        _logger?.LogDebug("StopAsync called - stopping UDP client");
+        
+        // Cancel the receiver task first
         if (_cts is { IsCancellationRequested: false })
         {
             await _cts.CancelAsync();
@@ -221,29 +243,62 @@ public class UdpWrapper : IUdpClientWrapper
             {
                 if (_receiverTask != null)
                 {
-                    await _receiverTask.ConfigureAwait(false);
+                    // Wait with timeout to prevent hanging
+                    var completedTask = await Task.WhenAny(_receiverTask, Task.Delay(2000));
+                    if (completedTask != _receiverTask)
+                    {
+                        _logger?.LogWarning("Receiver task did not complete within timeout");
+                    }
                 }
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)
             {
                 Debug.WriteLine($"UdpWrapper: StopAsync receiver error: {ex.Message}");
+                _logger?.LogWarning("StopAsync receiver error: {Message}", ex.Message);
             }
         }
 
-        _client?.Close();
-        _client = null;
+        // Dispose CancellationTokenSource
+        _cts?.Dispose();
+        _cts = null;
+        _receiverTask = null;
+
+        // Close and dispose the UDP client
+        if (_client != null)
+        {
+            try
+            {
+                _client.Close();
+                _client.Dispose();
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning("Error closing UDP client: {Message}", ex.Message);
+            }
+            _client = null;
+        }
+        
+        _logger?.LogInformation("UDP client stopped successfully");
     }
 
     /// <summary>
     /// Disposes resources and cancels the receiver loop.
+    /// After Dispose, the wrapper cannot be reused.
     /// </summary>
     public void Dispose()
     {
         if (_disposed) return;
+        _disposed = true;
+        
         _cts?.Cancel();
         _cts?.Dispose();
+        _cts = null;
+        
+        _client?.Close();
         _client?.Dispose();
-        _disposed = true;
+        _client = null;
+        
+        _logger?.LogInformation("UdpWrapper disposed");
     }
 }

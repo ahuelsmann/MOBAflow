@@ -90,141 +90,93 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <!--  Toolbar - Always visible across all views  -->
+                <!--  Compact CommandBar with labels on the side  -->
                 <CommandBar
                     Grid.Row="0"
+                    Background="Transparent"
                     DefaultLabelPosition="Right"
+                    IsOpen="False"
                     OverflowButtonVisibility="Auto">
+                    <!--  File Operations  -->
                     <AppBarButton
                         Command="{x:Bind ViewModel.NewSolutionCommand}"
-                        Label="New"
-                        ToolTipService.ToolTip="Create new empty solution">
-                        <AppBarButton.Icon>
-                            <FontIcon Glyph="&#xE8A5;" />
-                        </AppBarButton.Icon>
-                    </AppBarButton>
+                        Icon="Add"
+                        Label="New" />
                     <AppBarButton
                         Command="{x:Bind ViewModel.LoadSolutionCommand}"
-                        Label="Open"
-                        ToolTipService.ToolTip="Open solution file">
-                        <AppBarButton.Icon>
-                            <FontIcon Glyph="&#xE838;" />
-                        </AppBarButton.Icon>
-                    </AppBarButton>
+                        Icon="OpenFile"
+                        Label="Open" />
                     <AppBarButton
                         Command="{x:Bind ViewModel.SaveSolutionCommand}"
                         Icon="Save"
-                        Label="Save"
-                        ToolTipService.ToolTip="Save solution" />
+                        Label="Save" />
                     <AppBarSeparator />
-                    <AppBarButton
-                        MinWidth="0"
-                        Command="{x:Bind TrackPlanEditorViewModel.BrowseAndLoadAnyRailLayoutCommand}"
-                        ToolTipService.ToolTip="Import AnyRail XML track layout">
-                        <AppBarButton.Icon>
-                            <FontIcon Glyph="&#xE8B5;" />
-                        </AppBarButton.Icon>
-                    </AppBarButton>
-                    <AppBarButton
-                        MinWidth="0"
-                        Command="{x:Bind TrackPlanEditorViewModel.ExportToAnyRailCommand}"
-                        ToolTipService.ToolTip="Export track layout to AnyRail XML">
-                        <AppBarButton.Icon>
-                            <FontIcon Glyph="&#xEDE1;" />
-                        </AppBarButton.Icon>
-                    </AppBarButton>
-                    <AppBarSeparator />
+                    <!--  Z21 Connection  -->
                     <AppBarButton
                         Command="{x:Bind CounterViewModel.ConnectCommand}"
-                        Label="Connect"
-                        ToolTipService.ToolTip="Connect to Z21 Command Station">
-                        <AppBarButton.Icon>
-                            <FontIcon Glyph="&#xE968;" />
-                        </AppBarButton.Icon>
-                    </AppBarButton>
+                        Icon="Globe"
+                        Label="Connect" />
                     <AppBarButton
                         Command="{x:Bind CounterViewModel.DisconnectCommand}"
-                        Label="Disconnect"
-                        ToolTipService.ToolTip="Disconnect from Z21">
-                        <AppBarButton.Icon>
-                            <FontIcon Glyph="&#xE711;" />
-                        </AppBarButton.Icon>
-                    </AppBarButton>
-                    <AppBarSeparator />
+                        Icon="Cancel"
+                        Label="Disconnect" />
                     <AppBarToggleButton
                         Click="TrackPower_Click"
                         IsChecked="{x:Bind CounterViewModel.IsTrackPowerOn, Mode=OneWay}"
                         IsEnabled="{x:Bind CounterViewModel.IsConnected, Mode=OneWay}"
-                        Label="Track Power"
-                        ToolTipService.ToolTip="Toggle Track Power ON/OFF">
+                        Label="Power">
                         <AppBarToggleButton.Icon>
                             <FontIcon Glyph="&#xE945;" />
                         </AppBarToggleButton.Icon>
                     </AppBarToggleButton>
                     <AppBarSeparator />
+                    <!--  Simulation  -->
                     <AppBarButton
-                        MinWidth="0"
                         Command="{x:Bind ViewModel.SimulateFeedbackCommand}"
-                        ToolTipService.ToolTip="Simulate Feedback for selected Journey or InPort">
-                        <AppBarButton.Icon>
-                            <FontIcon Glyph="&#xE768;" />
-                        </AppBarButton.Icon>
-                    </AppBarButton>
+                        Icon="Play"
+                        Label="Simulate" />
                     <AppBarElementContainer VerticalAlignment="Center">
                         <TextBox
-                            Width="80"
+                            Width="60"
                             PlaceholderText="InPort"
                             Text="{x:Bind ViewModel.SimulateInPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                     </AppBarElementContainer>
                     <AppBarButton
-                        MinWidth="0"
                         Command="{x:Bind ViewModel.ResetJourneyCommand}"
-                        ToolTipService.ToolTip="Reset selected Journey to initial state">
-                        <AppBarButton.Icon>
-                            <FontIcon Glyph="&#xE72C;" />
-                        </AppBarButton.Icon>
-                    </AppBarButton>
+                        Icon="Refresh"
+                        Label="Reset" />
                     <AppBarSeparator />
+                    <!--  Speech  -->
                     <AppBarElementContainer VerticalAlignment="Center">
-                        <ToggleButton
-                            Width="32"
-                            Height="32"
-                            Padding="0"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            IsChecked="{x:Bind ViewModel.IsDarkMode, Mode=TwoWay}"
-                            ToolTipService.ToolTip="Toggle Dark/Light Mode">
-                            <FontIcon FontSize="16" Glyph="&#xE793;" />
-                        </ToggleButton>
-                    </AppBarElementContainer>
-                    <AppBarSeparator />
-                    <!--  Speech Engine Selection  -->
-                    <AppBarElementContainer VerticalAlignment="Center" ToolTipService.ToolTip="Select Speech Engine">
                         <ComboBox
-                            MinWidth="180"
-                            ItemsSource="{x:Bind ViewModel.AvailableSpeechEngines}"
-                            SelectedItem="{x:Bind ViewModel.SelectedSpeechEngine, Mode=TwoWay}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <FontIcon FontSize="12" Glyph="&#xE8BD;" />
-                                        <TextBlock Text="{Binding}" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
+                            MinWidth="160"
+                            ItemsSource="{x:Bind ViewModel.AvailableSpeechEngines, Mode=OneTime}"
+                            SelectedItem="{x:Bind ViewModel.SelectedSpeechEngine, Mode=TwoWay}" />
                     </AppBarElementContainer>
                     <AppBarButton
-                        MinWidth="0"
                         Command="{x:Bind ViewModel.TestSpeechCommand}"
-                        ToolTipService.ToolTip="Test Speech (Ctrl+T)">
-                        <AppBarButton.Icon>
-                            <FontIcon Glyph="&#xE8BD;" />
-                        </AppBarButton.Icon>
-                        <AppBarButton.KeyboardAccelerators>
-                            <KeyboardAccelerator Key="T" Modifiers="Control" />
-                        </AppBarButton.KeyboardAccelerators>
-                    </AppBarButton>
+                        Icon="Volume"
+                        Label="Test" />
+                    <AppBarSeparator />
+                    <!--  Theme Toggle  -->
+                    <AppBarToggleButton IsChecked="{x:Bind ViewModel.IsDarkMode, Mode=TwoWay}" Label="Dark">
+                        <AppBarToggleButton.Icon>
+                            <FontIcon Glyph="&#xE793;" />
+                        </AppBarToggleButton.Icon>
+                    </AppBarToggleButton>
+
+                    <!--  Secondary Commands (overflow menu)  -->
+                    <CommandBar.SecondaryCommands>
+                        <AppBarButton
+                            Command="{x:Bind TrackPlanEditorViewModel.BrowseAndLoadAnyRailLayoutCommand}"
+                            Icon="Import"
+                            Label="Import AnyRail" />
+                        <AppBarButton Command="{x:Bind TrackPlanEditorViewModel.ExportToAnyRailCommand}" Label="Export AnyRail">
+                            <AppBarButton.Icon>
+                                <FontIcon Glyph="&#xEDE1;" />
+                            </AppBarButton.Icon>
+                        </AppBarButton>
+                    </CommandBar.SecondaryCommands>
                 </CommandBar>
 
                 <!--  Content Frame for page navigation  -->
@@ -286,13 +238,13 @@
                     x:Name="SpeechHealthIcon"
                     FontSize="14"
                     Foreground="{ThemeResource SystemFillColorCautionBrush}"
-                    Glyph="&#xE946;" />
+                    Glyph="{x:Bind ViewModel.SpeechHealthIcon, Mode=OneWay}" />
                 <TextBlock
                     x:Name="SpeechHealthText"
                     VerticalAlignment="Center"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Style="{StaticResource CaptionTextBlockStyle}"
-                    Text="Azure Speech: Checking..."
+                    Text="{x:Bind ViewModel.SpeechHealthStatus, Mode=OneWay}"
                     ToolTipService.ToolTip="Azure Speech Service Health Status" />
             </StackPanel>
 

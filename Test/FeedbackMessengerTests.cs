@@ -10,7 +10,6 @@ using Moba.Domain;
 using Moba.Domain.Message;
 using Moba.Test.Mocks;
 using NUnit.Framework;
-using System.Collections.ObjectModel;
 using System.Collections.Generic;
 
 /// <summary>
