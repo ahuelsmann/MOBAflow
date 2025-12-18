@@ -544,6 +544,7 @@ public class Z21 : IZ21
     /// Sends a digital command to the Z21.
     /// </summary>
     /// <param name="sendBytes">The byte sequence containing the command for the Z21.</param>
+    /// <param name="cancellationToken"></param>
     public async Task SendCommandAsync(byte[] sendBytes, CancellationToken cancellationToken = default)
     {
         await SendAsync(sendBytes, cancellationToken).ConfigureAwait(false);

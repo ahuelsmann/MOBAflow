@@ -15,7 +15,7 @@ public class SolutionInstanceTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddSingleton(sp => new Solution());
+        services.AddSingleton(_ => new Solution());
         
         var serviceProvider = services.BuildServiceProvider();
         
@@ -91,7 +91,7 @@ public class SolutionInstanceTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddSingleton(sp => new Solution());
+        services.AddSingleton(_ => new Solution());
         
         var serviceProvider = services.BuildServiceProvider();
         

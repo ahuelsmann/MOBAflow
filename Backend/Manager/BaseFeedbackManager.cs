@@ -37,7 +37,7 @@ public abstract class BaseFeedbackManager<TEntity> : IFeedbackManager where TEnt
         // Handler is simple lambda that doesn't capture 'this', avoiding memory leak with WeakReferences
         WeakReferenceMessenger.Default.Register<FeedbackReceivedMessage>(
             this,
-            (recipient, message) =>
+            (_, message) =>
             {
                 OnMessageReceived(message);
             }

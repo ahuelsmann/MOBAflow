@@ -11,8 +11,6 @@ using System.Diagnostics;
 /// </summary>
 public class WorkflowService(ActionExecutor actionExecutor)
 {
-    private readonly ActionExecutor _actionExecutor = actionExecutor;
-
     /// <summary>
     /// Executes a workflow with all its actions sequentially.
     /// </summary>
@@ -36,7 +34,7 @@ public class WorkflowService(ActionExecutor actionExecutor)
         {
             try
             {
-                await _actionExecutor.ExecuteAsync(action, context);
+                await actionExecutor.ExecuteAsync(action, context);
             }
             catch (Exception ex)
             {

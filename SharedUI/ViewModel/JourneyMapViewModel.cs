@@ -21,7 +21,7 @@ public class JourneyMapViewModel : ObservableObject
         _mainViewModel = mainViewModel;
 
         // Subscribe to journey and project changes
-        _mainViewModel.PropertyChanged += (s, e) =>
+        _mainViewModel.PropertyChanged += (_, e) =>
         {
             switch (e.PropertyName)
             {

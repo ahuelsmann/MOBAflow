@@ -12,8 +12,6 @@ using System.Runtime.Versioning;
 [SupportedOSPlatform("windows")]
 public class WindowsSoundPlayer(ILogger<WindowsSoundPlayer> logger) : ISoundPlayer
 {
-    private readonly ILogger<WindowsSoundPlayer> _logger = logger;
-
     /// <summary>
     /// Plays a wave file from the specified path.
     /// Blocks for 1.5 seconds to allow sound to complete.
@@ -24,7 +22,7 @@ public class WindowsSoundPlayer(ILogger<WindowsSoundPlayer> logger) : ISoundPlay
         try
         {
             Console.WriteLine($"🔊 Playing sound file: {waveFile}");
-            _logger.LogInformation("Playing sound file: {WaveFile}", waveFile);
+            logger.LogInformation("Playing sound file: {WaveFile}", waveFile);
             
             using var player = new SoundPlayer
             {
@@ -34,12 +32,12 @@ public class WindowsSoundPlayer(ILogger<WindowsSoundPlayer> logger) : ISoundPlay
             Thread.Sleep(1500);
             
             Console.WriteLine($"✅ Sound file played successfully: {waveFile}");
-            _logger.LogDebug("Sound file played successfully: {WaveFile}", waveFile);
+            logger.LogDebug("Sound file played successfully: {WaveFile}", waveFile);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Failed to play sound file: {waveFile} - Error: {ex.Message}");
-            _logger.LogError(ex, "Failed to play sound file: {WaveFile}", waveFile);
+            logger.LogError(ex, "Failed to play sound file: {WaveFile}", waveFile);
             throw new InvalidOperationException($"Failed to play sound file: {waveFile}", ex);
         }
     }

@@ -171,7 +171,7 @@ public class ResultTests
         var actionExecuted = false;
 
         // Act
-        result.OnFailure(e => actionExecuted = true);
+        result.OnFailure(_ => actionExecuted = true);
 
         // Assert
         Assert.That(actionExecuted, Is.False);
@@ -292,7 +292,7 @@ public class ResultTests
         var actionExecuted = false;
 
         // Act
-        result.OnSuccess(v => actionExecuted = true);
+        result.OnSuccess(_ => actionExecuted = true);
 
         // Assert
         Assert.That(actionExecuted, Is.True, "OnSuccess should execute even with null value");

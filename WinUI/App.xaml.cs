@@ -77,7 +77,7 @@ public partial class App
         services.AddSingleton(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value);
 
         // Register SpeechOptions (Sound service configuration)
-        services.Configure<Sound.SpeechOptions>(configuration.GetSection("Speech"));
+        services.Configure<SpeechOptions>(configuration.GetSection("Speech"));
 
         // Logging (required by HealthCheckService and SpeechHealthCheck)
         services.AddLogging();
@@ -86,8 +86,8 @@ public partial class App
         // Uses Windows SAPI - always works without cloud credentials
         services.AddSingleton<ISpeakerEngine>(sp =>
         {
-            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<Sound.SystemSpeechEngine>>();
-            return new Sound.SystemSpeechEngine(logger!);
+            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<SystemSpeechEngine>>();
+            return new SystemSpeechEngine(logger!);
         });
 
         // Backend Services (Interfaces are in Backend.Interface and Backend.Network)
@@ -106,16 +106,16 @@ public partial class App
         services.AddSingleton(sp =>
         {
             var speakerEngine = sp.GetService<ISpeakerEngine>();
-            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<Backend.Service.AnnouncementService>>();
-            return new Backend.Service.AnnouncementService(speakerEngine, logger);
+            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<AnnouncementService>>();
+            return new AnnouncementService(speakerEngine, logger);
         });
         
         // ✅ ActionExecutor with AnnouncementService for Announcement actions
         services.AddSingleton(sp =>
         {
             var z21 = sp.GetRequiredService<Backend.Interface.IZ21>();
-            var announcementService = sp.GetRequiredService<Backend.Service.AnnouncementService>();
-            return new ActionExecutor(z21, announcementService);
+            var announcementService = sp.GetRequiredService<AnnouncementService>();
+            return new ActionExecutor(announcementService);
         });
         
         services.AddSingleton<WorkflowService>();
@@ -128,7 +128,7 @@ public partial class App
         services.AddSingleton<Service.SnapToConnectService>();
 
         // Sound Services (required by HealthCheckService)
-        services.AddSingleton<Sound.SpeechHealthCheck>();
+        services.AddSingleton<SpeechHealthCheck>();
         services.AddSingleton<Service.HealthCheckService>();
 
         // ViewModels
@@ -144,11 +144,11 @@ public partial class App
             sp.GetRequiredService<Backend.Interface.IZ21>(),
             sp.GetRequiredService<WorkflowService>(),
             sp.GetRequiredService<SharedUI.Interface.IUiDispatcher>(),
-            sp.GetRequiredService<Common.Configuration.AppSettings>(),
+            sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<Domain.Solution>(),
             sp.GetService<SharedUI.Interface.ICityService>(),
             sp.GetService<SharedUI.Interface.ISettingsService>(),
-            sp.GetService<Backend.Service.AnnouncementService>()  // For TestSpeech command
+            sp.GetService<AnnouncementService>()  // For TestSpeech command
         ));
         services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
         services.AddSingleton<SharedUI.ViewModel.TrackPlanEditorViewModel>();

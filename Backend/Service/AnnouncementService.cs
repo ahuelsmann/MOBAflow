@@ -3,7 +3,7 @@
 namespace Moba.Backend.Service;
 
 using Domain;
-using Moba.Sound;
+using Sound;
 using Microsoft.Extensions.Logging;
 
 /// <summary>

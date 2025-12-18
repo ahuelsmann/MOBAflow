@@ -14,7 +14,6 @@ using Microsoft.Extensions.Options;
 public class SpeechHealthCheck(IOptions<SpeechOptions> options, ILogger<SpeechHealthCheck> logger)
 {
     private readonly SpeechOptions _options = options.Value;
-    private readonly ILogger<SpeechHealthCheck> _logger = logger;
 
     /// <summary>
     /// Checks if Azure Speech Service is properly configured.
@@ -29,11 +28,11 @@ public class SpeechHealthCheck(IOptions<SpeechOptions> options, ILogger<SpeechHe
 
         if (!isConfigured)
         {
-            this.LogWarning("Azure Speech Service is not configured. Set SPEECH_KEY and SPEECH_REGION.", _logger);
+            this.LogWarning("Azure Speech Service is not configured. Set SPEECH_KEY and SPEECH_REGION.", logger);
         }
         else
         {
-            this.Log($"✅ Azure Speech Service is configured for region: {speechRegion}", _logger);
+            this.Log($"✅ Azure Speech Service is configured for region: {speechRegion}", logger);
         }
 
         return isConfigured;
@@ -47,7 +46,7 @@ public class SpeechHealthCheck(IOptions<SpeechOptions> options, ILogger<SpeechHe
     {
         if (!IsConfigured())
         {
-            this.LogWarning("Cannot test connectivity - service not configured", _logger);
+            this.LogWarning("Cannot test connectivity - service not configured", logger);
             return Task.FromResult(false);
         }
 
@@ -57,13 +56,13 @@ public class SpeechHealthCheck(IOptions<SpeechOptions> options, ILogger<SpeechHe
         // Test mode short-circuit
         if (string.Equals(speechKey, "test-key", StringComparison.Ordinal))
         {
-            this.Log("✅ Connectivity test skipped (test mode)", _logger);
+            this.Log("✅ Connectivity test skipped (test mode)", logger);
             return Task.FromResult(true);
         }
 
         try
         {
-            this.Log("🔍 Testing Azure Speech Service connectivity...", _logger);
+            this.Log("🔍 Testing Azure Speech Service connectivity...", logger);
 
             var config = SpeechConfig.FromSubscription(speechKey!, speechRegion!);
             
@@ -71,7 +70,7 @@ public class SpeechHealthCheck(IOptions<SpeechOptions> options, ILogger<SpeechHe
             using var synthesizer = new SpeechSynthesizer(config, null);
             
             // If we can create the config and synthesizer, credentials are likely valid
-            this.Log("✅ Azure Speech Service connectivity test passed", _logger);
+            this.Log("✅ Azure Speech Service connectivity test passed", logger);
             return Task.FromResult(true);
         }
         catch (Exception ex)
@@ -79,7 +78,7 @@ public class SpeechHealthCheck(IOptions<SpeechOptions> options, ILogger<SpeechHe
             this.LogError(
                 $"Azure Speech Service connectivity test failed. Possible causes: Invalid/expired API key, Incorrect region ({speechRegion}), Network/Firewall blocking Azure services",
                 ex,
-                _logger);
+                logger);
             return Task.FromResult(false);
         }
     }

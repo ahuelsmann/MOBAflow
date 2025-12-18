@@ -12,17 +12,8 @@ using System.Diagnostics;
 /// Executes WorkflowActions based on their type and parameters.
 /// This implements Clean Architecture by separating domain models (WorkflowAction) from execution logic.
 /// </summary>
-public class ActionExecutor
+public class ActionExecutor(AnnouncementService? announcementService = null)
 {
-    private readonly Interface.IZ21? _z21;
-    private readonly Backend.Service.AnnouncementService? _announcementService;
-
-    public ActionExecutor(Interface.IZ21? z21 = null, Backend.Service.AnnouncementService? announcementService = null)
-    {
-        _z21 = z21;
-        _announcementService = announcementService;
-    }
-
     /// <summary>
     /// Executes a WorkflowAction based on its type.
     /// </summary>
@@ -60,7 +51,7 @@ public class ActionExecutor
 
         // Get bytes from parameters (stored as base64 string or byte array)
         byte[]? bytes = null;
-        
+
         if (action.Parameters.TryGetValue("Bytes", out var bytesObj))
         {
             if (bytesObj is byte[] byteArray)
@@ -125,64 +116,27 @@ public class ActionExecutor
             return;
         }
 
-        if (_announcementService == null)
+        if (announcementService == null)
         {
             Debug.WriteLine($"    ⚠ Announcement '{action.Name}' skipped: AnnouncementService not configured");
             return;
         }
 
         // Generate announcement text from template
-        var announcementText = _announcementService.GenerateAnnouncementText(
-            new Domain.Journey { Text = context.JourneyTemplateText },
+        var announcementText = announcementService.GenerateAnnouncementText(
+            new Journey { Text = context.JourneyTemplateText },
             context.CurrentStation,
             stationIndex: 1  // Will be calculated from context if needed
         );
 
         // Speak the announcement
-        await _announcementService.GenerateAndSpeakAnnouncementAsync(
-            new Domain.Journey { Text = context.JourneyTemplateText },
+        await announcementService.GenerateAndSpeakAnnouncementAsync(
+            new Journey { Text = context.JourneyTemplateText },
             context.CurrentStation,
             stationIndex: 1,
             CancellationToken.None
         ).ConfigureAwait(false);
 
         Debug.WriteLine($"    ✓ Announcement: \"{announcementText}\"");
-    }
-
-    /// <summary>
-    /// Replaces template placeholders in announcement messages with actual values from context.
-    /// Supported placeholders:
-    /// - {StationName} - Current station name
-    /// - {JourneyName} - Journey template text
-    /// - {ExitSide} - Exit side (left/right) based on Station.IsExitOnLeft
-    /// </summary>
-    private string ReplaceTemplatePlaceholders(string message, ActionExecutionContext context)
-    {
-        if (string.IsNullOrEmpty(message))
-            return message;
-
-        // Replace {StationName}
-        if (context.CurrentStation != null && message.Contains("{StationName}", StringComparison.OrdinalIgnoreCase))
-        {
-            message = message.Replace("{StationName}", context.CurrentStation.Name, StringComparison.OrdinalIgnoreCase);
-            Debug.WriteLine($"    → Replaced {{StationName}} with '{context.CurrentStation.Name}'");
-        }
-
-        // Replace {JourneyName}
-        if (!string.IsNullOrEmpty(context.JourneyTemplateText) && message.Contains("{JourneyName}", StringComparison.OrdinalIgnoreCase))
-        {
-            message = message.Replace("{JourneyName}", context.JourneyTemplateText, StringComparison.OrdinalIgnoreCase);
-            Debug.WriteLine($"    → Replaced {{JourneyName}} with '{context.JourneyTemplateText}'");
-        }
-
-        // Replace {ExitSide}
-        if (context.CurrentStation != null && message.Contains("{ExitSide}", StringComparison.OrdinalIgnoreCase))
-        {
-            var exitSide = context.CurrentStation.IsExitOnLeft ? "links" : "rechts";
-            message = message.Replace("{ExitSide}", exitSide, StringComparison.OrdinalIgnoreCase);
-            Debug.WriteLine($"    → Replaced {{ExitSide}} with '{exitSide}'");
-        }
-
-        return message;
     }
 }

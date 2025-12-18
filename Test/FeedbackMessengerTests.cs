@@ -6,9 +6,9 @@ using CommunityToolkit.Mvvm.Messaging;
 using Moba.Backend;
 using Moba.Backend.Manager;
 using Moba.Backend.Service;
-using Moba.Domain;
-using Moba.Domain.Message;
-using Moba.Test.Mocks;
+using Domain;
+using Domain.Message;
+using Mocks;
 using NUnit.Framework;
 using System.Collections.Generic;
 
@@ -51,7 +51,7 @@ public class FeedbackMessengerTests
         
         WeakReferenceMessenger.Default.Register<FeedbackReceivedMessage>(
             this,
-            (r, message) =>
+            (_, message) =>
             {
                 messageReceived = true;
                 capturedMessage = message;
@@ -63,7 +63,7 @@ public class FeedbackMessengerTests
         _fakeUdp.RaiseReceived(testFeedback);
 
         // Wait for async processing
-        System.Threading.Thread.Sleep(100);
+        Thread.Sleep(100);
 
         // Assert
         Assert.That(messageReceived, Is.True, "Message should be received");
@@ -81,18 +81,18 @@ public class FeedbackMessengerTests
 
         WeakReferenceMessenger.Default.Register<FeedbackReceivedMessage>(
             this,
-            (r, m) => subscriber1Count++
+            (_, _) => subscriber1Count++
         );
         
         WeakReferenceMessenger.Default.Register<FeedbackReceivedMessage>(
             this,
-            (r, m) => subscriber2Count++
+            (_, _) => subscriber2Count++
         );
 
         // Act
         var testFeedback = new byte[] { 0x04, 0x00, 0xF0, 0xA1, 0x05, 0x03 };
         _fakeUdp.RaiseReceived(testFeedback);
-        System.Threading.Thread.Sleep(100);
+        Thread.Sleep(100);
 
         // Assert
         Assert.That(subscriber1Count, Is.EqualTo(1), "Subscriber 1 should receive message");
@@ -116,12 +116,12 @@ public class FeedbackMessengerTests
         var journeyMgr = new JourneyManager(_z21, project, workflowService);
 
         bool feedbackProcessed = false;
-        journeyMgr.FeedbackReceived += (s, e) => feedbackProcessed = true;
+        journeyMgr.FeedbackReceived += (_, _) => feedbackProcessed = true;
 
         // Act
         var testFeedback = new byte[] { 0x04, 0x00, 0xF0, 0xA1, 0x05, 0x03 };
         _fakeUdp.RaiseReceived(testFeedback);
-        System.Threading.Thread.Sleep(100);
+        Thread.Sleep(100);
 
         // Assert
         Assert.That(feedbackProcessed, Is.True, "JourneyManager should process feedback");
@@ -136,13 +136,13 @@ public class FeedbackMessengerTests
 
         WeakReferenceMessenger.Default.Register<FeedbackReceivedMessage>(
             this,
-            (r, m) => capturedMessage = m
+            (_, m) => capturedMessage = m
         );
 
         // Act
         var testFeedback = new byte[] { 0x04, 0x00, 0xF0, 0xA1, 0x05, 0x03 };
         _fakeUdp.RaiseReceived(testFeedback);
-        System.Threading.Thread.Sleep(100);
+        Thread.Sleep(100);
 
         var afterTime = DateTime.UtcNow;
 
@@ -160,20 +160,20 @@ public class FeedbackMessengerTests
 
         WeakReferenceMessenger.Default.Register<FeedbackReceivedMessage>(
             this,
-            (r, m) => messageCount++
+            (_, _) => messageCount++
         );
 
         // Act - Send first feedback
         var testFeedback = new byte[] { 0x04, 0x00, 0xF0, 0xA1, 0x05, 0x03 };
         _fakeUdp.RaiseReceived(testFeedback);
-        System.Threading.Thread.Sleep(100);
+        Thread.Sleep(100);
 
         // Unregister
         WeakReferenceMessenger.Default.Unregister<FeedbackReceivedMessage>(this);
 
         // Send second feedback
         _fakeUdp.RaiseReceived(testFeedback);
-        System.Threading.Thread.Sleep(100);
+        Thread.Sleep(100);
 
         // Assert
         Assert.That(messageCount, Is.EqualTo(1), "Should only receive first message after unregister");
@@ -184,12 +184,12 @@ public class FeedbackMessengerTests
     {
         // Arrange
         bool legacyEventFired = false;
-        _z21.Received += (feedback) => legacyEventFired = true;
+        _z21.Received += (_) => legacyEventFired = true;
 
         // Act
         var testFeedback = new byte[] { 0x04, 0x00, 0xF0, 0xA1, 0x05, 0x03 };
         _fakeUdp.RaiseReceived(testFeedback);
-        System.Threading.Thread.Sleep(100);
+        Thread.Sleep(100);
 
         // Assert
         Assert.That(legacyEventFired, Is.True, "Legacy Z21.Received event should still work");

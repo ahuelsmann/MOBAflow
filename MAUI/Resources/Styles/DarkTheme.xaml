@@ -19,6 +19,7 @@
     <Color x:Key="RailwayAccent">#81C784</Color>
     <Color x:Key="RailwayDanger">#EF5350</Color>
     <Color x:Key="RailwaySecondary">#FF9800</Color>
+    <Color x:Key="RailwayWarning">#FFB74D</Color>
 
     <!--  Error/Warning Colors  -->
     <Color x:Key="Error">#EF5350</Color>

@@ -3,6 +3,7 @@
 using Android.App;
 using Android.Content;
 using Android.OS;
+
 using AndroidX.Core.App;
 
 // ← Add MainActivity reference
@@ -55,35 +56,35 @@ public class Z21BackgroundService : global::Android.App.Service
         }
     }
 
-    private Notification BuildNotification(string title, string message)
+    private Notification? BuildNotification(string title, string message)
     {
         var intent = new Intent(this, typeof(MainActivity));
         intent.SetFlags(ActivityFlags.SingleTop);
-        
+
         var pendingIntent = PendingIntent.GetActivity(
-            this, 
-            0, 
-            intent, 
+            this,
+            0,
+            intent,
             PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
 
         var stopIntent = new Intent(this, typeof(Z21BackgroundService));
         stopIntent.SetAction("STOP_SERVICE");
         var stopPendingIntent = PendingIntent.GetService(
-            this, 
-            1, 
-            stopIntent, 
+            this,
+            1,
+            stopIntent,
             PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
 
         var builder = new NotificationCompat.Builder(this, CHANNEL_ID)
             .SetContentTitle(title)
-            .SetContentText(message)
-            .SetSmallIcon(global::Android.Resource.Drawable.IcMenuInfoDetails)
-            .SetOngoing(true)
-            .SetContentIntent(pendingIntent)
-            .AddAction(global::Android.Resource.Drawable.IcMenuCloseClearCancel, "Stop", stopPendingIntent)
-            .SetPriority(NotificationCompat.PriorityLow);
+            ?.SetContentText(message)
+            ?.SetSmallIcon(global::Android.Resource.Drawable.IcMenuInfoDetails)
+            ?.SetOngoing(true)
+            ?.SetContentIntent(pendingIntent)
+            ?.AddAction(global::Android.Resource.Drawable.IcMenuCloseClearCancel, "Stop", stopPendingIntent)
+            ?.SetPriority(NotificationCompat.PriorityLow);
 
-        return builder.Build();
+        return builder?.Build();
     }
 
     public override void OnDestroy()

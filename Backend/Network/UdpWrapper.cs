@@ -59,13 +59,6 @@ public class UdpWrapper : IUdpClientWrapper
     }
 
     /// <summary>
-    /// Raised for each received UDP datagram.
-    /// IMPORTANT: This event is raised on a background thread!
-    /// Platform-specific code must dispatch to UI thread if updating UI properties.
-    /// </summary>
-    public event EventHandler<UdpReceivedEventArgs>? ReceivedEvent;
-
-    /// <summary>
     /// Connects the wrapper to the remote endpoint and starts the receiver loop.
     /// If already connected, closes the existing connection first.
     /// </summary>

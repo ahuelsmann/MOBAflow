@@ -15,6 +15,6 @@ public sealed partial class FeedbackPointsPage : Page
     public FeedbackPointsPage(MainWindowViewModel viewModel)
     {
         ViewModel = viewModel;
-        this.InitializeComponent();
+        InitializeComponent();
     }
 }

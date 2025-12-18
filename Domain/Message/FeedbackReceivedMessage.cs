@@ -14,7 +14,8 @@ using CommunityToolkit.Mvvm.Messaging.Messages;
 /// It's the primary event that drives all feedback processing in MOBAflow.
 /// 
 /// Architecture:
-/// - Inherits from ValueChangedMessage<uint> where Value = InPort
+/// - Inherits from ValueChangedMessage
+/// where Value = InPort
 /// - Includes RawData (byte[]) for protocol analysis if needed
 /// - ReceivedAt timestamp for timing analysis
 /// 
