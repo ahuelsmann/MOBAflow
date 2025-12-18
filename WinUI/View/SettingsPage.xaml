@@ -130,23 +130,46 @@
                 </Expander.HeaderTemplate>
 
                 <StackPanel Padding="56,16,0,16" Spacing="16">
-                    <TextBox
-                        MaxWidth="500"
+                    <!--  Speech Engine Selection  -->
+                    <ComboBox
+                        x:Name="SpeechEngineComboBox"
+                        MaxWidth="400"
                         HorizontalAlignment="Left"
-                        Header="Azure Speech Key"
-                        PlaceholderText="Enter your Azure Speech API key"
-                        Text="{x:Bind ViewModel.SpeechKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        Header="Speech Engine"
+                        ItemsSource="{x:Bind ViewModel.AvailableSpeechEngines}"
+                        SelectedItem="{x:Bind ViewModel.SelectedSpeechEngine, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon FontSize="14" Glyph="&#xE8BD;" />
+                                    <TextBlock Text="{Binding}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
 
-                    <TextBox
-                        MaxWidth="300"
-                        HorizontalAlignment="Left"
-                        Header="Azure Region"
-                        PlaceholderText="germanywestcentral"
-                        Text="{x:Bind ViewModel.SpeechRegion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                        <TextBox.Description>
-                            <TextBlock Text="Azure region for Speech Service" />
-                        </TextBox.Description>
-                    </TextBox>
+                    <!--  Azure Settings (only shown when Azure engine selected)  -->
+                    <StackPanel
+                        Spacing="16"
+                        Visibility="{x:Bind ViewModel.IsAzureSpeechEngineSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBox
+                            MaxWidth="500"
+                            HorizontalAlignment="Left"
+                            Header="Azure Speech Key"
+                            PlaceholderText="Enter your Azure Speech API key"
+                            Text="{x:Bind ViewModel.SpeechKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <TextBox
+                            MaxWidth="300"
+                            HorizontalAlignment="Left"
+                            Header="Azure Region"
+                            PlaceholderText="germanywestcentral"
+                            Text="{x:Bind ViewModel.SpeechRegion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBox.Description>
+                                <TextBlock Text="Azure region for Speech Service" />
+                            </TextBox.Description>
+                        </TextBox>
+                    </StackPanel>
 
                     <Slider
                         Width="400"
@@ -165,6 +188,16 @@
                         Minimum="0"
                         StepFrequency="5"
                         Value="{x:Bind ViewModel.SpeechVolume, Mode=TwoWay}" />
+
+                    <!--  Test Button  -->
+                    <Button
+                        Command="{x:Bind ViewModel.TestSpeechCommand}"
+                        Content="Test Speech"
+                        ToolTipService.ToolTip="Play a test announcement">
+                        <Button.KeyboardAccelerators>
+                            <KeyboardAccelerator Key="T" Modifiers="Control" />
+                        </Button.KeyboardAccelerators>
+                    </Button>
                 </StackPanel>
             </Expander>
 

@@ -15,12 +15,14 @@ using System.Diagnostics;
 public class ActionExecutor
 {
     private readonly Interface.IZ21? _z21;
+    private readonly Backend.Service.AnnouncementService? _announcementService;
 
-    // ctor to allow tests to provide IZ21 when creating mocks
-    public ActionExecutor(Interface.IZ21? z21 = null)
+    public ActionExecutor(Interface.IZ21? z21 = null, Backend.Service.AnnouncementService? announcementService = null)
     {
         _z21 = z21;
+        _announcementService = announcementService;
     }
+
     /// <summary>
     /// Executes a WorkflowAction based on its type.
     /// </summary>
@@ -100,35 +102,51 @@ public class ActionExecutor
 
     /// <summary>
     /// Executes a text-to-speech announcement action.
-    /// Parameters: Message (string), VoiceName (string, optional)
-    /// Supports template placeholders: {StationName}, {JourneyName}
+    /// Uses Journey template text with placeholder replacement:
+    /// - {StationName} → Current station name
+    /// - {ExitDirection} → "links" or "rechts" based on Station.IsExitOnLeft
+    /// - {StationNumber} → Position in journey (1-based)
+    /// - {TrackNumber} → Station track number
+    /// 
+    /// Template comes from: Journey.Text (set in ActionExecutionContext.JourneyTemplateText)
     /// </summary>
     private async Task ExecuteAnnouncementAsync(WorkflowAction action, ActionExecutionContext context)
     {
-        // ✅ Graceful handling: Skip if prerequisites missing
-        if (action.Parameters == null || !action.Parameters.ContainsKey("Message"))
+        // Verify prerequisites
+        if (string.IsNullOrEmpty(context.JourneyTemplateText))
         {
-            Debug.WriteLine($"    ⚠ Announcement '{action.Name}' skipped: Missing Message parameter");
+            Debug.WriteLine($"    ⚠ Announcement '{action.Name}' skipped: No Journey template text");
             return;
         }
 
-        if (context.SpeakerEngine == null)
+        if (context.CurrentStation == null)
         {
-            Debug.WriteLine($"    ⚠ Announcement '{action.Name}' skipped: No SpeakerEngine configured");
+            Debug.WriteLine($"    ⚠ Announcement '{action.Name}' skipped: No current station");
             return;
         }
 
-        var message = action.Parameters["Message"].ToString()!;
-        var voiceName = action.Parameters.TryGetValue("VoiceName", out var voice)
-            ? voice.ToString()
-            : null;
+        if (_announcementService == null)
+        {
+            Debug.WriteLine($"    ⚠ Announcement '{action.Name}' skipped: AnnouncementService not configured");
+            return;
+        }
 
-        // ✅ Replace template placeholders with actual values
-        message = ReplaceTemplatePlaceholders(message, context);
+        // Generate announcement text from template
+        var announcementText = _announcementService.GenerateAnnouncementText(
+            new Domain.Journey { Text = context.JourneyTemplateText },
+            context.CurrentStation,
+            stationIndex: 1  // Will be calculated from context if needed
+        );
 
-        await context.SpeakerEngine.AnnouncementAsync(message, voiceName);
+        // Speak the announcement
+        await _announcementService.GenerateAndSpeakAnnouncementAsync(
+            new Domain.Journey { Text = context.JourneyTemplateText },
+            context.CurrentStation,
+            stationIndex: 1,
+            CancellationToken.None
+        ).ConfigureAwait(false);
 
-        Debug.WriteLine($"    ✓ Announcement: {message} (Voice: {voiceName ?? "default"})");
+        Debug.WriteLine($"    ✓ Announcement: \"{announcementText}\"");
     }
 
     /// <summary>

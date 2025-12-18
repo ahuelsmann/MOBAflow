@@ -2,6 +2,8 @@
 
 namespace Moba.Backend.Manager;
 
+using CommunityToolkit.Mvvm.Messaging;
+using Domain.Message;
 using Interface;
 using Service;
 using System.Diagnostics;
@@ -30,6 +32,18 @@ public abstract class BaseFeedbackManager<TEntity> : IFeedbackManager where TEnt
     {
         Z21 = z21;
         Entities = entities;
+        
+        // ✅ Subscribe to Messenger (new approach)
+        // Handler is simple lambda that doesn't capture 'this', avoiding memory leak with WeakReferences
+        WeakReferenceMessenger.Default.Register<FeedbackReceivedMessage>(
+            this,
+            (recipient, message) =>
+            {
+                OnMessageReceived(message);
+            }
+        );
+        
+        // Keep legacy Z21.Received subscription for backward compatibility
         Z21.Received += OnFeedbackReceived;
 
         ExecutionContext = executionContext ?? new ActionExecutionContext
@@ -56,6 +70,30 @@ public abstract class BaseFeedbackManager<TEntity> : IFeedbackManager where TEnt
             catch (Exception ex)
             {
                 Debug.WriteLine($"❌ ProcessFeedbackAsync failed for InPort {feedback.InPort}: {ex.Message}");
+                Debug.WriteLine($"   Stack trace: {ex.StackTrace}");
+            }
+        });
+    }
+
+    /// <summary>
+    /// Handles incoming feedback message from Messenger.
+    /// Converts FeedbackReceivedMessage to FeedbackResult and processes it.
+    /// Uses fire-and-forget pattern with proper exception handling.
+    /// </summary>
+    private void OnMessageReceived(FeedbackReceivedMessage message)
+    {
+        // Fire-and-forget with exception handling
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                // Convert InPort (uint from ValueChangedMessage) to FeedbackResult
+                var feedback = new FeedbackResult(message.RawData);
+                await ProcessFeedbackAsync(feedback).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ ProcessFeedbackAsync failed for Messenger message: {ex.Message}");
                 Debug.WriteLine($"   Stack trace: {ex.StackTrace}");
             }
         });

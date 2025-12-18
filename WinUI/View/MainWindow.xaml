@@ -197,6 +197,34 @@
                             <FontIcon FontSize="16" Glyph="&#xE793;" />
                         </ToggleButton>
                     </AppBarElementContainer>
+                    <AppBarSeparator />
+                    <!--  Speech Engine Selection  -->
+                    <AppBarElementContainer VerticalAlignment="Center" ToolTipService.ToolTip="Select Speech Engine">
+                        <ComboBox
+                            MinWidth="180"
+                            ItemsSource="{x:Bind ViewModel.AvailableSpeechEngines}"
+                            SelectedItem="{x:Bind ViewModel.SelectedSpeechEngine, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <FontIcon FontSize="12" Glyph="&#xE8BD;" />
+                                        <TextBlock Text="{Binding}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </AppBarElementContainer>
+                    <AppBarButton
+                        MinWidth="0"
+                        Command="{x:Bind ViewModel.TestSpeechCommand}"
+                        ToolTipService.ToolTip="Test Speech (Ctrl+T)">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xE8BD;" />
+                        </AppBarButton.Icon>
+                        <AppBarButton.KeyboardAccelerators>
+                            <KeyboardAccelerator Key="T" Modifiers="Control" />
+                        </AppBarButton.KeyboardAccelerators>
+                    </AppBarButton>
                 </CommandBar>
 
                 <!--  Content Frame for page navigation  -->

@@ -2,6 +2,8 @@
 
 namespace Moba.Backend;
 
+using CommunityToolkit.Mvvm.Messaging;
+using Domain.Message;
 using Interface;
 using Microsoft.Extensions.Logging;
 using Network;
@@ -360,8 +362,18 @@ public class Z21 : IZ21
 
         if (Z21MessageParser.IsRBusFeedback(content))
         {
-            Received?.Invoke(new FeedbackResult(content));
-            _logger?.LogDebug("RBus Feedback received");
+            // Parse feedback to get InPort
+            var feedback = new FeedbackResult(content);
+            
+            // ✅ Publish via Messenger (Feedback Event deprecated in favor of Messenger)
+            WeakReferenceMessenger.Default.Send(
+                new FeedbackReceivedMessage((uint)feedback.InPort, content)
+            );
+            
+            // Keep legacy event for backward compatibility (optional, can be removed later)
+            Received?.Invoke(feedback);
+            
+            _logger?.LogDebug("RBus Feedback received: InPort={InPort}", feedback.InPort);
             return;
         }
 

@@ -18,7 +18,7 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
-  solution: '**/*.sln'
+  solution: '**/*.slnx'
   buildPlatform: 'x64'
   buildConfiguration: 'Release'
   dotnetVersion: '10.0.x'

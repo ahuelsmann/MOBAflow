@@ -13,6 +13,16 @@ public class AppSettings
     public ApplicationSettings Application { get; set; } = new();
     public LoggingSettings Logging { get; set; } = new();
     public HealthCheckSettings HealthCheck { get; set; } = new();
+
+    /// <summary>
+    /// Gets Azure Speech Service subscription key (convenience property).
+    /// </summary>
+    public string? AzureSpeechKey => string.IsNullOrEmpty(Speech.Key) ? null : Speech.Key;
+
+    /// <summary>
+    /// Gets Azure Speech Service region (convenience property).
+    /// </summary>
+    public string? AzureSpeechRegion => string.IsNullOrEmpty(Speech.Region) ? null : Speech.Region;
 }
 
 /// <summary>

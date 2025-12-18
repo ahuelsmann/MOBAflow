@@ -146,7 +146,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>
                 var workflow = _project.Workflows.FirstOrDefault(w => w.Id == currentStation.WorkflowId.Value);
                 if (workflow != null)
                 {
-                    // Set template context for announcements
+                    // Set template context for actions (e.g., Announcement action)
                     ExecutionContext?.JourneyTemplateText = journey.Text;
                     ExecutionContext?.CurrentStation = currentStation;
 

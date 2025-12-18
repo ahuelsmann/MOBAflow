@@ -33,6 +33,7 @@ public partial class MainWindowViewModel : ObservableObject
     // Optional Services
     private readonly ICityService? _cityLibraryService;
     private readonly ISettingsService? _settingsService;
+    private readonly AnnouncementService? _announcementService;
 
     // Runtime State
     private JourneyManager? _journeyManager;
@@ -47,7 +48,8 @@ public partial class MainWindowViewModel : ObservableObject
         AppSettings settings,
         Solution solution,
         ICityService? cityLibraryService = null,
-        ISettingsService? settingsService = null)
+        ISettingsService? settingsService = null,
+        AnnouncementService? announcementService = null)
     {
         _ioService = ioService;
         _z21 = z21;
@@ -56,6 +58,7 @@ public partial class MainWindowViewModel : ObservableObject
         _settings = settings;
         _cityLibraryService = cityLibraryService;
         _settingsService = settingsService;
+        _announcementService = announcementService;
 
         // Subscribe to Solution changes
         Solution = solution;

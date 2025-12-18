@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml;
 
 using Moba.Backend.Service;
 using Moba.Common.Configuration;
+using Moba.Sound;
 
 namespace Moba.WinUI;
 
@@ -81,6 +82,14 @@ public partial class App
         // Logging (required by HealthCheckService and SpeechHealthCheck)
         services.AddLogging();
 
+        // ✅ Register ISpeakerEngine - SystemSpeechEngine works OFFLINE (no Azure needed!)
+        // Uses Windows SAPI - always works without cloud credentials
+        services.AddSingleton<ISpeakerEngine>(sp =>
+        {
+            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<Sound.SystemSpeechEngine>>();
+            return new Sound.SystemSpeechEngine(logger!);
+        });
+
         // Backend Services (Interfaces are in Backend.Interface and Backend.Network)
         services.AddSingleton<Z21Monitor>();
         services.AddSingleton<Backend.Interface.IZ21, Backend.Z21>(sp =>
@@ -93,17 +102,24 @@ public partial class App
         services.AddSingleton<Backend.Network.IUdpClientWrapper, Backend.Network.UdpWrapper>();
 
         // Backend Services - Register in dependency order
+        // ✅ AnnouncementService FIRST (uses ISpeakerEngine)
+        services.AddSingleton(sp =>
+        {
+            var speakerEngine = sp.GetService<ISpeakerEngine>();
+            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<Backend.Service.AnnouncementService>>();
+            return new Backend.Service.AnnouncementService(speakerEngine, logger);
+        });
+        
+        // ✅ ActionExecutor with AnnouncementService for Announcement actions
         services.AddSingleton(sp =>
         {
             var z21 = sp.GetRequiredService<Backend.Interface.IZ21>();
-            return new ActionExecutor(z21);
+            var announcementService = sp.GetRequiredService<Backend.Service.AnnouncementService>();
+            return new ActionExecutor(z21, announcementService);
         });
+        
         services.AddSingleton<WorkflowService>();
-
-        // Domain.Solution - Pure POCO, no Settings initialization needed
-        services.AddSingleton(sp => new Domain.Solution());
-
-        // WinUI Services (Interfaces are in SharedUI.Service)
+        
         services.AddSingleton<SharedUI.Interface.IIoService, Service.IoService>();
         services.AddSingleton<SharedUI.Interface.IUiDispatcher, Service.UiDispatcher>();
         services.AddSingleton<SharedUI.Interface.ICityService, Service.CityService>();
@@ -119,7 +135,21 @@ public partial class App
         // Note: Wrapper ViewModels (SolutionViewModel, ProjectViewModel, JourneyViewModel, etc.)
         // are created with 'new' at runtime because they wrap Domain models.
         // Only "standalone" ViewModels that don't wrap models are registered here.
-        services.AddSingleton<SharedUI.ViewModel.MainWindowViewModel>();
+
+        // Domain.Solution as singleton (shared across application lifetime)
+        services.AddSingleton<Domain.Solution>();
+
+        services.AddSingleton(sp => new SharedUI.ViewModel.MainWindowViewModel(
+            sp.GetRequiredService<SharedUI.Interface.IIoService>(),
+            sp.GetRequiredService<Backend.Interface.IZ21>(),
+            sp.GetRequiredService<WorkflowService>(),
+            sp.GetRequiredService<SharedUI.Interface.IUiDispatcher>(),
+            sp.GetRequiredService<Common.Configuration.AppSettings>(),
+            sp.GetRequiredService<Domain.Solution>(),
+            sp.GetService<SharedUI.Interface.ICityService>(),
+            sp.GetService<SharedUI.Interface.ISettingsService>(),
+            sp.GetService<Backend.Service.AnnouncementService>()  // For TestSpeech command
+        ));
         services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
         services.AddSingleton<SharedUI.ViewModel.TrackPlanEditorViewModel>();
         services.AddSingleton<SharedUI.ViewModel.JourneyMapViewModel>();

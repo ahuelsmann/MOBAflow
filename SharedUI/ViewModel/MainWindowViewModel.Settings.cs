@@ -123,6 +123,39 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// List of available speech engines for selection.
+    /// </summary>
+    public string[] AvailableSpeechEngines { get; } = 
+    [
+        "System Speech (Windows SAPI)",
+        "Azure Cognitive Services"
+    ];
+
+    /// <summary>
+    /// Currently selected speech engine name.
+    /// </summary>
+    public string? SelectedSpeechEngine
+    {
+        get => _settings.Speech.SpeakerEngineName ?? AvailableSpeechEngines[0];
+        set
+        {
+            if (_settings.Speech.SpeakerEngineName != value)
+            {
+                _settings.Speech.SpeakerEngineName = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsAzureSpeechEngineSelected));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Returns true if Azure Cognitive Services is selected.
+    /// Used to show/hide Azure-specific settings.
+    /// </summary>
+    public bool IsAzureSpeechEngineSelected => 
+        SelectedSpeechEngine?.Contains("Azure", StringComparison.OrdinalIgnoreCase) == true;
+
     public bool ResetWindowLayoutOnStart
     {
         get => _settings.Application.ResetWindowLayoutOnStart;
@@ -249,6 +282,8 @@ public partial class MainWindowViewModel
             OnPropertyChanged(nameof(SpeechRegion));
             OnPropertyChanged(nameof(SpeechRate));
             OnPropertyChanged(nameof(SpeechVolume));
+            OnPropertyChanged(nameof(SelectedSpeechEngine));
+            OnPropertyChanged(nameof(IsAzureSpeechEngineSelected));
             OnPropertyChanged(nameof(ResetWindowLayoutOnStart));
             OnPropertyChanged(nameof(AutoLoadLastSolution));
             OnPropertyChanged(nameof(HealthCheckEnabled));
@@ -261,6 +296,36 @@ public partial class MainWindowViewModel
         catch (Exception ex)
         {
             ErrorMessage = ex.Message;
+            ShowErrorMessage = true;
+        }
+    }
+
+    [RelayCommand]
+    private async Task TestSpeechAsync()
+    {
+        try
+        {
+            ShowErrorMessage = false;
+            
+            // Get the current speaker engine from DI (injected via AnnouncementService)
+            var testMessage = "Dies ist ein Test der Sprachausgabe. Nächster Halt: Bielefeld Hauptbahnhof.";
+            
+            // Use the announcement service if available
+            if (_announcementService != null)
+            {
+                var testJourney = new Domain.Journey { Text = testMessage };
+                var testStation = new Domain.Station { Name = "Test", IsExitOnLeft = false };
+                await _announcementService.GenerateAndSpeakAnnouncementAsync(testJourney, testStation, 1);
+            }
+            else
+            {
+                ErrorMessage = "Speech service not available";
+                ShowErrorMessage = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Speech test failed: {ex.Message}";
             ShowErrorMessage = true;
         }
     }
