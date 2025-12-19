@@ -23,8 +23,8 @@ public class Workflow
     /// Actions as data objects (execution moved to ActionExecutor)
     /// </summary>
     public List<WorkflowAction> Actions { get; set; }
-    
-    public uint InPort { get; set; } = 1;
+
+    public uint InPort { get; set; }
     public bool IsUsingTimerToIgnoreFeedbacks { get; set; }
     public double IntervalForTimerToIgnoreFeedbacks { get; set; }
 }

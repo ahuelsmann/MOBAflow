@@ -16,12 +16,12 @@ public class Station
     public Guid Id { get; set; }
     public string Name { get; set; }
     public string? Description { get; set; }
-        
+
     /// <summary>
     /// Hardware feedback address (Z21 InPort).
     /// Used for feedback detection on the physical model railroad.
     /// </summary>
-    public uint InPort { get; set; } = 1;
+    public uint InPort { get; set; }
 
     /// <summary>
     /// Number of laps before stopping at this station.

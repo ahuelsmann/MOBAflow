@@ -24,7 +24,7 @@ public class Journey
 
     public List<Station> Stations { get; set; }
 
-    public uint InPort { get; set; } = 1;
+    public uint InPort { get; set; }
     public bool IsUsingTimerToIgnoreFeedbacks { get; set; }
     public double IntervalForTimerToIgnoreFeedbacks { get; set; }
     public BehaviorOnLastStop BehaviorOnLastStop { get; set; }

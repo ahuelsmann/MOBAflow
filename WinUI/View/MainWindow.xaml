@@ -182,10 +182,8 @@
         <!--  StatusBar  -->
         <Grid
             Grid.Row="2"
-            Height="32"
             Background="{ThemeResource LayerFillColorDefaultBrush}"
-            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-            BorderThickness="0,1,0,0">
+            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
@@ -196,17 +194,15 @@
             <!--  Z21 Status (links)  -->
             <StackPanel
                 Grid.Column="0"
-                Margin="12,0"
                 VerticalAlignment="Center"
-                Orientation="Horizontal"
-                Spacing="8">
+                Orientation="Horizontal">
                 <FontIcon
                     x:Name="Z21StatusIcon"
+                    Margin="12,0,12,0"
                     FontSize="14"
                     Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                     Glyph="&#xF384;" />
                 <ToggleSwitch
-                    Margin="6,-4"
                     FontSize="12"
                     IsOn="False"
                     OffContent="Disconnected"
@@ -231,10 +227,9 @@
             <StackPanel
                 x:Name="SpeechHealthPanel"
                 Grid.Column="2"
-                Margin="0,0,12,0"
+                Margin="8,0,0,0"
                 VerticalAlignment="Center"
-                Orientation="Horizontal"
-                Spacing="8">
+                Orientation="Horizontal">
                 <AppBarElementContainer VerticalAlignment="Center">
                     <DropDownButton MinWidth="160">
                         <DropDownButton.Content>
@@ -259,6 +254,7 @@
                 </AppBarElementContainer>
                 <FontIcon
                     x:Name="SpeechHealthIcon"
+                    Margin="12,0,12,0"
                     FontSize="14"
                     Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                     Glyph="{x:Bind ViewModel.SpeechHealthIcon, Mode=OneWay}" />

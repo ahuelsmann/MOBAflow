@@ -40,10 +40,7 @@ public sealed class FeedbackReceivedMessage : ValueChangedMessage<uint>
     /// </summary>
     /// <param name="inPort">Track feedback point number (1-128)</param>
     /// <param name="rawData">Raw UDP packet bytes from Z21</param>
-    public FeedbackReceivedMessage(uint inPort, byte[] rawData)
-        : this(inPort, rawData, DateTime.UtcNow)
-    {
-    }
+    public FeedbackReceivedMessage(uint inPort, byte[] rawData) : this(inPort, rawData, DateTime.UtcNow) { }
 
     /// <summary>
     /// Creates a new feedback received message with explicit timestamp.
@@ -51,8 +48,7 @@ public sealed class FeedbackReceivedMessage : ValueChangedMessage<uint>
     /// <param name="inPort">Track feedback point number (1-128)</param>
     /// <param name="rawData">Raw UDP packet bytes from Z21</param>
     /// <param name="receivedAt">When feedback was received (UTC)</param>
-    public FeedbackReceivedMessage(uint inPort, byte[] rawData, DateTime receivedAt)
-        : base(inPort)
+    public FeedbackReceivedMessage(uint inPort, byte[] rawData, DateTime receivedAt) : base(inPort)
     {
         RawData = rawData;
         ReceivedAt = receivedAt;
