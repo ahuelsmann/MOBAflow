@@ -1,11 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
 <Page
     x:Class="Moba.WinUI.View.FeedbackPointsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:domain="using:Moba.Domain"
-    xmlns:i="using:Microsoft.Xaml.Interactivity"
-    xmlns:local="using:Moba.WinUI.Behavior"
     DataContext="{x:Bind ViewModel}">
 
     <Grid>
@@ -37,16 +34,19 @@
                     FontWeight="SemiBold"
                     Style="{StaticResource SubtitleTextBlockStyle}"
                     Text="Feedback Points" />
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                <StackPanel
+                    Grid.Column="1"
+                    Orientation="Horizontal"
+                    Spacing="2">
                     <Button
-                        Command="{x:Bind ViewModel.AddFeedbackPointCommand}"
                         Padding="4"
+                        Command="{x:Bind ViewModel.AddFeedbackPointCommand}"
                         ToolTipService.ToolTip="Create a new feedback point with the next available InPort">
                         <FontIcon FontSize="14" Glyph="&#xE710;" />
                     </Button>
                     <Button
-                        Command="{x:Bind ViewModel.DeleteFeedbackPointCommand}"
                         Padding="4"
+                        Command="{x:Bind ViewModel.DeleteFeedbackPointCommand}"
                         ToolTipService.ToolTip="Remove the selected feedback point">
                         <FontIcon FontSize="14" Glyph="&#xE74D;" />
                     </Button>
@@ -65,9 +65,7 @@
                         <Grid Padding="8,6">
                             <StackPanel Spacing="4">
                                 <TextBlock FontWeight="SemiBold" Text="{x:Bind Name, Mode=OneWay}" />
-                                <TextBlock
-                                    FontSize="12"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
                                     <Run Text="InPort " />
                                     <Run FontWeight="Bold" Text="{x:Bind InPort, Mode=OneWay}" />
                                 </TextBlock>

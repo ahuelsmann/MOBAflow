@@ -299,23 +299,6 @@
                                     Text="{x:Bind ViewModel.LayoutDescription, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                     TextWrapping="Wrap" />
 
-                                <ComboBox Header="Track System" SelectedItem="{x:Bind ViewModel.TrackSystem, Mode=TwoWay}">
-                                    <x:String>Piko A-Gleis</x:String>
-                                    <x:String>Tillig Elite</x:String>
-                                    <x:String>Roco Line</x:String>
-                                    <x:String>Märklin C-Gleis</x:String>
-                                    <x:String>Fleischmann Profi</x:String>
-                                </ComboBox>
-
-                                <ComboBox Header="Scale" SelectedItem="{x:Bind ViewModel.Scale, Mode=TwoWay}">
-                                    <x:String>H0</x:String>
-                                    <x:String>N</x:String>
-                                    <x:String>TT</x:String>
-                                    <x:String>Z</x:String>
-                                    <x:String>0</x:String>
-                                    <x:String>G</x:String>
-                                </ComboBox>
-
                                 <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
                                 <TextBlock

@@ -44,16 +44,19 @@
                     FontWeight="SemiBold"
                     Style="{StaticResource SubtitleTextBlockStyle}"
                     Text="Workflows" />
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                <StackPanel
+                    Grid.Column="1"
+                    Orientation="Horizontal"
+                    Spacing="2">
                     <Button
-                        Command="{x:Bind ViewModel.AddWorkflowCommand}"
                         Padding="4"
+                        Command="{x:Bind ViewModel.AddWorkflowCommand}"
                         ToolTipService.ToolTip="Create a new workflow">
                         <FontIcon FontSize="14" Glyph="&#xE710;" />
                     </Button>
                     <Button
-                        Command="{x:Bind ViewModel.DeleteWorkflowCommand}"
                         Padding="4"
+                        Command="{x:Bind ViewModel.DeleteWorkflowCommand}"
                         ToolTipService.ToolTip="Remove the selected workflow">
                         <FontIcon FontSize="14" Glyph="&#xE74D;" />
                     </Button>

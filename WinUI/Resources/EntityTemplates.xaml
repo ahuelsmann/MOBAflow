@@ -136,7 +136,7 @@
                 <!--  Text-to-Speech Template  -->
                 <TextBox
                     Height="240"
-                    AcceptsReturn="True" 
+                    AcceptsReturn="True"
                     Header="Text-to-Speech Template"
                     PlaceholderText="e.g., '{TrainName} is arriving at {StationName}'"
                     Text="{Binding Text, Mode=TwoWay}"
@@ -579,5 +579,4 @@
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>
-
 </ResourceDictionary>

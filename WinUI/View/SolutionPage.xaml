@@ -39,16 +39,19 @@
                     FontWeight="SemiBold"
                     Style="{StaticResource SubtitleTextBlockStyle}"
                     Text="Projects" />
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                <StackPanel
+                    Grid.Column="1"
+                    Orientation="Horizontal"
+                    Spacing="2">
                     <Button
-                        Command="{x:Bind ViewModel.AddProjectCommand}"
                         Padding="4"
+                        Command="{x:Bind ViewModel.AddProjectCommand}"
                         ToolTipService.ToolTip="Create a new MOBA project">
                         <FontIcon FontSize="14" Glyph="&#xE710;" />
                     </Button>
                     <Button
-                        Command="{x:Bind ViewModel.DeleteProjectCommand}"
                         Padding="4"
+                        Command="{x:Bind ViewModel.DeleteProjectCommand}"
                         ToolTipService.ToolTip="Remove the selected project">
                         <FontIcon FontSize="14" Glyph="&#xE74D;" />
                     </Button>
