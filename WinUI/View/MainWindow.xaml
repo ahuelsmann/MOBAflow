@@ -19,16 +19,23 @@
         <!--  TitleBar  -->
         <TitleBar
             x:Name="AppTitleBar"
-            Title="MOBAflow"
+            Title="MOBA"
             Grid.Row="0"
             IsBackButtonVisible="False"
             IsPaneToggleButtonVisible="False"
-            Subtitle="">
+            Subtitle="flow">
             <TitleBar.IconSource>
                 <FontIconSource FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE7C0;" />
             </TitleBar.IconSource>
+            <TitleBar.RightHeader>
+                <!--<ToggleSwitch
+                    IsOn="False"
+                    OffContent="Disconnected"
+                    OnContent="Connected" />-->
+            </TitleBar.RightHeader>
         </TitleBar>
 
+        <!--  NavigationView  -->
         <NavigationView
             x:Name="MainNavigation"
             Grid.Row="1"
@@ -159,12 +166,6 @@
                         Icon="Refresh"
                         Label="Reset" />
                     <AppBarSeparator />
-                    <!--  Speech  -->
-                    <AppBarButton
-                        Command="{x:Bind ViewModel.TestSpeechCommand}"
-                        Icon="Volume"
-                        Label="Test" />
-                    <AppBarSeparator />
                     <!--  Theme Toggle  -->
                     <AppBarToggleButton IsChecked="{x:Bind ViewModel.IsDarkMode, Mode=TwoWay}" Label="Dark">
                         <AppBarToggleButton.Icon>
@@ -178,7 +179,7 @@
             </Grid>
         </NavigationView>
 
-        <!--  StatusBar - Over the entire width of the window  -->
+        <!--  StatusBar  -->
         <Grid
             Grid.Row="2"
             Height="32"
