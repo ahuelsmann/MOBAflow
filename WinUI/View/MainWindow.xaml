@@ -98,29 +98,42 @@
                     IsOpen="False"
                     OverflowButtonVisibility="Auto">
                     <!--  File Operations  -->
-                    <AppBarButton
-                        Command="{x:Bind ViewModel.NewSolutionCommand}"
-                        Icon="Add"
-                        Label="New" />
-                    <AppBarButton
-                        Command="{x:Bind ViewModel.LoadSolutionCommand}"
-                        Icon="OpenFile"
-                        Label="Open" />
+                    <AppBarButton Command="{x:Bind ViewModel.NewSolutionCommand}" Label="New">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xE729;" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton Command="{x:Bind ViewModel.LoadSolutionCommand}" Label="Open">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xE838;" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
                     <AppBarButton
                         Command="{x:Bind ViewModel.SaveSolutionCommand}"
                         Icon="Save"
                         Label="Save" />
                     <AppBarSeparator />
+                    <!--  Import Export  -->
+                    <AppBarButton Command="{x:Bind TrackPlanEditorViewModel.BrowseAndLoadAnyRailLayoutCommand}" Label="Import">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xE896;" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton Command="{x:Bind TrackPlanEditorViewModel.ExportToAnyRailCommand}" Label="Export">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xE898;" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
                     <!--  Z21 Connection  -->
-                    <AppBarButton
+                    <!--<AppBarButton
                         Command="{x:Bind CounterViewModel.ConnectCommand}"
                         Icon="Globe"
-                        Label="Connect" />
-                    <AppBarButton
+                        Label="Connect" />-->
+                    <!--<AppBarButton
                         Command="{x:Bind CounterViewModel.DisconnectCommand}"
                         Icon="Cancel"
-                        Label="Disconnect" />
-                    <AppBarToggleButton
+                        Label="Disconnect" />-->
+                    <!--<AppBarToggleButton
                         Click="TrackPower_Click"
                         IsChecked="{x:Bind CounterViewModel.IsTrackPowerOn, Mode=OneWay}"
                         IsEnabled="{x:Bind CounterViewModel.IsConnected, Mode=OneWay}"
@@ -128,7 +141,7 @@
                         <AppBarToggleButton.Icon>
                             <FontIcon Glyph="&#xE945;" />
                         </AppBarToggleButton.Icon>
-                    </AppBarToggleButton>
+                    </AppBarToggleButton>-->
                     <AppBarSeparator />
                     <!--  Simulation  -->
                     <AppBarButton
@@ -147,28 +160,6 @@
                         Label="Reset" />
                     <AppBarSeparator />
                     <!--  Speech  -->
-                    <AppBarElementContainer VerticalAlignment="Center">
-                        <DropDownButton MinWidth="160">
-                            <DropDownButton.Content>
-                                <TextBlock
-                                    Style="{StaticResource CaptionTextBlockStyle}"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="{x:Bind ViewModel.SelectedSpeechEngine, Mode=OneWay}" />
-                            </DropDownButton.Content>
-                            <DropDownButton.Flyout>
-                                <MenuFlyout>
-                                    <MenuFlyoutItem
-                                        Text="System Speech (Windows SAPI)"
-                                        Command="{x:Bind ViewModel.SelectSpeechEngineCommand}"
-                                        CommandParameter="System Speech (Windows SAPI)" />
-                                    <MenuFlyoutItem
-                                        Text="Azure Cognitive Services"
-                                        Command="{x:Bind ViewModel.SelectSpeechEngineCommand}"
-                                        CommandParameter="Azure Cognitive Services" />
-                                </MenuFlyout>
-                            </DropDownButton.Flyout>
-                        </DropDownButton>
-                    </AppBarElementContainer>
                     <AppBarButton
                         Command="{x:Bind ViewModel.TestSpeechCommand}"
                         Icon="Volume"
@@ -180,19 +171,6 @@
                             <FontIcon Glyph="&#xE793;" />
                         </AppBarToggleButton.Icon>
                     </AppBarToggleButton>
-
-                    <!--  Secondary Commands (overflow menu)  -->
-                    <CommandBar.SecondaryCommands>
-                        <AppBarButton
-                            Command="{x:Bind TrackPlanEditorViewModel.BrowseAndLoadAnyRailLayoutCommand}"
-                            Icon="Import"
-                            Label="Import AnyRail" />
-                        <AppBarButton Command="{x:Bind TrackPlanEditorViewModel.ExportToAnyRailCommand}" Label="Export AnyRail">
-                            <AppBarButton.Icon>
-                                <FontIcon Glyph="&#xEDE1;" />
-                            </AppBarButton.Icon>
-                        </AppBarButton>
-                    </CommandBar.SecondaryCommands>
                 </CommandBar>
 
                 <!--  Content Frame for page navigation  -->
@@ -226,21 +204,27 @@
                     FontSize="14"
                     Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                     Glyph="&#xF384;" />
-                <TextBlock
+                <ToggleSwitch
+                    Margin="6,-4"
+                    FontSize="12"
+                    IsOn="False"
+                    OffContent="Disconnected"
+                    OnContent="Connected" />
+                <!--<TextBlock
                     VerticalAlignment="Center"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Style="{StaticResource CaptionTextBlockStyle}"
-                    Text="{x:Bind ViewModel.Z21StatusText, Mode=OneWay}" />
+                    Text="{x:Bind ViewModel.Z21StatusText, Mode=OneWay}" />-->
             </StackPanel>
 
             <!--  Divider  -->
-            <Border
+            <!--<Border
                 Grid.Column="1"
                 Width="1"
                 Height="20"
                 Margin="8,0"
                 VerticalAlignment="Center"
-                Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                Background="{ThemeResource DividerStrokeColorDefaultBrush}" />-->
 
             <!--  Azure Speech Health Status  -->
             <StackPanel
@@ -250,18 +234,40 @@
                 VerticalAlignment="Center"
                 Orientation="Horizontal"
                 Spacing="8">
+                <AppBarElementContainer VerticalAlignment="Center">
+                    <DropDownButton MinWidth="160">
+                        <DropDownButton.Content>
+                            <TextBlock
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="{x:Bind ViewModel.SelectedSpeechEngine, Mode=OneWay}" />
+                        </DropDownButton.Content>
+                        <DropDownButton.Flyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem
+                                    Command="{x:Bind ViewModel.SelectSpeechEngineCommand}"
+                                    CommandParameter="System Speech (Windows SAPI)"
+                                    Text="System Speech (Windows SAPI)" />
+                                <MenuFlyoutItem
+                                    Command="{x:Bind ViewModel.SelectSpeechEngineCommand}"
+                                    CommandParameter="Azure Cognitive Services"
+                                    Text="Azure Cognitive Services" />
+                            </MenuFlyout>
+                        </DropDownButton.Flyout>
+                    </DropDownButton>
+                </AppBarElementContainer>
                 <FontIcon
                     x:Name="SpeechHealthIcon"
                     FontSize="14"
                     Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                     Glyph="{x:Bind ViewModel.SpeechHealthIcon, Mode=OneWay}" />
-                <TextBlock
+                <!--<TextBlock
                     x:Name="SpeechHealthText"
                     VerticalAlignment="Center"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Text="{x:Bind ViewModel.SpeechHealthStatus, Mode=OneWay}"
-                    ToolTipService.ToolTip="Azure Speech Service Health Status" />
+                    ToolTipService.ToolTip="Azure Speech Service Health Status" />-->
             </StackPanel>
 
             <!--  Solution Path (rechts)  -->

@@ -20,13 +20,6 @@
                     Grid.Column="0"
                     Style="{StaticResource TitleTextBlockStyle}"
                     Text="Settings" />
-
-                <ToggleSwitch
-                    Grid.Column="1"
-                    Margin="24,0,0,0"
-                    IsOn="{x:Bind ViewModel.IsDarkMode, Mode=TwoWay}"
-                    OffContent="Light"
-                    OnContent="Dark" />
             </Grid>
 
             <!--  Z21 Connection Section  -->
@@ -38,7 +31,7 @@
                 <Expander.HeaderTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal" Spacing="12">
-                            <FontIcon FontSize="20" Glyph="&#xE968;" />
+              <FontIcon FontSize="20" Glyph="&#xE8CE;" />
                             <TextBlock
                                 VerticalAlignment="Center"
                                 Style="{StaticResource SubtitleTextBlockStyle}"
@@ -222,7 +215,7 @@
                 <Expander.HeaderTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal" Spacing="12">
-                            <FontIcon FontSize="20" Glyph="&#xE713;" />
+              <FontIcon FontSize="20" Glyph="&#xF71C;" />
                             <TextBlock
                                 VerticalAlignment="Center"
                                 Style="{StaticResource SubtitleTextBlockStyle}"

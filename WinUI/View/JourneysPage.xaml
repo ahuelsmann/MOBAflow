@@ -48,16 +48,19 @@
                     FontWeight="SemiBold"
                     Style="{StaticResource SubtitleTextBlockStyle}"
                     Text="Journeys" />
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                <StackPanel
+                    Grid.Column="1"
+                    Orientation="Horizontal"
+                    Spacing="2">
                     <Button
-                        Command="{x:Bind ViewModel.AddJourneyCommand}"
                         Padding="4"
+                        Command="{x:Bind ViewModel.AddJourneyCommand}"
                         ToolTipService.ToolTip="Create a new journey">
                         <FontIcon FontSize="14" Glyph="&#xE710;" />
                     </Button>
                     <Button
-                        Command="{x:Bind ViewModel.DeleteJourneyCommand}"
                         Padding="4"
+                        Command="{x:Bind ViewModel.DeleteJourneyCommand}"
                         ToolTipService.ToolTip="Remove the selected journey">
                         <FontIcon FontSize="14" Glyph="&#xE74D;" />
                     </Button>
@@ -142,16 +145,19 @@
                     FontWeight="SemiBold"
                     Style="{StaticResource SubtitleTextBlockStyle}"
                     Text="Stations" />
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                <StackPanel
+                    Grid.Column="1"
+                    Orientation="Horizontal"
+                    Spacing="2">
                     <Button
-                        Command="{x:Bind ViewModel.AddStationCommand}"
                         Padding="4"
+                        Command="{x:Bind ViewModel.AddStationCommand}"
                         ToolTipService.ToolTip="Add a new station to this journey">
                         <FontIcon FontSize="14" Glyph="&#xE710;" />
                     </Button>
                     <Button
-                        Command="{x:Bind ViewModel.DeleteStationCommand}"
                         Padding="4"
+                        Command="{x:Bind ViewModel.DeleteStationCommand}"
                         ToolTipService.ToolTip="Remove the selected station">
                         <FontIcon FontSize="14" Glyph="&#xE74D;" />
                     </Button>
@@ -320,16 +326,10 @@
                     <DataTemplate x:DataType="viewmodel:WorkflowViewModel">
                         <Grid Padding="6">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <FontIcon
-                                Grid.Column="0"
-                                Margin="0,0,8,0"
-                                FontSize="16"
-                                Glyph="&#xE9D5;" />
                             <TextBlock
-                                Grid.Column="1"
+                                Grid.Column="0"
                                 VerticalAlignment="Center"
                                 Text="{x:Bind Name, Mode=OneWay}" />
                         </Grid>

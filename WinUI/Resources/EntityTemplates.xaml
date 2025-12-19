@@ -48,39 +48,38 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-
                         <TextBlock
                             Grid.Row="0"
-                            Grid.Column="0"
-                            Text="Current Station:" />
-                        <TextBlock
-                            Grid.Row="0"
-                            Grid.Column="1"
-                            FontWeight="SemiBold"
-                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                            Text="{Binding CurrentStation, Mode=OneWay}" />
-
-                        <TextBlock
-                            Grid.Row="1"
                             Grid.Column="0"
                             Text="Counter:" />
                         <TextBlock
-                            Grid.Row="1"
+                            Grid.Row="0"
                             Grid.Column="1"
                             FontWeight="SemiBold"
                             Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                             Text="{Binding CurrentCounter, Mode=OneWay}" />
 
                         <TextBlock
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            Text="Position:" />
+                        <TextBlock
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Text="{Binding CurrentPos, Mode=OneWay}" />
+
+                        <TextBlock
                             Grid.Row="2"
                             Grid.Column="0"
-                            Text="Current Position:" />
+                            Text="Current Station:" />
                         <TextBlock
                             Grid.Row="2"
                             Grid.Column="1"
                             FontWeight="SemiBold"
                             Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                            Text="{Binding CurrentPos, Mode=OneWay}" />
+                            Text="{Binding CurrentStation, Mode=OneWay}" />
                     </Grid>
                 </StackPanel>
 
@@ -204,22 +203,16 @@
                     <!--  Content  -->
                     <Grid Margin="12">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <FontIcon
-                            Grid.Column="0"
-                            Margin="0,0,8,0"
-                            FontSize="16"
-                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                            Glyph="&#xE9D5;" />
+           
                         <TextBlock
-                            Grid.Column="1"
+                            Grid.Column="0"
                             VerticalAlignment="Center"
                             Text="{Binding WorkflowName, Mode=OneWay, TargetNullValue='Drop workflow here...'}" />
                         <FontIcon
-                            Grid.Column="2"
+                            Grid.Column="1"
                             FontSize="14"
                             Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                             Glyph="&#xE74B;"
@@ -402,7 +395,10 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Journeys:" />
+                        <TextBlock
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            Text="Journeys:" />
                         <TextBlock
                             Grid.Row="0"
                             Grid.Column="1"
@@ -410,7 +406,10 @@
                             Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                             Text="{Binding JourneyCount, Mode=OneWay}" />
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Workflows:" />
+                        <TextBlock
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            Text="Workflows:" />
                         <TextBlock
                             Grid.Row="1"
                             Grid.Column="1"
@@ -418,7 +417,10 @@
                             Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                             Text="{Binding WorkflowCount, Mode=OneWay}" />
 
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Trains:" />
+                        <TextBlock
+                            Grid.Row="2"
+                            Grid.Column="0"
+                            Text="Trains:" />
                         <TextBlock
                             Grid.Row="2"
                             Grid.Column="1"
@@ -426,7 +428,10 @@
                             Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                             Text="{Binding TrainCount, Mode=OneWay}" />
 
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Locomotives:" />
+                        <TextBlock
+                            Grid.Row="3"
+                            Grid.Column="0"
+                            Text="Locomotives:" />
                         <TextBlock
                             Grid.Row="3"
                             Grid.Column="1"
@@ -434,7 +439,10 @@
                             Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                             Text="{Binding LocomotiveCount, Mode=OneWay}" />
 
-                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Wagons:" />
+                        <TextBlock
+                            Grid.Row="4"
+                            Grid.Column="0"
+                            Text="Wagons:" />
                         <TextBlock
                             Grid.Row="4"
                             Grid.Column="1"
@@ -442,7 +450,10 @@
                             Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                             Text="{Binding WagonCount, Mode=OneWay}" />
 
-                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Feedback Points:" />
+                        <TextBlock
+                            Grid.Row="5"
+                            Grid.Column="0"
+                            Text="Feedback Points:" />
                         <TextBlock
                             Grid.Row="5"
                             Grid.Column="1"

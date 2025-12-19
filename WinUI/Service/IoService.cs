@@ -2,13 +2,18 @@
 namespace Moba.WinUI.Service;
 
 using Backend.Converter;
+
 using Domain;
+
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.Storage.Pickers;
+
 using Newtonsoft.Json;
+
 using SharedUI.Interface;
+
 using System.Diagnostics;
 
 public class IoService : IIoService
@@ -46,7 +51,7 @@ public class IoService : IIoService
         if (result == null) return (null, null, null);
 
         var json = await File.ReadAllTextAsync(result.Path);
-        
+
         // Configure serialization with ActionConverter
         var settings = new JsonSerializerSettings
         {
@@ -54,12 +59,12 @@ public class IoService : IIoService
                 new ActionConverter()
             }
         };
-        
+
         var sol = JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
-        
+
         // Save last solution path to settings
         _settingsService.LastSolutionPath = result.Path;
-        
+
         return (sol, result.Path, null);
     }
 
@@ -75,7 +80,7 @@ public class IoService : IIoService
                 return (null, null, $"File not found: {filePath}");
 
             var json = await File.ReadAllTextAsync(filePath);
-            
+
             // Configure serialization with ActionConverter
             var settings = new JsonSerializerSettings
             {
@@ -83,71 +88,17 @@ public class IoService : IIoService
                     new ActionConverter()
                 }
             };
-            
+
             var sol = JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
-            
+
             // Save last solution path to settings
             _settingsService.LastSolutionPath = filePath;
-            
+
             return (sol, filePath, null);
         }
         catch (Exception ex)
         {
             return (null, null, $"Error loading solution: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Attempts to auto-load the last opened solution if auto-load is enabled.
-    /// Returns null if auto-load is disabled, no previous solution exists, or the file is no longer available.
-    /// </summary>
-    public async Task<(Solution? solution, string? path, string? error)> TryAutoLoadLastSolutionAsync()
-    {
-        try
-        {
-            // Check if auto-load is enabled
-            if (!_settingsService.AutoLoadLastSolution)
-            {
-                Debug.WriteLine("ℹ️ Auto-load is disabled in settings");
-                return (null, null, null);
-            }
-
-            // Check if there's a last solution path
-            var lastPath = _settingsService.LastSolutionPath;
-            if (string.IsNullOrEmpty(lastPath))
-            {
-                Debug.WriteLine(" No previous solution path found");
-                return (null, null, null);
-            }
-
-            // Check if the file still exists
-            if (!File.Exists(lastPath))
-            {
-                Debug.WriteLine($" Last solution file not found: {lastPath}");
-                return (null, null, $"Last solution file not found: {lastPath}");
-            }
-
-            Debug.WriteLine($" Auto-loading last solution: {lastPath}");
-            
-            var json = await File.ReadAllTextAsync(lastPath);
-            
-            // Configure serialization with ActionConverter
-            var settings = new JsonSerializerSettings
-            {
-                Converters = {
-                    new ActionConverter()
-                }
-            };
-            
-            var loadedSolution = JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
-
-            Debug.WriteLine($" Auto-loaded solution with {loadedSolution.Projects.Count} projects");
-            return (loadedSolution, lastPath, null);
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($" Failed to auto-load last solution: {ex.Message}");
-            return (null, null, $"Failed to auto-load: {ex.Message}");
         }
     }
 
@@ -182,10 +133,10 @@ public class IoService : IIoService
 
         var json = JsonConvert.SerializeObject(solution, settings);
         await File.WriteAllTextAsync(path!, json);
-        
+
         // Save last solution path to settings
         _settingsService.LastSolutionPath = path;
-        
+
         return (true, path, null);
     }
 
@@ -233,9 +184,9 @@ public class IoService : IIoService
                 // result == Secondary: Don't Save - continue with new solution
                 Debug.WriteLine(" User chose not to save - creating new solution");
             }
-            
+
             Debug.WriteLine(" Creating new empty solution");
-            
+
             return (true, false, null);
         }
         catch (Exception ex)
