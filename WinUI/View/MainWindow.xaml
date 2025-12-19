@@ -129,11 +129,6 @@
                             <FontIcon Glyph="&#xE945;" />
                         </AppBarToggleButton.Icon>
                     </AppBarToggleButton>
-                    <AppBarButton
-                        Command="{x:Bind CounterViewModel.RecoverZ21Command}"
-                        Icon="Repair"
-                        Label="Recover"
-                        ToolTipService.ToolTip="Recover unresponsive Z21 without hardware restart" />
                     <AppBarSeparator />
                     <!--  Simulation  -->
                     <AppBarButton
@@ -153,10 +148,26 @@
                     <AppBarSeparator />
                     <!--  Speech  -->
                     <AppBarElementContainer VerticalAlignment="Center">
-                        <ComboBox
-                            MinWidth="160"
-                            ItemsSource="{x:Bind ViewModel.AvailableSpeechEngines, Mode=OneTime}"
-                            SelectedItem="{x:Bind ViewModel.SelectedSpeechEngine, Mode=TwoWay}" />
+                        <DropDownButton MinWidth="160">
+                            <DropDownButton.Content>
+                                <TextBlock
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind ViewModel.SelectedSpeechEngine, Mode=OneWay}" />
+                            </DropDownButton.Content>
+                            <DropDownButton.Flyout>
+                                <MenuFlyout>
+                                    <MenuFlyoutItem
+                                        Text="System Speech (Windows SAPI)"
+                                        Command="{x:Bind ViewModel.SelectSpeechEngineCommand}"
+                                        CommandParameter="System Speech (Windows SAPI)" />
+                                    <MenuFlyoutItem
+                                        Text="Azure Cognitive Services"
+                                        Command="{x:Bind ViewModel.SelectSpeechEngineCommand}"
+                                        CommandParameter="Azure Cognitive Services" />
+                                </MenuFlyout>
+                            </DropDownButton.Flyout>
+                        </DropDownButton>
                     </AppBarElementContainer>
                     <AppBarButton
                         Command="{x:Bind ViewModel.TestSpeechCommand}"
@@ -242,7 +253,7 @@
                 <FontIcon
                     x:Name="SpeechHealthIcon"
                     FontSize="14"
-                    Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                    Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                     Glyph="{x:Bind ViewModel.SpeechHealthIcon, Mode=OneWay}" />
                 <TextBlock
                     x:Name="SpeechHealthText"
@@ -258,7 +269,7 @@
                 Grid.Column="3"
                 Margin="12,0"
                 VerticalAlignment="Center"
-                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                 Style="{StaticResource CaptionTextBlockStyle}"
                 Text="{x:Bind ViewModel.CurrentSolutionPath, Mode=OneWay}"
                 TextTrimming="CharacterEllipsis" />

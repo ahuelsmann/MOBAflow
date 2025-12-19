@@ -377,13 +377,82 @@
         <ScrollViewer>
             <StackPanel Padding="16" Spacing="16">
                 <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Project Properties" />
-                <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
 
-                <NumberBox
-                    Header="Journey Count"
-                    IsEnabled="False"
-                    SpinButtonPlacementMode="Compact"
-                    Value="{Binding Count, Mode=OneWay}" />
+                <!--  Project Statistics  -->
+                <StackPanel
+                    Padding="12"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="4"
+                    Spacing="8">
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{ThemeResource CaptionTextBlockStyle}"
+                        Text="PROJECT STATISTICS" />
+                    <Grid ColumnSpacing="16" RowSpacing="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Journeys:" />
+                        <TextBlock
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Text="{Binding JourneyCount, Mode=OneWay}" />
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Workflows:" />
+                        <TextBlock
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Text="{Binding WorkflowCount, Mode=OneWay}" />
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Trains:" />
+                        <TextBlock
+                            Grid.Row="2"
+                            Grid.Column="1"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Text="{Binding TrainCount, Mode=OneWay}" />
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Locomotives:" />
+                        <TextBlock
+                            Grid.Row="3"
+                            Grid.Column="1"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Text="{Binding LocomotiveCount, Mode=OneWay}" />
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Wagons:" />
+                        <TextBlock
+                            Grid.Row="4"
+                            Grid.Column="1"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Text="{Binding WagonCount, Mode=OneWay}" />
+
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Feedback Points:" />
+                        <TextBlock
+                            Grid.Row="5"
+                            Grid.Column="1"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Text="{Binding FeedbackPointCount, Mode=OneWay}" />
+                    </Grid>
+                </StackPanel>
+
+                <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>

@@ -300,6 +300,17 @@ public partial class MainWindowViewModel
         }
     }
 
+    private IRelayCommand<string?>? _selectSpeechEngineCommand;
+
+    /// <summary>
+    /// Command to select a speech engine from the UI.
+    /// </summary>
+    public IRelayCommand<string?> SelectSpeechEngineCommand =>
+        _selectSpeechEngineCommand ??= new RelayCommand<string?>(engine =>
+        {
+            SelectedSpeechEngine = engine;
+        });
+
     [RelayCommand]
     private async Task TestSpeechAsync()
     {

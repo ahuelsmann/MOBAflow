@@ -26,8 +26,13 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
     [ObservableProperty]
     private string _name;
 
-    [ObservableProperty]
-    private int _count;//=> Journeys.Count;
+    // Statistics (computed from collections)
+    public int JourneyCount => Journeys.Count;
+    public int WorkflowCount => Workflows.Count;
+    public int TrainCount => Trains.Count;
+    public int LocomotiveCount => Locomotives.Count;
+    public int WagonCount => Wagons.Count;
+    public int FeedbackPointCount => FeedbackPoints.Count;
     #endregion
 
     partial void OnNameChanged(string value)
@@ -88,12 +93,23 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
         _dispatcher = dispatcher;
         _name = model.Name;  // Initialize from Model
         Refresh();
-        Journeys.CollectionChanged += Journeys_CollectionChanged;
+
+        Journeys.CollectionChanged += (_, __) => NotifyStatisticsChanged();
+        Workflows.CollectionChanged += (_, __) => NotifyStatisticsChanged();
+        Trains.CollectionChanged += (_, __) => NotifyStatisticsChanged();
+        Locomotives.CollectionChanged += (_, __) => NotifyStatisticsChanged();
+        Wagons.CollectionChanged += (_, __) => NotifyStatisticsChanged();
+        FeedbackPoints.CollectionChanged += (_, __) => NotifyStatisticsChanged();
     }
 
-    private void Journeys_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    private void NotifyStatisticsChanged()
     {
-        Count = Journeys.Count;
+        OnPropertyChanged(nameof(JourneyCount));
+        OnPropertyChanged(nameof(WorkflowCount));
+        OnPropertyChanged(nameof(TrainCount));
+        OnPropertyChanged(nameof(LocomotiveCount));
+        OnPropertyChanged(nameof(WagonCount));
+        OnPropertyChanged(nameof(FeedbackPointCount));
     }
 
     /// <summary>
@@ -141,5 +157,7 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
         FeedbackPoints.Clear();
         foreach (var fp in Model.FeedbackPoints)
             FeedbackPoints.Add(fp);
+
+        NotifyStatisticsChanged();
     }
 }
