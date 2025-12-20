@@ -37,31 +37,32 @@ public class NavigationService
     /// </summary>
     public void NavigateToPage(string tag)
     {
-        if (_contentFrame == null)
-            throw new InvalidOperationException("NavigationService not initialized. Call Initialize(Frame) first.");
+            if (_contentFrame == null)
+                throw new InvalidOperationException("NavigationService not initialized. Call Initialize(Frame) first.");
 
-        try
-        {
-            object page = tag switch
+            try
             {
-                "overview" => _serviceProvider.GetRequiredService<OverviewPage>(),
-                "solution" => _serviceProvider.GetRequiredService<SolutionPage>(),
-                "journeys" => _serviceProvider.GetRequiredService<JourneysPage>(),
-                "workflows" => _serviceProvider.GetRequiredService<WorkflowsPage>(),
-                "feedbackpoints" => _serviceProvider.GetRequiredService<FeedbackPointsPage>(),
-                "trackplaneditor" => _serviceProvider.GetRequiredService<TrackPlanEditorPage>(),
-                "journeymap" => _serviceProvider.GetRequiredService<JourneyMapPage>(),
-                "settings" => _serviceProvider.GetRequiredService<SettingsPage>(),
-                _ => throw new ArgumentException($"Unknown navigation tag: {tag}", nameof(tag))
-            };
+                object page = tag switch
+                {
+                    "overview" => _serviceProvider.GetRequiredService<OverviewPage>(),
+                    "solution" => _serviceProvider.GetRequiredService<SolutionPage>(),
+                    "journeys" => _serviceProvider.GetRequiredService<JourneysPage>(),
+                    "workflows" => _serviceProvider.GetRequiredService<WorkflowsPage>(),
+                    "feedbackpoints" => _serviceProvider.GetRequiredService<FeedbackPointsPage>(),
+                    "trackplaneditor" => _serviceProvider.GetRequiredService<TrackPlanEditorPage>(),
+                    "journeymap" => _serviceProvider.GetRequiredService<JourneyMapPage>(),
+                    "settings" => _serviceProvider.GetRequiredService<SettingsPage>(),
+                    "monitor" => _serviceProvider.GetRequiredService<MonitorPage>(),
+                    _ => throw new ArgumentException($"Unknown navigation tag: {tag}", nameof(tag))
+                };
 
-            _contentFrame.Content = page;
+                _contentFrame.Content = page;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Navigation to '{tag}' failed: {ex.Message}");
+            }
         }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"❌ Navigation to '{tag}' failed: {ex.Message}");
-        }
-    }
 
     /// <summary>
     /// Navigate to Overview page (default startup page).

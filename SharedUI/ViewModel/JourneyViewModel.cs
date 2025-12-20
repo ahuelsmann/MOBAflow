@@ -14,6 +14,7 @@ using Interface;
 
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel;
 using System.Diagnostics;
 
 public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Journey>
@@ -392,6 +393,25 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
 
             // Trigger reorder logic (updates Model + renumbers)
             StationsReorderedCommand.Execute(null);
+        }
+    }
+
+    /// <summary>
+    /// Overrides OnPropertyChanged to fire ModelChanged event for model properties.
+    /// This ensures that any change to journey data (Text, Name, Description, etc.)
+    /// automatically triggers a save notification.
+    /// </summary>
+    protected override void OnPropertyChanged(PropertyChangedEventArgs e)
+    {
+        base.OnPropertyChanged(e);
+
+        // Don't fire ModelChanged for runtime state properties (these are read-only from UI)
+        var runtimeProperties = new[] { nameof(CurrentStation), nameof(CurrentCounter), nameof(CurrentPos) };
+        
+        if (!runtimeProperties.Contains(e.PropertyName) && e.PropertyName != nameof(Stations))
+        {
+            // Fire ModelChanged for any other property change
+            ModelChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 }

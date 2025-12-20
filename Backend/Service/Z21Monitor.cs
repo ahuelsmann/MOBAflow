@@ -91,14 +91,29 @@ public class Z21Monitor
 
         return header switch
         {
-            0x40 => "LAN_GET_SERIAL_NUMBER",
-            0x1A => "LAN_GET_HWINFO",
             0x10 => "LAN_GET_CODE",
-            0x85 => "LAN_SYSTEMSTATE_DATACHANGED",
-            0x84 => "LAN_SYSTEMSTATE_GETDATA",
-            0x21 => ParseLanXCommand(data),
-            0x88 => "LAN_RAILCOM_DATACHANGED",
+            0x1A => "LAN_GET_HWINFO",
+            0x21 => ParseLanXCommand(data),       // X-Bus commands
+            0x40 => "LAN_GET_SERIAL_NUMBER",
             0x50 => "LAN_SET_BROADCASTFLAGS",
+            0x51 => "LAN_GET_BROADCASTFLAGS",
+            0x60 => "LAN_GET_LOCOMODE",
+            0x61 => "LAN_SET_LOCOMODE",
+            0x70 => "LAN_GET_TURNOUTMODE",
+            0x71 => "LAN_SET_TURNOUTMODE",
+            0x80 => "LAN_RMBUS_DATACHANGED",      // R-Bus feedback data
+            0x81 => "LAN_RMBUS_GETDATA",
+            0x82 => "LAN_RMBUS_PROGRAMMODULE",
+            0x84 => "LAN_SYSTEMSTATE_GETDATA",
+            0x85 => "LAN_SYSTEMSTATE_DATACHANGED",
+            0x88 => "LAN_RAILCOM_DATACHANGED",
+            0x89 => "LAN_RAILCOM_GETDATA",
+            0xA0 => "LAN_LOCONET_Z21_RX",
+            0xA1 => "LAN_LOCONET_Z21_TX",
+            0xA2 => "LAN_LOCONET_FROM_LAN",
+            0xA3 => "LAN_LOCONET_DISPATCH_ADDR",
+            0xA4 => "LAN_LOCONET_DETECTOR",
+            0xC4 => "LAN_CAN_DETECTOR",
             _ => $"Unknown (0x{header:X4})"
         };
     }

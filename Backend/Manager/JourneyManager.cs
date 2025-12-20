@@ -97,8 +97,11 @@ public class JourneyManager : BaseFeedbackManager<Journey>
                         continue;
                     }
 
-                    UpdateLastFeedbackTime(GetInPort(journey));
+                    // Process feedback FIRST, THEN update timer
+                    // This ensures the first feedback increments the counter,
+                    // and subsequent feedbacks are blocked by the timer
                     await HandleFeedbackAsync(journey).ConfigureAwait(false);
+                    UpdateLastFeedbackTime(GetInPort(journey));
                 }
             }
         }

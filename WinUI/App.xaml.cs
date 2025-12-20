@@ -82,12 +82,30 @@ public partial class App
         // Logging (required by HealthCheckService and SpeechHealthCheck)
         services.AddLogging();
 
-        // ✅ Register ISpeakerEngine - SystemSpeechEngine works OFFLINE (no Azure needed!)
-        // Uses Windows SAPI - always works without cloud credentials
-        services.AddSingleton<ISpeakerEngine>(sp =>
+        // ✅ Register both Speech Engines as singletons
+        // SystemSpeechEngine - Windows SAPI (offline, no Azure needed)
+        services.AddSingleton(sp =>
         {
             var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<SystemSpeechEngine>>();
             return new SystemSpeechEngine(logger!);
+        });
+
+        // CognitiveSpeechEngine - Azure Cognitive Services (cloud-based)
+        services.AddSingleton(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<SpeechOptions>>();
+            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<CognitiveSpeechEngine>>();
+            return new CognitiveSpeechEngine(options, logger!);
+        });
+
+        // ✅ Register SpeakerEngineFactory - selects engine based on Settings
+        services.AddSingleton<ISpeakerEngineFactory>(sp =>
+        {
+            var settings = sp.GetRequiredService<AppSettings>();
+            var systemEngine = sp.GetRequiredService<SystemSpeechEngine>();
+            var cognitiveEngine = sp.GetRequiredService<CognitiveSpeechEngine>();
+            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<SpeakerEngineFactory>>();
+            return new SpeakerEngineFactory(settings, systemEngine, cognitiveEngine, logger!);
         });
 
         // Backend Services (Interfaces are in Backend.Interface and Backend.Network)
@@ -102,12 +120,12 @@ public partial class App
         services.AddSingleton<Backend.Network.IUdpClientWrapper, Backend.Network.UdpWrapper>();
 
         // Backend Services - Register in dependency order
-        // ✅ AnnouncementService FIRST (uses ISpeakerEngine)
+        // ✅ AnnouncementService (uses ISpeakerEngineFactory for runtime engine selection)
         services.AddSingleton(sp =>
         {
-            var speakerEngine = sp.GetService<ISpeakerEngine>();
+            var speakerEngineFactory = sp.GetService<ISpeakerEngineFactory>();
             var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<AnnouncementService>>();
-            return new AnnouncementService(speakerEngine, logger);
+            return new AnnouncementService(speakerEngineFactory, logger);
         });
         
         // ✅ ActionExecutor with AnnouncementService for Announcement actions
@@ -147,28 +165,29 @@ public partial class App
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<Domain.Solution>(),
             sp.GetService<SharedUI.Interface.ICityService>(),
-            sp.GetService<SharedUI.Interface.ISettingsService>(),
-            sp.GetService<AnnouncementService>()  // For TestSpeech command
-        ));
-        services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
-        services.AddSingleton<SharedUI.ViewModel.TrackPlanEditorViewModel>();
-        services.AddSingleton<SharedUI.ViewModel.JourneyMapViewModel>();
+                sp.GetService<SharedUI.Interface.ISettingsService>(),
+                sp.GetService<AnnouncementService>()  // For TestSpeech command
+            ));
+            services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
+            services.AddSingleton<SharedUI.ViewModel.TrackPlanEditorViewModel>();
+            services.AddSingleton<SharedUI.ViewModel.JourneyMapViewModel>();
+            services.AddSingleton<SharedUI.ViewModel.MonitorPageViewModel>();
 
-        // Pages (Transient = new instance per navigation)
-        services.AddTransient<View.OverviewPage>();
-        services.AddTransient<View.SolutionPage>();
-        services.AddTransient<View.JourneysPage>();
-        services.AddTransient<View.WorkflowsPage>();
-        services.AddTransient<View.FeedbackPointsPage>();
+            // Pages (Transient = new instance per navigation)
+            services.AddTransient<View.OverviewPage>();
+            services.AddTransient<View.SolutionPage>();
+            services.AddTransient<View.JourneysPage>();
+            services.AddTransient<View.WorkflowsPage>();
+            services.AddTransient<View.FeedbackPointsPage>();
+            services.AddTransient<View.TrackPlanEditorPage>();
+            services.AddTransient<View.JourneyMapPage>();
+            services.AddTransient<View.SettingsPage>();
+            services.AddTransient<View.MonitorPage>();
 
-        services.AddTransient<View.SettingsPage>();
-        services.AddTransient<View.TrackPlanEditorPage>();
-        services.AddTransient<View.JourneyMapPage>();
+            // MainWindow (Singleton = one instance for app lifetime)
+            services.AddSingleton<View.MainWindow>();
 
-        // MainWindow (Singleton = one instance for app lifetime)
-        services.AddSingleton<View.MainWindow>();
-
-        return services.BuildServiceProvider();
+            return services.BuildServiceProvider();
     }
 
     /// <summary>
@@ -185,76 +204,52 @@ public partial class App
         _ = AutoLoadLastSolutionAsync(((View.MainWindow)_window).ViewModel);
     }
 
-    /// <summary>
-    /// Automatically loads the last used solution if AutoLoadLastSolution preference is enabled.
-    /// </summary>
-    private async Task AutoLoadLastSolutionAsync(SharedUI.ViewModel.MainWindowViewModel mainWindowViewModel)
-    {
-        try
+        /// <summary>
+        /// Automatically loads the last used solution if AutoLoadLastSolution preference is enabled.
+        /// Delegates to MainWindowViewModel.LoadSolutionFromPathAsync() to ensure all initialization happens correctly.
+        /// </summary>
+        private async Task AutoLoadLastSolutionAsync(SharedUI.ViewModel.MainWindowViewModel mainWindowViewModel)
         {
-            var settingsService = Services.GetService<SharedUI.Interface.ISettingsService>();
-            if (settingsService == null)
+            try
             {
-                System.Diagnostics.Debug.WriteLine("⚠️ SettingsService not available - skipping auto-load");
-                return;
-            }
-
-            if (!settingsService.AutoLoadLastSolution)
-            {
-                System.Diagnostics.Debug.WriteLine("ℹ️ Auto-load disabled - skipping");
-                return;
-            }
-
-            var lastPath = settingsService.LastSolutionPath;
-            if (string.IsNullOrEmpty(lastPath))
-            {
-                System.Diagnostics.Debug.WriteLine("ℹ️ No last solution path - skipping auto-load");
-                return;
-            }
-
-            if (!File.Exists(lastPath))
-            {
-                System.Diagnostics.Debug.WriteLine($"⚠️ Last solution file not found: {lastPath}");
-                return;
-            }
-
-            System.Diagnostics.Debug.WriteLine($"📂 Auto-loading last solution: {lastPath}");
-
-            // Load the solution using IIoService
-            var ioService = Services.GetRequiredService<SharedUI.Interface.IIoService>();
-            var (loadedSolution, path, error) = await ioService.LoadFromPathAsync(lastPath);
-
-            if (!string.IsNullOrEmpty(error))
-            {
-                System.Diagnostics.Debug.WriteLine($" Auto-load failed: {error}");
-                return;
-            }
-
-            if (loadedSolution != null)
-            {
-                // Update the Solution singleton
-                mainWindowViewModel.Solution.Projects.Clear();
-                foreach (var project in loadedSolution.Projects)
+                var settingsService = Services.GetService<SharedUI.Interface.ISettingsService>();
+                if (settingsService == null)
                 {
-                    mainWindowViewModel.Solution.Projects.Add(project);
+                    System.Diagnostics.Debug.WriteLine("⚠️ SettingsService not available - skipping auto-load");
+                    return;
                 }
-                mainWindowViewModel.Solution.Name = loadedSolution.Name;
 
-                // Refresh ViewModel
-                mainWindowViewModel.SolutionViewModel?.Refresh();
+                if (!settingsService.AutoLoadLastSolution)
+                {
+                    System.Diagnostics.Debug.WriteLine("ℹ️ Auto-load disabled - skipping");
+                    return;
+                }
 
-                // ✅ Set CurrentSolutionPath and HasSolution for StatusBar display
-                mainWindowViewModel.CurrentSolutionPath = path;
-                mainWindowViewModel.HasSolution = mainWindowViewModel.Solution.Projects.Count > 0;
+                var lastPath = settingsService.LastSolutionPath;
+                if (string.IsNullOrEmpty(lastPath))
+                {
+                    System.Diagnostics.Debug.WriteLine("ℹ️ No last solution path - skipping auto-load");
+                    return;
+                }
 
-                System.Diagnostics.Debug.WriteLine($"✅ Auto-load completed: {path}");
-                System.Diagnostics.Debug.WriteLine($"   Projects: {loadedSolution.Projects.Count}, HasSolution: {mainWindowViewModel.HasSolution}");
+                if (!File.Exists(lastPath))
+                {
+                    System.Diagnostics.Debug.WriteLine($"⚠️ Last solution file not found: {lastPath}");
+                    return;
+                }
+
+                System.Diagnostics.Debug.WriteLine($"📂 Auto-loading last solution: {lastPath}");
+
+                // ✅ Use the SAME code path as manual loading!
+                // This ensures JourneyManager and all other initialization happens correctly.
+                await mainWindowViewModel.LoadSolutionFromPathAsync(lastPath);
+
+                System.Diagnostics.Debug.WriteLine($"✅ Auto-load completed: {lastPath}");
             }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($" Auto-load failed: {ex.Message}");
-            // Don't crash the application if auto-load fails
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Auto-load failed: {ex.Message}");
+                // Don't crash the application if auto-load fails
+            }
         }
     }
-}

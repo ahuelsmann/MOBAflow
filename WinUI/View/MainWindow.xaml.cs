@@ -4,11 +4,16 @@ namespace Moba.WinUI.View;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
+
 using Service;
+
 using SharedUI.Interface;
 using SharedUI.ViewModel;
+
 using System.ComponentModel;
 using System.Diagnostics;
+
 using MainWindowViewModel = SharedUI.ViewModel.MainWindowViewModel;
 
 public sealed partial class MainWindow
@@ -136,6 +141,22 @@ public sealed partial class MainWindow
         {
             // Simply execute command with current state - no business logic here
             CounterViewModel.SetTrackPowerCommand.Execute(toggleButton.IsChecked);
+        }
+    }
+
+    private void ToggleSwitch_Toggled(object sender, RoutedEventArgs e)
+    {
+        ToggleSwitch toggleSwitch = sender as ToggleSwitch;
+        if (toggleSwitch != null)
+        {
+            if (toggleSwitch.IsOn == true)
+            {
+                CounterViewModel.ConnectCommand.Execute(toggleSwitch.IsOn);
+            }
+            else
+            {
+                CounterViewModel.DisconnectCommand.Execute(toggleSwitch.IsOn);
+            }
         }
     }
     #endregion

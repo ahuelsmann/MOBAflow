@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using Domain;
 using Domain.Enum;
 using Helper;
+using System.Diagnostics;
 
 /// <summary>
 /// MainWindowViewModel - Workflow Management
@@ -125,6 +126,10 @@ public partial class MainWindowViewModel
         SelectedWorkflow.Model.Actions.Add(newAction);
         var viewModel = new CommandViewModel(newAction);
         SelectedWorkflow.Actions.Add(viewModel);
+
+        Debug.WriteLine($"➕ Added Command action '{newAction.Name}' to workflow '{SelectedWorkflow.Name}'");
+        Debug.WriteLine($"   Workflow now has {SelectedWorkflow.Model.Actions.Count} actions in Model");
+        Debug.WriteLine($"   Workflow now has {SelectedWorkflow.Actions.Count} actions in ViewModel");
     }
 
     [RelayCommand]

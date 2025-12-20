@@ -37,7 +37,7 @@
           "Id": "f1e2d3c4-b5a6-7890-1234-567890abcdef",
           "Name": "BR 146 - DB Regio",
           "Pos": 1,
-          "DigitalAddress": 3,
+          "DigitalAddress": 101,
           "Manufacturer": "Piko",
           "ArticleNumber": "",
           "Series": "146",
@@ -82,6 +82,15 @@
               "Number": 0,
               "Type": 0,
               "Parameters": {}
+            },
+            {
+              "Id": "01b2c9e3-7e64-4f37-8dbc-e487902d2163",
+              "Name": "Stop Loco 101",
+              "Number": 2,
+              "Type": 1,
+              "Parameters": {
+                "Bytes": "CgBAAOQTAGWAEg=="
+              }
             }
           ],
           "InPort": 0,
@@ -94,7 +103,7 @@
           "Id": "c1d2e3f4-a5b6-7890-1234-567890abcdef",
           "Name": "RE 78 (Porta-Express)",
           "Description": "",
-          "Text": "Nächster Halt {StationName}. Ausstieg in Fahrtrichtung {StationIsExitOnLeft}.",
+          "Text": "Nächster Halt: {StationName}. Ausstieg in Fahrtrichtung {StationIsExitOnLeft}.",
           "Stations": [
             {
               "Id": "d1e2f3a4-b5c6-7890-1234-567890abcdef",
@@ -170,8 +179,8 @@
             }
           ],
           "InPort": 1,
-          "IsUsingTimerToIgnoreFeedbacks": false,
-          "IntervalForTimerToIgnoreFeedbacks": 5.0,
+          "IsUsingTimerToIgnoreFeedbacks": true,
+          "IntervalForTimerToIgnoreFeedbacks": 3.0,
           "BehaviorOnLastStop": 1,
           "NextJourneyId": null,
           "FirstPos": 0
@@ -264,7 +273,7 @@
             "CenterX": 257.5,
             "CenterY": 646.0,
             "Rotation": 0.0,
-            "AssignedInPort": null,
+            "AssignedInPort": 3,
             "TrackNumber": null,
             "Layer": "Default"
           },
@@ -394,7 +403,7 @@
             "CenterX": 82.0,
             "CenterY": 599.0,
             "Rotation": 0.0,
-            "AssignedInPort": null,
+            "AssignedInPort": 1,
             "TrackNumber": null,
             "Layer": "Default"
           },
@@ -1005,7 +1014,7 @@
             "CenterX": 170.0,
             "CenterY": 622.5,
             "Rotation": 0.0,
-            "AssignedInPort": null,
+            "AssignedInPort": 2,
             "TrackNumber": null,
             "Layer": "Default"
           },

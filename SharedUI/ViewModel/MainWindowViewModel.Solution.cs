@@ -36,6 +36,10 @@ public partial class MainWindowViewModel
             OnPropertyChanged(nameof(SelectedProject));
             OnPropertyChanged(nameof(FilteredJourneys));
             OnPropertyChanged(nameof(FilteredWorkflows));
+
+            // Dispose JourneyManager when solution unloads
+            _journeyManager?.Dispose();
+            _journeyManager = null;
             return;
         }
 
@@ -54,6 +58,10 @@ public partial class MainWindowViewModel
             SelectedProject = SolutionViewModel.Projects[0];
         }
 
+        // NOTE: JourneyManager initialization moved to ApplyLoadedSolution()
+        // This ensures JourneyManager is always initialized with the REAL loaded project,
+        // not the empty default project created here.
+
         SaveSolutionCommand.NotifyCanExecuteChanged();
         ConnectToZ21Command.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(SelectedProject));
@@ -67,10 +75,25 @@ public partial class MainWindowViewModel
         // Notify subscribers to sync their data before saving
         SolutionSaving?.Invoke(this, EventArgs.Empty);
 
+        // Debug: Log workflow actions before saving
+        foreach (var project in Solution.Projects)
+        {
+            foreach (var workflow in project.Workflows)
+            {
+                Debug.WriteLine($"💾 Saving Workflow '{workflow.Name}' with {workflow.Actions.Count} actions:");
+                foreach (var action in workflow.Actions)
+                {
+                    Debug.WriteLine($"   - Action: {action.Name} (Type: {action.Type}, Id: {action.Id})");
+                }
+            }
+        }
+
         var (success, path, error) = await _ioService.SaveAsync(Solution, CurrentSolutionPath);
         if (success && path != null)
         {
             CurrentSolutionPath = path;
+            HasUnsavedChanges = false;  // Clear the unsaved changes flag after successful save
+            Debug.WriteLine($"✅ Solution saved to {path}");
         }
         else if (!string.IsNullOrEmpty(error))
         {
@@ -91,17 +114,22 @@ public partial class MainWindowViewModel
         Solution.Name = "New Solution";
 
         // Add default project
-        Solution.Projects.Add(new Project
+        var newProject = new Project
         {
             Name = "New Project",
             Journeys = new List<Journey>(),
             Workflows = new List<Workflow>(),
             Trains = new List<Train>()
-        });
+        };
+        Solution.Projects.Add(newProject);
 
         SolutionViewModel?.Refresh();
 
         CurrentSolutionPath = null;
+        HasUnsavedChanges = false;  // New solution starts as "clean"
+
+        // Initialize JourneyManager with the new empty project
+        InitializeJourneyManager(newProject);
 
         SaveSolutionCommand.NotifyCanExecuteChanged();
         ConnectToZ21Command.NotifyCanExecuteChanged();
@@ -117,29 +145,69 @@ public partial class MainWindowViewModel
             throw new InvalidOperationException($"Failed to load solution: {error}");
         }
 
-        if (loadedSolution != null)
+        if (loadedSolution != null && path != null)
         {
-            Solution.Projects.Clear();
-            foreach (var project in loadedSolution.Projects)
-            {
-                Solution.Projects.Add(project);
-            }
-
-            Solution.Name = loadedSolution.Name;
-            SolutionViewModel?.Refresh();
-
-            CurrentSolutionPath = path;
-            HasSolution = Solution.Projects.Count > 0;
-
-            SaveSolutionCommand.NotifyCanExecuteChanged();
-            ConnectToZ21Command.NotifyCanExecuteChanged();
-            LoadCities();
-
-            OnPropertyChanged(nameof(Solution));
-
-            // Notify subscribers to load their data after loading
-            SolutionLoaded?.Invoke(this, EventArgs.Empty);
+            ApplyLoadedSolution(loadedSolution, path);
         }
+    }
+
+    /// <summary>
+    /// Loads a solution from a specific file path.
+    /// Used by auto-load functionality to ensure the same code path as manual loading.
+    /// </summary>
+    public async Task LoadSolutionFromPathAsync(string filePath)
+    {
+        var (loadedSolution, path, error) = await _ioService.LoadFromPathAsync(filePath);
+
+        if (!string.IsNullOrEmpty(error))
+        {
+            throw new InvalidOperationException($"Failed to load solution: {error}");
+        }
+
+        if (loadedSolution != null && path != null)
+        {
+            ApplyLoadedSolution(loadedSolution, path);
+        }
+    }
+
+    /// <summary>
+    /// Applies a loaded solution to the ViewModel.
+    /// Single source of truth for all solution loading operations.
+    /// </summary>
+    private void ApplyLoadedSolution(Solution loadedSolution, string path)
+    {
+        Solution.Projects.Clear();
+        foreach (var project in loadedSolution.Projects)
+        {
+            Solution.Projects.Add(project);
+        }
+
+        Solution.Name = loadedSolution.Name;
+        SolutionViewModel?.Refresh();
+
+        CurrentSolutionPath = path;
+        HasSolution = Solution.Projects.Count > 0;
+        HasUnsavedChanges = false;  // Just loaded, so no unsaved changes
+
+        // Re-initialize JourneyManager with the loaded project
+        // This is critical because the initial JourneyManager was created with an empty project
+        if (Solution.Projects.Count > 0)
+        {
+            InitializeJourneyManager(Solution.Projects[0]);
+            Debug.WriteLine($"✅ JourneyManager initialized after loading solution with {Solution.Projects[0].Journeys.Count} journeys");
+        }
+
+        SaveSolutionCommand.NotifyCanExecuteChanged();
+        ConnectToZ21Command.NotifyCanExecuteChanged();
+        LoadCities();
+
+        OnPropertyChanged(nameof(Solution));
+
+        // Notify subscribers to load their data after loading
+        SolutionLoaded?.Invoke(this, EventArgs.Empty);
+
+        Debug.WriteLine($"✅ Solution loaded: {path}");
+        Debug.WriteLine($"   Projects: {Solution.Projects.Count}, Journeys: {Solution.Projects.FirstOrDefault()?.Journeys.Count ?? 0}");
     }
 
     private bool CanSaveSolution() => true;

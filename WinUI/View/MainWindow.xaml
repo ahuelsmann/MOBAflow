@@ -28,10 +28,7 @@
                 <FontIconSource FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE7C0;" />
             </TitleBar.IconSource>
             <TitleBar.RightHeader>
-                <!--<ToggleSwitch
-                    IsOn="False"
-                    OffContent="Disconnected"
-                    OnContent="Connected" />-->
+                <!--  RightHeader  -->
             </TitleBar.RightHeader>
         </TitleBar>
 
@@ -78,17 +75,23 @@
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem Content="Journey Map" Tag="journeymap">
-                    <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE81D;" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItemSeparator />
-                <NavigationViewItem Content="Settings" Tag="settings">
-                    <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE115;" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
-            </NavigationView.MenuItems>
+                            <NavigationViewItem.Icon>
+                                <FontIcon Glyph="&#xE81D;" />
+                            </NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                        <NavigationViewItemSeparator />
+                        <NavigationViewItem Content="Settings" Tag="settings">
+                            <NavigationViewItem.Icon>
+                                <FontIcon Glyph="&#xE115;" />
+                            </NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                        <NavigationViewItemSeparator />
+                        <NavigationViewItem Content="Monitor" Tag="monitor">
+                            <NavigationViewItem.Icon>
+                                <FontIcon Glyph="&#xE7F4;" />
+                            </NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                    </NavigationView.MenuItems>
 
             <!--  Content area with Toolbar and Pages  -->
             <Grid>
@@ -132,14 +135,6 @@
                         </AppBarButton.Icon>
                     </AppBarButton>
                     <!--  Z21 Connection  -->
-                    <!--<AppBarButton
-                        Command="{x:Bind CounterViewModel.ConnectCommand}"
-                        Icon="Globe"
-                        Label="Connect" />-->
-                    <!--<AppBarButton
-                        Command="{x:Bind CounterViewModel.DisconnectCommand}"
-                        Icon="Cancel"
-                        Label="Disconnect" />-->
                     <!--<AppBarToggleButton
                         Click="TrackPower_Click"
                         IsChecked="{x:Bind CounterViewModel.IsTrackPowerOn, Mode=OneWay}"
@@ -206,22 +201,9 @@
                     FontSize="12"
                     IsOn="False"
                     OffContent="Disconnected"
-                    OnContent="Connected" />
-                <!--<TextBlock
-                    VerticalAlignment="Center"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Style="{StaticResource CaptionTextBlockStyle}"
-                    Text="{x:Bind ViewModel.Z21StatusText, Mode=OneWay}" />-->
+                    OnContent="Connected"
+                    Toggled="ToggleSwitch_Toggled" />
             </StackPanel>
-
-            <!--  Divider  -->
-            <!--<Border
-                Grid.Column="1"
-                Width="1"
-                Height="20"
-                Margin="8,0"
-                VerticalAlignment="Center"
-                Background="{ThemeResource DividerStrokeColorDefaultBrush}" />-->
 
             <!--  Azure Speech Health Status  -->
             <StackPanel
@@ -258,13 +240,7 @@
                     FontSize="14"
                     Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                     Glyph="{x:Bind ViewModel.SpeechHealthIcon, Mode=OneWay}" />
-                <!--<TextBlock
-                    x:Name="SpeechHealthText"
-                    VerticalAlignment="Center"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Style="{StaticResource CaptionTextBlockStyle}"
-                    Text="{x:Bind ViewModel.SpeechHealthStatus, Mode=OneWay}"
-                    ToolTipService.ToolTip="Azure Speech Service Health Status" />-->
+                <!--  {x:Bind ViewModel.SpeechHealthStatus, Mode=OneWay}  -->
             </StackPanel>
 
             <!--  Solution Path (rechts)  -->

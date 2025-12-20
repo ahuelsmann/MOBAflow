@@ -54,6 +54,9 @@ public class ActionExecutor(AnnouncementService? announcementService = null)
 
         if (action.Parameters.TryGetValue("Bytes", out var bytesObj))
         {
+            Debug.WriteLine($"    📦 Bytes parameter type: {bytesObj?.GetType().FullName ?? "null"}");
+            Debug.WriteLine($"    📦 Bytes parameter value: {bytesObj}");
+
             if (bytesObj is byte[] byteArray)
             {
                 bytes = byteArray;
@@ -62,10 +65,20 @@ public class ActionExecutor(AnnouncementService? announcementService = null)
             {
                 bytes = Convert.FromBase64String(base64String);
             }
+            else if (bytesObj != null)
+            {
+                // Handle JToken or other types - convert to string first
+                var str = bytesObj.ToString();
+                if (!string.IsNullOrEmpty(str))
+                {
+                    bytes = Convert.FromBase64String(str);
+                }
+            }
         }
 
         if (bytes != null && bytes.Length > 0)
         {
+            Debug.WriteLine($"    📤 Sending {bytes.Length} bytes: {BitConverter.ToString(bytes)}");
             await context.Z21.SendCommandAsync(bytes);
             Debug.WriteLine($"    ✓ Command sent: {bytes.Length} bytes");
         }

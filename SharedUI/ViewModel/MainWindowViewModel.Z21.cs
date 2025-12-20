@@ -18,6 +18,31 @@ using System.Net;
 /// </summary>
 public partial class MainWindowViewModel
 {
+    #region JourneyManager Initialization
+    /// <summary>
+    /// Initializes the JourneyManager for the given project.
+    /// Can be called at any time (with or without Z21 connection).
+    /// </summary>
+    private void InitializeJourneyManager(Domain.Project project)
+    {
+        if (_journeyManager != null)
+        {
+            _journeyManager.Dispose();
+        }
+
+        var executionContext = new ActionExecutionContext
+        {
+            Z21 = _z21
+        };
+
+        _journeyManager = new JourneyManager(_z21, project, _workflowService, executionContext);
+        _journeyManager.StationChanged += OnJourneyStationChanged;
+        _journeyManager.FeedbackReceived += OnJourneyFeedbackReceived;
+
+        Debug.WriteLine($"✅ JourneyManager initialized for project '{project.Name}' with {project.Journeys.Count} journeys");
+    }
+    #endregion
+
     #region Z21 Traffic Monitor
     [ObservableProperty]
     private ObservableCollection<Z21TrafficPacket> trafficPackets = [];
@@ -79,24 +104,17 @@ public partial class MainWindowViewModel
 
                 await _z21.ConnectAsync(address, port);
 
-                // Initialize Traffic Monitor
-                InitializeTrafficMonitor();
+                // Traffic Monitor already initialized in constructor
 
                 IsZ21Connected = true;
                 Z21StatusText = $"Connected to {_settings.Z21.CurrentIpAddress}:{port}";
 
-                if (Solution.Projects.Count > 0)
+                // JourneyManager already initialized from Solution load
+                // No need to recreate it - just keep using the existing one
+                if (_journeyManager == null && Solution.Projects.Count > 0)
                 {
-                    var project = Solution.Projects[0];
-                    var executionContext = new ActionExecutionContext
-                    {
-                        Z21 = _z21
-                    };
-
-                    _journeyManager?.Dispose();
-                    _journeyManager = new JourneyManager(_z21, project, _workflowService, executionContext);
-                    _journeyManager.StationChanged += OnJourneyStationChanged;
-                    _journeyManager.FeedbackReceived += OnJourneyFeedbackReceived;
+                    // Fallback: if somehow not initialized, initialize now
+                    InitializeJourneyManager(Solution.Projects[0]);
                 }
 
                 ConnectToZ21Command.NotifyCanExecuteChanged();
@@ -144,26 +162,13 @@ public partial class MainWindowViewModel
     {
         try
         {
-            // Create JourneyManager if needed for simulation
-            if (_journeyManager == null && Solution.Projects.Count > 0)
+            // JourneyManager should already be initialized when solution loads
+            // If not, something went wrong - log and return
+            if (_journeyManager == null)
             {
-                var project = Solution.Projects[0];
-                
-                Debug.WriteLine("🔍 [DEBUG] Creating ExecutionContext for JourneyManager");
-                
-                var executionContext = new ActionExecutionContext
-                {
-                    Z21 = _z21,
-                    SpeakerEngine = null  // Will be set via MainWindowViewModel.SpeakerEngine property
-                };
-                
-                Debug.WriteLine($"   - ExecutionContext.SpeakerEngine: {executionContext.SpeakerEngine?.Name ?? "NULL (not implemented yet)"}");
-                
-                _journeyManager = new JourneyManager(_z21, project, _workflowService, executionContext);
-                _journeyManager.StationChanged += OnJourneyStationChanged;
-                _journeyManager.FeedbackReceived += OnJourneyFeedbackReceived;
-                
-                Debug.WriteLine("✅ [DEBUG] JourneyManager created with event subscriptions");
+                Z21StatusText = "Error: JourneyManager not initialized. Load a solution first.";
+                Debug.WriteLine("❌ SimulateFeedback: JourneyManager is null");
+                return;
             }
 
             // Get InPort from selected journey or text field
@@ -319,8 +324,12 @@ public partial class MainWindowViewModel
     {
         _uiDispatcher.InvokeOnUi(() =>
         {
-            // Find the JourneyViewModel for this journey
-            var journeyVM = SelectedProject?.Journeys.FirstOrDefault(j => j.Id == e.JourneyId);
+            // Find the JourneyViewModel in the ENTIRE solution, not just selected project
+            // This ensures updates occur even if the journey isn't in the selected project
+            var journeyVM = SolutionViewModel?.Projects
+                .SelectMany(p => p.Journeys)
+                .FirstOrDefault(j => j.Id == e.JourneyId);
+            
             if (journeyVM != null)
             {
                 // Manually notify property changes since the ViewModel's SessionState 
@@ -336,6 +345,10 @@ public partial class MainWindowViewModel
                 
                 Debug.WriteLine($"📊 JourneyViewModel '{journeyVM.Name}' updated: Counter={e.SessionState.Counter}, Pos={e.SessionState.CurrentPos}, Station={e.SessionState.CurrentStationName}");
             }
+            else
+            {
+                Debug.WriteLine($"⚠️ Journey {e.JourneyId} not found in any project for station change");
+            }
         });
     }
 
@@ -347,14 +360,22 @@ public partial class MainWindowViewModel
     {
         _uiDispatcher.InvokeOnUi(() =>
         {
-            // Find the JourneyViewModel for this journey
-            var journeyVM = SelectedProject?.Journeys.FirstOrDefault(j => j.Id == e.JourneyId);
+            // Find the JourneyViewModel in the ENTIRE solution, not just selected project
+            // This ensures counters update even if the journey isn't in the selected project
+            var journeyVM = SolutionViewModel?.Projects
+                .SelectMany(p => p.Journeys)
+                .FirstOrDefault(j => j.Id == e.JourneyId);
+            
             if (journeyVM != null)
             {
                 // Update counter in UI
                 journeyVM.UpdateFromSessionState(e.SessionState);
                 
                 Debug.WriteLine($"🔔 JourneyViewModel '{journeyVM.Name}' feedback: Counter={e.SessionState.Counter}");
+            }
+            else
+            {
+                Debug.WriteLine($"⚠️ Journey {e.JourneyId} not found in any project");
             }
         });
     }

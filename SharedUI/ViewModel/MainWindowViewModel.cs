@@ -37,6 +37,10 @@ public partial class MainWindowViewModel : ObservableObject
 
     // Runtime State
     private JourneyManager? _journeyManager;
+    
+    // Event handlers for model change tracking
+    private JourneyViewModel? _currentJourneyWithModelChangedSubscription;
+    private EventHandler? _journeyModelChangedHandler;
     #endregion
 
     #region Constructor
@@ -69,6 +73,9 @@ public partial class MainWindowViewModel : ObservableObject
         _z21.OnVersionInfoChanged += OnZ21VersionInfoChanged;
         _z21.OnConnectionLost += HandleConnectionLost;
 
+        // ✅ Subscribe to Traffic Monitor immediately (before connection)
+        InitializeTrafficMonitor();
+
         // Load City Library at startup (fire-and-forget)
         if (_cityLibraryService != null)
         {
@@ -97,6 +104,12 @@ public partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private bool isDarkMode = true;  // Dark theme is default for WinUI
+
+    /// <summary>
+    /// Indicates whether the current solution has unsaved changes.
+    /// </summary>
+    [ObservableProperty]
+    private bool hasUnsavedChanges;
 
     /// <summary>
     /// Indicates whether a solution with projects is currently loaded.
@@ -257,6 +270,34 @@ public partial class MainWindowViewModel : ObservableObject
     {
         // Update CanExecute for feedback point-related commands
         DeleteFeedbackPointCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// Handles changes to the selected object on JourneysPage.
+    /// Subscribes to ModelChanged events of journeys to track unsaved changes.
+    /// </summary>
+    partial void OnJourneysPageSelectedObjectChanged(object? value)
+    {
+        // Unsubscribe from previous journey's ModelChanged event
+        if (_currentJourneyWithModelChangedSubscription != null && _journeyModelChangedHandler != null)
+        {
+            _currentJourneyWithModelChangedSubscription.ModelChanged -= _journeyModelChangedHandler;
+            _currentJourneyWithModelChangedSubscription = null;
+        }
+
+        // Subscribe to new journey's ModelChanged event if selected object is a journey
+        if (value is JourneyViewModel journeyVM)
+        {
+            _currentJourneyWithModelChangedSubscription = journeyVM;
+            
+            // Create handler that marks solution as having unsaved changes
+            _journeyModelChangedHandler = (s, e) =>
+            {
+                HasUnsavedChanges = true;  // Mark as unsaved, but don't auto-save
+            };
+            
+            journeyVM.ModelChanged += _journeyModelChangedHandler;
+        }
     }
     #endregion
 
