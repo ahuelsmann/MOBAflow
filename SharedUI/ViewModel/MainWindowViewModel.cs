@@ -42,6 +42,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     // Runtime State
     private JourneyManager? _journeyManager;
+    private Timer? _z21AutoConnectTimer;
     
     // Event handlers for model change tracking
     private JourneyViewModel? _currentJourneyWithModelChangedSubscription;
@@ -77,9 +78,14 @@ public partial class MainWindowViewModel : ObservableObject
         _z21.OnSystemStateChanged += OnZ21SystemStateChanged;
         _z21.OnVersionInfoChanged += OnZ21VersionInfoChanged;
         _z21.OnConnectionLost += HandleConnectionLost;
+        _z21.OnConnectedChanged += OnZ21ConnectedChanged;
 
         // ✅ Subscribe to Traffic Monitor immediately (before connection)
         InitializeTrafficMonitor();
+        
+        // ✅ Auto-connect to Z21 at startup (fire-and-forget, non-blocking)
+        // Connection status will be updated via OnConnectedChanged event when Z21 responds
+        _ = TryAutoConnectToZ21Async();
 
         // Load City Library at startup (fire-and-forget)
         if (_cityLibraryService != null)
@@ -390,35 +396,59 @@ public partial class MainWindowViewModel : ObservableObject
     #region Lifecycle
     public void OnWindowClosing()
     {
+        // Stop Z21 auto-connect retry timer
+        if (_z21AutoConnectTimer != null)
+        {
+            try
+            {
+                _z21AutoConnectTimer.Dispose();
+                _z21AutoConnectTimer = null;
+            }
+            catch (Exception ex)
+            {
+                this.LogError("Error disposing Z21 auto-connect timer", ex);
+            }
+        }
+
+        // Dispose JourneyManager if initialized
         if (_journeyManager != null)
         {
             try
             {
                 _journeyManager.Dispose();
                 _journeyManager = null;
-
-                var z21 = _z21;
-
-                _ = Task.Run(async () =>
-                {
-                    try { await z21.DisconnectAsync(); }
-                    catch (TaskCanceledException) { }
-                    catch (OperationCanceledException) { }
-                    catch (Exception ex)
-                    {
-                        this.LogError("Error during Z21 shutdown", ex);
-                    }
-                });
             }
             catch (Exception ex)
             {
-                this.LogError("Error scheduling Z21 shutdown", ex);
+                this.LogError("Error disposing JourneyManager", ex);
             }
         }
 
+        // ✅ CRITICAL: Always send LAN_LOGOFF to Z21 on app exit
+        // This prevents "zombie clients" on Z21 which can cause it to become unresponsive
+        // Note: Fire-and-forget is acceptable here since we're exiting anyway,
+        // but we give it a brief moment to complete
+        try
+        {
+            var disconnectTask = _z21.DisconnectAsync();
+            // Wait briefly (100ms) to allow LAN_LOGOFF to be sent
+            // Don't block indefinitely as app needs to exit
+            disconnectTask.Wait(TimeSpan.FromMilliseconds(100));
+        }
+        catch (TaskCanceledException) { /* Expected during shutdown */ }
+        catch (OperationCanceledException) { /* Expected during shutdown */ }
+        catch (AggregateException) { /* Task.Wait throws AggregateException */ }
+        catch (Exception ex)
+        {
+            this.LogError("Error during Z21 disconnect", ex);
+        }
+
+        // Unsubscribe from all Z21 events
         _z21.OnSystemStateChanged -= OnZ21SystemStateChanged;
         _z21.OnVersionInfoChanged -= OnZ21VersionInfoChanged;
         _z21.OnConnectionLost -= HandleConnectionLost;
+        _z21.OnConnectedChanged -= OnZ21ConnectedChanged;
+        
         ExitApplicationRequested?.Invoke(this, EventArgs.Empty);
     }
 

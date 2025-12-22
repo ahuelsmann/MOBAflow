@@ -18,17 +18,18 @@ public class CounterViewModelTests
         public event XBusStatusChanged? OnXBusStatusChanged;
         public event VersionInfoChanged? OnVersionInfoChanged;
         public event Action? OnConnectionLost;
+        public event Action<bool>? OnConnectedChanged;
         public bool IsConnected { get; private set; }
         public Z21Monitor? TrafficMonitor => null;
         public Z21VersionInfo? VersionInfo => null;
-        public Task ConnectAsync(IPAddress address, int port = 21105, CancellationToken cancellationToken = default) { IsConnected = true; return Task.CompletedTask; }
-        public Task DisconnectAsync() { IsConnected = false; return Task.CompletedTask; }
+        public Task ConnectAsync(IPAddress address, int port = 21105, CancellationToken cancellationToken = default) { IsConnected = true; OnConnectedChanged?.Invoke(true); return Task.CompletedTask; }
+        public Task DisconnectAsync() { IsConnected = false; OnConnectedChanged?.Invoke(false); return Task.CompletedTask; }
         public Task SendCommandAsync(byte[] sendBytes) => Task.CompletedTask;
         public Task SetTrackPowerOnAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task SetTrackPowerOffAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task SetEmergencyStopAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task GetStatusAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
-        public Task RecoverConnectionAsync(IPAddress address, int port = 21105, CancellationToken cancellationToken = default) { IsConnected = true; return Task.CompletedTask; }
+        public Task RecoverConnectionAsync(IPAddress address, int port = 21105, CancellationToken cancellationToken = default) { IsConnected = true; OnConnectedChanged?.Invoke(true); return Task.CompletedTask; }
         public void SimulateFeedback(int inPort) => Received?.Invoke(new FeedbackResult([0x0F,0x00,0x80,0x00, 0x00, (byte)inPort, 0x01]));
         public void Dispose() { }
     }

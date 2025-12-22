@@ -64,9 +64,13 @@ public partial class App
         var services = new ServiceCollection();
 
         // Load appsettings.json configuration
+        // In DEBUG mode, also load appsettings.Development.json to enable all feature toggles
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+#if DEBUG
+            .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
+#endif
             .Build();
 
         // Register IConfiguration

@@ -42,6 +42,12 @@ public class Z21Settings
     public string DefaultPort { get; set; } = "21105";
 
     /// <summary>
+    /// Auto-connect retry interval in seconds (how often to attempt reconnection if Z21 is unreachable).
+    /// Default: 10 seconds.
+    /// </summary>
+    public int AutoConnectRetryIntervalSeconds { get; set; } = 10;
+
+    /// <summary>
     /// List of recently used IP addresses.
     /// </summary>
     public List<string> RecentIpAddresses { get; set; } = new();
@@ -163,16 +169,19 @@ public class FeatureToggleSettings
     /// Enable Overview page (Dashboard with journey status).
     /// </summary>
     public bool IsOverviewPageAvailable { get; set; } = true;
+    public string? OverviewPageLabel { get; set; }
 
     /// <summary>
     /// Enable Solution page (Project/Solution management).
     /// </summary>
     public bool IsSolutionPageAvailable { get; set; } = true;
+    public string? SolutionPageLabel { get; set; }
 
     /// <summary>
     /// Enable Settings page (Application configuration).
     /// </summary>
     public bool IsSettingsPageAvailable { get; set; } = true;
+    public string? SettingsPageLabel { get; set; }
 
     // Journey Management (Stable - ENABLED by default)
     
@@ -180,11 +189,13 @@ public class FeatureToggleSettings
     /// Enable Journeys page (Train journey management with stations).
     /// </summary>
     public bool IsJourneysPageAvailable { get; set; } = true;
+    public string? JourneysPageLabel { get; set; }
 
     /// <summary>
     /// Enable Workflows page (Automation workflows for actions).
     /// </summary>
     public bool IsWorkflowsPageAvailable { get; set; } = true;
+    public string? WorkflowsPageLabel { get; set; }
 
     // Track Management (Testing - DISABLED by default for Open Source)
 
@@ -193,18 +204,21 @@ public class FeatureToggleSettings
     /// Experimental feature - disabled by default for Open Source release.
     /// </summary>
     public bool IsFeedbackPointsPageAvailable { get; set; }
+    public string? FeedbackPointsPageLabel { get; set; } = "Preview";
 
     /// <summary>
     /// Enable Track Plan Editor page (Visual track layout designer).
     /// Experimental feature - disabled by default for Open Source release.
     /// </summary>
     public bool IsTrackPlanEditorPageAvailable { get; set; }
+    public string? TrackPlanEditorPageLabel { get; set; } = "Preview";
 
     /// <summary>
     /// Enable Journey Map page (Visual journey path visualization).
     /// Experimental feature - disabled by default for Open Source release.
     /// </summary>
     public bool IsJourneyMapPageAvailable { get; set; }
+    public string? JourneyMapPageLabel { get; set; } = "Preview";
 
     // Monitoring (Testing - DISABLED by default)
 
@@ -213,4 +227,5 @@ public class FeatureToggleSettings
     /// Experimental feature - disabled by default for Open Source release.
     /// </summary>
     public bool IsMonitorPageAvailable { get; set; } = false;
+    public string? MonitorPageLabel { get; set; } = "Beta";
 }

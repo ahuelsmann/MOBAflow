@@ -107,22 +107,8 @@ public partial class MainWindowViewModel
 
                 await _z21.ConnectAsync(address, port);
 
-                // Traffic Monitor already initialized in constructor
-
-                IsZ21Connected = true;
-                Z21StatusText = $"Connected to {_settings.Z21.CurrentIpAddress}:{port}";
-
-                // JourneyManager already initialized from Solution load
-                // No need to recreate it - just keep using the existing one
-                if (_journeyManager == null && Solution.Projects.Count > 0)
-                {
-                    // Fallback: if somehow not initialized, initialize now
-                    InitializeJourneyManager(Solution.Projects[0]);
-                }
-
-                ConnectToZ21Command.NotifyCanExecuteChanged();
-                DisconnectFromZ21Command.NotifyCanExecuteChanged();
-                SetTrackPowerCommand.NotifyCanExecuteChanged();
+                // Note: IsZ21Connected will be set when Z21 responds (via OnConnectedChanged event)
+                Z21StatusText = $"Waiting for Z21 at {_settings.Z21.CurrentIpAddress}:{port}...";
             }
             catch (Exception ex)
             {
@@ -250,6 +236,109 @@ public partial class MainWindowViewModel
     private bool CanConnectToZ21() => !IsZ21Connected;
     private bool CanDisconnectFromZ21() => IsZ21Connected;
     private bool CanToggleTrackPower() => IsZ21Connected;
+    
+    /// <summary>
+    /// Attempts to auto-connect to Z21 at startup.
+    /// Non-blocking: returns immediately, connection status updated via OnConnectedChanged event.
+    /// Starts a retry timer that attempts to reconnect every 10 seconds if Z21 is not reachable.
+    /// </summary>
+    private async Task TryAutoConnectToZ21Async()
+    {
+        if (string.IsNullOrEmpty(_settings.Z21.CurrentIpAddress))
+        {
+            Z21StatusText = "No Z21 IP configured";
+            Debug.WriteLine("⚠️ Z21 Auto-Connect: No IP address configured");
+            return;
+        }
+
+        // Initial connection attempt
+        await AttemptZ21ConnectionAsync();
+        
+        // Start retry timer (checks periodically if not connected)
+        var retryInterval = TimeSpan.FromSeconds(_settings.Z21.AutoConnectRetryIntervalSeconds);
+        _z21AutoConnectTimer = new Timer(
+            _ => { _ = AttemptZ21ConnectionIfDisconnectedAsync(); },
+            null,
+            retryInterval,  // First retry after configured interval
+            retryInterval   // Subsequent retries at same interval
+        );
+        
+        Debug.WriteLine($"🔄 Z21 Auto-Connect retry timer started ({_settings.Z21.AutoConnectRetryIntervalSeconds}s interval)");
+    }
+    
+    /// <summary>
+    /// Attempts to connect to Z21 only if currently disconnected.
+    /// Called by retry timer.
+    /// </summary>
+    private async Task AttemptZ21ConnectionIfDisconnectedAsync()
+    {
+        if (IsZ21Connected) return;  // Already connected, skip
+        await AttemptZ21ConnectionAsync();
+    }
+    
+    /// <summary>
+    /// Performs a single connection attempt to Z21.
+    /// </summary>
+    private async Task AttemptZ21ConnectionAsync()
+    {
+        if (string.IsNullOrEmpty(_settings.Z21.CurrentIpAddress)) return;
+
+        try
+        {
+            Z21StatusText = "Connecting to Z21...";
+            var address = IPAddress.Parse(_settings.Z21.CurrentIpAddress);
+
+            int port = 21105;
+            if (!string.IsNullOrEmpty(_settings.Z21.DefaultPort) && int.TryParse(_settings.Z21.DefaultPort, out var parsedPort))
+            {
+                port = parsedPort;
+            }
+
+            Debug.WriteLine($"🔄 Z21 Auto-Connect: Attempting connection to {address}:{port}...");
+            await _z21.ConnectAsync(address, port);
+            
+            // Note: IsZ21Connected will be set when Z21 responds (via OnConnectedChanged)
+            Z21StatusText = $"Waiting for Z21 at {_settings.Z21.CurrentIpAddress}:{port}...";
+        }
+        catch (Exception ex)
+        {
+            Z21StatusText = $"Z21 unavailable: {ex.Message}";
+            Debug.WriteLine($"⚠️ Z21 Auto-Connect failed: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Handles Z21 connected state changes from the backend.
+    /// Called when Z21 starts or stops responding.
+    /// </summary>
+    private void OnZ21ConnectedChanged(bool isConnected)
+    {
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            IsZ21Connected = isConnected;
+            
+            if (isConnected)
+            {
+                Z21StatusText = $"Connected to {_settings.Z21.CurrentIpAddress}";
+                Debug.WriteLine("✅ Z21 connection confirmed - Z21 is responding");
+                
+                // Initialize JourneyManager if needed
+                if (_journeyManager == null && Solution.Projects.Count > 0)
+                {
+                    InitializeJourneyManager(Solution.Projects[0]);
+                }
+            }
+            else
+            {
+                Z21StatusText = "Z21 disconnected";
+                Debug.WriteLine("❌ Z21 disconnected");
+            }
+            
+            ConnectToZ21Command.NotifyCanExecuteChanged();
+            DisconnectFromZ21Command.NotifyCanExecuteChanged();
+            SetTrackPowerCommand.NotifyCanExecuteChanged();
+        });
+    }
     #endregion
 
     #region Z21 Event Handlers

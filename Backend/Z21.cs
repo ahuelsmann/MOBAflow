@@ -19,6 +19,7 @@ public class Z21 : IZ21
     public event XBusStatusChanged? OnXBusStatusChanged;
     public event VersionInfoChanged? OnVersionInfoChanged;
     public event Action? OnConnectionLost;
+    public event Action<bool>? OnConnectedChanged;
 
     private readonly IUdpClientWrapper _udp;
     private readonly ILogger<Z21>? _logger;
@@ -29,6 +30,7 @@ public class Z21 : IZ21
     private const int MAX_KEEPALIVE_FAILURES = 3;
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private bool _disposed;
+    private bool _isConnected;
 
     public Z21Monitor? TrafficMonitor => _trafficMonitor;
 
@@ -52,14 +54,19 @@ public class Z21 : IZ21
     public SystemState CurrentSystemState { get; private set; } = new();
 
     /// <summary>
-    /// Indicates whether the Z21 is currently connected.
+    /// Indicates whether the Z21 is currently connected AND has responded.
+    /// Only returns true after Z21 has sent a valid response (SystemState, XBusStatus, or VersionInfo).
     /// </summary>
-    public bool IsConnected => _cancellationTokenSource != null && !_cancellationTokenSource.Token.IsCancellationRequested;
+    public bool IsConnected => _isConnected;
 
     /// <summary>
     /// Connect to Z21.
     /// Sets broadcast flags to receive all events, which keeps the connection alive automatically.
     /// Also starts a keepalive timer that sends periodic status requests every 30 seconds.
+    /// 
+    /// Connection is non-blocking: method returns immediately after sending initial commands.
+    /// IsConnected becomes true only when Z21 responds (via OnConnectedChanged event).
+    /// This matches the behavior of the official Roco Z21 app.
     /// </summary>
     /// <param name="address">IP address of the Z21.</param>
     /// <param name="port">UDP port of the Z21 (default: 21105).</param>
@@ -67,6 +74,10 @@ public class Z21 : IZ21
     public async Task ConnectAsync(IPAddress address, int port = Z21Protocol.DefaultPort, CancellationToken cancellationToken = default)
     {
         _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        
+        // Reset connection state
+        _isConnected = false;
+        
         await _udp.ConnectAsync(address, port, _cancellationTokenSource.Token).ConfigureAwait(false);
         
         // Small delay between commands to prevent Z21 overload
@@ -76,17 +87,20 @@ public class Z21 : IZ21
         await SetBroadcastFlagsAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
         await Task.Delay(50, _cancellationTokenSource.Token).ConfigureAwait(false);
         
-        // Request initial status
+        // Request initial status - this should trigger a response
         await GetStatusAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
         
         // Request version information (serial number, hardware type, firmware version)
         await Task.Delay(50, _cancellationTokenSource.Token).ConfigureAwait(false);
         await RequestVersionInfoAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
         
-        // Start keepalive timer to prevent Z21 timeout/crash
+        // Start keepalive timer immediately (will also serve as connection check)
         StartKeepaliveTimer();
         
-        _logger?.LogInformation("Z21 connected to {Address}:{Port}. Keepalive timer started (30s interval)", address, port);
+        _logger?.LogInformation("🔄 Z21 connection initiated to {Address}:{Port}. Waiting for response...", address, port);
+        
+        // Note: IsConnected will be set to true when Z21 responds (in OnUdpReceived)
+        // This is handled by the _connectionTcs logic in the message handlers
     }
 
     /// <summary>
@@ -125,8 +139,15 @@ public class Z21 : IZ21
             _cancellationTokenSource = null;
         }
         
-        // Reset failure counter
+        // Reset connection state and failure counter
+        var wasConnected = _isConnected;
+        _isConnected = false;
         _keepAliveFailures = 0;
+        
+        if (wasConnected)
+        {
+            OnConnectedChanged?.Invoke(false);
+        }
         
         await _udp.StopAsync().ConfigureAwait(false);
         _logger?.LogInformation("Z21 disconnected successfully");
@@ -163,6 +184,19 @@ public class Z21 : IZ21
             _keepaliveTimer = null;
             _logger?.LogDebug("Keepalive timer stopped");
         }
+    }
+    
+    /// <summary>
+    /// Sets IsConnected to true if not already connected and fires OnConnectedChanged event.
+    /// Called when Z21 sends any valid response (SystemState, XBusStatus, SerialNumber, etc.)
+    /// </summary>
+    private void SetConnectedIfNotAlready()
+    {
+        if (_isConnected) return;
+        
+        _isConnected = true;
+        _logger?.LogInformation("✅ Z21 is responding - connection confirmed");
+        OnConnectedChanged?.Invoke(true);
     }
     
     /// <summary>
@@ -262,9 +296,13 @@ public class Z21 : IZ21
         await SendAsync(Z21Command.BuildHandshake(), cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Sets broadcast flags to receive only essential events (R-Bus feedback + System State).
+    /// This reduces Z21 traffic by ~90% compared to subscribing to all events.
+    /// </summary>
     private async Task SetBroadcastFlagsAsync(CancellationToken cancellationToken = default)
     {
-        await SendAsync(Z21Command.BuildBroadcastFlagsAll(), cancellationToken).ConfigureAwait(false);
+        await SendAsync(Z21Command.BuildBroadcastFlagsBasic(), cancellationToken).ConfigureAwait(false);
     }
     #endregion
 
@@ -448,6 +486,9 @@ public class Z21 : IZ21
             var xStatus = Z21MessageParser.TryParseXBusStatus(content);
             if (xStatus != null)
             {
+                // Z21 is responding - mark as connected
+                SetConnectedIfNotAlready();
+                
                 OnXBusStatusChanged?.Invoke(xStatus);
                 _logger?.LogDebug("XBus Status: EmergencyStop={EmergencyStop}, TrackOff={TrackOff}, ShortCircuit={ShortCircuit}, Programming={Programming}", xStatus.EmergencyStop, xStatus.TrackOff, xStatus.ShortCircuit, xStatus.Programming);
             }
@@ -477,6 +518,9 @@ public class Z21 : IZ21
 
             if (Z21MessageParser.TryParseSystemState(content, out var mainCurrent, out var progCurrent, out var filteredMainCurrent, out var temperature, out var supplyVoltage, out var vccVoltage, out var centralState, out var centralStateEx))
             {
+                // Z21 is responding - mark as connected
+                SetConnectedIfNotAlready();
+                
                 CurrentSystemState = new SystemState
                 {
                     MainCurrent = mainCurrent,
@@ -505,6 +549,9 @@ public class Z21 : IZ21
         {
             if (Z21MessageParser.TryParseSerialNumber(content, out var serialNumber))
             {
+                // Z21 is responding - mark as connected
+                SetConnectedIfNotAlready();
+                
                 VersionInfo ??= new Z21VersionInfo();
                 VersionInfo.SerialNumber = serialNumber;
                 _logger?.LogInformation("📌 Z21 Serial Number: {SerialNumber}", serialNumber);

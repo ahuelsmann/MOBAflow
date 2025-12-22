@@ -40,7 +40,30 @@ public static class Z21Protocol
 
     public static class BroadcastFlags
     {
+        /// <summary>All flags set - subscribes to EVERYTHING (not recommended, causes high traffic)</summary>
         public const uint All = 0xFFFF_FFFF;
+        
+        /// <summary>
+        /// Broadcast flags for basic model railway control.
+        /// - RBUS: R-Bus feedback (track occupancy sensors) - essential for feedback points
+        /// - SYSTEMSTATE: System state updates (current, temperature, track power status)
+        /// </summary>
+        public const uint Basic = Rbus | SystemState;
+        
+        /// <summary>R-Bus feedback messages (Bit 1) - track occupancy/feedback sensors</summary>
+        public const uint Rbus = 0x0000_0002;
+        
+        /// <summary>System state changes (Bit 3) - current, temperature, track power, emergency stop</summary>
+        public const uint SystemState = 0x0000_0008;
+        
+        /// <summary>Driving commands from other controllers (Bit 0) - not needed for feedback-only apps</summary>
+        public const uint Driving = 0x0000_0001;
+        
+        /// <summary>RailCom data (Bit 2) - advanced loco detection, usually not needed</summary>
+        public const uint RailCom = 0x0000_0004;
+        
+        /// <summary>LocoNet messages (Bit 8) - only if using LocoNet devices</summary>
+        public const uint LocoNet = 0x0000_0100;
     }
 
     public static string ToHex(byte[] data) => BitConverter.ToString(data);

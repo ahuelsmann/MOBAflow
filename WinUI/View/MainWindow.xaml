@@ -100,20 +100,20 @@
                 </NavigationViewItem>
                 <NavigationViewItemSeparator />
                 <NavigationViewItem
-                    Content="Settings"
-                    Tag="settings"
-                    Visibility="{Binding ViewModel.IsSettingsPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE115;" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItemSeparator />
-                <NavigationViewItem
                     Content="Monitor"
                     Tag="monitor"
                     Visibility="{Binding ViewModel.IsMonitorPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE7F4;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItemSeparator />
+                <NavigationViewItem
+                    Content="Settings"
+                    Tag="settings"
+                    Visibility="{Binding ViewModel.IsSettingsPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE115;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
             </NavigationView.MenuItems>
@@ -211,23 +211,32 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <!--  Z21 Status (links)  -->
+            <!--  Z21 Status + Track Power (links)  -->
             <StackPanel
                 Grid.Column="0"
                 VerticalAlignment="Center"
                 Orientation="Horizontal">
+                <!--  Connection Status Icon (auto-updated based on IsZ21Connected)  -->
                 <FontIcon
                     x:Name="Z21StatusIcon"
-                    Margin="12,0,12,0"
+                    Margin="12,0,8,0"
                     FontSize="14"
                     Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                     Glyph="&#xF384;" />
+                <TextBlock
+                    Margin="0,0,16,0"
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="{x:Bind ViewModel.Z21StatusText, Mode=OneWay}" />
+                <!--  Track Power Toggle (like Roco Z21 app)  -->
                 <ToggleSwitch
                     FontSize="12"
-                    IsOn="False"
-                    OffContent="Disconnected"
-                    OnContent="Connected"
-                    Toggled="ToggleSwitch_Toggled" />
+                    IsEnabled="{x:Bind ViewModel.IsZ21Connected, Mode=OneWay}"
+                    IsOn="{x:Bind ViewModel.IsTrackPowerOn, Mode=TwoWay}"
+                    OffContent="Track Off"
+                    OnContent="Track On"
+                    Toggled="TrackPower_Toggled" />
             </StackPanel>
 
             <!--  Azure Speech Health Status  -->

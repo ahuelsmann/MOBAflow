@@ -18,6 +18,11 @@ public interface IZ21 : IDisposable
     event XBusStatusChanged? OnXBusStatusChanged;
     event VersionInfoChanged? OnVersionInfoChanged;
     event Action? OnConnectionLost;
+    
+    /// <summary>
+    /// Raised when the connection state changes (true = connected and responding, false = disconnected).
+    /// </summary>
+    event Action<bool>? OnConnectedChanged;
 
     bool IsConnected { get; }
     Z21Monitor? TrafficMonitor { get; }

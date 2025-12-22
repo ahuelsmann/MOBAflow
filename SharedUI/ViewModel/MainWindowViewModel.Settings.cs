@@ -45,6 +45,20 @@ public partial class MainWindowViewModel
         }
     }
 
+    public double Z21AutoConnectRetryInterval
+    {
+        get => _settings.Z21.AutoConnectRetryIntervalSeconds;
+        set
+        {
+            if (_settings.Z21.AutoConnectRetryIntervalSeconds != (int)value)
+            {
+                _settings.Z21.AutoConnectRetryIntervalSeconds = (int)value;
+                OnPropertyChanged();
+                // TODO: Restart auto-connect timer with new interval
+            }
+        }
+    }
+
     public string CityLibraryPath
     {
         get => _settings.CityLibrary.FilePath;
@@ -265,6 +279,30 @@ public partial class MainWindowViewModel
     /// Bound to NavigationView item visibility.
     /// </summary>
     public bool IsMonitorPageAvailable => _settings.FeatureToggles.IsMonitorPageAvailable;
+
+    // Feature Toggle Labels (optional)
+    
+    public string? OverviewPageLabel => _settings.FeatureToggles.OverviewPageLabel;
+    public string? SolutionPageLabel => _settings.FeatureToggles.SolutionPageLabel;
+    public string? JourneysPageLabel => _settings.FeatureToggles.JourneysPageLabel;
+    public string? WorkflowsPageLabel => _settings.FeatureToggles.WorkflowsPageLabel;
+    public string? FeedbackPointsPageLabel => _settings.FeatureToggles.FeedbackPointsPageLabel;
+    public string? TrackPlanEditorPageLabel => _settings.FeatureToggles.TrackPlanEditorPageLabel;
+    public string? JourneyMapPageLabel => _settings.FeatureToggles.JourneyMapPageLabel;
+    public string? SettingsPageLabel => _settings.FeatureToggles.SettingsPageLabel;
+    public string? MonitorPageLabel => _settings.FeatureToggles.MonitorPageLabel;
+    
+    // Settings Page CheckBox Content (with labels)
+    
+    public string FeedbackPointsCheckBoxContent => FormatPageContent("Feedback Points Page", FeedbackPointsPageLabel);
+    public string TrackPlanEditorCheckBoxContent => FormatPageContent("Track Plan Editor Page", TrackPlanEditorPageLabel);
+    public string JourneyMapCheckBoxContent => FormatPageContent("Journey Map Page", JourneyMapPageLabel);
+    public string MonitorCheckBoxContent => FormatPageContent("Monitor Page", MonitorPageLabel);
+    
+    private static string FormatPageContent(string pageName, string? label)
+    {
+        return string.IsNullOrWhiteSpace(label) ? pageName : $"{pageName} ({label})";
+    }
 
     #endregion
 

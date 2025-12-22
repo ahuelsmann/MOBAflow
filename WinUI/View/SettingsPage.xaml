@@ -62,6 +62,19 @@
                             <TextBlock Text="Z21 communication port (default: 21105)" />
                         </TextBox.Description>
                     </TextBox>
+
+                    <NumberBox
+                        MaxWidth="200"
+                        HorizontalAlignment="Left"
+                        Header="Auto-Connect Retry Interval (seconds)"
+                        Maximum="60"
+                        Minimum="5"
+                        SpinButtonPlacementMode="Inline"
+                        Value="{x:Bind ViewModel.Z21AutoConnectRetryInterval, Mode=TwoWay}">
+                        <NumberBox.Description>
+                            <TextBlock Text="How often to attempt reconnection if Z21 is unreachable (5-60 seconds)" />
+                        </NumberBox.Description>
+                    </NumberBox>
                 </StackPanel>
             </Expander>
 
@@ -278,6 +291,91 @@
                             <TextBlock Text="How often to check Z21 connection status" />
                         </NumberBox.Description>
                     </NumberBox>
+                </StackPanel>
+            </Expander>
+
+            <!--  Feature Toggles Section  -->
+            <Expander
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                Header="Feature Toggles"
+                IsExpanded="False">
+                <Expander.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon FontSize="20" Glyph="&#xE7C8;" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Style="{StaticResource SubtitleTextBlockStyle}"
+                                Text="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </Expander.HeaderTemplate>
+
+                <StackPanel Padding="56,16,0,16" Spacing="12">
+                    <TextBlock
+                        Margin="0,0,0,8"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="Control which features are available in the application. Changes require app restart."
+                        TextWrapping="Wrap" />
+
+                    <!--  Core Features  -->
+                    <TextBlock
+                        Margin="0,8,0,4"
+                        FontWeight="SemiBold"
+                        Style="{StaticResource BodyStrongTextBlockStyle}"
+                        Text="Core Features" />
+                    <CheckBox Content="Overview Page" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsOverviewPageAvailable, Mode=TwoWay}" />
+                    <CheckBox Content="Solution Page" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsSolutionPageAvailable, Mode=TwoWay}" />
+                    <CheckBox Content="Settings Page" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsSettingsPageAvailable, Mode=TwoWay}" />
+
+                    <!--  Journey Management  -->
+                    <TextBlock
+                        Margin="0,16,0,4"
+                        FontWeight="SemiBold"
+                        Style="{StaticResource BodyStrongTextBlockStyle}"
+                        Text="Journey Management" />
+                    <CheckBox Content="Journeys Page" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsJourneysPageAvailable, Mode=TwoWay}" />
+                    <CheckBox Content="Workflows Page" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsWorkflowsPageAvailable, Mode=TwoWay}" />
+
+                    <!--  Track Management (Experimental)  -->
+                    <TextBlock
+                        Margin="0,16,0,4"
+                        FontWeight="SemiBold"
+                        Style="{StaticResource BodyStrongTextBlockStyle}"
+                        Text="Track Management (Experimental)" />
+                    
+                    <CheckBox Content="{x:Bind ViewModel.FeedbackPointsCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsFeedbackPointsPageAvailable, Mode=TwoWay}">
+                        <ToolTipService.ToolTip>
+                            <TextBlock Text="Track sensor configuration (experimental)" />
+                        </ToolTipService.ToolTip>
+                    </CheckBox>
+                    
+                    <CheckBox Content="{x:Bind ViewModel.TrackPlanEditorCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsTrackPlanEditorPageAvailable, Mode=TwoWay}">
+                        <ToolTipService.ToolTip>
+                            <TextBlock Text="Visual track layout designer (experimental)" />
+                        </ToolTipService.ToolTip>
+                    </CheckBox>
+                    
+                    <CheckBox Content="{x:Bind ViewModel.JourneyMapCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsJourneyMapPageAvailable, Mode=TwoWay}">
+                        <ToolTipService.ToolTip>
+                            <TextBlock Text="Journey visualization map (experimental)" />
+                        </ToolTipService.ToolTip>
+                    </CheckBox>
+
+                    <!--  Monitoring  -->
+                    <TextBlock
+                        Margin="0,16,0,4"
+                        FontWeight="SemiBold"
+                        Style="{StaticResource BodyStrongTextBlockStyle}"
+                        Text="Monitoring &amp; Debugging" />
+                    
+                    <CheckBox Content="{x:Bind ViewModel.MonitorCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsMonitorPageAvailable, Mode=TwoWay}">
+                        <ToolTipService.ToolTip>
+                            <TextBlock Text="Z21 traffic monitor and diagnostics" />
+                        </ToolTipService.ToolTip>
+                    </CheckBox>
                 </StackPanel>
             </Expander>
 

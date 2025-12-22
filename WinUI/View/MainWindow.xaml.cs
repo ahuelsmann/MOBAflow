@@ -136,18 +136,15 @@ public sealed partial class MainWindow
         }
     }
 
-    private void ToggleSwitch_Toggled(object sender, RoutedEventArgs e)
+    private void TrackPower_Toggled(object sender, RoutedEventArgs e)
     {
-        _ = e; // Suppress unused parameter warning (required by event signature)
+        _ = e; // Suppress unused parameter warning
         if (sender is not ToggleSwitch toggleSwitch) return;
 
-        if (toggleSwitch.IsOn)
+        // Execute track power command
+        if (ViewModel.SetTrackPowerCommand.CanExecute(toggleSwitch.IsOn))
         {
-            CounterViewModel.ConnectCommand.Execute(toggleSwitch.IsOn);
-        }
-        else
-        {
-            CounterViewModel.DisconnectCommand.Execute(toggleSwitch.IsOn);
+            ViewModel.SetTrackPowerCommand.Execute(toggleSwitch.IsOn);
         }
     }
     #endregion
