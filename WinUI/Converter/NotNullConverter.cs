@@ -10,7 +10,7 @@ using Microsoft.UI.Xaml.Data;
 /// </summary>
 public class NotNullConverter : IValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, string language)
+    public object Convert(object? value, Type targetType, object parameter, string language)
     {
         return value != null ? Visibility.Visible : Visibility.Collapsed;
     }

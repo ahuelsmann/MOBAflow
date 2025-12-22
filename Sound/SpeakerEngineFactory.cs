@@ -2,8 +2,8 @@
 namespace Moba.Sound;
 
 using Common.Configuration;
+
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 /// <summary>
 /// Factory that selects the appropriate ISpeakerEngine based on AppSettings.

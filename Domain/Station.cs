@@ -11,6 +11,7 @@ public class Station
     {
         Id = Guid.NewGuid();
         Name = "New Station";
+        Connections = new List<ConnectingService>();
     }
 
     public Guid Id { get; set; }
@@ -40,17 +41,22 @@ public class Station
     public bool IsExitOnLeft { get; set; }
 
     /// <summary>
-    /// Track/Platform number.
+    /// Upcoming feature: Track/Platform number.
     /// </summary>
     public uint? Track { get; set; } = 1;
 
     /// <summary>
-    /// Arrival time.
+    /// Upcoming feature: Arrival time.
     /// </summary>
     public DateTime? Arrival { get; set; }
 
     /// <summary>
-    /// Departure time.
+    /// Upcoming feature: Departure time.
     /// </summary>
     public DateTime? Departure { get; set; }
+
+    /// <summary>
+    /// Upcoming feature: Travel connections.
+    /// </summary>
+    public List<ConnectingService> Connections { get; set; }
 }

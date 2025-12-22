@@ -111,12 +111,12 @@
     </Style>
 
     <!--  📊 Card Style (for grouping controls)  -->
-    <Style x:Key="CardFrameStyle" TargetType="Frame">
+    <Style x:Key="CardFrameStyle" TargetType="Border">
         <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />
-        <Setter Property="BorderColor" Value="{StaticResource Border}" />
-        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Stroke" Value="{StaticResource Border}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 12" />
         <Setter Property="Padding" Value="{StaticResource SpacingM}" />
-        <Setter Property="HasShadow" Value="True" />
     </Style>
 
 </ResourceDictionary>

@@ -3,7 +3,6 @@ namespace Moba.Domain;
 
 /// <summary>
 /// Workflow - Pure Data Object (POCO).
-/// NO BUSINESS LOGIC! StartAsync moved to WorkflowService in Backend.
 /// </summary>
 public class Workflow
 {
@@ -18,7 +17,7 @@ public class Workflow
     public Guid Id { get; set; }
     public string Name { get; set; }
     public string Description { get; set; }
-    
+
     /// <summary>
     /// Actions as data objects (execution moved to ActionExecutor)
     /// </summary>

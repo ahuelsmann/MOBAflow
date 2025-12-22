@@ -4,7 +4,7 @@ namespace Moba.Domain;
 using Enum;
 
 /// <summary>
-/// Represents a train consisting of locomotives and wagons.
+/// Upcoming feature: Represents a train consisting of locomotives and wagons.
 /// </summary>
 public class Train
 {
@@ -25,14 +25,14 @@ public class Train
     public string Description { get; set; }
     public TrainType TrainType { get; set; }
     public ServiceType ServiceType { get; set; }
-    
+
     /// <summary>
-    /// Locomotive IDs (resolved at runtime via Project.Locomotives lookup)
+    /// Upcoming feature: Locomotive IDs (resolved at runtime via Project.Locomotives lookup)
     /// </summary>
     public List<Guid> LocomotiveIds { get; set; }
-    
+
     /// <summary>
-    /// Wagon IDs (resolved at runtime via Project wagons lookup)
+    /// Upcoming feature: Wagon IDs (resolved at runtime via Project wagons lookup)
     /// </summary>
     public List<Guid> WagonIds { get; set; }
 }

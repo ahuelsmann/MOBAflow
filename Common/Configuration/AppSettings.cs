@@ -13,6 +13,7 @@ public class AppSettings
     public ApplicationSettings Application { get; set; } = new();
     public LoggingSettings Logging { get; set; } = new();
     public HealthCheckSettings HealthCheck { get; set; } = new();
+    public FeatureToggleSettings FeatureToggles { get; set; } = new();
 
     /// <summary>
     /// Gets Azure Speech Service subscription key (convenience property).
@@ -147,4 +148,69 @@ public class HealthCheckSettings
     /// Health check interval in seconds.
     /// </summary>
     public int IntervalSeconds { get; set; } = 60;
+}
+
+/// <summary>
+/// Feature toggle configuration for controlling page visibility.
+/// Used to control which features are available in the application (e.g., for Open Source releases).
+/// These settings are transparent - users can enable/disable features by editing appsettings.json.
+/// </summary>
+public class FeatureToggleSettings
+{
+    // Core Features (Stable - ENABLED by default)
+    
+    /// <summary>
+    /// Enable Overview page (Dashboard with journey status).
+    /// </summary>
+    public bool IsOverviewPageAvailable { get; set; } = true;
+
+    /// <summary>
+    /// Enable Solution page (Project/Solution management).
+    /// </summary>
+    public bool IsSolutionPageAvailable { get; set; } = true;
+
+    /// <summary>
+    /// Enable Settings page (Application configuration).
+    /// </summary>
+    public bool IsSettingsPageAvailable { get; set; } = true;
+
+    // Journey Management (Stable - ENABLED by default)
+    
+    /// <summary>
+    /// Enable Journeys page (Train journey management with stations).
+    /// </summary>
+    public bool IsJourneysPageAvailable { get; set; } = true;
+
+    /// <summary>
+    /// Enable Workflows page (Automation workflows for actions).
+    /// </summary>
+    public bool IsWorkflowsPageAvailable { get; set; } = true;
+
+    // Track Management (Testing - DISABLED by default for Open Source)
+
+    /// <summary>
+    /// Enable Feedback Points page (Track sensor configuration).
+    /// Experimental feature - disabled by default for Open Source release.
+    /// </summary>
+    public bool IsFeedbackPointsPageAvailable { get; set; }
+
+    /// <summary>
+    /// Enable Track Plan Editor page (Visual track layout designer).
+    /// Experimental feature - disabled by default for Open Source release.
+    /// </summary>
+    public bool IsTrackPlanEditorPageAvailable { get; set; }
+
+    /// <summary>
+    /// Enable Journey Map page (Visual journey path visualization).
+    /// Experimental feature - disabled by default for Open Source release.
+    /// </summary>
+    public bool IsJourneyMapPageAvailable { get; set; }
+
+    // Monitoring (Testing - DISABLED by default)
+
+    /// <summary>
+    /// Enable Monitor page (Real-time system monitoring and diagnostics).
+    /// Experimental feature - disabled by default for Open Source release.
+    /// </summary>
+    public bool IsMonitorPageAvailable { get; set; } = false;
 }

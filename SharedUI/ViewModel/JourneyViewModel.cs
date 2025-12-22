@@ -13,8 +13,8 @@ using Domain.Enum;
 using Interface;
 
 using System.Collections.ObjectModel;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 
 public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Journey>
@@ -121,7 +121,7 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     }
 
     [Display(Name = "Text-to-speech template")]
-    public string? Text
+    public string Text
     {
         get => _journey.Text;
         set => SetProperty(_journey.Text, value, _journey, (m, v) => m.Text = v);

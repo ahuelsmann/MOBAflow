@@ -4,13 +4,18 @@ namespace Moba.SharedUI.ViewModel;
 using Backend.Interface;
 using Backend.Manager;
 using Backend.Service;
+
 using Common.Configuration;
 using Common.Extensions;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
 using Domain.Enum;
+
 using Interface;
+
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 
@@ -170,6 +175,30 @@ public partial class MainWindowViewModel : ObservableObject
     private object? currentSelectedObject;
 
     /// <summary>
+    /// Error message to display in UI (Settings page).
+    /// </summary>
+    [ObservableProperty]
+    private string errorMessage = string.Empty;
+
+    /// <summary>
+    /// Controls visibility of error message in UI.
+    /// </summary>
+    [ObservableProperty]
+    private bool showErrorMessage;
+
+    /// <summary>
+    /// Controls visibility of success message in UI.
+    /// </summary>
+    [ObservableProperty]
+    private bool showSuccessMessage;
+
+    /// <summary>
+    /// Selected theme index for UI theme picker (0=Light, 1=Dark, 2=System).
+    /// </summary>
+    [ObservableProperty]
+    private int selectedThemeIndex = 1; // Default: Dark
+
+    /// <summary>
     /// The currently selected object for SolutionPage properties panel.
     /// Displays: SelectedProject
     /// </summary>
@@ -230,6 +259,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     partial void OnSelectedProjectChanged(ProjectViewModel? value)
     {
+        _ = value; // Suppress unused parameter warning
         // Update CanExecute for project-related commands
         DeleteProjectCommand.NotifyCanExecuteChanged();
         // Also update journey/workflow commands since they depend on SelectedProject
@@ -240,6 +270,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     partial void OnSelectedJourneyChanged(JourneyViewModel? value)
     {
+        _ = value; // Suppress unused parameter warning
         // Update CanExecute for journey-related commands
         DeleteJourneyCommand.NotifyCanExecuteChanged();
         ResetJourneyCommand.NotifyCanExecuteChanged();
@@ -249,12 +280,14 @@ public partial class MainWindowViewModel : ObservableObject
 
     partial void OnSelectedStationChanged(StationViewModel? value)
     {
+        _ = value; // Suppress unused parameter warning
         // Update CanExecute for station-related commands
         DeleteStationCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnSelectedWorkflowChanged(WorkflowViewModel? value)
     {
+        _ = value; // Suppress unused parameter warning
         // Update CanExecute for workflow-related commands
         DeleteWorkflowCommand.NotifyCanExecuteChanged();
         DeleteActionCommand.NotifyCanExecuteChanged();
@@ -262,12 +295,14 @@ public partial class MainWindowViewModel : ObservableObject
 
     partial void OnSelectedActionChanged(object? value)
     {
+        _ = value; // Suppress unused parameter warning
         // Update CanExecute for action-related commands
         DeleteActionCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnSelectedFeedbackPointChanged(FeedbackPointOnTrack? value)
     {
+        _ = value; // Suppress unused parameter warning
         // Update CanExecute for feedback point-related commands
         DeleteFeedbackPointCommand.NotifyCanExecuteChanged();
     }
@@ -291,7 +326,7 @@ public partial class MainWindowViewModel : ObservableObject
             _currentJourneyWithModelChangedSubscription = journeyVM;
             
             // Create handler that marks solution as having unsaved changes
-            _journeyModelChangedHandler = (s, e) =>
+            _journeyModelChangedHandler = (_, _) =>
             {
                 HasUnsavedChanges = true;  // Mark as unsaved, but don't auto-save
             };
@@ -412,7 +447,7 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanAddStationFromCity))]
     private void AddStationFromCity(City city)
     {
-        if (SelectedJourney == null || city == null) return;
+        if (SelectedJourney == null) return;
 
         // Get City's first station (Hauptbahnhof) - only the NAME
         var cityStation = city.Stations.FirstOrDefault();

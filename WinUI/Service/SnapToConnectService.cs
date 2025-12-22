@@ -2,9 +2,11 @@
 namespace Moba.WinUI.Service;
 
 using SharedUI.ViewModel;
+
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
+
 using Windows.Foundation;
 
 /// <summary>
@@ -31,30 +33,30 @@ public class SnapToConnectService
     {
         var endpoints = new List<TrackEndpoint>();
         var pathData = segment.PathData;
-        
+
         if (string.IsNullOrEmpty(pathData))
             return endpoints;
 
         // Parse PathData to extract coordinates
         var coords = ExtractCoordinates(pathData);
-        
+
         if (coords.Count >= 2)
         {
             var startPoint = coords[0];
             var endPoint = coords[^1]; // Last coordinate
-            
+
             // Calculate angle from start to end
             var angle = Math.Atan2(endPoint.Y - startPoint.Y, endPoint.X - startPoint.X) * 180 / Math.PI;
-            
+
             // Start point: incoming connection (angle points INTO the track)
             endpoints.Add(new TrackEndpoint(startPoint, angle + 180, segment, true));
-            
+
             // End point: outgoing connection (angle points OUT of the track)
             endpoints.Add(new TrackEndpoint(endPoint, angle, segment, false));
-            
+
             Debug.WriteLine($"📍 Endpoints for {segment.ArticleCode}: Start=({startPoint.X:F0},{startPoint.Y:F0}), End=({endPoint.X:F0},{endPoint.Y:F0})");
         }
-        
+
         return endpoints;
     }
 
@@ -66,11 +68,11 @@ public class SnapToConnectService
     {
         var points = new List<Point>();
         var ic = CultureInfo.InvariantCulture;
-        
+
         // Match coordinate pairs like "123.45,678.90" or "-10.5,20.3"
         var regex = new Regex(@"(-?\d+\.?\d*),(-?\d+\.?\d*)");
         var matches = regex.Matches(pathData);
-        
+
         foreach (Match match in matches)
         {
             if (double.TryParse(match.Groups[1].Value, NumberStyles.Float, ic, out var x) &&
@@ -79,7 +81,7 @@ public class SnapToConnectService
                 points.Add(new Point(x, y));
             }
         }
-        
+
         return points;
     }
 
@@ -89,7 +91,7 @@ public class SnapToConnectService
     /// Returns the position to snap to and the required rotation.
     /// </summary>
     public (Point SnapPosition, double SnapRotation)? FindSnapEndpoint(
-        Point currentPosition, 
+        Point currentPosition,
         double currentRotation,
         IEnumerable<TrackSegmentViewModel> segments)
     {

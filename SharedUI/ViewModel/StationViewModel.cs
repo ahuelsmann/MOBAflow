@@ -3,7 +3,9 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
+
 using Interface;
 
 /// <summary>
@@ -143,6 +145,7 @@ public partial class StationViewModel : ObservableObject, IViewModelWrapper<Stat
 
     partial void OnIsCurrentStationChanged(bool value)
     {
+        _ = value; // Suppress unused parameter warning
         // Notify UI that colors have changed
         OnPropertyChanged(nameof(BackgroundColor));
         OnPropertyChanged(nameof(ForegroundColor));

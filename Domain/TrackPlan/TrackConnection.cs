@@ -25,14 +25,7 @@ public class TrackConnection
     /// <summary>
     /// Index of the endpoint on segment 1 (0 = start/main, 1+ = other endpoints for turnouts).
     /// </summary>
-    public int Segment1EndpointIndex { get; set; } = 0;
-
-    /// <summary>
-    /// Which endpoint of segment 1 is connected (true = start, false = end).
-    /// DEPRECATED: Use Segment1EndpointIndex instead. Kept for backwards compatibility.
-    /// </summary>
-    [Obsolete("Use Segment1EndpointIndex instead")]
-    public bool Segment1IsStart { get; set; } = true;
+    public int Segment1EndpointIndex { get; set; }
 
     /// <summary>
     /// ID of the second connected segment.
@@ -43,13 +36,6 @@ public class TrackConnection
     /// Index of the endpoint on segment 2 (0 = start/main, 1+ = other endpoints for turnouts).
     /// </summary>
     public int Segment2EndpointIndex { get; set; } = 1;
-
-    /// <summary>
-    /// Which endpoint of segment 2 is connected (true = start, false = end).
-    /// DEPRECATED: Use Segment2EndpointIndex instead. Kept for backwards compatibility.
-    /// </summary>
-    [Obsolete("Use Segment2EndpointIndex instead")]
-    public bool Segment2IsStart { get; set; } = true;
 
     /// <summary>
     /// X coordinate of the connection point.

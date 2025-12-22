@@ -5,7 +5,7 @@
 > **Multi-platform system (.NET 10)**  
 > MOBAflow (WinUI) | MOBAsmart (MAUI) | MOBAdash (Blazor)
 > 
-> **Last Updated:** 2025-12-18 | **Version:** 3.7
+> **Last Updated:** 2025-12-19 | **Version:** 3.8
 
 ---
 
@@ -40,11 +40,58 @@
 - Copy working patterns exactly, then adapt for the new entity
 - If it works on JourneysPage, it should work the same way on WorkflowsPage
 
+### **5. Warning-Free Code (NEW!)**
+- **NEVER introduce new warnings** when implementing features
+- **Fix warnings immediately** - don't defer to "later"
+- **Partial method signatures MUST match** the generated code exactly:
+  - ✅ `partial void OnXxxChanged(Type value)` → Use `_ = value;` to suppress if unused
+  - ❌ `partial void OnXxxChanged(Type _)` → Parameter name mismatch warning!
+- **Event handlers must suppress unused parameters**: `_ = e;` or `_ = sender;`
+- **IValueConverter parameters are nullable at runtime**: Use `object? value` not `object value`
+- **Run build validation** before declaring any task complete
+
+**Warning Patterns to Avoid:**
+```csharp
+// ❌ WRONG: Parameter name mismatch (CS8826)
+partial void OnSelectedItemChanged(ItemViewModel? _) { }
+
+// ✅ CORRECT: Match generated signature, suppress unused
+partial void OnSelectedItemChanged(ItemViewModel? value)
+{
+    _ = value; // Suppress unused parameter warning
+    UpdateRelatedState();
+}
+
+// ❌ WRONG: Nullable annotation mismatch in converters
+public object Convert(object value, ...) // CS8602 at runtime
+
+// ✅ CORRECT: Runtime nullable
+public object Convert(object? value, ...)
+{
+    return value != null ? Visibility.Visible : Visibility.Collapsed;
+}
+```
+
 ---
 
-## 🎯 Current Session Status (Dec 18, 2025)
+## 🎯 Current Session Status (Dec 19, 2025)
 
 ### ✅ Completed This Session
+- ✅ **Feature-Toggle System** - NavigationView Pages können über Settings enabled/disabled werden
+  - Created: `FeatureToggleSettings` in `AppSettings.cs`
+  - Added: 9 `IsXxxPageAvailable` properties in `MainWindowViewModel.Settings.cs`
+  - Configured: `appsettings.json` (Production) und `appsettings.Development.json` (All enabled)
+- ✅ **Comprehensive Warning Cleanup** - Alle kritischen Warnings behoben
+  - Fixed: Partial method parameter name mismatches (`value` + `_ = value;`)
+  - Fixed: Nullable converter parameters (`object?`)
+  - Fixed: Unused code, redundant checks
+  - Removed: Duplicate files (`City - Kopieren.cs`, `ConnectingService.cs`)
+  - Removed: Unused classes (`IFilePickerService`, `TrackLayoutValidator`, `FeedbackPointsPageViewModel`)
+- ✅ **Solution-weite Analyse** - DI, MVVM, Legacy Code geprüft
+  - Result: Keine kritischen Probleme gefunden
+  - All patterns follow instructions correctly
+
+### ✅ Completed Previous Session (Dec 18, 2025)
 - ✅ **FeedbackPointsPage DI Refactoring** - Standardized to use MainWindowViewModel like all other pages
   - Deleted `FeedbackPointsPageViewModel.cs` (unnecessary wrapper)
   - Removed custom `CreateFeedbackPointsPage()` factory method

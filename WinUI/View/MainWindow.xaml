@@ -45,53 +45,78 @@
                 <NavigationViewItem
                     Content="Overview"
                     Icon="Home"
-                    Tag="overview" />
+                    Tag="overview"
+                    Visibility="{Binding ViewModel.IsOverviewPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
                 <NavigationViewItemSeparator />
-                <NavigationViewItem Content="Solution" Tag="solution">
+                <NavigationViewItem
+                    Content="Solution"
+                    Tag="solution"
+                    Visibility="{Binding ViewModel.IsSolutionPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE8B7;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Journeys" Tag="journeys">
+                <NavigationViewItem
+                    Content="Journeys"
+                    Tag="journeys"
+                    Visibility="{Binding ViewModel.IsJourneysPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE7C1;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Workflows" Tag="workflows">
+                <NavigationViewItem
+                    Content="Workflows"
+                    Tag="workflows"
+                    Visibility="{Binding ViewModel.IsWorkflowsPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE945;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItemSeparator />
-                <NavigationViewItem Content="Feedback Points" Tag="feedbackpoints">
+                <NavigationViewItem
+                    Content="Feedback Points"
+                    Tag="feedbackpoints"
+                    Visibility="{Binding ViewModel.IsFeedbackPointsPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE72C;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItemSeparator />
-                <NavigationViewItem Content="Track Plan" Tag="trackplaneditor">
+                <NavigationViewItem
+                    Content="Track Plan"
+                    Tag="trackplaneditor"
+                    Visibility="{Binding ViewModel.IsTrackPlanEditorPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE809;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Journey Map" Tag="journeymap">
-                            <NavigationViewItem.Icon>
-                                <FontIcon Glyph="&#xE81D;" />
-                            </NavigationViewItem.Icon>
-                        </NavigationViewItem>
-                        <NavigationViewItemSeparator />
-                        <NavigationViewItem Content="Settings" Tag="settings">
-                            <NavigationViewItem.Icon>
-                                <FontIcon Glyph="&#xE115;" />
-                            </NavigationViewItem.Icon>
-                        </NavigationViewItem>
-                        <NavigationViewItemSeparator />
-                        <NavigationViewItem Content="Monitor" Tag="monitor">
-                            <NavigationViewItem.Icon>
-                                <FontIcon Glyph="&#xE7F4;" />
-                            </NavigationViewItem.Icon>
-                        </NavigationViewItem>
-                    </NavigationView.MenuItems>
+                <NavigationViewItem
+                    Content="Journey Map"
+                    Tag="journeymap"
+                    Visibility="{Binding ViewModel.IsJourneyMapPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE81D;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItemSeparator />
+                <NavigationViewItem
+                    Content="Settings"
+                    Tag="settings"
+                    Visibility="{Binding ViewModel.IsSettingsPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE115;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItemSeparator />
+                <NavigationViewItem
+                    Content="Monitor"
+                    Tag="monitor"
+                    Visibility="{Binding ViewModel.IsMonitorPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE7F4;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.MenuItems>
 
             <!--  Content area with Toolbar and Pages  -->
             <Grid>

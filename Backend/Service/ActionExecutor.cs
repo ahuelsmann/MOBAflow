@@ -54,7 +54,7 @@ public class ActionExecutor(AnnouncementService? announcementService = null)
 
         if (action.Parameters.TryGetValue("Bytes", out var bytesObj))
         {
-            Debug.WriteLine($"    📦 Bytes parameter type: {bytesObj?.GetType().FullName ?? "null"}");
+            Debug.WriteLine($"    📦 Bytes parameter type: {bytesObj.GetType().FullName}");
             Debug.WriteLine($"    📦 Bytes parameter value: {bytesObj}");
 
             if (bytesObj is byte[] byteArray)

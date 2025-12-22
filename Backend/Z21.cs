@@ -144,7 +144,7 @@ public class Z21 : IZ21
         StopKeepaliveTimer();
         
         _keepaliveTimer = new Timer(
-            _ => _ = SendKeepaliveAsync(),
+            state => { _ = state; _ = SendKeepaliveAsync(); },
             null,
             TimeSpan.FromSeconds(30),  // First keepalive after 30 seconds
             TimeSpan.FromSeconds(30)); // Subsequent keepalives every 30 seconds

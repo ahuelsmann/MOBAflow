@@ -1,6 +1,7 @@
 namespace Moba.SharedUI.ViewModel
 {
     using CommunityToolkit.Mvvm.Input;
+
     using System.Windows.Input;
 
     public partial class MainWindowViewModel

@@ -2,8 +2,11 @@
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
+
 using Newtonsoft.Json;
+
 using SharedUI.Interface;
+
 using System.Diagnostics;
 
 /// <summary>
@@ -39,7 +42,7 @@ public class SettingsService : ISettingsService
         {
             var json = JsonConvert.SerializeObject(settings, Formatting.Indented);
             await File.WriteAllTextAsync(_settingsFilePath, json);
-            
+
             Debug.WriteLine($"✅ Settings saved to {_settingsFilePath}");
         }
         catch (Exception ex)

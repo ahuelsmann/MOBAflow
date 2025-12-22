@@ -5,6 +5,7 @@ using SharedUI.Interface;
 
 #if ANDROID
 using Android.Content;
+
 using Microsoft.Maui.ApplicationModel;
 #endif
 

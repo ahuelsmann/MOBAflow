@@ -2,6 +2,7 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
 
 /// <summary>

@@ -155,20 +155,19 @@ public class JourneyManager : BaseFeedbackManager<Journey>
             if (currentStation.WorkflowId.HasValue)
             {
                 var workflow = _project.Workflows.FirstOrDefault(w => w.Id == currentStation.WorkflowId.Value);
-                if (workflow != null)
+                if (workflow != null && ExecutionContext != null)
                 {
                     // Set template context for actions (e.g., Announcement action)
                     ExecutionContext.JourneyTemplateText = journey.Text;
                     ExecutionContext.CurrentStation = currentStation;
 
-                    if (ExecutionContext != null)
-                        await _workflowService.ExecuteAsync(workflow, ExecutionContext).ConfigureAwait(false);
+                    await _workflowService.ExecuteAsync(workflow, ExecutionContext).ConfigureAwait(false);
 
                     // Clear context after workflow execution
                     ExecutionContext.JourneyTemplateText = null;
                     ExecutionContext.CurrentStation = null;
                 }
-                else
+                else if (workflow == null)
                 {
                     Debug.WriteLine($"⚠ Workflow with ID {currentStation.WorkflowId.Value} not found");
                 }

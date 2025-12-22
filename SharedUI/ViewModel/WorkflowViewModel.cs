@@ -2,13 +2,19 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Action;
+
 using Backend.Interface;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
 using Domain.Enum;
+
 using Interface;
+
 using Sound;
+
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 
@@ -19,11 +25,13 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
     private readonly Workflow _model;
 
     // Context
+    #pragma warning disable IDE0052 // Remove unread private members - Reserved for future use
     private readonly Project? _project;
 
     // Optional Services
     private readonly ISpeakerEngine? _speakerEngine;
     private readonly IZ21? _z21;
+    #pragma warning restore IDE0052
     #endregion
 
     public WorkflowViewModel(Workflow model, ISpeakerEngine? speakerEngine = null, Project? project = null, IZ21? z21 = null)

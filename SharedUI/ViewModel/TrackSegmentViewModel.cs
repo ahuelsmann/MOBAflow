@@ -2,7 +2,9 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
+
 using Domain.TrackPlan;
+
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -53,7 +55,7 @@ public partial class TrackSegmentViewModel : ObservableObject
 
     /// <summary>
     /// SVG path data for rendering this segment.
-    /// </summary>
+    /// </summary)
     public string PathData => _segment.PathData;
 
     /// <summary>
@@ -186,7 +188,7 @@ public partial class TrackSegmentViewModel : ObservableObject
         var endpoints = new List<(double X, double Y)>();
 
         // Parse PathData to find all sub-path endpoints
-        var pathData = PathData ?? string.Empty;
+        var pathData = PathData;
         var subPaths = ParseSubPaths(pathData);
 
         foreach (var subPath in subPaths)
@@ -331,13 +333,15 @@ public partial class TrackSegmentViewModel : ObservableObject
     /// </summary>
     public bool ShowEndEndpoint => !IsEndConnected;
 
-    partial void OnIsStartConnectedChanged(bool _)
+    partial void OnIsStartConnectedChanged(bool value)
     {
+        _ = value; // Suppress unused parameter warning
         OnPropertyChanged(nameof(ShowStartEndpoint));
     }
 
-    partial void OnIsEndConnectedChanged(bool _)
+    partial void OnIsEndConnectedChanged(bool value)
     {
+        _ = value; // Suppress unused parameter warning
         OnPropertyChanged(nameof(ShowEndEndpoint));
     }
 
@@ -565,8 +569,9 @@ public partial class TrackSegmentViewModel : ObservableObject
         return result.ToString().Trim();
     }
 
-    partial void OnIsSelectedChanged(bool _)
+    partial void OnIsSelectedChanged(bool value)
     {
+        _ = value; // Suppress unused parameter warning
         OnPropertyChanged(nameof(StrokeThickness));
     }
 }

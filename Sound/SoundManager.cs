@@ -3,6 +3,7 @@
 namespace Moba.Sound;
 
 using Microsoft.Extensions.Logging;
+
 using System.Media;
 using System.Runtime.Versioning;
 

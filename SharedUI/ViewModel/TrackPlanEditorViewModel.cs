@@ -3,8 +3,11 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Domain.TrackPlan;
+
 using Interface;
+
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
@@ -219,12 +222,14 @@ public partial class TrackPlanEditorViewModel : ObservableObject
 
     partial void OnCanvasWidthMmChanged(double value)
     {
+        _ = value; // Suppress unused parameter warning
         OnPropertyChanged(nameof(CanvasWidth));
         OnPropertyChanged(nameof(CanvasSizeDisplay));
     }
 
     partial void OnCanvasHeightMmChanged(double value)
     {
+        _ = value; // Suppress unused parameter warning
         OnPropertyChanged(nameof(CanvasHeight));
         OnPropertyChanged(nameof(CanvasSizeDisplay));
     }
@@ -312,7 +317,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         SelectedSegment.AssignedInPort = inPortValue;
         OnPropertyChanged(nameof(AssignedSensorCount));
         OnPropertyChanged(nameof(SensorStatusText));
-        
+
         Debug.WriteLine($"📡 InPort {inPortValue} assigned to {SelectedSegment.ArticleCode}");
     }
 
@@ -348,7 +353,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     }
 
     private bool CanDisconnectSegment() =>
-        SelectedSegment != null && 
+        SelectedSegment != null &&
         (SelectedSegment.IsStartConnected || SelectedSegment.IsEndConnected);
     #endregion
 
@@ -372,7 +377,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
             return;
 
         var pathData = GeneratePathData(template, x, y);
-        
+
         // DEBUG: Output to help diagnose visibility issues
         Debug.WriteLine($"Adding segment: {template.ArticleCode}");
         Debug.WriteLine($"  Type: {template.Type}, Length: {template.Length}mm, Radius: {template.Radius}mm");
@@ -396,7 +401,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         var viewModel = new TrackSegmentViewModel(segment);
         PlacedSegments.Add(viewModel);
         SelectedSegment = viewModel;
-        
+
         Debug.WriteLine($"  Segment added successfully. Total segments: {PlacedSegments.Count}");
     }
 
@@ -480,7 +485,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
             var angleRad = template.Angle * Math.PI / 180.0;
             var endX = x + radius * Math.Sin(angleRad);
             var endY = y + radius * (1 - Math.Cos(angleRad));
-            
+
             // Arc command: A rx,ry rotation large-arc-flag sweep-flag x,y
             return string.Format(ic, "M {0:F2},{1:F2} A {2:F2},{3:F2} 0 0 1 {4:F2},{5:F2}", x, y, radius, radius, endX, endY);
         }
@@ -490,8 +495,8 @@ public partial class TrackPlanEditorViewModel : ObservableObject
             // Simple turnout at position (x, y)
             var length = template.Length * scale;
             var branchY = template.Type == TrackType.TurnoutLeft ? -20 : 20;
-            return string.Format(ic, "M {0:F2},{1:F2} L {2:F2},{3:F2} M {4:F2},{5:F2} L {6:F2},{7:F2}", 
-                x, y, x + length, y, 
+            return string.Format(ic, "M {0:F2},{1:F2} L {2:F2},{3:F2} M {4:F2},{5:F2} L {6:F2},{7:F2}",
+                x, y, x + length, y,
                 x + length / 2, y, x + length / 2 + 30, y + branchY);
         }
 
@@ -513,11 +518,11 @@ public partial class TrackPlanEditorViewModel : ObservableObject
             var distance = Math.Sqrt(
                 Math.Pow(endpoints[i].X - endpoint.X, 2) +
                 Math.Pow(endpoints[i].Y - endpoint.Y, 2));
-            
+
             if (distance < 1) // Within 1px tolerance
                 return i;
         }
-        
+
         // Fallback: return the closest endpoint index
         var closest = 0;
         var minDistance = double.MaxValue;
@@ -526,7 +531,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
             var distance = Math.Sqrt(
                 Math.Pow(endpoints[i].X - endpoint.X, 2) +
                 Math.Pow(endpoints[i].Y - endpoint.Y, 2));
-            
+
             if (distance < minDistance)
             {
                 minDistance = distance;
@@ -589,11 +594,11 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         foreach (var connection in connectionsToRemove)
         {
             // Get the other segment and update its connection state
-            var otherSegmentId = connection.Segment1Id == segment.Id 
-                ? connection.Segment2Id 
+            var otherSegmentId = connection.Segment1Id == segment.Id
+                ? connection.Segment2Id
                 : connection.Segment1Id;
-            var otherEndpointIndex = connection.Segment1Id == segment.Id 
-                ? connection.Segment2EndpointIndex 
+            var otherEndpointIndex = connection.Segment1Id == segment.Id
+                ? connection.Segment2EndpointIndex
                 : connection.Segment1EndpointIndex;
             var otherIsStart = otherEndpointIndex == 0; // Simple heuristic: index 0 = start
 
@@ -622,8 +627,8 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         return group;
     }
 
-    private void CollectConnectedSegments(TrackSegmentViewModel segment, 
-                                           List<TrackSegmentViewModel> group, 
+    private void CollectConnectedSegments(TrackSegmentViewModel segment,
+                                           List<TrackSegmentViewModel> group,
                                            HashSet<string> visited)
     {
         if (visited.Contains(segment.Id))
@@ -633,13 +638,13 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         group.Add(segment);
 
         // Find all connections involving this segment
-        var connections = Connections.Where(c => 
+        var connections = Connections.Where(c =>
             c.Segment1Id == segment.Id || c.Segment2Id == segment.Id);
 
         foreach (var connection in connections)
         {
-            var otherSegmentId = connection.Segment1Id == segment.Id 
-                ? connection.Segment2Id 
+            var otherSegmentId = connection.Segment1Id == segment.Id
+                ? connection.Segment2Id
                 : connection.Segment1Id;
 
             var otherSegment = PlacedSegments.FirstOrDefault(s => s.Id == otherSegmentId);
@@ -663,131 +668,131 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         }
 
         // Update connection points
-        foreach (var connection in Connections.Where(c => 
+        foreach (var connection in Connections.Where(c =>
             group.Any(s => s.Id == c.Segment1Id || s.Id == c.Segment2Id)))
         {
             connection.ConnectionX += deltaX;
             connection.ConnectionY += deltaY;
         }
 
-            Debug.WriteLine($"📦 Moved group of {group.Count} segments");
+        Debug.WriteLine($"📦 Moved group of {group.Count} segments");
+    }
+
+    /// <summary>
+    /// Automatically detect and create connections between segments based on matching endpoints.
+    /// Used after AnyRail XML import to restore track connectivity.
+    /// Handles turnouts (3-4 endpoints) as well as simple tracks (2 endpoints).
+    /// </summary>
+    /// <param name="tolerance">Maximum distance (in pixels) for endpoints to be considered connected. Default 5.0 for rounding tolerance.</param>
+    public void AutoConnectFromEndpoints(double tolerance = 5.0)
+    {
+        var segments = PlacedSegments.ToList();
+        int connectionsCreated = 0;
+
+        Debug.WriteLine($"🔗 AutoConnect: Checking {segments.Count} segments with tolerance {tolerance}px");
+
+        // Debug: Print first few segment endpoints to verify extraction
+        foreach (var seg in segments.Take(3))
+        {
+            var endpoints = seg.GetAllEndpoints();
+            Debug.WriteLine($"   Segment {seg.ArticleCode}: {endpoints.Count} endpoints");
         }
 
-        /// <summary>
-        /// Automatically detect and create connections between segments based on matching endpoints.
-        /// Used after AnyRail XML import to restore track connectivity.
-        /// Handles turnouts (3-4 endpoints) as well as simple tracks (2 endpoints).
-        /// </summary>
-        /// <param name="tolerance">Maximum distance (in pixels) for endpoints to be considered connected. Default 5.0 for rounding tolerance.</param>
-        public void AutoConnectFromEndpoints(double tolerance = 5.0)
+        for (int i = 0; i < segments.Count; i++)
         {
-            var segments = PlacedSegments.ToList();
-            int connectionsCreated = 0;
+            var seg1 = segments[i];
+            var seg1Endpoints = seg1.GetAllEndpoints();
 
-            Debug.WriteLine($"🔗 AutoConnect: Checking {segments.Count} segments with tolerance {tolerance}px");
-
-            // Debug: Print first few segment endpoints to verify extraction
-            foreach (var seg in segments.Take(3))
+            for (int j = i + 1; j < segments.Count; j++)
             {
-                var endpoints = seg.GetAllEndpoints();
-                Debug.WriteLine($"   Segment {seg.ArticleCode}: {endpoints.Count} endpoints");
-            }
+                var seg2 = segments[j];
+                var seg2Endpoints = seg2.GetAllEndpoints();
 
-            for (int i = 0; i < segments.Count; i++)
-            {
-                var seg1 = segments[i];
-                var seg1Endpoints = seg1.GetAllEndpoints();
-
-                for (int j = i + 1; j < segments.Count; j++)
+                // Check all combinations of endpoints between the two segments
+                foreach (var ep1 in seg1Endpoints)
+                {
+                    foreach (var ep2 in seg2Endpoints)
                     {
-                        var seg2 = segments[j];
-                        var seg2Endpoints = seg2.GetAllEndpoints();
-
-                        // Check all combinations of endpoints between the two segments
-                        foreach (var ep1 in seg1Endpoints)
+                        if (PointsMatch(ep1, ep2, tolerance))
                         {
-                            foreach (var ep2 in seg2Endpoints)
-                            {
-                                if (PointsMatch(ep1, ep2, tolerance))
-                                {
-                                    // Determine if this is start or end for each segment
-                                    var seg1IsStart = IsStartEndpoint(seg1, ep1);
-                                    var seg2IsStart = IsStartEndpoint(seg2, ep2);
+                            // Determine if this is start or end for each segment
+                            var seg1IsStart = IsStartEndpoint(seg1, ep1);
+                            var seg2IsStart = IsStartEndpoint(seg2, ep2);
 
-                                    // CreateConnection handles duplicate checks now with endpoint indices
-                                    CreateConnection(seg1, seg1IsStart, seg2, seg2IsStart, ep1.X, ep1.Y);
-                                    connectionsCreated++;
-                                }
-                            }
+                            // CreateConnection handles duplicate checks now with endpoint indices
+                            CreateConnection(seg1, seg1IsStart, seg2, seg2IsStart, ep1.X, ep1.Y);
+                            connectionsCreated++;
                         }
                     }
                 }
+            }
+        }
 
-                    Debug.WriteLine($"🔗 AutoConnect: Created {connectionsCreated} connections from endpoint matching");
-                }
+        Debug.WriteLine($"🔗 AutoConnect: Created {connectionsCreated} connections from endpoint matching");
+    }
 
-            /// <summary>
-            /// Automatically connect a specific segment to nearby segments based on endpoint proximity.
-            /// Used when dragging a segment to reconnect it after being disconnected.
-            /// </summary>
-            /// <param name="segment">The segment to connect.</param>
-            /// <param name="tolerance">Maximum distance (in pixels) for endpoints to be considered connected. Default 5.0 for rounding tolerance.</param>
-            public void AutoConnectFromEndpoints(TrackSegmentViewModel segment, double tolerance = 5.0)
+    /// <summary>
+    /// Automatically connect a specific segment to nearby segments based on endpoint proximity.
+    /// Used when dragging a segment to reconnect it after being disconnected.
+    /// </summary>
+    /// <param name="segment">The segment to connect.</param>
+    /// <param name="tolerance">Maximum distance (in pixels) for endpoints to be considered connected. Default 5.0 for rounding tolerance.</param>
+    public void AutoConnectFromEndpoints(TrackSegmentViewModel segment, double tolerance = 5.0)
+    {
+        var segmentEndpoints = segment.GetAllEndpoints();
+        int connectionsCreated = 0;
+
+        Debug.WriteLine($"🔗 AutoConnect for {segment.ArticleCode}: Checking {segmentEndpoints.Count} endpoints");
+
+        foreach (var otherSegment in PlacedSegments.Where(s => s.Id != segment.Id))
+        {
+            var otherEndpoints = otherSegment.GetAllEndpoints();
+
+            foreach (var ep1 in segmentEndpoints)
             {
-                var segmentEndpoints = segment.GetAllEndpoints();
-                int connectionsCreated = 0;
-
-                Debug.WriteLine($"🔗 AutoConnect for {segment.ArticleCode}: Checking {segmentEndpoints.Count} endpoints");
-
-                foreach (var otherSegment in PlacedSegments.Where(s => s.Id != segment.Id))
+                foreach (var ep2 in otherEndpoints)
                 {
-                    var otherEndpoints = otherSegment.GetAllEndpoints();
-
-                    foreach (var ep1 in segmentEndpoints)
+                    if (PointsMatch(ep1, ep2, tolerance))
                     {
-                        foreach (var ep2 in otherEndpoints)
-                        {
-                            if (PointsMatch(ep1, ep2, tolerance))
-                            {
-                                var segIsStart = IsStartEndpoint(segment, ep1);
-                                var otherIsStart = IsStartEndpoint(otherSegment, ep2);
+                        var segIsStart = IsStartEndpoint(segment, ep1);
+                        var otherIsStart = IsStartEndpoint(otherSegment, ep2);
 
-                                // CreateConnection handles duplicate checks now with endpoint indices
-                                CreateConnection(segment, segIsStart, otherSegment, otherIsStart, ep1.X, ep1.Y);
-                                connectionsCreated++;
-                            }
-                        }
+                        // CreateConnection handles duplicate checks now with endpoint indices
+                        CreateConnection(segment, segIsStart, otherSegment, otherIsStart, ep1.X, ep1.Y);
+                        connectionsCreated++;
                     }
                 }
-
-                if (connectionsCreated > 0)
-                {
-                    Debug.WriteLine($"🔗 AutoConnect: Created {connectionsCreated} connections for {segment.ArticleCode}");
-                }
             }
-
-            /// <summary>
-            /// Determine if an endpoint is closer to the segment's start point.
-            /// </summary>
-        private static bool IsStartEndpoint(TrackSegmentViewModel segment, (double X, double Y) endpoint)
-        {
-            var startDist = Math.Pow(segment.StartPointX - endpoint.X, 2) + Math.Pow(segment.StartPointY - endpoint.Y, 2);
-            var endDist = Math.Pow(segment.EndPointX - endpoint.X, 2) + Math.Pow(segment.EndPointY - endpoint.Y, 2);
-            return startDist <= endDist;
         }
 
-        /// <summary>
-        /// Check if two points are within tolerance distance of each other.
-        /// </summary>
-        private static bool PointsMatch((double X, double Y) p1, (double X, double Y) p2, double tolerance)
+        if (connectionsCreated > 0)
         {
-            var dx = p1.X - p2.X;
-            var dy = p1.Y - p2.Y;
-            return dx * dx + dy * dy <= tolerance * tolerance;
+            Debug.WriteLine($"🔗 AutoConnect: Created {connectionsCreated} connections for {segment.ArticleCode}");
         }
-        #endregion
+    }
 
-        #region AnyRail Import/Export
+    /// <summary>
+    /// Determine if an endpoint is closer to the segment's start point.
+    /// </summary>
+    private static bool IsStartEndpoint(TrackSegmentViewModel segment, (double X, double Y) endpoint)
+    {
+        var startDist = Math.Pow(segment.StartPointX - endpoint.X, 2) + Math.Pow(segment.StartPointY - endpoint.Y, 2);
+        var endDist = Math.Pow(segment.EndPointX - endpoint.X, 2) + Math.Pow(segment.EndPointY - endpoint.Y, 2);
+        return startDist <= endDist;
+    }
+
+    /// <summary>
+    /// Check if two points are within tolerance distance of each other.
+    /// </summary>
+    private static bool PointsMatch((double X, double Y) p1, (double X, double Y) p2, double tolerance)
+    {
+        var dx = p1.X - p2.X;
+        var dy = p1.Y - p2.Y;
+        return dx * dx + dy * dy <= tolerance * tolerance;
+    }
+    #endregion
+
+    #region AnyRail Import/Export
     /// <summary>
     /// Current loaded AnyRail layout (if imported).
     /// </summary>
@@ -830,7 +835,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
             var center = part.GetCenter();
             var articleCode = part.GetArticleCode();
             var trackType = part.GetTrackSegmentType();
-            
+
             var segment = new TrackSegment
             {
                 Id = part.Id,
@@ -844,16 +849,16 @@ public partial class TrackPlanEditorViewModel : ObservableObject
                 Layer = "Default"
             };
 
-                PlacedSegments.Add(new TrackSegmentViewModel(segment));
-            }
+            PlacedSegments.Add(new TrackSegmentViewModel(segment));
+        }
 
-            // Automatically detect and create connections based on matching endpoints
-            AutoConnectFromEndpoints();
+        // Automatically detect and create connections based on matching endpoints
+        AutoConnectFromEndpoints();
 
-            OnPropertyChanged(nameof(AssignedSensorCount));
-            OnPropertyChanged(nameof(SensorStatusText));
+        OnPropertyChanged(nameof(AssignedSensorCount));
+        OnPropertyChanged(nameof(SensorStatusText));
 
-            Debug.WriteLine($"📂 Imported AnyRail layout: {PlacedSegments.Count} segments");
+        Debug.WriteLine($"📂 Imported AnyRail layout: {PlacedSegments.Count} segments");
     }
 
     /// <summary>
@@ -878,7 +883,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     public void ExportToAnyRail(String xmlPath)
     {
         var ic = CultureInfo.InvariantCulture;
-        
+
         using var writer = new StreamWriter(xmlPath);
         writer.WriteLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
         writer.WriteLine($"<layout width=\"{CanvasWidth.ToString(ic)}\" height=\"{CanvasHeight.ToString(ic)}\" scaleX=\"1\" scaleY=\"1\">");
@@ -888,22 +893,22 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         {
             writer.WriteLine($"    <part id=\"{segment.Id}\" type=\"{GetAnyRailType(segment)}\">");
             writer.WriteLine("      <drawing>");
-            
+
             // Write path as line (simplified - full arc support would need more work)
             var startX = segment.StartPointX.ToString(ic);
             var startY = segment.StartPointY.ToString(ic);
             var endX = segment.EndPointX.ToString(ic);
             var endY = segment.EndPointY.ToString(ic);
             writer.WriteLine($"        <line pt1=\"{startX},{startY}\" pt2=\"{endX},{endY}\" />");
-            
+
             writer.WriteLine("      </drawing>");
-            
+
             // Write InPort if assigned
             if (segment.AssignedInPort.HasValue)
             {
                 writer.WriteLine($"      <inport>{segment.AssignedInPort.Value}</inport>");
             }
-            
+
             writer.WriteLine("    </part>");
         }
 
@@ -913,113 +918,112 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         Debug.WriteLine($"💾 Exported track plan to: {xmlPath}");
     }
 
-        private static string GetAnyRailType(TrackSegmentViewModel segment)
+    private static string GetAnyRailType(TrackSegmentViewModel segment)
+    {
+        return segment.ArticleCode switch
         {
-            return segment.ArticleCode switch
-            {
-                var s when s.StartsWith("G") => "Straight",
-                var s when s.StartsWith("R") => "Curve",
-                "WL" => "LeftRegularTurnout",
-                "WR" => "RightRegularTurnout",
-                "DKW" => "DoubleSlip",
-                "DWW" => "ThreeWay",
-                _ => "Straight"
-            };
-        }
-        #endregion
+            var s when s.StartsWith("G") => "Straight",
+            var s when s.StartsWith("R") => "Curve",
+            "WL" => "LeftRegularTurnout",
+            "WR" => "RightRegularTurnout",
+            "DKW" => "DoubleSlip",
+            "DWW" => "ThreeWay",
+            _ => "Straight"
+        };
+    }
+    #endregion
 
-        #region Project Persistence
-        /// <summary>
-        /// Sync current track layout to the selected Project for JSON persistence.
-        /// Call this before saving the Solution.
-        /// </summary>
-        public void SyncToProject()
+    #region Project Persistence
+    /// <summary>
+    /// Sync current track layout to the selected Project for JSON persistence.
+    /// Call this before saving the Solution.
+    /// </summary>
+    public void SyncToProject()
+    {
+        var project = _mainViewModel.SelectedProject?.Model;
+        if (project == null)
         {
-            var project = _mainViewModel.SelectedProject?.Model;
-            if (project == null)
-            {
-                Debug.WriteLine("⚠️ SyncToProject: No project selected");
-                return;
-            }
-
-            // Create or update TrackLayout
-            project.TrackLayout ??= new TrackLayout();
-
-            // Sync layout properties
-            project.TrackLayout.Name = LayoutName;
-            project.TrackLayout.Description = LayoutDescription;
-            project.TrackLayout.TrackSystem = TrackSystem;
-            project.TrackLayout.Scale = Scale;
-            project.TrackLayout.WidthMm = CanvasWidthMm;
-            project.TrackLayout.HeightMm = CanvasHeightMm;
-
-            // Convert ViewModels to Domain models
-            project.TrackLayout.Segments.Clear();
-            foreach (var vm in PlacedSegments)
-            {
-                project.TrackLayout.Segments.Add(vm.Model);
-            }
-
-            // Copy connections
-            project.TrackLayout.Connections.Clear();
-            project.TrackLayout.Connections.AddRange(Connections);
-
-            Debug.WriteLine($"💾 SyncToProject: {project.TrackLayout.Segments.Count} segments, {project.TrackLayout.Connections.Count} connections");
+            Debug.WriteLine("⚠️ SyncToProject: No project selected");
+            return;
         }
 
-        /// <summary>
-        /// Load track layout from the selected Project.
-        /// Call this when a Project is selected or Solution is loaded.
-        /// </summary>
-        public void LoadFromProject()
+        // Create or update TrackLayout
+        project.TrackLayout ??= new TrackLayout();
+
+        // Sync layout properties
+        project.TrackLayout.Name = LayoutName;
+        project.TrackLayout.Description = LayoutDescription;
+        project.TrackLayout.TrackSystem = TrackSystem;
+        project.TrackLayout.Scale = Scale;
+        project.TrackLayout.WidthMm = CanvasWidthMm;
+        project.TrackLayout.HeightMm = CanvasHeightMm;
+
+        // Convert ViewModels to Domain models
+        project.TrackLayout.Segments.Clear();
+        foreach (var vm in PlacedSegments)
         {
-            var project = _mainViewModel.SelectedProject?.Model;
-            if (project?.TrackLayout == null)
-            {
-                Debug.WriteLine("📂 LoadFromProject: No track layout in project");
-                return;
-            }
-
-            var layout = project.TrackLayout;
-
-            // Clear existing data
-            PlacedSegments.Clear();
-            Connections.Clear();
-
-            // Load layout properties
-            LayoutName = layout.Name;
-            LayoutDescription = layout.Description;
-            TrackSystem = layout.TrackSystem;
-            Scale = layout.Scale;
-            CanvasWidthMm = layout.WidthMm;
-            CanvasHeightMm = layout.HeightMm;
-
-            // Load segments
-            foreach (var segment in layout.Segments)
-            {
-                PlacedSegments.Add(new TrackSegmentViewModel(segment));
-            }
-
-            // Load connections
-            Connections.AddRange(layout.Connections);
-
-            // Restore connection states on ViewModels
-            foreach (var connection in Connections)
-            {
-                var seg1 = PlacedSegments.FirstOrDefault(s => s.Id == connection.Segment1Id);
-                var seg2 = PlacedSegments.FirstOrDefault(s => s.Id == connection.Segment2Id);
-
-                var seg1IsStart = connection.Segment1EndpointIndex == 0; // Index 0 = start
-                var seg2IsStart = connection.Segment2EndpointIndex == 0; // Index 0 = start
-                seg1?.SetConnectionState(seg1IsStart, true, connection.Segment2Id);
-                seg2?.SetConnectionState(seg2IsStart, true, connection.Segment1Id);
-            }
-
-            OnPropertyChanged(nameof(AssignedSensorCount));
-            OnPropertyChanged(nameof(SensorStatusText));
-
-            Debug.WriteLine($"📂 LoadFromProject: {PlacedSegments.Count} segments, {Connections.Count} connections");
+            project.TrackLayout.Segments.Add(vm.Model);
         }
-        #endregion
+
+        // Copy connections
+        project.TrackLayout.Connections.Clear();
+        project.TrackLayout.Connections.AddRange(Connections);
+
+        Debug.WriteLine($"💾 SyncToProject: {project.TrackLayout.Segments.Count} segments, {project.TrackLayout.Connections.Count} connections");
     }
 
+    /// <summary>
+    /// Load track layout from the selected Project.
+    /// Call this when a Project is selected or Solution is loaded.
+    /// </summary>
+    public void LoadFromProject()
+    {
+        var project = _mainViewModel.SelectedProject?.Model;
+        if (project?.TrackLayout == null)
+        {
+            Debug.WriteLine("📂 LoadFromProject: No track layout in project");
+            return;
+        }
+
+        var layout = project.TrackLayout;
+
+        // Clear existing data
+        PlacedSegments.Clear();
+        Connections.Clear();
+
+        // Load layout properties
+        LayoutName = layout.Name;
+        LayoutDescription = layout.Description;
+        TrackSystem = layout.TrackSystem;
+        Scale = layout.Scale;
+        CanvasWidthMm = layout.WidthMm;
+        CanvasHeightMm = layout.HeightMm;
+
+        // Load segments
+        foreach (var segment in layout.Segments)
+        {
+            PlacedSegments.Add(new TrackSegmentViewModel(segment));
+        }
+
+        // Load connections
+        Connections.AddRange(layout.Connections);
+
+        // Restore connection states on ViewModels
+        foreach (var connection in Connections)
+        {
+            var seg1 = PlacedSegments.FirstOrDefault(s => s.Id == connection.Segment1Id);
+            var seg2 = PlacedSegments.FirstOrDefault(s => s.Id == connection.Segment2Id);
+
+            var seg1IsStart = connection.Segment1EndpointIndex == 0; // Index 0 = start
+            var seg2IsStart = connection.Segment2EndpointIndex == 0; // Index 0 = start
+            seg1?.SetConnectionState(seg1IsStart, true, connection.Segment2Id);
+            seg2?.SetConnectionState(seg2IsStart, true, connection.Segment1Id);
+        }
+
+        OnPropertyChanged(nameof(AssignedSensorCount));
+        OnPropertyChanged(nameof(SensorStatusText));
+
+        Debug.WriteLine($"📂 LoadFromProject: {PlacedSegments.Count} segments, {Connections.Count} connections");
+    }
+    #endregion
+}

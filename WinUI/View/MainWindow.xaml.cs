@@ -4,7 +4,6 @@ namespace Moba.WinUI.View;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
 
 using Service;
 
@@ -45,6 +44,9 @@ public sealed partial class MainWindow
         _uiDispatcher = uiDispatcher;
 
         InitializeComponent();
+
+        // Set DataContext for Binding (needed for NavigationView.MenuItems which don't support x:Bind)
+        RootGrid.DataContext = this;
 
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
@@ -134,29 +136,18 @@ public sealed partial class MainWindow
         }
     }
 
-    // Minimal event handler - delegates to ViewModel Command
-    private void TrackPower_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is AppBarToggleButton toggleButton)
-        {
-            // Simply execute command with current state - no business logic here
-            CounterViewModel.SetTrackPowerCommand.Execute(toggleButton.IsChecked);
-        }
-    }
-
     private void ToggleSwitch_Toggled(object sender, RoutedEventArgs e)
     {
-        ToggleSwitch toggleSwitch = sender as ToggleSwitch;
-        if (toggleSwitch != null)
+        _ = e; // Suppress unused parameter warning (required by event signature)
+        if (sender is not ToggleSwitch toggleSwitch) return;
+
+        if (toggleSwitch.IsOn)
         {
-            if (toggleSwitch.IsOn == true)
-            {
-                CounterViewModel.ConnectCommand.Execute(toggleSwitch.IsOn);
-            }
-            else
-            {
-                CounterViewModel.DisconnectCommand.Execute(toggleSwitch.IsOn);
-            }
+            CounterViewModel.ConnectCommand.Execute(toggleSwitch.IsOn);
+        }
+        else
+        {
+            CounterViewModel.DisconnectCommand.Execute(toggleSwitch.IsOn);
         }
     }
     #endregion

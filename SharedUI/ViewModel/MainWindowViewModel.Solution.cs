@@ -26,23 +26,8 @@ public partial class MainWindowViewModel
     #endregion
 
     #region Solution Management
-    partial void OnSolutionChanged(Solution? value)
+    partial void OnSolutionChanged(Solution value)
     {
-        if (value == null)
-        {
-            HasSolution = false;
-            SolutionViewModel = null;
-            AvailableCities.Clear();
-            OnPropertyChanged(nameof(SelectedProject));
-            OnPropertyChanged(nameof(FilteredJourneys));
-            OnPropertyChanged(nameof(FilteredWorkflows));
-
-            // Dispose JourneyManager when solution unloads
-            _journeyManager?.Dispose();
-            _journeyManager = null;
-            return;
-        }
-
         // Ensure Solution always has at least one project
         if (value.Projects.Count == 0)
         {

@@ -155,8 +155,9 @@ public partial class CounterViewModel : ObservableObject, IDisposable
     /// </summary>
     public bool IsNotConnected => !IsConnected;
 
-    partial void OnIsConnectedChanged(bool _)
+    partial void OnIsConnectedChanged(bool value)
     {
+        _ = value; // Suppress unused parameter warning
         // Notify UI about inverse property change
         OnPropertyChanged(nameof(IsNotConnected));
 
@@ -738,25 +739,29 @@ public partial class InPortStatistic : ObservableObject
         OnPropertyChanged(nameof(LapCountFormatted));
     }
 
-    partial void OnHasReceivedFirstLapChanged(bool _)
+    partial void OnHasReceivedFirstLapChanged(bool value)
     {
+        _ = value; // Suppress unused parameter warning
         // Notify UI about background color change
         OnPropertyChanged(nameof(BackgroundColorName));
     }
 
-    partial void OnTargetLapCountChanged(int _)
+    partial void OnTargetLapCountChanged(int value)
     {
+        _ = value; // Suppress unused parameter warning
         OnPropertyChanged(nameof(Progress));
         OnPropertyChanged(nameof(LapCountFormatted));
     }
 
-    partial void OnLastLapTimeChanged(TimeSpan? _)
+    partial void OnLastLapTimeChanged(TimeSpan? value)
     {
+        _ = value; // Suppress unused parameter warning
         OnPropertyChanged(nameof(LastLapTimeFormatted));
     }
 
-    partial void OnLastFeedbackTimeChanged(DateTime? _)
+    partial void OnLastFeedbackTimeChanged(DateTime? value)
     {
+        _ = value; // Suppress unused parameter warning
         OnPropertyChanged(nameof(LastFeedbackTimeFormatted));
     }
 }

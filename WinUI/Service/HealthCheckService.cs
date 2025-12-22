@@ -6,6 +6,7 @@ namespace Moba.WinUI.Service;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+
 using Sound;
 
 /// <summary>

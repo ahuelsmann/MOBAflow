@@ -131,7 +131,6 @@ public partial class App
         // ✅ ActionExecutor with AnnouncementService for Announcement actions
         services.AddSingleton(sp =>
         {
-            var z21 = sp.GetRequiredService<Backend.Interface.IZ21>();
             var announcementService = sp.GetRequiredService<AnnouncementService>();
             return new ActionExecutor(announcementService);
         });

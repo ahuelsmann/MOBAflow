@@ -2,7 +2,7 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Common.Configuration;
-using CommunityToolkit.Mvvm.ComponentModel;
+
 using CommunityToolkit.Mvvm.Input;
 
 /// <summary>
@@ -208,17 +208,64 @@ public partial class MainWindowViewModel
         }
     }
 
-    [ObservableProperty]
-    private bool _showSuccessMessage;
+    #endregion
 
-    [ObservableProperty]
-    private bool _showErrorMessage;
+    #region Feature Toggle Properties (Read-Only for NavigationView Visibility)
 
-    [ObservableProperty]
-    private string? _errorMessage;
+    /// <summary>
+    /// Gets whether the Overview page is available.
+    /// Bound to NavigationView item visibility.
+    /// </summary>
+    public bool IsOverviewPageAvailable => _settings.FeatureToggles.IsOverviewPageAvailable;
 
-    [ObservableProperty]
-    private int _selectedThemeIndex = 2; // Default: Use system setting
+    /// <summary>
+    /// Gets whether the Solution page is available.
+    /// Bound to NavigationView item visibility.
+    /// </summary>
+    public bool IsSolutionPageAvailable => _settings.FeatureToggles.IsSolutionPageAvailable;
+
+    /// <summary>
+    /// Gets whether the Journeys page is available.
+    /// Bound to NavigationView item visibility.
+    /// </summary>
+    public bool IsJourneysPageAvailable => _settings.FeatureToggles.IsJourneysPageAvailable;
+
+    /// <summary>
+    /// Gets whether the Workflows page is available.
+    /// Bound to NavigationView item visibility.
+    /// </summary>
+    public bool IsWorkflowsPageAvailable => _settings.FeatureToggles.IsWorkflowsPageAvailable;
+
+    /// <summary>
+    /// Gets whether the Feedback Points page is available.
+    /// Bound to NavigationView item visibility.
+    /// </summary>
+    public bool IsFeedbackPointsPageAvailable => _settings.FeatureToggles.IsFeedbackPointsPageAvailable;
+
+    /// <summary>
+    /// Gets whether the Track Plan Editor page is available.
+    /// Bound to NavigationView item visibility.
+    /// </summary>
+    public bool IsTrackPlanEditorPageAvailable => _settings.FeatureToggles.IsTrackPlanEditorPageAvailable;
+
+    /// <summary>
+    /// Gets whether the Journey Map page is available.
+    /// Bound to NavigationView item visibility.
+    /// </summary>
+    public bool IsJourneyMapPageAvailable => _settings.FeatureToggles.IsJourneyMapPageAvailable;
+
+    /// <summary>
+    /// Gets whether the Settings page is available.
+    /// Bound to NavigationView item visibility.
+    /// </summary>
+    public bool IsSettingsPageAvailable => _settings.FeatureToggles.IsSettingsPageAvailable;
+
+    /// <summary>
+    /// Gets whether the Monitor page is available.
+    /// Bound to NavigationView item visibility.
+    /// </summary>
+    public bool IsMonitorPageAvailable => _settings.FeatureToggles.IsMonitorPageAvailable;
+
     #endregion
 
     #region Settings Commands

@@ -4,7 +4,7 @@ namespace Moba.Domain;
 using Enum;
 
 /// <summary>
-/// Represents a passenger wagon.
+/// Upcoming feature: Represents a passenger wagon.
 /// </summary>
 public class PassengerWagon : Wagon
 {

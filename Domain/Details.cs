@@ -4,7 +4,7 @@ namespace Moba.Domain;
 using Enum;
 
 /// <summary>
-/// Additional details about a locomotive or wagon.
+/// Upcoming feature: Additional details about a locomotive or wagon.
 /// </summary>
 public class Details
 {

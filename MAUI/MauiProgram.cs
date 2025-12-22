@@ -6,13 +6,20 @@ using Backend.Data;
 using Backend.Interface;
 using Backend.Network;
 using Backend.Service;
+
 using Common.Configuration;
+
 using CommunityToolkit.Maui;
+
 using Domain;
+
 using Microsoft.Extensions.Logging;
+
 using Service;
+
 using SharedUI.Interface;
 using SharedUI.ViewModel;
+
 using UraniumUI;
 
 public static class MauiProgram

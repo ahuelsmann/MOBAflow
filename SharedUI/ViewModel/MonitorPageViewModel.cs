@@ -2,10 +2,14 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Model;
+
 using Common.Extensions;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Interface;
+
 using System.Collections.ObjectModel;
 
 /// <summary>
@@ -47,13 +51,13 @@ public partial class MonitorPageViewModel : ObservableObject
         _uiDispatcher = uiDispatcher;
 
         // Subscribe to TrafficPackets changes to update count
-        TrafficPackets.CollectionChanged += (s, e) =>
+        TrafficPackets.CollectionChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(TrafficCount));
         };
 
         // Subscribe to connection status changes
-        _mainWindowViewModel.PropertyChanged += (s, e) =>
+        _mainWindowViewModel.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(MainWindowViewModel.IsZ21Connected))
             {
