@@ -74,8 +74,15 @@ public interface IZ21 : IDisposable
     /// <param name="cancellationToken">Cancellation token</param>
     Task RecoverConnectionAsync(IPAddress address, int port = 21105, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Simulates a feedback event for testing purposes (WinUI only).
-    /// </summary>
-    void SimulateFeedback(int inPort);
-}
+        /// <summary>
+        /// Simulates a feedback event for testing purposes (WinUI only).
+        /// </summary>
+        void SimulateFeedback(int inPort);
+
+        /// <summary>
+        /// Sets the system state polling interval. Use 0 to disable polling.
+        /// Changes take effect immediately if connected.
+        /// </summary>
+        /// <param name="intervalSeconds">Polling interval in seconds (0 = disabled, 1-30 recommended).</param>
+        void SetSystemStatePollingInterval(int intervalSeconds);
+    }

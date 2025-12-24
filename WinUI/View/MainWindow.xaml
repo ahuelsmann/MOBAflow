@@ -27,9 +27,6 @@
             <TitleBar.IconSource>
                 <FontIconSource FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE7C0;" />
             </TitleBar.IconSource>
-            <TitleBar.RightHeader>
-                <!--  RightHeader  -->
-            </TitleBar.RightHeader>
         </TitleBar>
 
         <!--  NavigationView  -->
@@ -220,13 +217,20 @@
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Text="{x:Bind ViewModel.StatusText, Mode=OneWay}" />
                 <!--  Track Power Toggle (like Roco Z21 app)  -->
-                <ToggleSwitch
-                    FontSize="12"
-                    IsEnabled="{x:Bind ViewModel.IsConnected, Mode=OneWay}"
-                    IsOn="{x:Bind ViewModel.IsTrackPowerOn, Mode=TwoWay}"
-                    OffContent="Track Off"
-                    OnContent="Track On"
-                    Toggled="TrackPower_Toggled" />
+                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <ToggleSwitch
+                        FontSize="12"
+                        IsEnabled="{x:Bind ViewModel.IsConnected, Mode=OneWay}"
+                        IsOn="{x:Bind ViewModel.IsTrackPowerOn, Mode=TwoWay}"
+                        OffContent=""
+                        OnContent=""
+                        Toggled="TrackPower_Toggled" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="Track Power" />
+                </StackPanel>
             </StackPanel>
 
             <!--  Azure Speech Health Status  -->

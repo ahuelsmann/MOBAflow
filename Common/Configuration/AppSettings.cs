@@ -48,6 +48,12 @@ public class Z21Settings
     public int AutoConnectRetryIntervalSeconds { get; set; } = 10;
 
     /// <summary>
+    /// System state polling interval in seconds (how often to request current, voltage, temperature updates).
+    /// Default: 5 seconds. Set to 0 to disable polling (rely only on Z21 broadcast events).
+    /// </summary>
+    public int SystemStatePollingIntervalSeconds { get; set; } = 5;
+
+    /// <summary>
     /// List of recently used IP addresses.
     /// </summary>
     public List<string> RecentIpAddresses { get; set; } = new();

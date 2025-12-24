@@ -64,6 +64,20 @@ public partial class MainWindowViewModel
         }
     }
 
+    public double Z21SystemStatePollingInterval
+    {
+        get => _settings.Z21.SystemStatePollingIntervalSeconds;
+        set
+        {
+            if (_settings.Z21.SystemStatePollingIntervalSeconds != (int)value)
+            {
+                _settings.Z21.SystemStatePollingIntervalSeconds = (int)value;
+                OnPropertyChanged();
+                // Timer update happens on next connect or can be applied live via Z21.SetSystemStatePollingInterval()
+            }
+        }
+    }
+
     public string CityLibraryPath
     {
         get => _settings.CityLibrary.FilePath;

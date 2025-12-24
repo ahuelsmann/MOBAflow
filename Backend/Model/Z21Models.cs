@@ -58,12 +58,6 @@ public class Z21VersionInfo
     }
 
     /// <summary>
-    /// Hardware version/revision number.
-    /// Typically 0 for most units.
-    /// </summary>
-    public uint HardwareVersion { get; set; }
-
-    /// <summary>
     /// Returns a summary string with all version information.
     /// </summary>
     public override string ToString()

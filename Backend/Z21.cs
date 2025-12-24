@@ -28,6 +28,8 @@ public class Z21 : IZ21
     private readonly Z21Monitor? _trafficMonitor;
     private CancellationTokenSource? _cancellationTokenSource;
     private Timer? _keepaliveTimer;
+    private Timer? _systemStatePollingTimer;
+    private int _systemStatePollingIntervalSeconds = 5;
     private int _keepAliveFailures;
     private const int MAX_KEEPALIVE_FAILURES = 3;
     private readonly SemaphoreSlim _sendLock = new(1, 1);
@@ -95,10 +97,13 @@ public class Z21 : IZ21
         // Request version information (serial number, hardware type, firmware version)
         await Task.Delay(50, _cancellationTokenSource.Token).ConfigureAwait(false);
         await RequestVersionInfoAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
-        
+
         // Start keepalive timer immediately (will also serve as connection check)
         StartKeepaliveTimer();
-        
+
+        // Start system state polling timer for frequent updates (current, voltage, temperature)
+        StartSystemStatePollingTimer();
+
         _logger?.LogInformation("🔄 Z21 connection initiated to {Address}:{Port}. Waiting for response...", address, port);
         
         // Note: IsConnected will be set to true when Z21 responds (in OnUdpReceived)
@@ -112,8 +117,9 @@ public class Z21 : IZ21
     /// </summary>
     public async Task DisconnectAsync()
     {
-        // Stop keepalive timer first
+        // Stop timers first
         StopKeepaliveTimer();
+        StopSystemStatePollingTimer();
 
         // Only send LAN_LOGOFF if UDP is connected
         if (_udp.IsConnected)
@@ -265,6 +271,92 @@ public class Z21 : IZ21
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Error during connection lost handling");
+        }
+    }
+    #endregion
+
+    #region SystemState Polling
+    /// <summary>
+    /// Sets the system state polling interval. Use 0 to disable polling.
+    /// Changes take effect immediately.
+    /// </summary>
+    /// <param name="intervalSeconds">Polling interval in seconds (0 = disabled, 1-30 recommended).</param>
+    public void SetSystemStatePollingInterval(int intervalSeconds)
+    {
+        _systemStatePollingIntervalSeconds = intervalSeconds;
+
+        if (_isConnected)
+        {
+            // Restart timer with new interval if connected
+            StopSystemStatePollingTimer();
+            if (intervalSeconds > 0)
+            {
+                StartSystemStatePollingTimer();
+            }
+        }
+
+        _logger?.LogInformation("System state polling interval set to {Interval}s", intervalSeconds);
+    }
+
+    /// <summary>
+    /// Starts a timer that periodically requests system state (current, voltage, temperature) from Z21.
+    /// </summary>
+    private void StartSystemStatePollingTimer()
+    {
+        if (_systemStatePollingIntervalSeconds <= 0) return;
+
+        StopSystemStatePollingTimer();
+
+        var interval = TimeSpan.FromSeconds(_systemStatePollingIntervalSeconds);
+        _systemStatePollingTimer = new Timer(
+            state => { _ = state; _ = SendSystemStateRequestAsync(); },
+            null,
+            interval,  // First poll after interval
+            interval); // Subsequent polls at interval
+
+        _logger?.LogDebug("SystemState polling timer started ({Interval}s interval)", _systemStatePollingIntervalSeconds);
+    }
+
+    /// <summary>
+    /// Stops the system state polling timer.
+    /// </summary>
+    private void StopSystemStatePollingTimer()
+    {
+        if (_systemStatePollingTimer != null)
+        {
+            _systemStatePollingTimer.Dispose();
+            _systemStatePollingTimer = null;
+            _logger?.LogDebug("SystemState polling timer stopped");
+        }
+    }
+
+    /// <summary>
+    /// Sends a system state request (LAN_SYSTEMSTATE_GETDATA) to Z21.
+    /// </summary>
+    private async Task SendSystemStateRequestAsync()
+    {
+        if (_cancellationTokenSource == null || _cancellationTokenSource.Token.IsCancellationRequested)
+        {
+            return;
+        }
+
+        try
+        {
+            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                _cancellationTokenSource.Token, 
+                timeoutCts.Token);
+
+            await SendAsync(Z21Command.BuildHandshake(), linkedCts.Token).ConfigureAwait(false);
+            _logger?.LogTrace("SystemState request sent");
+        }
+        catch (OperationCanceledException) when (_cancellationTokenSource?.Token.IsCancellationRequested == true)
+        {
+            // Normal during shutdown, don't log
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning("SystemState request failed: {Message}", ex.Message);
         }
     }
     #endregion
@@ -645,6 +737,7 @@ public class Z21 : IZ21
         if (disposing)
         {
             StopKeepaliveTimer();
+            StopSystemStatePollingTimer();
             _sendLock.Dispose();
             try { _udp.Dispose(); } catch { /* ignore */ }
             _cancellationTokenSource?.Cancel();

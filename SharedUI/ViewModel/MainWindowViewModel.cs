@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Interface;
@@ -247,9 +247,6 @@ public partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private string hardwareType = "-";
-
-    [ObservableProperty]
-    private string hardwareVersion = "-";
 
     [ObservableProperty]
     private string simulateInPort = "1";

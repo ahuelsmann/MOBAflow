@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using Backend;
@@ -105,6 +105,9 @@ public partial class MainWindowViewModel
                 {
                     port = parsedPort;
                 }
+
+                // Apply system state polling interval from settings before connecting
+                _z21.SetSystemStatePollingInterval(_settings.Z21.SystemStatePollingIntervalSeconds);
 
                 await _z21.ConnectAsync(address, port);
 
@@ -218,13 +221,11 @@ public partial class MainWindowViewModel
             if (turnOn)
             {
                 await _z21.SetTrackPowerOnAsync();
-                StatusText = "Track power ON";
                 IsTrackPowerOn = true;
             }
             else
             {
                 await _z21.SetTrackPowerOffAsync();
-                StatusText = "Track power OFF";
                 IsTrackPowerOn = false;
             }
         }
@@ -372,7 +373,6 @@ public partial class MainWindowViewModel
             SerialNumber = versionInfo.SerialNumber.ToString();
             FirmwareVersion = versionInfo.FirmwareVersion;
             HardwareType = versionInfo.HardwareType;
-            HardwareVersion = versionInfo.HardwareVersion.ToString();
 
             this.Log($"Z21 Version Info: S/N={SerialNumber}, HW={HardwareType}, FW={FirmwareVersion}");
         });
@@ -397,23 +397,21 @@ public partial class MainWindowViewModel
         SupplyVoltage = systemState.SupplyVoltage;
         VccVoltage = systemState.VccVoltage;
 
-        var statusParts = new List<string>
-        {
-            "Connected",
-            $"Current: {systemState.MainCurrent}mA",
-            $"Temp: {systemState.Temperature}C"
-        };
+        // Only show warnings/special states in StatusText - normal state is just "Connected"
+        var warnings = new List<string>();
 
         if (systemState.IsEmergencyStop)
-            statusParts.Add("WARNING: EMERGENCY STOP");
+            warnings.Add("EMERGENCY STOP");
 
         if (systemState.IsShortCircuit)
-            statusParts.Add("WARNING: SHORT CIRCUIT");
+            warnings.Add("SHORT CIRCUIT");
 
         if (systemState.IsProgrammingMode)
-            statusParts.Add("Programming");
+            warnings.Add("Programming");
 
-        StatusText = string.Join(" | ", statusParts);
+        StatusText = warnings.Count > 0 
+            ? $"Connected | {string.Join(" | ", warnings)}" 
+            : "Connected";
 
         this.Log($"Z21 System State: Track Power {(systemState.IsTrackPowerOn ? "ON" : "OFF")}, Current={systemState.MainCurrent}mA");
     }
