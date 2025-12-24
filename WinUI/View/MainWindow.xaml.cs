@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
 using Microsoft.UI.Windowing;
@@ -19,7 +19,6 @@ public sealed partial class MainWindow
 {
     #region Fields
     public MainWindowViewModel ViewModel { get; }
-    public CounterViewModel CounterViewModel { get; }
     public TrackPlanEditorViewModel TrackPlanEditorViewModel { get; }
 
     private readonly NavigationService _navigationService;
@@ -29,7 +28,6 @@ public sealed partial class MainWindow
 
     public MainWindow(
         MainWindowViewModel viewModel,
-        CounterViewModel counterViewModel,
         TrackPlanEditorViewModel trackPlanEditorViewModel,
         NavigationService navigationService,
         HealthCheckService healthCheckService,
@@ -37,7 +35,6 @@ public sealed partial class MainWindow
         IIoService ioService)
     {
         ViewModel = viewModel;
-        CounterViewModel = counterViewModel;
         TrackPlanEditorViewModel = trackPlanEditorViewModel;
         _navigationService = navigationService;
         _healthCheckService = healthCheckService;
@@ -93,9 +90,9 @@ public sealed partial class MainWindow
     #region Event Handlers
     private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MainWindowViewModel.IsZ21Connected))
+        if (e.PropertyName == nameof(MainWindowViewModel.IsConnected))
         {
-            Z21StatusIcon.Glyph = ViewModel.IsZ21Connected ? "\uE8EB" : "\uF384";
+            Z21StatusIcon.Glyph = ViewModel.IsConnected ? "\uE8EB" : "\uF384";
         }
         else if (e.PropertyName == nameof(MainWindowViewModel.IsDarkMode))
         {
@@ -149,3 +146,4 @@ public sealed partial class MainWindow
     }
     #endregion
 }
+

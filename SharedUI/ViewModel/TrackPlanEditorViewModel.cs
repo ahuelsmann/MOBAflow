@@ -144,6 +144,23 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     [ObservableProperty]
     private double inPortInput = double.NaN;
 
+    /// <summary>
+    /// Current zoom level (25-200%).
+    /// </summary>
+    [ObservableProperty]
+    private double zoomLevel = 100.0;
+
+    /// <summary>
+    /// Formatted zoom level for display (e.g., "100%").
+    /// </summary>
+    public string ZoomLevelText => $"{ZoomLevel:F0}%";
+
+    /// <summary>
+    /// Mouse position text for display (e.g., "X: 0  Y: 0").
+    /// </summary>
+    [ObservableProperty]
+    private string mousePositionText = "X: 0  Y: 0";
+
     partial void OnSelectedSegmentChanged(TrackSegmentViewModel? value)
     {
         OnPropertyChanged(nameof(HasSelectedSegment));
@@ -458,6 +475,27 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     }
 
     private bool CanRotateSegment() => SelectedSegment is not null;
+
+    /// <summary>
+    /// Zoom in (increase zoom by 25%).
+    /// </summary>
+    [RelayCommand]
+    private void ZoomIn()
+    {
+        ZoomLevel = Math.Min(200, ZoomLevel + 25);
+        OnPropertyChanged(nameof(ZoomLevelText));
+    }
+
+    /// <summary>
+    /// Zoom out (decrease zoom by 25%).
+    /// </summary>
+    [RelayCommand]
+    private void ZoomOut()
+    {
+        ZoomLevel = Math.Max(25, ZoomLevel - 25);
+        OnPropertyChanged(nameof(ZoomLevelText));
+    }
+
     #endregion
 
     #region Helper Methods

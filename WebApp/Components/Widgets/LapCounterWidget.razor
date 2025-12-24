@@ -1,4 +1,4 @@
-@using Moba.SharedUI.ViewModel
+﻿@using Moba.SharedUI.ViewModel
 <div class="lap-counter-widget card">
     <div class="card-header">
         <h3>Lap Counter Settings</h3>
@@ -36,7 +36,7 @@
 
 @code {
     [Parameter]
-    public CounterViewModel ViewModel { get; set; } = null!;
+    public MainWindowViewModel ViewModel { get; set; } = null!;
 
     private void ResetCounters()
     {

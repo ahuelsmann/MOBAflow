@@ -2,6 +2,7 @@
 
 namespace Moba.Backend.Interface;
 
+using Model;
 using Protocol;
 using Service;
 using System.Net;
@@ -13,6 +14,7 @@ public delegate void VersionInfoChanged(Z21VersionInfo versionInfo);
 
 public interface IZ21 : IDisposable
 {
+
     event Feedback? Received;
     event SystemStateChanged? OnSystemStateChanged;
     event XBusStatusChanged? OnXBusStatusChanged;

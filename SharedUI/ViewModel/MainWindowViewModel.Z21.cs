@@ -1,9 +1,10 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using Backend;
 using Backend.Manager;
 using Backend.Model;
+using Backend.Protocol;
 using Backend.Service;
 
 using Common.Extensions;
@@ -89,14 +90,14 @@ public partial class MainWindowViewModel
     #endregion
 
     #region Z21 Connection Commands
-    [RelayCommand(CanExecute = nameof(CanConnectToZ21))]
-    private async Task ConnectToZ21Async()
+    [RelayCommand(CanExecute = nameof(CanConnect))]
+    private async Task ConnectAsync()
     {
         if (!string.IsNullOrEmpty(_settings.Z21.CurrentIpAddress))
         {
             try
             {
-                Z21StatusText = "Connecting...";
+                StatusText = "Connecting...";
                 var address = IPAddress.Parse(_settings.Z21.CurrentIpAddress);
 
                 int port = 21105;
@@ -107,42 +108,42 @@ public partial class MainWindowViewModel
 
                 await _z21.ConnectAsync(address, port);
 
-                // Note: IsZ21Connected will be set when Z21 responds (via OnConnectedChanged event)
-                Z21StatusText = $"Waiting for Z21 at {_settings.Z21.CurrentIpAddress}:{port}...";
+                // Note: IsConnected will be set when Z21 responds (via OnConnectedChanged event)
+                StatusText = $"Waiting for Z21 at {_settings.Z21.CurrentIpAddress}:{port}...";
             }
             catch (Exception ex)
             {
-                Z21StatusText = $"Connection failed: {ex.Message}";
+                StatusText = $"Connection failed: {ex.Message}";
             }
         }
         else
         {
-            Z21StatusText = "No IP address configured in AppSettings";
+            StatusText = "No IP address configured in AppSettings";
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanDisconnectFromZ21))]
-    private async Task DisconnectFromZ21Async()
+    [RelayCommand(CanExecute = nameof(CanDisconnect))]
+    private async Task DisconnectAsync()
     {
         try
         {
-            Z21StatusText = "Disconnecting...";
+            StatusText = "Disconnecting...";
 
             _journeyManager?.Dispose();
             _journeyManager = null;
 
             await _z21.DisconnectAsync();
 
-            IsZ21Connected = false;
+            IsConnected = false;
             IsTrackPowerOn = false;
-            Z21StatusText = "Disconnected";
+            StatusText = "Disconnected";
 
-            ConnectToZ21Command.NotifyCanExecuteChanged();
+            ConnectCommand.NotifyCanExecuteChanged();
             SetTrackPowerCommand.NotifyCanExecuteChanged();
         }
         catch (Exception ex)
         {
-            Z21StatusText = $"Error: {ex.Message}";
+            StatusText = $"Error: {ex.Message}";
         }
     }
 
@@ -155,7 +156,7 @@ public partial class MainWindowViewModel
             // If not, something went wrong - log and return
             if (_journeyManager == null)
             {
-                Z21StatusText = "Error: JourneyManager not initialized. Load a solution first.";
+                StatusText = "Error: JourneyManager not initialized. Load a solution first.";
                 Debug.WriteLine("❌ SimulateFeedback: JourneyManager is null");
                 return;
             }
@@ -170,16 +171,16 @@ public partial class MainWindowViewModel
             }
             else if (!int.TryParse(SimulateInPort, out inPort))
             {
-                Z21StatusText = "Invalid InPort number";
+                StatusText = "Invalid InPort number";
                 return;
             }
 
             _z21.SimulateFeedback(inPort);
-            Z21StatusText = $"Simulated feedback for InPort {inPort}";
+            StatusText = $"Simulated feedback for InPort {inPort}";
         }
         catch (Exception ex)
         {
-            Z21StatusText = $"Error: {ex.Message}";
+            StatusText = $"Error: {ex.Message}";
         }
     }
 
@@ -201,11 +202,11 @@ public partial class MainWindowViewModel
                 _journeyManager.Reset(SelectedJourney.Model);
             }
 
-            Z21StatusText = $"Journey '{SelectedJourney.Name}' reset";
+            StatusText = $"Journey '{SelectedJourney.Name}' reset";
         }
         catch (Exception ex)
         {
-            Z21StatusText = $"Error: {ex.Message}";
+            StatusText = $"Error: {ex.Message}";
         }
     }
 
@@ -217,25 +218,25 @@ public partial class MainWindowViewModel
             if (turnOn)
             {
                 await _z21.SetTrackPowerOnAsync();
-                Z21StatusText = "Track power ON";
+                StatusText = "Track power ON";
                 IsTrackPowerOn = true;
             }
             else
             {
                 await _z21.SetTrackPowerOffAsync();
-                Z21StatusText = "Track power OFF";
+                StatusText = "Track power OFF";
                 IsTrackPowerOn = false;
             }
         }
         catch (Exception ex)
         {
-            Z21StatusText = $"Track power error: {ex.Message}";
+            StatusText = $"Track power error: {ex.Message}";
         }
     }
 
-    private bool CanConnectToZ21() => !IsZ21Connected;
-    private bool CanDisconnectFromZ21() => IsZ21Connected;
-    private bool CanToggleTrackPower() => IsZ21Connected;
+    private bool CanConnect() => !IsConnected;
+    private bool CanDisconnect() => IsConnected;
+    private bool CanToggleTrackPower() => IsConnected;
     
     /// <summary>
     /// Attempts to auto-connect to Z21 at startup.
@@ -246,11 +247,14 @@ public partial class MainWindowViewModel
     {
         if (string.IsNullOrEmpty(_settings.Z21.CurrentIpAddress))
         {
-            Z21StatusText = "No Z21 IP configured";
+            StatusText = "No Z21 IP configured";
             Debug.WriteLine("⚠️ Z21 Auto-Connect: No IP address configured");
             return;
         }
 
+        // Set initial status
+        StatusText = $"Connecting to {_settings.Z21.CurrentIpAddress}...";
+        
         // Initial connection attempt
         await AttemptZ21ConnectionAsync();
         
@@ -272,7 +276,7 @@ public partial class MainWindowViewModel
     /// </summary>
     private async Task AttemptZ21ConnectionIfDisconnectedAsync()
     {
-        if (IsZ21Connected) return;  // Already connected, skip
+        if (IsConnected) return;  // Already connected, skip
         await AttemptZ21ConnectionAsync();
     }
     
@@ -283,9 +287,12 @@ public partial class MainWindowViewModel
     {
         if (string.IsNullOrEmpty(_settings.Z21.CurrentIpAddress)) return;
 
+        // Don't overwrite status if already connected
+        if (IsConnected) return;
+
         try
         {
-            Z21StatusText = "Connecting to Z21...";
+            StatusText = "Connecting to Z21...";
             var address = IPAddress.Parse(_settings.Z21.CurrentIpAddress);
 
             int port = 21105;
@@ -297,12 +304,12 @@ public partial class MainWindowViewModel
             Debug.WriteLine($"🔄 Z21 Auto-Connect: Attempting connection to {address}:{port}...");
             await _z21.ConnectAsync(address, port);
             
-            // Note: IsZ21Connected will be set when Z21 responds (via OnConnectedChanged)
-            Z21StatusText = $"Waiting for Z21 at {_settings.Z21.CurrentIpAddress}:{port}...";
+            // Note: Status will be updated by OnConnectedChanged event when Z21 responds
+            // Don't set "Waiting for..." status here - it gets overwritten by the event!
         }
         catch (Exception ex)
         {
-            Z21StatusText = $"Z21 unavailable: {ex.Message}";
+            StatusText = $"Z21 unavailable: {ex.Message}";
             Debug.WriteLine($"⚠️ Z21 Auto-Connect failed: {ex.Message}");
         }
     }
@@ -315,11 +322,11 @@ public partial class MainWindowViewModel
     {
         _uiDispatcher.InvokeOnUi(() =>
         {
-            IsZ21Connected = isConnected;
+            IsConnected = isConnected;
             
             if (isConnected)
             {
-                Z21StatusText = $"Connected to {_settings.Z21.CurrentIpAddress}";
+                StatusText = $"Connected to {_settings.Z21.CurrentIpAddress}";
                 Debug.WriteLine("✅ Z21 connection confirmed - Z21 is responding");
                 
                 // Initialize JourneyManager if needed
@@ -330,12 +337,12 @@ public partial class MainWindowViewModel
             }
             else
             {
-                Z21StatusText = "Z21 disconnected";
+                StatusText = "Z21 disconnected";
                 Debug.WriteLine("❌ Z21 disconnected");
             }
             
-            ConnectToZ21Command.NotifyCanExecuteChanged();
-            DisconnectFromZ21Command.NotifyCanExecuteChanged();
+            ConnectCommand.NotifyCanExecuteChanged();
+            DisconnectCommand.NotifyCanExecuteChanged();
             SetTrackPowerCommand.NotifyCanExecuteChanged();
         });
     }
@@ -347,31 +354,48 @@ public partial class MainWindowViewModel
         _uiDispatcher.InvokeOnUi(() => UpdateZ21SystemState(systemState));
     }
 
+    private void OnZ21XBusStatusChanged(XBusStatus xBusStatus)
+    {
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            // XBusStatus.TrackOff is the OPPOSITE of IsTrackPowerOn
+            IsTrackPowerOn = !xBusStatus.TrackOff;
+            
+            this.Log($"📊 XBus status updated: Track Power {(IsTrackPowerOn ? "ON" : "OFF")}, EmergencyStop={xBusStatus.EmergencyStop}, ShortCircuit={xBusStatus.ShortCircuit}");
+        });
+    }
+
     private void OnZ21VersionInfoChanged(Z21VersionInfo versionInfo)
     {
         _uiDispatcher.InvokeOnUi(() =>
         {
-            Z21SerialNumber = versionInfo.SerialNumber.ToString();
-            Z21FirmwareVersion = versionInfo.FirmwareVersion;
-            Z21HardwareType = versionInfo.HardwareType;
-            Z21HardwareVersion = versionInfo.HardwareVersion.ToString();
+            SerialNumber = versionInfo.SerialNumber.ToString();
+            FirmwareVersion = versionInfo.FirmwareVersion;
+            HardwareType = versionInfo.HardwareType;
+            HardwareVersion = versionInfo.HardwareVersion.ToString();
 
-            this.Log($"Z21 Version Info: S/N={Z21SerialNumber}, HW={Z21HardwareType}, FW={Z21FirmwareVersion}");
+            this.Log($"Z21 Version Info: S/N={SerialNumber}, HW={HardwareType}, FW={FirmwareVersion}");
         });
     }
 
     private void UpdateZ21SystemState(SystemState systemState)
     {
         // If we're receiving system state updates, we're connected
-        if (!IsZ21Connected)
+        if (!IsConnected)
         {
-            IsZ21Connected = true;
-            ConnectToZ21Command.NotifyCanExecuteChanged();
-            DisconnectFromZ21Command.NotifyCanExecuteChanged();
+            IsConnected = true;
+            ConnectCommand.NotifyCanExecuteChanged();
+            DisconnectCommand.NotifyCanExecuteChanged();
             SetTrackPowerCommand.NotifyCanExecuteChanged();
         }
 
         IsTrackPowerOn = systemState.IsTrackPowerOn;
+
+        // Update System State properties (for OverviewPage/WebApp)
+        MainCurrent = systemState.MainCurrent;
+        Temperature = systemState.Temperature;
+        SupplyVoltage = systemState.SupplyVoltage;
+        VccVoltage = systemState.VccVoltage;
 
         var statusParts = new List<string>
         {
@@ -389,21 +413,21 @@ public partial class MainWindowViewModel
         if (systemState.IsProgrammingMode)
             statusParts.Add("Programming");
 
-        Z21StatusText = string.Join(" | ", statusParts);
+        StatusText = string.Join(" | ", statusParts);
 
-        this.Log($"Z21 System State: TrackPower={systemState.IsTrackPowerOn}, Current={systemState.MainCurrent}mA");
+        this.Log($"Z21 System State: Track Power {(systemState.IsTrackPowerOn ? "ON" : "OFF")}, Current={systemState.MainCurrent}mA");
     }
 
     private void HandleConnectionLost()
     {
         _uiDispatcher.InvokeOnUi(() =>
         {
-            IsZ21Connected = false;
+            IsConnected = false;
             IsTrackPowerOn = false;
-            Z21StatusText = "Connection lost - reconnect required";
+            StatusText = "Connection lost - reconnect required";
 
-            ConnectToZ21Command.NotifyCanExecuteChanged();
-            DisconnectFromZ21Command.NotifyCanExecuteChanged();
+            ConnectCommand.NotifyCanExecuteChanged();
+            DisconnectCommand.NotifyCanExecuteChanged();
             SetTrackPowerCommand.NotifyCanExecuteChanged();
         });
     }
@@ -473,3 +497,4 @@ public partial class MainWindowViewModel
     }
     #endregion
 }
+

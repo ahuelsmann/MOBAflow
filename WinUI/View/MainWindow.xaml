@@ -159,16 +159,6 @@
                             <FontIcon Glyph="&#xE898;" />
                         </AppBarButton.Icon>
                     </AppBarButton>
-                    <!--  Z21 Connection  -->
-                    <!--<AppBarToggleButton
-                        Click="TrackPower_Click"
-                        IsChecked="{x:Bind CounterViewModel.IsTrackPowerOn, Mode=OneWay}"
-                        IsEnabled="{x:Bind CounterViewModel.IsConnected, Mode=OneWay}"
-                        Label="Power">
-                        <AppBarToggleButton.Icon>
-                            <FontIcon Glyph="&#xE945;" />
-                        </AppBarToggleButton.Icon>
-                    </AppBarToggleButton>-->
                     <AppBarSeparator />
                     <!--  Simulation  -->
                     <AppBarButton
@@ -216,7 +206,7 @@
                 Grid.Column="0"
                 VerticalAlignment="Center"
                 Orientation="Horizontal">
-                <!--  Connection Status Icon (auto-updated based on IsZ21Connected)  -->
+                <!--  Connection Status Icon (auto-updated based on IsConnected)  -->
                 <FontIcon
                     x:Name="Z21StatusIcon"
                     Margin="12,0,8,0"
@@ -228,11 +218,11 @@
                     VerticalAlignment="Center"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Style="{StaticResource CaptionTextBlockStyle}"
-                    Text="{x:Bind ViewModel.Z21StatusText, Mode=OneWay}" />
+                    Text="{x:Bind ViewModel.StatusText, Mode=OneWay}" />
                 <!--  Track Power Toggle (like Roco Z21 app)  -->
                 <ToggleSwitch
                     FontSize="12"
-                    IsEnabled="{x:Bind ViewModel.IsZ21Connected, Mode=OneWay}"
+                    IsEnabled="{x:Bind ViewModel.IsConnected, Mode=OneWay}"
                     IsOn="{x:Bind ViewModel.IsTrackPowerOn, Mode=TwoWay}"
                     OffContent="Track Off"
                     OnContent="Track On"
@@ -289,3 +279,4 @@
         </Grid>
     </Grid>
 </Window>
+

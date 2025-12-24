@@ -21,11 +21,10 @@ using Windows.UI.Core;
 /// Track Plan Editor Page - Interactive drag & drop track planning.
 /// Code-behind handles drag & drop operations (WinUI limitation - no good XAML Behavior support).
 /// </summary>
-public sealed partial class TrackPlanEditorPage : INotifyPropertyChanged
+public sealed partial class TrackPlanEditorPage
 {
     #region Fields
     private readonly SnapToConnectService _snapService;
-    private string _zoomLevelText = "100%";
     #endregion
 
     public TrackPlanEditorPage(TrackPlanEditorViewModel viewModel, SnapToConnectService snapService)
@@ -36,36 +35,6 @@ public sealed partial class TrackPlanEditorPage : INotifyPropertyChanged
     }
 
     public TrackPlanEditorViewModel ViewModel => (TrackPlanEditorViewModel)DataContext;
-
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    /// <summary>
-    /// Current zoom level display text.
-    /// </summary>
-    public string ZoomLevelText
-    {
-        get => _zoomLevelText;
-        set
-        {
-            _zoomLevelText = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ZoomLevelText)));
-        }
-    }
-
-    private string _mousePositionText = "X: 0  Y: 0";
-    
-    /// <summary>
-    /// Current mouse position display text.
-    /// </summary>
-    public string MousePositionText
-    {
-        get => _mousePositionText;
-        set
-        {
-            _mousePositionText = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MousePositionText)));
-        }
-    }
 
     #region Keyboard Shortcuts
     private void Page_KeyDown(object sender, KeyRoutedEventArgs e)
@@ -97,28 +66,6 @@ public sealed partial class TrackPlanEditorPage : INotifyPropertyChanged
                 e.Handled = true;
                 break;
         }
-    }
-    #endregion
-
-    #region Zoom Controls
-    private void ZoomSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
-    {
-        if (CanvasScrollViewer == null) return;
-
-        
-        var zoomFactor = (float)(e.NewValue / 100.0);
-        CanvasScrollViewer.ChangeView(null, null, zoomFactor);
-        ZoomLevelText = $"{e.NewValue:F0}%";
-    }
-
-    private void ZoomIn_Click(object sender, RoutedEventArgs e)
-    {
-        ZoomSlider.Value = Math.Min(ZoomSlider.Maximum, ZoomSlider.Value + 25);
-    }
-
-    private void ZoomOut_Click(object sender, RoutedEventArgs e)
-    {
-        ZoomSlider.Value = Math.Max(ZoomSlider.Minimum, ZoomSlider.Value - 25);
     }
     #endregion
 
@@ -410,7 +357,7 @@ public sealed partial class TrackPlanEditorPage : INotifyPropertyChanged
         // Update mouse position display (convert to mm - 1px = 2mm at scale 0.5)
         var mmX = currentPosition.X * 2;
         var mmY = currentPosition.Y * 2;
-        MousePositionText = $"X: {mmX:F0}mm  Y: {mmY:F0}mm";
+        ViewModel.MousePositionText = $"X: {mmX:F0}mm  Y: {mmY:F0}mm";
         
         // Handle right-click panning
         if (_isPanning)

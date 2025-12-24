@@ -47,8 +47,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<AppSettings>();
         builder.Services.AddSingleton<ISettingsService, SettingsService>();
 
-        // ViewModels (CounterViewModel now requires IUiDispatcher and ISettingsService)
-        builder.Services.AddSingleton<CounterViewModel>();
+        // ViewModels
+        builder.Services.AddSingleton<MainWindowViewModel>();
         builder.Services.AddTransient<JourneyViewModel>();
 
         // Backend services - Register in dependency order

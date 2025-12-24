@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Model;
@@ -36,8 +36,8 @@ public partial class MonitorPageViewModel : ObservableObject
     /// <summary>
     /// Connection status text.
     /// </summary>
-    public string ConnectionStatus => _mainWindowViewModel.IsZ21Connected 
-        ? $"✅ Connected to {_mainWindowViewModel.Z21IpAddress}" 
+    public string ConnectionStatus => _mainWindowViewModel.IsConnected 
+        ? $"✅ Connected to {_mainWindowViewModel.IpAddress}" 
         : "❌ Not connected";
 
     /// <summary>
@@ -59,7 +59,7 @@ public partial class MonitorPageViewModel : ObservableObject
         // Subscribe to connection status changes
         _mainWindowViewModel.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(MainWindowViewModel.IsZ21Connected))
+            if (e.PropertyName == nameof(MainWindowViewModel.IsConnected))
             {
                 OnPropertyChanged(nameof(ConnectionStatus));
             }
@@ -113,3 +113,5 @@ public partial class MonitorPageViewModel : ObservableObject
             this.Log("Traffic cleared");
         }
     }
+
+

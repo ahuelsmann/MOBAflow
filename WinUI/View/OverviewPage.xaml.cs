@@ -5,15 +5,18 @@ using SharedUI.ViewModel;
 
 /// <summary>
 /// Overview page showing the Lap Counter Dashboard with Z21 connection and track statistics.
-/// This page provides the same functionality as MAUI MainPage and WebApp Counter page.
+/// Uses MainWindowViewModel (unified cross-platform ViewModel).
 /// </summary>
 public sealed partial class OverviewPage
 {
-    public CounterViewModel ViewModel { get; }
+    public MainWindowViewModel ViewModel { get; }
 
-    public OverviewPage(CounterViewModel viewModel)
+    public OverviewPage(MainWindowViewModel viewModel)
     {
         ViewModel = viewModel;
         InitializeComponent();
     }
 }
+
+
+

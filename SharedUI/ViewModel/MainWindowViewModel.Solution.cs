@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.Input;
@@ -48,7 +48,7 @@ public partial class MainWindowViewModel
         // not the empty default project created here.
 
         SaveSolutionCommand.NotifyCanExecuteChanged();
-        ConnectToZ21Command.NotifyCanExecuteChanged();
+        ConnectCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(SelectedProject));
 
         LoadCities();
@@ -117,7 +117,7 @@ public partial class MainWindowViewModel
         InitializeJourneyManager(newProject);
 
         SaveSolutionCommand.NotifyCanExecuteChanged();
-        ConnectToZ21Command.NotifyCanExecuteChanged();
+        ConnectCommand.NotifyCanExecuteChanged();
     }
 
     [RelayCommand]
@@ -183,7 +183,7 @@ public partial class MainWindowViewModel
         }
 
         SaveSolutionCommand.NotifyCanExecuteChanged();
-        ConnectToZ21Command.NotifyCanExecuteChanged();
+        ConnectCommand.NotifyCanExecuteChanged();
         LoadCities();
 
         OnPropertyChanged(nameof(Solution));
@@ -209,3 +209,4 @@ public partial class MainWindowViewModel
     }
     #endregion
 }
+

@@ -1,4 +1,4 @@
-<Page
+﻿<Page
     x:Class="Moba.WinUI.View.SettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -46,7 +46,7 @@
                         HorizontalAlignment="Left"
                         Header="IP Address"
                         PlaceholderText="192.168.0.111"
-                        Text="{x:Bind ViewModel.Z21IpAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        Text="{x:Bind ViewModel.IpAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                         <TextBox.Description>
                             <TextBlock Text="IP address of your Z21 digital command station" />
                         </TextBox.Description>
@@ -57,7 +57,7 @@
                         HorizontalAlignment="Left"
                         Header="Port"
                         PlaceholderText="21105"
-                        Text="{x:Bind ViewModel.Z21Port, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        Text="{x:Bind ViewModel.Port, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                         <TextBox.Description>
                             <TextBlock Text="Z21 communication port (default: 21105)" />
                         </TextBox.Description>

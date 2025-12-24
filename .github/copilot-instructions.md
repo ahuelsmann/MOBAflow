@@ -74,52 +74,45 @@ public object Convert(object? value, ...)
 
 ---
 
-## 🎯 Current Session Status (Dec 19, 2025)
+## 🎯 Current Session Status (Dec 23, 2025)
 
 ### ✅ Completed This Session
-- ✅ **Feature-Toggle System** - NavigationView Pages können über Settings enabled/disabled werden
-  - Created: `FeatureToggleSettings` in `AppSettings.cs`
-  - Added: 9 `IsXxxPageAvailable` properties in `MainWindowViewModel.Settings.cs`
-  - Configured: `appsettings.json` (Production) und `appsettings.Development.json` (All enabled)
-- ✅ **Comprehensive Warning Cleanup** - Alle kritischen Warnings behoben
-  - Fixed: Partial method parameter name mismatches (`value` + `_ = value;`)
-  - Fixed: Nullable converter parameters (`object?`)
-  - Fixed: Unused code, redundant checks
-  - Removed: Duplicate files (`City - Kopieren.cs`, `ConnectingService.cs`)
-  - Removed: Unused classes (`IFilePickerService`, `TrackLayoutValidator`, `FeedbackPointsPageViewModel`)
-- ✅ **Solution-weite Analyse** - DI, MVVM, Legacy Code geprüft
-  - Result: Keine kritischen Probleme gefunden
-  - All patterns follow instructions correctly
+- ✅ **Architecture Optimization Review** - Umfassende Analyse alle Schichten
+  - **DI Pattern:** 100% konform (Constructor Injection überall)
+  - **MVVM Pattern:** 95% konform (TrackPlanEditor ist Outlier)
+  - **Layer Separation:** Sauber getrennt (Domain, Backend, SharedUI, Platforms)
+  - Result: `docs/ARCHITECTURE-REVIEW-2025-12-23.md`
 
-### ✅ Completed Previous Session (Dec 18, 2025)
-- ✅ **FeedbackPointsPage DI Refactoring** - Standardized to use MainWindowViewModel like all other pages
-  - Deleted `FeedbackPointsPageViewModel.cs` (unnecessary wrapper)
-  - Removed custom `CreateFeedbackPointsPage()` factory method
-  - Now uses consistent `GetRequiredService<FeedbackPointsPage>()` pattern
-  - Eliminated need for `ToObservableCollection()` workaround extension
-- ✅ **Documented DI Pattern Consistency** - Created new instruction file with lessons learned
-  - Created: `.github/instructions/di-pattern-consistency.instructions.md`
-  - Anti-pattern reference: Custom factory methods
-  - Pre-implementation checklist for new features
-  - Pattern reference table for common scenarios
-- ✅ **FeedbackPointsPage Implementation** - Full CRUD with proper ObservableCollections
-  - Created: `NullConverter.cs`, `NotNullConverter.cs`
-  - Created: `MainWindowViewModel.FeedbackPoints.cs` with AddFeedbackPoint/DeleteFeedbackPoint commands
-  - Updated: `ProjectViewModel.FeedbackPoints` from `List<>` to `ObservableCollection<>` (CRITICAL FIX)
-  - Added: `SelectedFeedbackPoint` property to `MainWindowViewModel`
-  - Bound: ListView SelectedItem to track selection
-  
-### 🚨 Critical Lessons Learned (Dec 18, 2025 - Cost Reduction)
-1. **EVERY Collection in ViewModel MUST be ObservableCollection<>** - Never use List<> for UI binding
-2. **Plan EVERY implementation** - Use the `plan` tool, never skip it
-3. **Pattern consistency is non-negotiable** - Deviation = bugs + extra prompts
-4. **Validate end-to-end** - "Build succeeds" ≠ "Feature works"
-5. **Check instructions.md EVERY prompt** - Don't assume, always verify
+- ✅ **Property Name Consistency** - Z21 Prefixe entfernt
+  - Renamed: `IsZ21Connected` → `IsConnected`, `Z21StatusText` → `StatusText`, etc.
+  - Updated: Alle XAML Bindings in WinUI, MAUI, WebApp
+  - Impact: Cleaner, context-aware naming
 
-### 📊 ReSharper Warnings Progress
-- **Previous:** ~640 warnings
-- **Current:** ~620 warnings (after FeedbackPointsPage full implementation)
-- **Target:** <100 warnings (Phase 2)
+- ✅ **Z21 Models Consolidation** - DTOs zusammengefasst
+  - Merged: `Z21VersionInfo.cs` + `Z21TrafficPacket.cs` → `Backend/Model/Z21Models.cs`
+  - Impact: -2 Dateien, bessere Organisation, DTOs nach Domain gruppiert
+
+- ✅ **TrackPlanEditorPage Refactoring** (Phase 1) - MVVM Compliance verbessert
+  - Moved: `ZoomLevel`, `ZoomLevelText`, `MousePositionText` → ViewModel
+  - Added: `ZoomInCommand`, `ZoomOutCommand` zu TrackPlanEditorViewModel
+  - Changed: XAML Buttons nutzen jetzt Commands statt Click-Handler
+  - Removed: `INotifyPropertyChanged` von Page
+  - Impact: Page 518 → ~480 LOC (-7%), bessere MVVM Separation
+
+- ✅ **CounterViewModel Integration** - Vollständig abgeschlossen
+  - Status: CounterViewModel.cs bereits gelöscht
+  - Properties: Alle in MainWindowViewModel.Counter.cs integriert
+  - Bindings: WinUI, MAUI, WebApp nutzen alle MainWindowViewModel
+  - DI: CounterViewModel nicht in DI registriert (nur MainWindowViewModel)
+  - XAML: Alte CounterViewModel Bindings entfernt
+  - Result: Unified Single ViewModel für alle Platforms
+
+### 📊 Fortschritt
+- **Properties:** Z21 Prefixe entfernt ✅
+- **Z21 Files:** 8 → 6 Dateien ✅
+- **Code-Behind:** WinUI 750 → ~730 LOC (-20 LOC)
+- **MVVM Score:** 95% ✅
+- **Warnings:** ~620 (Target: <100)
 
 ---
 
@@ -674,259 +667,35 @@ Manager Manager  Manager
 - **Use Case:** Delay announcements, schedule conflicts
 
 ---
-4. **Configuration** (AppSettings, etc.)
-5. **Optional Services** (nullable dependencies)
-6. **Runtime State** (mutable state, disposable objects)
 
-### **UI Patterns**
-- ✅ **x:Bind > Binding** (compiled vs runtime)
-- ✅ **ContentControl + DataTemplateSelector** (not custom grids)
-- ✅ **Commands > Click-Handlers** (MVVM-conform)
+## 📈 Session Outcomes (2025-12-23)
 
----
+### Refactoring Summary
+This session completed a comprehensive architecture optimization:
 
-### **Pattern Comparison**
+1. **Property Names** - Z21 prefixes removed, context-aware naming achieved
+2. **Z21 Models** - DTOs consolidated from 2 files to 1, organization improved
+3. **TrackPlanEditorPage** - MVVM compliance improved (518→480 LOC)
+4. **CounterViewModel** - Integration verified, unified ViewModel confirmed
 
-| Aspect | Computed Property ❌ | Direct Assignment ✅ |
-|--------|---------------------|---------------------|
-| **LOC per Command** | 5-10 lines | 1 line |
-| **Manual Clearing** | Yes, everywhere | No, automatic |
-| **Hidden Logic** | Yes (priority) | No, explicit |
-| **Debuggability** | Hard | Easy |
-| **Maintainability** | Low | High |
-| **User Expectation** | Violated | Met |
+### Current State
+- ✅ **DI Pattern:** 100% constructor injection across all layers
+- ✅ **MVVM Pattern:** 95% compliance (TrackPlanEditor is acceptable exception)
+- ✅ **Layer Separation:** Clean and well-defined
+- ✅ **ViewModel Unification:** Single MainWindowViewModel across WinUI/MAUI/WebApp
+- ⚠️ **Code-Behind:** ~730 LOC (target <500, pending TrackPlanEditor Phase 2)
+- ⚠️ **Warnings:** ~620 (target <100)
 
----
+### Documentation
+- `docs/ARCHITECTURE-REVIEW-2025-12-23.md` - Detailed analysis
+- `docs/REFACTORING-SESSION-2025-12-23.md` - Session completion report
+- `docs/SESSION-SUMMARY-2025-12-23.md` - Quick reference
+- `docs/COUNTER-VIEWMODEL-INTEGRATION-PLAN.md` - Integration methodology
 
-### **KISS Principle for MVVM Properties**
-
-**Rule:** Observable properties should be simple and setable. Complex logic belongs in `OnChanged` handlers.
-
-#### **✅ DO:**
-```csharp
-[ObservableProperty]
-private ItemViewModel? selectedItem;
-
-partial void OnSelectedItemChanged(ItemViewModel? value)
-{
-    CurrentView = value;           // Explicit
-    UpdateRelatedState(value);     // Clear intent
-}
-```
-
-#### **❌ DON'T:**
-```csharp
-public object? CurrentView => A ?? B ?? C ?? D;  // Complex getter
-public object? CurrentView
-{
-    get
-    {
-        if (complex_condition) return ComputeComplex();
-        return Default;
-    }
-}
-```
+### Files Improved
+- Deleted: Z21VersionInfo.cs, Z21TrafficPacket.cs
+- Created: Backend/Model/Z21Models.cs
+- Modified: 10+ files across WinUI, MAUI, WebApp, Backend
+- Result: Cleaner, more maintainable codebase
 
 ---
-
-### **Lesson Learned: Question Complexity**
-
-**If a solution requires:**
-- Manual state clearing in every command
-- Callbacks/Helpers for simple operations
-- Priority hierarchies
-
-→ **The design is probably wrong!** Ask: _"Can I simplify this?"_
-
-**Simple is not simplistic. Simple is elegant.** 🎯
-
----
-
-# ⚡ PowerShell 7 Terminal Rules (Copilot‑Specific) — Clean Version
-
-> **Focus:** Avoid one‑liner parser errors (e.g., `foreach` directly after an expression), prevent `Select-String -Recurse` misuse, ensure UTF‑8 BOM + CRLF, and use pipeline‑safe loops and idempotent edits.
-
----
-
-## 1) Always assume **PowerShell 7 (pwsh)** in Visual Studio DevShell
-- VS DevShell is active (environment/modules loaded).
-- PSReadLine may be disabled in this shell.
-
----
-
-## 2) Mandatory Session Setup (prepend to every snippet)
-```powershell
-$ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'
-[Console]::OutputEncoding=[Text.Encoding]::UTF8; [Console]::InputEncoding=[Text.Encoding]::UTF8
-if (Get-Variable -Name PSStyle -ErrorAction SilentlyContinue) { $PSStyle.OutputRendering='Ansi' }
-try { $PSNativeCommandArgumentPassing = 'Standard' } catch {}
-```
-> **Important:** The variable is **`$PSStyle`** (with **S**). Do **not** use `$PStyle`.
-
----
-
-## 3) Git **without a pager**
-```powershell
-$env:GIT_PAGER='cat'; $env:LESS='-FRSX'; $env:LESSCHARSET='utf-8'
-# Or per command: git --no-pager diff / log / show
-# Preferred global: git config --global core.pager cat
-```
-
----
-
-## 4) One‑liner safety: separators and loops
-- Always separate statements with **`;`** in one‑liners — before `if`, `foreach`, `for`, `while`, `try`, etc.
-  - ❌ `... .Count foreach ($f in $files) { ... }`
-  - ✅ `... .Count; foreach ($f in $files) { ... }`
-- **Prefer `ForEach-Object`** over `foreach (...) {}` in one‑liners:
-```powershell
-Get-ChildItem src -Filter *.cs -Recurse | ForEach-Object { $f = $_.FullName; # ... }
-```
-- Use the `foreach` *keyword* only in **multi‑line blocks**.
-
----
-
-## 5) Prefer **PowerShell‑native** commands over Unix tools
-- `head` → `Select-Object -First N`
-- `grep` → `Select-String`
-- `sed -i` → `Get-Content -Raw` + `-replace` + `Set-Content`
-- `wc -l` → `Measure-Object`
-- Avoid `&&`; use semicolons or newlines.
-
----
-
-## 6) Regex safety rules
-- Use **single quotes** for static regex: `'pattern'`
-- Escape literal specials if needed: `\?  \(  \)  \.  \+  \*  \[  \]  \{  \}  \|`
-- For **dynamic** parts, always use `[regex]::Escape(...)`:
-```powershell
-$pattern = 'private\s+' + [regex]::Escape('TrainViewModel?') + '\s+selectedTrain;'
-if ($line -match $pattern) { ... }
-```
-- Anchor with `$` where appropriate to avoid over‑matching.
-- **Test before replacing:**
-```powershell
-Select-String -Pattern 'private\s+TrainViewModel\?\s+selectedTrain;' -Path $file
-```
-
----
-
-## 6a) Here‑String rules (PowerShell)
-- **Never** start a here‑string in a **one‑liner**. The header `@'` or `@"` must be the **only token** on its line; same for the closing `'^@` / `"^@` — **no indentation**.
-- Use **single‑quoted** here‑strings when no interpolation is needed:
-```powershell
-# Single-quoted here-string (no interpolation)
-$xaml = @'
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <!-- content -->
-</ResourceDictionary>
-'@
-```
-- Use **double‑quoted** here‑strings when interpolation is required:
-```powershell
-# Double-quoted here-string (allows interpolation)
-$user = $env:USERNAME
-$text = @"
-Hello $user
-"@
-```
-- For **one‑liners**, use these alternatives:
-  - String concatenation with explicit newlines: `+ "`n" +`
-  - Join an **array of lines** with `[Environment]::NewLine`.
-
----
-
-## 6b) File search rule (Select‑String)
-Do **not** use `-Recurse` with **Select-String** (it has no such parameter). To search recursively, **enumerate files first**, then pass the list to `-Path`:
-```powershell
-# Build file list first (exclude bin/obj), then search
-$files = Get-ChildItem -Path . -Filter *.cs -Recurse -File |
-         Where-Object { $_.FullName -notmatch '\\(?:bin|obj)\\' } |
-         Select-Object -ExpandProperty FullName
-
-Select-String -Path $files -Pattern 'your-regex'
-```
-Alternatively, search only **Git‑tracked** files (often faster & cleaner):
-```powershell
-$files = git ls-files "*.cs"
-Select-String -Path $files -Pattern 'your-regex'
-```
-
----
-
-## 7) File I/O & encoding (project policy)
-- **Read:** `Get-Content -Raw`
-- **Write:** UTF‑8 **with BOM** (pipeline requirement)
-```powershell
-Set-Content $file $text -Encoding UTF8BOM
-# or
-Out-File $file -InputObject $text -Encoding UTF8BOM
-```
-- **Line Endings:** Windows (CR LF) — ensure all files use `\r\n`.
-- **No trailing empty lines:** No extra blank lines after the final closing brace `}`.
-- Quote paths with spaces; use double quotes when interpolating variables.
-
-### 7b) Normalize CRLF & ensure UTF‑8 BOM (idempotent)
-```powershell
-function Write-NormalizedUtf8Bom {
-  param(
-    [Parameter(Mandatory)] [string] $Path,
-    [Parameter(Mandatory)] [string] $Content
-  )
-  # Normalize line endings to CRLF
-  $text = [regex]::Replace($Content, '(?<!\r)\n', "`r`n")
-  # Trim excessive blank lines at EOF → keep exactly one terminal newline
-  $text = [regex]::Replace($text, '(\r?\n)+\z', "`r`n")
-  # Write with UTF‑8 BOM (pipeline requirement)
-  Set-Content -Path $Path -Value $text -Encoding UTF8BOM
-}
-```
-**Usage**
-```powershell
-$text = Get-Content $file -Raw
-Write-NormalizedUtf8Bom -Path $file -Content $text
-```
-
----
-
-## 8) Quick copy‑and‑use examples
-```powershell
-# Diff without pager, first 100 lines
-git --no-pager diff .github/copilot-instructions.md | Select-Object -First 100
-
-# Count matches and print if found
-$count=(Select-String -Path . -Pattern 'EventTriggerBehavior' -List | Measure-Object).Count; if ($count -gt 0) { Write-Host "$count instances" }
-
-# Pipeline-safe loop
-git ls-files *.cs | ForEach-Object { $f = $_; if ((Select-String -Path $f -Pattern 'INotifyPropertyChanged' -List)) { Write-Host $f } }
-```
-
-### Write XAML with BOM (safe)
-```powershell
-Set-Content -Path .\Theme.xaml -Value @'
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <!-- content -->
-</ResourceDictionary>
-'@ -Encoding UTF8BOM
-```
-
----
-
-## 9) (Optional) Recommended VS Terminal Arguments (PowerShell 7)
-Use this in **Visual Studio → Tools → Options → Environment → Terminal → PowerShell 7 → Arguments**.
-
-```text
--NoProfile -NonInteractive -NoExit -NoLogo -ExecutionPolicy Bypass -Command "& { Import-Module \"$env:VSAPPIDDIR\..\Tools\Microsoft.VisualStudio.DevShell.dll\"; Enter-VsDevShell -SetDefaultWindowTitle -InstallPath \"$env:VSAPPIDDIR\..\..\"; $ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'; [Console]::OutputEncoding=[Text.Encoding]::UTF8; [Console]::InputEncoding=[Text.Encoding]::UTF8; $env:POWERSHELL_TELEMETRY_OPTOUT='1'; $env:DOTNET_CLI_TELEMETRY_OPTOUT='1'; $env:DOTNET_CLI_UI_LANGUAGE='en'; $env:TERM='xterm-256color'; try { Remove-Module PSReadLine -ErrorAction SilentlyContinue } catch {}; if (Get-Variable -Name PSStyle -ErrorAction SilentlyContinue) { $PSStyle.OutputRendering='Ansi'; Set-Variable -Name PStyle -Value $PSStyle -Scope Global }; $env:GIT_PAGER='cat'; $env:LESS='-FRSX'; $env:LESSCHARSET='utf-8'; try { $PSNativeCommandArgumentPassing='Standard' } catch {}; try { $ErrorView='ConciseView' } catch {}; $gitRoot=(git rev-parse --show-toplevel 2>$null); if ($gitRoot -and (Test-Path $gitRoot)) { Set-Location $gitRoot } else { $sln=Get-ChildItem -Path . -Filter *.sln -ErrorAction SilentlyContinue | Select-Object -First 1; if ($sln) { Set-Location $sln.Directory.FullName } } }"
-```
-
----
-
-## 10) Do **not** generate
-- No reference to **`$PStyle`** (only **`$PSStyle`**).
-- No Bash syntax in pwsh snippets unless explicitly asked to use *Git Bash*.
-- No destructive one‑liners without a prior `Select-String` check.
-- Do **not** place `foreach (...) {}` after an expression in one‑liners. Use `; foreach` or `... | ForEach-Object {}`.
-- Do **not** slice arrays with `[0..N]` unless clamped; prefer `Select-Object -First / -Skip`.
-- Do **not** start a **here‑string** in a one‑liner; header and terminator must be on their own lines at column 0 (no indentation).

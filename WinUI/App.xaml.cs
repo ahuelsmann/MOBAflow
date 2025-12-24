@@ -168,29 +168,28 @@ public partial class App
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<Domain.Solution>(),
             sp.GetService<SharedUI.Interface.ICityService>(),
-                sp.GetService<SharedUI.Interface.ISettingsService>(),
-                sp.GetService<AnnouncementService>()  // For TestSpeech command
-            ));
-            services.AddSingleton<SharedUI.ViewModel.CounterViewModel>();
-            services.AddSingleton<SharedUI.ViewModel.TrackPlanEditorViewModel>();
-            services.AddSingleton<SharedUI.ViewModel.JourneyMapViewModel>();
-            services.AddSingleton<SharedUI.ViewModel.MonitorPageViewModel>();
+            sp.GetService<SharedUI.Interface.ISettingsService>(),
+            sp.GetService<AnnouncementService>()  // For TestSpeech command
+        ));
+        services.AddSingleton<SharedUI.ViewModel.TrackPlanEditorViewModel>();
+        services.AddSingleton<SharedUI.ViewModel.JourneyMapViewModel>();
+        services.AddSingleton<SharedUI.ViewModel.MonitorPageViewModel>();
 
-            // Pages (Transient = new instance per navigation)
-            services.AddTransient<View.OverviewPage>();
-            services.AddTransient<View.SolutionPage>();
-            services.AddTransient<View.JourneysPage>();
-            services.AddTransient<View.WorkflowsPage>();
-            services.AddTransient<View.FeedbackPointsPage>();
-            services.AddTransient<View.TrackPlanEditorPage>();
-            services.AddTransient<View.JourneyMapPage>();
-            services.AddTransient<View.SettingsPage>();
-            services.AddTransient<View.MonitorPage>();
+        // Pages (Transient = new instance per navigation)
+        services.AddTransient<View.OverviewPage>();
+        services.AddTransient<View.SolutionPage>();
+        services.AddTransient<View.JourneysPage>();
+        services.AddTransient<View.WorkflowsPage>();
+        services.AddTransient<View.FeedbackPointsPage>();
+        services.AddTransient<View.TrackPlanEditorPage>();
+        services.AddTransient<View.JourneyMapPage>();
+        services.AddTransient<View.SettingsPage>();
+        services.AddTransient<View.MonitorPage>();
 
-            // MainWindow (Singleton = one instance for app lifetime)
-            services.AddSingleton<View.MainWindow>();
+        // MainWindow (Singleton = one instance for app lifetime)
+        services.AddSingleton<View.MainWindow>();
 
-            return services.BuildServiceProvider();
+        return services.BuildServiceProvider();
     }
 
     /// <summary>
@@ -207,52 +206,52 @@ public partial class App
         _ = AutoLoadLastSolutionAsync(((View.MainWindow)_window).ViewModel);
     }
 
-        /// <summary>
-        /// Automatically loads the last used solution if AutoLoadLastSolution preference is enabled.
-        /// Delegates to MainWindowViewModel.LoadSolutionFromPathAsync() to ensure all initialization happens correctly.
-        /// </summary>
-        private async Task AutoLoadLastSolutionAsync(SharedUI.ViewModel.MainWindowViewModel mainWindowViewModel)
+    /// <summary>
+    /// Automatically loads the last used solution if AutoLoadLastSolution preference is enabled.
+    /// Delegates to MainWindowViewModel.LoadSolutionFromPathAsync() to ensure all initialization happens correctly.
+    /// </summary>
+    private async Task AutoLoadLastSolutionAsync(SharedUI.ViewModel.MainWindowViewModel mainWindowViewModel)
+    {
+        try
         {
-            try
+            var settingsService = Services.GetService<SharedUI.Interface.ISettingsService>();
+            if (settingsService == null)
             {
-                var settingsService = Services.GetService<SharedUI.Interface.ISettingsService>();
-                if (settingsService == null)
-                {
-                    System.Diagnostics.Debug.WriteLine("⚠️ SettingsService not available - skipping auto-load");
-                    return;
-                }
-
-                if (!settingsService.AutoLoadLastSolution)
-                {
-                    System.Diagnostics.Debug.WriteLine("ℹ️ Auto-load disabled - skipping");
-                    return;
-                }
-
-                var lastPath = settingsService.LastSolutionPath;
-                if (string.IsNullOrEmpty(lastPath))
-                {
-                    System.Diagnostics.Debug.WriteLine("ℹ️ No last solution path - skipping auto-load");
-                    return;
-                }
-
-                if (!File.Exists(lastPath))
-                {
-                    System.Diagnostics.Debug.WriteLine($"⚠️ Last solution file not found: {lastPath}");
-                    return;
-                }
-
-                System.Diagnostics.Debug.WriteLine($"📂 Auto-loading last solution: {lastPath}");
-
-                // ✅ Use the SAME code path as manual loading!
-                // This ensures JourneyManager and all other initialization happens correctly.
-                await mainWindowViewModel.LoadSolutionFromPathAsync(lastPath);
-
-                System.Diagnostics.Debug.WriteLine($"✅ Auto-load completed: {lastPath}");
+                System.Diagnostics.Debug.WriteLine("⚠️ SettingsService not available - skipping auto-load");
+                return;
             }
-            catch (Exception ex)
+
+            if (!settingsService.AutoLoadLastSolution)
             {
-                System.Diagnostics.Debug.WriteLine($"❌ Auto-load failed: {ex.Message}");
-                // Don't crash the application if auto-load fails
+                System.Diagnostics.Debug.WriteLine("ℹ️ Auto-load disabled - skipping");
+                return;
             }
+
+            var lastPath = settingsService.LastSolutionPath;
+            if (string.IsNullOrEmpty(lastPath))
+            {
+                System.Diagnostics.Debug.WriteLine("ℹ️ No last solution path - skipping auto-load");
+                return;
+            }
+
+            if (!File.Exists(lastPath))
+            {
+                System.Diagnostics.Debug.WriteLine($"⚠️ Last solution file not found: {lastPath}");
+                return;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"📂 Auto-loading last solution: {lastPath}");
+
+            // ✅ Use the SAME code path as manual loading!
+            // This ensures JourneyManager and all other initialization happens correctly.
+            await mainWindowViewModel.LoadSolutionFromPathAsync(lastPath);
+
+            System.Diagnostics.Debug.WriteLine($"✅ Auto-load completed: {lastPath}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ Auto-load failed: {ex.Message}");
+            // Don't crash the application if auto-load fails
         }
     }
+}

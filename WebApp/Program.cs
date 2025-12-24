@@ -45,8 +45,8 @@ builder.Services.AddSingleton<DataManager>();
 // ✅ Solution as Singleton (initialized empty, can be loaded later by user)
 builder.Services.AddSingleton<Solution>();
 
-// ✅ CounterViewModel as Singleton (DI resolves IZ21, IUiDispatcher, ISettingsService automatically)
-builder.Services.AddSingleton<CounterViewModel>();
+// ✅ MainWindowViewModel as Singleton (unified cross-platform ViewModel)
+builder.Services.AddSingleton<MainWindowViewModel>();
 
 var app = builder.Build();
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Interface;
@@ -75,13 +75,18 @@ public partial class MainWindowViewModel : ObservableObject
 
         // ✅ Subscribe to Z21 events immediately (like CounterViewModel does)
         // This ensures we receive status updates regardless of how connection was established
+        _z21.Received += OnFeedbackReceived;  // For counter statistics
         _z21.OnSystemStateChanged += OnZ21SystemStateChanged;
+        _z21.OnXBusStatusChanged += OnZ21XBusStatusChanged;
         _z21.OnVersionInfoChanged += OnZ21VersionInfoChanged;
         _z21.OnConnectionLost += HandleConnectionLost;
         _z21.OnConnectedChanged += OnZ21ConnectedChanged;
 
         // ✅ Subscribe to Traffic Monitor immediately (before connection)
         InitializeTrafficMonitor();
+        
+        // ✅ Initialize Track Statistics with defaults (will be updated when project loads)
+        InitializeStatisticsFromFeedbackPoints();
         
         // ✅ Auto-connect to Z21 at startup (fire-and-forget, non-blocking)
         // Connection status will be updated via OnConnectedChanged event when Z21 responds
@@ -226,25 +231,25 @@ public partial class MainWindowViewModel : ObservableObject
     private object? workflowsPageSelectedObject;
 
     [ObservableProperty]
-    private bool isZ21Connected;
+    private bool isConnected;
 
     [ObservableProperty]
     private bool isTrackPowerOn;
 
     [ObservableProperty]
-    private string z21StatusText = "Disconnected";
+    private string statusText = "Disconnected";
 
     [ObservableProperty]
-    private string z21SerialNumber = "-";
+    private string serialNumber = "-";
 
     [ObservableProperty]
-    private string z21FirmwareVersion = "-";
+    private string firmwareVersion = "-";
 
     [ObservableProperty]
-    private string z21HardwareType = "-";
+    private string hardwareType = "-";
 
     [ObservableProperty]
-    private string z21HardwareVersion = "-";
+    private string hardwareVersion = "-";
 
     [ObservableProperty]
     private string simulateInPort = "1";
@@ -262,6 +267,7 @@ public partial class MainWindowViewModel : ObservableObject
     private City? selectedCity;
 
     public event EventHandler? ExitApplicationRequested;
+
 
     partial void OnSelectedProjectChanged(ProjectViewModel? value)
     {

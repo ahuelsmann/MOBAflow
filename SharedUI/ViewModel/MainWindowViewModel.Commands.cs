@@ -1,4 +1,4 @@
-namespace Moba.SharedUI.ViewModel
+﻿namespace Moba.SharedUI.ViewModel
 {
     using CommunityToolkit.Mvvm.Input;
 

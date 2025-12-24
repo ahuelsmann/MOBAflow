@@ -1,4 +1,4 @@
-@using System.ComponentModel
+﻿@using System.ComponentModel
 @using Moba.SharedUI.ViewModel
 @implements IDisposable
 
@@ -11,7 +11,7 @@
             <div class="form-group">
                 <label>Z21 IP Address:</label>
                 <select class="form-control"
-                        @bind="ViewModel.Z21IpAddress"
+                        @bind="ViewModel.IpAddress"
                         disabled="@ViewModel.IsConnected">
                     @foreach (var ip in ViewModel.AvailableIpAddresses)
                     {
@@ -25,7 +25,7 @@
 
 @code {
     [Parameter]
-    public CounterViewModel ViewModel { get; set; } = null!;
+    public MainWindowViewModel ViewModel { get; set; } = null!;
 
     protected override void OnInitialized()
     {
@@ -42,3 +42,4 @@
         ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
     }
 }
+

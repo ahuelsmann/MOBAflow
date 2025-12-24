@@ -2,8 +2,8 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Common.Configuration;
-
 using CommunityToolkit.Mvvm.Input;
+using System.Collections.ObjectModel;
 
 /// <summary>
 /// MainWindowViewModel - Settings Management
@@ -18,8 +18,13 @@ public partial class MainWindowViewModel
     /// </summary>
     public AppSettings Settings => _settings;
 
+    /// <summary>
+    /// Available IP addresses for Z21 connection (from recent connections).
+    /// </summary>
+    public ObservableCollection<string> AvailableIpAddresses => new(_settings.Z21.RecentIpAddresses);
+
     // Wrapper properties for Settings page bindings
-    public string Z21IpAddress
+    public string IpAddress
     {
         get => _settings.Z21.CurrentIpAddress;
         set
@@ -32,7 +37,7 @@ public partial class MainWindowViewModel
         }
     }
 
-    public string Z21Port
+    public string Port
     {
         get => _settings.Z21.DefaultPort;
         set
@@ -359,8 +364,8 @@ public partial class MainWindowViewModel
             await _settingsService.ResetToDefaultsAsync();
 
             // Notify all settings properties changed
-            OnPropertyChanged(nameof(Z21IpAddress));
-            OnPropertyChanged(nameof(Z21Port));
+            OnPropertyChanged(nameof(IpAddress));
+            OnPropertyChanged(nameof(Port));
             OnPropertyChanged(nameof(CityLibraryPath));
             OnPropertyChanged(nameof(CityLibraryAutoReload));
             OnPropertyChanged(nameof(SpeechKey));
@@ -427,3 +432,4 @@ public partial class MainWindowViewModel
     }
     #endregion
 }
+

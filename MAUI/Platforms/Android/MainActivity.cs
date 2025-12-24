@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.MAUI.Platforms.Android;
 
@@ -41,9 +41,9 @@ public class MainActivity : MauiAppCompatActivity
 
         try
         {
-            // Get the CounterViewModel from DI and trigger cleanup
-            var viewModel = IPlatformApplication.Current?.Services.GetService<CounterViewModel>();
-            if (viewModel != null)
+            // Get the MainWindowViewModel from DI and trigger cleanup
+            var viewModel = IPlatformApplication.Current?.Services.GetService<MainWindowViewModel>();
+            if (viewModel != null && viewModel.IsConnected)
             {
                 // Fire-and-forget but with short timeout to not block Android
                 var cleanupTask = Task.Run(async () =>
@@ -51,7 +51,7 @@ public class MainActivity : MauiAppCompatActivity
                     using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
                     try
                     {
-                        await viewModel.CleanupAsync();
+                        await viewModel.DisconnectCommand.ExecuteAsync(null);
                         Debug.WriteLine("✅ MainActivity: Z21 cleanup complete");
                     }
                     catch (OperationCanceledException)
@@ -63,6 +63,7 @@ public class MainActivity : MauiAppCompatActivity
                 // Wait briefly for cleanup (Android may kill process otherwise)
                 cleanupTask.Wait(TimeSpan.FromSeconds(2));
             }
+
         }
         catch (Exception ex)
         {
@@ -72,3 +73,5 @@ public class MainActivity : MauiAppCompatActivity
         base.OnDestroy();
     }
 }
+
+

@@ -1,14 +1,14 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI;
 
 using SharedUI.ViewModel;
 
 public partial class MainPage
 {
-    private readonly CounterViewModel _viewModel;
+    private readonly MainWindowViewModel _viewModel;
     private bool _isUpdatingFromBinding;
 
-    public MainPage(CounterViewModel viewModel)
+    public MainPage(MainWindowViewModel viewModel)
     {
         InitializeComponent();
         _viewModel = viewModel;
@@ -21,8 +21,8 @@ public partial class MainPage
     private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         // Track when binding is updating the switches to avoid feedback loops
-        if (e.PropertyName == nameof(CounterViewModel.IsConnected) ||
-            e.PropertyName == nameof(CounterViewModel.IsTrackPowerOn))
+        if (e.PropertyName == nameof(MainWindowViewModel.IsConnected) ||
+            e.PropertyName == nameof(MainWindowViewModel.IsTrackPowerOn))
         {
             _isUpdatingFromBinding = true;
             // Reset flag after UI update completes
@@ -53,6 +53,12 @@ public partial class MainPage
         if (_viewModel.IsConnected == e.Value)
             return;
 
-        await _viewModel.SetConnectionCommand.ExecuteAsync(e.Value);
+        if (e.Value)
+            await _viewModel.ConnectCommand.ExecuteAsync(null);
+        else
+            await _viewModel.DisconnectCommand.ExecuteAsync(null);
     }
 }
+
+
+
