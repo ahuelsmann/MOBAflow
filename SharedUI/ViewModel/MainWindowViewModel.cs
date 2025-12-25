@@ -73,6 +73,11 @@ public partial class MainWindowViewModel : ObservableObject
         // Subscribe to Solution changes
         Solution = solution;
 
+        // ✅ Initialize Counter settings from AppSettings.Counter
+        GlobalTargetLapCount = settings.Counter.TargetLapCount;
+        UseTimerFilter = settings.Counter.UseTimerFilter;
+        TimerIntervalSeconds = settings.Counter.TimerIntervalSeconds;
+
         // ✅ Subscribe to Z21 events immediately (like CounterViewModel does)
         // This ensures we receive status updates regardless of how connection was established
         _z21.Received += OnFeedbackReceived;  // For counter statistics

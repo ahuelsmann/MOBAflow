@@ -202,23 +202,31 @@
                         </TextBox>
                     </StackPanel>
 
-                    <Slider
-                        Width="400"
+                    <NumberBox
+                        MaxWidth="400"
                         HorizontalAlignment="Left"
                         Header="Speech Rate"
                         Maximum="10"
                         Minimum="-10"
-                        StepFrequency="1"
-                        Value="{x:Bind ViewModel.SpeechRate, Mode=TwoWay}" />
+                        SpinButtonPlacementMode="Inline"
+                        Value="{x:Bind ViewModel.SpeechRate, Mode=TwoWay}">
+                        <NumberBox.Description>
+                            <TextBlock Text="Adjust speech speed (-10 = slowest, 0 = normal, 10 = fastest)" />
+                        </NumberBox.Description>
+                    </NumberBox>
 
-                    <Slider
-                        Width="400"
+                    <NumberBox
+                        MaxWidth="400"
                         HorizontalAlignment="Left"
                         Header="Speech Volume"
                         Maximum="100"
                         Minimum="0"
-                        StepFrequency="5"
-                        Value="{x:Bind ViewModel.SpeechVolume, Mode=TwoWay}" />
+                        SpinButtonPlacementMode="Inline"
+                        Value="{x:Bind ViewModel.SpeechVolume, Mode=TwoWay}">
+                        <NumberBox.Description>
+                            <TextBlock Text="Adjust speech volume (0-100)" />
+                        </NumberBox.Description>
+                    </NumberBox>
 
                     <!--  Test Button  -->
                     <Button

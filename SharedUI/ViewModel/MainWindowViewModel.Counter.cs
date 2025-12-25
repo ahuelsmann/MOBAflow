@@ -114,6 +114,16 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Called when SelectedProject changes.
+    /// Re-initializes track statistics based on the new project's FeedbackPoints.
+    /// </summary>
+    partial void OnSelectedProjectChanged(ProjectViewModel? value)
+    {
+        _ = value; // Suppress unused parameter warning
+        InitializeStatisticsFromFeedbackPoints();
+    }
+
     #endregion
 
     #region Counter Commands

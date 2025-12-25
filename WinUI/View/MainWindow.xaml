@@ -27,6 +27,14 @@
             <TitleBar.IconSource>
                 <FontIconSource FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE7C0;" />
             </TitleBar.IconSource>
+            <TitleBar.RightHeader>
+                <ToggleSwitch
+                    FontSize="12"
+                    IsEnabled="True"
+                    IsOn="{x:Bind ViewModel.IsDarkMode, Mode=TwoWay}"
+                    OffContent="Light"
+                    OnContent="Dark" />
+            </TitleBar.RightHeader>
         </TitleBar>
 
         <!--  NavigationView  -->
@@ -172,13 +180,6 @@
                         Command="{x:Bind ViewModel.ResetJourneyCommand}"
                         Icon="Refresh"
                         Label="Reset" />
-                    <AppBarSeparator />
-                    <!--  Theme Toggle  -->
-                    <AppBarToggleButton IsChecked="{x:Bind ViewModel.IsDarkMode, Mode=TwoWay}" Label="Dark">
-                        <AppBarToggleButton.Icon>
-                            <FontIcon Glyph="&#xE793;" />
-                        </AppBarToggleButton.Icon>
-                    </AppBarToggleButton>
                 </CommandBar>
 
                 <!--  Content Frame for page navigation  -->
@@ -217,7 +218,10 @@
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Text="{x:Bind ViewModel.StatusText, Mode=OneWay}" />
                 <!--  Track Power Toggle (like Roco Z21 app)  -->
-                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <StackPanel
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal"
+                    Spacing="8">
                     <ToggleSwitch
                         FontSize="12"
                         IsEnabled="{x:Bind ViewModel.IsConnected, Mode=OneWay}"
@@ -263,10 +267,9 @@
                     FontSize="14"
                     Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                     Glyph="{x:Bind ViewModel.SpeechHealthIcon, Mode=OneWay}" />
-                <!--  {x:Bind ViewModel.SpeechHealthStatus, Mode=OneWay}  -->
             </StackPanel>
 
-            <!--  Solution Path (rechts)  -->
+            <!--  Solution Path  -->
             <TextBlock
                 Grid.Column="3"
                 Margin="12,0"

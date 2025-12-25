@@ -11,6 +11,7 @@ public class AppSettings
     public SpeechSettings Speech { get; set; } = new();
     public CityLibrarySettings CityLibrary { get; set; } = new();
     public ApplicationSettings Application { get; set; } = new();
+    public CounterSettings Counter { get; set; } = new();
     public LoggingSettings Logging { get; set; } = new();
     public HealthCheckSettings HealthCheck { get; set; } = new();
     public FeatureToggleSettings FeatureToggles { get; set; } = new();
@@ -131,6 +132,27 @@ public class ApplicationSettings
     /// Path to last opened solution file.
     /// </summary>
     public string? LastSolutionPath { get; set; }
+}
+
+/// <summary>
+/// Counter/Statistics feature configuration.
+/// </summary>
+public class CounterSettings
+{
+    /// <summary>
+    /// Global target lap count for all tracks (default: 10).
+    /// </summary>
+    public int TargetLapCount { get; set; } = 10;
+
+    /// <summary>
+    /// Enables timer-based filtering to prevent multiple counts from long trains (default: true).
+    /// </summary>
+    public bool UseTimerFilter { get; set; } = true;
+
+    /// <summary>
+    /// Timer filter interval in seconds (prevents duplicate counts within this timeframe, default: 10).
+    /// </summary>
+    public double TimerIntervalSeconds { get; set; } = 10.0;
 }
 
 /// <summary>

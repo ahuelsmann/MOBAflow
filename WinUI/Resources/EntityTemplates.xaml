@@ -8,6 +8,10 @@
     <!--  EntityTemplateSelector  -->
     <selector:EntityTemplateSelector
         x:Key="EntityTemplateSelector"
+        ActionTemplate="{StaticResource ActionTemplate}"
+        AnnouncementActionTemplate="{StaticResource AnnouncementActionTemplate}"
+        AudioActionTemplate="{StaticResource AudioActionTemplate}"
+        CommandActionTemplate="{StaticResource CommandActionTemplate}"
         DefaultTemplate="{StaticResource DefaultTemplate}"
         FeedbackPointTemplate="{StaticResource FeedbackPointTemplate}"
         JourneyTemplate="{StaticResource JourneyTemplate}"
@@ -264,13 +268,53 @@
         </StackPanel>
     </DataTemplate>
 
-    <!--  Placeholder templates for remaining types  -->
+    <!--  ============================================  -->
+    <!--  Workflow Template (Fluent Design 2)  -->
+    <!--  ============================================  -->
     <DataTemplate x:Key="WorkflowTemplate">
         <ScrollViewer>
             <StackPanel Padding="16" Spacing="16">
-                <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Workflow Properties" />
-                <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
-                <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="(More properties coming...)" />
+                <!--  Header  -->
+                <TextBlock
+                    Margin="0,0,0,8"
+                    Style="{ThemeResource SubtitleTextBlockStyle}"
+                    Text="Workflow Properties" />
+
+                <!--  Name  -->
+                <TextBox
+                    Header="Name"
+                    PlaceholderText="Enter workflow name"
+                    Text="{Binding Name, Mode=TwoWay}" />
+
+                <!--  Description  -->
+                <TextBox
+                    Height="80"
+                    AcceptsReturn="True"
+                    Header="Description"
+                    PlaceholderText="Enter description"
+                    Text="{Binding Description, Mode=TwoWay}"
+                    TextWrapping="Wrap" />
+
+                <!--  InPort  -->
+                <NumberBox
+                    Header="InPort (Trigger)"
+                    Maximum="255"
+                    Minimum="0"
+                    SpinButtonPlacementMode="Inline"
+                    Value="{Binding InPort, Mode=TwoWay}" />
+
+                <!--  Timer Settings  -->
+                <StackPanel Spacing="12">
+                    <CheckBox Content="Use Timer To Ignore Feedbacks" IsChecked="{Binding IsUsingTimerToIgnoreFeedbacks, Mode=TwoWay}" />
+
+                    <NumberBox
+                        Header="Timer Interval (seconds)"
+                        IsEnabled="{Binding IsUsingTimerToIgnoreFeedbacks, Mode=OneWay}"
+                        Maximum="60"
+                        Minimum="0"
+                        SpinButtonPlacementMode="Inline"
+                        Value="{Binding IntervalForTimerToIgnoreFeedbacks, Mode=TwoWay}" />
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>
@@ -474,7 +518,10 @@
             <StackPanel Padding="16" Spacing="16">
                 <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Announcement Action" />
 
-                <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
+                <TextBox
+                    Header="Name"
+                    PlaceholderText="e.g., Arrival Announcement"
+                    Text="{Binding Name, Mode=TwoWay}" />
 
                 <NumberBox
                     Header="Number"
@@ -486,10 +533,14 @@
                     MinHeight="100"
                     AcceptsReturn="True"
                     Header="Message"
+                    PlaceholderText="e.g., '{TrainName} is arriving at {StationName}'"
                     Text="{Binding Message, Mode=TwoWay}"
                     TextWrapping="Wrap" />
 
-                <TextBox Header="Voice Name" Text="{Binding VoiceName, Mode=TwoWay}" />
+                <TextBox
+                    Header="Voice Name"
+                    PlaceholderText="e.g., de-DE-KatjaNeural"
+                    Text="{Binding VoiceName, Mode=TwoWay}" />
 
                 <NumberBox
                     Header="Rate (Speech Speed)"
@@ -498,11 +549,13 @@
                     SpinButtonPlacementMode="Inline"
                     Value="{Binding Rate, Mode=TwoWay}" />
 
-                <Slider
+                <NumberBox
                     Header="Volume"
+                    LargeChange="0.1"
                     Maximum="1"
                     Minimum="0"
-                    StepFrequency="0.1"
+                    SmallChange="0.01"
+                    SpinButtonPlacementMode="Inline"
                     Value="{Binding Volume, Mode=TwoWay}" />
             </StackPanel>
         </ScrollViewer>
@@ -513,7 +566,10 @@
             <StackPanel Padding="16" Spacing="16">
                 <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Audio Action" />
 
-                <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
+                <TextBox
+                    Header="Name"
+                    PlaceholderText="e.g., Station Bell"
+                    Text="{Binding Name, Mode=TwoWay}" />
 
                 <NumberBox
                     Header="Number"
@@ -521,14 +577,21 @@
                     SpinButtonPlacementMode="Inline"
                     Value="{Binding Number, Mode=TwoWay}" />
 
-                <TextBox Header="File Path" Text="{Binding FilePath, Mode=TwoWay}" />
+                <TextBox
+                    Header="File Path"
+                    PlaceholderText="path/to/sound.wav"
+                    Text="{Binding FilePath, Mode=TwoWay}" />
 
-                <Slider
+                <NumberBox
                     Header="Volume"
+                    LargeChange="0.1"
                     Maximum="1"
                     Minimum="0"
-                    StepFrequency="0.1"
+                    SmallChange="0.01"
+                    SpinButtonPlacementMode="Inline"
                     Value="{Binding Volume, Mode=TwoWay}" />
+
+                <CheckBox Content="Loop Playback" IsChecked="{Binding Loop, Mode=TwoWay}" />
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>
@@ -538,7 +601,10 @@
             <StackPanel Padding="16" Spacing="16">
                 <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Command Action" />
 
-                <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
+                <TextBox
+                    Header="Name"
+                    PlaceholderText="e.g., Stop Loco 101"
+                    Text="{Binding Name, Mode=TwoWay}" />
 
                 <NumberBox
                     Header="Number"
@@ -546,11 +612,42 @@
                     SpinButtonPlacementMode="Inline"
                     Value="{Binding Number, Mode=TwoWay}" />
 
+                <!--  Address  -->
+                <NumberBox
+                    Header="Address"
+                    Maximum="10239"
+                    Minimum="0"
+                    SpinButtonPlacementMode="Inline"
+                    Value="{Binding Address, Mode=TwoWay}" />
+
+                <!--  Speed  -->
+                <NumberBox
+                    Header="Speed"
+                    Maximum="127"
+                    Minimum="0"
+                    SpinButtonPlacementMode="Inline"
+                    Value="{Binding Speed, Mode=TwoWay}" />
+
+                <!--  Direction  -->
+                <ComboBox
+                    HorizontalAlignment="Stretch"
+                    Header="Direction"
+                    ItemsSource="{Binding DirectionValues}"
+                    SelectedItem="{Binding Direction, Mode=TwoWay}" />
+
+                <!--  Raw Z21 Bytes (Advanced)  -->
                 <TextBox
-                    MinHeight="100"
+                    Height="80"
                     AcceptsReturn="True"
-                    Header="Command String"
-                    Text="{Binding CommandString, Mode=TwoWay}"
+                    Header="Digital command byte sequence in hex format"
+                    IsReadOnly="True"
+                    Text="{Binding BytesHex, Mode=OneWay}"
+                    TextWrapping="Wrap" />
+
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Style="{ThemeResource CaptionTextBlockStyle}"
+                    Text="Decoded from Z21 DCC command format. Edit the command in Z21 app or use raw bytes directly."
                     TextWrapping="Wrap" />
             </StackPanel>
         </ScrollViewer>
