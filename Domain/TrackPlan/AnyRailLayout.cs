@@ -15,12 +15,12 @@ public class AnyRailLayout
     public double ScaleX { get; set; }
     public double ScaleY { get; set; }
     public List<AnyRailPart> Parts { get; } = [];
+    public List<AnyRailEndpoint> Endpoints { get; } = [];
+    public List<AnyRailConnection> Connections { get; } = [];
 
     /// <summary>
     /// Parses an AnyRail XML file and returns an AnyRailLayout.
     /// </summary>
-    /// <param name="xmlPath">Path to the AnyRail XML file.</param>
-    /// <returns>Parsed AnyRailLayout instance.</returns>
     public static AnyRailLayout Parse(string xmlPath)
     {
         var xdoc = XDocument.Load(xmlPath);
@@ -33,6 +33,24 @@ public class AnyRailLayout
             ScaleY = double.Parse(layoutEl.Attribute("scaleY")?.Value ?? "1", CultureInfo.InvariantCulture),
         };
 
+        // Parse endpoints first (needed for connection resolution)
+        var endpointsEl = layoutEl.Element("endpoints");
+        if (endpointsEl != null)
+        {
+            foreach (var ep in endpointsEl.Elements("endpoint"))
+            {
+                var coord = ParseCoord3(ep.Attribute("coord")?.Value);
+                layout.Endpoints.Add(new AnyRailEndpoint
+                {
+                    Nr = int.Parse(ep.Attribute("nr")?.Value ?? "0", CultureInfo.InvariantCulture),
+                    X = coord.X,
+                    Y = coord.Y,
+                    Direction = int.Parse(ep.Attribute("direction")?.Value ?? "0", CultureInfo.InvariantCulture)
+                });
+            }
+        }
+
+        // Parse parts with their endpoint numbers
         foreach (var p in layoutEl.Element("parts")!.Elements("part"))
         {
             var part = new AnyRailPart
@@ -40,6 +58,18 @@ public class AnyRailLayout
                 Id = (string?)p.Attribute("id") ?? string.Empty,
                 Type = (string?)p.Attribute("type")
             };
+
+            // Parse endpoint numbers for this part
+            var endpointNrsEl = p.Element("endpointNrs");
+            if (endpointNrsEl != null)
+            {
+                foreach (var epNr in endpointNrsEl.Elements("endpointNr"))
+                {
+                    part.EndpointNrs.Add(int.Parse(epNr.Value, CultureInfo.InvariantCulture));
+                }
+            }
+
+            // Parse drawing elements
             var drawing = p.Element("drawing");
             if (drawing != null)
             {
@@ -62,7 +92,58 @@ public class AnyRailLayout
             }
             layout.Parts.Add(part);
         }
+
+        // Parse connections (endpoint to endpoint)
+        var connectionsEl = layoutEl.Element("connections");
+        if (connectionsEl != null)
+        {
+            foreach (var conn in connectionsEl.Elements("connection"))
+            {
+                layout.Connections.Add(new AnyRailConnection
+                {
+                    Endpoint1 = int.Parse(conn.Attribute("endpoint1")?.Value ?? "0", CultureInfo.InvariantCulture),
+                    Endpoint2 = int.Parse(conn.Attribute("endpoint2")?.Value ?? "0", CultureInfo.InvariantCulture)
+                });
+            }
+        }
+
         return layout;
+    }
+
+    /// <summary>
+    /// Converts AnyRail connections (endpoint-to-endpoint) to TrackConnections (segment-to-segment).
+    /// </summary>
+    public List<TrackConnection> ToTrackConnections()
+    {
+        var result = new List<TrackConnection>();
+        
+        // Build endpoint-to-part lookup
+        var endpointToPart = new Dictionary<int, (string PartId, int EndpointIndex)>();
+        foreach (var part in Parts)
+        {
+            for (int i = 0; i < part.EndpointNrs.Count; i++)
+            {
+                endpointToPart[part.EndpointNrs[i]] = (part.Id, i);
+            }
+        }
+
+        // Convert each connection
+        foreach (var conn in Connections)
+        {
+            if (endpointToPart.TryGetValue(conn.Endpoint1, out var part1) &&
+                endpointToPart.TryGetValue(conn.Endpoint2, out var part2))
+            {
+                result.Add(new TrackConnection
+                {
+                    Segment1Id = part1.PartId,
+                    Segment1EndpointIndex = part1.EndpointIndex,
+                    Segment2Id = part2.PartId,
+                    Segment2EndpointIndex = part2.EndpointIndex
+                });
+            }
+        }
+
+        return result;
     }
 
     private static (double X, double Y) ParsePoint(string? s)
@@ -71,6 +152,34 @@ public class AnyRailLayout
         return (double.Parse(parts[0], CultureInfo.InvariantCulture),
                 double.Parse(parts[1], CultureInfo.InvariantCulture));
     }
+
+    private static (double X, double Y, double Z) ParseCoord3(string? s)
+    {
+        var parts = (s ?? "0,0,0").Split(',');
+        return (double.Parse(parts[0], CultureInfo.InvariantCulture),
+                double.Parse(parts[1], CultureInfo.InvariantCulture),
+                parts.Length > 2 ? double.Parse(parts[2], CultureInfo.InvariantCulture) : 0);
+    }
+}
+
+/// <summary>
+/// AnyRail endpoint with coordinates and direction.
+/// </summary>
+public class AnyRailEndpoint
+{
+    public int Nr { get; set; }
+    public double X { get; set; }
+    public double Y { get; set; }
+    public int Direction { get; set; }
+}
+
+/// <summary>
+/// AnyRail connection between two endpoints.
+/// </summary>
+public class AnyRailConnection
+{
+    public int Endpoint1 { get; set; }
+    public int Endpoint2 { get; set; }
 }
 
 /// <summary>
@@ -84,6 +193,13 @@ public class AnyRailPart
     public string Id { get; set; } = string.Empty;
 
     public string? Type { get; set; }
+    
+    /// <summary>
+    /// Endpoint numbers assigned to this part.
+    /// Index 0 = first endpoint, Index 1 = second endpoint, etc.
+    /// </summary>
+    public List<int> EndpointNrs { get; } = [];
+    
     public List<AnyRailLine> Lines { get; } = [];
     public List<AnyRailArc> Arcs { get; } = [];
 
@@ -186,45 +302,6 @@ public class AnyRailPart
     }
 
     /// <summary>
-    /// Generates SVG path data string for this part's drawing elements.
-    /// </summary>
-    /// <returns>SVG path data string (M, L, A commands).</returns>
-    public string ToPathData()
-    {
-        var sb = new StringBuilder();
-
-        // Process lines
-        // Note: XAML Path uses space-separated coordinates: "M x y L x y"
-        foreach (var line in Lines)
-        {
-            sb.Append(CultureInfo.InvariantCulture, $"M {line.Pt1.X:F0} {line.Pt1.Y:F0} ");
-            sb.Append(CultureInfo.InvariantCulture, $"L {line.Pt2.X:F0} {line.Pt2.Y:F0} ");
-        }
-
-        // Process arcs (SVG arc: A rx ry x-axis-rotation large-arc-flag sweep-flag x y)
-        foreach (var arc in Arcs)
-        {
-            sb.Append(CultureInfo.InvariantCulture, $"M {arc.Pt1.X:F0} {arc.Pt1.Y:F0} ");
-            
-            // Determine arc flags based on direction and angle
-            // large-arc-flag: 1 if angle > 180°, else 0
-            var largeArc = Math.Abs(arc.Angle) > 180 ? 1 : 0;
-            
-            // sweep-flag: Determines arc direction (0 = counter-clockwise, 1 = clockwise)
-            // AnyRail direction is in degrees (0-360)
-            // For directions 0-180: sweep = 0 (counter-clockwise, curves outward for top)
-            // For directions 180-360: sweep = 0 as well (curves outward for bottom)
-            // The sweep flag should be 0 for all curves to curve outward from the center
-            var sweep = 0;
-            
-            // SVG arc format: A rx ry x-axis-rotation large-arc-flag sweep-flag x y
-            sb.Append(CultureInfo.InvariantCulture, $"A {arc.Radius:F0} {arc.Radius:F0} 0 {largeArc} {sweep} {arc.Pt2.X:F0} {arc.Pt2.Y:F0} ");
-        }
-
-        return sb.ToString().Trim();
-    }
-
-    /// <summary>
     /// Calculates the center point of this part for label placement.
     /// </summary>
     /// <returns>Center coordinates (X, Y).</returns>
@@ -250,6 +327,29 @@ public class AnyRailPart
         var avgX = allPoints.Average(p => p.X);
         var avgY = allPoints.Average(p => p.Y);
         return (avgX, avgY);
+    }
+
+    /// <summary>
+    /// Gets all unique endpoints of this part (for connection detection).
+    /// </summary>
+    /// <returns>List of endpoint coordinates.</returns>
+    public List<(double X, double Y)> GetEndpoints()
+    {
+        var endpoints = new HashSet<(int X, int Y)>();
+
+        foreach (var line in Lines)
+        {
+            endpoints.Add(((int)Math.Round(line.Pt1.X), (int)Math.Round(line.Pt1.Y)));
+            endpoints.Add(((int)Math.Round(line.Pt2.X), (int)Math.Round(line.Pt2.Y)));
+        }
+
+        foreach (var arc in Arcs)
+        {
+            endpoints.Add(((int)Math.Round(arc.Pt1.X), (int)Math.Round(arc.Pt1.Y)));
+            endpoints.Add(((int)Math.Round(arc.Pt2.X), (int)Math.Round(arc.Pt2.Y)));
+        }
+
+        return endpoints.Select(e => ((double)e.X, (double)e.Y)).ToList();
     }
 }
 

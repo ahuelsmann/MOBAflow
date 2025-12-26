@@ -3,1071 +3,471 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using Domain.TrackPlan;
-
 using Interface;
-
+using Service;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Globalization;
 
 /// <summary>
-/// ViewModel for TrackPlanEditorPage - interactive drag & drop track plan editor.
-/// Users can drag track pieces from a toolbar onto a canvas and snap them together.
-/// Supports AnyRail XML import/export and InPort assignment for feedback sensors.
+/// ViewModel for TrackPlanEditorPage - topology-based track plan editor.
+/// Positions and paths are calculated by TrackLayoutRenderer from the connection graph.
 /// </summary>
 public partial class TrackPlanEditorViewModel : ObservableObject
 {
-    #region Fields
     private readonly MainWindowViewModel _mainViewModel;
     private readonly IIoService _ioService;
-    #endregion
+    private readonly TrackLayoutRenderer _renderer = new();
 
     public TrackPlanEditorViewModel(MainWindowViewModel mainViewModel, IIoService ioService)
     {
         _mainViewModel = mainViewModel;
         _ioService = ioService;
 
-        // Subscribe to Solution events for persistence
-        _mainViewModel.SolutionSaving += OnSolutionSaving;
-        _mainViewModel.SolutionLoaded += OnSolutionLoaded;
-        _mainViewModel.PropertyChanged += OnMainViewModelPropertyChanged;
+        _mainViewModel.SolutionSaving += (_, _) => SyncToProject();
+        _mainViewModel.SolutionLoaded += (_, _) => LoadFromProject();
+        _mainViewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(MainWindowViewModel.SelectedProject))
+                LoadFromProject();
+        };
 
-        // Load track library
         LoadTrackLibrary();
     }
 
-    private void OnSolutionSaving(object? sender, EventArgs e)
-    {
-        SyncToProject();
-    }
-
-    private void OnSolutionLoaded(object? sender, EventArgs e)
-    {
-        LoadFromProject();
-    }
-
-    private void OnMainViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        // When SelectedProject changes, load the track layout
-        if (e.PropertyName == nameof(MainWindowViewModel.SelectedProject))
-        {
-            LoadFromProject();
-        }
-    }
-
-    #region Track Library (Toolbar)
-    /// <summary>
-    /// All available track templates from Piko A-Gleis system.
-    /// Displayed in the toolbar for drag & drop.
-    /// </summary>
+    #region Track Library
     public ObservableCollection<TrackTemplateViewModel> TrackLibrary { get; } = [];
 
-    /// <summary>
-    /// Selected track template in the toolbar (for inspection/info).
-    /// </summary>
     [ObservableProperty]
     private TrackTemplateViewModel? selectedTemplate;
-
-    /// <summary>
-    /// SVG path data for snap preview line (visual feedback during drag).
-    /// </summary>
-    [ObservableProperty]
-    private string? snapPreviewPathData;
-
-    /// <summary>
-    /// Indicates whether snap preview should be visible.
-    /// </summary>
-    [ObservableProperty]
-    private bool isSnapPreviewVisible;
 
     private void LoadTrackLibrary()
     {
         TrackLibrary.Clear();
-
-        // Group tracks by category for better UX
-        var straightTracks = PikoATrackLibrary.GetStraightTracks()
-            .Select(t => new TrackTemplateViewModel(t))
-            .ToList();
-
-        var curvedTracks = PikoATrackLibrary.GetCurvedTracks()
-            .Select(t => new TrackTemplateViewModel(t))
-            .ToList();
-
-        var turnouts = PikoATrackLibrary.GetTurnouts()
-            .Select(t => new TrackTemplateViewModel(t))
-            .ToList();
-
-        var crossings = PikoATrackLibrary.GetCrossings()
-            .Select(t => new TrackTemplateViewModel(t))
-            .ToList();
-
-        // Add all tracks (maintain category order)
-        foreach (var track in straightTracks.Concat(curvedTracks).Concat(turnouts).Concat(crossings))
+        foreach (var template in PikoATrackLibrary.Templates)
         {
-            TrackLibrary.Add(track);
+            TrackLibrary.Add(new TrackTemplateViewModel(template));
         }
     }
     #endregion
 
-    #region Canvas (Placed Tracks)
-    /// <summary>
-    /// All track segments currently placed on the canvas.
-    /// </summary>
-    public ObservableCollection<TrackSegmentViewModel> PlacedSegments { get; } = [];
-
-    /// <summary>
-    /// All connections between track segments.
-    /// </summary>
+    #region Layout Data
+    public ObservableCollection<TrackSegmentViewModel> Segments { get; } = [];
     public List<TrackConnection> Connections { get; } = [];
 
-    /// <summary>
-    /// Currently selected segment on the canvas (for editing/deletion).
-    /// </summary>
     [ObservableProperty]
     private TrackSegmentViewModel? selectedSegment;
 
-    /// <summary>
-    /// Indicates whether a segment is selected (for UI binding).
-    /// </summary>
-    public bool HasSelectedSegment => SelectedSegment != null;
-
-    /// <summary>
-    /// Indicates whether no segment is selected (for placeholder text).
-    /// </summary>
-    public bool HasNoSelectedSegment => SelectedSegment == null;
-
-    /// <summary>
-    /// InPort value being entered for assignment.
-    /// </summary>
     [ObservableProperty]
-    private double inPortInput = double.NaN;
+    private string layoutName = "Untitled Layout";
 
+    [ObservableProperty]
+    private string? layoutDescription;
+
+    public bool HasSelectedSegment => SelectedSegment != null;
+    public int SegmentCount => Segments.Count;
+    public int AssignedFeedbackPointCount => Segments.Count(s => s.HasInPort);
+    public string StatusText => $"{SegmentCount} segments, {AssignedFeedbackPointCount} with feedback points";
+
+    partial void OnSelectedSegmentChanging(TrackSegmentViewModel? oldValue, TrackSegmentViewModel? newValue)
+    {
+        // Deselect old segment
+        if (oldValue != null)
+        {
+            oldValue.IsSelected = false;
+        }
+        
+        // Select new segment
+        if (newValue != null)
+        {
+            newValue.IsSelected = true;
+        }
+    }
+
+    partial void OnSelectedSegmentChanged(TrackSegmentViewModel? value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(HasSelectedSegment));
+    }
+    #endregion
+
+    #region Zoom
     /// <summary>
-    /// Current zoom level (10-400%).
+    /// Zoom level in percent (25-200%). Default 100% shows the layout at calculated scale.
     /// </summary>
     [ObservableProperty]
     private double zoomLevel = 100.0;
 
     /// <summary>
-    /// Formatted zoom level for display (e.g., "100%").
+    /// Zoom factor for ScaleTransform (0.25 - 2.0).
+    /// </summary>
+    public double ZoomFactor => ZoomLevel / 100.0;
+
+    /// <summary>
+    /// Display text for zoom level.
     /// </summary>
     public string ZoomLevelText => $"{ZoomLevel:F0}%";
 
-    /// <summary>
-    /// Mouse position text for display (e.g., "X: 0  Y: 0").
-    /// </summary>
-    [ObservableProperty]
-    private string mousePositionText = "X: 0  Y: 0";
-
-    partial void OnSelectedSegmentChanged(TrackSegmentViewModel? value)
+    partial void OnZoomLevelChanged(double value)
     {
-        OnPropertyChanged(nameof(HasSelectedSegment));
-        OnPropertyChanged(nameof(HasNoSelectedSegment));
-
-        // Update InPort input when selection changes
-        if (value != null)
-        {
-            InPortInput = value.AssignedInPort ?? double.NaN;
-        }
-        else
-        {
-            InPortInput = double.NaN;
-        }
-
-        // Notify commands about selection change
-        DisconnectSelectedSegmentCommand.NotifyCanExecuteChanged();
+        _ = value;
+        OnPropertyChanged(nameof(ZoomFactor));
+        OnPropertyChanged(nameof(ZoomLevelText));
     }
 
-    #region Canvas Size (configurable work surface)
-    /// <summary>
-    /// Scale factor for canvas rendering: 1mm = 1px for simple 1:1 display.
-    /// This is only used for displaying mm values to the user, NOT for scaling coordinates.
-    /// Track coordinates from AnyRail are already in pixels and used directly.
-    /// </summary>
-    public const double PixelsPerMm = 1.0;
-
-    /// <summary>
-    /// Layout name (persisted).
-    /// </summary>
-    [ObservableProperty]
-    private string layoutName = "Untitled Layout";
-
-    /// <summary>
-    /// Layout description (persisted).
-    /// </summary>
-    [ObservableProperty]
-    private string? layoutDescription;
-
-    /// <summary>
-    /// Track system (e.g., "Piko A-Gleis", "Tillig Elite").
-    /// </summary>
-    [ObservableProperty]
-    private string trackSystem = "Piko A-Gleis";
-
-    /// <summary>
-    /// Scale (e.g., "H0", "N", "TT").
-    /// </summary>
-    [ObservableProperty]
-    private string scale = "H0";
-
-    /// <summary>
-    /// Canvas width in mm (real-world table dimensions for user display only).
-    /// The actual canvas size in pixels is determined by the track coordinates.
-    /// </summary>
-    [ObservableProperty]
-    private double canvasWidthMm = 2660;
-
-    /// <summary>
-    /// Canvas height in mm (real-world table dimensions for user display only).
-    /// The actual canvas size in pixels is determined by the track coordinates.
-    /// </summary>
-    [ObservableProperty]
-    private double canvasHeightMm = 1100;
-
-    /// <summary>
-    /// Canvas width in pixels (for rendering).
-    /// This should match the maximum X coordinate from track segments.
-    /// </summary>
-    public double CanvasWidth => 4000; // Enough space for all tracks from AnyRail import
-
-    /// <summary>
-    /// Canvas height in pixels (for rendering).
-    /// This should match the maximum Y coordinate from track segments.
-    /// </summary>
-    public double CanvasHeight => 1650; // Enough space for all tracks from AnyRail import
-
-    /// <summary>
-    /// Display text for canvas dimensions.
-    /// </summary>
-    public string CanvasSizeDisplay => $"{CanvasWidthMm:F0} × {CanvasHeightMm:F0} mm";
-
-    partial void OnCanvasWidthMmChanged(double value)
-    {
-        _ = value; // Suppress unused parameter warning
-        OnPropertyChanged(nameof(CanvasWidth));
-        OnPropertyChanged(nameof(CanvasSizeDisplay));
-    }
-
-    partial void OnCanvasHeightMmChanged(double value)
-    {
-        _ = value; // Suppress unused parameter warning
-        OnPropertyChanged(nameof(CanvasHeight));
-        OnPropertyChanged(nameof(CanvasSizeDisplay));
-    }
-    #endregion
-
-    /// <summary>
-    /// Number of segments with assigned InPorts.
-    /// </summary>
-    public int AssignedSensorCount => PlacedSegments.Count(s => s.AssignedInPort.HasValue);
-
-    /// <summary>
-    /// Status text for sensor assignments.
-    /// </summary>
-    public string SensorStatusText => $"{AssignedSensorCount} of {PlacedSegments.Count} segments have sensors";
-    #endregion
-
-    #region Selection
-    /// <summary>
-    /// Select all segments on the canvas (Ctrl+A).
-    /// </summary>
-    [RelayCommand]
-    private void SelectAll()
-    {
-        foreach (var segment in PlacedSegments)
-        {
-            segment.IsSelected = true;
-        }
-        Debug.WriteLine($"✅ Selected all {PlacedSegments.Count} segments");
-    }
-
-    /// <summary>
-    /// Deselect all segments.
-    /// </summary>
-    [RelayCommand]
-    private void DeselectAll()
-    {
-        foreach (var segment in PlacedSegments)
-        {
-            segment.IsSelected = false;
-        }
-        SelectedSegment = null;
-    }
-
-    /// <summary>
-    /// Delete all selected segments.
-    /// </summary>
-    [RelayCommand]
-    private void DeleteSelected()
-    {
-        var selectedSegments = PlacedSegments.Where(s => s.IsSelected).ToList();
-        foreach (var segment in selectedSegments)
-        {
-            RemoveConnectionsForSegment(segment);
-            PlacedSegments.Remove(segment);
-        }
-        SelectedSegment = null;
-        OnPropertyChanged(nameof(AssignedSensorCount));
-        OnPropertyChanged(nameof(SensorStatusText));
-        Debug.WriteLine($"🗑️ Deleted {selectedSegments.Count} segments");
-    }
-    #endregion
-
-    #region InPort Assignment
-    /// <summary>
-    /// Assigns the current InPortInput value to the selected segment.
-    /// </summary>
-    [RelayCommand]
-    private void AssignInPort()
-    {
-        if (SelectedSegment == null || double.IsNaN(InPortInput) || InPortInput < 1 || InPortInput > 2048)
-            return;
-
-        var inPortValue = (uint)InPortInput;
-
-        // Check if InPort is already used by another segment
-        var existingSegment = PlacedSegments.FirstOrDefault(s =>
-            s.AssignedInPort == inPortValue && s != SelectedSegment);
-
-        if (existingSegment != null)
-        {
-            // Clear the previous assignment
-            existingSegment.AssignedInPort = null;
-        }
-
-        SelectedSegment.AssignedInPort = inPortValue;
-        OnPropertyChanged(nameof(AssignedSensorCount));
-        OnPropertyChanged(nameof(SensorStatusText));
-
-        Debug.WriteLine($"📡 InPort {inPortValue} assigned to {SelectedSegment.ArticleCode}");
-    }
-
-    /// <summary>
-    /// Clears the InPort assignment from the selected segment.
-    /// </summary>
-    [RelayCommand]
-    private void ClearInPort()
-    {
-        if (SelectedSegment == null)
-            return;
-
-        SelectedSegment.AssignedInPort = null;
-        InPortInput = double.NaN;
-        OnPropertyChanged(nameof(AssignedSensorCount));
-        OnPropertyChanged(nameof(SensorStatusText));
-
-        Debug.WriteLine($"🗑️ InPort cleared from {SelectedSegment.ArticleCode}");
-    }
-
-    /// <summary>
-    /// Disconnect the selected segment from all other segments.
-    /// This allows moving the segment independently.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanDisconnectSegment))]
-    private void DisconnectSelectedSegment()
-    {
-        if (SelectedSegment == null)
-            return;
-
-        RemoveConnectionsForSegment(SelectedSegment);
-        Debug.WriteLine($"🔓 Disconnected {SelectedSegment.ArticleCode} from all connections");
-    }
-
-    private bool CanDisconnectSegment() =>
-        SelectedSegment != null &&
-        (SelectedSegment.IsStartConnected || SelectedSegment.IsEndConnected);
-    #endregion
-
-    #region Commands
-    /// <summary>
-    /// Add a track segment to the canvas (from toolbar drag & drop).
-    /// </summary>
-    [RelayCommand]
-    private void AddTrackSegment(TrackTemplateViewModel template)
-    {
-        // Use default position
-        AddTrackSegmentAtPosition(template, 200, 200);
-    }
-
-    /// <summary>
-    /// Add a track segment at a specific position.
-    /// </summary>
-    public void AddTrackSegmentAtPosition(TrackTemplateViewModel? template, double x, double y)
-    {
-        if (template is null)
-            return;
-
-        var pathData = GeneratePathData(template, x, y);
-
-        // DEBUG: Output to help diagnose visibility issues
-        Debug.WriteLine($"Adding segment: {template.ArticleCode}");
-        Debug.WriteLine($"  Type: {template.Type}, Length: {template.Length}mm, Radius: {template.Radius}mm");
-        Debug.WriteLine($"  PathData: {pathData}");
-        Debug.WriteLine($"  Position: {x}, {y}");
-
-        // Create new segment at the specified position
-        var segment = new TrackSegment
-        {
-            Id = Guid.NewGuid().ToString(),
-            Name = $"{template.ArticleCode}-{PlacedSegments.Count + 1:D3}",
-            Type = (TrackSegmentType)template.Type,
-            ArticleCode = template.ArticleCode,
-            PathData = pathData,
-            CenterX = x,
-            CenterY = y,
-            Rotation = 0,
-            Layer = "Default"
-        };
-
-        var viewModel = new TrackSegmentViewModel(segment);
-        PlacedSegments.Add(viewModel);
-        SelectedSegment = viewModel;
-
-        Debug.WriteLine($"  Segment added successfully. Total segments: {PlacedSegments.Count}");
-    }
-
-    /// <summary>
-    /// Delete the currently selected segment.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanDeleteSegment))]
-    private void DeleteSelectedSegment()
-    {
-        if (SelectedSegment is null)
-            return;
-
-        PlacedSegments.Remove(SelectedSegment);
-        SelectedSegment = null;
-    }
-
-    private bool CanDeleteSegment() => SelectedSegment is not null;
-
-    /// <summary>
-    /// Clear all segments from the canvas.
-    /// </summary>
-    [RelayCommand]
-    private void ClearCanvas()
-    {
-        PlacedSegments.Clear();
-        SelectedSegment = null;
-    }
-
-    /// <summary>
-    /// Rotate the selected segment by 15° clockwise.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanRotateSegment))]
-    private void RotateRight()
-    {
-        if (SelectedSegment is null)
-            return;
-
-        var newRotation = (SelectedSegment.Rotation + 15) % 360;
-        SelectedSegment.SetRotation(newRotation);
-    }
-
-    /// <summary>
-    /// Rotate the selected segment by 15° counter-clockwise.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanRotateSegment))]
-    private void RotateLeft()
-    {
-        if (SelectedSegment is null)
-            return;
-
-        var newRotation = SelectedSegment.Rotation - 15;
-        if (newRotation < 0) newRotation += 360;
-        SelectedSegment.SetRotation(newRotation);
-    }
-
-    private bool CanRotateSegment() => SelectedSegment is not null;
-
-    /// <summary>
-    /// Zoom in (increase zoom by 5%).
-    /// </summary>
     [RelayCommand]
     private void ZoomIn()
     {
-        ZoomLevel = Math.Min(400, ZoomLevel + 5);
-        OnPropertyChanged(nameof(ZoomLevelText));
+        ZoomLevel = Math.Min(200, ZoomLevel + 5);
     }
 
-    /// <summary>
-    /// Zoom out (decrease zoom by 5%).
-    /// </summary>
     [RelayCommand]
     private void ZoomOut()
     {
-        ZoomLevel = Math.Max(10, ZoomLevel - 5);
-        OnPropertyChanged(nameof(ZoomLevelText));
-    }
-
-    #endregion
-
-    #region Helper Methods
-    /// <summary>
-    /// Generate SVG path data for a track template at specific position.
-    /// Uses absolute coordinates so the path renders at the correct canvas position.
-    /// Uses InvariantCulture to ensure dot (.) as decimal separator in SVG path data.
-    /// </summary>
-    private static string GeneratePathData(TrackTemplateViewModel template, double x, double y)
-    {
-        const double scale = 0.5; // 1mm = 0.5px (smaller for better fit)
-        var ic = CultureInfo.InvariantCulture;
-
-        if (template.Type == TrackType.Straight)
-        {
-            // Horizontal line at position (x, y)
-            var length = template.Length * scale;
-            return string.Format(ic, "M {0:F2},{1:F2} L {2:F2},{3:F2}", x, y, x + length, y);
-        }
-
-        if (template.Type == TrackType.Curve)
-        {
-            // Arc path at position (x, y)
-            var radius = template.Radius * scale;
-            var angleRad = template.Angle * Math.PI / 180.0;
-            var endX = x + radius * Math.Sin(angleRad);
-            var endY = y + radius * (1 - Math.Cos(angleRad));
-
-            // Arc command: A rx,ry rotation large-arc-flag sweep-flag x,y
-            return string.Format(ic, "M {0:F2},{1:F2} A {2:F2},{3:F2} 0 0 1 {4:F2},{5:F2}", x, y, radius, radius, endX, endY);
-        }
-
-        if (template.Type is TrackType.TurnoutLeft or TrackType.TurnoutRight)
-        {
-            // Simple turnout at position (x, y)
-            var length = template.Length * scale;
-            var branchY = template.Type == TrackType.TurnoutLeft ? -20 : 20;
-            return string.Format(ic, "M {0:F2},{1:F2} L {2:F2},{3:F2} M {4:F2},{5:F2} L {6:F2},{7:F2}",
-                x, y, x + length, y,
-                x + length / 2, y, x + length / 2 + 30, y + branchY);
-        }
-
-        // Default: straight line at position
-        var defaultLength = template.Length * scale;
-        return string.Format(ic, "M {0:F2},{1:F2} L {2:F2},{3:F2}", x, y, x + defaultLength, y);
+        ZoomLevel = Math.Max(25, ZoomLevel - 5);
     }
     #endregion
 
-    #region Connection Management
+    #region Commands
+
     /// <summary>
-    /// Get the endpoint index of a segment for a given endpoint coordinate.
+    /// Add a new segment from the library.
     /// </summary>
-    private static int GetEndpointIndex(TrackSegmentViewModel segment, (double X, double Y) endpoint)
+    [RelayCommand]
+    private void AddSegment(TrackTemplateViewModel? template)
     {
-        var endpoints = segment.GetAllEndpoints();
-        for (int i = 0; i < endpoints.Count; i++)
+        if (template == null) return;
+
+        var segment = new TrackSegment
         {
-            var distance = Math.Sqrt(
-                Math.Pow(endpoints[i].X - endpoint.X, 2) +
-                Math.Pow(endpoints[i].Y - endpoint.Y, 2));
+            ArticleCode = template.ArticleCode
+        };
 
-            if (distance < 1) // Within 1px tolerance
-                return i;
-        }
+        var vm = new TrackSegmentViewModel(segment);
+        Segments.Add(vm);
+        SelectedSegment = vm;
+        RenderLayout();
 
-        // Fallback: return the closest endpoint index
-        var closest = 0;
-        var minDistance = double.MaxValue;
-        for (int i = 0; i < endpoints.Count; i++)
-        {
-            var distance = Math.Sqrt(
-                Math.Pow(endpoints[i].X - endpoint.X, 2) +
-                Math.Pow(endpoints[i].Y - endpoint.Y, 2));
-
-            if (distance < minDistance)
-            {
-                minDistance = distance;
-                closest = i;
-            }
-        }
-        return closest;
+        Debug.WriteLine($"➕ Added segment: {template.ArticleCode}");
     }
 
     /// <summary>
-    /// Create a connection between two segments at a snap point.
-    /// Supports multiple connections per segment (e.g., turnouts with 3-4 endpoints).
+    /// Delete the selected segment.
     /// </summary>
-    public void CreateConnection(TrackSegmentViewModel segment1, bool segment1IsStart,
-                                  TrackSegmentViewModel segment2, bool segment2IsStart,
-                                  double connectionX, double connectionY)
+    [RelayCommand]
+    private void DeleteSegment()
     {
-        var ep = (X: connectionX, Y: connectionY);
-        var segment1EndpointIndex = GetEndpointIndex(segment1, ep);
-        var segment2EndpointIndex = GetEndpointIndex(segment2, ep);
+        if (SelectedSegment == null) return;
 
-        // Check if a connection at this specific endpoint combination already exists
-        var existingConnection = Connections.FirstOrDefault(c =>
-            ((c.Segment1Id == segment1.Id && c.Segment2Id == segment2.Id) ||
-             (c.Segment1Id == segment2.Id && c.Segment2Id == segment1.Id)) &&
-            ((c.Segment1EndpointIndex == segment1EndpointIndex && c.Segment2EndpointIndex == segment2EndpointIndex) ||
-             (c.Segment1EndpointIndex == segment2EndpointIndex && c.Segment2EndpointIndex == segment1EndpointIndex)));
+        // Remove connections involving this segment
+        Connections.RemoveAll(c =>
+            c.Segment1Id == SelectedSegment.Id || c.Segment2Id == SelectedSegment.Id);
 
-        if (existingConnection != null)
-            return;
+        Segments.Remove(SelectedSegment);
+        SelectedSegment = null;
+        RenderLayout();
+
+        OnPropertyChanged(nameof(SegmentCount));
+        OnPropertyChanged(nameof(StatusText));
+    }
+
+    /// <summary>
+    /// Connect two segments at their endpoints.
+    /// </summary>
+    [RelayCommand]
+    private void ConnectSegments(string parameters)
+    {
+        // Format: "segment1Id,endpoint1,segment2Id,endpoint2"
+        var parts = parameters.Split(',');
+        if (parts.Length != 4) return;
 
         var connection = new TrackConnection
         {
-            Segment1Id = segment1.Id,
-            Segment1EndpointIndex = segment1EndpointIndex,
-            Segment2Id = segment2.Id,
-            Segment2EndpointIndex = segment2EndpointIndex,
-            ConnectionX = connectionX,
-            ConnectionY = connectionY
+            Segment1Id = parts[0],
+            Segment1EndpointIndex = int.Parse(parts[1]),
+            Segment2Id = parts[2],
+            Segment2EndpointIndex = int.Parse(parts[3])
         };
 
-        Connections.Add(connection);
+        // Check for existing connection
+        var exists = Connections.Any(c =>
+            (c.Segment1Id == connection.Segment1Id && c.Segment2Id == connection.Segment2Id) ||
+            (c.Segment1Id == connection.Segment2Id && c.Segment2Id == connection.Segment1Id));
 
-        // Update segment connection states
-        segment1.SetConnectionState(segment1IsStart, true, segment2.Id);
-        segment2.SetConnectionState(segment2IsStart, true, segment1.Id);
-
-        Debug.WriteLine($"🔗 Connection created: {segment1.ArticleCode}[{segment1EndpointIndex}] <-> {segment2.ArticleCode}[{segment2EndpointIndex}]");
-    }
-
-    /// <summary>
-    /// Remove all connections for a segment.
-    /// </summary>
-    public void RemoveConnectionsForSegment(TrackSegmentViewModel segment)
-    {
-        var connectionsToRemove = Connections
-            .Where(c => c.Segment1Id == segment.Id || c.Segment2Id == segment.Id)
-            .ToList();
-
-        foreach (var connection in connectionsToRemove)
+        if (!exists)
         {
-            // Get the other segment and update its connection state
-            var otherSegmentId = connection.Segment1Id == segment.Id
-                ? connection.Segment2Id
-                : connection.Segment1Id;
-            var otherEndpointIndex = connection.Segment1Id == segment.Id
-                ? connection.Segment2EndpointIndex
-                : connection.Segment1EndpointIndex;
-            var otherIsStart = otherEndpointIndex == 0; // Simple heuristic: index 0 = start
-
-            var otherSegment = PlacedSegments.FirstOrDefault(s => s.Id == otherSegmentId);
-            otherSegment?.SetConnectionState(otherIsStart, false, null);
-
-            Connections.Remove(connection);
-        }
-
-        // Clear this segment's connection states
-        segment.SetConnectionState(true, false, null);
-        segment.SetConnectionState(false, false, null);
-    }
-
-    /// <summary>
-    /// Get all segments connected to a given segment (recursively).
-    /// Used for group movement.
-    /// </summary>
-    public List<TrackSegmentViewModel> GetConnectedGroup(TrackSegmentViewModel startSegment)
-    {
-        var group = new List<TrackSegmentViewModel>();
-        var visited = new HashSet<string>();
-
-        CollectConnectedSegments(startSegment, group, visited);
-
-        return group;
-    }
-
-    private void CollectConnectedSegments(TrackSegmentViewModel segment,
-                                           List<TrackSegmentViewModel> group,
-                                           HashSet<string> visited)
-    {
-        if (visited.Contains(segment.Id))
-            return;
-
-        visited.Add(segment.Id);
-        group.Add(segment);
-
-        // Find all connections involving this segment
-        var connections = Connections.Where(c =>
-            c.Segment1Id == segment.Id || c.Segment2Id == segment.Id);
-
-        foreach (var connection in connections)
-        {
-            var otherSegmentId = connection.Segment1Id == segment.Id
-                ? connection.Segment2Id
-                : connection.Segment1Id;
-
-            var otherSegment = PlacedSegments.FirstOrDefault(s => s.Id == otherSegmentId);
-            if (otherSegment != null)
-            {
-                CollectConnectedSegments(otherSegment, group, visited);
-            }
+            Connections.Add(connection);
+            RenderLayout();
         }
     }
 
-    /// <summary>
-    /// Move a group of connected segments by delta.
-    /// </summary>
-    public void MoveConnectedGroup(TrackSegmentViewModel startSegment, double deltaX, double deltaY)
-    {
-        var group = GetConnectedGroup(startSegment);
-
-        foreach (var segment in group)
-        {
-            segment.MoveBy(deltaX, deltaY);
-        }
-
-        // Update connection points
-        foreach (var connection in Connections.Where(c =>
-            group.Any(s => s.Id == c.Segment1Id || s.Id == c.Segment2Id)))
-        {
-            connection.ConnectionX += deltaX;
-            connection.ConnectionY += deltaY;
-        }
-
-        Debug.WriteLine($"📦 Moved group of {group.Count} segments");
-    }
+    // Rotation commands removed - endpoints are imported from AnyRail
 
     /// <summary>
-    /// Automatically detect and create connections between segments based on matching endpoints.
-    /// Used after AnyRail XML import to restore track connectivity.
-    /// Handles turnouts (3-4 endpoints) as well as simple tracks (2 endpoints).
-    /// </summary>
-    /// <param name="tolerance">Maximum distance (in pixels) for endpoints to be considered connected. Default 5.0 for rounding tolerance.</param>
-    public void AutoConnectFromEndpoints(double tolerance = 5.0)
-    {
-        var segments = PlacedSegments.ToList();
-        int connectionsCreated = 0;
-
-        Debug.WriteLine($"🔗 AutoConnect: Checking {segments.Count} segments with tolerance {tolerance}px");
-
-        // Debug: Print first few segment endpoints to verify extraction
-        foreach (var seg in segments.Take(3))
-        {
-            var endpoints = seg.GetAllEndpoints();
-            Debug.WriteLine($"   Segment {seg.ArticleCode}: {endpoints.Count} endpoints");
-        }
-
-        for (int i = 0; i < segments.Count; i++)
-        {
-            var seg1 = segments[i];
-            var seg1Endpoints = seg1.GetAllEndpoints();
-
-            for (int j = i + 1; j < segments.Count; j++)
-            {
-                var seg2 = segments[j];
-                var seg2Endpoints = seg2.GetAllEndpoints();
-
-                // Check all combinations of endpoints between the two segments
-                foreach (var ep1 in seg1Endpoints)
-                {
-                    foreach (var ep2 in seg2Endpoints)
-                    {
-                        if (PointsMatch(ep1, ep2, tolerance))
-                        {
-                            // Determine if this is start or end for each segment
-                            var seg1IsStart = IsStartEndpoint(seg1, ep1);
-                            var seg2IsStart = IsStartEndpoint(seg2, ep2);
-
-                            // CreateConnection handles duplicate checks now with endpoint indices
-                            CreateConnection(seg1, seg1IsStart, seg2, seg2IsStart, ep1.X, ep1.Y);
-                            connectionsCreated++;
-                        }
-                    }
-                }
-            }
-        }
-
-        Debug.WriteLine($"🔗 AutoConnect: Created {connectionsCreated} connections from endpoint matching");
-    }
-
-    /// <summary>
-    /// Automatically connect a specific segment to nearby segments based on endpoint proximity.
-    /// Used when dragging a segment to reconnect it after being disconnected.
-    /// </summary>
-    /// <param name="segment">The segment to connect.</param>
-    /// <param name="tolerance">Maximum distance (in pixels) for endpoints to be considered connected. Default 5.0 for rounding tolerance.</param>
-    public void AutoConnectFromEndpoints(TrackSegmentViewModel segment, double tolerance = 5.0)
-    {
-        var segmentEndpoints = segment.GetAllEndpoints();
-        int connectionsCreated = 0;
-
-        Debug.WriteLine($"🔗 AutoConnect for {segment.ArticleCode}: Checking {segmentEndpoints.Count} endpoints");
-
-        foreach (var otherSegment in PlacedSegments.Where(s => s.Id != segment.Id))
-        {
-            var otherEndpoints = otherSegment.GetAllEndpoints();
-
-            foreach (var ep1 in segmentEndpoints)
-            {
-                foreach (var ep2 in otherEndpoints)
-                {
-                    if (PointsMatch(ep1, ep2, tolerance))
-                    {
-                        var segIsStart = IsStartEndpoint(segment, ep1);
-                        var otherIsStart = IsStartEndpoint(otherSegment, ep2);
-
-                        // CreateConnection handles duplicate checks now with endpoint indices
-                        CreateConnection(segment, segIsStart, otherSegment, otherIsStart, ep1.X, ep1.Y);
-                        connectionsCreated++;
-                    }
-                }
-            }
-        }
-
-        if (connectionsCreated > 0)
-        {
-            Debug.WriteLine($"🔗 AutoConnect: Created {connectionsCreated} connections for {segment.ArticleCode}");
-        }
-    }
-
-    /// <summary>
-    /// Determine if an endpoint is closer to the segment's start point.
-    /// </summary>
-    private static bool IsStartEndpoint(TrackSegmentViewModel segment, (double X, double Y) endpoint)
-    {
-        var startDist = Math.Pow(segment.StartPointX - endpoint.X, 2) + Math.Pow(segment.StartPointY - endpoint.Y, 2);
-        var endDist = Math.Pow(segment.EndPointX - endpoint.X, 2) + Math.Pow(segment.EndPointY - endpoint.Y, 2);
-        return startDist <= endDist;
-    }
-
-    /// <summary>
-    /// Check if two points are within tolerance distance of each other.
-    /// </summary>
-    private static bool PointsMatch((double X, double Y) p1, (double X, double Y) p2, double tolerance)
-    {
-        var dx = p1.X - p2.X;
-        var dy = p1.Y - p2.Y;
-        return dx * dx + dy * dy <= tolerance * tolerance;
-    }
-    #endregion
-
-    #region AnyRail Import/Export
-    /// <summary>
-    /// Current loaded AnyRail layout (if imported).
-    /// </summary>
-    private AnyRailLayout? _anyRailLayout;
-
-    /// <summary>
-    /// Browse and import an AnyRail XML layout file.
+    /// Clear all segments.
     /// </summary>
     [RelayCommand]
-    private async Task BrowseAndLoadAnyRailLayoutAsync()
+    private void ClearLayout()
     {
-        var file = await _ioService.BrowseForXmlFileAsync();
-        if (file == null)
-            return;
-
-        LoadAnyRailLayout(file);
+        Segments.Clear();
+        Connections.Clear();
+        SelectedSegment = null;
+        OnPropertyChanged(nameof(SegmentCount));
+        OnPropertyChanged(nameof(StatusText));
     }
 
+    #endregion
+
+    #region Rendering
+
     /// <summary>
-    /// Load an AnyRail XML layout and convert to PlacedSegments.
+    /// Render the layout by calculating positions from topology.
     /// </summary>
-    public void LoadAnyRailLayout(string xmlPath)
+    private void RenderLayout()
     {
-        if (string.IsNullOrWhiteSpace(xmlPath) || !File.Exists(xmlPath))
+        // Build TrackLayout from current state
+        var layout = new TrackLayout
+        {
+            Name = LayoutName,
+            Description = LayoutDescription,
+            Segments = Segments.Select(s => s.Model).ToList(),
+            Connections = Connections.ToList()
+        };
+
+        // Calculate positions and path data
+        var rendered = _renderer.Render(layout);
+
+        // Apply to ViewModels
+        foreach (var rs in rendered)
+        {
+            var vm = Segments.FirstOrDefault(s => s.Id == rs.Id);
+            if (vm != null)
+            {
+                vm.X = rs.X;
+                vm.Y = rs.Y;
+                vm.PathData = rs.PathData;
+            }
+        }
+
+        OnPropertyChanged(nameof(SegmentCount));
+        OnPropertyChanged(nameof(StatusText));
+    }
+
+
+
+    #endregion
+
+    #region InPort Assignment
+
+    [ObservableProperty]
+    private double inPortInput = double.NaN;
+
+    [RelayCommand]
+    private void AssignInPort()
+    {
+        if (SelectedSegment == null || double.IsNaN(InPortInput) || InPortInput < 1)
             return;
 
-        _anyRailLayout = AnyRailLayout.Parse(xmlPath);
+        SelectedSegment.AssignedInPort = (uint)InPortInput;
+        OnPropertyChanged(nameof(AssignedFeedbackPointCount));
+        OnPropertyChanged(nameof(StatusText));
+    }
 
-        // Clear existing segments
-        PlacedSegments.Clear();
+    [RelayCommand]
+    private void ClearInPort()
+    {
+        if (SelectedSegment == null) return;
+        SelectedSegment.AssignedInPort = null;
+        InPortInput = double.NaN;
+        OnPropertyChanged(nameof(AssignedFeedbackPointCount));
+        OnPropertyChanged(nameof(StatusText));
+    }
+
+    #endregion
+
+    #region Persistence
+
+    private void SyncToProject()
+    {
+        var project = _mainViewModel.SelectedProject?.Model;
+        if (project == null) return;
+
+
+
+
+        project.TrackLayout ??= new TrackLayout();
+        project.TrackLayout.Name = LayoutName;
+        project.TrackLayout.Description = LayoutDescription;
+        project.TrackLayout.Segments = Segments.Select(s => s.Model).ToList();
+        project.TrackLayout.Connections = Connections.ToList();
+
+        Debug.WriteLine($"💾 Saved: {Segments.Count} segments, {Connections.Count} connections");
+    }
+
+    private void LoadFromProject()
+    {
+        var layout = _mainViewModel.SelectedProject?.Model?.TrackLayout;
+        if (layout == null)
+        {
+            Debug.WriteLine("📂 No track layout in project");
+            return;
+        }
+
+        Segments.Clear();
         Connections.Clear();
 
-        // Convert AnyRail parts to TrackSegments
-        foreach (var part in _anyRailLayout.Parts)
+        LayoutName = layout.Name;
+        LayoutDescription = layout.Description;
+
+        foreach (var segment in layout.Segments)
         {
-            var pathData = part.ToPathData();
-            if (string.IsNullOrWhiteSpace(pathData))
-                continue;
+            Segments.Add(new TrackSegmentViewModel(segment));
+        }
 
-            var center = part.GetCenter();
+        Connections.AddRange(layout.Connections);
+        
+        // Always render to calculate PathData from topology
+        RenderLayout();
+
+        Debug.WriteLine($"📂 Loaded: {Segments.Count} segments, {Connections.Count} connections");
+    }
+
+
+    #endregion
+
+    #region Import/Export
+
+    [RelayCommand]
+    private async Task ImportAnyRailAsync()
+    {
+        var file = await _ioService.BrowseForXmlFileAsync();
+        if (file == null) return;
+
+        var anyRailLayout = AnyRailLayout.Parse(file);
+
+        Segments.Clear();
+        Connections.Clear();
+
+        // Build endpoint lookup
+        var endpointLookup = anyRailLayout.Endpoints.ToDictionary(e => e.Nr);
+
+        // Calculate scale and offset to fit layout in view
+        var (scale, offsetX, offsetY) = CalculateScaleAndOffset(anyRailLayout, endpointLookup);
+
+        // Convert AnyRail parts to segments with scaled endpoint coordinates
+        foreach (var part in anyRailLayout.Parts)
+        {
             var articleCode = part.GetArticleCode();
-            var trackType = part.GetTrackSegmentType();
-
+            
+            // Get endpoint coordinates from AnyRail XML, scaled and offset
+            var endpoints = new List<SegmentEndpoint>();
+            foreach (var epNr in part.EndpointNrs)
+            {
+                if (endpointLookup.TryGetValue(epNr, out var ep))
+                {
+                    endpoints.Add(new SegmentEndpoint
+                    {
+                        X = ep.X * scale + offsetX,
+                        Y = ep.Y * scale + offsetY
+                    });
+                }
+            }
+            
+            // Convert AnyRail lines to domain DrawingLines
+            var lines = part.Lines.Select(line => new DrawingLine
+            {
+                X1 = line.Pt1.X * scale + offsetX,
+                Y1 = line.Pt1.Y * scale + offsetY,
+                X2 = line.Pt2.X * scale + offsetX,
+                Y2 = line.Pt2.Y * scale + offsetY
+            }).ToList();
+            
+            // Convert AnyRail arcs to domain DrawingArcs
+            var arcs = part.Arcs.Select(arc => new DrawingArc
+            {
+                X1 = arc.Pt1.X * scale + offsetX,
+                Y1 = arc.Pt1.Y * scale + offsetY,
+                X2 = arc.Pt2.X * scale + offsetX,
+                Y2 = arc.Pt2.Y * scale + offsetY,
+                Radius = arc.Radius * scale,
+                Sweep = 0  // Default sweep, will be calculated if needed
+            }).ToList();
+            
             var segment = new TrackSegment
             {
                 Id = part.Id,
-                Name = $"{articleCode} ({part.Id})",
                 ArticleCode = articleCode,
-                Type = trackType,
-                PathData = pathData,
-                CenterX = center.X,
-                CenterY = center.Y,
-                Rotation = 0,
-                Layer = "Default"
+                Endpoints = endpoints,
+                Lines = lines,
+                Arcs = arcs
             };
-
-            PlacedSegments.Add(new TrackSegmentViewModel(segment));
+            
+            Segments.Add(new TrackSegmentViewModel(segment));
         }
 
-        // Automatically detect and create connections based on matching endpoints
-        AutoConnectFromEndpoints();
+        // Get connections directly from XML
+        Connections.AddRange(anyRailLayout.ToTrackConnections());
 
-        OnPropertyChanged(nameof(AssignedSensorCount));
-        OnPropertyChanged(nameof(SensorStatusText));
+        // Render layout from endpoints
+        RenderLayout();
 
-        Debug.WriteLine($"📂 Imported AnyRail layout: {PlacedSegments.Count} segments");
+        Debug.WriteLine($"📂 Imported AnyRail: {Segments.Count} segments, {Connections.Count} connections (scale: {scale:F3})");
     }
 
     /// <summary>
-    /// Export current track plan to AnyRail XML format.
+    /// Calculate scale and offset to center layout in view.
     /// </summary>
-    [RelayCommand]
-    private async Task ExportToAnyRailAsync()
+    private static (double scale, double offsetX, double offsetY) CalculateScaleAndOffset(
+        AnyRailLayout layout, Dictionary<int, AnyRailEndpoint> endpointLookup)
     {
-        if (PlacedSegments.Count == 0)
-            return;
+        if (layout.Parts.Count == 0)
+            return (0.15, 50, 50);
 
-        var file = await _ioService.SaveXmlFileAsync("trackplan.xml");
-        if (file == null)
-            return;
+        // Find bounding box from all endpoints
+        double minX = double.MaxValue, minY = double.MaxValue;
+        double maxX = double.MinValue, maxY = double.MinValue;
 
-        ExportToAnyRail(file);
-    }
-
-    /// <summary>
-    /// Export track plan to AnyRail XML format.
-    /// </summary>
-    public void ExportToAnyRail(String xmlPath)
-    {
-        var ic = CultureInfo.InvariantCulture;
-
-        using var writer = new StreamWriter(xmlPath);
-        writer.WriteLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-        writer.WriteLine($"<layout width=\"{CanvasWidth.ToString(ic)}\" height=\"{CanvasHeight.ToString(ic)}\" scaleX=\"1\" scaleY=\"1\">");
-        writer.WriteLine("  <parts>");
-
-        foreach (var segment in PlacedSegments)
+        foreach (var part in layout.Parts)
         {
-            writer.WriteLine($"    <part id=\"{segment.Id}\" type=\"{GetAnyRailType(segment)}\">");
-            writer.WriteLine("      <drawing>");
-
-            // Write path as line (simplified - full arc support would need more work)
-            var startX = segment.StartPointX.ToString(ic);
-            var startY = segment.StartPointY.ToString(ic);
-            var endX = segment.EndPointX.ToString(ic);
-            var endY = segment.EndPointY.ToString(ic);
-            writer.WriteLine($"        <line pt1=\"{startX},{startY}\" pt2=\"{endX},{endY}\" />");
-
-            writer.WriteLine("      </drawing>");
-
-            // Write InPort if assigned
-            if (segment.AssignedInPort.HasValue)
+            foreach (var epNr in part.EndpointNrs)
             {
-                writer.WriteLine($"      <inport>{segment.AssignedInPort.Value}</inport>");
+                if (endpointLookup.TryGetValue(epNr, out var ep))
+                {
+                    minX = Math.Min(minX, ep.X);
+                    minY = Math.Min(minY, ep.Y);
+                    maxX = Math.Max(maxX, ep.X);
+                    maxY = Math.Max(maxY, ep.Y);
+                }
             }
-
-            writer.WriteLine("    </part>");
         }
 
-        writer.WriteLine("  </parts>");
-        writer.WriteLine("</layout>");
+        var layoutWidth = maxX - minX;
+        var layoutHeight = maxY - minY;
 
-        Debug.WriteLine($"💾 Exported track plan to: {xmlPath}");
+        // Target view size (Canvas dimensions)
+        const double targetWidth = 1000.0;
+        const double targetHeight = 600.0;
+        const double padding = 50.0;
+
+        var availableWidth = targetWidth - 2 * padding;
+        var availableHeight = targetHeight - 2 * padding;
+
+        // Calculate scale to fit
+        var scaleX = availableWidth / layoutWidth;
+        var scaleY = availableHeight / layoutHeight;
+        var scale = Math.Min(scaleX, scaleY);
+        scale = Math.Clamp(scale, 0.05, 0.5);
+
+        // Calculate scaled layout dimensions
+        var scaledWidth = layoutWidth * scale;
+        var scaledHeight = layoutHeight * scale;
+
+        // Calculate offset to CENTER the layout in the view
+        var offsetX = (targetWidth - scaledWidth) / 2 - (minX * scale);
+        var offsetY = (targetHeight - scaledHeight) / 2 - (minY * scale);
+
+        return (scale, offsetX, offsetY);
     }
 
-    private static string GetAnyRailType(TrackSegmentViewModel segment)
-    {
-        return segment.ArticleCode switch
-        {
-            var s when s.StartsWith("G") => "Straight",
-            var s when s.StartsWith("R") => "Curve",
-            "WL" => "LeftRegularTurnout",
-            "WR" => "RightRegularTurnout",
-            "DKW" => "DoubleSlip",
-            "DWW" => "ThreeWay",
-            _ => "Straight"
-        };
-    }
-    #endregion
-
-    #region Project Persistence
-    /// <summary>
-    /// Sync current track layout to the selected Project for JSON persistence.
-    /// Call this before saving the Solution.
-    /// </summary>
-    public void SyncToProject()
-    {
-        var project = _mainViewModel.SelectedProject?.Model;
-        if (project == null)
-        {
-            Debug.WriteLine("⚠️ SyncToProject: No project selected");
-            return;
-        }
-
-        // Create or update TrackLayout
-        project.TrackLayout ??= new TrackLayout();
-
-        // Sync layout properties
-        project.TrackLayout.Name = LayoutName;
-        project.TrackLayout.Description = LayoutDescription;
-        project.TrackLayout.TrackSystem = TrackSystem;
-        project.TrackLayout.Scale = Scale;
-        project.TrackLayout.WidthMm = CanvasWidthMm;
-        project.TrackLayout.HeightMm = CanvasHeightMm;
-
-        // Convert ViewModels to Domain models
-        project.TrackLayout.Segments.Clear();
-        foreach (var vm in PlacedSegments)
-        {
-            project.TrackLayout.Segments.Add(vm.Model);
-        }
-
-        // Copy connections
-        project.TrackLayout.Connections.Clear();
-        project.TrackLayout.Connections.AddRange(Connections);
-
-        Debug.WriteLine($"💾 SyncToProject: {project.TrackLayout.Segments.Count} segments, {project.TrackLayout.Connections.Count} connections");
-    }
-
-    /// <summary>
-    /// Load track layout from the selected Project.
-    /// Call this when a Project is selected or Solution is loaded.
-    /// </summary>
-    public void LoadFromProject()
-    {
-        var project = _mainViewModel.SelectedProject?.Model;
-        if (project?.TrackLayout == null)
-        {
-            Debug.WriteLine("📂 LoadFromProject: No track layout in project");
-            return;
-        }
-
-        var layout = project.TrackLayout;
-
-        // Clear existing data
-        PlacedSegments.Clear();
-        Connections.Clear();
-
-        // Load layout properties
-        LayoutName = layout.Name;
-        LayoutDescription = layout.Description;
-        TrackSystem = layout.TrackSystem;
-        Scale = layout.Scale;
-        CanvasWidthMm = layout.WidthMm;
-        CanvasHeightMm = layout.HeightMm;
-
-        // Load segments
-        foreach (var segment in layout.Segments)
-        {
-            PlacedSegments.Add(new TrackSegmentViewModel(segment));
-        }
-
-        // Load connections
-        Connections.AddRange(layout.Connections);
-
-        // Restore connection states on ViewModels
-        foreach (var connection in Connections)
-        {
-            var seg1 = PlacedSegments.FirstOrDefault(s => s.Id == connection.Segment1Id);
-            var seg2 = PlacedSegments.FirstOrDefault(s => s.Id == connection.Segment2Id);
-
-            var seg1IsStart = connection.Segment1EndpointIndex == 0; // Index 0 = start
-            var seg2IsStart = connection.Segment2EndpointIndex == 0; // Index 0 = start
-            seg1?.SetConnectionState(seg1IsStart, true, connection.Segment2Id);
-            seg2?.SetConnectionState(seg2IsStart, true, connection.Segment1Id);
-        }
-
-        OnPropertyChanged(nameof(AssignedSensorCount));
-        OnPropertyChanged(nameof(SensorStatusText));
-
-        Debug.WriteLine($"📂 LoadFromProject: {PlacedSegments.Count} segments, {Connections.Count} connections");
-    }
     #endregion
 }

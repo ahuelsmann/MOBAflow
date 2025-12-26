@@ -196,2062 +196,3184 @@
         }
       ],
       "TrackLayout": {
-        "Id": "e6e3a4e0-3e4e-4829-a158-40b2baaa737a",
-        "Name": "Untitled Layout",
-        "Description": null,
+        "Name": "Demo Layout",
+        "Description": "Simple demo layout with 3 track segments",
         "TrackSystem": "Piko A-Gleis",
-        "Scale": "H0",
-        "WidthMm": 2660.0,
-        "HeightMm": 1100.0,
         "Segments": [
           {
             "Id": "401",
-            "Name": "G231 (401)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 1189 331 L 1539 331",
-            "CenterX": 1364.0,
-            "CenterY": 331.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 393.48707551951344,
+                "Y": 186.41662442980237
+              },
+              {
+                "X": 313.659401926001,
+                "Y": 186.41662442980237
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 313.659401926001,
+                "Y1": 186.41662442980237,
+                "X2": 393.48707551951344,
+                "Y2": 186.41662442980237
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "402",
-            "Name": "G119 (402)",
-            "Type": 0,
             "ArticleCode": "G119",
-            "PathData": "M 1632 331 L 1813 331",
-            "CenterX": 1722.5,
-            "CenterY": 331.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 414.6984287886467,
+                "Y": 186.41662442980237
+              },
+              {
+                "X": 455.98073998986314,
+                "Y": 186.41662442980237
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 414.6984287886467,
+                "Y1": 186.41662442980237,
+                "X2": 455.98073998986314,
+                "Y2": 186.41662442980237
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "400",
-            "Name": "G231 (400)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 840 331 L 1189 331",
-            "CenterX": 1014.5,
-            "CenterY": 331.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 234.05980739989863,
+                "Y": 186.41662442980237
+              },
+              {
+                "X": 313.659401926001,
+                "Y": 186.41662442980237
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 234.05980739989863,
+                "Y1": 186.41662442980237,
+                "X2": 313.659401926001,
+                "Y2": 186.41662442980237
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "68",
-            "Name": "R2 (68)",
-            "Type": 1,
             "ArticleCode": "R2",
-            "PathData": "M 3886 782 A 638 638 0 0 0 3800 463",
-            "CenterX": 3843.0,
-            "CenterY": 622.5,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 928.7886467308667,
+                "Y": 289.28028383172835
+              },
+              {
+                "X": 909.1738469336036,
+                "Y": 216.52306132792705
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 928.7886467308667,
+                "Y1": 289.28028383172835,
+                "X2": 909.1738469336036,
+                "Y2": 216.52306132792705,
+                "Radius": 145.51444500760263,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "25",
-            "Name": "R1 (25)",
-            "Type": 1,
             "ArticleCode": "R1",
-            "PathData": "M 294 510 A 545 545 0 0 0 221 782",
-            "CenterX": 257.5,
-            "CenterY": 646.0,
-            "Rotation": 0.0,
-            "AssignedInPort": 3,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Endpoints": [
+              {
+                "X": 92.87886467308667,
+                "Y": 289.28028383172835
+              },
+              {
+                "X": 109.52863659401926,
+                "Y": 227.2427774961987
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 109.52863659401926,
+                "Y1": 227.2427774961987,
+                "X2": 92.87886467308667,
+                "Y2": 289.28028383172835,
+                "Radius": 124.30309173846933,
+                "Sweep": 0
+              }
+            ],
+            "AssignedInPort": null,
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "55",
-            "Name": "G231 (55)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 2537 1327 L 2898 1327",
-            "CenterX": 2717.5,
-            "CenterY": 1327.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 621.1099847947288,
+                "Y": 413.58337557019763
+              },
+              {
+                "X": 703.4465281297516,
+                "Y": 413.58337557019763
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 621.1099847947288,
+                "Y1": 413.58337557019763,
+                "X2": 703.4465281297516,
+                "Y2": 413.58337557019763
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "316",
-            "Name": "G231 (316)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 1826 1327 L 2187 1327",
-            "CenterX": 2006.5,
-            "CenterY": 1327.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 541.2823112012164,
+                "Y": 413.58337557019763
+              },
+              {
+                "X": 458.9457678661936,
+                "Y": 413.58337557019763
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 458.9457678661936,
+                "Y1": 413.58337557019763,
+                "X2": 541.2823112012164,
+                "Y2": 413.58337557019763
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "304",
-            "Name": "R3 (304)",
-            "Type": 1,
             "ArticleCode": "R3",
-            "PathData": "M 131 1242 A 732 732 0 0 0 399 1510",
-            "CenterX": 265.0,
-            "CenterY": 1376.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 133.476938672073,
+                "Y": 455.3218449062342
+              },
+              {
+                "X": 72.35174860618348,
+                "Y": 394.19665484034465
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 72.35174860618348,
+                "Y1": 394.19665484034465,
+                "X2": 133.476938672073,
+                "Y2": 455.3218449062342,
+                "Radius": 166.95387734414598,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "86",
-            "Name": "G231 (86)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 2187 1420 L 2537 1420",
-            "CenterX": 2362.0,
-            "CenterY": 1420.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 621.1099847947288,
+                "Y": 434.794728839331
+              },
+              {
+                "X": 541.2823112012164,
+                "Y": 434.794728839331
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 541.2823112012164,
+                "Y1": 434.794728839331,
+                "X2": 621.1099847947288,
+                "Y2": 434.794728839331
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "74",
-            "Name": "R2 (74)",
-            "Type": 1,
             "ArticleCode": "R2",
-            "PathData": "M 3567 1335 A 638 638 0 0 0 3800 1101",
-            "CenterX": 3683.5,
-            "CenterY": 1218.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 909.1738469336036,
+                "Y": 362.03750633552966
+              },
+              {
+                "X": 856.0314242270654,
+                "Y": 415.4080081094779
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 856.0314242270654,
+                "Y1": 415.4080081094779,
+                "X2": 909.1738469336036,
+                "Y2": 362.03750633552966,
+                "Radius": 145.51444500760263,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "275",
-            "Name": "G231 (275)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 2187 144 L 2536 144",
-            "CenterX": 2361.5,
-            "CenterY": 144.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 620.8819057273188,
+                "Y": 143.76583882412572
+              },
+              {
+                "X": 541.2823112012164,
+                "Y": 143.76583882412572
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 541.2823112012164,
+                "Y1": 143.76583882412572,
+                "X2": 620.8819057273188,
+                "Y2": 143.76583882412572
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "96",
-            "Name": "G231 (96)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 2175 50 L 2536 50",
-            "CenterX": 2355.5,
-            "CenterY": 50.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 620.8819057273188,
+                "Y": 122.32640648758237
+              },
+              {
+                "X": 538.545362392296,
+                "Y": 122.32640648758237
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 538.545362392296,
+                "Y1": 122.32640648758237,
+                "X2": 620.8819057273188,
+                "Y2": 122.32640648758237
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "403",
-            "Name": "G62 (403)",
-            "Type": 0,
             "ArticleCode": "G62",
-            "PathData": "M 1539 331 L 1632 331",
-            "CenterX": 1585.5,
-            "CenterY": 331.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 414.6984287886467,
+                "Y": 186.41662442980237
+              },
+              {
+                "X": 393.48707551951344,
+                "Y": 186.41662442980237
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 393.48707551951344,
+                "Y1": 186.41662442980237,
+                "X2": 414.6984287886467,
+                "Y2": 186.41662442980237
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "14",
-            "Name": "G231 (14)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 765 144 L 1115 144",
-            "CenterX": 940.0,
-            "CenterY": 144.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 296.7815509376584,
+                "Y": 143.76583882412572
+              },
+              {
+                "X": 216.95387734414598,
+                "Y": 143.76583882412572
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 216.95387734414598,
+                "Y1": 143.76583882412572,
+                "X2": 296.7815509376584,
+                "Y2": 143.76583882412572
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "13",
-            "Name": "R3 (13)",
-            "Type": 1,
             "ArticleCode": "R3",
-            "PathData": "M 131 416 A 732 732 0 0 0 33 782",
-            "CenterX": 82.0,
-            "CenterY": 599.0,
-            "Rotation": 0.0,
-            "AssignedInPort": 1,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Endpoints": [
+              {
+                "X": 72.35174860618348,
+                "Y": 205.80334515965535
+              },
+              {
+                "X": 50.0,
+                "Y": 289.28028383172835
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 72.35174860618348,
+                "Y1": 205.80334515965535,
+                "X2": 50.0,
+                "Y2": 289.28028383172835,
+                "Radius": 166.95387734414598,
+                "Sweep": 0
+              }
+            ],
+            "AssignedInPort": null,
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "63",
-            "Name": "R1 (63)",
-            "Type": 1,
             "ArticleCode": "R1",
-            "PathData": "M 3520 311 A 545 545 0 0 0 3248 238",
-            "CenterX": 3384.0,
-            "CenterY": 274.5,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 783.274201723264,
+                "Y": 165.20527116066904
+              },
+              {
+                "X": 845.3117080587937,
+                "Y": 181.85504308160165
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 845.3117080587937,
+                "Y1": 181.85504308160165,
+                "X2": 783.274201723264,
+                "Y2": 165.20527116066904,
+                "Radius": 124.30309173846933,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "174",
-            "Name": "R3 (174)",
-            "Type": 1,
             "ArticleCode": "R3",
-            "PathData": "M 3881 1242 A 732 732 0 0 0 3979 876",
-            "CenterX": 3930.0,
-            "CenterY": 1059.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 950.0,
+                "Y": 310.7197161682717
+              },
+              {
+                "X": 927.6482513938165,
+                "Y": 394.19665484034465
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 927.6482513938165,
+                "Y1": 394.19665484034465,
+                "X2": 950.0,
+                "Y2": 310.7197161682717,
+                "Radius": 166.95387734414598,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "379",
-            "Name": "G119 (379)",
-            "Type": 0,
             "ArticleCode": "G119",
-            "PathData": "M 2537 331 L 2717 331",
-            "CenterX": 2627.0,
-            "CenterY": 331.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 662.1642169285352,
+                "Y": 186.41662442980237
+              },
+              {
+                "X": 621.1099847947288,
+                "Y": 186.41662442980237
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 621.1099847947288,
+                "Y1": 186.41662442980237,
+                "X2": 662.1642169285352,
+                "Y2": 186.41662442980237
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "376",
-            "Name": "G231 (376)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 2811 331 L 3160 331",
-            "CenterX": 2985.5,
-            "CenterY": 331.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 763.203243791181,
+                "Y": 186.41662442980237
+              },
+              {
+                "X": 683.6036492650785,
+                "Y": 186.41662442980237
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 683.6036492650785,
+                "Y1": 186.41662442980237,
+                "X2": 763.203243791181,
+                "Y2": 186.41662442980237
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "382",
-            "Name": "G62 (382)",
-            "Type": 0,
             "ArticleCode": "G62",
-            "PathData": "M 2717 331 L 2811 331",
-            "CenterX": 2764.0,
-            "CenterY": 331.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 683.6036492650785,
+                "Y": 186.41662442980237
+              },
+              {
+                "X": 662.1642169285352,
+                "Y": 186.41662442980237
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 662.1642169285352,
+                "Y1": 186.41662442980237,
+                "X2": 683.6036492650785,
+                "Y2": 186.41662442980237
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "386",
-            "Name": "G62 (386)",
-            "Type": 0,
             "ArticleCode": "G62",
-            "PathData": "M 3160 331 L 3254 331",
-            "CenterX": 3207.0,
-            "CenterY": 331.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 784.6426761277243,
+                "Y": 186.41662442980237
+              },
+              {
+                "X": 763.203243791181,
+                "Y": 186.41662442980237
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 763.203243791181,
+                "Y1": 186.41662442980237,
+                "X2": 784.6426761277243,
+                "Y2": 186.41662442980237
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "49",
-            "Name": "G231 (49)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 1114 1608 L 1476 1608",
-            "CenterX": 1295.0,
-            "CenterY": 1608.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 379.11809427268116,
+                "Y": 477.6735935124176
+              },
+              {
+                "X": 296.55347187024836,
+                "Y": 477.6735935124176
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 296.55347187024836,
+                "Y1": 477.6735935124176,
+                "X2": 379.11809427268116,
+                "Y2": 477.6735935124176
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "58",
-            "Name": "R3 (58)",
-            "Type": 1,
             "ArticleCode": "R3",
-            "PathData": "M 3613 148 A 732 732 0 0 0 3248 50",
-            "CenterX": 3430.5,
-            "CenterY": 99.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 866.523061327927,
+                "Y": 144.67815509376587
+              },
+              {
+                "X": 783.274201723264,
+                "Y": 122.32640648758237
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 866.523061327927,
+                "Y1": 144.67815509376587,
+                "X2": 783.274201723264,
+                "Y2": 122.32640648758237,
+                "Radius": 166.95387734414598,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "404",
-            "Name": "G231 (404)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 1813 331 L 2175 331",
-            "CenterX": 1994.0,
-            "CenterY": 331.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 538.545362392296,
+                "Y": 186.41662442980237
+              },
+              {
+                "X": 455.98073998986314,
+                "Y": 186.41662442980237
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 455.98073998986314,
+                "Y1": 186.41662442980237,
+                "X2": 538.545362392296,
+                "Y2": 186.41662442980237
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "57",
-            "Name": "G231 (57)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 2537 1420 L 2898 1420",
-            "CenterX": 2717.5,
-            "CenterY": 1420.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 703.4465281297516,
+                "Y": 434.794728839331
+              },
+              {
+                "X": 621.1099847947288,
+                "Y": 434.794728839331
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 621.1099847947288,
+                "Y1": 434.794728839331,
+                "X2": 703.4465281297516,
+                "Y2": 434.794728839331
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "30",
-            "Name": "R3 (30)",
-            "Type": 1,
             "ArticleCode": "R3",
-            "PathData": "M 399 1510 A 732 732 0 0 0 765 1608",
-            "CenterX": 582.0,
-            "CenterY": 1559.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 216.95387734414598,
+                "Y": 477.6735935124176
+              },
+              {
+                "X": 133.476938672073,
+                "Y": 455.3218449062342
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 133.476938672073,
+                "Y1": 455.3218449062342,
+                "X2": 216.95387734414598,
+                "Y2": 477.6735935124176,
+                "Radius": 166.95387734414598,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "54",
-            "Name": "G231 (54)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 2537 1608 L 2898 1608",
-            "CenterX": 2717.5,
-            "CenterY": 1608.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 703.4465281297516,
+                "Y": 477.6735935124176
+              },
+              {
+                "X": 621.1099847947288,
+                "Y": 477.6735935124176
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 621.1099847947288,
+                "Y1": 477.6735935124176,
+                "X2": 703.4465281297516,
+                "Y2": 477.6735935124176
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "53",
-            "Name": "G231 (53)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 1476 1608 L 1826 1608",
-            "CenterX": 1651.0,
-            "CenterY": 1608.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 458.9457678661936,
+                "Y": 477.6735935124176
+              },
+              {
+                "X": 379.11809427268116,
+                "Y": 477.6735935124176
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 379.11809427268116,
+                "Y1": 477.6735935124176,
+                "X2": 458.9457678661936,
+                "Y2": 477.6735935124176
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "70",
-            "Name": "G62 (70)",
-            "Type": 0,
             "ArticleCode": "G62",
-            "PathData": "M 3979 782 L 3979 876",
-            "CenterX": 3979.0,
-            "CenterY": 829.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 950.0,
+                "Y": 310.7197161682717
+              },
+              {
+                "X": 950.0,
+                "Y": 289.28028383172835
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 950.0,
+                "Y1": 289.28028383172835,
+                "X2": 950.0,
+                "Y2": 310.7197161682717
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "31",
-            "Name": "R1 (31)",
-            "Type": 1,
             "ArticleCode": "R1",
-            "PathData": "M 221 782 A 545 545 0 0 0 294 1055",
-            "CenterX": 257.5,
-            "CenterY": 918.5,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 109.52863659401926,
+                "Y": 351.54586923466803
+              },
+              {
+                "X": 92.87886467308667,
+                "Y": 289.28028383172835
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 92.87886467308667,
+                "Y1": 289.28028383172835,
+                "X2": 109.52863659401926,
+                "Y2": 351.54586923466803,
+                "Radius": 124.30309173846933,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "173",
-            "Name": "G231 (173)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 1476 238 L 1826 238",
-            "CenterX": 1651.0,
-            "CenterY": 238.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 379.11809427268116,
+                "Y": 165.20527116066904
+              },
+              {
+                "X": 458.9457678661936,
+                "Y": 165.20527116066904
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 379.11809427268116,
+                "Y1": 165.20527116066904,
+                "X2": 458.9457678661936,
+                "Y2": 165.20527116066904
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "36",
-            "Name": "R2 (36)",
-            "Type": 1,
             "ArticleCode": "R2",
-            "PathData": "M 446 1335 A 638 638 0 0 0 765 1420",
-            "CenterX": 605.5,
-            "CenterY": 1377.5,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 144.19665484034465,
+                "Y": 415.4080081094779
+              },
+              {
+                "X": 216.95387734414598,
+                "Y": 434.794728839331
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 144.19665484034465,
+                "Y1": 415.4080081094779,
+                "X2": 216.95387734414598,
+                "Y2": 434.794728839331,
+                "Radius": 145.51444500760263,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "176",
-            "Name": "WR (176)",
-            "Type": 4,
             "ArticleCode": "WR",
-            "PathData": "M 3248 238 L 2886 238 M 2892 191 A 1374 1374 0 0 0 3248 238",
-            "CenterX": 3068.5,
-            "CenterY": 226.25,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 702.0780537252914,
+                "Y": 154.4855549923974
+              },
+              {
+                "X": 783.274201723264,
+                "Y": 165.20527116066904
+              },
+              {
+                "X": 700.7095793208312,
+                "Y": 165.20527116066904
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 783.274201723264,
+                "Y1": 165.20527116066904,
+                "X2": 700.7095793208312,
+                "Y2": 165.20527116066904
+              }
+            ],
+            "Arcs": [
+              {
+                "X1": 702.0780537252914,
+                "Y1": 154.4855549923974,
+                "X2": 783.274201723264,
+                "Y2": 165.20527116066904,
+                "Radius": 313.38063862138875,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "40",
-            "Name": "G231 (40)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 765 1327 L 1114 1327",
-            "CenterX": 939.5,
-            "CenterY": 1327.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 296.55347187024836,
+                "Y": 413.58337557019763
+              },
+              {
+                "X": 216.95387734414598,
+                "Y": 413.58337557019763
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 216.95387734414598,
+                "Y1": 413.58337557019763,
+                "X2": 296.55347187024836,
+                "Y2": 413.58337557019763
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "77",
-            "Name": "R1 (77)",
-            "Type": 1,
             "ArticleCode": "R1",
-            "PathData": "M 3719 1055 A 545 545 0 0 0 3792 782",
-            "CenterX": 3755.5,
-            "CenterY": 918.5,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 890.6994424733907,
+                "Y": 351.54586923466803
+              },
+              {
+                "X": 907.3492143943233,
+                "Y": 289.28028383172835
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 890.6994424733907,
+                "Y1": 351.54586923466803,
+                "X2": 907.3492143943233,
+                "Y2": 289.28028383172835,
+                "Radius": 124.30309173846933,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "405",
-            "Name": "G62 (405)",
-            "Type": 0,
             "ArticleCode": "G62",
-            "PathData": "M 746 331 L 840 331",
-            "CenterX": 793.0,
-            "CenterY": 331.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 234.05980739989863,
+                "Y": 186.41662442980237
+              },
+              {
+                "X": 212.62037506335528,
+                "Y": 186.41662442980237
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 212.62037506335528,
+                "Y1": 186.41662442980237,
+                "X2": 234.05980739989863,
+                "Y2": 186.41662442980237
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "279",
-            "Name": "G231 (279)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 2537 238 L 2886 238",
-            "CenterX": 2711.5,
-            "CenterY": 238.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 700.7095793208312,
+                "Y": 165.20527116066904
+              },
+              {
+                "X": 621.1099847947288,
+                "Y": 165.20527116066904
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 621.1099847947288,
+                "Y1": 165.20527116066904,
+                "X2": 700.7095793208312,
+                "Y2": 165.20527116066904
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "171",
-            "Name": "G231 (171)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 1127 50 L 1476 50",
-            "CenterX": 1301.5,
-            "CenterY": 50.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 379.11809427268116,
+                "Y": 122.32640648758237
+              },
+              {
+                "X": 299.5184997465788,
+                "Y": 122.32640648758237
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 299.5184997465788,
+                "Y1": 122.32640648758237,
+                "X2": 379.11809427268116,
+                "Y2": 122.32640648758237
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "20",
-            "Name": "R1 (20)",
-            "Type": 1,
             "ArticleCode": "R1",
-            "PathData": "M 765 238 A 545 545 0 0 0 493 311",
-            "CenterX": 629.0,
-            "CenterY": 274.5,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 154.91637100861632,
+                "Y": 181.85504308160165
+              },
+              {
+                "X": 216.95387734414598,
+                "Y": 165.20527116066904
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 216.95387734414598,
+                "Y1": 165.20527116066904,
+                "X2": 154.91637100861632,
+                "Y2": 181.85504308160165,
+                "Radius": 124.30309173846933,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "24",
-            "Name": "R1 (24)",
-            "Type": 1,
             "ArticleCode": "R1",
-            "PathData": "M 493 311 A 545 545 0 0 0 294 510",
-            "CenterX": 393.5,
-            "CenterY": 410.5,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 109.52863659401926,
+                "Y": 227.2427774961987
+              },
+              {
+                "X": 154.91637100861632,
+                "Y": 181.85504308160165
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 154.91637100861632,
+                "Y1": 181.85504308160165,
+                "X2": 109.52863659401926,
+                "Y2": 227.2427774961987,
+                "Radius": 124.30309173846933,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "69",
-            "Name": "R3 (69)",
-            "Type": 1,
             "ArticleCode": "R3",
-            "PathData": "M 3979 782 A 732 732 0 0 0 3881 416",
-            "CenterX": 3930.0,
-            "CenterY": 599.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 927.6482513938165,
+                "Y": 205.80334515965535
+              },
+              {
+                "X": 950.0,
+                "Y": 289.28028383172835
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 950.0,
+                "Y1": 289.28028383172835,
+                "X2": 927.6482513938165,
+                "Y2": 205.80334515965535,
+                "Radius": 166.95387734414598,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "60",
-            "Name": "R2 (60)",
-            "Type": 1,
             "ArticleCode": "R2",
-            "PathData": "M 3567 230 A 638 638 0 0 0 3248 144",
-            "CenterX": 3407.5,
-            "CenterY": 187.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 856.0314242270654,
+                "Y": 163.38063862138875
+              },
+              {
+                "X": 783.274201723264,
+                "Y": 143.76583882412572
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 856.0314242270654,
+                "Y1": 163.38063862138875,
+                "X2": 783.274201723264,
+                "Y2": 143.76583882412572,
+                "Radius": 145.51444500760263,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "50",
-            "Name": "G231 (50)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 1476 1327 L 1826 1327",
-            "CenterX": 1651.0,
-            "CenterY": 1327.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 458.9457678661936,
+                "Y": 413.58337557019763
+              },
+              {
+                "X": 379.11809427268116,
+                "Y": 413.58337557019763
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 379.11809427268116,
+                "Y1": 413.58337557019763,
+                "X2": 458.9457678661936,
+                "Y2": 413.58337557019763
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "182",
-            "Name": "G231 (182)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 2187 238 L 2537 238",
-            "CenterX": 2362.0,
-            "CenterY": 238.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 621.1099847947288,
+                "Y": 165.20527116066904
+              },
+              {
+                "X": 541.2823112012164,
+                "Y": 165.20527116066904
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 541.2823112012164,
+                "Y1": 165.20527116066904,
+                "X2": 621.1099847947288,
+                "Y2": 165.20527116066904
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "33",
-            "Name": "R1 (33)",
-            "Type": 1,
             "ArticleCode": "R1",
-            "PathData": "M 493 1254 A 545 545 0 0 0 765 1327",
-            "CenterX": 629.0,
-            "CenterY": 1290.5,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 216.95387734414598,
+                "Y": 413.58337557019763
+              },
+              {
+                "X": 154.91637100861632,
+                "Y": 396.93360364926514
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 154.91637100861632,
+                "Y1": 396.93360364926514,
+                "X2": 216.95387734414598,
+                "Y2": 413.58337557019763,
+                "Radius": 124.30309173846933,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "306",
-            "Name": "R3 (306)",
-            "Type": 1,
             "ArticleCode": "R3",
-            "PathData": "M 3613 1510 A 732 732 0 0 0 3881 1242",
-            "CenterX": 3747.0,
-            "CenterY": 1376.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 866.523061327927,
+                "Y": 455.3218449062342
+              },
+              {
+                "X": 927.6482513938165,
+                "Y": 394.19665484034465
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 866.523061327927,
+                "Y1": 455.3218449062342,
+                "X2": 927.6482513938165,
+                "Y2": 394.19665484034465,
+                "Radius": 166.95387734414598,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "73",
-            "Name": "R2 (73)",
-            "Type": 1,
             "ArticleCode": "R2",
-            "PathData": "M 3800 1101 A 638 638 0 0 0 3886 782",
-            "CenterX": 3843.0,
-            "CenterY": 941.5,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 909.1738469336036,
+                "Y": 362.03750633552966
+              },
+              {
+                "X": 928.7886467308667,
+                "Y": 289.28028383172835
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 909.1738469336036,
+                "Y1": 362.03750633552966,
+                "X2": 928.7886467308667,
+                "Y2": 289.28028383172835,
+                "Radius": 145.51444500760263,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "42",
-            "Name": "G231 (42)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 765 1608 L 1114 1608",
-            "CenterX": 939.5,
-            "CenterY": 1608.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 216.95387734414598,
+                "Y": 477.6735935124176
+              },
+              {
+                "X": 296.55347187024836,
+                "Y": 477.6735935124176
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 216.95387734414598,
+                "Y1": 477.6735935124176,
+                "X2": 296.55347187024836,
+                "Y2": 477.6735935124176
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "95",
-            "Name": "WL (95)",
-            "Type": 3,
             "ArticleCode": "WL",
-            "PathData": "M 3248 50 L 2886 50 M 3248 50 A 1374 1374 0 0 0 2892 97",
-            "CenterX": 3068.5,
-            "CenterY": 61.75,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 700.7095793208312,
+                "Y": 122.32640648758237
+              },
+              {
+                "X": 783.274201723264,
+                "Y": 122.32640648758237
+              },
+              {
+                "X": 702.0780537252914,
+                "Y": 133.04612265585405
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 783.274201723264,
+                "Y1": 122.32640648758237,
+                "X2": 700.7095793208312,
+                "Y2": 122.32640648758237
+              }
+            ],
+            "Arcs": [
+              {
+                "X1": 783.274201723264,
+                "Y1": 122.32640648758237,
+                "X2": 702.0780537252914,
+                "Y2": 133.04612265585405,
+                "Radius": 313.38063862138875,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "48",
-            "Name": "G231 (48)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 1115 1420 L 1476 1420",
-            "CenterX": 1295.5,
-            "CenterY": 1420.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 379.11809427268116,
+                "Y": 434.794728839331
+              },
+              {
+                "X": 296.7815509376584,
+                "Y": 434.794728839331
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 296.7815509376584,
+                "Y1": 434.794728839331,
+                "X2": 379.11809427268116,
+                "Y2": 434.794728839331
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "333",
-            "Name": "G231 (333)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 1825 50 L 2175 50",
-            "CenterX": 2000.0,
-            "CenterY": 50.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 538.545362392296,
+                "Y": 122.32640648758237
+              },
+              {
+                "X": 458.71768879878357,
+                "Y": 122.32640648758237
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 458.71768879878357,
+                "Y1": 122.32640648758237,
+                "X2": 538.545362392296,
+                "Y2": 122.32640648758237
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "43",
-            "Name": "G231 (43)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 1114 1327 L 1476 1327",
-            "CenterX": 1295.0,
-            "CenterY": 1327.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 379.11809427268116,
+                "Y": 413.58337557019763
+              },
+              {
+                "X": 296.55347187024836,
+                "Y": 413.58337557019763
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 296.55347187024836,
+                "Y1": 413.58337557019763,
+                "X2": 379.11809427268116,
+                "Y2": 413.58337557019763
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "183",
-            "Name": "WR (183)",
-            "Type": 4,
             "ArticleCode": "WR",
-            "PathData": "M 1476 144 L 1838 144 M 1832 191 A 1374 1374 0 0 0 1476 144",
-            "CenterX": 1655.5,
-            "CenterY": 155.75,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 460.31424227065384,
+                "Y": 154.4855549923974
+              },
+              {
+                "X": 461.682716675114,
+                "Y": 143.76583882412572
+              },
+              {
+                "X": 379.11809427268116,
+                "Y": 143.76583882412572
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 379.11809427268116,
+                "Y1": 143.76583882412572,
+                "X2": 461.682716675114,
+                "Y2": 143.76583882412572
+              }
+            ],
+            "Arcs": [
+              {
+                "X1": 460.31424227065384,
+                "Y1": 154.4855549923974,
+                "X2": 379.11809427268116,
+                "Y2": 143.76583882412572,
+                "Radius": 313.38063862138875,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "303",
-            "Name": "R3 (303)",
-            "Type": 1,
             "ArticleCode": "R3",
-            "PathData": "M 399 148 A 732 732 0 0 0 131 416",
-            "CenterX": 265.0,
-            "CenterY": 282.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 72.35174860618348,
+                "Y": 205.80334515965535
+              },
+              {
+                "X": 133.476938672073,
+                "Y": 144.67815509376587
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 133.476938672073,
+                "Y1": 144.67815509376587,
+                "X2": 72.35174860618348,
+                "Y2": 205.80334515965535,
+                "Radius": 166.95387734414598,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "332",
-            "Name": "DKW (332)",
-            "Type": 8,
             "ArticleCode": "DKW",
-            "PathData": "M 1832 191 L 2181 284 M 1826 238 L 2187 238 M 1832 191 A 1374 1374 0 0 0 2187 238 M 2181 284 A 1374 1374 0 0 0 1825 238",
-            "CenterX": 2006.375,
-            "CenterY": 237.75,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 539.9138367967562,
+                "Y": 175.69690826153067
+              },
+              {
+                "X": 458.9457678661936,
+                "Y": 165.20527116066904
+              },
+              {
+                "X": 541.2823112012164,
+                "Y": 165.20527116066904
+              },
+              {
+                "X": 460.31424227065384,
+                "Y": 154.4855549923974
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 460.31424227065384,
+                "Y1": 154.4855549923974,
+                "X2": 539.9138367967562,
+                "Y2": 175.69690826153067
+              },
+              {
+                "X1": 458.9457678661936,
+                "Y1": 165.20527116066904,
+                "X2": 541.2823112012164,
+                "Y2": 165.20527116066904
+              }
+            ],
+            "Arcs": [
+              {
+                "X1": 460.31424227065384,
+                "Y1": 154.4855549923974,
+                "X2": 541.2823112012164,
+                "Y2": 165.20527116066904,
+                "Radius": 313.38063862138875,
+                "Sweep": 0
+              },
+              {
+                "X1": 539.9138367967562,
+                "Y1": 175.69690826153067,
+                "X2": 458.71768879878357,
+                "Y2": 165.20527116066904,
+                "Radius": 313.38063862138875,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "34",
-            "Name": "R2 (34)",
-            "Type": 1,
             "ArticleCode": "R2",
-            "PathData": "M 127 782 A 638 638 0 0 0 213 1101",
-            "CenterX": 170.0,
-            "CenterY": 941.5,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 91.05423213380638,
+                "Y": 362.03750633552966
+              },
+              {
+                "X": 71.43943233654333,
+                "Y": 289.28028383172835
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 71.43943233654333,
+                "Y1": 289.28028383172835,
+                "X2": 91.05423213380638,
+                "Y2": 362.03750633552966,
+                "Radius": 145.51444500760263,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "79",
-            "Name": "R1 (79)",
-            "Type": 1,
             "ArticleCode": "R1",
-            "PathData": "M 3520 1254 A 545 545 0 0 0 3719 1055",
-            "CenterX": 3619.5,
-            "CenterY": 1154.5,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 845.3117080587937,
+                "Y": 396.93360364926514
+              },
+              {
+                "X": 890.6994424733907,
+                "Y": 351.54586923466803
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 845.3117080587937,
+                "Y1": 396.93360364926514,
+                "X2": 890.6994424733907,
+                "Y2": 351.54586923466803,
+                "Radius": 124.30309173846933,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "328",
-            "Name": "G231 (328)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 1838 144 L 2187 144",
-            "CenterX": 2012.5,
-            "CenterY": 144.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 461.682716675114,
+                "Y": 143.76583882412572
+              },
+              {
+                "X": 541.2823112012164,
+                "Y": 143.76583882412572
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 461.682716675114,
+                "Y1": 143.76583882412572,
+                "X2": 541.2823112012164,
+                "Y2": 143.76583882412572
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "181",
-            "Name": "G231 (181)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 1127 238 L 1476 238",
-            "CenterX": 1301.5,
-            "CenterY": 238.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 299.5184997465788,
+                "Y": 165.20527116066904
+              },
+              {
+                "X": 379.11809427268116,
+                "Y": 165.20527116066904
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 299.5184997465788,
+                "Y1": 165.20527116066904,
+                "X2": 379.11809427268116,
+                "Y2": 165.20527116066904
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "16",
-            "Name": "R2 (16)",
-            "Type": 1,
             "ArticleCode": "R2",
-            "PathData": "M 446 230 A 638 638 0 0 0 213 463",
-            "CenterX": 329.5,
-            "CenterY": 346.5,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 91.05423213380638,
+                "Y": 216.52306132792705
+              },
+              {
+                "X": 144.19665484034465,
+                "Y": 163.38063862138875
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 144.19665484034465,
+                "Y1": 163.38063862138875,
+                "X2": 91.05423213380638,
+                "Y2": 216.52306132792705,
+                "Radius": 145.51444500760263,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "314",
-            "Name": "G231 (314)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 1826 1420 L 2187 1420",
-            "CenterX": 2006.5,
-            "CenterY": 1420.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 541.2823112012164,
+                "Y": 434.794728839331
+              },
+              {
+                "X": 458.9457678661936,
+                "Y": 434.794728839331
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 458.9457678661936,
+                "Y1": 434.794728839331,
+                "X2": 541.2823112012164,
+                "Y2": 434.794728839331
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "18",
-            "Name": "R2 (18)",
-            "Type": 1,
             "ArticleCode": "R2",
-            "PathData": "M 213 463 A 638 638 0 0 0 127 782",
-            "CenterX": 170.0,
-            "CenterY": 622.5,
-            "Rotation": 0.0,
-            "AssignedInPort": 2,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Endpoints": [
+              {
+                "X": 71.43943233654333,
+                "Y": 289.28028383172835
+              },
+              {
+                "X": 91.05423213380638,
+                "Y": 216.52306132792705
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 91.05423213380638,
+                "Y1": 216.52306132792705,
+                "X2": 71.43943233654333,
+                "Y2": 289.28028383172835,
+                "Radius": 145.51444500760263,
+                "Sweep": 0
+              }
+            ],
+            "AssignedInPort": null,
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "32",
-            "Name": "R1 (32)",
-            "Type": 1,
             "ArticleCode": "R1",
-            "PathData": "M 294 1055 A 545 545 0 0 0 493 1254",
-            "CenterX": 393.5,
-            "CenterY": 1154.5,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 154.91637100861632,
+                "Y": 396.93360364926514
+              },
+              {
+                "X": 109.52863659401926,
+                "Y": 351.54586923466803
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 109.52863659401926,
+                "Y1": 351.54586923466803,
+                "X2": 154.91637100861632,
+                "Y2": 396.93360364926514,
+                "Radius": 124.30309173846933,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "76",
-            "Name": "R2 (76)",
-            "Type": 1,
             "ArticleCode": "R2",
-            "PathData": "M 3248 1420 A 638 638 0 0 0 3567 1335",
-            "CenterX": 3407.5,
-            "CenterY": 1377.5,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 783.274201723264,
+                "Y": 434.794728839331
+              },
+              {
+                "X": 856.0314242270654,
+                "Y": 415.4080081094779
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 783.274201723264,
+                "Y1": 434.794728839331,
+                "X2": 856.0314242270654,
+                "Y2": 415.4080081094779,
+                "Radius": 145.51444500760263,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "64",
-            "Name": "R1 (64)",
-            "Type": 1,
             "ArticleCode": "R1",
-            "PathData": "M 3719 510 A 545 545 0 0 0 3520 311",
-            "CenterX": 3619.5,
-            "CenterY": 410.5,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 845.3117080587937,
+                "Y": 181.85504308160165
+              },
+              {
+                "X": 890.6994424733907,
+                "Y": 227.2427774961987
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 890.6994424733907,
+                "Y1": 227.2427774961987,
+                "X2": 845.3117080587937,
+                "Y2": 181.85504308160165,
+                "Radius": 124.30309173846933,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "214",
-            "Name": "G231 (214)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 2898 1608 L 3248 1608",
-            "CenterX": 3073.0,
-            "CenterY": 1608.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 703.4465281297516,
+                "Y": 477.6735935124176
+              },
+              {
+                "X": 783.274201723264,
+                "Y": 477.6735935124176
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 703.4465281297516,
+                "Y1": 477.6735935124176,
+                "X2": 783.274201723264,
+                "Y2": 477.6735935124176
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "81",
-            "Name": "G231 (81)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 2898 144 L 3247 144",
-            "CenterX": 3072.5,
-            "CenterY": 144.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 703.4465281297516,
+                "Y": 143.76583882412572
+              },
+              {
+                "X": 783.046122655854,
+                "Y": 143.76583882412572
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 703.4465281297516,
+                "Y1": 143.76583882412572,
+                "X2": 783.046122655854,
+                "Y2": 143.76583882412572
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "315",
-            "Name": "G231 (315)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 1826 1608 L 2187 1608",
-            "CenterX": 2006.5,
-            "CenterY": 1608.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 458.9457678661936,
+                "Y": 477.6735935124176
+              },
+              {
+                "X": 541.2823112012164,
+                "Y": 477.6735935124176
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 458.9457678661936,
+                "Y1": 477.6735935124176,
+                "X2": 541.2823112012164,
+                "Y2": 477.6735935124176
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "80",
-            "Name": "R1 (80)",
-            "Type": 1,
             "ArticleCode": "R1",
-            "PathData": "M 3248 1327 A 545 545 0 0 0 3520 1254",
-            "CenterX": 3384.0,
-            "CenterY": 1290.5,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 845.3117080587937,
+                "Y": 396.93360364926514
+              },
+              {
+                "X": 783.274201723264,
+                "Y": 413.58337557019763
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 783.274201723264,
+                "Y1": 413.58337557019763,
+                "X2": 845.3117080587937,
+                "Y2": 396.93360364926514,
+                "Radius": 124.30309173846933,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "172",
-            "Name": "G231 (172)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 1476 50 L 1825 50",
-            "CenterX": 1650.5,
-            "CenterY": 50.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 379.11809427268116,
+                "Y": 122.32640648758237
+              },
+              {
+                "X": 458.71768879878357,
+                "Y": 122.32640648758237
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 379.11809427268116,
+                "Y1": 122.32640648758237,
+                "X2": 458.71768879878357,
+                "Y2": 122.32640648758237
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "8",
-            "Name": "WR (8)",
-            "Type": 4,
             "ArticleCode": "WR",
-            "PathData": "M 765 50 L 1127 50 M 1121 97 A 1374 1374 0 0 0 765 50",
-            "CenterX": 944.5,
-            "CenterY": 61.75,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 216.95387734414598,
+                "Y": 122.32640648758237
+              },
+              {
+                "X": 299.5184997465788,
+                "Y": 122.32640648758237
+              },
+              {
+                "X": 298.1500253421186,
+                "Y": 133.04612265585405
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 216.95387734414598,
+                "Y1": 122.32640648758237,
+                "X2": 299.5184997465788,
+                "Y2": 122.32640648758237
+              }
+            ],
+            "Arcs": [
+              {
+                "X1": 298.1500253421186,
+                "Y1": 133.04612265585405,
+                "X2": 216.95387734414598,
+                "Y2": 122.32640648758237,
+                "Radius": 313.38063862138875,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "273",
-            "Name": "G231 (273)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 2536 50 L 2886 50",
-            "CenterX": 2711.0,
-            "CenterY": 50.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 700.7095793208312,
+                "Y": 122.32640648758237
+              },
+              {
+                "X": 620.8819057273188,
+                "Y": 122.32640648758237
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 620.8819057273188,
+                "Y1": 122.32640648758237,
+                "X2": 700.7095793208312,
+                "Y2": 122.32640648758237
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "67",
-            "Name": "R2 (67)",
-            "Type": 1,
             "ArticleCode": "R2",
-            "PathData": "M 3800 463 A 638 638 0 0 0 3567 230",
-            "CenterX": 3683.5,
-            "CenterY": 346.5,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 856.0314242270654,
+                "Y": 163.38063862138875
+              },
+              {
+                "X": 909.1738469336036,
+                "Y": 216.52306132792705
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 909.1738469336036,
+                "Y1": 216.52306132792705,
+                "X2": 856.0314242270654,
+                "Y2": 163.38063862138875,
+                "Radius": 145.51444500760263,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "202",
-            "Name": "WR (202)",
-            "Type": 4,
             "ArticleCode": "WR",
-            "PathData": "M 2537 331 L 2175 331 M 2181 284 A 1374 1374 0 0 0 2537 331",
-            "CenterX": 2357.5,
-            "CenterY": 319.25,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 538.545362392296,
+                "Y": 186.41662442980237
+              },
+              {
+                "X": 621.1099847947288,
+                "Y": 186.41662442980237
+              },
+              {
+                "X": 539.9138367967562,
+                "Y": 175.69690826153067
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 621.1099847947288,
+                "Y1": 186.41662442980237,
+                "X2": 538.545362392296,
+                "Y2": 186.41662442980237
+              }
+            ],
+            "Arcs": [
+              {
+                "X1": 539.9138367967562,
+                "Y1": 175.69690826153067,
+                "X2": 621.1099847947288,
+                "Y2": 186.41662442980237,
+                "Radius": 313.38063862138875,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "236",
-            "Name": "G231 (236)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 2898 1327 L 3248 1327",
-            "CenterX": 3073.0,
-            "CenterY": 1327.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 783.274201723264,
+                "Y": 413.58337557019763
+              },
+              {
+                "X": 703.4465281297516,
+                "Y": 413.58337557019763
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 703.4465281297516,
+                "Y1": 413.58337557019763,
+                "X2": 783.274201723264,
+                "Y2": 413.58337557019763
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "52",
-            "Name": "G231 (52)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 1476 1420 L 1826 1420",
-            "CenterX": 1651.0,
-            "CenterY": 1420.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 379.11809427268116,
+                "Y": 434.794728839331
+              },
+              {
+                "X": 458.9457678661936,
+                "Y": 434.794728839331
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 379.11809427268116,
+                "Y1": 434.794728839331,
+                "X2": 458.9457678661936,
+                "Y2": 434.794728839331
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "35",
-            "Name": "R2 (35)",
-            "Type": 1,
             "ArticleCode": "R2",
-            "PathData": "M 213 1101 A 638 638 0 0 0 446 1335",
-            "CenterX": 329.5,
-            "CenterY": 1218.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 144.19665484034465,
+                "Y": 415.4080081094779
+              },
+              {
+                "X": 91.05423213380638,
+                "Y": 362.03750633552966
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 91.05423213380638,
+                "Y1": 362.03750633552966,
+                "X2": 144.19665484034465,
+                "Y2": 415.4080081094779,
+                "Radius": 145.51444500760263,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "26",
-            "Name": "G62 (26)",
-            "Type": 0,
             "ArticleCode": "G62",
-            "PathData": "M 33 876 L 33 782",
-            "CenterX": 33.0,
-            "CenterY": 829.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 50.0,
+                "Y": 289.28028383172835
+              },
+              {
+                "X": 50.0,
+                "Y": 310.7197161682717
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 50.0,
+                "Y1": 310.7197161682717,
+                "X2": 50.0,
+                "Y2": 289.28028383172835
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "41",
-            "Name": "G231 (41)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 765 1420 L 1115 1420",
-            "CenterX": 940.0,
-            "CenterY": 1420.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 216.95387734414598,
+                "Y": 434.794728839331
+              },
+              {
+                "X": 296.7815509376584,
+                "Y": 434.794728839331
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 216.95387734414598,
+                "Y1": 434.794728839331,
+                "X2": 296.7815509376584,
+                "Y2": 434.794728839331
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "65",
-            "Name": "R1 (65)",
-            "Type": 1,
             "ArticleCode": "R1",
-            "PathData": "M 3792 782 A 545 545 0 0 0 3719 510",
-            "CenterX": 3755.5,
-            "CenterY": 646.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 907.3492143943233,
+                "Y": 289.28028383172835
+              },
+              {
+                "X": 890.6994424733907,
+                "Y": 227.2427774961987
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 907.3492143943233,
+                "Y1": 289.28028383172835,
+                "X2": 890.6994424733907,
+                "Y2": 227.2427774961987,
+                "Radius": 124.30309173846933,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "235",
-            "Name": "G231 (235)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 2898 1420 L 3248 1420",
-            "CenterX": 3073.0,
-            "CenterY": 1420.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 703.4465281297516,
+                "Y": 434.794728839331
+              },
+              {
+                "X": 783.274201723264,
+                "Y": 434.794728839331
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 703.4465281297516,
+                "Y1": 434.794728839331,
+                "X2": 783.274201723264,
+                "Y2": 434.794728839331
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "159",
-            "Name": "DWW (159)",
-            "Type": 7,
             "ArticleCode": "DWW",
-            "PathData": "M 1476 144 L 1114 144 M 1476 144 A 1374 1374 0 0 0 1121 191 M 1121 97 A 1374 1374 0 0 0 1476 144",
-            "CenterX": 1297.3333333333333,
-            "CenterY": 144.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 298.1500253421186,
+                "Y": 133.04612265585405
+              },
+              {
+                "X": 379.11809427268116,
+                "Y": 143.76583882412572
+              },
+              {
+                "X": 296.55347187024836,
+                "Y": 143.76583882412572
+              },
+              {
+                "X": 298.1500253421186,
+                "Y": 154.4855549923974
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 379.11809427268116,
+                "Y1": 143.76583882412572,
+                "X2": 296.55347187024836,
+                "Y2": 143.76583882412572
+              }
+            ],
+            "Arcs": [
+              {
+                "X1": 379.11809427268116,
+                "Y1": 143.76583882412572,
+                "X2": 298.1500253421186,
+                "Y2": 154.4855549923974,
+                "Radius": 313.38063862138875,
+                "Sweep": 0
+              },
+              {
+                "X1": 298.1500253421186,
+                "Y1": 133.04612265585405,
+                "X2": 379.11809427268116,
+                "Y2": 143.76583882412572,
+                "Radius": 313.38063862138875,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "179",
-            "Name": "DWW (179)",
-            "Type": 7,
             "ArticleCode": "DWW",
-            "PathData": "M 2536 144 L 2898 144 M 2536 144 A 1374 1374 0 0 0 2892 97 M 2892 191 A 1374 1374 0 0 0 2536 144",
-            "CenterX": 2715.0,
-            "CenterY": 144.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 620.8819057273188,
+                "Y": 143.76583882412572
+              },
+              {
+                "X": 703.4465281297516,
+                "Y": 143.76583882412572
+              },
+              {
+                "X": 702.0780537252914,
+                "Y": 154.4855549923974
+              },
+              {
+                "X": 702.0780537252914,
+                "Y": 133.04612265585405
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 620.8819057273188,
+                "Y1": 143.76583882412572,
+                "X2": 703.4465281297516,
+                "Y2": 143.76583882412572
+              }
+            ],
+            "Arcs": [
+              {
+                "X1": 620.8819057273188,
+                "Y1": 143.76583882412572,
+                "X2": 702.0780537252914,
+                "Y2": 133.04612265585405,
+                "Radius": 313.38063862138875,
+                "Sweep": 0
+              },
+              {
+                "X1": 702.0780537252914,
+                "Y1": 154.4855549923974,
+                "X2": 620.8819057273188,
+                "Y2": 143.76583882412572,
+                "Radius": 313.38063862138875,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "160",
-            "Name": "WL (160)",
-            "Type": 3,
             "ArticleCode": "WL",
-            "PathData": "M 765 238 L 1127 238 M 765 238 A 1374 1374 0 0 0 1121 191",
-            "CenterX": 944.5,
-            "CenterY": 226.25,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 298.1500253421186,
+                "Y": 154.4855549923974
+              },
+              {
+                "X": 216.95387734414598,
+                "Y": 165.20527116066904
+              },
+              {
+                "X": 299.5184997465788,
+                "Y": 165.20527116066904
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 216.95387734414598,
+                "Y1": 165.20527116066904,
+                "X2": 299.5184997465788,
+                "Y2": 165.20527116066904
+              }
+            ],
+            "Arcs": [
+              {
+                "X1": 216.95387734414598,
+                "Y1": 165.20527116066904,
+                "X2": 298.1500253421186,
+                "Y2": 154.4855549923974,
+                "Radius": 313.38063862138875,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "87",
-            "Name": "G231 (87)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 2187 1608 L 2537 1608",
-            "CenterX": 2362.0,
-            "CenterY": 1608.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 621.1099847947288,
+                "Y": 477.6735935124176
+              },
+              {
+                "X": 541.2823112012164,
+                "Y": 477.6735935124176
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 541.2823112012164,
+                "Y1": 477.6735935124176,
+                "X2": 621.1099847947288,
+                "Y2": 477.6735935124176
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "85",
-            "Name": "G231 (85)",
-            "Type": 0,
             "ArticleCode": "G231",
-            "PathData": "M 2187 1327 L 2537 1327",
-            "CenterX": 2362.0,
-            "CenterY": 1327.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 621.1099847947288,
+                "Y": 413.58337557019763
+              },
+              {
+                "X": 541.2823112012164,
+                "Y": 413.58337557019763
+              }
+            ],
+            "Lines": [
+              {
+                "X1": 541.2823112012164,
+                "Y1": 413.58337557019763,
+                "X2": 621.1099847947288,
+                "Y2": 413.58337557019763
+              }
+            ],
+            "Arcs": [],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "71",
-            "Name": "R3 (71)",
-            "Type": 1,
             "ArticleCode": "R3",
-            "PathData": "M 3248 1608 A 732 732 0 0 0 3613 1510",
-            "CenterX": 3430.5,
-            "CenterY": 1559.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 866.523061327927,
+                "Y": 455.3218449062342
+              },
+              {
+                "X": 783.274201723264,
+                "Y": 477.6735935124176
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 783.274201723264,
+                "Y1": 477.6735935124176,
+                "X2": 866.523061327927,
+                "Y2": 455.3218449062342,
+                "Radius": 166.95387734414598,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "15",
-            "Name": "R2 (15)",
-            "Type": 1,
             "ArticleCode": "R2",
-            "PathData": "M 765 144 A 638 638 0 0 0 446 230",
-            "CenterX": 605.5,
-            "CenterY": 187.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 144.19665484034465,
+                "Y": 163.38063862138875
+              },
+              {
+                "X": 216.95387734414598,
+                "Y": 143.76583882412572
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 216.95387734414598,
+                "Y1": 143.76583882412572,
+                "X2": 144.19665484034465,
+                "Y2": 163.38063862138875,
+                "Radius": 145.51444500760263,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "9",
-            "Name": "R3 (9)",
-            "Type": 1,
             "ArticleCode": "R3",
-            "PathData": "M 765 50 A 732 732 0 0 0 399 148",
-            "CenterX": 582.0,
-            "CenterY": 99.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 133.476938672073,
+                "Y": 144.67815509376587
+              },
+              {
+                "X": 216.95387734414598,
+                "Y": 122.32640648758237
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 216.95387734414598,
+                "Y1": 122.32640648758237,
+                "X2": 133.476938672073,
+                "Y2": 144.67815509376587,
+                "Radius": 166.95387734414598,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "175",
-            "Name": "R3 (175)",
-            "Type": 1,
             "ArticleCode": "R3",
-            "PathData": "M 33 876 A 732 732 0 0 0 131 1242",
-            "CenterX": 82.0,
-            "CenterY": 1059.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 50.0,
+                "Y": 310.7197161682717
+              },
+              {
+                "X": 72.35174860618348,
+                "Y": 394.19665484034465
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 50.0,
+                "Y1": 310.7197161682717,
+                "X2": 72.35174860618348,
+                "Y2": 394.19665484034465,
+                "Radius": 166.95387734414598,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           },
           {
             "Id": "305",
-            "Name": "R3 (305)",
-            "Type": 1,
             "ArticleCode": "R3",
-            "PathData": "M 3881 416 A 732 732 0 0 0 3613 148",
-            "CenterX": 3747.0,
-            "CenterY": 282.0,
-            "Rotation": 0.0,
+            "Endpoints": [
+              {
+                "X": 866.523061327927,
+                "Y": 144.67815509376587
+              },
+              {
+                "X": 927.6482513938165,
+                "Y": 205.80334515965535
+              }
+            ],
+            "Lines": [],
+            "Arcs": [
+              {
+                "X1": 927.6482513938165,
+                "Y1": 205.80334515965535,
+                "X2": 866.523061327927,
+                "Y2": 144.67815509376587,
+                "Radius": 166.95387734414598,
+                "Sweep": 0
+              }
+            ],
             "AssignedInPort": null,
-            "TrackNumber": null,
-            "Layer": "Default"
+            "Name": null,
+            "Layer": null
           }
         ],
         "Connections": [
           {
-            "Id": "0d913c8b-d0fc-4e73-a2f0-01807612f631",
+            "Segment1Id": "202",
+            "Segment1EndpointIndex": 2,
+            "Segment2Id": "332",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "404",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "402",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "71",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "214",
+            "Segment2EndpointIndex": 1
+          },
+          {
             "Segment1Id": "401",
+            "Segment1EndpointIndex": 0,
+            "Segment2Id": "403",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "403",
+            "Segment1EndpointIndex": 0,
+            "Segment2Id": "402",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "405",
             "Segment1EndpointIndex": 0,
             "Segment2Id": "400",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 1189.0,
-            "ConnectionY": 331.0
+            "Segment2EndpointIndex": 0
           },
           {
-            "Id": "35d998ae-5d13-4be3-be7e-0a0f897b23ad",
-            "Segment1Id": "401",
+            "Segment1Id": "30",
             "Segment1EndpointIndex": 1,
-            "Segment2Id": "403",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 1539.0,
-            "ConnectionY": 331.0
+            "Segment2Id": "304",
+            "Segment2EndpointIndex": 0
           },
           {
-            "Id": "83df34a6-8d2c-4bf9-9a58-5d239138c35c",
-            "Segment1Id": "402",
+            "Segment1Id": "76",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "74",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "181",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "173",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "160",
             "Segment1EndpointIndex": 0,
-            "Segment2Id": "403",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 1632.0,
-            "ConnectionY": 331.0
-          },
-          {
-            "Id": "5df95c51-cd4d-491e-87c0-1af3110fd0cc",
-            "Segment1Id": "402",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "404",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 1813.0,
-            "ConnectionY": 331.0
-          },
-          {
-            "Id": "7bc090bb-12ef-48c5-9e5e-4f124425a870",
-            "Segment1Id": "400",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "405",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 840.0,
-            "ConnectionY": 331.0
-          },
-          {
-            "Id": "78b7d72f-cfcb-46c4-a1bb-922b548b747e",
-            "Segment1Id": "68",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "73",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 3886.0,
-            "ConnectionY": 782.0
-          },
-          {
-            "Id": "973bdaca-f0a9-4123-beba-a3045ec115ab",
-            "Segment1Id": "68",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "67",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 3800.0,
-            "ConnectionY": 463.0
-          },
-          {
-            "Id": "31a97df7-aaf5-47d0-8aaa-5e4cee7cc227",
-            "Segment1Id": "25",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "31",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 221.0,
-            "ConnectionY": 782.0
-          },
-          {
-            "Id": "bca19760-385f-4065-95db-d92fd8406bb0",
-            "Segment1Id": "25",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "24",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 294.0,
-            "ConnectionY": 510.0
-          },
-          {
-            "Id": "294439b9-567d-4160-a807-347a9833adbc",
-            "Segment1Id": "55",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "236",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 2898.0,
-            "ConnectionY": 1327.0
-          },
-          {
-            "Id": "a24c2ace-25fb-4988-87d7-34ef4aa553ac",
-            "Segment1Id": "55",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "85",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 2537.0,
-            "ConnectionY": 1327.0
-          },
-          {
-            "Id": "4778a1d5-9a20-4182-a079-53affbf689ad",
-            "Segment1Id": "316",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "50",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 1826.0,
-            "ConnectionY": 1327.0
-          },
-          {
-            "Id": "cee545f1-d808-407e-b01d-f268a653f003",
-            "Segment1Id": "316",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "85",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 2187.0,
-            "ConnectionY": 1327.0
-          },
-          {
-            "Id": "7c4dbf98-94ef-44e2-aa00-217ae10dcf05",
-            "Segment1Id": "304",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "30",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 399.0,
-            "ConnectionY": 1510.0
-          },
-          {
-            "Id": "89b64e2f-3102-4b57-a387-d8b35459d8a5",
-            "Segment1Id": "304",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "175",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 131.0,
-            "ConnectionY": 1242.0
-          },
-          {
-            "Id": "08ba0129-8f39-4926-a744-b3f61e50e447",
-            "Segment1Id": "86",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "57",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 2537.0,
-            "ConnectionY": 1420.0
-          },
-          {
-            "Id": "f8fed930-4f77-40c4-bcca-22e4f5e3541b",
-            "Segment1Id": "86",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "314",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 2187.0,
-            "ConnectionY": 1420.0
-          },
-          {
-            "Id": "34fb4721-3af0-4135-be2c-6e06196dfb85",
-            "Segment1Id": "74",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "73",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 3800.0,
-            "ConnectionY": 1101.0
-          },
-          {
-            "Id": "45a0b809-415e-419e-845f-27600873dfb2",
-            "Segment1Id": "74",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "76",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 3567.0,
-            "ConnectionY": 1335.0
-          },
-          {
-            "Id": "dbb1a2cf-0b30-4d20-965f-1935603bd556",
-            "Segment1Id": "275",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "328",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 2187.0,
-            "ConnectionY": 144.0
-          },
-          {
-            "Id": "2de8b338-9ccf-4560-b4f9-4cec3f437b88",
-            "Segment1Id": "275",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "179",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 2536.0,
-            "ConnectionY": 144.0
-          },
-          {
-            "Id": "444080e8-7e2e-41c5-a385-33287eed462f",
-            "Segment1Id": "96",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "333",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 2175.0,
-            "ConnectionY": 50.0
-          },
-          {
-            "Id": "b4d3d724-2af6-43fd-900c-02334ea6a0b7",
-            "Segment1Id": "96",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "273",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 2536.0,
-            "ConnectionY": 50.0
-          },
-          {
-            "Id": "761cc4c9-e140-4a05-a2d0-45e207417fdb",
-            "Segment1Id": "14",
-            "Segment1EndpointIndex": 1,
             "Segment2Id": "159",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 1115.0,
-            "ConnectionY": 144.0
+            "Segment2EndpointIndex": 3
           },
           {
-            "Id": "8ef77396-b71c-4c4e-96ba-55a4d5c0afd3",
-            "Segment1Id": "14",
+            "Segment1Id": "26",
             "Segment1EndpointIndex": 0,
-            "Segment2Id": "15",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 765.0,
-            "ConnectionY": 144.0
+            "Segment2Id": "13",
+            "Segment2EndpointIndex": 1
           },
           {
-            "Id": "cd315864-9042-45ae-a0d9-4aa76df5c671",
             "Segment1Id": "13",
             "Segment1EndpointIndex": 0,
             "Segment2Id": "303",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 131.0,
-            "ConnectionY": 416.0
+            "Segment2EndpointIndex": 0
           },
           {
-            "Id": "458c1abe-17d8-468a-8475-398fea4553f3",
-            "Segment1Id": "13",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "26",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 33.0,
-            "ConnectionY": 782.0
-          },
-          {
-            "Id": "b8974aff-45ca-4512-b898-2027d64726ed",
-            "Segment1Id": "63",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "176",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 3248.0,
-            "ConnectionY": 238.0
-          },
-          {
-            "Id": "83af8086-b448-4d12-ae7f-82095817ca47",
-            "Segment1Id": "63",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "64",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 3520.0,
-            "ConnectionY": 311.0
-          },
-          {
-            "Id": "2de99481-a468-44bd-aa72-166024f43268",
-            "Segment1Id": "174",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "70",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 3979.0,
-            "ConnectionY": 876.0
-          },
-          {
-            "Id": "1323a7c1-a1b5-4a51-b285-84f239e3872e",
-            "Segment1Id": "174",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "306",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 3881.0,
-            "ConnectionY": 1242.0
-          },
-          {
-            "Id": "03fc5d97-c6da-4e79-9231-1262b44766cb",
-            "Segment1Id": "379",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "382",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 2717.0,
-            "ConnectionY": 331.0
-          },
-          {
-            "Id": "afd83047-2732-4ea9-8b38-693b865091ae",
-            "Segment1Id": "379",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "202",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 2537.0,
-            "ConnectionY": 331.0
-          },
-          {
-            "Id": "e1882b59-75fa-42e0-9acc-1eaaf53b4937",
-            "Segment1Id": "376",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "382",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 2811.0,
-            "ConnectionY": 331.0
-          },
-          {
-            "Id": "692884ce-efb8-406d-83b5-37810112317f",
-            "Segment1Id": "376",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "386",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 3160.0,
-            "ConnectionY": 331.0
-          },
-          {
-            "Id": "9fc4a673-e674-4fb1-8278-f6f96c1cdba9",
-            "Segment1Id": "49",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "53",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 1476.0,
-            "ConnectionY": 1608.0
-          },
-          {
-            "Id": "0c688d8a-d907-4a97-94ec-ce33ff7d2e0b",
-            "Segment1Id": "49",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "42",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 1114.0,
-            "ConnectionY": 1608.0
-          },
-          {
-            "Id": "858744a0-a061-412f-8771-d7c3110616f6",
-            "Segment1Id": "58",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "95",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 3248.0,
-            "ConnectionY": 50.0
-          },
-          {
-            "Id": "b951d78d-b315-4307-837c-f62077574a37",
-            "Segment1Id": "58",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "305",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 3613.0,
-            "ConnectionY": 148.0
-          },
-          {
-            "Id": "b46d0030-442e-440c-96cf-495356ebc5a0",
-            "Segment1Id": "404",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "202",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 2175.0,
-            "ConnectionY": 331.0
-          },
-          {
-            "Id": "47d546b3-e718-4e73-bd52-aaf1d52dbe76",
-            "Segment1Id": "57",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "235",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 2898.0,
-            "ConnectionY": 1420.0
-          },
-          {
-            "Id": "b88f50f2-f9c3-41ac-8f5c-3aa38b542ffc",
-            "Segment1Id": "30",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "42",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 765.0,
-            "ConnectionY": 1608.0
-          },
-          {
-            "Id": "ac42c340-7286-428d-a2b4-29033af9e2fe",
-            "Segment1Id": "54",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "214",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 2898.0,
-            "ConnectionY": 1608.0
-          },
-          {
-            "Id": "f3448c78-cfc5-4c5f-8bc1-22ea3fbba432",
-            "Segment1Id": "54",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "87",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 2537.0,
-            "ConnectionY": 1608.0
-          },
-          {
-            "Id": "87e41a01-c269-4f55-a266-c9e693ab8cb9",
-            "Segment1Id": "53",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "315",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 1826.0,
-            "ConnectionY": 1608.0
-          },
-          {
-            "Id": "a4cd4e32-f520-43ce-8a3f-3a2e9c624106",
-            "Segment1Id": "70",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "69",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 3979.0,
-            "ConnectionY": 782.0
-          },
-          {
-            "Id": "f4725b4c-15f1-4e00-b9ad-73e2fc528924",
             "Segment1Id": "31",
             "Segment1EndpointIndex": 1,
-            "Segment2Id": "32",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 294.0,
-            "ConnectionY": 1055.0
+            "Segment2Id": "25",
+            "Segment2EndpointIndex": 0
           },
           {
-            "Id": "4676e964-53de-4b9b-8bbf-ce5deedf1bff",
-            "Segment1Id": "173",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "332",
-            "Segment2EndpointIndex": 2,
-            "ConnectionX": 1826.0,
-            "ConnectionY": 238.0
-          },
-          {
-            "Id": "4eb9ed79-bc98-45f1-a083-8cf46f9b05bb",
-            "Segment1Id": "173",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "181",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 1476.0,
-            "ConnectionY": 238.0
-          },
-          {
-            "Id": "931e60fd-4ec2-4b23-ab75-badddc918375",
-            "Segment1Id": "36",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "35",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 446.0,
-            "ConnectionY": 1335.0
-          },
-          {
-            "Id": "ba68b85c-5a33-4095-a5e1-cde68f9c2cf4",
-            "Segment1Id": "36",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "41",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 765.0,
-            "ConnectionY": 1420.0
-          },
-          {
-            "Id": "2669016e-e0a2-4cf6-a4fd-3311479a5bcf",
-            "Segment1Id": "176",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "279",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 2886.0,
-            "ConnectionY": 238.0
-          },
-          {
-            "Id": "22d13123-9eba-49b3-aca2-efea71a80c87",
-            "Segment1Id": "176",
-            "Segment1EndpointIndex": 2,
-            "Segment2Id": "179",
-            "Segment2EndpointIndex": 3,
-            "ConnectionX": 2892.0,
-            "ConnectionY": 191.0
-          },
-          {
-            "Id": "51ad3ad6-9f15-4b3f-94a3-98171f30e56b",
-            "Segment1Id": "40",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "33",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 765.0,
-            "ConnectionY": 1327.0
-          },
-          {
-            "Id": "9bd0ae9e-077f-40d6-a75e-a07e10ac31f0",
-            "Segment1Id": "40",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "43",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 1114.0,
-            "ConnectionY": 1327.0
-          },
-          {
-            "Id": "494f715b-dd2d-4bc4-8505-ff172e8eb5e4",
-            "Segment1Id": "77",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "79",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 3719.0,
-            "ConnectionY": 1055.0
-          },
-          {
-            "Id": "666ef771-83ef-48fa-b6a6-e4f2e25527e5",
             "Segment1Id": "77",
             "Segment1EndpointIndex": 1,
             "Segment2Id": "65",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 3792.0,
-            "ConnectionY": 782.0
+            "Segment2EndpointIndex": 0
           },
           {
-            "Id": "0207c1af-9b84-4860-8ed2-e12668033e69",
-            "Segment1Id": "279",
+            "Segment1Id": "404",
             "Segment1EndpointIndex": 0,
-            "Segment2Id": "182",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 2537.0,
-            "ConnectionY": 238.0
-          },
-          {
-            "Id": "9fa5f50f-20f8-405d-95a1-ccb3ec146f15",
-            "Segment1Id": "171",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "172",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 1476.0,
-            "ConnectionY": 50.0
-          },
-          {
-            "Id": "dd4e2293-8294-4985-9ab7-891287a24ee2",
-            "Segment1Id": "171",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "8",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 1127.0,
-            "ConnectionY": 50.0
-          },
-          {
-            "Id": "d82f8b1c-e519-4d73-b716-6a34164d8fff",
-            "Segment1Id": "20",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "24",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 493.0,
-            "ConnectionY": 311.0
-          },
-          {
-            "Id": "16c56777-005c-4aab-b971-b4298879a4ed",
-            "Segment1Id": "20",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "160",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 765.0,
-            "ConnectionY": 238.0
-          },
-          {
-            "Id": "3e31aa26-c9f2-4705-a10a-955c8133d4d9",
-            "Segment1Id": "69",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "305",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 3881.0,
-            "ConnectionY": 416.0
-          },
-          {
-            "Id": "8633ad4b-e167-49fe-82b1-d1a4d0630484",
-            "Segment1Id": "60",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "81",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 3248.0,
-            "ConnectionY": 144.0
-          },
-          {
-            "Id": "3d531783-ce92-4bc9-8e3a-41a03213024a",
-            "Segment1Id": "60",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "67",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 3567.0,
-            "ConnectionY": 230.0
-          },
-          {
-            "Id": "cb0ea265-ef6d-463f-b17d-45f253f68dd9",
-            "Segment1Id": "50",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "43",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 1476.0,
-            "ConnectionY": 1327.0
-          },
-          {
-            "Id": "89c1f592-69be-4087-bad7-8b10f7e86765",
-            "Segment1Id": "182",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "332",
-            "Segment2EndpointIndex": 3,
-            "ConnectionX": 2187.0,
-            "ConnectionY": 238.0
-          },
-          {
-            "Id": "9e1b7307-0e4d-44a2-8432-10e945d113dd",
-            "Segment1Id": "33",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "32",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 493.0,
-            "ConnectionY": 1254.0
-          },
-          {
-            "Id": "976bd4ce-23c0-4050-b8fd-ed9893e67731",
-            "Segment1Id": "306",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "71",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 3613.0,
-            "ConnectionY": 1510.0
-          },
-          {
-            "Id": "bca9cf4c-840f-4c9c-83ea-6799912e261e",
-            "Segment1Id": "95",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "273",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 2886.0,
-            "ConnectionY": 50.0
-          },
-          {
-            "Id": "e40ab532-d1ad-4d8b-9c56-4a83312f4dd4",
-            "Segment1Id": "95",
-            "Segment1EndpointIndex": 2,
-            "Segment2Id": "179",
-            "Segment2EndpointIndex": 2,
-            "ConnectionX": 2892.0,
-            "ConnectionY": 97.0
-          },
-          {
-            "Id": "c270dab5-5359-4f9a-9e43-d17f4810d1f1",
-            "Segment1Id": "48",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "52",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 1476.0,
-            "ConnectionY": 1420.0
-          },
-          {
-            "Id": "fa6609c2-7cc0-4a3c-b820-bb18513457be",
-            "Segment1Id": "48",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "41",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 1115.0,
-            "ConnectionY": 1420.0
-          },
-          {
-            "Id": "234d3c80-cda9-4395-9736-80d4f1ac9020",
-            "Segment1Id": "333",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "172",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 1825.0,
-            "ConnectionY": 50.0
-          },
-          {
-            "Id": "3235b4fb-2909-446d-9b26-9af2f20f5409",
-            "Segment1Id": "183",
-            "Segment1EndpointIndex": 2,
-            "Segment2Id": "332",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 1832.0,
-            "ConnectionY": 191.0
-          },
-          {
-            "Id": "b8065b58-b581-4b69-b8df-fca9e0276d1b",
-            "Segment1Id": "183",
-            "Segment1EndpointIndex": 1,
-            "Segment2Id": "328",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 1838.0,
-            "ConnectionY": 144.0
-          },
-          {
-            "Id": "b6580b4f-7ccf-407e-8da7-39d2a3c64e98",
-            "Segment1Id": "183",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "159",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 1476.0,
-            "ConnectionY": 144.0
-          },
-          {
-            "Id": "74704192-f7b9-410d-acf0-4b101c99d9a3",
-            "Segment1Id": "303",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "9",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 399.0,
-            "ConnectionY": 148.0
-          },
-          {
-            "Id": "67d6b3b3-a5ec-4459-bd2f-139532fb0a9f",
-            "Segment1Id": "332",
-            "Segment1EndpointIndex": 1,
             "Segment2Id": "202",
-            "Segment2EndpointIndex": 2,
-            "ConnectionX": 2181.0,
-            "ConnectionY": 284.0
+            "Segment2EndpointIndex": 0
           },
           {
-            "Id": "cbdf6467-4c2b-4e52-93ee-d689ee52044c",
-            "Segment1Id": "34",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "18",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 127.0,
-            "ConnectionY": 782.0
-          },
-          {
-            "Id": "638586ad-db93-4073-937e-b935d3b302d7",
-            "Segment1Id": "34",
+            "Segment1Id": "386",
             "Segment1EndpointIndex": 1,
-            "Segment2Id": "35",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 213.0,
-            "ConnectionY": 1101.0
+            "Segment2Id": "376",
+            "Segment2EndpointIndex": 0
           },
           {
-            "Id": "240a9dac-781d-4c61-b57a-26e9650442d9",
-            "Segment1Id": "79",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "80",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 3520.0,
-            "ConnectionY": 1254.0
-          },
-          {
-            "Id": "e82c4d41-2a81-495d-978d-33028a786df1",
-            "Segment1Id": "181",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "160",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 1127.0,
-            "ConnectionY": 238.0
-          },
-          {
-            "Id": "ce0dce66-5634-41ad-a646-6ff7ccd5e882",
-            "Segment1Id": "16",
+            "Segment1Id": "400",
             "Segment1EndpointIndex": 1,
-            "Segment2Id": "18",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 213.0,
-            "ConnectionY": 463.0
+            "Segment2Id": "401",
+            "Segment2EndpointIndex": 1
           },
           {
-            "Id": "77d0846e-5aa5-4aeb-9765-c6f1918b0a14",
-            "Segment1Id": "16",
+            "Segment1Id": "332",
+            "Segment1EndpointIndex": 3,
+            "Segment2Id": "183",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "35",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "34",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "52",
             "Segment1EndpointIndex": 0,
-            "Segment2Id": "15",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 446.0,
-            "ConnectionY": 230.0
+            "Segment2Id": "48",
+            "Segment2EndpointIndex": 0
           },
           {
-            "Id": "178ca2f8-e10e-40b7-8733-bb2db6d8e028",
-            "Segment1Id": "314",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "52",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 1826.0,
-            "ConnectionY": 1420.0
-          },
-          {
-            "Id": "f0295545-93b6-4ea1-8b38-4d39eceba95a",
             "Segment1Id": "76",
             "Segment1EndpointIndex": 0,
             "Segment2Id": "235",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 3248.0,
-            "ConnectionY": 1420.0
+            "Segment2EndpointIndex": 1
           },
           {
-            "Id": "fa519dfe-ecd0-41ab-9048-2eb77c927666",
-            "Segment1Id": "64",
-            "Segment1EndpointIndex": 0,
-            "Segment2Id": "65",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 3719.0,
-            "ConnectionY": 510.0
-          },
-          {
-            "Id": "1a091e6d-38b8-4889-a42e-701330f1fc34",
-            "Segment1Id": "214",
+            "Segment1Id": "79",
             "Segment1EndpointIndex": 1,
-            "Segment2Id": "71",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 3248.0,
-            "ConnectionY": 1608.0
+            "Segment2Id": "77",
+            "Segment2EndpointIndex": 0
           },
           {
-            "Id": "c09ab7f3-2779-47d6-8001-59fc5d87cca1",
-            "Segment1Id": "81",
+            "Segment1Id": "304",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "175",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "316",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "50",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "24",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "20",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "314",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "52",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "36",
             "Segment1EndpointIndex": 0,
-            "Segment2Id": "179",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 2898.0,
-            "ConnectionY": 144.0
+            "Segment2Id": "35",
+            "Segment2EndpointIndex": 0
           },
           {
-            "Id": "41458d36-0ca2-47e4-8281-1df672fab7cf",
-            "Segment1Id": "315",
+            "Segment1Id": "68",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "67",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "86",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "314",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "18",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "16",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "42",
+            "Segment1EndpointIndex": 0,
+            "Segment2Id": "30",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "34",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "18",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "73",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "68",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "54",
             "Segment1EndpointIndex": 1,
             "Segment2Id": "87",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 2187.0,
-            "ConnectionY": 1608.0
+            "Segment2EndpointIndex": 0
           },
           {
-            "Id": "0b724489-4ee0-4133-beb5-012854696b6f",
+            "Segment1Id": "48",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "41",
+            "Segment2EndpointIndex": 1
+          },
+          {
             "Segment1Id": "80",
             "Segment1EndpointIndex": 0,
-            "Segment2Id": "236",
-            "Segment2EndpointIndex": 1,
-            "ConnectionX": 3248.0,
-            "ConnectionY": 1327.0
+            "Segment2Id": "79",
+            "Segment2EndpointIndex": 0
           },
           {
-            "Id": "2c5e9f68-fc0b-461d-9657-88d4f5c3dac4",
+            "Segment1Id": "49",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "42",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "57",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "86",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "65",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "64",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "55",
+            "Segment1EndpointIndex": 0,
+            "Segment2Id": "85",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "15",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "14",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "43",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "40",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "69",
+            "Segment1EndpointIndex": 0,
+            "Segment2Id": "305",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "70",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "69",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "175",
+            "Segment1EndpointIndex": 0,
+            "Segment2Id": "26",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "303",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "9",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "214",
+            "Segment1EndpointIndex": 0,
+            "Segment2Id": "54",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "41",
+            "Segment1EndpointIndex": 0,
+            "Segment2Id": "36",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "235",
+            "Segment1EndpointIndex": 0,
+            "Segment2Id": "57",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "53",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "49",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "87",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "315",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "40",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "33",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "174",
+            "Segment1EndpointIndex": 0,
+            "Segment2Id": "70",
+            "Segment2EndpointIndex": 0
+          },
+          {
             "Segment1Id": "8",
             "Segment1EndpointIndex": 2,
             "Segment2Id": "159",
-            "Segment2EndpointIndex": 3,
-            "ConnectionX": 1121.0,
-            "ConnectionY": 97.0
+            "Segment2EndpointIndex": 0
           },
           {
-            "Id": "91c3be88-b4c9-4cc5-927a-7620253757dd",
-            "Segment1Id": "8",
+            "Segment1Id": "95",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "58",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "275",
             "Segment1EndpointIndex": 0,
-            "Segment2Id": "9",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 765.0,
-            "ConnectionY": 50.0
+            "Segment2Id": "179",
+            "Segment2EndpointIndex": 0
           },
           {
-            "Id": "fec989f1-8bdd-41fd-ae91-a0a2ea0681f3",
-            "Segment1Id": "26",
+            "Segment1Id": "275",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "328",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "173",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "332",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "58",
             "Segment1EndpointIndex": 0,
-            "Segment2Id": "175",
-            "Segment2EndpointIndex": 0,
-            "ConnectionX": 33.0,
-            "ConnectionY": 876.0
+            "Segment2Id": "305",
+            "Segment2EndpointIndex": 0
           },
           {
-            "Id": "034ecd92-dc2d-4a5b-aae8-f3978a881bd7",
-            "Segment1Id": "159",
-            "Segment1EndpointIndex": 2,
+            "Segment1Id": "183",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "328",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "33",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "32",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "306",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "174",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "64",
+            "Segment1EndpointIndex": 0,
+            "Segment2Id": "63",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "74",
+            "Segment1EndpointIndex": 0,
+            "Segment2Id": "73",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "50",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "43",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "236",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "55",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "25",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "24",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "9",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "8",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "179",
+            "Segment1EndpointIndex": 3,
+            "Segment2Id": "95",
+            "Segment2EndpointIndex": 2
+          },
+          {
+            "Segment1Id": "80",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "236",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "95",
+            "Segment1EndpointIndex": 0,
+            "Segment2Id": "273",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "279",
+            "Segment1EndpointIndex": 0,
+            "Segment2Id": "176",
+            "Segment2EndpointIndex": 2
+          },
+          {
+            "Segment1Id": "172",
+            "Segment1EndpointIndex": 0,
+            "Segment2Id": "171",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "32",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "31",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "181",
+            "Segment1EndpointIndex": 0,
             "Segment2Id": "160",
-            "Segment2EndpointIndex": 2,
-            "ConnectionX": 1121.0,
-            "ConnectionY": 191.0
+            "Segment2EndpointIndex": 2
+          },
+          {
+            "Segment1Id": "60",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "81",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "315",
+            "Segment1EndpointIndex": 0,
+            "Segment2Id": "53",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "179",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "81",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "273",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "96",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "96",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "333",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "176",
+            "Segment1EndpointIndex": 0,
+            "Segment2Id": "179",
+            "Segment2EndpointIndex": 2
+          },
+          {
+            "Segment1Id": "171",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "8",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "16",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "15",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "333",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "172",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "176",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "63",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "279",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "182",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "71",
+            "Segment1EndpointIndex": 0,
+            "Segment2Id": "306",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "382",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "379",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "160",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "20",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "85",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "316",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "183",
+            "Segment1EndpointIndex": 2,
+            "Segment2Id": "159",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "379",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "202",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "332",
+            "Segment1EndpointIndex": 2,
+            "Segment2Id": "182",
+            "Segment2EndpointIndex": 1
+          },
+          {
+            "Segment1Id": "376",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "382",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "67",
+            "Segment1EndpointIndex": 0,
+            "Segment2Id": "60",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "14",
+            "Segment1EndpointIndex": 0,
+            "Segment2Id": "159",
+            "Segment2EndpointIndex": 2
           }
         ]
       }

@@ -2,16 +2,12 @@
 namespace Moba.Domain.TrackPlan;
 
 /// <summary>
-/// Represents a complete track layout with all segments and connections.
-/// Can be saved/loaded as part of a Project (JSON serialization).
+/// Represents a complete track layout as a topology graph.
+/// Contains segments (nodes) and connections (edges).
+/// No coordinates - the renderer calculates positions from the graph.
 /// </summary>
 public class TrackLayout
 {
-    /// <summary>
-    /// Unique identifier for this layout.
-    /// </summary>
-    public Guid Id { get; set; } = Guid.NewGuid();
-
     /// <summary>
     /// Display name for this layout.
     /// </summary>
@@ -23,24 +19,9 @@ public class TrackLayout
     public string? Description { get; set; }
 
     /// <summary>
-    /// Track system used (e.g., "Piko A-Gleis", "Tillig Elite").
+    /// Track system used (e.g., "Piko A-Gleis").
     /// </summary>
     public string TrackSystem { get; set; } = "Piko A-Gleis";
-
-    /// <summary>
-    /// Scale (e.g., "H0", "N", "TT").
-    /// </summary>
-    public string Scale { get; set; } = "H0";
-
-    /// <summary>
-    /// Width of the layout work surface in mm.
-    /// </summary>
-    public double WidthMm { get; set; } = 2400;
-
-    /// <summary>
-    /// Height of the layout work surface in mm.
-    /// </summary>
-    public double HeightMm { get; set; } = 1600;
 
     /// <summary>
     /// All track segments in this layout.
@@ -48,7 +29,7 @@ public class TrackLayout
     public List<TrackSegment> Segments { get; set; } = [];
 
     /// <summary>
-    /// All connections between track segments.
+    /// All connections between track segments (the topology graph edges).
     /// </summary>
     public List<TrackConnection> Connections { get; set; } = [];
 }

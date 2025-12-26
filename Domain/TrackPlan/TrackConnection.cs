@@ -3,27 +3,23 @@ namespace Moba.Domain.TrackPlan;
 
 /// <summary>
 /// Represents a connection between two track segment endpoints.
-/// When two segments are snapped together, a connection is created.
-/// Connected segments move together as a unit.
+/// This is an edge in the topology graph - no coordinates needed.
+/// The renderer calculates positions based on these connections.
 /// 
-/// Supports multiple connections per segment:
-/// - Simple tracks (2 endpoints): index 0 (start), 1 (end)
-/// - Turnouts (3-4 endpoints): index 0 (main), 1 (branch), 2 (branch2), 3 (branch3)
+/// Endpoint indices:
+/// - Simple tracks (2 endpoints): 0 = start, 1 = end
+/// - Turnouts (3 endpoints): 0 = main, 1 = straight, 2 = branch
+/// - Double slips (4 endpoints): 0-3 for each direction
 /// </summary>
 public class TrackConnection
 {
-    /// <summary>
-    /// Unique identifier for this connection.
-    /// </summary>
-    public string Id { get; set; } = Guid.NewGuid().ToString();
-
     /// <summary>
     /// ID of the first connected segment.
     /// </summary>
     public string Segment1Id { get; set; } = string.Empty;
 
     /// <summary>
-    /// Index of the endpoint on segment 1 (0 = start/main, 1+ = other endpoints for turnouts).
+    /// Endpoint index on segment 1 (0 = start, 1 = end, 2+ for turnouts).
     /// </summary>
     public int Segment1EndpointIndex { get; set; }
 
@@ -33,17 +29,7 @@ public class TrackConnection
     public string Segment2Id { get; set; } = string.Empty;
 
     /// <summary>
-    /// Index of the endpoint on segment 2 (0 = start/main, 1+ = other endpoints for turnouts).
+    /// Endpoint index on segment 2 (0 = start, 1 = end, 2+ for turnouts).
     /// </summary>
-    public int Segment2EndpointIndex { get; set; } = 1;
-
-    /// <summary>
-    /// X coordinate of the connection point.
-    /// </summary>
-    public double ConnectionX { get; set; }
-
-    /// <summary>
-    /// Y coordinate of the connection point.
-    /// </summary>
-    public double ConnectionY { get; set; }
+    public int Segment2EndpointIndex { get; set; }
 }

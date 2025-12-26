@@ -154,14 +154,9 @@
                         Label="Save" />
                     <AppBarSeparator />
                     <!--  Import Export  -->
-                    <AppBarButton Command="{x:Bind TrackPlanEditorViewModel.BrowseAndLoadAnyRailLayoutCommand}" Label="Import">
+                    <AppBarButton Command="{x:Bind TrackPlanEditorViewModel.ImportAnyRailCommand}" Label="Import">
                         <AppBarButton.Icon>
                             <FontIcon Glyph="&#xE896;" />
-                        </AppBarButton.Icon>
-                    </AppBarButton>
-                    <AppBarButton Command="{x:Bind TrackPlanEditorViewModel.ExportToAnyRailCommand}" Label="Export">
-                        <AppBarButton.Icon>
-                            <FontIcon Glyph="&#xE898;" />
                         </AppBarButton.Icon>
                     </AppBarButton>
                     <AppBarSeparator />

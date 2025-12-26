@@ -5,7 +5,7 @@
 > **Multi-platform system (.NET 10)**  
 > MOBAflow (WinUI) | MOBAsmart (MAUI) | MOBAdash (Blazor)
 > 
-> **Last Updated:** 2025-12-19 | **Version:** 3.8
+> **Last Updated:** 2025-12-24 | **Version:** 3.9
 
 ---
 
@@ -74,45 +74,25 @@ public object Convert(object? value, ...)
 
 ---
 
-## 🎯 Current Session Status (Dec 23, 2025)
+## 🎯 Current Session Status (Dec 24, 2025)
 
 ### ✅ Completed This Session
-- ✅ **Architecture Optimization Review** - Umfassende Analyse alle Schichten
-  - **DI Pattern:** 100% konform (Constructor Injection überall)
-  - **MVVM Pattern:** 95% konform (TrackPlanEditor ist Outlier)
-  - **Layer Separation:** Sauber getrennt (Domain, Backend, SharedUI, Platforms)
-  - Result: `docs/ARCHITECTURE-REVIEW-2025-12-23.md`
+- ✅ **Track Plan Refactoring** - Topologie-basiertes Design implementiert
+  - **Domain:** TrackSegment, TrackLayout, TrackConnection vereinfacht
+  - **Removed:** PathData, CenterX/Y, Type, Id (aus Connection), Scale, WidthMm, HeightMm
+  - **Added:** TrackLayoutRenderer für Position-Berechnung aus Topologie
+  - **Impact:** -700 LOC, ~300 LOC neues ViewModel (vorher ~1000 LOC)
 
-- ✅ **Property Name Consistency** - Z21 Prefixe entfernt
-  - Renamed: `IsZ21Connected` → `IsConnected`, `Z21StatusText` → `StatusText`, etc.
-  - Updated: Alle XAML Bindings in WinUI, MAUI, WebApp
-  - Impact: Cleaner, context-aware naming
-
-- ✅ **Z21 Models Consolidation** - DTOs zusammengefasst
-  - Merged: `Z21VersionInfo.cs` + `Z21TrafficPacket.cs` → `Backend/Model/Z21Models.cs`
-  - Impact: -2 Dateien, bessere Organisation, DTOs nach Domain gruppiert
-
-- ✅ **TrackPlanEditorPage Refactoring** (Phase 1) - MVVM Compliance verbessert
-  - Moved: `ZoomLevel`, `ZoomLevelText`, `MousePositionText` → ViewModel
-  - Added: `ZoomInCommand`, `ZoomOutCommand` zu TrackPlanEditorViewModel
-  - Changed: XAML Buttons nutzen jetzt Commands statt Click-Handler
-  - Removed: `INotifyPropertyChanged` von Page
-  - Impact: Page 518 → ~480 LOC (-7%), bessere MVVM Separation
-
-- ✅ **CounterViewModel Integration** - Vollständig abgeschlossen
-  - Status: CounterViewModel.cs bereits gelöscht
-  - Properties: Alle in MainWindowViewModel.Counter.cs integriert
-  - Bindings: WinUI, MAUI, WebApp nutzen alle MainWindowViewModel
-  - DI: CounterViewModel nicht in DI registriert (nur MainWindowViewModel)
-  - XAML: Alte CounterViewModel Bindings entfernt
-  - Result: Unified Single ViewModel für alle Platforms
+- ✅ **AnyRail Import Optimierung**
+  - PathData wird direkt aus AnyRail XML übernommen (keine Neuberechnung)
+  - Connections werden mit Toleranz-Matching (5px) extrahiert
+  - Hybrid-Ansatz: Imports nutzen Original-Koordinaten, neue Gleise nutzen Renderer
 
 ### 📊 Fortschritt
-- **Properties:** Z21 Prefixe entfernt ✅
-- **Z21 Files:** 8 → 6 Dateien ✅
-- **Code-Behind:** WinUI 750 → ~730 LOC (-20 LOC)
-- **MVVM Score:** 95% ✅
-- **Warnings:** ~620 (Target: <100)
+- **Track Plan System:** Komplett neu implementiert ✅
+- **Domain Models:** 3 Dateien stark vereinfacht ✅
+- **XAML:** TrackPlanEditorPage.xaml 500→170 LOC (-66%) ✅
+- **Code-Behind:** TrackPlanEditorPage.xaml.cs 500→75 LOC (-85%) ✅
 
 ---
 
@@ -410,6 +390,44 @@ private void UpdateSystemState(SystemState state)
 - ✅ **Solution:** Custom `ListViewItemClickBehavior` with direct EventArgs extraction
 - 📉 **Impact:** -200 LOC code-behind, clean MVVM separation, reusable patterns
 - 📖 **NuGet:** `Microsoft.Xaml.Behaviors.WinUI.Managed` Version **3.0.0**
+
+### **6. Coordinate-Based Track Plan (Dec 2025)** ⭐ NEW
+- ❌ **Mistake:** Storing absolute coordinates (PathData, CenterX/Y) in Domain model
+  - 1000+ LOC ViewModels with coordinate calculations
+  - Zoom/Pan logic causing flicker
+  - Endpoint tracking in code-behind
+- ✅ **Solution:** Topologie-basiertes Design
+  - **Domain:** Only ArticleCode, Rotation, Connections (no coordinates)
+  - **Renderer:** Calculates positions from topology + Piko geometry at runtime
+  - **Import:** Use AnyRail PathData directly (already has correct coordinates)
+- 📉 **Impact:** -700 LOC, simpler architecture, no flicker
+
+**Topologie-basiertes Design Pattern:**
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ JSON (what we store)           │ Runtime (what we calculate)   │
+├─────────────────────────────────────────────────────────────────┤
+│ TrackLayout:                   │ TrackLayoutRenderer:           │
+│   Segments:                    │   - BFS traversal of graph     │
+│     - ArticleCode: "G231"      │   - PikoATrackLibrary lookup   │
+│     - Rotation: 30             │   - Endpoint alignment         │
+│     - AssignedInPort: 1        │   → X, Y, PathData (computed)  │
+│   Connections:                 │                                │
+│     - Segment1Id + Endpoint    │                                │
+│     - Segment2Id + Endpoint    │                                │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Hybrid Approach for Imports:**
+```csharp
+// AnyRail Import: Use original coordinates directly
+vm.PathData = part.ToPathData();  // Already has absolute coords
+vm.X = 0; vm.Y = 0;               // No offset needed
+
+// New tracks from Library: Calculate from topology
+var rendered = _renderer.Render(layout);
+vm.PathData = rendered.PathData;  // Computed from connections
+```
 
 ---
 

@@ -45,6 +45,7 @@ public static class PikoATrackLibrary
 
         // Special Switches
         new() { ArticleCode = "DKW", Name = "Doppelkreuzungsweiche", Type = TrackType.DoubleCrossover, Length = 239.07, Radius = 907.97, Angle = 15, ProductCode = "55224" },
+        new() { ArticleCode = "DWW", Name = "Dreiwegweiche", Type = TrackType.ThreeWay, Length = 239.07, Radius = 907.97, Angle = 15, ProductCode = "55225" },
         new() { ArticleCode = "W3", Name = "3-Wegeweiche", Type = TrackType.ThreeWay, Length = 237.8, Radius = 907.97, Angle = 30, ProductCode = "55225" },
 
         // Crossings (Kreuzungen)

@@ -63,33 +63,33 @@
                         </TextBox.Description>
                     </TextBox>
 
-                            <NumberBox
-                                MaxWidth="200"
-                                HorizontalAlignment="Left"
-                                Header="Auto-Connect Retry Interval (seconds)"
-                                Maximum="60"
-                                Minimum="5"
-                                SpinButtonPlacementMode="Inline"
-                                Value="{x:Bind ViewModel.Z21AutoConnectRetryInterval, Mode=TwoWay}">
-                                <NumberBox.Description>
-                                    <TextBlock Text="How often to attempt reconnection if Z21 is unreachable (5-60 seconds)" />
-                                </NumberBox.Description>
-                            </NumberBox>
+                    <NumberBox
+                        MaxWidth="200"
+                        HorizontalAlignment="Left"
+                        Header="Auto-Connect Retry Interval (seconds)"
+                        Maximum="60"
+                        Minimum="5"
+                        SpinButtonPlacementMode="Inline"
+                        Value="{x:Bind ViewModel.Z21AutoConnectRetryInterval, Mode=TwoWay}">
+                        <NumberBox.Description>
+                            <TextBlock Text="How often to attempt reconnection if Z21 is unreachable (5-60 seconds)" />
+                        </NumberBox.Description>
+                    </NumberBox>
 
-                            <NumberBox
-                                MaxWidth="200"
-                                HorizontalAlignment="Left"
-                                Header="System State Polling Interval (seconds)"
-                                Maximum="30"
-                                Minimum="0"
-                                SpinButtonPlacementMode="Inline"
-                                Value="{x:Bind ViewModel.Z21SystemStatePollingInterval, Mode=TwoWay}">
-                                <NumberBox.Description>
-                                    <TextBlock Text="How often to request current, voltage, temperature updates (0 = disabled, 1-30 seconds)" />
-                                </NumberBox.Description>
-                            </NumberBox>
-                        </StackPanel>
-                    </Expander>
+                    <NumberBox
+                        MaxWidth="200"
+                        HorizontalAlignment="Left"
+                        Header="System State Polling Interval (seconds)"
+                        Maximum="30"
+                        Minimum="0"
+                        SpinButtonPlacementMode="Inline"
+                        Value="{x:Bind ViewModel.Z21SystemStatePollingInterval, Mode=TwoWay}">
+                        <NumberBox.Description>
+                            <TextBlock Text="How often to request current, voltage, temperature updates (0 = disabled, 1-30 seconds)" />
+                        </NumberBox.Description>
+                    </NumberBox>
+                </StackPanel>
+            </Expander>
 
             <!--  City Library Section  -->
             <Expander
@@ -260,15 +260,6 @@
 
                 <StackPanel Padding="56,16,0,16" Spacing="16">
                     <StackPanel>
-                        <CheckBox Content="Reset window layout on startup" IsChecked="{x:Bind ViewModel.ResetWindowLayoutOnStart, Mode=TwoWay}" />
-                        <TextBlock
-                            Margin="28,0,0,0"
-                            Style="{StaticResource CaptionTextBlockStyle}"
-                            Text="Reset window size and position to defaults when application starts"
-                            TextWrapping="Wrap" />
-                    </StackPanel>
-
-                    <StackPanel>
                         <CheckBox Content="Auto-load last solution" IsChecked="{x:Bind ViewModel.AutoLoadLastSolution, Mode=TwoWay}" />
                         <TextBlock
                             Margin="28,0,0,0"
@@ -279,16 +270,16 @@
                 </StackPanel>
             </Expander>
 
-            <!--  Track Statistics Section  -->
+            <!--  Feedback Points Section  -->
             <Expander
                 HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Stretch"
-                Header="Track Statistics"
+                Header="Feedback Points"
                 IsExpanded="False">
                 <Expander.HeaderTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal" Spacing="12">
-                            <FontIcon FontSize="20" Glyph="&#xE9D9;" />
+                            <FontIcon FontSize="20" Glyph="&#xE701;" />
                             <TextBlock
                                 VerticalAlignment="Center"
                                 Style="{StaticResource SubtitleTextBlockStyle}"
@@ -310,7 +301,7 @@
                             <TextBlock TextWrapping="Wrap">
                                 <Run Text="How many feedback points (InPorts) are in your track layout?" />
                                 <LineBreak />
-                                <Run Text="Example: 3 → Track Statistics will show InPorts 1, 2, 3" />
+                                <Run Text="Example: 3 → Monitor will show InPorts 1, 2, 3" />
                                 <LineBreak />
                                 <Run FontStyle="Italic" Text="Note: Restart required to apply changes" />
                             </TextBlock>
@@ -406,13 +397,13 @@
                         FontWeight="SemiBold"
                         Style="{StaticResource BodyStrongTextBlockStyle}"
                         Text="Track Management (Experimental)" />
-                    
+
                     <CheckBox Content="{x:Bind ViewModel.TrackPlanEditorCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsTrackPlanEditorPageAvailable, Mode=TwoWay}">
                         <ToolTipService.ToolTip>
                             <TextBlock Text="Visual track layout designer (experimental)" />
                         </ToolTipService.ToolTip>
                     </CheckBox>
-                    
+
                     <CheckBox Content="{x:Bind ViewModel.JourneyMapCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsJourneyMapPageAvailable, Mode=TwoWay}">
                         <ToolTipService.ToolTip>
                             <TextBlock Text="Journey visualization map (experimental)" />
@@ -425,7 +416,7 @@
                         FontWeight="SemiBold"
                         Style="{StaticResource BodyStrongTextBlockStyle}"
                         Text="Monitoring &amp; Debugging" />
-                    
+
                     <CheckBox Content="{x:Bind ViewModel.MonitorCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsMonitorPageAvailable, Mode=TwoWay}">
                         <ToolTipService.ToolTip>
                             <TextBlock Text="Z21 traffic monitor and diagnostics" />

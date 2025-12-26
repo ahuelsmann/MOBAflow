@@ -3,66 +3,88 @@ namespace Moba.Domain.TrackPlan;
 
 /// <summary>
 /// Represents a single track segment in the track plan.
-/// Each segment can be selected and assigned a feedback sensor (InPort).
+/// Track system agnostic - supports Piko, Roco, Tillig, etc.
+/// Contains drawing elements (Lines/Arcs) for rendering.
 /// </summary>
 public class TrackSegment
 {
     /// <summary>
     /// Unique identifier for this segment.
     /// </summary>
-    public string Id { get; set; } = string.Empty;
+    public string Id { get; set; } = Guid.NewGuid().ToString();
 
     /// <summary>
-    /// Display name for this segment (e.g., "G231-001", "R2-Left-01").
-    /// </summary>
-    public string Name { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Type of track segment.
-    /// </summary>
-    public TrackSegmentType Type { get; set; }
-
-    /// <summary>
-    /// Piko A-Gleis article code (e.g., "G231", "R2", "WL").
+    /// Track article code (e.g., "G231", "R2", "WL").
+    /// Used to look up geometry from the track library (Piko, Roco, Tillig).
     /// </summary>
     public string ArticleCode { get; set; } = string.Empty;
 
     /// <summary>
-    /// SVG path data for rendering this segment.
-    /// Uses standard SVG path syntax (M, L, A, C, etc.).
+    /// Endpoint coordinates for topology and connection matching.
+    /// These are the connection points where tracks join.
     /// </summary>
-    public string PathData { get; set; } = string.Empty;
+    public List<SegmentEndpoint> Endpoints { get; set; } = [];
 
     /// <summary>
-    /// X coordinate of the segment's center point (for label placement).
-    /// Normalized coordinates (0-1000).
+    /// Line drawing elements (straight sections).
+    /// Used by renderer to draw the track.
     /// </summary>
-    public double CenterX { get; set; }
+    public List<DrawingLine> Lines { get; set; } = [];
 
     /// <summary>
-    /// Y coordinate of the segment's center point (for label placement).
-    /// Normalized coordinates (0-1000).
+    /// Arc drawing elements (curved sections).
+    /// Used by renderer to draw curves with proper radius.
     /// </summary>
-    public double CenterY { get; set; }
+    public List<DrawingArc> Arcs { get; set; } = [];
 
     /// <summary>
-    /// Rotation angle in degrees (0 = horizontal, going right).
-    /// </summary>
-    public double Rotation { get; set; }
-
-    /// <summary>
-    /// Optional: Assigned feedback sensor port (InPort).
-    /// Null if no sensor is assigned to this segment.
+    /// Optional: Assigned feedback sensor port (InPort 1-2048).
     /// </summary>
     public uint? AssignedInPort { get; set; }
 
     /// <summary>
-    /// Optional: Track number for multi-track stations (e.g., "1", "2a").
+    /// Optional: User-defined name for this segment.
     /// </summary>
-    public string? TrackNumber { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>
-    /// Layer/group this segment belongs to (e.g., "MainLine", "Station", "Yard").
+    /// Optional: Layer/group this segment belongs to.
     /// </summary>
-    public string Layer { get; set; } = "Default";
+    public string? Layer { get; set; }
+}
+
+/// <summary>
+/// Endpoint of a track segment (connection point).
+/// </summary>
+public class SegmentEndpoint
+{
+    public double X { get; set; }
+    public double Y { get; set; }
+}
+
+/// <summary>
+/// A straight line drawing element.
+/// </summary>
+public class DrawingLine
+{
+    public double X1 { get; set; }
+    public double Y1 { get; set; }
+    public double X2 { get; set; }
+    public double Y2 { get; set; }
+}
+
+/// <summary>
+/// An arc (curve) drawing element.
+/// </summary>
+public class DrawingArc
+{
+    public double X1 { get; set; }
+    public double Y1 { get; set; }
+    public double X2 { get; set; }
+    public double Y2 { get; set; }
+    public double Radius { get; set; }
+    /// <summary>
+    /// SVG sweep flag: 0 = counter-clockwise, 1 = clockwise.
+    /// </summary>
+    public int Sweep { get; set; }
 }
