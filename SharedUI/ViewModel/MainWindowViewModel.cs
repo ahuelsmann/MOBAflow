@@ -179,12 +179,6 @@ public partial class MainWindowViewModel : ObservableObject
     private TrainViewModel? selectedTrain;
 
     /// <summary>
-    /// The currently selected feedback point.
-    /// </summary>
-    [ObservableProperty]
-    private FeedbackPointOnTrack? selectedFeedbackPoint;
-
-    /// <summary>
     /// The currently selected object to display in the properties panel.
     /// </summary>
     [ObservableProperty]
@@ -271,56 +265,6 @@ public partial class MainWindowViewModel : ObservableObject
     public event EventHandler? ExitApplicationRequested;
 
 
-    partial void OnSelectedProjectChanged(ProjectViewModel? value)
-    {
-        _ = value; // Suppress unused parameter warning
-        // Update CanExecute for project-related commands
-        DeleteProjectCommand.NotifyCanExecuteChanged();
-        // Also update journey/workflow commands since they depend on SelectedProject
-        DeleteJourneyCommand.NotifyCanExecuteChanged();
-        DeleteWorkflowCommand.NotifyCanExecuteChanged();
-        DeleteFeedbackPointCommand.NotifyCanExecuteChanged();
-    }
-
-    partial void OnSelectedJourneyChanged(JourneyViewModel? value)
-    {
-        _ = value; // Suppress unused parameter warning
-        // Update CanExecute for journey-related commands
-        DeleteJourneyCommand.NotifyCanExecuteChanged();
-        ResetJourneyCommand.NotifyCanExecuteChanged();
-        AddStationCommand.NotifyCanExecuteChanged();
-        DeleteStationCommand.NotifyCanExecuteChanged();
-    }
-
-    partial void OnSelectedStationChanged(StationViewModel? value)
-    {
-        _ = value; // Suppress unused parameter warning
-        // Update CanExecute for station-related commands
-        DeleteStationCommand.NotifyCanExecuteChanged();
-    }
-
-    partial void OnSelectedWorkflowChanged(WorkflowViewModel? value)
-    {
-        _ = value; // Suppress unused parameter warning
-        // Update CanExecute for workflow-related commands
-        DeleteWorkflowCommand.NotifyCanExecuteChanged();
-        DeleteActionCommand.NotifyCanExecuteChanged();
-    }
-
-    partial void OnSelectedActionChanged(object? value)
-    {
-        _ = value; // Suppress unused parameter warning
-        // Update CanExecute for action-related commands
-        DeleteActionCommand.NotifyCanExecuteChanged();
-    }
-
-    partial void OnSelectedFeedbackPointChanged(FeedbackPointOnTrack? value)
-    {
-        _ = value; // Suppress unused parameter warning
-        // Update CanExecute for feedback point-related commands
-        DeleteFeedbackPointCommand.NotifyCanExecuteChanged();
-    }
-
     /// <summary>
     /// Handles changes to the selected object on JourneysPage.
     /// Subscribes to ModelChanged events of journeys to track unsaved changes.
@@ -384,13 +328,9 @@ public partial class MainWindowViewModel : ObservableObject
         SolutionViewModel!.Projects.Remove(SelectedProject);
 
         // Select first project if available, otherwise clear
-        if (SolutionViewModel.Projects.Count > 0)
+        SelectedProject = SolutionViewModel.Projects.FirstOrDefault();
+        if (SelectedProject == null)
         {
-            SelectedProject = SolutionViewModel.Projects[0];
-        }
-        else
-        {
-            SelectedProject = null;
             HasSolution = false;
         }
 

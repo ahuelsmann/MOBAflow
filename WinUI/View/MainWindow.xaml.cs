@@ -66,7 +66,7 @@ public sealed partial class MainWindow
         _navigationService.Initialize(ContentFrame);
 
         // Set first nav item as selected (Overview)
-        MainNavigation.SelectedItem = MainNavigation.MenuItems[0];
+        MainNavigation.SelectedItem = MainNavigation.MenuItems.FirstOrDefault();
 
         // Subscribe to ViewModel events
         ViewModel.ExitApplicationRequested += OnExitApplicationRequested;

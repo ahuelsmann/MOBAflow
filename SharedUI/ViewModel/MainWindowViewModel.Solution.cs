@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.Input;
@@ -38,9 +38,9 @@ public partial class MainWindowViewModel
         HasSolution = value.Projects.Count > 0;
 
         // Auto-select first project if no project is selected
-        if (SelectedProject == null && SolutionViewModel.Projects.Count > 0)
+        if (SelectedProject == null)
         {
-            SelectedProject = SolutionViewModel.Projects[0];
+            SelectedProject = SolutionViewModel.Projects.FirstOrDefault();
         }
 
         // NOTE: JourneyManager initialization moved to ApplyLoadedSolution()
@@ -180,6 +180,13 @@ public partial class MainWindowViewModel
         {
             InitializeJourneyManager(Solution.Projects[0]);
             Debug.WriteLine($"✅ JourneyManager initialized after loading solution with {Solution.Projects[0].Journeys.Count} journeys");
+            
+            // Auto-select first project after loading
+            SelectedProject = SolutionViewModel?.Projects.FirstOrDefault();
+            if (SelectedProject != null)
+            {
+                Debug.WriteLine($"✅ Auto-selected first project: {SelectedProject.Name}");
+            }
         }
 
         SaveSolutionCommand.NotifyCanExecuteChanged();

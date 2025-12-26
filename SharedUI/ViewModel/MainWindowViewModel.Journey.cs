@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.Input;
@@ -202,9 +202,9 @@ public partial class MainWindowViewModel
             return;
 
         // Take the first station from the selected city (name only!)
-        if (SelectedCity.Stations.Count > 0)
+        var cityStation = SelectedCity.Stations.FirstOrDefault();
+        if (cityStation != null)
         {
-            var cityStation = SelectedCity.Stations[0];
 
             // Create NEW Station (copy name from City Library)
             var newStation = new Station

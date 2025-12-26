@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -32,7 +32,6 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
     public int TrainCount => Trains.Count;
     public int LocomotiveCount => Locomotives.Count;
     public int WagonCount => Wagons.Count;
-    public int FeedbackPointCount => FeedbackPoints.Count;
     #endregion
 
     partial void OnNameChanged(string value)
@@ -81,12 +80,6 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
     /// </summary>
     public ObservableCollection<GoodsWagonViewModel> GoodsWagons { get; } = new();
 
-    /// <summary>
-    /// Observable collection of FeedbackPoints for UI binding.
-    /// Manually synced with Model.FeedbackPoints via Refresh().
-    /// </summary>
-    public ObservableCollection<FeedbackPointOnTrack> FeedbackPoints { get; } = new();
-
     public ProjectViewModel(Project model, IUiDispatcher? dispatcher = null)
     {
         Model = model;
@@ -99,7 +92,6 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
         Trains.CollectionChanged += (_, __) => NotifyStatisticsChanged();
         Locomotives.CollectionChanged += (_, __) => NotifyStatisticsChanged();
         Wagons.CollectionChanged += (_, __) => NotifyStatisticsChanged();
-        FeedbackPoints.CollectionChanged += (_, __) => NotifyStatisticsChanged();
     }
 
     private void NotifyStatisticsChanged()
@@ -109,7 +101,6 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
         OnPropertyChanged(nameof(TrainCount));
         OnPropertyChanged(nameof(LocomotiveCount));
         OnPropertyChanged(nameof(WagonCount));
-        OnPropertyChanged(nameof(FeedbackPointCount));
     }
 
     /// <summary>
@@ -153,10 +144,6 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
         GoodsWagons.Clear();
         foreach (var gw in Model.GoodsWagons)
             GoodsWagons.Add(new GoodsWagonViewModel(gw));
-
-        FeedbackPoints.Clear();
-        foreach (var fp in Model.FeedbackPoints)
-            FeedbackPoints.Add(fp);
 
         NotifyStatisticsChanged();
     }

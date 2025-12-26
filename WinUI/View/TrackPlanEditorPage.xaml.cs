@@ -32,9 +32,25 @@ public sealed partial class TrackPlanEditorPage
         InitializeComponent();
         DataContext = viewModel;
         _snapService = snapService;
+        
+        // Sync ViewModel ZoomLevel with ScrollViewer ZoomFactor
+        viewModel.PropertyChanged += ViewModel_PropertyChanged;
     }
 
     public TrackPlanEditorViewModel ViewModel => (TrackPlanEditorViewModel)DataContext;
+
+    /// <summary>
+    /// Sync ZoomLevel changes from ViewModel to ScrollViewer ZoomFactor.
+    /// </summary>
+    private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(TrackPlanEditorViewModel.ZoomLevel))
+        {
+            // Convert ZoomLevel (25-200%) to ZoomFactor (0.25-2.0)
+            var zoomFactor = (float)(ViewModel.ZoomLevel / 100.0);
+            CanvasScrollViewer.ChangeView(null, null, zoomFactor);
+        }
+    }
 
     #region Keyboard Shortcuts
     private void Page_KeyDown(object sender, KeyRoutedEventArgs e)

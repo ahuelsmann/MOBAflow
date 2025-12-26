@@ -27,14 +27,6 @@
             <TitleBar.IconSource>
                 <FontIconSource FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE7C0;" />
             </TitleBar.IconSource>
-            <TitleBar.RightHeader>
-                <ToggleSwitch
-                    FontSize="12"
-                    IsEnabled="True"
-                    IsOn="{x:Bind ViewModel.IsDarkMode, Mode=TwoWay}"
-                    OffContent="Light"
-                    OnContent="Dark" />
-            </TitleBar.RightHeader>
         </TitleBar>
 
         <!--  NavigationView  -->
@@ -75,15 +67,6 @@
                     Visibility="{Binding ViewModel.IsWorkflowsPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE945;" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItemSeparator />
-                <NavigationViewItem
-                    Content="Feedback Points"
-                    Tag="feedbackpoints"
-                    Visibility="{Binding ViewModel.IsFeedbackPointsPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE72C;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItemSeparator />
@@ -130,13 +113,30 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <!--  Compact CommandBar with labels on the side  -->
-                <CommandBar
-                    Grid.Row="0"
-                    Background="Transparent"
-                    DefaultLabelPosition="Right"
-                    IsOpen="False"
-                    OverflowButtonVisibility="Auto">
+                <!--  Theme Toggle and CommandBar on same row  -->
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!--  Theme Toggle (left side)  -->
+                    <ToggleSwitch
+                        Grid.Column="0"
+                        Margin="12,0,0,0"
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        IsOn="{x:Bind ViewModel.IsDarkMode, Mode=TwoWay}"
+                        OffContent="Light"
+                        OnContent="Dark" />
+
+                    <!--  Compact CommandBar (right side)  -->
+                    <CommandBar
+                        Grid.Column="1"
+                        Background="Transparent"
+                        DefaultLabelPosition="Right"
+                        IsOpen="False"
+                        OverflowButtonVisibility="Auto">
                     <!--  File Operations  -->
                     <AppBarButton Command="{x:Bind ViewModel.NewSolutionCommand}" Label="New">
                         <AppBarButton.Icon>
@@ -180,7 +180,8 @@
                         Command="{x:Bind ViewModel.ResetJourneyCommand}"
                         Icon="Refresh"
                         Label="Reset" />
-                </CommandBar>
+                    </CommandBar>
+                </Grid>
 
                 <!--  Content Frame for page navigation  -->
                 <Frame x:Name="ContentFrame" Grid.Row="1" />

@@ -13,7 +13,6 @@
         AudioActionTemplate="{StaticResource AudioActionTemplate}"
         CommandActionTemplate="{StaticResource CommandActionTemplate}"
         DefaultTemplate="{StaticResource DefaultTemplate}"
-        FeedbackPointTemplate="{StaticResource FeedbackPointTemplate}"
         JourneyTemplate="{StaticResource JourneyTemplate}"
         ProjectTemplate="{StaticResource ProjectTemplate}"
         StationTemplate="{StaticResource StationTemplate}"
@@ -383,33 +382,6 @@
         </ScrollViewer>
     </DataTemplate>
 
-    <!--  ============================================  -->
-    <!--  FeedbackPoint Template (Domain Object)  -->
-    <!--  ============================================  -->
-    <DataTemplate x:Key="FeedbackPointTemplate">
-        <ScrollViewer>
-            <StackPanel Padding="16" Spacing="16">
-                <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Feedback Point Properties" />
-
-                <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
-
-                <NumberBox
-                    Header="InPort"
-                    Minimum="1"
-                    SpinButtonPlacementMode="Inline"
-                    Value="{Binding InPort, Mode=TwoWay}" />
-
-                <TextBox
-                    MinHeight="80"
-                    AcceptsReturn="True"
-                    Header="Description"
-                    PlaceholderText="Optional description for this feedback point"
-                    Text="{Binding Description, Mode=TwoWay}"
-                    TextWrapping="Wrap" />
-            </StackPanel>
-        </ScrollViewer>
-    </DataTemplate>
-
     <DataTemplate x:Key="ProjectTemplate">
         <ScrollViewer>
             <StackPanel Padding="16" Spacing="16">
@@ -431,7 +403,6 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -493,17 +464,6 @@
                             FontWeight="SemiBold"
                             Foreground="{ThemeResource AccentFillColorDefaultBrush}"
                             Text="{Binding WagonCount, Mode=OneWay}" />
-
-                        <TextBlock
-                            Grid.Row="5"
-                            Grid.Column="0"
-                            Text="Feedback Points:" />
-                        <TextBlock
-                            Grid.Row="5"
-                            Grid.Column="1"
-                            FontWeight="SemiBold"
-                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                            Text="{Binding FeedbackPointCount, Mode=OneWay}" />
                     </Grid>
                 </StackPanel>
 

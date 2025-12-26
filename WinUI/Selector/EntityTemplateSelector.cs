@@ -39,11 +39,6 @@ public class EntityTemplateSelector : DataTemplateSelector
     public DataTemplate? ProjectTemplate { get; set; }
 
     /// <summary>
-    /// DataTemplate for FeedbackPointOnTrack (Domain object)
-    /// </summary>
-    public DataTemplate? FeedbackPointTemplate { get; set; }
-
-    /// <summary>
     /// DataTemplate for LocomotiveViewModel
     /// </summary>
     public DataTemplate? LocomotiveTemplate { get; set; }
@@ -90,7 +85,6 @@ public class EntityTemplateSelector : DataTemplateSelector
             PassengerWagonViewModel => WagonTemplate,
             GoodsWagonViewModel => WagonTemplate,
             ProjectViewModel => ProjectTemplate,
-            FeedbackPointOnTrack => FeedbackPointTemplate,
             AnnouncementViewModel => AnnouncementActionTemplate,
             AudioViewModel => AudioActionTemplate,
             CommandViewModel => CommandActionTemplate,

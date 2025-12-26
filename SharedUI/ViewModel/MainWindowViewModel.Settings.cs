@@ -170,7 +170,7 @@ public partial class MainWindowViewModel
     /// </summary>
     public string? SelectedSpeechEngine
     {
-        get => _settings.Speech.SpeakerEngineName ?? AvailableSpeechEngines[0];
+        get => _settings.Speech.SpeakerEngineName ?? AvailableSpeechEngines.FirstOrDefault() ?? "None";
         set
         {
             if (_settings.Speech.SpeakerEngineName != value)
@@ -241,6 +241,20 @@ public partial class MainWindowViewModel
         }
     }
 
+    public double CountOfFeedbackPoints
+    {
+        get => _settings.Counter.CountOfFeedbackPoints;
+        set
+        {
+            if (_settings.Counter.CountOfFeedbackPoints != (int)value)
+            {
+                _settings.Counter.CountOfFeedbackPoints = (int)value;
+                OnPropertyChanged();
+                // Note: Requires restart to re-initialize Statistics collection
+            }
+        }
+    }
+
     #endregion
 
     #region Feature Toggle Properties (Read-Only for NavigationView Visibility)
@@ -268,12 +282,6 @@ public partial class MainWindowViewModel
     /// Bound to NavigationView item visibility.
     /// </summary>
     public bool IsWorkflowsPageAvailable => _settings.FeatureToggles.IsWorkflowsPageAvailable;
-
-    /// <summary>
-    /// Gets whether the Feedback Points page is available.
-    /// Bound to NavigationView item visibility.
-    /// </summary>
-    public bool IsFeedbackPointsPageAvailable => _settings.FeatureToggles.IsFeedbackPointsPageAvailable;
 
     /// <summary>
     /// Gets whether the Track Plan Editor page is available.
@@ -305,7 +313,6 @@ public partial class MainWindowViewModel
     public string? SolutionPageLabel => _settings.FeatureToggles.SolutionPageLabel;
     public string? JourneysPageLabel => _settings.FeatureToggles.JourneysPageLabel;
     public string? WorkflowsPageLabel => _settings.FeatureToggles.WorkflowsPageLabel;
-    public string? FeedbackPointsPageLabel => _settings.FeatureToggles.FeedbackPointsPageLabel;
     public string? TrackPlanEditorPageLabel => _settings.FeatureToggles.TrackPlanEditorPageLabel;
     public string? JourneyMapPageLabel => _settings.FeatureToggles.JourneyMapPageLabel;
     public string? SettingsPageLabel => _settings.FeatureToggles.SettingsPageLabel;
@@ -313,7 +320,6 @@ public partial class MainWindowViewModel
     
     // Settings Page CheckBox Content (with labels)
     
-    public string FeedbackPointsCheckBoxContent => FormatPageContent("Feedback Points Page", FeedbackPointsPageLabel);
     public string TrackPlanEditorCheckBoxContent => FormatPageContent("Track Plan Editor Page", TrackPlanEditorPageLabel);
     public string JourneyMapCheckBoxContent => FormatPageContent("Journey Map Page", JourneyMapPageLabel);
     public string MonitorCheckBoxContent => FormatPageContent("Monitor Page", MonitorPageLabel);

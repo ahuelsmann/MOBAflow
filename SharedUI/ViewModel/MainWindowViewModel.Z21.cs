@@ -331,9 +331,13 @@ public partial class MainWindowViewModel
                 Debug.WriteLine("✅ Z21 connection confirmed - Z21 is responding");
                 
                 // Initialize JourneyManager if needed
-                if (_journeyManager == null && Solution.Projects.Count > 0)
+                if (_journeyManager == null)
                 {
-                    InitializeJourneyManager(Solution.Projects[0]);
+                    var firstProject = Solution.Projects.FirstOrDefault();
+                    if (firstProject != null)
+                    {
+                        InitializeJourneyManager(firstProject);
+                    }
                 }
             }
             else

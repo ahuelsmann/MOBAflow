@@ -180,7 +180,6 @@ public partial class App
         services.AddTransient<View.SolutionPage>();
         services.AddTransient<View.JourneysPage>();
         services.AddTransient<View.WorkflowsPage>();
-        services.AddTransient<View.FeedbackPointsPage>();
         services.AddTransient<View.TrackPlanEditorPage>();
         services.AddTransient<View.JourneyMapPage>();
         services.AddTransient<View.SettingsPage>();

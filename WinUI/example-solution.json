@@ -195,36 +195,14 @@
           "FirstPos": 0
         }
       ],
-      "FeedbackPoints": [
-        {
-          "InPort": 1,
-          "Name": "Feedback Point 1",
-          "Description": null
-        },
-        {
-          "InPort": 2,
-          "Name": "Feedback Point 2",
-          "Description": null
-        },
-        {
-          "InPort": 3,
-          "Name": "Feedback Point 3",
-          "Description": null
-        },
-        {
-          "InPort": 4,
-          "Name": "Feedback Point 4",
-          "Description": null
-        }
-      ],
       "TrackLayout": {
         "Id": "e6e3a4e0-3e4e-4829-a158-40b2baaa737a",
         "Name": "Untitled Layout",
         "Description": null,
         "TrackSystem": "Piko A-Gleis",
         "Scale": "H0",
-        "WidthMm": 2400.0,
-        "HeightMm": 1600.0,
+        "WidthMm": 2660.0,
+        "HeightMm": 1100.0,
         "Segments": [
           {
             "Id": "401",

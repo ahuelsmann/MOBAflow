@@ -145,7 +145,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     private double inPortInput = double.NaN;
 
     /// <summary>
-    /// Current zoom level (25-200%).
+    /// Current zoom level (10-400%).
     /// </summary>
     [ObservableProperty]
     private double zoomLevel = 100.0;
@@ -182,9 +182,11 @@ public partial class TrackPlanEditorViewModel : ObservableObject
 
     #region Canvas Size (configurable work surface)
     /// <summary>
-    /// Scale factor: 1 pixel = 0.5mm (so 2400mm = 1200px).
+    /// Scale factor for canvas rendering: 1mm = 1px for simple 1:1 display.
+    /// This is only used for displaying mm values to the user, NOT for scaling coordinates.
+    /// Track coordinates from AnyRail are already in pixels and used directly.
     /// </summary>
-    public const double PixelsPerMm = 0.5;
+    public const double PixelsPerMm = 1.0;
 
     /// <summary>
     /// Layout name (persisted).
@@ -211,26 +213,30 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     private string scale = "H0";
 
     /// <summary>
-    /// Canvas width in mm (real-world dimensions).
+    /// Canvas width in mm (real-world table dimensions for user display only).
+    /// The actual canvas size in pixels is determined by the track coordinates.
     /// </summary>
     [ObservableProperty]
-    private double canvasWidthMm = 2400;
+    private double canvasWidthMm = 2660;
 
     /// <summary>
-    /// Canvas height in mm (real-world dimensions).
+    /// Canvas height in mm (real-world table dimensions for user display only).
+    /// The actual canvas size in pixels is determined by the track coordinates.
     /// </summary>
     [ObservableProperty]
-    private double canvasHeightMm = 1600;
+    private double canvasHeightMm = 1100;
 
     /// <summary>
     /// Canvas width in pixels (for rendering).
+    /// This should match the maximum X coordinate from track segments.
     /// </summary>
-    public double CanvasWidth => CanvasWidthMm * PixelsPerMm;
+    public double CanvasWidth => 4000; // Enough space for all tracks from AnyRail import
 
     /// <summary>
     /// Canvas height in pixels (for rendering).
+    /// This should match the maximum Y coordinate from track segments.
     /// </summary>
-    public double CanvasHeight => CanvasHeightMm * PixelsPerMm;
+    public double CanvasHeight => 1650; // Enough space for all tracks from AnyRail import
 
     /// <summary>
     /// Display text for canvas dimensions.
@@ -477,22 +483,22 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     private bool CanRotateSegment() => SelectedSegment is not null;
 
     /// <summary>
-    /// Zoom in (increase zoom by 25%).
+    /// Zoom in (increase zoom by 5%).
     /// </summary>
     [RelayCommand]
     private void ZoomIn()
     {
-        ZoomLevel = Math.Min(200, ZoomLevel + 25);
+        ZoomLevel = Math.Min(400, ZoomLevel + 5);
         OnPropertyChanged(nameof(ZoomLevelText));
     }
 
     /// <summary>
-    /// Zoom out (decrease zoom by 25%).
+    /// Zoom out (decrease zoom by 5%).
     /// </summary>
     [RelayCommand]
     private void ZoomOut()
     {
-        ZoomLevel = Math.Max(25, ZoomLevel - 25);
+        ZoomLevel = Math.Max(10, ZoomLevel - 5);
         OnPropertyChanged(nameof(ZoomLevelText));
     }
 

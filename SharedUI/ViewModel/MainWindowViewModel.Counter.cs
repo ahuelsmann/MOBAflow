@@ -73,35 +73,32 @@ public partial class MainWindowViewModel
     #region Counter Initialization
 
     /// <summary>
-    /// Initializes the Statistics collection from the current project's FeedbackPoints.
-    /// Call this when a project is loaded or when FeedbackPoints change.
+    /// Initializes the Statistics collection from the CountOfFeedbackPoints setting.
+    /// Call this when a project is loaded or when the setting changes.
     /// </summary>
     public void InitializeStatisticsFromFeedbackPoints()
     {
         Statistics.Clear();
 
-        if (SelectedProject?.Model?.FeedbackPoints != null && SelectedProject.Model.FeedbackPoints.Count > 0)
+        // Create statistics based on CountOfFeedbackPoints setting
+        int count = _settings.Counter.CountOfFeedbackPoints;
+        if (count > 0)
         {
-            // Create statistics from actual feedback points
-            foreach (var feedbackPoint in SelectedProject.Model.FeedbackPoints.OrderBy(fp => fp.InPort))
+            for (int i = 1; i <= count; i++)
             {
                 Statistics.Add(new InPortStatistic
                 {
-                    InPort = (int)feedbackPoint.InPort,
-                    Name = feedbackPoint.Name,
+                    InPort = i,
+                    Name = $"Feedback Point {i}",
                     Count = 0,
                     TargetLapCount = GlobalTargetLapCount
                 });
             }
-            this.Log($"✅ Initialized {Statistics.Count} track statistics from FeedbackPoints");
+            this.Log($"✅ Initialized {Statistics.Count} track statistics from settings (InPorts 1-{count})");
         }
         else
         {
-            // Fallback: Create default statistics (InPorts 1-3)
-            Statistics.Add(new InPortStatistic { InPort = 1, Count = 0, TargetLapCount = GlobalTargetLapCount });
-            Statistics.Add(new InPortStatistic { InPort = 2, Count = 0, TargetLapCount = GlobalTargetLapCount });
-            Statistics.Add(new InPortStatistic { InPort = 3, Count = 0, TargetLapCount = GlobalTargetLapCount });
-            this.Log("⚠️ No FeedbackPoints found - initialized default track statistics (InPorts 1-3)");
+            this.Log("ℹ️ CountOfFeedbackPoints is 0 - no track statistics initialized. Set CountOfFeedbackPoints in settings to enable.");
         }
     }
 

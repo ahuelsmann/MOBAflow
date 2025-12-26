@@ -19,7 +19,6 @@ public class Project
         Trains = [];
         Workflows = [];
         Journeys = [];
-        FeedbackPoints = [];
     }
 
     public string Name { get; set; } = string.Empty;
@@ -32,7 +31,6 @@ public class Project
     public List<Train> Trains { get; set; }
     public List<Workflow> Workflows { get; set; }
     public List<Journey> Journeys { get; set; }
-    public List<FeedbackPointOnTrack> FeedbackPoints { get; set; }
 
     /// <summary>
     /// Track layout for this project (segments, connections, work surface size).

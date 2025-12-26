@@ -14,7 +14,11 @@ public class AppSettings
     public CounterSettings Counter { get; set; } = new();
     public LoggingSettings Logging { get; set; } = new();
     public HealthCheckSettings HealthCheck { get; set; } = new();
-    public FeatureToggleSettings FeatureToggles { get; set; } = new();
+    /// <summary>
+    /// Feature toggles for experimental/preview features (WinUI only).
+    /// This setting is optional - if not present in appsettings.json, defaults to new FeatureToggleSettings().
+    /// </summary>
+    public FeatureToggleSettings? FeatureToggles { get; set; }
 
     /// <summary>
     /// Gets Azure Speech Service subscription key (convenience property).
@@ -139,6 +143,14 @@ public class ApplicationSettings
 /// </summary>
 public class CounterSettings
 {
+    /// <summary>
+    /// Number of feedback points (InPorts) in your track layout.
+    /// Used to auto-initialize track statistics when no Solution is loaded (default: 0).
+    /// Example: If you have 3 feedback points, set this to 3 → Statistics will show InPorts 1, 2, 3.
+    /// Note: InPort 0 means "disabled" or "not in use". InPort 1 = Feedback Point 1 (simple 1:1 mapping).
+    /// </summary>
+    public int CountOfFeedbackPoints { get; set; } = 0;
+
     /// <summary>
     /// Global target lap count for all tracks (default: 10).
     /// </summary>

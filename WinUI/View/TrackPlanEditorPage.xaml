@@ -88,7 +88,7 @@
                             Width="{x:Bind ViewModel.CanvasWidth, Mode=OneWay}"
                             Height="{x:Bind ViewModel.CanvasHeight, Mode=OneWay}"
                             AllowDrop="True"
-                            Background="#1a1a1a"
+                            Background="{ThemeResource SolidBackgroundFillColorBaseAltBrush}"
                             DragOver="TrackCanvas_DragOver"
                             Drop="TrackCanvas_Drop"
                             PointerMoved="TrackCanvas_PointerMoved_Drag"
@@ -235,8 +235,8 @@
                             <Slider
                                 x:Name="ZoomSlider"
                                 Width="100"
-                                Maximum="200"
-                                Minimum="25"
+                                Maximum="400"
+                                Minimum="10"
                                 ToolTipService.ToolTip="Zoom Level"
                                 Value="{x:Bind ViewModel.ZoomLevel, Mode=TwoWay}" />
                             <Button

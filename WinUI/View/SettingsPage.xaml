@@ -279,6 +279,46 @@
                 </StackPanel>
             </Expander>
 
+            <!--  Track Statistics Section  -->
+            <Expander
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                Header="Track Statistics"
+                IsExpanded="False">
+                <Expander.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon FontSize="20" Glyph="&#xE9D9;" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Style="{StaticResource SubtitleTextBlockStyle}"
+                                Text="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </Expander.HeaderTemplate>
+
+                <StackPanel Padding="56,16,0,16" Spacing="16">
+                    <NumberBox
+                        MaxWidth="200"
+                        HorizontalAlignment="Left"
+                        Header="Number of Feedback Points"
+                        Maximum="99"
+                        Minimum="0"
+                        SpinButtonPlacementMode="Inline"
+                        Value="{x:Bind ViewModel.CountOfFeedbackPoints, Mode=TwoWay}">
+                        <NumberBox.Description>
+                            <TextBlock TextWrapping="Wrap">
+                                <Run Text="How many feedback points (InPorts) are in your track layout?" />
+                                <LineBreak />
+                                <Run Text="Example: 3 → Track Statistics will show InPorts 1, 2, 3" />
+                                <LineBreak />
+                                <Run FontStyle="Italic" Text="Note: Restart required to apply changes" />
+                            </TextBlock>
+                        </NumberBox.Description>
+                    </NumberBox>
+                </StackPanel>
+            </Expander>
+
             <!--  Health Check Section  -->
             <Expander
                 HorizontalAlignment="Stretch"
@@ -366,12 +406,6 @@
                         FontWeight="SemiBold"
                         Style="{StaticResource BodyStrongTextBlockStyle}"
                         Text="Track Management (Experimental)" />
-                    
-                    <CheckBox Content="{x:Bind ViewModel.FeedbackPointsCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsFeedbackPointsPageAvailable, Mode=TwoWay}">
-                        <ToolTipService.ToolTip>
-                            <TextBlock Text="Track sensor configuration (experimental)" />
-                        </ToolTipService.ToolTip>
-                    </CheckBox>
                     
                     <CheckBox Content="{x:Bind ViewModel.TrackPlanEditorCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsTrackPlanEditorPageAvailable, Mode=TwoWay}">
                         <ToolTipService.ToolTip>
