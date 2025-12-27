@@ -106,6 +106,114 @@ public partial class DetailsPage : ContentPage
 </Style>
 ```
 
+### Compact Control Spacing
+
+**CheckBox + Label Pattern (Negative Margin Technique)**
+
+When using `Scale` to reduce control size, use negative margin to maintain visual compactness:
+
+```xaml
+<!-- ✅ CORRECT: Compact CheckBox with tight label spacing -->
+<HorizontalStackLayout Spacing="6">
+    <CheckBox
+        IsChecked="{Binding UseTimerFilter}"
+        Scale="0.90"
+        VerticalOptions="Center" />
+    <Label
+        FontSize="12"
+        Text="Timer in s" 
+        Margin="-8,0,0,0"    <!-- Negative margin compensates for invisible padding -->
+        TextColor="{DynamicResource TextSecondary}"
+        VerticalOptions="Center" />
+</HorizontalStackLayout>
+```
+
+**Why this works:**
+- `Scale="0.90"` shrinks visual size but preserves hit box (good for touch)
+- `Spacing="6"` would be too large due to invisible CheckBox padding
+- `Margin="-8,0,0,0"` pulls label closer for visual balance
+- Result: Compact appearance + functional touch target
+
+**Alternatives to avoid:**
+```xaml
+<!-- ❌ Less precise: Removing all spacing -->
+<HorizontalStackLayout Spacing="0">
+    <CheckBox Scale="0.90" />
+    <Label Margin="2,0,0,0" />  <!-- Less control than negative margin -->
+</HorizontalStackLayout>
+
+<!-- ❌ Overkill: Using Grid for 2 elements -->
+<Grid ColumnDefinitions="Auto,Auto">
+    <CheckBox Grid.Column="0" />
+    <Label Grid.Column="1" Margin="-8,0,0,0" />
+</Grid>
+```
+**Scale Guidelines for Mobile:**
+- `Scale="1.0"` - Default (often too large for compact UI)
+- `Scale="0.90"` - CheckBox (recommended)
+- `Scale="0.75"` - Switch controls (recommended)
+- Never go below `0.7` (accessibility issues)
+
+### Stepper Control Pattern (±Buttons)
+
+Standard pattern for increment/decrement controls:
+
+```xaml
+<HorizontalStackLayout Spacing="6">
+    <!-- Decrement Button -->
+    <Button
+        Padding="8,4"
+        BackgroundColor="{DynamicResource SurfaceDark}"
+        Command="{Binding DecrementCommand}"
+        CornerRadius="4"
+        FontSize="16"
+        Text="−"
+        TextColor="{DynamicResource TextPrimary}"
+        WidthRequest="36" />
+    
+    <!-- Value Display Border -->
+    <Border
+        Padding="10,4"
+        BackgroundColor="{DynamicResource SurfaceDark}"
+        StrokeShape="RoundRectangle 4"
+        StrokeThickness="0"
+        WidthRequest="44">  <!-- Adjust width based on content -->
+        <Label
+            FontAttributes="Bold"
+            FontSize="15"
+            HorizontalOptions="Center"
+            Text="{Binding Count}"
+            TextColor="{DynamicResource TextPrimary}"
+            VerticalOptions="Center" />
+    </Border>
+    
+    <!-- Increment Button -->
+    <Button
+        Padding="8,4"
+        BackgroundColor="{DynamicResource SurfaceDark}"
+        Command="{Binding IncrementCommand}"
+        CornerRadius="4"
+        FontSize="16"
+        Text="+"
+        TextColor="{DynamicResource TextPrimary}"
+        WidthRequest="36" />
+</HorizontalStackLayout>
+```
+
+**Width Guidelines:**
+- Buttons: `WidthRequest="36"` (square touch target)
+- Value display:
+  - `WidthRequest="44"` - Single/double digit integers (e.g., "3", "10")
+  - `WidthRequest="70"` - Decimal values (e.g., "2.5")
+  
+**Example from MOBAsmart:**
+```xaml
+<!-- Timer interval with decimal display -->
+<Border WidthRequest="70">
+    <Label Text="{Binding TimerIntervalSeconds, StringFormat='{0:F1}'}" />
+</Border>
+```
+
 ## 📱 Touch & Mobile UX
 
 ### Touch Targets
@@ -175,4 +283,3 @@ MAUI/
 │   └── Android/                ← Android-specific code
 ├── MauiProgram.cs              ← DI registration
 └── App.xaml                    ← Application entry point
-```

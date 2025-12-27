@@ -162,7 +162,12 @@ public class UdpWrapper : IUdpClientWrapper
     /// <exception cref="SocketException">Thrown if all retry attempts fail</exception>
     public async Task SendAsync(byte[] data, CancellationToken cancellationToken = default, int maxRetries = 3)
     {
-        if (_client == null) throw new InvalidOperationException("UdpWrapper is not connected");
+        // Thread-safe check: Capture client reference to prevent null reference during disconnect
+        var client = _client;
+        if (client == null || _disposed)
+        {
+            throw new InvalidOperationException("UdpWrapper is not connected");
+        }
 
         var sendStartTime = Stopwatch.StartNew();
         int attempt = 0;
@@ -192,7 +197,8 @@ public class UdpWrapper : IUdpClientWrapper
         {
             try
             {
-                await _client.SendAsync(data, cancellationToken).ConfigureAwait(false);
+                // Use captured client reference for thread-safety
+                await client.SendAsync(data, cancellationToken).ConfigureAwait(false);
                 
                 sendStartTime.Stop();
                 _logger?.LogDebug("✅ Send successful in {ElapsedMs}ms", sendStartTime.ElapsedMilliseconds);

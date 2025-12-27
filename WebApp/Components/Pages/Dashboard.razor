@@ -1,6 +1,6 @@
-﻿@page "/"
+@page "/"
 @page "/dashboard"
-@inject MainWindowViewModel ViewModel
+@inject WebAppViewModel ViewModel
 @using System.ComponentModel
 @using Moba.SharedUI.ViewModel
 @implements IDisposable
@@ -36,49 +36,61 @@
 
     <div class="tracks-section">
         <h3 class="section-title">Track Statistics</h3>
-        <div class="cards-grid">
-            @foreach (var stat in ViewModel.Statistics)
-            {
-                <div class="track-card card">
-                    <div class="card-header">
-                        <div class="track-header">
-                            <h4 class="track-name">Track @stat.InPort</h4>
-                            <span class="status-badge in-progress">@stat.LapCountFormatted</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="track-stats">
-                            <div class="stat-item">
-                                <span class="stat-label">InPort:</span>
-                                <span class="stat-value">@stat.InPort</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Lap Count:</span>
-                                <span class="stat-value">@stat.Count</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Target:</span>
-                                <span class="stat-value">@stat.TargetLapCount</span>
-                            </div>
-                            @if (stat.LastFeedbackTime.HasValue)
-                            {
-                                <div class="stat-item">
-                                    <span class="stat-label">Last Detected:</span>
-                                    <span class="stat-value">@stat.LastFeedbackTimeFormatted</span>
-                                </div>
-                            }
-                            @if (stat.LastLapTime.HasValue)
-                            {
-                                <div class="stat-item">
-                                    <span class="stat-label">Last Lap Time:</span>
-                                    <span class="stat-value">@stat.LastLapTimeFormatted</span>
-                                </div>
-                            }
-                        </div>
-                    </div>
+        @if (ViewModel.Statistics.Count == 0)
+        {
+            <div class="empty-state card">
+                <div class="card-body">
+                    <p class="text-muted">No track statistics configured. Set CountOfFeedbackPoints in settings.</p>
+                    <p class="text-muted">Current value: @ViewModel.CountOfFeedbackPoints feedback points</p>
                 </div>
-            }
-        </div>
+            </div>
+        }
+        else
+        {
+            <div class="cards-grid">
+                @foreach (var stat in ViewModel.Statistics)
+                {
+                    <div class="track-card card">
+                        <div class="card-header">
+                            <div class="track-header">
+                                <h4 class="track-name">Track @stat.InPort</h4>
+                                <span class="status-badge in-progress">@stat.LapCountFormatted</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="track-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">InPort:</span>
+                                    <span class="stat-value">@stat.InPort</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Lap Count:</span>
+                                    <span class="stat-value">@stat.Count</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Target:</span>
+                                    <span class="stat-value">@stat.TargetLapCount</span>
+                                </div>
+                                @if (stat.LastFeedbackTime.HasValue)
+                                {
+                                    <div class="stat-item">
+                                        <span class="stat-label">Last Detected:</span>
+                                        <span class="stat-value">@stat.LastFeedbackTimeFormatted</span>
+                                    </div>
+                                }
+                                @if (stat.LastLapTime.HasValue)
+                                {
+                                    <div class="stat-item">
+                                        <span class="stat-label">Last Lap Time:</span>
+                                        <span class="stat-value">@stat.LastLapTimeFormatted</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
     </div>
 </div>
 

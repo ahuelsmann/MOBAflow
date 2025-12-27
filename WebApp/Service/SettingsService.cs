@@ -20,6 +20,17 @@ public class SettingsService : ISettingsService
 
     #region Application Settings
     /// <summary>
+    /// Loads settings (no-op for Blazor Server - settings come from appsettings.json via DI).
+    /// </summary>
+    public Task LoadSettingsAsync()
+    {
+        // In Blazor Server, settings are loaded by the host from appsettings.json
+        // This is a no-op to satisfy the interface
+        Debug.WriteLine("ℹ️ Blazor Server: Settings loaded from appsettings.json via DI");
+        return Task.CompletedTask;
+    }
+    
+    /// <summary>
     /// Gets the current application settings.
     /// </summary>
     public AppSettings GetSettings() => _settings;

@@ -4,6 +4,7 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.Input;
 
 using Domain;
+using Service;  // For NullIoService
 
 using System.Diagnostics;
 
@@ -57,6 +58,13 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanSaveSolution))]
     private async Task SaveSolutionAsync()
     {
+        // Skip if IoService not available (WebApp/MAUI)
+        if (_ioService is NullIoService)
+        {
+            Debug.WriteLine("⚠️ Save not supported on this platform");
+            return;
+        }
+
         // Notify subscribers to sync their data before saving
         SolutionSaving?.Invoke(this, EventArgs.Empty);
 
@@ -89,7 +97,8 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private async Task NewSolutionAsync()
     {
-        if (SaveSolutionCommand.CanExecute(null))
+        // Skip file operations if IoService not available (WebApp/MAUI)
+        if (_ioService is not NullIoService && SaveSolutionCommand.CanExecute(null))
         {
             await SaveSolutionCommand.ExecuteAsync(null);
         }
@@ -123,6 +132,13 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private async Task LoadSolutionAsync()
     {
+        // Skip if IoService not available (WebApp/MAUI)
+        if (_ioService is NullIoService)
+        {
+            Debug.WriteLine("⚠️ Load not supported on this platform");
+            return;
+        }
+
         var (loadedSolution, path, error) = await _ioService.LoadAsync();
 
         if (!string.IsNullOrEmpty(error))
@@ -142,6 +158,13 @@ public partial class MainWindowViewModel
     /// </summary>
     public async Task LoadSolutionFromPathAsync(string filePath)
     {
+        // Skip if IoService not available (WebApp/MAUI)
+        if (_ioService is NullIoService)
+        {
+            Debug.WriteLine("⚠️ Load not supported on this platform");
+            return;
+        }
+
         var (loadedSolution, path, error) = await _ioService.LoadFromPathAsync(filePath);
 
         if (!string.IsNullOrEmpty(error))
@@ -202,7 +225,7 @@ public partial class MainWindowViewModel
         Debug.WriteLine($"   Projects: {Solution.Projects.Count}, Journeys: {Solution.Projects.FirstOrDefault()?.Journeys.Count ?? 0}");
     }
 
-    private bool CanSaveSolution() => true;
+    private bool CanSaveSolution() => _ioService is not NullIoService;
 
     /// <summary>
     /// Loads cities from City Library into AvailableCities for UI binding.

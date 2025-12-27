@@ -32,7 +32,13 @@ public class Z21 : IZ21
     private int _systemStatePollingIntervalSeconds = 5;
     private int _keepAliveFailures;
     private const int MAX_KEEPALIVE_FAILURES = 3;
+    
+    // Lock hierarchy (acquire from top to bottom to prevent deadlock):
+    // 1. _connectionLock (protects Connect/Disconnect state)
+    // 2. _sendLock (protects individual UDP send operations)
     private readonly SemaphoreSlim _sendLock = new(1, 1);
+    private readonly SemaphoreSlim _connectionLock = new(1, 1);
+    
     private bool _disposed;
     private bool _isConnected;
 
@@ -49,7 +55,6 @@ public class Z21 : IZ21
         _logger = logger;
         _trafficMonitor = trafficMonitor;
         _udp.Received += OnUdpReceived;
-        _logger = logger;
     }
 
     /// <summary>
@@ -77,37 +82,45 @@ public class Z21 : IZ21
     /// <param name="cancellationToken">Enables the controlled cancellation of long-running operations.</param>
     public async Task ConnectAsync(IPAddress address, int port = Z21Protocol.DefaultPort, CancellationToken cancellationToken = default)
     {
-        _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        
-        // Reset connection state
-        _isConnected = false;
-        
-        await _udp.ConnectAsync(address, port, _cancellationTokenSource.Token).ConfigureAwait(false);
-        
-        // Small delay between commands to prevent Z21 overload
-        await SendHandshakeAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
-        await Task.Delay(50, _cancellationTokenSource.Token).ConfigureAwait(false);
-        
-        await SetBroadcastFlagsAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
-        await Task.Delay(50, _cancellationTokenSource.Token).ConfigureAwait(false);
-        
-        // Request initial status - this should trigger a response
-        await GetStatusAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
-        
-        // Request version information (serial number, hardware type, firmware version)
-        await Task.Delay(50, _cancellationTokenSource.Token).ConfigureAwait(false);
-        await RequestVersionInfoAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
+        await _connectionLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            
+            // Reset connection state
+            _isConnected = false;
+            
+            await _udp.ConnectAsync(address, port, _cancellationTokenSource.Token).ConfigureAwait(false);
+            
+            // Small delay between commands to prevent Z21 overload
+            await SendHandshakeAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
+            await Task.Delay(50, _cancellationTokenSource.Token).ConfigureAwait(false);
+            
+            await SetBroadcastFlagsAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
+            await Task.Delay(50, _cancellationTokenSource.Token).ConfigureAwait(false);
+            
+            // Request initial status - this should trigger a response
+            await GetStatusAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
+            
+            // Request version information (serial number, hardware type, firmware version)
+            await Task.Delay(50, _cancellationTokenSource.Token).ConfigureAwait(false);
+            await RequestVersionInfoAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
 
-        // Start keepalive timer immediately (will also serve as connection check)
-        StartKeepaliveTimer();
+            // Start keepalive timer immediately (will also serve as connection check)
+            StartKeepaliveTimer();
 
-        // Start system state polling timer for frequent updates (current, voltage, temperature)
-        StartSystemStatePollingTimer();
+            // Start system state polling timer for frequent updates (current, voltage, temperature)
+            StartSystemStatePollingTimer();
 
-        _logger?.LogInformation("🔄 Z21 connection initiated to {Address}:{Port}. Waiting for response...", address, port);
-        
-        // Note: IsConnected will be set to true when Z21 responds (in OnUdpReceived)
-        // This is handled by the _connectionTcs logic in the message handlers
+            _logger?.LogInformation("🔄 Z21 connection initiated to {Address}:{Port}. Waiting for response...", address, port);
+            
+            // Note: IsConnected will be set to true when Z21 responds (in OnUdpReceived)
+            // This is handled by the _connectionTcs logic in the message handlers
+        }
+        finally
+        {
+            _connectionLock.Release();
+        }
     }
 
     /// <summary>
@@ -117,48 +130,62 @@ public class Z21 : IZ21
     /// </summary>
     public async Task DisconnectAsync()
     {
-        // Stop timers first
-        StopKeepaliveTimer();
-        StopSystemStatePollingTimer();
+        await _connectionLock.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            // Step 1: Stop timers FIRST to prevent new callbacks from starting
+            StopKeepaliveTimer();
+            StopSystemStatePollingTimer();
+            
+            // Step 2: Small delay to allow any in-flight timer callbacks to complete
+            // This prevents race condition where timer callback starts just before timer.Dispose()
+            await Task.Delay(100).ConfigureAwait(false);
 
-        // Only send LAN_LOGOFF if UDP is connected
-        if (_udp.IsConnected)
-        {
-            // Send LAN_LOGOFF to immediately free client slot on Z21
-            // This is critical for development: without it, the Z21 keeps "zombie clients"
-            // and can hit the 20-client limit after many debug sessions
-            try
+            // Step 3: Only send LAN_LOGOFF if UDP is connected
+            if (_udp.IsConnected)
             {
-                await _udp.SendAsync(Z21Command.BuildLogoff()).ConfigureAwait(false);
-                _logger?.LogInformation("LAN_LOGOFF sent to Z21");
+                // Send LAN_LOGOFF to immediately free client slot on Z21
+                // This is critical for development: without it, the Z21 keeps "zombie clients"
+                // and can hit the 20-client limit after many debug sessions
+                try
+                {
+                    await _udp.SendAsync(Z21Command.BuildLogoff()).ConfigureAwait(false);
+                    _logger?.LogInformation("LAN_LOGOFF sent to Z21");
+                }
+                catch (Exception ex)
+                {
+                    // Don't fail disconnect if logoff fails (e.g., network already down)
+                    _logger?.LogWarning("Failed to send LAN_LOGOFF: {Message}", ex.Message);
+                }
             }
-            catch (Exception ex)
+            
+            // Step 4: Cancel token source (this will cancel any pending async operations)
+            if (_cancellationTokenSource != null)
             {
-                // Don't fail disconnect if logoff fails (e.g., network already down)
-                _logger?.LogWarning("Failed to send LAN_LOGOFF: {Message}", ex.Message);
+                // Cancel and dispose safely
+                await _cancellationTokenSource.CancelAsync();
+                _cancellationTokenSource.Dispose();
+                _cancellationTokenSource = null;
             }
+            
+            // Step 5: Reset connection state and failure counter
+            var wasConnected = _isConnected;
+            _isConnected = false;
+            _keepAliveFailures = 0;
+            
+            if (wasConnected)
+            {
+                OnConnectedChanged?.Invoke(false);
+            }
+            
+            // Step 6: Stop UDP (this sets _client = null)
+            await _udp.StopAsync().ConfigureAwait(false);
+            _logger?.LogInformation("Z21 disconnected successfully");
         }
-        
-        if (_cancellationTokenSource != null)
+        finally
         {
-            // Cancel and dispose safely
-            await _cancellationTokenSource.CancelAsync();
-            _cancellationTokenSource.Dispose();
-            _cancellationTokenSource = null;
+            _connectionLock.Release();
         }
-        
-        // Reset connection state and failure counter
-        var wasConnected = _isConnected;
-        _isConnected = false;
-        _keepAliveFailures = 0;
-        
-        if (wasConnected)
-        {
-            OnConnectedChanged?.Invoke(false);
-        }
-        
-        await _udp.StopAsync().ConfigureAwait(false);
-        _logger?.LogInformation("Z21 disconnected successfully");
     }
 
     #region Keepalive Management
@@ -219,6 +246,13 @@ public class Z21 : IZ21
             return;
         }
         
+        // Check if UDP is still connected before attempting send
+        if (!_udp.IsConnected)
+        {
+            _logger?.LogTrace("Keep-Alive skipped: UDP not connected");
+            return;
+        }
+        
         try
         {
             // Create timeout token (5 seconds)
@@ -240,6 +274,11 @@ public class Z21 : IZ21
         catch (OperationCanceledException) when (_cancellationTokenSource?.Token.IsCancellationRequested == true)
         {
             // Normal during shutdown, don't log
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("not connected"))
+        {
+            // UDP disconnected during timer callback - this is expected during shutdown
+            _logger?.LogTrace("Keep-Alive skipped: {Message}", ex.Message);
         }
         catch (Exception ex)
         {
@@ -339,6 +378,13 @@ public class Z21 : IZ21
         {
             return;
         }
+        
+        // Check if UDP is still connected before attempting send
+        if (!_udp.IsConnected)
+        {
+            _logger?.LogTrace("SystemState request skipped: UDP not connected");
+            return;
+        }
 
         try
         {
@@ -354,6 +400,11 @@ public class Z21 : IZ21
         {
             // Normal during shutdown, don't log
         }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("not connected"))
+        {
+            // UDP disconnected during timer callback - this is expected during shutdown
+            _logger?.LogTrace("SystemState request skipped: {Message}", ex.Message);
+        }
         catch (Exception ex)
         {
             _logger?.LogWarning("SystemState request failed: {Message}", ex.Message);
@@ -367,15 +418,22 @@ public class Z21 : IZ21
     /// </summary>
     private async Task SendAsync(byte[] data, CancellationToken cancellationToken = default)
     {
+        // ✅ Validate data BEFORE acquiring lock to fail fast
+        ArgumentNullException.ThrowIfNull(data, nameof(data));
+
         await _sendLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            // Log sent packet to traffic monitor
-            _trafficMonitor?.LogSentPacket(
-                data,
-                Z21Monitor.ParsePacketType(data),
-                $"Length: {data.Length} bytes"
-            );
+            // ✅ Only call ParsePacketType when actually logging (deferred execution)
+            // This prevents NullReferenceException if ParsePacketType throws
+            if (_trafficMonitor != null)
+            {
+                _trafficMonitor.LogSentPacket(
+                    data,
+                    Z21Monitor.ParsePacketType(data),
+                    $"Length: {data.Length} bytes"
+                );
+            }
 
             await _udp.SendAsync(data).ConfigureAwait(false);
         }
@@ -448,7 +506,7 @@ public class Z21 : IZ21
     /// If the UDP connection is closed, it will establish a new connection to the specified address.
     /// 
     /// Recovery Sequence (based on Z21 protocol behavior):
-    /// 1. Check if UDP client is connected, if not connect to specified address
+    /// 1. Check if UDP client is connected, if not connect to the specified address
     /// 2. Emergency Stop (0x06 0x00 0x40 0x00 0x80 0x80) - "Kicks" the Z21 awake
     /// 3. LAN_LOGOFF (0x04 0x00 0x30 0x00) - Clears any hanging client session
     /// 4. LAN_GET_SERIAL_NUMBER (0x04 0x00 0x10 0x00) - Simple command that always responds
@@ -566,11 +624,15 @@ public class Z21 : IZ21
         }
 
         // Log received packet to traffic monitor
-        _trafficMonitor?.LogReceivedPacket(
-            content,
-            Z21Monitor.ParsePacketType(content),
-            $"Length: {content.Length} bytes"
-        );
+        // ✅ Only call ParsePacketType when actually logging (deferred execution)
+        if (_trafficMonitor != null)
+        {
+            _trafficMonitor.LogReceivedPacket(
+                content,
+                Z21Monitor.ParsePacketType(content),
+                $"Length: {content.Length} bytes"
+            );
+        }
 
         // Log all received packets for debugging
         _logger?.LogDebug("UDP received {Length} bytes: {Payload}", content.Length, Z21Protocol.ToHex(content));
@@ -739,6 +801,7 @@ public class Z21 : IZ21
             StopKeepaliveTimer();
             StopSystemStatePollingTimer();
             _sendLock.Dispose();
+            _connectionLock.Dispose();
             try { _udp.Dispose(); } catch { /* ignore */ }
             _cancellationTokenSource?.Cancel();
             _cancellationTokenSource?.Dispose();

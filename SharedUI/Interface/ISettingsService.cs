@@ -16,6 +16,11 @@ public interface ISettingsService
     AppSettings GetSettings();
 
     /// <summary>
+    /// Loads settings from appsettings.json.
+    /// </summary>
+    Task LoadSettingsAsync();
+
+    /// <summary>
     /// Saves settings to appsettings.json.
     /// </summary>
     Task SaveSettingsAsync(AppSettings settings);

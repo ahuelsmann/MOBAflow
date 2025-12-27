@@ -15,6 +15,7 @@ using Domain;
 using Domain.Enum;
 
 using Interface;
+using Service;  // For NullIoService
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -51,17 +52,17 @@ public partial class MainWindowViewModel : ObservableObject
 
     #region Constructor
     public MainWindowViewModel(
-        IIoService ioService,
         IZ21 z21,
         WorkflowService workflowService,
         IUiDispatcher uiDispatcher,
         AppSettings settings,
         Solution solution,
+        IIoService? ioService = null,  // ✅ Optional for WebApp/MAUI
         ICityService? cityLibraryService = null,
         ISettingsService? settingsService = null,
         AnnouncementService? announcementService = null)
     {
-        _ioService = ioService;
+        _ioService = ioService ?? new NullIoService();  // Use null object pattern
         _z21 = z21;
         _workflowService = workflowService;
         _uiDispatcher = uiDispatcher;
@@ -165,6 +166,15 @@ public partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private JourneyViewModel? selectedJourney;
+
+    /// <summary>
+    /// Called when SelectedJourney changes. Notifies ResetJourneyCommand to update its CanExecute state.
+    /// </summary>
+    partial void OnSelectedJourneyChanged(JourneyViewModel? value)
+    {
+        _ = value; // Suppress unused parameter warning
+        ResetJourneyCommand?.NotifyCanExecuteChanged();
+    }
 
     [ObservableProperty]
     private StationViewModel? selectedStation;

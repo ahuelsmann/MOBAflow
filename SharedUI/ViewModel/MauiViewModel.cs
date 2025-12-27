@@ -17,23 +17,49 @@ public partial class MauiViewModel : ObservableObject
     private readonly IZ21 _z21;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly AppSettings _settings;
+    private readonly ISettingsService _settingsService;
 
-    public MauiViewModel(IZ21 z21, IUiDispatcher uiDispatcher, AppSettings settings)
+    public MauiViewModel(IZ21 z21, IUiDispatcher uiDispatcher, AppSettings settings, ISettingsService settingsService)
     {
         _z21 = z21;
         _uiDispatcher = uiDispatcher;
         _settings = settings;
+        _settingsService = settingsService;
 
         // Subscribe to Z21 events
         _z21.Received += OnFeedbackReceived;
         _z21.OnSystemStateChanged += OnZ21SystemStateChanged;
         _z21.OnConnectedChanged += OnZ21ConnectedChanged;
 
-        // Initialize with saved settings
-        Z21IpAddress = _settings.Z21.CurrentIpAddress;
-        CountOfFeedbackPoints = _settings.Counter.CountOfFeedbackPoints;
+        // ✅ Initialize with loaded settings (settings were loaded in SettingsService constructor)
+        LoadSettingsIntoViewModel();
+        
+        // Apply polling interval to Z21 on startup (5 seconds - not configurable)
+        _z21.SetSystemStatePollingInterval(5);
         
         InitializeStatistics();
+    }
+    
+    /// <summary>
+    /// Loads settings from AppSettings singleton into ViewModel properties.
+    /// Called during constructor after SettingsService has loaded the file.
+    /// </summary>
+    private void LoadSettingsIntoViewModel()
+    {
+        Z21IpAddress = _settings.Z21.CurrentIpAddress;
+        CountOfFeedbackPoints = _settings.Counter.CountOfFeedbackPoints;
+        GlobalTargetLapCount = _settings.Counter.TargetLapCount;
+        UseTimerFilter = _settings.Counter.UseTimerFilter;
+        TimerIntervalSeconds = _settings.Counter.TimerIntervalSeconds;
+        
+        System.Diagnostics.Debug.WriteLine("═══════════════════════════════════════════════════════");
+        System.Diagnostics.Debug.WriteLine("✅ Settings loaded into ViewModel:");
+        System.Diagnostics.Debug.WriteLine($"   IP Address: {Z21IpAddress}");
+        System.Diagnostics.Debug.WriteLine($"   Feedback Points: {CountOfFeedbackPoints}");
+        System.Diagnostics.Debug.WriteLine($"   Target Laps: {GlobalTargetLapCount}");
+        System.Diagnostics.Debug.WriteLine($"   Use Timer Filter: {UseTimerFilter}");
+        System.Diagnostics.Debug.WriteLine($"   Timer Interval: {TimerIntervalSeconds}s");
+        System.Diagnostics.Debug.WriteLine("═══════════════════════════════════════════════════════");
     }
 
     #region Z21 Connection
@@ -106,10 +132,51 @@ public partial class MauiViewModel : ObservableObject
     [ObservableProperty]
     private int countOfFeedbackPoints = 3;
 
+    [ObservableProperty]
+    private int globalTargetLapCount = 10;
+
+    [ObservableProperty]
+    private bool useTimerFilter;
+
+    [ObservableProperty]
+    private double timerIntervalSeconds = 2.0;
+
+    // Last feedback time tracking for timer filter
+    private readonly Dictionary<int, DateTime> _lastFeedbackTime = new();
+
     partial void OnCountOfFeedbackPointsChanged(int value)
     {
         _settings.Counter.CountOfFeedbackPoints = value;
         InitializeStatistics();
+        _ = SaveSettingsAsync(); // Auto-save
+    }
+
+    partial void OnGlobalTargetLapCountChanged(int value)
+    {
+        _ = value; // Suppress unused parameter warning
+        _settings.Counter.TargetLapCount = value;
+        
+        // Update all existing statistics
+        foreach (var stat in Statistics)
+        {
+            stat.TargetLapCount = value;
+        }
+        
+        _ = SaveSettingsAsync(); // Auto-save
+    }
+
+    partial void OnUseTimerFilterChanged(bool value)
+    {
+        _ = value; // Suppress unused parameter warning
+        _settings.Counter.UseTimerFilter = value;
+        _ = SaveSettingsAsync(); // Auto-save
+    }
+
+    partial void OnTimerIntervalSecondsChanged(double value)
+    {
+        _ = value; // Suppress unused parameter warning
+        _settings.Counter.TimerIntervalSeconds = value;
+        _ = SaveSettingsAsync(); // Auto-save
     }
 
     private void InitializeStatistics()
@@ -121,7 +188,8 @@ public partial class MauiViewModel : ObservableObject
             {
                 InPort = i,
                 Name = $"Track {i}",
-                Count = 0
+                Count = 0,
+                TargetLapCount = GlobalTargetLapCount
             });
         }
     }
@@ -134,6 +202,74 @@ public partial class MauiViewModel : ObservableObject
             stat.Count = 0;
             stat.LastFeedbackTime = null;
             stat.LastLapTime = TimeSpan.Zero;
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanDecrementFeedbackPoints))]
+    private void DecrementFeedbackPoints()
+    {
+        if (CountOfFeedbackPoints > 1)
+        {
+            CountOfFeedbackPoints--;
+        }
+    }
+
+    private bool CanDecrementFeedbackPoints() => CountOfFeedbackPoints > 1;
+
+    [RelayCommand]
+    private void IncrementFeedbackPoints()
+    {
+        CountOfFeedbackPoints++;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanDecrementTargetLapCount))]
+    private void DecrementTargetLapCount()
+    {
+        if (GlobalTargetLapCount > 1)
+        {
+            GlobalTargetLapCount--;
+        }
+    }
+
+    private bool CanDecrementTargetLapCount() => GlobalTargetLapCount > 1;
+
+    [RelayCommand]
+    private void IncrementTargetLapCount()
+    {
+        GlobalTargetLapCount++;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanDecrementTimerInterval))]
+    private void DecrementTimerInterval()
+    {
+        if (TimerIntervalSeconds > 1.0)
+        {
+            TimerIntervalSeconds = Math.Round(TimerIntervalSeconds - 1.0, 1);
+        }
+    }
+
+    private bool CanDecrementTimerInterval() => TimerIntervalSeconds > 1.0;
+
+    [RelayCommand]
+    private void IncrementTimerInterval()
+    {
+        TimerIntervalSeconds = Math.Round(TimerIntervalSeconds + 1.0, 1);
+    }
+
+    /// <summary>
+    /// Saves all settings to persistent storage.
+    /// Called automatically when any counter setting changes.
+    /// </summary>
+    private async Task SaveSettingsAsync()
+    {
+        try
+        {
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+            System.Diagnostics.Debug.WriteLine("✅ Counter settings saved");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ Failed to save settings: {ex.Message}");
         }
     }
 
@@ -168,15 +304,31 @@ public partial class MauiViewModel : ObservableObject
             var stat = Statistics.FirstOrDefault(s => s.InPort == feedback.InPort);
             if (stat != null)
             {
-                stat.Count++;
-                stat.LastFeedbackTime = DateTime.Now;
-                
-                // Calculate lap time if we have a previous feedback
-                if (stat.LastLapTime != TimeSpan.Zero)
+                // Timer filter: Prevent duplicate counts from long trains
+                if (UseTimerFilter)
                 {
-                    var lapTime = DateTime.Now - (stat.LastFeedbackTime.Value - stat.LastLapTime);
-                    stat.LastLapTime = lapTime;
+                    if (_lastFeedbackTime.TryGetValue(feedback.InPort, out DateTime lastTime))
+                    {
+                        var elapsed = (DateTime.Now - lastTime).TotalSeconds;
+                        if (elapsed < TimerIntervalSeconds)
+                        {
+                            // Skip: Too soon after last feedback (same train still passing)
+                            return;
+                        }
+                    }
+                    _lastFeedbackTime[feedback.InPort] = DateTime.Now;
                 }
+
+                // Calculate lap time (time between two consecutive feedbacks)
+                DateTime now = DateTime.Now;
+                if (stat.LastFeedbackTime.HasValue)
+                {
+                    stat.LastLapTime = now - stat.LastFeedbackTime.Value;
+                }
+
+                // Update count and timestamp
+                stat.Count++;
+                stat.LastFeedbackTime = now;
             }
         });
     }

@@ -3,6 +3,7 @@ namespace Moba.SharedUI.ViewModel;
 
 using Common.Configuration;
 using CommunityToolkit.Mvvm.Input;
+using Service;  // For NullIoService
 using System.Collections.ObjectModel;
 
 /// <summary>
@@ -360,6 +361,14 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private async Task BrowseCityLibraryAsync()
     {
+        // Skip if IoService not available (WebApp/MAUI)
+        if (_ioService is NullIoService)
+        {
+            ErrorMessage = "File browsing not supported on this platform";
+            ShowErrorMessage = true;
+            return;
+        }
+
         try
         {
             var path = await _ioService.BrowseForJsonFileAsync();

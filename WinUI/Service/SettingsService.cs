@@ -22,9 +22,51 @@ public class SettingsService : ISettingsService
     {
         _settings = settings;
         _settingsFilePath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+        
+        // ✅ Load settings from file on startup
+        _ = LoadSettingsAsync();
     }
 
     #region Application Settings
+    /// <summary>
+    /// Loads settings from appsettings.json file.
+    /// If file doesn't exist, uses current default settings.
+    /// </summary>
+    public async Task LoadSettingsAsync()
+    {
+        try
+        {
+            if (File.Exists(_settingsFilePath))
+            {
+                var json = await File.ReadAllTextAsync(_settingsFilePath);
+                var loadedSettings = JsonConvert.DeserializeObject<AppSettings>(json);
+                
+                if (loadedSettings != null)
+                {
+                    // Copy all loaded values to the DI-registered singleton
+                    _settings.Application.LastSolutionPath = loadedSettings.Application.LastSolutionPath;
+                    _settings.Application.AutoLoadLastSolution = loadedSettings.Application.AutoLoadLastSolution;
+                    _settings.Z21.CurrentIpAddress = loadedSettings.Z21.CurrentIpAddress;
+                    _settings.Z21.DefaultPort = loadedSettings.Z21.DefaultPort;
+                    _settings.Counter.CountOfFeedbackPoints = loadedSettings.Counter.CountOfFeedbackPoints;
+                    _settings.Counter.TargetLapCount = loadedSettings.Counter.TargetLapCount;
+                    _settings.Counter.UseTimerFilter = loadedSettings.Counter.UseTimerFilter;
+                    _settings.Counter.TimerIntervalSeconds = loadedSettings.Counter.TimerIntervalSeconds;
+                    
+                    Debug.WriteLine($"✅ WinUI Settings loaded from {_settingsFilePath}");
+                }
+            }
+            else
+            {
+                Debug.WriteLine($"ℹ️ No settings file found at {_settingsFilePath}, using defaults");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"⚠️ Failed to load settings: {ex.Message}, using defaults");
+        }
+    }
+    
     /// <summary>
     /// Gets the current application settings from IOptions.
     /// </summary>

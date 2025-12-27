@@ -161,12 +161,12 @@ public partial class App
         services.AddSingleton<Domain.Solution>();
 
         services.AddSingleton(sp => new SharedUI.ViewModel.MainWindowViewModel(
-            sp.GetRequiredService<SharedUI.Interface.IIoService>(),
             sp.GetRequiredService<Backend.Interface.IZ21>(),
             sp.GetRequiredService<WorkflowService>(),
             sp.GetRequiredService<SharedUI.Interface.IUiDispatcher>(),
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<Domain.Solution>(),
+            sp.GetRequiredService<SharedUI.Interface.IIoService>(),  // Now optional (6th parameter)
             sp.GetService<SharedUI.Interface.ICityService>(),
             sp.GetService<SharedUI.Interface.ISettingsService>(),
             sp.GetService<AnnouncementService>()  // For TestSpeech command

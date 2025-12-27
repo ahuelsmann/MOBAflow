@@ -45,8 +45,8 @@ builder.Services.AddSingleton<DataManager>();
 // ✅ Solution as Singleton (initialized empty, can be loaded later by user)
 builder.Services.AddSingleton<Solution>();
 
-// ✅ MainWindowViewModel as Singleton (unified cross-platform ViewModel)
-builder.Services.AddSingleton<MainWindowViewModel>();
+// ✅ WebAppViewModel as Singleton (web-optimized ViewModel for Blazor Server)
+builder.Services.AddSingleton<WebAppViewModel>();
 
 var app = builder.Build();
 

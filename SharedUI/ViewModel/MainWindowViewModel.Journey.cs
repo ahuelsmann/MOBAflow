@@ -176,22 +176,26 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanResetJourneyCounter))]
     private void ResetJourneyCounter()
     {
-        if (SelectedJourney == null || _journeyManager == null) return;
+        if (SelectedJourney == null) return;
 
-        var state = _journeyManager.GetState(SelectedJourney.Model.Id);
-        if (state != null)
+        // If JourneyManager is available, reset the session state
+        if (_journeyManager != null)
         {
-            state.Counter = 0;
-            state.CurrentPos = 0;
-            state.CurrentStationName = string.Empty;
-            state.LastFeedbackTime = null;
-            
-            // Trigger UI update
-            OnPropertyChanged(nameof(SelectedJourney));
+            var state = _journeyManager.GetState(SelectedJourney.Model.Id);
+            if (state != null)
+            {
+                state.Counter = 0;
+                state.CurrentPos = 0;
+                state.CurrentStationName = string.Empty;
+                state.LastFeedbackTime = null;
+            }
         }
+        
+        // Always trigger UI update to reflect reset
+        OnPropertyChanged(nameof(SelectedJourney));
     }
 
-    private bool CanResetJourneyCounter() => SelectedJourney != null && _journeyManager != null;
+    private bool CanResetJourneyCounter() => SelectedJourney != null;
     #endregion
 
     #region Station Management (City Library)
