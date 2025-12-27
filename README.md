@@ -15,16 +15,25 @@
 - 🎯 **Journey Management** - Define train routes with multiple stations
 - 🔊 **Text-to-Speech** - Azure Cognitive Services & Windows Speech
 - ⚡ **Workflow Automation** - Event-driven action sequences
-- 🎨 **Multi-Platform** - WinUI (Windows), MAUI (Android), Blazor (Web)
+- 🎨 **Track Plan Import** - Import layouts from AnyRail (user-exported XML files)
+- 📱 **Multi-Platform** - WinUI (Windows), MAUI (Android), Blazor (Web)
+
+## 🛤️ AnyRail Integration
+
+MOBAflow supports **importing track layouts from AnyRail** (user-exported XML files for personal use). This feature enables:
+- ✅ Import of user-created AnyRail track plans (XML format)
+- ✅ Automatic detection of track geometry and article codes
+- ✅ SVG path generation for visualization
+
+**Important:** AnyRail is proprietary software by Carsten Kühling & Paco Ahlqvist. MOBAflow is **independent** and **not affiliated** with AnyRail. The import feature is provided for **interoperability** purposes (fair use) and allows users to import their **own exported track plans**. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for legal details.
 
 ## 📋 Quick Links
 
-- 📖 **Documentation:** [`docs/README.md`](docs/README.md)
+- 📖 **Documentation:** [`docs/wiki/INDEX.md`](docs/wiki/INDEX.md)
 - 🏗️ **Architecture:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - 🤖 **AI Instructions:** [`.github/copilot-instructions.md`](.github/copilot-instructions.md)
 - 🤝 **Contributing:** [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - 📜 **Third-Party Licenses:** [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md)
-- ⚖️ **AnyRail Integration:** [`docs/ANYRAIL-INTEGRATION-LEGAL.md`](docs/ANYRAIL-INTEGRATION-LEGAL.md) *(Legal basis & compliance)*
 
 ## 🚀 Getting Started
 
@@ -109,8 +118,11 @@ MOBAflow uses several open-source packages. See [`THIRD-PARTY-NOTICES.md`](THIRD
 ## 🙏 Acknowledgments
 
 - **Roco** for the Z21 Digital Command Station and protocol documentation
+- **AnyRail** (Carsten Kühling & Paco Ahlqvist) - MOBAflow supports importing user-exported track plans (XML format) for interoperability
+- **Piko** for the A-Track system geometry specifications
 - **.NET Foundation** for the amazing .NET ecosystem
 - **CommunityToolkit** contributors for MVVM helpers
+- **GitHub Copilot** for AI-assisted development and code quality improvements
 - **All contributors** who help improve MOBAflow
 
 ---

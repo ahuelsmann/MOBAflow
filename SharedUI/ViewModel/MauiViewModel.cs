@@ -46,19 +46,27 @@ public partial class MauiViewModel : ObservableObject
     /// </summary>
     private void LoadSettingsIntoViewModel()
     {
+        System.Diagnostics.Debug.WriteLine("═══════════════════════════════════════════════════════");
+        System.Diagnostics.Debug.WriteLine("🔄 MauiViewModel.LoadSettingsIntoViewModel START");
+        System.Diagnostics.Debug.WriteLine($"   AppSettings.Counter.CountOfFeedbackPoints: {_settings.Counter.CountOfFeedbackPoints}");
+        System.Diagnostics.Debug.WriteLine($"   AppSettings.Counter.TargetLapCount: {_settings.Counter.TargetLapCount}");
+        System.Diagnostics.Debug.WriteLine($"   AppSettings.Counter.UseTimerFilter: {_settings.Counter.UseTimerFilter}");
+        System.Diagnostics.Debug.WriteLine($"   AppSettings.Counter.TimerIntervalSeconds: {_settings.Counter.TimerIntervalSeconds}");
+        System.Diagnostics.Debug.WriteLine($"   AppSettings.Z21.CurrentIpAddress: {_settings.Z21.CurrentIpAddress}");
+        
         Z21IpAddress = _settings.Z21.CurrentIpAddress;
         CountOfFeedbackPoints = _settings.Counter.CountOfFeedbackPoints;
         GlobalTargetLapCount = _settings.Counter.TargetLapCount;
         UseTimerFilter = _settings.Counter.UseTimerFilter;
         TimerIntervalSeconds = _settings.Counter.TimerIntervalSeconds;
         
-        System.Diagnostics.Debug.WriteLine("═══════════════════════════════════════════════════════");
-        System.Diagnostics.Debug.WriteLine("✅ Settings loaded into ViewModel:");
-        System.Diagnostics.Debug.WriteLine($"   IP Address: {Z21IpAddress}");
-        System.Diagnostics.Debug.WriteLine($"   Feedback Points: {CountOfFeedbackPoints}");
-        System.Diagnostics.Debug.WriteLine($"   Target Laps: {GlobalTargetLapCount}");
-        System.Diagnostics.Debug.WriteLine($"   Use Timer Filter: {UseTimerFilter}");
-        System.Diagnostics.Debug.WriteLine($"   Timer Interval: {TimerIntervalSeconds}s");
+        System.Diagnostics.Debug.WriteLine("───────────────────────────────────────────────────────");
+        System.Diagnostics.Debug.WriteLine("✅ Values loaded into ViewModel:");
+        System.Diagnostics.Debug.WriteLine($"   Z21IpAddress: {Z21IpAddress}");
+        System.Diagnostics.Debug.WriteLine($"   CountOfFeedbackPoints: {CountOfFeedbackPoints}");
+        System.Diagnostics.Debug.WriteLine($"   GlobalTargetLapCount: {GlobalTargetLapCount}");
+        System.Diagnostics.Debug.WriteLine($"   UseTimerFilter: {UseTimerFilter}");
+        System.Diagnostics.Debug.WriteLine($"   TimerIntervalSeconds: {TimerIntervalSeconds}s");
         System.Diagnostics.Debug.WriteLine("═══════════════════════════════════════════════════════");
     }
 
@@ -146,6 +154,7 @@ public partial class MauiViewModel : ObservableObject
 
     partial void OnCountOfFeedbackPointsChanged(int value)
     {
+        System.Diagnostics.Debug.WriteLine($"🔔 OnCountOfFeedbackPointsChanged: {value}");
         _settings.Counter.CountOfFeedbackPoints = value;
         InitializeStatistics();
         _ = SaveSettingsAsync(); // Auto-save
@@ -153,7 +162,7 @@ public partial class MauiViewModel : ObservableObject
 
     partial void OnGlobalTargetLapCountChanged(int value)
     {
-        _ = value; // Suppress unused parameter warning
+        System.Diagnostics.Debug.WriteLine($"🔔 OnGlobalTargetLapCountChanged: {value}");
         _settings.Counter.TargetLapCount = value;
         
         // Update all existing statistics
@@ -167,14 +176,14 @@ public partial class MauiViewModel : ObservableObject
 
     partial void OnUseTimerFilterChanged(bool value)
     {
-        _ = value; // Suppress unused parameter warning
+        System.Diagnostics.Debug.WriteLine($"🔔 OnUseTimerFilterChanged: {value}");
         _settings.Counter.UseTimerFilter = value;
         _ = SaveSettingsAsync(); // Auto-save
     }
 
     partial void OnTimerIntervalSecondsChanged(double value)
     {
-        _ = value; // Suppress unused parameter warning
+        System.Diagnostics.Debug.WriteLine($"🔔 OnTimerIntervalSecondsChanged: {value}");
         _settings.Counter.TimerIntervalSeconds = value;
         _ = SaveSettingsAsync(); // Auto-save
     }

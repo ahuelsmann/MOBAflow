@@ -232,17 +232,23 @@ Implementing New Feature?
 
 | User Mentions | Auto-Load File | Trigger Keywords |
 |---------------|----------------|------------------|
-| **Backend Work** | `.github/instructions/backend.instructions.md` | *Manager.cs, *Service.cs, SessionState, IUiDispatcher, JourneyManager |
-| **WinUI UI** | `.github/instructions/winui.instructions.md` | .xaml, EditorPage, ContentControl, x:Bind, DataTemplate, SelectorBar |
-| **ViewModel** | `.github/instructions/winui.instructions.md` | *ViewModel.cs, ObservableProperty, RelayCommand, MVVM |
+| **Backend Work** | `docs/copilot/backend.instructions.md` | *Manager.cs, *Service.cs, SessionState, IUiDispatcher, JourneyManager |
+| **WinUI UI** | `docs/copilot/winui.instructions.md` | .xaml, EditorPage, ContentControl, x:Bind, DataTemplate, SelectorBar |
+| **ViewModel** | `docs/copilot/winui.instructions.md` | *ViewModel.cs, ObservableProperty, RelayCommand, MVVM |
 | **Domain Entities** | Inline rules below | Journey, Station, Train, Locomotive, Workflow, FeedbackPointOnTrack (check: GUID refs?) |
-| **Tests** | `.github/instructions/test.instructions.md` | Test.csproj, [Test], FakeUdpClient, NUnit |
-| **State Management** | `.github/instructions/hasunsavedchanges-patterns.instructions.md` | UndoRedo, HasUnsavedChanges, StateManager |
-| **MAUI Mobile** | `.github/instructions/maui.instructions.md` | .razor, MainThread, MOBAsmart |
-| **Blazor Web** | `.github/instructions/blazor.instructions.md` | .razor, MOBAdash, @code |
-| **DI Pattern & Pages** | `.github/instructions/di-pattern-consistency.instructions.md` | New page, factory method, inconsistent pattern, GetRequiredService, NavigationService |
+| **Tests** | `docs/copilot/test.instructions.md` | Test.csproj, [Test], FakeUdpClient, NUnit |
+| **State Management** | `docs/copilot/hasunsavedchanges-patterns.instructions.md` | UndoRedo, HasUnsavedChanges, StateManager |
+| **MAUI Mobile** | `docs/copilot/maui.instructions.md` | .razor, MainThread, MOBAsmart |
+| **MAUI .NET 9 Constraint** | Read ARCHITECTURE section above! | MAUI update, .NET 10, UraniumUI, CommunityToolkit.Maui version |
+| **Blazor Web** | `docs/copilot/blazor.instructions.md` | .razor, MOBAdash, @code |
+| **DI Pattern & Pages** | `docs/copilot/di-pattern-consistency.instructions.md` | New page, factory method, inconsistent pattern, GetRequiredService, NavigationService |
 | **UI Layout Changes** | Read CORE PRINCIPLES section above! | Layout, buttons, Add/Delete, header, CommandBar, ListView, Page design |
 | **Warnings/Cleanup** | Inline section below | ReSharper, warnings, refactor, cleanup |
+| **User Documentation** | `docs/wiki/` | User guide, wiki, documentation, help |
+| **MAUI Persistence** | `docs/copilot/MAUI-PERSISTIERUNG-TEST.md` | Settings persistence, Android storage, appsettings.json |
+| **MAUI Background** | `docs/copilot/MAUI-BACKGROUND-SERVICE-CONCEPT.md` | Background service, foreground service, Android service |
+| **Icon Update** | `docs/copilot/ICON-UPDATE-GUIDE.md` | WinUI 3 app icon, ICO generation, Package.appxmanifest |
+
 
 **Execution:** Before answering, scan keywords → Execute `get_file(<instruction_file>)` → Apply rules.
 
@@ -277,6 +283,27 @@ Implementing New Feature?
 ### **MAUI Layer (Mobile UI)**
 - ✅ **YES:** MainThread.BeginInvokeOnMainThread, ContentView, MAUI-specific controls
 - ❌ **NO:** WinUI-specific APIs, Desktop-only patterns
+
+### **⚠️ MAUI .NET 9 Constraint (WICHTIG!)**
+**MOBAsmart (MAUI) bleibt auf .NET 9** - NICHT auf .NET 10 upgraden!
+
+**Gründe:**
+- ✅ **UraniumUI 2.14.0** - Keine .NET 10 Unterstützung bestätigt
+- ✅ **MAUI-Stabilität** - .NET 9 ist production-ready
+- ✅ **Build-Optimierungen** - Debug-Settings getestet auf .NET 9
+
+**NICHT updaten (bis Migration geplant):**
+| Package | Aktuelle Version | Grund |
+|---------|------------------|-------|
+| `Microsoft.Maui.Controls` | 9.0.100 | .NET 9 MAUI |
+| `CommunityToolkit.Maui` | 9.1.1 | Kompatibel mit .NET 9 |
+| `CommunityToolkit.Maui.MediaElement` | 4.1.1 | Kompatibel mit .NET 9 |
+
+**Erlaubt zu updaten:**
+- ✅ `Microsoft.Extensions.*` (plattformunabhängig)
+- ✅ `CommunityToolkit.Mvvm` (SharedUI, kein MAUI-Bezug)
+- ✅ Andere Backend/Domain Packages
+
 
 ### **Test Layer**
 - ✅ **YES:** Fake objects (FakeUdpClient), Dependency Injection, NUnit
@@ -630,90 +657,39 @@ public object? CurrentSelectedObject {
         - `Padding="12"` for comfortable inner spacing
         - `CornerRadius="8"` for modern card appearance
 
-        ### **Fluent Design 2**
-        - ✅ **Spacing:** Padding="16" Spacing="16" (consistent 16px)
-        - ✅ **Typography:** `{ThemeResource SubtitleTextBlockStyle}`
-        - ✅ **Theme-Aware:** `{ThemeResource TextFillColorSecondaryBrush}`
-        - ✅ **Modern Controls:** NumberBox (SpinButtonPlacementMode="Inline"), TimePicker
+### **Fluent Design 2**
+- ✅ **Spacing:** Padding="16" Spacing="16" (consistent 16px)
+- ✅ **Typography:** `{ThemeResource SubtitleTextBlockStyle}`
+- ✅ **Theme-Aware:** `{ThemeResource TextFillColorSecondaryBrush}`
+- ✅ **Modern Controls:** NumberBox (SpinButtonPlacementMode="Inline"), TimePicker
 
 ---
 
 ## 📚 Deep-Dive Documentation (Load on Demand)
 
 ### **Layer-Specific Instructions**
-- `.github/instructions/backend.instructions.md` - Platform-independent patterns
-- `.github/instructions/winui.instructions.md` - WinUI 3 UI patterns
-- `.github/instructions/maui.instructions.md` - Mobile patterns
-- `.github/instructions/blazor.instructions.md` - Web patterns
-- `.github/instructions/test.instructions.md` - Testing guidelines
-- `.github/instructions/hasunsavedchanges-patterns.instructions.md` - State management
+- `docs/copilot/backend.instructions.md` - Platform-independent patterns
+- `docs/copilot/winui.instructions.md` - WinUI 3 UI patterns
+- `docs/copilot/maui.instructions.md` - Mobile patterns
+- `docs/copilot/blazor.instructions.md` - Web patterns
+- `docs/copilot/test.instructions.md` - Testing guidelines
+- `docs/copilot/hasunsavedchanges-patterns.instructions.md` - State management
 
 ### **Architecture Documentation**
 - `docs/ARCHITECTURE-INSIGHTS-2025-12-09.md` - Journey execution flow, SessionState, ViewModel 1:1 mapping
 - `docs/XAML-BEHAVIORSEVENT-TO-COMMAND.md` - Event-to-Command pattern (XAML Behaviors v3.0)
 
----
+### **User Documentation (Wiki)**
+- `docs/wiki/INDEX.md` - Platform Overview & Quick Start
+- `docs/wiki/MOBAFLOW-USER-GUIDE.md` - Windows Desktop Guide
+- `docs/wiki/MOBASMART-USER-GUIDE.md` - Android Mobile Guide  
+- `docs/wiki/MOBASMART-WIKI.md` - Android Extended Documentation
+- `docs/wiki/MOBADASH-USER-GUIDE.md` - Blazor Web Guide
 
-## 🔧 Manager Architecture (Feedback Processing)
+### **Technical Documentation (Copilot)**
+- `docs/copilot/MAUI-PERSISTIERUNG-TEST.md` - Settings persistence testing
+- `docs/copilot/MAUI-BACKGROUND-SERVICE-CONCEPT.md` - Background service concept
+- `docs/copilot/ICON-UPDATE-GUIDE.md` - WinUI 3 App Icon Update Guide
 
-### **Principle:** Different Perspectives on Z21 Feedback Events
 
-```
-Z21 Feedback (InPort=5)
-        ↓
-┌───────┼────────┬────────────┐
-│       │        │            │
-Journey Workflow Station   (Future)
-Manager Manager  Manager
-```
-
-### **1. JourneyManager (Train Perspective)** ✅ Implemented
-- **Question:** "Where is the **train** right now?"
-- **Entity:** `Journey` (Journey.InPort = train sensor)
-- **SessionState:** `JourneySessionState` (Counter, CurrentPos, CurrentStationName)
-- **Event:** `StationChanged` (train reached station)
-- **Trigger:** Execute Station.Flow workflow
-
-### **2. WorkflowManager (Workflow Perspective)** ⏸️ Future
-- **Question:** "Which **workflow** is executing?"
-- **Entity:** `Workflow` (Workflow.InPort = trigger sensor)
-- **Independent:** Not tied to train movements
-
-### **3. StationManager (Platform Perspective)** ⏸️ Future
-- **Question:** "What's happening on **Platform 1**?"
-- **Entity:** `Station` (Platform sensors)
-- **Use Case:** Delay announcements, schedule conflicts
-
----
-
-## 📈 Session Outcomes (2025-12-23)
-
-### Refactoring Summary
-This session completed a comprehensive architecture optimization:
-
-1. **Property Names** - Z21 prefixes removed, context-aware naming achieved
-2. **Z21 Models** - DTOs consolidated from 2 files to 1, organization improved
-3. **TrackPlanEditorPage** - MVVM compliance improved (518→480 LOC)
-4. **CounterViewModel** - Integration verified, unified ViewModel confirmed
-
-### Current State
-- ✅ **DI Pattern:** 100% constructor injection across all layers
-- ✅ **MVVM Pattern:** 95% compliance (TrackPlanEditor is acceptable exception)
-- ✅ **Layer Separation:** Clean and well-defined
-- ✅ **ViewModel Unification:** Single MainWindowViewModel across WinUI/MAUI/WebApp
-- ⚠️ **Code-Behind:** ~730 LOC (target <500, pending TrackPlanEditor Phase 2)
-- ⚠️ **Warnings:** ~620 (target <100)
-
-### Documentation
-- `docs/ARCHITECTURE-REVIEW-2025-12-23.md` - Detailed analysis
-- `docs/REFACTORING-SESSION-2025-12-23.md` - Session completion report
-- `docs/SESSION-SUMMARY-2025-12-23.md` - Quick reference
-- `docs/COUNTER-VIEWMODEL-INTEGRATION-PLAN.md` - Integration methodology
-
-### Files Improved
-- Deleted: Z21VersionInfo.cs, Z21TrafficPacket.cs
-- Created: Backend/Model/Z21Models.cs
-- Modified: 10+ files across WinUI, MAUI, WebApp, Backend
-- Result: Cleaner, more maintainable codebase
-
----
+------

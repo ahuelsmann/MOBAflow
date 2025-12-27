@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI;
 
+using SharedUI.Interface;
 using SharedUI.ViewModel;
 
 public partial class App
@@ -56,13 +57,23 @@ public partial class App
 
 	protected override Window CreateWindow(IActivationState? activationState)
 	{
-		// ✅ Create MainPage AFTER App is initialized
+		// ✅ CRITICAL: Load settings BEFORE creating MainPage
+		System.Diagnostics.Debug.WriteLine("🚀 App.CreateWindow: Loading settings...");
+		var settingsService = _services.GetRequiredService<ISettingsService>();
+		
+		// ⚠️ BLOCKING: Wait for settings to load (on background thread to avoid UI freeze)
+		Task.Run(async () => await settingsService.LoadSettingsAsync()).Wait();
+		
+		System.Diagnostics.Debug.WriteLine("✅ App.CreateWindow: Settings loaded, creating MainPage...");
+
+		// ✅ Create MainPage AFTER settings are loaded
 		var mainPage = _services.GetRequiredService<MainPage>();
 		var window = new Window(mainPage);
 
 		// ✅ Subscribe to lifecycle events for cleanup
 		window.Destroying += OnWindowDestroying;
 
+		System.Diagnostics.Debug.WriteLine("✅ App.CreateWindow: Window created successfully");
 		return window;
 	}
 
@@ -95,6 +106,9 @@ public partial class App
 		}
 	}
 }
+
+
+
 
 
 

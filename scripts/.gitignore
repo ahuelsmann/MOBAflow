@@ -1,0 +1,3 @@
+# Ignore temporary script outputs
+*.log
+*.tmp

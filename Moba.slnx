@@ -10,6 +10,13 @@
     <File Path="README.md" />
     <File Path="THIRD-PARTY-NOTICES.md" />
   </Folder>
+  <Folder Name="/Solution Items/scripts/">
+    <File Path="scripts/README.md" />
+    <File Path="scripts/create-ico.ps1" />
+    <File Path="scripts/fix-manifest.ps1" />
+    <File Path="scripts/resize-icons-dotnet.ps1" />
+    <File Path="scripts/generate-icons.ps1" />
+  </Folder>
   <Folder Name="/Solution Items/docs/">
     <File Path="docs/ARCHITECTURE.md" />
     <File Path="docs/ASYNC-PATTERNS.md" />
@@ -25,8 +32,22 @@
     <File Path="docs/THREADING.md" />
     <File Path="docs/UI-GUIDELINES.md" />
     <File Path="docs/Z21-PROTOCOL.md" />
-  </Folder>`r`n  `r`n  `r`n
-  
+  </Folder>
+  <Folder Name="/Solution Items/docs/wiki/">
+    <File Path="docs/wiki/INDEX.md" />
+    <File Path="docs/wiki/MOBAFLOW-USER-GUIDE.md" />
+    <File Path="docs/wiki/MOBASMART-USER-GUIDE.md" />
+    <File Path="docs/wiki/MOBASMART-WIKI.md" />
+    <File Path="docs/wiki/MOBADASH-USER-GUIDE.md" />
+    <File Path="docs/wiki/QUICK-START-TRACK-STATISTICS.md" />
+  </Folder>
+  <Folder Name="/Solution Items/docs/copilot/">
+    <File Path="docs/copilot/ARCHITECTURE-REVIEW-2025-12-23.md" />
+    <File Path="docs/copilot/MAUI-PERSISTIERUNG-TEST.md" />
+    <File Path="docs/copilot/MAUI-BACKGROUND-SERVICE-CONCEPT.md" />
+    <File Path="docs/copilot/ICON-UPDATE-GUIDE.md" />
+  </Folder>
+
   <Project Path="Backend/Backend.csproj">
     <Deploy />
   </Project>
