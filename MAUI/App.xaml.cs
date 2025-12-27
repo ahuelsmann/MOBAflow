@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI;
 
 using SharedUI.ViewModel;
@@ -72,19 +72,21 @@ public partial class App
 	/// </summary>
 	private async void OnWindowDestroying(object? sender, EventArgs e)
 	{
+		_ = sender; // Suppress unused parameter warning
+		
 		try
 		{
 			System.Diagnostics.Debug.WriteLine("🔄 App: OnWindowDestroying - Starting cleanup...");
 
-			// Get MainWindowViewModel and trigger graceful disconnect
-			var viewModel = _services.GetService<MainWindowViewModel>();
+			// Get MauiViewModel and trigger graceful disconnect
+			var viewModel = _services.GetService<MauiViewModel>();
 			if (viewModel != null)
 			{
 				if (viewModel.IsConnected)
 				{
 					await viewModel.DisconnectCommand.ExecuteAsync(null);
 				}
-				System.Diagnostics.Debug.WriteLine("✅ App: MainWindowViewModel cleanup complete");
+				System.Diagnostics.Debug.WriteLine("✅ App: MauiViewModel cleanup complete");
 			}
 		}
 		catch (Exception ex)

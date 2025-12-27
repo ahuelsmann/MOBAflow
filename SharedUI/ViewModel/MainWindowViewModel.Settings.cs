@@ -250,7 +250,9 @@ public partial class MainWindowViewModel
             {
                 _settings.Counter.CountOfFeedbackPoints = (int)value;
                 OnPropertyChanged();
-                // Note: Requires restart to re-initialize Statistics collection
+                
+                // Immediately update Track Statistics on Overview page
+                InitializeStatisticsFromFeedbackPoints();
             }
         }
     }

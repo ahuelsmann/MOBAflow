@@ -48,20 +48,13 @@ public static class MauiProgram
         builder.Services.AddSingleton<ISettingsService, SettingsService>();
 
         // ViewModels
-        builder.Services.AddSingleton<MainWindowViewModel>();
-        builder.Services.AddTransient<JourneyViewModel>();
+        builder.Services.AddSingleton<MauiViewModel>();  // ✅ Mobile-optimized ViewModel
 
         // Backend services - Register in dependency order
         builder.Services.AddSingleton<IUdpClientWrapper, UdpWrapper>();
         builder.Services.AddSingleton<IZ21, Z21>();
         builder.Services.AddSingleton<ActionExecutor>();
         builder.Services.AddSingleton<WorkflowService>();
-
-        // ✅ DataManager as Singleton (master data loaded on first access)
-        builder.Services.AddSingleton<DataManager>();
-
-        // ✅ Solution as Singleton (initialized empty, can be loaded later by user)
-        builder.Services.AddSingleton<Solution>();
 
         // Views
         builder.Services.AddTransient<MainPage>();

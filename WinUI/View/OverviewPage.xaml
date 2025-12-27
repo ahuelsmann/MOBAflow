@@ -200,16 +200,16 @@
                 </Grid>
             </Expander>
 
-            <!--  Settings Section (only visible when connected)  -->
+            <!--  Counter Settings Section  -->
             <Expander
                 HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Stretch"
-                Header="Settings"
+                Header="Counter Settings"
                 IsExpanded="True">
                 <Expander.HeaderTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal" Spacing="12">
-                            <FontIcon FontSize="20" Glyph="&#xE713;" />
+                            <FontIcon FontSize="20" Glyph="&#xE823;" />
                             <TextBlock
                                 VerticalAlignment="Center"
                                 Style="{StaticResource SubtitleTextBlockStyle}"
@@ -217,51 +217,34 @@
                         </StackPanel>
                     </DataTemplate>
                 </Expander.HeaderTemplate>
-                <Grid
-                    Padding="56,16,0,16"
-                    ColumnSpacing="24"
-                    RowSpacing="12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
+                <StackPanel Padding="56,16,0,16" Spacing="16">
 
-                    <TextBlock
-                        Grid.Row="0"
-                        Grid.Column="0"
-                        VerticalAlignment="Center"
-                        Text="Target Lap Count:" />
+                    <!--  Target Lap Count  -->
                     <NumberBox
-                        Grid.Row="0"
-                        Grid.Column="1"
-                        Width="150"
+                        Width="200"
                         HorizontalAlignment="Left"
+                        Header="Target Lap Count"
                         Minimum="1"
                         SpinButtonPlacementMode="Inline"
                         Value="{x:Bind ViewModel.GlobalTargetLapCount, Mode=TwoWay}" />
 
-                    <CheckBox
-                        Grid.Row="1"
-                        Grid.Column="0"
-                        Grid.ColumnSpan="2"
-                        Content="Use Timer Filter"
-                        IsChecked="{x:Bind ViewModel.UseTimerFilter, Mode=TwoWay}" />
+                    <!--  Timer Filter Settings  -->
+                    <StackPanel Spacing="12">
+                        <StackPanel Spacing="4">
+                            <CheckBox Content="Use Timer Filter" IsChecked="{x:Bind ViewModel.UseTimerFilter, Mode=TwoWay}" />
+                            <TextBlock
+                                Margin="32,0,0,0"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Prevents multiple counts from the same train pass"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
 
-                    <StackPanel
-                        Grid.Row="2"
-                        Grid.Column="0"
-                        Grid.ColumnSpan="2"
-                        Spacing="8"
-                        Visibility="{x:Bind ViewModel.UseTimerFilter, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                         <NumberBox
-                            MaxWidth="200"
+                            Width="200"
                             HorizontalAlignment="Left"
                             Header="Timer Interval (seconds)"
+                            IsEnabled="{x:Bind ViewModel.UseTimerFilter, Mode=OneWay}"
                             LargeChange="1"
                             Maximum="10"
                             Minimum="1"
@@ -269,12 +252,14 @@
                             SpinButtonPlacementMode="Inline"
                             Value="{x:Bind ViewModel.TimerIntervalSeconds, Mode=TwoWay}">
                             <NumberBox.Description>
-                                <TextBlock Text="Prevents multiple counts from the same train pass (e.g., 16-axle train)" TextWrapping="Wrap" />
+                                <TextBlock Text="Example: 10s for 16-axle trains" TextWrapping="Wrap" />
                             </NumberBox.Description>
                         </NumberBox>
                     </StackPanel>
-                </Grid>
+                </StackPanel>
             </Expander>
+
+
 
             <!--  Track Statistics Section (only visible when connected)  -->
             <StackPanel Spacing="16">

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <!-- Android API 36 (only version supported by .NET 10) -->
-    <TargetFrameworks>net10.0-android36.0</TargetFrameworks>
+    <!-- .NET 9 for MAUI stability and Uranium UI compatibility -->
+    <TargetFrameworks>net9.0-android</TargetFrameworks>
     <OutputType>Exe</OutputType>
     <RootNamespace>Moba.MAUI</RootNamespace>
     <UseMaui>true</UseMaui>
@@ -34,10 +34,10 @@
     <!-- PERFORMANCE: Parallel build -->
     <MaxCpuCount>0</MaxCpuCount>
 
-    <!-- Fast Deployment: Shared Runtime (smaller APK, faster deploy) -->
+    <!-- ⚡ FAST DEPLOYMENT: Use shared runtime (faster deploy to physical devices) -->
     <AndroidUseSharedRuntime>true</AndroidUseSharedRuntime>
     <AndroidLinkMode>None</AndroidLinkMode>
-    <EmbedAssembliesIntoApk>false</EmbedAssembliesIntoApk>
+    <EmbedAssembliesIntoApk>false</EmbedAssembliesIntoApk>  <!-- ⚡ KEY CHANGE: Don't embed -->
     <RunAOTCompilation>false</RunAOTCompilation>
     <AndroidEnableProguard>false</AndroidEnableProguard>
 
@@ -54,19 +54,20 @@
     <AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
     <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
 
-    <!-- ⚡ NEW: Faster Java compilation -->
+    <!-- Faster Java/DEX compilation -->
     <AndroidDexTool>d8</AndroidDexTool>
     <AndroidEnableD8R8>true</AndroidEnableD8R8>
 
-    <!-- ⚡ NEW: Skip resource shrinking in Debug -->
+    <!-- Skip resource shrinking in Debug -->
     <AndroidEnableSGenConcurrent>true</AndroidEnableSGenConcurrent>
     <AndroidLinkSkip>true</AndroidLinkSkip>
 
-    <!-- ⚡ NEW: Faster XAML compilation -->
+    <!-- Faster XAML compilation -->
     <XamlCTask>Compile</XamlCTask>
 
-    <!-- ⚡ NEW: Use incremental linker -->
-    <MtouchExtraArgs>--optimize=-inline-isdirectbinding</MtouchExtraArgs>
+    <!-- Enable Hot Reload -->
+    <UseInterpreter>true</UseInterpreter>
+    <EnablePreviewMsixTooling>true</EnablePreviewMsixTooling>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -85,6 +86,7 @@
   <ItemGroup>
     <TrimmerRootDescriptor Include="Linker.xml" />
   </ItemGroup>
+
 
   <ItemGroup>
     <!-- App Icon -->
@@ -133,10 +135,16 @@
     <MauiXaml Update="MainPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
+    <MauiXaml Update="MainPage_Minimal.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="MainPage_New.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="Resources\Styles\DarkTheme.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+    <MauiXaml Update="Resources\Styles\FluentStyles.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
   </ItemGroup>
