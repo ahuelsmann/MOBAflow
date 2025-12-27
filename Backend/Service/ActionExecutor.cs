@@ -12,7 +12,7 @@ using System.Diagnostics;
 /// Executes WorkflowActions based on their type and parameters.
 /// This implements Clean Architecture by separating domain models (WorkflowAction) from execution logic.
 /// </summary>
-public class ActionExecutor(AnnouncementService? announcementService = null)
+public class ActionExecutor(AnnouncementService? announcementService = null) : Interface.IActionExecutor
 {
     /// <summary>
     /// Executes a WorkflowAction based on its type.

@@ -1,77 +1,75 @@
 <Page
-x:Class="Moba.WinUI.View.TrackPlanEditorPage"
-xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-xmlns:vm="using:Moba.SharedUI.ViewModel">
+    x:Class="Moba.WinUI.View.TrackPlanEditorPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:Moba.SharedUI.ViewModel">
 
-<Grid Padding="24,16">
-    <Grid.RowDefinitions>
-        <RowDefinition Height="*" />
-        <RowDefinition Height="Auto" />
-    </Grid.RowDefinitions>
-    <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="240" />
-        <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="280" />
-    </Grid.ColumnDefinitions>
+    <Grid Padding="24,16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="240" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="280" />
+        </Grid.ColumnDefinitions>
 
-    <!--  Track Library  -->
-    <Border
-        Grid.Row="0"
-        Grid.Column="0"
-        Padding="16"
-        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        CornerRadius="8">
-        <Grid RowSpacing="12">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+        <!--  Track Library  -->
+        <Border
+            Grid.Row="0"
+            Grid.Column="0"
+            Padding="16"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            CornerRadius="8">
+            <Grid RowSpacing="12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-            <TextBlock
-                Grid.Row="0"
-                Style="{StaticResource SubtitleTextBlockStyle}"
-                Text="Track Library" />
+                <TextBlock
+                    Grid.Row="0"
+                    Style="{StaticResource SubtitleTextBlockStyle}"
+                    Text="Track Library" />
 
-            <TextBlock
-                Grid.Row="1"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Style="{StaticResource CaptionTextBlockStyle}"
-                Text="Drag tracks to canvas" />
+                <TextBlock
+                    Grid.Row="1"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="Drag tracks to canvas" />
 
-            <ListView
-                Grid.Row="2"
-                CanDragItems="True"
-                DragItemsStarting="TrackLibrary_DragItemsStarting"
-                ItemsSource="{x:Bind ViewModel.TrackLibrary, Mode=OneWay}"
-                SelectionMode="Single">
-                <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="vm:TrackTemplateViewModel">
-                        <StackPanel Padding="8,6" Spacing="2">
-                            <TextBlock FontWeight="SemiBold" Text="{x:Bind ArticleCode}" />
-                            <TextBlock
-                                FontSize="12"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{x:Bind Name}" />
-                        </StackPanel>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
-        </Grid>
-    </Border>
+                <ListView
+                    Grid.Row="2"
+                    CanDragItems="True"
+                    DragItemsStarting="TrackLibrary_DragItemsStarting"
+                    ItemsSource="{x:Bind ViewModel.TrackLibrary, Mode=OneWay}"
+                    SelectionMode="Single">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="vm:TrackTemplateViewModel">
+                            <StackPanel Padding="8,6" Spacing="2">
+                                <TextBlock FontWeight="SemiBold" Text="{x:Bind ArticleCode}" />
+                                <TextBlock
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind Name}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
+        </Border>
 
-    <!--  Track Plan Canvas with Zoom  -->
-    <Border
-        Grid.Row="0"
-        Grid.Column="1"
-        Margin="16,0"
-        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        CornerRadius="8">
-        <Grid>
-                <ScrollViewer
-                    HorizontalScrollBarVisibility="Auto"
-                    VerticalScrollBarVisibility="Auto">
+        <!--  Track Plan Canvas with Zoom  -->
+        <Border
+            Grid.Row="0"
+            Grid.Column="1"
+            Margin="16,0"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            CornerRadius="8">
+            <Grid>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                     <Canvas
                         x:Name="TrackCanvas"
                         Width="1000"
@@ -82,79 +80,77 @@ xmlns:vm="using:Moba.SharedUI.ViewModel">
                         Drop="TrackCanvas_Drop"
                         PointerPressed="TrackCanvas_PointerPressed">
                         <Canvas.RenderTransform>
-                            <ScaleTransform
-                                ScaleX="{x:Bind ViewModel.ZoomFactor, Mode=OneWay}"
-                                ScaleY="{x:Bind ViewModel.ZoomFactor, Mode=OneWay}" />
+                            <ScaleTransform ScaleX="{x:Bind ViewModel.ZoomFactor, Mode=OneWay}" ScaleY="{x:Bind ViewModel.ZoomFactor, Mode=OneWay}" />
                         </Canvas.RenderTransform>
 
-                    <!--  Track Segments  -->
-                    <ItemsControl ItemsSource="{x:Bind ViewModel.Segments, Mode=OneWay}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <Canvas />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="vm:TrackSegmentViewModel">
-                                <Grid PointerPressed="Segment_PointerPressed">
-                                    <!--  Invisible wider hit area for easier clicking  -->
-                                    <Path
-                                        Data="{x:Bind PathData, Mode=OneWay}"
-                                        Stroke="Transparent"
-                                        StrokeThickness="16" />
-                                    <!--  Visible track path  -->
-                                    <Path
-                                        Data="{x:Bind PathData, Mode=OneWay}"
-                                        Stroke="{ThemeResource AccentFillColorDefaultBrush}"
-                                        StrokeThickness="4" />
-                                    <!--  Selection highlight (shown when selected)  -->
-                                    <Path
-                                        Data="{x:Bind PathData, Mode=OneWay}"
-                                        Opacity="0.5"
-                                        Stroke="Yellow"
-                                        StrokeThickness="8"
-                                        Visibility="{x:Bind IsSelected, Mode=OneWay}" />
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </Canvas>
-            </ScrollViewer>
+                        <!--  Track Segments  -->
+                        <ItemsControl ItemsSource="{x:Bind ViewModel.Segments, Mode=OneWay}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:TrackSegmentViewModel">
+                                    <Grid PointerPressed="Segment_PointerPressed">
+                                        <!--  Invisible wider hit area for easier clicking  -->
+                                        <Path
+                                            Data="{x:Bind PathData, Mode=OneWay}"
+                                            Stroke="Transparent"
+                                            StrokeThickness="16" />
+                                        <!--  Visible track path  -->
+                                        <Path
+                                            Data="{x:Bind PathData, Mode=OneWay}"
+                                            Stroke="{ThemeResource AccentFillColorDefaultBrush}"
+                                            StrokeThickness="4" />
+                                        <!--  Selection highlight (shown when selected)  -->
+                                        <Path
+                                            Data="{x:Bind PathData, Mode=OneWay}"
+                                            Opacity="0.5"
+                                            Stroke="Yellow"
+                                            StrokeThickness="8"
+                                            Visibility="{x:Bind IsSelected, Mode=OneWay}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Canvas>
+                </ScrollViewer>
 
-            <!--  Zoom Controls (bottom right overlay)  -->
-            <StackPanel
-                Margin="8"
-                Padding="8"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Bottom"
-                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                CornerRadius="4"
-                Orientation="Horizontal"
-                Spacing="8">
-                <Button
-                    Padding="8,4"
-                    Command="{x:Bind ViewModel.ZoomOutCommand}"
-                    Content="-"
-                    FontWeight="Bold" />
-                <Slider
-                    Width="120"
-                    VerticalAlignment="Center"
-                    Maximum="200"
-                    Minimum="25"
-                    StepFrequency="5"
-                    Value="{x:Bind ViewModel.ZoomLevel, Mode=TwoWay}" />
-                <Button
-                    Padding="8,4"
-                    Command="{x:Bind ViewModel.ZoomInCommand}"
-                    Content="+"
-                    FontWeight="Bold" />
-                <TextBlock
-                    VerticalAlignment="Center"
-                    FontSize="12"
-                    Text="{x:Bind ViewModel.ZoomLevelText, Mode=OneWay}" />
-            </StackPanel>
-        </Grid>
-    </Border>
+                <!--  Zoom Controls (bottom right overlay)  -->
+                <StackPanel
+                    Margin="8"
+                    Padding="8"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Bottom"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                    CornerRadius="4"
+                    Orientation="Horizontal"
+                    Spacing="8">
+                    <Button
+                        Padding="8,4"
+                        Command="{x:Bind ViewModel.ZoomOutCommand}"
+                        Content="-"
+                        FontWeight="Bold" />
+                    <Slider
+                        Width="120"
+                        VerticalAlignment="Center"
+                        Maximum="200"
+                        Minimum="25"
+                        StepFrequency="5"
+                        Value="{x:Bind ViewModel.ZoomLevel, Mode=TwoWay}" />
+                    <Button
+                        Padding="8,4"
+                        Command="{x:Bind ViewModel.ZoomInCommand}"
+                        Content="+"
+                        FontWeight="Bold" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        Text="{x:Bind ViewModel.ZoomLevelText, Mode=OneWay}" />
+                </StackPanel>
+            </Grid>
+        </Border>
 
         <!--  Properties Panel  -->
         <Border
@@ -186,8 +182,8 @@ xmlns:vm="using:Moba.SharedUI.ViewModel">
                     <!--  InPort Assignment  -->
                     <NumberBox
                         Header="Feedback Point (InPort)"
-                        Minimum="1"
                         Maximum="2048"
+                        Minimum="1"
                         SpinButtonPlacementMode="Inline"
                         Value="{x:Bind ViewModel.InPortInput, Mode=TwoWay}" />
                     <StackPanel Orientation="Horizontal" Spacing="8">
@@ -195,9 +191,7 @@ xmlns:vm="using:Moba.SharedUI.ViewModel">
                         <Button Command="{x:Bind ViewModel.ClearInPortCommand}" Content="Clear" />
                     </StackPanel>
 
-                    <Button
-                        Command="{x:Bind ViewModel.DeleteSegmentCommand}"
-                        Content="Delete Segment" />
+                    <Button Command="{x:Bind ViewModel.DeleteSegmentCommand}" Content="Delete Segment" />
                 </StackPanel>
 
                 <!--  Status  -->

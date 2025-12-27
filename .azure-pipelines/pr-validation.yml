@@ -1,8 +1,7 @@
 # Azure DevOps Pipeline: Pull Request Validation
-# Triggers on PR to main branch - must pass before PR can be completed
 # Build + Test for .NET 10 solution
 
-trigger: none  # Only triggered by PR, not by push
+trigger: none
 
 pr:
   branches:
@@ -32,7 +31,6 @@ stages:
         timeoutInMinutes: 30
         
         steps:
-          # Checkout code
           - checkout: self
             fetchDepth: 1
             clean: true
@@ -45,13 +43,16 @@ stages:
               version: '$(dotnetVersion)'
               includePreviewVersions: true
 
-          # Install Windows App SDK workload (for WinUI)
+          # Install all required MAUI workloads
           - task: PowerShell@2
-            displayName: 'Install Windows App SDK Workload'
+            displayName: 'Install MAUI Workloads'
             inputs:
               targetType: 'inline'
               script: |
+                dotnet workload install maui --skip-manifest-update
+                dotnet workload install android --skip-manifest-update
                 dotnet workload install maui-windows --skip-manifest-update
+                dotnet workload restore
                 dotnet workload list
 
           # Restore NuGet packages

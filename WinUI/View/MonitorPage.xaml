@@ -68,20 +68,18 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    
+
                     <TextBlock
                         Grid.Column="0"
                         Style="{StaticResource SubtitleTextBlockStyle}"
                         Text="Z21" />
-                    
+
                     <Border
                         Grid.Column="1"
                         Padding="8,4"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                         CornerRadius="4">
-                        <TextBlock
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Style="{StaticResource CaptionTextBlockStyle}">
+                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}">
                             <Run Text="{x:Bind ViewModel.TrafficCount, Mode=OneWay}" />
                             <Run Text="packets" />
                         </TextBlock>

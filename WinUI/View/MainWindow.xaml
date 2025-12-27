@@ -137,44 +137,44 @@
                         DefaultLabelPosition="Right"
                         IsOpen="False"
                         OverflowButtonVisibility="Auto">
-                    <!--  File Operations  -->
-                    <AppBarButton Command="{x:Bind ViewModel.NewSolutionCommand}" Label="New">
-                        <AppBarButton.Icon>
-                            <FontIcon Glyph="&#xE729;" />
-                        </AppBarButton.Icon>
-                    </AppBarButton>
-                    <AppBarButton Command="{x:Bind ViewModel.LoadSolutionCommand}" Label="Open">
-                        <AppBarButton.Icon>
-                            <FontIcon Glyph="&#xE838;" />
-                        </AppBarButton.Icon>
-                    </AppBarButton>
-                    <AppBarButton
-                        Command="{x:Bind ViewModel.SaveSolutionCommand}"
-                        Icon="Save"
-                        Label="Save" />
-                    <AppBarSeparator />
-                    <!--  Import Export  -->
-                    <AppBarButton Command="{x:Bind TrackPlanEditorViewModel.ImportAnyRailCommand}" Label="Import">
-                        <AppBarButton.Icon>
-                            <FontIcon Glyph="&#xE896;" />
-                        </AppBarButton.Icon>
-                    </AppBarButton>
-                    <AppBarSeparator />
-                    <!--  Simulation  -->
-                    <AppBarButton
-                        Command="{x:Bind ViewModel.SimulateFeedbackCommand}"
-                        Icon="Play"
-                        Label="Simulate" />
-                    <AppBarElementContainer VerticalAlignment="Center">
-                        <TextBox
-                            Width="60"
-                            PlaceholderText="InPort"
-                            Text="{x:Bind ViewModel.SimulateInPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    </AppBarElementContainer>
-                    <AppBarButton
-                        Command="{x:Bind ViewModel.ResetJourneyCommand}"
-                        Icon="Refresh"
-                        Label="Reset" />
+                        <!--  File Operations  -->
+                        <AppBarButton Command="{x:Bind ViewModel.NewSolutionCommand}" Label="New">
+                            <AppBarButton.Icon>
+                                <FontIcon Glyph="&#xE729;" />
+                            </AppBarButton.Icon>
+                        </AppBarButton>
+                        <AppBarButton Command="{x:Bind ViewModel.LoadSolutionCommand}" Label="Open">
+                            <AppBarButton.Icon>
+                                <FontIcon Glyph="&#xE838;" />
+                            </AppBarButton.Icon>
+                        </AppBarButton>
+                        <AppBarButton
+                            Command="{x:Bind ViewModel.SaveSolutionCommand}"
+                            Icon="Save"
+                            Label="Save" />
+                        <AppBarSeparator />
+                        <!--  Import Export  -->
+                        <AppBarButton Command="{x:Bind TrackPlanEditorViewModel.ImportAnyRailCommand}" Label="Import">
+                            <AppBarButton.Icon>
+                                <FontIcon Glyph="&#xE896;" />
+                            </AppBarButton.Icon>
+                        </AppBarButton>
+                        <AppBarSeparator />
+                        <!--  Simulation  -->
+                        <AppBarButton
+                            Command="{x:Bind ViewModel.SimulateFeedbackCommand}"
+                            Icon="Play"
+                            Label="Simulate" />
+                        <AppBarElementContainer VerticalAlignment="Center">
+                            <TextBox
+                                Width="60"
+                                PlaceholderText="InPort"
+                                Text="{x:Bind ViewModel.SimulateInPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        </AppBarElementContainer>
+                        <AppBarButton
+                            Command="{x:Bind ViewModel.ResetJourneyCommand}"
+                            Icon="Refresh"
+                            Label="Reset" />
                     </CommandBar>
                 </Grid>
 
@@ -277,4 +277,3 @@
         </Grid>
     </Grid>
 </Window>
-

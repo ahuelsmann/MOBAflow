@@ -13,7 +13,7 @@ using System.Diagnostics;
 /// Platform-independent: No UI thread dispatching (that's handled by platform-specific ViewModels).
 /// Uses SessionState to separate runtime state from domain objects.
 /// </summary>
-public class JourneyManager : BaseFeedbackManager<Journey>
+public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
 {
     private readonly SemaphoreSlim _processingLock = new(1, 1);
     private readonly WorkflowService _workflowService;
@@ -242,11 +242,19 @@ public class JourneyManager : BaseFeedbackManager<Journey>
         {
             state.Counter = 0;
             state.CurrentPos = (int)journey.FirstPos;
-            state.CurrentStationName = string.Empty;
-            state.LastFeedbackTime = null;
             state.IsActive = true;
-            Debug.WriteLine($"🔄 Journey '{journey.Name}' reset");
+            Debug.WriteLine($"🔄 Journey '{journey.Name}' reset to position {state.CurrentPos}");
         }
+    }
+
+    /// <summary>
+    /// Gets the current session state for a specific journey.
+    /// </summary>
+    /// <param name="journeyId">The journey ID</param>
+    /// <returns>The journey session state, or null if not found</returns>
+    public JourneySessionState? GetState(Guid journeyId)
+    {
+        return _states.TryGetValue(journeyId, out var state) ? state : null;
     }
 
     public override void ResetAll()
@@ -257,17 +265,6 @@ public class JourneyManager : BaseFeedbackManager<Journey>
         }
         base.ResetAll();
         Debug.WriteLine("🔄 All journeys reset");
-    }
-
-    /// <summary>
-    /// Gets the runtime state for a journey.
-    /// Returns null if journey is not registered.
-    /// </summary>
-    /// <param name="journeyId">The journey ID</param>
-    /// <returns>SessionState or null if not found</returns>
-    public JourneySessionState? GetState(Guid journeyId)
-    {
-        return _states.GetValueOrDefault(journeyId);
     }
 
     protected override uint GetInPort(Journey entity) => entity.InPort;

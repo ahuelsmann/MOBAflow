@@ -9,7 +9,7 @@ using System.Diagnostics;
 /// Orchestrates the execution of workflows and their actions.
 /// Platform-independent: No UI thread dispatching.
 /// </summary>
-public class WorkflowService(ActionExecutor actionExecutor)
+public class WorkflowService(Interface.IActionExecutor actionExecutor)
 {
     /// <summary>
     /// Executes a workflow with all its actions sequentially.
