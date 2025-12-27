@@ -330,7 +330,7 @@
                 "Sweep": 0
               }
             ],
-            "AssignedInPort": null,
+            "AssignedInPort": 3,
             "Name": null,
             "Layer": null
           },
@@ -596,7 +596,7 @@
                 "Sweep": 0
               }
             ],
-            "AssignedInPort": null,
+            "AssignedInPort": 1,
             "Name": null,
             "Layer": null
           },
@@ -1926,7 +1926,7 @@
                 "Sweep": 0
               }
             ],
-            "AssignedInPort": null,
+            "AssignedInPort": 2,
             "Name": null,
             "Layer": null
           },
