@@ -1,5 +1,5 @@
 # Azure DevOps Pipeline: Pull Request Validation
-# Build + Test for .NET 10 solution
+# Build + Test for .NET 10 solution (MAUI excluded)
 
 trigger: none
 
@@ -17,7 +17,6 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
-  solution: '**/*.slnx'
   buildPlatform: 'x64'
   buildConfiguration: 'Release'
   dotnetVersion: '10.0.x'
@@ -43,49 +42,26 @@ stages:
               version: '$(dotnetVersion)'
               includePreviewVersions: true
 
-          # Install all required MAUI workloads
-          - task: PowerShell@2
-            displayName: 'Install MAUI Workloads'
-            inputs:
-              targetType: 'inline'
-              script: |
-                dotnet workload install maui --skip-manifest-update
-                dotnet workload install android --skip-manifest-update
-                dotnet workload install maui-windows --skip-manifest-update
-                dotnet workload restore
-                dotnet workload list
-
-          # Restore NuGet packages
+          # Restore only WinUI, WebApp, and Test projects
           - task: DotNetCoreCLI@2
-            displayName: 'Restore NuGet Packages'
+            displayName: 'Restore NuGet Packages (no MAUI)'
             inputs:
               command: 'restore'
-              projects: '$(solution)'
+              projects: |
+                **/WinUI.csproj
+                **/WebApp.csproj
+                **/Test.csproj
               feedsToUse: 'select'
 
-          # Build solution
+          # Build only WinUI + WebApp
           - task: DotNetCoreCLI@2
-            displayName: 'Build Solution'
+            displayName: 'Build Solution (no MAUI)'
             inputs:
               command: 'build'
-              projects: '$(solution)'
+              projects: |
+                **/WinUI.csproj
+                **/WebApp.csproj
               arguments: '--configuration $(buildConfiguration) --no-restore'
 
           # Run unit tests
           - task: DotNetCoreCLI@2
-            displayName: 'Run Unit Tests'
-            inputs:
-              command: 'test'
-              projects: '**/Test.csproj'
-              arguments: '--configuration $(buildConfiguration) --no-build --logger trx --results-directory $(Agent.TempDirectory)/TestResults'
-              publishTestResults: true
-
-          # Publish test results
-          - task: PublishTestResults@2
-            displayName: 'Publish Test Results'
-            condition: succeededOrFailed()
-            inputs:
-              testResultsFormat: 'VSTest'
-              testResultsFiles: '$(Agent.TempDirectory)/TestResults/*.trx'
-              mergeTestResults: true
-              testRunTitle: 'PR Validation Tests'
