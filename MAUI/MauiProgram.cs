@@ -2,12 +2,12 @@
 namespace Moba.MAUI;
 
 using Backend;
+using Backend.Extensions;
 using Backend.Interface;
 using Backend.Network;
 using Backend.Service;
 
 using Common.Configuration;
-
 using CommunityToolkit.Maui;
 
 using Microsoft.Extensions.Logging;
@@ -48,10 +48,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<MauiViewModel>();  // ✅ Mobile-optimized ViewModel
 
         // Backend services - Register in dependency order
-        builder.Services.AddSingleton<IUdpClientWrapper, UdpWrapper>();
-        builder.Services.AddSingleton<IZ21, Z21>();
-        builder.Services.AddSingleton<ActionExecutor>();
-        builder.Services.AddSingleton<WorkflowService>();
+        // ✅ Use shared extension method for platform-consistent registration
+        builder.Services.AddMobaBackendServices();
 
         // Views
         builder.Services.AddTransient<MainPage>();

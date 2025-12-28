@@ -36,21 +36,21 @@ using Microsoft.Extensions.Logging;
 /// </summary>
 public class AnnouncementService
 {
-    private readonly ISpeakerEngineFactory? _speakerEngineFactory;
+    private readonly ISpeakerEngine? _speakerEngine;
     private readonly ILogger<AnnouncementService>? _logger;
 
     /// <summary>
-    /// Initializes announcement service with optional speaker engine factory.
-    /// If no factory is supplied, announcements are generated but not spoken.
+    /// Initializes announcement service with optional speaker engine.
+    /// If no engine is supplied, announcements are generated but not spoken.
     /// </summary>
-    /// <param name="speakerEngineFactory">Factory for getting the appropriate speaker engine</param>
+    /// <param name="speakerEngine">Speaker engine for audio output (optional)</param>
     /// <param name="logger">Optional logger for debugging</param>
-    public AnnouncementService(ISpeakerEngineFactory? speakerEngineFactory = null, ILogger<AnnouncementService>? logger = null)
+    public AnnouncementService(ISpeakerEngine? speakerEngine = null, ILogger<AnnouncementService>? logger = null)
     {
-        _speakerEngineFactory = speakerEngineFactory;
+        _speakerEngine = speakerEngine;
         _logger = logger;
-        _logger?.LogInformation("AnnouncementService initialized (Speaker Engine Factory: {HasFactory})", 
-            _speakerEngineFactory != null ? "Available" : "None");
+        _logger?.LogInformation("AnnouncementService initialized (Speaker Engine: {EngineType})", 
+            _speakerEngine?.Name ?? "None");
     }
 
     /// <summary>
@@ -119,17 +119,14 @@ public class AnnouncementService
             return;
         }
 
-        // Get speaker engine from factory (allows runtime switching)
-        var speakerEngine = _speakerEngineFactory?.GetSpeakerEngine();
-        
         // Speak via speaker engine if available
-        if (speakerEngine != null)
+        if (_speakerEngine != null)
         {
             try
             {
                 _logger?.LogInformation("🔊 Speaking announcement via {SpeakerEngine} for station '{StationName}'", 
-                    speakerEngine.Name, station.Name);
-                await speakerEngine.AnnouncementAsync(announcementText, voiceName: null).ConfigureAwait(false);
+                    _speakerEngine.Name, station.Name);
+                await _speakerEngine.AnnouncementAsync(announcementText, voiceName: null).ConfigureAwait(false);
             }
             catch (Exception ex)
             {

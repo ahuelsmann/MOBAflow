@@ -2,6 +2,7 @@
 
 using Moba.Backend;
 using Moba.Backend.Data;
+using Moba.Backend.Extensions;
 using Moba.Backend.Interface;
 using Moba.Backend.Network;
 using Moba.Backend.Service;
@@ -34,16 +35,11 @@ builder.Services.AddSingleton<ISettingsService, SettingsService>();
 builder.Services.AddSingleton<IUiDispatcher, BlazorUiDispatcher>();
 
 // Backend services - Register in dependency order
-builder.Services.AddSingleton<IUdpClientWrapper, UdpWrapper>();
-builder.Services.AddSingleton<IZ21, Z21>();
-builder.Services.AddSingleton<ActionExecutor>();
-builder.Services.AddSingleton<WorkflowService>();
+// ✅ Use shared extension method for platform-consistent registration
+builder.Services.AddMobaBackendServices();
 
 // ✅ DataManager as Singleton (master data - simplified for Blazor Server)
 builder.Services.AddSingleton<DataManager>();
-
-// ✅ Solution as Singleton (initialized empty, can be loaded later by user)
-builder.Services.AddSingleton<Solution>();
 
 // ✅ WebAppViewModel as Singleton (web-optimized ViewModel for Blazor Server)
 builder.Services.AddSingleton<WebAppViewModel>();

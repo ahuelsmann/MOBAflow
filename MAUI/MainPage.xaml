@@ -3,10 +3,10 @@
     x:Class="Moba.MAUI.MainPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:local="clr-namespace:Moba.SharedUI.ViewModel;assembly=SharedUI"
-    x:DataType="local:MauiViewModel"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     Title="MOBAsmart"
+    x:DataType="local:MauiViewModel"
     BackgroundColor="{DynamicResource SurfaceBackground}">
 
     <ScrollView>

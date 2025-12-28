@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
 
 using Moba.Backend.Service;
+using Moba.Backend.Extensions;
 using Moba.Common.Configuration;
 using Moba.Sound;
 
@@ -86,50 +87,38 @@ public partial class App
         // Logging (required by HealthCheckService and SpeechHealthCheck)
         services.AddLogging();
 
-        // ✅ Register both Speech Engines as singletons
-        // SystemSpeechEngine - Windows SAPI (offline, no Azure needed)
-        services.AddSingleton(sp =>
-        {
-            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<SystemSpeechEngine>>();
-            return new SystemSpeechEngine(logger!);
-        });
-
-        // CognitiveSpeechEngine - Azure Cognitive Services (cloud-based)
-        services.AddSingleton(sp =>
-        {
-            var options = sp.GetRequiredService<IOptions<SpeechOptions>>();
-            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<CognitiveSpeechEngine>>();
-            return new CognitiveSpeechEngine(options, logger!);
-        });
-
-        // ✅ Register SpeakerEngineFactory - selects engine based on Settings
-        services.AddSingleton<ISpeakerEngineFactory>(sp =>
+        // ✅ Register ISpeakerEngine with lazy initialization
+        // Only creates the CONFIGURED engine, not both
+        // Decision is made at registration time based on AppSettings
+        services.AddSingleton<ISpeakerEngine>(sp =>
         {
             var settings = sp.GetRequiredService<AppSettings>();
-            var systemEngine = sp.GetRequiredService<SystemSpeechEngine>();
-            var cognitiveEngine = sp.GetRequiredService<CognitiveSpeechEngine>();
-            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<SpeakerEngineFactory>>();
-            return new SpeakerEngineFactory(settings, systemEngine, cognitiveEngine, logger!);
+            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger>();
+            
+            // Check if Azure Cognitive Services is configured
+            var selectedEngine = settings.Speech.SpeakerEngineName;
+            if (!string.IsNullOrEmpty(selectedEngine) &&
+                selectedEngine.Contains("Azure", System.StringComparison.OrdinalIgnoreCase))
+            {
+                // Only create Azure engine if explicitly configured
+                var options = sp.GetRequiredService<IOptions<SpeechOptions>>();
+                return new CognitiveSpeechEngine(options, sp.GetService<Microsoft.Extensions.Logging.ILogger<CognitiveSpeechEngine>>()!);
+            }
+            
+            // Default: Windows SAPI (always available, no Azure SDK needed)
+            return new SystemSpeechEngine(sp.GetService<Microsoft.Extensions.Logging.ILogger<SystemSpeechEngine>>()!);
         });
 
         // Backend Services (Interfaces are in Backend.Interface and Backend.Network)
-        services.AddSingleton<Z21Monitor>();
-        services.AddSingleton<Backend.Interface.IZ21, Backend.Z21>(sp =>
-        {
-            var udp = sp.GetRequiredService<Backend.Network.IUdpClientWrapper>();
-            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<Backend.Z21>>();
-            var trafficMonitor = sp.GetRequiredService<Z21Monitor>();
-            return new Backend.Z21(udp, logger, trafficMonitor);
-        });
-        services.AddSingleton<Backend.Network.IUdpClientWrapper, Backend.Network.UdpWrapper>();
+        // ✅ Use shared extension method for platform-consistent registration
+        services.AddMobaBackendServices();
 
-        // Backend Services - Register in dependency order
-        // ✅ AnnouncementService (uses ISpeakerEngineFactory for runtime engine selection)
+        // ✅ AnnouncementService (uses ISpeakerEngine directly, not Factory)
         services.AddSingleton(sp =>
         {
-            var speakerEngineFactory = sp.GetService<ISpeakerEngineFactory>();
+            var speakerEngine = sp.GetRequiredService<ISpeakerEngine>();
             var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<AnnouncementService>>();
-            return new AnnouncementService(speakerEngineFactory, logger);
+            return new AnnouncementService(speakerEngine, logger);
         });
         
         // ✅ ActionExecutor with AnnouncementService for Announcement actions
@@ -143,8 +132,39 @@ public partial class App
         
         services.AddSingleton<SharedUI.Interface.IIoService, Service.IoService>();
         services.AddSingleton<SharedUI.Interface.IUiDispatcher, Service.UiDispatcher>();
-        services.AddSingleton<SharedUI.Interface.ICityService, Service.CityService>();
-        services.AddSingleton<SharedUI.Interface.ISettingsService, Service.SettingsService>();
+        
+        // ✅ ICityService with NullObject fallback
+        // Always register a service (real or no-op)
+        services.AddSingleton<SharedUI.Interface.ICityService>(sp =>
+        {
+            try
+            {
+                var appSettings = sp.GetRequiredService<AppSettings>();
+                return new Service.CityService(appSettings);
+            }
+            catch
+            {
+                // Fallback to NullObject if city data unavailable
+                return new Service.NullCityService();
+            }
+        });
+
+        // ✅ ISettingsService with NullObject fallback
+        // Always register a service (real or no-op)
+        services.AddSingleton<SharedUI.Interface.ISettingsService>(sp =>
+        {
+            try
+            {
+                var appSettings = sp.GetRequiredService<AppSettings>();
+                return new Service.SettingsService(appSettings);
+            }
+            catch
+            {
+                // Fallback to NullObject if settings file unavailable
+                return new Service.NullSettingsService();
+            }
+        });
+        
         services.AddSingleton<Service.NavigationService>();
         services.AddSingleton<Service.SnapToConnectService>();
 
@@ -155,10 +175,9 @@ public partial class App
         // ViewModels
         // Note: Wrapper ViewModels (SolutionViewModel, ProjectViewModel, JourneyViewModel, etc.)
         // are created with 'new' at runtime because they wrap Domain models.
-        // Only "standalone" ViewModels that don't wrap models are registered here.
+        // Only "standalone" ViewModel that don't wrap models are registered here.
 
-        // Domain.Solution as singleton (shared across application lifetime)
-        services.AddSingleton<Domain.Solution>();
+        // Domain.Solution is registered in AddMobaBackendServices()
 
         services.AddSingleton(sp => new SharedUI.ViewModel.MainWindowViewModel(
             sp.GetRequiredService<Backend.Interface.IZ21>(),
@@ -166,10 +185,10 @@ public partial class App
             sp.GetRequiredService<SharedUI.Interface.IUiDispatcher>(),
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<Domain.Solution>(),
-            sp.GetRequiredService<SharedUI.Interface.IIoService>(),  // Now optional (6th parameter)
-            sp.GetService<SharedUI.Interface.ICityService>(),
-            sp.GetService<SharedUI.Interface.ISettingsService>(),
-            sp.GetService<AnnouncementService>()  // For TestSpeech command
+            sp.GetRequiredService<SharedUI.Interface.IIoService>(),
+            sp.GetRequiredService<SharedUI.Interface.ICityService>(),      // Now guaranteed (NullObject if unavailable)
+            sp.GetRequiredService<SharedUI.Interface.ISettingsService>(),  // Now guaranteed (NullObject if unavailable)
+            sp.GetRequiredService<AnnouncementService>()  // For TestSpeech command
         ));
         services.AddSingleton<SharedUI.ViewModel.TrackPlanEditorViewModel>();
         services.AddSingleton<SharedUI.ViewModel.JourneyMapViewModel>();
