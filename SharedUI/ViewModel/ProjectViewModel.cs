@@ -87,11 +87,11 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
         _name = model.Name;  // Initialize from Model
         Refresh();
 
-        Journeys.CollectionChanged += (_, __) => NotifyStatisticsChanged();
-        Workflows.CollectionChanged += (_, __) => NotifyStatisticsChanged();
-        Trains.CollectionChanged += (_, __) => NotifyStatisticsChanged();
-        Locomotives.CollectionChanged += (_, __) => NotifyStatisticsChanged();
-        Wagons.CollectionChanged += (_, __) => NotifyStatisticsChanged();
+        Journeys.CollectionChanged += (_, _) => NotifyStatisticsChanged();
+        Workflows.CollectionChanged += (_, _) => NotifyStatisticsChanged();
+        Trains.CollectionChanged += (_, _) => NotifyStatisticsChanged();
+        Locomotives.CollectionChanged += (_, _) => NotifyStatisticsChanged();
+        Wagons.CollectionChanged += (_, _) => NotifyStatisticsChanged();
     }
 
     private void NotifyStatisticsChanged()

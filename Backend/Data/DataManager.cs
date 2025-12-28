@@ -17,17 +17,24 @@ public class DataManager
     /// Load the data.
     /// </summary>
     /// <param name="path">Expects the full path including file name.</param>
-    /// <returns>Returns an instance of the loaded data as DataManager.</returns>
+    /// <returns>Returns an instance of the loaded data as DataManager, or null if loading fails.</returns>
     public static async Task<DataManager?> LoadAsync(string path)
     {
-        if (!string.IsNullOrEmpty(path) && File.Exists(path))
+        try
         {
-            string json = await File.ReadAllTextAsync(path).ConfigureAwait(false);
-            if (!string.IsNullOrEmpty(json))
+            if (!string.IsNullOrEmpty(path) && File.Exists(path))
             {
-                var temp = JsonConvert.DeserializeObject<DataManager>(json);
-                return temp;
+                string json = await File.ReadAllTextAsync(path).ConfigureAwait(false);
+                if (!string.IsNullOrEmpty(json))
+                {
+                    var temp = JsonConvert.DeserializeObject<DataManager>(json);
+                    return temp;
+                }
             }
+        }
+        catch
+        {
+            // Return null for any deserialization errors
         }
         return null;
     }

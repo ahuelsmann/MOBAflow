@@ -12,6 +12,7 @@ using Windows.ApplicationModel.DataTransfer;
 /// Journeys page displaying journeys, stations, and city library with properties panel.
 /// Supports drag & drop from city library to stations list.
 /// </summary>
+// ReSharper disable once PartialTypeWithSinglePart
 public sealed partial class JourneysPage : Page
 {
     public MainWindowViewModel ViewModel { get; }

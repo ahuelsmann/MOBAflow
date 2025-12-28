@@ -65,7 +65,7 @@ public class ActionExecutor(AnnouncementService? announcementService = null) : I
             {
                 bytes = Convert.FromBase64String(base64String);
             }
-            else if (bytesObj != null)
+            else
             {
                 // Handle JToken or other types - convert to string first
                 var str = bytesObj.ToString();
@@ -99,7 +99,7 @@ public class ActionExecutor(AnnouncementService? announcementService = null) : I
 
         var filePath = action.Parameters["FilePath"].ToString()!;
 
-        await Task.Run(() => context.SoundPlayer.Play(filePath));
+        await context.SoundPlayer.PlayAsync(filePath).ConfigureAwait(false);
 
         Debug.WriteLine($"    ✓ Audio played: {filePath}");
     }

@@ -2,7 +2,6 @@
 namespace Moba.MAUI;
 
 using Backend;
-using Backend.Data;
 using Backend.Interface;
 using Backend.Network;
 using Backend.Service;
@@ -10,8 +9,6 @@ using Backend.Service;
 using Common.Configuration;
 
 using CommunityToolkit.Maui;
-
-using Domain;
 
 using Microsoft.Extensions.Logging;
 

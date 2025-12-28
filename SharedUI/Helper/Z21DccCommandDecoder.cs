@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.Helper;
 
+#pragma warning disable CS1570 // XML comment contains badly formatted XML
 /// <summary>
 /// Decodes Z21 DCC command bytes into human-readable format.
 /// Supports parsing LAN_X_SET_LOCO_DRIVE commands.
@@ -21,6 +22,7 @@ namespace Moba.SharedUI.Helper;
 /// - Short address (1-127): directly from bytes
 /// - Long address (128-10239): combined from two bytes using Motorola format
 /// </summary>
+#pragma warning restore CS1570
 public static class Z21DccCommandDecoder
 {
     /// <summary>
@@ -37,9 +39,9 @@ public static class Z21DccCommandDecoder
 
     /// <summary>
     /// Decodes Z21 DCC command bytes into address, speed, and direction.
-    /// Returns null if bytes cannot be decoded.
+    /// Returns a DccCommand object with IsValid=false if bytes cannot be decoded.
     /// </summary>
-    public static DccCommand? DecodeLocoCommand(byte[]? bytes)
+    public static DccCommand DecodeLocoCommand(byte[]? bytes)
     {
         var result = new DccCommand { IsValid = false };
 

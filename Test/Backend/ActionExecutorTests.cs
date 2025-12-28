@@ -87,9 +87,9 @@ public class ActionExecutorTests
     }
 
     [Test]
-    public async Task ExecuteAsync_WithAudioAction_ShouldNotThrow()
+    public async Task ExecuteAsync_WithAudioAction_WithoutSoundPlayer_ShouldThrow()
     {
-        // Arrange
+        // Arrange - Context without SoundPlayer
         var action = new WorkflowAction
         {
             Id = Guid.NewGuid(),
@@ -103,7 +103,7 @@ public class ActionExecutorTests
         };
 
         // Act & Assert
-        Assert.DoesNotThrowAsync(async () =>
+        Assert.ThrowsAsync<ArgumentException>(async () =>
         {
             await _actionExecutor.ExecuteAsync(action, _context);
         });

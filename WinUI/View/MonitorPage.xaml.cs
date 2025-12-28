@@ -2,8 +2,9 @@
 namespace Moba.WinUI.View;
 
 using Microsoft.UI.Xaml.Controls;
-using Moba.SharedUI.ViewModel;
+using SharedUI.ViewModel;
 
+// ReSharper disable once PartialTypeWithSinglePart
 public sealed partial class MonitorPage : Page
 {
     public MonitorPageViewModel ViewModel { get; }

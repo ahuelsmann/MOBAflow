@@ -343,7 +343,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         var file = await _ioService.BrowseForXmlFileAsync();
         if (file == null) return;
 
-        var anyRailLayout = AnyRailLayout.Parse(file);
+        var anyRailLayout = await AnyRailLayout.ParseAsync(file);
 
         Segments.Clear();
         Connections.Clear();

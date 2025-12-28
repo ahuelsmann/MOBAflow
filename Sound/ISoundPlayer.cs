@@ -8,8 +8,16 @@ namespace Moba.Sound;
 public interface ISoundPlayer
 {
     /// <summary>
-    /// Plays a wave file from the specified path.
+    /// Plays a wave file from the specified path asynchronously.
     /// </summary>
     /// <param name="waveFile">Full path to the .wav file to play</param>
+    /// <param name="cancellationToken">Cancellation token to stop playback</param>
+    Task PlayAsync(string waveFile, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Plays a wave file from the specified path (synchronous wrapper for backward compatibility).
+    /// </summary>
+    /// <param name="waveFile">Full path to the .wav file to play</param>
+    [Obsolete("Use PlayAsync instead for non-blocking I/O and cancellation support")]
     void Play(string waveFile);
 }

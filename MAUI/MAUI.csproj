@@ -8,6 +8,8 @@
     <SingleProject>true</SingleProject>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- Suppress XC0103: BoolToObjectConverter requires attribute but is from external library (CommunityToolkit.Maui) -->
+    <NoWarn>XC0103</NoWarn>
 
     <!-- Display name -->
     <ApplicationTitle>MOBAsmart</ApplicationTitle>

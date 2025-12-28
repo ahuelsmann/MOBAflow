@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using Action;
@@ -24,14 +24,12 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
     // Model
     private readonly Workflow _model;
 
-    // Context
-    #pragma warning disable IDE0052 // Remove unread private members - Reserved for future use
+    // Context - Reserved for future use (e.g., context menu actions, workflow validation)
     private readonly Project? _project;
 
-    // Optional Services
+    // Optional Services - Reserved for future use
     private readonly ISpeakerEngine? _speakerEngine;
     private readonly IZ21? _z21;
-    #pragma warning restore IDE0052
     #endregion
 
     public WorkflowViewModel(Workflow model, ISpeakerEngine? speakerEngine = null, Project? project = null, IZ21? z21 = null)

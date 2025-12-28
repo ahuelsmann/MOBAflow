@@ -419,7 +419,7 @@ public class Z21 : IZ21
     private async Task SendAsync(byte[] data, CancellationToken cancellationToken = default)
     {
         // ✅ Validate data BEFORE acquiring lock to fail fast
-        ArgumentNullException.ThrowIfNull(data, nameof(data));
+        ArgumentNullException.ThrowIfNull(data);
 
         await _sendLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -744,11 +744,11 @@ public class Z21 : IZ21
     }
 
     /// <summary>
-    /// Sends a digital command to the Z21.
+    /// Sends a digital command to the Z21 with optional cancellation support.
     /// </summary>
     /// <param name="sendBytes">The byte sequence containing the command for the Z21.</param>
-    /// <param name="cancellationToken"></param>
-    public async Task SendCommandAsync(byte[] sendBytes, CancellationToken cancellationToken = default)
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public async Task SendCommandAsync(byte[] sendBytes, CancellationToken cancellationToken)
     {
         await SendAsync(sendBytes, cancellationToken).ConfigureAwait(false);
     }

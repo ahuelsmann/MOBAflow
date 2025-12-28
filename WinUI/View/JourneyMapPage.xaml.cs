@@ -8,6 +8,7 @@ using SharedUI.ViewModel;
 /// Journey Map page showing the virtual route with station progress.
 /// Displays schematic station-to-station visualization with current position indicator.
 /// </summary>
+// ReSharper disable once PartialTypeWithSinglePart
 public sealed partial class JourneyMapPage : Page
 {
     public JourneyMapViewModel ViewModel { get; }

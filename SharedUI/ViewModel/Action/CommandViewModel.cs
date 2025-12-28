@@ -51,6 +51,7 @@ public class CommandViewModel : WorkflowActionViewModel
                 return;
 
             SetParameter("Address", value);
+            // ReSharper disable once RedundantArgumentDefaultValue
             OnPropertyChanged(nameof(Address));  // Explicit notification for NumberBox
             UpdateBytesFromProperties();  // Auto-update bytes
             OnPropertyChanged(nameof(BytesHex));
@@ -81,6 +82,7 @@ public class CommandViewModel : WorkflowActionViewModel
                 return;
 
             SetParameter("Speed", value);
+            // ReSharper disable once RedundantArgumentDefaultValue
             OnPropertyChanged(nameof(Speed));  // Explicit notification for NumberBox
             UpdateBytesFromProperties();  // Auto-update bytes
             OnPropertyChanged(nameof(BytesHex));
@@ -111,6 +113,7 @@ public class CommandViewModel : WorkflowActionViewModel
                 return;
 
             SetParameter("Direction", value);
+            // ReSharper disable once RedundantArgumentDefaultValue
             OnPropertyChanged(nameof(Direction));  // Explicit notification for ComboBox
             UpdateBytesFromProperties();  // Auto-update bytes
             OnPropertyChanged(nameof(BytesHex));

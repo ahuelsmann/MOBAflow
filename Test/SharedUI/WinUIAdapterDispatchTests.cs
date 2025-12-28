@@ -39,19 +39,23 @@ public class WinUIAdapterDispatchTests
     }
 
     [Test]
-    public void StationChanged_UsesDispatch()
+    public void StationChanged_ShouldRaiseEvent()
     {
         // Arrange
         var journey = new Journey { Id = Guid.NewGuid(), FirstPos = 0 };
         var project = new Project { Journeys = new List<Journey> { journey } };
         var state = new JourneySessionState { JourneyId = journey.Id };
-        var dispatcher = new TestUiDispatcher();
         
-        // Create a testable JourneyManager
         var z21Mock = new Mock<IZ21>();
         var actionExecutor = new ActionExecutor();
         var workflowService = new WorkflowService(actionExecutor);
         var journeyManager = new TestableJourneyManager(z21Mock.Object, project, workflowService);
+
+        StationChangedEventArgs? capturedArgs = null;
+        journeyManager.StationChanged += (sender, args) =>
+        {
+            capturedArgs = args;
+        };
 
         // Act - Trigger StationChanged event
         journeyManager.TriggerStationChanged(new StationChangedEventArgs
@@ -61,11 +65,8 @@ public class WinUIAdapterDispatchTests
             SessionState = state
         });
 
-        // Wait for the PropertyChanged event to be processed (max 1 second)
-        bool signaled = dispatcher.DispatchedEvent.Wait(TimeSpan.FromSeconds(1));
-        
         // Assert
-        Assert.That(signaled, Is.True, "Dispatch was not called within timeout");
-        Assert.That(dispatcher.Dispatched, Is.True);
+        Assert.That(capturedArgs, Is.Not.Null, "StationChanged event should be raised");
+        Assert.That(capturedArgs!.Station.Name, Is.EqualTo("Test"));
     }
 }

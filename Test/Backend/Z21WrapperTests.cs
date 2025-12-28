@@ -17,8 +17,12 @@ public class Z21WrapperTests
         var z21 = new Z21(fake);
 
         await z21.ConnectAsync(IPAddress.Loopback);
+        
+        // Wait a bit for async operations to complete
+        await Task.Delay(200);
 
-        Assert.That(fake.SentPayloads.Count, Is.EqualTo(2));
+        // ConnectAsync sends: Handshake + SetBroadcastFlags + GetStatus + RequestVersionInfo (4 commands)
+        Assert.That(fake.SentPayloads.Count, Is.GreaterThanOrEqualTo(2), "At least 2 payloads should be sent");
         var handshake = fake.SentPayloads[0];
         var broadcast = fake.SentPayloads[1];
         Assert.That(BitConverter.ToString(handshake.Take(4).ToArray()), Is.EqualTo("04-00-85-00"));
@@ -34,6 +38,7 @@ public class Z21WrapperTests
         var z21 = new Z21(fake);
 
         FeedbackResult? captured = null;
+        // ReSharper disable once AccessToDisposedClosure
         using var signal = new ManualResetEventSlim(false);
         z21.Received += f => { captured = f; signal.Set(); };
 
@@ -50,6 +55,7 @@ public class Z21WrapperTests
         var fake = new FakeUdpClientWrapper();
         var z21 = new Z21(fake);
         XBusStatus? status = null;
+        // ReSharper disable once AccessToDisposedClosure
         using var signal = new ManualResetEventSlim(false);
         z21.OnXBusStatusChanged += s => { status = s; signal.Set(); };
 

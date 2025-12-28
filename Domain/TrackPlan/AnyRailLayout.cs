@@ -19,11 +19,12 @@ public class AnyRailLayout
     public List<AnyRailConnection> Connections { get; } = [];
 
     /// <summary>
-    /// Parses an AnyRail XML file and returns an AnyRailLayout.
+    /// Parses an AnyRail XML file asynchronously and returns an AnyRailLayout.
     /// </summary>
-    public static AnyRailLayout Parse(string xmlPath)
+    public static async Task<AnyRailLayout> ParseAsync(string xmlPath, CancellationToken cancellationToken = default)
     {
-        var xdoc = XDocument.Load(xmlPath);
+        using var reader = File.OpenText(xmlPath);
+        var xdoc = await XDocument.LoadAsync(reader, LoadOptions.None, cancellationToken).ConfigureAwait(false);
         var layoutEl = xdoc.Root!;
         var layout = new AnyRailLayout
         {
@@ -109,6 +110,12 @@ public class AnyRailLayout
 
         return layout;
     }
+
+    /// <summary>
+    /// Parses an AnyRail XML file and returns an AnyRailLayout (synchronous wrapper for backward compatibility).
+    /// </summary>
+    [Obsolete("Use ParseAsync instead for better performance and non-blocking I/O")]
+    public static AnyRailLayout Parse(string xmlPath) => ParseAsync(xmlPath).GetAwaiter().GetResult();
 
     /// <summary>
     /// Converts AnyRail connections (endpoint-to-endpoint) to TrackConnections (segment-to-segment).

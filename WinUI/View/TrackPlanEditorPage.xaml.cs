@@ -11,6 +11,7 @@ using Windows.ApplicationModel.DataTransfer;
 /// Track Plan Editor Page - Topology-based track plan editor.
 /// Simplified code-behind for the new topology-based architecture.
 /// </summary>
+// ReSharper disable once PartialTypeWithSinglePart
 public sealed partial class TrackPlanEditorPage : Page
 {
     public TrackPlanEditorPage(TrackPlanEditorViewModel viewModel)
