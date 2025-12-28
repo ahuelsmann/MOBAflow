@@ -1,17 +1,28 @@
 <svg width="456" height="456" viewBox="0 0 456 456" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- Background -->
-    <rect width="456" height="456" fill="#512BD4"/>
+    <!-- Background (lila wie WinUI) -->
+    <rect width="456" height="456" fill="#5B3A99"/>
     
-    <!-- Railroad Track Icon (symbolic, centered, white) -->
+    <!-- Train front (modern locomotive icon - centered) -->
+    <!-- Main body (blue locomotive) -->
+    <rect x="140" y="120" width="176" height="176" rx="16" fill="#2B7CD3"/>
     
-    <!-- Rails (two parallel lines) -->
-    <rect x="88" y="168" width="280" height="16" rx="8" fill="#FFFFFF" opacity="0.95"/>
-    <rect x="88" y="272" width="280" height="16" rx="8" fill="#FFFFFF" opacity="0.95"/>
+    <!-- Roof/top section (darker blue) -->
+    <rect x="140" y="120" width="176" height="32" rx="16" fill="#1E5FA0"/>
     
-    <!-- Sleepers (horizontal wooden beams) -->
-    <rect x="108" y="148" width="12" height="160" rx="4" fill="#FFFFFF" opacity="0.8"/>
-    <rect x="168" y="148" width="12" height="160" rx="4" fill="#FFFFFF" opacity="0.8"/>
-    <rect x="228" y="148" width="12" height="160" rx="4" fill="#FFFFFF" opacity="0.8"/>
-    <rect x="288" y="148" width="12" height="160" rx="4" fill="#FFFFFF" opacity="0.8"/>
-    <rect x="348" y="148" width="12" height="160" rx="4" fill="#FFFFFF" opacity="0.8"/>
+    <!-- Large windshield (light blue, transparent) -->
+    <rect x="164" y="168" width="128" height="80" rx="8" fill="#87CEEB" opacity="0.9"/>
+    
+    <!-- Window frame (horizontal divider) -->
+    <rect x="164" y="232" width="128" height="8" fill="#1E5FA0"/>
+    
+    <!-- Bottom section (bumper area) -->
+    <rect x="140" y="272" width="176" height="24" fill="#1E5FA0"/>
+    
+    <!-- Headlights (two yellow circles) -->
+    <circle cx="188" cy="284" r="10" fill="#FFD700"/>
+    <circle cx="268" cy="284" r="10" fill="#FFD700"/>
+    
+    <!-- Rails below (two silver lines) -->
+    <rect x="80" y="320" width="296" height="6" rx="3" fill="#C0C0C0"/>
+    <rect x="80" y="336" width="296" height="6" rx="3" fill="#C0C0C0"/>
 </svg>

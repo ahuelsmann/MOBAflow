@@ -88,6 +88,16 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     {
         _ = value;
         OnPropertyChanged(nameof(HasSelectedSegment));
+        
+        // Load InPort value from selected segment
+        if (value?.AssignedInPort.HasValue == true)
+        {
+            InPortInput = value.AssignedInPort.Value;
+        }
+        else
+        {
+            InPortInput = double.NaN;
+        }
     }
     #endregion
 

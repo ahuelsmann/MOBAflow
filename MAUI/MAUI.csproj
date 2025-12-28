@@ -91,10 +91,12 @@
 
 
   <ItemGroup>
-    <!-- App Icon -->
-    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
-    <!-- Splash Screen -->
-    <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
+    <!-- App Icon - DEAKTIVIERT wegen Android Resource ID Konflikt (siehe Issue mit id/legacy Fragment) -->
+    <!-- TODO: PNG-basierte Icons manuell in Platforms/Android/Resources/mipmap-* platzieren -->
+    <!-- <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" /> -->
+    
+    <!-- Splash Screen mit neuem MOBAflow Design (gleich wie WinUI) - DEAKTIVIERT: SVG-Datei fehlt -->
+    <!-- <MauiSplashScreen Include="Resources\Splash\mobaflow_icon_splash.svg" Color="#512BD4" BaseSize="128,128" /> -->
     <!-- Images (includes all SVG icons automatically) -->
     <MauiImage Include="Resources\Images\*" />
     <!-- Custom Fonts -->

@@ -1,20 +1,21 @@
 # MOBAflow Icon Update Guide
 
-**Letzte Aktualisierung:** 27.12.2025  
-**Version:** 1.0
+**Letzte Aktualisierung:** 25.12.2025  
+**Version:** 2.0
 
 Dieses Dokument beschreibt, wie die App-Icons für MOBAflow (WinUI 3) aktualisiert werden können.
 
 ---
 
-## 🎨 Übersicht
+## 🎨 Aktuelles Design
 
-MOBAflow verwendet ein **lila-blaues** Icon-Design mit folgenden Elementen:
+MOBAflow verwendet ein **Eisenbahn-Icon** (Frontalansicht) mit folgenden Elementen:
 - 🟣 **Hintergrundfarbe:** `#5B3A99` (Lila/Violett)
-- 🚂 **Lokomotive:** `#2B7CD3` (Blau)
-- 🛤️ **Gleise:** `#C0C0C0` (Silber)
-- 🔴 **Feedback-Punkt:** `#FF6B6B` (Rot)
-- 📝 **Text:** `#FFFFFF` (Weiß)
+- 🚂 **Lokomotive:** `#2B7CD3` (Blau) - Frontalansicht mit Fenstern
+- 💡 **Scheinwerfer:** `#FFD700` (Gold) und `#FFFFFF` (Weiß)
+- 🛤️ **Gleise:** `#C0C0C0` (Silber) - Perspektivische Darstellung
+- 🔴 **Feedback-Punkt:** `#FF6B6B` (Rot) mit Glow-Effekt
+- 📝 **Text:** `#FFFFFF` (Weiß) - "MOBA"
 
 ---
 
@@ -23,131 +24,124 @@ MOBAflow verwendet ein **lila-blaues** Icon-Design mit folgenden Elementen:
 ### **Basis-Icons (Quelle):**
 ```
 scripts/
-├── mobaflow-icon.svg      ← SVG-Vorlage (editierbar in Inkscape/Figma)
+├── mobaflow-icon.svg          ← SVG-Vorlage (editierbar)
+└── svg-to-png.ps1             ← Konvertierungs-Script
+└── update-icon.ps1            ← Schnell-Update Script
 
 WinUI/Assets/
-└── mobaflow-icon.png      ← PNG-Basis (256x256 oder größer, manuell erstellt)
+└── mobaflow-icon.png          ← PNG-Basis (512x512, aus SVG generiert)
 ```
 
 ### **Generierte Icons (automatisch erstellt):**
 ```
 WinUI/Assets/
-├── mobaflow-icon.ico                ← Windows .exe Icon (Multi-Resolution)
-├── Square44x44Logo.png              (44x44)
-├── Square44x44Logo.scale-200.png    (88x88)
-├── Square150x150Logo.png            (150x150)
-├── Square150x150Logo.scale-200.png  (300x300)
-├── Wide310x150Logo.png              (310x150)
-├── Wide310x150Logo.scale-200.png    (620x300)
-├── StoreLogo.png                    (50x50)
-├── StoreLogo.scale-200.png          (100x100)
-├── SplashScreen.png                 (620x300)
-├── SplashScreen.scale-200.png       (1240x600)
-├── LargeTile.png                    (310x310)
-└── LargeTile.scale-200.png          (620x620)
+├── Square44x44Logo.png              (44x44)   - Taskleiste
+├── Square44x44Logo.scale-200.png    (88x88)   - High-DPI
+├── Square150x150Logo.png            (150x150) - Start-Kachel
+├── Square150x150Logo.scale-200.png  (300x300) - High-DPI
+├── Wide310x150Logo.png              (310x150) - Breite Kachel
+├── Wide310x150Logo.scale-200.png    (620x300) - High-DPI
+├── StoreLogo.png                    (50x50)   - Store
+├── StoreLogo.scale-200.png          (100x100) - High-DPI
+├── SplashScreen.png                 (620x300) - Ladebildschirm
+├── SplashScreen.scale-200.png       (1240x600)- High-DPI
+├── LargeTile.png                    (310x310) - Große Kachel
+└── LargeTile.scale-200.png          (620x620) - High-DPI
 ```
 
-
 ---
 
-## 🚀 Icon aktualisieren (Schritt-für-Schritt)
+## 🚀 Icon aktualisieren (Einfache Methode)
 
-### **1. Neues Icon vorbereiten**
-
-**Option A: SVG bearbeiten**
-1. Öffne `scripts/mobaflow-icon.svg` in einem Editor (Inkscape, Figma, VS Code)
-2. Passe das Design an (Farben, Form, Text)
-3. Exportiere als PNG (mindestens 256x256px)
-4. Speichere als `WinUI/Assets/mobaflow-icon.png`
-
-
-**Option B: PNG direkt ersetzen**
-1. Erstelle ein neues Icon (256x256px oder größer)
-2. Speichere es als `WinUI/Assets/mobaflow-icon.png`
-3. Stelle sicher, dass es **transparenten Hintergrund** oder **#5B3A99** hat
-
-
----
-
-### **2. Icons in alle Größen generieren**
-
-Führe das PowerShell-Script aus:
+### **Automatisches Update (Empfohlen)**
 
 ```powershell
 # Im Projekt-Root-Verzeichnis
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+.\scripts\update-icon.ps1
+```
+
+**Was passiert:**
+1. ✅ Öffnet SVG in Browser (Microsoft Edge)
+2. ✅ Du speicherst es als PNG (512x512)
+3. ✅ Script generiert automatisch alle 12 Icon-Größen
+4. ✅ Zeigt nächste Schritte (Build, Icon-Cache löschen)
+
+---
+
+## 🎨 Icon Design anpassen
+
+### **1. SVG bearbeiten**
+
+Öffne `scripts/mobaflow-icon.svg` in einem Editor:
+- **Inkscape** (empfohlen, kostenlos): https://inkscape.org
+- **Figma** (online): https://figma.com
+- **VS Code** mit SVG-Extension
+
+**Farben ändern:**
+```svg
+<!-- Hintergrund -->
+<rect fill="#5B3A99"/>  <!-- Lila -->
+
+<!-- Lok -->
+<rect fill="#2B7CD3"/>  <!-- Blau -->
+
+<!-- Scheinwerfer -->
+<circle fill="#FFD700"/> <!-- Gold -->
+
+<!-- Feedback-Punkt -->
+<circle fill="#FF6B6B"/> <!-- Rot -->
+```
+
+### **2. PNG exportieren**
+
+**Option A: Automatisch (Inkscape)**
+```powershell
+.\scripts\svg-to-png.ps1
+```
+
+**Option B: Manuell (Browser)**
+1. Öffne SVG in Edge: `Start-Process msedge scripts\mobaflow-icon.svg`
+2. Rechtsklick → "Bild speichern unter..."
+3. Speichere als `WinUI\Assets\mobaflow-icon.png` (512x512)
+
+### **3. Alle Größen generieren**
+
+```powershell
 .\scripts\resize-icons-dotnet.ps1
 ```
 
-**Was das Script macht:**
-- ✅ Lädt `mobaflow-icon.png`
-- ✅ Skaliert es in 12 verschiedene Größen (44x44 bis 1240x600)
-- ✅ Verwendet High-Quality Bicubic Interpolation
-- ✅ Speichert alle Icons in `scripts/`
+---
 
-**Ausgabe:**
+## 🔧 Manuelle Installation (ohne Scripts)
+
+### **1. Inkscape installieren**
+
+```powershell
+# Via winget (Windows 11)
+winget install Inkscape.Inkscape
+
+# ODER Download:
+# https://inkscape.org/release/
 ```
-🎨 Resizing WinUI 3 app icons...
 
-✅ Created: Square44x44Logo.png (44x44)
-✅ Created: Square44x44Logo.scale-200.png (88x88)
-...
-✨ Icon resizing complete: 12/12 successful
+### **2. SVG zu PNG konvertieren**
+
+```powershell
+# Inkscape CLI (nach Installation)
+$inkscape = "C:\Program Files\Inkscape\bin\inkscape.exe"
+& $inkscape --export-type="png" `
+    --export-filename="WinUI\Assets\mobaflow-icon.png" `
+    --export-width=512 --export-height=512 `
+    "scripts\mobaflow-icon.svg"
+```
+
+### **3. Icons generieren**
+
+```powershell
+.\scripts\resize-icons-dotnet.ps1
 ```
 
 ---
-
-### **3. Windows .ico Datei erstellen** (optional)
-
-Für die `.exe` wird eine `.ico` Datei benötigt:
-
-```powershell
-.\scripts\create-ico.ps1
-```
-
-**Was das Script macht:**
-- ✅ Konvertiert PNG zu ICO (Multi-Resolution: 16, 32, 48, 256px)
-- ✅ Speichert als `scripts/mobaflow-icon.ico`
-
-**Ausgabe:**
-```
-🎨 Converting PNG to ICO format...
-✅ ICO file created successfully: scripts\mobaflow-icon.ico
-   Contains sizes: 16, 32, 48, 256px
-```
-
----
-
-### **4. Package.appxmanifest aktualisieren**
-
-Passe die Manifest-Datei an (Hintergrundfarbe + DisplayName):
-
-```powershell
-.\scripts\fix-manifest.ps1
-```
-
-**Was das Script macht:**
-- ✅ Ändert `BackgroundColor="transparent"` → `BackgroundColor="#5B3A99"`
-- ✅ Ändert `<DisplayName>WinUI</DisplayName>` → `<DisplayName>MOBAflow</DisplayName>`
-
-**Ausgabe:**
-```
-🔧 Updating Package.appxmanifest...
-✅ Package.appxmanifest updated!
-   - DisplayName: MOBAflow
-   - BackgroundColor: #5B3A99 (Purple)
-```
-
----
-
-### **5. Projekt neu bauen**
-
-```powershell
-# Clean (alte Builds löschen)
-dotnet clean WinUI\WinUI.csproj
-
-# Build (neu kompilieren)
-dotnet build WinUI\WinUI.csproj
 ```
 
 ---
