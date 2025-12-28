@@ -3,6 +3,7 @@
     <File Path=".editorconfig" />
     <File Path=".github/copilot-instructions.md" />
     <File Path=".gitignore" />
+    <File Path=".sln.DotSettings" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Build.targets" />
     <File Path="Directory.Packages.props" />
@@ -53,7 +54,9 @@
   </Project>
   <Project Path="Common/Common.csproj" />
   <Project Path="Domain/Domain.csproj" />
-  <Project Path="MAUI/MAUI.csproj" />
+  <Project Path="MAUI/MAUI.csproj">
+    <Deploy Solution="Debug|*" />
+  </Project>
   <Project Path="SharedUI/SharedUI.csproj" Id="e6527119-fec0-439b-bd9a-a0525ac0f93e" />
   <Project Path="Sound/Sound.csproj">
     <Deploy />

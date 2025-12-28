@@ -12,39 +12,12 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!--  Page Header  -->
-        <Grid Grid.Row="0" Margin="0,0,0,16">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-
-            <!--  Title  -->
-            <TextBlock
-                Grid.Column="0"
-                Padding="8,0,0,0"
-                Style="{StaticResource TitleTextBlockStyle}"
-                Text="Monitor" />
-
-            <!--  Action Buttons  -->
-            <StackPanel
-                Grid.Column="1"
-                Orientation="Horizontal"
-                Spacing="8">
-                <Button Command="{x:Bind ViewModel.ClearTrafficCommand}" ToolTipService.ToolTip="Clear all traffic packets">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <FontIcon FontSize="14" Glyph="&#xE74D;" />
-                        <TextBlock Text="Clear Traffic" />
-                    </StackPanel>
-                </Button>
-                <Button Command="{x:Bind ViewModel.ClearActivityLogsCommand}" ToolTipService.ToolTip="Clear activity logs">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <FontIcon FontSize="14" Glyph="&#xE74D;" />
-                        <TextBlock Text="Clear Logs" />
-                    </StackPanel>
-                </Button>
-            </StackPanel>
-        </Grid>
+        <!--  Title  -->
+        <TextBlock
+            Grid.Row="0"
+            Padding="8,0,0,0"
+            Style="{StaticResource TitleTextBlockStyle}"
+            Text="Monitor" />
 
         <!--  Main Content: Traffic + Activity Logs  -->
         <Grid Grid.Row="1">
@@ -72,18 +45,16 @@
                     <TextBlock
                         Grid.Column="0"
                         Style="{StaticResource SubtitleTextBlockStyle}"
-                        Text="Z21" />
+                        Text="Z21 Traffic" />
 
-                    <Border
+                    <Button
                         Grid.Column="1"
-                        Padding="8,4"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        CornerRadius="4">
-                        <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}">
-                            <Run Text="{x:Bind ViewModel.TrafficCount, Mode=OneWay}" />
-                            <Run Text="packets" />
-                        </TextBlock>
-                    </Border>
+                        Command="{x:Bind ViewModel.ClearTrafficCommand}"
+                        ToolTipService.ToolTip="Clear all traffic packets">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon FontSize="14" Glyph="&#xE74D;" />
+                        </StackPanel>
+                    </Button>
                 </Grid>
 
                 <!--  Column Headers  -->
@@ -201,11 +172,27 @@
                 </Grid.RowDefinitions>
 
                 <!--  Section Header  -->
-                <TextBlock
-                    Grid.Row="0"
-                    Margin="0,0,0,8"
-                    Style="{StaticResource SubtitleTextBlockStyle}"
-                    Text="Application" />
+                <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock
+                        Grid.Column="0"
+                        Margin="0,0,0,8"
+                        Style="{StaticResource SubtitleTextBlockStyle}"
+                        Text="Application Log" />
+
+                    <Button
+                        Grid.Column="1"
+                        Command="{x:Bind ViewModel.ClearActivityLogsCommand}"
+                        ToolTipService.ToolTip="Clear activity logs">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon FontSize="14" Glyph="&#xE74D;" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
 
                 <!--  Column Header  -->
                 <Grid

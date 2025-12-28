@@ -154,7 +154,10 @@
                             Label="Save" />
                         <AppBarSeparator />
                         <!--  Import Export  -->
-                        <AppBarButton Command="{x:Bind TrackPlanEditorViewModel.ImportAnyRailCommand}" Label="Import">
+                        <AppBarButton
+                            Command="{x:Bind TrackPlanEditorViewModel.ImportAnyRailCommand}"
+                            Label="Import"
+                            ToolTipService.ToolTip="AnyRail XML Import">
                             <AppBarButton.Icon>
                                 <FontIcon Glyph="&#xE896;" />
                             </AppBarButton.Icon>
@@ -166,11 +169,13 @@
                             Icon="Play"
                             Label="Simulate" />
                         <AppBarElementContainer VerticalAlignment="Center">
-                            <TextBox
-                                Width="60"
-                                PlaceholderText="InPort"
-                                Text="{x:Bind ViewModel.SimulateInPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <NumberBox
+                                Minimum="1"
+                                SpinButtonPlacementMode="Inline"
+                                ToolTipService.ToolTip="Feedback Point (InPort)"
+                                Value="{x:Bind ViewModel.SimulateInPort, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         </AppBarElementContainer>
+                        <AppBarSeparator />
                         <AppBarButton
                             Command="{x:Bind ViewModel.ResetJourneyCommand}"
                             Icon="Refresh"
