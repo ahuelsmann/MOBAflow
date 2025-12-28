@@ -39,8 +39,8 @@ MOBAflow supports **importing track layouts from AnyRail** (user-exported XML fi
 
 ### Prerequisites
 - **.NET 10 SDK** (or later)
-- **Visual Studio 2025** (recommended) or Rider/VS Code
-- **Roco Z21 Digital Command Station** (optional, for testing)
+- **Visual Studio 2026** (recommended)
+- **Roco Z21 Digital Command Station**
 
 ### Clone & Build
 
