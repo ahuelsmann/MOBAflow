@@ -6,6 +6,7 @@ using Domain;
 using Moba.Domain.Enum;
 
 using System.Diagnostics;
+using System.IO;
 
 /// <summary>
 /// Action Executor Service.
@@ -98,6 +99,14 @@ public class ActionExecutor(AnnouncementService? announcementService = null) : I
             throw new ArgumentException("Audio action requires Parameters and SoundPlayer");
 
         var filePath = action.Parameters["FilePath"].ToString()!;
+
+        // Validate file exists before attempting playback
+        if (!File.Exists(filePath))
+        {
+            var error = $"Audio file not found: {filePath}";
+            Debug.WriteLine($"    ❌ {error}");
+            throw new FileNotFoundException(error, filePath);
+        }
 
         await context.SoundPlayer.PlayAsync(filePath).ConfigureAwait(false);
 

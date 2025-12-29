@@ -6,6 +6,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <RazorCompileOnBuild>false</RazorCompileOnBuild>
+    <RazorCompileOnPublish>false</RazorCompileOnPublish>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Backend\Backend.csproj" />
     <ProjectReference Include="..\SharedUI\SharedUI.csproj" />

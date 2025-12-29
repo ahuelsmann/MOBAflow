@@ -67,7 +67,6 @@
                         MaxWidth="200"
                         HorizontalAlignment="Left"
                         Header="Auto-Connect Retry Interval (seconds)"
-                        Maximum="60"
                         Minimum="5"
                         SpinButtonPlacementMode="Inline"
                         Value="{x:Bind ViewModel.Z21AutoConnectRetryInterval, Mode=TwoWay}">
@@ -80,8 +79,7 @@
                         MaxWidth="200"
                         HorizontalAlignment="Left"
                         Header="System State Polling Interval (seconds)"
-                        Maximum="30"
-                        Minimum="0"
+                        Minimum="5"
                         SpinButtonPlacementMode="Inline"
                         Value="{x:Bind ViewModel.Z21SystemStatePollingInterval, Mode=TwoWay}">
                         <NumberBox.Description>
@@ -293,7 +291,6 @@
                         MaxWidth="200"
                         HorizontalAlignment="Left"
                         Header="Number of Feedback Points"
-                        Maximum="99"
                         Minimum="0"
                         SpinButtonPlacementMode="Inline"
                         Value="{x:Bind ViewModel.CountOfFeedbackPoints, Mode=TwoWay}">
@@ -335,8 +332,7 @@
                         Width="300"
                         HorizontalAlignment="Left"
                         Header="Health Check Interval (seconds)"
-                        Maximum="300"
-                        Minimum="10"
+                        Minimum="5"
                         SpinButtonPlacementMode="Inline"
                         Value="{x:Bind ViewModel.HealthCheckIntervalSeconds, Mode=TwoWay}">
                         <NumberBox.Description>

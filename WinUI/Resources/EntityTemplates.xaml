@@ -3,21 +3,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:behavior="using:Moba.WinUI.Behavior"
     xmlns:i="using:Microsoft.Xaml.Interactivity"
-    xmlns:selector="using:Moba.WinUI.Selector">
-
-    <!--  EntityTemplateSelector  -->
-    <selector:EntityTemplateSelector
-        x:Key="EntityTemplateSelector"
-        ActionTemplate="{StaticResource ActionTemplate}"
-        AnnouncementActionTemplate="{StaticResource AnnouncementActionTemplate}"
-        AudioActionTemplate="{StaticResource AudioActionTemplate}"
-        CommandActionTemplate="{StaticResource CommandActionTemplate}"
-        DefaultTemplate="{StaticResource DefaultTemplate}"
-        JourneyTemplate="{StaticResource JourneyTemplate}"
-        ProjectTemplate="{StaticResource ProjectTemplate}"
-        StationTemplate="{StaticResource StationTemplate}"
-        TrainTemplate="{StaticResource TrainTemplate}"
-        WorkflowTemplate="{StaticResource WorkflowTemplate}" />
+    xmlns:selector="using:Moba.WinUI.Selector"
+    xmlns:vmAction="using:Moba.SharedUI.ViewModel.Action">
 
     <!--  ============================================  -->
     <!--  Journey Template (Fluent Design 2)  -->
@@ -104,7 +91,6 @@
                 <!--  InPort  -->
                 <NumberBox
                     Header="InPort"
-                    Maximum="255"
                     Minimum="0"
                     SpinButtonPlacementMode="Inline"
                     Value="{Binding InPort, Mode=TwoWay}" />
@@ -130,8 +116,7 @@
                     <NumberBox
                         Header="Timer Interval (seconds)"
                         IsEnabled="{Binding IsUsingTimerToIgnoreFeedbacks, Mode=OneWay}"
-                        Maximum="60"
-                        Minimum="0"
+                        Minimum="1"
                         SpinButtonPlacementMode="Inline"
                         Value="{Binding IntervalForTimerToIgnoreFeedbacks, Mode=TwoWay}" />
                 </StackPanel>
@@ -164,17 +149,16 @@
                     PlaceholderText="Station name"
                     Text="{Binding Name, Mode=TwoWay}" />
 
-                <TextBox
+                <!--<TextBox
                     Height="60"
                     AcceptsReturn="True"
                     Header="Description"
                     PlaceholderText="Optional description"
                     Text="{Binding Description, Mode=TwoWay}"
-                    TextWrapping="Wrap" />
+                    TextWrapping="Wrap" />-->
 
                 <NumberBox
                     Header="InPort"
-                    Maximum="255"
                     Minimum="0"
                     SpinButtonPlacementMode="Inline"
                     Value="{Binding InPort, Mode=TwoWay}" />
@@ -224,23 +208,26 @@
                 </Grid>
 
                 <!--  Schedule  -->
-                <TextBlock
+                <!--<TextBlock
                     Margin="0,8,0,4"
                     Style="{ThemeResource BaseTextBlockStyle}"
-                    Text="Schedule" />
+                    Text="Schedule" />-->
 
-                <!--  Schedule (Arrival/Departure not yet in ViewModel)  -->
-                <!--
-                <TimePicker Header="Arrival Time" Time="{Binding Arrival, Mode=TwoWay}" />
-                <TimePicker Header="Departure Time" Time="{Binding Departure, Mode=TwoWay}" />
-                -->
+                <TimePicker
+                    ClockIdentifier="24HourClock"
+                    Header="Arrival Time"
+                    Time="{Binding Arrival, Mode=TwoWay, Converter={StaticResource DateTimeToTimeSpanConverter}}" />
 
-                <NumberBox
+                <TimePicker
+                    ClockIdentifier="24HourClock"
+                    Header="Departure Time"
+                    Time="{Binding Departure, Mode=TwoWay, Converter={StaticResource DateTimeToTimeSpanConverter}}" />
+
+                <!--<NumberBox
                     Header="Track Number"
-                    Maximum="99"
                     Minimum="1"
                     SpinButtonPlacementMode="Inline"
-                    Value="{Binding Track, Mode=TwoWay}" />
+                    Value="{Binding Track, Mode=TwoWay}" />-->
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>
@@ -297,7 +284,6 @@
                 <!--  InPort  -->
                 <NumberBox
                     Header="InPort (Trigger)"
-                    Maximum="255"
                     Minimum="0"
                     SpinButtonPlacementMode="Inline"
                     Value="{Binding InPort, Mode=TwoWay}" />
@@ -309,11 +295,23 @@
                     <NumberBox
                         Header="Timer Interval (seconds)"
                         IsEnabled="{Binding IsUsingTimerToIgnoreFeedbacks, Mode=OneWay}"
-                        Maximum="60"
-                        Minimum="0"
+                        Minimum="1"
                         SpinButtonPlacementMode="Inline"
                         Value="{Binding IntervalForTimerToIgnoreFeedbacks, Mode=TwoWay}" />
                 </StackPanel>
+
+                <!--  Execution Mode  -->
+                <ComboBox
+                    HorizontalAlignment="Stretch"
+                    Header="Execution Mode"
+                    ItemsSource="{Binding ExecutionModeValues, Mode=OneWay}"
+                    SelectedItem="{Binding ExecutionMode, Mode=TwoWay}" />
+
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Style="{ThemeResource CaptionTextBlockStyle}"
+                    Text="Sequential: Actions run one-by-one, DelayAfterMs adds pause after completion. Parallel: Actions start staggered, DelayAfterMs controls start offset (cumulative)."
+                    TextWrapping="Wrap" />
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>
@@ -483,12 +481,6 @@
                     PlaceholderText="e.g., Arrival Announcement"
                     Text="{Binding Name, Mode=TwoWay}" />
 
-                <NumberBox
-                    Header="Number"
-                    Minimum="0"
-                    SpinButtonPlacementMode="Inline"
-                    Value="{Binding Number, Mode=TwoWay}" />
-
                 <TextBox
                     MinHeight="100"
                     AcceptsReturn="True"
@@ -510,13 +502,18 @@
                     Value="{Binding Rate, Mode=TwoWay}" />
 
                 <NumberBox
-                    Header="Volume"
-                    LargeChange="0.1"
-                    Maximum="1"
+                    Header="Delay After (ms)"
+                    Maximum="60000"
                     Minimum="0"
-                    SmallChange="0.01"
                     SpinButtonPlacementMode="Inline"
-                    Value="{Binding Volume, Mode=TwoWay}" />
+                    ToolTipService.ToolTip="Wait time after this action completes (Sequential mode only)"
+                    Value="{Binding DelayAfterMs, Mode=TwoWay}" />
+
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Style="{ThemeResource CaptionTextBlockStyle}"
+                    Text="Volume is controlled via Windows system volume settings. Use Drag &amp; Drop in the Actions list to change execution order. DelayAfterMs applies only in Sequential mode."
+                    TextWrapping="Wrap" />
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>
@@ -531,27 +528,38 @@
                     PlaceholderText="e.g., Station Bell"
                     Text="{Binding Name, Mode=TwoWay}" />
 
+                <StackPanel Spacing="8">
+                    <TextBlock Text="File Path" />
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox
+                            Grid.Column="0"
+                            PlaceholderText="Resources\Sounds\Station\sound.wav"
+                            Text="{Binding FilePath, Mode=TwoWay}" />
+                        <Button
+                            Grid.Column="1"
+                            Command="{Binding BrowseForFileCommand}"
+                            Content="Browse..."
+                            ToolTipService.ToolTip="Select an audio file" />
+                    </Grid>
+                </StackPanel>
+
                 <NumberBox
-                    Header="Number"
+                    Header="Delay After (ms)"
+                    Maximum="60000"
                     Minimum="0"
                     SpinButtonPlacementMode="Inline"
-                    Value="{Binding Number, Mode=TwoWay}" />
+                    ToolTipService.ToolTip="Wait time after this action completes (Sequential mode only)"
+                    Value="{Binding DelayAfterMs, Mode=TwoWay}" />
 
-                <TextBox
-                    Header="File Path"
-                    PlaceholderText="path/to/sound.wav"
-                    Text="{Binding FilePath, Mode=TwoWay}" />
-
-                <NumberBox
-                    Header="Volume"
-                    LargeChange="0.1"
-                    Maximum="1"
-                    Minimum="0"
-                    SmallChange="0.01"
-                    SpinButtonPlacementMode="Inline"
-                    Value="{Binding Volume, Mode=TwoWay}" />
-
-                <CheckBox Content="Loop Playback" IsChecked="{Binding Loop, Mode=TwoWay}" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Style="{ThemeResource CaptionTextBlockStyle}"
+                    Text="Volume is controlled via Windows system volume settings. The audio file will play once when this action is triggered. Use Drag &amp; Drop to change execution order. DelayAfterMs applies only in Sequential mode."
+                    TextWrapping="Wrap" />
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>
@@ -565,12 +573,6 @@
                     Header="Name"
                     PlaceholderText="e.g., Stop Loco 101"
                     Text="{Binding Name, Mode=TwoWay}" />
-
-                <NumberBox
-                    Header="Number"
-                    Minimum="0"
-                    SpinButtonPlacementMode="Inline"
-                    Value="{Binding Number, Mode=TwoWay}" />
 
                 <!--  Address  -->
                 <NumberBox
@@ -595,6 +597,14 @@
                     ItemsSource="{Binding DirectionValues}"
                     SelectedItem="{Binding Direction, Mode=TwoWay}" />
 
+                <NumberBox
+                    Header="Delay After (ms)"
+                    Maximum="60000"
+                    Minimum="0"
+                    SpinButtonPlacementMode="Inline"
+                    ToolTipService.ToolTip="Wait time after this command executes (Sequential mode only)"
+                    Value="{Binding DelayAfterMs, Mode=TwoWay}" />
+
                 <!--  Raw Z21 Bytes (Advanced)  -->
                 <TextBox
                     Height="80"
@@ -607,7 +617,7 @@
                 <TextBlock
                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                     Style="{ThemeResource CaptionTextBlockStyle}"
-                    Text="Decoded from Z21 DCC command format. Edit the command in Z21 app or use raw bytes directly."
+                    Text="Decoded from Z21 DCC command format. Edit the command in Z21 app or use raw bytes directly. Use Drag &amp; Drop to change execution order. DelayAfterMs applies only in Sequential mode."
                     TextWrapping="Wrap" />
             </StackPanel>
         </ScrollViewer>
@@ -621,19 +631,122 @@
 
                 <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
 
-                <NumberBox
-                    Header="Number"
-                    Minimum="0"
-                    SpinButtonPlacementMode="Inline"
-                    Value="{Binding Number, Mode=TwoWay}" />
-
                 <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{Binding Type}" />
 
                 <TextBlock
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="(Select specific action type in Workflow for detailed properties)"
+                    Text="Select specific action type in Workflow for detailed properties. Use Drag &amp; Drop to change execution order."
                     TextWrapping="Wrap" />
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>
+
+    <!--  ============================================  -->
+    <!--  Locomotive Template (Fluent Design 2)  -->
+    <!--  ============================================  -->
+    <DataTemplate x:Key="LocomotiveTemplate">
+        <ScrollViewer>
+            <StackPanel Padding="16" Spacing="16">
+                <TextBlock
+                    Margin="0,0,0,8"
+                    Style="{ThemeResource SubtitleTextBlockStyle}"
+                    Text="Locomotive Properties" />
+
+                <TextBox
+                    Header="Name"
+                    PlaceholderText="Enter locomotive name"
+                    Text="{Binding Name, Mode=TwoWay}" />
+
+                <TextBox
+                    Height="80"
+                    AcceptsReturn="True"
+                    Header="Description"
+                    PlaceholderText="Enter description"
+                    Text="{Binding Description, Mode=TwoWay}"
+                    TextWrapping="Wrap" />
+
+                <NumberBox
+                    Header="Address"
+                    Maximum="10239"
+                    Minimum="0"
+                    SpinButtonPlacementMode="Inline"
+                    Value="{Binding Address, Mode=TwoWay}" />
+
+                <ComboBox
+                    HorizontalAlignment="Stretch"
+                    Header="Locomotive Type"
+                    ItemsSource="{Binding LocomotiveTypeValues}"
+                    SelectedItem="{Binding LocomotiveType, Mode=TwoWay}" />
+
+                <NumberBox
+                    Header="Length (mm)"
+                    Minimum="0"
+                    SpinButtonPlacementMode="Inline"
+                    Value="{Binding LengthMm, Mode=TwoWay}" />
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+
+    <!--  ============================================  -->
+    <!--  Wagon Template (Fluent Design 2)  -->
+    <!--  ============================================  -->
+    <DataTemplate x:Key="WagonTemplate">
+        <ScrollViewer>
+            <StackPanel Padding="16" Spacing="16">
+                <TextBlock
+                    Margin="0,0,0,8"
+                    Style="{ThemeResource SubtitleTextBlockStyle}"
+                    Text="Wagon Properties" />
+
+                <TextBox
+                    Header="Name"
+                    PlaceholderText="Enter wagon name"
+                    Text="{Binding Name, Mode=TwoWay}" />
+
+                <TextBox
+                    Height="80"
+                    AcceptsReturn="True"
+                    Header="Description"
+                    PlaceholderText="Enter description"
+                    Text="{Binding Description, Mode=TwoWay}"
+                    TextWrapping="Wrap" />
+
+                <ComboBox
+                    HorizontalAlignment="Stretch"
+                    Header="Wagon Type"
+                    ItemsSource="{Binding WagonTypeValues}"
+                    SelectedItem="{Binding WagonType, Mode=TwoWay}" />
+
+                <NumberBox
+                    Header="Length (mm)"
+                    Minimum="0"
+                    SpinButtonPlacementMode="Inline"
+                    Value="{Binding LengthMm, Mode=TwoWay}" />
+
+                <NumberBox
+                    Header="Capacity"
+                    Minimum="0"
+                    SpinButtonPlacementMode="Inline"
+                    Value="{Binding Capacity, Mode=TwoWay}" />
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+
+    <!--  ============================================  -->
+    <!--  EntityTemplateSelector (MUST BE LAST)  -->
+    <!--  ============================================  -->
+    <selector:EntityTemplateSelector
+        x:Key="EntityTemplateSelector"
+        ActionTemplate="{StaticResource ActionTemplate}"
+        AnnouncementActionTemplate="{StaticResource AnnouncementActionTemplate}"
+        AudioActionTemplate="{StaticResource AudioActionTemplate}"
+        CommandActionTemplate="{StaticResource CommandActionTemplate}"
+        DefaultTemplate="{StaticResource DefaultTemplate}"
+        JourneyTemplate="{StaticResource JourneyTemplate}"
+        LocomotiveTemplate="{StaticResource LocomotiveTemplate}"
+        ProjectTemplate="{StaticResource ProjectTemplate}"
+        StationTemplate="{StaticResource StationTemplate}"
+        TrainTemplate="{StaticResource TrainTemplate}"
+        WagonTemplate="{StaticResource WagonTemplate}"
+        WorkflowTemplate="{StaticResource WorkflowTemplate}" />
 </ResourceDictionary>

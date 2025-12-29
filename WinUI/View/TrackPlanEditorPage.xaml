@@ -135,8 +135,8 @@
                     <Slider
                         Width="120"
                         VerticalAlignment="Center"
-                        Maximum="200"
-                        Minimum="25"
+                        Maximum="500"
+                        Minimum="5"
                         StepFrequency="5"
                         Value="{x:Bind ViewModel.ZoomLevel, Mode=TwoWay}" />
                     <Button

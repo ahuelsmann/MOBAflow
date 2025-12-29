@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel.Action;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -40,6 +40,12 @@ public abstract class WorkflowActionViewModel : ObservableObject
     {
         get => _action.Number;
         set => SetProperty(_action.Number, value, _action, (a, v) => a.Number = v);
+    }
+
+    public int DelayAfterMs
+    {
+        get => _action.DelayAfterMs;
+        set => SetProperty(_action.DelayAfterMs, value, _action, (a, v) => a.DelayAfterMs = v);
     }
 
     public ActionType Type => _action.Type;

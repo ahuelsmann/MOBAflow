@@ -69,8 +69,8 @@ public class SystemSpeechEngine : ISpeakerEngine
             // Range: -10 (slowest) to 10 (fastest), 0 is normal
             synthesizer.Rate = -2; // Approximately -15% to -20% slower
 
-            // Configure volume
-            synthesizer.Volume = 100; // Range: 0 to 100
+            // Volume is controlled via Windows system volume settings
+            synthesizer.Volume = 100; // Always use maximum (0-100), Windows system volume controls output
 
             try
             {

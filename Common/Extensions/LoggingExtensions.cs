@@ -3,6 +3,7 @@
 namespace Moba.Common.Extensions;
 
 using Microsoft.Extensions.Logging;
+
 using System.Collections.Concurrent;
 using System.Diagnostics;
 

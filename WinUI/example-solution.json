@@ -78,24 +78,22 @@
           "Actions": [
             {
               "Id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
-              "Name": "Arrival Announcement",
-              "Number": 0,
+              "Name": "Arrival",
+              "Number": 1,
               "Type": 0,
               "Parameters": {}
             },
             {
-              "Id": "01b2c9e3-7e64-4f37-8dbc-e487902d2163",
-              "Name": "Stop Loco 101",
-              "Number": 1,
-              "Type": 1,
+              "Id": "fe201181-f622-4442-b190-3253cf37433f",
+              "Name": "Gong",
+              "Number": 0,
+              "Type": 2,
               "Parameters": {
-                "Bytes": "CgBAAOQTAGWZCw==",
-                "Speed": 25,
-                "Address": 101,
-                "Direction": "Backward"
+                "FilePath": "C:\\Repo\\ahuelsmann\\MOBAflow\\Sound\\Resources\\Sounds\\273231__gollamar__announcement-04.wav"
               }
             }
           ],
+          "ExecutionMode": 1,
           "InPort": 0,
           "IsUsingTimerToIgnoreFeedbacks": false,
           "IntervalForTimerToIgnoreFeedbacks": 0.0
@@ -118,7 +116,7 @@
               "IsExitOnLeft": true,
               "Track": 1,
               "Arrival": null,
-              "Departure": null,
+              "Departure": "2025-12-29T00:01:00+01:00",
               "Connections": []
             },
             {
@@ -130,8 +128,8 @@
               "WorkflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "IsExitOnLeft": false,
               "Track": 1,
-              "Arrival": null,
-              "Departure": null,
+              "Arrival": "2025-12-29T00:03:00+01:00",
+              "Departure": "2025-12-29T00:04:00+01:00",
               "Connections": []
             },
             {
@@ -143,8 +141,8 @@
               "WorkflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "IsExitOnLeft": true,
               "Track": 1,
-              "Arrival": null,
-              "Departure": null,
+              "Arrival": "2025-12-29T00:06:00+01:00",
+              "Departure": "2025-12-29T00:07:00+01:00",
               "Connections": []
             },
             {
@@ -156,8 +154,8 @@
               "WorkflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "IsExitOnLeft": false,
               "Track": 1,
-              "Arrival": null,
-              "Departure": null,
+              "Arrival": "2025-12-29T00:09:00+01:00",
+              "Departure": "2025-12-29T00:10:00+01:00",
               "Connections": []
             },
             {
@@ -169,8 +167,8 @@
               "WorkflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "IsExitOnLeft": true,
               "Track": 1,
-              "Arrival": null,
-              "Departure": null,
+              "Arrival": "2025-12-29T00:12:00+01:00",
+              "Departure": "2025-12-29T00:13:00+01:00",
               "Connections": []
             },
             {
@@ -182,14 +180,14 @@
               "WorkflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "IsExitOnLeft": false,
               "Track": 1,
-              "Arrival": null,
-              "Departure": null,
+              "Arrival": "2025-12-29T00:15:00+01:00",
+              "Departure": "2025-12-29T00:16:00+01:00",
               "Connections": []
             }
           ],
-          "InPort": 1,
-          "IsUsingTimerToIgnoreFeedbacks": false,
-          "IntervalForTimerToIgnoreFeedbacks": 25.0,
+          "InPort": 2,
+          "IsUsingTimerToIgnoreFeedbacks": true,
+          "IntervalForTimerToIgnoreFeedbacks": 10.0,
           "BehaviorOnLastStop": 1,
           "NextJourneyId": null,
           "FirstPos": 0

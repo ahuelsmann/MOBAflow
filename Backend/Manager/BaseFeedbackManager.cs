@@ -197,7 +197,12 @@ public abstract class BaseFeedbackManager<TEntity> : IFeedbackManager where TEnt
 
         if (disposing)
         {
+            // ✅ Unregister from Messenger FIRST (stops new feedback events)
+            WeakReferenceMessenger.Default.Unregister<FeedbackReceivedMessage>(this);
+            
+            // Unsubscribe from Z21 events
             Z21.Received -= OnFeedbackReceived;
+            
             CleanupResources();
         }
 

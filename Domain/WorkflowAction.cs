@@ -11,8 +11,23 @@ public class WorkflowAction
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Execution order number (1-based).
+    /// Automatically updated when actions are reordered via drag & drop.
+    /// Used for sorting actions before execution.
+    /// </summary>
     public uint Number { get; set; }
+    
     public ActionType Type { get; set; }
+
+    /// <summary>
+    /// Delay in milliseconds to wait AFTER this action completes.
+    /// Only applies when Workflow.ExecutionMode is Sequential.
+    /// Use for precise timing control (e.g., wait for audio to finish before next action).
+    /// Default: 0 (no delay)
+    /// </summary>
+    public int DelayAfterMs { get; set; } = 0;
 
     /// <summary>
     /// Action-specific parameters (polymorphic via Type property).

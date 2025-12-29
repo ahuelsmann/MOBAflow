@@ -76,6 +76,7 @@
                 DragItemsStarting="WorkflowListView_DragItemsStarting"
                 IsItemClickEnabled="True"
                 ItemsSource="{x:Bind ViewModel.SelectedProject.Workflows, Mode=OneWay}"
+                KeyDown="WorkflowListView_KeyDown"
                 SelectedItem="{x:Bind ViewModel.SelectedWorkflow, Mode=TwoWay}"
                 SelectionMode="Single">
                 <i:Interaction.Behaviors>
@@ -164,8 +165,14 @@
             </CommandBar>
             <ListView
                 Grid.Row="2"
+                AllowDrop="True"
+                CanDragItems="True"
+                CanReorderItems="True"
+                DragItemsStarting="ActionListView_DragItemsStarting"
+                Drop="ActionListView_Drop"
                 IsItemClickEnabled="True"
                 ItemsSource="{x:Bind ViewModel.SelectedWorkflow.Actions, Mode=OneWay}"
+                KeyDown="ActionListView_KeyDown"
                 SelectedItem="{x:Bind ViewModel.SelectedAction, Mode=TwoWay}"
                 SelectionMode="Single">
                 <i:Interaction.Behaviors>

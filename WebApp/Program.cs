@@ -34,8 +34,13 @@ builder.Services.AddSingleton<ISettingsService, SettingsService>();
 // Blazor-specific services
 builder.Services.AddSingleton<IUiDispatcher, BlazorUiDispatcher>();
 
+// ✅ Audio Services (NullObject - WebApp doesn't support audio)
+builder.Services.AddSingleton<Moba.Sound.ISoundPlayer, Moba.Sound.NullSoundPlayer>();
+builder.Services.AddSingleton<Moba.Sound.ISpeakerEngine, Moba.Sound.NullSpeakerEngine>();
+
 // Backend services - Register in dependency order
 // ✅ Use shared extension method for platform-consistent registration
+// Backend expects ISoundPlayer/ISpeakerEngine from above (NullObject for web)
 builder.Services.AddMobaBackendServices();
 
 // ✅ DataManager as Singleton (master data - simplified for Blazor Server)

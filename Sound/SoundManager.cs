@@ -16,7 +16,7 @@ public class WindowsSoundPlayer(ILogger<WindowsSoundPlayer> logger) : ISoundPlay
 {
     /// <summary>
     /// Plays a wave file from the specified path asynchronously.
-    /// Waits for 1.5 seconds to allow sound to complete (async, cancelable).
+    /// Waits for the sound to complete playback before returning (blocking on background thread).
     /// </summary>
     /// <param name="waveFile">Full path to the .wav file to play</param>
     /// <param name="cancellationToken">Cancellation token to stop playback</param>
@@ -27,12 +27,17 @@ public class WindowsSoundPlayer(ILogger<WindowsSoundPlayer> logger) : ISoundPlay
             Console.WriteLine($"🔊 Playing sound file: {waveFile}");
             logger.LogInformation("Playing sound file: {WaveFile}", waveFile);
             
-            // ReSharper disable once ArrangeObjectCreationWhenTypeEvident
-            using var player = new SoundPlayer { SoundLocation = waveFile };
-            player.Play();
-            
-            // Async delay instead of blocking Thread.Sleep
-            await Task.Delay(1500, cancellationToken).ConfigureAwait(false);
+            // Run on background thread to avoid blocking UI
+            await Task.Run(() =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                
+                // ReSharper disable once ArrangeObjectCreationWhenTypeEvident
+                using var player = new SoundPlayer { SoundLocation = waveFile };
+                
+                // PlaySync() blocks until sound completes - perfect for sequential execution!
+                player.PlaySync();
+            }, cancellationToken).ConfigureAwait(false);
             
             Console.WriteLine($"✅ Sound file played successfully: {waveFile}");
             logger.LogDebug("Sound file played successfully: {WaveFile}", waveFile);

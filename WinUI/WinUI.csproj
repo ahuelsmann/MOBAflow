@@ -7,10 +7,16 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
     <UseWinUI>true</UseWinUI>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
+  </PropertyGroup>
+  <PropertyGroup>
+    <GenerateAppxManifest>false</GenerateAppxManifest>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <PropertyGroup>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
@@ -58,5 +64,25 @@
   <ItemGroup>
     <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- App Icon - DEAKTIVIERT wegen Android Resource ID Konflikt (siehe Issue mit id/legacy Fragment) -->
+    <!-- TODO: PNG-basierte Icons manuell in Platforms/Android/Resources/mipmap-* platzieren -->
+    <!-- <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" /> -->
+
+    <!-- Splash Screen mit neuem MOBAflow Design (gleich wie WinUI) - DEAKTIVIERT: SVG-Datei fehlt -->
+    <!-- <MauiSplashScreen Include="Resources\Splash\mobaflow_icon_splash.svg" Color="#512BD4" BaseSize="128,128" /> -->
+    
+    <!-- Images (includes all SVG icons automatically) -->
+    <MauiImage Include="Resources\Images\*" />
+    
+    <!-- Custom Fonts -->
+    <MauiFont Include="Resources\Fonts\*" />
+    
+    <!-- Raw Assets -->
+    <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+    
+    <!-- Audio Library - Sound effects for workflow actions -->
+    <!-- Now managed by Sound project (Sound.csproj copies to output) -->
   </ItemGroup>
 </Project>

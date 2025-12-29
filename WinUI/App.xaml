@@ -18,6 +18,7 @@
             <converter:ExitSideConverter x:Key="ExitSideConverter" />
             <converter:NullConverter x:Key="NullConverter" />
             <converter:NotNullConverter x:Key="NotNullConverter" />
+            <converter:DateTimeToTimeSpanConverter x:Key="DateTimeToTimeSpanConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

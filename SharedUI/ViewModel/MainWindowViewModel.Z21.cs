@@ -31,17 +31,17 @@ public partial class MainWindowViewModel
     {
         if (_journeyManager != null)
         {
+            // Unsubscribe from previous instance
+            _workflowService.ActionExecutionError -= OnActionExecutionError;
             _journeyManager.Dispose();
         }
 
-        var executionContext = new ActionExecutionContext
-        {
-            Z21 = _z21
-        };
-
-        _journeyManager = new JourneyManager(_z21, project, _workflowService, executionContext);
+        _journeyManager = new JourneyManager(_z21, project, _workflowService, _executionContext);
         _journeyManager.StationChanged += OnJourneyStationChanged;
         _journeyManager.FeedbackReceived += OnJourneyFeedbackReceived;
+        
+        // ✅ Subscribe directly to WorkflowService (simplified event chain)
+        _workflowService.ActionExecutionError += OnActionExecutionError;
 
         Debug.WriteLine($"✅ JourneyManager initialized for project '{project.Name}' with {project.Journeys.Count} journeys");
     }

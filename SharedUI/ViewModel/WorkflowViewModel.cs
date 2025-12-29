@@ -12,6 +12,7 @@ using Domain;
 using Domain.Enum;
 
 using Interface;
+using Service;  // For NullIoService
 
 using Sound;
 
@@ -30,17 +31,22 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
     // Optional Services - Reserved for future use
     private readonly ISpeakerEngine? _speakerEngine;
     private readonly IZ21? _z21;
+    private readonly IIoService? _ioService;
     #endregion
 
-    public WorkflowViewModel(Workflow model, ISpeakerEngine? speakerEngine = null, Project? project = null, IZ21? z21 = null)
+    public WorkflowViewModel(Workflow model, ISpeakerEngine? speakerEngine = null, Project? project = null, IZ21? z21 = null, IIoService? ioService = null)
     {
         _model = model;
         _speakerEngine = speakerEngine;
         _project = project;
         _z21 = z21;
+        _ioService = ioService;
 
+        // Sort actions by Number before creating ViewModels to preserve correct order
         Actions = new ObservableCollection<object>(
-            model.Actions.Select(CreateViewModelForAction)
+            model.Actions
+                .OrderBy(a => a.Number)
+                .Select(CreateViewModelForAction)
         );
     }
 
@@ -83,6 +89,17 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
         get => _model.IntervalForTimerToIgnoreFeedbacks;
         set => SetProperty(_model.IntervalForTimerToIgnoreFeedbacks, value, _model, (m, v) => m.IntervalForTimerToIgnoreFeedbacks = v);
     }
+
+    public WorkflowExecutionMode ExecutionMode
+    {
+        get => _model.ExecutionMode;
+        set => SetProperty(_model.ExecutionMode, value, _model, (m, v) => m.ExecutionMode = v);
+    }
+
+    /// <summary>
+    /// Gets all possible WorkflowExecutionMode values for ComboBox binding.
+    /// </summary>
+    public IEnumerable<WorkflowExecutionMode> ExecutionModeValues => Enum.GetValues<WorkflowExecutionMode>();
 
     public ObservableCollection<object> Actions { get; }
 
@@ -193,7 +210,7 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
         return action.Type switch
         {
             ActionType.Announcement => new AnnouncementViewModel(action),
-            ActionType.Audio => new AudioViewModel(action),
+            ActionType.Audio => new AudioViewModel(action, _ioService ?? new Service.NullIoService()),
             ActionType.Command => new CommandViewModel(action),
             _ => throw new NotSupportedException($"Action-Typ {action.Type} wird nicht unterstützt")
         };

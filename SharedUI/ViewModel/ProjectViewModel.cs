@@ -21,6 +21,7 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
 
     // Optional Services
     private readonly IUiDispatcher? _dispatcher;
+    private readonly IIoService? _ioService;
 
     // Properties (ObservableProperty fields)
     [ObservableProperty]
@@ -80,10 +81,11 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
     /// </summary>
     public ObservableCollection<GoodsWagonViewModel> GoodsWagons { get; } = new();
 
-    public ProjectViewModel(Project model, IUiDispatcher? dispatcher = null)
+    public ProjectViewModel(Project model, IUiDispatcher? dispatcher = null, IIoService? ioService = null)
     {
         Model = model;
         _dispatcher = dispatcher;
+        _ioService = ioService;
         _name = model.Name;  // Initialize from Model
         Refresh();
 
@@ -119,7 +121,7 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
 
         Workflows.Clear();
         foreach (var w in Model.Workflows)
-            Workflows.Add(new WorkflowViewModel(w));
+            Workflows.Add(new WorkflowViewModel(w, ioService: _ioService));
 
         Trains.Clear();
         foreach (var t in Model.Trains)

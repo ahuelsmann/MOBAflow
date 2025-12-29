@@ -2,7 +2,18 @@
 namespace Moba.Backend.Service;
 
 using Domain;
+using Domain.Enum;
 using System.Diagnostics;
+
+/// <summary>
+/// Event args for action execution errors.
+/// </summary>
+public class ActionExecutionErrorEventArgs : EventArgs
+{
+    public required WorkflowAction Action { get; init; }
+    public required Exception Exception { get; init; }
+    public required string ErrorMessage { get; init; }
+}
 
 /// <summary>
 /// Workflow execution service.
@@ -12,7 +23,15 @@ using System.Diagnostics;
 public class WorkflowService(Interface.IActionExecutor actionExecutor)
 {
     /// <summary>
-    /// Executes a workflow with all its actions sequentially.
+    /// Raised when an action execution fails.
+    /// Subscribe to this event to display error messages in UI.
+    /// </summary>
+    public event EventHandler<ActionExecutionErrorEventArgs>? ActionExecutionError;
+
+    /// <summary>
+    /// Executes a workflow with all its actions according to its execution mode.
+    /// Sequential: Executes actions one-by-one, respecting DelayAfterMs.
+    /// Parallel: Fires all actions simultaneously without waiting.
     /// </summary>
     /// <param name="workflow">The workflow to execute</param>
     /// <param name="context">Execution context containing dependencies and state</param>
@@ -22,7 +41,7 @@ public class WorkflowService(Interface.IActionExecutor actionExecutor)
         ArgumentNullException.ThrowIfNull(workflow);
         ArgumentNullException.ThrowIfNull(context);
 
-        Debug.WriteLine($"▶ Starting workflow: {workflow.Name}");
+        Debug.WriteLine($"▶ Starting workflow: {workflow.Name} (Mode: {workflow.ExecutionMode})");
 
         if (workflow.Actions.Count == 0)
         {
@@ -30,19 +49,114 @@ public class WorkflowService(Interface.IActionExecutor actionExecutor)
             return;
         }
 
+        if (workflow.ExecutionMode == WorkflowExecutionMode.Parallel)
+        {
+            await ExecuteParallelAsync(workflow, context);
+        }
+        else  // Sequential (default)
+        {
+            await ExecuteSequentialAsync(workflow, context);
+        }
+
+        Debug.WriteLine($"✅ Workflow '{workflow.Name}' completed");
+    }
+
+    /// <summary>
+    /// Executes actions sequentially, waiting for each to complete.
+    /// Respects DelayAfterMs property for precise timing control.
+    /// </summary>
+    private async Task ExecuteSequentialAsync(Workflow workflow, ActionExecutionContext context)
+    {
         foreach (var action in workflow.Actions.OrderBy(a => a.Number))
         {
             try
             {
                 await actionExecutor.ExecuteAsync(action, context);
+
+                // Apply per-action delay if specified
+                if (action.DelayAfterMs > 0)
+                {
+                    Debug.WriteLine($"    ⏱ Waiting {action.DelayAfterMs}ms after action #{action.Number}...");
+                    await Task.Delay(action.DelayAfterMs);
+                }
+            }
+            catch (FileNotFoundException fnfEx)
+            {
+                var errorMsg = $"Audio file not found for action '{action.Name}': {fnfEx.FileName}";
+                Debug.WriteLine($"❌ {errorMsg}");
+                OnActionExecutionError(action, fnfEx, errorMsg);
+                // Continue with next action
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"❌ Error executing action #{action.Number} '{action.Name}': {ex.Message}");
+                var errorMsg = $"Error executing action #{action.Number} '{action.Name}': {ex.Message}";
+                Debug.WriteLine($"❌ {errorMsg}");
+                OnActionExecutionError(action, ex, errorMsg);
                 // Continue with next action even if one fails
             }
         }
+    }
 
-        Debug.WriteLine($"✅ Workflow '{workflow.Name}' completed");
+    /// <summary>
+    /// Executes all actions in parallel (fire-and-forget).
+    /// Actions start with staggered delays based on DelayAfterMs of previous actions.
+    /// Example: Action1 (DelayAfterMs=0) starts at t=0, Action2 (DelayAfterMs=500) starts at t=500.
+    /// Waits for all actions to complete before returning.
+    /// </summary>
+    private async Task ExecuteParallelAsync(Workflow workflow, ActionExecutionContext context)
+    {
+        var tasks = new List<Task>();
+        int cumulativeDelay = 0;
+
+        foreach (var action in workflow.Actions.OrderBy(a => a.Number))
+        {
+            // Capture delay for this action's task
+            var startDelay = cumulativeDelay;
+            
+            tasks.Add(Task.Run(async () =>
+            {
+                try
+                {
+                    // Wait before starting this action (staggered start)
+                    if (startDelay > 0)
+                    {
+                        Debug.WriteLine($"    ⏱ Action #{action.Number} waiting {startDelay}ms before start...");
+                        await Task.Delay(startDelay);
+                    }
+
+                    await actionExecutor.ExecuteAsync(action, context);
+                }
+                catch (FileNotFoundException fnfEx)
+                {
+                    var errorMsg = $"Audio file not found for action '{action.Name}': {fnfEx.FileName}";
+                    Debug.WriteLine($"❌ {errorMsg}");
+                    OnActionExecutionError(action, fnfEx, errorMsg);
+                }
+                catch (Exception ex)
+                {
+                    var errorMsg = $"Error executing action #{action.Number} '{action.Name}': {ex.Message}";
+                    Debug.WriteLine($"❌ {errorMsg}");
+                    OnActionExecutionError(action, ex, errorMsg);
+                }
+            }));
+
+            // Accumulate delay for next action
+            cumulativeDelay += action.DelayAfterMs;
+        }
+
+        await Task.WhenAll(tasks);  // Wait for all actions to complete
+    }
+
+    /// <summary>
+    /// Raises the ActionExecutionError event.
+    /// </summary>
+    private void OnActionExecutionError(WorkflowAction action, Exception exception, string errorMessage)
+    {
+        ActionExecutionError?.Invoke(this, new ActionExecutionErrorEventArgs
+        {
+            Action = action,
+            Exception = exception,
+            ErrorMessage = errorMessage
+        });
     }
 }

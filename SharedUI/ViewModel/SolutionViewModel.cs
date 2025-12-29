@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -22,6 +22,7 @@ public partial class SolutionViewModel : ObservableObject, IViewModelWrapper<Sol
     
     // Optional Services
     private readonly IUiDispatcher? _dispatcher;
+    private readonly IIoService? _ioService;
     
     // Properties
     [ObservableProperty]
@@ -35,10 +36,11 @@ public partial class SolutionViewModel : ObservableObject, IViewModelWrapper<Sol
     /// </summary>
     public ObservableCollection<ProjectViewModel> Projects { get; } = new();
 
-    public SolutionViewModel(Solution model, IUiDispatcher? dispatcher = null)
+    public SolutionViewModel(Solution model, IUiDispatcher? dispatcher = null, IIoService? ioService = null)
     {
         Model = model;
         _dispatcher = dispatcher;
+        _ioService = ioService;
         Refresh();
     }
 
@@ -54,7 +56,7 @@ public partial class SolutionViewModel : ObservableObject, IViewModelWrapper<Sol
         Projects.Clear();
         foreach (var project in Model.Projects)
         {
-            Projects.Add(new ProjectViewModel(project, _dispatcher));
+            Projects.Add(new ProjectViewModel(project, _dispatcher, _ioService));
         }
     }
 }

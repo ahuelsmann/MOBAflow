@@ -60,26 +60,35 @@ public sealed partial class JourneysPage : Page
         else if (e.DataView.Properties.TryGetValue("Workflow", out object? workflowObj) && workflowObj is WorkflowViewModel workflow)
         {
             ViewModel.AssignWorkflowToStationCommand.Execute(workflow);
-                }
-            }
-
-            private void CityListView_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
-            {
-                // Delegate to ViewModel Command
-                if (ViewModel.SelectedCity != null)
-                {
-                    ViewModel.AddStationFromCityCommand.Execute(ViewModel.SelectedCity);
-                }
-            }
-
-            private void StationListView_DeleteKeyInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
-            {
-                // Delegate to ViewModel Command
-                if (ViewModel.DeleteStationCommand.CanExecute(null))
-                {
-                    ViewModel.DeleteStationCommand.Execute(null);
-                    args.Handled = true;
-                }
-            }
-            #endregion
         }
+    }
+
+    private void CityListView_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+    {
+        _ = e;
+        // Delegate to ViewModel Command
+        if (ViewModel.SelectedCity != null)
+        {
+            ViewModel.AddStationFromCityCommand.Execute(ViewModel.SelectedCity);
+        }
+    }
+
+    private void JourneysListView_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == Windows.System.VirtualKey.Delete && ViewModel.DeleteJourneyCommand.CanExecute(null))
+        {
+            ViewModel.DeleteJourneyCommand.Execute(null);
+            e.Handled = true;
+        }
+    }
+
+    private void StationsListView_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == Windows.System.VirtualKey.Delete && ViewModel.DeleteStationCommand.CanExecute(null))
+        {
+            ViewModel.DeleteStationCommand.Execute(null);
+            e.Handled = true;
+        }
+    }
+    #endregion
+}

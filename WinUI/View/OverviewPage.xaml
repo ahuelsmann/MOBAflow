@@ -246,9 +246,8 @@
                             Header="Timer Interval (seconds)"
                             IsEnabled="{x:Bind ViewModel.UseTimerFilter, Mode=OneWay}"
                             LargeChange="1"
-                            Maximum="10"
                             Minimum="1"
-                            SmallChange="0.5"
+                            SmallChange="1"
                             SpinButtonPlacementMode="Inline"
                             Value="{x:Bind ViewModel.TimerIntervalSeconds, Mode=TwoWay}">
                             <NumberBox.Description>
@@ -258,8 +257,6 @@
                     </StackPanel>
                 </StackPanel>
             </Expander>
-
-
 
             <!--  Track Statistics Section (only visible when connected)  -->
             <StackPanel Spacing="16">

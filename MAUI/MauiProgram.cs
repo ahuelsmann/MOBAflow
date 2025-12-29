@@ -44,11 +44,17 @@ public static class MauiProgram
         builder.Services.AddSingleton<AppSettings>();
         builder.Services.AddSingleton<ISettingsService, SettingsService>();
 
+        // ✅ Audio Services (NullObject - MAUI doesn't support audio yet)
+        // TODO: Replace with platform-specific implementations when MAUI audio is needed
+        builder.Services.AddSingleton<Sound.ISoundPlayer, Sound.NullSoundPlayer>();
+        builder.Services.AddSingleton<Sound.ISpeakerEngine, Sound.NullSpeakerEngine>();
+
         // ViewModels
         builder.Services.AddSingleton<MauiViewModel>();  // ✅ Mobile-optimized ViewModel
 
         // Backend services - Register in dependency order
         // ✅ Use shared extension method for platform-consistent registration
+        // Backend expects ISoundPlayer/ISpeakerEngine from above (NullObject for now)
         builder.Services.AddMobaBackendServices();
 
         // Views

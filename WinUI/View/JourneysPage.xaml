@@ -79,6 +79,7 @@
                 Grid.Row="2"
                 IsItemClickEnabled="True"
                 ItemsSource="{x:Bind ViewModel.SelectedProject.Journeys, Mode=OneWay}"
+                KeyDown="JourneysListView_KeyDown"
                 SelectedItem="{x:Bind ViewModel.SelectedJourney, Mode=TwoWay}"
                 SelectionMode="Single">
                 <i:Interaction.Behaviors>
@@ -172,11 +173,9 @@
                 Drop="StationListView_Drop"
                 IsItemClickEnabled="True"
                 ItemsSource="{x:Bind ViewModel.SelectedJourney.Stations, Mode=OneWay}"
+                KeyDown="StationsListView_KeyDown"
                 SelectedItem="{x:Bind ViewModel.SelectedStation, Mode=TwoWay}"
                 SelectionMode="Single">
-                <ListView.KeyboardAccelerators>
-                    <KeyboardAccelerator Key="Delete" Invoked="StationListView_DeleteKeyInvoked" />
-                </ListView.KeyboardAccelerators>
                 <i:Interaction.Behaviors>
                     <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.JourneysPageItemClickedCommand}" />
                 </i:Interaction.Behaviors>

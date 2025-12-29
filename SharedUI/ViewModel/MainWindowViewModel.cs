@@ -17,6 +17,8 @@ using Domain.Enum;
 using Interface;
 using Service;  // For NullIoService
 
+using Sound;
+
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 
@@ -41,6 +43,9 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly ISettingsService? _settingsService;
     private readonly AnnouncementService? _announcementService;
 
+    // Execution Context (contains all action execution dependencies)
+    private readonly ActionExecutionContext _executionContext;
+
     // Runtime State
     private JourneyManager? _journeyManager;
     private Timer? _z21AutoConnectTimer;
@@ -57,6 +62,7 @@ public partial class MainWindowViewModel : ObservableObject
         IUiDispatcher uiDispatcher,
         AppSettings settings,
         Solution solution,
+        ActionExecutionContext executionContext,
         IIoService? ioService = null,  // ✅ Optional for WebApp/MAUI
         ICityService? cityLibraryService = null,
         ISettingsService? settingsService = null,
@@ -70,6 +76,7 @@ public partial class MainWindowViewModel : ObservableObject
         _cityLibraryService = cityLibraryService;
         _settingsService = settingsService;
         _announcementService = announcementService;
+        _executionContext = executionContext;
 
         // Subscribe to Solution changes
         Solution = solution;
@@ -354,6 +361,20 @@ public partial class MainWindowViewModel : ObservableObject
     #region Lifecycle
     public void OnWindowClosing()
     {
+        // Auto-save solution if there are unsaved changes
+        if (HasUnsavedChanges && SaveSolutionCommand.CanExecute(null))
+        {
+            Debug.WriteLine("💾 Auto-saving solution on window close...");
+            _ = SaveSolutionCommand.ExecuteAsync(null);
+        }
+
+        // Auto-save settings (Z21 IP, Counter settings, etc.)
+        if (_settingsService != null && SaveSettingsCommand.CanExecute(null))
+        {
+            Debug.WriteLine("💾 Auto-saving settings on window close...");
+            _ = SaveSettingsCommand.ExecuteAsync(null);
+        }
+
         // Stop Z21 auto-connect retry timer
         if (_z21AutoConnectTimer != null)
         {

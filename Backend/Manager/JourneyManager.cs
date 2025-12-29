@@ -80,34 +80,60 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
 
     protected override async Task ProcessFeedbackAsync(FeedbackResult feedback)
     {
-        // Wait for lock (blocking) - queues feedbacks sequentially
-        await _processingLock.WaitAsync().ConfigureAwait(false);
+        // ✅ Check if disposed before accessing SemaphoreSlim
+        if (Disposed)
+        {
+            Debug.WriteLine("⚠️ JourneyManager already disposed - ignoring feedback");
+            return;
+        }
 
         try
         {
-            Debug.WriteLine($"📡 Feedback received: InPort {feedback.InPort}");
+            // Wait for lock (blocking) - queues feedbacks sequentially
+            await _processingLock.WaitAsync().ConfigureAwait(false);
 
-            foreach (var journey in Entities)
+            try
             {
-                if (GetInPort(journey) == feedback.InPort)
+                // ✅ Double-check after acquiring lock (disposal might have happened while waiting)
+                if (Disposed)
                 {
-                    if (ShouldIgnoreFeedback(journey))
-                    {
-                        Debug.WriteLine($"⏭ Feedback for journey '{GetEntityName(journey)}' ignored (timer active)");
-                        continue;
-                    }
+                    Debug.WriteLine("⚠️ JourneyManager disposed during lock acquisition");
+                    return;
+                }
 
-                    // Process feedback FIRST, THEN update timer
-                    // This ensures the first feedback increments the counter,
-                    // and subsequent feedbacks are blocked by the timer
-                    await HandleFeedbackAsync(journey).ConfigureAwait(false);
-                    UpdateLastFeedbackTime(GetInPort(journey));
+                Debug.WriteLine($"📡 Feedback received: InPort {feedback.InPort}");
+
+                foreach (var journey in Entities)
+                {
+                    if (GetInPort(journey) == feedback.InPort)
+                    {
+                        if (ShouldIgnoreFeedback(journey))
+                        {
+                            Debug.WriteLine($"⏭ Feedback for journey '{GetEntityName(journey)}' ignored (timer active)");
+                            continue;
+                        }
+
+                        // Process feedback FIRST, THEN update timer
+                        // This ensures the first feedback increments the counter,
+                        // and subsequent feedbacks are blocked by the timer
+                        await HandleFeedbackAsync(journey).ConfigureAwait(false);
+                        UpdateLastFeedbackTime(GetInPort(journey));
+                    }
+                }
+            }
+            finally
+            {
+                // ✅ Only release if not disposed
+                if (!Disposed)
+                {
+                    _processingLock.Release();
                 }
             }
         }
-        finally
+        catch (ObjectDisposedException)
         {
-            _processingLock.Release();
+            // SemaphoreSlim was disposed while we were waiting - this is expected during shutdown
+            Debug.WriteLine("⚠️ JourneyManager SemaphoreSlim disposed during feedback processing");
         }
     }
 
@@ -275,8 +301,12 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
 
     protected override string GetEntityName(Journey entity) => entity.Name;
 
-    protected override void CleanupResources()
+    protected override void Dispose(bool disposing)
     {
-        _processingLock.Dispose();
+        if (disposing)
+        {
+            _processingLock.Dispose();
+        }
+        base.Dispose(disposing);
     }
 }

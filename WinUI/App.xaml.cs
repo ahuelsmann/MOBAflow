@@ -111,24 +111,8 @@ public partial class App
 
         // Backend Services (Interfaces are in Backend.Interface and Backend.Network)
         // ✅ Use shared extension method for platform-consistent registration
+        // Backend now registers: ActionExecutionContext, AnnouncementService, ActionExecutor
         services.AddMobaBackendServices();
-
-        // ✅ AnnouncementService (uses ISpeakerEngine directly, not Factory)
-        services.AddSingleton(sp =>
-        {
-            var speakerEngine = sp.GetRequiredService<ISpeakerEngine>();
-            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<AnnouncementService>>();
-            return new AnnouncementService(speakerEngine, logger);
-        });
-        
-        // ✅ ActionExecutor with AnnouncementService for Announcement actions
-        services.AddSingleton<Backend.Interface.IActionExecutor>(sp =>
-        {
-            var announcementService = sp.GetRequiredService<AnnouncementService>();
-            return new ActionExecutor(announcementService);
-        });
-        
-        services.AddSingleton<WorkflowService>();
         
         services.AddSingleton<SharedUI.Interface.IIoService, Service.IoService>();
         services.AddSingleton<SharedUI.Interface.IUiDispatcher, Service.UiDispatcher>();
@@ -169,6 +153,7 @@ public partial class App
         services.AddSingleton<Service.SnapToConnectService>();
 
         // Sound Services (required by HealthCheckService)
+        services.AddSingleton<ISoundPlayer, WindowsSoundPlayer>();
         services.AddSingleton<SpeechHealthCheck>();
         services.AddSingleton<Service.HealthCheckService>();
 
@@ -185,6 +170,7 @@ public partial class App
             sp.GetRequiredService<SharedUI.Interface.IUiDispatcher>(),
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<Domain.Solution>(),
+            sp.GetRequiredService<ActionExecutionContext>(),  // ✅ Inject context with all audio services
             sp.GetRequiredService<SharedUI.Interface.IIoService>(),
             sp.GetRequiredService<SharedUI.Interface.ICityService>(),      // Now guaranteed (NullObject if unavailable)
             sp.GetRequiredService<SharedUI.Interface.ISettingsService>(),  // Now guaranteed (NullObject if unavailable)

@@ -253,4 +253,23 @@ public class IoService : IIoService
         var result = await picker.PickSaveFileAsync();
         return result?.Path;
     }
+
+    /// <summary>
+    /// Opens a file picker to browse for an audio file (WAV, MP3, etc.).
+    /// </summary>
+    /// <returns>The selected file path, or null if cancelled.</returns>
+    public async Task<string?> BrowseForAudioFileAsync()
+    {
+        if (_windowId == null)
+            throw new InvalidOperationException("WindowId must be set before using IoService");
+
+        var picker = new FileOpenPicker(_windowId.Value)
+        {
+            SuggestedStartLocation = PickerLocationId.MusicLibrary,
+            FileTypeFilter = { ".wav", ".mp3", ".ogg", ".flac", ".m4a" }
+        };
+
+        var result = await picker.PickSingleFileAsync();
+        return result?.Path;
+    }
 }

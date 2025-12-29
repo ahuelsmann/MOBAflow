@@ -6,6 +6,7 @@ using Network;
 using Service;
 using Microsoft.Extensions.DependencyInjection;
 using Domain;
+using Sound;
 
 /// <summary>
 /// Extension methods for registering shared backend services across all platforms.
@@ -19,8 +20,15 @@ public static class MobaServiceCollectionExtensions
     /// 
     /// Includes:
     /// - Network: IUdpClientWrapper, Z21Monitor, IZ21
-    /// - Workflow: WorkflowService, ActionExecutor
+    /// - Workflow: WorkflowService, ActionExecutor, ActionExecutionContext
     /// - Domain: Solution
+    /// 
+    /// Audio Services (ISoundPlayer, ISpeakerEngine):
+    /// - Backend expects these services from platform-specific registrations
+    /// - If not registered by platform, ActionExecutor uses null-safe execution
+    /// - WinUI: WindowsSoundPlayer, SystemSpeechEngine/CognitiveSpeechEngine
+    /// - MAUI: NullSoundPlayer, NullSpeakerEngine (or platform-specific implementations)
+    /// - WebApp: NullSoundPlayer, NullSpeakerEngine
     /// </summary>
     /// <param name="services">The service collection to register services in</param>
     /// <returns>The service collection for fluent chaining</returns>
@@ -38,9 +46,31 @@ public static class MobaServiceCollectionExtensions
             return new Z21(udp, logger, trafficMonitor);
         });
 
+        // ✅ ActionExecutionContext (Backend owns this, platforms provide audio implementations)
+        services.AddSingleton<ActionExecutionContext>(sp => new ActionExecutionContext
+        {
+            Z21 = sp.GetRequiredService<IZ21>(),
+            SpeakerEngine = sp.GetService<ISpeakerEngine>(),  // Optional - from platform
+            SoundPlayer = sp.GetService<ISoundPlayer>()       // Optional - from platform
+        });
+
+        // ✅ AnnouncementService (optional - only if ISpeakerEngine is available)
+        services.AddSingleton<AnnouncementService>(sp =>
+        {
+            var speakerEngine = sp.GetService<ISpeakerEngine>();
+            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<AnnouncementService>>();
+            return new AnnouncementService(speakerEngine, logger);
+        });
+
+        // ✅ ActionExecutor (uses AnnouncementService if available)
+        services.AddSingleton<IActionExecutor>(sp =>
+        {
+            var announcementService = sp.GetService<AnnouncementService>();
+            return new ActionExecutor(announcementService);
+        });
+
         // Workflow & Actions
         services.AddSingleton<WorkflowService>();
-        services.AddSingleton<IActionExecutor, ActionExecutor>();
 
         // Domain
         services.AddSingleton<Solution>();

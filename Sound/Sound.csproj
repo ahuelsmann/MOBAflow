@@ -1,12 +1,27 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 <PropertyGroup>
   <RootNamespace>Moba.Sound</RootNamespace>
   <TargetFramework>net9.0</TargetFramework>
 </PropertyGroup>
   <ItemGroup>
-    <Content Include="Ton.wav">
+    <!-- Legacy test sound -->
+    
+    <!-- Sound Library - Workflow audio effects -->
+    <!-- All .wav files in Resources/Sounds/ will be copied to output directory -->
+    <Content Include="Resources\Sounds\**\*.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Resources\Sounds\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Content>
+    
+    <!-- Sound Library - Documentation -->
+    <None Include="Resources\Sounds\**\*.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Resources\Sounds\273231__gollamar__announcement-04.wav" />
+    <None Remove="Resources\Sounds\273646__gollamar__announcement-06.wav" />
+    <None Remove="Resources\Sounds\Station\724058__chungus43a__prague-metro-line-a-chime.wav" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CognitiveServices.Speech" />
@@ -17,5 +32,13 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Update="Resources\Sounds\273646__gollamar__announcement-06.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Update="Resources\Sounds\Station\README.md">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

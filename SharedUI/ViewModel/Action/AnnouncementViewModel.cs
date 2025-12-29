@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel.Action;
 
 using Domain;
@@ -6,7 +6,8 @@ using Domain.Enum;
 
 /// <summary>
 /// ViewModel for TTS Announcement actions.
-/// Wraps WorkflowAction with typed properties for Message, VoiceName, etc.
+/// Wraps WorkflowAction with typed properties for Message, VoiceName, and Rate.
+/// Volume is controlled via system-wide Windows volume settings.
 /// </summary>
 public class AnnouncementViewModel : WorkflowActionViewModel
 {
@@ -41,15 +42,6 @@ public class AnnouncementViewModel : WorkflowActionViewModel
     {
         get => GetParameter<int>("Rate");
         set => SetParameter("Rate", value);
-    }
-
-    /// <summary>
-    /// Volume (0.0 - 1.0).
-    /// </summary>
-    public double Volume
-    {
-        get => GetParameter<double>("Volume");
-        set => SetParameter("Volume", value);
     }
 
     public override string ToString() => !string.IsNullOrEmpty(Name) ? $"{Name} (Announcement)" : $"Announcement: {Message}";

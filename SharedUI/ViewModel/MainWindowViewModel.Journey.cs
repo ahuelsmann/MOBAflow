@@ -1,6 +1,8 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using Common.Extensions;  // For LogError extension method
+
 using CommunityToolkit.Mvvm.Input;
 
 using Domain;
@@ -228,5 +230,24 @@ public partial class MainWindowViewModel
     }
 
     private bool CanAddStationToJourney() => true;
+    #endregion
+
+    #region Action Execution Error Handling
+    /// <summary>
+    /// Handles action execution errors from WorkflowService.
+    /// Displays error message to user and logs to application log (MonitorPage).
+    /// </summary>
+    private void OnActionExecutionError(object? sender, Backend.Service.ActionExecutionErrorEventArgs e)
+    {
+        // Dispatch to UI thread for UI updates
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            // Set status text for immediate visibility
+            StatusText = $"❌ Action '{e.Action.Name}' failed: {e.ErrorMessage}";
+
+            // Log to application log (visible in MonitorPage)
+            this.LogError($"Action '{e.Action.Name}' execution failed", e.Exception);
+        });
+    }
     #endregion
 }

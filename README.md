@@ -120,6 +120,7 @@ MOBAflow uses several open-source packages. See [`THIRD-PARTY-NOTICES.md`](THIRD
 - **Roco** for the Z21 Digital Command Station and protocol documentation
 - **AnyRail** (Carsten Kühling & Paco Ahlqvist) - MOBAflow supports importing user-exported track plans (XML format) for interoperability
 - **Piko** for the A-Track system geometry specifications
+- **Freesound.org** - Audio library uses sound effects from [Freesound.org](https://freesound.org/) (licensed under Creative Commons 0 and Creative Commons Attribution). See [`Sound/Resources/Sounds/ATTRIBUTION.md`](Sound/Resources/Sounds/ATTRIBUTION.md) for detailed sound attributions.
 - **.NET Foundation** for the amazing .NET ecosystem
 - **CommunityToolkit** contributors for MVVM helpers
 - **GitHub Copilot** for AI-assisted development and code quality improvements

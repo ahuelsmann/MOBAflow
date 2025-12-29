@@ -153,7 +153,7 @@ public partial class MainWindowViewModel
         };
 
         SelectedWorkflow.Model.Actions.Add(newAction);
-        var viewModel = new AudioViewModel(newAction);
+        var viewModel = new AudioViewModel(newAction, _ioService);
         SelectedWorkflow.Actions.Add(viewModel);
     }
 

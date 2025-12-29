@@ -2,7 +2,7 @@
 
 **Version:** 1.0  
 **Plattform:** Windows 10/11 (Desktop)  
-**Letzte Aktualisierung:** 27.12.2025
+**Letzte Aktualisierung:** 29.12.2025
 
 ---
 
@@ -116,29 +116,62 @@ Ein **Workflow** ist eine Sequenz von Aktionen, die automatisch bei einem Ereign
 3. **Properties:**
    - **Name:** z.B. "Bahnhofsansage Berlin"
    - **InPort:** Trigger-Feedback Point (z.B. InPort 1)
+   - **Execution Mode:** Sequential (nacheinander) oder Parallel (gleichzeitig)
    - **Actions:** Liste der auszuführenden Aktionen
+
+#### Execution Modes:
+
+| Mode | Beschreibung | DelayAfterMs Bedeutung |
+|------|--------------|------------------------|
+| **Sequential** | Actions laufen nacheinander | Pause NACH Action-Ende vor nächster Action |
+| **Parallel** | Actions starten gestaffelt (overlapping) | Start-Offset (kumulativ von vorheriger Action) |
+
+**Beispiel Sequential:**
+```
+Action 1: Gong abspielen → Wartet bis Ende → Pause 1000ms → Action 2 startet
+Action 2: Ansage → Wartet bis Ende → Action 3 startet
+```
+
+**Beispiel Parallel (Staggered Start):**
+```
+t=0ms:    Action 1: Gong (DelayAfterMs=0)           → Startet sofort
+t=500ms:  Action 2: Ansage (DelayAfterMs=500)       → Startet nach 500ms (Gong läuft noch)
+t=2500ms: Action 3: Beleuchtung (DelayAfterMs=2000) → Startet nach weiteren 2s
+```
 
 #### Verfügbare Actions:
 
 | Action Type | Beschreibung | Parameter |
 |-------------|--------------|-----------|
 | **Announcement** | Text-to-Speech Ansage | Text, Voice, Rate, Volume |
-| **Command** | Z21-Befehl senden | Command Type (Track Power, Loco Speed, etc.) |
-| **Audio** | WAV/MP3 abspielen | File Path, Volume |
-| **Delay** | Pause einfügen | Milliseconds |
-| **Log** | Log-Eintrag schreiben | Message, Level |
+| **Command** | Z21-Befehl senden | Command Bytes |
+| **Audio** | WAV-Datei abspielen | File Path |
 
-#### Beispiel-Workflow:
+**Alle Actions unterstützen:**
+- **DelayAfterMs:** Zeitverzögerung (Bedeutung abhängig von Execution Mode)
+
+#### Beispiel-Workflow (Sequential):
 ```yaml
 Workflow: "Bahnhofsansage Berlin Hbf"
 Trigger: InPort 1
+Execution Mode: Sequential
 
 Actions:
-1. Announcement: "Der ICE 1234 nach München fährt ein"
-2. Delay: 3000ms
-3. Audio: "bahnhofsglocke.wav"
-4. Delay: 2000ms
-5. Announcement: "Vorsicht bei der Einfahrt"
+1. Audio: "gong.wav" (DelayAfterMs: 1000)          → Gong + 1s Pause danach
+2. Announcement: "ICE 1234 fährt ein"              → Ansage
+3. Announcement: "Vorsicht bei der Einfahrt"       → Zweite Ansage
+```
+
+#### Beispiel-Workflow (Parallel):
+```yaml
+Workflow: "Bahnhof mit Effekten"
+Trigger: InPort 1
+Execution Mode: Parallel
+
+Actions:
+1. Audio: "gong.wav" (DelayAfterMs: 0)             → t=0ms: Gong startet
+2. Announcement: "Zug fährt ein" (DelayAfterMs: 500) → t=500ms: Ansage startet (Gong läuft noch)
+3. Command: Beleuchtung (DelayAfterMs: 2000)       → t=2500ms: Licht schaltet
 ```
 
 ---

@@ -34,4 +34,10 @@ public interface IIoService
     /// <param name="suggestedFileName">Suggested file name</param>
     /// <returns>The selected file path, or null if cancelled.</returns>
     Task<string?> SaveXmlFileAsync(string suggestedFileName);
+
+    /// <summary>
+    /// Opens a file picker to browse for an audio file (WAV, MP3, etc.).
+    /// </summary>
+    /// <returns>The selected file path, or null if cancelled.</returns>
+    Task<string?> BrowseForAudioFileAsync();
 }

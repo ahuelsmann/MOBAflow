@@ -1,20 +1,29 @@
-﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel.Action;
+
+using CommunityToolkit.Mvvm.Input;
 
 using Domain;
 using Domain.Enum;
 
+using Interface;
+
 /// <summary>
 /// ViewModel for Audio playback actions.
-/// Wraps WorkflowAction with typed properties for FilePath, Volume.
+/// Wraps WorkflowAction with typed properties for FilePath.
+/// Volume is controlled via system-wide Windows volume settings.
+/// Audio files are played once when the action is triggered.
 /// </summary>
-public class AudioViewModel : WorkflowActionViewModel
+public partial class AudioViewModel : WorkflowActionViewModel
 {
     #region Fields
-    // (No additional fields - inherits from WorkflowActionViewModel)
+    private readonly IIoService _ioService;
     #endregion
 
-    public AudioViewModel(WorkflowAction action) : base(action, ActionType.Audio) { }
+    public AudioViewModel(WorkflowAction action, IIoService ioService) : base(action, ActionType.Audio) 
+    {
+        _ioService = ioService;
+    }
 
     /// <summary>
     /// Path to audio file (relative or absolute).
@@ -26,21 +35,16 @@ public class AudioViewModel : WorkflowActionViewModel
     }
 
     /// <summary>
-    /// Volume (0.0 - 1.0).
+    /// Command to browse for an audio file.
     /// </summary>
-    public double Volume
+    [RelayCommand]
+    private async Task BrowseForFileAsync()
     {
-        get => GetParameter<double>("Volume");
-        set => SetParameter("Volume", value);
-    }
-
-    /// <summary>
-    /// Loop playback.
-    /// </summary>
-    public bool Loop
-    {
-        get => GetParameter<bool>("Loop");
-        set => SetParameter("Loop", value);
+        var path = await _ioService.BrowseForAudioFileAsync();
+        if (!string.IsNullOrEmpty(path))
+        {
+            FilePath = path;
+        }
     }
 
     public override string ToString() => !string.IsNullOrEmpty(Name) ? $"{Name} (Audio)" : $"Audio: {Path.GetFileName(FilePath)}";

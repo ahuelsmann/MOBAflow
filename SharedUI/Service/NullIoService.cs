@@ -45,4 +45,9 @@ public class NullIoService : IIoService
     {
         return Task.FromResult<string?>(null);
     }
+
+    public Task<string?> BrowseForAudioFileAsync()
+    {
+        return Task.FromResult<string?>(null);
+    }
 }
