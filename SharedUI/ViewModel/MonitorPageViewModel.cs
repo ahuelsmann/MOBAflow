@@ -1,32 +1,49 @@
-﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Model;
 
-using Common.Extensions;
+using Common.Serilog;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using Interface;
 
+using Microsoft.Extensions.Logging;
+
 using System.Collections.ObjectModel;
 
 /// <summary>
 /// ViewModel for MonitorPage - displays Z21 traffic and application logs.
 /// Left panel: Z21 UDP traffic (sent/received packets)
-/// Right panel: Application logs (from LoggingExtensions)
+/// Right panel: Application logs (from Serilog InMemorySink)
 /// </summary>
 public partial class MonitorPageViewModel : ObservableObject
 {
     private readonly MainWindowViewModel _mainWindowViewModel;
     private readonly IUiDispatcher _uiDispatcher;
+    private readonly ILogger<MonitorPageViewModel> _logger;
 
     /// <summary>
     /// Application log entries formatted as strings for UI display.
     /// </summary>
     [ObservableProperty]
     private ObservableCollection<string> activityLogs = [];
+
+    /// <summary>
+    /// Indicates whether auto-scroll is paused for Traffic Monitor.
+    /// True = User can scroll manually, False = Auto-scroll to newest packet.
+    /// </summary>
+    [ObservableProperty]
+    private bool isTrafficScrollPaused;
+
+    /// <summary>
+    /// Indicates whether auto-scroll is paused for Application Log.
+    /// True = User can scroll manually, False = Auto-scroll to newest log.
+    /// </summary>
+    [ObservableProperty]
+    private bool isActivityLogScrollPaused;
 
     /// <summary>
     /// Z21 UDP traffic packets from MainWindowViewModel.
@@ -45,10 +62,11 @@ public partial class MonitorPageViewModel : ObservableObject
     /// </summary>
     public int TrafficCount => TrafficPackets.Count;
 
-    public MonitorPageViewModel(MainWindowViewModel mainWindowViewModel, IUiDispatcher uiDispatcher)
+    public MonitorPageViewModel(MainWindowViewModel mainWindowViewModel, IUiDispatcher uiDispatcher, ILogger<MonitorPageViewModel> logger)
     {
         _mainWindowViewModel = mainWindowViewModel;
         _uiDispatcher = uiDispatcher;
+        _logger = logger;
 
         // Subscribe to TrafficPackets changes to update count
         TrafficPackets.CollectionChanged += (_, _) =>
@@ -65,17 +83,17 @@ public partial class MonitorPageViewModel : ObservableObject
             }
         };
 
-        // Load existing log entries
-        foreach (var entry in LoggingExtensions.GetLogEntries())
+        // Load existing log entries from Serilog InMemorySink
+        foreach (var entry in InMemorySink.GetLogEntries())
         {
             ActivityLogs.Add(FormatLogEntry(entry));
         }
 
-        // Subscribe to new log entries from LoggingExtensions
-        LoggingExtensions.LogAdded += OnLogAdded;
+        // Subscribe to new log entries from Serilog InMemorySink
+        InMemorySink.LogAdded += OnLogAdded;
 
-        // Add initial log entry
-        this.Log("Monitor started");
+        // Add initial log entry using Serilog
+        _logger.LogInformation("Monitor started");
     }
 
     private void OnLogAdded(LogEntry entry)
@@ -102,16 +120,39 @@ public partial class MonitorPageViewModel : ObservableObject
     private void ClearActivityLogs()
     {
         ActivityLogs.Clear();
-        LoggingExtensions.ClearLogs();
-        this.Log("Logs cleared");
+        InMemorySink.ClearLogs();
+        _logger.LogInformation("Logs cleared");
     }
 
-        [RelayCommand]
-        private void ClearTraffic()
-        {
-            _mainWindowViewModel.ClearTrafficMonitorCommand.Execute(null);
-            this.Log("Traffic cleared");
-        }
+    [RelayCommand]
+    private void ClearTraffic()
+    {
+        _mainWindowViewModel.ClearTrafficMonitorCommand.Execute(null);
+        _logger.LogInformation("Traffic cleared");
     }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

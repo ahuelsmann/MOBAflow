@@ -2,8 +2,6 @@
 
 namespace Moba.Sound;
 
-using Common.Extensions;
-
 using Microsoft.Extensions.Logging;
 
 using System.Globalization;
@@ -50,9 +48,9 @@ public class SystemSpeechEngine : ISpeakerEngine
             // Select voice if specified
             if (!string.IsNullOrEmpty(voiceName) && !TrySelectVoice(synthesizer, voiceName))
             {
-                this.LogWarning($"Voice '{voiceName}' not found. Using default voice.", _logger);
+                _logger.LogWarning("Voice '{VoiceName}' not found. Using default voice", voiceName);
                 
-                this.Log("Available voices:", _logger);
+                _logger.LogInformation("Available voices:");
                 
                 // Use Select() instead of foreach for better performance
                 var voiceDescriptions = synthesizer.GetInstalledVoices()
@@ -61,7 +59,7 @@ public class SystemSpeechEngine : ISpeakerEngine
                 
                 foreach (var description in voiceDescriptions)
                 {
-                    this.Log(description, _logger);
+                    _logger.LogInformation("{VoiceDescription}", description);
                 }
             }
 
@@ -75,15 +73,15 @@ public class SystemSpeechEngine : ISpeakerEngine
             try
             {
                 // Synthesize speech synchronously
-                this.Log($"🔊 Synthesizing speech: [{message}]", _logger);
+                _logger.LogInformation("Synthesizing speech: {Message}", message);
                 
                 synthesizer.Speak(message);
                 
-                this.Log($"✅ Speech synthesized successfully for text: [{message}]", _logger);
+                _logger.LogInformation("Speech synthesized successfully for text: {Message}", message);
             }
             catch (Exception ex)
             {
-                this.LogError($"ERROR during speech synthesis for message: [{message}]", ex, _logger);
+                _logger.LogError(ex, "ERROR during speech synthesis for message: {Message}", message);
                 throw;
             }
         });
@@ -101,7 +99,7 @@ public class SystemSpeechEngine : ISpeakerEngine
         try
         {
             synthesizer.SelectVoice(voiceName);
-            this.Log($"✅ Using voice (exact match): {voiceName}", _logger);
+            _logger.LogInformation("Using voice (exact match): {VoiceName}", voiceName);
             return true;
         }
         catch (ArgumentException)
@@ -117,7 +115,7 @@ public class SystemSpeechEngine : ISpeakerEngine
         if (matchingVoice != null)
         {
             synthesizer.SelectVoice(matchingVoice.VoiceInfo.Name);
-            this.Log($"✅ Using voice (partial match): {matchingVoice.VoiceInfo.Name}", _logger);
+            _logger.LogInformation("Using voice (partial match): {VoiceName}", matchingVoice.VoiceInfo.Name);
             return true;
         }
 
@@ -128,7 +126,7 @@ public class SystemSpeechEngine : ISpeakerEngine
             try
             {
                 synthesizer.SelectVoiceByHints(VoiceGender.NotSet, VoiceAge.NotSet, 0, new CultureInfo("de-DE"));
-                this.Log("✅ Using German voice (by culture)", _logger);
+                _logger.LogInformation("Using German voice (by culture)");
                 return true;
             }
             catch

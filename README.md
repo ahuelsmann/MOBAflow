@@ -88,6 +88,30 @@ SharedUI (Base ViewModels)
 WinUI / MAUI / Blazor (Platform-specific)
 ```
 
+### Technology Stack
+
+- **Framework:** .NET 10
+- **UI Frameworks:** WinUI 3, .NET MAUI, Blazor Server
+- **MVVM:** CommunityToolkit.Mvvm
+- **Logging:** Serilog (File + In-Memory Sink for real-time UI)
+- **Speech:** Azure Cognitive Services, Windows Speech API
+- **Networking:** Direct UDP to Z21 (no external dependencies)
+- **Testing:** NUnit
+
+### Logging Infrastructure
+
+MOBAflow uses **Serilog** for centralized, structured logging:
+
+- **File Logs:** `bin/Debug/logs/mobaflow-YYYYMMDD.log` (rolling, 7-day retention)
+- **In-Memory Sink:** Real-time log streaming to MonitorPage UI
+- **Structured Logging:** Searchable properties instead of string interpolation
+- **Log Levels:** Debug (Moba namespace), Warning (Microsoft namespace)
+
+**Example:**
+```csharp
+_logger.LogInformation("Feedback received: InPort={InPort}, Value={Value}", inPort, value);
+```
+
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for detailed architecture documentation.
 
 ## 🤝 Contributing

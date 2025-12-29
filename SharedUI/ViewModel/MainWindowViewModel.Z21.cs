@@ -7,10 +7,10 @@ using Backend.Model;
 using Backend.Protocol;
 using Backend.Service;
 
-using Common.Extensions;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
+using Microsoft.Extensions.Logging;
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -366,7 +366,8 @@ public partial class MainWindowViewModel
             // XBusStatus.TrackOff is the OPPOSITE of IsTrackPowerOn
             IsTrackPowerOn = !xBusStatus.TrackOff;
             
-            this.Log($"📊 XBus status updated: Track Power {(IsTrackPowerOn ? "ON" : "OFF")}, EmergencyStop={xBusStatus.EmergencyStop}, ShortCircuit={xBusStatus.ShortCircuit}");
+            _logger.LogInformation("XBus status updated: Track Power {PowerState}, EmergencyStop={EmergencyStop}, ShortCircuit={ShortCircuit}", 
+                IsTrackPowerOn ? "ON" : "OFF", xBusStatus.EmergencyStop, xBusStatus.ShortCircuit);
         });
     }
 
@@ -378,7 +379,8 @@ public partial class MainWindowViewModel
             FirmwareVersion = versionInfo.FirmwareVersion;
             HardwareType = versionInfo.HardwareType;
 
-            this.Log($"Z21 Version Info: S/N={SerialNumber}, HW={HardwareType}, FW={FirmwareVersion}");
+            _logger.LogInformation("Z21 Version Info: S/N={SerialNumber}, HW={HardwareType}, FW={FirmwareVersion}", 
+                SerialNumber, HardwareType, FirmwareVersion);
         });
     }
 
@@ -417,7 +419,8 @@ public partial class MainWindowViewModel
             ? $"Connected | {string.Join(" | ", warnings)}" 
             : "Connected";
 
-        this.Log($"Z21 System State: Track Power {(systemState.IsTrackPowerOn ? "ON" : "OFF")}, Current={systemState.MainCurrent}mA");
+        _logger.LogDebug("Z21 System State: Track Power {PowerState}, Current={Current}mA", 
+            systemState.IsTrackPowerOn ? "ON" : "OFF", systemState.MainCurrent);
     }
 
     private void HandleConnectionLost()

@@ -1,9 +1,11 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Common.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
+using Microsoft.Extensions.Logging;
+
 using System.Collections.ObjectModel;
 
 /// <summary>
@@ -37,9 +39,10 @@ public partial class MainWindowViewModel
 
     /// <summary>
     /// Timer filter interval in seconds (prevents duplicate counts within this timeframe).
+    /// Synchronized with AppSettings.Counter.TimerIntervalSeconds.
     /// </summary>
     [ObservableProperty]
-    private double timerIntervalSeconds = 2.0;
+    private double timerIntervalSeconds;
 
     /// <summary>
     /// Main current in mA (from Z21 SystemState).
@@ -94,20 +97,55 @@ public partial class MainWindowViewModel
                     TargetLapCount = GlobalTargetLapCount
                 });
             }
-            this.Log($"✅ Initialized {Statistics.Count} track statistics from settings (InPorts 1-{count})");
+            _logger.LogInformation("Initialized {Count} track statistics from settings (InPorts 1-{MaxInPort})", Statistics.Count, count);
         }
         else
         {
-            this.Log("ℹ️ CountOfFeedbackPoints is 0 - no track statistics initialized. Set CountOfFeedbackPoints in settings to enable.");
+            _logger.LogInformation("CountOfFeedbackPoints is 0 - no track statistics initialized. Set CountOfFeedbackPoints in settings to enable");
         }
     }
 
     partial void OnGlobalTargetLapCountChanged(int value)
     {
+        // Save to AppSettings (RAM)
+        _settings.Counter.TargetLapCount = value;
+        
+        // Persist to appsettings.json (Disk) - fire and forget
+        _settingsService?.SaveSettingsAsync(_settings);
+        
         // Update all existing statistics when global target changes
         foreach (var stat in Statistics)
         {
             stat.TargetLapCount = value;
+        }
+    }
+
+    partial void OnUseTimerFilterChanged(bool value)
+    {
+        // Save to AppSettings (RAM)
+        _settings.Counter.UseTimerFilter = value;
+        
+        // Persist to appsettings.json (Disk) - fire and forget
+        _settingsService?.SaveSettingsAsync(_settings);
+    }
+
+    partial void OnTimerIntervalSecondsChanged(double value)
+    {
+        // Save to AppSettings (RAM)
+        _settings.Counter.TimerIntervalSeconds = value;
+        
+        // ✅ DEBUG: Log to verify this method is called
+        System.Diagnostics.Debug.WriteLine($"🔥 OnTimerIntervalSecondsChanged called! Value={value}, SettingsService={(_settingsService != null ? "EXISTS" : "NULL")}");
+        
+        // Persist to appsettings.json (Disk) - fire and forget
+        if (_settingsService != null)
+        {
+            System.Diagnostics.Debug.WriteLine($"🔥 Calling SaveSettingsAsync with TimerIntervalSeconds={value}");
+            _settingsService.SaveSettingsAsync(_settings);
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine("❌ SettingsService is NULL - cannot save!");
         }
     }
 
@@ -136,7 +174,7 @@ public partial class MainWindowViewModel
             stat.HasReceivedFirstLap = false;
         }
         _lastFeedbackTime.Clear();
-        this.Log("🔄 All counters reset");
+        _logger.LogInformation("All counters reset");
     }
 
     private bool CanResetCounters() => true; // Always enabled
@@ -162,7 +200,8 @@ public partial class MainWindowViewModel
                 var elapsed = DateTime.Now - lastTime;
                 if (elapsed.TotalSeconds < TimerIntervalSeconds)
                 {
-                    this.Log($"⏱️ InPort {inPort}: Ignored (timer filter: {elapsed.TotalSeconds:F1}s < {TimerIntervalSeconds}s)");
+                    _logger.LogDebug("InPort {InPort}: Ignored (timer filter: {Elapsed:F1}s < {Threshold}s)", 
+                        inPort, elapsed.TotalSeconds, TimerIntervalSeconds);
                     return;
                 }
             }
@@ -181,7 +220,8 @@ public partial class MainWindowViewModel
         stat.Count++;
         stat.LastFeedbackTime = DateTime.Now;
 
-        this.Log($"📊 InPort {inPort}: Lap {stat.Count}/{stat.TargetLapCount} | Lap time: {stat.LastLapTimeFormatted}");
+        _logger.LogInformation("InPort {InPort}: Lap {Count}/{Target} | Lap time: {LapTime}", 
+            inPort, stat.Count, stat.TargetLapCount, stat.LastLapTimeFormatted);
     }
 
     /// <summary>

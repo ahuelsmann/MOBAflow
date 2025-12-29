@@ -3,7 +3,8 @@ namespace Moba.Backend.Service;
 
 using Domain;
 using Domain.Enum;
-using System.Diagnostics;
+
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Event args for action execution errors.
@@ -20,7 +21,7 @@ public class ActionExecutionErrorEventArgs : EventArgs
 /// Orchestrates the execution of workflows and their actions.
 /// Platform-independent: No UI thread dispatching.
 /// </summary>
-public class WorkflowService(Interface.IActionExecutor actionExecutor)
+public class WorkflowService(Interface.IActionExecutor actionExecutor, ILogger<WorkflowService>? logger = null)
 {
     /// <summary>
     /// Raised when an action execution fails.
@@ -41,11 +42,11 @@ public class WorkflowService(Interface.IActionExecutor actionExecutor)
         ArgumentNullException.ThrowIfNull(workflow);
         ArgumentNullException.ThrowIfNull(context);
 
-        Debug.WriteLine($"▶ Starting workflow: {workflow.Name} (Mode: {workflow.ExecutionMode})");
+        logger?.LogInformation("▶ Starting workflow: {WorkflowName} (Mode: {ExecutionMode})", workflow.Name, workflow.ExecutionMode);
 
         if (workflow.Actions.Count == 0)
         {
-            Debug.WriteLine($"⚠ Workflow '{workflow.Name}' has no actions");
+            logger?.LogWarning("⚠ Workflow '{WorkflowName}' has no actions", workflow.Name);
             return;
         }
 
@@ -58,7 +59,7 @@ public class WorkflowService(Interface.IActionExecutor actionExecutor)
             await ExecuteSequentialAsync(workflow, context);
         }
 
-        Debug.WriteLine($"✅ Workflow '{workflow.Name}' completed");
+        logger?.LogInformation("✅ Workflow '{WorkflowName}' completed", workflow.Name);
     }
 
     /// <summary>
@@ -76,21 +77,21 @@ public class WorkflowService(Interface.IActionExecutor actionExecutor)
                 // Apply per-action delay if specified
                 if (action.DelayAfterMs > 0)
                 {
-                    Debug.WriteLine($"    ⏱ Waiting {action.DelayAfterMs}ms after action #{action.Number}...");
+                    logger?.LogDebug("    ⏱ Waiting {DelayMs}ms after action #{ActionNumber}...", action.DelayAfterMs, action.Number);
                     await Task.Delay(action.DelayAfterMs);
                 }
             }
             catch (FileNotFoundException fnfEx)
             {
                 var errorMsg = $"Audio file not found for action '{action.Name}': {fnfEx.FileName}";
-                Debug.WriteLine($"❌ {errorMsg}");
+                logger?.LogError(fnfEx, "❌ {ErrorMessage}", errorMsg);
                 OnActionExecutionError(action, fnfEx, errorMsg);
                 // Continue with next action
             }
             catch (Exception ex)
             {
                 var errorMsg = $"Error executing action #{action.Number} '{action.Name}': {ex.Message}";
-                Debug.WriteLine($"❌ {errorMsg}");
+                logger?.LogError(ex, "❌ {ErrorMessage}", errorMsg);
                 OnActionExecutionError(action, ex, errorMsg);
                 // Continue with next action even if one fails
             }
@@ -120,7 +121,7 @@ public class WorkflowService(Interface.IActionExecutor actionExecutor)
                     // Wait before starting this action (staggered start)
                     if (startDelay > 0)
                     {
-                        Debug.WriteLine($"    ⏱ Action #{action.Number} waiting {startDelay}ms before start...");
+                        logger?.LogDebug("    ⏱ Action #{ActionNumber} waiting {StartDelay}ms before start...", action.Number, startDelay);
                         await Task.Delay(startDelay);
                     }
 
@@ -129,13 +130,13 @@ public class WorkflowService(Interface.IActionExecutor actionExecutor)
                 catch (FileNotFoundException fnfEx)
                 {
                     var errorMsg = $"Audio file not found for action '{action.Name}': {fnfEx.FileName}";
-                    Debug.WriteLine($"❌ {errorMsg}");
+                    logger?.LogError(fnfEx, "❌ {ErrorMessage}", errorMsg);
                     OnActionExecutionError(action, fnfEx, errorMsg);
                 }
                 catch (Exception ex)
                 {
                     var errorMsg = $"Error executing action #{action.Number} '{action.Name}': {ex.Message}";
-                    Debug.WriteLine($"❌ {errorMsg}");
+                    logger?.LogError(ex, "❌ {ErrorMessage}", errorMsg);
                     OnActionExecutionError(action, ex, errorMsg);
                 }
             }));

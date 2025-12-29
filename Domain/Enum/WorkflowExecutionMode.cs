@@ -15,9 +15,9 @@ public enum WorkflowExecutionMode
 
     /// <summary>
     /// Parallel execution: Actions start with staggered delays (overlapping).
-    /// DelayAfterMs: Delay BEFORE action starts (cumulative from previous actions).
-    /// Use for: Layered effects (Gong at t=0, Announcement at t=500ms, Light at t=2s)
-    /// Example: Action1(DelayAfterMs=0)→t=0, Action2(DelayAfterMs=500)→t=500, Action3(DelayAfterMs=1500)→t=2000
+    /// DelayAfterMs: Cumulative delay from start. Each action's DelayAfterMs is added to previous total.
+    /// Use for: Layered effects (Gong at t=0, Announcement at t=500ms, Light at t=2000ms)
+    /// Example: Action1(Delay=0)→t=0, Action2(Delay=500)→t=500, Action3(Delay=1500)→t=2000
     /// </summary>
     Parallel = 1
 }

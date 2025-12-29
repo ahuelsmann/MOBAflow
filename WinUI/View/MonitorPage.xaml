@@ -1,10 +1,18 @@
-<?xml version="1.0" encoding="utf-8" ?>
 <Page
     x:Class="Moba.WinUI.View.MonitorPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:model="using:Moba.Backend.Model"
+    xmlns:converter="using:Moba.WinUI.Converter"
     DataContext="{x:Bind ViewModel}">
+
+    <Page.Resources>
+        <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converter:BoolToFontWeightConverter x:Key="BoolToFontWeightConverter" />
+        <converter:BoolToFeedbackBackgroundConverter x:Key="BoolToFeedbackBackgroundConverter" />
+        <converter:BoolToScrollIconConverter x:Key="BoolToScrollIconConverter" />
+        <converter:BoolToScrollTextConverter x:Key="BoolToScrollTextConverter" />
+    </Page.Resources>
 
     <Grid Padding="8">
         <Grid.RowDefinitions>
@@ -40,6 +48,7 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <TextBlock
@@ -47,8 +56,19 @@
                         Style="{StaticResource SubtitleTextBlockStyle}"
                         Text="Z21 Traffic" />
 
-                    <Button
+                    <ToggleButton
                         Grid.Column="1"
+                        Margin="0,0,8,0"
+                        IsChecked="{x:Bind ViewModel.IsTrafficScrollPaused, Mode=TwoWay}"
+                        ToolTipService.ToolTip="Pause auto-scroll (allows manual scrolling)">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon FontSize="14" Glyph="{x:Bind ViewModel.IsTrafficScrollPaused, Mode=OneWay, Converter={StaticResource BoolToScrollIconConverter}}" />
+                            <TextBlock Text="{x:Bind ViewModel.IsTrafficScrollPaused, Mode=OneWay, Converter={StaticResource BoolToScrollTextConverter}}" />
+                        </StackPanel>
+                    </ToggleButton>
+
+                    <Button
+                        Grid.Column="2"
                         Command="{x:Bind ViewModel.ClearTrafficCommand}"
                         ToolTipService.ToolTip="Clear all traffic packets">
                         <StackPanel Orientation="Horizontal" Spacing="6">
@@ -67,6 +87,7 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="90" />
                         <ColumnDefinition Width="30" />
+                        <ColumnDefinition Width="60" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
@@ -87,11 +108,18 @@
                         FontFamily="Consolas"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="INPORT" />
+                    <TextBlock
+                        Grid.Column="3"
+                        FontFamily="Consolas"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
                         Text="PACKET TYPE" />
                 </Grid>
 
                 <!--  Traffic ListView  -->
                 <ListView
+                    x:Name="TrafficListView"
                     Grid.Row="2"
                     Margin="0,4,0,0"
                     ItemsSource="{x:Bind ViewModel.TrafficPackets, Mode=OneWay}"
@@ -104,10 +132,14 @@
                     </ListView.ItemContainerStyle>
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="model:Z21TrafficPacket">
-                            <Grid Padding="12,4" ColumnSpacing="12">
+                            <Grid
+                                Padding="12,4"
+                                Background="{x:Bind IsFeedbackRelated, Converter={StaticResource BoolToFeedbackBackgroundConverter}}"
+                                ColumnSpacing="12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="90" />
                                     <ColumnDefinition Width="30" />
+                                    <ColumnDefinition Width="60" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
@@ -115,7 +147,7 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <!--  Row 1: Time + Direction + Packet Type  -->
+                                <!--  Row 1: Time + Direction + InPort + Packet Type  -->
                                 <TextBlock
                                     Grid.Row="0"
                                     Grid.Column="0"
@@ -136,6 +168,16 @@
                                     Grid.Row="0"
                                     Grid.Column="2"
                                     FontFamily="Consolas"
+                                    FontWeight="SemiBold"
+                                    Style="{StaticResource CaptionTextBlockStyle}"
+                                    Text="{x:Bind InPortFormatted}"
+                                    Visibility="{x:Bind IsFeedbackRelated, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="3"
+                                    FontFamily="Consolas"
+                                    FontWeight="{x:Bind IsFeedbackRelated, Converter={StaticResource BoolToFontWeightConverter}}"
                                     Style="{StaticResource CaptionTextBlockStyle}"
                                     Text="{x:Bind PacketType}"
                                     TextTrimming="CharacterEllipsis" />
@@ -143,7 +185,7 @@
                                 <!--  Row 2: Byte Sequence (unter Packet Type)  -->
                                 <TextBlock
                                     Grid.Row="1"
-                                    Grid.Column="2"
+                                    Grid.Column="3"
                                     Margin="0,2,0,0"
                                     FontFamily="Consolas"
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
@@ -176,6 +218,7 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <TextBlock
@@ -184,8 +227,19 @@
                         Style="{StaticResource SubtitleTextBlockStyle}"
                         Text="Application Log" />
 
-                    <Button
+                    <ToggleButton
                         Grid.Column="1"
+                        Margin="0,0,8,0"
+                        IsChecked="{x:Bind ViewModel.IsActivityLogScrollPaused, Mode=TwoWay}"
+                        ToolTipService.ToolTip="Pause auto-scroll (allows manual scrolling)">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon FontSize="14" Glyph="{x:Bind ViewModel.IsActivityLogScrollPaused, Mode=OneWay, Converter={StaticResource BoolToScrollIconConverter}}" />
+                            <TextBlock Text="{x:Bind ViewModel.IsActivityLogScrollPaused, Mode=OneWay, Converter={StaticResource BoolToScrollTextConverter}}" />
+                        </StackPanel>
+                    </ToggleButton>
+
+                    <Button
+                        Grid.Column="2"
                         Command="{x:Bind ViewModel.ClearActivityLogsCommand}"
                         ToolTipService.ToolTip="Clear activity logs">
                         <StackPanel Orientation="Horizontal" Spacing="6">
@@ -209,6 +263,7 @@
 
                 <!--  Logs ListView  -->
                 <ListView
+                    x:Name="ActivityLogListView"
                     Grid.Row="2"
                     Margin="0,4,0,0"
                     ItemsSource="{x:Bind ViewModel.ActivityLogs, Mode=OneWay}"

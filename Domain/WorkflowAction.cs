@@ -22,9 +22,14 @@ public class WorkflowAction
     public ActionType Type { get; set; }
 
     /// <summary>
-    /// Delay in milliseconds to wait AFTER this action completes.
-    /// Only applies when Workflow.ExecutionMode is Sequential.
-    /// Use for precise timing control (e.g., wait for audio to finish before next action).
+    /// Delay in milliseconds for timing control.
+    /// 
+    /// Sequential Mode: Pause AFTER this action completes (before next action starts).
+    /// - Use for: Adding silence between actions (e.g., wait 1s after Gong before Announcement)
+    /// 
+    /// Parallel Mode: Start offset FROM previous action (cumulative).
+    /// - Use for: Staggered overlapping effects (e.g., Gong at t=0, Announcement at t+500ms)
+    /// 
     /// Default: 0 (no delay)
     /// </summary>
     public int DelayAfterMs { get; set; } = 0;

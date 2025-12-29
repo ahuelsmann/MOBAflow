@@ -6,7 +6,6 @@ using Backend.Manager;
 using Backend.Service;
 
 using Common.Configuration;
-using Common.Extensions;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -15,6 +14,9 @@ using Domain;
 using Domain.Enum;
 
 using Interface;
+
+using Microsoft.Extensions.Logging;
+
 using Service;  // For NullIoService
 
 using Sound;
@@ -34,6 +36,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IZ21 _z21;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly WorkflowService _workflowService;
+    private readonly ILogger<MainWindowViewModel> _logger;
 
     // Configuration
     private readonly AppSettings _settings;
@@ -63,6 +66,7 @@ public partial class MainWindowViewModel : ObservableObject
         AppSettings settings,
         Solution solution,
         ActionExecutionContext executionContext,
+        ILogger<MainWindowViewModel> logger,
         IIoService? ioService = null,  // ✅ Optional for WebApp/MAUI
         ICityService? cityLibraryService = null,
         ISettingsService? settingsService = null,
@@ -73,6 +77,7 @@ public partial class MainWindowViewModel : ObservableObject
         _workflowService = workflowService;
         _uiDispatcher = uiDispatcher;
         _settings = settings;
+        _logger = logger;
         _cityLibraryService = cityLibraryService;
         _settingsService = settingsService;
         _announcementService = announcementService;
@@ -385,7 +390,7 @@ public partial class MainWindowViewModel : ObservableObject
             }
             catch (Exception ex)
             {
-                this.LogError("Error disposing Z21 auto-connect timer", ex);
+                _logger.LogError(ex, "Error disposing Z21 auto-connect timer");
             }
         }
 
@@ -399,7 +404,7 @@ public partial class MainWindowViewModel : ObservableObject
             }
             catch (Exception ex)
             {
-                this.LogError("Error disposing JourneyManager", ex);
+                _logger.LogError(ex, "Error disposing JourneyManager");
             }
         }
 
@@ -419,7 +424,7 @@ public partial class MainWindowViewModel : ObservableObject
         catch (AggregateException) { /* Task.Wait throws AggregateException */ }
         catch (Exception ex)
         {
-            this.LogError("Error during Z21 disconnect", ex);
+            _logger.LogError(ex, "Error during Z21 disconnect");
         }
 
         // Unsubscribe from all Z21 events

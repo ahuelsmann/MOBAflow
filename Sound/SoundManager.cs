@@ -24,7 +24,6 @@ public class WindowsSoundPlayer(ILogger<WindowsSoundPlayer> logger) : ISoundPlay
     {
         try
         {
-            Console.WriteLine($"🔊 Playing sound file: {waveFile}");
             logger.LogInformation("Playing sound file: {WaveFile}", waveFile);
             
             // Run on background thread to avoid blocking UI
@@ -39,18 +38,15 @@ public class WindowsSoundPlayer(ILogger<WindowsSoundPlayer> logger) : ISoundPlay
                 player.PlaySync();
             }, cancellationToken).ConfigureAwait(false);
             
-            Console.WriteLine($"✅ Sound file played successfully: {waveFile}");
             logger.LogDebug("Sound file played successfully: {WaveFile}", waveFile);
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine($"⏸ Sound playback cancelled: {waveFile}");
             logger.LogInformation("Sound playback cancelled: {WaveFile}", waveFile);
             throw;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Failed to play sound file: {waveFile} - Error: {ex.Message}");
             logger.LogError(ex, "Failed to play sound file: {WaveFile}", waveFile);
             throw new InvalidOperationException($"Failed to play sound file: {waveFile}", ex);
         }

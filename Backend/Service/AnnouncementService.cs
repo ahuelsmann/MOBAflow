@@ -3,8 +3,10 @@
 namespace Moba.Backend.Service;
 
 using Domain;
-using Sound;
+
 using Microsoft.Extensions.Logging;
+
+using Sound;
 
 /// <summary>
 /// Service for generating station announcements from templates.

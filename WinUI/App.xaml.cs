@@ -1,13 +1,17 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
 
 using Moba.Backend.Service;
 using Moba.Backend.Extensions;
 using Moba.Common.Configuration;
+using Moba.Common.Serilog;
 using Moba.Sound;
+
+using Serilog;
 
 namespace Moba.WinUI;
 
@@ -84,8 +88,14 @@ public partial class App
         // Register SpeechOptions (Sound service configuration)
         services.Configure<SpeechOptions>(configuration.GetSection("Speech"));
 
+        // ✅ Configure Serilog for file logging
+        ConfigureSerilog();
+
         // Logging (required by HealthCheckService and SpeechHealthCheck)
-        services.AddLogging();
+        services.AddLogging(loggingBuilder =>
+        {
+            loggingBuilder.AddSerilog(Log.Logger, dispose: true);
+        });
 
         // ✅ Register ISpeakerEngine with lazy initialization
         // Only creates the CONFIGURED engine, not both
@@ -171,6 +181,7 @@ public partial class App
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<Domain.Solution>(),
             sp.GetRequiredService<ActionExecutionContext>(),  // ✅ Inject context with all audio services
+            sp.GetRequiredService<ILogger<SharedUI.ViewModel.MainWindowViewModel>>(),  // ✅ Inject ILogger
             sp.GetRequiredService<SharedUI.Interface.IIoService>(),
             sp.GetRequiredService<SharedUI.Interface.ICityService>(),      // Now guaranteed (NullObject if unavailable)
             sp.GetRequiredService<SharedUI.Interface.ISettingsService>(),  // Now guaranteed (NullObject if unavailable)
@@ -197,12 +208,32 @@ public partial class App
     }
 
     /// <summary>
+    /// Configures Serilog for file logging to bin\Debug\logs folder and in-memory sink for MonitorPage.
+    /// </summary>
+    private static void ConfigureSerilog()
+    {
+        var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
+        Directory.CreateDirectory(logDirectory);
+
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+            .Enrich.FromLogContext()
+            .WriteTo.InMemory()  // ✅ Custom sink for MonitorPage real-time display
+            .WriteTo.File(
+                Path.Combine(logDirectory, "mobaflow-.log"),
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 7,
+                outputTemplate: "[{Timestamp:HH:mm:ss.fff} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}")
+            .CreateLogger();
+    }
+
+    /// <summary>
     /// Invoked when the application is launched.
     /// </summary>
     /// <param name="args">Details about the launch request and process.</param>
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-
         _window = Services.GetRequiredService<View.MainWindow>();
         _window.Activate();
 

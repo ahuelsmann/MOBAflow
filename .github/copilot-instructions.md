@@ -5,7 +5,7 @@
 > **Multi-platform system (.NET 10)**  
 > MOBAflow (WinUI) | MOBAsmart (MAUI) | MOBAdash (Blazor)
 > 
-> **Last Updated:** 2025-12-29 | **Version:** 3.10
+> **Last Updated:** 2025-01-29 | **Version:** 3.12
 
 ---
 
@@ -40,7 +40,7 @@
 - Copy working patterns exactly, then adapt for the new entity
 - If it works on JourneysPage, it should work the same way on WorkflowsPage
 
-### **5. Warning-Free Code (NEW!)**
+### **5. Warning-Free Code**
 - **NEVER introduce new warnings** when implementing features
 - **Fix warnings immediately** - don't defer to "later"
 - **Partial method signatures MUST match** the generated code exactly:
@@ -72,6 +72,78 @@ public object Convert(object? value, ...)
 }
 ```
 
+### **6. Always Create a Plan (MANDATORY!)**
+- **EVERY user request MUST start with a plan** using the `plan` tool
+- **No exceptions** - even for "simple" tasks
+- Plans ensure systematic approach and prevent oversights
+- Use `update_plan_progress` to track completion
+- Call `finish_plan` when all steps are done
+
+**Plan Structure:**
+```markdown
+# Task Title
+
+## Steps
+1. Analyze current state
+2. Identify required changes
+3. Implement changes
+4. Verify with build
+5. Update documentation
+```
+
+### **7. Before/After Analysis (MANDATORY!)**
+- **ALWAYS analyze the situation BEFORE making changes**
+  - What is the current state?
+  - What files are affected?
+  - What are the dependencies?
+  - Are there similar patterns elsewhere?
+  
+- **ALWAYS verify the result AFTER changes**
+  - Build successful?
+  - No new warnings?
+  - Consistent with existing patterns?
+  - Documentation updated?
+
+**Template:**
+```
+## BEFORE:
+- Current state description
+- Problems identified
+- Affected components
+
+## CHANGES:
+- File 1: Change description
+- File 2: Change description
+
+## AFTER:
+- Build status
+- Warnings fixed/introduced
+- Patterns validated
+- Documentation updated
+```
+
+### **8. Auto-Update Instructions (CRITICAL!)**
+- **When discovering important architectural decisions** → Update this file IMMEDIATELY
+- **When fixing critical bugs** → Document in "Current Session Status"
+- **When establishing new patterns** → Add to relevant section
+- **When deprecating old approaches** → Mark as deprecated with alternatives
+
+**Triggers for instruction updates:**
+- Protocol reverse-engineering (e.g., Z21 packet structures)
+- Breaking changes to core classes
+- New best practices discovered
+- Critical bug fixes with broad impact
+- Architectural decisions affecting multiple projects
+
+**Update Format:**
+```markdown
+- ✅ **Feature Name (Date)**
+  - Problem: Brief description
+  - Solution: Implementation details
+  - Impact: Affected components
+  - Files: Changed file list
+```
+
 ---
 
 ## 🎯 Current Session Status (Dec 29, 2025)
@@ -94,11 +166,19 @@ public object Convert(object? value, ...)
   - WorkflowService: Staggered Parallel implementiert
   - WorkflowViewModel: ExecutionModeValues Property für ComboBox-Bindung
 
+- ✅ **Code Quality & Logging**
+  - Console.WriteLine aus SoundManager.cs entfernt (ILogger reicht)
+  - WorkflowService: ILogger injiziert (ersetzt Debug.WriteLine)
+  - UdpWrapper.Dispose(): Race Condition Fix (ruft jetzt StopAsync() auf)
+  - WorkflowAction.DelayAfterMs: Dokumentation für beide Modi präzisiert
+
 ### 📊 Fortschritt
 - **Action Ordering:** ✅ Korrekt geladen & gespeichert
 - **Audio Playback:** ✅ Sequential wartet auf Ende, Parallel startet gestaffelt
 - **ExecutionMode:** ✅ Korrekt persistiert ohne Converter
 - **Code Quality:** ✅ Warning-frei, type-safe Enum-Bindung
+- **Logging:** ✅ Production-ready (ILogger statt Debug.WriteLine/Console.WriteLine)
+- **Threading:** ✅ Race Condition in UdpWrapper.Dispose() behoben
   - Event-Chain vereinfacht: WorkflowService → ViewModel (direkt, ohne JourneyManager-Hop)
   - Action-Execution-Fehler werden in MonitorPage Application Log angezeigt
 
@@ -107,6 +187,83 @@ public object Convert(object? value, ...)
 - **Sound-Bibliothek:** ✅ Plattform-unabhängig in Sound-Projekt
 - **Workflow Timing:** ✅ Sequential/Parallel Modi voll funktionsfähig
 - **Error-Handling:** ✅ File.Exists + UI-Feedback + Application Log
+
+- ✅ **Z21 Traffic Monitor Improvements (Dec 29, 2025)**
+  - Feedback-Pakete farblich hervorgehoben (goldgelber Hintergrund)
+  - InPort-Anzeige für Feedback-Pakete
+  - Richtungspfeile: ↓ = Eingehend, ↑ = Ausgehend
+  - Auto-Scroll mit Pause/Resume-Toggles (Live/Paused-Modi)
+  - FirstOrDefault() statt Items[0] (null-safe)
+
+- ✅ **Serilog Integration (Dec 29, 2025)**
+  - Custom InMemorySink für Real-Time UI Logs (MonitorPage)
+  - File Logging: `bin/Debug/logs/mobaflow-*.log` (7 Tage Retention)
+  - LoggingExtensions entfernt (deprecated, replaced by ILogger)
+  - Structured Logging mit Properties statt String-Interpolation
+  - Min. Level: Debug (Moba), Warning (Microsoft)
+
+- ✅ **Z21 Feedback InPort Extraction Fix (Dec 29, 2025)**
+  - **CRITICAL BUG FIX:** InPort-Extraktion war fundamental falsch
+  - Problem: `data[5]` ist Feedback-ZUSTAND (Bit-Pattern), nicht InPort-Nummer
+  - Lösung: Z21FeedbackParser mit korrekter Bit-zu-InPort-Konvertierung
+  - Formel: InPort = (GroupNumber × 64) + (ByteIndex × 8) + BitPosition + 1
+  - FeedbackResult.cs: Jetzt mit Z21FeedbackParser.ExtractFirstInPort()
+  - Z21Monitor.cs: ExtractInPort() + ExtractAllInPorts() für Traffic Monitor
+  - Z21TrafficPacket: AllInPorts Property für Multi-Bit-Anzeige (z.B. "1,2,5")
+  - Betrifft: JourneyManager, BaseFeedbackManager, Counter/Statistics
+
+---
+
+## 📋 LOGGING BEST PRACTICES (Serilog)
+
+### **Always Use ILogger via Constructor Injection**
+```csharp
+public class MyViewModel : ObservableObject
+{
+    private readonly ILogger<MyViewModel> _logger;
+
+    public MyViewModel(ILogger<MyViewModel> logger)
+    {
+        _logger = logger;
+    }
+}
+```
+
+### **Structured Logging (DO THIS)**
+```csharp
+// ✅ CORRECT: Structured properties (searchable, indexable)
+_logger.LogInformation("Feedback received: InPort={InPort}, Value={Value}", inPort, value);
+_logger.LogWarning("Connection attempt {Attempt} failed for {IpAddress}", attemptCount, ip);
+_logger.LogError(ex, "Failed to process journey {JourneyId}: {Reason}", id, ex.Message);
+
+// ❌ WRONG: String interpolation (not searchable)
+_logger.LogInformation($"Feedback received: InPort={inPort}, Value={value}");
+```
+
+### **Log Levels**
+- `LogDebug()`: Development diagnostics (packet dumps, state changes)
+- `LogInformation()`: Important events (connections, workflow execution, user actions)
+- `LogWarning()`: Recoverable errors (retry attempts, fallbacks)
+- `LogError()`: Failures requiring attention (exceptions, invalid state)
+
+### **MonitorPage Application Log**
+- Uses `InMemorySink` (custom Serilog sink)
+- Real-time display in MonitorPage → Application Log panel
+- Automatically formatted with severity icons (🔍 ℹ️ ⚠️ ❌)
+- Auto-scroll with Pause/Resume toggle
+
+### **File Logs**
+- Location: `bin/Debug/logs/mobaflow-YYYYMMDD.log`
+- Rolling: Daily (1 file per day)
+- Retention: 7 days (older files auto-deleted)
+- Format: `[HH:mm:ss.fff LEVEL] [SourceContext] Message`
+
+### **Never Use**
+- ❌ `Console.WriteLine()` - use `_logger.LogInformation()`
+- ❌ `Debug.WriteLine()` - use `_logger.LogDebug()`
+- ❌ `this.Log()` - deprecated, removed
+- ❌ String interpolation in log messages - use structured properties
+
 ---
 
 ## ERROR HANDLING BEST PRACTICES

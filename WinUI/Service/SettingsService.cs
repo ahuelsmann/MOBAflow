@@ -17,14 +17,58 @@ public class SettingsService : ISettingsService
 {
     private readonly AppSettings _settings;
     private readonly string _settingsFilePath;
+    private readonly SemaphoreSlim _saveLock = new(1, 1);
+    private readonly Timer _debounceTimer;
+    private bool _hasPendingSave;
 
     public SettingsService(AppSettings settings)
     {
         _settings = settings;
         _settingsFilePath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+        _debounceTimer = new Timer(OnDebounceElapsed, null, Timeout.Infinite, Timeout.Infinite);
         
-        // ✅ Load settings from file on startup
-        _ = LoadSettingsAsync();
+        // ✅ Load settings synchronously to avoid deadlock
+        // WinUI 3 Desktop apps cannot use async in DI constructors
+        LoadSettingsSync();
+    }
+
+    /// <summary>
+    /// Loads settings synchronously from appsettings.json (constructor-safe).
+    /// </summary>
+    private void LoadSettingsSync()
+    {
+        try
+        {
+            if (File.Exists(_settingsFilePath))
+            {
+                var json = File.ReadAllText(_settingsFilePath);
+                var loadedSettings = JsonConvert.DeserializeObject<AppSettings>(json);
+                
+                if (loadedSettings != null)
+                {
+                    // Copy all loaded values to the DI-registered singleton
+                    _settings.Application.LastSolutionPath = loadedSettings.Application.LastSolutionPath;
+                    _settings.Application.AutoLoadLastSolution = loadedSettings.Application.AutoLoadLastSolution;
+                    _settings.Z21.CurrentIpAddress = loadedSettings.Z21.CurrentIpAddress;
+                    _settings.Z21.DefaultPort = loadedSettings.Z21.DefaultPort;
+                    _settings.Counter.CountOfFeedbackPoints = loadedSettings.Counter.CountOfFeedbackPoints;
+                    _settings.Counter.TargetLapCount = loadedSettings.Counter.TargetLapCount;
+                    _settings.Counter.UseTimerFilter = loadedSettings.Counter.UseTimerFilter;
+                    _settings.Counter.TimerIntervalSeconds = loadedSettings.Counter.TimerIntervalSeconds;
+                    
+                    Debug.WriteLine($"✅ WinUI Settings loaded from {_settingsFilePath}");
+                }
+            }
+            else
+            {
+                Debug.WriteLine($"⚠️ Settings file not found: {_settingsFilePath} - using defaults");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"❌ Failed to load settings: {ex.Message}");
+            // Continue with default settings
+        }
     }
 
     #region Application Settings
@@ -76,21 +120,37 @@ public class SettingsService : ISettingsService
     }
 
     /// <summary>
-    /// Saves settings to appsettings.json file.
+    /// Saves settings to appsettings.json file with debouncing (500ms delay).
+    /// Multiple rapid calls are batched into a single write operation.
     /// </summary>
-    public async Task SaveSettingsAsync(AppSettings settings)
+    public Task SaveSettingsAsync(AppSettings settings)
     {
+        _hasPendingSave = true;
+        _debounceTimer.Change(500, Timeout.Infinite); // 500ms debounce
+        return Task.CompletedTask;
+    }
+
+    private async void OnDebounceElapsed(object? state)
+    {
+        if (!_hasPendingSave)
+            return;
+
+        _hasPendingSave = false;
+
+        await _saveLock.WaitAsync();
         try
         {
-            var json = JsonConvert.SerializeObject(settings, Formatting.Indented);
+            var json = JsonConvert.SerializeObject(_settings, Formatting.Indented);
             await File.WriteAllTextAsync(_settingsFilePath, json);
-
             Debug.WriteLine($"✅ Settings saved to {_settingsFilePath}");
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"❌ Failed to save settings: {ex.Message}");
-            throw;
+        }
+        finally
+        {
+            _saveLock.Release();
         }
     }
 

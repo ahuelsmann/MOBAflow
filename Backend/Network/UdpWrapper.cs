@@ -284,19 +284,24 @@ public class UdpWrapper : IUdpClientWrapper
     /// <summary>
     /// Disposes resources and cancels the receiver loop.
     /// After Dispose, the wrapper cannot be reused.
+    /// Calls StopAsync() synchronously to ensure proper cleanup.
     /// </summary>
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
         
-        _cts?.Cancel();
-        _cts?.Dispose();
-        _cts = null;
-        
-        _client?.Close();
-        _client?.Dispose();
-        _client = null;
+        // Use StopAsync() to ensure proper cleanup (wait for receiver task to complete)
+        // GetAwaiter().GetResult() is acceptable in Dispose() as a synchronous wrapper
+        try
+        {
+            StopAsync().GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error during dispose");
+            Debug.WriteLine($"UdpWrapper: Dispose error: {ex.Message}");
+        }
         
         _logger?.LogInformation("UdpWrapper disposed");
     }

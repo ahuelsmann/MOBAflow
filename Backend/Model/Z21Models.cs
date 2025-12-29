@@ -75,7 +75,7 @@ public class Z21TrafficPacket
     public DateTime Timestamp { get; set; } = DateTime.Now;
 
     /// <summary>
-    /// Direction: true = Sent (→), false = Received (←).
+    /// Direction: true = Sent (↑), false = Received (↓).
     /// </summary>
     public bool IsSent { get; set; }
 
@@ -95,17 +95,44 @@ public class Z21TrafficPacket
     public string Details { get; set; } = string.Empty;
 
     /// <summary>
-    /// Formats the packet data as hex string for display.
+    /// Indicates whether this packet is feedback-related (LAN_RMBUS_DATACHANGED or similar).
+    /// </summary>
+    public bool IsFeedbackRelated { get; set; }
+
+    /// <summary>
+    /// Primary InPort number if this is a feedback packet (first active bit), otherwise null.
+    /// For packets with multiple active feedback points, this is the lowest numbered InPort.
+    /// </summary>
+    public int? InPort { get; set; }
+
+    /// <summary>
+    /// All active InPort numbers if this is a feedback packet with multiple bits set.
+    /// Empty list for non-feedback packets or if no bits are set.
+    /// Useful for displaying all active feedback points in Traffic Monitor UI.
+    /// </summary>
+    public List<int> AllInPorts { get; set; } = [];
+
+    /// <summary>
+    /// Formats the packet data as hex string for display (spaced bytes).
+    /// Example: "0F 00 80 00 00 01 00 00 00 00 00 00 00 00 00"
     /// </summary>
     public string DataHex => BitConverter.ToString(Data).Replace("-", " ");
 
     /// <summary>
-    /// Direction icon for UI display.
+    /// Direction icon for UI display: ↓ = Received, ↑ = Sent.
     /// </summary>
-    public string DirectionIcon => IsSent ? "→" : "←";
+    public string DirectionIcon => IsSent ? "↑" : "↓";
 
     /// <summary>
     /// Formatted timestamp for UI display.
     /// </summary>
     public string TimestampFormatted => Timestamp.ToString("HH:mm:ss.fff");
+
+    /// <summary>
+    /// Formatted InPort for UI display (empty if null).
+    /// Shows all active InPorts if multiple bits are set (e.g., "1,2,5").
+    /// </summary>
+    public string InPortFormatted => AllInPorts.Count > 1 
+        ? string.Join(",", AllInPorts) 
+        : InPort?.ToString() ?? string.Empty;
 }

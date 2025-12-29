@@ -1,14 +1,14 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Common.Extensions;  // For LogError extension method
-
 using CommunityToolkit.Mvvm.Input;
 
 using Domain;
 using Domain.Enum;
 
 using Helper;
+
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// MainWindowViewModel - Journey and Station Management
@@ -246,7 +246,8 @@ public partial class MainWindowViewModel
             StatusText = $"❌ Action '{e.Action.Name}' failed: {e.ErrorMessage}";
 
             // Log to application log (visible in MonitorPage)
-            this.LogError($"Action '{e.Action.Name}' execution failed", e.Exception);
+            _logger.LogError(e.Exception, "Action '{ActionName}' execution failed: {ErrorMessage}", 
+                e.Action.Name, e.ErrorMessage);
         });
     }
     #endregion
