@@ -2,7 +2,6 @@
 namespace Moba.SharedUI.Helper;
 
 using Interface;
-
 using System.Collections.ObjectModel;
 
 /// <summary>

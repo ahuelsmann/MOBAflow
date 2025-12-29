@@ -2,9 +2,7 @@
 namespace Moba.MAUI.Service;
 
 using Common.Configuration;
-
 using SharedUI.Interface;
-
 using System.Diagnostics;
 using System.Text.Json;
 
@@ -24,7 +22,7 @@ public class SettingsService : ISettingsService
         _settingsFilePath = Path.Combine(FileSystem.AppDataDirectory, "appsettings.json");
 
         Debug.WriteLine("═══════════════════════════════════════════════════════");
-        Debug.WriteLine($"🔧 SettingsService Constructor");
+        Debug.WriteLine("🔧 SettingsService Constructor");
         Debug.WriteLine($"   File path: {_settingsFilePath}");
         Debug.WriteLine($"   AppDataDirectory: {FileSystem.AppDataDirectory}");
         Debug.WriteLine("═══════════════════════════════════════════════════════");
@@ -50,7 +48,7 @@ public class SettingsService : ISettingsService
 
         try
         {
-            Debug.WriteLine($"📂 LoadSettingsAsync: Checking file existence...");
+            Debug.WriteLine("📂 LoadSettingsAsync: Checking file existence...");
             Debug.WriteLine($"   Path: {_settingsFilePath}");
             Debug.WriteLine($"   Exists: {File.Exists(_settingsFilePath)}");
 
@@ -61,7 +59,7 @@ public class SettingsService : ISettingsService
                 
                 if (string.IsNullOrWhiteSpace(json))
                 {
-                    Debug.WriteLine($"⚠️ File is empty, using defaults");
+                    Debug.WriteLine("⚠️ File is empty, using defaults");
                     _isLoaded = true;
                     return;
                 }
@@ -70,7 +68,7 @@ public class SettingsService : ISettingsService
 
                 if (loadedSettings != null)
                 {
-                    Debug.WriteLine($"📦 Deserializing settings...");
+                    Debug.WriteLine("📦 Deserializing settings...");
                     Debug.WriteLine($"   Loaded Tracks: {loadedSettings.Counter.CountOfFeedbackPoints}");
                     Debug.WriteLine($"   Loaded Target: {loadedSettings.Counter.TargetLapCount}");
                     Debug.WriteLine($"   Loaded Timer: {loadedSettings.Counter.TimerIntervalSeconds}s");
@@ -86,30 +84,30 @@ public class SettingsService : ISettingsService
                     _settings.Counter.UseTimerFilter = loadedSettings.Counter.UseTimerFilter;
                     _settings.Counter.TimerIntervalSeconds = loadedSettings.Counter.TimerIntervalSeconds;
 
-                    Debug.WriteLine($"✅ Settings applied to singleton");
+                    Debug.WriteLine("✅ Settings applied to singleton");
                     _isLoaded = true;
                 }
                 else
                 {
-                    Debug.WriteLine($"⚠️ Deserialization returned null!");
+                    Debug.WriteLine("⚠️ Deserialization returned null!");
                     _isLoaded = true;
                 }
             }
             else
             {
-                Debug.WriteLine($"ℹ️ No settings file found, using defaults");
+                Debug.WriteLine("ℹ️ No settings file found, using defaults");
                 Debug.WriteLine($"   Default Tracks: {_settings.Counter.CountOfFeedbackPoints}");
                 Debug.WriteLine($"   Default Target: {_settings.Counter.TargetLapCount}");
                 Debug.WriteLine($"   Default Timer: {_settings.Counter.TimerIntervalSeconds}s");
                 
                 // ✅ Create initial settings file with defaults
-                Debug.WriteLine($"💾 Creating initial settings file...");
+                Debug.WriteLine("💾 Creating initial settings file...");
                 await SaveSettingsAsync(_settings).ConfigureAwait(false);
                 _isLoaded = true;
             }
 
             Debug.WriteLine("═══════════════════════════════════════════════════════");
-            Debug.WriteLine($"✅ SettingsService Initialized");
+            Debug.WriteLine("✅ SettingsService Initialized");
             Debug.WriteLine($"   Tracks: {_settings.Counter.CountOfFeedbackPoints}");
             Debug.WriteLine($"   Target: {_settings.Counter.TargetLapCount}");
             Debug.WriteLine($"   Timer Filter: {_settings.Counter.UseTimerFilter}");
@@ -139,7 +137,7 @@ public class SettingsService : ISettingsService
         {
             var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
 
-            Debug.WriteLine($"💾 SaveSettingsAsync called");
+            Debug.WriteLine("💾 SaveSettingsAsync called");
             Debug.WriteLine($"   Path: {_settingsFilePath}");
             Debug.WriteLine($"   Tracks: {settings.Counter.CountOfFeedbackPoints}");
             Debug.WriteLine($"   Target: {settings.Counter.TargetLapCount}");
@@ -149,7 +147,7 @@ public class SettingsService : ISettingsService
             await File.WriteAllTextAsync(_settingsFilePath, json).ConfigureAwait(false);
 
             var fileInfo = new FileInfo(_settingsFilePath);
-            Debug.WriteLine($"✅ Settings saved successfully");
+            Debug.WriteLine("✅ Settings saved successfully");
             Debug.WriteLine($"   File size: {fileInfo.Length} bytes");
             Debug.WriteLine($"   Last modified: {fileInfo.LastWriteTime}");
         }

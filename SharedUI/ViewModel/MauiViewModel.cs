@@ -1,13 +1,15 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using System.Collections.ObjectModel;
+using Backend;
 using Backend.Interface;
+using Common.Configuration;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Common.Configuration;
-using SharedUI.Interface;
-using SharedUI.ViewModel;
+using Interface;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Net;
 
 /// <summary>
 /// Mobile-optimized ViewModel for MAUI - focused on Z21 monitoring and feedback statistics.
@@ -46,13 +48,13 @@ public partial class MauiViewModel : ObservableObject
     /// </summary>
     private void LoadSettingsIntoViewModel()
     {
-        System.Diagnostics.Debug.WriteLine("═══════════════════════════════════════════════════════");
-        System.Diagnostics.Debug.WriteLine("🔄 MauiViewModel.LoadSettingsIntoViewModel START");
-        System.Diagnostics.Debug.WriteLine($"   AppSettings.Counter.CountOfFeedbackPoints: {_settings.Counter.CountOfFeedbackPoints}");
-        System.Diagnostics.Debug.WriteLine($"   AppSettings.Counter.TargetLapCount: {_settings.Counter.TargetLapCount}");
-        System.Diagnostics.Debug.WriteLine($"   AppSettings.Counter.UseTimerFilter: {_settings.Counter.UseTimerFilter}");
-        System.Diagnostics.Debug.WriteLine($"   AppSettings.Counter.TimerIntervalSeconds: {_settings.Counter.TimerIntervalSeconds}");
-        System.Diagnostics.Debug.WriteLine($"   AppSettings.Z21.CurrentIpAddress: {_settings.Z21.CurrentIpAddress}");
+        Debug.WriteLine("═══════════════════════════════════════════════════════");
+        Debug.WriteLine("🔄 MauiViewModel.LoadSettingsIntoViewModel START");
+        Debug.WriteLine($"   AppSettings.Counter.CountOfFeedbackPoints: {_settings.Counter.CountOfFeedbackPoints}");
+        Debug.WriteLine($"   AppSettings.Counter.TargetLapCount: {_settings.Counter.TargetLapCount}");
+        Debug.WriteLine($"   AppSettings.Counter.UseTimerFilter: {_settings.Counter.UseTimerFilter}");
+        Debug.WriteLine($"   AppSettings.Counter.TimerIntervalSeconds: {_settings.Counter.TimerIntervalSeconds}");
+        Debug.WriteLine($"   AppSettings.Z21.CurrentIpAddress: {_settings.Z21.CurrentIpAddress}");
         
         Z21IpAddress = _settings.Z21.CurrentIpAddress;
         CountOfFeedbackPoints = _settings.Counter.CountOfFeedbackPoints;
@@ -60,14 +62,14 @@ public partial class MauiViewModel : ObservableObject
         UseTimerFilter = _settings.Counter.UseTimerFilter;
         TimerIntervalSeconds = _settings.Counter.TimerIntervalSeconds;
         
-        System.Diagnostics.Debug.WriteLine("───────────────────────────────────────────────────────");
-        System.Diagnostics.Debug.WriteLine("✅ Values loaded into ViewModel:");
-        System.Diagnostics.Debug.WriteLine($"   Z21IpAddress: {Z21IpAddress}");
-        System.Diagnostics.Debug.WriteLine($"   CountOfFeedbackPoints: {CountOfFeedbackPoints}");
-        System.Diagnostics.Debug.WriteLine($"   GlobalTargetLapCount: {GlobalTargetLapCount}");
-        System.Diagnostics.Debug.WriteLine($"   UseTimerFilter: {UseTimerFilter}");
-        System.Diagnostics.Debug.WriteLine($"   TimerIntervalSeconds: {TimerIntervalSeconds}s");
-        System.Diagnostics.Debug.WriteLine("═══════════════════════════════════════════════════════");
+        Debug.WriteLine("───────────────────────────────────────────────────────");
+        Debug.WriteLine("✅ Values loaded into ViewModel:");
+        Debug.WriteLine($"   Z21IpAddress: {Z21IpAddress}");
+        Debug.WriteLine($"   CountOfFeedbackPoints: {CountOfFeedbackPoints}");
+        Debug.WriteLine($"   GlobalTargetLapCount: {GlobalTargetLapCount}");
+        Debug.WriteLine($"   UseTimerFilter: {UseTimerFilter}");
+        Debug.WriteLine($"   TimerIntervalSeconds: {TimerIntervalSeconds}s");
+        Debug.WriteLine("═══════════════════════════════════════════════════════");
     }
 
     #region Z21 Connection
@@ -105,29 +107,29 @@ public partial class MauiViewModel : ObservableObject
 
         try
         {
-            var address = System.Net.IPAddress.Parse(Z21IpAddress);
+            var address = IPAddress.Parse(Z21IpAddress);
             int port = int.Parse(_settings.Z21.DefaultPort);
-            await _z21.ConnectAsync(address, port);
+            await _z21.ConnectAsync(address, port).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Connection failed: {ex.Message}");
+            Debug.WriteLine($"Connection failed: {ex.Message}");
         }
     }
 
     [RelayCommand]
     private async Task DisconnectAsync()
     {
-        await _z21.DisconnectAsync();
+        await _z21.DisconnectAsync().ConfigureAwait(false);
     }
 
     [RelayCommand]
     private async Task SetTrackPowerAsync(bool turnOn)
     {
         if (turnOn)
-            await _z21.SetTrackPowerOnAsync();
+            await _z21.SetTrackPowerOnAsync().ConfigureAwait(false);
         else
-            await _z21.SetTrackPowerOffAsync();
+            await _z21.SetTrackPowerOffAsync().ConfigureAwait(false);
     }
 
     #endregion
@@ -154,7 +156,7 @@ public partial class MauiViewModel : ObservableObject
 
     partial void OnCountOfFeedbackPointsChanged(int value)
     {
-        System.Diagnostics.Debug.WriteLine($"🔔 OnCountOfFeedbackPointsChanged: {value}");
+        Debug.WriteLine($"🔔 OnCountOfFeedbackPointsChanged: {value}");
         _settings.Counter.CountOfFeedbackPoints = value;
         InitializeStatistics();
         _ = SaveSettingsAsync(); // Auto-save
@@ -162,7 +164,7 @@ public partial class MauiViewModel : ObservableObject
 
     partial void OnGlobalTargetLapCountChanged(int value)
     {
-        System.Diagnostics.Debug.WriteLine($"🔔 OnGlobalTargetLapCountChanged: {value}");
+        Debug.WriteLine($"🔔 OnGlobalTargetLapCountChanged: {value}");
         _settings.Counter.TargetLapCount = value;
         
         // Update all existing statistics
@@ -176,14 +178,14 @@ public partial class MauiViewModel : ObservableObject
 
     partial void OnUseTimerFilterChanged(bool value)
     {
-        System.Diagnostics.Debug.WriteLine($"🔔 OnUseTimerFilterChanged: {value}");
+        Debug.WriteLine($"🔔 OnUseTimerFilterChanged: {value}");
         _settings.Counter.UseTimerFilter = value;
         _ = SaveSettingsAsync(); // Auto-save
     }
 
     partial void OnTimerIntervalSecondsChanged(double value)
     {
-        System.Diagnostics.Debug.WriteLine($"🔔 OnTimerIntervalSecondsChanged: {value}");
+        Debug.WriteLine($"🔔 OnTimerIntervalSecondsChanged: {value}");
         _settings.Counter.TimerIntervalSeconds = value;
         _ = SaveSettingsAsync(); // Auto-save
     }
@@ -274,11 +276,11 @@ public partial class MauiViewModel : ObservableObject
         try
         {
             await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
-            System.Diagnostics.Debug.WriteLine("✅ Counter settings saved");
+            Debug.WriteLine("✅ Counter settings saved");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"❌ Failed to save settings: {ex.Message}");
+            Debug.WriteLine($"❌ Failed to save settings: {ex.Message}");
         }
     }
 
@@ -294,7 +296,7 @@ public partial class MauiViewModel : ObservableObject
         });
     }
 
-    private void OnZ21SystemStateChanged(Backend.SystemState state)
+    private void OnZ21SystemStateChanged(SystemState state)
     {
         _uiDispatcher.InvokeOnUi(() =>
         {
@@ -306,7 +308,7 @@ public partial class MauiViewModel : ObservableObject
         });
     }
 
-    private void OnFeedbackReceived(Backend.FeedbackResult feedback)
+    private void OnFeedbackReceived(FeedbackResult feedback)
     {
         _uiDispatcher.InvokeOnUi(() =>
         {

@@ -2,9 +2,8 @@
 
 namespace Moba.Test.Backend;
 
-using Domain;
-using Moba.Backend.Service;
 using Microsoft.Extensions.Logging;
+using Moba.Backend.Service;
 using Moq;
 
 /// <summary>

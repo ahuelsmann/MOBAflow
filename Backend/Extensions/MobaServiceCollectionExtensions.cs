@@ -1,11 +1,12 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Extensions;
 
+using Domain;
 using Interface;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Network;
 using Service;
-using Microsoft.Extensions.DependencyInjection;
-using Domain;
 using Sound;
 
 /// <summary>
@@ -41,7 +42,7 @@ public static class MobaServiceCollectionExtensions
         services.AddSingleton<IZ21, Z21>(sp =>
         {
             var udp = sp.GetRequiredService<IUdpClientWrapper>();
-            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<Z21>>();
+            var logger = sp.GetService<ILogger<Z21>>();
             var trafficMonitor = sp.GetRequiredService<Z21Monitor>();
             return new Z21(udp, logger, trafficMonitor);
         });
@@ -58,7 +59,7 @@ public static class MobaServiceCollectionExtensions
         services.AddSingleton<AnnouncementService>(sp =>
         {
             var speakerEngine = sp.GetService<ISpeakerEngine>();
-            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<AnnouncementService>>();
+            var logger = sp.GetService<ILogger<AnnouncementService>>();
             return new AnnouncementService(speakerEngine, logger);
         });
 

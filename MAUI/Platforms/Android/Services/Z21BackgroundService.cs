@@ -1,21 +1,25 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 #if ANDROID
-using Android.App;
-using Android.Content;
-using Android.OS;
 
-using AndroidX.Core.App;
+
 
 // ← Add MainActivity reference
 
 namespace Moba.MAUI.Platforms.Android.Services;
 
+using AndroidX.Core.App;
+using global::Android;
+using global::Android.App;
+using global::Android.Content;
+using global::Android.Content.PM;
+using global::Android.OS;
+
 /// <summary>
 /// Android Foreground Service to keep Z21 UDP connection alive in background.
 /// Shows persistent notification while running.
 /// </summary>
-[Service(ForegroundServiceType = global::Android.Content.PM.ForegroundService.TypeDataSync)]
-public class Z21BackgroundService : global::Android.App.Service
+[Service(ForegroundServiceType = ForegroundService.TypeDataSync)]
+public class Z21BackgroundService : Service
 {
     private const int NOTIFICATION_ID = 1001;
     private const string CHANNEL_ID = "mobasmart_z21_channel";
@@ -78,10 +82,10 @@ public class Z21BackgroundService : global::Android.App.Service
         var builder = new NotificationCompat.Builder(this, CHANNEL_ID)
             .SetContentTitle(title)
             ?.SetContentText(message)
-            ?.SetSmallIcon(global::Android.Resource.Drawable.IcMenuInfoDetails)
+            ?.SetSmallIcon(Resource.Drawable.IcMenuInfoDetails)
             ?.SetOngoing(true)
             ?.SetContentIntent(pendingIntent)
-            ?.AddAction(global::Android.Resource.Drawable.IcMenuCloseClearCancel, "Stop", stopPendingIntent)
+            ?.AddAction(Resource.Drawable.IcMenuCloseClearCancel, "Stop", stopPendingIntent)
             ?.SetPriority(NotificationCompat.PriorityLow);
 
         return builder?.Build();

@@ -3,9 +3,10 @@
 namespace Moba.Test.Integration;
 
 using Domain.Enum;
-using Moba.Backend.Interface;
+
 using Moba.Backend.Service;
-using Moba.Test.Mocks;
+
+using Mocks;
 
 /// <summary>
 /// End-to-end workflow execution tests.
@@ -37,7 +38,7 @@ public class WorkflowExecutionEndToEndTests
     [TearDown]
     public void TearDown()
     {
-        _z21?.Dispose();
+        _z21.Dispose();
     }
 
     [Test]
@@ -146,7 +147,7 @@ public class WorkflowExecutionEndToEndTests
     }
 
     [Test]
-    public async Task WorkflowExecution_ShouldHandleErrors()
+    public Task WorkflowExecution_ShouldHandleErrors()
     {
         // Arrange
         var workflow = new Workflow
@@ -174,6 +175,7 @@ public class WorkflowExecutionEndToEndTests
         {
             await _workflowService.ExecuteAsync(workflow, _executionContext);
         });
+        return Task.CompletedTask;
     }
 
     [Test]

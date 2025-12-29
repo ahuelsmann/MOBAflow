@@ -2,7 +2,9 @@
 namespace Moba.SharedUI.Service;
 
 using Domain.TrackPlan;
+using System.Diagnostics;
 using System.Globalization;
+using System.Text;
 
 /// <summary>
 /// Renders track layouts from stored endpoint coordinates.
@@ -37,7 +39,7 @@ public class TrackLayoutRenderer
         if (layout.Segments.Count == 0)
             return result;
 
-        System.Diagnostics.Debug.WriteLine($"🔧 Renderer: {layout.Segments.Count} segments, {layout.Connections.Count} connections");
+        Debug.WriteLine($"🔧 Renderer: {layout.Segments.Count} segments, {layout.Connections.Count} connections");
 
         foreach (var segment in layout.Segments)
         {
@@ -74,7 +76,7 @@ public class TrackLayoutRenderer
         }
 
 
-        System.Diagnostics.Debug.WriteLine($"🔧 Rendered: {result.Count} segments");
+        Debug.WriteLine($"🔧 Rendered: {result.Count} segments");
         return result;
     }
 
@@ -114,7 +116,7 @@ public class TrackLayoutRenderer
     private static string GeneratePathData(TrackSegment segment)
     {
         var ic = CultureInfo.InvariantCulture;
-        var sb = new System.Text.StringBuilder();
+        var sb = new StringBuilder();
 
         // Draw all lines
         foreach (var line in segment.Lines)

@@ -187,7 +187,7 @@
           ],
           "InPort": 2,
           "IsUsingTimerToIgnoreFeedbacks": true,
-          "IntervalForTimerToIgnoreFeedbacks": 21.0,
+          "IntervalForTimerToIgnoreFeedbacks": 20.0,
           "BehaviorOnLastStop": 1,
           "NextJourneyId": null,
           "FirstPos": 0

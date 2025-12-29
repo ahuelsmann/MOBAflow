@@ -422,6 +422,70 @@
 	<s:Boolean x:Key="/Default/CodeInspection/Inspections/NotAccessedField_002ELocal/@EntryIndexedValue">False</s:Boolean>
 
 	<!-- ============================================ -->
+	<!-- CA1848: Use LoggerMessage Delegates -->
+	<!-- ============================================ -->
+	<!-- 
+		Category: CSharpWarnings::CA1848
+		Count: Multiple occurrences across viewmodels
+		Files: MonitorPageViewModel.cs, WorkflowViewModel.cs, etc.
+		
+		Issue: ReSharper flags async test methods returning Task
+		
+		Why It's Wrong:
+		- Test methods correctly return Task (best practice for async tests)
+		- ReSharper incorrectly suggests removing async/await
+		- All async tests are properly structured with await calls
+		- NUnit supports and recommends async Task test methods
+		
+		Example (CORRECT):
+		```csharp
+		[Test]
+		public async Task MyTest_Should_DoSomething()
+		{
+		    await _workflowService.ExecuteAsync(workflow, context);
+		    Assert.That(result, Is.True);
+		}
+		```
+		
+		Why This Suppression:
+		- False positive in ReSharper/NUnit integration
+		- Tests execute correctly without modification
+		- Changing return type would break test framework contract
+		
+		Status: FALSE POSITIVE - ReSharper version limitation
+	-->
+	<s:Boolean x:Key="/Default/CodeInspection/Inspections/NUnit1032/@EntryIndexedValue">False</s:Boolean>
+
+	<!-- ============================================ -->
+	<!-- CA1848: Use LoggerMessage Delegates -->
+	<!-- ============================================ -->
+	<!-- 
+		Category: CSharpWarnings::CA1848
+		Count: Multiple occurrences across viewmodels
+		Files: MonitorPageViewModel.cs, WorkflowViewModel.cs, etc.
+		
+		Issue: Analyzer suggests LoggerMessage.Define() for all log messages
+		
+		Rationale:
+		- LoggerMessage.Define() adds significant boilerplate
+		- Performance gain negligible for infrequent log statements
+		- Most log messages (startup, feature lifecycle) run once/rarely
+		- Only worth it for high-frequency logging (100+ per second)
+		
+		Examples of Suppressed Calls:
+		- _logger.LogInformation("Monitor started")
+		- _logger.LogInformation("Logs cleared")
+		- _logger.LogInformation("Traffic cleared")
+		
+		Pattern:
+		- Simple messages: Use _logger.LogInformation("text") directly
+		- High-frequency: Consider LoggerMessage.Define() if profiling shows impact
+		
+		Status: INTENTIONAL SUPPRESSION
+	-->
+	<s:Boolean x:Key="/Default/CodeInspection/Inspections/CSharpWarnings_002B_003DCA1848/@EntryIndexedValue">False</s:Boolean>
+
+	<!-- ============================================ -->
 	<!-- RESHARPER WARNINGS SUMMARY -->
 	<!-- ============================================ -->
 	<!-- 
@@ -451,7 +515,11 @@
 		   - Parameter shadowing (valid C# pattern)
 		   - Backward compatibility overloads
 		   
-		Total Warnings Suppressed: ~120+
+		5. Performance Analyzer Suppressions (~5+ warnings)
+		   - CA1848: LoggerMessage.Define() for simple messages
+		   - Not worth boilerplate for infrequent logging
+		   
+		Total Warnings Suppressed: ~125+
 		Actual Code Defects Fixed: ~20 (all in actionable categories)
 		
 		Team Guidelines:

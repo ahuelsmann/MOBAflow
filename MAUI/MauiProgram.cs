@@ -1,22 +1,14 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI;
 
-using Backend;
 using Backend.Extensions;
-using Backend.Interface;
-using Backend.Network;
-using Backend.Service;
-
 using Common.Configuration;
 using CommunityToolkit.Maui;
-
 using Microsoft.Extensions.Logging;
-
 using Service;
-
 using SharedUI.Interface;
 using SharedUI.ViewModel;
-
+using Sound;
 using UraniumUI;
 
 public static class MauiProgram
@@ -46,8 +38,8 @@ public static class MauiProgram
 
         // ✅ Audio Services (NullObject - MAUI doesn't support audio yet)
         // TODO: Replace with platform-specific implementations when MAUI audio is needed
-        builder.Services.AddSingleton<Sound.ISoundPlayer, Sound.NullSoundPlayer>();
-        builder.Services.AddSingleton<Sound.ISpeakerEngine, Sound.NullSpeakerEngine>();
+        builder.Services.AddSingleton<ISoundPlayer, NullSoundPlayer>();
+        builder.Services.AddSingleton<ISpeakerEngine, NullSpeakerEngine>();
 
         // ViewModels
         builder.Services.AddSingleton<MauiViewModel>();  // ✅ Mobile-optimized ViewModel

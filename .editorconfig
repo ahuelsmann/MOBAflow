@@ -105,6 +105,7 @@ resharper_csharp_braces_redundant = true
 # Code analysis
 dotnet_diagnostic.CA1822.severity = none
 dotnet_diagnostic.CA1859.severity = suggestion
+dotnet_diagnostic.CA1848.severity = silent
 dotnet_code_quality.ca1062.api_surface = public
 
 # Build Performance: Reduce background analysis
@@ -209,3 +210,10 @@ dotnet_diagnostic.CA2007.severity = none
 # File header template
 file_header_template = Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
+#### XAML Designer Warnings Suppression ####
+
+# XLS0414: Constructor must be public (Design-time DataContext in EntityTemplates.xaml)
+# Reason: ViewModels use DI constructors; IsDesignTimeCreatable=False prevents instantiation
+# but designer still warns. This is a harmless design-time artifact.
+[*.xaml]
+dotnet_diagnostic.XLS0414.severity = none

@@ -4,6 +4,7 @@ namespace Moba.Backend.Interface;
 
 using Domain;
 using Manager;
+using Service;
 
 /// <summary>
 /// Interface for managing journey execution based on track feedback events.
@@ -34,5 +35,5 @@ public interface IJourneyManager
     /// </summary>
     /// <param name="journeyId">The journey ID</param>
     /// <returns>The journey session state, or null if not found</returns>
-    Service.JourneySessionState? GetState(Guid journeyId);
+    JourneySessionState? GetState(Guid journeyId);
 }

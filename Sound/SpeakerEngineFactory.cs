@@ -2,7 +2,6 @@
 namespace Moba.Sound;
 
 using Common.Configuration;
-
 using Microsoft.Extensions.Logging;
 
 /// <summary>

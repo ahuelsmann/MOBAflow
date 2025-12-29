@@ -3,9 +3,7 @@ namespace Moba.WinUI.Service;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
-
 using System.Diagnostics;
-
 using View;
 
 /// <summary>

@@ -1,9 +1,11 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Converter;
 
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
+using Windows.UI;
 
 /// <summary>
 /// Converter that converts a boolean value to a Brush for feedback highlighting.
@@ -23,14 +25,14 @@ public class BoolToFeedbackBackgroundConverter : IValueConverter
             {
                 var accentColor = accentBrush.Color;
                 // Apply 15% opacity for subtle highlight
-                return new SolidColorBrush(Windows.UI.Color.FromArgb(38, accentColor.R, accentColor.G, accentColor.B));
+                return new SolidColorBrush(Color.FromArgb(38, accentColor.R, accentColor.G, accentColor.B));
             }
 
             // Fallback: Purple accent (if theme resource unavailable)
-            return new SolidColorBrush(Windows.UI.Color.FromArgb(38, 136, 23, 152)); // #26881798 (Purple with 15% opacity)
+            return new SolidColorBrush(Color.FromArgb(38, 136, 23, 152)); // #26881798 (Purple with 15% opacity)
         }
 
-        return new SolidColorBrush(Microsoft.UI.Colors.Transparent);
+        return new SolidColorBrush(Colors.Transparent);
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, string language)

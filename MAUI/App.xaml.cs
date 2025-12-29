@@ -3,6 +3,7 @@ namespace Moba.MAUI;
 
 using SharedUI.Interface;
 using SharedUI.ViewModel;
+using System.Diagnostics;
 
 public partial class App
 {
@@ -58,13 +59,13 @@ public partial class App
 	protected override Window CreateWindow(IActivationState? activationState)
 	{
 		// ✅ CRITICAL: Load settings BEFORE creating MainPage
-		System.Diagnostics.Debug.WriteLine("🚀 App.CreateWindow: Loading settings...");
+		Debug.WriteLine("🚀 App.CreateWindow: Loading settings...");
 		var settingsService = _services.GetRequiredService<ISettingsService>();
 		
 		// ⚠️ BLOCKING: Wait for settings to load (on background thread to avoid UI freeze)
 		Task.Run(async () => await settingsService.LoadSettingsAsync()).Wait();
 		
-		System.Diagnostics.Debug.WriteLine("✅ App.CreateWindow: Settings loaded, creating MainPage...");
+		Debug.WriteLine("✅ App.CreateWindow: Settings loaded, creating MainPage...");
 
 		// ✅ Create MainPage AFTER settings are loaded
 		var mainPage = _services.GetRequiredService<MainPage>();
@@ -73,7 +74,7 @@ public partial class App
 		// ✅ Subscribe to lifecycle events for cleanup
 		window.Destroying += OnWindowDestroying;
 
-		System.Diagnostics.Debug.WriteLine("✅ App.CreateWindow: Window created successfully");
+		Debug.WriteLine("✅ App.CreateWindow: Window created successfully");
 		return window;
 	}
 
@@ -87,7 +88,7 @@ public partial class App
 		
 		try
 		{
-			System.Diagnostics.Debug.WriteLine("🔄 App: OnWindowDestroying - Starting cleanup...");
+			Debug.WriteLine("🔄 App: OnWindowDestroying - Starting cleanup...");
 
 			// Get MauiViewModel and trigger graceful disconnect
 			var viewModel = _services.GetService<MauiViewModel>();
@@ -97,12 +98,12 @@ public partial class App
 				{
 					await viewModel.DisconnectCommand.ExecuteAsync(null);
 				}
-				System.Diagnostics.Debug.WriteLine("✅ App: MauiViewModel cleanup complete");
+				Debug.WriteLine("✅ App: MauiViewModel cleanup complete");
 			}
 		}
 		catch (Exception ex)
 		{
-			System.Diagnostics.Debug.WriteLine($"⚠️ App: Cleanup error: {ex.Message}");
+			Debug.WriteLine($"⚠️ App: Cleanup error: {ex.Message}");
 		}
 	}
 }

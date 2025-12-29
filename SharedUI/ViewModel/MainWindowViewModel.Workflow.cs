@@ -2,14 +2,10 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Action;
-
 using CommunityToolkit.Mvvm.Input;
-
 using Domain;
 using Domain.Enum;
-
 using Helper;
-
 using System.Diagnostics;
 
 /// <summary>

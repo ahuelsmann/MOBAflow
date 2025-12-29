@@ -3,7 +3,6 @@
 namespace Moba.Sound;
 
 using Microsoft.Extensions.Logging;
-
 using System.Globalization;
 using System.Runtime.Versioning;
 using System.Speech.Synthesis;
@@ -84,7 +83,7 @@ public class SystemSpeechEngine : ISpeakerEngine
                 _logger.LogError(ex, "ERROR during speech synthesis for message: {Message}", message);
                 throw;
             }
-        });
+        }).ConfigureAwait(false);
     }
 
     /// <summary>

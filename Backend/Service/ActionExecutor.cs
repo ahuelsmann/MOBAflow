@@ -2,18 +2,16 @@
 namespace Moba.Backend.Service;
 
 using Domain;
-
-using Moba.Domain.Enum;
-
+using Domain.Enum;
+using Interface;
 using System.Diagnostics;
-using System.IO;
 
 /// <summary>
 /// Action Executor Service.
 /// Executes WorkflowActions based on their type and parameters.
 /// This implements Clean Architecture by separating domain models (WorkflowAction) from execution logic.
 /// </summary>
-public class ActionExecutor(AnnouncementService? announcementService = null) : Interface.IActionExecutor
+public class ActionExecutor(AnnouncementService? announcementService = null) : IActionExecutor
 {
     /// <summary>
     /// Executes a WorkflowAction based on its type.
@@ -25,15 +23,15 @@ public class ActionExecutor(AnnouncementService? announcementService = null) : I
         switch (action.Type)
         {
             case ActionType.Command:
-                await ExecuteCommandAsync(action, context);
+                await ExecuteCommandAsync(action, context).ConfigureAwait(false);
                 break;
 
             case ActionType.Audio:
-                await ExecuteAudioAsync(action, context);
+                await ExecuteAudioAsync(action, context).ConfigureAwait(false);
                 break;
 
             case ActionType.Announcement:
-                await ExecuteAnnouncementAsync(action, context);
+                await ExecuteAnnouncementAsync(action, context).ConfigureAwait(false);
                 break;
 
             default:
@@ -80,7 +78,7 @@ public class ActionExecutor(AnnouncementService? announcementService = null) : I
         if (bytes != null && bytes.Length > 0)
         {
             Debug.WriteLine($"    📤 Sending {bytes.Length} bytes: {BitConverter.ToString(bytes)}");
-            await context.Z21.SendCommandAsync(bytes);
+            await context.Z21.SendCommandAsync(bytes).ConfigureAwait(false);
             Debug.WriteLine($"    ✓ Command sent: {bytes.Length} bytes");
         }
         else

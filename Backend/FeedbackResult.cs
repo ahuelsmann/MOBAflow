@@ -2,6 +2,7 @@
 namespace Moba.Backend;
 
 using Protocol;
+using System.Diagnostics;
 
 /// <summary>
 /// Represents a Z21 feedback event with the active InPort number.
@@ -37,7 +38,7 @@ public class FeedbackResult
         {
             // This should not happen in normal operation - Z21 only sends feedback when bits are set
             // Log this as a warning if it occurs
-            System.Diagnostics.Debug.WriteLine($"⚠️ FeedbackResult: No active InPort detected in packet: {BitConverter.ToString(content)}");
+            Debug.WriteLine($"⚠️ FeedbackResult: No active InPort detected in packet: {BitConverter.ToString(content)}");
         }
     }
 }

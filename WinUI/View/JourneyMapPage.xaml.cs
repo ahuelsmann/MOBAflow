@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
-using Microsoft.UI.Xaml.Controls;
 using SharedUI.ViewModel;
 
 /// <summary>
@@ -9,7 +8,7 @@ using SharedUI.ViewModel;
 /// Displays schematic station-to-station visualization with current position indicator.
 /// </summary>
 // ReSharper disable once PartialTypeWithSinglePart
-public sealed partial class JourneyMapPage : Page
+public sealed partial class JourneyMapPage
 {
     public JourneyMapViewModel ViewModel { get; }
 

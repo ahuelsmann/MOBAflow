@@ -1,9 +1,13 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using SharedUI.ViewModel;
+using SharedUI.ViewModel.Action;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.System;
 
 /// <summary>
 /// Workflows page displaying workflows and actions with properties panel.
@@ -30,9 +34,9 @@ public sealed partial class WorkflowsPage
         }
     }
 
-    private void WorkflowListView_KeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    private void WorkflowListView_KeyDown(object sender, KeyRoutedEventArgs e)
     {
-        if (e.Key == Windows.System.VirtualKey.Delete && ViewModel.DeleteWorkflowCommand.CanExecute(null))
+        if (e.Key == VirtualKey.Delete && ViewModel.DeleteWorkflowCommand.CanExecute(null))
         {
             ViewModel.DeleteWorkflowCommand.Execute(null);
             e.Handled = true;
@@ -41,14 +45,14 @@ public sealed partial class WorkflowsPage
 
     private void ActionListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {
-        if (e.Items.FirstOrDefault() is object action)
+        if (e.Items.FirstOrDefault() is { } action)
         {
             e.Data.Properties.Add("Action", action);
             e.Data.RequestedOperation = DataPackageOperation.Move;
         }
     }
 
-    private void ActionListView_Drop(object sender, Microsoft.UI.Xaml.DragEventArgs e)
+    private void ActionListView_Drop(object sender, DragEventArgs e)
     {
         _ = e;
         if (ViewModel.SelectedWorkflow == null) return;
@@ -58,9 +62,9 @@ public sealed partial class WorkflowsPage
         UpdateActionNumbers();
     }
 
-    private void ActionListView_KeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    private void ActionListView_KeyDown(object sender, KeyRoutedEventArgs e)
     {
-        if (e.Key == Windows.System.VirtualKey.Delete && ViewModel.DeleteActionCommand.CanExecute(null))
+        if (e.Key == VirtualKey.Delete && ViewModel.DeleteActionCommand.CanExecute(null))
         {
             ViewModel.DeleteActionCommand.Execute(null);
             e.Handled = true;
@@ -73,7 +77,7 @@ public sealed partial class WorkflowsPage
 
         for (int i = 0; i < ViewModel.SelectedWorkflow.Actions.Count; i++)
         {
-            if (ViewModel.SelectedWorkflow.Actions[i] is SharedUI.ViewModel.Action.WorkflowActionViewModel actionVM)
+            if (ViewModel.SelectedWorkflow.Actions[i] is WorkflowActionViewModel actionVM)
             {
                 actionVM.Number = (uint)(i + 1);
             }

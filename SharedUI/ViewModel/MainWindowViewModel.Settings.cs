@@ -3,8 +3,10 @@ namespace Moba.SharedUI.ViewModel;
 
 using Common.Configuration;
 using CommunityToolkit.Mvvm.Input;
-using Service;  // For NullIoService
+using Domain;
+using Service;
 using System.Collections.ObjectModel;
+// For NullIoService
 
 /// <summary>
 /// MainWindowViewModel - Settings Management
@@ -266,60 +268,60 @@ public partial class MainWindowViewModel
     /// Gets whether the Overview page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
-    public bool IsOverviewPageAvailable => _settings.FeatureToggles.IsOverviewPageAvailable;
+    public bool IsOverviewPageAvailable => _settings.FeatureToggles is { IsOverviewPageAvailable: true };
 
     /// <summary>
     /// Gets whether the Solution page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
-    public bool IsSolutionPageAvailable => _settings.FeatureToggles.IsSolutionPageAvailable;
+    public bool IsSolutionPageAvailable => _settings.FeatureToggles is { IsSolutionPageAvailable: true };
 
     /// <summary>
     /// Gets whether the Journeys page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
-    public bool IsJourneysPageAvailable => _settings.FeatureToggles.IsJourneysPageAvailable;
+    public bool IsJourneysPageAvailable => _settings.FeatureToggles is { IsJourneysPageAvailable: true };
 
     /// <summary>
     /// Gets whether the Workflows page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
-    public bool IsWorkflowsPageAvailable => _settings.FeatureToggles.IsWorkflowsPageAvailable;
+    public bool IsWorkflowsPageAvailable => _settings.FeatureToggles is { IsWorkflowsPageAvailable: true };
 
     /// <summary>
     /// Gets whether the Track Plan Editor page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
-    public bool IsTrackPlanEditorPageAvailable => _settings.FeatureToggles.IsTrackPlanEditorPageAvailable;
+    public bool IsTrackPlanEditorPageAvailable => _settings.FeatureToggles is { IsTrackPlanEditorPageAvailable: true };
 
     /// <summary>
     /// Gets whether the Journey Map page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
-    public bool IsJourneyMapPageAvailable => _settings.FeatureToggles.IsJourneyMapPageAvailable;
+    public bool IsJourneyMapPageAvailable => _settings.FeatureToggles is { IsJourneyMapPageAvailable: true };
 
     /// <summary>
     /// Gets whether the Settings page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
-    public bool IsSettingsPageAvailable => _settings.FeatureToggles.IsSettingsPageAvailable;
+    public bool IsSettingsPageAvailable => _settings.FeatureToggles is { IsSettingsPageAvailable: true };
 
     /// <summary>
     /// Gets whether the Monitor page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
-    public bool IsMonitorPageAvailable => _settings.FeatureToggles.IsMonitorPageAvailable;
+    public bool IsMonitorPageAvailable => _settings.FeatureToggles is { IsMonitorPageAvailable: true };
 
     // Feature Toggle Labels (optional)
     
-    public string? OverviewPageLabel => _settings.FeatureToggles.OverviewPageLabel;
-    public string? SolutionPageLabel => _settings.FeatureToggles.SolutionPageLabel;
-    public string? JourneysPageLabel => _settings.FeatureToggles.JourneysPageLabel;
-    public string? WorkflowsPageLabel => _settings.FeatureToggles.WorkflowsPageLabel;
-    public string? TrackPlanEditorPageLabel => _settings.FeatureToggles.TrackPlanEditorPageLabel;
-    public string? JourneyMapPageLabel => _settings.FeatureToggles.JourneyMapPageLabel;
-    public string? SettingsPageLabel => _settings.FeatureToggles.SettingsPageLabel;
-    public string? MonitorPageLabel => _settings.FeatureToggles.MonitorPageLabel;
+    public string? OverviewPageLabel => _settings.FeatureToggles?.OverviewPageLabel;
+    public string? SolutionPageLabel => _settings.FeatureToggles?.SolutionPageLabel;
+    public string? JourneysPageLabel => _settings.FeatureToggles?.JourneysPageLabel;
+    public string? WorkflowsPageLabel => _settings.FeatureToggles?.WorkflowsPageLabel;
+    public string? TrackPlanEditorPageLabel => _settings.FeatureToggles?.TrackPlanEditorPageLabel;
+    public string? JourneyMapPageLabel => _settings.FeatureToggles?.JourneyMapPageLabel;
+    public string? SettingsPageLabel => _settings.FeatureToggles?.SettingsPageLabel;
+    public string? MonitorPageLabel => _settings.FeatureToggles?.MonitorPageLabel;
     
     // Settings Page CheckBox Content (with labels)
     
@@ -343,12 +345,12 @@ public partial class MainWindowViewModel
         try
         {
             ShowErrorMessage = false;
-            await _settingsService.SaveSettingsAsync(_settings);
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
 
             ShowSuccessMessage = true;
 
             // Auto-hide success message after 3 seconds
-            await Task.Delay(3000);
+            await Task.Delay(3000).ConfigureAwait(false);
             ShowSuccessMessage = false;
         }
         catch (Exception ex)
@@ -371,7 +373,7 @@ public partial class MainWindowViewModel
 
         try
         {
-            var path = await _ioService.BrowseForJsonFileAsync();
+            var path = await _ioService.BrowseForJsonFileAsync().ConfigureAwait(false);
             if (!string.IsNullOrEmpty(path))
             {
                 CityLibraryPath = path;
@@ -392,7 +394,7 @@ public partial class MainWindowViewModel
         try
         {
             ShowErrorMessage = false;
-            await _settingsService.ResetToDefaultsAsync();
+            await _settingsService.ResetToDefaultsAsync().ConfigureAwait(false);
 
             // Notify all settings properties changed
             OnPropertyChanged(nameof(IpAddress));
@@ -411,7 +413,7 @@ public partial class MainWindowViewModel
             OnPropertyChanged(nameof(HealthCheckIntervalSeconds));
 
             ShowSuccessMessage = true;
-            await Task.Delay(3000);
+            await Task.Delay(3000).ConfigureAwait(false);
             ShowSuccessMessage = false;
         }
         catch (Exception ex)
@@ -445,9 +447,9 @@ public partial class MainWindowViewModel
             // Use the announcement service if available
             if (_announcementService != null)
             {
-                var testJourney = new Domain.Journey { Text = testMessage };
-                var testStation = new Domain.Station { Name = "Test", IsExitOnLeft = false };
-                await _announcementService.GenerateAndSpeakAnnouncementAsync(testJourney, testStation, 1);
+                var testJourney = new Journey { Text = testMessage };
+                var testStation = new Station { Name = "Test", IsExitOnLeft = false };
+                await _announcementService.GenerateAndSpeakAnnouncementAsync(testJourney, testStation, 1).ConfigureAwait(false);
             }
             else
             {

@@ -3,7 +3,7 @@ namespace Moba.Backend.Service;
 
 using Domain;
 using Domain.Enum;
-
+using Interface;
 using Microsoft.Extensions.Logging;
 
 /// <summary>
@@ -21,7 +21,7 @@ public class ActionExecutionErrorEventArgs : EventArgs
 /// Orchestrates the execution of workflows and their actions.
 /// Platform-independent: No UI thread dispatching.
 /// </summary>
-public class WorkflowService(Interface.IActionExecutor actionExecutor, ILogger<WorkflowService>? logger = null)
+public class WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowService>? logger = null)
 {
     /// <summary>
     /// Raised when an action execution fails.
@@ -52,11 +52,11 @@ public class WorkflowService(Interface.IActionExecutor actionExecutor, ILogger<W
 
         if (workflow.ExecutionMode == WorkflowExecutionMode.Parallel)
         {
-            await ExecuteParallelAsync(workflow, context);
+            await ExecuteParallelAsync(workflow, context).ConfigureAwait(false);
         }
         else  // Sequential (default)
         {
-            await ExecuteSequentialAsync(workflow, context);
+            await ExecuteSequentialAsync(workflow, context).ConfigureAwait(false);
         }
 
         logger?.LogInformation("✅ Workflow '{WorkflowName}' completed", workflow.Name);
@@ -72,13 +72,13 @@ public class WorkflowService(Interface.IActionExecutor actionExecutor, ILogger<W
         {
             try
             {
-                await actionExecutor.ExecuteAsync(action, context);
+                await actionExecutor.ExecuteAsync(action, context).ConfigureAwait(false);
 
                 // Apply per-action delay if specified
                 if (action.DelayAfterMs > 0)
                 {
                     logger?.LogDebug("    ⏱ Waiting {DelayMs}ms after action #{ActionNumber}...", action.DelayAfterMs, action.Number);
-                    await Task.Delay(action.DelayAfterMs);
+                    await Task.Delay(action.DelayAfterMs).ConfigureAwait(false);
                 }
             }
             catch (FileNotFoundException fnfEx)
@@ -122,10 +122,10 @@ public class WorkflowService(Interface.IActionExecutor actionExecutor, ILogger<W
                     if (startDelay > 0)
                     {
                         logger?.LogDebug("    ⏱ Action #{ActionNumber} waiting {StartDelay}ms before start...", action.Number, startDelay);
-                        await Task.Delay(startDelay);
+                        await Task.Delay(startDelay).ConfigureAwait(false);
                     }
 
-                    await actionExecutor.ExecuteAsync(action, context);
+                    await actionExecutor.ExecuteAsync(action, context).ConfigureAwait(false);
                 }
                 catch (FileNotFoundException fnfEx)
                 {
@@ -145,7 +145,7 @@ public class WorkflowService(Interface.IActionExecutor actionExecutor, ILogger<W
             cumulativeDelay += action.DelayAfterMs;
         }
 
-        await Task.WhenAll(tasks);  // Wait for all actions to complete
+        await Task.WhenAll(tasks).ConfigureAwait(false);  // Wait for all actions to complete
     }
 
     /// <summary>

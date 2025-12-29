@@ -1,11 +1,11 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Microsoft.Extensions.Logging;
 
+namespace Moba.Backend.Network;
+
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
-
-namespace Moba.Backend.Network;
 
 /// <summary>
 /// Platform-independent UDP client wrapper for Z21 communication.
@@ -237,13 +237,13 @@ public class UdpWrapper : IUdpClientWrapper
         // Cancel the receiver task first
         if (_cts is { IsCancellationRequested: false })
         {
-            await _cts.CancelAsync();
+            await _cts.CancelAsync().ConfigureAwait(false);
             try
             {
                 if (_receiverTask != null)
                 {
                     // Wait with timeout to prevent hanging
-                    var completedTask = await Task.WhenAny(_receiverTask, Task.Delay(2000));
+                    var completedTask = await Task.WhenAny(_receiverTask, Task.Delay(2000)).ConfigureAwait(false);
                     if (completedTask != _receiverTask)
                     {
                         _logger?.LogWarning("Receiver task did not complete within timeout");

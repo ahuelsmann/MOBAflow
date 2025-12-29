@@ -4,7 +4,7 @@ namespace Moba.MAUI;
 using SharedUI.ViewModel;
 
 // ReSharper disable once PartialTypeWithSinglePart
-public partial class MainPage : ContentPage
+public partial class MainPage
 {
     public MauiViewModel ViewModel { get; }
 

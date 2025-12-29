@@ -235,7 +235,6 @@
 
             <!--  Azure Speech Health Status  -->
             <StackPanel
-                x:Name="SpeechHealthPanel"
                 Grid.Column="2"
                 Margin="8,0,0,0"
                 VerticalAlignment="Center"
@@ -263,7 +262,6 @@
                     </DropDownButton>
                 </AppBarElementContainer>
                 <FontIcon
-                    x:Name="SpeechHealthIcon"
                     Margin="12,0,12,0"
                     FontSize="14"
                     Foreground="{ThemeResource AccentFillColorDefaultBrush}"

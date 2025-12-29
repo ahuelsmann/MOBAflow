@@ -82,6 +82,13 @@ public partial class TrackSegmentViewModel : ObservableObject
     [ObservableProperty]
     private string pathData = string.Empty;
 
+    /// <summary>
+    /// Rotation in degrees (calculated by renderer for topology-based layout).
+    /// WinUI uses RenderTransform to apply rotation.
+    /// </summary>
+    [ObservableProperty]
+    private double rotation;
+
     #endregion
 
     #region UI State

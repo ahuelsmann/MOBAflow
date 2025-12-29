@@ -255,7 +255,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
                 break;
         }
 
-        await Task.CompletedTask;
+        await Task.CompletedTask.ConfigureAwait(false);
     }
 
     /// <summary>

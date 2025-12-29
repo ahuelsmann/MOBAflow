@@ -5,13 +5,10 @@ using Backend;
 using Backend.Manager;
 using Backend.Model;
 using Backend.Protocol;
-using Backend.Service;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
+using Domain;
 using Microsoft.Extensions.Logging;
-
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Net;
@@ -27,7 +24,7 @@ public partial class MainWindowViewModel
     /// Initializes the JourneyManager for the given project.
     /// Can be called at any time (with or without Z21 connection).
     /// </summary>
-    private void InitializeJourneyManager(Domain.Project project)
+    private void InitializeJourneyManager(Project project)
     {
         if (_journeyManager != null)
         {
@@ -109,7 +106,7 @@ public partial class MainWindowViewModel
                 // Apply system state polling interval from settings before connecting
                 _z21.SetSystemStatePollingInterval(_settings.Z21.SystemStatePollingIntervalSeconds);
 
-                await _z21.ConnectAsync(address, port);
+                await _z21.ConnectAsync(address, port).ConfigureAwait(false);
 
                 // Note: IsConnected will be set when Z21 responds (via OnConnectedChanged event)
                 StatusText = $"Waiting for Z21 at {_settings.Z21.CurrentIpAddress}:{port}...";
@@ -135,7 +132,7 @@ public partial class MainWindowViewModel
             _journeyManager?.Dispose();
             _journeyManager = null;
 
-            await _z21.DisconnectAsync();
+            await _z21.DisconnectAsync().ConfigureAwait(false);
 
             IsConnected = false;
             IsTrackPowerOn = false;
@@ -220,12 +217,12 @@ public partial class MainWindowViewModel
         {
             if (turnOn)
             {
-                await _z21.SetTrackPowerOnAsync();
+                await _z21.SetTrackPowerOnAsync().ConfigureAwait(false);
                 IsTrackPowerOn = true;
             }
             else
             {
-                await _z21.SetTrackPowerOffAsync();
+                await _z21.SetTrackPowerOffAsync().ConfigureAwait(false);
                 IsTrackPowerOn = false;
             }
         }
@@ -257,12 +254,12 @@ public partial class MainWindowViewModel
         StatusText = $"Connecting to {_settings.Z21.CurrentIpAddress}...";
         
         // Initial connection attempt
-        await AttemptZ21ConnectionAsync();
+        await AttemptZ21ConnectionAsync().ConfigureAwait(false);
         
         // Start retry timer (checks periodically if not connected)
         var retryInterval = TimeSpan.FromSeconds(_settings.Z21.AutoConnectRetryIntervalSeconds);
         _z21AutoConnectTimer = new Timer(
-            _ => { _ = AttemptZ21ConnectionIfDisconnectedAsync(); },
+            _ => { },
             null,
             retryInterval,  // First retry after configured interval
             retryInterval   // Subsequent retries at same interval
@@ -270,17 +267,7 @@ public partial class MainWindowViewModel
         
         Debug.WriteLine($"🔄 Z21 Auto-Connect retry timer started ({_settings.Z21.AutoConnectRetryIntervalSeconds}s interval)");
     }
-    
-    /// <summary>
-    /// Attempts to connect to Z21 only if currently disconnected.
-    /// Called by retry timer.
-    /// </summary>
-    private async Task AttemptZ21ConnectionIfDisconnectedAsync()
-    {
-        if (IsConnected) return;  // Already connected, skip
-        await AttemptZ21ConnectionAsync();
-    }
-    
+   
     /// <summary>
     /// Performs a single connection attempt to Z21.
     /// </summary>
@@ -303,7 +290,7 @@ public partial class MainWindowViewModel
             }
 
             Debug.WriteLine($"🔄 Z21 Auto-Connect: Attempting connection to {address}:{port}...");
-            await _z21.ConnectAsync(address, port);
+            await _z21.ConnectAsync(address, port).ConfigureAwait(false);
             
             // Note: Status will be updated by OnConnectedChanged event when Z21 responds
             // Don't set "Waiting for..." status here - it gets overwritten by the event!

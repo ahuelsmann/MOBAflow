@@ -4,6 +4,7 @@
     xmlns:behavior="using:Moba.WinUI.Behavior"
     xmlns:i="using:Microsoft.Xaml.Interactivity"
     xmlns:selector="using:Moba.WinUI.Selector"
+    xmlns:vm="using:Moba.SharedUI.ViewModel"
     xmlns:vmAction="using:Moba.SharedUI.ViewModel.Action">
 
     <!--  ============================================  -->

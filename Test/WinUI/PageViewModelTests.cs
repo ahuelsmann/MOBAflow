@@ -2,8 +2,8 @@
 
 namespace Moba.Test.WinUI;
 
-using Moba.SharedUI.ViewModel;
 using Microsoft.Extensions.Logging;
+using Moba.SharedUI.ViewModel;
 using Moq;
 
 /// <summary>

@@ -163,7 +163,6 @@
                 <StackPanel Padding="56,16,0,16" Spacing="16">
                     <!--  Speech Engine Selection  -->
                     <ComboBox
-                        x:Name="SpeechEngineComboBox"
                         MaxWidth="400"
                         HorizontalAlignment="Left"
                         Header="Speech Engine"

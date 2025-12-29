@@ -2,7 +2,6 @@
 namespace Moba.Domain.TrackPlan;
 
 using System.Globalization;
-using System.Text;
 using System.Xml.Linq;
 
 /// <summary>

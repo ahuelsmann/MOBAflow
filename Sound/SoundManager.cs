@@ -3,10 +3,8 @@
 namespace Moba.Sound;
 
 using Microsoft.Extensions.Logging;
-
 using System.Media;
 using System.Runtime.Versioning;
-using System.Threading.Tasks;
 
 /// <summary>
 /// Windows-specific implementation of ISoundPlayer using System.Media.SoundPlayer.
@@ -32,8 +30,9 @@ public class WindowsSoundPlayer(ILogger<WindowsSoundPlayer> logger) : ISoundPlay
                 cancellationToken.ThrowIfCancellationRequested();
                 
                 // ReSharper disable once ArrangeObjectCreationWhenTypeEvident
-                using var player = new SoundPlayer { SoundLocation = waveFile };
-                
+                using var player = new SoundPlayer();
+                player.SoundLocation = waveFile;
+
                 // PlaySync() blocks until sound completes - perfect for sequential execution!
                 player.PlaySync();
             }, cancellationToken).ConfigureAwait(false);

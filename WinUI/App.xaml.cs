@@ -1,19 +1,27 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+
+namespace Moba.WinUI;
+
+using Backend.Extensions;
+using Backend.Interface;
+using Backend.Service;
+using Common.Configuration;
+using Common.Serilog;
+using Domain;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
-
-using Moba.Backend.Service;
-using Moba.Backend.Extensions;
-using Moba.Common.Configuration;
-using Moba.Common.Serilog;
-using Moba.Sound;
-
 using Serilog;
-
-namespace Moba.WinUI;
+using Serilog.Events;
+using Service;
+using SharedUI.Interface;
+using SharedUI.ViewModel;
+using Sound;
+using System.Diagnostics;
+using View;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 /// <summary>
 /// Provides application-specific behavior to supplement the default Application class.
@@ -36,14 +44,14 @@ public partial class App
         catch (Exception ex)
         {
             // Log the exception before crashing
-            System.Diagnostics.Debug.WriteLine("🚨 FATAL ERROR during App initialization:");
-            System.Diagnostics.Debug.WriteLine($"   Exception Type: {ex.GetType().Name}");
-            System.Diagnostics.Debug.WriteLine($"   Message: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"   StackTrace: {ex.StackTrace}");
+            Debug.WriteLine("🚨 FATAL ERROR during App initialization:");
+            Debug.WriteLine($"   Exception Type: {ex.GetType().Name}");
+            Debug.WriteLine($"   Message: {ex.Message}");
+            Debug.WriteLine($"   StackTrace: {ex.StackTrace}");
             if (ex.InnerException != null)
             {
-                System.Diagnostics.Debug.WriteLine($"   Inner Exception: {ex.InnerException.Message}");
-                System.Diagnostics.Debug.WriteLine($"   Inner StackTrace: {ex.InnerException.StackTrace}");
+                Debug.WriteLine($"   Inner Exception: {ex.InnerException.Message}");
+                Debug.WriteLine($"   Inner StackTrace: {ex.InnerException.StackTrace}");
             }
 
             // Re-throw to get Windows Error Reporting
@@ -103,69 +111,69 @@ public partial class App
         services.AddSingleton<ISpeakerEngine>(sp =>
         {
             var settings = sp.GetRequiredService<AppSettings>();
-            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger>();
-            
+            sp.GetService<ILogger>();
+
             // Check if Azure Cognitive Services is configured
             var selectedEngine = settings.Speech.SpeakerEngineName;
             if (!string.IsNullOrEmpty(selectedEngine) &&
-                selectedEngine.Contains("Azure", System.StringComparison.OrdinalIgnoreCase))
+                selectedEngine.Contains("Azure", StringComparison.OrdinalIgnoreCase))
             {
                 // Only create Azure engine if explicitly configured
                 var options = sp.GetRequiredService<IOptions<SpeechOptions>>();
-                return new CognitiveSpeechEngine(options, sp.GetService<Microsoft.Extensions.Logging.ILogger<CognitiveSpeechEngine>>()!);
+                return new CognitiveSpeechEngine(options, sp.GetService<ILogger<CognitiveSpeechEngine>>()!);
             }
-            
+
             // Default: Windows SAPI (always available, no Azure SDK needed)
-            return new SystemSpeechEngine(sp.GetService<Microsoft.Extensions.Logging.ILogger<SystemSpeechEngine>>()!);
+            return new SystemSpeechEngine(sp.GetService<ILogger<SystemSpeechEngine>>()!);
         });
 
         // Backend Services (Interfaces are in Backend.Interface and Backend.Network)
         // ✅ Use shared extension method for platform-consistent registration
         // Backend now registers: ActionExecutionContext, AnnouncementService, ActionExecutor
         services.AddMobaBackendServices();
-        
-        services.AddSingleton<SharedUI.Interface.IIoService, Service.IoService>();
-        services.AddSingleton<SharedUI.Interface.IUiDispatcher, Service.UiDispatcher>();
-        
+
+        services.AddSingleton<IIoService, IoService>();
+        services.AddSingleton<IUiDispatcher, UiDispatcher>();
+
         // ✅ ICityService with NullObject fallback
         // Always register a service (real or no-op)
-        services.AddSingleton<SharedUI.Interface.ICityService>(sp =>
+        services.AddSingleton<ICityService>(sp =>
         {
             try
             {
                 var appSettings = sp.GetRequiredService<AppSettings>();
-                return new Service.CityService(appSettings);
+                return new CityService(appSettings);
             }
             catch
             {
                 // Fallback to NullObject if city data unavailable
-                return new Service.NullCityService();
+                return new NullCityService();
             }
         });
 
         // ✅ ISettingsService with NullObject fallback
         // Always register a service (real or no-op)
-        services.AddSingleton<SharedUI.Interface.ISettingsService>(sp =>
+        services.AddSingleton<ISettingsService>(sp =>
         {
             try
             {
                 var appSettings = sp.GetRequiredService<AppSettings>();
-                return new Service.SettingsService(appSettings);
+                return new SettingsService(appSettings);
             }
             catch
             {
                 // Fallback to NullObject if settings file unavailable
-                return new Service.NullSettingsService();
+                return new NullSettingsService();
             }
         });
-        
-        services.AddSingleton<Service.NavigationService>();
-        services.AddSingleton<Service.SnapToConnectService>();
+
+        services.AddSingleton<NavigationService>();
+        services.AddSingleton<SnapToConnectService>();
 
         // Sound Services (required by HealthCheckService)
         services.AddSingleton<ISoundPlayer, WindowsSoundPlayer>();
         services.AddSingleton<SpeechHealthCheck>();
-        services.AddSingleton<Service.HealthCheckService>();
+        services.AddSingleton<HealthCheckService>();
 
         // ViewModels
         // Note: Wrapper ViewModels (SolutionViewModel, ProjectViewModel, JourneyViewModel, etc.)
@@ -174,35 +182,35 @@ public partial class App
 
         // Domain.Solution is registered in AddMobaBackendServices()
 
-        services.AddSingleton(sp => new SharedUI.ViewModel.MainWindowViewModel(
-            sp.GetRequiredService<Backend.Interface.IZ21>(),
+        services.AddSingleton(sp => new MainWindowViewModel(
+            sp.GetRequiredService<IZ21>(),
             sp.GetRequiredService<WorkflowService>(),
-            sp.GetRequiredService<SharedUI.Interface.IUiDispatcher>(),
+            sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<AppSettings>(),
-            sp.GetRequiredService<Domain.Solution>(),
+            sp.GetRequiredService<Solution>(),
             sp.GetRequiredService<ActionExecutionContext>(),  // ✅ Inject context with all audio services
-            sp.GetRequiredService<ILogger<SharedUI.ViewModel.MainWindowViewModel>>(),  // ✅ Inject ILogger
-            sp.GetRequiredService<SharedUI.Interface.IIoService>(),
-            sp.GetRequiredService<SharedUI.Interface.ICityService>(),      // Now guaranteed (NullObject if unavailable)
-            sp.GetRequiredService<SharedUI.Interface.ISettingsService>(),  // Now guaranteed (NullObject if unavailable)
+            sp.GetRequiredService<ILogger<MainWindowViewModel>>(),  // ✅ Inject ILogger
+            sp.GetRequiredService<IIoService>(),
+            sp.GetRequiredService<ICityService>(),      // Now guaranteed (NullObject if unavailable)
+            sp.GetRequiredService<ISettingsService>(),  // Now guaranteed (NullObject if unavailable)
             sp.GetRequiredService<AnnouncementService>()  // For TestSpeech command
         ));
-        services.AddSingleton<SharedUI.ViewModel.TrackPlanEditorViewModel>();
-        services.AddSingleton<SharedUI.ViewModel.JourneyMapViewModel>();
-        services.AddSingleton<SharedUI.ViewModel.MonitorPageViewModel>();
+        services.AddSingleton<TrackPlanEditorViewModel>();
+        services.AddSingleton<JourneyMapViewModel>();
+        services.AddSingleton<MonitorPageViewModel>();
 
         // Pages (Transient = new instance per navigation)
-        services.AddTransient<View.OverviewPage>();
-        services.AddTransient<View.SolutionPage>();
-        services.AddTransient<View.JourneysPage>();
-        services.AddTransient<View.WorkflowsPage>();
-        services.AddTransient<View.TrackPlanEditorPage>();
-        services.AddTransient<View.JourneyMapPage>();
-        services.AddTransient<View.SettingsPage>();
-        services.AddTransient<View.MonitorPage>();
+        services.AddTransient<OverviewPage>();
+        services.AddTransient<SolutionPage>();
+        services.AddTransient<JourneysPage>();
+        services.AddTransient<WorkflowsPage>();
+        services.AddTransient<TrackPlanEditorPage>();
+        services.AddTransient<JourneyMapPage>();
+        services.AddTransient<SettingsPage>();
+        services.AddTransient<MonitorPage>();
 
         // MainWindow (Singleton = one instance for app lifetime)
-        services.AddSingleton<View.MainWindow>();
+        services.AddSingleton<MainWindow>();
 
         return services.BuildServiceProvider();
     }
@@ -217,7 +225,7 @@ public partial class App
 
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()
-            .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
             .Enrich.FromLogContext()
             .WriteTo.InMemory()  // ✅ Custom sink for MonitorPage real-time display
             .WriteTo.File(
@@ -234,58 +242,58 @@ public partial class App
     /// <param name="args">Details about the launch request and process.</param>
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-        _window = Services.GetRequiredService<View.MainWindow>();
+        _window = Services.GetRequiredService<MainWindow>();
         _window.Activate();
 
         // Auto-load last solution if enabled
-        _ = AutoLoadLastSolutionAsync(((View.MainWindow)_window).ViewModel);
+        _ = AutoLoadLastSolutionAsync(((MainWindow)_window).ViewModel);
     }
 
     /// <summary>
     /// Automatically loads the last used solution if AutoLoadLastSolution preference is enabled.
     /// Delegates to MainWindowViewModel.LoadSolutionFromPathAsync() to ensure all initialization happens correctly.
     /// </summary>
-    private async Task AutoLoadLastSolutionAsync(SharedUI.ViewModel.MainWindowViewModel mainWindowViewModel)
+    private async Task AutoLoadLastSolutionAsync(MainWindowViewModel mainWindowViewModel)
     {
         try
         {
-            var settingsService = Services.GetService<SharedUI.Interface.ISettingsService>();
+            var settingsService = Services.GetService<ISettingsService>();
             if (settingsService == null)
             {
-                System.Diagnostics.Debug.WriteLine("⚠️ SettingsService not available - skipping auto-load");
+                Debug.WriteLine("⚠️ SettingsService not available - skipping auto-load");
                 return;
             }
 
             if (!settingsService.AutoLoadLastSolution)
             {
-                System.Diagnostics.Debug.WriteLine("ℹ️ Auto-load disabled - skipping");
+                Debug.WriteLine("ℹ️ Auto-load disabled - skipping");
                 return;
             }
 
             var lastPath = settingsService.LastSolutionPath;
             if (string.IsNullOrEmpty(lastPath))
             {
-                System.Diagnostics.Debug.WriteLine("ℹ️ No last solution path - skipping auto-load");
+                Debug.WriteLine("ℹ️ No last solution path - skipping auto-load");
                 return;
             }
 
             if (!File.Exists(lastPath))
             {
-                System.Diagnostics.Debug.WriteLine($"⚠️ Last solution file not found: {lastPath}");
+                Debug.WriteLine($"⚠️ Last solution file not found: {lastPath}");
                 return;
             }
 
-            System.Diagnostics.Debug.WriteLine($"📂 Auto-loading last solution: {lastPath}");
+            Debug.WriteLine($"📂 Auto-loading last solution: {lastPath}");
 
             // ✅ Use the SAME code path as manual loading!
             // This ensures JourneyManager and all other initialization happens correctly.
             await mainWindowViewModel.LoadSolutionFromPathAsync(lastPath);
 
-            System.Diagnostics.Debug.WriteLine($"✅ Auto-load completed: {lastPath}");
+            Debug.WriteLine($"✅ Auto-load completed: {lastPath}");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"❌ Auto-load failed: {ex.Message}");
+            Debug.WriteLine($"❌ Auto-load failed: {ex.Message}");
             // Don't crash the application if auto-load fails
         }
     }

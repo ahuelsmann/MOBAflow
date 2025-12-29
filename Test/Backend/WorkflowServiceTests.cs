@@ -2,9 +2,7 @@
 
 namespace Moba.Test.Backend;
 
-using Domain;
 using Domain.Enum;
-using Moba.Backend.Interface;
 using Moba.Backend.Service;
 using Mocks;
 
@@ -38,11 +36,11 @@ public class WorkflowServiceTests
     [TearDown]
     public void TearDown()
     {
-        _z21?.Dispose();
+        _z21.Dispose();
     }
 
     [Test]
-    public async Task ExecuteAsync_WithEmptyWorkflow_ShouldNotThrow()
+    public Task ExecuteAsync_WithEmptyWorkflow_ShouldNotThrow()
     {
         // Arrange
         var workflow = new Workflow
@@ -57,6 +55,7 @@ public class WorkflowServiceTests
         {
             await _workflowService.ExecuteAsync(workflow, _context);
         });
+        return Task.CompletedTask;
     }
 
     [Test]

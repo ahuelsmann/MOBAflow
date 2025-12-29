@@ -2,7 +2,6 @@
 namespace Moba.SharedUI.ViewModel.Action;
 
 using CommunityToolkit.Mvvm.ComponentModel;
-
 using Domain;
 using Domain.Enum;
 

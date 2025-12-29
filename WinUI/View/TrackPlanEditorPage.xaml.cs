@@ -3,8 +3,12 @@ namespace Moba.WinUI.View;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+
 using SharedUI.ViewModel;
+
 using System.Diagnostics;
+
 using Windows.ApplicationModel.DataTransfer;
 
 /// <summary>
@@ -12,7 +16,7 @@ using Windows.ApplicationModel.DataTransfer;
 /// Simplified code-behind for the new topology-based architecture.
 /// </summary>
 // ReSharper disable once PartialTypeWithSinglePart
-public sealed partial class TrackPlanEditorPage : Page
+public sealed partial class TrackPlanEditorPage
 {
     public TrackPlanEditorPage(TrackPlanEditorViewModel viewModel)
     {
@@ -58,13 +62,13 @@ public sealed partial class TrackPlanEditorPage : Page
 
     #region Selection
 
-    private void TrackCanvas_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    private void TrackCanvas_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
         // Click on empty area deselects
         ViewModel.SelectedSegment = null;
     }
 
-    private void Segment_PointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    private void Segment_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
         if (sender is FrameworkElement element && element.DataContext is TrackSegmentViewModel segment)
         {

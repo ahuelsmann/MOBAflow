@@ -1,12 +1,12 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using Backend;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using Microsoft.Extensions.Logging;
-
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 /// <summary>
 /// MainWindowViewModel - Counter/Statistics Features
@@ -135,17 +135,17 @@ public partial class MainWindowViewModel
         _settings.Counter.TimerIntervalSeconds = value;
         
         // ✅ DEBUG: Log to verify this method is called
-        System.Diagnostics.Debug.WriteLine($"🔥 OnTimerIntervalSecondsChanged called! Value={value}, SettingsService={(_settingsService != null ? "EXISTS" : "NULL")}");
+        Debug.WriteLine($"🔥 OnTimerIntervalSecondsChanged called! Value={value}, SettingsService={(_settingsService != null ? "EXISTS" : "NULL")}");
         
         // Persist to appsettings.json (Disk) - fire and forget
         if (_settingsService != null)
         {
-            System.Diagnostics.Debug.WriteLine($"🔥 Calling SaveSettingsAsync with TimerIntervalSeconds={value}");
+            Debug.WriteLine($"🔥 Calling SaveSettingsAsync with TimerIntervalSeconds={value}");
             _settingsService.SaveSettingsAsync(_settings);
         }
         else
         {
-            System.Diagnostics.Debug.WriteLine("❌ SettingsService is NULL - cannot save!");
+            Debug.WriteLine("❌ SettingsService is NULL - cannot save!");
         }
     }
 
@@ -227,7 +227,7 @@ public partial class MainWindowViewModel
     /// <summary>
     /// Handles Z21 feedback events (subscription in MainWindowViewModel.cs constructor).
     /// </summary>
-    private void OnFeedbackReceived(Backend.FeedbackResult feedback)
+    private void OnFeedbackReceived(FeedbackResult feedback)
     {
         _uiDispatcher.InvokeOnUi(() =>
         {

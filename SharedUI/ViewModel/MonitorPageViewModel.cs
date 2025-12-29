@@ -2,16 +2,11 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Model;
-
 using Common.Serilog;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using Interface;
-
 using Microsoft.Extensions.Logging;
-
 using System.Collections.ObjectModel;
 
 /// <summary>
@@ -53,8 +48,8 @@ public partial class MonitorPageViewModel : ObservableObject
     /// <summary>
     /// Connection status text.
     /// </summary>
-    public string ConnectionStatus => _mainWindowViewModel.IsConnected 
-        ? $"✅ Connected to {_mainWindowViewModel.IpAddress}" 
+    public string ConnectionStatus => _mainWindowViewModel.IsConnected
+        ? $"✅ Connected to {_mainWindowViewModel.IpAddress}"
         : "❌ Not connected";
 
     /// <summary>
@@ -131,28 +126,3 @@ public partial class MonitorPageViewModel : ObservableObject
         _logger.LogInformation("Traffic cleared");
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

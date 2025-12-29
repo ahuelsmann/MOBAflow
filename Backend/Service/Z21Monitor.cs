@@ -3,7 +3,7 @@ namespace Moba.Backend.Service;
 
 using Microsoft.Extensions.Logging;
 using Model;
-
+using Protocol;
 using System.Collections.Concurrent;
 
 /// <summary>
@@ -210,7 +210,7 @@ public class Z21Monitor
         // LAN_RMBUS_DATACHANGED: Use Z21FeedbackParser for correct bit-to-InPort conversion
         if (header == 0x80 && data.Length >= 13)
         {
-            int inPort = Protocol.Z21FeedbackParser.ExtractFirstInPort(data);
+            int inPort = Z21FeedbackParser.ExtractFirstInPort(data);
             return inPort > 0 ? inPort : null;  // Return null if no bits set
         }
 
@@ -232,7 +232,7 @@ public class Z21Monitor
         // LAN_RMBUS_DATACHANGED: Use Z21FeedbackParser to extract all active InPorts
         if (header == 0x80)
         {
-            return Protocol.Z21FeedbackParser.ExtractAllInPorts(data);
+            return Z21FeedbackParser.ExtractAllInPorts(data);
         }
 
         // For other feedback types, return empty list

@@ -32,7 +32,7 @@ public class WorkflowAction
     /// 
     /// Default: 0 (no delay)
     /// </summary>
-    public int DelayAfterMs { get; set; } = 0;
+    public int DelayAfterMs { get; set; }
 
     /// <summary>
     /// Action-specific parameters (polymorphic via Type property).

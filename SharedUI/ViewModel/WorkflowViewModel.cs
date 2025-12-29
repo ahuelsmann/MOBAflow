@@ -2,22 +2,15 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Action;
-
-using Backend.Interface;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using Domain;
 using Domain.Enum;
-
 using Interface;
-using Service;  // For NullIoService
-
-using Sound;
-
+using Service;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+// For NullIoService
 
 public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Workflow>
 {
@@ -25,21 +18,13 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
     // Model
     private readonly Workflow _model;
 
-    // Context - Reserved for future use (e.g., context menu actions, workflow validation)
-    private readonly Project? _project;
-
     // Optional Services - Reserved for future use
-    private readonly ISpeakerEngine? _speakerEngine;
-    private readonly IZ21? _z21;
     private readonly IIoService? _ioService;
     #endregion
 
-    public WorkflowViewModel(Workflow model, ISpeakerEngine? speakerEngine = null, Project? project = null, IZ21? z21 = null, IIoService? ioService = null)
+    public WorkflowViewModel(Workflow model, IIoService? ioService = null)
     {
         _model = model;
-        _speakerEngine = speakerEngine;
-        _project = project;
-        _z21 = z21;
         _ioService = ioService;
 
         // Sort actions by Number before creating ViewModels to preserve correct order
@@ -210,7 +195,7 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
         return action.Type switch
         {
             ActionType.Announcement => new AnnouncementViewModel(action),
-            ActionType.Audio => new AudioViewModel(action, _ioService ?? new Service.NullIoService()),
+            ActionType.Audio => new AudioViewModel(action, _ioService ?? new NullIoService()),
             ActionType.Command => new CommandViewModel(action),
             _ => throw new NotSupportedException($"Action-Typ {action.Type} wird nicht unterstützt")
         };

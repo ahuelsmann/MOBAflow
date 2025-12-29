@@ -2,13 +2,9 @@
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
-
 using Domain;
-
 using Newtonsoft.Json;
-
 using SharedUI.Interface;
-
 using System.Diagnostics;
 
 /// <summary>

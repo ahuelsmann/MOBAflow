@@ -163,7 +163,7 @@ public class Z21 : IZ21
             if (_cancellationTokenSource != null)
             {
                 // Cancel and dispose safely
-                await _cancellationTokenSource.CancelAsync();
+                await _cancellationTokenSource.CancelAsync().ConfigureAwait(false);
                 _cancellationTokenSource.Dispose();
                 _cancellationTokenSource = null;
             }
@@ -763,22 +763,29 @@ public class Z21 : IZ21
     /// <param name="inPort">The InPort number (0-255) to simulate feedback for.</param>
     public void SimulateFeedback(int inPort)
     {
-        if (inPort < 0 || inPort > 255)
+        if (inPort < 0 || inPort > 512)
         {
-            throw new ArgumentOutOfRangeException(nameof(inPort), "InPort must be between 0 and 255");
+            throw new ArgumentOutOfRangeException(nameof(inPort), "InPort must be between 0 and 512");
         }
 
-        byte[] simulatedContent = [
-            0x0F, 0x00, 0x80, 0x00,     // Header
-            0x00,                       // GroupIndex
-            (byte)inPort,               // InPort
-            0x01,                       // Status (occupied)
-            0x00, 0x00, 0x00, 0x00,     // Additional bytes
-            0x00, 0x00, 0x00, 0x00      // Padding
-        ];
+        // Convert InPort (1-based) to group/byte/bit representation per Z21 protocol
+        var portIndex = Math.Max(inPort - 1, 0); // clamp 0 to first slot
+        var groupNumber = portIndex / 64;        // 0-based module
+        var byteIndex = (portIndex % 64) / 8;    // which data byte (0-7)
+        var bitPosition = portIndex % 8;         // which bit inside the byte (0-7)
 
-        _logger?.LogInformation("🔔 SimulateFeedback: InPort={InPort}, Subscribers={Count}", inPort, Received?.GetInvocationList().Length ?? 0);
-        Debug.WriteLine($"🔔 SimulateFeedback: InPort={inPort}, Subscribers={Received?.GetInvocationList().Length ?? 0}");
+        var simulatedContent = new byte[15];
+        simulatedContent[0] = 0x0F; // Length LSB (15 bytes)
+        simulatedContent[1] = 0x00; // Length MSB
+        simulatedContent[2] = 0x80; // Header LSB (LAN_RMBUS_DATACHANGED)
+        simulatedContent[3] = 0x00; // Header MSB
+        simulatedContent[4] = (byte)groupNumber; // Group number (module id)
+        simulatedContent[5 + byteIndex] = (byte)(1 << bitPosition); // Feedback bit pattern
+        // Remaining bytes stay 0; checksum ignored in parser/tests
+
+        _logger?.LogInformation("🔔 SimulateFeedback: InPort={InPort}, Group={Group}, Byte={ByteIndex}, Bit={BitPosition}, Subscribers={Count}",
+            inPort, groupNumber, byteIndex, bitPosition, Received?.GetInvocationList().Length ?? 0);
+        Debug.WriteLine($"🔔 SimulateFeedback: InPort={inPort}, Group={groupNumber}, Byte={byteIndex}, Bit={bitPosition}, Subscribers={Received?.GetInvocationList().Length ?? 0}");
 
         Received?.Invoke(new FeedbackResult(simulatedContent));
 

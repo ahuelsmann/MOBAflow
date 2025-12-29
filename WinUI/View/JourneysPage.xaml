@@ -75,7 +75,6 @@
                 Text="{x:Bind ViewModel.JourneySearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
             <ListView
-                x:Name="JourneysListView"
                 Grid.Row="2"
                 IsItemClickEnabled="True"
                 ItemsSource="{x:Bind ViewModel.SelectedProject.Journeys, Mode=OneWay}"
@@ -166,7 +165,6 @@
             </Grid>
 
             <ListView
-                x:Name="StationsListView"
                 Grid.Row="1"
                 AllowDrop="True"
                 DragOver="StationListView_DragOver"
@@ -248,7 +246,6 @@
                 Style="{StaticResource CaptionTextBlockStyle}"
                 Text="Drag or double-click to add" />
             <ListView
-                x:Name="CityLibraryListView"
                 Grid.Row="2"
                 CanDragItems="True"
                 DoubleTapped="CityListView_DoubleTapped"
@@ -315,7 +312,6 @@
                 Style="{StaticResource CaptionTextBlockStyle}"
                 Text="Drag to station to assign" />
             <ListView
-                x:Name="WorkflowLibraryListView"
                 Grid.Row="2"
                 CanDragItems="True"
                 DragItemsStarting="WorkflowListView_DragItemsStarting"

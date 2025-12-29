@@ -1,13 +1,17 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using System.Collections.ObjectModel;
+using Backend;
 using Backend.Interface;
-using Backend.Model;  // For Z21VersionInfo
+using Backend.Model;
+using Common.Configuration;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Common.Configuration;
-using SharedUI.Interface;
+using Interface;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Net;
+// For Z21VersionInfo
 
 /// <summary>
 /// Web-optimized ViewModel for Blazor Server - focused on Z21 monitoring and feedback statistics.
@@ -58,12 +62,12 @@ public partial class WebAppViewModel : ObservableObject
         UseTimerFilter = _settings.Counter.UseTimerFilter;
         TimerIntervalSeconds = _settings.Counter.TimerIntervalSeconds;
         
-        System.Diagnostics.Debug.WriteLine("═══════════════════════════════════════════════════════");
-        System.Diagnostics.Debug.WriteLine("✅ WebApp Settings loaded:");
-        System.Diagnostics.Debug.WriteLine($"   IP Address: {Z21IpAddress}");
-        System.Diagnostics.Debug.WriteLine($"   Feedback Points: {CountOfFeedbackPoints}");
-        System.Diagnostics.Debug.WriteLine($"   Target Laps: {GlobalTargetLapCount}");
-        System.Diagnostics.Debug.WriteLine("═══════════════════════════════════════════════════════");
+        Debug.WriteLine("═══════════════════════════════════════════════════════");
+        Debug.WriteLine("✅ WebApp Settings loaded:");
+        Debug.WriteLine($"   IP Address: {Z21IpAddress}");
+        Debug.WriteLine($"   Feedback Points: {CountOfFeedbackPoints}");
+        Debug.WriteLine($"   Target Laps: {GlobalTargetLapCount}");
+        Debug.WriteLine("═══════════════════════════════════════════════════════");
     }
 
     #region Z21 Connection
@@ -128,14 +132,14 @@ public partial class WebAppViewModel : ObservableObject
         try
         {
             StatusText = "Connecting...";
-            var address = System.Net.IPAddress.Parse(Z21IpAddress);
+            var address = IPAddress.Parse(Z21IpAddress);
             int port = int.Parse(_settings.Z21.DefaultPort);
-            await _z21.ConnectAsync(address, port);
+            await _z21.ConnectAsync(address, port).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
             StatusText = $"Connection failed: {ex.Message}";
-            System.Diagnostics.Debug.WriteLine($"❌ Connection failed: {ex.Message}");
+            Debug.WriteLine($"❌ Connection failed: {ex.Message}");
         }
     }
 
@@ -145,7 +149,7 @@ public partial class WebAppViewModel : ObservableObject
         try
         {
             StatusText = "Disconnecting...";
-            await _z21.DisconnectAsync();
+            await _z21.DisconnectAsync().ConfigureAwait(false);
             StatusText = "Disconnected";
         }
         catch (Exception ex)
@@ -160,9 +164,9 @@ public partial class WebAppViewModel : ObservableObject
         try
         {
             if (turnOn)
-                await _z21.SetTrackPowerOnAsync();
+                await _z21.SetTrackPowerOnAsync().ConfigureAwait(false);
             else
-                await _z21.SetTrackPowerOffAsync();
+                await _z21.SetTrackPowerOffAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -234,11 +238,11 @@ public partial class WebAppViewModel : ObservableObject
                     TargetLapCount = GlobalTargetLapCount
                 });
             }
-            System.Diagnostics.Debug.WriteLine($"✅ Initialized {Statistics.Count} track statistics (InPorts 1-{count})");
+            Debug.WriteLine($"✅ Initialized {Statistics.Count} track statistics (InPorts 1-{count})");
         }
         else
         {
-            System.Diagnostics.Debug.WriteLine("⚠️ CountOfFeedbackPoints is 0 - no track statistics initialized");
+            Debug.WriteLine("⚠️ CountOfFeedbackPoints is 0 - no track statistics initialized");
         }
         
         // Notify UI that Statistics collection has changed
@@ -256,10 +260,10 @@ public partial class WebAppViewModel : ObservableObject
             stat.HasReceivedFirstLap = false;
         }
         _lastFeedbackTime.Clear();
-        System.Diagnostics.Debug.WriteLine("🔄 All counters reset");
+        Debug.WriteLine("🔄 All counters reset");
     }
 
-    private void OnFeedbackReceived(Backend.FeedbackResult feedback)
+    private void OnFeedbackReceived(FeedbackResult feedback)
     {
         _uiDispatcher.InvokeOnUi(() =>
         {
@@ -280,7 +284,7 @@ public partial class WebAppViewModel : ObservableObject
                 var elapsed = DateTime.Now - lastTime;
                 if (elapsed.TotalSeconds < TimerIntervalSeconds)
                 {
-                    System.Diagnostics.Debug.WriteLine($"⏱️ InPort {inPort}: Ignored (timer filter: {elapsed.TotalSeconds:F1}s < {TimerIntervalSeconds}s)");
+                    Debug.WriteLine($"⏱️ InPort {inPort}: Ignored (timer filter: {elapsed.TotalSeconds:F1}s < {TimerIntervalSeconds}s)");
                     return;
                 }
             }
@@ -299,14 +303,14 @@ public partial class WebAppViewModel : ObservableObject
         stat.Count++;
         stat.LastFeedbackTime = DateTime.Now;
 
-        System.Diagnostics.Debug.WriteLine($"📊 InPort {inPort}: Lap {stat.Count}/{stat.TargetLapCount} | Lap time: {stat.LastLapTimeFormatted}");
+        Debug.WriteLine($"📊 InPort {inPort}: Lap {stat.Count}/{stat.TargetLapCount} | Lap time: {stat.LastLapTimeFormatted}");
     }
 
     #endregion
 
     #region Z21 Event Handlers
 
-    private void OnZ21SystemStateChanged(Backend.SystemState systemState)
+    private void OnZ21SystemStateChanged(SystemState systemState)
     {
         _uiDispatcher.InvokeOnUi(() =>
         {
@@ -335,7 +339,7 @@ public partial class WebAppViewModel : ObservableObject
             IsConnected = connected;
             StatusText = connected ? "Connected" : "Disconnected";
             
-            System.Diagnostics.Debug.WriteLine(connected 
+            Debug.WriteLine(connected 
                 ? "✅ Z21 connection confirmed" 
                 : "❌ Z21 disconnected");
         });
@@ -349,7 +353,7 @@ public partial class WebAppViewModel : ObservableObject
             FirmwareVersion = versionInfo.FirmwareVersion;
             HardwareType = versionInfo.HardwareType;
 
-            System.Diagnostics.Debug.WriteLine($"✅ Z21 Version: S/N={SerialNumber}, HW={HardwareType}, FW={FirmwareVersion}");
+            Debug.WriteLine($"✅ Z21 Version: S/N={SerialNumber}, HW={HardwareType}, FW={FirmwareVersion}");
         });
     }
 
@@ -362,12 +366,12 @@ public partial class WebAppViewModel : ObservableObject
     {
         try
         {
-            await _settingsService.SaveSettingsAsync(_settings);
-            System.Diagnostics.Debug.WriteLine("✅ Settings saved");
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+            Debug.WriteLine("✅ Settings saved");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"❌ Failed to save settings: {ex.Message}");
+            Debug.WriteLine($"❌ Failed to save settings: {ex.Message}");
         }
     }
 

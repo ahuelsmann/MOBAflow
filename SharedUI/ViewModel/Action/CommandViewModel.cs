@@ -4,6 +4,7 @@ namespace Moba.SharedUI.ViewModel.Action;
 using Domain;
 using Domain.Enum;
 using Helper;
+using System.Diagnostics;
 
 /// <summary>
 /// ViewModel for Z21 Command actions (loco control).
@@ -25,7 +26,7 @@ public class CommandViewModel : WorkflowActionViewModel
     /// <summary>
     /// Available direction values for ComboBox binding.
     /// </summary>
-    public static string[] DirectionValues { get; } = new[] { "Forward", "Backward" };
+    public static string[] DirectionValues { get; } = ["Forward", "Backward"];
 
     /// <summary>
     /// Locomotive address (DCC address).
@@ -211,7 +212,7 @@ public class CommandViewModel : WorkflowActionViewModel
             catch (Exception ex)
             {
                 // Log error but don't crash
-                System.Diagnostics.Debug.WriteLine($"Error encoding Z21 command: {ex.Message}");
+                Debug.WriteLine($"Error encoding Z21 command: {ex.Message}");
             }
         }
 

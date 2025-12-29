@@ -2,12 +2,8 @@
 
 namespace Moba.Test.Backend;
 
-using Domain;
 using Domain.Enum;
-
-using Moba.Backend.Interface;
 using Moba.Backend.Service;
-
 using Mocks;
 
 /// <summary>
@@ -38,7 +34,7 @@ public class ActionExecutorTests
     [TearDown]
     public void TearDown()
     {
-        _z21?.Dispose();
+        _z21.Dispose();
     }
 
     [Test]
@@ -89,7 +85,7 @@ public class ActionExecutorTests
     }
 
     [Test]
-    public async Task ExecuteAsync_WithAudioAction_WithoutSoundPlayer_ShouldThrow()
+    public Task ExecuteAsync_WithAudioAction_WithoutSoundPlayer_ShouldThrow()
     {
         // Arrange - Context without SoundPlayer
         var action = new WorkflowAction
@@ -109,6 +105,7 @@ public class ActionExecutorTests
         {
             await _actionExecutor.ExecuteAsync(action, _context);
         });
+        return Task.CompletedTask;
     }
 
     [Test]

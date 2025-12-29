@@ -2,11 +2,9 @@
 namespace Moba.WinUI.Service;
 
 using SharedUI.ViewModel;
-
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
-
 using Windows.Foundation;
 
 /// <summary>

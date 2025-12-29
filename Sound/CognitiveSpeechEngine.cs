@@ -88,7 +88,7 @@ public class CognitiveSpeechEngine : ISpeakerEngine
             
             _logger.LogInformation("Synthesizing speech via Azure: {Message}", message);
             
-            var speechSynthesisResult = await speechSynthesizer.SpeakSsmlAsync(ssml);
+            var speechSynthesisResult = await speechSynthesizer.SpeakSsmlAsync(ssml).ConfigureAwait(false);
             OutputSpeechSynthesisResult(speechSynthesisResult, message);
         }
         catch (Exception ex)

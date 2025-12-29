@@ -2,18 +2,22 @@
 namespace Moba.WinUI.View;
 
 using Domain;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+
 using SharedUI.ViewModel;
+
 using Windows.ApplicationModel.DataTransfer;
+using Windows.System;
 
 /// <summary>
 /// Journeys page displaying journeys, stations, and city library with properties panel.
 /// Supports drag & drop from city library to stations list.
 /// </summary>
 // ReSharper disable once PartialTypeWithSinglePart
-public sealed partial class JourneysPage : Page
+public sealed partial class JourneysPage
 {
     public MainWindowViewModel ViewModel { get; }
 
@@ -75,7 +79,7 @@ public sealed partial class JourneysPage : Page
 
     private void JourneysListView_KeyDown(object sender, KeyRoutedEventArgs e)
     {
-        if (e.Key == Windows.System.VirtualKey.Delete && ViewModel.DeleteJourneyCommand.CanExecute(null))
+        if (e.Key == VirtualKey.Delete && ViewModel.DeleteJourneyCommand.CanExecute(null))
         {
             ViewModel.DeleteJourneyCommand.Execute(null);
             e.Handled = true;
@@ -84,7 +88,7 @@ public sealed partial class JourneysPage : Page
 
     private void StationsListView_KeyDown(object sender, KeyRoutedEventArgs e)
     {
-        if (e.Key == Windows.System.VirtualKey.Delete && ViewModel.DeleteStationCommand.CanExecute(null))
+        if (e.Key == VirtualKey.Delete && ViewModel.DeleteStationCommand.CanExecute(null))
         {
             ViewModel.DeleteStationCommand.Execute(null);
             e.Handled = true;

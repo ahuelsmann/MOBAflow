@@ -6,23 +6,26 @@ using CommunityToolkit.Mvvm.Input;
 using Domain.TrackPlan;
 using Interface;
 using Service;
+using Renderer;
+using Converter;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 
 /// <summary>
 /// ViewModel for TrackPlanEditorPage - topology-based track plan editor.
-/// Positions and paths are calculated by TrackLayoutRenderer from the connection graph.
+/// Positions and paths are calculated by TopologyRenderer from the connection graph.
 /// </summary>
 public partial class TrackPlanEditorViewModel : ObservableObject
 {
     private readonly MainWindowViewModel _mainViewModel;
     private readonly IIoService _ioService;
-    private readonly TrackLayoutRenderer _renderer = new();
+    private readonly TopologyRenderer _renderer;
 
     public TrackPlanEditorViewModel(MainWindowViewModel mainViewModel, IIoService ioService)
     {
         _mainViewModel = mainViewModel;
         _ioService = ioService;
+        _renderer = new TopologyRenderer(new TrackGeometryLibrary());
 
         _mainViewModel.SolutionSaving += (_, _) => SyncToProject();
         _mainViewModel.SolutionLoaded += (_, _) => LoadFromProject();
@@ -244,10 +247,14 @@ public partial class TrackPlanEditorViewModel : ObservableObject
             Connections = Connections.ToList()
         };
 
-        // Calculate positions and path data
+        Debug.WriteLine($"🎨 RenderLayout: {layout.Segments.Count} segments, {layout.Connections.Count} connections");
+
+        // Calculate positions and path data from topology
         var rendered = _renderer.Render(layout);
 
-        // Apply to ViewModels
+        Debug.WriteLine($"✅ Rendered: {rendered.Count} segments");
+
+        // Apply calculated positions, PathData, and rotation to ViewModels
         foreach (var rs in rendered)
         {
             var vm = Segments.FirstOrDefault(s => s.Id == rs.Id);
@@ -256,6 +263,11 @@ public partial class TrackPlanEditorViewModel : ObservableObject
                 vm.X = rs.X;
                 vm.Y = rs.Y;
                 vm.PathData = rs.PathData;
+                vm.Rotation = rs.Rotation;  // Apply rotation for WinUI RenderTransform
+                var pathPreview = rs.PathData != null && rs.PathData.Length > 50 
+                    ? rs.PathData.Substring(0, 50) + "..." 
+                    : rs.PathData;
+                Debug.WriteLine($"  Segment {rs.Id} ({rs.ArticleCode}): X={rs.X:F1}, Y={rs.Y:F1}, PathData={pathPreview}");
             }
         }
 
@@ -316,7 +328,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
 
     private void LoadFromProject()
     {
-        var layout = _mainViewModel.SelectedProject?.Model?.TrackLayout;
+        var layout = _mainViewModel.SelectedProject?.Model.TrackLayout;
         if (layout == null)
         {
             Debug.WriteLine("📂 No track layout in project");
@@ -350,10 +362,10 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     [RelayCommand]
     private async Task ImportAnyRailAsync()
     {
-        var file = await _ioService.BrowseForXmlFileAsync();
+        var file = await _ioService.BrowseForXmlFileAsync().ConfigureAwait(false);
         if (file == null) return;
 
-        var anyRailLayout = await AnyRailLayout.ParseAsync(file);
+        var anyRailLayout = await AnyRailLayout.ParseAsync(file).ConfigureAwait(false);
 
         Segments.Clear();
         Connections.Clear();
@@ -477,6 +489,107 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         var offsetY = (targetHeight - scaledHeight) / 2 - (minY * scale);
 
         return (scale, offsetX, offsetY);
+    }
+
+    /// <summary>
+    /// Import AnyRail layout and convert to PURE TOPOLOGY (no coordinates).
+    /// Renderer calculates all positions from ArticleCode + Connections.
+    /// </summary>
+    [RelayCommand]
+    private async Task ImportAnyRailPureTopologyAsync()
+    {
+        var file = await _ioService.BrowseForXmlFileAsync().ConfigureAwait(false);
+        if (file == null) return;
+
+        var anyRailLayout = await AnyRailLayout.ParseAsync(file).ConfigureAwait(false);
+
+        Segments.Clear();
+        Connections.Clear();
+
+        // Build endpoint lookup for connection detection
+        var endpointLookup = anyRailLayout.Endpoints.ToDictionary(e => e.Nr);
+
+        // Convert AnyRail parts to segments (ArticleCode ONLY)
+        foreach (var part in anyRailLayout.Parts)
+        {
+            var articleCode = part.GetArticleCode();
+            
+            var segment = new TrackSegment
+            {
+                Id = part.Id,
+                ArticleCode = articleCode
+                // NO Endpoints, Lines, Arcs - renderer calculates from ArticleCode!
+            };
+            
+            Segments.Add(new TrackSegmentViewModel(segment));
+        }
+
+        // Detect connections from AnyRail endpoints
+        DetectConnections(anyRailLayout, endpointLookup);
+
+        // Convert to pure topology (strip any remaining coordinate data)
+        var tempLayout = new TrackLayout
+        {
+            Name = $"AnyRail Import: Pure Topology",
+            Description = "Pure topology (coordinates calculated by renderer)",
+            Segments = Segments.Select(s => s.Model).ToList(),
+            Connections = Connections.ToList()
+        };
+
+        var pureTopology = TopologyConverter.ToPureTopology(tempLayout);
+        var stats = TopologyConverter.GetConversionStats(tempLayout, pureTopology);
+
+        LayoutName = pureTopology.Name;
+        LayoutDescription = pureTopology.Description;
+
+        // Update ViewModels with pure topology
+        Segments.Clear();
+        foreach (var seg in pureTopology.Segments)
+        {
+            Segments.Add(new TrackSegmentViewModel(seg));
+        }
+
+        // Render from topology (calculates all positions)
+        RenderLayout();
+
+        Debug.WriteLine($"📦 AnyRail Pure Topology Import: {stats}");
+    }
+
+    /// <summary>
+    /// Detect connections between segments based on shared AnyRail endpoints.
+    /// </summary>
+    private void DetectConnections(AnyRailLayout anyRailLayout, Dictionary<int, AnyRailEndpoint> endpointLookup)
+    {
+        // Group parts by endpoint numbers
+        var endpointToParts = new Dictionary<int, List<(AnyRailPart Part, int EndpointIndex)>>();
+
+        foreach (var part in anyRailLayout.Parts)
+        {
+            for (int i = 0; i < part.EndpointNrs.Count; i++)
+            {
+                var epNr = part.EndpointNrs[i];
+                if (!endpointToParts.ContainsKey(epNr))
+                {
+                    endpointToParts[epNr] = [];
+                }
+                endpointToParts[epNr].Add((part, i));
+            }
+        }
+
+        // Create connections where endpoints are shared
+        foreach (var pair in endpointToParts.Values.Where(list => list.Count == 2))
+        {
+            var (part1, ep1) = pair[0];
+            var (part2, ep2) = pair[1];
+
+            Connections.Add(new TrackConnection
+            {
+                Segment1Id = part1.Id,
+                Segment1EndpointIndex = ep1,
+                Segment2Id = part2.Id,
+                Segment2EndpointIndex = ep2
+            });
+        }
     }
 
     #endregion

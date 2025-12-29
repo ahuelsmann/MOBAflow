@@ -1,0 +1,58 @@
+{
+  "Name": "simple-test-layout",
+  "Projects": [
+    {
+      "Name": "Test Layout",
+      "SpeakerEngines": [],
+      "Voices": [],
+      "Locomotives": [],
+      "PassengerWagons": [],
+      "GoodsWagons": [],
+      "Trains": [],
+      "Workflows": [],
+      "Journeys": [],
+      "TrackLayout": {
+        "Name": "Simple Test Layout (3 Segments)",
+        "Description": "Minimal layout to test topology rendering: Straight → Straight → Curve",
+        "TrackSystem": "Piko A-Gleis",
+        "Segments": [
+          {
+            "Id": "1",
+            "ArticleCode": "G231",
+            "AssignedInPort": null,
+            "Name": "Start",
+            "Layer": null
+          },
+          {
+            "Id": "2",
+            "ArticleCode": "G231",
+            "AssignedInPort": null,
+            "Name": "Middle",
+            "Layer": null
+          },
+          {
+            "Id": "3",
+            "ArticleCode": "R1",
+            "AssignedInPort": null,
+            "Name": "Curve",
+            "Layer": null
+          }
+        ],
+        "Connections": [
+          {
+            "Segment1Id": "1",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "2",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "2",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "3",
+            "Segment2EndpointIndex": 0
+          }
+        ]
+      }
+    }
+  ]
+}

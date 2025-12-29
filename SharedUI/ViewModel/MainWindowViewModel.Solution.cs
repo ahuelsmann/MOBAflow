@@ -2,11 +2,10 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.Input;
-
 using Domain;
-using Service;  // For NullIoService
-
+using Service;
 using System.Diagnostics;
+// For NullIoService
 
 /// <summary>
 /// MainWindowViewModel - Solution and Project Management
@@ -81,11 +80,15 @@ public partial class MainWindowViewModel
             }
         }
 
-        var (success, path, error) = await _ioService.SaveAsync(Solution, CurrentSolutionPath);
+        var (success, path, error) = await _ioService.SaveAsync(Solution, CurrentSolutionPath).ConfigureAwait(false);
         if (success && path != null)
         {
-            CurrentSolutionPath = path;
-            HasUnsavedChanges = false;  // Clear the unsaved changes flag after successful save
+            // Marshal to UI thread to update observable properties bound to UI
+            _uiDispatcher.InvokeOnUi(() =>
+            {
+                CurrentSolutionPath = path;
+                HasUnsavedChanges = false;  // Clear the unsaved changes flag after successful save
+            });
             Debug.WriteLine($"✅ Solution saved to {path}");
         }
         else if (!string.IsNullOrEmpty(error))
@@ -100,7 +103,7 @@ public partial class MainWindowViewModel
         // Skip file operations if IoService not available (WebApp/MAUI)
         if (_ioService is not NullIoService && SaveSolutionCommand.CanExecute(null))
         {
-            await SaveSolutionCommand.ExecuteAsync(null);
+            await SaveSolutionCommand.ExecuteAsync(null).ConfigureAwait(false);
         }
 
         // Clear existing Solution (DI singleton)
@@ -139,7 +142,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        var (loadedSolution, path, error) = await _ioService.LoadAsync();
+        var (loadedSolution, path, error) = await _ioService.LoadAsync().ConfigureAwait(false);
 
         if (!string.IsNullOrEmpty(error))
         {
@@ -148,7 +151,8 @@ public partial class MainWindowViewModel
 
         if (loadedSolution != null && path != null)
         {
-            ApplyLoadedSolution(loadedSolution, path);
+            // Marshal to UI thread to update observable properties bound to UI
+            _uiDispatcher.InvokeOnUi(() => ApplyLoadedSolution(loadedSolution, path));
         }
     }
 
@@ -165,7 +169,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        var (loadedSolution, path, error) = await _ioService.LoadFromPathAsync(filePath);
+        var (loadedSolution, path, error) = await _ioService.LoadFromPathAsync(filePath).ConfigureAwait(false);
 
         if (!string.IsNullOrEmpty(error))
         {
@@ -174,7 +178,8 @@ public partial class MainWindowViewModel
 
         if (loadedSolution != null && path != null)
         {
-            ApplyLoadedSolution(loadedSolution, path);
+            // Marshal to UI thread to update observable properties bound to UI
+            _uiDispatcher.InvokeOnUi(() => ApplyLoadedSolution(loadedSolution, path));
         }
     }
 

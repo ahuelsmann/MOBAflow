@@ -2,10 +2,8 @@
 namespace Moba.SharedUI.ViewModel.Action;
 
 using CommunityToolkit.Mvvm.Input;
-
 using Domain;
 using Domain.Enum;
-
 using Interface;
 
 /// <summary>
@@ -40,7 +38,7 @@ public partial class AudioViewModel : WorkflowActionViewModel
     [RelayCommand]
     private async Task BrowseForFileAsync()
     {
-        var path = await _ioService.BrowseForAudioFileAsync();
+        var path = await _ioService.BrowseForAudioFileAsync().ConfigureAwait(false);
         if (!string.IsNullOrEmpty(path))
         {
             FilePath = path;

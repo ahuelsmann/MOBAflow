@@ -4,25 +4,17 @@ namespace Moba.SharedUI.ViewModel;
 using Backend.Interface;
 using Backend.Manager;
 using Backend.Service;
-
 using Common.Configuration;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using Domain;
 using Domain.Enum;
-
 using Interface;
-
 using Microsoft.Extensions.Logging;
-
-using Service;  // For NullIoService
-
-using Sound;
-
+using Service;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+// For NullIoService
 
 /// <summary>
 /// Core ViewModel for main window functionality.
@@ -117,7 +109,7 @@ public partial class MainWindowViewModel : ObservableObject
             {
                 try
                 {
-                    await LoadCityLibraryAsync();
+                    await LoadCityLibraryAsync().ConfigureAwait(false);
                     Debug.WriteLine($"✅ City Library loaded: {CityLibrary.Count} cities");
                 }
                 catch (Exception ex)
@@ -185,7 +177,7 @@ public partial class MainWindowViewModel : ObservableObject
     partial void OnSelectedJourneyChanged(JourneyViewModel? value)
     {
         _ = value; // Suppress unused parameter warning
-        ResetJourneyCommand?.NotifyCanExecuteChanged();
+        ResetJourneyCommand.NotifyCanExecuteChanged();
     }
 
     [ObservableProperty]
@@ -503,7 +495,7 @@ public partial class MainWindowViewModel : ObservableObject
     {
         if (_cityLibraryService == null) return;
 
-        var cities = await _cityLibraryService.LoadCitiesAsync();
+        var cities = await _cityLibraryService.LoadCitiesAsync().ConfigureAwait(false);
         CityLibrary = new ObservableCollection<City>(cities);
 
         Debug.WriteLine($"✅ City Library loaded: {CityLibrary.Count} cities");

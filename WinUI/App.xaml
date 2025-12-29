@@ -16,8 +16,7 @@
             <converter:BoolToAccentBrushConverter x:Key="BoolToAccentBrushConverter" />
             <converter:TrackNumberConverter x:Key="TrackNumberConverter" />
             <converter:ExitSideConverter x:Key="ExitSideConverter" />
-            <converter:NullConverter x:Key="NullConverter" />
-            <converter:NotNullConverter x:Key="NotNullConverter" />
+            <converter:NullableConverter x:Key="NullableConverter" />
             <converter:DateTimeToTimeSpanConverter x:Key="DateTimeToTimeSpanConverter" />
         </ResourceDictionary>
     </Application.Resources>

@@ -1,15 +1,11 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-using Moba.Backend;
 using Moba.Backend.Data;
 using Moba.Backend.Extensions;
-using Moba.Backend.Interface;
-using Moba.Backend.Network;
-using Moba.Backend.Service;
 using Moba.Common.Configuration;
-using Moba.Domain;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
+using Moba.Sound;
 using Moba.WebApp.Components;
 using Moba.WebApp.Service;
 
@@ -35,8 +31,8 @@ builder.Services.AddSingleton<ISettingsService, SettingsService>();
 builder.Services.AddSingleton<IUiDispatcher, BlazorUiDispatcher>();
 
 // ✅ Audio Services (NullObject - WebApp doesn't support audio)
-builder.Services.AddSingleton<Moba.Sound.ISoundPlayer, Moba.Sound.NullSoundPlayer>();
-builder.Services.AddSingleton<Moba.Sound.ISpeakerEngine, Moba.Sound.NullSpeakerEngine>();
+builder.Services.AddSingleton<ISoundPlayer, NullSoundPlayer>();
+builder.Services.AddSingleton<ISpeakerEngine, NullSpeakerEngine>();
 
 // Backend services - Register in dependency order
 // ✅ Use shared extension method for platform-consistent registration

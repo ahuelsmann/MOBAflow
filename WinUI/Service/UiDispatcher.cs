@@ -2,7 +2,6 @@
 namespace Moba.WinUI.Service;
 
 using Microsoft.UI.Dispatching;
-
 using SharedUI.Interface;
 
 public class UiDispatcher : IUiDispatcher

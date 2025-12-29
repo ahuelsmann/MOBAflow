@@ -1,8 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
+using Android.OS;
+using Platforms.Android.Services;
 using SharedUI.Interface;
-
 #if ANDROID
 using Android.Content;
 
@@ -28,11 +29,11 @@ public class BackgroundService : IBackgroundService
             return Task.CompletedTask;
         }
 
-        var intent = new Intent(activity, typeof(Platforms.Android.Services.Z21BackgroundService));
+        var intent = new Intent(activity, typeof(Z21BackgroundService));
         intent.PutExtra("title", title);
         intent.PutExtra("message", message);
 
-        if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.O)
+        if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
         {
             activity.StartForegroundService(intent);
         }
@@ -55,7 +56,7 @@ public class BackgroundService : IBackgroundService
             return Task.CompletedTask;
         }
 
-        var intent = new Intent(activity, typeof(Platforms.Android.Services.Z21BackgroundService));
+        var intent = new Intent(activity, typeof(Z21BackgroundService));
         intent.SetAction("STOP_SERVICE");
         activity.StartService(intent);
 
