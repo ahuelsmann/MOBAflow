@@ -66,6 +66,12 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     [ObservableProperty]
     private string? layoutDescription;
 
+    [ObservableProperty]
+    private double canvasWidth = 2000;
+
+    [ObservableProperty]
+    private double canvasHeight = 1500;
+
     public bool HasSelectedSegment => SelectedSegment != null;
     public int SegmentCount => Segments.Count;
     public int AssignedFeedbackPointCount => Segments.Count(s => s.HasInPort);
@@ -414,31 +420,41 @@ public partial class TrackPlanEditorViewModel : ObservableObject
 
             Debug.WriteLine($"🎨 RenderLayout: {layout.Segments.Count} segments, {layout.Connections.Count} connections");
 
-            // Calculate positions and path data from topology
-            var rendered = _renderer.Render(layout);
+        // Calculate positions and path data from topology
+        var result = _renderer.Render(layout);
 
-            Debug.WriteLine($"✅ Rendered: {rendered.Count} segments");
+        Debug.WriteLine($"✅ Rendered: {result.Segments.Count} segments");
 
-            // Apply calculated positions, PathData, and rotation to ViewModels
-            foreach (var rs in rendered)
+        // Apply calculated positions, PathData, and rotation to ViewModels
+        foreach (var rs in result.Segments)
+        {
+            var vm = Segments.FirstOrDefault(s => s.Id == rs.Id);
+            if (vm != null)
             {
-                var vm = Segments.FirstOrDefault(s => s.Id == rs.Id);
-                if (vm != null)
-                {
-                    vm.X = rs.X;
-                    vm.Y = rs.Y;
-                    vm.PathData = rs.PathData;
-                    vm.Rotation = rs.Rotation;  // Apply rotation for WinUI RenderTransform
-                    var pathPreview = rs.PathData != null && rs.PathData.Length > 50 
-                        ? rs.PathData.Substring(0, 50) + "..." 
-                        : rs.PathData;
-                    Debug.WriteLine($"  Segment {rs.Id} ({rs.ArticleCode}): X={rs.X:F1}, Y={rs.Y:F1}, PathData={pathPreview}");
-                }
+                vm.X = rs.X;
+                vm.Y = rs.Y;
+                vm.PathData = rs.PathData;
+                vm.Rotation = rs.Rotation;  // Apply rotation for WinUI RenderTransform
+                var pathPreview = rs.PathData != null && rs.PathData.Length > 50 
+                    ? rs.PathData.Substring(0, 50) + "..." 
+                    : rs.PathData;
+                Debug.WriteLine($"  Segment {rs.Id} ({rs.ArticleCode}): X={rs.X:F1}, Y={rs.Y:F1}, Rotation={rs.Rotation:F1}°, PathData={pathPreview}");
             }
-
-            OnPropertyChanged(nameof(SegmentCount));
-            OnPropertyChanged(nameof(StatusText));
         }
+
+        if (result.Segments.Count > 0)
+        {
+            var bb = result.BoundingBox;
+            // add extra margin on right/bottom to match left/top 50px in renderer
+            const double extraMargin = 50.0;
+            CanvasWidth = Math.Max(bb.Width + extraMargin, 800);
+            CanvasHeight = Math.Max(bb.Height + extraMargin, 600);
+            Debug.WriteLine($"🖼️ Canvas size set to {CanvasWidth:F1} x {CanvasHeight:F1} (bounding {bb.Width:F1} x {bb.Height:F1})");
+        }
+
+        OnPropertyChanged(nameof(SegmentCount));
+        OnPropertyChanged(nameof(StatusText));
+    }
 
         /// <summary>
         /// Refresh PathData for all segments after drag/move operations.
@@ -603,66 +619,104 @@ public partial class TrackPlanEditorViewModel : ObservableObject
 
         #region Import/Export
 
-        /// <summary>
-        /// Import AnyRail layout as PURE TOPOLOGY.
-        /// Only ArticleCode + Connections are extracted - no coordinates.
-        /// TopologyRenderer calculates all positions from track geometry library.
-        /// </summary>
-        [RelayCommand]
-        private async Task ImportAnyRailAsync()
-        {
-            var file = await _ioService.BrowseForXmlFileAsync();
-            if (file == null) return;
+    [RelayCommand]
+    private async Task ImportAnyRailAsync()
+    {
+        var file = await _ioService.BrowseForXmlFileAsync();
+        if (file == null) return;
 
-            var anyRailLayout = await AnyRailLayout.ParseAsync(file);
+        var anyRailLayout = await AnyRailLayout.ParseAsync(file);
 
             Segments.Clear();
             Connections.Clear();
 
-            // Build endpoint lookup for connection detection
-            var endpointLookup = anyRailLayout.Endpoints.ToDictionary(e => e.Nr);
+        // Get TrackGeometryLibrary for endpoint lookup
+        var geometryLibrary = new TrackGeometryLibrary();
+        var missingGeometries = new HashSet<string>();
 
-            // Convert AnyRail parts to segments (ArticleCode ONLY - no coordinates!)
-            foreach (var part in anyRailLayout.Parts)
+        // Convert AnyRail parts to segments with library geometry endpoints
+        foreach (var part in anyRailLayout.Parts)
+        {
+            var articleCode = part.GetArticleCode();
+            
+            // Get endpoints from TrackGeometryLibrary based on ArticleCode
+            // These are local coordinates (relative to 0,0) that TopologyRenderer expects
+            var geometry = geometryLibrary.GetGeometry(articleCode);
+            
+            if (geometry == null)
             {
-                var articleCode = part.GetArticleCode();
-
-                var segment = new TrackSegment
+                missingGeometries.Add(articleCode);
+                Debug.WriteLine($"⚠️ Missing geometry for article code: {articleCode} (Part {part.Id}) - SKIPPING");
+                continue; // Skip segments without geometry for now
+            }
+            
+            // Build endpoints with Direction from AnyRail XML
+            var endpoints = new List<SegmentEndpoint>();
+            
+            // Match AnyRail endpoint numbers to library endpoint indices
+            for (int i = 0; i < part.EndpointNrs.Count && i < geometry.Endpoints.Count; i++)
+            {
+                var endpointNr = part.EndpointNrs[i];
+                var anyRailEndpoint = anyRailLayout.Endpoints.FirstOrDefault(e => e.Nr == endpointNr);
+                
+                endpoints.Add(new SegmentEndpoint
                 {
-                    Id = part.Id,
-                    ArticleCode = articleCode
-                    // NO Endpoints, Lines, Arcs - TopologyRenderer calculates from ArticleCode!
-                };
-
-                Segments.Add(new TrackSegmentViewModel(segment));
+                    X = geometry.Endpoints[i].X,  // Library position
+                    Y = geometry.Endpoints[i].Y,  // Library position
+                    Direction = anyRailEndpoint?.Direction  // AnyRail absolute direction!
+                });
             }
-
-            // Get connections directly from XML (explicit endpoint-to-endpoint mapping)
-            var converted = anyRailLayout.ToTrackConnections();
-            if (converted.Count == 0)
+            
+            var segment = new TrackSegment
             {
-                // Fallback: detect connections by grouping endpoints on parts
-                Debug.WriteLine("⚠️ AnyRail ToTrackConnections returned 0 connections - falling back to DetectConnections()");
-                DetectConnections(anyRailLayout, endpointLookup);
-            }
-            else
-            {
-                Connections.AddRange(converted);
-            }
+                Id = part.Id,
+                ArticleCode = articleCode,
+                Endpoints = endpoints
+            };
+            
+            Segments.Add(new TrackSegmentViewModel(segment));
+        }
 
-            // Log distinct article codes and missing geometries in library
-            try
-            {
-                var codes = Segments.Select(s => s.ArticleCode).Distinct().OrderBy(c => c).ToList();
-                var lib = new TrackGeometryLibrary();
-                var missing = codes.Where(c => lib.GetGeometry(c) == null).ToList();
-                Debug.WriteLine($"📦 Imported article codes: {string.Join(',', codes)}");
-                if (missing.Count > 0)
-                {
-                    Debug.WriteLine($"⚠️ Missing geometries for article codes: {string.Join(',', missing)}");
-                }
-            }
-            catch
+        // Get connections directly from XML
+        Connections.AddRange(anyRailLayout.ToTrackConnections());
+
+        // Report missing geometries
+        if (missingGeometries.Count > 0)
+        {
+            Debug.WriteLine($"❌ Missing geometries in library: {string.Join(", ", missingGeometries)}");
+            Debug.WriteLine($"   Please add these to TrackGeometryLibrary!");
+        }
+
+        // Render layout from endpoints
+        RenderLayout();
+
+        Debug.WriteLine($"📂 Imported AnyRail: {Segments.Count}/{anyRailLayout.Parts.Count} segments, {Connections.Count} connections");
+    }
+
+    /// <summary>
+    /// Import AnyRail layout and convert to PURE TOPOLOGY (no coordinates).
+    /// Renderer calculates all positions from ArticleCode + Connections.
+    /// </summary>
+    [RelayCommand]
+    private async Task ImportAnyRailPureTopologyAsync()
+    {
+        var file = await _ioService.BrowseForXmlFileAsync();
+        if (file == null) return;
+
+        var anyRailLayout = await AnyRailLayout.ParseAsync(file);
+
+        Segments.Clear();
+        Connections.Clear();
+
+        // Build endpoint lookup for connection detection
+        var endpointLookup = anyRailLayout.Endpoints.ToDictionary(e => e.Nr);
+
+        // Convert AnyRail parts to segments (ArticleCode ONLY)
+        foreach (var part in anyRailLayout.Parts)
+        {
+            var articleCode = part.GetArticleCode();
+            
+            var segment = new TrackSegment
             {
                 // best-effort logging; don't crash import
             }

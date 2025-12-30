@@ -49,29 +49,30 @@ public class TopologyRendererTests
         var rendered = renderer.Render(layout);
 
         // Assert
-        Assert.That(rendered, Has.Count.EqualTo(3), "Should render all 3 segments");
+        Assert.That(rendered.Segments, Has.Count.EqualTo(3), "Should render all 3 segments");
 
-        // Segment 1: G231 at origin
-        var seg1 = rendered.First(r => r.Id == "seg-1");
-        Assert.That(seg1.X, Is.EqualTo(0), "First segment starts at X=0");
-        Assert.That(seg1.Y, Is.EqualTo(0), "First segment starts at Y=0");
+        // Renderer offsets all coordinates by +50/+50
+        const double offset = 50.0;
+
+        // Segment 1: G231 at origin + offset
+        var seg1 = rendered.Segments.First(r => r.Id == "seg-1");
+        Assert.That(seg1.X, Is.EqualTo(0 + offset).Within(0.01), "First segment starts at X=50 after offset");
+        Assert.That(seg1.Y, Is.EqualTo(0 + offset).Within(0.01), "First segment starts at Y=50 after offset");
         Assert.That(seg1.PathData, Is.EqualTo("M 0,0 L 230.93,0"), "G231 has correct PathData");
         Assert.That(seg1.AssignedInPort, Is.EqualTo(1), "InPort preserved");
 
         // Segment 2: R2 connected to seg-1
-        // Position = seg1.Pos + seg1.Endpoint1 - seg2.Endpoint0
-        //          = (0,0) + (230.93,0) - (0,0) = (230.93, 0)
-        var seg2 = rendered.First(r => r.Id == "seg-2");
-        Assert.That(seg2.X, Is.EqualTo(230.93).Within(0.01), "R2 starts where G231 ends (X=230.93)");
-        Assert.That(seg2.Y, Is.EqualTo(0), "R2 starts at same Y as G231");
+        // Position without offset = (230.93, 0) → with offset = (280.93, 50)
+        var seg2 = rendered.Segments.First(r => r.Id == "seg-2");
+        Assert.That(seg2.X, Is.EqualTo(230.93 + offset).Within(0.01), "R2 starts where G231 ends (plus offset)");
+        Assert.That(seg2.Y, Is.EqualTo(0 + offset).Within(0.01), "R2 starts at same Y as G231 (plus offset)");
         Assert.That(seg2.PathData, Is.EqualTo("M 0,0 A 421.88,421.88 0 0 1 210.94,56.52"), "R2 has correct PathData");
 
         // Segment 3: G231 connected to seg-2
-        // Position = seg2.Pos + seg2.Endpoint1 - seg3.Endpoint0
-        //          = (230.93,0) + (210.94,56.52) - (0,0) = (441.87, 56.52)
-        var seg3 = rendered.First(r => r.Id == "seg-3");
-        Assert.That(seg3.X, Is.EqualTo(441.87).Within(0.01), "Second G231 positioned after R2 curve");
-        Assert.That(seg3.Y, Is.EqualTo(56.52).Within(0.01), "Second G231 Y-offset matches R2 end");
+        // Position without offset = (441.87, 56.52) → with offset = (491.87, 106.52)
+        var seg3 = rendered.Segments.First(r => r.Id == "seg-3");
+        Assert.That(seg3.X, Is.EqualTo(441.87 + offset).Within(0.01), "Second G231 positioned after R2 curve (plus offset)");
+        Assert.That(seg3.Y, Is.EqualTo(56.52 + offset).Within(0.01), "Second G231 Y-offset matches R2 end (plus offset)");
         Assert.That(seg3.PathData, Is.EqualTo("M 0,0 L 230.93,0"), "G231 has correct PathData");
         Assert.That(seg3.AssignedInPort, Is.EqualTo(2), "InPort preserved");
     }
@@ -88,7 +89,7 @@ public class TopologyRendererTests
         var rendered = renderer.Render(layout);
 
         // Assert
-        Assert.That(rendered, Is.Empty, "Empty layout should return no rendered segments");
+        Assert.That(rendered.Segments, Is.Empty, "Empty layout should return no rendered segments");
     }
 
     [Test]
@@ -110,6 +111,6 @@ public class TopologyRendererTests
         var rendered = renderer.Render(layout);
 
         // Assert
-        Assert.That(rendered, Is.Empty, "Unknown ArticleCode should be skipped");
+        Assert.That(rendered.Segments, Is.Empty, "Unknown ArticleCode should be skipped");
     }
 }

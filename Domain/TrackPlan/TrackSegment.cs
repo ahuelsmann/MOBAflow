@@ -60,6 +60,13 @@ public class SegmentEndpoint
 {
     public double X { get; set; }
     public double Y { get; set; }
+    
+    /// <summary>
+    /// Absolute direction in degrees (from AnyRail XML).
+    /// 0° = East, 90° = North, 180° = West, 270° = South.
+    /// Optional: Only set when imported from AnyRail.
+    /// </summary>
+    public double? Direction { get; set; }
 }
 
 /// <summary>

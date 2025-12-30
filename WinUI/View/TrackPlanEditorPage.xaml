@@ -69,71 +69,75 @@
             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
             CornerRadius="8">
             <Grid>
-                <Canvas
-                    x:Name="TrackCanvas"
-                    AllowDrop="True"
-                    Background="{ThemeResource SolidBackgroundFillColorBaseAltBrush}"
-                    DragOver="TrackCanvas_DragOver"
-                    Drop="TrackCanvas_Drop"
-                    PointerMoved="TrackCanvas_PointerMoved"
-                    PointerPressed="TrackCanvas_PointerPressed"
-                    PointerReleased="TrackCanvas_PointerReleased">
-                    <Canvas.RenderTransform>
-                        <TransformGroup>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                    <Canvas
+                        Width="{x:Bind ViewModel.CanvasWidth, Mode=OneWay}"
+                        Height="{x:Bind ViewModel.CanvasHeight, Mode=OneWay}"
+                        AllowDrop="True"
+                        Background="{ThemeResource SolidBackgroundFillColorBaseAltBrush}"
+                        DragOver="TrackCanvas_DragOver"
+                        Drop="TrackCanvas_Drop"
+                        PointerPressed="TrackCanvas_PointerPressed">
+                        <Canvas.RenderTransform>
                             <ScaleTransform ScaleX="{x:Bind ViewModel.ZoomFactor, Mode=OneWay}" ScaleY="{x:Bind ViewModel.ZoomFactor, Mode=OneWay}" />
                             <TranslateTransform X="{x:Bind ViewModel.PanOffsetX, Mode=OneWay}" Y="{x:Bind ViewModel.PanOffsetY, Mode=OneWay}" />
                                 </TransformGroup>
                             </Canvas.RenderTransform>
 
-                            <!--  Track Segments  -->
-                            <ItemsControl ItemsSource="{x:Bind ViewModel.Segments, Mode=OneWay}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <Canvas />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:TrackSegmentViewModel">
-                                        <Grid
-                                            PointerMoved="Segment_PointerMoved"
-                                            PointerPressed="Segment_PointerPressed"
-                                                                        PointerReleased="Segment_PointerReleased">
-                                                                        <!--  Invisible wider hit area for easier clicking  -->
-                                                                        <Path
-                                                                            Data="{x:Bind PathData, Mode=OneWay}"
-                                                                            Stroke="Transparent"
-                                                                            StrokeThickness="16" />
-                                                                        <!--  Visible track path  -->
-                                                                        <Path
-                                                                            Data="{x:Bind PathData, Mode=OneWay}"
-                                                                            Stroke="{ThemeResource AccentFillColorDefaultBrush}"
-                                                                            StrokeThickness="4" />
-                                                                        <!--  Selection highlight (shown when selected)  -->
-                                                                        <Path
-                                                                            Data="{x:Bind PathData, Mode=OneWay}"
-                                                                            Opacity="0.5"
-                                                                            Stroke="Yellow"
-                                                                            StrokeThickness="8"
-                                                                            Visibility="{x:Bind IsSelected, Mode=OneWay}" />
-                                                                        <!--  Drag group highlight (shown when part of drag group)  -->
-                                                                        <Path
-                                                                            Data="{x:Bind PathData, Mode=OneWay}"
-                                                                            Opacity="0.3"
-                                                                            Stroke="Cyan"
-                                                                            StrokeThickness="10"
-                                                                            Visibility="{x:Bind IsPartOfDragGroup, Mode=OneWay}" />
-                                                                        <!--  Snap target highlight (shown when near dragged segment)  -->
-                                                                        <Path
-                                                                            Data="{x:Bind PathData, Mode=OneWay}"
-                                                                            Opacity="0.6"
-                                                                            Stroke="Lime"
-                                                                            StrokeThickness="12"
-                                                                            Visibility="{x:Bind IsSnapTarget, Mode=OneWay}" />
-                                                                    </Grid>
-                                                                </DataTemplate>
-                                                            </ItemsControl.ItemTemplate>
-                                                        </ItemsControl>
-                                                    </Canvas>
+                        <!--  Track Segments  -->
+                        <ItemsControl ItemsSource="{x:Bind ViewModel.Segments, Mode=OneWay}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:TrackSegmentViewModel">
+                                     <Grid PointerPressed="Segment_PointerPressed">
+                                        <!--  Invisible wider hit area for easier clicking  -->
+                                        <Path
+                                            Data="{x:Bind PathData, Mode=OneWay, FallbackValue='M 0,0'}"
+                                            Stroke="Transparent"
+                                            StrokeThickness="16">
+                                            <Path.RenderTransform>
+                                                <TransformGroup>
+                                                    <RotateTransform Angle="{x:Bind Rotation, Mode=OneWay}" />
+                                                    <TranslateTransform X="{x:Bind X, Mode=OneWay}" Y="{x:Bind Y, Mode=OneWay}" />
+                                                </TransformGroup>
+                                            </Path.RenderTransform>
+                                        </Path>
+                                        <!--  Visible track path  -->
+                                        <Path
+                                            Data="{x:Bind PathData, Mode=OneWay, FallbackValue='M 0,0'}"
+                                            Stroke="{ThemeResource AccentFillColorDefaultBrush}"
+                                            StrokeThickness="4">
+                                            <Path.RenderTransform>
+                                                <TransformGroup>
+                                                    <RotateTransform Angle="{x:Bind Rotation, Mode=OneWay}" />
+                                                    <TranslateTransform X="{x:Bind X, Mode=OneWay}" Y="{x:Bind Y, Mode=OneWay}" />
+                                                </TransformGroup>
+                                            </Path.RenderTransform>
+                                        </Path>
+                                        <!--  Selection highlight (shown when selected)  -->
+                                        <Path
+                                            Data="{x:Bind PathData, Mode=OneWay, FallbackValue='M 0,0'}"
+                                            Opacity="0.5"
+                                            Stroke="Yellow"
+                                            StrokeThickness="8"
+                                            Visibility="{x:Bind IsSelected, Mode=OneWay}">
+                                            <Path.RenderTransform>
+                                                <TransformGroup>
+                                                    <RotateTransform Angle="{x:Bind Rotation, Mode=OneWay}" />
+                                                    <TranslateTransform X="{x:Bind X, Mode=OneWay}" Y="{x:Bind Y, Mode=OneWay}" />
+                                                </TransformGroup>
+                                            </Path.RenderTransform>
+                                        </Path>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Canvas>
+                </ScrollViewer>
 
                                             <!--  Zoom Controls (bottom right overlay)  -->
                 <StackPanel

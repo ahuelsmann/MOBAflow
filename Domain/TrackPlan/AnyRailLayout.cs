@@ -358,7 +358,7 @@ public class AnyRailPart
             "Curve" => GetCurveArticleCode(),
             "RightRegularTurnout" => "WR",
             "LeftRegularTurnout" => "WL",
-            "ThreewayTurnout" => "DWW",
+            "ThreewayTurnout" => "W3",  // Piko 55424
             "DoubleSlipswitch" => "DKW",
             _ => Type ?? "Unknown"
         };

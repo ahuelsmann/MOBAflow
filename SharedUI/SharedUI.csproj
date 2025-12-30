@@ -9,9 +9,13 @@
     <Compile Remove="Validation\**" />
     <EmbeddedResource Remove="Validation\**" />
     <None Remove="Validation\**" />
+    <Compile Remove="Tools\PikoPdfGeometryExtractor\**" />
+    <EmbeddedResource Remove="Tools\PikoPdfGeometryExtractor\**" />
+    <None Remove="Tools\PikoPdfGeometryExtractor\**" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="GShark" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Backend\Backend.csproj" />

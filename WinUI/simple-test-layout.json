@@ -12,29 +12,92 @@
       "Workflows": [],
       "Journeys": [],
       "TrackLayout": {
-        "Name": "Simple Test Layout (3 Segments)",
-        "Description": "Minimal layout to test topology rendering: Straight → Straight → Curve",
+        "Name": "Simple Test Layout (R1 Ring)",
+        "Description": "Closed ring to test topology rendering: 12x R1 with end-to-start connections plus closing edge.",
         "TrackSystem": "Piko A-Gleis",
         "Segments": [
           {
             "Id": "1",
-            "ArticleCode": "G231",
+            "ArticleCode": "R1",
             "AssignedInPort": null,
-            "Name": "Start",
+            "Name": "R1-01",
             "Layer": null
           },
           {
             "Id": "2",
-            "ArticleCode": "G231",
+            "ArticleCode": "R1",
             "AssignedInPort": null,
-            "Name": "Middle",
+            "Name": "R1-02",
             "Layer": null
           },
           {
             "Id": "3",
             "ArticleCode": "R1",
             "AssignedInPort": null,
-            "Name": "Curve",
+            "Name": "R1-03",
+            "Layer": null
+          },
+          {
+            "Id": "4",
+            "ArticleCode": "R1",
+            "AssignedInPort": null,
+            "Name": "R1-04",
+            "Layer": null
+          },
+          {
+            "Id": "5",
+            "ArticleCode": "R1",
+            "AssignedInPort": null,
+            "Name": "R1-05",
+            "Layer": null
+          },
+          {
+            "Id": "6",
+            "ArticleCode": "R1",
+            "AssignedInPort": null,
+            "Name": "R1-06",
+            "Layer": null
+          },
+          {
+            "Id": "7",
+            "ArticleCode": "R1",
+            "AssignedInPort": null,
+            "Name": "R1-07",
+            "Layer": null
+          },
+          {
+            "Id": "8",
+            "ArticleCode": "R1",
+            "AssignedInPort": null,
+            "Name": "R1-08",
+            "Layer": null
+          },
+          {
+            "Id": "9",
+            "ArticleCode": "R1",
+            "AssignedInPort": null,
+            "Name": "R1-09",
+            "Layer": null
+          },
+          {
+            "Id": "10",
+            "ArticleCode": "R1",
+            "AssignedInPort": null,
+            "Name": "R1-10",
+            "Layer": null
+          },
+          {
+            "Id": "11",
+            "ArticleCode": "R1",
+            "AssignedInPort": null,
+            "Name": "R1-11",
+            "Layer": null
+          },
+          {
+            "Id": "12",
+            "ArticleCode": "R1",
+            "AssignedInPort": null,
+            "Name": "R1-12",
             "Layer": null
           }
         ],
@@ -49,6 +112,66 @@
             "Segment1Id": "2",
             "Segment1EndpointIndex": 1,
             "Segment2Id": "3",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "3",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "4",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "4",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "5",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "5",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "6",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "6",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "7",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "7",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "8",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "8",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "9",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "9",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "10",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "10",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "11",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "11",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "12",
+            "Segment2EndpointIndex": 0
+          },
+          {
+            "Segment1Id": "12",
+            "Segment1EndpointIndex": 1,
+            "Segment2Id": "1",
             "Segment2EndpointIndex": 0
           }
         ]
