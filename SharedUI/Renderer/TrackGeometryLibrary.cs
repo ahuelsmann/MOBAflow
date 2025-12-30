@@ -112,16 +112,74 @@ public class TrackGeometryLibrary
             PathData = "M 0,0 A 545.63,545.63 0 0 1 272.82,73.08"
         };
 
-        // R9 - Radius 907.97mm, 15° (switch turnout radius, 24 pieces = full circle)
-        // For 15° (0.2618 rad): sin(15°)=0.25882, cos(15°)=0.96593
-        // End: x = 907.97 * 0.25882 = 235.00, y = 907.97 * (1 - 0.96593) = 30.93
-        _templates["R9"] = new TrackGeometry
-        {
-            ArticleCode = "R9",
-            Endpoints = [new TrackPoint(0, 0), new TrackPoint(235.00, 30.93)],
-            PathData = "M 0,0 A 907.97,907.97 0 0 1 235.00,30.93"
-        };
-    }
+            // R9 - Radius 907.97mm, 15° (switch turnout radius, 24 pieces = full circle)
+            // For 15° (0.2618 rad): sin(15°)=0.25882, cos(15°)=0.96593
+            // End: x = 907.97 * 0.25882 = 235.00, y = 907.97 * (1 - 0.96593) = 30.93
+            _templates["R9"] = new TrackGeometry
+            {
+                ArticleCode = "R9",
+                Endpoints = [new TrackPoint(0, 0), new TrackPoint(235.00, 30.93)],
+                PathData = "M 0,0 A 907.97,907.97 0 0 1 235.00,30.93"
+            };
+
+            // === TURNOUTS (Weichen) ===
+            // All turnouts have 3 endpoints: 0=entry, 1=straight exit, 2=diverging exit
+            // Straight path = G231 (230.93mm), diverging path = R9 (907.97mm radius, 15°)
+
+            // WR - Right Regular Turnout (Rechtsweiche)
+            // Entry at origin, straight exit at G231 length, diverging exit at R9 endpoint
+            _templates["WR"] = new TrackGeometry
+            {
+                ArticleCode = "WR",
+                Endpoints = [
+                    new TrackPoint(0, 0),           // Entry
+                    new TrackPoint(230.93, 0),      // Straight exit (G231 length)
+                    new TrackPoint(235.00, 30.93)   // Diverging exit (R9: 15° right)
+                ],
+                PathData = "M 0,0 L 230.93,0 M 0,0 A 907.97,907.97 0 0 1 235.00,30.93"
+            };
+
+            // WL - Left Regular Turnout (Linksweiche)
+            // Entry at origin, straight exit at G231 length, diverging exit at R9 endpoint (mirrored Y)
+            _templates["WL"] = new TrackGeometry
+            {
+                ArticleCode = "WL",
+                Endpoints = [
+                    new TrackPoint(0, 0),           // Entry
+                    new TrackPoint(230.93, 0),      // Straight exit (G231 length)
+                    new TrackPoint(235.00, -30.93)  // Diverging exit (R9: 15° left, negative Y)
+                ],
+                PathData = "M 0,0 L 230.93,0 M 0,0 A 907.97,907.97 0 0 0 235.00,-30.93"
+            };
+
+            // DWW - Three-way Turnout (Dreiwegweiche)
+            // Entry at origin, straight exit, left diverging, right diverging
+            _templates["DWW"] = new TrackGeometry
+            {
+                ArticleCode = "DWW",
+                Endpoints = [
+                    new TrackPoint(0, 0),           // Entry
+                    new TrackPoint(230.93, 0),      // Straight exit
+                    new TrackPoint(235.00, -30.93), // Left diverging (R9: 15° left)
+                    new TrackPoint(235.00, 30.93)   // Right diverging (R9: 15° right)
+                ],
+                PathData = "M 0,0 L 230.93,0 M 0,0 A 907.97,907.97 0 0 0 235.00,-30.93 M 0,0 A 907.97,907.97 0 0 1 235.00,30.93"
+            };
+
+            // DKW - Double Slip Switch (Doppelkreuzungsweiche)
+            // Four endpoints forming an X pattern with R9 curves
+            _templates["DKW"] = new TrackGeometry
+            {
+                ArticleCode = "DKW",
+                Endpoints = [
+                    new TrackPoint(0, 0),           // Entry 1
+                    new TrackPoint(230.93, 0),      // Exit 1 (straight through)
+                    new TrackPoint(0, 61.88),       // Entry 2 (parallel track, 61.88mm spacing)
+                    new TrackPoint(230.93, 61.88)   // Exit 2 (parallel track)
+                ],
+                PathData = "M 0,0 L 230.93,0 M 0,61.88 L 230.93,61.88 M 0,0 A 907.97,907.97 0 0 1 230.93,61.88 M 0,61.88 A 907.97,907.97 0 0 0 230.93,0"
+            };
+        }
 
     /// <summary>
     /// Get track geometry by article code.

@@ -61,7 +61,7 @@
             </Grid>
         </Border>
 
-        <!--  Track Plan Canvas with Zoom  -->
+        <!--  Track Plan Canvas with Zoom & Pan  -->
         <Border
             Grid.Row="0"
             Grid.Column="1"
@@ -69,54 +69,73 @@
             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
             CornerRadius="8">
             <Grid>
-                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                    <Canvas
-                        Width="1000"
-                        Height="600"
-                        AllowDrop="True"
-                        Background="{ThemeResource SolidBackgroundFillColorBaseAltBrush}"
-                        DragOver="TrackCanvas_DragOver"
-                        Drop="TrackCanvas_Drop"
-                        PointerPressed="TrackCanvas_PointerPressed">
-                        <Canvas.RenderTransform>
+                <Canvas
+                    x:Name="TrackCanvas"
+                    AllowDrop="True"
+                    Background="{ThemeResource SolidBackgroundFillColorBaseAltBrush}"
+                    DragOver="TrackCanvas_DragOver"
+                    Drop="TrackCanvas_Drop"
+                    PointerMoved="TrackCanvas_PointerMoved"
+                    PointerPressed="TrackCanvas_PointerPressed"
+                    PointerReleased="TrackCanvas_PointerReleased">
+                    <Canvas.RenderTransform>
+                        <TransformGroup>
                             <ScaleTransform ScaleX="{x:Bind ViewModel.ZoomFactor, Mode=OneWay}" ScaleY="{x:Bind ViewModel.ZoomFactor, Mode=OneWay}" />
-                        </Canvas.RenderTransform>
+                            <TranslateTransform X="{x:Bind ViewModel.PanOffsetX, Mode=OneWay}" Y="{x:Bind ViewModel.PanOffsetY, Mode=OneWay}" />
+                                </TransformGroup>
+                            </Canvas.RenderTransform>
 
-                        <!--  Track Segments  -->
-                        <ItemsControl ItemsSource="{x:Bind ViewModel.Segments, Mode=OneWay}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <Canvas />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:TrackSegmentViewModel">
-                                    <Grid PointerPressed="Segment_PointerPressed">
-                                        <!--  Invisible wider hit area for easier clicking  -->
-                                        <Path
-                                            Data="{x:Bind PathData, Mode=OneWay}"
-                                            Stroke="Transparent"
-                                            StrokeThickness="16" />
-                                        <!--  Visible track path  -->
-                                        <Path
-                                            Data="{x:Bind PathData, Mode=OneWay}"
-                                            Stroke="{ThemeResource AccentFillColorDefaultBrush}"
-                                            StrokeThickness="4" />
-                                        <!--  Selection highlight (shown when selected)  -->
-                                        <Path
-                                            Data="{x:Bind PathData, Mode=OneWay}"
-                                            Opacity="0.5"
-                                            Stroke="Yellow"
-                                            StrokeThickness="8"
-                                            Visibility="{x:Bind IsSelected, Mode=OneWay}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </Canvas>
-                </ScrollViewer>
+                            <!--  Track Segments  -->
+                            <ItemsControl ItemsSource="{x:Bind ViewModel.Segments, Mode=OneWay}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <Canvas />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:TrackSegmentViewModel">
+                                        <Grid
+                                            PointerMoved="Segment_PointerMoved"
+                                            PointerPressed="Segment_PointerPressed"
+                                                                        PointerReleased="Segment_PointerReleased">
+                                                                        <!--  Invisible wider hit area for easier clicking  -->
+                                                                        <Path
+                                                                            Data="{x:Bind PathData, Mode=OneWay}"
+                                                                            Stroke="Transparent"
+                                                                            StrokeThickness="16" />
+                                                                        <!--  Visible track path  -->
+                                                                        <Path
+                                                                            Data="{x:Bind PathData, Mode=OneWay}"
+                                                                            Stroke="{ThemeResource AccentFillColorDefaultBrush}"
+                                                                            StrokeThickness="4" />
+                                                                        <!--  Selection highlight (shown when selected)  -->
+                                                                        <Path
+                                                                            Data="{x:Bind PathData, Mode=OneWay}"
+                                                                            Opacity="0.5"
+                                                                            Stroke="Yellow"
+                                                                            StrokeThickness="8"
+                                                                            Visibility="{x:Bind IsSelected, Mode=OneWay}" />
+                                                                        <!--  Drag group highlight (shown when part of drag group)  -->
+                                                                        <Path
+                                                                            Data="{x:Bind PathData, Mode=OneWay}"
+                                                                            Opacity="0.3"
+                                                                            Stroke="Cyan"
+                                                                            StrokeThickness="10"
+                                                                            Visibility="{x:Bind IsPartOfDragGroup, Mode=OneWay}" />
+                                                                        <!--  Snap target highlight (shown when near dragged segment)  -->
+                                                                        <Path
+                                                                            Data="{x:Bind PathData, Mode=OneWay}"
+                                                                            Opacity="0.6"
+                                                                            Stroke="Lime"
+                                                                            StrokeThickness="12"
+                                                                            Visibility="{x:Bind IsSnapTarget, Mode=OneWay}" />
+                                                                    </Grid>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </Canvas>
 
-                <!--  Zoom Controls (bottom right overlay)  -->
+                                            <!--  Zoom Controls (bottom right overlay)  -->
                 <StackPanel
                     Margin="8"
                     Padding="8"
@@ -130,23 +149,33 @@
                         Padding="8,4"
                         Command="{x:Bind ViewModel.ZoomOutCommand}"
                         Content="-"
-                        FontWeight="Bold" />
+                        FontWeight="Bold"
+                        ToolTipService.ToolTip="Zoom Out (5%)" />
                     <Slider
                         Width="120"
                         VerticalAlignment="Center"
-                        Maximum="500"
+                        Maximum="400"
                         Minimum="5"
                         StepFrequency="5"
+                        ToolTipService.ToolTip="Zoom Level"
                         Value="{x:Bind ViewModel.ZoomLevel, Mode=TwoWay}" />
                     <Button
                         Padding="8,4"
                         Command="{x:Bind ViewModel.ZoomInCommand}"
                         Content="+"
-                        FontWeight="Bold" />
+                        FontWeight="Bold"
+                        ToolTipService.ToolTip="Zoom In (5%)" />
                     <TextBlock
                         VerticalAlignment="Center"
                         FontSize="12"
                         Text="{x:Bind ViewModel.ZoomLevelText, Mode=OneWay}" />
+                    <Button
+                        Padding="8,4"
+                        Command="{x:Bind ViewModel.ResetZoomCommand}"
+                        FontWeight="Bold"
+                        ToolTipService.ToolTip="Reset to 100% (Fit to View)">
+                        <FontIcon FontSize="12" Glyph="&#xE72C;" />
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>
@@ -186,19 +215,37 @@
                         SpinButtonPlacementMode="Inline"
                         Value="{x:Bind ViewModel.InPortInput, Mode=TwoWay}" />
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Command="{x:Bind ViewModel.AssignInPortCommand}" Content="Assign" />
-                        <Button Command="{x:Bind ViewModel.ClearInPortCommand}" Content="Clear" />
-                    </StackPanel>
+                                                <Button Command="{x:Bind ViewModel.AssignInPortCommand}" Content="Assign" />
+                                                <Button Command="{x:Bind ViewModel.ClearInPortCommand}" Content="Clear" />
+                                            </StackPanel>
 
-                    <Button Command="{x:Bind ViewModel.DeleteSegmentCommand}" Content="Delete Segment" />
-                </StackPanel>
+                                            <!--  Segment Actions  -->
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <Button
+                                                    Command="{x:Bind ViewModel.DisconnectSegmentCommand}"
+                                                    ToolTipService.ToolTip="Disconnect from connected segments">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <FontIcon FontSize="12" Glyph="&#xE894;" />
+                                                        <TextBlock Text="Disconnect" />
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button
+                                                    Command="{x:Bind ViewModel.DeleteSegmentCommand}"
+                                                    ToolTipService.ToolTip="Delete this segment">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <FontIcon FontSize="12" Glyph="&#xE74D;" />
+                                                        <TextBlock Text="Delete" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+                                        </StackPanel>
 
-                <!--  Status  -->
-                <TextBlock
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Style="{StaticResource CaptionTextBlockStyle}"
-                    Text="{x:Bind ViewModel.StatusText, Mode=OneWay}" />
-            </StackPanel>
-        </Border>
-    </Grid>
-</Page>
+                                        <!--  Status  -->
+                                        <TextBlock
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Style="{StaticResource CaptionTextBlockStyle}"
+                                            Text="{x:Bind ViewModel.StatusText, Mode=OneWay}" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </Page>

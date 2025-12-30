@@ -7,7 +7,6 @@ using Domain.TrackPlan;
 using Interface;
 using Service;
 using Renderer;
-using Converter;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 
@@ -104,22 +103,42 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     }
     #endregion
 
-    #region Zoom
+    #region Zoom & Pan
+
     /// <summary>
-    /// Zoom level in percent (25-200%). Default 100% shows the layout at calculated scale.
+    /// Base scale factor calculated to fit the entire layout in view.
+    /// When ZoomLevel = 100%, the layout fits perfectly in the canvas.
+    /// </summary>
+    [ObservableProperty]
+    private double baseScale = 1.0;
+
+    /// <summary>
+    /// Zoom level in percent (5-400%). 100% = layout fits in view (baseScale).
     /// </summary>
     [ObservableProperty]
     private double zoomLevel = 100.0;
 
     /// <summary>
-    /// Zoom factor for ScaleTransform (0.25 - 2.0).
+    /// Combined zoom factor for ScaleTransform = BaseScale * (ZoomLevel / 100).
     /// </summary>
-    public double ZoomFactor => ZoomLevel / 100.0;
+    public double ZoomFactor => BaseScale * (ZoomLevel / 100.0);
 
     /// <summary>
     /// Display text for zoom level.
     /// </summary>
     public string ZoomLevelText => $"{ZoomLevel:F0}%";
+
+    /// <summary>
+    /// Pan offset X (canvas translation).
+    /// </summary>
+    [ObservableProperty]
+    private double panOffsetX;
+
+    /// <summary>
+    /// Pan offset Y (canvas translation).
+    /// </summary>
+    [ObservableProperty]
+    private double panOffsetY;
 
     partial void OnZoomLevelChanged(double value)
     {
@@ -128,17 +147,41 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         OnPropertyChanged(nameof(ZoomLevelText));
     }
 
+    partial void OnBaseScaleChanged(double value)
+    {
+        _ = value;
+        OnPropertyChanged(nameof(ZoomFactor));
+    }
+
     [RelayCommand]
     private void ZoomIn()
     {
-        ZoomLevel = Math.Min(200, ZoomLevel + 5);
+        ZoomLevel = Math.Min(400, ZoomLevel + 5);
     }
 
     [RelayCommand]
     private void ZoomOut()
     {
-        ZoomLevel = Math.Max(25, ZoomLevel - 5);
+        ZoomLevel = Math.Max(5, ZoomLevel - 5);
     }
+
+    [RelayCommand]
+    private void ResetZoom()
+    {
+        ZoomLevel = 100.0;
+        PanOffsetX = 0;
+        PanOffsetY = 0;
+    }
+
+    /// <summary>
+    /// Pan the canvas by delta values.
+    /// </summary>
+    public void Pan(double deltaX, double deltaY)
+    {
+        PanOffsetX += deltaX;
+        PanOffsetY += deltaY;
+    }
+
     #endregion
 
     #region Commands
@@ -229,51 +272,252 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         OnPropertyChanged(nameof(StatusText));
     }
 
+    /// <summary>
+    /// Disconnect the selected segment from all its connections.
+    /// The segment becomes a free-floating piece that can be moved independently.
+    /// </summary>
+    [RelayCommand]
+    private void DisconnectSegment()
+    {
+        if (SelectedSegment == null) return;
+
+        var removedCount = Connections.RemoveAll(c =>
+            c.Segment1Id == SelectedSegment.Id || c.Segment2Id == SelectedSegment.Id);
+
+        if (removedCount > 0)
+        {
+            Debug.WriteLine($"🔗 Disconnected {SelectedSegment.ArticleCode}: removed {removedCount} connections");
+            OnPropertyChanged(nameof(StatusText));
+        }
+    }
+
+    /// <summary>
+    /// Snap tolerance for endpoint matching (in layout units).
+    /// </summary>
+    private const double SnapTolerance = 50.0;  // Generous tolerance for user-friendly snapping
+
+    /// <summary>
+    /// Find nearby free endpoints that could snap to the given segment's endpoints.
+    /// Returns the best snap candidate (closest match).
+    /// </summary>
+    public SnapCandidate? FindSnapCandidate(TrackSegmentViewModel draggedSegment)
+    {
+        if (draggedSegment.Model.Endpoints.Count == 0) return null;
+
+        SnapCandidate? bestCandidate = null;
+        double bestDistance = SnapTolerance;
+
+        // Get all segments NOT in the current drag group
+        var dragGroupIds = new HashSet<string>(FindConnectedGroup(draggedSegment.Id).Select(s => s.Id));
+
+        foreach (var otherSegment in Segments)
+        {
+            // Skip segments in the drag group
+            if (dragGroupIds.Contains(otherSegment.Id)) continue;
+
+            // Check each endpoint of the dragged segment against each endpoint of other segment
+            for (int dragEpIndex = 0; dragEpIndex < draggedSegment.Model.Endpoints.Count; dragEpIndex++)
+            {
+                var dragEp = draggedSegment.Model.Endpoints[dragEpIndex];
+
+                for (int otherEpIndex = 0; otherEpIndex < otherSegment.Model.Endpoints.Count; otherEpIndex++)
+                {
+                    // Skip if this endpoint is already connected
+                    if (IsEndpointConnected(otherSegment.Id, otherEpIndex)) continue;
+
+                    var otherEp = otherSegment.Model.Endpoints[otherEpIndex];
+
+                    // Calculate distance
+                    var dx = dragEp.X - otherEp.X;
+                    var dy = dragEp.Y - otherEp.Y;
+                    var distance = Math.Sqrt(dx * dx + dy * dy);
+
+                    if (distance < bestDistance)
+                    {
+                        bestDistance = distance;
+                        bestCandidate = new SnapCandidate
+                        {
+                            TargetSegment = otherSegment,
+                            TargetEndpointIndex = otherEpIndex,
+                            DraggedEndpointIndex = dragEpIndex,
+                            Distance = distance,
+                            SnapX = otherEp.X,
+                            SnapY = otherEp.Y
+                        };
+                    }
+                }
+            }
+        }
+
+        return bestCandidate;
+    }
+
+    /// <summary>
+    /// Check if an endpoint is already connected.
+    /// </summary>
+    private bool IsEndpointConnected(string segmentId, int endpointIndex)
+    {
+        return Connections.Any(c =>
+            (c.Segment1Id == segmentId && c.Segment1EndpointIndex == endpointIndex) ||
+            (c.Segment2Id == segmentId && c.Segment2EndpointIndex == endpointIndex));
+    }
+
+    /// <summary>
+    /// Create a connection when snapping occurs.
+    /// </summary>
+    public void SnapAndConnect(TrackSegmentViewModel draggedSegment, SnapCandidate candidate)
+    {
+        // Calculate offset to snap the dragged segment to the target
+        var dragEp = draggedSegment.Model.Endpoints[candidate.DraggedEndpointIndex];
+        var deltaX = candidate.SnapX - dragEp.X;
+        var deltaY = candidate.SnapY - dragEp.Y;
+
+        // Move all segments in the drag group
+        var dragGroup = FindConnectedGroup(draggedSegment.Id);
+        foreach (var segment in dragGroup)
+        {
+            segment.MoveBy(deltaX, deltaY);
+        }
+
+        // Create the connection
+        var connection = new TrackConnection
+        {
+            Segment1Id = draggedSegment.Id,
+            Segment1EndpointIndex = candidate.DraggedEndpointIndex,
+            Segment2Id = candidate.TargetSegment.Id,
+            Segment2EndpointIndex = candidate.TargetEndpointIndex
+        };
+
+        Connections.Add(connection);
+        RefreshPathData();
+
+        Debug.WriteLine($"🔗 Snapped {draggedSegment.ArticleCode} to {candidate.TargetSegment.ArticleCode}");
+    }
+
     #endregion
 
     #region Rendering
 
-    /// <summary>
-    /// Render the layout by calculating positions from topology.
-    /// </summary>
-    private void RenderLayout()
-    {
-        // Build TrackLayout from current state
-        var layout = new TrackLayout
+        /// <summary>
+        /// Render the layout by calculating positions from topology.
+        /// </summary>
+        private void RenderLayout()
         {
-            Name = LayoutName,
-            Description = LayoutDescription,
-            Segments = Segments.Select(s => s.Model).ToList(),
-            Connections = Connections.ToList()
-        };
-
-        Debug.WriteLine($"🎨 RenderLayout: {layout.Segments.Count} segments, {layout.Connections.Count} connections");
-
-        // Calculate positions and path data from topology
-        var rendered = _renderer.Render(layout);
-
-        Debug.WriteLine($"✅ Rendered: {rendered.Count} segments");
-
-        // Apply calculated positions, PathData, and rotation to ViewModels
-        foreach (var rs in rendered)
-        {
-            var vm = Segments.FirstOrDefault(s => s.Id == rs.Id);
-            if (vm != null)
+            // Build TrackLayout from current state
+            var layout = new TrackLayout
             {
-                vm.X = rs.X;
-                vm.Y = rs.Y;
-                vm.PathData = rs.PathData;
-                vm.Rotation = rs.Rotation;  // Apply rotation for WinUI RenderTransform
-                var pathPreview = rs.PathData != null && rs.PathData.Length > 50 
-                    ? rs.PathData.Substring(0, 50) + "..." 
-                    : rs.PathData;
-                Debug.WriteLine($"  Segment {rs.Id} ({rs.ArticleCode}): X={rs.X:F1}, Y={rs.Y:F1}, PathData={pathPreview}");
+                Name = LayoutName,
+                Description = LayoutDescription,
+                Segments = Segments.Select(s => s.Model).ToList(),
+                Connections = Connections.ToList()
+            };
+
+            Debug.WriteLine($"🎨 RenderLayout: {layout.Segments.Count} segments, {layout.Connections.Count} connections");
+
+            // Calculate positions and path data from topology
+            var rendered = _renderer.Render(layout);
+
+            Debug.WriteLine($"✅ Rendered: {rendered.Count} segments");
+
+            // Apply calculated positions, PathData, and rotation to ViewModels
+            foreach (var rs in rendered)
+            {
+                var vm = Segments.FirstOrDefault(s => s.Id == rs.Id);
+                if (vm != null)
+                {
+                    vm.X = rs.X;
+                    vm.Y = rs.Y;
+                    vm.PathData = rs.PathData;
+                    vm.Rotation = rs.Rotation;  // Apply rotation for WinUI RenderTransform
+                    var pathPreview = rs.PathData != null && rs.PathData.Length > 50 
+                        ? rs.PathData.Substring(0, 50) + "..." 
+                        : rs.PathData;
+                    Debug.WriteLine($"  Segment {rs.Id} ({rs.ArticleCode}): X={rs.X:F1}, Y={rs.Y:F1}, PathData={pathPreview}");
+                }
+            }
+
+            OnPropertyChanged(nameof(SegmentCount));
+            OnPropertyChanged(nameof(StatusText));
+        }
+
+        /// <summary>
+        /// Refresh PathData for all segments after drag/move operations.
+        /// Uses current segment positions (Lines, Arcs) to regenerate SVG paths.
+        /// </summary>
+        public void RefreshPathData()
+        {
+            foreach (var vm in Segments)
+            {
+                vm.PathData = GeneratePathData(vm.Model);
             }
         }
 
-        OnPropertyChanged(nameof(SegmentCount));
-        OnPropertyChanged(nameof(StatusText));
-    }
+        /// <summary>
+        /// Generate SVG PathData from segment's Lines and Arcs.
+        /// </summary>
+        private static string GeneratePathData(TrackSegment segment)
+        {
+            var sb = new System.Text.StringBuilder();
+
+            // Add lines
+            foreach (var line in segment.Lines)
+            {
+                sb.Append($"M {line.X1:F1},{line.Y1:F1} L {line.X2:F1},{line.Y2:F1} ");
+            }
+
+            // Add arcs
+            foreach (var arc in segment.Arcs)
+            {
+                // SVG Arc: M x1,y1 A rx,ry rotation large-arc-flag sweep-flag x2,y2
+                var sweepFlag = arc.Sweep > 0 ? 1 : 0;
+                sb.Append($"M {arc.X1:F1},{arc.Y1:F1} A {arc.Radius:F1},{arc.Radius:F1} 0 0 {sweepFlag} {arc.X2:F1},{arc.Y2:F1} ");
+            }
+
+            return sb.ToString().Trim();
+        }
+
+        #endregion
+
+        #region Connection Graph
+
+        /// <summary>
+        /// Find all segments connected to the given segment (BFS traversal of connection graph).
+        /// Returns a list including the start segment.
+        /// </summary>
+        public List<TrackSegmentViewModel> FindConnectedGroup(string startSegmentId)
+        {
+            var result = new List<TrackSegmentViewModel>();
+            var visited = new HashSet<string>();
+            var queue = new Queue<string>();
+
+            queue.Enqueue(startSegmentId);
+
+            while (queue.Count > 0)
+            {
+                var currentId = queue.Dequeue();
+                if (visited.Contains(currentId)) continue;
+                visited.Add(currentId);
+
+                var segment = Segments.FirstOrDefault(s => s.Id == currentId);
+                if (segment != null)
+                {
+                    result.Add(segment);
+                }
+
+                // Find connected segments via Connections
+                var connectedIds = Connections
+                    .Where(c => c.Segment1Id == currentId || c.Segment2Id == currentId)
+                    .Select(c => c.Segment1Id == currentId ? c.Segment2Id : c.Segment1Id)
+                    .Where(id => !visited.Contains(id));
+
+                foreach (var id in connectedIds)
+                {
+                    queue.Enqueue(id);
+                }
+            }
+
+            return result;
+        }
 
 
 
@@ -348,212 +592,95 @@ public partial class TrackPlanEditorViewModel : ObservableObject
 
         Connections.AddRange(layout.Connections);
         
-        // Always render to calculate PathData from topology
-        RenderLayout();
+            // Always render to calculate PathData from topology
+            RenderLayout();
 
-        Debug.WriteLine($"📂 Loaded: {Segments.Count} segments, {Connections.Count} connections");
-    }
+            Debug.WriteLine($"📂 Loaded: {Segments.Count} segments, {Connections.Count} connections");
+        }
 
 
-    #endregion
+        #endregion
 
-    #region Import/Export
+        #region Import/Export
 
-    [RelayCommand]
-    private async Task ImportAnyRailAsync()
-    {
-        var file = await _ioService.BrowseForXmlFileAsync().ConfigureAwait(false);
-        if (file == null) return;
-
-        var anyRailLayout = await AnyRailLayout.ParseAsync(file).ConfigureAwait(false);
-
-        Segments.Clear();
-        Connections.Clear();
-
-        // Build endpoint lookup
-        var endpointLookup = anyRailLayout.Endpoints.ToDictionary(e => e.Nr);
-
-        // Calculate scale and offset to fit layout in view
-        var (scale, offsetX, offsetY) = CalculateScaleAndOffset(anyRailLayout, endpointLookup);
-
-        // Convert AnyRail parts to segments with scaled endpoint coordinates
-        foreach (var part in anyRailLayout.Parts)
+        /// <summary>
+        /// Import AnyRail layout as PURE TOPOLOGY.
+        /// Only ArticleCode + Connections are extracted - no coordinates.
+        /// TopologyRenderer calculates all positions from track geometry library.
+        /// </summary>
+        [RelayCommand]
+        private async Task ImportAnyRailAsync()
         {
-            var articleCode = part.GetArticleCode();
-            
-            // Get endpoint coordinates from AnyRail XML, scaled and offset
-            var endpoints = new List<SegmentEndpoint>();
-            foreach (var epNr in part.EndpointNrs)
+            var file = await _ioService.BrowseForXmlFileAsync();
+            if (file == null) return;
+
+            var anyRailLayout = await AnyRailLayout.ParseAsync(file);
+
+            Segments.Clear();
+            Connections.Clear();
+
+            // Build endpoint lookup for connection detection
+            var endpointLookup = anyRailLayout.Endpoints.ToDictionary(e => e.Nr);
+
+            // Convert AnyRail parts to segments (ArticleCode ONLY - no coordinates!)
+            foreach (var part in anyRailLayout.Parts)
             {
-                if (endpointLookup.TryGetValue(epNr, out var ep))
+                var articleCode = part.GetArticleCode();
+
+                var segment = new TrackSegment
                 {
-                    endpoints.Add(new SegmentEndpoint
-                    {
-                        X = ep.X * scale + offsetX,
-                        Y = ep.Y * scale + offsetY
-                    });
+                    Id = part.Id,
+                    ArticleCode = articleCode
+                    // NO Endpoints, Lines, Arcs - TopologyRenderer calculates from ArticleCode!
+                };
+
+                Segments.Add(new TrackSegmentViewModel(segment));
+            }
+
+            // Get connections directly from XML (explicit endpoint-to-endpoint mapping)
+            var converted = anyRailLayout.ToTrackConnections();
+            if (converted.Count == 0)
+            {
+                // Fallback: detect connections by grouping endpoints on parts
+                Debug.WriteLine("⚠️ AnyRail ToTrackConnections returned 0 connections - falling back to DetectConnections()");
+                DetectConnections(anyRailLayout, endpointLookup);
+            }
+            else
+            {
+                Connections.AddRange(converted);
+            }
+
+            // Log distinct article codes and missing geometries in library
+            try
+            {
+                var codes = Segments.Select(s => s.ArticleCode).Distinct().OrderBy(c => c).ToList();
+                var lib = new TrackGeometryLibrary();
+                var missing = codes.Where(c => lib.GetGeometry(c) == null).ToList();
+                Debug.WriteLine($"📦 Imported article codes: {string.Join(',', codes)}");
+                if (missing.Count > 0)
+                {
+                    Debug.WriteLine($"⚠️ Missing geometries for article codes: {string.Join(',', missing)}");
                 }
             }
-            
-            // Convert AnyRail lines to domain DrawingLines
-            var lines = part.Lines.Select(line => new DrawingLine
+            catch
             {
-                X1 = line.Pt1.X * scale + offsetX,
-                Y1 = line.Pt1.Y * scale + offsetY,
-                X2 = line.Pt2.X * scale + offsetX,
-                Y2 = line.Pt2.Y * scale + offsetY
-            }).ToList();
-            
-            // Convert AnyRail arcs to domain DrawingArcs
-            var arcs = part.Arcs.Select(arc => new DrawingArc
-            {
-                X1 = arc.Pt1.X * scale + offsetX,
-                Y1 = arc.Pt1.Y * scale + offsetY,
-                X2 = arc.Pt2.X * scale + offsetX,
-                Y2 = arc.Pt2.Y * scale + offsetY,
-                Radius = arc.Radius * scale,
-                Sweep = 0  // Default sweep, will be calculated if needed
-            }).ToList();
-            
-            var segment = new TrackSegment
-            {
-                Id = part.Id,
-                ArticleCode = articleCode,
-                Endpoints = endpoints,
-                Lines = lines,
-                Arcs = arcs
-            };
-            
-            Segments.Add(new TrackSegmentViewModel(segment));
-        }
-
-        // Get connections directly from XML
-        Connections.AddRange(anyRailLayout.ToTrackConnections());
-
-        // Render layout from endpoints
-        RenderLayout();
-
-        Debug.WriteLine($"📂 Imported AnyRail: {Segments.Count} segments, {Connections.Count} connections (scale: {scale:F3})");
-    }
-
-    /// <summary>
-    /// Calculate scale and offset to center layout in view.
-    /// </summary>
-    private static (double scale, double offsetX, double offsetY) CalculateScaleAndOffset(
-        AnyRailLayout layout, Dictionary<int, AnyRailEndpoint> endpointLookup)
-    {
-        if (layout.Parts.Count == 0)
-            return (0.15, 50, 50);
-
-        // Find bounding box from all endpoints
-        double minX = double.MaxValue, minY = double.MaxValue;
-        double maxX = double.MinValue, maxY = double.MinValue;
-
-        foreach (var part in layout.Parts)
-        {
-            foreach (var epNr in part.EndpointNrs)
-            {
-                if (endpointLookup.TryGetValue(epNr, out var ep))
-                {
-                    minX = Math.Min(minX, ep.X);
-                    minY = Math.Min(minY, ep.Y);
-                    maxX = Math.Max(maxX, ep.X);
-                    maxY = Math.Max(maxY, ep.Y);
-                }
+                // best-effort logging; don't crash import
             }
+
+            // Set layout metadata
+            LayoutName = "AnyRail Import";
+            LayoutDescription = $"Imported {Segments.Count} segments, {Connections.Count} connections";
+
+            // Reset view
+            ZoomLevel = 100.0;
+            PanOffsetX = 0;
+            PanOffsetY = 0;
+
+            // Render from topology (TopologyRenderer calculates all positions from geometry library)
+            RenderLayout();
+
+            Debug.WriteLine($"📂 Imported AnyRail: {Segments.Count} segments, {Connections.Count} connections");
         }
-
-        var layoutWidth = maxX - minX;
-        var layoutHeight = maxY - minY;
-
-        // Target view size (Canvas dimensions)
-        const double targetWidth = 1000.0;
-        const double targetHeight = 600.0;
-        const double padding = 50.0;
-
-        var availableWidth = targetWidth - 2 * padding;
-        var availableHeight = targetHeight - 2 * padding;
-
-        // Calculate scale to fit
-        var scaleX = availableWidth / layoutWidth;
-        var scaleY = availableHeight / layoutHeight;
-        var scale = Math.Min(scaleX, scaleY);
-        scale = Math.Clamp(scale, 0.05, 0.5);
-
-        // Calculate scaled layout dimensions
-        var scaledWidth = layoutWidth * scale;
-        var scaledHeight = layoutHeight * scale;
-
-        // Calculate offset to CENTER the layout in the view
-        var offsetX = (targetWidth - scaledWidth) / 2 - (minX * scale);
-        var offsetY = (targetHeight - scaledHeight) / 2 - (minY * scale);
-
-        return (scale, offsetX, offsetY);
-    }
-
-    /// <summary>
-    /// Import AnyRail layout and convert to PURE TOPOLOGY (no coordinates).
-    /// Renderer calculates all positions from ArticleCode + Connections.
-    /// </summary>
-    [RelayCommand]
-    private async Task ImportAnyRailPureTopologyAsync()
-    {
-        var file = await _ioService.BrowseForXmlFileAsync().ConfigureAwait(false);
-        if (file == null) return;
-
-        var anyRailLayout = await AnyRailLayout.ParseAsync(file).ConfigureAwait(false);
-
-        Segments.Clear();
-        Connections.Clear();
-
-        // Build endpoint lookup for connection detection
-        var endpointLookup = anyRailLayout.Endpoints.ToDictionary(e => e.Nr);
-
-        // Convert AnyRail parts to segments (ArticleCode ONLY)
-        foreach (var part in anyRailLayout.Parts)
-        {
-            var articleCode = part.GetArticleCode();
-            
-            var segment = new TrackSegment
-            {
-                Id = part.Id,
-                ArticleCode = articleCode
-                // NO Endpoints, Lines, Arcs - renderer calculates from ArticleCode!
-            };
-            
-            Segments.Add(new TrackSegmentViewModel(segment));
-        }
-
-        // Detect connections from AnyRail endpoints
-        DetectConnections(anyRailLayout, endpointLookup);
-
-        // Convert to pure topology (strip any remaining coordinate data)
-        var tempLayout = new TrackLayout
-        {
-            Name = $"AnyRail Import: Pure Topology",
-            Description = "Pure topology (coordinates calculated by renderer)",
-            Segments = Segments.Select(s => s.Model).ToList(),
-            Connections = Connections.ToList()
-        };
-
-        var pureTopology = TopologyConverter.ToPureTopology(tempLayout);
-        var stats = TopologyConverter.GetConversionStats(tempLayout, pureTopology);
-
-        LayoutName = pureTopology.Name;
-        LayoutDescription = pureTopology.Description;
-
-        // Update ViewModels with pure topology
-        Segments.Clear();
-        foreach (var seg in pureTopology.Segments)
-        {
-            Segments.Add(new TrackSegmentViewModel(seg));
-        }
-
-        // Render from topology (calculates all positions)
-        RenderLayout();
-
-        Debug.WriteLine($"📦 AnyRail Pure Topology Import: {stats}");
-    }
 
     /// <summary>
     /// Detect connections between segments based on shared AnyRail endpoints.

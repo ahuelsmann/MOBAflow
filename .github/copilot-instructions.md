@@ -5,7 +5,7 @@
 > **Multi-platform system (.NET 10)**  
 > MOBAflow (WinUI) | MOBAsmart (MAUI) | MOBAdash (Blazor)
 > 
-> **Last Updated:** 2025-01-29 | **Version:** 3.12
+> **Last Updated:** 2025-01-31 | **Version:** 3.14
 
 ---
 
@@ -687,6 +687,281 @@ AnyRail XML → AnyRailLayout.Parse() → AnyRailPart[] → TrackSegmentViewMode
 - `Domain/TrackPlan/TrackLayout.cs` - Minimal POCO (47 LOC)
 - `SharedUI/ViewModel/TrackPlanViewModel.cs` - Import command + conversion
 - `WinUI/View/TrackPlanPage.xaml` - Viewbox + Path rendering
+
+---
+
+## 🤖 AI & Geometry for Track Planning
+
+### **AI Strengths (What Copilot Does Well)**
+- ✅ **Class structures:** Track, Node, Connection, Switch, CurveSegment
+- ✅ **Helper functions:** Angle calculation, curve radii, transformations (rotation, translation)
+- ✅ **Track library parsing:** Märklin, Piko, Roco (structured JSON/XML)
+- ✅ **UI scaffolding:** WPF, WinUI, MAUI track editors
+- ✅ **Data models:** Graph-based track networks
+- ✅ **Routine automation:** Snap-to-grid, Undo/Redo, Serialization
+
+### **AI Weaknesses (Always Verify Manually!)**
+- ⚠️ **Exact geometry:** May suggest wrong formulas for arcs/tangent points
+- ⚠️ **Numerical stability:** Rounding errors, wrong tolerances, inaccurate snap algorithms
+- ⚠️ **Topological consistency:** Tracks must be logically AND geometrically connected
+- ⚠️ **Complex algorithms:** Auto-layout, gap closing, pathfinding, collision detection
+
+**CRITICAL:** Use AI as idea generator for geometry code, but **always verify the final logic manually**.
+
+### **Effective AI Prompting for Geometry**
+```
+"Bitte zuerst die mathematische Formel für die Endpunkte eines Kreisbogens angeben.
+Danach die Herleitung in Worten.
+Erst dann den C#-Code."
+```
+
+**This forces step-by-step reasoning:**
+1. Mathematical formula first → Verifiable
+2. Derivation in words → Understandable  
+3. C# code last → Correct implementation
+
+### **Making AI "Spatially Aware"**
+AI models don't understand images/shapes - they work with text/structure. 
+But with structured data, AI can reason spatially:
+
+```json
+{
+  "G239": {
+    "type": "straight",
+    "length": 239.07,
+    "connectors": [
+      { "x": 0, "y": 0, "angle": 0 },
+      { "x": 239.07, "y": 0, "angle": 0 }
+    ]
+  },
+  "R1": {
+    "type": "curve",
+    "radius": 360,
+    "angle": 30,
+    "connectors": [
+      { "x": 0, "y": 0, "angle": 0 },
+      { "x": 180, "y": 48.24, "angle": 30 }
+    ]
+  }
+}
+```
+
+**With structured data, AI can:**
+- Check if tracks connect (matching endpoints + angles)
+- Suggest compatible pieces
+- Generate geometrically correct layouts
+
+### **Proven Architecture Patterns**
+
+#### **1. Track as Graph**
+```
+TrackSegment = Node with Ports (Position + Angle)
+Connection = Edge between Ports
+```
+- Ideal for: Auto-layout, routing, collision detection
+- **MOBAflow uses:** `TrackLayout.Connections` + `TrackSegment.Endpoints`
+
+#### **2. Parametric Geometry**
+| Type | Parameters |
+|------|------------|
+| Straight | StartPoint, Length, Angle |
+| Curve | StartPoint, Radius, SweepAngle |
+| Turnout | Combination of segments |
+
+- **MOBAflow uses:** `PikoATrackLibrary.Templates` with Length, Radius, Angle
+
+#### **3. Snapping System**
+- Tolerance-based: 0.5mm + 0.5°
+- Magnetic snap to ports
+- Optional: Intelligent snapping (preferred connections)
+
+#### **4. Library System**
+- JSON/XML-based definitions
+- Hierarchy: Manufacturer → Series → ArticleCode → Geometry
+- **MOBAflow uses:** `PikoATrackLibrary` (static), `TrackGeometryLibrary` (runtime)
+
+### **Key Geometry Formulas (Verified)**
+
+**Arc Endpoint Calculation:**
+```
+For arc with radius R and angle θ (degrees):
+θ_rad = θ × π / 180
+x_end = R × sin(θ_rad)
+y_end = R × (1 - cos(θ_rad))
+
+Example R1 (360mm, 30°):
+x = 360 × sin(30°) = 360 × 0.5 = 180mm
+y = 360 × (1 - cos(30°)) = 360 × 0.134 = 48.24mm
+```
+
+**SVG Arc Command:**
+```
+M x1,y1 A rx,ry rotation large-arc-flag sweep-flag x2,y2
+
+MOBAflow convention:
+- sweep-flag = 1 for all Piko curves (clockwise from start)
+- large-arc-flag = 0 for angles < 180°
+```
+
+### **MOBAflow Track Planning Architecture**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ Domain                  │ SharedUI/Renderer                     │
+├─────────────────────────────────────────────────────────────────┤
+│ PikoATrackLibrary       │ TrackGeometryLibrary                  │
+│ (Static templates)      │ (Runtime geometry + PathData)         │
+│                         │                                       │
+│ TrackSegment            │ TrackSegmentViewModel                 │
+│ - ArticleCode           │ - X, Y (computed)                     │
+│ - Endpoints[]           │ - PathData (SVG)                      │
+│ - Lines[], Arcs[]       │ - Rotation                            │
+│                         │                                       │
+│ TrackLayout             │ TrackLayoutRenderer                   │
+│ - Segments[]            │ - BFS graph traversal                 │
+│ - Connections[]         │ - Endpoint alignment                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### **Key Files**
+| File | Purpose |
+|------|---------|
+| `Domain/TrackPlan/PikoATrackLibrary.cs` | Static track templates (Length, Radius, Angle) |
+| `Domain/TrackPlan/TrackSegment.cs` | Track segment POCO (Endpoints, Lines, Arcs) |
+| `Domain/TrackPlan/TrackLayout.cs` | Layout topology (Segments + Connections) |
+| `SharedUI/Renderer/TrackGeometryLibrary.cs` | Runtime geometry with SVG PathData |
+| `SharedUI/Service/TrackLayoutRenderer.cs` | Graph → Coordinates conversion |
+
+### **Piko A-Gleis Specifications (Reference Data)**
+
+**Straight Tracks (Gerade):**
+| Article | Length (mm) | Use Case |
+|---------|-------------|----------|
+| G239 | 239.07 | Standard length |
+| G231 | 230.93 | Standard length |
+| G119 | 119.54 | Half-length |
+| G115 | 115.46 | Half-length |
+| G107 | 107.32 | K30 crossing parallel |
+| G62 | 61.88 | R3↔R4 adapter |
+
+**Curved Tracks (Bogen 30°):**
+| Article | Radius (mm) | Angle | Arc Length (mm) | Full Circle |
+|---------|-------------|-------|-----------------|-------------|
+| R1 | 360.00 | 30° | 188.5 | 12 pieces |
+| R2 | 421.88 | 30° | 220.9 | 12 pieces |
+| R3 | 483.75 | 30° | 253.3 | 12 pieces |
+| R4 | 545.63 | 30° | 285.6 | 12 pieces |
+| R9 | 907.97 | 15° | 237.8 | 24 pieces |
+
+**Turnouts (Weichen):**
+| Article | Type | Branch Angle | Branch Radius (mm) | Straight = G239 |
+|---------|------|--------------|-------------------|-----------------|
+| WL | Left turnout | 15° | 907.97 | ✅ |
+| WR | Right turnout | 15° | 907.97 | ✅ |
+| DKW | Double crossover | 15° | 907.97 | ✅ |
+| DWW | Three-way | 15° | 907.97 | ✅ |
+| BWL | Curved left R2/R3 | 30° | 421.88/483.75 | - |
+| BWR | Curved right R2/R3 | 30° | 421.88/483.75 | - |
+
+**System Constants:**
+| Constant | Value | Description |
+|----------|-------|-------------|
+| Parallel Track Spacing | 61.88 mm | Distance between parallel tracks |
+| Turnout Branch Angle | 15° | All WL/WR switches |
+| Turnout Branch Radius | 907.97 mm | Same as R9 |
+| Rail Gauge (H0) | 16.5 mm | NEM standard |
+| Track Profile | Code 100 (2.5 mm) | NEM 120 |
+
+### **Connection Rules (For AI Reasoning)**
+
+**Tell the AI these rules explicitly:**
+```
+"Zwei Gleise können verbunden werden, wenn ihre Endwinkel übereinstimmen."
+"Der Abstand zwischen parallelen Gleisen beträgt immer 61.88 mm."
+"Ein 30°-Bogen besteht aus 12 Segmenten für einen Vollkreis."
+"Weichen haben immer einen Abzweigwinkel von 15°."
+"G62 verbindet R3 und R4 (Radiendifferenz-Ausgleich)."
+"Parallelgleis entsteht automatisch ohne Ausgleichsstück bei WL/WR."
+```
+
+### **Data Model for AI Context**
+
+**Provide this structure to enable spatial reasoning:**
+```csharp
+public class TrackSegment
+{
+    public string Id { get; set; }
+    public TrackType Type { get; set; }
+    public List<Connector> Connectors { get; set; }
+}
+
+public class Connector
+{
+    public double X { get; set; }
+    public double Y { get; set; }
+    public double Angle { get; set; }  // In degrees
+}
+
+// Connection rule: 
+// G239 connects to G231 if:
+//   end.Angle == other.start.Angle (mod 360)
+//   AND distance(end.Position, other.start.Position) < 0.5mm
+```
+
+### **Practical AI Prompts for Geometry Tasks**
+
+**Connection Check:**
+```
+"Erstelle eine Methode, die prüft, ob zwei Gleise verbunden werden können.
+Toleranz: 0.5 mm Position, 0.5° Winkel.
+Rückgabe: bool + optional: welche Connectoren passen."
+```
+
+**Arc Endpoint Calculation:**
+```
+"Berechne die Endkoordinaten eines 30°-Bogens mit Radius R.
+Formel zuerst, dann Herleitung, dann C#-Code.
+Beispiel: R1 (360mm, 30°) → x=180mm, y=48.24mm"
+```
+
+**Snapping Implementation:**
+```
+"Implementiere Snapping mit einer Toleranz von 0.5 mm und 0.5°.
+Eingabe: Position + Winkel des neuen Gleises.
+Ausgabe: Nächster passender Connector oder null."
+```
+
+**Turnout Class:**
+```
+"Erzeuge eine Klasse für Weichen mit zwei Ausgängen.
+Gerade Richtung = G239 Geometrie.
+Abzweig = R9 Geometrie (907.97mm, 15°).
+Beide Connectors am Start, je einer am Ende jedes Pfades."
+```
+
+**Rotation Transform:**
+```
+"Schreibe eine Funktion, die ein Gleis um einen Winkel rotiert.
+Rotationspunkt = erster Connector.
+Alle anderen Connectors werden transformiert."
+```
+
+### **Comment-Based Context for AI**
+
+**Add these comments in code to help AI understand spatial relationships:**
+```csharp
+// G239 connects to G231 if end angle = start angle
+// and end position of G239 equals start position of G231
+
+// R1 30° arc: radius 360 mm, angle 30°, arc length = 188.5 mm
+// Endpoint: x = R × sin(30°), y = R × (1 - cos(30°))
+
+// Parallel track spacing = 61.88 mm (Piko A-Gleis standard)
+// Turnout branch angle = 15° (all WL/WR switches)
+
+// Full circle: 12 × 30° = 360° (R1, R2, R3, R4)
+// Full circle: 24 × 15° = 360° (R9)
+```
 
 ---
 

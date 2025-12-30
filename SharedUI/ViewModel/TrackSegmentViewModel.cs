@@ -105,6 +105,72 @@ public partial class TrackSegmentViewModel : ObservableObject
     [ObservableProperty]
     private bool isTriggered;
 
+    /// <summary>
+    /// Whether this segment is being dragged.
+    /// </summary>
+    [ObservableProperty]
+    private bool isDragging;
+
+    /// <summary>
+    /// Whether this segment is part of a group being dragged.
+    /// </summary>
+    [ObservableProperty]
+    private bool isPartOfDragGroup;
+
+    /// <summary>
+    /// Whether this segment is a potential snap target during drag.
+    /// </summary>
+    [ObservableProperty]
+    private bool isSnapTarget;
+
+    #endregion
+
+    #region Drag Support
+
+    /// <summary>
+    /// Offset X from segment origin to drag start point.
+    /// Used to maintain relative position during drag.
+    /// </summary>
+    public double DragOffsetX { get; set; }
+
+    /// <summary>
+    /// Offset Y from segment origin to drag start point.
+    /// </summary>
+    public double DragOffsetY { get; set; }
+
+    /// <summary>
+    /// Move segment by delta (for group drag).
+    /// </summary>
+    public void MoveBy(double deltaX, double deltaY)
+    {
+        X += deltaX;
+        Y += deltaY;
+
+        // Also update domain model endpoints
+        foreach (var ep in _segment.Endpoints)
+        {
+            ep.X += deltaX;
+            ep.Y += deltaY;
+        }
+
+        // Update drawing elements
+        foreach (var line in _segment.Lines)
+        {
+            line.X1 += deltaX;
+            line.Y1 += deltaY;
+            line.X2 += deltaX;
+            line.Y2 += deltaY;
+        }
+
+        foreach (var arc in _segment.Arcs)
+        {
+            arc.X1 += deltaX;
+            arc.Y1 += deltaY;
+            arc.X2 += deltaX;
+            arc.Y2 += deltaY;
+        }
+    }
+
     #endregion
 
     #region Computed Properties for UI

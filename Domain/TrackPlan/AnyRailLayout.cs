@@ -3,6 +3,7 @@ namespace Moba.Domain.TrackPlan;
 
 using System.Globalization;
 using System.Xml.Linq;
+using System.Diagnostics;
 
 /// <summary>
 /// Represents a track layout imported from AnyRail XML format.
@@ -122,34 +123,169 @@ public class AnyRailLayout
     public List<TrackConnection> ToTrackConnections()
     {
         var result = new List<TrackConnection>();
-        
-        // Build endpoint-to-part lookup
-        var endpointToPart = new Dictionary<int, (string PartId, int EndpointIndex)>();
+
+        // Build endpoint-to-parts lookup (support multiple parts per endpoint)
+        var endpointToParts = new Dictionary<int, List<(string PartId, int EndpointIndex)>>();
         foreach (var part in Parts)
         {
             for (int i = 0; i < part.EndpointNrs.Count; i++)
             {
-                endpointToPart[part.EndpointNrs[i]] = (part.Id, i);
+                var ep = part.EndpointNrs[i];
+                if (!endpointToParts.TryGetValue(ep, out var list))
+                {
+                    list = new List<(string, int)>();
+                    endpointToParts[ep] = list;
+                }
+                endpointToParts[ep].Add((part.Id, i));
             }
         }
 
-        // Convert each connection
+        Debug.WriteLine($"AnyRail: Parts={Parts.Count}, Endpoints={Endpoints.Count}, Connections={Connections.Count}");
+
+        // Build endpoint number -> coordinate lookup for fallback matching
+        var endpointCoords = Endpoints.ToDictionary(e => e.Nr, e => (X: e.X, Y: e.Y));
+
+        // Convert each connection (endpoint-to-endpoint) to segment-to-segment connections
         foreach (var conn in Connections)
         {
-            if (endpointToPart.TryGetValue(conn.Endpoint1, out var part1) &&
-                endpointToPart.TryGetValue(conn.Endpoint2, out var part2))
+            var has1 = endpointToParts.TryGetValue(conn.Endpoint1, out var list1);
+            var has2 = endpointToParts.TryGetValue(conn.Endpoint2, out var list2);
+
+            // If mapping missing for either endpoint, attempt coordinate-based fallback
+            if (!has1 || !has2)
             {
-                result.Add(new TrackConnection
+                Debug.WriteLine($"⚠️ ToTrackConnections: Missing mapping for endpoints {conn.Endpoint1} or {conn.Endpoint2} - attempting coordinate fallback");
+
+                const double tolerance = 1.0; // units in AnyRail coordinates
+
+                if (!has1)
                 {
-                    Segment1Id = part1.PartId,
-                    Segment1EndpointIndex = part1.EndpointIndex,
-                    Segment2Id = part2.PartId,
-                    Segment2EndpointIndex = part2.EndpointIndex
-                });
+                    // Try to find parts whose endpoint coordinates are close to the referenced endpoint
+                    if (endpointCoords.TryGetValue(conn.Endpoint1, out var coord1))
+                    {
+                        var matches = new List<(string PartId, int EndpointIndex, double Dist)>();
+                        foreach (var part in Parts)
+                        {
+                            for (int i = 0; i < part.EndpointNrs.Count; i++)
+                            {
+                                var epNr = part.EndpointNrs[i];
+                                if (endpointCoords.TryGetValue(epNr, out var epCoord))
+                                {
+                                    var dx = epCoord.X - coord1.X;
+                                    var dy = epCoord.Y - coord1.Y;
+                                    var dist = Math.Sqrt(dx * dx + dy * dy);
+                                    if (dist <= tolerance)
+                                    {
+                                        matches.Add((part.Id, i, dist));
+                                    }
+                                }
+                            }
+                        }
+
+                        if (matches.Count > 0)
+                        {
+                            // Order by distance and use matches as list1
+                            list1 = matches.OrderBy(m => m.Dist).Select(m => (m.PartId, m.EndpointIndex)).ToList();
+                            has1 = true;
+                            Debug.WriteLine($"🔁 ToTrackConnections: Fallback matched endpoint {conn.Endpoint1} to parts: {string.Join(',', list1.Select(x=>$"{x.PartId}.ep{x.EndpointIndex}"))}");
+                        }
+                        else
+                        {
+                            Debug.WriteLine($"⚠️ ToTrackConnections: Fallback found no match for endpoint {conn.Endpoint1} at ({coord1.X},{coord1.Y})");
+                        }
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"⚠️ ToTrackConnections: No coordinate found for endpoint {conn.Endpoint1} in endpoints list");
+                    }
+                }
+
+                if (!has2)
+                {
+                    if (endpointCoords.TryGetValue(conn.Endpoint2, out var coord2))
+                    {
+                        var matches = new List<(string PartId, int EndpointIndex, double Dist)>();
+                        foreach (var part in Parts)
+                        {
+                            for (int i = 0; i < part.EndpointNrs.Count; i++)
+                            {
+                                var epNr = part.EndpointNrs[i];
+                                if (endpointCoords.TryGetValue(epNr, out var epCoord))
+                                {
+                                    var dx = epCoord.X - coord2.X;
+                                    var dy = epCoord.Y - coord2.Y;
+                                    var dist = Math.Sqrt(dx * dx + dy * dy);
+                                    if (dist <= tolerance)
+                                    {
+                                        matches.Add((part.Id, i, dist));
+                                    }
+                                }
+                            }
+                        }
+
+                        if (matches.Count > 0)
+                        {
+                            list2 = matches.OrderBy(m => m.Dist).Select(m => (m.PartId, m.EndpointIndex)).ToList();
+                            has2 = true;
+                            Debug.WriteLine($"🔁 ToTrackConnections: Fallback matched endpoint {conn.Endpoint2} to parts: {string.Join(',', list2.Select(x=>$"{x.PartId}.ep{x.EndpointIndex}"))}");
+                        }
+                        else
+                        {
+                            Debug.WriteLine($"⚠️ ToTrackConnections: Fallback found no match for endpoint {conn.Endpoint2} at ({coord2.X},{coord2.Y})");
+                        }
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"⚠️ ToTrackConnections: No coordinate found for endpoint {conn.Endpoint2} in endpoints list");
+                    }
+                }
+
+                // If still missing after fallback, skip this connection
+                if (!has1 || !has2)
+                {
+                    Debug.WriteLine($"⚠️ ToTrackConnections: Skipping connection {conn.Endpoint1} <-> {conn.Endpoint2} after fallback attempts");
+                    continue;
+                }
+            }
+
+            // If multiple parts map to an endpoint, produce all pairwise connections
+            foreach (var p1 in list1)
+            {
+                foreach (var p2 in list2)
+                {
+                    // Avoid connecting the same part endpoint to itself
+                    if (p1.PartId == p2.PartId && p1.EndpointIndex == p2.EndpointIndex)
+                        continue;
+
+                    result.Add(new TrackConnection
+                    {
+                        Segment1Id = p1.PartId,
+                        Segment1EndpointIndex = p1.EndpointIndex,
+                        Segment2Id = p2.PartId,
+                        Segment2EndpointIndex = p2.EndpointIndex
+                    });
+                    Debug.WriteLine($"🔗 ToTrackConnections: {p1.PartId}.ep{p1.EndpointIndex} <-> {p2.PartId}.ep{p2.EndpointIndex}");
+                }
             }
         }
 
-        return result;
+        // Deduplicate identical connections (unordered)
+        var unique = new List<TrackConnection>();
+        var seen = new HashSet<string>();
+        foreach (var c in result)
+        {
+            // Create an order-independent key
+            var key = string.CompareOrdinal(c.Segment1Id, c.Segment2Id) <= 0
+                ? $"{c.Segment1Id}:{c.Segment1EndpointIndex}-{c.Segment2Id}:{c.Segment2EndpointIndex}"
+                : $"{c.Segment2Id}:{c.Segment2EndpointIndex}-{c.Segment1Id}:{c.Segment1EndpointIndex}";
+            if (seen.Add(key))
+            {
+                unique.Add(c);
+            }
+        }
+
+        Debug.WriteLine($"ToTrackConnections: converted {unique.Count} connections (raw {result.Count})");
+        return unique;
     }
 
     private static (double X, double Y) ParsePoint(string? s)
