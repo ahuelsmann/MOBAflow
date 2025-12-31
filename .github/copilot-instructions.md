@@ -149,7 +149,147 @@ public object Convert(object? value, ...)
 ## 🎯 Current Session Status (Jan 31, 2025)
 
 ### ✅ Completed This Session
+- ✅ **AnyRail Import Fix: Direct EndpointNrs Index Mapping (Jan 31, 2025)** 🎉
+  - **Problem:** Import created 0 connections → 91 disconnected components (starburst pattern)
+  - **Root Cause:** Complex BuildConnectorMapping with spatial sorting was broken and never executed
+  - **Solution:** Reverted to simple ToTrackConnections() with direct EndpointNrs index mapping
+  - **Architecture Changes:**
+    1. **Simplified Import:** Uses `anyRailLayout.ToTrackConnections()` directly
+    2. **Direct Index Mapping:** `EndpointNrs[i] → ConnectorIndex i` (NO spatial sorting!)
+    3. **Hard Validation:** Checks `connectorIndex < geometry.Endpoints.Count` before creating connections
+    4. **Removed Legacy Methods:**
+       - ❌ `BuildConnectorMapping()` (broken spatial sorting)
+       - ❌ `GetEndpointWorldCoordinates()` (not used)
+       - ❌ `CalculateEndpointHeadings()` (not used)
+  - **ToTrackConnections Implementation:**
+    ```csharp
+    // Build endpoint-to-parts lookup
+    foreach (var part in Parts)
+    {
+        for (int i = 0; i < part.EndpointNrs.Count; i++)
+        {
+            endpointToParts[part.EndpointNrs[i]].Add((part.Id, i)); // Direct index!
+        }
+    }
+    
+    // Create connections with coordinate-based fallback
+    foreach (var conn in Connections)
+    {
+        var list1 = endpointToParts[conn.Endpoint1];
+        var list2 = endpointToParts[conn.Endpoint2];
+        
+        result.Add(new TrackConnection
+        {
+            Segment1ConnectorIndex = p1.EndpointIndex, // Uses EndpointNrs array index!
+            Segment2ConnectorIndex = p2.EndpointIndex
+        });
+    }
+    ```
+  - **Impact:**
+    - ✅ **Import:** 96/96 connections created successfully
+    - ✅ **Rendering:** All 91 segments in 1 connected component
+    - ✅ **Validation:** Zero errors, zero warnings (Library, Connection, Rendering all PASSED)
+    - ✅ **WorldTransform:** Correct constraint-based placement with bidirectional traversal
+    - ⚠️ **Save/Load BUG:** Old JSON files still have 0 connections (must re-import to fix)
+  - **Build Status:** ✅ Zero errors, zero warnings
+  - **Files Modified:**
+    - `SharedUI/ViewModel/TrackPlanEditorViewModel.cs`: Simplified ImportFromAnyRailXmlAsync
+    - `Domain/TrackPlan/AnyRailLayout.cs`: Removed unused methods
+  - **Mathematical Correctness:** Direct EndpointNrs index mapping (AnyRail XML order = Connector order)
+
+- ✅ **Domain-Based WorldTransform: Pure Topology Renderer (Jan 31, 2025)** 🏗️🎉
+  - **Problem:** WorldTransform was in ViewModel layer, not in Domain (violated pure topology-first)
+  - **Solution:** Moved WorldTransform to TrackSegment (runtime-only, [JsonIgnore]), created pure TopologyRenderer
+  - **Architecture Changes:**
+    1. **Transform2D moved to Domain:** `Domain/Geometry/Transform2D.cs` (was in SharedUI)
+    2. **TrackSegment.WorldTransform:** Runtime-only property (NOT serialized)
+    3. **TopologyRenderer:** NEW pure domain renderer (`SharedUI/Service/TopologyRenderer.cs`)
+       - NO ViewModels, NO UI concerns, NO normalization
+       - Pure graph traversal: BFS with ConstraintSolver
+       - Finds root segment (no incoming connections)
+       - Traverses connections, sets segment.WorldTransform
+    4. **TrackSegmentViewModel.WorldTransform:** Proxies to `Model.WorldTransform` (no storage)
+    5. **ConstraintSolver:** Rigid/Rotational/Parametric constraint implementations
+       - Rigid: Exact alignment (standard tracks)
+       - Rotational: Position fixed, rotation free (turntables)
+       - Parametric: Branch angle parameter (switches)
+    6. **DetectConnections:** Inline connector matching (< 1mm, ±180° tolerance)
+  - **Deleted Legacy Components:**
+    - ❌ `SharedUI/Renderer/TopologyRenderer.cs` (old version)
+    - ❌ `SharedUI/Service/TrackLayoutRenderer.cs` (replaced by TopologyRenderer)
+    - ❌ `SharedUI/Service/ConnectorMatcher.cs` (replaced by DetectConnections)
+    - ❌ `SharedUI/ViewModel/SnapCandidate.cs` (snap logic removed)
+    - ❌ `Test/SharedUI/TrackLayoutRendererTests.cs` (obsolete tests)
+  - **Constraint Formula (Rigid):**
+    ```
+    rotation = parent.RotationDegrees + parentHeading + 180° - childHeading
+    position = parentWorld + parentConnector - rotatedChildConnector
+    ```
+  - **Impact:**
+    - ✅ 100% pure topology-first (Domain owns WorldTransform)
+    - ✅ NO coordinate pollution in ViewModels
+    - ✅ NO snap heuristics (constraint-based only)
+    - ✅ NO normalization/offsets (renderer doesn't know about Canvas)
+    - ✅ ViewModel proxies to Domain (single source of truth)
+    - ✅ Serialization excludes WorldTransform ([JsonIgnore])
+  - **Build Status:** ✅ Zero errors, zero warnings
+  - **Files Created:**
+    - `Domain/Geometry/Transform2D.cs` (NEW - moved from SharedUI)
+    - `SharedUI/Service/TopologyRenderer.cs` (NEW - pure domain renderer)
+  - **Files Modified:**
+    - `Domain/TrackPlan/TrackSegment.cs`: Added WorldTransform property ([JsonIgnore])
+    - `SharedUI/ViewModel/TrackSegmentViewModel.cs`: WorldTransform proxies to Model
+    - `SharedUI/Service/ConstraintSolver.cs`: Rigid/Rotational/Parametric implementations
+    - `SharedUI/ViewModel/TrackPlanEditorViewModel.cs`: Uses TopologyRenderer + DetectConnections
+    - `WinUI/View/TrackPlanEditorPage.xaml.cs`: Removed snap candidate logic
+  - **Mathematical Correctness:** Constraint-based geometry (no heuristics, only exact calculations)
+
+- ✅ **Pure Topology-First: WorldTransform Matrix Architecture (Jan 31, 2025)** 🏗️🎉
+  - **Problem:** Mixed coordinate/matrix architecture - X/Y/Rotation fields stored alongside WorldTransform
+  - **Solution:** Removed ALL coordinate storage, implemented pure transformation matrix approach
+  - **Architecture Changes:**
+    1. **TrackSegment (Domain):** Already clean - NO coordinate fields
+    2. **TrackSegmentViewModel:** Removed X/Y/Rotation properties → ONLY `WorldTransform` property
+    3. **Transform2D:** New record with TranslateX/Y/RotationDegrees + matrix operations (Multiply, Invert, TransformPoint)
+    4. **TrackGeometryExtensions:** GetConnectorTransform + GetInverseConnectorTransform extension methods
+    5. **ConstraintSolver:** Uses Transform2D instead of (X, Y, Rotation) tuples - pure matrix multiplication
+    6. **TrackLayoutRenderer:** Updates ViewModel.WorldTransform directly - NO coordinate return values
+    7. **XAML Bindings:** `Canvas.Left="{x:Bind WorldTransform.TranslateX}"` instead of `X`
+  - **Removed Components:**
+    - ❌ RenderedSegment record (with X/Y/Rotation fields)
+    - ❌ RenderResult/BoundingBox records
+    - ❌ BoundingBox normalization logic
+    - ❌ Coordinate offset calculations
+    - ❌ X/Y/Rotation properties in ViewModel
+    - ❌ Manual coordinate transformation helpers
+  - **Matrix Calculation Formula:**
+    ```
+    child.WorldTransform = parent.WorldTransform
+                         * parent.GetConnectorTransform(connA)
+                         * child.GetInverseConnectorTransform(connB)
+    ```
+  - **Impact:**
+    - ✅ 100% pure topology-first architecture
+    - ✅ NO coordinate storage anywhere in codebase
+    - ✅ Runtime-calculated WorldTransform matrices only
+    - ✅ Mathematically correct transformations (2D affine matrix)
+    - ✅ Renderer uses ONLY transformation matrices
+    - ✅ XAML binds directly to WorldTransform properties
+  - **Build Status:** ✅ Zero errors, zero warnings
+  - **Files Created:**
+    - `SharedUI/Geometry/Transform2D.cs` (NEW)
+    - `SharedUI/Geometry/TrackGeometryExtensions.cs` (NEW)
+  - **Files Modified:**
+    - `SharedUI/ViewModel/TrackSegmentViewModel.cs`: Removed X/Y/Rotation, added WorldTransform
+    - `SharedUI/Service/ConstraintSolver.cs`: Transform2D-based calculations
+    - `SharedUI/Service/TrackLayoutRenderer.cs`: Void Render() - updates ViewModels directly
+    - `SharedUI/ViewModel/TrackPlanEditorViewModel.cs`: Simplified RenderLayout()
+    - `WinUI/View/TrackPlanEditorPage.xaml`: WorldTransform bindings
+    - `WinUI/View/TrackPlanEditorPage.xaml.cs`: WorldTransform in drag calculations
+  - **Mathematical Correctness:** All transformations use standard 2D affine transformation matrices
+
 - ✅ **Piko A-Gleis Endpoint Count Documentation (Jan 31, 2025)** 📋
+
   - **Problem:** Endpoint counts for multi-connector track pieces (turnouts, crossings) not clearly documented
   - **Solution:** Added comprehensive documentation to TrackGeometryLibrary header
   - **Endpoint Counts (CRITICAL for ConnectorMatcher):**

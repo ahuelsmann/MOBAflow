@@ -49,7 +49,6 @@
     <File Path="docs/copilot/MAUI-BACKGROUND-SERVICE-CONCEPT.md" />
     <File Path="docs/copilot/ICON-UPDATE-GUIDE.md" />
   </Folder>
-
   <Project Path="Backend/Backend.csproj">
     <Deploy />
   </Project>
@@ -63,6 +62,7 @@
     <Deploy />
   </Project>
   <Project Path="Test/Test.csproj" Id="0c1e5217-ca11-41f0-83b1-5b26ca7e3b4d" />
+  <Project Path="TrackPlan/TrackPlan.csproj" Id="0683c0d6-96f6-4046-af87-177a6e5fc980" />
   <Project Path="WebApp/WebApp.csproj" />
   <Project Path="WinUI/WinUI.csproj">
     <Deploy />

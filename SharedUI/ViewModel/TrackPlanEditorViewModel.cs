@@ -14,14 +14,21 @@ using Microsoft.Extensions.Logging;
 /// <summary>
 /// ViewModel for TrackPlanEditorPage - topology-based track plan editor.
 /// Positions and paths are calculated by TopologyRenderer from the connection graph.
+/// Feedback states managed by FeedbackStateManager (InPort → TrackSegment occupation).
 /// </summary>
 public partial class TrackPlanEditorViewModel : ObservableObject
 {
     private readonly MainWindowViewModel _mainViewModel;
     private readonly IIoService _ioService;
-    private readonly TrackLayoutRenderer _renderer;
+    private readonly TopologyRenderer _renderer;
     private readonly TrackGeometryLibrary _geometryLibrary;
+    private readonly FeedbackStateManager _feedbackStateManager;
     private readonly ILogger<TrackPlanEditorViewModel> _logger;
+
+    /// <summary>
+    /// Public accessor for FeedbackStateManager (used by JourneyManager for route monitoring).
+    /// </summary>
+    public FeedbackStateManager FeedbackStateManager => _feedbackStateManager;
 
     public TrackPlanEditorViewModel(MainWindowViewModel mainViewModel, IIoService ioService, ILogger<TrackPlanEditorViewModel> logger)
     {
@@ -29,7 +36,11 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         _ioService = ioService;
         _logger = logger;
         _geometryLibrary = new TrackGeometryLibrary();
-        _renderer = new TrackLayoutRenderer(_geometryLibrary);
+        _renderer = new TopologyRenderer(_geometryLibrary);
+        _feedbackStateManager = new FeedbackStateManager();
+
+        // Subscribe to feedback state changes
+        _feedbackStateManager.FeedbackStateChanged += OnFeedbackStateChanged;
 
         _mainViewModel.SolutionSaving += (_, _) => SyncToProject();
         _mainViewModel.SolutionLoaded += (_, _) => LoadFromProject();
@@ -40,6 +51,24 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         };
 
         LoadTrackLibrary();
+    }
+
+    /// <summary>
+    /// Handle feedback state changes from Z21 InPort events.
+    /// Updates UI to reflect occupied segments.
+    /// </summary>
+    private void OnFeedbackStateChanged(object? sender, FeedbackStateChangedEventArgs e)
+    {
+        var segment = Segments.FirstOrDefault(s => s.Id == e.SegmentId);
+        if (segment != null)
+        {
+            // Trigger UI update by re-assigning IsOccupied (readonly property updates automatically)
+            // No need to call OnPropertyChanged - IsOccupied is a computed property
+            
+            var stateText = e.IsOccupied ? "OCCUPIED" : "FREE";
+            _logger.LogInformation("🚦 Segment {SegmentId} ({ArticleCode}) InPort {InPort} is now {State}",
+                e.SegmentId, e.ArticleCode, e.InPort, stateText);
+        }
     }
 
     #region Track Library
@@ -268,7 +297,38 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         }
     }
 
-    // Rotation commands removed - endpoints are imported from AnyRail
+    /// <summary>
+    /// Toggle switch state for parametric switch control.
+    /// Changes active constraint without moving the switch or recalculating coordinates.
+    /// Only affects which connection is active in the topology graph.
+    /// </summary>
+    [RelayCommand]
+    private void ToggleSwitch()
+    {
+        if (SelectedSegment?.Model.SwitchState == null)
+        {
+            _logger.LogWarning("Selected segment is not a switch or has no SwitchState");
+            return;
+        }
+
+        // Toggle switch state
+        SelectedSegment.Model.SwitchState = SelectedSegment.Model.SwitchState switch
+        {
+            SwitchState.Straight => SwitchState.BranchLeft,
+            SwitchState.BranchLeft => SwitchState.BranchRight,
+            SwitchState.BranchRight => SwitchState.Straight,
+            _ => SwitchState.Straight
+        };
+
+        _logger.LogInformation("Toggled switch {SegmentId} ({ArticleCode}) to {SwitchState}",
+            SelectedSegment.Id, SelectedSegment.ArticleCode, SelectedSegment.Model.SwitchState);
+
+        // Re-render layout with new active constraints
+        // This only changes which connections are active, NOT the switch's WorldTransform
+        RenderLayout();
+
+        OnPropertyChanged(nameof(StatusText));
+    }
 
     /// <summary>
     /// Clear all segments.
@@ -302,135 +362,62 @@ public partial class TrackPlanEditorViewModel : ObservableObject
          }
     }
 
-    /// <summary>
-    /// Snap tolerance for endpoint matching (in layout units).
-    /// </summary>
-    private const double SnapTolerance = 50.0;  // Generous tolerance for user-friendly snapping
-
-    /// <summary>
-    /// Find nearby free endpoints that could snap to the given segment's endpoints.
-    /// Returns the best snap candidate (closest match).
-    /// TODO: Reimplement with topology-first architecture using TrackGeometryLibrary
-    /// </summary>
-    public SnapCandidate? FindSnapCandidate(TrackSegmentViewModel draggedSegment)
-    {
-        // Temporarily disabled - needs reimplementation with TrackGeometryLibrary
-        // Old implementation used Endpoints[] which no longer exists in Domain
-        return null;
-    }
-
-    /// <summary>
-    /// Check if an endpoint is already connected.
-    /// </summary>
-    private bool IsEndpointConnected(string segmentId, int endpointIndex)
-    {
-        return Connections.Any(c =>
-            (c.Segment1Id == segmentId && c.Segment1EndpointIndex == endpointIndex) ||
-            (c.Segment2Id == segmentId && c.Segment2EndpointIndex == endpointIndex));
-    }
-
-    /// <summary>
-    /// Create a connection when snapping occurs.
-    /// TODO: Reimplement with topology-first architecture
-    /// </summary>
-    public void SnapAndConnect(TrackSegmentViewModel draggedSegment, SnapCandidate candidate)
-    {
-        // Temporarily disabled - needs reimplementation with TrackGeometryLibrary
-        _logger.LogWarning("SnapAndConnect not yet implemented in topology-first architecture");
-    }
-
     #endregion
 
     #region Rendering
 
-        /// <summary>
-        /// Render the layout by calculating positions from topology.
-        /// </summary>
-        private void RenderLayout()
+
+    /// <summary>
+    /// Render the layout by calculating WorldTransform matrices from topology.
+    /// Pure topology-first: Renderer modifies Domain objects (TrackSegment.WorldTransform).
+    /// </summary>
+    private void RenderLayout()
+    {
+        // Build TrackLayout from current state
+        var layout = new TrackLayout
         {
-            // Build TrackLayout from current state
-            var layout = new TrackLayout
-            {
-                Name = LayoutName,
-                Description = LayoutDescription,
-                Segments = Segments.Select(s => s.Model).ToList(),
-                Connections = Connections.ToList()
-            };
+            Name = LayoutName,
+            Description = LayoutDescription,
+            Segments = Segments.Select(s => s.Model).ToList(),
+            Connections = Connections.ToList()
+        };
 
-            _logger.LogInformation("RenderLayout: {SegmentCount} segments, {ConnectionCount} connections", layout.Segments.Count, layout.Connections.Count);
+        _logger.LogInformation("RenderLayout: {SegmentCount} segments, {ConnectionCount} connections", layout.Segments.Count, layout.Connections.Count);
 
-            // Calculate positions and path data from topology
-            var result = _renderer.Render(layout);
+        // Calculate WorldTransform for all segments (pure topology)
+        _renderer.Render(layout);
 
-            _logger.LogInformation("Rendered: {SegmentCount} segments", result.Segments.Count);
+        // Validate rendering results (debug builds only)
+        #if DEBUG
+        var validator = new GeometryValidator(_geometryLibrary);
+        validator.RunFullValidation(layout);
+        #endif
 
-            // Apply calculated positions, PathData, and rotation to ViewModels
-            int successCount = 0;
-            int errorCount = 0;
+        // Update PathData for each ViewModel
+        foreach (var vm in Segments)
+        {
+            var geometry = _geometryLibrary.GetGeometry(vm.ArticleCode);
+            vm.PathData = geometry?.PathData ?? "M 0,0 L 30,0";
             
-            foreach (var rs in result.Segments)
-            {
-                var vm = Segments.FirstOrDefault(s => s.Id == rs.Id);
-                if (vm != null)
-                {
-                    try
-                    {
-                        vm.X = rs.X;
-                        vm.Y = rs.Y;
-                        vm.PathData = rs.PathData;
-                        vm.Rotation = rs.Rotation;
-                        successCount++;
-                        
-                        var pathPreview = rs.PathData != null && rs.PathData.Length > 50 
-                            ? rs.PathData.Substring(0, 50) + "..." 
-                            : rs.PathData;
-                        _logger.LogDebug("Applied render result: Segment {SegmentId} ({ArticleCode}): X={X:F1}, Y={Y:F1}, Rotation={Rotation:F1}°, PathData={PathDataLength} chars", 
-                            rs.Id, rs.ArticleCode, rs.X, rs.Y, rs.Rotation, rs.PathData?.Length ?? 0);
-                    }
-                    catch (Exception ex)
-                    {
-                        errorCount++;
-                        var pathPreview = rs.PathData != null && rs.PathData.Length > 100
-                            ? rs.PathData.Substring(0, 100) + "..."
-                            : rs.PathData;
-                        _logger.LogError(ex, "Failed to apply render result for segment {SegmentId} ({ArticleCode}): X={X}, Y={Y}, Rotation={Rotation}, PathDataPreview={PathDataPreview}",
-                            rs.Id, rs.ArticleCode, rs.X, rs.Y, rs.Rotation, pathPreview ?? "null");
-                    }
-                }
-            }
-
-            _logger.LogInformation("Segment render results applied: {SuccessCount} successful, {ErrorCount} errors", successCount, errorCount);
-
-            if (result.Segments.Count > 0)
-            {
-                var bb = result.BoundingBox;
-                
-                // ALWAYS normalize coordinates: shift all segments so minX=0, minY=0
-                const double padding = 50.0;
-                var offsetX = -bb.MinX + padding;
-                var offsetY = -bb.MinY + padding;
-                
-                _logger.LogInformation("🔧 Normalizing coordinates: offset=({OffsetX:F1}, {OffsetY:F1}), BoundingBox=({MinX:F1}, {MinY:F1}) to ({MaxX:F1}, {MaxY:F1})", 
-                    offsetX, offsetY, bb.MinX, bb.MinY, bb.MaxX, bb.MaxY);
-                
-                // Apply offset to all segments
-                foreach (var vm in Segments)
-                {
-                    vm.X += offsetX;
-                    vm.Y += offsetY;
-                }
-                
-                // Update canvas size (width/height + 2*padding for margins)
-                CanvasWidth = Math.Max(bb.Width + 2 * padding, 800);
-                CanvasHeight = Math.Max(bb.Height + 2 * padding, 600);
-                
-                _logger.LogInformation("🔧 Canvas size set to {CanvasWidth:F1} x {CanvasHeight:F1} (bounding {BoundingBoxWidth:F1} x {BoundingBoxHeight:F1})", 
-                    CanvasWidth, CanvasHeight, bb.Width, bb.Height);
-            }
-
-            OnPropertyChanged(nameof(SegmentCount));
-            OnPropertyChanged(nameof(StatusText));
+            // Trigger WorldTransform property changed (setter notifies UI)
+            var currentTransform = vm.WorldTransform;
+            vm.WorldTransform = currentTransform;
         }
+
+        _logger.LogInformation("Rendered: {SegmentCount} segments with WorldTransform matrices", layout.Segments.Count);
+
+        // Register segments with FeedbackStateManager for InPort monitoring
+        _feedbackStateManager.RegisterSegments(layout.Segments);
+
+        // TODO: Calculate canvas size from bounding box of transformed segments
+        // For now: Use default size
+        CanvasWidth = 1200;
+        CanvasHeight = 800;
+
+        OnPropertyChanged(nameof(SegmentCount));
+        OnPropertyChanged(nameof(StatusText));
+    }
+
 
         /// <summary>
         /// Refresh PathData for all segments after drag/move operations.
@@ -497,8 +484,6 @@ public partial class TrackPlanEditorViewModel : ObservableObject
 
             return result;
         }
-
-
 
     #endregion
 
@@ -588,139 +573,108 @@ public partial class TrackPlanEditorViewModel : ObservableObject
 
         var anyRailLayout = await AnyRailLayout.ParseAsync(file);
 
+        _logger.LogInformation("📦 Importing AnyRail layout: {PartCount} parts, {EndpointCount} endpoints, {ConnectionCount} connections",
+            anyRailLayout.Parts.Count, anyRailLayout.Endpoints.Count, anyRailLayout.Connections.Count);
+
         Segments.Clear();
         Connections.Clear();
 
-        // Get TrackGeometryLibrary for ArticleCode validation
         var geometryLibrary = new TrackGeometryLibrary();
         var missingGeometries = new HashSet<string>();
 
-        // Step 1: Convert AnyRail parts to segments WITH endpoint world coordinates from AnyRail XML
-        var segmentData = new List<(string SegmentId, string ArticleCode, List<(double X, double Y, double Heading)> EndpointCoords)>();
-        
+        // Step 1: Create segments (pure topology - no coordinates)
+        int skippedCount = 0;
         foreach (var part in anyRailLayout.Parts)
         {
             var articleCode = part.GetArticleCode();
             
-            // Verify geometry exists in library
+            // Verify geometry exists
             var geometry = geometryLibrary.GetGeometry(articleCode);
             if (geometry == null)
             {
                 missingGeometries.Add(articleCode);
-                _logger.LogWarning("Missing geometry for article code: {ArticleCode} (Part {PartId}) - SKIPPING", articleCode, part.Id);
+                _logger.LogWarning("❌ Missing geometry for {ArticleCode} (Part {PartId}) - SKIPPING", 
+                    articleCode, part.Id);
+                skippedCount++;
                 continue;
             }
             
+            _logger.LogDebug("✅ Part {PartId} ({ArticleCode}): {ConnectorCount} connectors, EndpointNrs: [{EndpointNrs}]", 
+                part.Id, articleCode, geometry.Endpoints.Count, string.Join(",", part.EndpointNrs));
+            
+            // Create TrackSegment (pure topology)
             var segment = new TrackSegment
             {
                 Id = part.Id,
                 ArticleCode = articleCode
-                // Pure topology - no coordinates stored
             };
             
-            // ViewModel will be populated by RenderLayout() after all segments are imported
-            var vm = new TrackSegmentViewModel(segment);
-            Segments.Add(vm);
-            
-            // Get endpoint world coordinates from AnyRail XML (NOT calculated from Part position!)
-            var endpointCoords = part.GetEndpointWorldCoordinates(anyRailLayout);
-            segmentData.Add((part.Id, articleCode, endpointCoords));
-            
-            _logger.LogInformation("Part {PartId} ({ArticleCode}): {EndpointCount} endpoints from AnyRail XML", 
-                part.Id, articleCode, endpointCoords.Count);
+            Segments.Add(new TrackSegmentViewModel(segment));
         }
 
-        // Step 2: Use ConnectorMatcher to find connections based on AnyRail endpoint coordinates
-        var connectorMatcher = new ConnectorMatcher();
-        var connections = connectorMatcher.MatchConnectorsFromEndpoints(segmentData, geometryLibrary);
-        Connections.AddRange(connections);
+        if (skippedCount > 0)
+        {
+            _logger.LogWarning("⚠️ Skipped {SkippedCount}/{TotalCount} parts due to missing geometries", 
+                skippedCount, anyRailLayout.Parts.Count);
+        }
+
+        // Step 2: Create connections using ToTrackConnections (direct EndpointNrs index mapping)
+        var connections = anyRailLayout.ToTrackConnections();
         
-        _logger.LogInformation("ConnectorMatcher found {ConnectionCount} connections from {SegmentCount} segments", 
-            connections.Count, segmentData.Count);
+        // Validate connector indices before adding
+        int validConnections = 0;
+        foreach (var conn in connections)
+        {
+            var seg1 = Segments.FirstOrDefault(s => s.Id == conn.Segment1Id);
+            var seg2 = Segments.FirstOrDefault(s => s.Id == conn.Segment2Id);
+            
+            if (seg1 == null || seg2 == null)
+                continue; // Segment was skipped due to missing geometry
+            
+            var geom1 = geometryLibrary.GetGeometry(seg1.ArticleCode);
+            var geom2 = geometryLibrary.GetGeometry(seg2.ArticleCode);
+            
+            // Hard validation: Connector index must be within bounds
+            if (geom1 != null && conn.Segment1ConnectorIndex >= geom1.Endpoints.Count)
+            {
+                _logger.LogError("❌ Invalid ConnectorIndex {ConnIdx} for {SegmentId} ({ArticleCode}) - geometry only has {Count} connectors",
+                    conn.Segment1ConnectorIndex, seg1.Id, seg1.ArticleCode, geom1.Endpoints.Count);
+                continue;
+            }
+            
+            if (geom2 != null && conn.Segment2ConnectorIndex >= geom2.Endpoints.Count)
+            {
+                _logger.LogError("❌ Invalid ConnectorIndex {ConnIdx} for {SegmentId} ({ArticleCode}) - geometry only has {Count} connectors",
+                    conn.Segment2ConnectorIndex, seg2.Id, seg2.ArticleCode, geom2.Endpoints.Count);
+                continue;
+            }
+            
+            Connections.Add(conn);
+            validConnections++;
+            
+            if (validConnections <= 10)
+            {
+                _logger.LogInformation("🔗 Connection #{Index}: {Seg1} ({Art1})[{Conn1}] ↔ {Seg2} ({Art2})[{Conn2}]",
+                    validConnections, seg1.Id, seg1.ArticleCode, conn.Segment1ConnectorIndex,
+                    seg2.Id, seg2.ArticleCode, conn.Segment2ConnectorIndex);
+            }
+        }
+        
+        _logger.LogInformation("🔗 Created {ValidCount}/{TotalCount} valid connections",
+            validConnections, connections.Count);
 
         // Report missing geometries
         if (missingGeometries.Count > 0)
         {
-            _logger.LogWarning("Missing geometries in library: {MissingGeometries}. Add these to TrackGeometryLibrary for correct rendering", 
+            _logger.LogWarning("❌ Missing geometries: {MissingGeometries}", 
                 string.Join(", ", missingGeometries));
         }
 
-        // Step 3: Render layout to calculate world positions from topology
-        // (Discard temporary coordinates - renderer calculates fresh from graph)
+        // Step 3: Render layout (TopologyRenderer computes WorldTransform from topology)
         RenderLayout();
 
-        _logger.LogInformation("Imported AnyRail layout using Track-Graph Architecture: {ImportedSegmentCount}/{TotalSegmentCount} segments, {ConnectionCount} connections", 
-             Segments.Count, anyRailLayout.Parts.Count, Connections.Count);
-    }
-
-    /// <summary>
-    /// Find the AnyRail part that owns a specific endpoint number.
-    /// </summary>
-    private AnyRailPart? FindSegmentByEndpointNr(List<AnyRailPart> parts, int endpointNr)
-    {
-        return parts.FirstOrDefault(p => p.EndpointNrs.Contains(endpointNr));
-    }
-
-    /// <summary>
-    /// Import AnyRail layout and convert to PURE TOPOLOGY (no coordinates).
-    /// Renderer calculates all positions from ArticleCode + Connections.
-    /// </summary>
-    [RelayCommand]
-    private async Task ImportAnyRailPureTopologyAsync()
-    {
-        var file = await _ioService.BrowseForXmlFileAsync();
-        if (file == null) return;
-
-        var anyRailLayout = await AnyRailLayout.ParseAsync(file);
-
-        Segments.Clear();
-        Connections.Clear();
-
-        // Convert AnyRail parts to segments (ArticleCode ONLY)
-        foreach (var part in anyRailLayout.Parts)
-        {
-             var articleCode = part.GetArticleCode();
-             
-             // Register dynamic geometry if not already in library (turnouts, DKW, W3)
-             if (_geometryLibrary.GetGeometry(articleCode) == null)
-             {
-                 var endpoints = part.GetEndpoints().Select(e => new TrackPoint(e.X, e.Y)).ToList();
-                 var headings = part.CalculateEndpointHeadings(anyRailLayout); // Pass parent layout for endpoint lookup
-                 var pathData = part.ToPathData();
-
-                 _geometryLibrary.RegisterDynamicGeometry(articleCode, endpoints, headings, pathData);
-                 _logger.LogDebug("Registered dynamic geometry: {ArticleCode} with {EndpointCount} endpoints", articleCode, endpoints.Count);
-             }
-             
-             var segment = new TrackSegment
-             {
-                 Id = part.Id,
-                 ArticleCode = articleCode
-                 // Pure topology: no coordinates
-             };
-
-             Segments.Add(new TrackSegmentViewModel(segment));
-             _logger.LogDebug("Imported segment: {PartId} -> {ArticleCode}", part.Id, articleCode);
-         }
-
-        // Detect and create connections based on shared AnyRail endpoints
-        var connections = anyRailLayout.ToTrackConnections();
-        Connections.AddRange(connections);
-        _logger.LogDebug("Converted {ConnectionCount} connections from AnyRail XML", connections.Count);
-
-        // Set layout metadata
-        LayoutName = "AnyRail Import";
-        LayoutDescription = $"Imported {Segments.Count} segments, {Connections.Count} connections";
-
-        // Reset view
-        ZoomLevel = 100.0;
-        PanOffsetX = 0;
-        PanOffsetY = 0;
-
-        // Render from topology (TopologyRenderer calculates all positions from geometry library)
-        RenderLayout();
-
-        _logger.LogInformation("Imported AnyRail (pure topology): {SegmentCount} segments, {ConnectionCount} connections", Segments.Count, Connections.Count);
+        _logger.LogInformation("✅ Imported AnyRail layout: {SegmentCount} segments, {ConnectionCount} connections", 
+             Segments.Count, Connections.Count);
     }
 
     #endregion

@@ -48,6 +48,14 @@ public class TrackConnection
     /// </summary>
     public Dictionary<string, double>? Parameters { get; set; }
 
+    /// <summary>
+    /// Optional: Switch state required for this connection to be active.
+    /// If null, connection is always active.
+    /// If not null, connection is only active when parent segment SwitchState matches.
+    /// This enables parametric switch control without coordinate changes.
+    /// </summary>
+    public SwitchState? ActiveWhen { get; set; }
+
     // === BACKWARD COMPATIBILITY ===
     // Old properties for AnyRail import compatibility (will be removed in future version)
 

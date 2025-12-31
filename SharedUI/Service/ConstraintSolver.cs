@@ -2,12 +2,15 @@
 namespace Moba.SharedUI.Service;
 
 using Domain.TrackPlan;
+using Domain.Geometry;
 using Renderer;
-using System.Numerics;
+using Moba.SharedUI.Geometry; // For extension methods
+using System.Diagnostics;
 
 /// <summary>
 /// Calculates world transforms for track segments based on connection constraints.
 /// Track-Graph Architecture: Core component that converts topology → geometry.
+/// Pure topology-first: Uses Transform2D matrices instead of coordinate tuples.
 /// </summary>
 public class ConstraintSolver
 {
@@ -20,17 +23,18 @@ public class ConstraintSolver
 
     /// <summary>
     /// Calculate world transform for a child segment connected to a parent segment.
+    /// Pure matrix-based calculation: parent.WorldTransform * parent.ConnectorTransform * child.InverseConnectorTransform
     /// </summary>
-    /// <param name="parentWorldTransform">Parent's world transform (position + rotation)</param>
+    /// <param name="parentWorldTransform">Parent's world transform matrix</param>
     /// <param name="parentGeometry">Parent's geometry definition</param>
     /// <param name="parentConnectorIndex">Which connector on parent</param>
     /// <param name="childGeometry">Child's geometry definition</param>
     /// <param name="childConnectorIndex">Which connector on child</param>
     /// <param name="constraintType">Type of geometric constraint</param>
     /// <param name="parameters">Optional parameters for parametric constraints</param>
-    /// <returns>Child's world transform (X, Y, Rotation in degrees)</returns>
-    public (double X, double Y, double Rotation) CalculateWorldTransform(
-        (double X, double Y, double Rotation) parentWorldTransform,
+    /// <returns>Child's world transform matrix</returns>
+    public Transform2D CalculateWorldTransform(
+        Transform2D parentWorldTransform,
         TrackGeometry parentGeometry,
         int parentConnectorIndex,
         TrackGeometry childGeometry,
@@ -59,120 +63,144 @@ public class ConstraintSolver
     /// <summary>
     /// Rigid constraint: Exact position + heading alignment (±180°).
     /// Used for standard track connections.
+    /// Pure matrix calculation: parent.WorldTransform * parent.ConnectorTransform * child.InverseConnectorTransform
     /// </summary>
-    private (double X, double Y, double Rotation) CalculateRigidTransform(
-        (double X, double Y, double Rotation) parentWorldTransform,
+    private Transform2D CalculateRigidTransform(
+        Transform2D parentWorldTransform,
         TrackGeometry parentGeometry,
         int parentConnectorIndex,
         TrackGeometry childGeometry,
         int childConnectorIndex)
     {
-        // 1. Get parent connector in world coordinates
-        if (parentConnectorIndex >= parentGeometry.Endpoints.Count)
-            throw new ArgumentException($"Invalid parent connector index: {parentConnectorIndex}");
+        var pIdx = parentConnectorIndex;
+        var cIdx = childConnectorIndex;
 
-        var parentLocalConnector = parentGeometry.Endpoints[parentConnectorIndex];
-        var parentLocalHeading = parentGeometry.EndpointHeadingsDeg[parentConnectorIndex];
+        if (pIdx >= parentGeometry.Endpoints.Count || cIdx >= childGeometry.Endpoints.Count)
+        {
+            Debug.WriteLine($"⚠️ ConstraintSolver: Invalid connector index: parent[{pIdx}] child[{cIdx}]");
+            return parentWorldTransform; // Fallback
+        }
 
-        var (parentWorldX, parentWorldY) = RotateAndTranslate(
-            parentLocalConnector.X, parentLocalConnector.Y,
-            parentWorldTransform.Rotation,
-            parentWorldTransform.X, parentWorldTransform.Y);
-        
-        var parentWorldHeading = parentWorldTransform.Rotation + parentLocalHeading;
+        var pPoint = parentGeometry.Endpoints[pIdx];
+        var pHeading = parentGeometry.EndpointHeadingsDeg[pIdx];
 
-        // 2. Child must align opposite (180° flip for mating connectors)
-        if (childConnectorIndex >= childGeometry.Endpoints.Count)
-            throw new ArgumentException($"Invalid child connector index: {childConnectorIndex}");
+        var cPoint = childGeometry.Endpoints[cIdx];
+        var cHeading = childGeometry.EndpointHeadingsDeg[cIdx];
 
-        var childLocalConnector = childGeometry.Endpoints[childConnectorIndex];
-        var childLocalHeading = childGeometry.EndpointHeadingsDeg[childConnectorIndex];
+        // Calculate child rotation: parent rotation + parent heading + 180° - child heading
+        var childRotation = parentWorldTransform.RotationDegrees + pHeading + 180 - cHeading;
 
-        // Child's rotation: Align headings with 180° flip
-        var childWorldRotation = parentWorldHeading + 180 - childLocalHeading;
+        // Rotate child connector point by child's rotation
+        var rotatedChildConnector = RotatePoint(cPoint.X, cPoint.Y, childRotation);
 
-        // 3. Calculate child's origin position
-        // Child's connector must be at parent's connector position
-        var (childConnectorOffsetX, childConnectorOffsetY) = RotateAndTranslate(
-            childLocalConnector.X, childLocalConnector.Y,
-            childWorldRotation, 0, 0);
+        // Calculate world position: parent world + parent connector - rotated child connector
+        var parentWorldConnector = parentWorldTransform.TransformPoint(pPoint.X, pPoint.Y);
+        var childWorldX = parentWorldConnector.X - rotatedChildConnector.X;
+        var childWorldY = parentWorldConnector.Y - rotatedChildConnector.Y;
 
-        var childX = parentWorldX - childConnectorOffsetX;
-        var childY = parentWorldY - childConnectorOffsetY;
-
-        return (childX, childY, NormalizeAngle(childWorldRotation));
+        return new Transform2D
+        {
+            TranslateX = childWorldX,
+            TranslateY = childWorldY,
+            RotationDegrees = NormalizeAngle(childRotation)
+        };
     }
 
     /// <summary>
     /// Rotational constraint: Position fixed, heading free.
     /// Used for turntables and rotating bridges.
     /// </summary>
-    private (double X, double Y, double Rotation) CalculateRotationalTransform(
-        (double X, double Y, double Rotation) parentWorldTransform,
+    private Transform2D CalculateRotationalTransform(
+        Transform2D parentWorldTransform,
         TrackGeometry parentGeometry,
         int parentConnectorIndex,
         TrackGeometry childGeometry,
         int childConnectorIndex)
     {
-        // Position aligns like Rigid, but rotation is free (use current rotation or 0)
-        var (x, y, _) = CalculateRigidTransform(
+        // Position aligns like Rigid, but rotation is free (keep parent rotation)
+        var rigidTransform = CalculateRigidTransform(
             parentWorldTransform, parentGeometry, parentConnectorIndex,
             childGeometry, childConnectorIndex);
 
-        // Rotation is not constrained - keep current or default to 0
-        return (x, y, 0);
+        // Rotation is not constrained - keep parent's rotation
+        return new Transform2D
+        {
+            TranslateX = rigidTransform.TranslateX,
+            TranslateY = rigidTransform.TranslateY,
+            RotationDegrees = parentWorldTransform.RotationDegrees
+        };
     }
 
     /// <summary>
     /// Parametric constraint: Position and heading depend on parameter (e.g., switch angle).
     /// Used for switch branches.
     /// </summary>
-    private (double X, double Y, double Rotation) CalculateParametricTransform(
-        (double X, double Y, double Rotation) parentWorldTransform,
+    private Transform2D CalculateParametricTransform(
+        Transform2D parentWorldTransform,
         TrackGeometry parentGeometry,
         int parentConnectorIndex,
         TrackGeometry childGeometry,
         int childConnectorIndex,
         Dictionary<string, double>? parameters)
     {
-        // For now: Same as Rigid (TODO: Add parameter-based offset)
-        // Future: Extract branch angle from parameters and apply offset
-        var branchAngle = parameters?.GetValueOrDefault("BranchAngle", 0) ?? 0;
+        var branchAngle = parameters?.GetValueOrDefault("branchAngle", 0) ?? 0;
 
-        var (x, y, rotation) = CalculateRigidTransform(
-            parentWorldTransform, parentGeometry, parentConnectorIndex,
-            childGeometry, childConnectorIndex);
+        var pIdx = parentConnectorIndex;
+        var cIdx = childConnectorIndex;
 
-        // Apply branch angle offset
-        return (x, y, rotation + branchAngle);
+        if (pIdx >= parentGeometry.Endpoints.Count || cIdx >= childGeometry.Endpoints.Count)
+        {
+            Debug.WriteLine($"⚠️ ConstraintSolver: Invalid connector index: parent[{pIdx}] child[{cIdx}]");
+            return parentWorldTransform; // Fallback
+        }
+
+        var pPoint = parentGeometry.Endpoints[pIdx];
+        var pHeading = parentGeometry.EndpointHeadingsDeg[pIdx];
+
+        var cPoint = childGeometry.Endpoints[cIdx];
+        var cHeading = childGeometry.EndpointHeadingsDeg[cIdx];
+
+        // Calculate child rotation: parent rotation + parent heading + branchAngle - child heading
+        var childRotation = parentWorldTransform.RotationDegrees + pHeading + branchAngle - cHeading;
+
+        // Rotate child connector point by child's rotation
+        var rotatedChildConnector = RotatePoint(cPoint.X, cPoint.Y, childRotation);
+
+        // Calculate world position: parent world + parent connector - rotated child connector
+        var parentWorldConnector = parentWorldTransform.TransformPoint(pPoint.X, pPoint.Y);
+        var childWorldX = parentWorldConnector.X - rotatedChildConnector.X;
+        var childWorldY = parentWorldConnector.Y - rotatedChildConnector.Y;
+
+        return new Transform2D
+        {
+            TranslateX = childWorldX,
+            TranslateY = childWorldY,
+            RotationDegrees = NormalizeAngle(childRotation)
+        };
     }
 
     /// <summary>
-    /// Rotate and translate a point from local to world coordinates.
+    /// Rotate a point by angle (degrees).
     /// </summary>
-    private static (double X, double Y) RotateAndTranslate(
-        double localX, double localY,
-        double rotationDeg,
-        double translateX, double translateY)
+    private static (double X, double Y) RotatePoint(double x, double y, double degrees)
     {
-        var rad = rotationDeg * Math.PI / 180.0;
+        var rad = degrees * Math.PI / 180.0;
         var cos = Math.Cos(rad);
         var sin = Math.Sin(rad);
 
-        var rotatedX = localX * cos - localY * sin;
-        var rotatedY = localX * sin + localY * cos;
-
-        return (rotatedX + translateX, rotatedY + translateY);
+        return (
+            x * cos - y * sin,
+            x * sin + y * cos
+        );
     }
 
     /// <summary>
     /// Normalize angle to [0, 360) range.
     /// </summary>
-    private static double NormalizeAngle(double angleDeg)
+    private static double NormalizeAngle(double degrees)
     {
-        var result = angleDeg % 360;
-        if (result < 0)
-            result += 360;
-        return result;
+        var result = degrees % 360;
+        return result < 0 ? result + 360 : result;
     }
 }
+

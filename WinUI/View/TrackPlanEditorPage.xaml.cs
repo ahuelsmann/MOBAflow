@@ -147,11 +147,11 @@ public sealed partial class TrackPlanEditorPage
         private Point _lastDragPosition;
         private List<TrackSegmentViewModel> _dragGroup = [];
         private UIElement? _dragCaptureElement;
-        private SnapCandidate? _currentSnapCandidate;
 
         private void StartSegmentDrag(TrackSegmentViewModel segment, PointerRoutedEventArgs e, UIElement captureElement)
         {
             var pointer = e.GetCurrentPoint(TrackCanvas);
+
 
             // Calculate drag offset (pointer position relative to segment position)
             // Account for current zoom and pan
@@ -159,8 +159,8 @@ public sealed partial class TrackPlanEditorPage
             var canvasX = (pointer.Position.X - ViewModel.PanOffsetX) / zoomFactor;
             var canvasY = (pointer.Position.Y - ViewModel.PanOffsetY) / zoomFactor;
 
-            segment.DragOffsetX = canvasX - segment.X;
-            segment.DragOffsetY = canvasY - segment.Y;
+            segment.DragOffsetX = canvasX - segment.WorldTransform.TranslateX;
+            segment.DragOffsetY = canvasY - segment.WorldTransform.TranslateY;
             segment.IsDragging = true;
 
             // Find connected group for group drag
@@ -169,15 +169,15 @@ public sealed partial class TrackPlanEditorPage
             {
                 groupSegment.IsPartOfDragGroup = true;
                 // Calculate offset for each group member relative to drag start
-                groupSegment.DragOffsetX = canvasX - groupSegment.X;
-                groupSegment.DragOffsetY = canvasY - groupSegment.Y;
+                groupSegment.DragOffsetX = canvasX - groupSegment.WorldTransform.TranslateX;
+                groupSegment.DragOffsetY = canvasY - groupSegment.WorldTransform.TranslateY;
             }
 
             _isDraggingSegment = true;
             _draggedSegment = segment;
             _lastDragPosition = new Point(canvasX, canvasY);
             _dragCaptureElement = captureElement;
-            _currentSnapCandidate = null;
+
 
             // Capture pointer for drag tracking
             captureElement.CapturePointer(e.Pointer);
@@ -209,16 +209,6 @@ public sealed partial class TrackPlanEditorPage
             // Re-render to update PathData
             ViewModel.RefreshPathData();
 
-            // Check for snap candidates
-            ClearSnapHighlight();
-            _currentSnapCandidate = ViewModel.FindSnapCandidate(_draggedSegment);
-            if (_currentSnapCandidate != null)
-            {
-                // Highlight the snap target
-                _currentSnapCandidate.TargetSegment.IsSnapTarget = true;
-                Debug.WriteLine($"🧲 Snap candidate: {_currentSnapCandidate.TargetSegment.ArticleCode} (distance: {_currentSnapCandidate.Distance:F1})");
-            }
-
             _lastDragPosition = new Point(canvasX, canvasY);
             e.Handled = true;
         }
@@ -227,17 +217,10 @@ public sealed partial class TrackPlanEditorPage
         {
             if (_isDraggingSegment && _draggedSegment != null)
             {
-                // Check if we should snap
-                if (_currentSnapCandidate != null)
-                {
-                    ViewModel.SnapAndConnect(_draggedSegment, _currentSnapCandidate);
-                    Debug.WriteLine($"🔗 Snapped to {_currentSnapCandidate.TargetSegment.ArticleCode}");
-                }
 
                 Debug.WriteLine($"🎯 Drag ended: {_draggedSegment.ArticleCode}");
 
                 // Clear drag state
-                ClearSnapHighlight();
                 _draggedSegment.IsDragging = false;
                 foreach (var segment in _dragGroup)
                 {
@@ -247,7 +230,6 @@ public sealed partial class TrackPlanEditorPage
                 _isDraggingSegment = false;
                 _draggedSegment = null;
                 _dragGroup.Clear();
-                _currentSnapCandidate = null;
 
                 if (sender is UIElement elem)
                 {
@@ -255,14 +237,6 @@ public sealed partial class TrackPlanEditorPage
                 }
 
                 e.Handled = true;
-            }
-        }
-
-        private void ClearSnapHighlight()
-        {
-            foreach (var segment in ViewModel.Segments)
-            {
-                segment.IsSnapTarget = false;
             }
         }
 

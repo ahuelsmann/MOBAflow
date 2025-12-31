@@ -514,66 +514,6 @@ public class AnyRailPart
         return sb.ToString().Trim();
     }
 
-    /// <summary>
-    /// Calculates endpoint heading directions from AnyRail endpoint directions.
-    /// Uses the AnyRail layout's endpoint direction attributes directly.
-    /// </summary>
-    /// <param name="anyRailLayout">The parent AnyRail layout containing endpoint data</param>
-    public List<double> CalculateEndpointHeadings(AnyRailLayout anyRailLayout)
-    {
-        var headings = new List<double>();
-
-        // Build lookup: endpoint number → direction
-        var endpointDirections = anyRailLayout.Endpoints.ToDictionary(e => e.Nr, e => (double)e.Direction);
-
-        // For each endpoint number assigned to this part, lookup its direction
-        foreach (var endpointNr in EndpointNrs)
-        {
-            if (endpointDirections.TryGetValue(endpointNr, out var direction))
-            {
-                headings.Add(NormalizeAngle(direction));
-            }
-            else
-            {
-                // Fallback: estimate from geometry (should never happen with valid AnyRail XML)
-                Debug.WriteLine($"Warning: Endpoint {endpointNr} not found in AnyRail endpoints list for part {Id}");
-                headings.Add(0.0); // Default to 0°
-            }
-        }
-
-        return headings;
-    }
-
-    /// <summary>
-    /// Gets world coordinates for all endpoints from AnyRail layout.
-    /// Returns list of (X, Y, Heading) for each endpoint in EndpointNrs order.
-    /// </summary>
-    public List<(double X, double Y, double Heading)> GetEndpointWorldCoordinates(AnyRailLayout anyRailLayout)
-    {
-        var result = new List<(double, double, double)>();
-        
-        // Build lookup: endpoint number → (X, Y, Heading)
-        var endpointLookup = anyRailLayout.Endpoints.ToDictionary(
-            e => e.Nr,
-            e => (X: e.X, Y: e.Y, Heading: (double)e.Direction));
-        
-        // For each endpoint number assigned to this part, get world coordinates
-        foreach (var endpointNr in EndpointNrs)
-        {
-            if (endpointLookup.TryGetValue(endpointNr, out var ep))
-            {
-                result.Add((ep.X, ep.Y, NormalizeAngle(ep.Heading)));
-            }
-            else
-            {
-                Debug.WriteLine($"Warning: Endpoint {endpointNr} not found in AnyRail endpoints list for part {Id}");
-                result.Add((0.0, 0.0, 0.0)); // Fallback
-            }
-        }
-        
-        return result;
-    }
-
     private static double NormalizeAngle(double degrees)
     {
         var result = degrees % 360.0;

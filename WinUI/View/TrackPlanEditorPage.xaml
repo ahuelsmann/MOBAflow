@@ -7,6 +7,7 @@
 
     <Page.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <conv:PathDataToGeometryConverter x:Key="PathDataToGeometryConverter" />
     </Page.Resources>
 
     <Grid Padding="24,16">
@@ -102,41 +103,48 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:TrackSegmentViewModel">
-                                    <Grid
-                                        Canvas.Left="{Binding X, Mode=OneWay}"
-                                        Canvas.Top="{Binding Y, Mode=OneWay}"
-                                        PointerPressed="Segment_PointerPressed">
+                                    <Grid>
                                         <!--  Invisible wider hit area for easier clicking  -->
                                         <Path
-                                            Data="{Binding PathData, Mode=OneWay, Converter={StaticResource PathDataToGeometryConverter}, FallbackValue='M 0,0'}"
+                                            Canvas.Left="{x:Bind WorldTransform.TranslateX, Mode=OneWay}"
+                                            Canvas.Top="{x:Bind WorldTransform.TranslateY, Mode=OneWay}"
+                                            Data="{x:Bind PathData, Mode=OneWay, Converter={StaticResource PathDataToGeometryConverter}, FallbackValue='M 0,0'}"
+                                            PointerPressed="Segment_PointerPressed"
                                             Stroke="Transparent"
                                             StrokeThickness="16">
                                             <Path.RenderTransform>
-                                                <RotateTransform Angle="{Binding Rotation, Mode=OneWay}" />
+                                                <RotateTransform Angle="{x:Bind WorldTransform.RotationDegrees, Mode=OneWay}" />
                                             </Path.RenderTransform>
                                         </Path>
                                         <!--  Visible track path  -->
                                         <Path
-                                            Data="{Binding PathData, Mode=OneWay, Converter={StaticResource PathDataToGeometryConverter}, FallbackValue='M 0,0'}"
-                                            Stroke="{ThemeResource AccentFillColorDefaultBrush}"
+                                            Canvas.Left="{x:Bind WorldTransform.TranslateX, Mode=OneWay}"
+                                            Canvas.Top="{x:Bind WorldTransform.TranslateY, Mode=OneWay}"
+                                            Data="{x:Bind PathData, Mode=OneWay, Converter={StaticResource PathDataToGeometryConverter}, FallbackValue='M 0,0'}"
+                                            PointerPressed="Segment_PointerPressed"
+                                            Stroke="Red"
                                             StrokeThickness="4">
                                             <Path.RenderTransform>
-                                                <RotateTransform Angle="{Binding Rotation, Mode=OneWay}" />
+                                                <RotateTransform Angle="{x:Bind WorldTransform.RotationDegrees, Mode=OneWay}" />
                                             </Path.RenderTransform>
                                         </Path>
                                         <!--  Selection highlight (shown when selected)  -->
                                         <Path
-                                            Data="{Binding PathData, Mode=OneWay, Converter={StaticResource PathDataToGeometryConverter}, FallbackValue='M 0,0'}"
+                                            Canvas.Left="{x:Bind WorldTransform.TranslateX, Mode=OneWay}"
+                                            Canvas.Top="{x:Bind WorldTransform.TranslateY, Mode=OneWay}"
+                                            Data="{x:Bind PathData, Mode=OneWay, Converter={StaticResource PathDataToGeometryConverter}, FallbackValue='M 0,0'}"
                                             Opacity="0.5"
+                                            PointerPressed="Segment_PointerPressed"
                                             Stroke="Yellow"
                                             StrokeThickness="8"
-                                            Visibility="{Binding IsSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                                            Visibility="{x:Bind IsSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                                             <Path.RenderTransform>
-                                                <RotateTransform Angle="{Binding Rotation, Mode=OneWay}" />
+                                                <RotateTransform Angle="{x:Bind WorldTransform.RotationDegrees, Mode=OneWay}" />
                                             </Path.RenderTransform>
                                         </Path>
                                     </Grid>
                                 </DataTemplate>
+
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </Canvas>

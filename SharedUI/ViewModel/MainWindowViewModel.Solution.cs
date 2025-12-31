@@ -103,7 +103,7 @@ public partial class MainWindowViewModel
         // Skip file operations if IoService not available (WebApp/MAUI)
         if (_ioService is not NullIoService && SaveSolutionCommand.CanExecute(null))
         {
-            await SaveSolutionCommand.ExecuteAsync(null).ConfigureAwait(false);
+            await SaveSolutionCommand.ExecuteAsync(null);
         }
 
         // Clear existing Solution (DI singleton)
