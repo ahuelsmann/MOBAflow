@@ -41,25 +41,20 @@ public static class TopologyConverter
     }
 
     /// <summary>
-    /// Get statistics about the conversion (how much data was stripped).
+    /// Get statistics about the topology (topology-first metrics).
     /// </summary>
     public static ConversionStats GetConversionStats(TrackLayout before, TrackLayout after)
     {
-        var beforeEndpoints = before.Segments.Sum(s => s.Endpoints?.Count ?? 0);
-        var beforeLines = before.Segments.Sum(s => s.Lines?.Count ?? 0);
-        var beforeArcs = before.Segments.Sum(s => s.Arcs?.Count ?? 0);
-
-        var afterEndpoints = after.Segments.Sum(s => s.Endpoints?.Count ?? 0);
-        var afterLines = after.Segments.Sum(s => s.Lines?.Count ?? 0);
-        var afterArcs = after.Segments.Sum(s => s.Arcs?.Count ?? 0);
-
+        // Topology-first: No coordinate data stored, only ArticleCode + Connections
+        // Metrics now focus on graph structure instead of geometry
+        
         return new ConversionStats
         {
             SegmentCount = after.Segments.Count,
             ConnectionCount = after.Connections.Count,
-            EndpointsRemoved = beforeEndpoints - afterEndpoints,
-            LinesRemoved = beforeLines - afterLines,
-            ArcsRemoved = beforeArcs - afterArcs
+            EndpointsRemoved = 0,  // No longer relevant (topology-first)
+            LinesRemoved = 0,       // No longer relevant (topology-first)
+            ArcsRemoved = 0         // No longer relevant (topology-first)
         };
     }
 }

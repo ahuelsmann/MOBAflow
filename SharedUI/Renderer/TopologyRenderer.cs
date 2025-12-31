@@ -28,37 +28,51 @@ public class TopologyRenderer
     public RenderResult Render(TrackLayout layout)
     {
         var rendered = new List<RenderedSegment>();
-        var visited = new HashSet<string>();
+        var visitedSegments = new HashSet<string>();  // Track which segments are fully positioned
+        var visitedEndpoints = new HashSet<string>();  // Track (SegmentId, EndpointIndex) to avoid duplicate connections
 
         Debug.WriteLine($"🚀 TopologyRenderer.Render: {layout.Segments.Count} segments, {layout.Connections.Count} connections");
 
-        // Find starting segment
-        var start = layout.Segments.FirstOrDefault();
+        // Find best starting segment (most connected segment to ensure full traversal)
+        var start = layout.Segments
+            .OrderByDescending(s => layout.Connections.Count(c => c.Segment1Id == s.Id || c.Segment2Id == s.Id))
+            .FirstOrDefault();
+        
         if (start == null)
         {
             Debug.WriteLine("⚠️  No segments found!");
             return new RenderResult(rendered, BoundingBox.Empty);
         }
 
-        Debug.WriteLine($"📍 Starting BFS from segment: {start.Id} ({start.ArticleCode})");
+        var startConnectionCount = layout.Connections.Count(c => c.Segment1Id == start.Id || c.Segment2Id == start.Id);
+        Debug.WriteLine($"📍 Starting BFS from segment: {start.Id} ({start.ArticleCode}) with {startConnectionCount} connections");
 
         // BFS queue: (Segment, Position X, Position Y, Accumulated Rotation)
         var queue = new Queue<(TrackSegment Segment, double X, double Y, double RotationDeg)>();
         queue.Enqueue((start, 0, 0, 0));  // Start at origin with 0° rotation
+        Debug.WriteLine($"🎯 START SEGMENT: {start.Id} ({start.ArticleCode}) at (0, 0, 0°)");
 
         while (queue.Count > 0)
         {
             var (segment, x, y, rotationDeg) = queue.Dequeue();
-            if (visited.Contains(segment.Id)) continue;
-            visited.Add(segment.Id);
+            
+            // Only process segment positioning ONCE (avoid duplicate rendering)
+            if (visitedSegments.Contains(segment.Id)) 
+            {
+                Debug.WriteLine($"  ⏭️  Skipping already visited segment: {segment.Id} ({segment.ArticleCode})");
+                continue;
+            }
+            visitedSegments.Add(segment.Id);
 
             // Lookup geometry from library
             var geometry = _library.GetGeometry(segment.ArticleCode);
             if (geometry == null)
             {
-                Debug.WriteLine($"Warning: No geometry found for ArticleCode '{segment.ArticleCode}'");
+                Debug.WriteLine($"⚠️  No geometry found for ArticleCode '{segment.ArticleCode}' (Segment {segment.Id}) - SKIPPING");
                 continue;
             }
+
+            Debug.WriteLine($"  ✓ Segment {segment.Id} ({segment.ArticleCode}): {geometry.Endpoints.Count} endpoints defined in library");
 
             // Apply rotation transform to PathData
             var rotatedPathData = ApplyRotation(geometry.PathData, rotationDeg);
@@ -75,7 +89,8 @@ public class TopologyRenderer
                 AssignedInPort = segment.AssignedInPort
             });
 
-            Debug.WriteLine($"  Rendered segment {segment.Id} ({segment.ArticleCode}): X={x:F1}, Y={y:F1}, PathData={(rotatedPathData?.Length > 50 ? rotatedPathData.Substring(0, 50) + "..." : rotatedPathData)}");
+            Debug.WriteLine($"  ✅ Rendered segment {segment.Id} ({segment.ArticleCode}): X={x:F2}, Y={y:F2}, Rot={rotationDeg:F1}°");
+            Debug.WriteLine($"     PathData: {(rotatedPathData?.Length > 60 ? rotatedPathData.Substring(0, 60) + "..." : rotatedPathData)}");
 
             // Find ALL connections (current segment can be Segment1 OR Segment2)
             // AnyRail connections are directionless - need to check both ends
@@ -104,8 +119,17 @@ public class TopologyRenderer
                     nextEndpointIndex = conn.Segment1EndpointIndex;
                 }
 
+                // Check if this endpoint connection was already processed (avoid infinite loops)
+                var endpointKey = $"{segment.Id}:{currentEndpointIndex}→{nextId}:{nextEndpointIndex}";
+                if (visitedEndpoints.Contains(endpointKey)) 
+                {
+                    Debug.WriteLine($"    ⏭️  Skipping already visited connection: {endpointKey}");
+                    continue;
+                }
+                visitedEndpoints.Add(endpointKey);
+
                 var nextSegment = layout.Segments.FirstOrDefault(s => s.Id == nextId);
-                if (nextSegment == null || visited.Contains(nextId)) continue;
+                if (nextSegment == null) continue;
 
                 var nextGeometry = _library.GetGeometry(nextSegment.ArticleCode);
                 if (nextGeometry == null) continue;
@@ -126,7 +150,10 @@ public class TopologyRenderer
                 // Calculate next transform so that endpoints match AND tangents are aligned.
                 // 1) Current endpoint in WORLD coordinates
                 var currentEndpointLocal = geometry.Endpoints[currentEndpointIndex];
+                Debug.WriteLine($"    📍 Current segment {segment.Id} at World ({x:F2}, {y:F2}), Rot={rotationDeg:F1}°");
+                Debug.WriteLine($"       Endpoint[{currentEndpointIndex}] Local: ({currentEndpointLocal.X:F2}, {currentEndpointLocal.Y:F2})");
                 var currentEndpointWorld = TransformPoint(currentEndpointLocal, x, y, rotationDeg);
+                Debug.WriteLine($"       Endpoint[{currentEndpointIndex}] World: ({currentEndpointWorld.X:F2}, {currentEndpointWorld.Y:F2})");
 
                 // 2) Compute target heading for the next endpoint.
                 // Use absolute Direction from segment.Endpoints if available, otherwise use geometry library
@@ -142,14 +169,19 @@ public class TopologyRenderer
 
                 // 4) With rotation known, compute translation so the two endpoints coincide.
                 var nextEndpointLocal = nextGeometry.Endpoints[nextEndpointIndex];
+                Debug.WriteLine($"    🔗 Next segment {nextId}: Endpoint[{nextEndpointIndex}] Local ({nextEndpointLocal.X:F2}, {nextEndpointLocal.Y:F2})");
                 var nextEndpointWorldIfAtOrigin = TransformPoint(nextEndpointLocal, 0, 0, nextRotationDeg);
+                Debug.WriteLine($"       WorldIfAtOrigin: ({nextEndpointWorldIfAtOrigin.X:F2}, {nextEndpointWorldIfAtOrigin.Y:F2})");
                 var nextX = currentEndpointWorld.X - nextEndpointWorldIfAtOrigin.X;
                 var nextY = currentEndpointWorld.Y - nextEndpointWorldIfAtOrigin.Y;
+                Debug.WriteLine($"       ➡️ FINAL Next position: ({nextX:F2}, {nextY:F2}), Rot={nextRotationDeg:F1}°");
 
                 Debug.WriteLine($"  Connection: {segment.Id}.Ep{currentEndpointIndex} → {nextId}.Ep{nextEndpointIndex}");
-                Debug.WriteLine($"    Current endpoint: ({currentEndpointWorld.X:F1}, {currentEndpointWorld.Y:F1})");
-                Debug.WriteLine($"    Current heading: {currentHeadingWorld:F1}°, Desired next: {desiredNextHeadingWorld:F1}°");
-                Debug.WriteLine($"    Next segment pos: ({nextX:F1}, {nextY:F1}), rotation: {nextRotationDeg:F1}°");
+                Debug.WriteLine($"    Current endpoint World: ({currentEndpointWorld.X:F1}, {currentEndpointWorld.Y:F1}), Local: ({currentEndpointLocal.X:F1}, {currentEndpointLocal.Y:F1})");
+                Debug.WriteLine($"    Current heading World: {currentHeadingWorld:F1}°, Desired next: {desiredNextHeadingWorld:F1}°");
+                Debug.WriteLine($"    Next heading Local: {nextHeadingLocal:F1}°, Next rotation: {nextRotationDeg:F1}°");
+                Debug.WriteLine($"    Next endpoint Local: ({nextEndpointLocal.X:F1}, {nextEndpointLocal.Y:F1}), WorldIfAtOrigin: ({nextEndpointWorldIfAtOrigin.X:F1}, {nextEndpointWorldIfAtOrigin.Y:F1})");
+                Debug.WriteLine($"    Next segment final pos: ({nextX:F1}, {nextY:F1}), rotation: {nextRotationDeg:F1}°");
 
                 queue.Enqueue((nextSegment, nextX, nextY, nextRotationDeg));
             }
@@ -236,36 +268,27 @@ public class TopologyRenderer
 
     /// <summary>
     /// Get endpoint direction in world coordinates.
-    /// Uses segment.Endpoints[index].Direction if available (from AnyRail XML),
-    /// otherwise falls back to geometry library heading + current rotation.
+    /// Always uses geometry library heading + current rotation.
+    /// AnyRail XML directions are absolute and cannot be used for topology alignment.
     /// </summary>
     private static double GetEndpointDirection(TrackSegment segment, int endpointIndex, TrackGeometry geometry, double rotationDeg)
     {
-        // Check if segment has endpoint data with explicit direction
-        if (segment.Endpoints.Count > endpointIndex && segment.Endpoints[endpointIndex].Direction.HasValue)
-        {
-            return segment.Endpoints[endpointIndex].Direction.Value;
-        }
-
-        // Fallback: use geometry library heading + rotation
+        // Always use geometry library heading + rotation for correct alignment
+        // AnyRail Direction values are absolute world coordinates, not relative to segment
+        _ = segment; // Suppress unused parameter warning
         var headingLocal = GetEndpointHeadingDeg(geometry, endpointIndex);
         return NormalizeDeg(headingLocal + rotationDeg);
     }
 
     /// <summary>
     /// Get endpoint direction in local coordinates (no rotation applied).
-    /// Uses segment.Endpoints[index].Direction if available,
-    /// otherwise falls back to geometry library heading.
+    /// Always uses geometry library heading.
     /// </summary>
     private static double GetEndpointDirectionLocal(TrackSegment segment, int endpointIndex, TrackGeometry geometry)
     {
-        // Check if segment has endpoint data with explicit direction
-        if (segment.Endpoints.Count > endpointIndex && segment.Endpoints[endpointIndex].Direction.HasValue)
-        {
-            return segment.Endpoints[endpointIndex].Direction.Value;
-        }
-
-        // Fallback: use geometry library heading
+        // Always use geometry library heading (local coordinates)
+        // AnyRail Direction values are absolute and not suitable for topology rendering
+        _ = segment; // Suppress unused parameter warning
         return GetEndpointHeadingDeg(geometry, endpointIndex);
     }
 

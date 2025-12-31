@@ -155,7 +155,7 @@
                         <AppBarSeparator />
                         <!--  Import Export  -->
                         <AppBarButton
-                            Command="{x:Bind TrackPlanEditorViewModel.ImportAnyRailCommand}"
+                            Command="{x:Bind TrackPlanEditorViewModel.ImportFromAnyRailXmlCommand}"
                             Label="Import"
                             ToolTipService.ToolTip="AnyRail XML Import">
                             <AppBarButton.Icon>

@@ -2,14 +2,14 @@
 namespace Moba.Domain.TrackPlan;
 
 /// <summary>
-/// Represents a connection between two track segment endpoints.
-/// This is an edge in the topology graph - no coordinates needed.
-/// The renderer calculates positions based on these connections.
+/// Represents a connection between two track segment connectors.
+/// Track-Graph Architecture: Connections are edges in the topology graph with geometric constraints.
+/// The constraint type determines how world transforms are calculated during rendering.
 /// 
-/// Endpoint indices:
-/// - Simple tracks (2 endpoints): 0 = start, 1 = end
-/// - Turnouts (3 endpoints): 0 = main, 1 = straight, 2 = branch
-/// - Double slips (4 endpoints): 0-3 for each direction
+/// Connector indices:
+/// - Simple tracks (2 connectors): 0 = start, 1 = end
+/// - Turnouts (3 connectors): 0 = main, 1 = straight, 2 = branch
+/// - Double slips (4 connectors): 0-3 for each direction
 /// </summary>
 public class TrackConnection
 {
@@ -19,9 +19,10 @@ public class TrackConnection
     public string Segment1Id { get; set; } = string.Empty;
 
     /// <summary>
-    /// Endpoint index on segment 1 (0 = start, 1 = end, 2+ for turnouts).
+    /// Connector index on segment 1 (0 = first connector, 1 = second, etc.).
+    /// Maps to TrackSegment.Connectors[index] or TrackGeometry.Endpoints[index].
     /// </summary>
-    public int Segment1EndpointIndex { get; set; }
+    public int Segment1ConnectorIndex { get; set; }
 
     /// <summary>
     /// ID of the second connected segment.
@@ -29,7 +30,44 @@ public class TrackConnection
     public string Segment2Id { get; set; } = string.Empty;
 
     /// <summary>
-    /// Endpoint index on segment 2 (0 = start, 1 = end, 2+ for turnouts).
+    /// Connector index on segment 2 (0 = first connector, 1 = second, etc.).
+    /// Maps to TrackSegment.Connectors[index] or TrackGeometry.Endpoints[index].
     /// </summary>
-    public int Segment2EndpointIndex { get; set; }
+    public int Segment2ConnectorIndex { get; set; }
+
+    /// <summary>
+    /// Geometric constraint type for this connection.
+    /// Determines how world transforms are calculated.
+    /// Default: Rigid (exact position + heading alignment).
+    /// </summary>
+    public ConstraintType ConstraintType { get; set; } = ConstraintType.Rigid;
+
+    /// <summary>
+    /// Optional parameters for parametric constraints.
+    /// Example: Branch angle for switch turnouts.
+    /// </summary>
+    public Dictionary<string, double>? Parameters { get; set; }
+
+    // === BACKWARD COMPATIBILITY ===
+    // Old properties for AnyRail import compatibility (will be removed in future version)
+
+    /// <summary>
+    /// [DEPRECATED] Use Segment1ConnectorIndex instead.
+    /// </summary>
+    [Obsolete("Use Segment1ConnectorIndex instead")]
+    public int Segment1EndpointIndex
+    {
+        get => Segment1ConnectorIndex;
+        set => Segment1ConnectorIndex = value;
+    }
+
+    /// <summary>
+    /// [DEPRECATED] Use Segment2ConnectorIndex instead.
+    /// </summary>
+    [Obsolete("Use Segment2ConnectorIndex instead")]
+    public int Segment2EndpointIndex
+    {
+        get => Segment2ConnectorIndex;
+        set => Segment2ConnectorIndex = value;
+    }
 }

@@ -260,9 +260,9 @@ public class AnyRailLayout
                     result.Add(new TrackConnection
                     {
                         Segment1Id = p1.PartId,
-                        Segment1EndpointIndex = p1.EndpointIndex,
+                        Segment1ConnectorIndex = p1.EndpointIndex,
                         Segment2Id = p2.PartId,
-                        Segment2EndpointIndex = p2.EndpointIndex
+                        Segment2ConnectorIndex = p2.EndpointIndex
                     });
                     Debug.WriteLine($"🔗 ToTrackConnections: {p1.PartId}.ep{p1.EndpointIndex} <-> {p2.PartId}.ep{p2.EndpointIndex}");
                 }
@@ -276,8 +276,8 @@ public class AnyRailLayout
         {
             // Create an order-independent key
             var key = string.CompareOrdinal(c.Segment1Id, c.Segment2Id) <= 0
-                ? $"{c.Segment1Id}:{c.Segment1EndpointIndex}-{c.Segment2Id}:{c.Segment2EndpointIndex}"
-                : $"{c.Segment2Id}:{c.Segment2EndpointIndex}-{c.Segment1Id}:{c.Segment1EndpointIndex}";
+                ? $"{c.Segment1Id}:{c.Segment1ConnectorIndex}-{c.Segment2Id}:{c.Segment2ConnectorIndex}"
+                : $"{c.Segment2Id}:{c.Segment2ConnectorIndex}-{c.Segment1Id}:{c.Segment1ConnectorIndex}";
             if (seen.Add(key))
             {
                 unique.Add(c);
@@ -346,6 +346,66 @@ public class AnyRailPart
     public List<AnyRailArc> Arcs { get; } = [];
 
     /// <summary>
+    /// Gets the X coordinate of the part's first point (from Lines or Arcs).
+    /// This represents the absolute position in AnyRail's coordinate system.
+    /// </summary>
+    public double GetX()
+    {
+        if (Lines.Count > 0)
+            return Lines[0].Pt1.X;
+        if (Arcs.Count > 0)
+            return Arcs[0].Pt1.X;
+        return 0;
+    }
+
+    /// <summary>
+    /// Gets the Y coordinate of the part's first point (from Lines or Arcs).
+    /// This represents the absolute position in AnyRail's coordinate system.
+    /// </summary>
+    public double GetY()
+    {
+        if (Lines.Count > 0)
+            return Lines[0].Pt1.Y;
+        if (Arcs.Count > 0)
+            return Arcs[0].Pt1.Y;
+        return 0;
+    }
+
+    /// <summary>
+    /// Gets the rotation angle of the part in degrees (0-360).
+    /// Calculated from the first line or arc direction.
+    /// </summary>
+    public double GetRotation()
+    {
+        if (Lines.Count > 0)
+        {
+            // Calculate angle from first line's direction
+            var line = Lines[0];
+            var dx = line.Pt2.X - line.Pt1.X;
+            var dy = line.Pt2.Y - line.Pt1.Y;
+            var angleRad = Math.Atan2(dy, dx);
+            var angleDeg = angleRad * 180.0 / Math.PI;
+            return NormalizeAngle(angleDeg);
+        }
+        
+        if (Arcs.Count > 0)
+        {
+            // Calculate angle from first arc's starting tangent
+            var arc = Arcs[0];
+            var dx = arc.Pt2.X - arc.Pt1.X;
+            var dy = arc.Pt2.Y - arc.Pt1.Y;
+            
+            // For arcs, use the chord direction as approximation
+            // (More precise would be to calculate tangent at Pt1)
+            var angleRad = Math.Atan2(dy, dx);
+            var angleDeg = angleRad * 180.0 / Math.PI;
+            return NormalizeAngle(angleDeg);
+        }
+        
+        return 0;
+    }
+
+    /// <summary>
     /// Derives the track article code (e.g., "R1", "R2", "G231") from the part's geometry.
     /// Based on Piko A-Gleis H0 specifications.
     /// </summary>
@@ -394,20 +454,131 @@ public class AnyRailPart
             return "R";
 
         var radius = Arcs[0].Radius;
+        var angle = Arcs[0].Angle;
 
-        // Piko A-Gleis curve radii (values from XML)
-        // R1 ≈ 545 units (360mm real)
-        // R2 ≈ 638 units (422mm real)
-        // R3 ≈ 732 units (484mm real)
-        // R9 ≈ 1374 units (908mm real - used in turnouts)
+        // AnyRail XML radii mapping to Piko A-Gleis + AnyRail-specific radii
+        // AnyRail uses radii: 545mm (R2-like), 638mm (R3-like), 732mm (R4-like), 1374mm (R9-like)
+        // Piko A-Gleis uses: 360mm (R1), 421.88mm (R2), 483.75mm (R3), 545.63mm (R4), 907.97mm (R9)
+        
+        // Strategy: Use angle to differentiate between 30° curves (R1-R4) and 15° curves (R9)
+        // For 30° curves: Map AnyRail radii to nearest Piko equivalent OR use AnyRail-specific codes
+        // For 15° curves: Always use R9 (turnout radius)
+        
+        if (Math.Abs(angle - 15) < 2)  // 15° arc → turnout radius
+        {
+            return "R9";  // Piko R9 = 907.97mm, AnyRail R9 = 1374mm (both 15°)
+        }
+        
+        // 30° arc → standard curve radius
+        // Exact match first (tolerance ±10mm for floating point comparison)
+        if (Math.Abs(radius - 360) < 10) return "R1";    // Piko R1 (360mm)
+        if (Math.Abs(radius - 421.88) < 10) return "R2"; // Piko R2 (421.88mm)
+        if (Math.Abs(radius - 483.75) < 10) return "R3"; // Piko R3 (483.75mm)
+        if (Math.Abs(radius - 545.63) < 10) return "R4"; // Piko R4 (545.63mm)
+        if (Math.Abs(radius - 545) < 10) return "R2";    // AnyRail 545mm → map to R2 (close enough)
+        if (Math.Abs(radius - 638) < 10) return "R3";    // AnyRail 638mm → map to R3
+        if (Math.Abs(radius - 732) < 10) return "R4";    // AnyRail 732mm → map to R4
+
+        // Fallback: Range-based detection
         return radius switch
         {
-            < 600 => "R1",
-            < 700 => "R2",
-            < 800 => "R3",
-            < 1000 => "R4",
-            _ => "R9"
+            < 400 => "R1",   // < 400mm → R1
+            < 520 => "R2",   // 400-520mm → R2
+            < 600 => "R3",   // 520-600mm → R3
+            < 800 => "R4",   // 600-800mm → R4
+            _ => "R9"        // > 800mm → R9 (large radius)
         };
+    }
+
+    /// <summary>
+    /// Generates SVG PathData from Lines and Arcs for rendering.
+    /// </summary>
+    public string ToPathData()
+    {
+        var sb = new System.Text.StringBuilder();
+
+        // Add lines
+        foreach (var line in Lines)
+        {
+            sb.Append($"M {line.Pt1.X},{line.Pt1.Y} L {line.Pt2.X},{line.Pt2.Y} ");
+        }
+
+        // Add arcs (SVG Arc: A rx,ry rotation large-arc-flag sweep-flag x2,y2)
+        foreach (var arc in Arcs)
+        {
+            var sweepFlag = 0; // Curves bend outward (convex) - AnyRail convention
+            var largeArcFlag = arc.Angle > 180 ? 1 : 0;
+            sb.Append($"M {arc.Pt1.X},{arc.Pt1.Y} A {arc.Radius},{arc.Radius} 0 {largeArcFlag} {sweepFlag} {arc.Pt2.X},{arc.Pt2.Y} ");
+        }
+
+        return sb.ToString().Trim();
+    }
+
+    /// <summary>
+    /// Calculates endpoint heading directions from AnyRail endpoint directions.
+    /// Uses the AnyRail layout's endpoint direction attributes directly.
+    /// </summary>
+    /// <param name="anyRailLayout">The parent AnyRail layout containing endpoint data</param>
+    public List<double> CalculateEndpointHeadings(AnyRailLayout anyRailLayout)
+    {
+        var headings = new List<double>();
+
+        // Build lookup: endpoint number → direction
+        var endpointDirections = anyRailLayout.Endpoints.ToDictionary(e => e.Nr, e => (double)e.Direction);
+
+        // For each endpoint number assigned to this part, lookup its direction
+        foreach (var endpointNr in EndpointNrs)
+        {
+            if (endpointDirections.TryGetValue(endpointNr, out var direction))
+            {
+                headings.Add(NormalizeAngle(direction));
+            }
+            else
+            {
+                // Fallback: estimate from geometry (should never happen with valid AnyRail XML)
+                Debug.WriteLine($"Warning: Endpoint {endpointNr} not found in AnyRail endpoints list for part {Id}");
+                headings.Add(0.0); // Default to 0°
+            }
+        }
+
+        return headings;
+    }
+
+    /// <summary>
+    /// Gets world coordinates for all endpoints from AnyRail layout.
+    /// Returns list of (X, Y, Heading) for each endpoint in EndpointNrs order.
+    /// </summary>
+    public List<(double X, double Y, double Heading)> GetEndpointWorldCoordinates(AnyRailLayout anyRailLayout)
+    {
+        var result = new List<(double, double, double)>();
+        
+        // Build lookup: endpoint number → (X, Y, Heading)
+        var endpointLookup = anyRailLayout.Endpoints.ToDictionary(
+            e => e.Nr,
+            e => (X: e.X, Y: e.Y, Heading: (double)e.Direction));
+        
+        // For each endpoint number assigned to this part, get world coordinates
+        foreach (var endpointNr in EndpointNrs)
+        {
+            if (endpointLookup.TryGetValue(endpointNr, out var ep))
+            {
+                result.Add((ep.X, ep.Y, NormalizeAngle(ep.Heading)));
+            }
+            else
+            {
+                Debug.WriteLine($"Warning: Endpoint {endpointNr} not found in AnyRail endpoints list for part {Id}");
+                result.Add((0.0, 0.0, 0.0)); // Fallback
+            }
+        }
+        
+        return result;
+    }
+
+    private static double NormalizeAngle(double degrees)
+    {
+        var result = degrees % 360.0;
+        if (result < 0) result += 360.0;
+        return result;
     }
 
     /// <summary>

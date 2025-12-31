@@ -34,12 +34,6 @@ public partial class TrackSegmentViewModel : ObservableObject
     public string? Layer => _segment.Layer;
 
     /// <summary>
-    /// Endpoints for rendering and connection matching.
-    /// For curves, index [2] contains the arc-point for sweep calculation.
-    /// </summary>
-    public List<SegmentEndpoint> Endpoints => _segment.Endpoints;
-
-    /// <summary>
     /// Assigned feedback sensor port (InPort 1-2048).
     /// </summary>
     public uint? AssignedInPort
@@ -140,35 +134,15 @@ public partial class TrackSegmentViewModel : ObservableObject
 
     /// <summary>
     /// Move segment by delta (for group drag).
+    /// In topology-first architecture, only ViewModel coordinates change.
     /// </summary>
     public void MoveBy(double deltaX, double deltaY)
     {
         X += deltaX;
         Y += deltaY;
-
-        // Also update domain model endpoints
-        foreach (var ep in _segment.Endpoints)
-        {
-            ep.X += deltaX;
-            ep.Y += deltaY;
-        }
-
-        // Update drawing elements
-        foreach (var line in _segment.Lines)
-        {
-            line.X1 += deltaX;
-            line.Y1 += deltaY;
-            line.X2 += deltaX;
-            line.Y2 += deltaY;
-        }
-
-        foreach (var arc in _segment.Arcs)
-        {
-            arc.X1 += deltaX;
-            arc.Y1 += deltaY;
-            arc.X2 += deltaX;
-            arc.Y2 += deltaY;
-        }
+        
+        // TODO: Update PathData to reflect new position (if needed for dragging)
+        // For now, PathData remains unchanged (renderer will handle final positioning)
     }
 
     #endregion
