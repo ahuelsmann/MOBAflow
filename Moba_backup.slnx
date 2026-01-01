@@ -65,7 +65,9 @@
   <Project Path="TrackPlan.Import.AnyRail/TrackPlan.Import.AnyRail.csproj" Id="e85d1c41-67fc-4845-ad64-a7fa2e2cfbdd" />
   <Project Path="TrackPlan.Renderer/TrackPlan.Renderer.csproj" Id="8dafe6f3-0aa2-4cb9-bd6f-35282159ba7e" />
   <Project Path="TrackPlan.Test/TrackPlan.Test.csproj" Id="01ae4941-5b4f-4b1e-80ac-f35babc581d6" />
-  <Project Path="TrackPlan/TrackPlan.csproj" Id="0683c0d6-96f6-4046-af87-177a6e5fc980" />
+  <Project Path="TrackPlan/TrackPlan.csproj" Id="0683c0d6-96f6-4046-af87-177a6e5fc980">
+    
+  </Project>
   <Project Path="WebApp/WebApp.csproj" />
   <Project Path="WinUI/WinUI.csproj">
     <Deploy />
