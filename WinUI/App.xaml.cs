@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
+using Moba.SharedUI.Service;
 using Serilog;
 using Serilog.Events;
 using Service;

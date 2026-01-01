@@ -10,6 +10,6 @@
     <PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Service\" />
+    <ProjectReference Include="..\TrackPlan\TrackPlan.csproj" />
   </ItemGroup>
 </Project>

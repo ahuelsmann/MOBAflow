@@ -1,7 +1,7 @@
-﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Domain.TrackPlan;
+using Moba.TrackPlan.Domain;
 
 /// <summary>
 /// ViewModel wrapper for TrackTemplate (from PikoATrackLibrary).
@@ -9,16 +9,13 @@ using Domain.TrackPlan;
 /// </summary>
 public class TrackTemplateViewModel
 {
-    #region Fields
     private readonly TrackTemplate _template;
-    #endregion
 
     public TrackTemplateViewModel(TrackTemplate template)
     {
         _template = template;
     }
 
-    #region Domain Properties (1:1 mapping)
     public string ArticleCode => _template.ArticleCode;
     public string Name => _template.Name;
     public TrackType Type => _template.Type;
@@ -28,29 +25,21 @@ public class TrackTemplateViewModel
     public string ProductCode => _template.ProductCode;
     public string DisplayText => _template.DisplayText;
     public string Description => _template.Description;
-    #endregion
 
-    #region UI Properties
-    /// <summary>
-    /// Icon glyph for track type (Segoe MDL2 Assets).
-    /// </summary>
     public string IconGlyph => Type switch
     {
-        TrackType.Straight => "\uE8DC",        // Line
-        TrackType.Curve => "\uE913",           // Arc
-        TrackType.TurnoutLeft => "\uE76B",     // ArrowLeft
-        TrackType.TurnoutRight => "\uE76C",    // ArrowRight
-        TrackType.CurvedTurnoutLeft => "\uE919",   // Flow
-        TrackType.CurvedTurnoutRight => "\uE91A",  // Flow
-        TrackType.DoubleCrossover => "\uE8AB", // MultiSelect
-        TrackType.ThreeWay => "\uE8FD",        // Split
-        TrackType.Crossing => "\uE8DB",        // IntersectShape
+        TrackType.Straight => "\uE8DC",
+        TrackType.Curve => "\uE913",
+        TrackType.TurnoutLeft => "\uE76B",
+        TrackType.TurnoutRight => "\uE76C",
+        TrackType.CurvedTurnoutLeft => "\uE919",
+        TrackType.CurvedTurnoutRight => "\uE91A",
+        TrackType.DoubleCrossover => "\uE8AB",
+        TrackType.ThreeWay => "\uE8FD",
+        TrackType.Crossing => "\uE8DB",
         _ => "\uE8DC"
     };
 
-    /// <summary>
-    /// Category for grouping in toolbar.
-    /// </summary>
     public string Category => Type switch
     {
         TrackType.Straight => "Gerade Gleise",
@@ -61,6 +50,4 @@ public class TrackTemplateViewModel
         TrackType.Crossing => "Kreuzungen",
         _ => "Sonstiges"
     };
-    #endregion
 }
-

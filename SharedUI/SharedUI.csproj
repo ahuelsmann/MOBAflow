@@ -17,7 +17,14 @@
     <PackageReference Include="CommunityToolkit.Mvvm" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\TrackPlan\TrackPlan.csproj" />
+    <ProjectReference Include="..\TrackPlan.Renderer\TrackPlan.Renderer.csproj" />
     <ProjectReference Include="..\Backend\Backend.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Converter\" />
+    <Folder Include="Geometry\" />
+    <Folder Include="Renderer\" />
   </ItemGroup>
 </Project>

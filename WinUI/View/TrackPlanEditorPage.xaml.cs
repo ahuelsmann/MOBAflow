@@ -5,7 +5,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 
-using SharedUI.ViewModel;
+using Moba.SharedUI.ViewModel;
 
 using System.Diagnostics;
 
@@ -96,7 +96,7 @@ public sealed partial class TrackPlanEditorPage
         var pointer = e.GetCurrentPoint(TrackCanvas);
         var currentPosition = pointer.Position;
 
-        // Calculate delta (in screen space, so divide by zoom for canvas space)
+        // Calculate delta (in screen space, so divide to zoom for canvas space)
         var deltaX = currentPosition.X - _lastPanPosition.X;
         var deltaY = currentPosition.Y - _lastPanPosition.Y;
 

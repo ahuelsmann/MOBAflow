@@ -1,0 +1,9 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Moba.TrackPlan.Test</RootNamespace>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Description>Unit-Tests für Traversierung, Geometrie, Import.</Description>
+  </PropertyGroup>
+</Project>

@@ -64,6 +64,7 @@
   <ItemGroup>
     <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\TrackPlan\TrackPlan.csproj" />
   </ItemGroup>
   <ItemGroup>
     <!-- App Icon - DEAKTIVIERT wegen Android Resource ID Konflikt (siehe Issue mit id/legacy Fragment) -->

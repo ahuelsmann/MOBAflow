@@ -3,13 +3,17 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Domain.TrackPlan;
 using Interface;
-using Service;
-using Renderer;
+using Moba.TrackPlan.Domain;
+using Moba.TrackPlan.Import;
+using Moba.TrackPlan.Renderer;
+using Moba.TrackPlan.Service;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using TrackConnectionModel = Moba.TrackPlan.Domain.TrackConnection;
+using TrackLayoutModel = Moba.TrackPlan.Domain.TrackLayout;
+using TrackSegmentModel = Moba.TrackPlan.Domain.TrackSegment;
 
 /// <summary>
 /// ViewModel for TrackPlanEditorPage - topology-based track plan editor.
@@ -89,7 +93,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
 
     #region Layout Data
     public ObservableCollection<TrackSegmentViewModel> Segments { get; } = [];
-    public List<TrackConnection> Connections { get; } = [];
+    public List<TrackConnectionModel> Connections { get; } = [];
 
     [ObservableProperty]
     private TrackSegmentViewModel? selectedSegment;
@@ -277,12 +281,12 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         var parts = parameters.Split(',');
         if (parts.Length != 4) return;
 
-        var connection = new TrackConnection
+        var connection = new TrackConnectionModel
         {
             Segment1Id = parts[0],
-            Segment1EndpointIndex = int.Parse(parts[1]),
+            Segment1ConnectorIndex = int.Parse(parts[1]),
             Segment2Id = parts[2],
-            Segment2EndpointIndex = int.Parse(parts[3])
+            Segment2ConnectorIndex = int.Parse(parts[3])
         };
 
         // Check for existing connection
@@ -374,7 +378,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     private void RenderLayout()
     {
         // Build TrackLayout from current state
-        var layout = new TrackLayout
+        var layout = new TrackLayoutModel
         {
             Name = LayoutName,
             Description = LayoutDescription,
@@ -390,7 +394,13 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         // Validate rendering results (debug builds only)
         #if DEBUG
         var validator = new GeometryValidator(_geometryLibrary);
-        validator.RunFullValidation(layout);
+        var validationErrors = new List<string>();
+        validationErrors.AddRange(validator.ValidateLibrary());
+        validationErrors.AddRange(validator.ValidateConnections(layout));
+        foreach (var error in validationErrors)
+        {
+            _logger.LogWarning(error);
+        }
         #endif
 
         // Update PathData for each ViewModel
@@ -435,7 +445,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         /// Generate SVG PathData from segment's ArticleCode using TrackGeometryLibrary.
         /// Topology-first: No coordinates in Domain, use geometry library.
         /// </summary>
-        private string GeneratePathData(TrackSegment segment)
+        private string GeneratePathData(TrackSegmentModel segment)
         {
             // Generate from TrackGeometryLibrary (topology-first approach)
             var geometry = _geometryLibrary.GetGeometry(segment.ArticleCode);
@@ -522,11 +532,11 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         var project = _mainViewModel.SelectedProject?.Model;
         if (project == null) return;
 
-        project.TrackLayout ??= new TrackLayout();
-        project.TrackLayout.Name = LayoutName;
-        project.TrackLayout.Description = LayoutDescription;
-        project.TrackLayout.Segments = Segments.Select(s => s.Model).ToList();
-        project.TrackLayout.Connections = Connections.ToList();
+        var layout = project.TrackLayout ??= new TrackLayoutModel();
+        layout.Name = LayoutName;
+        layout.Description = LayoutDescription;
+        layout.Segments = Segments.Select(s => s.Model).ToList();
+        layout.Connections = Connections.ToList();
 
         _logger.LogInformation("Saved track layout: {SegmentCount} segments, {ConnectionCount} connections", Segments.Count, Connections.Count);
     }
@@ -534,7 +544,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     private void LoadFromProject()
     {
         var layout = _mainViewModel.SelectedProject?.Model.TrackLayout;
-        if (layout == null)
+        if (layout is not TrackLayoutModel trackLayout)
         {
             _logger.LogInformation("No track layout in project");
             return;
@@ -543,15 +553,15 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         Segments.Clear();
         Connections.Clear();
 
-        LayoutName = layout.Name;
-        LayoutDescription = layout.Description;
+        LayoutName = trackLayout.Name;
+        LayoutDescription = trackLayout.Description;
 
-        foreach (var segment in layout.Segments)
+        foreach (var segment in trackLayout.Segments)
         {
             Segments.Add(new TrackSegmentViewModel(segment));
         }
 
-        Connections.AddRange(layout.Connections);
+        Connections.AddRange(trackLayout.Connections);
         
         // All layouts now use topology-based rendering (no geometry stored in Domain)
         _logger.LogInformation("Loading track layout with topology-based rendering");
@@ -603,7 +613,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
                 part.Id, articleCode, geometry.Endpoints.Count, string.Join(",", part.EndpointNrs));
             
             // Create TrackSegment (pure topology)
-            var segment = new TrackSegment
+            var segment = new TrackSegmentModel
             {
                 Id = part.Id,
                 ArticleCode = articleCode
