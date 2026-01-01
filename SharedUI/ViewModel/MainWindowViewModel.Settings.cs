@@ -2,9 +2,13 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Common.Configuration;
+
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
+
 using Service;
+
 using System.Collections.ObjectModel;
 // For NullIoService
 
@@ -423,13 +427,11 @@ public partial class MainWindowViewModel
         }
     }
 
-    private IRelayCommand<string?>? _selectSpeechEngineCommand;
-
     /// <summary>
     /// Command to select a speech engine from the UI.
     /// </summary>
     public IRelayCommand<string?> SelectSpeechEngineCommand =>
-        _selectSpeechEngineCommand ??= new RelayCommand<string?>(engine =>
+        field ??= new RelayCommand<string?>(engine =>
         {
             SelectedSpeechEngine = engine;
         });

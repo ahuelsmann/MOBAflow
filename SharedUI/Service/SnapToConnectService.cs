@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Moba.TrackPlan.Domain;
-using Moba.SharedUI.ViewModel;
+using ViewModel;
 
 /// <summary>
 /// Service for snap-to-connect logic in track plan editor (AnyRail-style).

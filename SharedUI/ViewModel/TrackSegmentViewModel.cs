@@ -2,8 +2,9 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
+
 using Moba.TrackPlan.Domain;
-using Moba.TrackPlan.Geometry;
+using TrackPlan.Geometry;
 
 /// <summary>
 /// ViewModel for a track segment in the topology-based track plan.

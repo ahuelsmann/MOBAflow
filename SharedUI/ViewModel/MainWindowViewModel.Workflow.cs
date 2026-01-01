@@ -2,10 +2,14 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Action;
+
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
 using Domain.Enum;
+
 using Helper;
+
 using System.Diagnostics;
 
 /// <summary>
@@ -15,18 +19,18 @@ using System.Diagnostics;
 public partial class MainWindowViewModel
 {
     #region Workflow Search/Filter
-    private string _workflowSearchText = string.Empty;
+
     public string WorkflowSearchText
     {
-        get => _workflowSearchText;
+        get;
         set
         {
-            if (SetProperty(ref _workflowSearchText, value))
+            if (SetProperty(ref field, value))
             {
                 OnPropertyChanged(nameof(FilteredWorkflows));
             }
         }
-    }
+    } = string.Empty;
 
     /// <summary>
     /// Gets the filtered workflows based on search text.

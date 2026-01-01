@@ -5,13 +5,12 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 
-using Moba.SharedUI.ViewModel;
+using SharedUI.ViewModel;
 
 using System.Diagnostics;
 
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
-using Windows.System;
 
 /// <summary>
 /// Track Plan Editor Page - Topology-based track plan editor.

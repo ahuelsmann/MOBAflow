@@ -2,13 +2,20 @@
 namespace Moba.MAUI;
 
 using Backend.Extensions;
+
 using Common.Configuration;
+
 using CommunityToolkit.Maui;
+
 using Microsoft.Extensions.Logging;
+
 using Service;
+
 using SharedUI.Interface;
 using SharedUI.ViewModel;
+
 using Sound;
+
 using UraniumUI;
 
 public static class MauiProgram

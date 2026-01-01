@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.TrackPlan.Import;
 
+using Moba.TrackPlan.Domain;
+
 using System.Diagnostics;
 using System.Globalization;
 using System.Xml.Linq;
-using Moba.TrackPlan.Domain;
 
 /// <summary>
 /// Represents a track layout imported from AnyRail XML format.

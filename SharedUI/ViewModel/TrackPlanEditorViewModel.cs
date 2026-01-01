@@ -3,14 +3,18 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Interface;
-using Moba.TrackPlan.Domain;
-using Moba.TrackPlan.Import;
-using Moba.TrackPlan.Renderer;
-using Moba.TrackPlan.Service;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
+
 using Microsoft.Extensions.Logging;
+
+using Moba.TrackPlan.Domain;
+using TrackPlan.Import;
+using TrackPlan.Renderer;
+using Moba.TrackPlan.Service;
+
+using System.Collections.ObjectModel;
+
 using TrackConnectionModel = Moba.TrackPlan.Domain.TrackConnection;
 using TrackLayoutModel = Moba.TrackPlan.Domain.TrackLayout;
 using TrackSegmentModel = Moba.TrackPlan.Domain.TrackSegment;

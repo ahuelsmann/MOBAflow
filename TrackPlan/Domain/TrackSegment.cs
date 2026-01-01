@@ -1,8 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.TrackPlan.Domain;
 
-using System.Text.Json.Serialization;
 using Moba.TrackPlan.Geometry;
+
+using System.Text.Json.Serialization;
 
 /// <summary>
 /// Represents a single track segment in the track plan.

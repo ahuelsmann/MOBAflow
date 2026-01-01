@@ -1,9 +1,11 @@
-﻿// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
+
 using Interface;
 
 /// <summary>
@@ -117,10 +119,9 @@ public partial class StationViewModel : ObservableObject, IViewModelWrapper<Stat
 
     public int Position
     {
-        get => _position;
-        set => SetProperty(ref _position, value);
+        get;
+        set => SetProperty(ref field, value);
     }
-    private int _position;
 
     /// <summary>
     /// Indicates if this station is currently active in journey execution.

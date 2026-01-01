@@ -1,8 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.TrackPlan.Renderer;
 
-using System.Diagnostics;
 using Moba.TrackPlan.Domain;
+
+using System.Diagnostics;
 
 /// <summary>
 /// Validates TrackGeometryLibrary definitions and import connector mappings.

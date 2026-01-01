@@ -1,6 +1,4 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using System;
-using System.Collections.Generic;
 using Moba.TrackPlan.Domain;
 
 namespace Moba.TrackPlan.Renderer;

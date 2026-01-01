@@ -5,23 +5,34 @@ namespace Moba.WinUI;
 using Backend.Extensions;
 using Backend.Interface;
 using Backend.Service;
+
 using Common.Configuration;
 using Common.Serilog;
+
 using Domain;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
+
 using Moba.SharedUI.Service;
+
 using Serilog;
 using Serilog.Events;
+
 using Service;
+
 using SharedUI.Interface;
 using SharedUI.ViewModel;
+
 using Sound;
+
 using System.Diagnostics;
+
 using View;
+
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 /// <summary>

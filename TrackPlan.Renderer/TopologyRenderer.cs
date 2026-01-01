@@ -1,9 +1,10 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.TrackPlan.Renderer;
 
-using System.Diagnostics;
 using Moba.TrackPlan.Domain;
 using Moba.TrackPlan.Geometry;
+
+using System.Diagnostics;
 
 /// <summary>
 /// Pure topology-first renderer: Computes WorldTransform for each TrackSegment.

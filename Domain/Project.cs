@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.Domain;
-
 using Moba.TrackPlan.Domain;
+
+namespace Moba.Domain;
 
 /// <summary>
 /// Project - Pure Data Object.
@@ -35,5 +35,5 @@ public class Project
     /// <summary>
     /// Track layout for this project (segments, connections, work surface size).
     /// </summary>
-    public TrackLayout? TrackLayout { get; set; }
+    public Moba.TrackPlan.Domain.TrackLayout? TrackLayout { get; set; }
 }

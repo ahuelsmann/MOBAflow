@@ -2,10 +2,14 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Service;
+
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
 using Domain.Enum;
+
 using Helper;
+
 using Microsoft.Extensions.Logging;
 
 /// <summary>
@@ -52,18 +56,18 @@ public partial class MainWindowViewModel
     #endregion
 
     #region Journey Search/Filter
-    private string _journeySearchText = string.Empty;
+
     public string JourneySearchText
     {
-        get => _journeySearchText;
+        get;
         set
         {
-            if (SetProperty(ref _journeySearchText, value))
+            if (SetProperty(ref field, value))
             {
                 OnPropertyChanged(nameof(FilteredJourneys));
             }
         }
-    }
+    } = string.Empty;
 
     /// <summary>
     /// Gets the filtered journeys based on search text.

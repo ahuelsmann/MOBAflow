@@ -2,11 +2,16 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Model;
+
 using Common.Serilog;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Interface;
+
 using Microsoft.Extensions.Logging;
+
 using System.Collections.ObjectModel;
 
 /// <summary>

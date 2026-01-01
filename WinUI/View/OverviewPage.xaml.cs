@@ -17,6 +17,3 @@ public sealed partial class OverviewPage
         InitializeComponent();
     }
 }
-
-
-
