@@ -18,7 +18,6 @@
             <converter:ExitSideConverter x:Key="ExitSideConverter" />
             <converter:NullableConverter x:Key="NullableConverter" />
             <converter:DateTimeToTimeSpanConverter x:Key="DateTimeToTimeSpanConverter" />
-            <converter:PathDataToGeometryConverter x:Key="PathDataToGeometryConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

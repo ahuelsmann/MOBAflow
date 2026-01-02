@@ -224,7 +224,6 @@ public class UdpWrapper : IUdpClientWrapper
         }
     }
 
-
     /// <summary>
     /// Stops the receiver loop and closes the UDP client.
     /// Waits for the receiver task to complete gracefully.

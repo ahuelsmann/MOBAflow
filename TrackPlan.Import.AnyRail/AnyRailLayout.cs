@@ -187,7 +187,7 @@ public class AnyRailLayout
                         {
                             list1 = matches.OrderBy(m => m.Dist).Select(m => (m.PartId, m.EndpointIndex)).ToList();
                             has1 = true;
-                            Debug.WriteLine($"🔁 ToTrackConnections: Fallback matched endpoint {conn.Endpoint1} to parts: {string.Join(',', list1.Select(x=>$"{x.PartId}.ep{x.EndpointIndex}"))}");
+                            Debug.WriteLine($"🔁 ToTrackConnections: Fallback matched endpoint {conn.Endpoint1} to parts: {string.Join(',', list1.Select(x => $"{x.PartId}.ep{x.EndpointIndex}"))}");
                         }
                         else
                         {
@@ -227,7 +227,7 @@ public class AnyRailLayout
                         {
                             list2 = matches.OrderBy(m => m.Dist).Select(m => (m.PartId, m.EndpointIndex)).ToList();
                             has2 = true;
-                            Debug.WriteLine($"🔁 ToTrackConnections: Fallback matched endpoint {conn.Endpoint2} to parts: {string.Join(',', list2.Select(x=>$"{x.PartId}.ep{x.EndpointIndex}"))}");
+                            Debug.WriteLine($"🔁 ToTrackConnections: Fallback matched endpoint {conn.Endpoint2} to parts: {string.Join(',', list2.Select(x => $"{x.PartId}.ep{x.EndpointIndex}"))}");
                         }
                         else
                         {
@@ -355,7 +355,7 @@ public class AnyRailPart
             var angleDeg = angleRad * 180.0 / Math.PI;
             return NormalizeAngle(angleDeg);
         }
-        
+
         if (Arcs.Count > 0)
         {
             var arc = Arcs[0];
@@ -365,7 +365,7 @@ public class AnyRailPart
             var angleDeg = angleRad * 180.0 / Math.PI;
             return NormalizeAngle(angleDeg);
         }
-        
+
         return 0;
     }
 
@@ -409,25 +409,23 @@ public class AnyRailPart
         var radius = Arcs[0].Radius;
         var angle = Arcs[0].Angle;
 
+        // 15° = R9 (Weichengegenbogen)
         if (Math.Abs(angle - 15) < 2)
-        {
             return "R9";
-        }
-        
-        if (Math.Abs(radius - 360) < 10) return "R1";
-        if (Math.Abs(radius - 421.88) < 10) return "R2";
-        if (Math.Abs(radius - 483.75) < 10) return "R3";
-        if (Math.Abs(radius - 545.63) < 10) return "R4";
-        if (Math.Abs(radius - 545) < 10) return "R2";
-        if (Math.Abs(radius - 638) < 10) return "R3";
-        if (Math.Abs(radius - 732) < 10) return "R4";
 
+        // AnyRail uses centerline radius, not nominal Piko radius
+        if (Math.Abs(radius - 454) < 20) return "R1";   // Piko R1
+        if (Math.Abs(radius - 515) < 20) return "R2";   // Piko R2
+        if (Math.Abs(radius - 577) < 20) return "R3";   // Piko R3
+        if (Math.Abs(radius - 639) < 20) return "R4";   // Piko R4
+
+        // Fallback for unusual radii
         return radius switch
         {
-            < 400 => "R1",
-            < 520 => "R2",
+            < 480 => "R1",
+            < 540 => "R2",
             < 600 => "R3",
-            < 800 => "R4",
+            < 700 => "R4",
             _ => "R9"
         };
     }

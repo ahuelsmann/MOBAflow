@@ -285,7 +285,6 @@ public partial class MainWindowViewModel : ObservableObject
 
     public event EventHandler? ExitApplicationRequested;
 
-
     /// <summary>
     /// Handles changes to the selected object on JourneysPage.
     /// Subscribes to ModelChanged events of journeys to track unsaved changes.

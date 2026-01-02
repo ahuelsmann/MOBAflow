@@ -102,142 +102,140 @@ public sealed partial class TrackPlanEditorPage
         // Pan the viewport
         ViewModel.Pan(deltaX, deltaY);
 
-            _lastPanPosition = currentPosition;
+        _lastPanPosition = currentPosition;
+        e.Handled = true;
+    }
+
+    private void TrackCanvas_PointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        if (_isPanning)
+        {
+            _isPanning = false;
+            TrackCanvas.ReleasePointerCapture(e.Pointer);
             e.Handled = true;
+            Debug.WriteLine("🖐️ Pan ended");
         }
+    }
 
-        private void TrackCanvas_PointerReleased(object sender, PointerRoutedEventArgs e)
+    private void Segment_PointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        var pointer = e.GetCurrentPoint(sender as UIElement);
+
+        // Only select on left-click (not right-click which starts pan)
+        if (pointer.Properties.IsLeftButtonPressed)
         {
-            if (_isPanning)
+            if (sender is FrameworkElement element && element.DataContext is TrackSegmentViewModel segment)
             {
-                _isPanning = false;
-                TrackCanvas.ReleasePointerCapture(e.Pointer);
+                ViewModel.SelectedSegment = segment;
+
+                // Start drag on left-click
+                StartSegmentDrag(segment, e, element);
+
                 e.Handled = true;
-                Debug.WriteLine("🖐️ Pan ended");
+                Debug.WriteLine($"🔵 Selected: {segment.ArticleCode}");
             }
         }
+    }
 
-        private void Segment_PointerPressed(object sender, PointerRoutedEventArgs e)
+    #endregion
+
+    #region Segment Drag & Snap
+
+    private bool _isDraggingSegment;
+    private TrackSegmentViewModel? _draggedSegment;
+    private Point _lastDragPosition;
+    private List<TrackSegmentViewModel> _dragGroup = [];
+    private UIElement? _dragCaptureElement;
+
+    private void StartSegmentDrag(TrackSegmentViewModel segment, PointerRoutedEventArgs e, UIElement captureElement)
+    {
+        var pointer = e.GetCurrentPoint(TrackCanvas);
+
+        // Calculate drag offset (pointer position relative to segment position)
+        // Account for current zoom and pan
+        var zoomFactor = ViewModel.ZoomFactor;
+        var canvasX = (pointer.Position.X - ViewModel.PanOffsetX) / zoomFactor;
+        var canvasY = (pointer.Position.Y - ViewModel.PanOffsetY) / zoomFactor;
+
+        segment.DragOffsetX = canvasX - segment.WorldTransform.TranslateX;
+        segment.DragOffsetY = canvasY - segment.WorldTransform.TranslateY;
+        segment.IsDragging = true;
+
+        // Find connected group for group drag
+        _dragGroup = ViewModel.FindConnectedGroup(segment.Id);
+        foreach (var groupSegment in _dragGroup)
         {
-            var pointer = e.GetCurrentPoint(sender as UIElement);
-
-            // Only select on left-click (not right-click which starts pan)
-            if (pointer.Properties.IsLeftButtonPressed)
-            {
-                if (sender is FrameworkElement element && element.DataContext is TrackSegmentViewModel segment)
-                {
-                    ViewModel.SelectedSegment = segment;
-
-                    // Start drag on left-click
-                    StartSegmentDrag(segment, e, element);
-
-                    e.Handled = true;
-                    Debug.WriteLine($"🔵 Selected: {segment.ArticleCode}");
-                }
-            }
+            groupSegment.IsPartOfDragGroup = true;
+            // Calculate offset for each group member relative to drag start
+            groupSegment.DragOffsetX = canvasX - groupSegment.WorldTransform.TranslateX;
+            groupSegment.DragOffsetY = canvasY - groupSegment.WorldTransform.TranslateY;
         }
 
-        #endregion
+        _isDraggingSegment = true;
+        _draggedSegment = segment;
+        _lastDragPosition = new Point(canvasX, canvasY);
+        _dragCaptureElement = captureElement;
 
-        #region Segment Drag & Snap
+        // Capture pointer for drag tracking
+        captureElement.CapturePointer(e.Pointer);
 
-        private bool _isDraggingSegment;
-        private TrackSegmentViewModel? _draggedSegment;
-        private Point _lastDragPosition;
-        private List<TrackSegmentViewModel> _dragGroup = [];
-        private UIElement? _dragCaptureElement;
+        Debug.WriteLine($"🎯 Drag started: {segment.ArticleCode} (group size: {_dragGroup.Count})");
+    }
 
-        private void StartSegmentDrag(TrackSegmentViewModel segment, PointerRoutedEventArgs e, UIElement captureElement)
+    private void Segment_PointerMoved(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_isDraggingSegment || _draggedSegment == null) return;
+
+        var pointer = e.GetCurrentPoint(TrackCanvas);
+
+        // Convert to canvas coordinates
+        var zoomFactor = ViewModel.ZoomFactor;
+        var canvasX = (pointer.Position.X - ViewModel.PanOffsetX) / zoomFactor;
+        var canvasY = (pointer.Position.Y - ViewModel.PanOffsetY) / zoomFactor;
+
+        // Calculate delta from last position
+        var deltaX = canvasX - _lastDragPosition.X;
+        var deltaY = canvasY - _lastDragPosition.Y;
+
+        // Move all segments in the drag group
+        foreach (var segment in _dragGroup)
         {
-            var pointer = e.GetCurrentPoint(TrackCanvas);
-
-
-            // Calculate drag offset (pointer position relative to segment position)
-            // Account for current zoom and pan
-            var zoomFactor = ViewModel.ZoomFactor;
-            var canvasX = (pointer.Position.X - ViewModel.PanOffsetX) / zoomFactor;
-            var canvasY = (pointer.Position.Y - ViewModel.PanOffsetY) / zoomFactor;
-
-            segment.DragOffsetX = canvasX - segment.WorldTransform.TranslateX;
-            segment.DragOffsetY = canvasY - segment.WorldTransform.TranslateY;
-            segment.IsDragging = true;
-
-            // Find connected group for group drag
-            _dragGroup = ViewModel.FindConnectedGroup(segment.Id);
-            foreach (var groupSegment in _dragGroup)
-            {
-                groupSegment.IsPartOfDragGroup = true;
-                // Calculate offset for each group member relative to drag start
-                groupSegment.DragOffsetX = canvasX - groupSegment.WorldTransform.TranslateX;
-                groupSegment.DragOffsetY = canvasY - groupSegment.WorldTransform.TranslateY;
-            }
-
-            _isDraggingSegment = true;
-            _draggedSegment = segment;
-            _lastDragPosition = new Point(canvasX, canvasY);
-            _dragCaptureElement = captureElement;
-
-
-            // Capture pointer for drag tracking
-            captureElement.CapturePointer(e.Pointer);
-
-            Debug.WriteLine($"🎯 Drag started: {segment.ArticleCode} (group size: {_dragGroup.Count})");
+            segment.MoveBy(deltaX, deltaY);
         }
 
-        private void Segment_PointerMoved(object sender, PointerRoutedEventArgs e)
+        // Re-render to update PathData
+        ViewModel.RefreshPathData();
+
+        _lastDragPosition = new Point(canvasX, canvasY);
+        e.Handled = true;
+    }
+
+    private void Segment_PointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        if (_isDraggingSegment && _draggedSegment != null)
         {
-            if (!_isDraggingSegment || _draggedSegment == null) return;
 
-            var pointer = e.GetCurrentPoint(TrackCanvas);
+            Debug.WriteLine($"🎯 Drag ended: {_draggedSegment.ArticleCode}");
 
-            // Convert to canvas coordinates
-            var zoomFactor = ViewModel.ZoomFactor;
-            var canvasX = (pointer.Position.X - ViewModel.PanOffsetX) / zoomFactor;
-            var canvasY = (pointer.Position.Y - ViewModel.PanOffsetY) / zoomFactor;
-
-            // Calculate delta from last position
-            var deltaX = canvasX - _lastDragPosition.X;
-            var deltaY = canvasY - _lastDragPosition.Y;
-
-            // Move all segments in the drag group
+            // Clear drag state
+            _draggedSegment.IsDragging = false;
             foreach (var segment in _dragGroup)
             {
-                segment.MoveBy(deltaX, deltaY);
+                segment.IsPartOfDragGroup = false;
             }
 
-            // Re-render to update PathData
-            ViewModel.RefreshPathData();
+            _isDraggingSegment = false;
+            _draggedSegment = null;
+            _dragGroup.Clear();
 
-            _lastDragPosition = new Point(canvasX, canvasY);
+            if (sender is UIElement elem)
+            {
+                elem.ReleasePointerCapture(e.Pointer);
+            }
+
             e.Handled = true;
         }
+    }
 
-        private void Segment_PointerReleased(object sender, PointerRoutedEventArgs e)
-        {
-            if (_isDraggingSegment && _draggedSegment != null)
-            {
-
-                Debug.WriteLine($"🎯 Drag ended: {_draggedSegment.ArticleCode}");
-
-                // Clear drag state
-                _draggedSegment.IsDragging = false;
-                foreach (var segment in _dragGroup)
-                {
-                    segment.IsPartOfDragGroup = false;
-                }
-
-                _isDraggingSegment = false;
-                _draggedSegment = null;
-                _dragGroup.Clear();
-
-                if (sender is UIElement elem)
-                {
-                    elem.ReleasePointerCapture(e.Pointer);
-                }
-
-                e.Handled = true;
-            }
-        }
-
-        #endregion
-            }
+    #endregion
+}

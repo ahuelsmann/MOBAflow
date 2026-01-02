@@ -62,13 +62,38 @@ public sealed class TopologyRenderer
 
         Debug.WriteLine($"🔧 TopologyRenderer: Computed WorldTransform for {visited.Count}/{layout.Segments.Count} segments in {componentIndex} component(s)");
 
+        // Position isolated segments (no connections) in a grid layout
         if (visited.Count < layout.Segments.Count)
         {
             var missing = layout.Segments.Where(s => !visited.Contains(s.Id)).ToList();
-            Debug.WriteLine($"⚠️ WARNING: {missing.Count} segments NOT rendered (isolated nodes without connections):");
+            Debug.WriteLine($"⚠️ WARNING: {missing.Count} segments NOT rendered (isolated nodes without connections) - placing in grid");
+            
+            int col = 0;
+            int row = 0;
+            const double gridSpacingX = 200.0;
+            const double gridSpacingY = 150.0;
+            const int gridColumns = 8;
+            
             foreach (var seg in missing)
             {
-                Debug.WriteLine($"   - {seg.Id} ({seg.ArticleCode})");
+                var offsetX = componentIndex * 3000.0 + col * gridSpacingX;
+                var offsetY = row * gridSpacingY;
+                
+                seg.WorldTransform = new Transform2D
+                {
+                    TranslateX = offsetX,
+                    TranslateY = offsetY,
+                    RotationDegrees = 0
+                };
+                
+                Debug.WriteLine($"   📍 Isolated segment {seg.Id} ({seg.ArticleCode}) placed at ({offsetX:F0}, {offsetY:F0}, 0°)");
+                
+                col++;
+                if (col >= gridColumns)
+                {
+                    col = 0;
+                    row++;
+                }
             }
         }
     }
