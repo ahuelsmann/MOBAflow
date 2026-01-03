@@ -69,6 +69,14 @@
                         <FontIcon Glyph="&#xE945;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
+                <NavigationViewItem
+                    Content="Trains"
+                    Tag="trains"
+                    Visibility="{Binding ViewModel.IsTrainsPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE7C0;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
                 <NavigationViewItemSeparator />
                 <NavigationViewItem
                     Content="Track Plan"

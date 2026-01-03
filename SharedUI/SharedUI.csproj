@@ -5,6 +5,8 @@
   <OutputType>Library</OutputType>
   <Nullable>enable</Nullable>
   <ImplicitUsings>enable</ImplicitUsings>
+  <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
 </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" />

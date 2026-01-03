@@ -77,4 +77,33 @@ public partial class WagonViewModel : ObservableObject, IViewModelWrapper<Wagon>
         get => Model.Details;
         set => SetProperty(Model.Details, value, Model, (m, v) => m.Details = v);
     }
+
+    public DateTime? InvoiceDate
+    {
+        get => Model.InvoiceDate;
+        set => SetProperty(Model.InvoiceDate, value, Model, (m, v) => m.InvoiceDate = v);
+    }
+
+    public DateTime? DeliveryDate
+    {
+        get => Model.DeliveryDate;
+        set => SetProperty(Model.DeliveryDate, value, Model, (m, v) => m.DeliveryDate = v);
+    }
+
+    public string? PhotoPath
+    {
+        get => Model.PhotoPath;
+        set
+        {
+            if (SetProperty(Model.PhotoPath, value, Model, (m, v) => m.PhotoPath = v))
+            {
+                OnPropertyChanged(nameof(HasPhoto));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Returns true if a photo is assigned to this wagon.
+    /// </summary>
+    public bool HasPhoto => !string.IsNullOrWhiteSpace(Model.PhotoPath);
 }

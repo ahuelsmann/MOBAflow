@@ -48,6 +48,7 @@ public class NavigationService
                 "solution" => _serviceProvider.GetRequiredService<SolutionPage>(),
                 "journeys" => _serviceProvider.GetRequiredService<JourneysPage>(),
                 "workflows" => _serviceProvider.GetRequiredService<WorkflowsPage>(),
+                "trains" => _serviceProvider.GetRequiredService<TrainsPage>(),
                 "trackplaneditor" => _serviceProvider.GetRequiredService<TrackPlanEditorPage>(),
                 "journeymap" => _serviceProvider.GetRequiredService<JourneyMapPage>(),
                 "settings" => _serviceProvider.GetRequiredService<SettingsPage>(),

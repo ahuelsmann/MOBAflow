@@ -267,4 +267,58 @@ public class IoService : IIoService
         var result = await picker.PickSingleFileAsync();
         return result?.Path;
     }
+
+    /// <summary>
+    /// Opens a file picker to browse for a photo/image file (JPG, PNG, etc.).
+    /// </summary>
+    /// <returns>The selected file path, or null if cancelled.</returns>
+    public async Task<string?> BrowseForPhotoAsync()
+    {
+        if (_windowId == null)
+            throw new InvalidOperationException("WindowId must be set before using IoService");
+
+        var picker = new FileOpenPicker(_windowId.Value)
+        {
+            SuggestedStartLocation = PickerLocationId.PicturesLibrary,
+            FileTypeFilter = { ".jpg", ".jpeg", ".png", ".bmp", ".gif" }
+        };
+
+        var result = await picker.PickSingleFileAsync();
+        return result?.Path;
+    }
+
+    /// <summary>
+    /// Saves a photo file to the application's local photos storage.
+    /// Creates folder structure: ApplicationData.Current.LocalFolder/photos/{category}/{entityId}.ext
+    /// </summary>
+    /// <param name="sourceFilePath">Source photo file path</param>
+    /// <param name="category">Photo category (e.g., "locomotives", "passenger-wagons", "goods-wagons")</param>
+    /// <param name="entityId">Entity ID for filename</param>
+    /// <returns>Relative path to saved photo (e.g., "photos/locomotives/{id}.jpg")</returns>
+    public async Task<string?> SavePhotoAsync(string sourceFilePath, string category, Guid entityId)
+    {
+        try
+        {
+            var localFolder = Windows.Storage.ApplicationData.Current.LocalFolder;
+            var photosFolder = await localFolder.CreateFolderAsync("photos", Windows.Storage.CreationCollisionOption.OpenIfExists);
+            var categoryFolder = await photosFolder.CreateFolderAsync(category, Windows.Storage.CreationCollisionOption.OpenIfExists);
+
+            // Get file extension from source
+            var fileExtension = Path.GetExtension(sourceFilePath);
+            var fileName = $"{entityId}{fileExtension}";
+
+            var destinationFile = await categoryFolder.CreateFileAsync(fileName, Windows.Storage.CreationCollisionOption.ReplaceExisting);
+
+            // Copy file
+            File.Copy(sourceFilePath, destinationFile.Path, overwrite: true);
+
+            // Return relative path
+            return $"photos/{category}/{fileName}";
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error saving photo: {ex.Message}");
+            return null;
+        }
+    }
 }

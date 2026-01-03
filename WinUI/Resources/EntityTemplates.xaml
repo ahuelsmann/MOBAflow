@@ -653,37 +653,101 @@
                     Style="{ThemeResource SubtitleTextBlockStyle}"
                     Text="Locomotive Properties" />
 
-                <TextBox
-                    Header="Name"
-                    PlaceholderText="Enter locomotive name"
-                    Text="{Binding Name, Mode=TwoWay}" />
+                <!--  Basic Information  -->
+                <Border
+                    Padding="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                    CornerRadius="8">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Text="Basic Information" />
 
-                <TextBox
-                    Height="80"
-                    AcceptsReturn="True"
-                    Header="Description"
-                    PlaceholderText="Enter description"
-                    Text="{Binding Description, Mode=TwoWay}"
-                    TextWrapping="Wrap" />
+                        <TextBox
+                            Header="Name"
+                            PlaceholderText="Enter locomotive name"
+                            Text="{Binding Name, Mode=TwoWay}" />
 
-                <NumberBox
-                    Header="Address"
-                    Maximum="10239"
-                    Minimum="0"
-                    SpinButtonPlacementMode="Inline"
-                    Value="{Binding Address, Mode=TwoWay}" />
+                        <NumberBox
+                            Header="Digital Address (optional)"
+                            Maximum="10239"
+                            Minimum="1"
+                            PlaceholderText="DCC address"
+                            SpinButtonPlacementMode="Inline"
+                            Value="{Binding DigitalAddress, Mode=TwoWay, Converter={StaticResource NullableUIntConverter}}" />
+                    </StackPanel>
+                </Border>
 
-                <ComboBox
-                    HorizontalAlignment="Stretch"
-                    Header="Locomotive Type"
-                    ItemsSource="{Binding LocomotiveTypeValues}"
-                    SelectedItem="{Binding LocomotiveType, Mode=TwoWay}" />
+                <!--  Purchase Information  -->
+                <Border
+                    Padding="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                    CornerRadius="8">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Text="Purchase Information" />
 
-                <NumberBox
-                    Header="Length (mm)"
-                    Minimum="0"
-                    SpinButtonPlacementMode="Inline"
-                    Value="{Binding LengthMm, Mode=TwoWay}" />
+                        <TextBox
+                            Header="Manufacturer"
+                            PlaceholderText="e.g., Piko, Roco, Fleischmann"
+                            Text="{Binding Manufacturer, Mode=TwoWay}" />
+
+                        <TextBox
+                            Header="Article Number"
+                            PlaceholderText="Product SKU/article code"
+                            Text="{Binding ArticleNumber, Mode=TwoWay}" />
+
+                        <CalendarDatePicker
+                            Header="Invoice Date (optional)"
+                            PlaceholderText="Select date"
+                            Date="{Binding InvoiceDate, Mode=TwoWay, Converter={StaticResource DateTimeOffsetConverter}}" />
+
+                        <CalendarDatePicker
+                            Header="Delivery Date (optional)"
+                            PlaceholderText="Select date"
+                            Date="{Binding DeliveryDate, Mode=TwoWay, Converter={StaticResource DateTimeOffsetConverter}}" />
+                    </StackPanel>
+                </Border>
+
+                <!--  Technical Details  -->
+                <Border
+                    Padding="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                    CornerRadius="8">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Text="Technical Details" />
+
+                        <TextBox
+                            Header="Series"
+                            PlaceholderText="e.g., BR 64, ICE 3"
+                            Text="{Binding Series, Mode=TwoWay}" />
+
+                        <CheckBox
+                            Content="Pushing locomotive (Wendezug)"
+                            IsChecked="{Binding IsPushing, Mode=TwoWay}" />
+                    </StackPanel>
+                </Border>
+
+                <!--  Photo Path (Read-Only for now)  -->
+                <Border
+                    Padding="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                    CornerRadius="8"
+                    Visibility="{Binding HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Text="Photo" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="{Binding PhotoPath, Mode=OneWay}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>
@@ -699,36 +763,97 @@
                     Style="{ThemeResource SubtitleTextBlockStyle}"
                     Text="Wagon Properties" />
 
-                <TextBox
-                    Header="Name"
-                    PlaceholderText="Enter wagon name"
-                    Text="{Binding Name, Mode=TwoWay}" />
+                <!--  Basic Information  -->
+                <Border
+                    Padding="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                    CornerRadius="8">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Text="Basic Information" />
 
-                <TextBox
-                    Height="80"
-                    AcceptsReturn="True"
-                    Header="Description"
-                    PlaceholderText="Enter description"
-                    Text="{Binding Description, Mode=TwoWay}"
-                    TextWrapping="Wrap" />
+                        <TextBox
+                            Header="Name"
+                            PlaceholderText="Enter wagon name"
+                            Text="{Binding Name, Mode=TwoWay}" />
 
-                <ComboBox
-                    HorizontalAlignment="Stretch"
-                    Header="Wagon Type"
-                    ItemsSource="{Binding WagonTypeValues}"
-                    SelectedItem="{Binding WagonType, Mode=TwoWay}" />
+                        <NumberBox
+                            Header="Digital Address (optional)"
+                            Maximum="10239"
+                            Minimum="1"
+                            PlaceholderText="DCC address (if wagon has decoder)"
+                            SpinButtonPlacementMode="Inline"
+                            Value="{Binding DigitalAddress, Mode=TwoWay, Converter={StaticResource NullableUIntConverter}}" />
+                    </StackPanel>
+                </Border>
 
-                <NumberBox
-                    Header="Length (mm)"
-                    Minimum="0"
-                    SpinButtonPlacementMode="Inline"
-                    Value="{Binding LengthMm, Mode=TwoWay}" />
+                <!--  Purchase Information  -->
+                <Border
+                    Padding="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                    CornerRadius="8">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Text="Purchase Information" />
 
-                <NumberBox
-                    Header="Capacity"
-                    Minimum="0"
-                    SpinButtonPlacementMode="Inline"
-                    Value="{Binding Capacity, Mode=TwoWay}" />
+                        <TextBox
+                            Header="Manufacturer"
+                            PlaceholderText="e.g., Piko, Roco, Fleischmann"
+                            Text="{Binding Manufacturer, Mode=TwoWay}" />
+
+                        <TextBox
+                            Header="Article Number"
+                            PlaceholderText="Product SKU/article code"
+                            Text="{Binding ArticleNumber, Mode=TwoWay}" />
+
+                        <CalendarDatePicker
+                            Header="Invoice Date (optional)"
+                            PlaceholderText="Select date"
+                            Date="{Binding InvoiceDate, Mode=TwoWay, Converter={StaticResource DateTimeOffsetConverter}}" />
+
+                        <CalendarDatePicker
+                            Header="Delivery Date (optional)"
+                            PlaceholderText="Select date"
+                            Date="{Binding DeliveryDate, Mode=TwoWay, Converter={StaticResource DateTimeOffsetConverter}}" />
+                    </StackPanel>
+                </Border>
+
+                <!--  Technical Details  -->
+                <Border
+                    Padding="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                    CornerRadius="8">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Text="Technical Details" />
+
+                        <TextBox
+                            Header="Series"
+                            PlaceholderText="e.g., Eurofima, Avmz"
+                            Text="{Binding Series, Mode=TwoWay}" />
+                    </StackPanel>
+                </Border>
+
+                <!--  Photo Path (Read-Only for now)  -->
+                <Border
+                    Padding="12"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                    CornerRadius="8"
+                    Visibility="{Binding HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Text="Photo" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="{Binding PhotoPath, Mode=OneWay}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>

@@ -46,6 +46,7 @@ public class SettingsService : ISettingsService
                     // Copy all loaded values to the DI-registered singleton
                     _settings.Application.LastSolutionPath = loadedSettings.Application.LastSolutionPath;
                     _settings.Application.AutoLoadLastSolution = loadedSettings.Application.AutoLoadLastSolution;
+                    _settings.Application.AutoStartWebApp = loadedSettings.Application.AutoStartWebApp;
                     _settings.Z21.CurrentIpAddress = loadedSettings.Z21.CurrentIpAddress;
                     _settings.Z21.DefaultPort = loadedSettings.Z21.DefaultPort;
                     _settings.Counter.CountOfFeedbackPoints = loadedSettings.Counter.CountOfFeedbackPoints;
@@ -87,6 +88,7 @@ public class SettingsService : ISettingsService
                     // Copy all loaded values to the DI-registered singleton
                     _settings.Application.LastSolutionPath = loadedSettings.Application.LastSolutionPath;
                     _settings.Application.AutoLoadLastSolution = loadedSettings.Application.AutoLoadLastSolution;
+                    _settings.Application.AutoStartWebApp = loadedSettings.Application.AutoStartWebApp;
                     _settings.Z21.CurrentIpAddress = loadedSettings.Z21.CurrentIpAddress;
                     _settings.Z21.DefaultPort = loadedSettings.Z21.DefaultPort;
                     _settings.Counter.CountOfFeedbackPoints = loadedSettings.Counter.CountOfFeedbackPoints;

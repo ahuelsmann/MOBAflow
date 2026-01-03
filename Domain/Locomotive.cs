@@ -37,4 +37,20 @@ public class Locomotive
     public bool IsPushing { get; set; }
 
     public Details? Details { get; set; }
+
+    /// <summary>
+    /// Invoice date for purchase tracking (optional).
+    /// </summary>
+    public DateTime? InvoiceDate { get; set; }
+
+    /// <summary>
+    /// Delivery date for purchase tracking (optional).
+    /// </summary>
+    public DateTime? DeliveryDate { get; set; }
+
+    /// <summary>
+    /// Relative path to locomotive photo (stored in project photos folder).
+    /// Example: "locomotives/{id}.jpg"
+    /// </summary>
+    public string? PhotoPath { get; set; }
 }

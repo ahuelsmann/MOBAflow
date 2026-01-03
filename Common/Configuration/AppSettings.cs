@@ -136,6 +136,11 @@ public class ApplicationSettings
     /// Path to last opened solution file.
     /// </summary>
     public string? LastSolutionPath { get; set; }
+
+    /// <summary>
+    /// Automatically start the WebApp (Blazor REST/API) alongside WinUI.
+    /// </summary>
+    public bool AutoStartWebApp { get; set; } = true;
 }
 
 /// <summary>
@@ -268,4 +273,13 @@ public class FeatureToggleSettings
     /// </summary>
     public bool IsMonitorPageAvailable { get; set; } = false;
     public string? MonitorPageLabel { get; set; } = "Beta";
+
+    // Train/Rolling Stock Management (Upcoming - DISABLED by default)
+
+    /// <summary>
+    /// Enable Trains page (Locomotive and wagon inventory management).
+    /// Upcoming feature - disabled by default.
+    /// </summary>
+    public bool IsTrainsPageAvailable { get; set; } = false;
+    public string? TrainsPageLabel { get; set; } = "Preview";
 }

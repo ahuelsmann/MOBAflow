@@ -24,4 +24,20 @@ public class Wagon
     public ColorScheme? ColorPrimary { get; set; }
     public ColorScheme? ColorSecondary { get; set; }
     public Details? Details { get; set; }
+
+    /// <summary>
+    /// Invoice date for purchase tracking (optional).
+    /// </summary>
+    public DateTime? InvoiceDate { get; set; }
+
+    /// <summary>
+    /// Delivery date for purchase tracking (optional).
+    /// </summary>
+    public DateTime? DeliveryDate { get; set; }
+
+    /// <summary>
+    /// Relative path to wagon photo (stored in project photos folder).
+    /// Example: "locomotives/{id}.jpg" or "wagons/{id}.png"
+    /// </summary>
+    public string? PhotoPath { get; set; }
 }

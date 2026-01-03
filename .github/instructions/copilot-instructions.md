@@ -184,6 +184,58 @@ public object Convert(object? value, ...)
 ## 🎯 Current Session Status (Jan 31, 2025)
 
 ### ✅ Completed This Session
+- ✅ **TrainsPage Implementation: Inventarverwaltung für rollendes Material (Jan 31, 2025)** 🚂✨
+  - **Problem:** Keine UI zum Erfassen von Lokomotiven, Personenwagen und Güterwagen
+  - **Solution:** Vollständige TrainsPage mit 3-Spalten-Layout + EntityTemplates
+  - **Architecture Changes:**
+    1. **Domain Extensions:** InvoiceDate, DeliveryDate, PhotoPath zu Wagon + Locomotive
+    2. **ViewModel Extensions:** HasPhoto Property für Foto-Indikator
+    3. **MainWindowViewModel.Train.cs:** NEU - Commands für Add/Delete (Locomotives/PassengerWagons/GoodsWagons)
+    4. **TrainsPage.xaml:** 3-Spalten-ListView-Layout (Locomotives | PassengerWagons | GoodsWagons | Properties)
+    5. **EntityTemplates.xaml:** Erweiterte LocomotiveTemplate + WagonTemplate mit Purchase-Info
+    6. **Navigation:** TrainsPage zu NavigationService + DI + MainWindow.xaml hinzugefügt
+    7. **Converter:** NullToVisibilityConverter, InvertedBoolToVisibilityConverter, NullableUIntConverter, DateTimeOffsetConverter
+  - **Key Pattern (CRITICAL):**
+    - ✅ **DataTemplates in EntityTemplates.xaml** (NO separate UserControls!)
+    - ✅ **EntityTemplateSelector** handles polymorphic ViewModels (Locomotive/PassengerWagon/GoodsWagon)
+    - ✅ **Consistent 3-column layout** (analog zu JourneysPage: List | List | List | Properties)
+    - ✅ **CalendarDatePicker** für InvoiceDate/DeliveryDate (DateTimeOffsetConverter)
+    - ✅ **NumberBox** für DigitalAddress (NullableUIntConverter)
+    - ⚠️ **Foto-Upload via Button:** Verschoben zu Phase 2 (FileOpenPicker benötigt Code-Behind oder Command)
+  - **Impact:**
+    - ✅ Locomotives/PassengerWagons/GoodsWagons können erfasst werden
+    - ✅ Purchase-Tracking (InvoiceDate, DeliveryDate, Manufacturer, ArticleNumber)
+    - ✅ PhotoPath-Property vorhanden (UI zeigt Path an, Upload folgt in Phase 2)
+    - ✅ Fluent Design 2 konsistent (CardBackgroundFillColorSecondaryBrush, 8px/16px spacing)
+  - **Build Status:** ✅ Zero errors, zero warnings
+  - **Files Created:**
+    - `SharedUI/ViewModel/MainWindowViewModel.Train.cs`
+    - `WinUI/View/TrainsPage.xaml`
+    - `WinUI/View/TrainsPage.xaml.cs`
+    - `WinUI/Converter/NullToVisibilityConverter.cs`
+    - `WinUI/Converter/InvertedBoolToVisibilityConverter.cs`
+    - `WinUI/Converter/NullableUIntConverter.cs`
+    - `WinUI/Converter/DateTimeOffsetConverter.cs`
+  - **Files Modified:**
+    - `Domain/Wagon.cs`: +InvoiceDate, +DeliveryDate, +PhotoPath
+    - `Domain/Locomotive.cs`: +InvoiceDate, +DeliveryDate, +PhotoPath
+    - `SharedUI/ViewModel/LocomotiveViewModel.cs`: +HasPhoto property
+    - `SharedUI/ViewModel/WagonViewModel.cs`: +HasPhoto property
+    - `SharedUI/ViewModel/MainWindowViewModel.Settings.cs`: +IsTrainsPageAvailable
+    - `Common/Configuration/AppSettings.cs`: +FeatureToggleSettings.IsTrainsPageAvailable
+    - `WinUI/appsettings.json`: IsTrainsPageAvailable = true
+    - `WinUI/App.xaml`: Converter registriert
+    - `WinUI/Service/NavigationService.cs`: TrainsPage route
+    - `WinUI/App.xaml.cs`: TrainsPage DI-Registrierung
+    - `WinUI/View/MainWindow.xaml`: NavigationViewItem "Trains"
+    - `WinUI/Resources/EntityTemplates.xaml`: LocomotiveTemplate + WagonTemplate erweitert
+    - `SharedUI/SharedUI.csproj`: GenerateAssemblyInfo=false, GenerateTargetFrameworkAttribute=false
+  - **Next Steps (Phase 2):**
+    - 📸 Foto-Upload-Button in Properties Panel (FileOpenPicker Command)
+    - 📸 Foto-Preview in Properties (Image Control)
+    - 🌐 REST-API für MAUI Foto-Upload (WebApp-Erweiterung)
+    - 📱 MAUI Camera-Integration
+
 - ✅ **SharedUI Cleanup: Entfernung obsoleter Ordner und Tools (Jan 31, 2025)** 🧹
   - **Problem:** SharedUI enthielt leere Legacy-Ordner und ein nicht mehr benötigtes Tool-Projekt
   - **Solution:** Vollständige Bereinigung der Projektstruktur

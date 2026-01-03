@@ -264,6 +264,19 @@ public partial class MainWindowViewModel
         }
     }
 
+    public bool AutoStartWebApp
+    {
+        get => _settings.Application.AutoStartWebApp;
+        set
+        {
+            if (_settings.Application.AutoStartWebApp != value)
+            {
+                _settings.Application.AutoStartWebApp = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     #endregion
 
     #region Feature Toggle Properties (Read-Only for NavigationView Visibility)
@@ -315,6 +328,12 @@ public partial class MainWindowViewModel
     /// Bound to NavigationView item visibility.
     /// </summary>
     public bool IsMonitorPageAvailable => _settings.FeatureToggles is { IsMonitorPageAvailable: true };
+
+    /// <summary>
+    /// Gets whether the Trains page is available.
+    /// Bound to NavigationView item visibility.
+    /// </summary>
+    public bool IsTrainsPageAvailable => _settings.FeatureToggles is { IsTrainsPageAvailable: true };
 
     // Feature Toggle Labels (optional)
     
@@ -413,6 +432,7 @@ public partial class MainWindowViewModel
             OnPropertyChanged(nameof(IsAzureSpeechEngineSelected));
             OnPropertyChanged(nameof(ResetWindowLayoutOnStart));
             OnPropertyChanged(nameof(AutoLoadLastSolution));
+            OnPropertyChanged(nameof(AutoStartWebApp));
             OnPropertyChanged(nameof(HealthCheckEnabled));
             OnPropertyChanged(nameof(HealthCheckIntervalSeconds));
 

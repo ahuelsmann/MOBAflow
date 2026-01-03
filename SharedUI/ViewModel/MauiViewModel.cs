@@ -9,11 +9,12 @@ using Common.Configuration;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using Interface;
+using SharedUI.Interface;
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Net;
+using System.IO;
 
 /// <summary>
 /// Mobile-optimized ViewModel for MAUI - focused on Z21 monitoring and feedback statistics.
@@ -24,13 +25,26 @@ public partial class MauiViewModel : ObservableObject
     private readonly IUiDispatcher _uiDispatcher;
     private readonly AppSettings _settings;
     private readonly ISettingsService _settingsService;
+    private readonly IRestDiscoveryService _restDiscoveryService;
+    private readonly IPhotoUploadService _photoUploadService;
+    private readonly IPhotoCaptureService _photoCaptureService;
 
-    public MauiViewModel(IZ21 z21, IUiDispatcher uiDispatcher, AppSettings settings, ISettingsService settingsService)
+    public MauiViewModel(
+        IZ21 z21,
+        IUiDispatcher uiDispatcher,
+        AppSettings settings,
+        ISettingsService settingsService,
+        IRestDiscoveryService restDiscoveryService,
+        IPhotoUploadService photoUploadService,
+        IPhotoCaptureService photoCaptureService)
     {
         _z21 = z21;
         _uiDispatcher = uiDispatcher;
         _settings = settings;
         _settingsService = settingsService;
+        _restDiscoveryService = restDiscoveryService;
+        _photoUploadService = photoUploadService;
+        _photoCaptureService = photoCaptureService;
 
         // Subscribe to Z21 events
         _z21.Received += OnFeedbackReceived;
@@ -346,6 +360,64 @@ public partial class MauiViewModel : ObservableObject
                 stat.LastFeedbackTime = now;
             }
         });
+    }
+
+    #endregion
+
+    #region Photo Upload
+
+    [ObservableProperty]
+    private bool isPhotoUploading;
+
+    [ObservableProperty]
+    private string? photoUploadStatus;
+
+    [ObservableProperty]
+    private bool photoUploadSuccess;
+
+    [RelayCommand]
+    private async Task CaptureAndUploadPhotoAsync()
+    {
+        try
+        {
+            IsPhotoUploading = true;
+            PhotoUploadSuccess = false;
+            PhotoUploadStatus = null;
+
+            var localPath = await _photoCaptureService.CapturePhotoAsync().ConfigureAwait(false);
+            if (string.IsNullOrEmpty(localPath))
+            {
+                PhotoUploadStatus = "Capture cancelled or not available.";
+                return;
+            }
+
+            var (ip, port) = await _restDiscoveryService.DiscoverServerAsync().ConfigureAwait(false);
+            if (string.IsNullOrEmpty(ip) || port == null)
+            {
+                PhotoUploadStatus = "No MOBAflow REST server found (discovery timeout).";
+                return;
+            }
+
+            var entityId = Guid.NewGuid();
+            var (success, serverPhotoPath, error) = await _photoUploadService.UploadPhotoAsync(ip, port.Value, localPath, "locomotives", entityId).ConfigureAwait(false);
+            if (success)
+            {
+                PhotoUploadSuccess = true;
+                PhotoUploadStatus = serverPhotoPath ?? "Uploaded successfully.";
+            }
+            else
+            {
+                PhotoUploadStatus = error ?? "Upload failed.";
+            }
+        }
+        catch (Exception ex)
+        {
+            PhotoUploadStatus = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            IsPhotoUploading = false;
+        }
     }
 
     #endregion

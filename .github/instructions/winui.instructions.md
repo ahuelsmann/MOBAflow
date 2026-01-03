@@ -663,3 +663,206 @@ WinUI 3 CommandBar **does not automatically** move buttons to overflow menu when
 
 **Last Updated:** 2025-12-10  
 **Related:** Selection Management Best Practices, Responsive Design
+
+---
+
+## 📐 DataTemplate Architecture (CRITICAL!)
+
+### ✅ CORRECT: DataTemplates in EntityTemplates.xaml
+
+**All Properties Panels MUST be DataTemplates in `WinUI/Resources/EntityTemplates.xaml`**
+
+```xaml
+<!-- EntityTemplates.xaml -->
+<ResourceDictionary>
+    <DataTemplate x:Key="LocomotiveTemplate">
+        <ScrollViewer>
+            <StackPanel Padding="16" Spacing="16">
+                <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" 
+                           Text="Locomotive Properties" />
+                
+                <Border Padding="12"
+                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                        CornerRadius="8">
+                    <StackPanel Spacing="8">
+                        <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DataTemplate>
+</ResourceDictionary>
+```
+
+### ❌ WRONG: Separate UserControl Files
+
+**NEVER create separate .xaml UserControl files for Properties Panels!**
+
+```xaml
+<!-- ❌ DO NOT CREATE: LocomotivePropertiesPanel.xaml -->
+<UserControl x:Class="Moba.WinUI.View.LocomotivePropertiesPanel">
+    <!-- This will NOT compile correctly in WinUI 3! -->
+    <!-- InitializeComponent() will be missing! -->
+</UserControl>
+```
+
+**Why DataTemplates instead of UserControls?**
+- ✅ WinUI 3 XAML compiler generates code properly
+- ✅ EntityTemplateSelector handles polymorphic ViewModels
+- ✅ No `InitializeComponent()` issues
+- ✅ Standard WinUI 3 pattern (see Journey/Workflow/Station templates)
+- ❌ UserControls require `<Page>` root in WinUI 3 for complex scenarios
+
+---
+
+## 🔀 EntityTemplateSelector Pattern
+
+```csharp
+// WinUI/Selector/EntityTemplateSelector.cs
+public class EntityTemplateSelector : DataTemplateSelector
+{
+    public DataTemplate? LocomotiveTemplate { get; set; }
+    public DataTemplate? WagonTemplate { get; set; }
+    
+    protected override DataTemplate? SelectTemplateCore(object item, DependencyObject container)
+    {
+        return item switch
+        {
+            LocomotiveViewModel => LocomotiveTemplate,
+            PassengerWagonViewModel => WagonTemplate,
+            GoodsWagonViewModel => WagonTemplate,
+            _ => DefaultTemplate
+        };
+    }
+}
+```
+
+**Usage in Page:**
+
+```xaml
+<ContentControl Content="{x:Bind ViewModel.SelectedObject, Mode=OneWay}"
+                ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
+```
+
+---
+
+## 📋 CalendarDatePicker + DateTimeOffsetConverter
+
+```csharp
+// WinUI/Converter/DateTimeOffsetConverter.cs
+public class DateTimeOffsetConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, string language)
+    {
+        if (value is DateTime dateTime)
+            return new DateTimeOffset(dateTime);
+        return null;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, string language)
+    {
+        if (value is DateTimeOffset dateTimeOffset)
+            return dateTimeOffset.DateTime;
+        return null;
+    }
+}
+```
+
+```xaml
+<!-- Register in App.xaml -->
+<converter:DateTimeOffsetConverter x:Key="DateTimeOffsetConverter" />
+
+<!-- Use in XAML -->
+<CalendarDatePicker Header="Invoice Date (optional)"
+                    Date="{Binding InvoiceDate, Mode=TwoWay, Converter={StaticResource DateTimeOffsetConverter}}" />
+```
+
+---
+
+## 🔢 NumberBox + NullableUIntConverter
+
+```csharp
+// WinUI/Converter/NullableUIntConverter.cs
+public class NullableUIntConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, string language)
+    {
+        if (value is uint uintValue)
+            return (double)uintValue;
+        return double.NaN; // NumberBox displays empty when NaN
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, string language)
+    {
+        if (value is double doubleValue && !double.IsNaN(doubleValue))
+            return (uint)doubleValue;
+        return null;
+    }
+}
+```
+
+```xaml
+<NumberBox Header="Digital Address (optional)"
+           Maximum="10239"
+           Minimum="1"
+           Value="{Binding DigitalAddress, Mode=TwoWay, Converter={StaticResource NullableUIntConverter}}" />
+```
+
+---
+
+## 📂 FileOpenPicker Pattern
+
+### ❌ WRONG: Direct XAML Binding
+
+```csharp
+// ❌ FileOpenPicker CANNOT be triggered from XAML Command binding directly!
+[RelayCommand]
+private async Task BrowsePhotoAsync()
+{
+    var picker = new FileOpenPicker();
+    var file = await picker.PickSingleFileAsync(); // FAILS: No window handle!
+}
+```
+
+### ✅ CORRECT: InitializeWithWindow
+
+```csharp
+// ✅ Code-Behind Event Handler
+private async void BrowsePhoto_Click(object sender, RoutedEventArgs e)
+{
+    var picker = new FileOpenPicker
+    {
+        SuggestedStartLocation = PickerLocationId.PicturesLibrary
+    };
+    picker.FileTypeFilter.Add(".jpg");
+    
+    // ✅ CRITICAL: Initialize with window handle
+    var window = GetWindowForElement(this);
+    InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(window));
+    
+    var file = await picker.PickSingleFileAsync();
+    if (file != null)
+    {
+        // Process file...
+    }
+}
+```
+
+---
+
+## 📝 Properties Panel Checklist
+
+Before creating ANY Properties Panel:
+
+- [ ] ✅ Create DataTemplate in `EntityTemplates.xaml` (NOT separate .xaml file!)
+- [ ] ✅ Register template in `EntityTemplateSelector`
+- [ ] ✅ Use `ScrollViewer` as root element
+- [ ] ✅ Use `StackPanel` with `Spacing="16"` for content
+- [ ] ✅ Group properties in `Border` with `CardBackgroundFillColorSecondaryBrush`
+- [ ] ✅ Use `FontWeight="SemiBold"` for section titles
+- [ ] ✅ Register all new converters in `App.xaml`
+- [ ] ✅ Use `CalendarDatePicker` for `DateTime?` properties
+- [ ] ✅ Use `NumberBox` for numeric properties
+- [ ] ❌ NEVER create separate UserControl `.xaml` files for Properties Panels
+
+**Violation of these patterns = Immediate refactoring required!**

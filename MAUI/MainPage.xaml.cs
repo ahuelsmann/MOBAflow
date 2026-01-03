@@ -2,9 +2,10 @@
 namespace Moba.MAUI;
 
 using SharedUI.ViewModel;
+using Microsoft.Maui.Controls;
 
 // ReSharper disable once PartialTypeWithSinglePart
-public partial class MainPage
+public partial class MainPage : ContentPage
 {
     public MauiViewModel ViewModel { get; }
 
@@ -30,6 +31,9 @@ public partial class MainPage
             await ViewModel.DisconnectCommand.ExecuteAsync(null);
     }
 }
+
+
+
 
 
 

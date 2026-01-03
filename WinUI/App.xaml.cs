@@ -30,6 +30,8 @@ using SharedUI.ViewModel;
 using Sound;
 
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 
 using View;
 
@@ -41,6 +43,7 @@ using ILogger = Microsoft.Extensions.Logging.ILogger;
 public partial class App
 {
     private Window? _window;
+    private Process? _webAppProcess;
 
     /// <summary>
     /// Initializes the singleton application object. This is the first line of authored code
@@ -216,6 +219,7 @@ public partial class App
         services.AddTransient<SolutionPage>();
         services.AddTransient<JourneysPage>();
         services.AddTransient<WorkflowsPage>();
+        services.AddTransient<TrainsPage>();
         services.AddTransient<TrackPlanEditorPage>();
         services.AddTransient<JourneyMapPage>();
         services.AddTransient<SettingsPage>();
@@ -256,6 +260,9 @@ public partial class App
     {
         _window = Services.GetRequiredService<MainWindow>();
         _window.Activate();
+
+        // Optionally start WebApp (REST/API) alongside WinUI
+        _ = StartWebAppIfEnabledAsync();
 
         // Auto-load last solution if enabled
         _ = AutoLoadLastSolutionAsync(((MainWindow)_window).ViewModel);
@@ -307,6 +314,56 @@ public partial class App
         {
             Debug.WriteLine($"❌ Auto-load failed: {ex.Message}");
             // Don't crash the application if auto-load fails
+        }
+    }
+
+    private async Task StartWebAppIfEnabledAsync()
+    {
+        try
+        {
+            var settings = Services.GetRequiredService<AppSettings>();
+            if (!settings.Application.AutoStartWebApp)
+            {
+                Debug.WriteLine("ℹ️ AutoStartWebApp disabled - skipping WebApp launch");
+                return;
+            }
+
+            if (_webAppProcess != null && !_webAppProcess.HasExited)
+            {
+                Debug.WriteLine("ℹ️ WebApp already running");
+                return;
+            }
+
+            var candidates = new[]
+            {
+                Path.Combine(AppContext.BaseDirectory, "WebApp.dll"),
+                Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "WebApp", "bin", "Debug", "net10.0", "WebApp.dll")),
+                Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "WebApp", "bin", "Release", "net10.0", "WebApp.dll"))
+            };
+
+            var dllPath = candidates.FirstOrDefault(File.Exists);
+            if (dllPath == null)
+            {
+                Debug.WriteLine("⚠️ WebApp.dll not found - skipping auto-start");
+                return;
+            }
+
+            var psi = new ProcessStartInfo
+            {
+                FileName = "dotnet",
+                Arguments = $"\"{dllPath}\"",
+                WorkingDirectory = Path.GetDirectoryName(dllPath) ?? AppContext.BaseDirectory,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            _webAppProcess = Process.Start(psi);
+            Debug.WriteLine($"✅ WebApp started from {dllPath}");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"❌ Failed to start WebApp: {ex.Message}");
+            // Do not crash WinUI if WebApp start fails
         }
     }
 }

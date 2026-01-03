@@ -40,4 +40,19 @@ public interface IIoService
     /// </summary>
     /// <returns>The selected file path, or null if cancelled.</returns>
     Task<string?> BrowseForAudioFileAsync();
+
+    /// <summary>
+    /// Opens a file picker to browse for a photo/image file (JPG, PNG, etc.).
+    /// </summary>
+    /// <returns>The selected file path, or null if cancelled.</returns>
+    Task<string?> BrowseForPhotoAsync();
+
+    /// <summary>
+    /// Saves a photo file to the application's local photos storage.
+    /// </summary>
+    /// <param name="sourceFilePath">Source photo file path</param>
+    /// <param name="category">Photo category (e.g., "locomotives", "passenger-wagons", "goods-wagons")</param>
+    /// <param name="entityId">Entity ID for filename</param>
+    /// <returns>Relative path to saved photo (e.g., "photos/locomotives/{id}.jpg")</returns>
+    Task<string?> SavePhotoAsync(string sourceFilePath, string category, Guid entityId);
 }

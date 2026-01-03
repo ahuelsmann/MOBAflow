@@ -50,4 +50,14 @@ public class NullIoService : IIoService
     {
         return Task.FromResult<string?>(null);
     }
+
+    public Task<string?> BrowseForPhotoAsync()
+    {
+        return Task.FromResult<string?>(null);
+    }
+
+    public Task<string?> SavePhotoAsync(string sourceFilePath, string category, Guid entityId)
+    {
+        return Task.FromResult<string?>(null);
+    }
 }

@@ -48,6 +48,14 @@ public static class MauiProgram
         builder.Services.AddSingleton<ISoundPlayer, NullSoundPlayer>();
         builder.Services.AddSingleton<ISpeakerEngine, NullSpeakerEngine>();
 
+        // ✅ REST-API Discovery + Photo Upload Services
+        builder.Services.AddSingleton<RestApiDiscoveryService>();
+        builder.Services.AddSingleton<HttpClient>();
+        builder.Services.AddSingleton<PhotoUploadService>();
+        builder.Services.AddSingleton<IRestDiscoveryService, RestDiscoveryAdapter>();
+        builder.Services.AddSingleton<IPhotoUploadService, PhotoUploadAdapter>();
+        builder.Services.AddSingleton<IPhotoCaptureService, PhotoCaptureService>();
+
         // ViewModels
         builder.Services.AddSingleton<MauiViewModel>();  // ✅ Mobile-optimized ViewModel
 

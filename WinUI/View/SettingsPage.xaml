@@ -264,6 +264,15 @@
                             Text="Automatically load the last opened solution on startup"
                             TextWrapping="Wrap" />
                     </StackPanel>
+
+                    <StackPanel>
+                        <CheckBox Content="Auto-start WebApp (REST/API) with WinUI" IsChecked="{x:Bind ViewModel.AutoStartWebApp, Mode=TwoWay}" />
+                        <TextBlock
+                            Margin="28,0,0,0"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="Starts the Blazor WebApp (REST endpoint for photo upload) together with WinUI"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
                 </StackPanel>
             </Expander>
 
