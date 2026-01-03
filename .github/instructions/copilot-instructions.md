@@ -184,6 +184,37 @@ public object Convert(object? value, ...)
 ## 🎯 Current Session Status (Jan 31, 2025)
 
 ### ✅ Completed This Session
+- ✅ **SharedUI Cleanup: Entfernung obsoleter Ordner und Tools (Jan 31, 2025)** 🧹
+  - **Problem:** SharedUI enthielt leere Legacy-Ordner und ein nicht mehr benötigtes Tool-Projekt
+  - **Solution:** Vollständige Bereinigung der Projektstruktur
+  - **Entfernte Komponenten:**
+    - ❌ `SharedUI/Tools/PikoPdfGeometryExtractor/` (obsoletes Tool-Projekt)
+    - ❌ `SharedUI/Converter/` (leerer Ordner)
+    - ❌ `SharedUI/Geometry/` (leerer Ordner)
+    - ❌ `SharedUI/Renderer/` (leerer Ordner)
+    - ❌ 16 Zeilen `<Compile Remove>` Blöcke in SharedUI.csproj
+  - **Impact:**
+    - ✅ Sauberere Projektstruktur (4 obsolete Ordner entfernt)
+    - ✅ Einfachere .csproj-Datei (16 Zeilen weniger)
+    - ✅ Keine Build-Warnungen mehr für leere Ordner
+    - ✅ Build weiterhin erfolgreich (0 Fehler, 0 Warnungen)
+  - **Build Status:** ✅ Zero errors, zero warnings
+  - **Files Changed:**
+    - `SharedUI/SharedUI.csproj`: Entfernung aller Remove-Blöcke
+
+- ✅ **Build-Fehler Fix: TrackPlan.Import.AnyRail OutputType (Jan 31, 2025)** 🔧
+  - **Problem:** TrackPlan.Import.AnyRail wurde von Visual Studio übersprungen → SharedUI konnte nicht bauen → Kaskade von Fehlern
+  - **Root Cause:** Fehlende `<OutputType>Library</OutputType>` Eigenschaft
+  - **Solution:** Eine Zeile zu TrackPlan.Import.AnyRail.csproj hinzugefügt
+  - **Impact:**
+    - ✅ TrackPlan.Import.AnyRail wird jetzt gebaut (nicht mehr übersprungen)
+    - ✅ SharedUI kann abhängige .dll finden
+    - ✅ Alle abhängigen Projekte (WebApp, WinUI, Test, MAUI) bauen erfolgreich
+    - ✅ Build-Kaskade behoben (7 → 13 erfolgreiche Projekte)
+  - **Build Status:** ✅ Zero errors, zero warnings
+  - **Files Changed:**
+    - `TrackPlan.Import.AnyRail/TrackPlan.Import.AnyRail.csproj`: +1 Zeile (OutputType)
+
 - ✅ **AnyRail Import Fix: Direct EndpointNrs Index Mapping (Jan 31, 2025)** 🎉
   - **Problem:** Import created 0 connections → 91 disconnected components (starburst pattern)
   - **Root Cause:** Complex BuildConnectorMapping with spatial sorting was broken and never executed

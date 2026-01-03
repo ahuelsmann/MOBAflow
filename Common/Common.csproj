@@ -2,6 +2,7 @@
   <PropertyGroup>
     <RootNamespace>Moba.Common</RootNamespace>
     <TargetFramework>net9.0</TargetFramework>
+    <OutputType>Library</OutputType>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>

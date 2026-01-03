@@ -73,16 +73,16 @@
 
     <!-- Splash Screen mit neuem MOBAflow Design (gleich wie WinUI) - DEAKTIVIERT: SVG-Datei fehlt -->
     <!-- <MauiSplashScreen Include="Resources\Splash\mobaflow_icon_splash.svg" Color="#512BD4" BaseSize="128,128" /> -->
-    
+
     <!-- Images (includes all SVG icons automatically) -->
     <MauiImage Include="Resources\Images\*" />
-    
+
     <!-- Custom Fonts -->
     <MauiFont Include="Resources\Fonts\*" />
-    
+
     <!-- Raw Assets -->
     <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
-    
+
     <!-- Audio Library - Sound effects for workflow actions -->
     <!-- Now managed by Sound project (Sound.csproj copies to output) -->
   </ItemGroup>

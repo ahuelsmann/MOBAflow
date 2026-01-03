@@ -2,26 +2,10 @@
 <PropertyGroup>
   <RootNamespace>Moba.SharedUI</RootNamespace>
   <TargetFramework>net9.0</TargetFramework>
+  <OutputType>Library</OutputType>
   <Nullable>enable</Nullable>
   <ImplicitUsings>enable</ImplicitUsings>
 </PropertyGroup>
-  <ItemGroup>
-    <Compile Remove="Converter\**" />
-    <Compile Remove="Geometry\**" />
-    <Compile Remove="Renderer\**" />
-    <Compile Remove="Validation\**" />
-    <EmbeddedResource Remove="Converter\**" />
-    <EmbeddedResource Remove="Geometry\**" />
-    <EmbeddedResource Remove="Renderer\**" />
-    <EmbeddedResource Remove="Validation\**" />
-    <None Remove="Converter\**" />
-    <None Remove="Geometry\**" />
-    <None Remove="Renderer\**" />
-    <None Remove="Validation\**" />
-    <Compile Remove="Tools\PikoPdfGeometryExtractor\**" />
-    <EmbeddedResource Remove="Tools\PikoPdfGeometryExtractor\**" />
-    <None Remove="Tools\PikoPdfGeometryExtractor\**" />
-  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" />
   </ItemGroup>

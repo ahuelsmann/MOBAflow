@@ -1,18 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-<PropertyGroup>
-  <RootNamespace>Moba.Sound</RootNamespace>
-  <TargetFramework>net9.0</TargetFramework>
-</PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace>Moba.Sound</RootNamespace>
+    <TargetFramework>net9.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
   <ItemGroup>
     <!-- Legacy test sound -->
-    
+
     <!-- Sound Library - Workflow audio effects -->
     <!-- All .wav files in Resources/Sounds/ will be copied to output directory -->
     <Content Include="Resources\Sounds\**\*.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>Resources\Sounds\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Content>
-    
+
     <!-- Sound Library - Documentation -->
     <None Include="Resources\Sounds\**\*.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
