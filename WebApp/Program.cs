@@ -14,9 +14,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// ✅ Add Controllers for REST API
-builder.Services.AddControllers();
-
 // Configuration: AppSettings (required by ViewModels)
 var appSettings = new AppSettings();
 builder.Configuration.GetSection("AppSettings").Bind(appSettings);
@@ -29,6 +26,8 @@ if (string.IsNullOrEmpty(appSettings.Z21.CurrentIpAddress))
 }
 builder.Services.AddSingleton(appSettings);
 builder.Services.AddSingleton<ISettingsService, SettingsService>();
+
+
 
 // Blazor-specific services
 builder.Services.AddSingleton<IUiDispatcher, BlazorUiDispatcher>();
@@ -48,8 +47,8 @@ builder.Services.AddSingleton<DataManager>();
 // ✅ WebAppViewModel as Singleton (web-optimized ViewModel for Blazor Server)
 builder.Services.AddSingleton<WebAppViewModel>();
 
-// ✅ Photo Upload Services
-builder.Services.AddSingleton<PhotoStorageService>();
+// ✅ REST API Controllers
+builder.Services.AddControllers();
 
 // ✅ UDP Discovery Background Service
 builder.Services.AddHostedService<UdpDiscoveryService>();
@@ -68,10 +67,10 @@ app.UseAntiforgery();
 
 app.MapStaticAssets();
 
-// ✅ Map API Controllers
+// ✅ Map REST API Controllers (Photo Upload)
 app.MapControllers();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-await app.RunAsync();
+await app.RunAsync();await app.RunAsync();

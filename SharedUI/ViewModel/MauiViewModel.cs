@@ -14,7 +14,6 @@ using Interface;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Net;
-using System.IO;
 
 /// <summary>
 /// Mobile-optimized ViewModel for MAUI - focused on Z21 monitoring and feedback statistics.
@@ -77,6 +76,7 @@ public partial class MauiViewModel : ObservableObject
         
         Z21IpAddress = _settings.Z21.CurrentIpAddress;
         RestApiIpAddress = _settings.RestApi.CurrentIpAddress;
+        RestApiPort = _settings.RestApi.Port;
         CountOfFeedbackPoints = _settings.Counter.CountOfFeedbackPoints;
         GlobalTargetLapCount = _settings.Counter.TargetLapCount;
         UseTimerFilter = _settings.Counter.UseTimerFilter;
@@ -86,6 +86,7 @@ public partial class MauiViewModel : ObservableObject
         Debug.WriteLine("✅ Values loaded into ViewModel:");
         Debug.WriteLine($"   Z21IpAddress: {Z21IpAddress}");
         Debug.WriteLine($"   RestApiIpAddress: {RestApiIpAddress}");
+        Debug.WriteLine($"   RestApiPort: {RestApiPort}");
         Debug.WriteLine($"   CountOfFeedbackPoints: {CountOfFeedbackPoints}");
         Debug.WriteLine($"   GlobalTargetLapCount: {GlobalTargetLapCount}");
         Debug.WriteLine($"   UseTimerFilter: {UseTimerFilter}");
@@ -97,6 +98,9 @@ public partial class MauiViewModel : ObservableObject
 
     [ObservableProperty]
     private string restApiIpAddress = string.Empty;
+
+    [ObservableProperty]
+    private int restApiPort = 5001;
 
     partial void OnRestApiIpAddressChanged(string value)
     {
@@ -410,12 +414,17 @@ public partial class MauiViewModel : ObservableObject
             var (ip, port) = await _restDiscoveryService.DiscoverServerAsync().ConfigureAwait(false);
             if (string.IsNullOrEmpty(ip) || port == null)
             {
-                PhotoUploadStatus = "No MOBAflow REST server found (discovery timeout).";
+                PhotoUploadStatus = "⚠️ REST Server not configured\n\n" +
+                                    "Enter server IP in settings above:\n" +
+                                    "• Use your PC's local IP address\n" +
+                                    "  (e.g., 192.168.0.79)\n\n" +
+                                    "Server must be running on port 5001.";
                 return;
             }
 
-            var entityId = Guid.NewGuid();
-            var (success, serverPhotoPath, error) = await _photoUploadService.UploadPhotoAsync(ip, port.Value, localPath, "locomotives", entityId).ConfigureAwait(false);
+            // ✅ Upload photo WITHOUT entityId - WinUI will assign it to the currently selected item
+            var tempId = Guid.NewGuid(); // Temporary ID for filename only
+            var (success, serverPhotoPath, error) = await _photoUploadService.UploadPhotoAsync(ip, port.Value, localPath, "latest", tempId).ConfigureAwait(false);
             if (success)
             {
                 PhotoUploadSuccess = true;

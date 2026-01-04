@@ -18,11 +18,21 @@ public partial class LocomotiveViewModel : ObservableObject, IViewModelWrapper<L
     // Model
     [ObservableProperty]
     private Locomotive model;
+    private int photoVersion;
     #endregion
 
     public LocomotiveViewModel(Locomotive model)
     {
         Model = model;
+    }
+
+    partial void OnModelChanged(Locomotive value)
+    {
+        // Reset photo version and notify UI when model changes
+        photoVersion = 0;
+        OnPropertyChanged(nameof(PhotoPath));
+        OnPropertyChanged(nameof(PhotoPathWithVersion));
+        OnPropertyChanged(nameof(HasPhoto));
     }
 
     public string Name
@@ -102,12 +112,26 @@ public partial class LocomotiveViewModel : ObservableObject, IViewModelWrapper<L
         get => Model.PhotoPath;
         set
         {
+            // Always update photoVersion even if path hasn't changed (e.g., file overwrite)
             if (SetProperty(Model.PhotoPath, value, Model, (m, v) => m.PhotoPath = v))
             {
+                photoVersion++;
+                OnPropertyChanged(nameof(PhotoPathWithVersion));
                 OnPropertyChanged(nameof(HasPhoto));
+            }
+            else if (value != null)
+            {
+                // Path didn't change but we still want to refresh the image (cache busting)
+                photoVersion++;
+                OnPropertyChanged(nameof(PhotoPathWithVersion));
             }
         }
     }
+
+    /// <summary>
+    /// Cache-busting photo path for UI bindings.
+    /// </summary>
+    public string? PhotoPathWithVersion => string.IsNullOrWhiteSpace(Model.PhotoPath) ? null : $"{Model.PhotoPath}?v={photoVersion}";
 
     /// <summary>
     /// Returns true if a photo is assigned to this locomotive.

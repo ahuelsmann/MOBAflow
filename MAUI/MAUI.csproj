@@ -116,10 +116,6 @@
     <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
-    <!-- Android Resources -->
-    <AndroidResource Include="Platforms\Android\Resources\**\*.xml" />
-  </ItemGroup>
-  <ItemGroup>
     <!-- MAUI Core -->
     <PackageReference Include="Microsoft.Maui.Controls" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" />

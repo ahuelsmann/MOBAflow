@@ -69,7 +69,8 @@ public partial class MainWindowViewModel : ObservableObject
         IIoService? ioService = null,  // ✅ Optional for WebApp/MAUI
         ICityService? cityLibraryService = null,
         ISettingsService? settingsService = null,
-        AnnouncementService? announcementService = null)
+        AnnouncementService? announcementService = null,
+        object? photoHubClient = null)  // ✅ Optional PhotoHubClient (only in WinUI, type is object to avoid assembly reference)
     {
         _ioService = ioService ?? new NullIoService();  // Use null object pattern
         _z21 = z21;

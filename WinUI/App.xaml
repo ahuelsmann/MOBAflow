@@ -22,8 +22,7 @@
             <converter:NullableUIntConverter x:Key="NullableUIntConverter" />
             <converter:DateTimeToTimeSpanConverter x:Key="DateTimeToTimeSpanConverter" />
             <converter:DateTimeOffsetConverter x:Key="DateTimeOffsetConverter" />
-
-
+            <converter:PhotoPathToImageConverter x:Key="PhotoPathToImageConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

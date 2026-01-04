@@ -222,6 +222,33 @@ public partial class MainWindowViewModel
         }
     }
 
+    public bool AutoStartWebApp
+    {
+        get => _settings.Application.AutoStartWebApp;
+        set
+        {
+            if (_settings.Application.AutoStartWebApp != value)
+            {
+                _settings.Application.AutoStartWebApp = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    // REST API Settings
+    public int RestApiPort
+    {
+        get => _settings.RestApi.Port;
+        set
+        {
+            if (_settings.RestApi.Port != value)
+            {
+                _settings.RestApi.Port = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public bool HealthCheckEnabled
     {
         get => _settings.HealthCheck.Enabled;
@@ -260,19 +287,6 @@ public partial class MainWindowViewModel
                 
                 // Immediately update Track Statistics on Overview page
                 InitializeStatisticsFromFeedbackPoints();
-            }
-        }
-    }
-
-    public bool AutoStartWebApp
-    {
-        get => _settings.Application.AutoStartWebApp;
-        set
-        {
-            if (_settings.Application.AutoStartWebApp != value)
-            {
-                _settings.Application.AutoStartWebApp = value;
-                OnPropertyChanged();
             }
         }
     }

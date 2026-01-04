@@ -11,8 +11,11 @@ using Common.Serilog;
 
 using Domain;
 
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
@@ -31,8 +34,6 @@ using Sound;
 
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-
 using View;
 
 using ILogger = Microsoft.Extensions.Logging.ILogger;
@@ -43,7 +44,7 @@ using ILogger = Microsoft.Extensions.Logging.ILogger;
 public partial class App
 {
     private Window? _window;
-    private Process? _webAppProcess;
+    private IHost? _webAppHost;
 
     /// <summary>
     /// Initializes the singleton application object. This is the first line of authored code
@@ -149,6 +150,7 @@ public partial class App
 
         services.AddSingleton<IIoService, IoService>();
         services.AddSingleton<IUiDispatcher, UiDispatcher>();
+        services.AddSingleton<PhotoHubClient>();  // ✅ Real-time photo notifications from MAUI
 
         // ✅ ICityService with NullObject fallback
         // Always register a service (real or no-op)
@@ -208,7 +210,8 @@ public partial class App
             sp.GetRequiredService<IIoService>(),
             sp.GetRequiredService<ICityService>(),      // Now guaranteed (NullObject if unavailable)
             sp.GetRequiredService<ISettingsService>(),  // Now guaranteed (NullObject if unavailable)
-            sp.GetRequiredService<AnnouncementService>()  // For TestSpeech command
+            sp.GetRequiredService<AnnouncementService>(),  // For TestSpeech command
+            sp.GetRequiredService<PhotoHubClient>()  // ✅ Real-time photo notifications
         ));
         services.AddSingleton<TrackPlanEditorViewModel>();
         services.AddSingleton<JourneyMapViewModel>();
@@ -322,112 +325,196 @@ public partial class App
         try
         {
             var settings = Services.GetRequiredService<AppSettings>();
-            var restPort = settings.RestApi.Port;
             if (!settings.Application.AutoStartWebApp)
             {
-                Debug.WriteLine("ℹ️ AutoStartWebApp disabled in settings - skipping WebApp launch");
+                Debug.WriteLine("ℹ️ AutoStartWebApp disabled in settings - skipping REST API launch");
                 Debug.WriteLine("   To enable: Set 'Application.AutoStartWebApp' to true in appsettings.json");
                 return;
             }
 
-            if (_webAppProcess is not null && !_webAppProcess.HasExited)
+            if (_webAppHost != null)
             {
-                Debug.WriteLine("ℹ️ WebApp already running (PID: {0})", _webAppProcess.Id);
+                Debug.WriteLine("ℹ️ REST API already running");
                 return;
             }
 
-            // ✅ Ensure Windows Firewall rules exist for WebApp
+            var restPort = settings.RestApi.Port;
+
+            // ✅ Ensure Windows Firewall rules exist for REST API
             FirewallHelper.EnsureFirewallRulesExist(restPort);
 
-            // Search for WebApp.dll in common locations
-            var candidates = new[]
-            {
-                // 1. Same directory as WinUI (published/deployment scenario)
-                Path.Combine(AppContext.BaseDirectory, "WebApp.dll"),
-                
-                // 2. Development: Debug build (sibling project in MOBAflow workspace)
-                Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "WebApp", "bin", "Debug", "net10.0", "WebApp.dll")),
-                
-                // 3. Development: Release build (sibling project in MOBAflow workspace)
-                Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "WebApp", "bin", "Release", "net10.0", "WebApp.dll"))
-            };
+            // Build WebHost for in-process Kestrel hosting
+            var builder = Host.CreateDefaultBuilder();
 
-
-            Debug.WriteLine("🔍 Searching for WebApp.dll in {0} locations...", candidates.Length);
-            
-            string? dllPath = null;
-            foreach (var candidate in candidates)
+            builder.ConfigureWebHostDefaults(webBuilder =>
             {
-                Debug.WriteLine("   Checking: {0}", candidate);
-                if (File.Exists(candidate))
+                webBuilder.UseKestrel(options =>
                 {
-                    dllPath = candidate;
-                    Debug.WriteLine("   ✅ Found!");
-                    break;
-                }
-            }
-
-            if (dllPath is null)
-            {
-                Debug.WriteLine("⚠️ WebApp.dll not found in any location - skipping auto-start");
-                Debug.WriteLine("   Searched locations:");
-                foreach (var candidate in candidates)
-                {
-                    Debug.WriteLine("   - {0}", candidate);
-                }
-                Debug.WriteLine("   Build the WebApp project or disable AutoStartWebApp in settings");
-                return;
-            }
-
-            var psi = new ProcessStartInfo
-            {
-                FileName = "dotnet",
-                Arguments = $"\"{dllPath}\"",
-                WorkingDirectory = Path.GetDirectoryName(dllPath) ?? AppContext.BaseDirectory,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true
-            };
-
-            // Override Kestrel URL to the configured REST port (ensures we don't bind to stale appsettings)
-            psi.Environment["ASPNETCORE_URLS"] = $"http://0.0.0.0:{restPort}";
-            psi.Environment["ASPNETCORE_HTTP_PORTS"] = restPort.ToString();
-
-            _webAppProcess = Process.Start(psi);
-            
-            if (_webAppProcess is not null)
-            {
-                Debug.WriteLine("✅ WebApp started successfully");
-                Debug.WriteLine("   Path: {0}", dllPath);
-                Debug.WriteLine("   PID: {0}", _webAppProcess.Id);
-                Debug.WriteLine($"   REST API will be available on http://localhost:{restPort}");
-                Debug.WriteLine("   UDP Discovery Service listening on port 21106");
-                Debug.WriteLine("   💡 If MAUI can't discover server, check Windows Firewall settings");
-                
-                // Log WebApp output for debugging
-                _ = Task.Run(async () =>
-                {
-                    while (!_webAppProcess.HasExited)
-                    {
-                        var output = await _webAppProcess.StandardOutput.ReadLineAsync();
-                        if (!string.IsNullOrEmpty(output))
-                        {
-                            Debug.WriteLine($"[WebApp] {output}");
-                        }
-                    }
+                    options.ListenAnyIP(restPort);
                 });
-            }
-            else
+                
+                webBuilder.Configure(app =>
+                {
+                    // ✅ CORS must be before routing (required for MAUI mobile clients)
+                    app.UseCors();
+                    
+                    // ✅ Map SignalR Hub for photo notifications
+                    app.UseRouting();
+                    app.UseEndpoints(endpoints =>
+                    {
+                        endpoints.MapControllers();
+                        endpoints.MapHub<Hubs.PhotoHub>("/photos-hub");
+                    });
+                });
+            });
+
+            builder.ConfigureServices((_, services) =>
             {
-                Debug.WriteLine("❌ Failed to start WebApp process");
+                // Register MOBAflow Web Services
+                services.AddSingleton<PhotoStorageService>();
+                
+                // ✅ Explicitly add controllers from this assembly (WinUI)
+                // Required because WinUI apps don't auto-discover controllers like ASP.NET Core web apps
+                services.AddControllers()
+                    .AddApplicationPart(typeof(Controllers.PhotoUploadController).Assembly);
+                
+                // ✅ Register SignalR for real-time photo notifications
+                services.AddSignalR();
+
+                // ✅ CORS: Allow requests from any origin (required for MAUI mobile clients)
+                services.AddCors(options =>
+                {
+                    options.AddDefaultPolicy(policy =>
+                    {
+                        policy.AllowAnyOrigin()
+                              .AllowAnyMethod()
+                              .AllowAnyHeader();
+                    });
+                });
+            });
+
+            builder.ConfigureLogging(loggingBuilder =>
+            {
+                // Use the same Serilog logger as WinUI
+                loggingBuilder.AddSerilog(Log.Logger, dispose: false);
+            });
+
+            _webAppHost = builder.Build();
+
+            // Start WebHost asynchronously
+            _ = _webAppHost.RunAsync();
+
+            Debug.WriteLine("✅ REST API started successfully");
+            Debug.WriteLine($"   Binding: http://0.0.0.0:{restPort}");
+            Debug.WriteLine($"   Endpoints:");
+            Debug.WriteLine($"     • POST   /api/photos/upload  - Upload photo");
+            Debug.WriteLine($"     • GET    /api/photos/health  - Health check");
+            Debug.WriteLine($"   💡 MAUI can now upload photos to http://{{device-ip}}:{restPort}/api/photos/upload");
+
+            // Give Kestrel a moment to bind
+            await Task.Delay(1000);
+
+            // ✅ Start SignalR PhotoHubClient for real-time photo notifications
+            _ = StartPhotoHubClientAsync(restPort);
+
+            // ✅ Self-test: Verify server is actually responding
+            try
+            {
+                using var httpClient = new HttpClient();
+                httpClient.Timeout = TimeSpan.FromSeconds(5);
+                var testResponse = await httpClient.GetAsync($"http://localhost:{restPort}/api/photos/health");
+                if (testResponse.IsSuccessStatusCode)
+                {
+                    Debug.WriteLine($"   ✅ Self-test passed: Server responding on localhost:{restPort}");
+                }
+                else
+                {
+                    Debug.WriteLine($"   ⚠️ Self-test warning: Server returned {testResponse.StatusCode}");
+                }
+            }
+            catch (Exception selfTestEx)
+            {
+                Debug.WriteLine($"   ⚠️ Self-test failed: {selfTestEx.Message}");
+                Debug.WriteLine($"      This may indicate controller registration issues.");
             }
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"❌ Failed to start WebApp: {ex.GetType().Name} - {ex.Message}");
+            Debug.WriteLine($"❌ Failed to start REST API: {ex.GetType().Name}");
+            Debug.WriteLine($"   Message: {ex.Message}");
             Debug.WriteLine($"   Stack trace: {ex.StackTrace}");
-            // Do not crash WinUI if WebApp start fails
+            // Do not crash WinUI if REST API start fails
+        }
+    }
+
+    /// <summary>
+    /// Starts PhotoHubClient for real-time photo notifications from MAUI.
+    /// </summary>
+    private async Task StartPhotoHubClientAsync(int restPort)
+    {
+        Debug.WriteLine($"🔍 StartPhotoHubClientAsync called with port: {restPort}");
+        
+        try
+        {
+            Debug.WriteLine("🔍 Getting PhotoHubClient from DI...");
+            var photoHubClient = Services.GetRequiredService<PhotoHubClient>();
+            Debug.WriteLine("✅ PhotoHubClient resolved");
+            
+            Debug.WriteLine("🔍 Getting MainWindowViewModel from DI...");
+            var mainWindowViewModel = Services.GetRequiredService<MainWindowViewModel>();
+            Debug.WriteLine("✅ MainWindowViewModel resolved");
+            
+            Debug.WriteLine("🔍 Getting IUiDispatcher from DI...");
+            var uiDispatcher = Services.GetRequiredService<IUiDispatcher>();
+            Debug.WriteLine("✅ IUiDispatcher resolved");
+
+            // Connect to SignalR Hub
+            Debug.WriteLine($"🔍 Connecting to SignalR Hub at localhost:{restPort}...");
+            await photoHubClient.ConnectAsync("localhost", restPort);
+            Debug.WriteLine("✅ Connected to SignalR Hub");
+
+            // Subscribe to photo upload events
+            Debug.WriteLine("🔍 Subscribing to PhotoUploaded events...");
+            photoHubClient.PhotoUploaded += async (photoPath, uploadedAt) =>
+            {
+                try
+                {
+                    Debug.WriteLine($"📸 [REAL-TIME] Photo uploaded: {photoPath}");
+                    Debug.WriteLine($"   UploadedAt: {uploadedAt}");
+
+                    // Update ViewModel on UI thread - assign to currently selected item
+                    uiDispatcher.InvokeOnUi(() =>
+                    {
+                        try
+                        {
+                            Debug.WriteLine($"🔄 Assigning photo to selected item...");
+                            mainWindowViewModel.AssignLatestPhoto(photoPath);
+                            Debug.WriteLine($"✅ Photo assigned successfully");
+                        }
+                        catch (Exception innerEx)
+                        {
+                            Debug.WriteLine($"❌ Error assigning photo: {innerEx.Message}");
+                            Debug.WriteLine($"   StackTrace: {innerEx.StackTrace}");
+                        }
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"❌ Error handling PhotoUploaded event: {ex.Message}");
+                    Debug.WriteLine($"   StackTrace: {ex.StackTrace}");
+                }
+
+                await Task.CompletedTask;
+            };
+            Debug.WriteLine("✅ Subscribed to PhotoUploaded events");
+
+            Debug.WriteLine("✅ PhotoHubClient connected and subscribed to photo events");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"❌ Failed to start PhotoHubClient: {ex.Message}");
+            Debug.WriteLine($"   StackTrace: {ex.StackTrace}");
+            // Do not crash WinUI if SignalR client fails
         }
     }
 }

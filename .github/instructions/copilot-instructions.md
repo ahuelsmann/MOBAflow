@@ -2,10 +2,31 @@
 
 > Model railway application (MOBA) with focus on use of track feedback points. 
 > Journeys (with stops or stations) can be linked to feedback points so that any actions within the application can then be performed based on the feedbacks.
-> **Multi-platform system (.NET 10)**  
+> **Multi-platform system (.NET 9 / .NET 10)**  
 > MOBAflow (WinUI) | MOBAsmart (MAUI) | MOBAdash (Blazor)
 > 
-> **Last Updated:** 2025-01-31 | **Version:** 3.14
+> **Last Updated:** 2025-02-04 | **Version:** 3.15
+
+---
+
+## 📋 SESSION START CHECKLIST (ALWAYS DO THIS FIRST!)
+
+**At the beginning of EVERY session:**
+1. ✅ Read `.copilot-todos.md` to see what's been done in previous sessions
+2. ✅ Check for any "Noch offen ⏳" (open tasks) that need continuation
+3. ✅ Don't repeat recommendations that are already in the "Umgesetzt ✅" list
+4. ✅ Use this file as the **Cross-Session Knowledge Bridge**
+
+**Workspace Info:**
+- **Solution Format:** SLNX (Modern Visual Studio format) - File: `Moba.slnx`
+- **No legacy .sln file** - SLNX handles project loading automatically
+- **14 Projects in workspace** (see Moba.slnx for complete list)
+
+**When recommending something new:**
+- Ask: **"Soll ich das umsetzen?"** (Should I implement this?)
+- Wait for explicit "Ja" or "Nein"
+- Update `.copilot-todos.md` accordingly
+- Move tasks through: ⏳ → ✅ (with date)
 
 ---
 
@@ -183,631 +204,95 @@ public AppSettings LoadSettings()
 
 ---
 
-## 🎯 Current Session Status (Jan 31, 2025)
+## 🎯 Current Session Status (Feb 4, 2025)
 
-### ✅ Completed This Session
-- ✅ **TrainsPage Implementation: Inventarverwaltung für rollendes Material (Jan 31, 2025)** 🚂✨
-  - **Problem:** Keine UI zum Erfassen von Lokomotiven, Personenwagen und Güterwagen
-  - **Solution:** Vollständige TrainsPage mit 3-Spalten-Layout + EntityTemplates
-  - **Architecture Changes:**
-    1. **Domain Extensions:** InvoiceDate, DeliveryDate, PhotoPath zu Wagon + Locomotive
-    2. **ViewModel Extensions:** HasPhoto Property für Foto-Indikator
-    3. **MainWindowViewModel.Train.cs:** NEU - Commands für Add/Delete (Locomotives/PassengerWagons/GoodsWagons)
-    4. **TrainsPage.xaml:** 3-Spalten-ListView-Layout (Locomotives | PassengerWagons | GoodsWagons | Properties)
-    5. **EntityTemplates.xaml:** Erweiterte LocomotiveTemplate + WagonTemplate mit Purchase-Info
-    6. **Navigation:** TrainsPage zu NavigationService + DI + MainWindow.xaml hinzugefügt
-    7. **Converter:** NullToVisibilityConverter, InvertedBoolToVisibilityConverter, NullableUIntConverter, DateTimeOffsetConverter
-  - **Key Pattern (CRITICAL):**
-    - ✅ **DataTemplates in EntityTemplates.xaml** (NO separate UserControls!)
-    - ✅ **EntityTemplateSelector** handles polymorphic ViewModels (Locomotive/PassengerWagon/GoodsWagon)
-    - ✅ **Consistent 3-column layout** (analog zu JourneysPage: List | List | List | Properties)
-    - ✅ **CalendarDatePicker** für InvoiceDate/DeliveryDate (DateTimeOffsetConverter)
-    - ✅ **NumberBox** für DigitalAddress (NullableUIntConverter)
-    - ⚠️ **Foto-Upload via Button:** Verschoben zu Phase 2 (FileOpenPicker benötigt Code-Behind oder Command)
-  - **Impact:**
-    - ✅ Locomotives/PassengerWagons/GoodsWagons können erfasst werden
-    - ✅ Purchase-Tracking (InvoiceDate, DeliveryDate, Manufacturer, ArticleNumber)
-    - ✅ PhotoPath-Property vorhanden (UI zeigt Path an, Upload folgt in Phase 2)
-    - ✅ Fluent Design 2 konsistent (CardBackgroundFillColorSecondaryBrush, 8px/16px spacing)
-  - **Build Status:** ✅ Zero errors, zero warnings
-  - **Files Created:**
-    - `SharedUI/ViewModel/MainWindowViewModel.Train.cs`
-    - `WinUI/View/TrainsPage.xaml`
-    - `WinUI/View/TrainsPage.xaml.cs`
-    - `WinUI/Converter/NullToVisibilityConverter.cs`
-    - `WinUI/Converter/InvertedBoolToVisibilityConverter.cs`
-    - `WinUI/Converter/NullableUIntConverter.cs`
-    - `WinUI/Converter/DateTimeOffsetConverter.cs`
-  - **Files Modified:**
-    - `Domain/Wagon.cs`: +InvoiceDate, +DeliveryDate, +PhotoPath
-    - `Domain/Locomotive.cs`: +InvoiceDate, +DeliveryDate, +PhotoPath
-    - `SharedUI/ViewModel/LocomotiveViewModel.cs`: +HasPhoto property
-    - `SharedUI/ViewModel/WagonViewModel.cs`: +HasPhoto property
-    - `SharedUI/ViewModel/MainWindowViewModel.Settings.cs`: +IsTrainsPageAvailable
-    - `Common/Configuration/AppSettings.cs`: +FeatureToggleSettings.IsTrainsPageAvailable
-    - `WinUI/appsettings.json`: IsTrainsPageAvailable = true
-    - `WinUI/App.xaml`: Converter registriert
-    - `WinUI/Service/NavigationService.cs`: TrainsPage route
-    - `WinUI/App.xaml.cs`: TrainsPage DI-Registrierung
-    - `WinUI/View/MainWindow.xaml`: NavigationViewItem "Trains"
-    - `WinUI/Resources/EntityTemplates.xaml`: LocomotiveTemplate + WagonTemplate erweitert
-    - `SharedUI/SharedUI.csproj`: GenerateAssemblyInfo=false, GenerateTargetFrameworkAttribute=false
-  - **Next Steps (Phase 2):**
-    - 📸 Foto-Upload-Button in Properties Panel (FileOpenPicker Command)
-    - 📸 Foto-Preview in Properties (Image Control)
-    - 🌐 REST-API für MAUI Foto-Upload (WebApp-Erweiterung)
-    - 📱 MAUI Camera-Integration
+### ✅ Latest Completed: Photo Upload WinUI → MAUI (Feb 4, 2025) 📸🚀
 
-- ✅ **Async-Everywhere Pattern Implementation (Feb 3, 2025)** 🔄⚡
-  - **Problem:** Mixed sync/async patterns, `ApplicationData.Current` threw `InvalidOperationException` on non-UI thread
-  - **Root Cause:** WinRT APIs require UI thread context, services used synchronous methods
-  - **Solution:** Full async/await pattern implementation across all services
-  - **Architecture Changes:**
-    1. **IUiDispatcher Extended:**
-       - Added `InvokeOnUiAsync<T>` for async operations with return values
-       - All platforms implemented: WinUI (`TaskCompletionSource`), MAUI (`MainThread`), Blazor (direct)
-    2. **NavigationService → Fully Async:**
-       - `InitializeAsync(Frame)` - async initialization
-       - `NavigateToPageAsync(string)` - async navigation
-       - `NavigateToOverviewAsync()` - async default navigation
-    3. **SnapToConnectService → Fully Async:**
-       - `GetEndpointsAsync()` - async endpoint extraction
-       - `FindSnapEndpointAsync()` - async snap detection
-       - `FindSnapTargetAsync()` - async target finding
-    4. **IoService.SavePhotoAsync:**
-       - Uses `_uiDispatcher.InvokeOnUiAsync<string?>()` for WinRT API access
-       - Proper exception handling with Debug logging
-  - **Key Principles (NEW in Instructions):**
-    - ✅ **Async-Everywhere:** Default to async, NOT exception
-    - ✅ **NO Task.Run in Services:** Only in UI event handlers
-    - ✅ **Task.FromResult for simple returns:** Not fake async
-    - ✅ **Task.CompletedTask for void async:** Explicit completion
-    - ✅ **All async methods end with `Async` suffix:** Naming convention
-  - **Impact:**
-    - ✅ WinRT API access fixed (UI thread dispatch)
-    - ✅ Consistent async/await pattern across all services
-    - ✅ No thread blocking in service methods
-    - ✅ Proper async composition and error handling
-    - ✅ Build: Zero errors, zero warnings
-  - **Build Status:** ✅ Zero errors, zero warnings
-  - **Files Modified:**
-    - `SharedUI/Interface/IUiDispatcher.cs`: +`InvokeOnUiAsync<T>` method
-    - `WinUI/Service/UiDispatcher.cs`: Implemented generic async dispatch
-    - `MAUI/Service/UiDispatcher.cs`: Implemented with `MainThread.InvokeOnMainThreadAsync`
-    - `WebApp/Service/BlazorUiDispatcher.cs`: Direct async execution
-    - `WinUI/Service/IoService.cs`: Uses `InvokeOnUiAsync<string?>` for `SavePhotoAsync`
-    - `WinUI/Service/NavigationService.cs`: All methods async (Initialize/Navigate)
-    - `WinUI/View/MainWindow.xaml.cs`: Async navigation initialization
-    - `SharedUI/Service/SnapToConnectService.cs`: All methods async
-    - `.github/instructions/copilot-instructions.md`: +Async-Everywhere Pattern section
-  - **Copilot Instructions Updated:**
-    - Section **6.5. Async-Everywhere Pattern** added
-    - Explicit rules for `Task.Run` usage (UI only, NOT services)
-    - Best practices with code examples
-    - Naming conventions enforced
+**Problem:** MAUI konnte Fotos aufnehmen, aber nicht zu WinUI hochladen → PhotoPath blieb leer
 
-- ✅ **SharedUI Cleanup: Entfernung obsoleter Ordner und Tools (Jan 31, 2025)** 🧹
-  - **Problem:** SharedUI enthielt leere Legacy-Ordner und ein nicht mehr benötigtes Tool-Projekt
-  - **Solution:** Vollständige Bereinigung der Projektstruktur
-  - **Entfernte Komponenten:**
-    - ❌ `SharedUI/Tools/PikoPdfGeometryExtractor/` (obsoletes Tool-Projekt)
-    - ❌ `SharedUI/Converter/` (leerer Ordner)
-    - ❌ `SharedUI/Geometry/` (leerer Ordner)
-    - ❌ `SharedUI/Renderer/` (leerer Ordner)
-    - ❌ 16 Zeilen `<Compile Remove>` Blöcke in SharedUI.csproj
-  - **Impact:**
-    - ✅ Sauberere Projektstruktur (4 obsolete Ordner entfernt)
-    - ✅ Einfachere .csproj-Datei (16 Zeilen weniger)
-    - ✅ Keine Build-Warnungen mehr für leere Ordner
-    - ✅ Build weiterhin erfolgreich (0 Fehler, 0 Warnungen)
-  - **Build Status:** ✅ Zero errors, zero warnings
-  - **Files Changed:**
-    - `SharedUI/SharedUI.csproj`: Entfernung aller Remove-Blöcke
+**Solution:** Vollständige Real-Time Photo Upload Pipeline implementiert
 
-- ✅ **Build-Fehler Fix: TrackPlan.Import.AnyRail OutputType (Jan 31, 2025)** 🔧
-  - **Problem:** TrackPlan.Import.AnyRail wurde von Visual Studio übersprungen → SharedUI konnte nicht bauen → Kaskade von Fehlern
-  - **Root Cause:** Fehlende `<OutputType>Library</OutputType>` Eigenschaft
-  - **Solution:** Eine Zeile zu TrackPlan.Import.AnyRail.csproj hinzugefügt
-  - **Impact:**
-    - ✅ TrackPlan.Import.AnyRail wird jetzt gebaut (nicht mehr übersprungen)
-    - ✅ SharedUI kann abhängige .dll finden
-    - ✅ Alle abhängigen Projekte (WebApp, WinUI, Test, MAUI) bauen erfolgreich
-    - ✅ Build-Kaskade behoben (7 → 13 erfolgreiche Projekte)
-  - **Build Status:** ✅ Zero errors, zero warnings
-  - **Files Changed:**
-    - `TrackPlan.Import.AnyRail/TrackPlan.Import.AnyRail.csproj`: +1 Zeile (OutputType)
+**Architecture:**
 
-- ✅ **AnyRail Import Fix: Direct EndpointNrs Index Mapping (Jan 31, 2025)** 🎉
-  - **Problem:** Import created 0 connections → 91 disconnected components (starburst pattern)
-  - **Root Cause:** Complex BuildConnectorMapping with spatial sorting was broken and never executed
-  - **Solution:** Reverted to simple ToTrackConnections() with direct EndpointNrs index mapping
-  - **Architecture Changes:**
-    1. **Simplified Import:** Uses `anyRailLayout.ToTrackConnections()` directly
-    2. **Direct Index Mapping:** `EndpointNrs[i] → ConnectorIndex i` (NO spatial sorting!)
-    3. **Hard Validation:** Checks `connectorIndex < geometry.Endpoints.Count` before creating connections
-    4. **Removed Legacy Methods:**
-       - ❌ `BuildConnectorMapping()` (broken spatial sorting)
-       - ❌ `GetEndpointWorldCoordinates()` (not used)
-       - ❌ `CalculateEndpointHeadings()` (not used)
-  - **ToTrackConnections Implementation:**
-    ```csharp
-    // Build endpoint-to-parts lookup
-    foreach (var part in Parts)
-    {
-        for (int i = 0; i < part.EndpointNrs.Count; i++)
-        {
-            endpointToParts[part.EndpointNrs[i]].Add((part.Id, i)); // Direct index!
-        }
-    }
-    
-    // Create connections with coordinate-based fallback
-    foreach (var conn in Connections)
-    {
-        var list1 = endpointToParts[conn.Endpoint1];
-        var list2 = endpointToParts[conn.Endpoint2];
-        
-        result.Add(new TrackConnection
-        {
-            Segment1ConnectorIndex = p1.EndpointIndex, // Uses EndpointNrs array index!
-            Segment2ConnectorIndex = p2.EndpointIndex
-        });
-    }
-    ```
-  - **Impact:**
-    - ✅ **Import:** 96/96 connections created successfully
-    - ✅ **Rendering:** All 91 segments in 1 connected component
-    - ✅ **Validation:** Zero errors, zero warnings (Library, Connection, Rendering all PASSED)
-    - ✅ **WorldTransform:** Correct constraint-based placement with bidirectional traversal
-    - ⚠️ **Save/Load BUG:** Old JSON files still have 0 connections (must re-import to fix)
-  - **Build Status:** ✅ Zero errors, zero warnings
-  - **Files Modified:**
-    - `SharedUI/ViewModel/TrackPlanEditorViewModel.cs`: Simplified ImportFromAnyRailXmlAsync
-    - `Domain/TrackPlan/AnyRailLayout.cs`: Removed unused methods
-  - **Mathematical Correctness:** Direct EndpointNrs index mapping (AnyRail XML order = Connector order)
+1. **MAUI Camera Integration:**
+   - `MediaPicker.Default.CapturePhotoAsync()` → Foto aufnehmen
+   - `PhotoUploadService` → Upload zu WinUI REST-API
+   - `RestApiDiscoveryService` → Automatische Server-IP-Erkennung (Broadcasting + Config)
 
-- ✅ **Domain-Based WorldTransform: Pure Topology Renderer (Jan 31, 2025)** 🏗️🎉
-  - **Problem:** WorldTransform was in ViewModel layer, not in Domain (violated pure topology-first)
-  - **Solution:** Moved WorldTransform to TrackSegment (runtime-only, [JsonIgnore]), created pure TopologyRenderer
-  - **Architecture Changes:**
-    1. **Transform2D moved to Domain:** `Domain/Geometry/Transform2D.cs` (was in SharedUI)
-    2. **TrackSegment.WorldTransform:** Runtime-only property (NOT serialized)
-    3. **TopologyRenderer:** NEW pure domain renderer (`SharedUI/Service/TopologyRenderer.cs`)
-       - NO ViewModels, NO UI concerns, NO normalization
-       - Pure graph traversal: BFS with ConstraintSolver
-       - Finds root segment (no incoming connections)
-       - Traverses connections, sets segment.WorldTransform
-    4. **TrackSegmentViewModel.WorldTransform:** Proxies to `Model.WorldTransform` (no storage)
-    5. **ConstraintSolver:** Rigid/Rotational/Parametric constraint implementations
-       - Rigid: Exact alignment (standard tracks)
-       - Rotational: Position fixed, rotation free (turntables)
-       - Parametric: Branch angle parameter (switches)
-    6. **DetectConnections:** Inline connector matching (< 1mm, ±180° tolerance)
-  - **Deleted Legacy Components:**
-    - ❌ `SharedUI/Renderer/TopologyRenderer.cs` (old version)
-    - ❌ `SharedUI/Service/TrackLayoutRenderer.cs` (replaced by TopologyRenderer)
-    - ❌ `SharedUI/Service/ConnectorMatcher.cs` (replaced by DetectConnections)
-    - ❌ `SharedUI/ViewModel/SnapCandidate.cs` (snap logic removed)
-    - ❌ `Test/SharedUI/TrackLayoutRendererTests.cs` (obsolete tests)
-  - **Constraint Formula (Rigid):**
-    ```
-    rotation = parent.RotationDegrees + parentHeading + 180° - childHeading
-    position = parentWorld + parentConnector - rotatedChildConnector
-    ```
-  - **Impact:**
-    - ✅ 100% pure topology-first (Domain owns WorldTransform)
-    - ✅ NO coordinate pollution in ViewModels
-    - ✅ NO snap heuristics (constraint-based only)
-    - ✅ NO normalization/offsets (renderer doesn't know about Canvas)
-    - ✅ ViewModel proxies to Domain (single source of truth)
-    - ✅ Serialization excludes WorldTransform ([JsonIgnore])
-  - **Build Status:** ✅ Zero errors, zero warnings
-  - **Files Created:**
-    - `Domain/Geometry/Transform2D.cs` (NEW - moved from SharedUI)
-    - `SharedUI/Service/TopologyRenderer.cs` (NEW - pure domain renderer)
-  - **Files Modified:**
-    - `Domain/TrackPlan/TrackSegment.cs`: Added WorldTransform property ([JsonIgnore])
-    - `SharedUI/ViewModel/TrackSegmentViewModel.cs`: WorldTransform proxies to Model
-    - `SharedUI/Service/ConstraintSolver.cs`: Rigid/Rotational/Parametric implementations
-    - `SharedUI/ViewModel/TrackPlanEditorViewModel.cs`: Uses TopologyRenderer + DetectConnections
-    - `WinUI/View/TrackPlanEditorPage.xaml.cs`: Removed snap candidate logic
-  - **Mathematical Correctness:** Constraint-based geometry (no heuristics, only exact calculations)
+2. **WinUI REST-API (ASP.NET Core):**
+   - `PhotoUploadController.UploadPhoto()` → HTTP POST Endpoint
+   - `PhotoStorageService` → Speicherung in `AppData\Local\MOBAflow\photos\temp\`
+   - `SignalR PhotoHub` → Real-Time Notification an WinUI
 
-- ✅ **Pure Topology-First: WorldTransform Matrix Architecture (Jan 31, 2025)** 🏗️🎉
-  - **Problem:** Mixed coordinate/matrix architecture - X/Y/Rotation fields stored alongside WorldTransform
-  - **Solution:** Removed ALL coordinate storage, implemented pure transformation matrix approach
-  - **Architecture Changes:**
-    1. **TrackSegment (Domain):** Already clean - NO coordinate fields
-    2. **TrackSegmentViewModel:** Removed X/Y/Rotation properties → ONLY `WorldTransform` property
-    3. **Transform2D:** New record with TranslateX/Y/RotationDegrees + matrix operations (Multiply, Invert, TransformPoint)
-    4. **TrackGeometryExtensions:** GetConnectorTransform + GetInverseConnectorTransform extension methods
-    5. **ConstraintSolver:** Uses Transform2D instead of (X, Y, Rotation) tuples - pure matrix multiplication
-    6. **TrackLayoutRenderer:** Updates ViewModel.WorldTransform directly - NO coordinate return values
-    7. **XAML Bindings:** `Canvas.Left="{x:Bind WorldTransform.TranslateX}"` instead of `X`
-  - **Removed Components:**
-    - ❌ RenderedSegment record (with X/Y/Rotation fields)
-    - ❌ RenderedResult/BoundingBox records
-    - ❌ BoundingBox normalization logic
-    - ❌ Coordinate offset calculations
-    - ❌ X/Y/Rotation properties in ViewModel
-    - ❌ Manual coordinate transformation helpers
-  - **Matrix Calculation Formula:**
-    ```
-    child.WorldTransform = parent.WorldTransform
-                         * parent.GetConnectorTransform(connA)
-                         * child.GetInverseConnectorTransform(connB)
-    ```
-  - **Impact:**
-    - ✅ 100% pure topology-first architecture
-    - ✅ NO coordinate storage anywhere in codebase
-    - ✅ Runtime-calculated WorldTransform matrices only
-    - ✅ Mathematically correct transformations (2D affine matrix)
-    - ✅ Renderer uses ONLY transformation matrices
-    - ✅ XAML binds directly to WorldTransform properties
-  - **Build Status:** ✅ Zero errors, zero warnings
-  - **Files Created:**
-    - `SharedUI/Geometry/Transform2D.cs` (NEW)
-    - `SharedUI/Geometry/TrackGeometryExtensions.cs` (NEW)
-  - **Files Modified:**
-    - `SharedUI/ViewModel/TrackSegmentViewModel.cs`: Removed X/Y/Rotation, added WorldTransform
-    - `SharedUI/Service/ConstraintSolver.cs`: Transform2D-based calculations
-    - `SharedUI/Service/TrackLayoutRenderer.cs`: Void Render() - updates ViewModels directly
-    - `SharedUI/ViewModel/TrackPlanEditorViewModel.cs`: Simplified RenderLayout()
-    - `WinUI/View/TrackPlanEditorPage.xaml`: WorldTransform bindings
-    - `WinUI/View/TrackPlanEditorPage.xaml.cs`: WorldTransform in drag calculations
-  - **Mathematical Correctness:** All transformations use standard 2D affine transformation matrices
+3. **Real-Time Photo Assignment:**
+   - SignalR `OnPhotoUploaded` → Event in WinUI
+   - `MainWindowViewModel.AssignLatestPhoto()` → Automatische Zuweisung zu Lok/Wagon
+   - `MovePhotoToCategory()` → Verschiebung von `temp/` → `locomotives/` oder `wagons/`
 
-- ✅ **Piko A-Gleis Endpoint Count Documentation (Jan 31, 2025)** 📋
+**Fixes Applied:**
+- ✅ **Path Bug Fix:** `baseDir = MOBAflow` (NICHT `MOBAflow\photos`) → Verhindert doppelten `photos\photos\` Pfad
+- ✅ **MAUI REST-API Discovery:** Broadcasting + Config-Fallback
+- ✅ **SignalR Hub:** WinUI verbindet automatisch zu `localhost:5001/photos-hub`
+- ✅ **File.Move with overwrite:** Vermeidet IOException bei existierenden Dateien
 
-  - **Problem:** Endpoint counts for multi-connector track pieces (turnouts, crossings) not clearly documented
-  - **Solution:** Added comprehensive documentation to TrackGeometryLibrary header
-  - **Endpoint Counts (CRITICAL for ConnectorMatcher):**
-    - **2 Endpoints:** Straight tracks (G231, G119, G62, G107, G115, G239, G940)
-    - **2 Endpoints:** Curve tracks (R1, R2, R3, R4, R9)
-    - **3 Endpoints:** Simple turnouts (WL, WR)
-    - **3 Endpoints:** Curved switches (BWL, BWR, BWL-R3, BWR-R3)
-    - **3 Endpoints:** Y-Switch (WY)
-    - **4 Endpoints:** Three-way turnout (W3)
-    - **4 Endpoints:** Double slip switch (DKW)
-    - **4 Endpoints:** Crossings (K15, K30)
-  - **Verification:** All track definitions in TrackGeometryLibrary confirmed correct
-  - **Impact:**
-    - ✅ ConnectorMatcher can correctly iterate over all connectors
-    - ✅ Prevents confusion about expected endpoint counts
-    - ✅ Documentation matches implementation
-  - **Build Status:** ✅ Zero errors, zero warnings
-  - **Files Changed:** `SharedUI/Renderer/TrackGeometryLibrary.cs` (documentation header)
+**Impact:**
+- ✅ **MAUI → WinUI Photo Upload:** Funktioniert vollständig
+- ✅ **Automatic Assignment:** Foto wird automatisch zu ausgewählter Lok/Wagon zugewiesen
+- ✅ **Real-Time:** SignalR-Benachrichtigung innerhalb von Millisekunden
+- ✅ **Photo Storage:** `photos/locomotives/{guid}.jpg` oder `photos/wagons/{guid}.jpg`
+- ✅ **Build Status:** Zero errors, zero warnings
 
-- ✅ **Legacy Code & Documentation Cleanup (Jan 31, 2025)** 🧹
-  - **Problem:** Obsolete files from previous architecture iterations cluttering codebase
-  - **Solution:** Removed legacy classes and session documentation
-  - **Deleted Files:**
-    - `SharedUI/ViewModel/AnyRailGeometryCache.cs` - Session-only cache (obsolete after pure topology-first)
-    - `docs/ANYRAIL_IMPORT_TODO.md` - Resolved issues (hybrid approach superseded)
-    - `docs/SESSION-STATUS-2025-01-31-TOPOLOGY-RENDERER.md` - Session log (task completed)
-    - `docs/TOPOLOGY-FIRST-REFACTORING-STATUS.md` - Status: 100% complete
-  - **Impact:**
-    - ✅ Codebase cleaned (4 obsolete files removed)
-    - ✅ Zero references to deleted classes (verified)
-    - ✅ Documentation focuses on current architecture only
-    - ✅ Reduced maintenance burden
-  - **Build Status:** ✅ Zero errors, zero warnings
-  - **Kept (still relevant):**
-    - `docs/G-SHARK-INTEGRATION-ANALYSIS.md` - Architectural decision documentation
-    - `docs/MOBAFLOW-TRACK-DOMAIN-MODEL.md` - Current domain architecture
-    - `docs/MOBAFLOW-TRACK-GRAPH-ARCHITECTURE.md` - Final constraint-based design
+**Files Modified:**
+- `SharedUI/ViewModel/MainWindowViewModel.Train.cs`: `MovePhotoToCategory` Path-Fix
+- `MAUI/Service/PhotoUploadService.cs`: Upload-Implementierung
+- `MAUI/Service/RestApiDiscoveryService.cs`: Server-Discovery
+- `WinUI/Controllers/PhotoUploadController.cs`: REST-API Endpoint
+- `WinUI/Service/PhotoHubClient.cs`: SignalR Client
+- `SharedUI/Service/PhotoStorageService.cs`: File Storage Logic
 
-- ✅ **Method Rename: ImportAnyRailAsync → ImportFromAnyRailXmlAsync (Jan 31, 2025)** 📝
-  - **Problem:** Method name `ImportAnyRailAsync` nicht aussagekräftig genug
-  - **Solution:** Renamed to `ImportFromAnyRailXmlAsync` for clarity
-  - **Files Changed:**
-    - `SharedUI/ViewModel/TrackPlanEditorViewModel.cs`: Method + Command renamed
-    - `WinUI/View/MainWindow.xaml`: Command binding updated
-    - `Domain/TrackPlan/AnyRailLayout.cs`: Fixed property name mismatch (EndpointIndex → ConnectorIndex)
-  - **Impact:**
-    - ✅ Clearer intent (specifically AnyRail-XML import)
-    - ✅ Consistent with future import formats (SCARM, RailModeller)
-    - ✅ Fixed additional property name bugs found during refactoring
-  - **Build Status:** ✅ Zero errors, zero warnings
+**Key Pattern:**
+```csharp
+// ✅ CORRECT: Base directory WITHOUT "photos" subfolder
+var baseDir = Path.Combine(..., "MOBAflow");
+var tempPath = Path.Combine(baseDir, tempPhotoPath); // tempPhotoPath = "photos/temp/xyz.jpg"
+// → C:\...\MOBAflow\photos\temp\xyz.jpg ✅
 
-- ✅ **Complete Piko A-Gleis Geometry Catalog Implementation (Jan 31, 2025)** 📐🎉
-  - **Problem:** TrackGeometryLibrary hatte falsche Radien/Winkel + fehlende Weichen
-  - **Solution:** Vollständige Neuimplementierung basierend auf offiziellen Piko-Katalog-Daten
-  - **Gerade Gleise (7 Typen):**
-    - G239 (239.07mm), G231 (230.93mm), G119 (119.54mm)
-    - G115 (115.46mm), G107 (107.32mm), G62 (61.88mm)
-    - G940 (940mm Flexgleis)
-  - **Bogengleise (5 Typen) - KORRIGIERT:**
-    - ⚠️ **R1:** 30° (statt 7,5°), r=360.00mm
-    - ⚠️ **R2:** 30° (statt 7,5°), r=421.88mm
-    - R3: 30°, r=483.75mm
-    - R4: 30°, r=545.63mm
-    - R9: 15°, r=907.97mm (Weichengegenbogen)
-    - Parallelkreisabstand: 61.88mm (R1↔R2, R2↔R3, R3↔R4)
-  - **Weichen (8 Typen) - NEU:**
-    - WL/WR (Linksweiche/Rechtsweiche): G231 + R9-Abzweig (15°)
-    - BWL/BWR (Bogenweiche R2→R3): 61.88mm spacing
-    - BWL-R3/BWR-R3 (Bogenweiche R3→R4): 61.88mm spacing
-    - W3 (Dreiwegweiche): 4 Endpoints (Entry, Straight, Right, Left)
-    - WY (Y-Weiche): Symmetrische Abzweigung (±15°)
-  - **Kreuzungen (2 Typen) - NEU:**
-    - K15: 15° Kreuzung (4 Endpoints)
-    - K30: 30° Kreuzung (4 Endpoints, G107-Länge)
-  - **Doppelkreuzungsweiche (1 Typ):**
-    - DKW: 4 Endpoints, 15° Kreuzungswinkel
-  - **Impact:**
-    - ✅ 23+ Gleistypen vollständig definiert
-    - ✅ Alle Radien/Winkel mathematisch korrekt
-    - ✅ Connector-Positionen präzise (Toleranz < 1mm)
-    - ✅ AnyRail-Kompatibilität erhalten
-  - **Build Status:** ✅ Zero errors, zero warnings
-  - **Files Changed:** `SharedUI/Renderer/TrackGeometryLibrary.cs` (komplett überarbeitet)
-  - **Geometriebeispiele (Parallelgleis-Übergänge):**
-    1. **Übergang zu Parallelgleis:** WL → R9 → G231 (2,44 mm Abstand)
-    2. **Mit Bahnsteig-Abstand (eng):** WL → G115 → G231 → G115 (3,65 mm)
-    3. **Doppelter Parallelgleis-Abstand:** WL → G119+G119 → R9 → G231 → G115 (4,87 mm)
-    4. **3 Parallelgleise:** WL → WR → R9 → G231 (2,44/2,44/2,44 mm)
-    5. **Parallelgleis zu 3 Gleisen:** G231 → DKW → G231 / WL → G231 (2,44/2,44 mm)
-    6. **Bahnhof-Komplex:** WL → WR → G107 → K30 → DKW → K15 → R9 → G231 (1,63/2,44 mm)
-    7. **Großer Rangierbereich:** WL → G239 → DKW → WL → WR → G239 → G231 → K15 → G940 → G231 → WR (2,44 mm)
-    8. **Bahnhofsanlage (max):** G231 → WL → DKW → G231+G115 → alternierend (61,9 - 92,8 - 61,9 - 92,8 mm)
-  - **Wichtige Erkenntnisse:**
-    - Parallelgleis-Übergänge nutzen **R9 (15°)** oder **WL/WR** Weichen
-    - Bahnsteig-Abstand: **G115** (eng, 3,65mm) oder **G107** (K30-Kreuzung)
-    - Doppelter Abstand: **G119 + G119** = 2× Parallelkreisabstand
-    - Komplexe Bahnhöfe: Kombination aus **DKW + K15/K30 + WL/WR**
+// ❌ WRONG: Would create double "photos" path
+var photoDir = Path.Combine(..., "MOBAflow", "photos");
+var tempPath = Path.Combine(photoDir, tempPhotoPath);
+// → C:\...\MOBAflow\photos\photos\temp\xyz.jpg ❌
+```
 
-- ✅ **Full Track-Graph Architecture Implementation (Jan 31, 2025)** 🏗️🎉
-  - **Problem:** Gleisplan wurde nicht richtig gezeichnet + Architektur war unvollständig
-  - **Decision:** Vollständige Implementation der Track-Graph Architecture (User-Anforderung)
-  - **Architecture Components:**
-    1. **TrackConnector** (`Domain/TrackPlan/TrackConnector.cs`)
-       - Lokale Position + Heading + ConnectorType (Track, SwitchMain, SwitchBranch, Rotational)
-       - Definiert physische Verbindungspunkte an Segmenten
-    2. **ConstraintType** (`Domain/TrackPlan/ConstraintType.cs`)
-       - Rigid: Position + Heading exakt (±180° flip)
-       - Rotational: Position fix, Heading frei (Drehscheiben)
-       - Parametric: Abhängig von Parameter (Weichen-Abzweig)
-    3. **TrackConnection** (`Domain/TrackPlan/TrackConnection.cs`)
-       - Erweitert mit ConstraintType + Parameters
-       - Backward-compatible properties (Segment1EndpointIndex → Segment1ConnectorIndex)
-    4. **ConstraintSolver** (`SharedUI/Service/ConstraintSolver.cs`)
-       - Berechnet WorldTransform aus Parent + Constraint
-       - Rigid/Rotational/Parametric Constraint-Implementierungen
-    5. **ConnectorMatcher** (`SharedUI/Service/ConnectorMatcher.cs`)
-       - Toleranz-basiertes Matching (1mm Position, 5° Heading)
-       - Konvertiert temporäre Koordinaten → Connector-basierte Connections
-    6. **TrackLayoutRenderer** (aktualisiert)
-       - Nutzt ConstraintSolver statt manueller BFS-Berechnung
-       - Constraint-aware Rendering (zeigt Constraint-Typ in Logs)
-  - **Import-Pipeline:**
-    1. Parse AnyRail XML (temporäre Koordinaten)
-    2. Erstelle Segmente (nur ArticleCode, KEINE Koordinaten)
-    3. ConnectorMatcher: Finde Connector-Paare → Connections
-    4. **Discard** temporäre Koordinaten (wichtig!)
-    5. Renderer: Berechne World-Positionen aus Connections + Constraints
-  - **Files Created:**
-    - `Domain/TrackPlan/TrackConnector.cs` (NEW)
-    - `Domain/TrackPlan/ConstraintType.cs` (NEW)
-    - `SharedUI/Service/ConstraintSolver.cs` (NEW)
-    - `SharedUI/Service/ConnectorMatcher.cs` (NEW)
-  - **Files Modified:**
-    - `Domain/TrackPlan/TrackConnection.cs`: +ConstraintType, +Parameters
-    - `SharedUI/Service/TrackLayoutRenderer.cs`: +ConstraintSolver integration
-    - `SharedUI/ViewModel/TrackPlanEditorViewModel.cs`: +ConnectorMatcher usage
-    - `SharedUI/Renderer/TrackGeometryLibrary.cs`: Removed duplicate TrackPoint
-  - **Impact:**
-    - ✅ Vollständige Track-Graph Architecture implementiert
-    - ✅ Constraint-basierte Transformationen (mathematisch korrekt)
-    - ✅ Connector-Matching (Toleranz-basiert, präzise)
-    - ✅ Parametrisches Geometrie-Support (Weichen)
-    - ✅ Pure Topology-First (100% koordinatenfrei)
-    - ✅ Herstellerunabhängig (TrackGeometryLibrary)
-  - **Build Status:** ✅ Zero errors, zero warnings
-  - **Next Steps:**
-    1. Test mit realem AnyRail-Import (ConnectorMatcher validieren)
-    2. Parametric Constraints für Weichen testen
-    3. Performance-Optimierung (wenn nötig)
-    4. Unit Tests für ConstraintSolver + ConnectorMatcher
+---
 
+### 🔧 Session Summary (Feb 4, 2025)
 
+**Focus:** Photo Upload Pipeline + Real-Time Communication
 
-### ✅ Completed This Session
-- ✅ **Gleisplan Rendering Fix - Pure Topology-First Implementation (Jan 31, 2025)** 🎉
-  - **Problem:** Gleisplan wurde nicht richtig gezeichnet - alle Segmente starteten vom gleichen Punkt
-  - **Root Cause:** AnyRailGeometryCache war leer nach Reload (nur Session-Cache, nicht persistiert)
-  - **Decision:** User wählte Option 2 - Pure Topology-First mit Piko A Gleis Bibliothek (keine Koordinaten-Speicherung)
-  - **Solution:**
-    - **TrackLayoutRenderer:** Vollständige Graph-Traversierung implementiert (BFS)
-      - Startet bei erstem Segment (0,0)
-      - Berechnet World-Positionen aus Parent-Endpoint + Heading + Library-Geometrie
-      - Transformiert PathData (M/L/A commands) ins World-Koordinatensystem
-    - **TrackPlanEditorViewModel:** AnyRailGeometryCache entfernt
-      - Import ruft nur noch `RenderLayout()` auf (keine Koordinaten-Zuweisung)
-      - `GeneratePathData()` nutzt nur noch TrackGeometryLibrary
-    - **Coordinate Transformation:** Vollständiger SVG-Path-Parser implementiert
-      - Rotiert und verschiebt M (move), L (line), A (arc) Befehle
-      - Berechnet BoundingBox für Canvas-Größe
-  - **Architecture:** 100% Topology-First
-    - ✅ Domain: Nur ArticleCode + Connections (keine Koordinaten)
-    - ✅ Rendering: TrackGeometryLibrary (Piko A Gleis) + Graph-Traversierung
-    - ✅ Persistence: Clean JSON (nur Topologie)
-  - **Files Changed:**
-    - `SharedUI/Service/TrackLayoutRenderer.cs`: Graph traversal + path transformation (150+ Zeilen neue Logik)
-    - `SharedUI/ViewModel/TrackPlanEditorViewModel.cs`: AnyRailGeometryCache entfernt
-  - **Impact:**
-    - ✅ Gleisplan wird korrekt gezeichnet (Graph-Traversierung funktioniert)
-    - ✅ Save/Reload funktioniert (Koordinaten werden jedes Mal neu berechnet)
-    - ✅ Keine temporären Caches mehr (reine Topologie)
-    - ✅ Herstellerunabhängig (TrackGeometryLibrary austauschbar)
-  - **Build Status:** ✅ Zero errors
-  - **Next Steps:**
-    1. Test mit realem AnyRail-Import
-    2. Optimierung der PathData-Transformation (Performance)
-    3. Implementierung von Connector-Snap für manuelles Track-Building
-    4. Vollständige Track-Graph Architecture (TrackConnector, ConstraintSolver)
+**Key Achievements:**
+- ✅ **MAUI Camera → WinUI:** End-to-End Photo Upload funktioniert
+- ✅ **SignalR Real-Time:** Sofortige Foto-Benachrichtigung
+- ✅ **Automatic Assignment:** Foto wird automatisch zu Lok/Wagon zugewiesen
+- ✅ **Path Bug Fix:** Verhindert doppelten `photos\photos\` Pfad
 
+**Next Steps (Future Sessions):**
+- 📸 **Photo Preview in WinUI:** Image Control in Properties Panel
+- 📸 **Photo Delete:** Button zum Entfernen von Fotos
+- 📸 **Photo Gallery:** Mehrere Fotos pro Lok/Wagon (Array statt String)
+- 🌐 **Cloud Sync:** Optional Azure Blob Storage für Foto-Backup
+---
 
+## 📚 Session History
 
-### ✅ Completed This Session
-- ✅ **MOBAflow Track-Graph Architecture (Explicit & Final)** (Jan 31, 2025) 🏗️
-  - **Vision:** Constraints-basiert, keine Koordinaten nach Import
-  - **Core Principle:** "Koordinaten sind temporär - nur beim Import!"
-  - **Architecture:**
-    ```
-    AnyRail XML (X/Y) → Import-Pipeline (temp) → TrackGraph (topology only)
-                                                      ↓
-                                          Parametric Geometry (functions)
-                                                      ↓
-                                          WorldTransforms (calculated)
-                                                      ↓
-                                          SVG PathData (rendering)
-    ```
-  - **Domain Model:**
-    - **TrackSegment:** Node mit GeometryRef (z.B. "PIKO-R2") + Connectoren
-    - **TrackConnector:** Lokale Position + Winkel + Typ (Track, SwitchMain, SwitchBranch)
-    - **TrackConnection:** Edge mit Constraint (Rigid, Rotational, Parametric)
-    - **TrackGraph:** Validierung + Queries (FindSegment, GetConnections)
-  - **Constraint System:**
-    - **ConnectorMatcher:** Distanz < 1mm, Winkel < 5° (beim Import)
-    - **ConstraintSolver:** Berechnet WorldTransform aus Constraints
-      - Rigid: Position + Winkel exakt (±180°)
-      - Rotational: Position fix, Winkel frei (Drehscheiben)
-      - Parametric: Abhängig von Parameter (Weichen-Abzweig)
-  - **Import-Pipeline:**
-    1. Parse XML (mit temporären Koordinaten)
-    2. CreateTemporarySegments (World-Positionen für Matching)
-    3. MatchConnectors (Finde Connector-Paare)
-    4. Create TrackGraph (OHNE Koordinaten)
-    5. **Discard Coordinates** (temporäre Daten verwerfen!)
-  - **Parametric Geometry:**
-    - **SwitchGeometry:** Funktion (BranchAngle, BranchRadius, Length)
-    - **ThreeWaySwitchGeometry:** Y-Weiche (LeftBranch, RightBranch)
-    - Connectoren werden **berechnet**, nicht gespeichert!
-  - **Benefits:**
-    - ✅ Kein Snap (Connectoren matchen exakt)
-    - ✅ Kein Raten (Mathematik bestimmt Transform)
-    - ✅ Nur Mathematik (WorldTransform-Kette)
-    - ✅ Herstellerunabhängig (GeometryRef austauschbar)
-    - ✅ Parametrisch (Weichen = Funktionen)
-  - **Documentation:** `docs/MOBAFLOW-TRACK-GRAPH-ARCHITECTURE.md` (35 KB, 600+ Zeilen)
-  - **Next Steps:**
-    1. Implementiere TrackGraph Core Types
-    2. Implementiere ConnectorMatcher + ConstraintSolver
-    3. Implementiere AnyRailImporter (Pipeline)
-    4. Update TrackLayoutRenderer (nutze ConstraintSolver)
-    5. Unit Tests (Connector-Matching, Constraint-Solving)
+**Detailed session logs moved to:**
+- [Session Archive - January 2025](./session-archive-jan-2025.md)
 
-- ✅ **MOBAflow Track-Plan Domain Model (Explicit Modeling)** (Jan 31, 2025) 🏗️
-  - **Request:** Design explicit MOBAflow Track-Plan domain - learning from G-Shark, NOT using as dependency
-  - **Philosophy:** 
-    - ❌ **Nicht:** Zeichenprogramm (freies Zeichnen)
-    - ✅ **Sondern:** Gleis-CAD (reale Gleisgeometrien)
-    - ❌ **Nicht:** Koordinaten im Domain
-    - ✅ **Sondern:** Topologie-First (ArticleCode + Connections)
-    - ❌ **Nicht:** G-Shark als Dependency
-    - ✅ **Sondern:** Eigene Implementierung (gelernt von G-Shark)
-  - **Domain Model (3 Layers):**
-    1. **Domain:** TrackSegment (Id, ArticleCode), TrackConnection (pure topology)
-    2. **Geometry:** TrackPoint, TrackVector, Transform2D, TrackGeometry (calculations)
-    3. **Renderer:** TrackLayoutRenderer (graph traversal → world coordinates)
-  - **Mathematically Concepts (from G-Shark):**
-    - **Transform2D:** 2D Affine Matrix (Translation + Rotation, kein 3D-Overkill)
-    - **TrackVector:** Tangentenvektoren mit analytischen Formeln (Gerade, Kreisbogen)
-    - **Re-Orthogonalisierung:** Numerische Stabilität (Gram-Schmidt alle 10 Schritte)
-    - **TrackCalculator:** Arc-Endpunkte, Connection-Transforms, Graph-Traversal
-  - **Benefits vs. G-Shark:**
-    - ✅ Einfacher (nur Gerade + Kreisbogen, kein NURBS)
-    - ✅ Explizit (wir verstehen jede Zeile)
-    - ✅ 2D-optimiert (keine unnötige Z-Achse)
-    - ✅ Wartbar (keine Black-Box-Dependency)
-    - ✅ Ausreichend (gleiche numerische Stabilität)
-  - **Documentation:** `docs/MOBAFLOW-TRACK-DOMAIN-MODEL.md` (30 KB, 500+ Zeilen)
-  - **Next Steps:**
-    1. Implementiere Core Types (TrackPoint, TrackVector, Transform2D)
-    2. Erweitere TrackGeometry (add EndpointTangents)
-    3. Implementiere TrackCalculator
-    4. Update TrackLayoutRenderer (Graph-Traversal)
-    5. Unit Tests (Numerische Stabilität bei 100+ Segmenten)
+**Key Milestones:**
+- ✅ **Feb 4, 2025:** Photo Upload WinUI → MAUI (Real-Time with SignalR)
+- ✅ **Feb 3, 2025:** Async-Everywhere Pattern Implementation
+- ✅ **Jan 31, 2025:** TrainsPage (Locomotives/Wagons Inventory)
+- ✅ **Jan 31, 2025:** AnyRail Import Fix (96/96 connections)
+- ✅ **Jan 31, 2025:** Track-Graph Architecture (Pure Topology-First)
+- ✅ **Jan 31, 2025:** Piko A-Gleis Geometry Catalog (23+ track types)
 
-- ✅ **G-Shark Integration Analysis (Jan 31, 2025)** 📊
-  - **Request:** Analyze G-Shark computational geometry library for improved track calculations
-  - **Scope:** Arc endpoints, tangents, rotations, transformation chains, numerical stability, CAD precision
-  - **Analysis:**
-    - **G-Shark:** Open-source NURBS geometry library (MIT license, .NET Standard 2.0+)
-    - **Core Benefits:**
-      - ✅ Eliminates manual trigonometry (CAD-quality arc calculations)
-      - ✅ Tangent vectors for rotation at connection points
-      - ✅ Numerically stable transformation matrices (for graph traversal)
-      - ✅ Tolerance-based snap detection (< 0.01mm precision)
-      - ✅ Bounding box calculation (auto canvas sizing)
-  - **Impact on MOBAflow:**
-    - 🔥 **HIGH IMPACT:** Solves graph traversal TODO in TrackLayoutRenderer
-    - 🔥 **HIGH IMPACT:** Enables precise snap detection (currently disabled)
-    - 🔥 **HIGH IMPACT:** Reduces errors in long track chains (numerical stability)
-    - ⚡ **MEDIUM IMPACT:** Professional CAD-quality geometry
-  - **Decision:** ❌ **NOT using as dependency** → Instead: Learn mathematical concepts, implement ourselves
-  - **Documentation:** Complete analysis in `docs/G-SHARK-INTEGRATION-ANALYSIS.md`
-  - **Result:** Own implementation designed in `docs/MOBAFLOW-TRACK-DOMAIN-MODEL.md`
-
-- ✅ **Topology-First Refactoring Complete (Jan 31, 2025)** 🎉
-  - **Problem:** Mixed coordinate/topology architecture causing maintenance issues and coordinate pollution in Domain
-  - **Decision:** Full commit to Topology-First architecture (Option 2)
-  - **Architecture Changes:**
-    - **Domain:** Pure topology - removed `Endpoints[]`, `Lines[]`, `Arcs[]` from `TrackSegment`
-    - **Rendering:** Hybrid approach - AnyRailGeometryCache (imports) + TrackGeometryLibrary (manual)
-    - **Persistence:** Clean JSON - only ArticleCode + metadata stored
-  - **Files Changed:**
-    - `Domain/TrackPlan/TrackSegment.cs`: Removed all coordinate storage (pure POCO)
-    - `SharedUI/ViewModel/AnyRailGeometryCache.cs`: NEW - Session-only cache for imports
-    - `SharedUI/Service/TrackLayoutRenderer.cs`: Complete rewrite with hybrid rendering
-    - `SharedUI/ViewModel/TrackPlanEditorViewModel.cs`: Import/LoadFromProject simplified
-    - `SharedUI/ViewModel/TrackSegmentViewModel.cs`: Removed Endpoints property
-    - `SharedUI/Converter/TopologyConverter.cs`: Updated comparison metrics
-    - `Domain/Service/AnyRailConnectionConverter.cs`: DELETED (obsolete)
-  - **Impact:**
-    - ✅ Build errors: 50+ → 0 (100% reduction)
-    - ✅ Domain purity: 100% topology-only
-    - ✅ AnyRail imports: Pixel-perfect rendering from cache
-    - ✅ Manual tracks: Library-based rendering (topology-first)
-    - ✅ Architecture consistency: Hybrid approach applied uniformly
-  - **Documentation:** Complete refactoring status in `docs/TOPOLOGY-FIRST-REFACTORING-STATUS.md`
-
-- ✅ **AnyRail Import: Hybrid Coordinate System - Save/Reload Fix (Jan 31, 2025)**
-  - **Problem:** AnyRail layouts looked perfect after import but completely wrong after save/reload
-  - **Root Cause:** Two coordinate systems conflicting:
-    - Import: Used absolute coordinates from XML
-    - Reload: Used TopologyRenderer (calculates from 0,0) → Wrong positions
-  - **Solution:** Hybrid approach implemented in `LoadFromProject()` (lines 634-715)
-    - **AnyRail imports:** Regenerate PathData from stored Lines/Arcs (absolute coordinates)
-    - **Manual track building:** Continue using TopologyRenderer (topology-based layout)
-    - **Detection:** Check if `Lines.Count > 0 || Arcs.Count > 0` (line 635)
-  - **Impact:**
-    - ✅ Pixel-perfect reload for AnyRail imports
-    - ✅ No breaking change for manual track building
-    - ✅ Graceful degradation for mixed layouts
-    - ✅ Automatic canvas sizing from bounding box
-  - **Files Changed:**
-    - `SharedUI/ViewModel/TrackPlanEditorViewModel.cs`: `LoadFromProject()` method (lines 612-718)
-  - **Architecture Preserved:** 
-    - Domain stores ArticleCode + Connections + Lines/Arcs (only for AnyRail imports)
-    - Coordinates are computed at runtime OR regenerated from stored geometry
-
-### 📊 Fortschritt
-- **Track-Graph Architecture:** ✅ Complete (explicit constraint-based design)
-- **Import-Pipeline:** ✅ Designed (XML → temp coords → TrackGraph → discard)
-- **Constraint System:** ✅ Complete (Rigid, Rotational, Parametric)
-- **Parametric Geometry:** ✅ Designed (Switches = Functions)
-- **Track-Plan Domain Model:** ✅ Complete (explicit 3-layer architecture designed)
-- **G-Shark Analysis:** ✅ Complete (learned concepts, NOT using as dependency)
-- **Topology-First Refactoring:** ✅ 100% complete (0 build errors)
-- **Domain Architecture:** ✅ Pure topology (no coordinate pollution)
-- **AnyRail Import:** ✅ Uses absolute coordinates (direct from XML)
-- **AnyRail Save/Reload:** ✅ Pixel-perfect reproduction (hybrid approach)
-- **Manual Track Building:** ✅ Uses TrackGeometryLibrary (topology-based layout)
-- **Rendering Accuracy:** ✅ Exact match to AnyRail original (import AND reload)
-- **Build Status:** ✅ Warning-free compilation
-- **Documentation:** 
-  - ✅ `docs/TOPOLOGY-FIRST-REFACTORING-STATUS.md` (status: COMPLETE)
-  - ✅ `docs/G-SHARK-INTEGRATION-ANALYSIS.md` (comprehensive analysis)
-  - ✅ `docs/MOBAFLOW-TRACK-DOMAIN-MODEL.md` (explicit domain design)
-  - ✅ `docs/MOBAFLOW-TRACK-GRAPH-ARCHITECTURE.md` (NEW - constraint-based final design)
+---

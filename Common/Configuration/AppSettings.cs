@@ -39,11 +39,11 @@ public class AppSettings
 public class RestApiSettings
 {
     /// <summary>
-    /// Current REST-API server IP address (e.g., "192.168.0.78").
+    /// Current REST-API server IP address (e.g., "192.168.0.79").
     /// Used by MAUI app to connect to WebApp REST-API.
-    /// REQUIRED: User must manually enter the PC's IP address.
+    /// Default: 192.168.0.79 (adjust to your PC's actual IP)
     /// </summary>
-    public string CurrentIpAddress { get; set; } = string.Empty;
+    public string CurrentIpAddress { get; set; } = "192.168.0.79";
 
     /// <summary>
     /// REST-API server port.
@@ -164,8 +164,10 @@ public class ApplicationSettings
 
     /// <summary>
     /// Automatically start the WebApp (Blazor REST/API) alongside WinUI.
+    /// NOTE: Since WinUI now has in-process REST API (Kestrel), this is typically not needed.
+    /// Set to false to avoid port conflicts.
     /// </summary>
-    public bool AutoStartWebApp { get; set; } = true;
+    public bool AutoStartWebApp { get; set; } = false;
 }
 
 /// <summary>

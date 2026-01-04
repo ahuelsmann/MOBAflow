@@ -54,7 +54,7 @@
           },
           "InvoiceDate": "2024-03-15T00:00:00",
           "DeliveryDate": "2024-03-20T00:00:00",
-          "PhotoPath": "C:\\Users\\andre\\AppData\\Local\\MOBAflow\\photos\\locomotives\\f1e2d3c4-b5a6-7890-1234-567890abcdef.jpg"
+          "PhotoPath": "locomotives/f1e2d3c4-b5a6-7890-1234-567890abcdef.jpg"
         },
         {
           "Id": "a1b2c3d4-e5f6-7890-1234-567890fedcba",

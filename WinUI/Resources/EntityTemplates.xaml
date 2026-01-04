@@ -741,11 +741,17 @@
                             FontWeight="SemiBold"
                             Text="Photo" />
 
-                        <Image
-                            Height="140"
-                            Stretch="UniformToFill"
-                            Source="{Binding PhotoPath, Mode=OneWay}"
-                            Visibility="{Binding HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <Button
+                            Padding="0"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Click="PhotoImage_Click"
+                            Visibility="{Binding HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <Image
+                                Height="140"
+                                Stretch="Uniform"
+                                Source="{Binding PhotoPathWithVersion, Mode=OneWay, Converter={StaticResource PhotoPathToImageConverter}}" />
+                        </Button>
 
                         <TextBlock
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -859,11 +865,17 @@
                             FontWeight="SemiBold"
                             Text="Photo" />
 
-                        <Image
-                            Height="140"
-                            Stretch="UniformToFill"
-                            Source="{Binding PhotoPath, Mode=OneWay}"
-                            Visibility="{Binding HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <Button
+                            Padding="0"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Click="PhotoImage_Click"
+                            Visibility="{Binding HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <Image
+                                Height="140"
+                                Stretch="Uniform"
+                                Source="{Binding PhotoPathWithVersion, Mode=OneWay, Converter={StaticResource PhotoPathToImageConverter}}" />
+                        </Button>
 
                         <TextBlock
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"

@@ -298,16 +298,19 @@ public class IoService : IIoService
     /// <param name="entityId">Entity ID for filename</param>
     /// <returns>Absolute path to saved photo (e.g., "C:\Users\...\AppData\Local\MOBAflow\photos\locomotives\{id}.jpg")</returns>
     public async Task<string?> SavePhotoAsync(string sourceFilePath, string category, Guid entityId)
-
     {
         try
         {
+            var targetCategory = category.Equals("locomotives", StringComparison.OrdinalIgnoreCase)
+                ? "locomotives"
+                : "wagons";
+
             // ✅ Use .NET standard APIs for unpackaged WinUI 3 apps
             // ApplicationData.Current only works in packaged apps (MSIX)
             var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             var appFolder = Path.Combine(localAppData, "MOBAflow");
             var photosFolder = Path.Combine(appFolder, "photos");
-            var categoryFolder = Path.Combine(photosFolder, category);
+            var categoryFolder = Path.Combine(photosFolder, targetCategory);
 
             // Create directory structure if it doesn't exist
             Directory.CreateDirectory(categoryFolder);
@@ -321,7 +324,6 @@ public class IoService : IIoService
             await Task.Run(() => File.Copy(sourceFilePath, destinationPath, overwrite: true));
 
             // ✅ Return absolute path so Image control can load it
-            // Photos are stored in %LOCALAPPDATA%\MOBAflow\photos\{category}\
             return destinationPath;
         }
         catch (Exception ex)

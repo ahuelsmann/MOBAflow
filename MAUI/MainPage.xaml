@@ -11,15 +11,15 @@
 
     <ScrollView>
         <VerticalStackLayout
-            Padding="12"
-            HorizontalOptions="Center"
-            Spacing="10">
+            Padding="0"
+            HorizontalOptions="Fill"
+            Spacing="1">
 
             <!--  Header with Status Indicator  -->
             <Grid
-                Margin="0,4,0,0"
-                ColumnDefinitions="*,Auto"
-                MaximumWidthRequest="600">
+                Padding="16,12,16,12"
+                BackgroundColor="{DynamicResource SurfaceBackground}"
+                ColumnDefinitions="*,Auto">
                 <VerticalStackLayout
                     Grid.Column="0"
                     Spacing="0"
@@ -50,31 +50,57 @@
 
             <!--  Connection Controls Card  -->
             <Border
-                Padding="12"
-                MaximumWidthRequest="600"
-                Style="{DynamicResource FilledCard}">
-                <VerticalStackLayout Spacing="8">
-                    <!--  REST-API Server IP Entry  -->
+                Padding="16,12"
+                BackgroundColor="{DynamicResource SurfaceCard}"
+                Stroke="Transparent"
+                StrokeThickness="0">
+                <VerticalStackLayout Spacing="6">
+                    <!--  REST-API Server IP:Port Entry  -->
                     <Label
                         FontSize="11"
-                        Text="REST-API Server (WebApp)"
+                        Text="REST-API Server (WinUI/WebApp)"
                         TextColor="{DynamicResource TextSecondary}" />
-                    <Border
-                        Padding="10,6"
-                        BackgroundColor="{DynamicResource SurfaceHighlight}"
-                        StrokeShape="RoundRectangle 6"
-                        StrokeThickness="0">
-                        <Entry
-                            FontSize="13"
-                            Placeholder="192.168.0.100 (WebApp IP)"
-                            Text="{Binding RestApiIpAddress}"
-                            VerticalOptions="Center" />
-                    </Border>
+
+                    <!--  Inline Help Label (only when IP is empty)  -->
+                    <Label
+                        FontSize="10"
+                        IsVisible="{Binding RestApiIpAddress, Converter={toolkit:IsStringNullOrEmptyConverter}}"
+                        Text="💡 Enter your PC's local IP (e.g., 192.168.0.79)"
+                        TextColor="{DynamicResource RailwaySecondary}" />
+
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="4">
+                        <Border
+                            Grid.Column="0"
+                            Padding="10,6"
+                            BackgroundColor="{DynamicResource SurfaceHighlight}"
+                            StrokeShape="RoundRectangle 6"
+                            StrokeThickness="0">
+                            <Entry
+                                FontSize="13"
+                                Placeholder="192.168.0.100"
+                                Text="{Binding RestApiIpAddress}"
+                                VerticalOptions="Center" />
+                        </Border>
+                        <Border
+                            Grid.Column="1"
+                            Padding="10,6"
+                            BackgroundColor="{DynamicResource SurfaceHighlight}"
+                            StrokeShape="RoundRectangle 6"
+                            StrokeThickness="0"
+                            WidthRequest="80">
+                            <Entry
+                                FontSize="13"
+                                Keyboard="Numeric"
+                                Placeholder="5001"
+                                Text="{Binding RestApiPort}"
+                                VerticalOptions="Center" />
+                        </Border>
+                    </Grid>
 
                     <!--  Z21 IP Address Entry  -->
                     <Label
-                        FontSize="11"
                         Margin="0,8,0,0"
+                        FontSize="11"
                         Text="Z21 Digital Command Station"
                         TextColor="{DynamicResource TextSecondary}" />
                     <Border
@@ -90,7 +116,7 @@
                     </Border>
 
                     <!--  Connection & Track Power Toggles  -->
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="4">
                         <!--  Connection Toggle  -->
                         <Border
                             Grid.Column="0"
@@ -149,11 +175,10 @@
 
             <!--  System Stats Card (when connected)  -->
             <Border
-                Padding="8,6"
-                BackgroundColor="Transparent"
+                Padding="12,8"
+                BackgroundColor="{DynamicResource SurfaceCard}"
                 IsVisible="{Binding IsConnected}"
-                MaximumWidthRequest="600"
-                StrokeShape="RoundRectangle 8"
+                StrokeShape="RoundRectangle 0"
                 StrokeThickness="0">
                 <Grid ColumnDefinitions="*,*,*" ColumnSpacing="4">
                     <!--  Temperature  -->
@@ -212,10 +237,11 @@
 
             <!--  Counter Settings Card  -->
             <Border
-                Padding="12"
-                MaximumWidthRequest="600"
-                Style="{DynamicResource FilledCard}">
-                <VerticalStackLayout Spacing="8">
+                Padding="16,12"
+                BackgroundColor="{DynamicResource SurfaceCard}"
+                Stroke="Transparent"
+                StrokeThickness="0">
+                <VerticalStackLayout Spacing="6">
                     <HorizontalStackLayout>
                         <!--  Section Header  -->
                         <Label
@@ -225,10 +251,10 @@
                         <Label
                             FontAttributes="Bold"
                             FontSize="14"
-                            Text="Lap Counter" />
+                            Text="   Lap Counter" />
                     </HorizontalStackLayout>
                     <!--  Feedback Points & Target Laps  -->
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="4">
                         <!--  Number of Feedback Points  -->
                         <Border
                             Grid.Column="0"
@@ -236,48 +262,40 @@
                             BackgroundColor="{DynamicResource SurfaceHighlight}"
                             StrokeShape="RoundRectangle 6"
                             StrokeThickness="0">
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                <Label
-                                    Grid.Column="0"
-                                    FontSize="12"
-                                    Text="Tracks"
-                                    TextColor="{DynamicResource TextSecondary}"
-                                    VerticalOptions="Center" />
-                                <HorizontalStackLayout Grid.Column="1" Spacing="6">
-                                    <Button
-                                        Padding="8,4"
-                                        BackgroundColor="{DynamicResource SurfaceDark}"
-                                        Command="{Binding DecrementFeedbackPointsCommand}"
-                                        CornerRadius="4"
-                                        FontSize="16"
-                                        Text="−"
+                            <HorizontalStackLayout HorizontalOptions="Center" Spacing="6">
+                                <Button
+                                    Padding="8,4"
+                                    BackgroundColor="{DynamicResource SurfaceDark}"
+                                    Command="{Binding DecrementFeedbackPointsCommand}"
+                                    CornerRadius="4"
+                                    FontSize="16"
+                                    Text="−"
+                                    TextColor="{DynamicResource TextPrimary}"
+                                    WidthRequest="36" />
+                                <Border
+                                    Padding="10,4"
+                                    BackgroundColor="{DynamicResource SurfaceDark}"
+                                    StrokeShape="RoundRectangle 4"
+                                    StrokeThickness="0"
+                                    WidthRequest="44">
+                                    <Label
+                                        FontAttributes="Bold"
+                                        FontSize="15"
+                                        HorizontalOptions="Center"
+                                        Text="{Binding CountOfFeedbackPoints}"
                                         TextColor="{DynamicResource TextPrimary}"
-                                        WidthRequest="36" />
-                                    <Border
-                                        Padding="10,4"
-                                        BackgroundColor="{DynamicResource SurfaceDark}"
-                                        StrokeShape="RoundRectangle 4"
-                                        StrokeThickness="0"
-                                        WidthRequest="44">
-                                        <Label
-                                            FontAttributes="Bold"
-                                            FontSize="15"
-                                            HorizontalOptions="Center"
-                                            Text="{Binding CountOfFeedbackPoints}"
-                                            TextColor="{DynamicResource TextPrimary}"
-                                            VerticalOptions="Center" />
-                                    </Border>
-                                    <Button
-                                        Padding="8,4"
-                                        BackgroundColor="{DynamicResource SurfaceDark}"
-                                        Command="{Binding IncrementFeedbackPointsCommand}"
-                                        CornerRadius="4"
-                                        FontSize="16"
-                                        Text="+"
-                                        TextColor="{DynamicResource TextPrimary}"
-                                        WidthRequest="36" />
-                                </HorizontalStackLayout>
-                            </Grid>
+                                        VerticalOptions="Center" />
+                                </Border>
+                                <Button
+                                    Padding="8,4"
+                                    BackgroundColor="{DynamicResource SurfaceDark}"
+                                    Command="{Binding IncrementFeedbackPointsCommand}"
+                                    CornerRadius="4"
+                                    FontSize="16"
+                                    Text="+"
+                                    TextColor="{DynamicResource TextPrimary}"
+                                    WidthRequest="36" />
+                            </HorizontalStackLayout>
                         </Border>
 
                         <!--  Target Lap Count  -->
@@ -287,48 +305,40 @@
                             BackgroundColor="{DynamicResource SurfaceHighlight}"
                             StrokeShape="RoundRectangle 6"
                             StrokeThickness="0">
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                <Label
-                                    Grid.Column="0"
-                                    FontSize="12"
-                                    Text="Target"
-                                    TextColor="{DynamicResource TextSecondary}"
-                                    VerticalOptions="Center" />
-                                <HorizontalStackLayout Grid.Column="1" Spacing="6">
-                                    <Button
-                                        Padding="8,4"
-                                        BackgroundColor="{DynamicResource SurfaceDark}"
-                                        Command="{Binding DecrementTargetLapCountCommand}"
-                                        CornerRadius="4"
-                                        FontSize="16"
-                                        Text="−"
+                            <HorizontalStackLayout HorizontalOptions="Center" Spacing="6">
+                                <Button
+                                    Padding="8,4"
+                                    BackgroundColor="{DynamicResource SurfaceDark}"
+                                    Command="{Binding DecrementTargetLapCountCommand}"
+                                    CornerRadius="4"
+                                    FontSize="16"
+                                    Text="−"
+                                    TextColor="{DynamicResource TextPrimary}"
+                                    WidthRequest="36" />
+                                <Border
+                                    Padding="10,4"
+                                    BackgroundColor="{DynamicResource SurfaceDark}"
+                                    StrokeShape="RoundRectangle 4"
+                                    StrokeThickness="0"
+                                    WidthRequest="44">
+                                    <Label
+                                        FontAttributes="Bold"
+                                        FontSize="15"
+                                        HorizontalOptions="Center"
+                                        Text="{Binding GlobalTargetLapCount}"
                                         TextColor="{DynamicResource TextPrimary}"
-                                        WidthRequest="36" />
-                                    <Border
-                                        Padding="10,4"
-                                        BackgroundColor="{DynamicResource SurfaceDark}"
-                                        StrokeShape="RoundRectangle 4"
-                                        StrokeThickness="0"
-                                        WidthRequest="44">
-                                        <Label
-                                            FontAttributes="Bold"
-                                            FontSize="15"
-                                            HorizontalOptions="Center"
-                                            Text="{Binding GlobalTargetLapCount}"
-                                            TextColor="{DynamicResource TextPrimary}"
-                                            VerticalOptions="Center" />
-                                    </Border>
-                                    <Button
-                                        Padding="8,4"
-                                        BackgroundColor="{DynamicResource SurfaceDark}"
-                                        Command="{Binding IncrementTargetLapCountCommand}"
-                                        CornerRadius="4"
-                                        FontSize="16"
-                                        Text="+"
-                                        TextColor="{DynamicResource TextPrimary}"
-                                        WidthRequest="36" />
-                                </HorizontalStackLayout>
-                            </Grid>
+                                        VerticalOptions="Center" />
+                                </Border>
+                                <Button
+                                    Padding="8,4"
+                                    BackgroundColor="{DynamicResource SurfaceDark}"
+                                    Command="{Binding IncrementTargetLapCountCommand}"
+                                    CornerRadius="4"
+                                    FontSize="16"
+                                    Text="+"
+                                    TextColor="{DynamicResource TextPrimary}"
+                                    WidthRequest="36" />
+                            </HorizontalStackLayout>
                         </Border>
                     </Grid>
 
@@ -395,10 +405,11 @@
 
             <!--  Lap Counters Card  -->
             <Border
-                Padding="12"
-                MaximumWidthRequest="600"
-                Style="{DynamicResource ElevatedCard}">
-                <VerticalStackLayout Spacing="8">
+                Padding="16,12"
+                BackgroundColor="{DynamicResource SurfaceCard}"
+                Stroke="Transparent"
+                StrokeThickness="0">
+                <VerticalStackLayout Spacing="6">
                     <!--  Section Header with Reset Button  -->
                     <Grid ColumnDefinitions="Auto,*,Auto">
                         <Label
@@ -425,8 +436,8 @@
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="local:InPortStatistic">
                                 <Border
-                                    Margin="0,0,0,6"
-                                    Padding="10,6"
+                                    Margin="0,0,0,4"
+                                    Padding="12,8"
                                     BackgroundColor="{DynamicResource SurfaceElevated}"
                                     StrokeShape="RoundRectangle 8"
                                     StrokeThickness="0">
@@ -535,11 +546,15 @@
 
             <!--  Photo Capture & Upload Card  -->
             <Border
-                Padding="12"
-                MaximumWidthRequest="600"
-                Style="{DynamicResource FilledCard}">
-                <VerticalStackLayout Spacing="8">
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" VerticalOptions="Center">
+                Padding="16,12"
+                BackgroundColor="{DynamicResource SurfaceCard}"
+                Stroke="Transparent"
+                StrokeThickness="0">
+                <VerticalStackLayout Spacing="6">
+                    <Grid
+                        ColumnDefinitions="Auto,*"
+                        ColumnSpacing="8"
+                        VerticalOptions="Center">
                         <Label
                             Grid.Column="0"
                             FontAttributes="Bold"
@@ -549,13 +564,16 @@
                     </Grid>
 
                     <Button
-                        HeightRequest="44"
                         Command="{Binding CaptureAndUploadPhotoCommand}"
+                        HeightRequest="44"
                         IsEnabled="{Binding IsPhotoUploading, Converter={toolkit:BoolToObjectConverter TrueObject=False, FalseObject=True}}"
                         Style="{DynamicResource AccentButtonStyle}"
                         Text="Take Photo &amp; Upload" />
 
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" VerticalOptions="Center">
+                    <Grid
+                        ColumnDefinitions="Auto,*"
+                        ColumnSpacing="8"
+                        VerticalOptions="Center">
                         <ActivityIndicator
                             Grid.Column="0"
                             IsRunning="{Binding IsPhotoUploading}"
@@ -573,7 +591,8 @@
 
             <!--  Footer  -->
             <Label
-                Margin="0,4,0,8"
+                Padding="16,12,16,16"
+                BackgroundColor="{DynamicResource SurfaceBackground}"
                 FontSize="9"
                 HorizontalOptions="Center"
                 Text="© 2025 Andreas Hülsmann"

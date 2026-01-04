@@ -25,6 +25,15 @@ public partial class WagonViewModel : ObservableObject, IViewModelWrapper<Wagon>
         Model = model;
     }
 
+    partial void OnModelChanged(Wagon value)
+    {
+        // Reset photo version and notify UI when model changes
+        photoVersion = 0;
+        OnPropertyChanged(nameof(PhotoPath));
+        OnPropertyChanged(nameof(PhotoPathWithVersion));
+        OnPropertyChanged(nameof(HasPhoto));
+    }
+
     public string Name
     {
         get => Model.Name;
@@ -91,17 +100,33 @@ public partial class WagonViewModel : ObservableObject, IViewModelWrapper<Wagon>
         set => SetProperty(Model.DeliveryDate, value, Model, (m, v) => m.DeliveryDate = v);
     }
 
+    private int photoVersion;
+
     public string? PhotoPath
     {
         get => Model.PhotoPath;
         set
         {
+            // Always update photoVersion even if path hasn't changed (e.g., file overwrite)
             if (SetProperty(Model.PhotoPath, value, Model, (m, v) => m.PhotoPath = v))
             {
+                photoVersion++;
+                OnPropertyChanged(nameof(PhotoPathWithVersion));
                 OnPropertyChanged(nameof(HasPhoto));
+            }
+            else if (value != null)
+            {
+                // Path didn't change but we still want to refresh the image (cache busting)
+                photoVersion++;
+                OnPropertyChanged(nameof(PhotoPathWithVersion));
             }
         }
     }
+
+    /// <summary>
+    /// Cache-busting photo path for UI bindings.
+    /// </summary>
+    public string? PhotoPathWithVersion => string.IsNullOrWhiteSpace(Model.PhotoPath) ? null : $"{Model.PhotoPath}?v={photoVersion}";
 
     /// <summary>
     /// Returns true if a photo is assigned to this wagon.

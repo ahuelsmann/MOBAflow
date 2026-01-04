@@ -241,6 +241,49 @@
             <Expander
                 HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Stretch"
+                Header="REST API Server"
+                IsExpanded="False">
+                <Expander.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon FontSize="20" Glyph="&#xE8BA;" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Style="{StaticResource SubtitleTextBlockStyle}"
+                                Text="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </Expander.HeaderTemplate>
+
+                <StackPanel Padding="56,16,0,16" Spacing="16">
+                    <StackPanel>
+                        <CheckBox Content="Auto-start REST API with WinUI" IsChecked="{x:Bind ViewModel.AutoStartWebApp, Mode=TwoWay}" />
+                        <TextBlock
+                            Margin="28,0,0,0"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="Starts the in-process REST API server for photo uploads from MAUI"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <NumberBox
+                        MaxWidth="200"
+                        HorizontalAlignment="Left"
+                        Header="REST API Port"
+                        Minimum="1024"
+                        Maximum="65535"
+                        SpinButtonPlacementMode="Inline"
+                        Value="{x:Bind ViewModel.RestApiPort, Mode=TwoWay}">
+                        <NumberBox.Description>
+                            <TextBlock Text="Port for photo upload API (default: 5001)" />
+                        </NumberBox.Description>
+                    </NumberBox>
+                </StackPanel>
+            </Expander>
+
+            <!--  Application Behavior Section  -->
+            <Expander
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
                 Header="Application Behavior"
                 IsExpanded="False">
                 <Expander.HeaderTemplate>
@@ -262,15 +305,6 @@
                             Margin="28,0,0,0"
                             Style="{StaticResource CaptionTextBlockStyle}"
                             Text="Automatically load the last opened solution on startup"
-                            TextWrapping="Wrap" />
-                    </StackPanel>
-
-                    <StackPanel>
-                        <CheckBox Content="Auto-start WebApp (REST/API) with WinUI" IsChecked="{x:Bind ViewModel.AutoStartWebApp, Mode=TwoWay}" />
-                        <TextBlock
-                            Margin="28,0,0,0"
-                            Style="{StaticResource CaptionTextBlockStyle}"
-                            Text="Starts the Blazor WebApp (REST endpoint for photo upload) together with WinUI"
                             TextWrapping="Wrap" />
                     </StackPanel>
                 </StackPanel>
