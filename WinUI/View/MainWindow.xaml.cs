@@ -12,6 +12,7 @@ using SharedUI.ViewModel;
 
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 using MainWindowViewModel = SharedUI.ViewModel.MainWindowViewModel;
 
@@ -62,8 +63,8 @@ public sealed partial class MainWindow
             Debug.WriteLine("✅ IoService initialized with WindowId");
         }
 
-        // Initialize NavigationService with ContentFrame
-        _navigationService.Initialize(ContentFrame);
+        // Initialize NavigationService with ContentFrame (async initialization)
+        _ = InitializeNavigationAsync();
 
         // Set first nav item as selected (Overview)
         MainNavigation.SelectedItem = MainNavigation.MenuItems.FirstOrDefault();
@@ -82,9 +83,15 @@ public sealed partial class MainWindow
 
         // Initial health status
         ViewModel.UpdateHealthStatus(_healthCheckService.SpeechServiceStatus);
+    }
 
-        // Navigate to Overview page on startup
-        _navigationService.NavigateToOverview();
+    /// <summary>
+    /// Initializes navigation asynchronously and navigates to Overview page.
+    /// </summary>
+    private async Task InitializeNavigationAsync()
+    {
+        await _navigationService.InitializeAsync(ContentFrame);
+        await _navigationService.NavigateToOverviewAsync();
     }
 
     #region Event Handlers
@@ -125,11 +132,12 @@ public sealed partial class MainWindow
         });
     }
 
-    private void NavigationView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
+    private async void NavigationView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
     {
+        _ = sender; // Suppress unused parameter warning
         if (args.InvokedItemContainer?.Tag is string tag)
         {
-            _navigationService.NavigateToPage(tag);
+            await _navigationService.NavigateToPageAsync(tag);
         }
     }
 

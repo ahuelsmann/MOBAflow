@@ -2,6 +2,7 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 using Domain;
 using Domain.Enum;
@@ -106,4 +107,7 @@ public partial class WagonViewModel : ObservableObject, IViewModelWrapper<Wagon>
     /// Returns true if a photo is assigned to this wagon.
     /// </summary>
     public bool HasPhoto => !string.IsNullOrWhiteSpace(Model.PhotoPath);
+
+    [ObservableProperty]
+    private IAsyncRelayCommand? browsePhotoCommand;
 }

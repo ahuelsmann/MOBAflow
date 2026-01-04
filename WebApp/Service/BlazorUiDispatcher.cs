@@ -18,4 +18,18 @@ public class BlazorUiDispatcher : IUiDispatcher
         // via PropertyChanged subscription and InvokeAsync(StateHasChanged)
         action();
     }
+
+    public async Task InvokeOnUiAsync(Func<Task> asyncAction)
+    {
+        // Execute directly - Blazor components handle their own UI updates
+        // via PropertyChanged subscription and InvokeAsync(StateHasChanged)
+        await asyncAction();
+    }
+
+    public async Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc)
+    {
+        // Execute directly - Blazor components handle their own UI updates
+        // via PropertyChanged subscription and InvokeAsync(StateHasChanged)
+        return await asyncFunc();
+    }
 }

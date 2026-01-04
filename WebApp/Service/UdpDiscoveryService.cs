@@ -9,7 +9,8 @@ using System.Text;
 
 /// <summary>
 /// UDP Discovery Service for MOBAflow REST-API.
-/// Listens for UDP broadcasts from MAUI clients and responds with server IP + Port.
+/// Listens for UDP Multicast from MAUI clients and responds with server IP + Port.
+/// Uses Multicast (239.255.42.99) instead of Broadcast for better WiFi router compatibility.
 /// Similar pattern to Z21 discovery but for REST-API service discovery.
 /// </summary>
 public class UdpDiscoveryService : BackgroundService
@@ -17,6 +18,7 @@ public class UdpDiscoveryService : BackgroundService
     private const int DISCOVERY_PORT = 21106; // Different from Z21 (21105) to avoid conflicts
     private const string DISCOVERY_REQUEST = "MOBAFLOW_DISCOVER";
     private const string DISCOVERY_RESPONSE_PREFIX = "MOBAFLOW_REST_API";
+    private const string MULTICAST_ADDRESS = "239.255.42.99"; // Local network multicast
 
     private readonly ILogger<UdpDiscoveryService> _logger;
     private readonly IConfiguration _configuration;
@@ -30,14 +32,22 @@ public class UdpDiscoveryService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("UDP Discovery Service starting on port {Port}", DISCOVERY_PORT);
+        _logger.LogInformation("UDP Discovery Service starting on Multicast {MulticastAddress}:{Port}", MULTICAST_ADDRESS, DISCOVERY_PORT);
 
         try
         {
-            _udpListener = new UdpClient(DISCOVERY_PORT);
-            _udpListener.EnableBroadcast = true;
-
+            _udpListener = new UdpClient();
+            _udpListener.ExclusiveAddressUse = false;
+            
             var localEndPoint = new IPEndPoint(IPAddress.Any, DISCOVERY_PORT);
+            _udpListener.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+            _udpListener.Client.Bind(localEndPoint);
+            
+            // Join multicast group
+            var multicastAddress = IPAddress.Parse(MULTICAST_ADDRESS);
+            _udpListener.JoinMulticastGroup(multicastAddress);
+            
+            _logger.LogInformation("✅ Joined Multicast group {MulticastAddress} on port {Port}", MULTICAST_ADDRESS, DISCOVERY_PORT);
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -52,7 +62,16 @@ public class UdpDiscoveryService : BackgroundService
 
                         // Get local IP and REST API port
                         var localIp = GetLocalIPAddress();
-                        var restPort = _configuration.GetValue<int>("Kestrel:Endpoints:Http:Url", 5000);
+                        
+                        // ✅ Parse port from Kestrel URL (e.g., "http://localhost:5001")
+                        // Default to 5001 if not configured
+                        var kestrelUrl = _configuration["Kestrel:Endpoints:Http:Url"] ?? "http://localhost:5001";
+                        var restPort = 5001; // Default
+                        
+                        if (Uri.TryCreate(kestrelUrl, UriKind.Absolute, out var uri))
+                        {
+                            restPort = uri.Port;
+                        }
 
                         // Response format: "MOBAFLOW_REST_API|192.168.0.100|5000"
                         var response = $"{DISCOVERY_RESPONSE_PREFIX}|{localIp}|{restPort}";

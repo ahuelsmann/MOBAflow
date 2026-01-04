@@ -2,6 +2,7 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 using Domain;
 using Domain.Enum;
@@ -112,4 +113,7 @@ public partial class LocomotiveViewModel : ObservableObject, IViewModelWrapper<L
     /// Returns true if a photo is assigned to this locomotive.
     /// </summary>
     public bool HasPhoto => !string.IsNullOrWhiteSpace(Model.PhotoPath);
+
+    [ObservableProperty]
+    private IAsyncRelayCommand? browsePhotoCommand;
 }

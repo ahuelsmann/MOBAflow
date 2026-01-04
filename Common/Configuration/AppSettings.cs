@@ -8,6 +8,7 @@ namespace Moba.Common.Configuration;
 public class AppSettings
 {
     public Z21Settings Z21 { get; set; } = new();
+    public RestApiSettings RestApi { get; set; } = new();
     public SpeechSettings Speech { get; set; } = new();
     public CityLibrarySettings CityLibrary { get; set; } = new();
     public ApplicationSettings Application { get; set; } = new();
@@ -29,6 +30,30 @@ public class AppSettings
     /// Gets Azure Speech Service region (convenience property).
     /// </summary>
     public string? AzureSpeechRegion => string.IsNullOrEmpty(Speech.Region) ? null : Speech.Region;
+}
+
+/// <summary>
+/// REST-API Server connection settings (for MAUI client connecting to WinUI/WebApp server).
+/// Manual IP configuration only - no automatic discovery.
+/// </summary>
+public class RestApiSettings
+{
+    /// <summary>
+    /// Current REST-API server IP address (e.g., "192.168.0.78").
+    /// Used by MAUI app to connect to WebApp REST-API.
+    /// REQUIRED: User must manually enter the PC's IP address.
+    /// </summary>
+    public string CurrentIpAddress { get; set; } = string.Empty;
+
+    /// <summary>
+    /// REST-API server port.
+    /// </summary>
+    public int Port { get; set; } = 5001;
+
+    /// <summary>
+    /// List of recently used IP addresses.
+    /// </summary>
+    public List<string> RecentIpAddresses { get; set; } = new();
 }
 
 /// <summary>

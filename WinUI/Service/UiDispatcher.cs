@@ -12,9 +12,67 @@ public class UiDispatcher : IUiDispatcher
     {
         if (_dispatcherQueue?.HasThreadAccess == true)
             action();
-        else if (_dispatcherQueue != null)
+        else if (_dispatcherQueue is not null)
             _dispatcherQueue.TryEnqueue(() => action());
         else
             action();
+    }
+
+    public async Task InvokeOnUiAsync(Func<Task> asyncAction)
+    {
+        if (_dispatcherQueue?.HasThreadAccess == true)
+        {
+            await asyncAction();
+        }
+        else if (_dispatcherQueue is not null)
+        {
+            var tcs = new TaskCompletionSource();
+            _dispatcherQueue.TryEnqueue(async () =>
+            {
+                try
+                {
+                    await asyncAction();
+                    tcs.SetResult();
+                }
+                catch (Exception ex)
+                {
+                    tcs.SetException(ex);
+                }
+            });
+            await tcs.Task;
+        }
+        else
+        {
+            await asyncAction();
+        }
+    }
+
+    public async Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc)
+    {
+        if (_dispatcherQueue?.HasThreadAccess == true)
+        {
+            return await asyncFunc();
+        }
+        else if (_dispatcherQueue is not null)
+        {
+            var tcs = new TaskCompletionSource<T>();
+            _dispatcherQueue.TryEnqueue(async () =>
+            {
+                try
+                {
+                    var result = await asyncFunc();
+                    tcs.SetResult(result);
+                }
+                catch (Exception ex)
+                {
+                    tcs.SetException(ex);
+                }
+            });
+            return await tcs.Task;
+        }
+        else
+        {
+            return await asyncFunc();
+        }
     }
 }

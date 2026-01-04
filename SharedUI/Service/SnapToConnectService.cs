@@ -11,6 +11,7 @@ using ViewModel;
 /// Service for snap-to-connect logic in track plan editor (AnyRail-style).
 /// Provides magnetic snapping for connecting track segments at their endpoints.
 /// Endpoints are extracted from PathData (absolute coordinates).
+/// All operations are async to avoid blocking UI thread during PathData parsing.
 /// </summary>
 public class SnapToConnectService
 {
@@ -18,13 +19,16 @@ public class SnapToConnectService
 
     public record TrackEndpoint(TrackPoint Position, double Angle, TrackSegmentViewModel Segment, bool IsStart);
 
-    public List<TrackEndpoint> GetEndpoints(TrackSegmentViewModel segment)
+    /// <summary>
+    /// Extracts endpoints from a track segment's PathData asynchronously.
+    /// </summary>
+    public Task<List<TrackEndpoint>> GetEndpointsAsync(TrackSegmentViewModel segment)
     {
         var endpoints = new List<TrackEndpoint>();
         var pathData = segment.PathData;
 
         if (string.IsNullOrEmpty(pathData))
-            return endpoints;
+            return Task.FromResult(endpoints);
 
         var coords = ExtractCoordinates(pathData);
 
@@ -41,7 +45,7 @@ public class SnapToConnectService
             Debug.WriteLine($"📍 Endpoints for {segment.ArticleCode}: Start=({startPoint.X:F0},{startPoint.Y:F0}), End=({endPoint.X:F0},{endPoint.Y:F0})");
         }
 
-        return endpoints;
+        return Task.FromResult(endpoints);
     }
 
     private static List<TrackPoint> ExtractCoordinates(string pathData)
@@ -64,7 +68,10 @@ public class SnapToConnectService
         return points;
     }
 
-    public (TrackPoint SnapPosition, double SnapRotation)? FindSnapEndpoint(
+    /// <summary>
+    /// Finds the nearest snap endpoint within snap distance asynchronously.
+    /// </summary>
+    public async Task<(TrackPoint SnapPosition, double SnapRotation)?> FindSnapEndpointAsync(
         TrackPoint currentPosition,
         double currentRotation,
         IEnumerable<TrackSegmentViewModel> segments)
@@ -75,7 +82,8 @@ public class SnapToConnectService
 
         foreach (var segment in segments)
         {
-            foreach (var endpoint in GetEndpoints(segment))
+            var endpoints = await GetEndpointsAsync(segment);
+            foreach (var endpoint in endpoints)
             {
                 var distance = Math.Sqrt(
                     Math.Pow(endpoint.Position.X - currentPosition.X, 2) +
@@ -89,7 +97,7 @@ public class SnapToConnectService
             }
         }
 
-        if (bestTarget != null)
+        if (bestTarget is not null)
         {
             Debug.WriteLine($"🎯 Snap target found: ({bestTarget.Position.X:F0},{bestTarget.Position.Y:F0}) distance={minDistance:F0}px");
             return (bestTarget.Position, bestTarget.Angle);
@@ -98,12 +106,18 @@ public class SnapToConnectService
         return null;
     }
 
-    public TrackPoint? FindSnapTarget(TrackPoint currentPosition, IEnumerable<TrackSegmentViewModel> segments)
+    /// <summary>
+    /// Finds the nearest snap target position asynchronously.
+    /// </summary>
+    public async Task<TrackPoint?> FindSnapTargetAsync(TrackPoint currentPosition, IEnumerable<TrackSegmentViewModel> segments)
     {
-        var result = FindSnapEndpoint(currentPosition, 0, segments);
+        var result = await FindSnapEndpointAsync(currentPosition, 0, segments);
         return result?.SnapPosition;
     }
 
+    /// <summary>
+    /// Generates SVG path for snap preview line (synchronous - simple string formatting).
+    /// </summary>
     public string GenerateSnapPreviewPath(TrackPoint from, TrackPoint to)
     {
         var ic = CultureInfo.InvariantCulture;

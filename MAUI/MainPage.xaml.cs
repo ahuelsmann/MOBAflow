@@ -5,7 +5,7 @@ using SharedUI.ViewModel;
 using Microsoft.Maui.Controls;
 
 // ReSharper disable once PartialTypeWithSinglePart
-public partial class MainPage : ContentPage
+public partial class MainPage
 {
     public MauiViewModel ViewModel { get; }
 

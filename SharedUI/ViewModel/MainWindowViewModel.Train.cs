@@ -50,19 +50,62 @@ public partial class MainWindowViewModel
     partial void OnSelectedLocomotiveChanged(LocomotiveViewModel? value)
     {
         TrainsPageSelectedObject = value;
+        AttachLocomotivePhotoCommand(value);
         DeleteLocomotiveCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnSelectedPassengerWagonChanged(PassengerWagonViewModel? value)
     {
         TrainsPageSelectedObject = value;
+        AttachWagonPhotoCommand(value, "passenger-wagons");
         DeletePassengerWagonCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnSelectedGoodsWagonChanged(GoodsWagonViewModel? value)
     {
         TrainsPageSelectedObject = value;
+        AttachWagonPhotoCommand(value, "goods-wagons");
         DeleteGoodsWagonCommand.NotifyCanExecuteChanged();
+    }
+
+    private void AttachWagonPhotoCommand(WagonViewModel? wagonVm, string category)
+    {
+        if (wagonVm == null || _ioService == null) return;
+        if (wagonVm.BrowsePhotoCommand != null) return;
+
+        wagonVm.BrowsePhotoCommand = new AsyncRelayCommand(async () =>
+        {
+            var photoPath = await _ioService.BrowseForPhotoAsync();
+            if (string.IsNullOrEmpty(photoPath)) return;
+
+            var saved = await _ioService.SavePhotoAsync(photoPath, category, wagonVm.Model.Id);
+            if (saved != null)
+            {
+                wagonVm.PhotoPath = saved;
+                HasUnsavedChanges = true;
+                _logger.LogInformation("Photo saved for wagon: {Name}", wagonVm.Name);
+            }
+        });
+    }
+
+    private void AttachLocomotivePhotoCommand(LocomotiveViewModel? locoVm)
+    {
+        if (locoVm == null || _ioService == null) return;
+        if (locoVm.BrowsePhotoCommand != null) return;
+
+        locoVm.BrowsePhotoCommand = new AsyncRelayCommand(async () =>
+        {
+            var photoPath = await _ioService.BrowseForPhotoAsync();
+            if (string.IsNullOrEmpty(photoPath)) return;
+
+            var saved = await _ioService.SavePhotoAsync(photoPath, "locomotives", locoVm.Model.Id);
+            if (saved != null)
+            {
+                locoVm.PhotoPath = saved;
+                HasUnsavedChanges = true;
+                _logger.LogInformation("Photo saved for locomotive: {Name}", locoVm.Name);
+            }
+        });
     }
     #endregion
 
@@ -83,6 +126,7 @@ public partial class MainWindowViewModel
 
         SelectedProject.Model.Locomotives.Add(locomotive);
         SelectedLocomotive = new LocomotiveViewModel(locomotive);
+        AttachLocomotivePhotoCommand(SelectedLocomotive);
         HasUnsavedChanges = true;
 
         _logger.LogInformation("Added new locomotive: {Name}", locomotive.Name);
@@ -122,6 +166,7 @@ public partial class MainWindowViewModel
 
         SelectedProject.Model.PassengerWagons.Add(wagon);
         SelectedPassengerWagon = new PassengerWagonViewModel(wagon);
+        AttachWagonPhotoCommand(SelectedPassengerWagon, "passenger-wagons");
         HasUnsavedChanges = true;
 
         _logger.LogInformation("Added new passenger wagon: {Name}", wagon.Name);
@@ -161,6 +206,7 @@ public partial class MainWindowViewModel
 
         SelectedProject.Model.GoodsWagons.Add(wagon);
         SelectedGoodsWagon = new GoodsWagonViewModel(wagon);
+        AttachWagonPhotoCommand(SelectedGoodsWagon, "goods-wagons");
         HasUnsavedChanges = true;
 
         _logger.LogInformation("Added new goods wagon: {Name}", wagon.Name);
@@ -243,5 +289,59 @@ public partial class MainWindowViewModel
     }
 
     private bool CanBrowseGoodsWagonPhoto() => SelectedGoodsWagon != null;
+
+    [RelayCommand]
+    private async Task BrowseCurrentWagonPhotoAsync()
+    {
+        if (_ioService == null) return;
+
+        if (SelectedPassengerWagon?.Model != null)
+        {
+            var photoPath = await _ioService.BrowseForPhotoAsync();
+            if (string.IsNullOrEmpty(photoPath)) return;
+            var saved = await _ioService.SavePhotoAsync(photoPath, "passenger-wagons", SelectedPassengerWagon.Model.Id);
+            if (saved != null)
+            {
+                SelectedPassengerWagon.PhotoPath = saved;
+                HasUnsavedChanges = true;
+                _logger.LogInformation("Photo saved for passenger wagon: {Name}", SelectedPassengerWagon.Name);
+            }
+            return;
+        }
+
+        if (SelectedGoodsWagon?.Model != null)
+        {
+            var photoPath = await _ioService.BrowseForPhotoAsync();
+            if (string.IsNullOrEmpty(photoPath)) return;
+            var saved = await _ioService.SavePhotoAsync(photoPath, "goods-wagons", SelectedGoodsWagon.Model.Id);
+            if (saved != null)
+            {
+                SelectedGoodsWagon.PhotoPath = saved;
+                HasUnsavedChanges = true;
+                _logger.LogInformation("Photo saved for goods wagon: {Name}", SelectedGoodsWagon.Name);
+            }
+        }
+    }
+
+    [RelayCommand]
+    private async Task BrowseSelectedPhotoAsync()
+    {
+        if (_ioService == null) return;
+
+        if (SelectedLocomotive != null)
+        {
+            await BrowseLocomotivePhotoAsync();
+            return;
+        }
+        if (SelectedPassengerWagon != null)
+        {
+            await BrowsePassengerWagonPhotoAsync();
+            return;
+        }
+        if (SelectedGoodsWagon != null)
+        {
+            await BrowseGoodsWagonPhotoAsync();
+        }
+    }
     #endregion
 }

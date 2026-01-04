@@ -4,9 +4,9 @@ namespace Moba.SharedUI.Service;
 
 using Microsoft.Extensions.Logging;
 
-using Moba.SharedUI.ViewModel;
-using Moba.TrackPlan.Geometry;
-using Moba.TrackPlan.Renderer;
+using ViewModel;
+using TrackPlan.Geometry;
+using TrackPlan.Renderer;
 
 public class ConnectorMatcher
 {

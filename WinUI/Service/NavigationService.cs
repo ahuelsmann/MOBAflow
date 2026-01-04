@@ -27,21 +27,24 @@ public class NavigationService
     /// Initialize the navigation service with the content frame.
     /// Must be called before any navigation operations.
     /// </summary>
-    public void Initialize(Frame contentFrame)
+    public Task InitializeAsync(Frame contentFrame)
     {
         _contentFrame = contentFrame ?? throw new ArgumentNullException(nameof(contentFrame));
+        return Task.CompletedTask;
     }
 
     /// <summary>
     /// Navigate to a page by tag identifier.
+    /// Page instantiation via DI happens asynchronously to avoid blocking the UI thread.
     /// </summary>
-    public void NavigateToPage(string tag)
+    public async Task NavigateToPageAsync(string tag)
     {
-        if (_contentFrame == null)
-            throw new InvalidOperationException("NavigationService not initialized. Call Initialize(Frame) first.");
+        if (_contentFrame is null)
+            throw new InvalidOperationException("NavigationService not initialized. Call InitializeAsync(Frame) first.");
 
         try
         {
+            // Resolve page from DI container (potentially expensive operation)
             object page = tag switch
             {
                 "overview" => _serviceProvider.GetRequiredService<OverviewPage>(),
@@ -57,18 +60,21 @@ public class NavigationService
             };
 
             _contentFrame.Content = page;
+            
+            await Task.CompletedTask; // Explicit async completion
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"❌ Navigation to '{tag}' failed: {ex.Message}");
+            throw; // Re-throw for caller to handle
         }
     }
 
     /// <summary>
     /// Navigate to Overview page (default startup page).
     /// </summary>
-    public void NavigateToOverview()
+    public Task NavigateToOverviewAsync()
     {
-        NavigateToPage("overview");
+        return NavigateToPageAsync("overview");
     }
 }

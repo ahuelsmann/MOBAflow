@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.TrackPlan.Converter;
 
-using Moba.TrackPlan.Domain;
+using Domain;
 
 /// <summary>
 /// Converts AnyRail-imported track layout (with coordinates) to pure topology (ArticleCode + Connections only).

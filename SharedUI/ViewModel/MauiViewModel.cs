@@ -9,7 +9,7 @@ using Common.Configuration;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using SharedUI.Interface;
+using Interface;
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -73,8 +73,10 @@ public partial class MauiViewModel : ObservableObject
         Debug.WriteLine($"   AppSettings.Counter.UseTimerFilter: {_settings.Counter.UseTimerFilter}");
         Debug.WriteLine($"   AppSettings.Counter.TimerIntervalSeconds: {_settings.Counter.TimerIntervalSeconds}");
         Debug.WriteLine($"   AppSettings.Z21.CurrentIpAddress: {_settings.Z21.CurrentIpAddress}");
+        Debug.WriteLine($"   AppSettings.RestApi.CurrentIpAddress: {_settings.RestApi.CurrentIpAddress}");
         
         Z21IpAddress = _settings.Z21.CurrentIpAddress;
+        RestApiIpAddress = _settings.RestApi.CurrentIpAddress;
         CountOfFeedbackPoints = _settings.Counter.CountOfFeedbackPoints;
         GlobalTargetLapCount = _settings.Counter.TargetLapCount;
         UseTimerFilter = _settings.Counter.UseTimerFilter;
@@ -83,12 +85,26 @@ public partial class MauiViewModel : ObservableObject
         Debug.WriteLine("───────────────────────────────────────────────────────");
         Debug.WriteLine("✅ Values loaded into ViewModel:");
         Debug.WriteLine($"   Z21IpAddress: {Z21IpAddress}");
+        Debug.WriteLine($"   RestApiIpAddress: {RestApiIpAddress}");
         Debug.WriteLine($"   CountOfFeedbackPoints: {CountOfFeedbackPoints}");
         Debug.WriteLine($"   GlobalTargetLapCount: {GlobalTargetLapCount}");
         Debug.WriteLine($"   UseTimerFilter: {UseTimerFilter}");
         Debug.WriteLine($"   TimerIntervalSeconds: {TimerIntervalSeconds}s");
         Debug.WriteLine("═══════════════════════════════════════════════════════");
     }
+
+    #region REST-API Connection
+
+    [ObservableProperty]
+    private string restApiIpAddress = string.Empty;
+
+    partial void OnRestApiIpAddressChanged(string value)
+    {
+        _settings.RestApi.CurrentIpAddress = value;
+        _settingsService.SaveSettingsAsync(_settings); // Auto-save when IP changes
+    }
+
+    #endregion
 
     #region Z21 Connection
 

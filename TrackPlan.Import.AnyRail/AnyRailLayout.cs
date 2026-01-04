@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.TrackPlan.Import.AnyRail;
 
-using Moba.TrackPlan.Domain;
+using Domain;
 
 using System.Diagnostics;
 using System.Globalization;

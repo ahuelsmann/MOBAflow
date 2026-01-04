@@ -2,7 +2,7 @@
 namespace Moba.WebApp.Controllers;
 
 using Microsoft.AspNetCore.Mvc;
-using Moba.WebApp.Service;
+using Service;
 
 /// <summary>
 /// REST API Controller for photo uploads from MAUI clients.

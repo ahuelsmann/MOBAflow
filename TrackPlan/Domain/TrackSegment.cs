@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.TrackPlan.Domain;
 
-using Moba.TrackPlan.Geometry;
+using Geometry;
 
 using System.Text.Json.Serialization;
 

@@ -2,90 +2,41 @@
 namespace Moba.MAUI.Service;
 
 using Microsoft.Extensions.Logging;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
+using Common.Configuration;
 
 /// <summary>
-/// UDP Discovery Client for finding MOBAflow WebApp REST-API on local network.
-/// Sends broadcast "MOBAFLOW_DISCOVER" and listens for server response.
-/// Similar pattern to Z21 discovery.
+/// REST-API Server Connection Service for MAUI.
+/// Returns manually configured server IP and Port from settings.
+/// No automatic discovery - user must configure IP address manually (like Z21).
 /// </summary>
 public class RestApiDiscoveryService
 {
-    private const int DISCOVERY_PORT = 21106;
-    private const string DISCOVERY_REQUEST = "MOBAFLOW_DISCOVER";
-    private const int RESPONSE_TIMEOUT_MS = 3000; // 3 seconds
-
     private readonly ILogger<RestApiDiscoveryService> _logger;
+    private readonly AppSettings _appSettings;
 
-    public RestApiDiscoveryService(ILogger<RestApiDiscoveryService> logger)
+    public RestApiDiscoveryService(ILogger<RestApiDiscoveryService> logger, AppSettings appSettings)
     {
         _logger = logger;
+        _appSettings = appSettings;
     }
 
     /// <summary>
-    /// Discovers MOBAflow REST-API server on local network.
+    /// Gets the REST-API server endpoint from manual configuration.
     /// </summary>
-    /// <returns>Server IP and Port, or null if not found</returns>
-    public async Task<(string? ip, int? port)> DiscoverServerAsync()
+    /// <returns>Server IP and Port from settings, or null if not configured</returns>
+    public Task<(string? ip, int? port)> GetServerEndpointAsync()
     {
-        UdpClient? udpClient = null;
-
-        try
+        // Use manual IP configuration (required)
+        if (!string.IsNullOrWhiteSpace(_appSettings.RestApi.CurrentIpAddress))
         {
-            udpClient = new UdpClient();
-            udpClient.EnableBroadcast = true;
-
-            // Send broadcast discovery request
-            var requestBytes = Encoding.UTF8.GetBytes(DISCOVERY_REQUEST);
-            var broadcastEndpoint = new IPEndPoint(IPAddress.Broadcast, DISCOVERY_PORT);
-
-            await udpClient.SendAsync(requestBytes, broadcastEndpoint);
-            _logger.LogInformation("Sent UDP discovery broadcast to port {Port}", DISCOVERY_PORT);
-
-            // Wait for response with timeout
-            var receiveTask = udpClient.ReceiveAsync();
-            var timeoutTask = Task.Delay(RESPONSE_TIMEOUT_MS);
-
-            var completedTask = await Task.WhenAny(receiveTask, timeoutTask);
-
-            if (completedTask == receiveTask)
-            {
-                var result = await receiveTask;
-                var response = Encoding.UTF8.GetString(result.Buffer);
-
-                _logger.LogInformation("Received discovery response: {Response} from {RemoteEndPoint}", 
-                    response, result.RemoteEndPoint);
-
-                // Parse response: "MOBAFLOW_REST_API|192.168.0.100|5000"
-                var parts = response.Split('|');
-                if (parts.Length == 3 && parts[0] == "MOBAFLOW_REST_API")
-                {
-                    var serverIp = parts[1];
-                    if (int.TryParse(parts[2], out var serverPort))
-                    {
-                        _logger.LogInformation("Discovered MOBAflow server at {Ip}:{Port}", serverIp, serverPort);
-                        return (serverIp, serverPort);
-                    }
-                }
-            }
-            else
-            {
-                _logger.LogWarning("Discovery timeout - no server found");
-            }
-
-            return (null, null);
+            _logger.LogInformation("✅ Using configured REST-API server: {Ip}:{Port}", 
+                _appSettings.RestApi.CurrentIpAddress, _appSettings.RestApi.Port);
+            return Task.FromResult<(string?, int?)>((_appSettings.RestApi.CurrentIpAddress, _appSettings.RestApi.Port));
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error during REST-API discovery");
-            return (null, null);
-        }
-        finally
-        {
-            udpClient?.Close();
-            udpClient?.Dispose();
-        }
+
+        // No IP configured
+        _logger.LogWarning("⚠️ No REST-API server configured.");
+        _logger.LogInformation("💡 Please enter the WebApp server IP address in settings (e.g., 192.168.0.78)");
+        return Task.FromResult<(string?, int?)>((null, null));
     }
 }

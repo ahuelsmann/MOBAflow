@@ -9,11 +9,11 @@ using Interface;
 
 using Microsoft.Extensions.Logging;
 
-using Moba.SharedUI.Service;
+using Service;
 using Moba.TrackPlan.Domain;
-using Moba.TrackPlan.Geometry;
-using Moba.TrackPlan.Import.AnyRail;
-using Moba.TrackPlan.Renderer;
+using TrackPlan.Geometry;
+using TrackPlan.Import.AnyRail;
+using TrackPlan.Renderer;
 using Moba.TrackPlan.Service;
 
 using System.Collections.ObjectModel;

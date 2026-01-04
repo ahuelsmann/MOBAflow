@@ -5,18 +5,25 @@ using Microsoft.Extensions.Logging;
 using System.IO;
 
 /// <summary>
-/// Service for managing photo storage on the server.
-/// Photos are stored in wwwroot/photos/{category}/{entityId}.{ext}
+/// Service for managing photo storage.
+/// Photos are stored in %LOCALAPPDATA%\MOBAflow\photos\{category}\{entityId}.{ext}
+/// Same location as WinUI for consistency and file sharing.
 /// </summary>
 public class PhotoStorageService
 {
-    private readonly IWebHostEnvironment _environment;
     private readonly ILogger<PhotoStorageService> _logger;
+    private readonly string _photosBasePath;
 
-    public PhotoStorageService(IWebHostEnvironment environment, ILogger<PhotoStorageService> logger)
+    public PhotoStorageService(ILogger<PhotoStorageService> logger)
     {
-        _environment = environment;
         _logger = logger;
+        
+        // Use same location as WinUI: %LOCALAPPDATA%\MOBAflow\photos
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        _photosBasePath = Path.Combine(localAppData, "MOBAflow", "photos");
+        
+        // Ensure base directory exists
+        Directory.CreateDirectory(_photosBasePath);
     }
 
     /// <summary>
@@ -26,16 +33,13 @@ public class PhotoStorageService
     /// <param name="category">Category (locomotives, passenger-wagons, goods-wagons)</param>
     /// <param name="entityId">Entity GUID</param>
     /// <param name="fileExtension">File extension (e.g., .jpg)</param>
-    /// <returns>Relative path to saved photo</returns>
+    /// <returns>Absolute path to saved photo</returns>
     public async Task<string?> SavePhotoAsync(Stream stream, string category, Guid entityId, string fileExtension)
     {
         try
         {
-            // Ensure photos directory exists
-            var photosPath = Path.Combine(_environment.WebRootPath, "photos");
-            Directory.CreateDirectory(photosPath);
-
-            var categoryPath = Path.Combine(photosPath, category);
+            // Ensure category directory exists
+            var categoryPath = Path.Combine(_photosBasePath, category);
             Directory.CreateDirectory(categoryPath);
 
             // Save file
@@ -47,10 +51,10 @@ public class PhotoStorageService
                 await stream.CopyToAsync(fileStream);
             }
 
-            _logger.LogInformation("Photo saved: {Category}/{FileName}", category, fileName);
+            _logger.LogInformation("Photo saved: {FilePath}", filePath);
 
-            // Return relative path
-            return $"photos/{category}/{fileName}";
+            // Return absolute path (same format as WinUI)
+            return filePath;
         }
         catch (Exception ex)
         {
@@ -62,23 +66,23 @@ public class PhotoStorageService
     /// <summary>
     /// Deletes a photo if it exists.
     /// </summary>
-    public bool DeletePhoto(string relativePath)
+    public bool DeletePhoto(string photoPath)
     {
         try
         {
-            var fullPath = Path.Combine(_environment.WebRootPath, relativePath);
-            if (File.Exists(fullPath))
+            if (File.Exists(photoPath))
             {
-                File.Delete(fullPath);
-                _logger.LogInformation("Photo deleted: {Path}", relativePath);
+                File.Delete(photoPath);
+                _logger.LogInformation("Photo deleted: {Path}", photoPath);
                 return true;
             }
             return false;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting photo: {Path}", relativePath);
+            _logger.LogError(ex, "Error deleting photo: {Path}", photoPath);
             return false;
         }
     }
 }
+

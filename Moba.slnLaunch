@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "MOBAsmart+MOBAflow(+MOBAdash)",
+    "Projects": [
+      {
+        "Path": "WinUI\\WinUI.csproj",
+        "Action": "Start",
+        "DebugTarget": "WinUI"
+      },
+      {
+        "Path": "MAUI\\MAUI.csproj",
+        "Action": "Start",
+        "DebugTarget": "MAUI"
+      }
+    ]
+  }
+]

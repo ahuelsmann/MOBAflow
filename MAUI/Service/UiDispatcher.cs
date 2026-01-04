@@ -13,4 +13,22 @@ public class UiDispatcher : IUiDispatcher
         action();
 #endif
     }
+
+    public async Task InvokeOnUiAsync(Func<Task> asyncAction)
+    {
+#if ANDROID || IOS || MACCATALYST
+        await MainThread.InvokeOnMainThreadAsync(asyncAction);
+#else
+        await asyncAction();
+#endif
+    }
+
+    public async Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc)
+    {
+#if ANDROID || IOS || MACCATALYST
+        return await MainThread.InvokeOnMainThreadAsync(asyncFunc);
+#else
+        return await asyncFunc();
+#endif
+    }
 }

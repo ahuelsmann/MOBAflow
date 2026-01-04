@@ -12,16 +12,15 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="300" MinWidth="250" />
+            <ColumnDefinition Width="260" MinWidth="220" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="300" MinWidth="250" />
+            <ColumnDefinition Width="260" MinWidth="220" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="300" MinWidth="250" />
+            <ColumnDefinition Width="260" MinWidth="220" />
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition
-                Width="400"
-                MinWidth="350"
-                MaxWidth="500" />
+                Width="*"
+                MinWidth="300" />
         </Grid.ColumnDefinitions>
 
         <!--  Column 0: Locomotives  -->
@@ -331,54 +330,15 @@
             Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
         <!--  Column 6: Properties Panel  -->
-        <Grid Grid.Column="6" Padding="8">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-
-            <!--  Photo Upload Toolbar  -->
-            <StackPanel
-                Grid.Row="0"
-                Margin="0,0,0,12"
-                Orientation="Horizontal"
-                Spacing="8">
-                <Button
-                    Command="{x:Bind ViewModel.BrowseLocomotivePhotoCommand}"
-                    ToolTipService.ToolTip="Upload photo for selected locomotive"
-                    Visibility="{x:Bind ViewModel.SelectedLocomotive, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="16" Glyph="&#xEB9F;" />
-                        <TextBlock Text="Upload Photo" />
-                    </StackPanel>
-                </Button>
-                <Button
-                    Command="{x:Bind ViewModel.BrowsePassengerWagonPhotoCommand}"
-                    ToolTipService.ToolTip="Upload photo for selected passenger wagon"
-                    Visibility="{x:Bind ViewModel.SelectedPassengerWagon, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="16" Glyph="&#xEB9F;" />
-                        <TextBlock Text="Upload Photo" />
-                    </StackPanel>
-                </Button>
-                <Button
-                    Command="{x:Bind ViewModel.BrowseGoodsWagonPhotoCommand}"
-                    ToolTipService.ToolTip="Upload photo for selected goods wagon"
-                    Visibility="{x:Bind ViewModel.SelectedGoodsWagon, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="16" Glyph="&#xEB9F;" />
-                        <TextBlock Text="Upload Photo" />
-                    </StackPanel>
-                </Button>
-            </StackPanel>
-
-            <!--  Properties Content  -->
-            <ContentControl
-                Grid.Row="1"
-                HorizontalContentAlignment="Stretch"
-                VerticalContentAlignment="Stretch"
-                Content="{x:Bind ViewModel.TrainsPageSelectedObject, Mode=OneWay}"
-                ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
-        </Grid>
+        <ScrollViewer Grid.Column="6" Padding="8">
+            <Grid MaxWidth="480">
+                <!--  Properties Content  -->
+                <ContentControl
+                    HorizontalContentAlignment="Stretch"
+                    VerticalContentAlignment="Stretch"
+                    Content="{x:Bind ViewModel.TrainsPageSelectedObject, Mode=OneWay}"
+                    ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
+            </Grid>
+        </ScrollViewer>
     </Grid>
 </Page>

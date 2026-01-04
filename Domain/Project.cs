@@ -35,5 +35,5 @@ public class Project
     /// <summary>
     /// Track layout for this project (segments, connections, work surface size).
     /// </summary>
-    public Moba.TrackPlan.Domain.TrackLayout? TrackLayout { get; set; }
+    public TrackLayout? TrackLayout { get; set; }
 }

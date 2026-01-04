@@ -16,10 +16,12 @@ public class IoService : IIoService
     private WindowId? _windowId;
     private XamlRoot? _xamlRoot;
     private readonly ISettingsService _settingsService;
+    private readonly IUiDispatcher _uiDispatcher;
 
-    public IoService(ISettingsService settingsService)
+    public IoService(ISettingsService settingsService, IUiDispatcher uiDispatcher)
     {
         _settingsService = settingsService;
+        _uiDispatcher = uiDispatcher;
     }
 
     /// <summary>
@@ -289,31 +291,38 @@ public class IoService : IIoService
 
     /// <summary>
     /// Saves a photo file to the application's local photos storage.
-    /// Creates folder structure: ApplicationData.Current.LocalFolder/photos/{category}/{entityId}.ext
+    /// Creates folder structure: %LOCALAPPDATA%\MOBAflow\photos\{category}\{entityId}.ext
     /// </summary>
     /// <param name="sourceFilePath">Source photo file path</param>
     /// <param name="category">Photo category (e.g., "locomotives", "passenger-wagons", "goods-wagons")</param>
     /// <param name="entityId">Entity ID for filename</param>
-    /// <returns>Relative path to saved photo (e.g., "photos/locomotives/{id}.jpg")</returns>
+    /// <returns>Absolute path to saved photo (e.g., "C:\Users\...\AppData\Local\MOBAflow\photos\locomotives\{id}.jpg")</returns>
     public async Task<string?> SavePhotoAsync(string sourceFilePath, string category, Guid entityId)
+
     {
         try
         {
-            var localFolder = Windows.Storage.ApplicationData.Current.LocalFolder;
-            var photosFolder = await localFolder.CreateFolderAsync("photos", Windows.Storage.CreationCollisionOption.OpenIfExists);
-            var categoryFolder = await photosFolder.CreateFolderAsync(category, Windows.Storage.CreationCollisionOption.OpenIfExists);
+            // ✅ Use .NET standard APIs for unpackaged WinUI 3 apps
+            // ApplicationData.Current only works in packaged apps (MSIX)
+            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var appFolder = Path.Combine(localAppData, "MOBAflow");
+            var photosFolder = Path.Combine(appFolder, "photos");
+            var categoryFolder = Path.Combine(photosFolder, category);
+
+            // Create directory structure if it doesn't exist
+            Directory.CreateDirectory(categoryFolder);
 
             // Get file extension from source
             var fileExtension = Path.GetExtension(sourceFilePath);
             var fileName = $"{entityId}{fileExtension}";
+            var destinationPath = Path.Combine(categoryFolder, fileName);
 
-            var destinationFile = await categoryFolder.CreateFileAsync(fileName, Windows.Storage.CreationCollisionOption.ReplaceExisting);
+            // Copy file asynchronously
+            await Task.Run(() => File.Copy(sourceFilePath, destinationPath, overwrite: true));
 
-            // Copy file
-            File.Copy(sourceFilePath, destinationFile.Path, overwrite: true);
-
-            // Return relative path
-            return $"photos/{category}/{fileName}";
+            // ✅ Return absolute path so Image control can load it
+            // Photos are stored in %LOCALAPPDATA%\MOBAflow\photos\{category}\
+            return destinationPath;
         }
         catch (Exception ex)
         {
@@ -322,3 +331,4 @@ public class IoService : IIoService
         }
     }
 }
+

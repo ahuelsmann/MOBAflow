@@ -7,5 +7,5 @@ public class RestDiscoveryAdapter : IRestDiscoveryService
 {
     private readonly RestApiDiscoveryService _inner;
     public RestDiscoveryAdapter(RestApiDiscoveryService inner) => _inner = inner;
-    public Task<(string? ip, int? port)> DiscoverServerAsync() => _inner.DiscoverServerAsync();
+    public Task<(string? ip, int? port)> DiscoverServerAsync() => _inner.GetServerEndpointAsync();
 }

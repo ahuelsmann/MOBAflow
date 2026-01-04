@@ -68,11 +68,22 @@ public class SettingsService : ISettingsService
 
                 if (loadedSettings != null)
                 {
+                    var loadedRestApi = loadedSettings.RestApi ?? new RestApiSettings();
+
+                    // Auto-migrate legacy default port 5000 to 5001 to avoid conflicts
+                    if (loadedRestApi.Port == 5000 || loadedRestApi.Port == 0)
+                    {
+                        Debug.WriteLine("⚠️ REST API port 5000 detected (legacy default) - migrating to 5001 to avoid conflicts.");
+                        loadedRestApi.Port = 5001;
+                    }
+
                     Debug.WriteLine("📦 Deserializing settings...");
                     Debug.WriteLine($"   Loaded Tracks: {loadedSettings.Counter.CountOfFeedbackPoints}");
                     Debug.WriteLine($"   Loaded Target: {loadedSettings.Counter.TargetLapCount}");
                     Debug.WriteLine($"   Loaded Timer: {loadedSettings.Counter.TimerIntervalSeconds}s");
-                    Debug.WriteLine($"   Loaded IP: {loadedSettings.Z21.CurrentIpAddress}");
+                    Debug.WriteLine($"   Loaded Z21 IP: {loadedSettings.Z21.CurrentIpAddress}");
+                    Debug.WriteLine($"   Loaded REST IP: {loadedRestApi.CurrentIpAddress}");
+                    Debug.WriteLine($"   Loaded REST Port: {loadedRestApi.Port}");
 
                     // Copy all loaded values to the DI-registered singleton
                     _settings.Application.LastSolutionPath = loadedSettings.Application.LastSolutionPath;
@@ -83,6 +94,9 @@ public class SettingsService : ISettingsService
                     _settings.Counter.TargetLapCount = loadedSettings.Counter.TargetLapCount;
                     _settings.Counter.UseTimerFilter = loadedSettings.Counter.UseTimerFilter;
                     _settings.Counter.TimerIntervalSeconds = loadedSettings.Counter.TimerIntervalSeconds;
+                    _settings.RestApi.CurrentIpAddress = loadedRestApi.CurrentIpAddress;
+                    _settings.RestApi.Port = loadedRestApi.Port;
+                    _settings.RestApi.RecentIpAddresses = loadedRestApi.RecentIpAddresses ?? new List<string>();
 
                     Debug.WriteLine("✅ Settings applied to singleton");
                     _isLoaded = true;
@@ -99,6 +113,7 @@ public class SettingsService : ISettingsService
                 Debug.WriteLine($"   Default Tracks: {_settings.Counter.CountOfFeedbackPoints}");
                 Debug.WriteLine($"   Default Target: {_settings.Counter.TargetLapCount}");
                 Debug.WriteLine($"   Default Timer: {_settings.Counter.TimerIntervalSeconds}s");
+                Debug.WriteLine($"   Default REST IP: {_settings.RestApi.CurrentIpAddress}");
                 
                 // ✅ Create initial settings file with defaults
                 Debug.WriteLine("💾 Creating initial settings file...");
@@ -112,7 +127,8 @@ public class SettingsService : ISettingsService
             Debug.WriteLine($"   Target: {_settings.Counter.TargetLapCount}");
             Debug.WriteLine($"   Timer Filter: {_settings.Counter.UseTimerFilter}");
             Debug.WriteLine($"   Timer Interval: {_settings.Counter.TimerIntervalSeconds}s");
-            Debug.WriteLine($"   IP Address: {_settings.Z21.CurrentIpAddress}");
+            Debug.WriteLine($"   Z21 IP Address: {_settings.Z21.CurrentIpAddress}");
+            Debug.WriteLine($"   REST API IP Address: {_settings.RestApi.CurrentIpAddress}");
             Debug.WriteLine("═══════════════════════════════════════════════════════");
         }
         catch (Exception ex)
@@ -142,7 +158,9 @@ public class SettingsService : ISettingsService
             Debug.WriteLine($"   Tracks: {settings.Counter.CountOfFeedbackPoints}");
             Debug.WriteLine($"   Target: {settings.Counter.TargetLapCount}");
             Debug.WriteLine($"   Timer: {settings.Counter.TimerIntervalSeconds}s");
-            Debug.WriteLine($"   IP: {settings.Z21.CurrentIpAddress}");
+            Debug.WriteLine($"   Z21 IP: {settings.Z21.CurrentIpAddress}");
+            Debug.WriteLine($"   REST API IP: {settings.RestApi.CurrentIpAddress}");
+            Debug.WriteLine($"   REST API Port: {settings.RestApi.Port}");
 
             await File.WriteAllTextAsync(_settingsFilePath, json).ConfigureAwait(false);
 

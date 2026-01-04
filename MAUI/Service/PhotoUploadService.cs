@@ -67,11 +67,11 @@ public class PhotoUploadService
 
                 // Parse JSON response (simple approach - could use System.Text.Json for robustness)
                 // Expected: {"success":true,"photoPath":"photos/locomotives/xxx.jpg","message":"..."}
-                var pathStart = result.IndexOf("\"photoPath\":\"");
+                var pathStart = result.IndexOf("\"photoPath\":\"", StringComparison.Ordinal);
                 if (pathStart > 0)
                 {
                     pathStart += "\"photoPath\":\"".Length;
-                    var pathEnd = result.IndexOf("\"", pathStart);
+                    var pathEnd = result.IndexOf("\"", pathStart, StringComparison.Ordinal);
                     if (pathEnd > pathStart)
                     {
                         var serverPhotoPath = result.Substring(pathStart, pathEnd - pathStart);

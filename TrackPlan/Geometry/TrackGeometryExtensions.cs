@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.TrackPlan.Geometry;
 
-using Moba.TrackPlan.Domain;
+using Domain;
 
 /// <summary>
 /// Extension methods for TrackGeometry to calculate connector transformations.

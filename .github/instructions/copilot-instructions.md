@@ -91,58 +91,60 @@ public object Convert(object? value, ...)
 5. Update documentation
 ```
 
-### **7. Before/After Analysis (MANDATORY!)**
-- **ALWAYS analyze the situation BEFORE making changes**
-  - What is the current state?
-  - What files are affected?
-  - What are the dependencies?
-  - Are there similar patterns elsewhere?
-  
-- **ALWAYS verify the result AFTER changes**
-  - Build successful?
-  - No new warnings?
-  - Consistent with existing patterns?
-  - Documentation updated?
+### **6.5. Async-Everywhere Pattern (CRITICAL!)**
+- **ALWAYS prefer async/await** - it should be the default, not the exception
+- **Use async for ALL I/O operations** - file access, network calls, database queries
+- **Use async for ALL UI operations** - navigation, page instantiation, dispatching
+- **NEVER use `Task.Run` in Service/Manager classes** - only in UI event handlers
+- **Use `Task.FromResult` for simple returns** - not `Task.Run(() => value)`
+- **Use `Task.CompletedTask` for void async methods** - not empty `return Task.FromResult(0)`
 
-**Template:**
+**Async Best Practices:**
+```csharp
+// ✅ CORRECT: Async for I/O operations
+public async Task<AppSettings> LoadSettingsAsync()
+{
+    var json = await File.ReadAllTextAsync(_filePath);
+    return JsonConvert.DeserializeObject<AppSettings>(json);
+}
+
+// ✅ CORRECT: Async for UI operations
+public async Task NavigateToPageAsync(string tag)
+{
+    var page = _serviceProvider.GetRequiredService<Page>();
+    _contentFrame.Content = page;
+    await Task.CompletedTask; // Explicit async completion
+}
+
+// ✅ CORRECT: Task.FromResult for simple returns
+public Task<int> GetCountAsync()
+{
+    return Task.FromResult(_items.Count);
+}
+
+// ❌ WRONG: Task.Run in service methods (wastes thread pool)
+public async Task<int> GetCountAsync()
+{
+    return await Task.Run(() => _items.Count); // DON'T DO THIS!
+}
+
+// ❌ WRONG: Synchronous I/O (blocks thread)
+public AppSettings LoadSettings()
+{
+    var json = File.ReadAllText(_filePath); // DON'T DO THIS!
+}
 ```
-## BEFORE:
-- Current state description
-- Problems identified
-- Affected components
 
-## CHANGES:
-- File 1: Change description
-- File 2: Change description
+**When to use `Task.Run`:**
+- ✅ **UI event handlers:** `await Task.Run(() => HeavyComputation())` - offload from UI thread
+- ✅ **CPU-intensive work:** Image processing, complex calculations
+- ❌ **Service methods:** NEVER - use real async I/O or stay synchronous
+- ❌ **Fake async:** NEVER wrap synchronous code just to make it "async"
 
-## AFTER:
-- Build status
-- Warnings fixed/introduced
-- Patterns validated
-- Documentation updated
-```
-
-### **8. Auto-Update Instructions (CRITICAL!)**
-- **When discovering important architectural decisions** → Update this file IMMEDIATELY
-- **When fixing critical bugs** → Document in "Current Session Status"
-- **When establishing new patterns** → Add to relevant section
-- **When deprecating old approaches** → Mark as deprecated with alternatives
-
-**Triggers for instruction updates:**
-- Protocol reverse-engineering (e.g., Z21 packet structures)
-- Breaking changes to core classes
-- New best practices discovered
-- Critical bug fixes with broad impact
-- Architectural decisions affecting multiple projects
-
-**Update Format:**
-```markdown
-- ✅ **Feature Name (Date)**
-  - Problem: Brief description
-  - Solution: Implementation details
-  - Impact: Affected components
-  - Files: Changed file list
-```
+**Naming Conventions:**
+- All async methods MUST end with `Async` suffix
+- Example: `LoadAsync()`, `SaveAsync()`, `NavigateToPageAsync()`
+- Exception: `async void` event handlers (no suffix needed)
 
 ---
 
@@ -235,6 +237,54 @@ public object Convert(object? value, ...)
     - 📸 Foto-Preview in Properties (Image Control)
     - 🌐 REST-API für MAUI Foto-Upload (WebApp-Erweiterung)
     - 📱 MAUI Camera-Integration
+
+- ✅ **Async-Everywhere Pattern Implementation (Feb 3, 2025)** 🔄⚡
+  - **Problem:** Mixed sync/async patterns, `ApplicationData.Current` threw `InvalidOperationException` on non-UI thread
+  - **Root Cause:** WinRT APIs require UI thread context, services used synchronous methods
+  - **Solution:** Full async/await pattern implementation across all services
+  - **Architecture Changes:**
+    1. **IUiDispatcher Extended:**
+       - Added `InvokeOnUiAsync<T>` for async operations with return values
+       - All platforms implemented: WinUI (`TaskCompletionSource`), MAUI (`MainThread`), Blazor (direct)
+    2. **NavigationService → Fully Async:**
+       - `InitializeAsync(Frame)` - async initialization
+       - `NavigateToPageAsync(string)` - async navigation
+       - `NavigateToOverviewAsync()` - async default navigation
+    3. **SnapToConnectService → Fully Async:**
+       - `GetEndpointsAsync()` - async endpoint extraction
+       - `FindSnapEndpointAsync()` - async snap detection
+       - `FindSnapTargetAsync()` - async target finding
+    4. **IoService.SavePhotoAsync:**
+       - Uses `_uiDispatcher.InvokeOnUiAsync<string?>()` for WinRT API access
+       - Proper exception handling with Debug logging
+  - **Key Principles (NEW in Instructions):**
+    - ✅ **Async-Everywhere:** Default to async, NOT exception
+    - ✅ **NO Task.Run in Services:** Only in UI event handlers
+    - ✅ **Task.FromResult for simple returns:** Not fake async
+    - ✅ **Task.CompletedTask for void async:** Explicit completion
+    - ✅ **All async methods end with `Async` suffix:** Naming convention
+  - **Impact:**
+    - ✅ WinRT API access fixed (UI thread dispatch)
+    - ✅ Consistent async/await pattern across all services
+    - ✅ No thread blocking in service methods
+    - ✅ Proper async composition and error handling
+    - ✅ Build: Zero errors, zero warnings
+  - **Build Status:** ✅ Zero errors, zero warnings
+  - **Files Modified:**
+    - `SharedUI/Interface/IUiDispatcher.cs`: +`InvokeOnUiAsync<T>` method
+    - `WinUI/Service/UiDispatcher.cs`: Implemented generic async dispatch
+    - `MAUI/Service/UiDispatcher.cs`: Implemented with `MainThread.InvokeOnMainThreadAsync`
+    - `WebApp/Service/BlazorUiDispatcher.cs`: Direct async execution
+    - `WinUI/Service/IoService.cs`: Uses `InvokeOnUiAsync<string?>` for `SavePhotoAsync`
+    - `WinUI/Service/NavigationService.cs`: All methods async (Initialize/Navigate)
+    - `WinUI/View/MainWindow.xaml.cs`: Async navigation initialization
+    - `SharedUI/Service/SnapToConnectService.cs`: All methods async
+    - `.github/instructions/copilot-instructions.md`: +Async-Everywhere Pattern section
+  - **Copilot Instructions Updated:**
+    - Section **6.5. Async-Everywhere Pattern** added
+    - Explicit rules for `Task.Run` usage (UI only, NOT services)
+    - Best practices with code examples
+    - Naming conventions enforced
 
 - ✅ **SharedUI Cleanup: Entfernung obsoleter Ordner und Tools (Jan 31, 2025)** 🧹
   - **Problem:** SharedUI enthielt leere Legacy-Ordner und ein nicht mehr benötigtes Tool-Projekt

@@ -322,29 +322,60 @@ public partial class App
         try
         {
             var settings = Services.GetRequiredService<AppSettings>();
+            var restPort = settings.RestApi.Port;
             if (!settings.Application.AutoStartWebApp)
             {
-                Debug.WriteLine("ℹ️ AutoStartWebApp disabled - skipping WebApp launch");
+                Debug.WriteLine("ℹ️ AutoStartWebApp disabled in settings - skipping WebApp launch");
+                Debug.WriteLine("   To enable: Set 'Application.AutoStartWebApp' to true in appsettings.json");
                 return;
             }
 
-            if (_webAppProcess != null && !_webAppProcess.HasExited)
+            if (_webAppProcess is not null && !_webAppProcess.HasExited)
             {
-                Debug.WriteLine("ℹ️ WebApp already running");
+                Debug.WriteLine("ℹ️ WebApp already running (PID: {0})", _webAppProcess.Id);
                 return;
             }
 
+            // ✅ Ensure Windows Firewall rules exist for WebApp
+            FirewallHelper.EnsureFirewallRulesExist(restPort);
+
+            // Search for WebApp.dll in common locations
             var candidates = new[]
             {
+                // 1. Same directory as WinUI (published/deployment scenario)
                 Path.Combine(AppContext.BaseDirectory, "WebApp.dll"),
-                Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "WebApp", "bin", "Debug", "net10.0", "WebApp.dll")),
-                Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "WebApp", "bin", "Release", "net10.0", "WebApp.dll"))
+                
+                // 2. Development: Debug build (sibling project in MOBAflow workspace)
+                Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "WebApp", "bin", "Debug", "net10.0", "WebApp.dll")),
+                
+                // 3. Development: Release build (sibling project in MOBAflow workspace)
+                Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "WebApp", "bin", "Release", "net10.0", "WebApp.dll"))
             };
 
-            var dllPath = candidates.FirstOrDefault(File.Exists);
-            if (dllPath == null)
+
+            Debug.WriteLine("🔍 Searching for WebApp.dll in {0} locations...", candidates.Length);
+            
+            string? dllPath = null;
+            foreach (var candidate in candidates)
             {
-                Debug.WriteLine("⚠️ WebApp.dll not found - skipping auto-start");
+                Debug.WriteLine("   Checking: {0}", candidate);
+                if (File.Exists(candidate))
+                {
+                    dllPath = candidate;
+                    Debug.WriteLine("   ✅ Found!");
+                    break;
+                }
+            }
+
+            if (dllPath is null)
+            {
+                Debug.WriteLine("⚠️ WebApp.dll not found in any location - skipping auto-start");
+                Debug.WriteLine("   Searched locations:");
+                foreach (var candidate in candidates)
+                {
+                    Debug.WriteLine("   - {0}", candidate);
+                }
+                Debug.WriteLine("   Build the WebApp project or disable AutoStartWebApp in settings");
                 return;
             }
 
@@ -354,15 +385,48 @@ public partial class App
                 Arguments = $"\"{dllPath}\"",
                 WorkingDirectory = Path.GetDirectoryName(dllPath) ?? AppContext.BaseDirectory,
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
             };
 
+            // Override Kestrel URL to the configured REST port (ensures we don't bind to stale appsettings)
+            psi.Environment["ASPNETCORE_URLS"] = $"http://0.0.0.0:{restPort}";
+            psi.Environment["ASPNETCORE_HTTP_PORTS"] = restPort.ToString();
+
             _webAppProcess = Process.Start(psi);
-            Debug.WriteLine($"✅ WebApp started from {dllPath}");
+            
+            if (_webAppProcess is not null)
+            {
+                Debug.WriteLine("✅ WebApp started successfully");
+                Debug.WriteLine("   Path: {0}", dllPath);
+                Debug.WriteLine("   PID: {0}", _webAppProcess.Id);
+                Debug.WriteLine($"   REST API will be available on http://localhost:{restPort}");
+                Debug.WriteLine("   UDP Discovery Service listening on port 21106");
+                Debug.WriteLine("   💡 If MAUI can't discover server, check Windows Firewall settings");
+                
+                // Log WebApp output for debugging
+                _ = Task.Run(async () =>
+                {
+                    while (!_webAppProcess.HasExited)
+                    {
+                        var output = await _webAppProcess.StandardOutput.ReadLineAsync();
+                        if (!string.IsNullOrEmpty(output))
+                        {
+                            Debug.WriteLine($"[WebApp] {output}");
+                        }
+                    }
+                });
+            }
+            else
+            {
+                Debug.WriteLine("❌ Failed to start WebApp process");
+            }
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"❌ Failed to start WebApp: {ex.Message}");
+            Debug.WriteLine($"❌ Failed to start WebApp: {ex.GetType().Name} - {ex.Message}");
+            Debug.WriteLine($"   Stack trace: {ex.StackTrace}");
             // Do not crash WinUI if WebApp start fails
         }
     }

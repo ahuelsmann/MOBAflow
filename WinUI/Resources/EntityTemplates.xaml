@@ -731,21 +731,33 @@
                     </StackPanel>
                 </Border>
 
-                <!--  Photo Path (Read-Only for now)  -->
+                <!--  Photo  -->
                 <Border
                     Padding="12"
                     Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                    CornerRadius="8"
-                    Visibility="{Binding HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    CornerRadius="8">
                     <StackPanel Spacing="8">
                         <TextBlock
                             FontWeight="SemiBold"
                             Text="Photo" />
+
+                        <Image
+                            Height="140"
+                            Stretch="UniformToFill"
+                            Source="{Binding PhotoPath, Mode=OneWay}"
+                            Visibility="{Binding HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+
                         <TextBlock
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Style="{StaticResource CaptionTextBlockStyle}"
                             Text="{Binding PhotoPath, Mode=OneWay}"
                             TextWrapping="Wrap" />
+
+                        <Button
+                            Command="{Binding BrowsePhotoCommand}"
+                            Content="Browse Photo"
+                            Style="{StaticResource AccentButtonStyle}"
+                            ToolTipService.ToolTip="Select a photo from disk for this locomotive" />
                     </StackPanel>
                 </Border>
             </StackPanel>
@@ -837,21 +849,33 @@
                     </StackPanel>
                 </Border>
 
-                <!--  Photo Path (Read-Only for now)  -->
+                <!--  Photo  -->
                 <Border
                     Padding="12"
                     Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                    CornerRadius="8"
-                    Visibility="{Binding HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    CornerRadius="8">
                     <StackPanel Spacing="8">
                         <TextBlock
                             FontWeight="SemiBold"
                             Text="Photo" />
+
+                        <Image
+                            Height="140"
+                            Stretch="UniformToFill"
+                            Source="{Binding PhotoPath, Mode=OneWay}"
+                            Visibility="{Binding HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+
                         <TextBlock
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Style="{StaticResource CaptionTextBlockStyle}"
                             Text="{Binding PhotoPath, Mode=OneWay}"
                             TextWrapping="Wrap" />
+
+                        <Button
+                            Command="{Binding BrowsePhotoCommand}"
+                            Content="Browse Photo"
+                            Style="{StaticResource AccentButtonStyle}"
+                            ToolTipService.ToolTip="Select a photo from disk for this wagon" />
                     </StackPanel>
                 </Border>
             </StackPanel>

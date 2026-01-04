@@ -3,7 +3,7 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using Moba.TrackPlan.Domain;
-using Moba.TrackPlan.Geometry;
+using TrackPlan.Geometry;
 
 public partial class TrackSegmentViewModel : ObservableObject
 {
