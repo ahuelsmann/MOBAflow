@@ -2,7 +2,6 @@
 namespace Moba.WinUI.View;
 
 using SharedUI.ViewModel;
-
 using System.Collections.Specialized;
 
 // ReSharper disable once PartialTypeWithSinglePart

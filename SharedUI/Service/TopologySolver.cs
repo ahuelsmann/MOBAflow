@@ -1,11 +1,10 @@
-using Microsoft.Extensions.Logging;
-
-using Moba.SharedUI.ViewModel;
-using Moba.TrackPlan.Domain;
-using Moba.TrackPlan.Geometry;
-using Moba.TrackPlan.Renderer;
-
 namespace Moba.SharedUI.Service;
+
+using Microsoft.Extensions.Logging;
+using TrackPlan.Domain;
+using TrackPlan.Geometry;
+using TrackPlan.Renderer;
+using ViewModel;
 
 /// <summary>
 /// Computes world transforms for all segments based on the connection graph.

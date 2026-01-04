@@ -2,7 +2,6 @@
 namespace Moba.MAUI;
 
 using SharedUI.ViewModel;
-using Microsoft.Maui.Controls;
 
 // ReSharper disable once PartialTypeWithSinglePart
 public partial class MainPage

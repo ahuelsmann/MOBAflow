@@ -1,7 +1,8 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-using Moba.TrackPlan.Domain;
 
 namespace Moba.Domain;
+
+using TrackPlan.Domain;
 
 /// <summary>
 /// Project - Pure Data Object.

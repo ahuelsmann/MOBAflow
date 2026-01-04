@@ -71,7 +71,7 @@
                         SpinButtonPlacementMode="Inline"
                         Value="{x:Bind ViewModel.Z21AutoConnectRetryInterval, Mode=TwoWay}">
                         <NumberBox.Description>
-                            <TextBlock Text="How often to attempt reconnection if Z21 is unreachable (5-60 seconds)" />
+                            <TextBlock Text="How often to attempt reconnection if Z21 is unreachable (5-60 seconds)" TextWrapping="Wrap" />
                         </NumberBox.Description>
                     </NumberBox>
 
@@ -83,7 +83,7 @@
                         SpinButtonPlacementMode="Inline"
                         Value="{x:Bind ViewModel.Z21SystemStatePollingInterval, Mode=TwoWay}">
                         <NumberBox.Description>
-                            <TextBlock Text="How often to request current, voltage, temperature updates (0 = disabled, 1-30 seconds)" />
+                            <TextBlock Text="How often to request current, voltage, temperature updates (0 = disabled, 1-30 seconds)" TextWrapping="Wrap" />
                         </NumberBox.Description>
                     </NumberBox>
                 </StackPanel>
@@ -208,7 +208,7 @@
                         SpinButtonPlacementMode="Inline"
                         Value="{x:Bind ViewModel.SpeechRate, Mode=TwoWay}">
                         <NumberBox.Description>
-                            <TextBlock Text="Adjust speech speed (-10 = slowest, 0 = normal, 10 = fastest)" />
+                            <TextBlock Text="Adjust speech speed (-10 = slowest, 0 = normal, 10 = fastest)" TextWrapping="Wrap" />
                         </NumberBox.Description>
                     </NumberBox>
 
@@ -221,7 +221,7 @@
                         SpinButtonPlacementMode="Inline"
                         Value="{x:Bind ViewModel.SpeechVolume, Mode=TwoWay}">
                         <NumberBox.Description>
-                            <TextBlock Text="Adjust speech volume (0-100)" />
+                            <TextBlock Text="Adjust speech volume (0-100)" TextWrapping="Wrap" />
                         </NumberBox.Description>
                     </NumberBox>
 
@@ -237,11 +237,11 @@
                 </StackPanel>
             </Expander>
 
-            <!--  Application Behavior Section  -->
+            <!--  REST API Section  -->
             <Expander
                 HorizontalAlignment="Stretch"
                 HorizontalContentAlignment="Stretch"
-                Header="REST API Server"
+                Header="REST API"
                 IsExpanded="False">
                 <Expander.HeaderTemplate>
                     <DataTemplate>
@@ -257,24 +257,24 @@
 
                 <StackPanel Padding="56,16,0,16" Spacing="16">
                     <StackPanel>
-                        <CheckBox Content="Auto-start REST API with WinUI" IsChecked="{x:Bind ViewModel.AutoStartWebApp, Mode=TwoWay}" />
+                        <CheckBox Content="Auto-start REST API with MOBAflow" IsChecked="{x:Bind ViewModel.AutoStartWebApp, Mode=TwoWay}" />
                         <TextBlock
                             Margin="28,0,0,0"
                             Style="{StaticResource CaptionTextBlockStyle}"
-                            Text="Starts the in-process REST API server for photo uploads from MAUI"
+                            Text="Starts an in-process for photo uploads from MOBAsmart"
                             TextWrapping="Wrap" />
                     </StackPanel>
 
                     <NumberBox
                         MaxWidth="200"
                         HorizontalAlignment="Left"
-                        Header="REST API Port"
-                        Minimum="1024"
+                        Header="Port"
                         Maximum="65535"
+                        Minimum="1024"
                         SpinButtonPlacementMode="Inline"
                         Value="{x:Bind ViewModel.RestApiPort, Mode=TwoWay}">
                         <NumberBox.Description>
-                            <TextBlock Text="Port for photo upload API (default: 5001)" />
+                            <TextBlock Text="Service port for photo upload (default: 5001)" TextWrapping="Wrap" />
                         </NumberBox.Description>
                     </NumberBox>
                 </StackPanel>
@@ -378,7 +378,7 @@
                         SpinButtonPlacementMode="Inline"
                         Value="{x:Bind ViewModel.HealthCheckIntervalSeconds, Mode=TwoWay}">
                         <NumberBox.Description>
-                            <TextBlock Text="How often to check Z21 connection status" />
+                            <TextBlock Text="How often to check Z21 connection status" TextWrapping="Wrap" />
                         </NumberBox.Description>
                     </NumberBox>
                 </StackPanel>

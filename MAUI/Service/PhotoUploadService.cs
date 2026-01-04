@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
+using Android.OS;
 using Microsoft.Extensions.Logging;
-using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
 
@@ -212,7 +212,7 @@ public class PhotoUploadService
         message += "Troubleshooting:\n";
 #endif
 
-        message += $"✓ Server is running on PC\n";
+        message += "✓ Server is running on PC\n";
         message += $"✓ WinUI app shows REST API on port {serverPort}\n";
         message += $"✓ Windows Firewall allows port {serverPort}";
 
@@ -227,11 +227,11 @@ public class PhotoUploadService
     {
         try
         {
-            var brand = Android.OS.Build.Brand?.ToLowerInvariant() ?? string.Empty;
-            var device = Android.OS.Build.Device?.ToLowerInvariant() ?? string.Empty;
-            var model = Android.OS.Build.Model?.ToLowerInvariant() ?? string.Empty;
-            var product = Android.OS.Build.Product?.ToLowerInvariant() ?? string.Empty;
-            var hardware = Android.OS.Build.Hardware?.ToLowerInvariant() ?? string.Empty;
+            var brand = Build.Brand?.ToLowerInvariant() ?? string.Empty;
+            var device = Build.Device?.ToLowerInvariant() ?? string.Empty;
+            var model = Build.Model?.ToLowerInvariant() ?? string.Empty;
+            var product = Build.Product?.ToLowerInvariant() ?? string.Empty;
+            var hardware = Build.Hardware?.ToLowerInvariant() ?? string.Empty;
 
             return brand.Contains("generic") || 
                    device.Contains("generic") ||

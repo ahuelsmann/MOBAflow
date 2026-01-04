@@ -2,14 +2,11 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Common.Configuration;
-
 using CommunityToolkit.Mvvm.Input;
-
 using Domain;
-
 using Service;
-
 using System.Collections.ObjectModel;
+
 // For NullIoService
 
 /// <summary>

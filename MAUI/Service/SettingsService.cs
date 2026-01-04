@@ -68,7 +68,7 @@ public class SettingsService : ISettingsService
 
                 if (loadedSettings != null)
                 {
-                    var loadedRestApi = loadedSettings.RestApi ?? new RestApiSettings();
+                    var loadedRestApi = loadedSettings.RestApi;
 
                     // Auto-migrate legacy default port 5000 to 5001 to avoid conflicts
                     if (loadedRestApi.Port == 5000 || loadedRestApi.Port == 0)
@@ -96,7 +96,7 @@ public class SettingsService : ISettingsService
                     _settings.Counter.TimerIntervalSeconds = loadedSettings.Counter.TimerIntervalSeconds;
                     _settings.RestApi.CurrentIpAddress = loadedRestApi.CurrentIpAddress;
                     _settings.RestApi.Port = loadedRestApi.Port;
-                    _settings.RestApi.RecentIpAddresses = loadedRestApi.RecentIpAddresses ?? new List<string>();
+                    _settings.RestApi.RecentIpAddresses = loadedRestApi.RecentIpAddresses;
 
                     Debug.WriteLine("✅ Settings applied to singleton");
                     _isLoaded = true;

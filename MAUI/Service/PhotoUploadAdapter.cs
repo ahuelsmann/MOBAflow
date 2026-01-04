@@ -2,7 +2,6 @@
 namespace Moba.MAUI.Service;
 
 using SharedUI.Interface;
-using System;
 
 public class PhotoUploadAdapter : IPhotoUploadService
 {

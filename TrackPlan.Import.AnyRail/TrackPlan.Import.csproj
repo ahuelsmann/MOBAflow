@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>Moba.TrackPlan.Import.AnyRail</RootNamespace>
+    <RootNamespace>Moba.TrackPlan.Import</RootNamespace>
     <TargetFramework>net9.0</TargetFramework>
     <OutputType>Library</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>

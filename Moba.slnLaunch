@@ -1,6 +1,6 @@
 [
   {
-    "Name": "MOBAsmart+MOBAflow",
+    "Name": "WinUI+MAUI",
     "Projects": [
       {
         "Path": "WinUI\\WinUI.csproj",

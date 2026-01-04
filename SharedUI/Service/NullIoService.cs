@@ -60,4 +60,9 @@ public class NullIoService : IIoService
     {
         return Task.FromResult<string?>(null);
     }
+
+    public string? GetPhotoFullPath(string? relativePath)
+    {
+        return null;
+    }
 }

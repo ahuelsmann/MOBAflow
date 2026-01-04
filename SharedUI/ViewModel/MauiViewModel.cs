@@ -3,14 +3,10 @@ namespace Moba.SharedUI.ViewModel;
 
 using Backend;
 using Backend.Interface;
-
 using Common.Configuration;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using Interface;
-
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Net;

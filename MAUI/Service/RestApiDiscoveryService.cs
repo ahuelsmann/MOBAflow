@@ -1,8 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
-using Microsoft.Extensions.Logging;
+using Android.OS;
 using Common.Configuration;
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// REST-API Server Connection Service for MAUI.
@@ -82,11 +83,11 @@ public class RestApiDiscoveryService
         try
         {
             // Check for common emulator indicators
-            var brand = Android.OS.Build.Brand?.ToLowerInvariant() ?? string.Empty;
-            var device = Android.OS.Build.Device?.ToLowerInvariant() ?? string.Empty;
-            var model = Android.OS.Build.Model?.ToLowerInvariant() ?? string.Empty;
-            var product = Android.OS.Build.Product?.ToLowerInvariant() ?? string.Empty;
-            var hardware = Android.OS.Build.Hardware?.ToLowerInvariant() ?? string.Empty;
+            var brand = Build.Brand?.ToLowerInvariant() ?? string.Empty;
+            var device = Build.Device?.ToLowerInvariant() ?? string.Empty;
+            var model = Build.Model?.ToLowerInvariant() ?? string.Empty;
+            var product = Build.Product?.ToLowerInvariant() ?? string.Empty;
+            var hardware = Build.Hardware?.ToLowerInvariant() ?? string.Empty;
 
             // Common emulator signatures
             return brand.Contains("generic") || 

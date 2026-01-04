@@ -342,11 +342,18 @@ public partial class MainWindowViewModel : ObservableObject
     {
         if (SelectedProject == null) return;
 
+        // Store reference to deleted project
+        var deletedProject = SelectedProject;
+
         // Remove from Domain model
-        Solution.Projects.Remove(SelectedProject.Model);
+        Solution.Projects.Remove(deletedProject.Model);
 
         // Remove from SolutionViewModel's Projects collection
-        SolutionViewModel!.Projects.Remove(SelectedProject);
+        SolutionViewModel!.Projects.Remove(deletedProject);
+
+        // ✅ Clear all detail selections AFTER removing project
+        // This prevents showing stale data from the deleted project
+        ClearAllSelections();
 
         // Select first project if available, otherwise clear
         SelectedProject = SolutionViewModel.Projects.FirstOrDefault();

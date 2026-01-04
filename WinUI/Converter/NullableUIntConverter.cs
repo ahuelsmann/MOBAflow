@@ -2,7 +2,6 @@
 namespace Moba.WinUI.Converter;
 
 using Microsoft.UI.Xaml.Data;
-using System;
 
 /// <summary>
 /// Converts between uint? and double for NumberBox binding.

@@ -2,12 +2,9 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using Microsoft.Extensions.Logging;
-
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 
@@ -159,7 +156,13 @@ public partial class MainWindowViewModel
     partial void OnSelectedProjectChanged(ProjectViewModel? value)
     {
         _ = value; // Suppress unused parameter warning
-        InitializeStatisticsFromFeedbackPoints();
+        
+        // ✅ Defer collection update to avoid COMException during WinUI binding callback
+        // This ensures the Statistics collection is modified AFTER the property change callback completes
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            InitializeStatisticsFromFeedbackPoints();
+        });
     }
 
     #endregion

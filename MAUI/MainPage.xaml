@@ -116,57 +116,51 @@
                     </Border>
 
                     <!--  Connection & Track Power Toggles  -->
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="4">
+                    <Grid ColumnDefinitions="*,*">
                         <!--  Connection Toggle  -->
                         <Border
                             Grid.Column="0"
-                            Padding="8,5"
-                            BackgroundColor="{DynamicResource SurfaceDark}"
+                            HorizontalOptions="Center"
                             StrokeShape="RoundRectangle 6"
                             StrokeThickness="0">
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                            <Grid ColumnDefinitions="Auto,Auto">
                                 <Label
                                     Grid.Column="0"
                                     FontSize="11"
                                     Text="{Binding IsConnected, Converter={toolkit:BoolToObjectConverter TrueObject='Connected', FalseObject='Disconnected'}}"
                                     TextColor="{DynamicResource TextSecondary}"
-                                    VerticalOptions="Center" />
+                                    VerticalTextAlignment="Center" />
                                 <Switch
-                                    x:Name="ConnectionSwitch"
                                     Grid.Column="1"
                                     IsToggled="{Binding IsConnected, Mode=OneWay}"
                                     OnColor="{DynamicResource RailwayAccent}"
                                     Scale="0.75"
                                     ThumbColor="White"
-                                    Toggled="ConnectionSwitch_Toggled"
-                                    VerticalOptions="Center" />
+                                    Toggled="ConnectionSwitch_Toggled" />
                             </Grid>
                         </Border>
 
                         <!--  Track Power Toggle  -->
                         <Border
                             Grid.Column="1"
-                            Padding="8,5"
-                            BackgroundColor="{DynamicResource SurfaceDark}"
+                            HorizontalOptions="Center"
                             StrokeShape="RoundRectangle 6"
                             StrokeThickness="0">
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                            <Grid ColumnDefinitions="Auto,Auto">
                                 <Label
                                     Grid.Column="0"
                                     FontSize="11"
                                     Text="Track Power"
                                     TextColor="{DynamicResource TextSecondary}"
-                                    VerticalOptions="Center" />
+                                    VerticalTextAlignment="Center" />
                                 <Switch
-                                    x:Name="TrackPowerSwitch"
                                     Grid.Column="1"
                                     IsEnabled="{Binding IsConnected}"
                                     IsToggled="{Binding IsTrackPowerOn, Mode=OneWay}"
                                     OnColor="{DynamicResource RailwayWarning}"
                                     Scale="0.75"
                                     ThumbColor="White"
-                                    Toggled="TrackPowerSwitch_Toggled"
-                                    VerticalOptions="Center" />
+                                    Toggled="TrackPowerSwitch_Toggled" />
                             </Grid>
                         </Border>
                     </Grid>
@@ -242,17 +236,20 @@
                 Stroke="Transparent"
                 StrokeThickness="0">
                 <VerticalStackLayout Spacing="6">
-                    <HorizontalStackLayout>
-                        <!--  Section Header  -->
+                    <!--  Section Header  -->
+                    <Grid ColumnDefinitions="*,*">
                         <Label
+                            Grid.Column="0"
                             FontAttributes="Bold"
                             FontSize="14"
                             Text="Feedback Points" />
                         <Label
+                            Grid.Column="1"
                             FontAttributes="Bold"
                             FontSize="14"
-                            Text="   Lap Counter" />
-                    </HorizontalStackLayout>
+                            HorizontalTextAlignment="End"
+                            Text="Lap Counter" />
+                    </Grid>
                     <!--  Feedback Points & Target Laps  -->
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="4">
                         <!--  Number of Feedback Points  -->

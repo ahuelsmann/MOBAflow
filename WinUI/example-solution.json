@@ -54,7 +54,7 @@
           },
           "InvoiceDate": "2024-03-15T00:00:00",
           "DeliveryDate": "2024-03-20T00:00:00",
-          "PhotoPath": "locomotives/f1e2d3c4-b5a6-7890-1234-567890abcdef.jpg"
+          "PhotoPath": null
         },
         {
           "Id": "a1b2c3d4-e5f6-7890-1234-567890fedcba",
@@ -77,7 +77,7 @@
           },
           "InvoiceDate": "2023-11-10T00:00:00",
           "DeliveryDate": "2023-11-18T00:00:00",
-          "PhotoPath": null
+          "PhotoPath": "C:\\Users\\andre\\AppData\\Local\\MOBAflow\\photos\\locomotives\\a1b2c3d4-e5f6-7890-1234-567890fedcba.jpg"
         }
       ],
       "PassengerWagons": [
@@ -134,7 +134,7 @@
           "Id": "d4e5f6a7-b8c9-0123-4567-890123efabcd",
           "Name": "Container Wagon Sgns",
           "Pos": 1,
-          "DigitalAddress": null,
+          "DigitalAddress": 146,
           "Manufacturer": "Piko",
           "ArticleNumber": "54771",
           "Series": "Sgns",

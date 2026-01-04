@@ -4,11 +4,8 @@ namespace Moba.WinUI.View;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-
 using SharedUI.ViewModel;
-
 using System.Diagnostics;
-
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 
@@ -141,11 +138,7 @@ public sealed partial class TrackPlanEditorPage
 
     #region Segment Drag & Snap
 
-    private bool _isDraggingSegment;
-    private TrackSegmentViewModel? _draggedSegment;
-    private Point _lastDragPosition;
     private List<TrackSegmentViewModel> _dragGroup = [];
-    private UIElement? _dragCaptureElement;
 
     private void StartSegmentDrag(TrackSegmentViewModel segment, PointerRoutedEventArgs e, UIElement captureElement)
     {
@@ -171,71 +164,10 @@ public sealed partial class TrackPlanEditorPage
             groupSegment.DragOffsetY = canvasY - groupSegment.WorldTransform.TranslateY;
         }
 
-        _isDraggingSegment = true;
-        _draggedSegment = segment;
-        _lastDragPosition = new Point(canvasX, canvasY);
-        _dragCaptureElement = captureElement;
-
         // Capture pointer for drag tracking
         captureElement.CapturePointer(e.Pointer);
 
         Debug.WriteLine($"🎯 Drag started: {segment.ArticleCode} (group size: {_dragGroup.Count})");
     }
-
-    private void Segment_PointerMoved(object sender, PointerRoutedEventArgs e)
-    {
-        if (!_isDraggingSegment || _draggedSegment == null) return;
-
-        var pointer = e.GetCurrentPoint(TrackCanvas);
-
-        // Convert to canvas coordinates
-        var zoomFactor = ViewModel.ZoomFactor;
-        var canvasX = (pointer.Position.X - ViewModel.PanOffsetX) / zoomFactor;
-        var canvasY = (pointer.Position.Y - ViewModel.PanOffsetY) / zoomFactor;
-
-        // Calculate delta from last position
-        var deltaX = canvasX - _lastDragPosition.X;
-        var deltaY = canvasY - _lastDragPosition.Y;
-
-        // Move all segments in the drag group
-        foreach (var segment in _dragGroup)
-        {
-            segment.MoveBy(deltaX, deltaY);
-        }
-
-        // Re-render to update PathData
-        ViewModel.RefreshPathData();
-
-        _lastDragPosition = new Point(canvasX, canvasY);
-        e.Handled = true;
-    }
-
-    private void Segment_PointerReleased(object sender, PointerRoutedEventArgs e)
-    {
-        if (_isDraggingSegment && _draggedSegment != null)
-        {
-
-            Debug.WriteLine($"🎯 Drag ended: {_draggedSegment.ArticleCode}");
-
-            // Clear drag state
-            _draggedSegment.IsDragging = false;
-            foreach (var segment in _dragGroup)
-            {
-                segment.IsPartOfDragGroup = false;
-            }
-
-            _isDraggingSegment = false;
-            _draggedSegment = null;
-            _dragGroup.Clear();
-
-            if (sender is UIElement elem)
-            {
-                elem.ReleasePointerCapture(e.Pointer);
-            }
-
-            e.Handled = true;
-        }
-    }
-
     #endregion
 }

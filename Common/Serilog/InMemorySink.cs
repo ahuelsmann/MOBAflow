@@ -3,7 +3,6 @@ namespace Moba.Common.Serilog;
 
 using global::Serilog.Core;
 using global::Serilog.Events;
-
 using System.Collections.Concurrent;
 
 /// <summary>

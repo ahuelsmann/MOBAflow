@@ -3,7 +3,6 @@ namespace Moba.WinUI.Converter;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
-using System;
 
 /// <summary>
 /// Inverts BoolToVisibilityConverter: false → Visible, true → Collapsed.

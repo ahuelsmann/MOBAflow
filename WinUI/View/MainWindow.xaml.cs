@@ -4,16 +4,11 @@ namespace Moba.WinUI.View;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-
 using Service;
-
 using SharedUI.Interface;
 using SharedUI.ViewModel;
-
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Threading.Tasks;
-
 using MainWindowViewModel = SharedUI.ViewModel.MainWindowViewModel;
 
 public sealed partial class MainWindow

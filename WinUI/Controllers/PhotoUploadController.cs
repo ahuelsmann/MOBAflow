@@ -37,7 +37,7 @@ public class PhotoUploadController : ControllerBase
         [FromForm] string category,
         [FromForm] Guid entityId)
     {
-        if (file == null || file.Length == 0)
+        if (file.Length == 0)
             return BadRequest(new { error = "No file uploaded" });
 
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();

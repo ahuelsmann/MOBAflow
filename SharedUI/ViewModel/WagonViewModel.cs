@@ -135,4 +135,10 @@ public partial class WagonViewModel : ObservableObject, IViewModelWrapper<Wagon>
 
     [ObservableProperty]
     private IAsyncRelayCommand? browsePhotoCommand;
+
+    [ObservableProperty]
+    private IRelayCommand? deletePhotoCommand;
+
+    [ObservableProperty]
+    private IRelayCommand? showInExplorerCommand;
 }

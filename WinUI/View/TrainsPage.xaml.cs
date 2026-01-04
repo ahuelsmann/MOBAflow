@@ -1,10 +1,9 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
-using Microsoft.UI.Xaml.Controls;
 using SharedUI.ViewModel;
 
-public sealed partial class TrainsPage : Page
+public sealed partial class TrainsPage
 {
     public MainWindowViewModel ViewModel { get; }
 
@@ -14,4 +13,3 @@ public sealed partial class TrainsPage : Page
         InitializeComponent();
     }
 }
-

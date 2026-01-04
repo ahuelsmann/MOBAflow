@@ -4,7 +4,7 @@ namespace Moba.SharedUI.Service;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using Moba.TrackPlan.Domain;
+using TrackPlan.Domain;
 using ViewModel;
 
 /// <summary>

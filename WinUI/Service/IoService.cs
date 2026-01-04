@@ -2,13 +2,18 @@
 namespace Moba.WinUI.Service;
 
 using Backend.Converter;
+
 using Domain;
+
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.Storage.Pickers;
+
 using Newtonsoft.Json;
+
 using SharedUI.Interface;
+
 using System.Diagnostics;
 
 public class IoService : IIoService
@@ -16,12 +21,10 @@ public class IoService : IIoService
     private WindowId? _windowId;
     private XamlRoot? _xamlRoot;
     private readonly ISettingsService _settingsService;
-    private readonly IUiDispatcher _uiDispatcher;
 
-    public IoService(ISettingsService settingsService, IUiDispatcher uiDispatcher)
+    public IoService(ISettingsService settingsService)
     {
         _settingsService = settingsService;
-        _uiDispatcher = uiDispatcher;
     }
 
     /// <summary>
@@ -33,10 +36,18 @@ public class IoService : IIoService
         _xamlRoot = xamlRoot;
     }
 
-    public async Task<(Solution? solution, string? path, string? error)> LoadAsync()
+    /// <summary>
+    /// Ensures the service is initialized with a WindowId before file operations.
+    /// </summary>
+    private void EnsureInitialized()
     {
         if (_windowId == null)
-            throw new InvalidOperationException("WindowId must be set before using IoService");
+            throw new InvalidOperationException("WindowId must be set before using IoService. Call SetWindowId() first.");
+    }
+
+    public async Task<(Solution? solution, string? path, string? error)> LoadAsync()
+    {
+        EnsureInitialized();
 
         var picker = new FileOpenPicker(_windowId.Value)
         {
@@ -101,8 +112,7 @@ public class IoService : IIoService
 
     public async Task<(bool success, string? path, string? error)> SaveAsync(Solution solution, string? currentPath)
     {
-        if (_windowId == null)
-            throw new InvalidOperationException("WindowId must be set before using IoService");
+        EnsureInitialized();
 
         string? path = currentPath;
         if (string.IsNullOrEmpty(path))
@@ -120,21 +130,33 @@ public class IoService : IIoService
             path = result.Path;
         }
 
-        var settings = new JsonSerializerSettings
+        try
         {
-            Converters = {
-                new ActionConverter()
-            },
-            Formatting = Formatting.Indented
-        };
+            var settings = new JsonSerializerSettings
+            {
+                Converters = {
+                    new ActionConverter()
+                },
+                Formatting = Formatting.Indented
+            };
 
-        var json = JsonConvert.SerializeObject(solution, settings);
-        await File.WriteAllTextAsync(path!, json);
+            var json = JsonConvert.SerializeObject(solution, settings);
+            
+            // ✅ Atomic write: Write to temp file first, then rename to avoid data corruption
+            var tempPath = path! + ".tmp";
+            await File.WriteAllTextAsync(tempPath, json);
+            File.Move(tempPath, path!, overwrite: true);
 
-        // Save last solution path to settings
-        _settingsService.LastSolutionPath = path;
+            // Save last solution path to settings
+            _settingsService.LastSolutionPath = path;
 
-        return (true, path, null);
+            return (true, path, null);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"❌ Error saving solution: {ex.Message}");
+            return (false, null, $"Save failed: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -148,8 +170,7 @@ public class IoService : IIoService
             // Check if there are unsaved changes
             if (hasUnsavedChanges)
             {
-                if (_windowId == null)
-                    throw new InvalidOperationException("WindowId must be set before using IoService");
+                EnsureInitialized();
 
                 var dialog = new ContentDialog
                 {
@@ -199,8 +220,7 @@ public class IoService : IIoService
     /// <returns>The selected file path, or null if cancelled.</returns>
     public async Task<string?> BrowseForJsonFileAsync()
     {
-        if (_windowId == null)
-            throw new InvalidOperationException("WindowId must be set before using IoService");
+        EnsureInitialized();
 
         var picker = new FileOpenPicker(_windowId.Value)
         {
@@ -218,8 +238,7 @@ public class IoService : IIoService
     /// <returns>The selected file path, or null if cancelled.</returns>
     public async Task<string?> BrowseForXmlFileAsync()
     {
-        if (_windowId == null)
-            throw new InvalidOperationException("WindowId must be set before using IoService");
+        EnsureInitialized();
 
         var picker = new FileOpenPicker(_windowId.Value)
         {
@@ -236,8 +255,7 @@ public class IoService : IIoService
     /// </summary>
     public async Task<string?> SaveXmlFileAsync(string suggestedFileName)
     {
-        if (_windowId == null)
-            throw new InvalidOperationException("WindowId must be set before using IoService");
+        EnsureInitialized();
 
         var picker = new FileSavePicker(_windowId.Value)
         {
@@ -257,8 +275,7 @@ public class IoService : IIoService
     /// <returns>The selected file path, or null if cancelled.</returns>
     public async Task<string?> BrowseForAudioFileAsync()
     {
-        if (_windowId == null)
-            throw new InvalidOperationException("WindowId must be set before using IoService");
+        EnsureInitialized();
 
         var picker = new FileOpenPicker(_windowId.Value)
         {
@@ -276,8 +293,7 @@ public class IoService : IIoService
     /// <returns>The selected file path, or null if cancelled.</returns>
     public async Task<string?> BrowseForPhotoAsync()
     {
-        if (_windowId == null)
-            throw new InvalidOperationException("WindowId must be set before using IoService");
+        EnsureInitialized();
 
         var picker = new FileOpenPicker(_windowId.Value)
         {
@@ -301,9 +317,8 @@ public class IoService : IIoService
     {
         try
         {
-            var targetCategory = category.Equals("locomotives", StringComparison.OrdinalIgnoreCase)
-                ? "locomotives"
-                : "wagons";
+            // ✅ Normalize category to standard folder names
+            var targetCategory = NormalizePhotoCategory(category);
 
             // ✅ Use .NET standard APIs for unpackaged WinUI 3 apps
             // ApplicationData.Current only works in packaged apps (MSIX)
@@ -331,6 +346,43 @@ public class IoService : IIoService
             Debug.WriteLine($"Error saving photo: {ex.Message}");
             return null;
         }
+    }
+
+    /// <summary>
+    /// Normalizes photo category to standard folder names.
+    /// </summary>
+    private static string NormalizePhotoCategory(string category)
+    {
+        return category.ToLowerInvariant() switch
+        {
+            "locomotives" => "locomotives",
+            "passenger-wagons" or "goods-wagons" => "wagons",
+            _ => throw new ArgumentException($"Unknown photo category: '{category}'. Valid values: 'locomotives', 'passenger-wagons', 'goods-wagons'", nameof(category))
+        };
+    }
+
+    /// <summary>
+    /// Converts a relative photo path to an absolute file system path.
+    /// </summary>
+    public string? GetPhotoFullPath(string? relativePath)
+    {
+        if (string.IsNullOrWhiteSpace(relativePath))
+            return null;
+
+        // If already absolute, return as-is
+        if (Path.IsPathRooted(relativePath))
+            return relativePath;
+
+        // Convert relative path to absolute
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var appFolder = Path.Combine(localAppData, "MOBAflow");
+
+        // ✅ Platform-agnostic: Normalize path separators
+        // relativePath format: "photos/locomotives/{guid}.jpg" or "photos\locomotives\{guid}.jpg"
+        var normalizedPath = relativePath.Replace("/", Path.DirectorySeparatorChar.ToString());
+        var absolutePath = Path.Combine(appFolder, normalizedPath);
+
+        return absolutePath;
     }
 }
 

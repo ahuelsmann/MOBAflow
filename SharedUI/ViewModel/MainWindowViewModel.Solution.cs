@@ -2,11 +2,8 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.Input;
-
 using Domain;
-
 using Service;
-
 using System.Diagnostics;
 
 /// <summary>
@@ -127,6 +124,9 @@ public partial class MainWindowViewModel
         CurrentSolutionPath = null;
         HasUnsavedChanges = false;  // New solution starts as "clean"
 
+        // ✅ Clear all selections to reset property panels across all pages
+        ClearAllSelections();
+
         // Initialize JourneyManager with the new empty project
         InitializeJourneyManager(newProject);
 
@@ -191,6 +191,9 @@ public partial class MainWindowViewModel
     /// </summary>
     private void ApplyLoadedSolution(Solution loadedSolution, string path)
     {
+        // ✅ Clear all selections first to prevent stale data from previous solution
+        ClearAllSelections();
+
         Solution.Projects.Clear();
         foreach (var project in loadedSolution.Projects)
         {
@@ -233,6 +236,41 @@ public partial class MainWindowViewModel
     }
 
     private bool CanSaveSolution() => _ioService is not NullIoService;
+
+    /// <summary>
+    /// Clears all selections across all pages to reset property panels.
+    /// This ensures property panels show "No item selected" instead of stale data.
+    /// 
+    /// Called in the following scenarios:
+    /// - Creating a new solution (NewSolutionAsync)
+    /// - Loading a solution from file (ApplyLoadedSolution)
+    /// - Deleting the currently selected project (DeleteProject)
+    /// </summary>
+    private void ClearAllSelections()
+    {
+        // Solution Page
+        SelectedProject = null;
+        SolutionPageSelectedObject = null;
+        
+        // Journeys Page
+        SelectedJourney = null;
+        SelectedStation = null;
+        JourneysPageSelectedObject = null;
+        
+        // Workflows Page
+        SelectedWorkflow = null;
+        SelectedAction = null;
+        WorkflowsPageSelectedObject = null;
+        
+        // Trains Page
+        SelectedLocomotive = null;
+        SelectedPassengerWagon = null;
+        SelectedGoodsWagon = null;
+        TrainsPageSelectedObject = null;
+        
+        // General
+        CurrentSelectedObject = null;
+    }
 
     /// <summary>
     /// Loads cities from City Library into AvailableCities for UI binding.

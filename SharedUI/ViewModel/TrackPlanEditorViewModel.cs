@@ -8,15 +8,15 @@ using CommunityToolkit.Mvvm.Input;
 using Interface;
 
 using Microsoft.Extensions.Logging;
-
-using Service;
-using Moba.TrackPlan.Domain;
-using TrackPlan.Geometry;
-using TrackPlan.Import.AnyRail;
-using TrackPlan.Renderer;
 using Moba.TrackPlan.Service;
 
+using Service;
+
 using System.Collections.ObjectModel;
+
+using TrackPlan.Geometry;
+using TrackPlan.Import;
+using TrackPlan.Renderer;
 
 using TrackConnectionModel = Moba.TrackPlan.Domain.TrackConnection;
 using TrackLayoutModel = Moba.TrackPlan.Domain.TrackLayout;
@@ -30,46 +30,9 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     private readonly TrackGeometryLibrary _geometryLibrary;
     private readonly FeedbackStateManager _feedbackStateManager;
     private readonly ILogger<TrackPlanEditorViewModel> _logger;
-    private readonly ConnectorMatcher _connectorMatcher;
 
     // ⭐ NEW: TopologySolver mit eigenem Logger
     private readonly TopologySolver _topologySolver;
-
-    // --------------------------------------------------------------------
-    // Constructor
-    // --------------------------------------------------------------------
-
-    public TrackPlanEditorViewModel(
-        MainWindowViewModel mainViewModel,
-        IIoService ioService,
-        ILogger<TrackPlanEditorViewModel> logger,
-        ILogger<ConnectorMatcher> matcherLogger,
-        ILogger<TopologySolver> topologyLogger)   // ⭐ NEW
-    {
-        _mainViewModel = mainViewModel;
-        _ioService = ioService;
-        _logger = logger;
-
-        _geometryLibrary = new TrackGeometryLibrary();
-        _renderer = new TopologyRenderer(_geometryLibrary);
-        _feedbackStateManager = new FeedbackStateManager();
-        _connectorMatcher = new ConnectorMatcher(_geometryLibrary, matcherLogger);
-
-        // ⭐ NEW: TopologySolver korrekt initialisieren
-        _topologySolver = new TopologySolver(_geometryLibrary, topologyLogger);
-
-        _feedbackStateManager.FeedbackStateChanged += OnFeedbackStateChanged;
-
-        _mainViewModel.SolutionSaving += (_, _) => SyncToProject();
-        _mainViewModel.SolutionLoaded += (_, _) => LoadFromProject();
-        _mainViewModel.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == nameof(MainWindowViewModel.SelectedProject))
-                LoadFromProject();
-        };
-
-        LoadTrackLibrary();
-    }
 
     // --------------------------------------------------------------------
     // Track Library
@@ -79,13 +42,6 @@ public partial class TrackPlanEditorViewModel : ObservableObject
 
     [ObservableProperty]
     private TrackTemplateViewModel? selectedTemplate;
-
-    private void LoadTrackLibrary()
-    {
-        TrackLibrary.Clear();
-        foreach (var template in PikoATrackLibrary.Templates)
-            TrackLibrary.Add(new TrackTemplateViewModel(template));
-    }
 
     // --------------------------------------------------------------------
     // Layout Data
@@ -357,65 +313,13 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         OnPropertyChanged(nameof(StatusText));
     }
 
-    // --------------------------------------------------------------------
-    // Persistence
-    // --------------------------------------------------------------------
-
-    private void SyncToProject()
-    {
-        var project = _mainViewModel.SelectedProject?.Model;
-        if (project == null) return;
-
-        var layout = project.TrackLayout ??= new TrackLayoutModel();
-        layout.Name = LayoutName;
-        layout.Description = LayoutDescription;
-        layout.Segments = Segments.Select(s => s.Model).ToList();
-        layout.Connections = Connections.ToList();
-    }
-
-    private void LoadFromProject()
-    {
-        var layout = _mainViewModel.SelectedProject?.Model.TrackLayout;
-        if (layout is not TrackLayoutModel trackLayout)
-            return;
-
-        Segments.Clear();
-        Connections.Clear();
-
-        LayoutName = trackLayout.Name;
-        LayoutDescription = trackLayout.Description;
-
-        foreach (var segment in trackLayout.Segments)
-            Segments.Add(new TrackSegmentViewModel(segment));
-
-        Connections.AddRange(trackLayout.Connections);
-
-        RenderLayout();
-    }
-
-    // --------------------------------------------------------------------
-    // Feedback State
-    // --------------------------------------------------------------------
-
-    private void OnFeedbackStateChanged(object? sender, FeedbackStateChangedEventArgs e)
-    {
-        var segment = Segments.FirstOrDefault(s => s.Id == e.SegmentId);
-        if (segment != null)
-        {
-            var stateText = e.IsOccupied ? "OCCUPIED" : "FREE";
-            _logger.LogInformation(
-                "Segment {SegmentId} ({ArticleCode}) InPort {InPort} is now {State}",
-                e.SegmentId, e.ArticleCode, e.InPort, stateText);
-        }
-    }
-
     [RelayCommand]
     private async Task ImportFromAnyRailXml()
     {
         var file = await _ioService.BrowseForXmlFileAsync();
         if (file == null) return;
 
-        var anyRailLayout = await AnyRailLayout.ParseAsync(file);
+        var anyRailLayout = await AnyRail.ParseAsync(file);
 
         _logger.LogInformation(
             "Importing AnyRail layout: {PartCount} parts, {EndpointCount} endpoints, {ConnectionCount} connections",

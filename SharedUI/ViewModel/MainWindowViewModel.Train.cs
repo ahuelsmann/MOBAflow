@@ -70,7 +70,7 @@ public partial class MainWindowViewModel
 
     private void AttachWagonPhotoCommand(WagonViewModel? wagonVm)
     {
-        if (wagonVm == null || _ioService == null) return;
+        if (wagonVm == null) return;
         if (wagonVm.BrowsePhotoCommand != null) return;
 
         wagonVm.BrowsePhotoCommand = new AsyncRelayCommand(async () =>
@@ -86,11 +86,40 @@ public partial class MainWindowViewModel
                 _logger.LogInformation("Photo saved for wagon: {Name}", wagonVm.Name);
             }
         });
+
+        wagonVm.DeletePhotoCommand = new RelayCommand(() =>
+        {
+            wagonVm.PhotoPath = null;
+            HasUnsavedChanges = true;
+            _logger.LogInformation("Photo deleted for wagon: {Name}", wagonVm.Name);
+        });
+
+        wagonVm.ShowInExplorerCommand = new RelayCommand(() =>
+        {
+            if (string.IsNullOrWhiteSpace(wagonVm.PhotoPath)) return;
+
+            var fullPath = _ioService.GetPhotoFullPath(wagonVm.PhotoPath);
+            if (string.IsNullOrEmpty(fullPath) || !File.Exists(fullPath))
+            {
+                _logger.LogWarning("Photo file not found: {Path}", fullPath);
+                return;
+            }
+
+            try
+            {
+                Process.Start("explorer.exe", $"/select,\"{fullPath}\"");
+                _logger.LogInformation("Opened Explorer at: {Path}", fullPath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to open Explorer for: {Path}", fullPath);
+            }
+        });
     }
 
     private void AttachLocomotivePhotoCommand(LocomotiveViewModel? locoVm)
     {
-        if (locoVm == null || _ioService == null) return;
+        if (locoVm == null) return;
         if (locoVm.BrowsePhotoCommand != null) return;
 
         locoVm.BrowsePhotoCommand = new AsyncRelayCommand(async () =>
@@ -104,6 +133,35 @@ public partial class MainWindowViewModel
                 locoVm.PhotoPath = saved;
                 HasUnsavedChanges = true;
                 _logger.LogInformation("Photo saved for locomotive: {Name}", locoVm.Name);
+            }
+        });
+
+        locoVm.DeletePhotoCommand = new RelayCommand(() =>
+        {
+            locoVm.PhotoPath = null;
+            HasUnsavedChanges = true;
+            _logger.LogInformation("Photo deleted for locomotive: {Name}", locoVm.Name);
+        });
+
+        locoVm.ShowInExplorerCommand = new RelayCommand(() =>
+        {
+            if (string.IsNullOrWhiteSpace(locoVm.PhotoPath)) return;
+
+            var fullPath = _ioService.GetPhotoFullPath(locoVm.PhotoPath);
+            if (string.IsNullOrEmpty(fullPath) || !File.Exists(fullPath))
+            {
+                _logger.LogWarning("Photo file not found: {Path}", fullPath);
+                return;
+            }
+
+            try
+            {
+                Process.Start("explorer.exe", $"/select,\"{fullPath}\"");
+                _logger.LogInformation("Opened Explorer at: {Path}", fullPath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to open Explorer for: {Path}", fullPath);
             }
         });
     }
@@ -293,8 +351,6 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private async Task BrowseCurrentWagonPhotoAsync()
     {
-        if (_ioService == null) return;
-
         if (SelectedPassengerWagon?.Model != null)
         {
             var photoPath = await _ioService.BrowseForPhotoAsync();
@@ -326,8 +382,6 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private async Task BrowseSelectedPhotoAsync()
     {
-        if (_ioService == null) return;
-
         if (SelectedLocomotive != null)
         {
             await BrowseLocomotivePhotoAsync();

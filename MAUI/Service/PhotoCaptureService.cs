@@ -1,11 +1,7 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
-using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Media;
 using SharedUI.Interface;
-using System.IO;
-using Microsoft.Maui.Storage;
 
 public class PhotoCaptureService : IPhotoCaptureService
 {

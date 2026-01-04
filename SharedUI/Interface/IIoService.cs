@@ -55,4 +55,11 @@ public interface IIoService
     /// <param name="entityId">Entity ID for filename</param>
     /// <returns>Relative path to saved photo (e.g., "photos/locomotives/{id}.jpg")</returns>
     Task<string?> SavePhotoAsync(string sourceFilePath, string category, Guid entityId);
+
+    /// <summary>
+    /// Converts a relative photo path to an absolute file system path.
+    /// </summary>
+    /// <param name="relativePath">Relative path (e.g., returned from SavePhotoAsync)</param>
+    /// <returns>Absolute file system path, or null if path is invalid</returns>
+    string? GetPhotoFullPath(string? relativePath);
 }

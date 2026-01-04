@@ -90,7 +90,7 @@
                     HorizontalScrollBarVisibility="Auto"
                     VerticalScrollBarVisibility="Disabled"
                     Visibility="{x:Bind ViewModel.HasSelectedJourney, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <Grid VerticalAlignment="Center">
+                    <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />

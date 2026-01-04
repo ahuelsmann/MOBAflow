@@ -140,4 +140,10 @@ public partial class LocomotiveViewModel : ObservableObject, IViewModelWrapper<L
 
     [ObservableProperty]
     private IAsyncRelayCommand? browsePhotoCommand;
+
+    [ObservableProperty]
+    private IRelayCommand? deletePhotoCommand;
+
+    [ObservableProperty]
+    private IRelayCommand? showInExplorerCommand;
 }

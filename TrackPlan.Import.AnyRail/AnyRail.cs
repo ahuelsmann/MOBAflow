@@ -1,5 +1,5 @@
 // Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.TrackPlan.Import.AnyRail;
+namespace Moba.TrackPlan.Import;
 
 using Domain;
 
@@ -10,7 +10,7 @@ using System.Xml.Linq;
 /// <summary>
 /// Represents a track layout imported from AnyRail XML format.
 /// </summary>
-public class AnyRailLayout
+public class AnyRail
 {
     public double Width { get; set; }
     public double Height { get; set; }
@@ -23,12 +23,12 @@ public class AnyRailLayout
     /// <summary>
     /// Parses an AnyRail XML file asynchronously and returns an AnyRailLayout.
     /// </summary>
-    public static async Task<AnyRailLayout> ParseAsync(string xmlPath, CancellationToken cancellationToken = default)
+    public static async Task<AnyRail> ParseAsync(string xmlPath, CancellationToken cancellationToken = default)
     {
         using var reader = File.OpenText(xmlPath);
         var xdoc = await XDocument.LoadAsync(reader, LoadOptions.None, cancellationToken).ConfigureAwait(false);
         var layoutEl = xdoc.Root!;
-        var layout = new AnyRailLayout
+        var layout = new AnyRail
         {
             Width = double.Parse(layoutEl.Attribute("width")?.Value ?? "0", CultureInfo.InvariantCulture),
             Height = double.Parse(layoutEl.Attribute("height")?.Value ?? "0", CultureInfo.InvariantCulture),
@@ -117,7 +117,7 @@ public class AnyRailLayout
     /// Parses an AnyRail XML file and returns an AnyRailLayout (synchronous wrapper for backward compatibility).
     /// </summary>
     [Obsolete("Use ParseAsync instead for better performance and non-blocking I/O")]
-    public static AnyRailLayout Parse(string xmlPath) => ParseAsync(xmlPath).GetAwaiter().GetResult();
+    public static AnyRail Parse(string xmlPath) => ParseAsync(xmlPath).GetAwaiter().GetResult();
 
     /// <summary>
     /// Converts AnyRail connections (endpoint-to-endpoint) to TrackConnections (segment-to-segment).

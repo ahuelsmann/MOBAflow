@@ -2,13 +2,11 @@
 namespace Moba.Backend;
 
 using Protocol;
-
 using System.Diagnostics;
 
 /// <summary>
 /// Represents a Z21 feedback event with the active InPort number.
 /// Extracts the InPort from a LAN_RMBUS_DATACHANGED packet using bit-level analysis.
-/// 
 /// Historical Note: Previously used content[5] directly, which was incorrect.
 /// The data bytes represent feedback STATE (bit pattern), not InPort number.
 /// Now uses Z21FeedbackParser.ExtractFirstInPort() for correct bit-to-InPort conversion.
@@ -43,4 +41,3 @@ public class FeedbackResult
         }
     }
 }
-

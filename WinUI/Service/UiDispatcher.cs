@@ -27,7 +27,7 @@ public class UiDispatcher : IUiDispatcher
         else if (_dispatcherQueue is not null)
         {
             var tcs = new TaskCompletionSource();
-            _dispatcherQueue.TryEnqueue(async () =>
+            _dispatcherQueue.TryEnqueue(async void () =>
             {
                 try
                 {
@@ -53,10 +53,11 @@ public class UiDispatcher : IUiDispatcher
         {
             return await asyncFunc();
         }
-        else if (_dispatcherQueue is not null)
+
+        if (_dispatcherQueue is not null)
         {
             var tcs = new TaskCompletionSource<T>();
-            _dispatcherQueue.TryEnqueue(async () =>
+            _dispatcherQueue.TryEnqueue(async void () =>
             {
                 try
                 {
@@ -70,9 +71,7 @@ public class UiDispatcher : IUiDispatcher
             });
             return await tcs.Task;
         }
-        else
-        {
-            return await asyncFunc();
-        }
+
+        return await asyncFunc();
     }
 }
