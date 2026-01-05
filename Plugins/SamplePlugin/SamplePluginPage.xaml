@@ -1,0 +1,505 @@
+<!--
+    SamplePluginPage.xaml - Dynamically loaded XAML for plugin
+    Note: Uses {Binding} instead of {x:Bind} for runtime loading via XamlReader.Load
+    No x:Class attribute - this XAML is loaded as embedded resource at runtime
+-->
+<Page xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ScrollViewer>
+        <StackPanel Padding="24" Spacing="16">
+
+            <!--  Header  -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Spacing="4">
+                    <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="{Binding Title}" />
+                    <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="{Binding Description}" />
+                    <TextBlock Style="{StaticResource CaptionTextBlockStyle}">
+                        <Run Text="📁 " />
+                        <Run Text="{Binding CurrentSolutionPath}" />
+                    </TextBlock>
+                </StackPanel>
+
+                <Button
+                    Grid.Column="1"
+                    VerticalAlignment="Top"
+                    Command="{Binding RefreshStatisticsCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontSize="14" Glyph="&#xE72C;" />
+                        <TextBlock Text="Refresh" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <!--  Main Content Grid  -->
+            <Grid ColumnSpacing="16" RowSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!--  Left Column  -->
+                <StackPanel Grid.Column="0" Spacing="16">
+
+                    <!--  Z21 Status Card  -->
+                    <Border
+                        Padding="16"
+                        BorderBrush="Gray"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                        <StackPanel Spacing="12">
+                            <TextBlock
+                                FontSize="16"
+                                FontWeight="SemiBold"
+                                Text="🚂 Z21 Connection" />
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    Text="Status" />
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    Foreground="Gray"
+                                    Text="{Binding Z21Status}" />
+
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="0"
+                                    Text="Track Power" />
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    Foreground="Gray"
+                                    Text="{Binding TrackPowerStatus}" />
+
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="0"
+                                    Text="IP Address" />
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="1"
+                                    Foreground="Gray"
+                                    Text="{Binding Z21IpAddress}" />
+
+                                <TextBlock
+                                    Grid.Row="3"
+                                    Grid.Column="0"
+                                    Text="Port" />
+                                <TextBlock
+                                    Grid.Row="3"
+                                    Grid.Column="1"
+                                    Foreground="Gray"
+                                    Text="{Binding Z21Port}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!--  Project Statistics Card  -->
+                    <Border
+                        Padding="16"
+                        BorderBrush="Gray"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                        <StackPanel Spacing="12">
+                            <TextBlock
+                                FontSize="16"
+                                FontWeight="SemiBold"
+                                Text="📊 Project Statistics" />
+
+                            <!--  Solution Section  -->
+                            <TextBlock FontWeight="SemiBold" Text="Solution" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    Text="Name" />
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    Foreground="Gray"
+                                    Text="{Binding SolutionName}" />
+
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="0"
+                                    Text="Projects" />
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    Foreground="Gray"
+                                    Text="{Binding ProjectCount}" />
+
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="0"
+                                    Text="Current Project" />
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="1"
+                                    Foreground="Gray"
+                                    Text="{Binding CurrentProjectName}" />
+                            </Grid>
+
+                            <Border
+                                Height="1"
+                                Margin="0,8"
+                                Background="Gray"
+                                Opacity="0.3" />
+
+                            <!--  Journeys Section  -->
+                            <TextBlock FontWeight="SemiBold" Text="Journeys" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    Text="Total Journeys" />
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    Foreground="Gray"
+                                    Text="{Binding TotalJourneys}" />
+
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="0"
+                                    Text="Total Stations" />
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    Foreground="Gray"
+                                    Text="{Binding TotalStations}" />
+                            </Grid>
+
+                            <Border
+                                Height="1"
+                                Margin="0,8"
+                                Background="Gray"
+                                Opacity="0.3" />
+
+                            <!--  Workflows Section  -->
+                            <TextBlock FontWeight="SemiBold" Text="Workflows" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    Text="Total Workflows" />
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    Foreground="Gray"
+                                    Text="{Binding TotalWorkflows}" />
+
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="0"
+                                    Text="Total Actions" />
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    Foreground="Gray"
+                                    Text="{Binding TotalActions}" />
+                            </Grid>
+
+                            <Border
+                                Height="1"
+                                Margin="0,8"
+                                Background="Gray"
+                                Opacity="0.3" />
+
+                            <!--  Rolling Stock Section  -->
+                            <TextBlock FontWeight="SemiBold" Text="Rolling Stock" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    Text="Trains" />
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    Foreground="Gray"
+                                    Text="{Binding TotalTrains}" />
+
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="0"
+                                    Text="Locomotives" />
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    Foreground="Gray"
+                                    Text="{Binding TotalLocomotives}" />
+
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="0"
+                                    Text="Wagons" />
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="1"
+                                    Foreground="Gray"
+                                    Text="{Binding TotalWagons}" />
+                            </Grid>
+
+                            <Border
+                                Height="1"
+                                Margin="0,8"
+                                Background="Gray"
+                                Opacity="0.3" />
+
+                            <!--  Audio Section  -->
+                            <TextBlock FontWeight="SemiBold" Text="Audio &amp; Speech" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    Text="Voices" />
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    Foreground="Gray"
+                                    Text="{Binding TotalVoices}" />
+
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="0"
+                                    Text="Speaker Engines" />
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    Foreground="Gray"
+                                    Text="{Binding TotalSpeakerEngines}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!--  Right Column  -->
+                <StackPanel Grid.Column="1" Spacing="16">
+
+                    <!--  Settings Overview Card  -->
+                    <Border
+                        Padding="16"
+                        BorderBrush="Gray"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                        <StackPanel Spacing="12">
+                            <TextBlock
+                                FontSize="16"
+                                FontWeight="SemiBold"
+                                Text="⚙️ Settings Overview" />
+
+                            <!--  Speech Section  -->
+                            <TextBlock FontWeight="SemiBold" Text="Speech" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    Text="Engine" />
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    Foreground="Gray"
+                                    Text="{Binding SpeechEngine}" />
+
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="0"
+                                    Text="Region" />
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    Foreground="Gray"
+                                    Text="{Binding SpeechRegion}" />
+
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="0"
+                                    Text="Azure Speech" />
+                                <CheckBox
+                                    Grid.Row="2"
+                                    Grid.Column="1"
+                                    IsChecked="{Binding IsAzureSpeech}"
+                                    IsEnabled="False" />
+                            </Grid>
+
+                            <Border
+                                Height="1"
+                                Margin="0,8"
+                                Background="Gray"
+                                Opacity="0.3" />
+
+                            <!--  Application Section  -->
+                            <TextBlock FontWeight="SemiBold" Text="Application" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    Text="Auto-load Last Solution" />
+                                <CheckBox
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    IsChecked="{Binding AutoLoadLastSolution}"
+                                    IsEnabled="False" />
+
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="0"
+                                    Text="Auto-start WebApp" />
+                                <CheckBox
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    IsChecked="{Binding AutoStartWebApp}"
+                                    IsEnabled="False" />
+                            </Grid>
+
+                            <Border
+                                Height="1"
+                                Margin="0,8"
+                                Background="Gray"
+                                Opacity="0.3" />
+
+                            <!--  Health Check Section  -->
+                            <TextBlock FontWeight="SemiBold" Text="Health Check" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition />
+                                    <RowDefinition />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    Text="Enabled" />
+                                <CheckBox
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    IsChecked="{Binding HealthCheckEnabled}"
+                                    IsEnabled="False" />
+
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="0"
+                                    Text="Interval (s)" />
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    Foreground="Gray"
+                                    Text="{Binding HealthCheckInterval}" />
+                            </Grid>
+
+                            <Border
+                                Height="1"
+                                Margin="0,8"
+                                Background="Gray"
+                                Opacity="0.3" />
+
+                            <!--  Counter Section  -->
+                            <TextBlock FontWeight="SemiBold" Text="Feedback Counter" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0" Text="Feedback Points" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Foreground="Gray"
+                                    Text="{Binding FeedbackPointCount}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

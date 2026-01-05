@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 #if !SKIP_ANDROID_TESTS
 namespace Moba.Test.SharedUI;
 

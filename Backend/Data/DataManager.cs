@@ -1,8 +1,8 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Data;
 
 using Domain;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 public class DataManager
 {
@@ -27,7 +27,7 @@ public class DataManager
                 string json = await File.ReadAllTextAsync(path).ConfigureAwait(false);
                 if (!string.IsNullOrEmpty(json))
                 {
-                    var temp = JsonConvert.DeserializeObject<DataManager>(json);
+                    var temp = JsonSerializer.Deserialize<DataManager>(json, JsonOptions.Default);
                     return temp;
                 }
             }

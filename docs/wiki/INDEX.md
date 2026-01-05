@@ -30,6 +30,9 @@ Hier findest du alle Informationen zu den drei Plattformen:
 - 🎙️ Text-to-Speech (Azure Cognitive Services)
 - 🗂️ Solution Management (Projekt-Verwaltung)
 
+**Setup-Anleitungen:**
+- [`wiki/AZURE-SPEECH-SETUP.md`](wiki/AZURE-SPEECH-SETUP.md) - Azure Speech Service einrichten (kostenlos!)
+
 ---
 
 ### 📱 MOBAsmart (Android)
@@ -378,7 +381,7 @@ nmap -sU -p 21105 192.168.0.111
 
 **MOBAflow Platform** ist Open Source (MIT License).
 
-- **Copyright:** © 2025-2026 Andreas Hülsmann
+- **Copyright:** © 2025-2026 Andreas Huelsmann
 - **License:** MIT
 - **Repository:** https://dev.azure.com/ahuelsmann/MOBAflow
 
@@ -389,3 +392,26 @@ Siehe [`LICENSE`](../LICENSE) für Details.
 **Viel Spaß mit der MOBAflow Platform!** 🚂✨
 
 *Letzte Aktualisierung: 27.12.2025*
+
+---
+
+## 🔌 Plugin Development
+
+**Neue Dokumentation:**
+- [`wiki/PLUGIN-DEVELOPMENT.md`](wiki/PLUGIN-DEVELOPMENT.md) - Komplettes Plugin-Entwickler-Handbuch
+
+**Quick Links:**
+- 🏗️ **Plugin Architecture** - System-Design und Lifecycle
+- 📦 **Plugin Framework** - IPlugin, PluginBase, Services
+- 🚀 **Creating Plugins** - Step-by-step Tutorial
+- 🛠️ **Best Practices** - Do's and Don'ts
+- 🔧 **Troubleshooting** - Common Issues & Solutions
+
+**Hauptmerkmale:**
+- ✅ Auto-Discovery von Plugins im `Plugins/` Ordner
+- ✅ Automatische Validierung beim Start
+- ✅ Full Dependency Injection Support
+- ✅ Lifecycle Hooks (OnInitialize, OnUnload)
+- ✅ Robustheit - App läuft auch ohne Plugins
+
+---

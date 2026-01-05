@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Sound;
 
 /// <summary>
@@ -15,14 +15,5 @@ public class NullSoundPlayer : ISoundPlayer
     {
         // Silent no-op - platform doesn't support audio
         return Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// Does nothing. Audio playback is not supported on this platform.
-    /// </summary>
-    [Obsolete("Use PlayAsync instead for non-blocking I/O and cancellation support")]
-    public void Play(string waveFile)
-    {
-        // Silent no-op - platform doesn't support audio
     }
 }

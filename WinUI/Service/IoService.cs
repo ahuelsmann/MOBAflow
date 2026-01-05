@@ -1,7 +1,5 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
-
-using Backend.Converter;
 
 using Domain;
 
@@ -10,11 +8,9 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.Storage.Pickers;
 
-using Newtonsoft.Json;
-
 using SharedUI.Interface;
 
-using System.Diagnostics;
+using System.Text.Json;
 
 public class IoService : IIoService
 {
@@ -59,16 +55,7 @@ public class IoService : IIoService
         if (result == null) return (null, null, null);
 
         var json = await File.ReadAllTextAsync(result.Path);
-
-        // Configure serialization with ActionConverter
-        var settings = new JsonSerializerSettings
-        {
-            Converters = {
-                new ActionConverter()
-            }
-        };
-
-        var sol = JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
+        var sol = JsonSerializer.Deserialize<Solution>(json, JsonOptions.Default) ?? new Solution();
 
         // Save last solution path to settings
         _settingsService.LastSolutionPath = result.Path;
@@ -88,16 +75,7 @@ public class IoService : IIoService
                 return (null, null, $"File not found: {filePath}");
 
             var json = await File.ReadAllTextAsync(filePath);
-
-            // Configure serialization with ActionConverter
-            var settings = new JsonSerializerSettings
-            {
-                Converters = {
-                    new ActionConverter()
-                }
-            };
-
-            var sol = JsonConvert.DeserializeObject<Solution>(json, settings) ?? new Solution();
+            var sol = JsonSerializer.Deserialize<Solution>(json, JsonOptions.Default) ?? new Solution();
 
             // Save last solution path to settings
             _settingsService.LastSolutionPath = filePath;
@@ -132,15 +110,7 @@ public class IoService : IIoService
 
         try
         {
-            var settings = new JsonSerializerSettings
-            {
-                Converters = {
-                    new ActionConverter()
-                },
-                Formatting = Formatting.Indented
-            };
-
-            var json = JsonConvert.SerializeObject(solution, settings);
+            var json = JsonSerializer.Serialize(solution, JsonOptions.Default);
             
             // ✅ Atomic write: Write to temp file first, then rename to avoid data corruption
             var tempPath = path! + ".tmp";
@@ -154,7 +124,6 @@ public class IoService : IIoService
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"❌ Error saving solution: {ex.Message}");
             return (false, null, $"Save failed: {ex.Message}");
         }
     }
@@ -188,28 +157,22 @@ public class IoService : IIoService
                 if (result == ContentDialogResult.None)
                 {
                     // User cancelled
-                    Debug.WriteLine(" User cancelled new solution creation");
                     return (false, true, null);
                 }
 
                 if (result == ContentDialogResult.Primary)
                 {
                     // User wants to save - return and let ViewModel handle save
-                    Debug.WriteLine(" User wants to save before creating new solution");
                     return (false, false, "SAVE_REQUESTED");
                 }
 
                 // result == Secondary: Don't Save - continue with new solution
-                Debug.WriteLine(" User chose not to save - creating new solution");
             }
-
-            Debug.WriteLine(" Creating new empty solution");
 
             return (true, false, null);
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($" Failed to create new solution: {ex.Message}");
             return (false, false, $"Failed to create new solution: {ex.Message}");
         }
     }
@@ -336,16 +299,15 @@ public class IoService : IIoService
             var destinationPath = Path.Combine(categoryFolder, fileName);
 
             // Copy file asynchronously
-            await Task.Run(() => File.Copy(sourceFilePath, destinationPath, overwrite: true));
+                await Task.Run(() => File.Copy(sourceFilePath, destinationPath, overwrite: true));
 
-            // ✅ Return absolute path so Image control can load it
-            return destinationPath;
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"Error saving photo: {ex.Message}");
-            return null;
-        }
+                // ✅ Return absolute path so Image control can load it
+                return destinationPath;
+            }
+            catch
+            {
+                return null;
+            }
     }
 
     /// <summary>

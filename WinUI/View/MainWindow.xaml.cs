@@ -1,14 +1,20 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+
 using Service;
+
 using SharedUI.Interface;
 using SharedUI.ViewModel;
+
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
+
 using MainWindowViewModel = SharedUI.ViewModel.MainWindowViewModel;
 
 public sealed partial class MainWindow
@@ -20,6 +26,7 @@ public sealed partial class MainWindow
     private readonly NavigationService _navigationService;
     private readonly HealthCheckService _healthCheckService;
     private readonly IUiDispatcher _uiDispatcher;
+    private readonly PluginRegistry _pluginRegistry;
     #endregion
 
     public MainWindow(
@@ -28,13 +35,15 @@ public sealed partial class MainWindow
         NavigationService navigationService,
         HealthCheckService healthCheckService,
         IUiDispatcher uiDispatcher,
-        IIoService ioService)
+        IIoService ioService,
+        PluginRegistry pluginRegistry)
     {
         ViewModel = viewModel;
         TrackPlanEditorViewModel = trackPlanEditorViewModel;
         _navigationService = navigationService;
         _healthCheckService = healthCheckService;
         _uiDispatcher = uiDispatcher;
+        _pluginRegistry = pluginRegistry;
 
         InitializeComponent();
 
@@ -58,6 +67,9 @@ public sealed partial class MainWindow
             Debug.WriteLine("✅ IoService initialized with WindowId");
         }
 
+        // Add plugin navigation items before initialization selects overview
+        AddPluginNavigationItems();
+
         // Initialize NavigationService with ContentFrame (async initialization)
         _ = InitializeNavigationAsync();
 
@@ -78,6 +90,58 @@ public sealed partial class MainWindow
 
         // Initial health status
         ViewModel.UpdateHealthStatus(_healthCheckService.SpeechServiceStatus);
+    }
+
+    private void AddPluginNavigationItems()
+    {
+        var settingsItem = MainNavigation.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(item => (item.Tag as string) == "settings");
+        
+        if (settingsItem is null)
+        {
+            return; // No settings page, no plugin insertion
+        }
+
+        var pluginPages = _pluginRegistry.Pages.Where(p => !string.Equals(p.Source, "Core", StringComparison.OrdinalIgnoreCase)).ToList();
+        
+        if (pluginPages.Count == 0)
+        {
+            return; // No plugins to add
+        }
+
+        // Find the separator BEFORE settings (the one that should remain AFTER plugins)
+        var settingsIndex = MainNavigation.MenuItems.IndexOf(settingsItem);
+        var existingSeparatorIndex = settingsIndex > 0 && MainNavigation.MenuItems[settingsIndex - 1] is NavigationViewItemSeparator
+            ? settingsIndex - 1
+            : -1;
+
+        // Insert position: before the existing separator (or before settings if no separator)
+        var insertIndex = existingSeparatorIndex != -1 ? existingSeparatorIndex : settingsIndex;
+
+        // Insert plugin pages
+        foreach (var page in pluginPages)
+        {
+            var navItem = new NavigationViewItem
+            {
+                Content = page.Title,
+                Tag = page.Tag
+            };
+
+            if (!string.IsNullOrWhiteSpace(page.IconGlyph))
+            {
+                navItem.Icon = new FontIcon { Glyph = page.IconGlyph };
+            }
+
+            MainNavigation.MenuItems.Insert(insertIndex, navItem);
+            insertIndex++;
+        }
+
+        // Add a second separator BEFORE the plugin pages (between Monitor and first plugin)
+        // Only if we actually inserted plugins
+        if (pluginPages.Count > 0)
+        {
+            var pluginStartIndex = existingSeparatorIndex != -1 ? existingSeparatorIndex : settingsIndex;
+            MainNavigation.MenuItems.Insert(pluginStartIndex, new NavigationViewItemSeparator());
+        }
     }
 
     /// <summary>

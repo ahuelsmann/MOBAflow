@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.WinUI;
 
@@ -19,20 +19,15 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
-
 using Moba.SharedUI.Service;
+using Moba.WinUI.Service;
 
 using Serilog;
 using Serilog.Events;
-
-using Service;
-
 using SharedUI.Interface;
 using SharedUI.ViewModel;
 
 using Sound;
-
-using System.Diagnostics;
 using System.IO;
 using View;
 
@@ -45,6 +40,7 @@ public partial class App
 {
     private Window? _window;
     private IHost? _webAppHost;
+    private readonly ILogger<App> _logger;
 
     /// <summary>
     /// Initializes the singleton application object. This is the first line of authored code
@@ -55,22 +51,12 @@ public partial class App
         try
         {
             Services = ConfigureServices();
+            _logger = Services.GetRequiredService<ILogger<App>>();
             InitializeComponent();
         }
         catch (Exception ex)
         {
-            // Log the exception before crashing
-            Debug.WriteLine("🚨 FATAL ERROR during App initialization:");
-            Debug.WriteLine($"   Exception Type: {ex.GetType().Name}");
-            Debug.WriteLine($"   Message: {ex.Message}");
-            Debug.WriteLine($"   StackTrace: {ex.StackTrace}");
-            if (ex.InnerException != null)
-            {
-                Debug.WriteLine($"   Inner Exception: {ex.InnerException.Message}");
-                Debug.WriteLine($"   Inner StackTrace: {ex.InnerException.StackTrace}");
-            }
-
-            // Re-throw to get Windows Error Reporting
+            _logger?.LogCritical(ex, "FATAL ERROR during App initialization");
             throw;
         }
     }
@@ -121,6 +107,10 @@ public partial class App
             loggingBuilder.AddSerilog(Log.Logger, dispose: true);
         });
 
+        // Plugin infrastructure
+        var pluginRegistry = new PluginRegistry();
+        services.AddSingleton(pluginRegistry);
+
         // ✅ Register ISpeakerEngine with lazy initialization
         // Only creates the CONFIGURED engine, not both
         // Decision is made at registration time based on AppSettings
@@ -159,11 +149,11 @@ public partial class App
             try
             {
                 var appSettings = sp.GetRequiredService<AppSettings>();
-                return new CityService(appSettings);
+                var logger = sp.GetRequiredService<ILogger<CityService>>();
+                return new CityService(appSettings, logger);
             }
             catch
             {
-                // Fallback to NullObject if city data unavailable
                 return new NullCityService();
             }
         });
@@ -175,11 +165,11 @@ public partial class App
             try
             {
                 var appSettings = sp.GetRequiredService<AppSettings>();
-                return new SettingsService(appSettings);
+                var logger = sp.GetRequiredService<ILogger<SettingsService>>();
+                return new SettingsService(appSettings, logger);
             }
             catch
             {
-                // Fallback to NullObject if settings file unavailable
                 return new NullSettingsService();
             }
         });
@@ -219,17 +209,43 @@ public partial class App
 
         // Pages (Transient = new instance per navigation)
         services.AddTransient<OverviewPage>();
+        pluginRegistry.AddOrUpdate("overview", "Overview", "Home", typeof(OverviewPage), "Core");
+
         services.AddTransient<SolutionPage>();
+        pluginRegistry.AddOrUpdate("solution", "Solution", "", typeof(SolutionPage), "Core");
+
         services.AddTransient<JourneysPage>();
+        pluginRegistry.AddOrUpdate("journeys", "Journeys", "", typeof(JourneysPage), "Core");
+
         services.AddTransient<WorkflowsPage>();
+        pluginRegistry.AddOrUpdate("workflows", "Workflows", "\uE945", typeof(WorkflowsPage), "Core");
+
         services.AddTransient<TrainsPage>();
+        pluginRegistry.AddOrUpdate("trains", "Trains", "", typeof(TrainsPage), "Core");
+
         services.AddTransient<TrackPlanEditorPage>();
+        pluginRegistry.AddOrUpdate("trackplaneditor", "Track Plan", "", typeof(TrackPlanEditorPage), "Core");
+
         services.AddTransient<JourneyMapPage>();
+        pluginRegistry.AddOrUpdate("journeymap", "Journey Map", "", typeof(JourneyMapPage), "Core");
+
         services.AddTransient<SettingsPage>();
+        pluginRegistry.AddOrUpdate("settings", "Settings", "", typeof(SettingsPage), "Core");
+
         services.AddTransient<MonitorPage>();
+        pluginRegistry.AddOrUpdate("monitor", "Monitor", "", typeof(MonitorPage), "Core");
 
         // MainWindow (Singleton = one instance for app lifetime)
         services.AddSingleton<MainWindow>();
+
+        // Load plugins after core registrations so they can override/add
+        var pluginDirectory = Path.Combine(AppContext.BaseDirectory, "Plugins");
+        var pluginLoader = new PluginLoader(pluginDirectory, pluginRegistry);
+        
+        // Note: We use synchronous Load here because ConfigureServices is synchronous
+        // Plugin initialization will happen later in OnLaunched after DI is fully set up
+        var loadTask = Task.Run(() => pluginLoader.LoadPluginsAsync(services, logger: null));
+        loadTask.Wait(); // Block until plugins are loaded
 
         return services.BuildServiceProvider();
     }
@@ -282,41 +298,40 @@ public partial class App
             var settingsService = Services.GetService<ISettingsService>();
             if (settingsService == null)
             {
-                Debug.WriteLine("⚠️ SettingsService not available - skipping auto-load");
+                _logger.LogWarning("SettingsService not available - skipping auto-load");
                 return;
             }
 
             if (!settingsService.AutoLoadLastSolution)
             {
-                Debug.WriteLine("ℹ️ Auto-load disabled - skipping");
+                _logger.LogInformation("Auto-load disabled - skipping");
                 return;
             }
 
             var lastPath = settingsService.LastSolutionPath;
             if (string.IsNullOrEmpty(lastPath))
             {
-                Debug.WriteLine("ℹ️ No last solution path - skipping auto-load");
+                _logger.LogInformation("No last solution path - skipping auto-load");
                 return;
             }
 
             if (!File.Exists(lastPath))
             {
-                Debug.WriteLine($"⚠️ Last solution file not found: {lastPath}");
+                _logger.LogWarning("Last solution file not found: {LastPath}", lastPath);
                 return;
             }
 
-            Debug.WriteLine($"📂 Auto-loading last solution: {lastPath}");
+            _logger.LogInformation("Auto-loading last solution: {LastPath}", lastPath);
 
             // ✅ Use the SAME code path as manual loading!
             // This ensures JourneyManager and all other initialization happens correctly.
             await mainWindowViewModel.LoadSolutionFromPathAsync(lastPath);
 
-            Debug.WriteLine($"✅ Auto-load completed: {lastPath}");
+            _logger.LogInformation("Auto-load completed: {LastPath}", lastPath);
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"❌ Auto-load failed: {ex.Message}");
-            // Don't crash the application if auto-load fails
+            _logger.LogError(ex, "Auto-load failed");
         }
     }
 
@@ -327,14 +342,13 @@ public partial class App
             var settings = Services.GetRequiredService<AppSettings>();
             if (!settings.Application.AutoStartWebApp)
             {
-                Debug.WriteLine("ℹ️ AutoStartWebApp disabled in settings - skipping REST API launch");
-                Debug.WriteLine("   To enable: Set 'Application.AutoStartWebApp' to true in appsettings.json");
+                _logger.LogInformation("AutoStartWebApp disabled in settings - skipping REST API launch. To enable: set Application.AutoStartWebApp to true.");
                 return;
             }
 
             if (_webAppHost != null)
             {
-                Debug.WriteLine("ℹ️ REST API already running");
+                _logger.LogInformation("REST API already running");
                 return;
             }
 
@@ -404,12 +418,8 @@ public partial class App
             // Start WebHost asynchronously
             _ = _webAppHost.RunAsync();
 
-            Debug.WriteLine("✅ REST API started successfully");
-            Debug.WriteLine($"   Binding: http://0.0.0.0:{restPort}");
-            Debug.WriteLine($"   Endpoints:");
-            Debug.WriteLine($"     • POST   /api/photos/upload  - Upload photo");
-            Debug.WriteLine($"     • GET    /api/photos/health  - Health check");
-            Debug.WriteLine($"   💡 MAUI can now upload photos to http://{{device-ip}}:{restPort}/api/photos/upload");
+            _logger.LogInformation("REST API started successfully on {RestPort}", restPort);
+            _logger.LogInformation("Endpoints: POST /api/photos/upload; GET /api/photos/health");
 
             // Give Kestrel a moment to bind
             await Task.Delay(1000);
@@ -425,25 +435,21 @@ public partial class App
                 var testResponse = await httpClient.GetAsync($"http://localhost:{restPort}/api/photos/health");
                 if (testResponse.IsSuccessStatusCode)
                 {
-                    Debug.WriteLine($"   ✅ Self-test passed: Server responding on localhost:{restPort}");
+                    _logger.LogInformation("Self-test passed: server responding on localhost:{RestPort}", restPort);
                 }
                 else
                 {
-                    Debug.WriteLine($"   ⚠️ Self-test warning: Server returned {testResponse.StatusCode}");
+                    _logger.LogWarning("Self-test warning: server returned {StatusCode}", testResponse.StatusCode);
                 }
             }
             catch (Exception selfTestEx)
             {
-                Debug.WriteLine($"   ⚠️ Self-test failed: {selfTestEx.Message}");
-                Debug.WriteLine($"      This may indicate controller registration issues.");
+                _logger.LogWarning(selfTestEx, "Self-test failed. This may indicate controller registration issues.");
             }
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"❌ Failed to start REST API: {ex.GetType().Name}");
-            Debug.WriteLine($"   Message: {ex.Message}");
-            Debug.WriteLine($"   Stack trace: {ex.StackTrace}");
-            // Do not crash WinUI if REST API start fails
+            _logger.LogError(ex, "Failed to start REST API");
         }
     }
 
@@ -452,69 +458,56 @@ public partial class App
     /// </summary>
     private async Task StartPhotoHubClientAsync(int restPort)
     {
-        Debug.WriteLine($"🔍 StartPhotoHubClientAsync called with port: {restPort}");
+        _logger.LogInformation("StartPhotoHubClientAsync called with port: {RestPort}", restPort);
         
         try
         {
-            Debug.WriteLine("🔍 Getting PhotoHubClient from DI...");
+            _logger.LogDebug("Resolving PhotoHubClient from DI...");
             var photoHubClient = Services.GetRequiredService<PhotoHubClient>();
-            Debug.WriteLine("✅ PhotoHubClient resolved");
             
-            Debug.WriteLine("🔍 Getting MainWindowViewModel from DI...");
+            _logger.LogDebug("Resolving MainWindowViewModel from DI...");
             var mainWindowViewModel = Services.GetRequiredService<MainWindowViewModel>();
-            Debug.WriteLine("✅ MainWindowViewModel resolved");
             
-            Debug.WriteLine("🔍 Getting IUiDispatcher from DI...");
+            _logger.LogDebug("Resolving IUiDispatcher from DI...");
             var uiDispatcher = Services.GetRequiredService<IUiDispatcher>();
-            Debug.WriteLine("✅ IUiDispatcher resolved");
 
-            // Connect to SignalR Hub
-            Debug.WriteLine($"🔍 Connecting to SignalR Hub at localhost:{restPort}...");
+            _logger.LogInformation("Connecting to SignalR Hub at localhost:{RestPort}...", restPort);
             await photoHubClient.ConnectAsync("localhost", restPort);
-            Debug.WriteLine("✅ Connected to SignalR Hub");
+            _logger.LogInformation("Connected to SignalR Hub");
 
-            // Subscribe to photo upload events
-            Debug.WriteLine("🔍 Subscribing to PhotoUploaded events...");
+            _logger.LogDebug("Subscribing to PhotoUploaded events...");
             photoHubClient.PhotoUploaded += async (photoPath, uploadedAt) =>
             {
                 try
                 {
-                    Debug.WriteLine($"📸 [REAL-TIME] Photo uploaded: {photoPath}");
-                    Debug.WriteLine($"   UploadedAt: {uploadedAt}");
+                    _logger.LogInformation("[REAL-TIME] Photo uploaded: {PhotoPath} at {UploadedAt}", photoPath, uploadedAt);
 
-                    // Update ViewModel on UI thread - assign to currently selected item
                     uiDispatcher.InvokeOnUi(() =>
                     {
                         try
                         {
-                            Debug.WriteLine($"🔄 Assigning photo to selected item...");
+                            _logger.LogDebug("Assigning photo to selected item");
                             mainWindowViewModel.AssignLatestPhoto(photoPath);
-                            Debug.WriteLine($"✅ Photo assigned successfully");
+                            _logger.LogInformation("Photo assigned successfully");
                         }
                         catch (Exception innerEx)
                         {
-                            Debug.WriteLine($"❌ Error assigning photo: {innerEx.Message}");
-                            Debug.WriteLine($"   StackTrace: {innerEx.StackTrace}");
+                            _logger.LogError(innerEx, "Error assigning photo");
                         }
                     });
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"❌ Error handling PhotoUploaded event: {ex.Message}");
-                    Debug.WriteLine($"   StackTrace: {ex.StackTrace}");
+                    _logger.LogError(ex, "Error handling PhotoUploaded event");
                 }
 
                 await Task.CompletedTask;
             };
-            Debug.WriteLine("✅ Subscribed to PhotoUploaded events");
-
-            Debug.WriteLine("✅ PhotoHubClient connected and subscribed to photo events");
+            _logger.LogInformation("Subscribed to PhotoUploaded events");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"❌ Failed to start PhotoHubClient: {ex.Message}");
-            Debug.WriteLine($"   StackTrace: {ex.StackTrace}");
-            // Do not crash WinUI if SignalR client fails
+            _logger.LogError(ex, "Failed to start PhotoHubClient");
         }
     }
 }

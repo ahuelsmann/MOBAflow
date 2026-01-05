@@ -114,6 +114,408 @@ _logger.LogInformation("Feedback received: InPort={InPort}, Value={Value}", inPo
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for detailed architecture documentation.
 
+## 🔌 Plugin Development
+
+MOBAflow includes a **flexible and extensible plugin system** that allows developers to add custom pages, features, and integrations without modifying the core application. Plugins are automatically discovered, validated, and loaded at runtime.
+
+### Overview
+
+The plugin framework provides:
+- 🎯 **Easy Discovery** - Plugins in `WinUI/bin/Debug/Plugins/` are auto-discovered
+- ✅ **Validation** - Automatic plugin validation on startup
+- 🔄 **Lifecycle Hooks** - Initialize and cleanup at app startup/shutdown
+- 💉 **Dependency Injection** - Full DI container support for plugin services
+- 📦 **Metadata** - Version tracking, author info, and dependency declarations
+- 🛡️ **Robustness** - App runs fine even if plugins are missing or broken
+
+### Architecture
+
+```
+IPlugin Interface (Contract)
+    ↓
+PluginBase (Abstract Base Class)
+    ↓
+YourPlugin : PluginBase
+    ↓
+PluginDiscoveryService (Auto-Discovery)
+    ↓
+PluginValidator (Validation)
+    ↓
+PluginLoader (Registration & Lifecycle)
+    ↓
+DI Container (Service Resolution)
+```
+
+### Plugin Lifecycle
+
+1. **Discovery** (Startup)
+   - Plugin DLL is found in `WinUI/bin/Debug/Plugins/`
+   - Reflected for `IPlugin` implementations
+
+2. **Validation** (Startup)
+   - Plugin.Name is checked
+   - Page tags validated for duplicates
+   - Reserved tags trigger warnings
+
+3. **Configuration** (Startup)
+   - `ConfigureServices()` called
+   - Plugin services registered with DI
+
+4. **Initialization** (After app startup)
+   - `OnInitializedAsync()` called
+   - Resource loading, logging, setup
+
+5. **Runtime** (During app execution)
+   - Pages accessible in NavigationView
+   - ViewModels respond to user actions
+
+6. **Unloading** (App shutdown)
+   - `OnUnloadingAsync()` called
+   - Cleanup, state saving, resource disposal
+
+### Quick Start: Creating Your First Plugin
+
+#### Step 1: Copy the Minimal Plugin Template
+
+```bash
+cp -r Plugins/MinimalPlugin Plugins/MyAwesomePlugin
+```
+
+#### Step 2: Update Project File
+
+Edit `Plugins/MyAwesomePlugin/MyAwesomePlugin.csproj`:
+
+```xml
+<!-- RootNamespace stays as Moba.Plugin (class naming follows folder structure) -->
+<RootNamespace>Moba.Plugin</RootNamespace>
+
+<!-- EnableDynamicLoading ensures correct .deps.json generation -->
+<EnableDynamicLoading>true</EnableDynamicLoading>
+```
+
+#### Step 3: Rename Classes
+
+- `MinimalPlugin` → `MyAwesomePlugin`
+- `MinimalPluginViewModel` → `MyAwesomePluginViewModel`
+- `MinimalPluginPage` → `MyAwesomePluginPage`
+
+#### Step 4: Implement Your Plugin
+
+```csharp
+public sealed class MyAwesomePlugin : PluginBase
+{
+    public override string Name => "My Awesome Plugin";
+
+    public override PluginMetadata Metadata => new(
+        Name,
+        Version: "1.0.0",
+        Author: "Your Name",
+        Description: "What your plugin does",
+        MinimumHostVersion: "3.15"
+    );
+
+    public override IEnumerable<PluginPageDescriptor> GetPages()
+    {
+        yield return new PluginPageDescriptor(
+            Tag: "myawesomeplugin",
+            Title: "My Awesome Plugin",
+            IconGlyph: "\uECCD",
+            PageType: typeof(MyAwesomePluginPage)
+        );
+    }
+
+    public override void ConfigureServices(IServiceCollection services)
+    {
+        services.AddTransient<MyAwesomePluginViewModel>();
+        services.AddTransient<MyAwesomePluginPage>();
+    }
+}
+```
+
+#### Step 5: Build
+
+```bash
+dotnet build Plugins/MyAwesomePlugin
+# DLL is automatically copied to WinUI/bin/Debug/Plugins/
+```
+
+### Plugin Framework Classes
+
+#### IPlugin Interface
+
+```csharp
+public interface IPlugin
+{
+    string Name { get; }
+    PluginMetadata Metadata { get; }
+    IEnumerable<PluginPageDescriptor> GetPages();
+    void ConfigureServices(IServiceCollection services);
+    Task OnInitializedAsync();
+    Task OnUnloadingAsync();
+}
+```
+
+#### PluginBase Class
+
+Base class that implements IPlugin with sensible defaults:
+
+```csharp
+public abstract class PluginBase : IPlugin
+{
+    public abstract string Name { get; }
+    public virtual PluginMetadata Metadata => new(Name);
+    public virtual IEnumerable<PluginPageDescriptor> GetPages() => [];
+    public virtual void ConfigureServices(IServiceCollection services) { }
+    public virtual Task OnInitializedAsync() => Task.CompletedTask;
+    public virtual Task OnUnloadingAsync() => Task.CompletedTask;
+}
+```
+
+Simply inherit and override only what you need!
+
+#### PluginMetadata Record
+
+```csharp
+public sealed record PluginMetadata(
+    string Name,
+    string? Version = null,
+    string? Author = null,
+    string? Description = null,
+    string? MinimumHostVersion = null,
+    IEnumerable<string>? Dependencies = null
+);
+```
+
+#### PluginPageDescriptor Record
+
+```csharp
+public sealed record PluginPageDescriptor(
+    string Tag,           // Unique page identifier
+    string Title,         // NavigationView menu text
+    string? IconGlyph,    // Fluent Icon (optional)
+    Type PageType         // Your WinUI Page type
+);
+```
+
+### ViewModel Best Practices
+
+All plugin ViewModels should:
+1. **Inherit from `ObservableObject`** (CommunityToolkit.Mvvm)
+2. **Use `[ObservableProperty]` attributes** for reactive properties
+3. **Use `[RelayCommand]` attributes** for command handlers
+4. **Accept dependencies via constructor** (DI)
+
+```csharp
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Moba.SharedUI.ViewModel;
+
+public sealed partial class MyAwesomePluginViewModel : ObservableObject
+{
+    private readonly MainWindowViewModel _mainWindowViewModel;
+
+    [ObservableProperty]
+    private string title = "My Awesome Plugin";
+
+    [ObservableProperty]
+    private bool isConnected;
+
+    public MyAwesomePluginViewModel(MainWindowViewModel mainWindowViewModel)
+    {
+        _mainWindowViewModel = mainWindowViewModel ?? throw new ArgumentNullException(nameof(mainWindowViewModel));
+        IsConnected = mainWindowViewModel.IsConnected;
+        _mainWindowViewModel.PropertyChanged += OnMainWindowPropertyChanged;
+    }
+
+    [RelayCommand]
+    private void DoSomething()
+    {
+        // Your implementation here
+    }
+
+    private void OnMainWindowPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainWindowViewModel.IsConnected))
+            IsConnected = _mainWindowViewModel.IsConnected;
+    }
+}
+```
+
+### Dependency Injection
+
+Plugins can inject **any host service** automatically:
+
+#### Available Host Services
+
+- **MainWindowViewModel** - Main app state and commands
+- **IZ21** - Z21 control station interface
+- **Solution** - Current solution model
+- **WorkflowService** - Workflow management
+- **IIoService** - File operations
+- **ICityService** - City/station library
+- **ISettingsService** - Application settings
+- Any other registered host service
+
+#### Example: Accessing Host Services
+
+```csharp
+public sealed partial class MyAwesomePluginViewModel : ObservableObject
+{
+    private readonly MainWindowViewModel _mainWindow;
+    private readonly IZ21 _z21;
+    private readonly Solution _solution;
+
+    public MyAwesomePluginViewModel(
+        MainWindowViewModel mainWindow,
+        IZ21 z21,
+        Solution solution)
+    {
+        _mainWindow = mainWindow;
+        _z21 = z21;
+        _solution = solution;
+    }
+
+    [RelayCommand]
+    private async Task ConnectToZ21()
+    {
+        var isConnected = await _z21.ConnectAsync(_mainWindow.Z21IpAddress);
+        // ... handle result
+    }
+}
+```
+
+### Configuration & Versioning
+
+Each plugin should declare metadata for tracking:
+
+```csharp
+public override PluginMetadata Metadata => new(
+    Name: "My Awesome Plugin",
+    Version: "1.0.0",                       // Semantic versioning
+    Author: "Your Name",                    // Plugin author
+    Description: "What your plugin does",   // Short description
+    MinimumHostVersion: "3.15",             // Host compatibility
+    Dependencies: new[] {                   // Optional dependencies
+        "SharedUI",
+        "Some.NuGet.Package"
+    }
+);
+```
+
+### Lifecycle Hooks
+
+Use lifecycle hooks for setup and cleanup:
+
+```csharp
+public override async Task OnInitializedAsync()
+{
+    // Called after plugin loads and DI is set up
+    // Use for resource loading, initialization, logging, etc.
+    _logger.LogInformation("Plugin initialized");
+    await Task.CompletedTask;
+}
+
+public override async Task OnUnloadingAsync()
+{
+    // Called when app is shutting down
+    // Use for cleanup, saving state, disposing resources, etc.
+    _logger.LogInformation("Plugin shutting down");
+    await Task.CompletedTask;
+}
+```
+
+### Robustness & Error Handling
+
+The plugin system is **production-ready**:
+
+| Scenario | Result |
+|----------|--------|
+| Plugins directory doesn't exist | ✅ Created automatically, app continues |
+| No plugin DLLs found | ✅ Info log, app runs without plugins |
+| Plugin DLL corrupted | ✅ Error log, other plugins load normally |
+| Plugin validation fails | ✅ Warning log, plugin skipped |
+| Plugin.OnInitializedAsync() throws | ✅ Error log, app continues |
+
+**The app always runs**, even with no plugins or all broken plugins.
+
+### Troubleshooting
+
+#### Plugin not loading?
+
+1. **Check the logs:**
+   ```
+   WinUI/bin/Debug/logs/mobaflow-YYYYMMDD.log
+   ```
+
+2. **Verify plugin DLL location:**
+   ```
+   WinUI/bin/Debug/Plugins/MyPlugin.dll
+   ```
+
+3. **Ensure plugin class is public:**
+   ```csharp
+   public sealed class MyPlugin : PluginBase  // ← Must be public!
+   ```
+
+#### "No IPlugin implementations found"?
+
+- Class must inherit from `PluginBase` or implement `IPlugin`
+- Class must not be `abstract`
+- Namespace must match `RootNamespace` in `.csproj`
+
+#### Duplicate page tag error?
+
+- Each page must have a **unique** `Tag`
+- Don't use reserved tags: `overview`, `solution`, `journeys`, `workflows`, `trains`, `trackplaneditor`, `journeymap`, `monitor`, `settings`
+
+#### MainWindowViewModel not injected?
+
+- Constructor parameter must be exactly: `MainWindowViewModel mainWindowViewModel`
+- Cannot be optional or nullable
+- MainWindowViewModel must be properly registered in host
+
+### Best Practices
+
+✅ **DO:**
+- Inherit from `PluginBase` for cleaner code
+- Use `CommunityToolkit.Mvvm` for reactive properties
+- Implement lifecycle hooks if needed
+- Provide metadata for version tracking
+- Validate input in ViewModels
+- Use proper error handling
+- Follow naming conventions: `[Name]Plugin`, `[Name]PluginViewModel`, `[Name]PluginPage`
+
+❌ **DON'T:**
+- Use reserved page tags
+- Create duplicate page tags
+- Access MainWindowViewModel properties without null checks
+- Forget to call base methods when overriding
+- Use synchronous I/O operations
+- Store host service references beyond plugin lifetime
+- Hardcode configuration values (use Metadata instead)
+
+### Plugin Template
+
+A complete **Minimal Plugin** template is included in [`Plugins/MinimalPlugin/`](Plugins/MinimalPlugin/). Use this as a reference when creating new plugins.
+
+Features demonstrated:
+- ✅ PluginBase inheritance
+- ✅ Metadata declaration
+- ✅ Page registration
+- ✅ ViewModel with MainWindowViewModel injection
+- ✅ Observable properties and relay commands
+- ✅ Lifecycle hooks
+- ✅ Complete documentation
+
+### Resources
+
+- **Plugin Base Class:** [`Common/Plugins/PluginBase.cs`](Common/Plugins/PluginBase.cs)
+- **Plugin Interface:** [`Common/Plugins/IPlugin.cs`](Common/Plugins/IPlugin.cs)
+- **Plugin Loader:** [`WinUI/Service/PluginLoader.cs`](WinUI/Service/PluginLoader.cs)
+- **Minimal Plugin Example:** [`Plugins/MinimalPlugin/`](Plugins/MinimalPlugin/)
+- **MVVM Toolkit Docs:** https://learn.microsoft.com/dotnet/communitytoolkit/mvvm/
+- **WinUI 3 Docs:** https://learn.microsoft.com/windows/apps/winui/
+
 ## 🤝 Contributing
 
 We welcome contributions! Please read [`CONTRIBUTING.md`](CONTRIBUTING.md) for guidelines.

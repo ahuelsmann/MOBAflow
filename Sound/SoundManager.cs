@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Sound;
 
@@ -38,23 +38,16 @@ public class WindowsSoundPlayer(ILogger<WindowsSoundPlayer> logger) : ISoundPlay
             }, cancellationToken).ConfigureAwait(false);
             
             logger.LogDebug("Sound file played successfully: {WaveFile}", waveFile);
-        }
-        catch (OperationCanceledException)
-        {
-            logger.LogInformation("Sound playback cancelled: {WaveFile}", waveFile);
-            throw;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to play sound file: {WaveFile}", waveFile);
-            throw new InvalidOperationException($"Failed to play sound file: {waveFile}", ex);
-        }
-    }
-
-    /// <summary>
-    /// Plays a wave file from the specified path (synchronous wrapper for backward compatibility).
-    /// </summary>
-    /// <param name="waveFile">Full path to the .wav file to play</param>
-    [Obsolete("Use PlayAsync instead for non-blocking I/O and cancellation support")]
-    public void Play(string waveFile) => PlayAsync(waveFile).GetAwaiter().GetResult();
-}
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        logger.LogInformation("Sound playback cancelled: {WaveFile}", waveFile);
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Failed to play sound file: {WaveFile}", waveFile);
+                        throw new InvalidOperationException($"Failed to play sound file: {waveFile}", ex);
+                    }
+                }
+            }

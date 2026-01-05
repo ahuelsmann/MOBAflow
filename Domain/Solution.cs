@@ -1,7 +1,7 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
-using Newtonsoft.Json;
+using System.Text.Json;
 
 /// <summary>
 /// Solution contains project collection.
@@ -38,7 +38,7 @@ public class Solution
 
     /// <summary>
     /// Load solution data from a JSON file and apply it to this instance.
-    /// Uses Newtonsoft.Json for better polymorphism support (Workflows, Actions).
+    /// Uses System.Text.Json for better polymorphism support (Workflows, Actions).
     /// </summary>
     public async Task LoadAsync(string filePath)
     {
@@ -46,11 +46,7 @@ public class Solution
         if (!File.Exists(filePath)) throw new FileNotFoundException("Solution file not found", filePath);
 
         var json = await File.ReadAllTextAsync(filePath).ConfigureAwait(false);
-        var loaded = JsonConvert.DeserializeObject<Solution>(json, new JsonSerializerSettings
-        {
-            TypeNameHandling = TypeNameHandling.Auto,
-            NullValueHandling = NullValueHandling.Ignore
-        });
+        var loaded = JsonSerializer.Deserialize<Solution>(json, JsonOptions.Default);
 
         if (loaded == null) throw new InvalidOperationException("Failed to deserialize solution file");
 

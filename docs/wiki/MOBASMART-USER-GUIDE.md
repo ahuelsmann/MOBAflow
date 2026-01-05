@@ -353,7 +353,7 @@ Teile uns mit:
 **MOBAsmart** ist Teil des **MOBAflow**-Projekts.
 
 - **Lizenz:** MIT License
-- **Entwickler:** Andreas Hülsmann
+- **Entwickler:** Andreas Huelsmann
 - **Version:** 1.0 (Dezember 2025)
 
 **Drittanbieter-Software:**

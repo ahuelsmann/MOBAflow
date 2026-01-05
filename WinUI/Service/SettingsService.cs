@@ -1,10 +1,11 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
-using Newtonsoft.Json;
+using Domain;
+using Microsoft.Extensions.Logging;
 using SharedUI.Interface;
-using System.Diagnostics;
+using System.Text.Json;
 
 /// <summary>
 /// Service for reading and writing application settings to appsettings.json.
@@ -16,11 +17,13 @@ public class SettingsService : ISettingsService
     private readonly string _settingsFilePath;
     private readonly SemaphoreSlim _saveLock = new(1, 1);
     private readonly Timer _debounceTimer;
+    private readonly ILogger<SettingsService> _logger;
     private bool _hasPendingSave;
 
-    public SettingsService(AppSettings settings)
+    public SettingsService(AppSettings settings, ILogger<SettingsService> logger)
     {
         _settings = settings;
+        _logger = logger;
         _settingsFilePath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
         _debounceTimer = new Timer(OnDebounceElapsed, null, Timeout.Infinite, Timeout.Infinite);
         
@@ -39,7 +42,7 @@ public class SettingsService : ISettingsService
             if (File.Exists(_settingsFilePath))
             {
                 var json = File.ReadAllText(_settingsFilePath);
-                var loadedSettings = JsonConvert.DeserializeObject<AppSettings>(json);
+                var loadedSettings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions.Default);
                 
                 if (loadedSettings != null)
                 {
@@ -54,17 +57,17 @@ public class SettingsService : ISettingsService
                     _settings.Counter.UseTimerFilter = loadedSettings.Counter.UseTimerFilter;
                     _settings.Counter.TimerIntervalSeconds = loadedSettings.Counter.TimerIntervalSeconds;
                     
-                    Debug.WriteLine($"✅ WinUI Settings loaded from {_settingsFilePath}");
+                    _logger.LogInformation("WinUI settings loaded from {SettingsFilePath}", _settingsFilePath);
                 }
             }
             else
             {
-                Debug.WriteLine($"⚠️ Settings file not found: {_settingsFilePath} - using defaults");
+                _logger.LogWarning("Settings file not found: {SettingsFilePath} - using defaults", _settingsFilePath);
             }
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"❌ Failed to load settings: {ex.Message}");
+            _logger.LogError(ex, "Failed to load settings synchronously");
             // Continue with default settings
         }
     }
@@ -81,7 +84,7 @@ public class SettingsService : ISettingsService
             if (File.Exists(_settingsFilePath))
             {
                 var json = await File.ReadAllTextAsync(_settingsFilePath);
-                var loadedSettings = JsonConvert.DeserializeObject<AppSettings>(json);
+                var loadedSettings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions.Default);
                 
                 if (loadedSettings != null)
                 {
@@ -96,17 +99,18 @@ public class SettingsService : ISettingsService
                     _settings.Counter.UseTimerFilter = loadedSettings.Counter.UseTimerFilter;
                     _settings.Counter.TimerIntervalSeconds = loadedSettings.Counter.TimerIntervalSeconds;
                     
-                    Debug.WriteLine($"✅ WinUI Settings loaded from {_settingsFilePath}");
+                    _logger.LogInformation("WinUI settings loaded from {SettingsFilePath}", _settingsFilePath);
                 }
+
             }
             else
             {
-                Debug.WriteLine($"ℹ️ No settings file found at {_settingsFilePath}, using defaults");
+                _logger.LogInformation("No settings file found at {SettingsFilePath}, using defaults", _settingsFilePath);
             }
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"⚠️ Failed to load settings: {ex.Message}, using defaults");
+            _logger.LogWarning(ex, "Failed to load settings, using defaults");
         }
     }
     
@@ -139,13 +143,13 @@ public class SettingsService : ISettingsService
         await _saveLock.WaitAsync();
         try
         {
-            var json = JsonConvert.SerializeObject(_settings, Formatting.Indented);
+            var json = JsonSerializer.Serialize(_settings, JsonOptions.Default);
             await File.WriteAllTextAsync(_settingsFilePath, json);
-            Debug.WriteLine($"✅ Settings saved to {_settingsFilePath}");
+            _logger.LogInformation("Settings saved to {SettingsFilePath}", _settingsFilePath);
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"❌ Failed to save settings: {ex.Message}");
+            _logger.LogError(ex, "Failed to save settings");
         }
         finally
         {

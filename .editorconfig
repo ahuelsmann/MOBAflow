@@ -208,7 +208,7 @@ trim_trailing_whitespace = false
 dotnet_diagnostic.CA2007.severity = none
 
 # File header template
-file_header_template = Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+file_header_template = Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 #### XAML Designer Warnings Suppression ####
 

@@ -499,7 +499,7 @@ Ctrl + Shift + Delete → Cache leeren → Reload
 
 **MOBAdash** ist Teil des **MOBAflow**-Projekts (MIT License).
 
-- **Entwickler:** Andreas Hülsmann
+- **Entwickler:** Andreas Huelsmann
 - **Framework:** Blazor Server (.NET 10)
 - **UI-Library:** MudBlazor 7.0
 - **Charting:** Plotly.js

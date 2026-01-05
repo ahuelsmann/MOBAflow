@@ -1,9 +1,9 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
 using Common.Configuration;
+using Microsoft.Extensions.Logging;
 using SharedUI.Interface;
-using System.Diagnostics;
 using System.Text.Json;
 
 /// <summary>
@@ -14,18 +14,16 @@ public class SettingsService : ISettingsService
 {
     private readonly AppSettings _settings;
     private readonly string _settingsFilePath;
+    private readonly ILogger<SettingsService> _logger;
     private bool _isLoaded;
 
-    public SettingsService(AppSettings settings)
+    public SettingsService(AppSettings settings, ILogger<SettingsService> logger)
     {
         _settings = settings;
+        _logger = logger;
         _settingsFilePath = Path.Combine(FileSystem.AppDataDirectory, "appsettings.json");
 
-        Debug.WriteLine("═══════════════════════════════════════════════════════");
-        Debug.WriteLine("🔧 SettingsService Constructor");
-        Debug.WriteLine($"   File path: {_settingsFilePath}");
-        Debug.WriteLine($"   AppDataDirectory: {FileSystem.AppDataDirectory}");
-        Debug.WriteLine("═══════════════════════════════════════════════════════");
+        _logger.LogInformation("SettingsService initialized. FilePath: {SettingsFilePath}; AppDataDirectory: {AppDataDirectory}", _settingsFilePath, FileSystem.AppDataDirectory);
 
         // ✅ DON'T block constructor - settings will be loaded in App.xaml.cs
         _isLoaded = false;
@@ -42,24 +40,22 @@ public class SettingsService : ISettingsService
     {
         if (_isLoaded)
         {
-            Debug.WriteLine("⚠️ Settings already loaded, skipping");
+            _logger.LogDebug("Settings already loaded, skipping");
             return;
         }
 
         try
         {
-            Debug.WriteLine("📂 LoadSettingsAsync: Checking file existence...");
-            Debug.WriteLine($"   Path: {_settingsFilePath}");
-            Debug.WriteLine($"   Exists: {File.Exists(_settingsFilePath)}");
+            _logger.LogInformation("LoadSettingsAsync: Checking file existence at {SettingsFilePath}; Exists: {Exists}", _settingsFilePath, File.Exists(_settingsFilePath));
 
             if (File.Exists(_settingsFilePath))
             {
                 var json = await File.ReadAllTextAsync(_settingsFilePath).ConfigureAwait(false);
-                Debug.WriteLine($"📄 File content length: {json.Length} chars");
+                _logger.LogDebug("Settings file length: {Length} chars", json.Length);
                 
                 if (string.IsNullOrWhiteSpace(json))
                 {
-                    Debug.WriteLine("⚠️ File is empty, using defaults");
+                    _logger.LogWarning("Settings file is empty, using defaults");
                     _isLoaded = true;
                     return;
                 }
@@ -73,17 +69,17 @@ public class SettingsService : ISettingsService
                     // Auto-migrate legacy default port 5000 to 5001 to avoid conflicts
                     if (loadedRestApi.Port == 5000 || loadedRestApi.Port == 0)
                     {
-                        Debug.WriteLine("⚠️ REST API port 5000 detected (legacy default) - migrating to 5001 to avoid conflicts.");
+                        _logger.LogWarning("REST API port {LegacyPort} detected (legacy default) - migrating to {NewPort}", loadedRestApi.Port, 5001);
                         loadedRestApi.Port = 5001;
                     }
 
-                    Debug.WriteLine("📦 Deserializing settings...");
-                    Debug.WriteLine($"   Loaded Tracks: {loadedSettings.Counter.CountOfFeedbackPoints}");
-                    Debug.WriteLine($"   Loaded Target: {loadedSettings.Counter.TargetLapCount}");
-                    Debug.WriteLine($"   Loaded Timer: {loadedSettings.Counter.TimerIntervalSeconds}s");
-                    Debug.WriteLine($"   Loaded Z21 IP: {loadedSettings.Z21.CurrentIpAddress}");
-                    Debug.WriteLine($"   Loaded REST IP: {loadedRestApi.CurrentIpAddress}");
-                    Debug.WriteLine($"   Loaded REST Port: {loadedRestApi.Port}");
+                    _logger.LogInformation("Deserializing settings: Tracks {Tracks}; Target {Target}; Timer {Timer}s; Z21 IP {Z21Ip}; REST IP {RestIp}; REST Port {RestPort}",
+                        loadedSettings.Counter.CountOfFeedbackPoints,
+                        loadedSettings.Counter.TargetLapCount,
+                        loadedSettings.Counter.TimerIntervalSeconds,
+                        loadedSettings.Z21.CurrentIpAddress,
+                        loadedRestApi.CurrentIpAddress,
+                        loadedRestApi.Port);
 
                     // Copy all loaded values to the DI-registered singleton
                     _settings.Application.LastSolutionPath = loadedSettings.Application.LastSolutionPath;
@@ -98,43 +94,40 @@ public class SettingsService : ISettingsService
                     _settings.RestApi.Port = loadedRestApi.Port;
                     _settings.RestApi.RecentIpAddresses = loadedRestApi.RecentIpAddresses;
 
-                    Debug.WriteLine("✅ Settings applied to singleton");
+                    _logger.LogInformation("Settings applied to singleton");
                     _isLoaded = true;
                 }
                 else
                 {
-                    Debug.WriteLine("⚠️ Deserialization returned null!");
+                    _logger.LogWarning("Deserialization returned null");
                     _isLoaded = true;
                 }
             }
             else
             {
-                Debug.WriteLine("ℹ️ No settings file found, using defaults");
-                Debug.WriteLine($"   Default Tracks: {_settings.Counter.CountOfFeedbackPoints}");
-                Debug.WriteLine($"   Default Target: {_settings.Counter.TargetLapCount}");
-                Debug.WriteLine($"   Default Timer: {_settings.Counter.TimerIntervalSeconds}s");
-                Debug.WriteLine($"   Default REST IP: {_settings.RestApi.CurrentIpAddress}");
+                _logger.LogInformation("No settings file found, using defaults. Tracks {Tracks}; Target {Target}; Timer {Timer}s; REST IP {RestIp}",
+                    _settings.Counter.CountOfFeedbackPoints,
+                    _settings.Counter.TargetLapCount,
+                    _settings.Counter.TimerIntervalSeconds,
+                    _settings.RestApi.CurrentIpAddress);
                 
                 // ✅ Create initial settings file with defaults
-                Debug.WriteLine("💾 Creating initial settings file...");
+                _logger.LogInformation("Creating initial settings file...");
                 await SaveSettingsAsync(_settings).ConfigureAwait(false);
                 _isLoaded = true;
             }
 
-            Debug.WriteLine("═══════════════════════════════════════════════════════");
-            Debug.WriteLine("✅ SettingsService Initialized");
-            Debug.WriteLine($"   Tracks: {_settings.Counter.CountOfFeedbackPoints}");
-            Debug.WriteLine($"   Target: {_settings.Counter.TargetLapCount}");
-            Debug.WriteLine($"   Timer Filter: {_settings.Counter.UseTimerFilter}");
-            Debug.WriteLine($"   Timer Interval: {_settings.Counter.TimerIntervalSeconds}s");
-            Debug.WriteLine($"   Z21 IP Address: {_settings.Z21.CurrentIpAddress}");
-            Debug.WriteLine($"   REST API IP Address: {_settings.RestApi.CurrentIpAddress}");
-            Debug.WriteLine("═══════════════════════════════════════════════════════");
+            _logger.LogInformation("SettingsService initialized. Tracks {Tracks}; Target {Target}; Timer Filter {TimerFilter}; Timer Interval {TimerInterval}s; Z21 IP {Z21Ip}; REST IP {RestIp}",
+                _settings.Counter.CountOfFeedbackPoints,
+                _settings.Counter.TargetLapCount,
+                _settings.Counter.UseTimerFilter,
+                _settings.Counter.TimerIntervalSeconds,
+                _settings.Z21.CurrentIpAddress,
+                _settings.RestApi.CurrentIpAddress);
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"❌ Failed to load settings: {ex.Message}");
-            Debug.WriteLine($"   Stack trace: {ex.StackTrace}");
+            _logger.LogError(ex, "Failed to load settings");
             _isLoaded = true; // Don't retry on error
         }
     }
@@ -153,26 +146,23 @@ public class SettingsService : ISettingsService
         {
             var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
 
-            Debug.WriteLine("💾 SaveSettingsAsync called");
-            Debug.WriteLine($"   Path: {_settingsFilePath}");
-            Debug.WriteLine($"   Tracks: {settings.Counter.CountOfFeedbackPoints}");
-            Debug.WriteLine($"   Target: {settings.Counter.TargetLapCount}");
-            Debug.WriteLine($"   Timer: {settings.Counter.TimerIntervalSeconds}s");
-            Debug.WriteLine($"   Z21 IP: {settings.Z21.CurrentIpAddress}");
-            Debug.WriteLine($"   REST API IP: {settings.RestApi.CurrentIpAddress}");
-            Debug.WriteLine($"   REST API Port: {settings.RestApi.Port}");
+            _logger.LogInformation("SaveSettingsAsync called. Path: {SettingsFilePath}; Tracks {Tracks}; Target {Target}; Timer {Timer}s; Z21 IP {Z21Ip}; REST IP {RestIp}; REST Port {RestPort}",
+                _settingsFilePath,
+                settings.Counter.CountOfFeedbackPoints,
+                settings.Counter.TargetLapCount,
+                settings.Counter.TimerIntervalSeconds,
+                settings.Z21.CurrentIpAddress,
+                settings.RestApi.CurrentIpAddress,
+                settings.RestApi.Port);
 
             await File.WriteAllTextAsync(_settingsFilePath, json).ConfigureAwait(false);
 
             var fileInfo = new FileInfo(_settingsFilePath);
-            Debug.WriteLine("✅ Settings saved successfully");
-            Debug.WriteLine($"   File size: {fileInfo.Length} bytes");
-            Debug.WriteLine($"   Last modified: {fileInfo.LastWriteTime}");
+            _logger.LogInformation("Settings saved successfully. File size: {FileSize} bytes; Last modified: {LastModified}", fileInfo.Length, fileInfo.LastWriteTime);
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"❌ Failed to save settings: {ex.Message}");
-            Debug.WriteLine($"   Stack trace: {ex.StackTrace}");
+            _logger.LogError(ex, "Failed to save settings");
             throw;
         }
     }
@@ -182,14 +172,11 @@ public class SettingsService : ISettingsService
     /// </summary>
     public async Task ResetToDefaultsAsync()
     {
-        var defaultSettings = new AppSettings();
-        await SaveSettingsAsync(defaultSettings);
+        await SaveSettingsAsync(new AppSettings()).ConfigureAwait(false);
     }
-
     #endregion
 
     #region User Preferences
-
     /// <summary>
     /// Gets or sets the path to the last loaded solution file.
     /// </summary>
@@ -221,6 +208,5 @@ public class SettingsService : ISettingsService
             }
         }
     }
-
     #endregion
 }

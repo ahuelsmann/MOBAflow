@@ -1,10 +1,9 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
 using System.Diagnostics;
-using View;
 
 /// <summary>
 /// Navigation service for MOBAflow WinUI application.
@@ -15,12 +14,14 @@ public class NavigationService
 {
     #region Fields
     private readonly IServiceProvider _serviceProvider;
+    private readonly PluginRegistry _pluginRegistry;
     private Frame? _contentFrame;
     #endregion
 
-    public NavigationService(IServiceProvider serviceProvider)
+    public NavigationService(IServiceProvider serviceProvider, PluginRegistry pluginRegistry)
     {
         _serviceProvider = serviceProvider;
+        _pluginRegistry = pluginRegistry;
     }
 
     /// <summary>
@@ -44,23 +45,14 @@ public class NavigationService
 
         try
         {
-            // Resolve page from DI container (potentially expensive operation)
-            object page = tag switch
+            if (!_pluginRegistry.TryGetPage(tag, out var registration))
             {
-                "overview" => _serviceProvider.GetRequiredService<OverviewPage>(),
-                "solution" => _serviceProvider.GetRequiredService<SolutionPage>(),
-                "journeys" => _serviceProvider.GetRequiredService<JourneysPage>(),
-                "workflows" => _serviceProvider.GetRequiredService<WorkflowsPage>(),
-                "trains" => _serviceProvider.GetRequiredService<TrainsPage>(),
-                "trackplaneditor" => _serviceProvider.GetRequiredService<TrackPlanEditorPage>(),
-                "journeymap" => _serviceProvider.GetRequiredService<JourneyMapPage>(),
-                "settings" => _serviceProvider.GetRequiredService<SettingsPage>(),
-                "monitor" => _serviceProvider.GetRequiredService<MonitorPage>(),
-                _ => throw new ArgumentException($"Unknown navigation tag: {tag}", nameof(tag))
-            };
+                throw new ArgumentException($"Unknown navigation tag: {tag}", nameof(tag));
+            }
 
+            var page = _serviceProvider.GetRequiredService(registration.PageType);
             _contentFrame.Content = page;
-            
+
             await Task.CompletedTask; // Explicit async completion
         }
         catch (Exception ex)

@@ -12,7 +12,7 @@
 ## 📋 SESSION START CHECKLIST (ALWAYS DO THIS FIRST!)
 
 **At the beginning of EVERY session:**
-1. ✅ Read `.copilot-todos.md` to see what's been done in previous sessions
+1. ✅ Read `.github/instructions/.copilot-todos.md` to see what's been done in previous sessions
 2. ✅ Check for any "Noch offen ⏳" (open tasks) that need continuation
 3. ✅ Don't repeat recommendations that are already in the "Umgesetzt ✅" list
 4. ✅ Use this file as the **Cross-Session Knowledge Bridge**
@@ -21,11 +21,13 @@
 - **Solution Format:** SLNX (Modern Visual Studio format) - File: `Moba.slnx`
 - **No legacy .sln file** - SLNX handles project loading automatically
 - **14 Projects in workspace** (see Moba.slnx for complete list)
+- **WinUI Debug Logs:** `WinUI\\bin\\Debug\\logs` (relative to repo root)
+- **TODO-Liste:** `.github/instructions/.copilot-todos.md`
 
 **When recommending something new:**
 - Ask: **"Soll ich das umsetzen?"** (Should I implement this?)
 - Wait for explicit "Ja" or "Nein"
-- Update `.copilot-todos.md` accordingly
+- Update `.github/instructions/.copilot-todos.md` accordingly
 - Move tasks through: ⏳ → ✅ (with date)
 
 ---
@@ -167,6 +169,76 @@ public AppSettings LoadSettings()
 - Example: `LoadAsync()`, `SaveAsync()`, `NavigateToPageAsync()`
 - Exception: `async void` event handlers (no suffix needed)
 
+### **7. File Encoding & Line Endings (CRITICAL!)**
+
+**Standards (enforced by `.editorconfig` and `.gitattributes`):**
+- **Encoding:** UTF-8 without BOM (default for modern .NET)
+- **Line Endings:** CRLF (Windows standard, enforced via `end_of_line = crlf`)
+- **Final Newline:** No (`insert_final_newline = false`)
+
+**Configuration Files:**
+- `.editorconfig` - IDE-level enforcement (`charset = utf-8`, `end_of_line = crlf`)
+- `.gitattributes` - Git-level enforcement (`* text=auto eol=crlf`)
+
+**Checking for Mixed Line Endings (PowerShell):**
+```powershell
+# Check single file
+$content = [System.IO.File]::ReadAllText("path\to\file.cs")
+$crlf = ([regex]::Matches($content, "`r`n")).Count
+$lf = ([regex]::Matches($content, "(?<!\r)`n")).Count
+if ($lf -gt 0) { "MIXED: CRLF=$crlf, LF=$lf" } else { "OK: CRLF=$crlf" }
+```
+
+**Fixing Mixed Line Endings:**
+```powershell
+# Fix single file (normalize to CRLF)
+(Get-Content "path\to\file.cs" -Raw).Replace("`r`n","`n").Replace("`n","`r`n") | Set-Content "path\to\file.cs" -NoNewline
+```
+
+**When encountering line ending issues:**
+1. Check file with the pattern above
+2. Fix if mixed (LF > 0)
+3. Verify with build
+4. Commit with descriptive message
+
+### **8. PowerShell Terminal Optimization (IMPORTANT!)**
+
+**When running many file operations in PowerShell:**
+
+1. **Avoid complex multi-line strings** - PowerShell has issues with special characters like `$`, `<`, `>` in here-strings
+2. **Use `[System.IO.File]` methods** for reliable file operations
+3. **Keep commands short** - Split complex operations into multiple simple commands
+4. **Avoid parallelization via terminal** - Use sequential operations to prevent race conditions
+
+**Best Practices for File Content Creation:**
+```powershell
+# ❌ WRONG: Complex here-strings with special chars
+$content = @"
+<Project>
+  $(SomeVariable)
+</Project>
+"@
+
+# ✅ CORRECT: Use create_file tool or line-by-line approach
+# Or use [System.IO.File]::WriteAllText with escaped content
+```
+
+**For batch file checks (optimized approach):**
+```powershell
+# Check directory for mixed line endings (efficient)
+Get-ChildItem "path\to\dir" -Filter "*.cs" -Recurse | ForEach-Object {
+    $c = [System.IO.File]::ReadAllText($_.FullName)
+    $lf = ([regex]::Matches($c, "(?<!\r)`n")).Count
+    if ($lf -gt 0) { $_.Name + ": LF=$lf" }
+}
+```
+
+**Preference Order for File Operations:**
+1. **Use `create_file` tool** - Most reliable for new files
+2. **Use `replace_string_in_file` tool** - Best for modifications
+3. **Use `run_command_in_terminal`** - Only for simple operations or checks
+4. **Avoid complex PowerShell scripts** - Terminal has character limits and escaping issues
+
 ---
 
 ## 📚 Instruction Set Index
@@ -206,93 +278,93 @@ public AppSettings LoadSettings()
 
 ## 🎯 Current Session Status (Feb 4, 2025)
 
-### ✅ Latest Completed: Photo Upload WinUI → MAUI (Feb 4, 2025) 📸🚀
+### ✅ Latest Completed: Plugin System Architecture (Feb 4, 2025) 🔌✨
+
+**Major Achievement:** Complete **Plugin Framework** implementiert für extensible Architecture!
+
+**What Was Implemented:**
+
+1. **Plugin Framework Architecture:**
+   - `IPlugin` Interface - Plugin contract
+   - `PluginBase` Abstract class - Simplifies plugin development
+   - `PluginMetadata` - Version tracking, author info, dependencies
+   - `PluginPageDescriptor` - Page registration
+
+2. **Plugin Management Services:**
+   - `PluginDiscoveryService` - Auto-discover DLLs in Plugins folder
+   - `PluginValidator` - Validate plugins for errors (duplicate tags, missing names, etc.)
+   - `PluginLoader` - Lifecycle management (init/unload hooks)
+
+3. **Minimal Plugin Template:**
+   - Complete example plugin in `Plugins/MinimalPlugin/`
+   - Demonstrates MVVM with CommunityToolkit.Mvvm
+   - Shows MainWindowViewModel injection
+   - Includes lifecycle hooks, metadata, page registration
+
+4. **Documentation:**
+   - ✅ **README.md** - Comprehensive plugin development section
+   - ✅ **docs/ARCHITECTURE.md** - Full system architecture with plugin design
+   - ✅ **Plugins/MinimalPlugin/README.md** - Template reference
+   - ✅ **Updated Instructions** - Plugin best practices
+
+**Key Features:**
+- 🎯 **Easy Discovery** - Plugins in `WinUI/bin/Debug/Plugins/` auto-discovered
+- ✅ **Validation** - Automatic plugin validation on startup
+- 🔄 **Lifecycle Hooks** - OnInitializedAsync(), OnUnloadingAsync()
+- 💉 **Full DI Support** - Inject any host service (MainWindowViewModel, IZ21, etc.)
+- 📦 **Metadata** - Version, author, dependencies declared
+- 🛡️ **Robustness** - App always runs, even if plugins fail
+- 🚀 **Copy-Paste Template** - Minimal Plugin ready to duplicate
+
+**Architecture Highlights:**
+```
+IPlugin Interface (Contract)
+    ↓
+PluginBase (Abstract Base)
+    ↓
+MyPlugin : PluginBase
+    ↓
+PluginDiscoveryService (Auto-Discovery)
+    ↓
+PluginValidator (Validation)
+    ↓
+PluginLoader (Registration & Lifecycle)
+    ↓
+DI Container (Service Resolution)
+```
+
+**Benefits:**
+- ✅ Developers can add features **without modifying core**
+- ✅ **Isolated plugins** with full DI access
+- ✅ **Automatic loading** - just drop DLL in folder
+- ✅ **Version tracking** via metadata
+- ✅ **Error isolation** - broken plugins don't crash app
+
+**Navigation Integration:**
+- Plugins appear in NavigationView between last core page and Settings
+- Separator automatically added to distinguish plugin pages
+- Dynamic menu item creation with icons and titles
+
+**Files Created/Modified:**
+- ✅ `Common/Plugins/IPlugin.cs` - Plugin interface
+- ✅ `Common/Plugins/PluginBase.cs` - Abstract base class
+- ✅ `Common/Plugins/PluginDiscoveryService.cs` - Discovery
+- ✅ `Common/Plugins/PluginValidator.cs` - Validation
+- ✅ `WinUI/Service/PluginLoader.cs` - Lifecycle management
+- ✅ `WinUI/Service/PluginRegistry.cs` - Page registry
+- ✅ `WinUI/View/MainWindow.xaml.cs` - Dynamic plugin menu
+- ✅ `Plugins/MinimalPlugin/*` - Template plugin
+- ✅ `README.md` - Plugin development guide
+- ✅ `docs/ARCHITECTURE.md` - Full architecture documentation
+
+**Build Status:** ✅ Zero errors, zero warnings
+
+---
+
+### ✅ Previous Completed: Photo Upload WinUI → MAUI (Feb 4, 2025) 📸🚀
 
 **Problem:** MAUI konnte Fotos aufnehmen, aber nicht zu WinUI hochladen → PhotoPath blieb leer
 
 **Solution:** Vollständige Real-Time Photo Upload Pipeline implementiert
-
-**Architecture:**
-
-1. **MAUI Camera Integration:**
-   - `MediaPicker.Default.CapturePhotoAsync()` → Foto aufnehmen
-   - `PhotoUploadService` → Upload zu WinUI REST-API
-   - `RestApiDiscoveryService` → Automatische Server-IP-Erkennung (Broadcasting + Config)
-
-2. **WinUI REST-API (ASP.NET Core):**
-   - `PhotoUploadController.UploadPhoto()` → HTTP POST Endpoint
-   - `PhotoStorageService` → Speicherung in `AppData\Local\MOBAflow\photos\temp\`
-   - `SignalR PhotoHub` → Real-Time Notification an WinUI
-
-3. **Real-Time Photo Assignment:**
-   - SignalR `OnPhotoUploaded` → Event in WinUI
-   - `MainWindowViewModel.AssignLatestPhoto()` → Automatische Zuweisung zu Lok/Wagon
-   - `MovePhotoToCategory()` → Verschiebung von `temp/` → `locomotives/` oder `wagons/`
-
-**Fixes Applied:**
-- ✅ **Path Bug Fix:** `baseDir = MOBAflow` (NICHT `MOBAflow\photos`) → Verhindert doppelten `photos\photos\` Pfad
-- ✅ **MAUI REST-API Discovery:** Broadcasting + Config-Fallback
-- ✅ **SignalR Hub:** WinUI verbindet automatisch zu `localhost:5001/photos-hub`
-- ✅ **File.Move with overwrite:** Vermeidet IOException bei existierenden Dateien
-
-**Impact:**
-- ✅ **MAUI → WinUI Photo Upload:** Funktioniert vollständig
-- ✅ **Automatic Assignment:** Foto wird automatisch zu ausgewählter Lok/Wagon zugewiesen
-- ✅ **Real-Time:** SignalR-Benachrichtigung innerhalb von Millisekunden
-- ✅ **Photo Storage:** `photos/locomotives/{guid}.jpg` oder `photos/wagons/{guid}.jpg`
-- ✅ **Build Status:** Zero errors, zero warnings
-
-**Files Modified:**
-- `SharedUI/ViewModel/MainWindowViewModel.Train.cs`: `MovePhotoToCategory` Path-Fix
-- `MAUI/Service/PhotoUploadService.cs`: Upload-Implementierung
-- `MAUI/Service/RestApiDiscoveryService.cs`: Server-Discovery
-- `WinUI/Controllers/PhotoUploadController.cs`: REST-API Endpoint
-- `WinUI/Service/PhotoHubClient.cs`: SignalR Client
-- `SharedUI/Service/PhotoStorageService.cs`: File Storage Logic
-
-**Key Pattern:**
-```csharp
-// ✅ CORRECT: Base directory WITHOUT "photos" subfolder
-var baseDir = Path.Combine(..., "MOBAflow");
-var tempPath = Path.Combine(baseDir, tempPhotoPath); // tempPhotoPath = "photos/temp/xyz.jpg"
-// → C:\...\MOBAflow\photos\temp\xyz.jpg ✅
-
-// ❌ WRONG: Would create double "photos" path
-var photoDir = Path.Combine(..., "MOBAflow", "photos");
-var tempPath = Path.Combine(photoDir, tempPhotoPath);
-// → C:\...\MOBAflow\photos\photos\temp\xyz.jpg ❌
-```
-
----
-
-### 🔧 Session Summary (Feb 4, 2025)
-
-**Focus:** Photo Upload Pipeline + Real-Time Communication
-
-**Key Achievements:**
-- ✅ **MAUI Camera → WinUI:** End-to-End Photo Upload funktioniert
-- ✅ **SignalR Real-Time:** Sofortige Foto-Benachrichtigung
-- ✅ **Automatic Assignment:** Foto wird automatisch zu Lok/Wagon zugewiesen
-- ✅ **Path Bug Fix:** Verhindert doppelten `photos\photos\` Pfad
-
-**Next Steps (Future Sessions):**
-- 📸 **Photo Preview in WinUI:** Image Control in Properties Panel
-- 📸 **Photo Delete:** Button zum Entfernen von Fotos
-- 📸 **Photo Gallery:** Mehrere Fotos pro Lok/Wagon (Array statt String)
-- 🌐 **Cloud Sync:** Optional Azure Blob Storage für Foto-Backup
----
-
-## 📚 Session History
-
-**Detailed session logs moved to:**
-- [Session Archive - January 2025](./session-archive-jan-2025.md)
-
-**Key Milestones:**
-- ✅ **Feb 4, 2025:** Photo Upload WinUI → MAUI (Real-Time with SignalR)
-- ✅ **Feb 3, 2025:** Async-Everywhere Pattern Implementation
-- ✅ **Jan 31, 2025:** TrainsPage (Locomotives/Wagons Inventory)
-- ✅ **Jan 31, 2025:** AnyRail Import Fix (96/96 connections)
-- ✅ **Jan 31, 2025:** Track-Graph Architecture (Pure Topology-First)
-- ✅ **Jan 31, 2025:** Piko A-Gleis Geometry Catalog (23+ track types)
 
 ---

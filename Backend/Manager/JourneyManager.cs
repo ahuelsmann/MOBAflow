@@ -1,12 +1,12 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Backend.Manager;
 
 using Domain;
 using Domain.Enum;
 using Interface;
+using Microsoft.Extensions.Logging;
 using Service;
-using System.Diagnostics;
 
 /// <summary>
 /// Manages the execution of workflows and their actions related to a journey or stop (station) based on feedback events (track feedback points).
@@ -19,6 +19,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
     private readonly WorkflowService _workflowService;
     private readonly Dictionary<Guid, JourneySessionState> _states = [];
     private readonly Project _project;
+    private readonly ILogger<JourneyManager> _logger;
 
     /// <summary>
     /// Event raised when a journey reaches a new station.
@@ -55,15 +56,18 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
     /// <param name="project">Project containing journeys, stations, and workflows for reference resolution</param>
     /// <param name="workflowService">Service for executing workflows</param>
     /// <param name="executionContext">Optional execution context; if null, a new context with Z21 will be created</param>
+    /// <param name="logger">Optional logger for structured diagnostics</param>
     public JourneyManager(
         IZ21 z21,
         Project project,
         WorkflowService workflowService,
-        ActionExecutionContext? executionContext = null)
+        ActionExecutionContext? executionContext = null,
+        ILogger<JourneyManager>? logger = null)
     : base(z21, project.Journeys, executionContext)
     {
         _project = project;
         _workflowService = workflowService;
+        _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<JourneyManager>.Instance;
 
         // Initialize SessionState for all journeys
         foreach (var journey in project.Journeys)
@@ -80,28 +84,25 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
 
     protected override async Task ProcessFeedbackAsync(FeedbackResult feedback)
     {
-        // ✅ Check if disposed before accessing SemaphoreSlim
         if (Disposed)
         {
-            Debug.WriteLine("⚠️ JourneyManager already disposed - ignoring feedback");
+            _logger.LogWarning("JourneyManager already disposed - ignoring feedback");
             return;
         }
 
         try
         {
-            // Wait for lock (blocking) - queues feedbacks sequentially
             await _processingLock.WaitAsync().ConfigureAwait(false);
 
             try
             {
-                // ✅ Double-check after acquiring lock (disposal might have happened while waiting)
                 if (Disposed)
                 {
-                    Debug.WriteLine("⚠️ JourneyManager disposed during lock acquisition");
+                    _logger.LogWarning("JourneyManager disposed during lock acquisition");
                     return;
                 }
 
-                Debug.WriteLine($"📡 Feedback received: InPort {feedback.InPort}");
+                _logger.LogInformation("Feedback received: InPort {InPort}", feedback.InPort);
 
                 foreach (var journey in Entities)
                 {
@@ -109,13 +110,10 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
                     {
                         if (ShouldIgnoreFeedback(journey))
                         {
-                            Debug.WriteLine($"⏭ Feedback for journey '{GetEntityName(journey)}' ignored (timer active)");
+                            _logger.LogInformation("Feedback for journey '{Journey}' ignored (timer active)", GetEntityName(journey));
                             continue;
                         }
 
-                        // Process feedback FIRST, THEN update timer
-                        // This ensures the first feedback increments the counter,
-                        // and subsequent feedbacks are blocked by the timer
                         await HandleFeedbackAsync(journey).ConfigureAwait(false);
                         UpdateLastFeedbackTime(GetInPort(journey));
                     }
@@ -123,7 +121,6 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
             }
             finally
             {
-                // ✅ Only release if not disposed
                 if (!Disposed)
                 {
                     _processingLock.Release();
@@ -132,19 +129,17 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
         }
         catch (ObjectDisposedException)
         {
-            // SemaphoreSlim was disposed while we were waiting - this is expected during shutdown
-            Debug.WriteLine("⚠️ JourneyManager SemaphoreSlim disposed during feedback processing");
+            _logger.LogWarning("JourneyManager SemaphoreSlim disposed during feedback processing");
         }
     }
 
     private async Task HandleFeedbackAsync(Journey journey)
     {
-        // Get state
         var state = _states[journey.Id];
 
         state.Counter++;
         state.LastFeedbackTime = DateTime.Now;
-        Debug.WriteLine($"🔄 Journey '{journey.Name}': Round {state.Counter}, Position {state.CurrentPos}");
+        _logger.LogInformation("Journey '{Journey}': Round {Counter}, Position {Position}", journey.Name, state.Counter, state.CurrentPos);
 
         // Fire FeedbackReceived event on every feedback (for UI counter updates)
         OnFeedbackReceived(new JourneyFeedbackEventArgs
@@ -156,7 +151,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
         // Get current Station directly from Journey
         if (state.CurrentPos >= journey.Stations.Count)
         {
-            Debug.WriteLine("⚠ CurrentPos out of Stations list bounds");
+            _logger.LogWarning("CurrentPos out of Stations list bounds for journey '{Journey}'", journey.Name);
             return;
         }
 
@@ -164,7 +159,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
 
         if (state.Counter >= currentStation.NumberOfLapsToStop)
         {
-            Debug.WriteLine($"🚉 Station reached: {currentStation.Name}");
+            _logger.LogInformation("Station reached: {Station}", currentStation.Name);
 
             // Update SessionState with current station
             state.CurrentStationName = currentStation.Name;
@@ -195,7 +190,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
                 }
                 else if (workflow == null)
                 {
-                    Debug.WriteLine($"⚠ Workflow with ID {currentStation.WorkflowId.Value} not found");
+                    _logger.LogWarning("Workflow with ID {WorkflowId} not found", currentStation.WorkflowId.Value);
                 }
             }
 
@@ -216,15 +211,14 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
 
     private async Task HandleLastStationAsync(Journey journey)
     {
-        // Get state
         var state = _states[journey.Id];
 
-        Debug.WriteLine($"🏁 Last station of journey '{journey.Name}' reached");
+        _logger.LogInformation("Last station of journey '{Journey}' reached", journey.Name);
 
         switch (journey.BehaviorOnLastStop)
         {
             case BehaviorOnLastStop.BeginAgainFromFistStop:
-                Debug.WriteLine("🔄 Journey will restart from beginning");
+                _logger.LogInformation("Journey will restart from beginning");
                 state.CurrentPos = 0;
                 break;
 
@@ -234,23 +228,23 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
                     var nextJourney = _project.Journeys.FirstOrDefault(j => j.Id == journey.NextJourneyId.Value);
                     if (nextJourney != null && _states.TryGetValue(nextJourney.Id, out var nextState))
                     {
-                        Debug.WriteLine($"➡ Switching to journey: {nextJourney.Name}");
+                        _logger.LogInformation("Switching to journey: {Journey}", nextJourney.Name);
                         nextState.CurrentPos = (int)nextJourney.FirstPos;
-                        Debug.WriteLine($"✅ Journey '{nextJourney.Name}' activated at position {nextState.CurrentPos}");
+                        _logger.LogInformation("Journey '{Journey}' activated at position {Position}", nextJourney.Name, nextState.CurrentPos);
                     }
                     else
                     {
-                        Debug.WriteLine($"⚠ NextJourney with ID {journey.NextJourneyId.Value} not found or state missing");
+                        _logger.LogWarning("NextJourney with ID {NextJourneyId} not found or state missing", journey.NextJourneyId.Value);
                     }
                 }
                 else
                 {
-                    Debug.WriteLine("⚠ NextJourneyId not set");
+                    _logger.LogWarning("NextJourneyId not set for journey '{Journey}'", journey.Name);
                 }
                 break;
 
             case BehaviorOnLastStop.None:
-                Debug.WriteLine("⏹ Journey stops");
+                _logger.LogInformation("Journey stops");
                 state.IsActive = false;
                 break;
         }
@@ -269,7 +263,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
             state.Counter = 0;
             state.CurrentPos = (int)journey.FirstPos;
             state.IsActive = true;
-            Debug.WriteLine($"🔄 Journey '{journey.Name}' reset to position {state.CurrentPos}");
+            _logger.LogInformation("Journey '{Journey}' reset to position {Position}", journey.Name, state.CurrentPos);
         }
     }
 
@@ -290,7 +284,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
             Reset(journey);
         }
         base.ResetAll();
-        Debug.WriteLine("🔄 All journeys reset");
+        _logger.LogInformation("All journeys reset");
     }
 
     protected override uint GetInPort(Journey entity) => entity.InPort;

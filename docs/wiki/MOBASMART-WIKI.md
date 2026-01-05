@@ -668,7 +668,7 @@ public class InPortStatistic
 **MOBAsmart** ist Teil des **MOBAflow**-Projekts.
 
 - **Lizenz:** MIT License
-- **Entwickler:** Andreas Hülsmann
+- **Entwickler:** Andreas Huelsmann
 - **Repository:** [Azure DevOps](https://dev.azure.com/ahuelsmann/MOBAflow)
 - **Version:** 1.0 (Dezember 2025)
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.TrackPlan.Import;
 
 using Domain;
@@ -108,21 +108,15 @@ public class AnyRail
                     Endpoint2 = int.Parse(conn.Attribute("endpoint2")?.Value ?? "0", CultureInfo.InvariantCulture)
                 });
             }
-        }
+                }
 
-        return layout;
-    }
+                return layout;
+            }
 
-    /// <summary>
-    /// Parses an AnyRail XML file and returns an AnyRailLayout (synchronous wrapper for backward compatibility).
-    /// </summary>
-    [Obsolete("Use ParseAsync instead for better performance and non-blocking I/O")]
-    public static AnyRail Parse(string xmlPath) => ParseAsync(xmlPath).GetAwaiter().GetResult();
-
-    /// <summary>
-    /// Converts AnyRail connections (endpoint-to-endpoint) to TrackConnections (segment-to-segment).
-    /// </summary>
-    public List<TrackConnection> ToTrackConnections()
+            /// <summary>
+            /// Converts AnyRail connections (endpoint-to-endpoint) to TrackConnections (segment-to-segment).
+            /// </summary>
+            public List<TrackConnection> ToTrackConnections()
     {
         var result = new List<TrackConnection>();
 

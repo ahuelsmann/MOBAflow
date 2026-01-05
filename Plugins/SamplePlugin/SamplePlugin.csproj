@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
+    <UseWinUI>true</UseWinUI>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Moba.Plugin</RootNamespace>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+  </PropertyGroup>
+
+  <!-- Exclude XAML from standard Page compilation - we load it dynamically via XamlReader.Load -->
+  <ItemGroup>
+    <Page Remove="SamplePluginPage.xaml" />
+    <EmbeddedResource Include="SamplePluginPage.xaml">
+      <LogicalName>Moba.Plugin.SamplePluginPage.xaml</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+  </ItemGroup>
+
+  <!-- Plugin interface references: Private=false and ExcludeAssets=runtime 
+       prevent copying shared assemblies to plugin output (Microsoft Best Practice) -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\Common.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\..\SharedUI\SharedUI.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+  </ItemGroup>
+
+  <!-- Copy plugin DLL to WinUI Plugins folder after build -->
+  <Target Name="CopyToWinUIPlugins" AfterTargets="Build">
+    <PropertyGroup>
+      <PluginOutputDir>$(MSBuildThisFileDirectory)..\..\WinUI\bin\$(Configuration)\Plugins</PluginOutputDir>
+    </PropertyGroup>
+    <MakeDir Directories="$(PluginOutputDir)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginOutputDir)" />
+  </Target>
+</Project>

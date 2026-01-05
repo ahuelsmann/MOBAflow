@@ -1,10 +1,14 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using Common.Configuration;
+
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
+
 using Service;
+
 using System.Collections.ObjectModel;
 
 // For NullIoService
@@ -163,7 +167,7 @@ public partial class MainWindowViewModel
     /// <summary>
     /// List of available speech engines for selection.
     /// </summary>
-    public string[] AvailableSpeechEngines { get; } = 
+    public string[] AvailableSpeechEngines { get; } =
     [
         "System Speech (Windows SAPI)",
         "Azure Cognitive Services"
@@ -190,7 +194,7 @@ public partial class MainWindowViewModel
     /// Returns true if Azure Cognitive Services is selected.
     /// Used to show/hide Azure-specific settings.
     /// </summary>
-    public bool IsAzureSpeechEngineSelected => 
+    public bool IsAzureSpeechEngineSelected =>
         SelectedSpeechEngine?.Contains("Azure", StringComparison.OrdinalIgnoreCase) == true;
 
     public bool ResetWindowLayoutOnStart
@@ -281,7 +285,7 @@ public partial class MainWindowViewModel
             {
                 _settings.Counter.CountOfFeedbackPoints = (int)value;
                 OnPropertyChanged();
-                
+
                 // Immediately update Track Statistics on Overview page
                 InitializeStatisticsFromFeedbackPoints();
             }
@@ -347,7 +351,7 @@ public partial class MainWindowViewModel
     public bool IsTrainsPageAvailable => _settings.FeatureToggles is { IsTrainsPageAvailable: true };
 
     // Feature Toggle Labels (optional)
-    
+
     public string? OverviewPageLabel => _settings.FeatureToggles?.OverviewPageLabel;
     public string? SolutionPageLabel => _settings.FeatureToggles?.SolutionPageLabel;
     public string? JourneysPageLabel => _settings.FeatureToggles?.JourneysPageLabel;
@@ -356,13 +360,13 @@ public partial class MainWindowViewModel
     public string? JourneyMapPageLabel => _settings.FeatureToggles?.JourneyMapPageLabel;
     public string? SettingsPageLabel => _settings.FeatureToggles?.SettingsPageLabel;
     public string? MonitorPageLabel => _settings.FeatureToggles?.MonitorPageLabel;
-    
+
     // Settings Page CheckBox Content (with labels)
-    
+
     public string TrackPlanEditorCheckBoxContent => FormatPageContent("Track Plan Editor Page", TrackPlanEditorPageLabel);
     public string JourneyMapCheckBoxContent => FormatPageContent("Journey Map Page", JourneyMapPageLabel);
     public string MonitorCheckBoxContent => FormatPageContent("Monitor Page", MonitorPageLabel);
-    
+
     private static string FormatPageContent(string pageName, string? label)
     {
         return string.IsNullOrWhiteSpace(label) ? pageName : $"{pageName} ({label})";
@@ -378,19 +382,22 @@ public partial class MainWindowViewModel
 
         try
         {
-            ShowErrorMessage = false;
+            _uiDispatcher.InvokeOnUi(() => ShowErrorMessage = false);
             await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
 
-            ShowSuccessMessage = true;
+            _uiDispatcher.InvokeOnUi(() => ShowSuccessMessage = true);
 
             // Auto-hide success message after 3 seconds
             await Task.Delay(3000).ConfigureAwait(false);
-            ShowSuccessMessage = false;
+            _uiDispatcher.InvokeOnUi(() => ShowSuccessMessage = false);
         }
         catch (Exception ex)
         {
-            ErrorMessage = ex.Message;
-            ShowErrorMessage = true;
+            _uiDispatcher.InvokeOnUi(() =>
+            {
+                ErrorMessage = ex.Message;
+                ShowErrorMessage = true;
+            });
         }
     }
 
@@ -473,10 +480,10 @@ public partial class MainWindowViewModel
         try
         {
             ShowErrorMessage = false;
-            
+
             // Get the current speaker engine from DI (injected via AnnouncementService)
             var testMessage = "Dies ist ein Test der Sprachausgabe. Nächster Halt: Bielefeld Hauptbahnhof.";
-            
+
             // Use the announcement service if available
             if (_announcementService != null)
             {
@@ -498,4 +505,3 @@ public partial class MainWindowViewModel
     }
     #endregion
 }
-

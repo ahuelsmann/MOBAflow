@@ -1,11 +1,11 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
 using Domain;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
 using SharedUI.Interface;
-using System.Diagnostics;
+using System.Text.Json;
 
 /// <summary>
 /// Service for loading city master data from germany-stations.json.
@@ -15,9 +15,11 @@ public class CityService : ICityService
 {
     private List<City>? _cachedCities;
     private readonly string _jsonFilePath;
+    private readonly ILogger<CityService> _logger;
 
-    public CityService(AppSettings settings)
+    public CityService(AppSettings settings, ILogger<CityService> logger)
     {
+        _logger = logger;
         // Use configured path from appsettings.json
         var configuredPath = settings.CityLibrary.FilePath;
         
@@ -26,7 +28,7 @@ public class CityService : ICityService
             ? configuredPath
             : Path.Combine(AppContext.BaseDirectory, configuredPath);
             
-        Debug.WriteLine($" CityService initialized with path: {_jsonFilePath}");
+        _logger.LogInformation("CityService initialized with path: {JsonFilePath}", _jsonFilePath);
     }
 
     /// <summary>
@@ -39,7 +41,7 @@ public class CityService : ICityService
 
         if (!File.Exists(_jsonFilePath))
         {
-            Debug.WriteLine($" City library file not found: {_jsonFilePath}");
+            _logger.LogWarning("City library file not found: {JsonFilePath}", _jsonFilePath);
             _cachedCities = [];
             return _cachedCities;
         }
@@ -48,16 +50,16 @@ public class CityService : ICityService
         {
             var json = await File.ReadAllTextAsync(_jsonFilePath);
             
-            // Simple deserialization with Newtonsoft.Json - no complex options needed for POCOs
-            var data = JsonConvert.DeserializeObject<CitiesData>(json);
+            // Simple deserialization with System.Text.Json - no complex options needed for POCOs
+            var data = JsonSerializer.Deserialize<CitiesData>(json, JsonOptions.Default);
 
             _cachedCities = data?.Cities ?? [];
-            Debug.WriteLine($" Loaded {_cachedCities.Count} cities from library");
+            _logger.LogInformation("Loaded {Count} cities from library", _cachedCities.Count);
             return _cachedCities;
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($" Failed to load city library: {ex.Message}");
+            _logger.LogError(ex, "Failed to load city library from {JsonFilePath}", _jsonFilePath);
             _cachedCities = [];
             return _cachedCities;
         }
@@ -98,9 +100,11 @@ public class CityService : ICityService
 
         foreach (var city in _cachedCities)
         {
-            var station = city.Stations.FirstOrDefault(s => s.Id == stationId);
-            if (station != null)
-                return station;
+            foreach (var station in city.Stations)
+            {
+                if (station.Id == stationId)
+                    return station;
+            }
         }
 
         return null;

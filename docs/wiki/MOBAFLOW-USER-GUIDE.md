@@ -405,7 +405,7 @@ Stations:
 
 **MOBAflow** ist Open Source (MIT License).
 
-- **Entwickler:** Andreas Hülsmann
+- **Entwickler:** Andreas Huelsmann
 - **Repository:** [Azure DevOps](https://dev.azure.com/ahuelsmann/MOBAflow)
 - **Version:** 3.9 (Dezember 2025)
 

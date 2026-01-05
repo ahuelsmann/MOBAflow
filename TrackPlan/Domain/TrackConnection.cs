@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.TrackPlan.Domain;
 
 /// <summary>
@@ -49,33 +49,10 @@ public class TrackConnection
     public Dictionary<string, double>? Parameters { get; set; }
 
     /// <summary>
-    /// Optional: Switch state required for this connection to be active.
-    /// If null, connection is always active.
-    /// If not null, connection is only active when parent segment SwitchState matches.
-    /// This enables parametric switch control without coordinate changes.
-    /// </summary>
-    public SwitchState? ActiveWhen { get; set; }
-
-    // === BACKWARD COMPATIBILITY ===
-    // Old properties for AnyRail import compatibility (will be removed in future version)
-
-    /// <summary>
-    /// [DEPRECATED] Use Segment1ConnectorIndex instead.
-    /// </summary>
-    [Obsolete("Use Segment1ConnectorIndex instead")]
-    public int Segment1EndpointIndex
-    {
-        get => Segment1ConnectorIndex;
-        set => Segment1ConnectorIndex = value;
+        /// Optional: Switch state required for this connection to be active.
+        /// If null, connection is always active.
+        /// If not null, connection is only active when parent segment SwitchState matches.
+        /// This enables parametric switch control without coordinate changes.
+        /// </summary>
+        public SwitchState? ActiveWhen { get; set; }
     }
-
-    /// <summary>
-    /// [DEPRECATED] Use Segment2ConnectorIndex instead.
-    /// </summary>
-    [Obsolete("Use Segment2ConnectorIndex instead")]
-    public int Segment2EndpointIndex
-    {
-        get => Segment2ConnectorIndex;
-        set => Segment2ConnectorIndex = value;
-    }
-}

@@ -1,59 +1,80 @@
-// Copyright (c) 2025-2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Converter;
 
 using Domain;
 using Domain.Enum;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 /// <summary>
 /// JSON converter for WorkflowAction - handles Parameters dictionary serialization.
 /// </summary>
-public class ActionConverter : JsonConverter<WorkflowAction>
+public class ActionJsonConverter : JsonConverter<WorkflowAction>
 {
-    public override WorkflowAction? ReadJson(JsonReader reader, Type objectType, WorkflowAction? existingValue, bool hasExistingValue, JsonSerializer serializer)
+    public override WorkflowAction? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        if (reader.TokenType == JsonToken.Null)
+        if (reader.TokenType == JsonTokenType.Null)
             return null;
 
-        JObject jo = JObject.Load(reader);
+        using var jsonDoc = JsonDocument.ParseValue(ref reader);
+        var root = jsonDoc.RootElement;
 
         var action = new WorkflowAction
         {
-            Id = jo["Id"]?.ToObject<Guid>(serializer) ?? Guid.NewGuid(),
-            Name = jo["Name"]?.ToObject<string>(serializer) ?? string.Empty,
-            Number = jo["Number"]?.ToObject<uint>(serializer) ?? 0,
-            Type = jo["Type"]?.ToObject<ActionType>(serializer) ?? ActionType.Command,
+            Id = root.TryGetProperty("Id", out var idElement) 
+                ? idElement.GetGuid() 
+                : Guid.NewGuid(),
+            Name = root.TryGetProperty("Name", out var nameElement) 
+                ? nameElement.GetString() ?? string.Empty 
+                : string.Empty,
+            Number = root.TryGetProperty("Number", out var numberElement) 
+                ? numberElement.GetUInt32() 
+                : 0,
+            Type = root.TryGetProperty("Type", out var typeElement) 
+                ? Enum.Parse<ActionType>(typeElement.GetString() ?? "Command", ignoreCase: true) 
+                : ActionType.Command,
             Parameters = null
         };
 
-        // Read parameters as JToken dictionary first (preserves JSON structure)
-        var paramTokens = jo["Parameters"]?.ToObject<Dictionary<string, JToken>>(serializer);
-        if (paramTokens != null)
+        // Read parameters as dictionary (preserves JSON structure)
+        if (root.TryGetProperty("Parameters", out var paramElement) && paramElement.ValueKind != JsonValueKind.Null)
         {
-            action.Parameters = paramTokens.ToDictionary(kv => kv.Key, kv => (object)kv.Value);
+            var parameters = new Dictionary<string, object>();
+            foreach (var prop in paramElement.EnumerateObject())
+            {
+                parameters[prop.Name] = prop.Value.Clone();
+            }
+            action.Parameters = parameters;
         }
 
         return action;
     }
 
-    public override void WriteJson(JsonWriter writer, WorkflowAction? value, JsonSerializer serializer)
+    public override void Write(Utf8JsonWriter writer, WorkflowAction? value, JsonSerializerOptions options)
     {
         if (value == null)
         {
-            writer.WriteNull();
+            writer.WriteNullValue();
             return;
         }
 
-        var jo = new JObject
-        {
-            ["Id"] = JToken.FromObject(value.Id),
-            ["Name"] = value.Name,
-            ["Number"] = value.Number,
-            ["Type"] = JToken.FromObject(value.Type),
-            ["Parameters"] = value.Parameters != null ? JToken.FromObject(value.Parameters) : null
-        };
+        writer.WriteStartObject();
 
-        jo.WriteTo(writer);
+        writer.WriteString("Id", value.Id);
+        writer.WriteString("Name", value.Name);
+        writer.WriteNumber("Number", value.Number);
+        writer.WriteString("Type", value.Type.ToString());
+
+        if (value.Parameters != null)
+        {
+            writer.WritePropertyName("Parameters");
+            JsonSerializer.Serialize(writer, value.Parameters, options);
+        }
+        else
+        {
+            writer.WriteNull("Parameters");
+        }
+
+        writer.WriteEndObject();
     }
 }

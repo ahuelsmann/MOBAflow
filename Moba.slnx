@@ -1,7 +1,10 @@
 <Solution>
+  <Folder Name="/Plugins/">
+    <Project Path="Plugins/SamplePlugin/SamplePlugin.csproj" />
+  </Folder>
   <Folder Name="/Solution Items/">
-    <File Path=".copilot-todos.md" />
     <File Path=".editorconfig" />
+    <File Path=".github/instructions/.copilot-todos.md" />
     <File Path=".github/instructions/copilot-instructions.md" />
     <File Path=".gitignore" />
     <File Path=".sln.DotSettings" />
