@@ -1,0 +1,49 @@
+# Auto detect text files and perform LF normalization
+* text=auto eol=crlf
+
+# C# source files
+*.cs text eol=crlf
+*.csx text eol=crlf
+
+# Project files
+*.csproj text eol=crlf
+*.sln text eol=crlf
+*.props text eol=crlf
+*.targets text eol=crlf
+
+# XAML files
+*.xaml text eol=crlf
+
+# Web files
+*.html text eol=crlf
+*.css text eol=crlf
+*.js text eol=crlf
+*.ts text eol=crlf
+*.json text eol=crlf
+*.razor text eol=crlf
+
+# Config files
+*.xml text eol=crlf
+*.config text eol=crlf
+*.yml text eol=crlf
+*.yaml text eol=crlf
+.editorconfig text eol=crlf
+.gitattributes text eol=crlf
+.gitignore text eol=crlf
+
+# Documentation
+*.md text eol=crlf
+*.txt text eol=crlf
+
+# Binary files - no line ending normalization
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.dll binary
+*.exe binary
+*.pdb binary
+*.nupkg binary
+*.snupkg binary
