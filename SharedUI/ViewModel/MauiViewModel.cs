@@ -378,6 +378,7 @@ public partial class MauiViewModel : ObservableObject
         });
     }
 
+
     #endregion
 
     #region Photo Upload

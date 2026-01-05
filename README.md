@@ -554,4 +554,127 @@ MOBAflow uses several open-source packages. See [`THIRD-PARTY-NOTICES.md`](THIRD
 
 ---
 
+## 🔧 Scripts & Maintenance
+
+This section documents the PowerShell scripts in the `scripts/` directory for maintenance and build processes.
+
+### Icon Management Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `resize-icons-dotnet.ps1` | Scales the base icon to all required sizes for WinUI 3 |
+| `create-ico.ps1` | Creates a multi-resolution `.ico` file for Windows .exe |
+| `fix-manifest.ps1` | Updates `Package.appxmanifest` with correct values |
+| `generate-icons.ps1` | ⚠️ Legacy (use `resize-icons-dotnet.ps1` instead) |
+
+### Icon Update Workflow
+
+```powershell
+# 1. Scale icons to all sizes
+.\scripts\resize-icons-dotnet.ps1
+
+# 2. Create ICO file for Windows
+.\scripts\create-ico.ps1
+
+# 3. Update manifest
+.\scripts\fix-manifest.ps1
+
+# 4. Rebuild project
+dotnet clean WinUI\WinUI.csproj
+dotnet build WinUI\WinUI.csproj
+
+# 5. Clear Windows icon cache
+ie4uinit.exe -show
+```
+
+### Script Parameters
+
+**resize-icons-dotnet.ps1:**
+- `-SourceIcon` (optional): Path to base PNG (default: `WinUI\Assets\mobaflow-icon.png`)
+- `-AssetsDir` (optional): Target directory (default: `WinUI\Assets`)
+- **Output:** 12 PNG files in various sizes (44x44 to 1240x600)
+
+**create-ico.ps1:**
+- `-SourcePng` (optional): Path to base PNG
+- `-OutputIco` (optional): Path to target ICO file
+- **Output:** `mobaflow-icon.ico` with 4 resolutions (16, 32, 48, 256px)
+
+---
+
+## 🎵 Audio Library
+
+MOBAflow includes an audio system for workflow actions. Sound files are stored in `Sound/Resources/Sounds/`.
+
+### Directory Structure
+
+```
+Sound/Resources/Sounds/
+├── Station/          # Station bells, gongs, platform warnings
+├── Train/            # Whistles, horns, brake sounds
+├── Signals/          # Warning beeps, crossing bells
+└── Ambient/          # Background ambience (optional)
+```
+
+### Audio File Requirements
+
+| Requirement | Value |
+|-------------|-------|
+| **Format** | `.wav` (PCM) |
+| **Sample Rate** | 44100 Hz or 48000 Hz |
+| **Bit Depth** | 16-bit |
+| **Channels** | Mono or Stereo |
+| **Not Supported** | .mp3, .ogg, .flac |
+
+### Duration Recommendations
+
+| Sound Type | Duration |
+|------------|----------|
+| Station bells | 2-4 seconds |
+| Train whistles | 1-3 seconds |
+| Warning signals | 1-2 seconds |
+| Gongs/Chimes | 0.5-1 seconds |
+| Ambient loops | 10-30 seconds |
+
+### Adding Sounds
+
+1. **Download** from [Freesound.org](https://freesound.org) (filter by CC0 license)
+2. **Copy** to appropriate subfolder:
+   ```powershell
+   copy C:\Downloads\arrival_bell.wav Sound\Resources\Sounds\Station\
+   ```
+3. **Use in Workflow:**
+   - Create Audio Action
+   - Set FilePath: `Resources\Sounds\Station\arrival_bell.wav`
+
+### Naming Conventions
+
+| ✅ Good | ❌ Bad |
+|---------|--------|
+| `arrival_bell.wav` | `sound1.wav` |
+| `whistle_short.wav` | `ArrivalBell.wav` |
+| `crossing_warning.wav` | `My Sound.wav` |
+
+### Licensing
+
+- ✅ **CC0 (Public Domain)** - No attribution required
+- ✅ **CC-BY 4.0** - Attribution required (add to `ATTRIBUTION.md`)
+- ❌ **CC-BY-NC** - Avoid (non-commercial only)
+
+See [`Sound/Resources/Sounds/ATTRIBUTION.md`](Sound/Resources/Sounds/ATTRIBUTION.md) for sound attributions.
+
+### Example Workflow
+
+```
+Action #1: Audio
+  └─ FilePath: Resources\Sounds\Train\whistle_short.wav
+
+Action #2: Announcement
+  └─ Message: "{TrainName} erreicht {StationName}"
+
+Action #3: Audio
+  └─ FilePath: Resources\Sounds\Station\arrival_bell.wav
+```
+
+---
+
 **Made with ❤️ for model railroad enthusiasts**

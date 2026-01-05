@@ -41,13 +41,13 @@
                     VerticalOptions="Center">
                     <Label
                         x:Name="ThemeIcon"
-                        FontSize="12"
+                        FontSize="14"
                         Text="🌙"
                         VerticalOptions="Center" />
                     <Switch
                         x:Name="ThemeSwitch"
                         OnColor="{DynamicResource RailwayPrimary}"
-                        Scale="0.6"
+                        Scale="0.75"
                         ThumbColor="White"
                         Toggled="ThemeSwitch_Toggled" />
                 </HorizontalStackLayout>
@@ -55,8 +55,9 @@
                 <!--  Spacer  -->
                 <BoxView Grid.Column="3" Color="Transparent" />
 
-                <!--  Connection Status Indicator  -->
+                <!--  Connection Status Indicator (with pulse animation when connected)  -->
                 <Border
+                    x:Name="ConnectionIndicator"
                     Grid.Column="4"
                     BackgroundColor="{Binding IsConnected, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwayAccent}, FalseObject={StaticResource RailwayDanger}}}"
                     HeightRequest="14"

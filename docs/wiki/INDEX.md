@@ -18,6 +18,10 @@ Hier findest du alle Informationen zu den drei Plattformen:
 
 ## 🗂️ Dokumentations-Index
 
+> **📖 Benutzer-Dokumentation** - Für alle, die MOBAflow nutzen möchten
+> 
+> **👨‍💻 Entwickler-Dokumentation** - Am Ende dieser Seite, für Plugin-Entwickler und Contributors
+
 ### 🖥️ MOBAflow (Windows Desktop)
 
 **Benutzerhandbuch:**
@@ -391,27 +395,62 @@ Siehe [`LICENSE`](../LICENSE) für Details.
 
 **Viel Spaß mit der MOBAflow Platform!** 🚂✨
 
-*Letzte Aktualisierung: 27.12.2025*
+*Letzte Aktualisierung: 05.02.2025*
+
+---
+
+# 👨‍💻 Entwickler-Dokumentation
+
+> **Hinweis:** Die folgenden Abschnitte richten sich an **Software-Entwickler**, die MOBAflow erweitern oder Plugins entwickeln möchten.
 
 ---
 
 ## 🔌 Plugin Development
 
-**Neue Dokumentation:**
-- [`wiki/PLUGIN-DEVELOPMENT.md`](wiki/PLUGIN-DEVELOPMENT.md) - Komplettes Plugin-Entwickler-Handbuch
+**Für Entwickler, die MOBAflow mit eigenen Plugins erweitern möchten.**
 
-**Quick Links:**
-- 🏗️ **Plugin Architecture** - System-Design und Lifecycle
-- 📦 **Plugin Framework** - IPlugin, PluginBase, Services
-- 🚀 **Creating Plugins** - Step-by-step Tutorial
-- 🛠️ **Best Practices** - Do's and Don'ts
-- 🔧 **Troubleshooting** - Common Issues & Solutions
+📖 **Vollständige Dokumentation:** [`wiki/PLUGIN-DEVELOPMENT.md`](wiki/PLUGIN-DEVELOPMENT.md)
+
+### Überblick
+
+Das Plugin-System ermöglicht es, eigene Seiten, Features und Integrationen hinzuzufügen, ohne den Core-Code zu modifizieren.
 
 **Hauptmerkmale:**
 - ✅ Auto-Discovery von Plugins im `Plugins/` Ordner
 - ✅ Automatische Validierung beim Start
 - ✅ Full Dependency Injection Support
 - ✅ Lifecycle Hooks (OnInitialize, OnUnload)
-- ✅ Robustheit - App läuft auch ohne Plugins
+- ✅ Robustheit - App läuft auch ohne/mit defekten Plugins
+
+### Schnellstart
+
+```bash
+# 1. Template kopieren
+cp -r Plugins/SamplePlugin Plugins/MeinPlugin
+
+# 2. Klassen umbenennen
+# 3. Plugin-Logik implementieren
+# 4. Build & Test
+dotnet build Plugins/MeinPlugin
+```
+
+### Entwickler-Ressourcen
+
+| Ressource | Link |
+|-----------|------|
+| **Plugin-Entwickler-Handbuch** | [`wiki/PLUGIN-DEVELOPMENT.md`](wiki/PLUGIN-DEVELOPMENT.md) |
+| **Plugin Interface** | [`Common/Plugins/IPlugin.cs`](../../Common/Plugins/IPlugin.cs) |
+| **Plugin Base Class** | [`Common/Plugins/PluginBase.cs`](../../Common/Plugins/PluginBase.cs) |
+| **Sample Plugin** | [`Plugins/SamplePlugin/`](../../Plugins/SamplePlugin/) |
+| **Architektur-Übersicht** | [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md) |
+
+### Technologie-Stack
+
+| Komponente | Technologie |
+|------------|-------------|
+| **MVVM** | CommunityToolkit.Mvvm |
+| **DI** | Microsoft.Extensions.DependencyInjection |
+| **UI** | WinUI 3 (XAML) |
+| **Isolation** | AssemblyLoadContext (pro Plugin) |
 
 ---
