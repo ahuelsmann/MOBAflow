@@ -310,13 +310,13 @@ public partial class MainWindowViewModel
     /// Handles Z21 connected state changes from the backend.
     /// Called when Z21 starts or stops responding.
     /// </summary>
-    private void OnZ21ConnectedChanged(bool isConnected)
+    private void OnZ21ConnectedChanged(bool connected)
     {
         _uiDispatcher.InvokeOnUi(() =>
         {
-            IsConnected = isConnected;
+            IsConnected = connected;
             
-            if (isConnected)
+            if (connected)
             {
                 StatusText = $"Connected to {_settings.Z21.CurrentIpAddress}";
                 Debug.WriteLine("✅ Z21 connection confirmed - Z21 is responding");

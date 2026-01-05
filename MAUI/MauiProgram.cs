@@ -52,7 +52,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<RestApiDiscoveryService>();
 
         // ✅ Configure HttpClient with proper timeout and Android-specific handler
-        builder.Services.AddSingleton<HttpClient>(sp =>
+        builder.Services.AddSingleton<HttpClient>(_ =>
         {
 #if ANDROID
             // Use platform-specific message handler for Android
@@ -61,7 +61,7 @@ public static class MauiProgram
                 // Allow HTTP (cleartext) connections to local network
                 AllowAutoRedirect = true,
                 AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate,
-                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true // Trust all certificates for local dev
+                ServerCertificateCustomValidationCallback = (_, _, _, _) => true // Trust all certificates for local dev
             };
             var httpClient = new HttpClient(handler);
 #else

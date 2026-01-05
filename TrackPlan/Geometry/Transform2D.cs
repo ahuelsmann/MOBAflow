@@ -34,7 +34,7 @@ public record Transform2D
     public Transform2D Multiply(Transform2D other)
     {
         var thisRad = RotationDegrees * Math.PI / 180.0;
-        var otherRad = other.RotationDegrees * Math.PI / 180.0;
+        // Note: otherRad reserved for future scale/skew transform support
 
         var cos = Math.Cos(thisRad);
         var sin = Math.Sin(thisRad);

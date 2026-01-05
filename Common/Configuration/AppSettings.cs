@@ -168,6 +168,13 @@ public class ApplicationSettings
     /// Set to false to avoid port conflicts.
     /// </summary>
     public bool AutoStartWebApp { get; set; } = false;
+
+    /// <summary>
+    /// User-selected theme preference for MAUI app.
+    /// Values: "System" (follow OS), "Light", "Dark".
+    /// Default: "System" to follow the operating system theme.
+    /// </summary>
+    public string Theme { get; set; } = "System";
 }
 
 /// <summary>

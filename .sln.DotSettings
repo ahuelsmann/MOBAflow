@@ -529,5 +529,25 @@
 		- Update this file when suppressions change
 		- Review suppressions quarterly for regressions
 	-->
+    
+	<!-- Expression Always False (Nullable Analysis - Plugin System) -->
+	<s:Boolean x:Key="/Default/CodeInspection/Inspections/ConditionIsAlwaysTrueOrFalse/@EntryIndexedValue">False</s:Boolean>
 
+	<!-- Partial Class With Single Part (Source Generator Pattern) -->
+	<s:Boolean x:Key="/Default/CodeInspection/Inspections/PartialTypeWithSinglePart/@EntryIndexedValue">False</s:Boolean>
+
+	<!-- Non-Nullable Field Uninitialized (Delayed Init Pattern) -->
+	<s:Boolean x:Key="/Default/CodeInspection/Inspections/NotNullMemberIsNotInitialized/@EntryIndexedValue">False</s:Boolean>
+
+	<!-- Nullable Value Type Can Be Null (Already Checked) -->
+	<s:Boolean x:Key="/Default/CodeInspection/Inspections/PossibleInvalidOperationException/@EntryIndexedValue">False</s:Boolean>
+
+	<!-- Readonly Field Never Assigned (Work In Progress) -->
+	<s:Boolean x:Key="/Default/CodeInspection/Inspections/UnassignedField_002ELocal/@EntryIndexedValue">False</s:Boolean>
+
+	<!-- Value Assigned Not Used -->
+	<s:Boolean x:Key="/Default/CodeInspection/Inspections/RedundantAssignment/@EntryIndexedValue">False</s:Boolean>
+
+	<!-- Qualifier Is Redundant -->
+	<s:Boolean x:Key="/Default/CodeInspection/Inspections/RedundantQualifier/@EntryIndexedValue">False</s:Boolean>
 </wpf:ResourceDictionary>
