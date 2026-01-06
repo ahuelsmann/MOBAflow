@@ -1,4 +1,4 @@
-namespace Moba.SharedUI.Service;
+﻿namespace Moba.SharedUI.Service;
 
 using Microsoft.Extensions.Logging;
 using TrackPlan.Domain;

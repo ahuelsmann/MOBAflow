@@ -1,4 +1,4 @@
-namespace Moba.Test.Unit;
+﻿namespace Moba.Test.Unit;
 
 /// <summary>
 /// Tests for the "New Solution" functionality.

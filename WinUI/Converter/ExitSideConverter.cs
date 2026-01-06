@@ -1,4 +1,4 @@
-namespace Moba.WinUI.Converter;
+﻿namespace Moba.WinUI.Converter;
 
 using Microsoft.UI.Xaml.Data;
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Protocol;
 
 public record XBusStatus(bool EmergencyStop, bool TrackOff, bool ShortCircuit, bool Programming);

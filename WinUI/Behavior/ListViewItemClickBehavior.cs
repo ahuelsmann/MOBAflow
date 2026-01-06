@@ -1,4 +1,4 @@
-namespace Moba.WinUI.Behavior
+﻿namespace Moba.WinUI.Behavior
 {
     using Microsoft.UI.Xaml;
     using Microsoft.UI.Xaml.Controls;

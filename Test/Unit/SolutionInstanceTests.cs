@@ -1,4 +1,4 @@
-namespace Moba.Test.Unit;
+﻿namespace Moba.Test.Unit;
 
 using Microsoft.Extensions.DependencyInjection;
 
