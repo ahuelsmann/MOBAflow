@@ -1,4 +1,4 @@
-root = true
+﻿root = true
 
 # Common settings for all files
 [*]
@@ -190,6 +190,7 @@ dotnet_style_qualification_for_event = false:silent
 # XML and project files
 [*.{xml,xaml,csproj,props,targets}]
 indent_size = 2
+charset = utf-8-bom
 
 # JSON files
 [*.{json,resjson}]
