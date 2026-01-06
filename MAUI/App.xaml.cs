@@ -141,18 +141,33 @@ public partial class App
         ApplyTheme(settings.Application.Theme);
         Debug.WriteLine($"✅ App.CreateWindow: Theme '{settings.Application.Theme}' applied");
 
-        Debug.WriteLine("✅ App.CreateWindow: Settings loaded, creating MainPage...");
+        Debug.WriteLine("✅ App.CreateWindow: Settings loaded, creating SplashPage...");
 
-        // ✅ Create MainPage AFTER settings are loaded
-        var mainPage = _services.GetRequiredService<MainPage>();
-        var window = new Window(mainPage);
+        // ✅ Show SplashPage first, then navigate to MainPage
+        var splashPage = new View.SplashPage();
+        var window = new Window(splashPage);
 
         // ✅ Subscribe to lifecycle events for cleanup
         window.Destroying += OnWindowDestroying;
 
-        Debug.WriteLine("✅ App.CreateWindow: Window created successfully");
+        Debug.WriteLine("✅ App.CreateWindow: Window created with SplashPage");
         return window;
     }
+
+    /// <summary>
+    /// Creates the main page after splash screen.
+    /// Called from SplashPage after delay.
+    /// </summary>
+    public static Page CreateMainPage()
+    {
+        var services = ((App)Application.Current!).Services;
+        return services.GetRequiredService<MainPage>();
+    }
+
+    /// <summary>
+    /// Gets the service provider for dependency injection.
+    /// </summary>
+    public IServiceProvider Services => _services;
 
     /// <summary>
     /// Called when the window is being destroyed (app closing).

@@ -75,7 +75,7 @@
           },
           "invoiceDate": "2023-11-10T00:00:00",
           "deliveryDate": "2023-11-18T00:00:00",
-          "photoPath": "C:\\Users\\andre\\AppData\\Local\\MOBAflow\\photos\\locomotives\\a1b2c3d4-e5f6-7890-1234-567890fedcba.jpg"
+          "photoPath": "locomotives/a1b2c3d4-e5f6-7890-1234-567890fedcba.jpg"
         }
       ],
       "passengerWagons": [

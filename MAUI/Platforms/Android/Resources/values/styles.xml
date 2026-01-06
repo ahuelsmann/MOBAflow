@@ -15,13 +15,17 @@
         <item name="windowNoTitle">true</item>
         <item name="android:windowBackground">@color/maui_background_color</item>
     </style>
-
-    <!-- MAUI Splash Theme (used on startup) -->
-    <style name="Maui.SplashTheme" parent="MainTheme">
-        <item name="android:windowBackground">@drawable/maui_splash_image</item>
+    
+    <!-- Minimal Splash Theme - just dark background, no icon -->
+    <!-- Transitions seamlessly to our custom SplashPage -->
+    <style name="Maui.SplashTheme" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/maui_splash_color</item>
         <item name="android:windowNoTitle">true</item>
-        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowFullscreen">true</item>
         <item name="android:windowContentOverlay">@null</item>
-        <item name="android:windowActionBar">true</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:statusBarColor">@color/maui_splash_color</item>
+        <item name="android:navigationBarColor">@color/maui_splash_color</item>
     </style>
 </resources>

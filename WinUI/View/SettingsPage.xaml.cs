@@ -3,6 +3,8 @@ namespace Moba.WinUI.View;
 
 using SharedUI.ViewModel;
 
+using Windows.ApplicationModel.DataTransfer;
+
 /// <summary>
 /// Settings page for application-wide configuration.
 /// Uses MainWindowViewModel.Settings for data binding.
@@ -15,5 +17,12 @@ public sealed partial class SettingsPage
     {
         ViewModel = viewModel;
         InitializeComponent();
+    }
+
+    private void CopyIpToClipboard_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        var dataPackage = new DataPackage();
+        dataPackage.SetText(ViewModel.LocalIpAddress);
+        Clipboard.SetContent(dataPackage);
     }
 }

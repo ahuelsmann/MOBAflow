@@ -17,7 +17,7 @@ public sealed class PluginDiscoveryService
     /// Discovers all IPlugin implementations in DLL files within the plugin directory.
     /// Each plugin is loaded in its own AssemblyLoadContext for isolation.
     /// </summary>
-    /// <param name="pluginDirectory">Path to directory containing plugin DLLs</param>
+    /// <param name="pluginDirectory">Path to directory containing plugin DLLs or subdirectories with plugins</param>
     /// <param name="logger">Optional logger for diagnostic information</param>
     /// <returns>List of discovered plugin instances (empty if no plugins found or directory doesn't exist)</returns>
     public static IReadOnlyList<IPlugin> DiscoverPlugins(string pluginDirectory, ILogger? logger = null)
@@ -31,9 +31,31 @@ public sealed class PluginDiscoveryService
             return plugins.AsReadOnly();
         }
 
-        // Try to find plugin DLLs
-        var pluginDlls = Directory.EnumerateFiles(pluginDirectory, "*.dll").ToList();
-        if (!pluginDlls.Any())
+        // Try to find plugin DLLs - search in root and immediate subdirectories
+        // This supports both layouts: Plugins/*.dll and Plugins/PluginName/PluginName.dll
+        var pluginDlls = new List<string>();
+        
+        // Search root directory
+        pluginDlls.AddRange(Directory.EnumerateFiles(pluginDirectory, "*.dll"));
+        
+        // Search immediate subdirectories (each plugin in its own folder)
+        foreach (var subDir in Directory.EnumerateDirectories(pluginDirectory))
+        {
+            var subDirName = Path.GetFileName(subDir);
+            // Look for DLL with same name as directory (convention: PluginName/PluginName.dll)
+            var conventionDll = Path.Combine(subDir, $"{subDirName}.dll");
+            if (File.Exists(conventionDll))
+            {
+                pluginDlls.Add(conventionDll);
+            }
+            else
+            {
+                // Fallback: add all DLLs in subdirectory
+                pluginDlls.AddRange(Directory.EnumerateFiles(subDir, "*.dll"));
+            }
+        }
+        
+        if (pluginDlls.Count == 0)
         {
             logger?.LogInformation("No plugin DLLs found in: {PluginDirectory}. Starting without plugins.", pluginDirectory);
             return plugins.AsReadOnly();

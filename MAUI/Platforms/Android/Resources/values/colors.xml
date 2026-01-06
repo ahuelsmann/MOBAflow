@@ -8,6 +8,9 @@
     <!-- MAUI default background -->
     <color name="maui_background_color">#121212</color>
     
+    <!-- Splash screen background - matches SplashPage.xaml BackgroundColor -->
+    <color name="maui_splash_color">#0d0d1a</color>
+    
     <!-- Additional colors -->
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>

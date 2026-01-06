@@ -8,143 +8,113 @@ using Moba.SharedUI.ViewModel;
 namespace Moba.Plugin;
 
 /// <summary>
-/// ViewModel for the Sample Plugin Page.
-/// Demonstrates MVVM pattern using CommunityToolkit.Mvvm.
-/// Provides comprehensive project statistics and settings overview.
+/// ViewModel for the Sample Plugin Dashboard.
+/// Provides comprehensive statistics, settings, and connection status from MainWindowViewModel.
 /// </summary>
 public sealed partial class SamplePluginViewModel : ObservableObject
 {
-    private readonly MainWindowViewModel _mainWindowViewModel;
-
-    #region Basic Properties
-    [ObservableProperty]
-    private string title = "Sample Plugin";
-
-    [ObservableProperty]
-    private string description = "Project statistics and settings overview - demonstrating plugin development.";
-
-    [ObservableProperty]
-    private string currentSolutionPath = "None";
-
-    [ObservableProperty]
-    private bool isZ21Connected;
-
-    [ObservableProperty]
-    private bool isTrackPowerOn;
-    #endregion
-
-    #region Project Statistics
-    public string SolutionName => _mainWindowViewModel.Solution?.Name ?? "No Solution";
-    public int ProjectCount => _mainWindowViewModel.Solution?.Projects.Count ?? 0;
-    public string CurrentProjectName => _mainWindowViewModel.SelectedProject?.Name ?? "None";
-
-    public int TotalJourneys => _mainWindowViewModel.SelectedProject?.Model.Journeys.Count ?? 0;
-    public int TotalStations => _mainWindowViewModel.SelectedProject?.Model.Journeys.Sum(j => j.Stations?.Count ?? 0) ?? 0;
-    public int TotalWorkflows => _mainWindowViewModel.SelectedProject?.Model.Workflows.Count ?? 0;
-    public int TotalActions => _mainWindowViewModel.SelectedProject?.Model.Workflows.Sum(w => w.Actions?.Count ?? 0) ?? 0;
-    public int TotalTrains => _mainWindowViewModel.SelectedProject?.Model.Trains.Count ?? 0;
-    public int TotalLocomotives => _mainWindowViewModel.SelectedProject?.Model.Trains.Sum(t => t.LocomotiveIds?.Count ?? 0) ?? 0;
-    public int TotalWagons => _mainWindowViewModel.SelectedProject?.Model.Trains.Sum(t => t.WagonIds?.Count ?? 0) ?? 0;
-    public int TotalVoices => _mainWindowViewModel.SelectedProject?.Model.Voices.Count ?? 0;
-    public int TotalSpeakerEngines => _mainWindowViewModel.SelectedProject?.Model.SpeakerEngines.Count ?? 0;
-    #endregion
-
-    #region Z21 Status
-    public string Z21IpAddress => _mainWindowViewModel.IpAddress;
-    public string Z21Port => _mainWindowViewModel.Port;
-    public string Z21Status => IsZ21Connected ? "🟢 Connected" : "🔴 Disconnected";
-    public string TrackPowerStatus => IsTrackPowerOn ? "⚡ ON" : "⭕ OFF";
-    #endregion
-
-    #region REST API Status
-    public string RestApiPort => _mainWindowViewModel.RestApiPort.ToString();
-    public string RestApiUrl => $"http://localhost:{_mainWindowViewModel.RestApiPort}";
-    public bool IsRestApiEnabled => _mainWindowViewModel.AutoStartWebApp;
-    public string RestApiStatus => IsRestApiEnabled ? "🟢 Enabled" : "⭕ Disabled";
-    #endregion
-
-    #region Settings Overview
-    public string SpeechEngine => _mainWindowViewModel.SelectedSpeechEngine ?? "Not configured";
-    public string SpeechRegion => _mainWindowViewModel.SpeechRegion;
-    public bool IsAzureSpeech => _mainWindowViewModel.IsAzureSpeechEngineSelected;
-    public bool AutoLoadLastSolution => _mainWindowViewModel.AutoLoadLastSolution;
-    public bool AutoStartWebApp => _mainWindowViewModel.AutoStartWebApp;
-    public bool HealthCheckEnabled => _mainWindowViewModel.HealthCheckEnabled;
-    public double HealthCheckInterval => _mainWindowViewModel.HealthCheckIntervalSeconds;
-    public double FeedbackPointCount => _mainWindowViewModel.CountOfFeedbackPoints;
-    #endregion
+    private readonly MainWindowViewModel _main;
 
     public SamplePluginViewModel(MainWindowViewModel mainWindowViewModel)
     {
-        _mainWindowViewModel = mainWindowViewModel ?? throw new ArgumentNullException(nameof(mainWindowViewModel));
-        UpdateFromMainWindow();
-        _mainWindowViewModel.PropertyChanged += MainWindowViewModel_PropertyChanged;
+        _main = mainWindowViewModel ?? throw new ArgumentNullException(nameof(mainWindowViewModel));
+        _main.PropertyChanged += (s, e) => RefreshAll();
     }
 
-    private void UpdateFromMainWindow()
-    {
-        CurrentSolutionPath = _mainWindowViewModel.CurrentSolutionPath ?? "None";
-        IsZ21Connected = _mainWindowViewModel.IsConnected;
-        IsTrackPowerOn = _mainWindowViewModel.IsTrackPowerOn;
-        RefreshAllStatistics();
-    }
+    #region Solution & Project Statistics
+    public string SolutionName => _main.Solution?.Name ?? "No Solution Loaded";
+    public int ProjectCount => _main.Solution?.Projects.Count ?? 0;
+    public string SelectedProjectName => _main.SelectedProject?.Name ?? "None";
+    #endregion
+
+    #region Entity Counts
+    public int TotalJourneys => _main.SelectedProject?.Model.Journeys.Count ?? 0;
+    public int TotalWorkflows => _main.SelectedProject?.Model.Workflows.Count ?? 0;
+    public int TotalTrains => _main.SelectedProject?.Model.Trains.Count ?? 0;
+    public int TotalLocomotives => _main.SelectedProject?.Model.Locomotives.Count ?? 0;
+    public int TotalPassengerWagons => _main.SelectedProject?.Model.PassengerWagons.Count ?? 0;
+    public int TotalGoodsWagons => _main.SelectedProject?.Model.GoodsWagons.Count ?? 0;
+    #endregion
+
+    #region Z21 Connection Status
+    public bool IsZ21Connected => _main.IsConnected;
+    public string Z21StatusText => _main.IsConnected ? "Connected" : "Disconnected";
+    public string Z21StatusIcon => _main.IsConnected ? "🟢" : "🔴";
+    public string Z21IpAddress => _main.IpAddress ?? "-";
+    public string Z21Port => _main.Port ?? "21105";
+    public bool IsTrackPowerOn => _main.IsTrackPowerOn;
+    public string TrackPowerText => _main.IsTrackPowerOn ? "ON" : "OFF";
+    public string TrackPowerIcon => _main.IsTrackPowerOn ? "⚡" : "⭕";
+    
+    // Z21 System State (if available)
+    public string Z21MainCurrent => $"{_main.MainCurrent:F1} A";
+    public string Z21Temperature => $"{_main.Temperature:F0} °C";
+    public string Z21SupplyVoltage => $"{_main.SupplyVoltage:F1} V";
+    #endregion
+
+    #region REST API Status
+    public bool IsRestApiRunning => _main.Settings?.Application.AutoStartWebApp ?? false;
+    public string RestApiStatusText => IsRestApiRunning ? "Running" : "Stopped";
+    public string RestApiStatusIcon => IsRestApiRunning ? "🟢" : "🔴";
+    public int RestApiPort => _main.Settings?.RestApi.Port ?? 5001;
+    public string LocalIpAddress => _main.LocalIpAddress;
+    public string RestApiUrl => $"http://{LocalIpAddress}:{RestApiPort}";
+    #endregion
+
+    #region Settings Overview
+    public bool AutoLoadLastSolution => _main.Settings?.Application.AutoLoadLastSolution ?? false;
+    public bool AutoStartWebApp => _main.Settings?.Application.AutoStartWebApp ?? false;
+    public string SpeechEngine => _main.SelectedSpeechEngine ?? "Not configured";
+    public int SpeechRate => _main.SpeechRate;
+    public double SpeechVolume => _main.SpeechVolume;
+    public bool HealthCheckEnabled => _main.Settings?.HealthCheck.Enabled ?? false;
+    public int HealthCheckInterval => _main.Settings?.HealthCheck.IntervalSeconds ?? 30;
+    #endregion
 
     [RelayCommand]
-    private void RefreshStatistics() => RefreshAllStatistics();
-
-    private void RefreshAllStatistics()
+    private void RefreshAll()
     {
+        // Solution & Project
         OnPropertyChanged(nameof(SolutionName));
         OnPropertyChanged(nameof(ProjectCount));
-        OnPropertyChanged(nameof(CurrentProjectName));
+        OnPropertyChanged(nameof(SelectedProjectName));
+
+        // Entity Counts
         OnPropertyChanged(nameof(TotalJourneys));
-        OnPropertyChanged(nameof(TotalStations));
         OnPropertyChanged(nameof(TotalWorkflows));
-        OnPropertyChanged(nameof(TotalActions));
         OnPropertyChanged(nameof(TotalTrains));
         OnPropertyChanged(nameof(TotalLocomotives));
-        OnPropertyChanged(nameof(TotalWagons));
-        OnPropertyChanged(nameof(TotalVoices));
-        OnPropertyChanged(nameof(TotalSpeakerEngines));
+        OnPropertyChanged(nameof(TotalPassengerWagons));
+        OnPropertyChanged(nameof(TotalGoodsWagons));
+
+        // Z21 Connection
+        OnPropertyChanged(nameof(IsZ21Connected));
+        OnPropertyChanged(nameof(Z21StatusText));
+        OnPropertyChanged(nameof(Z21StatusIcon));
         OnPropertyChanged(nameof(Z21IpAddress));
         OnPropertyChanged(nameof(Z21Port));
-        OnPropertyChanged(nameof(Z21Status));
-        OnPropertyChanged(nameof(TrackPowerStatus));
+        OnPropertyChanged(nameof(IsTrackPowerOn));
+        OnPropertyChanged(nameof(TrackPowerText));
+        OnPropertyChanged(nameof(TrackPowerIcon));
+        OnPropertyChanged(nameof(Z21MainCurrent));
+        OnPropertyChanged(nameof(Z21Temperature));
+        OnPropertyChanged(nameof(Z21SupplyVoltage));
+
+        // REST API
+        OnPropertyChanged(nameof(IsRestApiRunning));
+        OnPropertyChanged(nameof(RestApiStatusText));
+        OnPropertyChanged(nameof(RestApiStatusIcon));
         OnPropertyChanged(nameof(RestApiPort));
+        OnPropertyChanged(nameof(LocalIpAddress));
         OnPropertyChanged(nameof(RestApiUrl));
-        OnPropertyChanged(nameof(IsRestApiEnabled));
-        OnPropertyChanged(nameof(RestApiStatus));
-        OnPropertyChanged(nameof(SpeechEngine));
-        OnPropertyChanged(nameof(SpeechRegion));
-        OnPropertyChanged(nameof(IsAzureSpeech));
+
+        // Settings
         OnPropertyChanged(nameof(AutoLoadLastSolution));
         OnPropertyChanged(nameof(AutoStartWebApp));
+        OnPropertyChanged(nameof(SpeechEngine));
+        OnPropertyChanged(nameof(SpeechRate));
+        OnPropertyChanged(nameof(SpeechVolume));
         OnPropertyChanged(nameof(HealthCheckEnabled));
         OnPropertyChanged(nameof(HealthCheckInterval));
-        OnPropertyChanged(nameof(FeedbackPointCount));
-    }
-
-    private void MainWindowViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        _ = sender;
-        
-        switch (e.PropertyName)
-        {
-            case nameof(MainWindowViewModel.CurrentSolutionPath):
-                CurrentSolutionPath = _mainWindowViewModel.CurrentSolutionPath ?? "None";
-                RefreshAllStatistics();
-                break;
-            case nameof(MainWindowViewModel.IsConnected):
-                IsZ21Connected = _mainWindowViewModel.IsConnected;
-                OnPropertyChanged(nameof(Z21Status));
-                break;
-            case nameof(MainWindowViewModel.IsTrackPowerOn):
-                IsTrackPowerOn = _mainWindowViewModel.IsTrackPowerOn;
-                OnPropertyChanged(nameof(TrackPowerStatus));
-                break;
-            case nameof(MainWindowViewModel.SelectedProject):
-                RefreshAllStatistics();
-                break;
-        }
     }
 }

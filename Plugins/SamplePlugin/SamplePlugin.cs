@@ -8,7 +8,10 @@ namespace Moba.Plugin;
 
 /// <summary>
 /// Sample plugin demonstrating the plugin framework.
-/// Shows how to create a plugin with XAML page and ViewModel.
+/// Shows how to create a plugin with code-only UI (no XAML).
+/// 
+/// CRITICAL: Plugins must use ContentProvider pattern, NOT Page inheritance!
+/// WinUI cannot resolve Page types from dynamically loaded assemblies.
 /// </summary>
 public sealed class SamplePlugin : PluginBase
 {
@@ -28,15 +31,15 @@ public sealed class SamplePlugin : PluginBase
             Tag: "sampleplugin",
             Title: "Sample Plugin",
             IconGlyph: "\uECCD",
-            PageType: typeof(SamplePluginPage)
+            PageType: typeof(SamplePluginContentProvider)  // ContentProvider, NOT Page!
         );
     }
 
     public override void ConfigureServices(IServiceCollection services)
     {
-        // Register plugin ViewModel and Page
+        // Register plugin ViewModel and ContentProvider
         services.AddTransient<SamplePluginViewModel>();
-        services.AddTransient<SamplePluginPage>();
+        services.AddTransient<SamplePluginContentProvider>();
     }
 
     public override async Task OnInitializedAsync()

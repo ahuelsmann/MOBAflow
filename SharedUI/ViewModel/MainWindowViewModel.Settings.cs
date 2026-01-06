@@ -250,6 +250,37 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets the local IP address(es) for the REST API endpoint.
+    /// Returns all IPv4 addresses of the machine.
+    /// </summary>
+    public string LocalIpAddress
+    {
+        get
+        {
+            try
+            {
+                var addresses = System.Net.Dns.GetHostAddresses(System.Net.Dns.GetHostName())
+                    .Where(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                    .Select(ip => ip.ToString())
+                    .ToList();
+
+                return addresses.Count > 0 
+                    ? string.Join(", ", addresses) 
+                    : "No network connection";
+            }
+            catch
+            {
+                return "Unable to determine";
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the full REST API URL including port.
+    /// </summary>
+    public string RestApiUrl => $"http://{LocalIpAddress}:{RestApiPort}";
+
     public bool HealthCheckEnabled
     {
         get => _settings.HealthCheck.Enabled;

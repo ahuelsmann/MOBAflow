@@ -2,12 +2,13 @@
 
 namespace Moba.MAUI.Platforms.Android;
 
-using _Microsoft.Android.Resource.Designer;
 using global::Android.App;
 using global::Android.Content.PM;
 using global::Android.OS;
 using global::Android.Views;
+
 using SharedUI.ViewModel;
+
 using Debug = System.Diagnostics.Debug;
 
 [Activity(
@@ -18,13 +19,8 @@ using Debug = System.Diagnostics.Debug;
     ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
 public class MainActivity : MauiAppCompatActivity
 {
-    protected override void OnCreate(Bundle? savedInstanceState)
-    {
-        base.OnCreate(savedInstanceState);
-
-        // Switch to MainTheme after splash screen (defined in Resources/values/styles.xml)
-        SetTheme(Resource.Style.MainTheme);
-    }
+    // MAUI handles splash screen theme switching automatically via Maui.SplashTheme
+    // No need to override OnCreate for theme switching
 
     /// <summary>
     /// Called when the activity is being destroyed (app closing, back button, swipe away).

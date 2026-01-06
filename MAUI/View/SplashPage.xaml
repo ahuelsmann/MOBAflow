@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Moba.MAUI.View.SplashPage"
+             BackgroundColor="#0d0d1a"
+             Shell.NavBarIsVisible="False">
+    
+    <Grid VerticalOptions="Fill" HorizontalOptions="Fill">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Logo Image -->
+        <Image Grid.Row="1"
+               Source="splash_background.png"
+               Aspect="AspectFit"
+               HeightRequest="200"
+               HorizontalOptions="Center"
+               VerticalOptions="End" />
+
+        <!-- App Name Text -->
+        <Label Grid.Row="2"
+               Text="MOBAsmart"
+               FontSize="32"
+               FontAttributes="Bold"
+               TextColor="White"
+               HorizontalOptions="Center"
+               VerticalOptions="Start"
+               Margin="0,24,0,0" />
+
+        <!-- Optional: Loading indicator or version -->
+        <VerticalStackLayout Grid.Row="3" 
+                             VerticalOptions="End" 
+                             HorizontalOptions="Center"
+                             Margin="0,0,0,48">
+            <ActivityIndicator IsRunning="True" 
+                               Color="White" 
+                               HeightRequest="24"
+                               WidthRequest="24" />
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

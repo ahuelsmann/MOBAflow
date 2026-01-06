@@ -27,7 +27,19 @@ public sealed partial class MainWindow
     private readonly HealthCheckService _healthCheckService;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly PluginRegistry _pluginRegistry;
+    
+    /// <summary>
+    /// Application version string for display in TitleBar.
+    /// </summary>
+    public string AppVersion { get; } = GetAppVersion();
     #endregion
+
+    private static string GetAppVersion()
+    {
+        var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+        var version = assembly.GetName().Version;
+        return version is not null ? $"v{version.Major}.{version.Minor}.{version.Build}" : "";
+    }
 
     public MainWindow(
         MainWindowViewModel viewModel,
@@ -52,6 +64,9 @@ public sealed partial class MainWindow
 
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
+        
+        // Set TitleBar subtitle with version
+        AppTitleBar.Subtitle = $"flow  {AppVersion}";
 
         // Maximize window on startup
         var appWindow = AppWindow;

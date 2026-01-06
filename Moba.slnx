@@ -4,6 +4,7 @@
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
+    <File Path=".gitattributes" />
     <File Path=".github/instructions/.copilot-todos.md" />
     <File Path=".github/instructions/copilot-instructions.md" />
     <File Path=".gitignore" />
@@ -16,11 +17,7 @@
     <File Path="THIRD-PARTY-NOTICES.md" />
   </Folder>
   <Folder Name="/Solution Items/scripts/">
-    <File Path="scripts/README.md" />
-    <File Path="scripts/create-ico.ps1" />
-    <File Path="scripts/fix-manifest.ps1" />
-    <File Path="scripts/resize-icons-dotnet.ps1" />
-    <File Path="scripts/generate-icons.ps1" />
+    <File Path="scripts/Enable-MAUIWifiDebug.ps1" />
   </Folder>
   <Folder Name="/Solution Items/docs/">
     <File Path="docs/ARCHITECTURE.md" />

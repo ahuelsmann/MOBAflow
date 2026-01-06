@@ -25,12 +25,15 @@
     </ProjectReference>
   </ItemGroup>
 
-  <!-- Copy plugin DLL to WinUI Plugins folder after build -->
+  <!-- Copy plugin DLL and dependencies to WinUI Plugins folder after build -->
   <Target Name="CopyToWinUIPlugins" AfterTargets="Build">
     <PropertyGroup>
-      <PluginOutputDir>$(MSBuildThisFileDirectory)..\..\WinUI\bin\$(Configuration)\Plugins</PluginOutputDir>
+      <PluginOutputDir>$(MSBuildThisFileDirectory)..\..\WinUI\bin\$(Configuration)\Plugins\SamplePlugin</PluginOutputDir>
     </PropertyGroup>
     <MakeDir Directories="$(PluginOutputDir)" />
+    <!-- Copy all output files including deps.json for AssemblyDependencyResolver -->
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginOutputDir)" />
+    <Copy SourceFiles="$(TargetDir)$(TargetName).deps.json" DestinationFolder="$(PluginOutputDir)" Condition="Exists('$(TargetDir)$(TargetName).deps.json')" />
+    <Copy SourceFiles="$(TargetDir)$(TargetName).pdb" DestinationFolder="$(PluginOutputDir)" Condition="Exists('$(TargetDir)$(TargetName).pdb')" />
   </Target>
 </Project>
