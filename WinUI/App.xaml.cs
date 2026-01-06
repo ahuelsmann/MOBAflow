@@ -40,6 +40,7 @@ public partial class App
 {
     private Window? _window;
     private IHost? _webAppHost;
+    private Service.UdpDiscoveryResponder? _udpDiscoveryResponder;
     private readonly ILogger<App> _logger;
 
     /// <summary>
@@ -354,11 +355,28 @@ public partial class App
 
             var restPort = settings.RestApi.Port;
 
-            // ✅ Ensure Windows Firewall rules exist for REST API
-            FirewallHelper.EnsureFirewallRulesExist(restPort);
+            // ✅ Check if port is available BEFORE attempting to start
+            if (!Utilities.PortChecker.IsPortAvailable(restPort))
+            {
+                var errorMessage = $"Cannot start REST API: Port {restPort} is already in use by another application.\n\n" +
+                                   $"Please either:\n" +
+                                   "1. Close the application using this port, or\n" +
+                                   "2. Change the REST API port in Settings, or\n" +
+                                   "3. Disable 'Auto-start REST API' in Settings";
 
-            // Build WebHost for in-process Kestrel hosting
-            var builder = Host.CreateDefaultBuilder();
+                _logger.LogError("Port {RestPort} is already in use - cannot start REST API", restPort);
+
+                // Show error dialog to user
+                await ShowPortInUseErrorAsync(restPort, errorMessage);
+                    return;
+                }
+
+                // NOTE: FirewallHelper removed - it caused UAC elevation dialogs on every start.
+                // Users should manually configure Windows Firewall if needed.
+                // See docs/wiki/FIREWALL-SETUP.md for instructions.
+
+                // Build WebHost for in-process Kestrel hosting
+                var builder = Host.CreateDefaultBuilder();
 
             builder.ConfigureWebHostDefaults(webBuilder =>
             {
@@ -424,6 +442,9 @@ public partial class App
             // Give Kestrel a moment to bind
             await Task.Delay(1000);
 
+            // ✅ Start UDP Discovery responder for MAUI auto-discovery
+            StartUdpDiscoveryResponder(restPort);
+
             // ✅ Start SignalR PhotoHubClient for real-time photo notifications
             _ = StartPhotoHubClientAsync(restPort);
 
@@ -446,18 +467,38 @@ public partial class App
             {
                 _logger.LogWarning(selfTestEx, "Self-test failed. This may indicate controller registration issues.");
             }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to start REST API");
+            }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to start REST API");
-        }
-    }
 
-    /// <summary>
-    /// Starts PhotoHubClient for real-time photo notifications from MAUI.
-    /// </summary>
-    private async Task StartPhotoHubClientAsync(int restPort)
-    {
+        /// <summary>
+        /// Starts the UDP Discovery responder for MAUI auto-discovery.
+        /// Allows MAUI clients to find the REST API server on the local network.
+        /// </summary>
+        private void StartUdpDiscoveryResponder(int restPort)
+        {
+            try
+            {
+                _udpDiscoveryResponder?.Dispose();
+                _udpDiscoveryResponder = new Service.UdpDiscoveryResponder(
+                    Services.GetRequiredService<ILogger<Service.UdpDiscoveryResponder>>(),
+                    restPort);
+                _udpDiscoveryResponder.Start();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to start UDP Discovery responder - MAUI auto-discovery will not work");
+            }
+        }
+
+        /// <summary>
+        /// Starts PhotoHubClient for real-time photo notifications from MAUI.
+        /// </summary>
+        private async Task StartPhotoHubClientAsync(int restPort)
+        {
         _logger.LogInformation("StartPhotoHubClientAsync called with port: {RestPort}", restPort);
         
         try
@@ -508,6 +549,34 @@ public partial class App
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to start PhotoHubClient");
+        }
+    }
+
+    /// <summary>
+    /// Shows an error dialog when the REST API port is already in use.
+    /// </summary>
+    private async Task ShowPortInUseErrorAsync(int port, string message)
+    {
+        try
+        {
+            // Use UI dispatcher to show dialog on UI thread
+            var uiDispatcher = Services.GetRequiredService<IUiDispatcher>();
+            await uiDispatcher.InvokeOnUiAsync(async () =>
+            {
+                var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
+                {
+                    Title = $"⚠️ Port {port} Already In Use",
+                    Content = message,
+                    CloseButtonText = "OK",
+                    XamlRoot = _window?.Content?.XamlRoot
+                };
+
+                _ = await dialog.ShowAsync();
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to show port error dialog");
         }
     }
 }

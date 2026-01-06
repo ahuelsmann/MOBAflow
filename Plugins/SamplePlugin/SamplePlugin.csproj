@@ -7,14 +7,6 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
   </PropertyGroup>
 
-  <!-- Exclude XAML from standard Page compilation - we load it dynamically via XamlReader.Load -->
-  <ItemGroup>
-    <Page Remove="SamplePluginPage.xaml" />
-    <EmbeddedResource Include="SamplePluginPage.xaml">
-      <LogicalName>Moba.Plugin.SamplePluginPage.xaml</LogicalName>
-    </EmbeddedResource>
-  </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" />
     <PackageReference Include="CommunityToolkit.Mvvm" />

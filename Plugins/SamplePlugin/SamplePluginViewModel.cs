@@ -56,6 +56,13 @@ public sealed partial class SamplePluginViewModel : ObservableObject
     public string TrackPowerStatus => IsTrackPowerOn ? "⚡ ON" : "⭕ OFF";
     #endregion
 
+    #region REST API Status
+    public string RestApiPort => _mainWindowViewModel.RestApiPort.ToString();
+    public string RestApiUrl => $"http://localhost:{_mainWindowViewModel.RestApiPort}";
+    public bool IsRestApiEnabled => _mainWindowViewModel.AutoStartWebApp;
+    public string RestApiStatus => IsRestApiEnabled ? "🟢 Enabled" : "⭕ Disabled";
+    #endregion
+
     #region Settings Overview
     public string SpeechEngine => _mainWindowViewModel.SelectedSpeechEngine ?? "Not configured";
     public string SpeechRegion => _mainWindowViewModel.SpeechRegion;
@@ -103,6 +110,10 @@ public sealed partial class SamplePluginViewModel : ObservableObject
         OnPropertyChanged(nameof(Z21Port));
         OnPropertyChanged(nameof(Z21Status));
         OnPropertyChanged(nameof(TrackPowerStatus));
+        OnPropertyChanged(nameof(RestApiPort));
+        OnPropertyChanged(nameof(RestApiUrl));
+        OnPropertyChanged(nameof(IsRestApiEnabled));
+        OnPropertyChanged(nameof(RestApiStatus));
         OnPropertyChanged(nameof(SpeechEngine));
         OnPropertyChanged(nameof(SpeechRegion));
         OnPropertyChanged(nameof(IsAzureSpeech));
