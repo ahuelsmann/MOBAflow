@@ -74,15 +74,53 @@ public interface IZ21 : IDisposable
     /// <param name="cancellationToken">Cancellation token</param>
     Task RecoverConnectionAsync(IPAddress address, int port = 21105, CancellationToken cancellationToken = default);
 
-        /// <summary>
-        /// Simulates a feedback event for testing purposes (WinUI only).
-        /// </summary>
-        void SimulateFeedback(int inPort);
+            /// <summary>
+            /// Simulates a feedback event for testing purposes (WinUI only).
+            /// </summary>
+            void SimulateFeedback(int inPort);
 
-        /// <summary>
-        /// Sets the system state polling interval. Use 0 to disable polling.
-        /// Changes take effect immediately if connected.
-        /// </summary>
-        /// <param name="intervalSeconds">Polling interval in seconds (0 = disabled, 1-30 recommended).</param>
-        void SetSystemStatePollingInterval(int intervalSeconds);
-    }
+            /// <summary>
+            /// Sets the system state polling interval. Use 0 to disable polling.
+            /// Changes take effect immediately if connected.
+            /// </summary>
+            /// <param name="intervalSeconds">Polling interval in seconds (0 = disabled, 1-30 recommended).</param>
+            void SetSystemStatePollingInterval(int intervalSeconds);
+
+            // ==================== Locomotive Drive Commands (Section 4) ====================
+
+            /// <summary>
+            /// Sets locomotive speed and direction.
+            /// LAN_X_SET_LOCO_DRIVE: 0xE4 0x1S Adr_MSB Adr_LSB RVVVVVVV XOR
+            /// Uses 128 speed steps by default for maximum precision.
+            /// </summary>
+            /// <param name="address">DCC locomotive address (1-9999)</param>
+            /// <param name="speed">Speed value (0-126, where 0=stop, 1=emergency stop)</param>
+            /// <param name="forward">True = forward direction, False = backward</param>
+            /// <param name="cancellationToken">Cancellation token</param>
+            Task SetLocoDriveAsync(int address, int speed, bool forward, CancellationToken cancellationToken = default);
+
+            /// <summary>
+            /// Sets a locomotive function on/off.
+            /// LAN_X_SET_LOCO_FUNCTION: 0xE4 0xF8 Adr_MSB Adr_LSB TTNNNNNN XOR
+            /// </summary>
+            /// <param name="address">DCC locomotive address (1-9999)</param>
+            /// <param name="functionIndex">Function index (0=F0/light, 1=F1/sound, etc.)</param>
+            /// <param name="on">True = function on, False = function off</param>
+            /// <param name="cancellationToken">Cancellation token</param>
+            Task SetLocoFunctionAsync(int address, int functionIndex, bool on, CancellationToken cancellationToken = default);
+
+            /// <summary>
+            /// Requests locomotive information and subscribes to updates for this address.
+            /// LAN_X_GET_LOCO_INFO: 0xE3 0xF0 Adr_MSB Adr_LSB XOR
+            /// Max 16 loco addresses can be subscribed per client (FIFO).
+            /// </summary>
+            /// <param name="address">DCC locomotive address (1-9999)</param>
+            /// <param name="cancellationToken">Cancellation token</param>
+            Task GetLocoInfoAsync(int address, CancellationToken cancellationToken = default);
+
+            /// <summary>
+            /// Raised when locomotive info is received from Z21.
+            /// Contains: address, speed, direction, function states.
+            /// </summary>
+            event Action<LocoInfo>? OnLocoInfoChanged;
+        }

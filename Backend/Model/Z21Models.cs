@@ -128,11 +128,59 @@ public class Z21TrafficPacket
     /// </summary>
     public string TimestampFormatted => Timestamp.ToString("HH:mm:ss.fff");
 
+        /// <summary>
+        /// Formatted InPort for UI display (empty if null).
+        /// Shows all active InPorts if multiple bits are set (e.g., "1,2,5").
+        /// </summary>
+        public string InPortFormatted => AllInPorts.Count > 1 
+            ? string.Join(",", AllInPorts) 
+            : InPort?.ToString() ?? string.Empty;
+    }
+
     /// <summary>
-    /// Formatted InPort for UI display (empty if null).
-    /// Shows all active InPorts if multiple bits are set (e.g., "1,2,5").
+    /// Represents locomotive information received from Z21.
+    /// LAN_X_LOCO_INFO (0xEF) response structure.
     /// </summary>
-    public string InPortFormatted => AllInPorts.Count > 1 
-        ? string.Join(",", AllInPorts) 
-        : InPort?.ToString() ?? string.Empty;
-}
+    public class LocoInfo
+    {
+        /// <summary>
+        /// DCC locomotive address (1-9999).
+        /// </summary>
+        public int Address { get; set; }
+
+        /// <summary>
+        /// Current speed (0-126 for 128 speed steps, 0=stop).
+        /// </summary>
+        public int Speed { get; set; }
+
+        /// <summary>
+        /// Direction: true = forward, false = backward.
+        /// </summary>
+        public bool IsForward { get; set; }
+
+        /// <summary>
+        /// Speed steps mode: 14, 28, or 128.
+        /// </summary>
+        public int SpeedSteps { get; set; } = 128;
+
+        /// <summary>
+        /// Function states F0-F31 as bitmask.
+        /// Bit 0 = F0 (light), Bit 1 = F1 (sound), etc.
+        /// </summary>
+        public uint Functions { get; set; }
+
+        /// <summary>
+        /// Returns true if F0 (light) is on.
+        /// </summary>
+        public bool IsF0On => (Functions & 0x01) != 0;
+
+        /// <summary>
+        /// Returns true if F1 (typically sound) is on.
+        /// </summary>
+        public bool IsF1On => (Functions & 0x02) != 0;
+
+        /// <summary>
+        /// Gets the state of a specific function.
+        /// </summary>
+        public bool GetFunction(int index) => (Functions & (1u << index)) != 0;
+    }

@@ -18,8 +18,6 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" />
   </ItemGroup>
-
-
   <ItemGroup>
     <Folder Include="Controllers\" />
     <Folder Include="wwwroot\js\" />

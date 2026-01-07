@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-using Moba.WinUI.View;
+using View;
 
 using System.Diagnostics;
 using System.Reflection;
@@ -21,14 +21,14 @@ public class NavigationService
 {
     #region Fields
     private readonly IServiceProvider _serviceProvider;
-    private readonly PluginRegistry _pluginRegistry;
+    private readonly NavigationRegistry _navigationRegistry;
     private Frame? _contentFrame;
     #endregion
 
-    public NavigationService(IServiceProvider serviceProvider, PluginRegistry pluginRegistry)
+    public NavigationService(IServiceProvider serviceProvider, NavigationRegistry navigationRegistry)
     {
         _serviceProvider = serviceProvider;
-        _pluginRegistry = pluginRegistry;
+        _navigationRegistry = navigationRegistry;
     }
 
     /// <summary>
@@ -53,13 +53,13 @@ public class NavigationService
 
         try
         {
-            if (!_pluginRegistry.TryGetPage(tag, out var registration))
+            if (!_navigationRegistry.TryGetPage(tag, out var registration))
             {
                 throw new ArgumentException($"Unknown navigation tag: {tag}", nameof(tag));
             }
 
-            // Check if this is a plugin (Source != "Core") 
-            if (registration.Source != "Core")
+            // Check if this is a plugin (Source != "Shell") 
+            if (registration.Source != "Shell")
             {
                 // Plugin: Use ContentProvider pattern
                 var contentProvider = _serviceProvider.GetRequiredService(registration.PageType);

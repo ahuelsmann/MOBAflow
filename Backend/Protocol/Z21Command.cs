@@ -57,15 +57,124 @@ public static class Z21Command
         ];
     }
 
-    public static byte[] BuildTrackPowerOn()
-        => [0x07, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_TRACK_POWER, Z21Protocol.TrackPowerDb0.ON, 0xA0];
+        public static byte[] BuildTrackPowerOn()
+            => [0x07, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_TRACK_POWER, Z21Protocol.TrackPowerDb0.ON, 0xA0];
 
-    public static byte[] BuildTrackPowerOff()
-        => [0x07, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_TRACK_POWER, Z21Protocol.TrackPowerDb0.OFF, 0xA1];
+        public static byte[] BuildTrackPowerOff()
+            => [0x07, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_TRACK_POWER, Z21Protocol.TrackPowerDb0.OFF, 0xA1];
 
-    public static byte[] BuildEmergencyStop()
-        => [0x06, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_SET_STOP, 0x80];
+        public static byte[] BuildEmergencyStop()
+            => [0x06, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_SET_STOP, 0x80];
 
-    public static byte[] BuildGetStatus()
-        => [0x07, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_TRACK_POWER, Z21Protocol.XHeader.X_GET_STATUS, 0x05];
-}
+        public static byte[] BuildGetStatus()
+            => [0x07, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_TRACK_POWER, Z21Protocol.XHeader.X_GET_STATUS, 0x05];
+
+        // ==================== Locomotive Drive Commands (Section 4) ====================
+
+        /// <summary>
+        /// Encodes a DCC locomotive address for Z21 protocol.
+        /// For addresses >= 128, the MSB is OR'd with 0xC0.
+        /// </summary>
+        private static (byte msb, byte lsb) EncodeLocoAddress(int address)
+        {
+            if (address < 128)
+            {
+                return (0x00, (byte)address);
+            }
+            // Long address: MSB = 0xC0 | high byte
+            return ((byte)(0xC0 | ((address >> 8) & 0x3F)), (byte)(address & 0xFF));
+        }
+
+        /// <summary>
+        /// Builds LAN_X_SET_LOCO_DRIVE command for 128 speed steps.
+        /// Format: 0xE4 0x13 Adr_MSB Adr_LSB RVVVVVVV XOR
+        /// </summary>
+        /// <param name="address">DCC locomotive address (1-9999)</param>
+        /// <param name="speed">Speed value (0=stop, 1=emergency stop, 2-127=speed 1-126)</param>
+        /// <param name="forward">True = forward direction</param>
+        public static byte[] BuildSetLocoDrive(int address, int speed, bool forward)
+        {
+            var (adrMsb, adrLsb) = EncodeLocoAddress(address);
+
+            // Speed byte: bit 7 = direction (1=forward), bits 0-6 = speed
+            // Speed encoding for 128 steps: 0=stop, 1=emergency stop, 2-127=speed 1-126
+            byte speedByte = (byte)((forward ? 0x80 : 0x00) | (speed & 0x7F));
+
+            // DB0 = 0x13 for 128 speed steps
+            byte db0 = 0x13;
+
+            // Calculate XOR checksum over X-BUS portion
+            byte xor = (byte)(Z21Protocol.XHeader.X_SET_LOCO_DRIVE ^ db0 ^ adrMsb ^ adrLsb ^ speedByte);
+
+            return
+            [
+                0x0A, 0x00,  // DataLen = 10 bytes
+                Z21Protocol.Header.LAN_X_HEADER, 0x00,  // Header
+                Z21Protocol.XHeader.X_SET_LOCO_DRIVE,   // 0xE4
+                db0,                                     // 0x13 (128 speed steps)
+                adrMsb, adrLsb,                         // Address
+                speedByte,                               // Direction + Speed
+                xor                                      // XOR checksum
+            ];
+        }
+
+        /// <summary>
+        /// Builds LAN_X_SET_LOCO_FUNCTION command.
+        /// Format: 0xE4 0xF8 Adr_MSB Adr_LSB TTNNNNNN XOR
+        /// </summary>
+        /// <param name="address">DCC locomotive address (1-9999)</param>
+        /// <param name="functionIndex">Function index (0=F0/light, 1=F1, etc.)</param>
+        /// <param name="on">True = on, False = off</param>
+        public static byte[] BuildSetLocoFunction(int address, int functionIndex, bool on)
+        {
+            var (adrMsb, adrLsb) = EncodeLocoAddress(address);
+
+            // Function byte: TT (bits 6-7) = 00=off, 01=on; NNNNNN (bits 0-5) = function index
+            // TT: 00 = off, 01 = on, 10 = toggle
+            byte funcByte = (byte)((on ? 0x40 : 0x00) | (functionIndex & 0x3F));
+
+            // DB0 = 0xF8 for function command
+            byte db0 = 0xF8;
+
+            // Calculate XOR checksum
+            byte xor = (byte)(Z21Protocol.XHeader.X_SET_LOCO_FUNCTION ^ db0 ^ adrMsb ^ adrLsb ^ funcByte);
+
+            return
+            [
+                0x0A, 0x00,  // DataLen = 10 bytes
+                Z21Protocol.Header.LAN_X_HEADER, 0x00,
+                Z21Protocol.XHeader.X_SET_LOCO_FUNCTION,  // 0xE4
+                db0,                                       // 0xF8
+                adrMsb, adrLsb,
+                funcByte,
+                xor
+            ];
+        }
+
+        /// <summary>
+        /// Builds LAN_X_GET_LOCO_INFO command.
+        /// Format: 0xE3 0xF0 Adr_MSB Adr_LSB XOR
+        /// Subscribes to loco updates (max 16 addresses per client, FIFO).
+        /// </summary>
+        /// <param name="address">DCC locomotive address (1-9999)</param>
+        public static byte[] BuildGetLocoInfo(int address)
+        {
+            var (adrMsb, adrLsb) = EncodeLocoAddress(address);
+
+            // DB0 = 0xF0
+            byte db0 = 0xF0;
+
+            // Calculate XOR checksum
+            byte xor = (byte)(Z21Protocol.XHeader.X_GET_LOCO_INFO ^ db0 ^ adrMsb ^ adrLsb);
+
+            return
+            [
+                0x09, 0x00,  // DataLen = 9 bytes
+                Z21Protocol.Header.LAN_X_HEADER, 0x00,
+                Z21Protocol.XHeader.X_GET_LOCO_INFO,  // 0xE3
+                db0,                                   // 0xF0
+                adrMsb, adrLsb,
+                xor
+            ];
+        }
+    }

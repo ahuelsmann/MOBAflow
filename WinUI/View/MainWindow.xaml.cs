@@ -26,7 +26,7 @@ public sealed partial class MainWindow
     private readonly NavigationService _navigationService;
     private readonly HealthCheckService _healthCheckService;
     private readonly IUiDispatcher _uiDispatcher;
-    private readonly PluginRegistry _pluginRegistry;
+    private readonly NavigationRegistry _navigationRegistry;
     
     /// <summary>
     /// Application version string for display in TitleBar.
@@ -47,15 +47,15 @@ public sealed partial class MainWindow
         NavigationService navigationService,
         HealthCheckService healthCheckService,
         IUiDispatcher uiDispatcher,
-        IIoService ioService,
-        PluginRegistry pluginRegistry)
-    {
-        ViewModel = viewModel;
-        TrackPlanEditorViewModel = trackPlanEditorViewModel;
-        _navigationService = navigationService;
-        _healthCheckService = healthCheckService;
-        _uiDispatcher = uiDispatcher;
-        _pluginRegistry = pluginRegistry;
+            IIoService ioService,
+            NavigationRegistry navigationRegistry)
+        {
+            ViewModel = viewModel;
+            TrackPlanEditorViewModel = trackPlanEditorViewModel;
+            _navigationService = navigationService;
+            _healthCheckService = healthCheckService;
+            _uiDispatcher = uiDispatcher;
+            _navigationRegistry = navigationRegistry;
 
         InitializeComponent();
 
@@ -116,7 +116,7 @@ public sealed partial class MainWindow
             return; // No settings page, no plugin insertion
         }
 
-        var pluginPages = _pluginRegistry.Pages.Where(p => !string.Equals(p.Source, "Core", StringComparison.OrdinalIgnoreCase)).ToList();
+        var pluginPages = _navigationRegistry.Pages.Where(p => !string.Equals(p.Source, "Shell", StringComparison.OrdinalIgnoreCase)).ToList();
         
         if (pluginPages.Count == 0)
         {

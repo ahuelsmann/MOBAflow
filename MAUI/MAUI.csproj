@@ -25,17 +25,6 @@
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">26.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
-  <!--<PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <BuildProject>false</BuildProject>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <SkipCompilerExecution>true</SkipCompilerExecution>
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
-    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
-  </PropertyGroup>-->
-
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <!-- PERFORMANCE: Skip analyzers in Debug builds -->
     <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
@@ -122,7 +111,7 @@
   </ItemGroup>
 
   <ItemGroup>
-  <!-- MAUI Core -->
+    <!-- MAUI Core -->
     <PackageReference Include="Microsoft.Maui.Controls" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
     <!-- CommunityToolkit.Maui (UI features: Expander, Converters, Behaviors) -->

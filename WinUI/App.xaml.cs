@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+﻿﻿﻿﻿﻿﻿﻿﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.WinUI;
 
@@ -19,16 +19,21 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
+
 using Moba.SharedUI.Service;
-using Moba.WinUI.Service;
 
 using Serilog;
 using Serilog.Events;
+
+using Service;
+
 using SharedUI.Interface;
 using SharedUI.ViewModel;
 
 using Sound;
+
 using System.IO;
+
 using View;
 
 using ILogger = Microsoft.Extensions.Logging.ILogger;
@@ -40,7 +45,7 @@ public partial class App
 {
     private Window? _window;
     private IHost? _webAppHost;
-    private Service.UdpDiscoveryResponder? _udpDiscoveryResponder;
+    private UdpDiscoveryResponder? _udpDiscoveryResponder;
     private readonly ILogger<App> _logger;
 
     /// <summary>
@@ -99,7 +104,7 @@ public partial class App
         // Register SpeechOptions (Sound service configuration)
         services.Configure<SpeechOptions>(configuration.GetSection("Speech"));
 
-        // ✅ Configure Serilog for file logging
+        // Configure Serilog for file logging
         ConfigureSerilog();
 
         // Logging (required by HealthCheckService and SpeechHealthCheck)
@@ -108,11 +113,11 @@ public partial class App
             loggingBuilder.AddSerilog(Log.Logger, dispose: true);
         });
 
-        // Plugin infrastructure
-        var pluginRegistry = new PluginRegistry();
-        services.AddSingleton(pluginRegistry);
+        // Navigation infrastructure
+        var navigationRegistry = new NavigationRegistry();
+        services.AddSingleton(navigationRegistry);
 
-        // ✅ Register ISpeakerEngine with lazy initialization
+        // Register ISpeakerEngine with lazy initialization
         // Only creates the CONFIGURED engine, not both
         // Decision is made at registration time based on AppSettings
         services.AddSingleton<ISpeakerEngine>(sp =>
@@ -135,15 +140,15 @@ public partial class App
         });
 
         // Backend Services (Interfaces are in Backend.Interface and Backend.Network)
-        // ✅ Use shared extension method for platform-consistent registration
+        // Use shared extension method for platform-consistent registration
         // Backend now registers: ActionExecutionContext, AnnouncementService, ActionExecutor
         services.AddMobaBackendServices();
 
         services.AddSingleton<IIoService, IoService>();
         services.AddSingleton<IUiDispatcher, UiDispatcher>();
-        services.AddSingleton<PhotoHubClient>();  // ✅ Real-time photo notifications from MAUI
+        services.AddSingleton<PhotoHubClient>();  // Real-time photo notifications from MAUI
 
-        // ✅ ICityService with NullObject fallback
+        // ICityService with NullObject fallback
         // Always register a service (real or no-op)
         services.AddSingleton<ICityService>(sp =>
         {
@@ -159,7 +164,7 @@ public partial class App
             }
         });
 
-        // ✅ ISettingsService with NullObject fallback
+        // ISettingsService with NullObject fallback
         // Always register a service (real or no-op)
         services.AddSingleton<ISettingsService>(sp =>
         {
@@ -196,53 +201,57 @@ public partial class App
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<Solution>(),
-            sp.GetRequiredService<ActionExecutionContext>(),  // ✅ Inject context with all audio services
-            sp.GetRequiredService<ILogger<MainWindowViewModel>>(),  // ✅ Inject ILogger
+            sp.GetRequiredService<ActionExecutionContext>(),  // Inject context with all audio services
+            sp.GetRequiredService<ILogger<MainWindowViewModel>>(),  // Inject ILogger
             sp.GetRequiredService<IIoService>(),
             sp.GetRequiredService<ICityService>(),      // Now guaranteed (NullObject if unavailable)
             sp.GetRequiredService<ISettingsService>(),  // Now guaranteed (NullObject if unavailable)
             sp.GetRequiredService<AnnouncementService>(),  // For TestSpeech command
-            sp.GetRequiredService<PhotoHubClient>()  // ✅ Real-time photo notifications
+            sp.GetRequiredService<PhotoHubClient>()  // Real-time photo notifications
         ));
         services.AddSingleton<TrackPlanEditorViewModel>();
         services.AddSingleton<JourneyMapViewModel>();
         services.AddSingleton<MonitorPageViewModel>();
+        services.AddSingleton<TrainControlViewModel>();
 
         // Pages (Transient = new instance per navigation)
         services.AddTransient<OverviewPage>();
-        pluginRegistry.AddOrUpdate("overview", "Overview", "Home", typeof(OverviewPage), "Core");
+        navigationRegistry.Register("overview", "Overview", "\uE80F", typeof(OverviewPage), "Shell");
 
         services.AddTransient<SolutionPage>();
-        pluginRegistry.AddOrUpdate("solution", "Solution", "", typeof(SolutionPage), "Core");
+        navigationRegistry.Register("solution", "Solution", "\uE8B7", typeof(SolutionPage), "Shell");
 
         services.AddTransient<JourneysPage>();
-        pluginRegistry.AddOrUpdate("journeys", "Journeys", "", typeof(JourneysPage), "Core");
+        navigationRegistry.Register("journeys", "Journeys", "\uE7C1", typeof(JourneysPage), "Shell");
 
         services.AddTransient<WorkflowsPage>();
-        pluginRegistry.AddOrUpdate("workflows", "Workflows", "\uE945", typeof(WorkflowsPage), "Core");
+        navigationRegistry.Register("workflows", "Workflows", "\uE945", typeof(WorkflowsPage), "Shell");
 
         services.AddTransient<TrainsPage>();
-        pluginRegistry.AddOrUpdate("trains", "Trains", "", typeof(TrainsPage), "Core");
+        navigationRegistry.Register("trains", "Trains", "\uEB4D", typeof(TrainsPage), "Shell");
+
+        services.AddTransient<TrainControlPage>();
+        navigationRegistry.Register("traincontrol", "Train Control", "\uE7C0", typeof(TrainControlPage), "Shell");
 
         services.AddTransient<TrackPlanEditorPage>();
-        pluginRegistry.AddOrUpdate("trackplaneditor", "Track Plan", "", typeof(TrackPlanEditorPage), "Core");
+        navigationRegistry.Register("trackplaneditor", "Track Plan", "\uE809", typeof(TrackPlanEditorPage), "Shell");
 
         services.AddTransient<JourneyMapPage>();
-        pluginRegistry.AddOrUpdate("journeymap", "Journey Map", "", typeof(JourneyMapPage), "Core");
+        navigationRegistry.Register("journeymap", "Journey Map", "\uE81E", typeof(JourneyMapPage), "Shell");
 
         services.AddTransient<SettingsPage>();
-        pluginRegistry.AddOrUpdate("settings", "Settings", "", typeof(SettingsPage), "Core");
+        navigationRegistry.Register("settings", "Settings", "\uE713", typeof(SettingsPage), "Shell");
 
         services.AddTransient<MonitorPage>();
-        pluginRegistry.AddOrUpdate("monitor", "Monitor", "", typeof(MonitorPage), "Core");
+        navigationRegistry.Register("monitor", "Monitor", "\uE7F4", typeof(MonitorPage), "Shell");
 
         // MainWindow (Singleton = one instance for app lifetime)
         services.AddSingleton<MainWindow>();
 
         // Load plugins after core registrations so they can override/add
         var pluginDirectory = Path.Combine(AppContext.BaseDirectory, "Plugins");
-        var pluginLoader = new PluginLoader(pluginDirectory, pluginRegistry);
-        
+        var pluginLoader = new PluginLoader(pluginDirectory, navigationRegistry);
+
         // Note: We use synchronous Load here because ConfigureServices is synchronous
         // Plugin initialization will happen later in OnLaunched after DI is fully set up
         var loadTask = Task.Run(() => pluginLoader.LoadPluginsAsync(services, logger: null));
@@ -263,7 +272,7 @@ public partial class App
             .MinimumLevel.Debug()
             .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
             .Enrich.FromLogContext()
-            .WriteTo.InMemory()  // ✅ Custom sink for MonitorPage real-time display
+            .WriteTo.InMemory()  // Custom sink for MonitorPage real-time display
             .WriteTo.File(
                 Path.Combine(logDirectory, "mobaflow-.log"),
                 rollingInterval: RollingInterval.Day,
@@ -324,7 +333,7 @@ public partial class App
 
             _logger.LogInformation("Auto-loading last solution: {LastPath}", lastPath);
 
-            // ✅ Use the SAME code path as manual loading!
+            // Use the SAME code path as manual loading!
             // This ensures JourneyManager and all other initialization happens correctly.
             await mainWindowViewModel.LoadSolutionFromPathAsync(lastPath);
 
@@ -355,7 +364,7 @@ public partial class App
 
             var restPort = settings.RestApi.Port;
 
-            // ✅ Check if port is available BEFORE attempting to start
+            // Check if port is available BEFORE attempting to start
             if (!Utilities.PortChecker.IsPortAvailable(restPort))
             {
                 var errorMessage = $"Cannot start REST API: Port {restPort} is already in use by another application.\n\n" +
@@ -368,15 +377,15 @@ public partial class App
 
                 // Show error dialog to user
                 await ShowPortInUseErrorAsync(restPort, errorMessage);
-                    return;
-                }
+                return;
+            }
 
-                // NOTE: FirewallHelper removed - it caused UAC elevation dialogs on every start.
-                // Users should manually configure Windows Firewall if needed.
-                // See docs/wiki/FIREWALL-SETUP.md for instructions.
+            // NOTE: FirewallHelper removed - it caused UAC elevation dialogs on every start.
+            // Users should manually configure Windows Firewall if needed.
+            // See docs/wiki/FIREWALL-SETUP.md for instructions.
 
-                // Build WebHost for in-process Kestrel hosting
-                var builder = Host.CreateDefaultBuilder();
+            // Build WebHost for in-process Kestrel hosting
+            var builder = Host.CreateDefaultBuilder();
 
             builder.ConfigureWebHostDefaults(webBuilder =>
             {
@@ -384,13 +393,13 @@ public partial class App
                 {
                     options.ListenAnyIP(restPort);
                 });
-                
+
                 webBuilder.Configure(app =>
                 {
-                    // ✅ CORS must be before routing (required for MAUI mobile clients)
+                    // CORS must be before routing (required for MAUI mobile clients)
                     app.UseCors();
-                    
-                    // ✅ Map SignalR Hub for photo notifications
+
+                    // Map SignalR Hub for photo notifications
                     app.UseRouting();
                     app.UseEndpoints(endpoints =>
                     {
@@ -404,16 +413,16 @@ public partial class App
             {
                 // Register MOBAflow Web Services
                 services.AddSingleton<PhotoStorageService>();
-                
-                // ✅ Explicitly add controllers from this assembly (WinUI)
+
+                // Explicitly add controllers from this assembly (WinUI)
                 // Required because WinUI apps don't auto-discover controllers like ASP.NET Core web apps
                 services.AddControllers()
                     .AddApplicationPart(typeof(Controllers.PhotoUploadController).Assembly);
-                
-                // ✅ Register SignalR for real-time photo notifications
+
+                // Register SignalR for real-time photo notifications
                 services.AddSignalR();
 
-                // ✅ CORS: Allow requests from any origin (required for MAUI mobile clients)
+                // CORS: Allow requests from any origin (required for MAUI mobile clients)
                 services.AddCors(options =>
                 {
                     options.AddDefaultPolicy(policy =>
@@ -442,13 +451,13 @@ public partial class App
             // Give Kestrel a moment to bind
             await Task.Delay(1000);
 
-            // ✅ Start UDP Discovery responder for MAUI auto-discovery
+            // Start UDP Discovery responder for MAUI auto-discovery
             StartUdpDiscoveryResponder(restPort);
 
-            // ✅ Start SignalR PhotoHubClient for real-time photo notifications
+            // Start SignalR PhotoHubClient for real-time photo notifications
             _ = StartPhotoHubClientAsync(restPort);
 
-            // ✅ Self-test: Verify server is actually responding
+            // Self-test: Verify server is actually responding
             try
             {
                 using var httpClient = new HttpClient();
@@ -467,48 +476,48 @@ public partial class App
             {
                 _logger.LogWarning(selfTestEx, "Self-test failed. This may indicate controller registration issues.");
             }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to start REST API");
-            }
         }
-
-        /// <summary>
-        /// Starts the UDP Discovery responder for MAUI auto-discovery.
-        /// Allows MAUI clients to find the REST API server on the local network.
-        /// </summary>
-        private void StartUdpDiscoveryResponder(int restPort)
+        catch (Exception ex)
         {
-            try
-            {
-                _udpDiscoveryResponder?.Dispose();
-                _udpDiscoveryResponder = new Service.UdpDiscoveryResponder(
-                    Services.GetRequiredService<ILogger<Service.UdpDiscoveryResponder>>(),
-                    restPort);
-                _udpDiscoveryResponder.Start();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to start UDP Discovery responder - MAUI auto-discovery will not work");
-            }
+            _logger.LogError(ex, "Failed to start REST API");
         }
+    }
 
-        /// <summary>
-        /// Starts PhotoHubClient for real-time photo notifications from MAUI.
-        /// </summary>
-        private async Task StartPhotoHubClientAsync(int restPort)
+    /// <summary>
+    /// Starts the UDP Discovery responder for MAUI auto-discovery.
+    /// Allows MAUI clients to find the REST API server on the local network.
+    /// </summary>
+    private void StartUdpDiscoveryResponder(int restPort)
+    {
+        try
         {
+            _udpDiscoveryResponder?.Dispose();
+            _udpDiscoveryResponder = new UdpDiscoveryResponder(
+                Services.GetRequiredService<ILogger<UdpDiscoveryResponder>>(),
+                restPort);
+            _udpDiscoveryResponder.Start();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to start UDP Discovery responder - MAUI auto-discovery will not work");
+        }
+    }
+
+    /// <summary>
+    /// Starts PhotoHubClient for real-time photo notifications from MAUI.
+    /// </summary>
+    private async Task StartPhotoHubClientAsync(int restPort)
+    {
         _logger.LogInformation("StartPhotoHubClientAsync called with port: {RestPort}", restPort);
-        
+
         try
         {
             _logger.LogDebug("Resolving PhotoHubClient from DI...");
             var photoHubClient = Services.GetRequiredService<PhotoHubClient>();
-            
+
             _logger.LogDebug("Resolving MainWindowViewModel from DI...");
             var mainWindowViewModel = Services.GetRequiredService<MainWindowViewModel>();
-            
+
             _logger.LogDebug("Resolving IUiDispatcher from DI...");
             var uiDispatcher = Services.GetRequiredService<IUiDispatcher>();
 
@@ -565,7 +574,7 @@ public partial class App
             {
                 var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
                 {
-                    Title = $"⚠️ Port {port} Already In Use",
+                    Title = $"Warning: Port {port} Already In Use",
                     Content = message,
                     CloseButtonText = "OK",
                     XamlRoot = _window?.Content?.XamlRoot

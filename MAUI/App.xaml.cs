@@ -160,7 +160,7 @@ public partial class App
     /// </summary>
     public static Page CreateMainPage()
     {
-        var services = ((App)Application.Current!).Services;
+        var services = ((App)Current!).Services;
         return services.GetRequiredService<MainPage>();
     }
 

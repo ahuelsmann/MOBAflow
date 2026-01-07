@@ -381,6 +381,12 @@ public partial class MainWindowViewModel
     /// </summary>
     public bool IsTrainsPageAvailable => _settings.FeatureToggles is { IsTrainsPageAvailable: true };
 
+    /// <summary>
+    /// Gets whether the Train Control page is available.
+    /// Bound to NavigationView item visibility.
+    /// </summary>
+    public bool IsTrainControlPageAvailable => _settings.FeatureToggles is { IsTrainControlPageAvailable: true };
+
     // Feature Toggle Labels (optional)
 
     public string? OverviewPageLabel => _settings.FeatureToggles?.OverviewPageLabel;

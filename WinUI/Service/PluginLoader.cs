@@ -14,12 +14,12 @@ namespace Moba.WinUI.Service;
 public sealed class PluginLoader
 {
     private readonly string _pluginDirectory;
-    private readonly PluginRegistry _registry;
+    private readonly NavigationRegistry _registry;
     private readonly List<IPlugin> _loadedPlugins = new();
 
     public IReadOnlyList<IPlugin> LoadedPlugins => _loadedPlugins.AsReadOnly();
 
-    public PluginLoader(string pluginDirectory, PluginRegistry registry)
+    public PluginLoader(string pluginDirectory, NavigationRegistry registry)
     {
         _pluginDirectory = pluginDirectory;
         _registry = registry;
@@ -145,7 +145,7 @@ public sealed class PluginLoader
             try
             {
                 services.AddTransient(page.PageType);
-                _registry.AddOrUpdate(page.Tag, page.Title, page.IconGlyph, page.PageType, plugin.Name);
+                _registry.Register(page.Tag, page.Title, page.IconGlyph, page.PageType, plugin.Name);
                 logger?.LogInformation("Registered plugin page {Tag} ({Title}) from {Plugin}",
                     page.Tag, page.Title, plugin.Name);
             }

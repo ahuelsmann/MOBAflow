@@ -45,7 +45,7 @@ public sealed partial class SamplePluginViewModel : ObservableObject
     public bool IsTrackPowerOn => _main.IsTrackPowerOn;
     public string TrackPowerText => _main.IsTrackPowerOn ? "ON" : "OFF";
     public string TrackPowerIcon => _main.IsTrackPowerOn ? "⚡" : "⭕";
-    
+
     // Z21 System State (if available)
     public string Z21MainCurrent => $"{_main.MainCurrent:F1} A";
     public string Z21Temperature => $"{_main.Temperature:F0} °C";

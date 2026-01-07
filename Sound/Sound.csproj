@@ -22,11 +22,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Remove="Resources\Sounds\273231__gollamar__announcement-04.wav" />
-    <None Remove="Resources\Sounds\273646__gollamar__announcement-06.wav" />
-    <None Remove="Resources\Sounds\Station\724058__chungus43a__prague-metro-line-a-chime.wav" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="Microsoft.CognitiveServices.Speech" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Options" />

@@ -77,6 +77,14 @@
                         <FontIcon Glyph="&#xE7C0;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
+                <NavigationViewItem
+                    Content="Train Control"
+                    Tag="traincontrol"
+                    Visibility="{Binding ViewModel.IsTrainControlPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xEC49;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
                 <NavigationViewItemSeparator />
                 <NavigationViewItem
                     Content="Track Plan"

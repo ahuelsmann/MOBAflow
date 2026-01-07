@@ -793,6 +793,72 @@ public class Z21 : IZ21
     }
     #endregion
 
+    #region Locomotive Drive Commands
+    /// <summary>
+    /// Event raised when locomotive info is received from Z21.
+    /// </summary>
+    public event Action<LocoInfo>? OnLocoInfoChanged;
+
+    /// <summary>
+    /// Sets locomotive speed and direction using 128 speed steps.
+    /// LAN_X_SET_LOCO_DRIVE: 0xE4 0x13 Adr_MSB Adr_LSB RVVVVVVV XOR
+    /// </summary>
+    /// <param name="address">DCC locomotive address (1-9999)</param>
+    /// <param name="speed">Speed value (0-126, where 0=stop)</param>
+    /// <param name="forward">True = forward direction, False = backward</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    public async Task SetLocoDriveAsync(int address, int speed, bool forward, CancellationToken cancellationToken = default)
+    {
+        if (address < 1 || address > 9999)
+            throw new ArgumentOutOfRangeException(nameof(address), "DCC address must be 1-9999");
+        if (speed < 0 || speed > 126)
+            throw new ArgumentOutOfRangeException(nameof(speed), "Speed must be 0-126");
+
+        // Speed encoding for 128 steps: add 1 to speed (0=stop, 1=e-stop in protocol, 2-127=speed 1-126)
+        var protocolSpeed = speed > 0 ? speed + 1 : 0;
+
+        await SendCommandAsync(Z21Command.BuildSetLocoDrive(address, protocolSpeed, forward), cancellationToken).ConfigureAwait(false);
+        _logger?.LogInformation("🚂 Loco {Address}: Speed={Speed}, Direction={Direction}", 
+            address, speed, forward ? "Forward" : "Backward");
+    }
+
+    /// <summary>
+    /// Sets a locomotive function on or off.
+    /// LAN_X_SET_LOCO_FUNCTION: 0xE4 0xF8 Adr_MSB Adr_LSB TTNNNNNN XOR
+    /// </summary>
+    /// <param name="address">DCC locomotive address (1-9999)</param>
+    /// <param name="functionIndex">Function index (0=F0/light, 1=F1/sound, etc.)</param>
+    /// <param name="on">True = function on, False = function off</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    public async Task SetLocoFunctionAsync(int address, int functionIndex, bool on, CancellationToken cancellationToken = default)
+    {
+        if (address < 1 || address > 9999)
+            throw new ArgumentOutOfRangeException(nameof(address), "DCC address must be 1-9999");
+        if (functionIndex < 0 || functionIndex > 31)
+            throw new ArgumentOutOfRangeException(nameof(functionIndex), "Function index must be 0-31");
+
+        await SendCommandAsync(Z21Command.BuildSetLocoFunction(address, functionIndex, on), cancellationToken).ConfigureAwait(false);
+        _logger?.LogInformation("🚂 Loco {Address}: F{Function}={State}", 
+            address, functionIndex, on ? "ON" : "OFF");
+    }
+
+    /// <summary>
+    /// Requests locomotive information and subscribes to updates.
+    /// LAN_X_GET_LOCO_INFO: 0xE3 0xF0 Adr_MSB Adr_LSB XOR
+    /// Max 16 addresses can be subscribed per client (FIFO).
+    /// </summary>
+    /// <param name="address">DCC locomotive address (1-9999)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    public async Task GetLocoInfoAsync(int address, CancellationToken cancellationToken = default)
+    {
+        if (address < 1 || address > 9999)
+            throw new ArgumentOutOfRangeException(nameof(address), "DCC address must be 1-9999");
+
+        await SendCommandAsync(Z21Command.BuildGetLocoInfo(address), cancellationToken).ConfigureAwait(false);
+        _logger?.LogDebug("🚂 Requested loco info for address {Address}", address);
+    }
+    #endregion
+
     #region IDisposable
     public void Dispose()
     {

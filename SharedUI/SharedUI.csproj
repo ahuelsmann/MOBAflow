@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-<PropertyGroup>
-  <RootNamespace>Moba.SharedUI</RootNamespace>
-  <TargetFramework>net9.0</TargetFramework>
-  <OutputType>Library</OutputType>
-  <Nullable>enable</Nullable>
-  <ImplicitUsings>enable</ImplicitUsings>
-  <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-  <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
-</PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace>Moba.SharedUI</RootNamespace>
+    <TargetFramework>net9.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" />
   </ItemGroup>

@@ -310,10 +310,19 @@ public class FeatureToggleSettings
 
     // Train/Rolling Stock Management (Upcoming - DISABLED by default)
 
-    /// <summary>
-    /// Enable Trains page (Locomotive and wagon inventory management).
-    /// Upcoming feature - disabled by default.
-    /// </summary>
-    public bool IsTrainsPageAvailable { get; set; } = false;
-    public string? TrainsPageLabel { get; set; } = "Preview";
-}
+        /// <summary>
+        /// Enable Trains page (Locomotive and wagon inventory management).
+        /// Upcoming feature - disabled by default.
+        /// </summary>
+        public bool IsTrainsPageAvailable { get; set; } = false;
+        public string? TrainsPageLabel { get; set; } = "Preview";
+
+        // Train Control (Digital Throttle - DISABLED by default)
+
+        /// <summary>
+        /// Enable Train Control page (Digital locomotive throttle for Z21).
+        /// New feature - disabled by default until fully tested.
+        /// </summary>
+        public bool IsTrainControlPageAvailable { get; set; } = false;
+        public string? TrainControlPageLabel { get; set; } = "Preview";
+    }

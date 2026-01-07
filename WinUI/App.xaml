@@ -23,6 +23,7 @@
             <converter:DateTimeToTimeSpanConverter x:Key="DateTimeToTimeSpanConverter" />
             <converter:DateTimeOffsetConverter x:Key="DateTimeOffsetConverter" />
             <converter:PhotoPathToImageConverter x:Key="PhotoPathToImageConverter" />
+            <converter:BoolToOpacityConverter x:Key="BoolToOpacityConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
