@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.MAUI.View;
 
@@ -20,10 +20,11 @@ public partial class SplashPage : ContentPage
         // Show splash for a short time, then navigate to main page
         await Task.Delay(1500);
 
-        // Navigate to main page
-        if (Application.Current?.MainPage is not null)
+        // Navigate to main page using the new Windows API (MainPage is deprecated)
+        var window = Application.Current?.Windows.FirstOrDefault();
+        if (window is not null)
         {
-            Application.Current.MainPage = App.CreateMainPage();
+            window.Page = App.CreateMainPage();
         }
     }
 }

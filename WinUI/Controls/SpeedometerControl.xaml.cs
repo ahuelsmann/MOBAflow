@@ -1,6 +1,7 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Controls;
 
+using System.Globalization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -148,7 +149,10 @@ public sealed partial class SpeedometerControl : UserControl
         var largeArc = sweepAngle > 180 ? 1 : 0;
 
         // Create path data
-        var pathData = $"M {startX:F1},{startY:F1} A {radius},{radius} 0 {largeArc} 0 {endX:F1},{endY:F1}";
+        var pathData = string.Format(
+            CultureInfo.InvariantCulture,
+            "M {0:F1},{1:F1} A {2},{2} 0 {3} 0 {4:F1},{5:F1}",
+            startX, startY, radius, largeArc, endX, endY);
 
         try
         {
@@ -160,42 +164,42 @@ public sealed partial class SpeedometerControl : UserControl
             // Fallback if path parsing fails
             SpeedArc.Data = null;
         }
-        
-                // Update arc color based on speed (green to yellow to red)
-                UpdateArcColor(normalizedValue);
-            }
 
-            private void UpdateArcColor(double normalizedValue)
-            {
-                if (SpeedArc is null) return;
+        // Update arc color based on speed (green to yellow to red)
+        UpdateArcColor(normalizedValue);
+    }
 
-                Windows.UI.Color color;
+    private void UpdateArcColor(double normalizedValue)
+    {
+        if (SpeedArc is null) return;
 
-                if (normalizedValue < 0.5)
-                {
-                    // Green to Yellow (0-50%)
-                    var t = normalizedValue * 2;
-                    color = Windows.UI.Color.FromArgb(255,
-                        (byte)(76 + t * 179),   // 76 to 255 (green to yellow R)
-                        (byte)(175 - t * 75),   // 175 to 100 (green to yellow G)
-                        80);                     // Blue stays low
-                }
-                else
-                {
-                    // Yellow to Red (50-100%)
-                    var t = (normalizedValue - 0.5) * 2;
-                    color = Windows.UI.Color.FromArgb(255,
-                        255,                     // Red stays max
-                        (byte)(100 - t * 100),  // 100 to 0 (yellow to red G)
-                        (byte)(80 - t * 80));   // Blue goes to 0
-                }
+        Windows.UI.Color color;
 
-                SpeedArc.Stroke = new SolidColorBrush(color);
-            }
-
-            private void UpdateDisplayText()
-            {
-                if (SpeedText is null) return;
-                SpeedText.Text = DisplayValue.ToString();
-            }
+        if (normalizedValue < 0.5)
+        {
+            // Green to Yellow (0-50%)
+            var t = normalizedValue * 2;
+            color = Windows.UI.Color.FromArgb(255,
+                (byte)(76 + t * 179),   // 76 to 255 (green to yellow R)
+                (byte)(175 - t * 75),   // 175 to 100 (green to yellow G)
+                80);                     // Blue stays low
         }
+        else
+        {
+            // Yellow to Red (50-100%)
+            var t = (normalizedValue - 0.5) * 2;
+            color = Windows.UI.Color.FromArgb(255,
+                255,                     // Red stays max
+                (byte)(100 - t * 100),  // 100 to 0 (yellow to red G)
+                (byte)(80 - t * 80));   // Blue goes to 0
+        }
+
+        SpeedArc.Stroke = new SolidColorBrush(color);
+    }
+
+    private void UpdateDisplayText()
+    {
+        if (SpeedText is null) return;
+        SpeedText.Text = DisplayValue.ToString();
+    }
+}

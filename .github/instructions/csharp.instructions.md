@@ -45,6 +45,40 @@ applyTo: '**/*.cs'
 - Always use `is null` or `is not null` instead of `== null` or `!= null`.
 - Trust the C# null annotations and don't add null checks when the type system says a value cannot be null.
 
+## Culture-Invariant Formatting (CRITICAL!)
+
+- **Always use `CultureInfo.InvariantCulture`** when formatting numbers for technical purposes:
+  - SVG/XAML path data (e.g., `"M 30.0,130.0 A ..."`)
+  - JSON/XML serialization
+  - File names or identifiers containing numbers
+  - Network protocols or API payloads
+  - Any format that requires a dot (`.`) as decimal separator
+
+- **Use culture-dependent formatting ONLY** for user-facing display text (UI labels, tooltips)
+
+**Examples:**
+```csharp
+// ✅ CORRECT: Technical format (path data, serialization)
+var pathData = string.Format(
+    CultureInfo.InvariantCulture,
+    "M {0:F1},{1:F1} A {2},{2} 0 {3} 0 {4:F1},{5:F1}",
+    startX, startY, radius, largeArc, endX, endY);
+
+// ✅ CORRECT: Alternative with FormattableString
+var json = FormattableString.Invariant($"{{\"value\": {myDouble:F2}}}");
+
+// ✅ CORRECT: User-facing display (localized)
+var displayText = $"{voltage:F1} V";  // Shows "12,3 V" in German
+
+// ❌ WRONG: String interpolation for technical formats
+var pathData = $"M {x:F1},{y:F1}";  // Fails with German locale!
+```
+
+**Why this matters:**
+- German/French locales use comma (`,`) as decimal separator
+- SVG/XAML parsers expect dot (`.`) as decimal separator
+- Mixing these causes `ArgumentException` or parsing failures
+
 ## Data Access Patterns
 
 - Guide the implementation of a data access layer using Entity Framework Core.

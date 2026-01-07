@@ -1,14 +1,18 @@
-﻿root = true
+root = true
 
 # Common settings for all files
 [*]
 indent_style = space
 indent_size = 4
-charset = utf-8-bom
+charset = utf-8
 trim_trailing_whitespace = true
 end_of_line = crlf
 max_line_length = 140
 insert_final_newline = false
+
+# Encoding policy
+# - Prefer UTF-8 without BOM across the repo to avoid tooling inconsistencies.
+# - If a specific tooling pipeline requires BOM for a specific file type, override it in a dedicated section.
 csharp_using_directive_placement = inside_namespace:silent
 csharp_prefer_simple_using_statement = true:suggestion
 csharp_prefer_braces = false:silent
@@ -190,7 +194,7 @@ dotnet_style_qualification_for_event = false:silent
 # XML and project files
 [*.{xml,xaml,csproj,props,targets}]
 indent_size = 2
-charset = utf-8-bom
+charset = utf-8
 
 # JSON files
 [*.{json,resjson}]

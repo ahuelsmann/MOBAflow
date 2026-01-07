@@ -1,4 +1,4 @@
-﻿<Page
+<Page
     x:Class="Moba.WinUI.View.TrainControlPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -10,7 +10,7 @@
     mc:Ignorable="d">
 
     <Page.Resources>
-        <converter:BoolToGlowOpacityConverter x:Key="GlowOpacityConverter" />
+        <converter:BoolToBacklightBrushConverter x:Key="BacklightConverter" />
     </Page.Resources>
 
     <Grid Padding="32,24">
@@ -21,55 +21,55 @@
 
         <!--  Page Header  -->
         <Grid Grid.Row="0" Margin="0,0,0,24">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBlock
-                    Grid.Column="0"
-                    VerticalAlignment="Center"
-                    FontSize="28"
-                    FontWeight="SemiBold"
-                    Text="Train Control" />
-                <Button
-                    Grid.Column="2"
-                    Height="48"
-                    Padding="24,0"
-                    Background="#E81123"
-                    Command="{x:Bind ViewModel.EmergencyStopCommand}"
-                    CornerRadius="8">
-                    <StackPanel Orientation="Horizontal" Spacing="12">
-                        <FontIcon
-                            FontSize="20"
-                            Foreground="White"
-                            Glyph="&#xE711;" />
-                        <TextBlock
-                            VerticalAlignment="Center"
-                            FontSize="16"
-                            FontWeight="Bold"
-                            Foreground="White"
-                            Text="EMERGENCY STOP" />
-                    </StackPanel>
-                </Button>
-            </Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock
+                Grid.Column="0"
+                VerticalAlignment="Center"
+                FontSize="28"
+                FontWeight="SemiBold"
+                Text="Train Control" />
+            <Button
+                Grid.Column="2"
+                Height="48"
+                Padding="24,0"
+                Background="#E81123"
+                Command="{x:Bind ViewModel.EmergencyStopCommand}"
+                CornerRadius="8">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <FontIcon
+                        FontSize="20"
+                        Foreground="White"
+                        Glyph="&#xE711;" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontSize="16"
+                        FontWeight="Bold"
+                        Foreground="White"
+                        Text="EMERGENCY STOP" />
+                </StackPanel>
+            </Button>
+        </Grid>
 
-                <!--  Main Content: 4 Columns - Left Panel | Speedometer | Functions | Speed Categories  -->
-                <Grid Grid.Row="1">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="220" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="140" />
-                        <ColumnDefinition Width="200" />
-                    </Grid.ColumnDefinitions>
+        <!--  Main Content: 4 Columns - Left Panel | Speedometer | Functions | Speed Categories  -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="140" />
+                <ColumnDefinition Width="200" />
+            </Grid.ColumnDefinitions>
 
-                    <!--  LEFT PANEL: Locomotive Settings  -->
-                    <Border
-                        Grid.Column="0"
-                        Margin="0,0,8,0"
-                        Padding="12,12,4,12"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            <!--  LEFT PANEL: Locomotive Settings  -->
+            <Border
+                Grid.Column="0"
+                Margin="0,0,8,0"
+                Padding="12,12,4,12"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="8">
                 <ScrollViewer Padding="0,0,12,0" VerticalScrollBarVisibility="Auto">
@@ -113,18 +113,18 @@
                             <ToggleSwitch
                                 IsOn="{x:Bind ViewModel.IsForward, Mode=TwoWay}"
                                 OffContent="Backward"
-                                        OnContent="Forward" />
-                                </StackPanel>
+                                OnContent="Forward" />
+                        </StackPanel>
 
-                                <!--  Separator  -->
-                                <Border
-                                    Height="1"
-                                    Margin="0,4"
-                                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                        <!--  Separator  -->
+                        <Border
+                            Height="1"
+                            Margin="0,4"
+                            Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
-                                <!--  Acceleration Ramp  -->
-                                <StackPanel Spacing="6">
-                                    <TextBlock
+                        <!--  Acceleration Ramp  -->
+                        <StackPanel Spacing="6">
+                            <TextBlock
                                 FontSize="11"
                                 FontWeight="SemiBold"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
@@ -198,27 +198,27 @@
                                     IsActive="True" />
                                 <TextBlock FontSize="11" Text="Ramping..." />
                             </StackPanel>
-                                    </Border>
-                                </StackPanel>
-                            </ScrollViewer>
                         </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
 
-                        <!--  CENTER: Speedometer  -->
-                        <Border
-                            Grid.Column="1"
-                            Margin="0"
-                            Padding="16"
-                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                            BorderThickness="1"
-                            CornerRadius="8">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="*" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
+            <!--  CENTER: Speedometer  -->
+            <Border
+                Grid.Column="1"
+                Margin="0"
+                Padding="16"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-                                <!--  Speedometer  -->
+                    <!--  Speedometer  -->
                     <controls:SpeedometerControl
                         Grid.Row="0"
                         HorizontalAlignment="Center"
@@ -329,281 +329,401 @@
                                 <TextBlock FontWeight="Bold" Text="MAX" />
                             </Button>
                         </Grid>
-                            </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!--  FUNCTIONS PANEL: F0-F20 with Backlit Effect  -->
+            <Border
+                Grid.Column="2"
+                Margin="8,0"
+                Padding="12"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+                <ScrollViewer Padding="0,0,8,0" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            Margin="0,0,0,8"
+                            FontSize="14"
+                            FontWeight="SemiBold"
+                            Text="Functions" />
+                        <Grid ColumnSpacing="6" RowSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <!--  F0: Light - Yellow  -->
+                            <ToggleButton
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Background="{x:Bind ViewModel.IsF0On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#FFD700}"
+                                Command="{x:Bind ViewModel.ToggleF0Command}"
+                                CornerRadius="6"
+                                IsChecked="{x:Bind ViewModel.IsF0On, Mode=OneWay}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="14" Glyph="&#xE793;" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Text="F0" />
+                                </StackPanel>
+                            </ToggleButton>
+                            <!--  F1: Sound - Blue  -->
+                            <ToggleButton
+                                Grid.Row="0"
+                                Grid.Column="1"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Background="{x:Bind ViewModel.IsF1On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#0078D4}"
+                                Command="{x:Bind ViewModel.ToggleF1Command}"
+                                CornerRadius="6"
+                                IsChecked="{x:Bind ViewModel.IsF1On, Mode=OneWay}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="14" Glyph="&#xE995;" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Text="F1" />
+                                </StackPanel>
+                            </ToggleButton>
+                            <!--  F2: Horn - Orange  -->
+                            <ToggleButton
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Background="{x:Bind ViewModel.IsF2On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#FF8C00}"
+                                Command="{x:Bind ViewModel.ToggleF2Command}"
+                                CornerRadius="6"
+                                IsChecked="{x:Bind ViewModel.IsF2On, Mode=OneWay}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="14" Glyph="&#xE7ED;" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Text="F2" />
+                                </StackPanel>
+                            </ToggleButton>
+                            <!--  F3: Door Close - Red  -->
+                            <ToggleButton
+                                Grid.Row="1"
+                                Grid.Column="1"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Background="{x:Bind ViewModel.IsF3On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#E81123}"
+                                Command="{x:Bind ViewModel.ToggleF3Command}"
+                                CornerRadius="6"
+                                IsChecked="{x:Bind ViewModel.IsF3On, Mode=OneWay}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="14" Glyph="&#xE7E8;" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Text="F3" />
+                                </StackPanel>
+                            </ToggleButton>
+                            <!--  F4: Door Release - Green  -->
+                            <ToggleButton
+                                Grid.Row="2"
+                                Grid.Column="0"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Background="{x:Bind ViewModel.IsF4On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#107C10}"
+                                Command="{x:Bind ViewModel.ToggleF4Command}"
+                                CornerRadius="6"
+                                IsChecked="{x:Bind ViewModel.IsF4On, Mode=OneWay}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="14" Glyph="&#xE73E;" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Text="F4" />
+                                </StackPanel>
+                            </ToggleButton>
+                            <!--  F5: Shunting Light - Teal  -->
+                            <ToggleButton
+                                Grid.Row="2"
+                                Grid.Column="1"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Background="{x:Bind ViewModel.IsF5On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#00B7C3}"
+                                Command="{x:Bind ViewModel.ToggleF5Command}"
+                                CornerRadius="6"
+                                IsChecked="{x:Bind ViewModel.IsF5On, Mode=OneWay}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="14" Glyph="&#xE793;" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Text="F5" />
+                                </StackPanel>
+                            </ToggleButton>
+                            <!--  F6: Interior Light - Warm Yellow  -->
+                            <ToggleButton
+                                Grid.Row="3"
+                                Grid.Column="0"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Background="{x:Bind ViewModel.IsF6On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#FFB900}"
+                                Command="{x:Bind ViewModel.ToggleF6Command}"
+                                CornerRadius="6"
+                                IsChecked="{x:Bind ViewModel.IsF6On, Mode=OneWay}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="14" Glyph="&#xE7E8;" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Text="F6" />
+                                </StackPanel>
+                            </ToggleButton>
+                            <!--  F7: Smoke - Gray  -->
+                            <ToggleButton
+                                Grid.Row="3"
+                                Grid.Column="1"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Background="{x:Bind ViewModel.IsF7On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#767676}"
+                                Command="{x:Bind ViewModel.ToggleF7Command}"
+                                CornerRadius="6"
+                                IsChecked="{x:Bind ViewModel.IsF7On, Mode=OneWay}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="14" Glyph="&#xE753;" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Text="F7" />
+                                </StackPanel>
+                            </ToggleButton>
+                            <!--  F8: Pantograph - Magenta  -->
+                            <ToggleButton
+                                Grid.Row="4"
+                                Grid.Column="0"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Background="{x:Bind ViewModel.IsF8On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#E040FB}"
+                                Command="{x:Bind ViewModel.ToggleF8Command}"
+                                CornerRadius="6"
+                                IsChecked="{x:Bind ViewModel.IsF8On, Mode=OneWay}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="14" Glyph="&#xE945;" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Text="F8" />
+                                </StackPanel>
+                            </ToggleButton>
+                            <!--  F9: Purple  -->
+                            <ToggleButton
+                                Grid.Row="4"
+                                Grid.Column="1"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Background="{x:Bind ViewModel.IsF9On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#8764B8}"
+                                Command="{x:Bind ViewModel.ToggleF9Command}"
+                                CornerRadius="6"
+                                IsChecked="{x:Bind ViewModel.IsF9On, Mode=OneWay}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="14" Glyph="&#xE734;" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Text="F9" />
+                                </StackPanel>
+                            </ToggleButton>
+                            <!--  F10: Lime Green  -->
+                            <ToggleButton
+                                Grid.Row="5"
+                                Grid.Column="0"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Background="{x:Bind ViewModel.IsF10On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#00CC6A}"
+                                Command="{x:Bind ViewModel.ToggleF10Command}"
+                                CornerRadius="6"
+                                IsChecked="{x:Bind ViewModel.IsF10On, Mode=OneWay}">
+                                <TextBlock
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Text="F10" />
+                            </ToggleButton>
+                            <!--  F11: Teal  -->
+                            <ToggleButton
+                                Grid.Row="5"
+                                Grid.Column="1"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Background="{x:Bind ViewModel.IsF11On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#038387}"
+                                Command="{x:Bind ViewModel.ToggleF11Command}"
+                                CornerRadius="6"
+                                IsChecked="{x:Bind ViewModel.IsF11On, Mode=OneWay}">
+                                <TextBlock
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Text="F11" />
+                            </ToggleButton>
+                            <!--  F12: Orchid  -->
+                            <ToggleButton
+                                Grid.Row="6"
+                                Grid.Column="0"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Background="{x:Bind ViewModel.IsF12On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#C239B3}"
+                                Command="{x:Bind ViewModel.ToggleF12Command}"
+                                CornerRadius="6"
+                                IsChecked="{x:Bind ViewModel.IsF12On, Mode=OneWay}">
+                                <TextBlock
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Text="F12" />
+                            </ToggleButton>
+                            <!--  F13: Hot Pink  -->
+                            <ToggleButton
+                                Grid.Row="6"
+                                Grid.Column="1"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Background="{x:Bind ViewModel.IsF13On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#FF1493}"
+                                Command="{x:Bind ViewModel.ToggleF13Command}"
+                                CornerRadius="6"
+                                IsChecked="{x:Bind ViewModel.IsF13On, Mode=OneWay}">
+                                <TextBlock
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Text="F13" />
+                            </ToggleButton>
+                            <!--  F14: Gray  -->
+                            <ToggleButton
+                                Grid.Row="7"
+                                Grid.Column="0"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Background="{x:Bind ViewModel.IsF14On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#7A7574}"
+                                Command="{x:Bind ViewModel.ToggleF14Command}"
+                                CornerRadius="6"
+                                IsChecked="{x:Bind ViewModel.IsF14On, Mode=OneWay}">
+                                <TextBlock
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Text="F14" />
+                            </ToggleButton>
+                            <!--  F15: Sage  -->
+                            <ToggleButton
+                                Grid.Row="7"
+                                Grid.Column="1"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Background="{x:Bind ViewModel.IsF15On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#567C73}"
+                                Command="{x:Bind ViewModel.ToggleF15Command}"
+                                CornerRadius="6"
+                                IsChecked="{x:Bind ViewModel.IsF15On, Mode=OneWay}">
+                                <TextBlock
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Text="F15" />
+                            </ToggleButton>
+                            <!--  F16: Brown  -->
+                            <ToggleButton
+                                Grid.Row="8"
+                                Grid.Column="0"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Background="{x:Bind ViewModel.IsF16On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#8E562E}"
+                                Command="{x:Bind ViewModel.ToggleF16Command}"
+                                CornerRadius="6"
+                                IsChecked="{x:Bind ViewModel.IsF16On, Mode=OneWay}">
+                                <TextBlock
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Text="F16" />
+                            </ToggleButton>
+                            <!--  F17: Tan  -->
+                            <ToggleButton
+                                Grid.Row="8"
+                                Grid.Column="1"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Background="{x:Bind ViewModel.IsF17On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#847545}"
+                                Command="{x:Bind ViewModel.ToggleF17Command}"
+                                CornerRadius="6"
+                                IsChecked="{x:Bind ViewModel.IsF17On, Mode=OneWay}">
+                                <TextBlock
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Text="F17" />
+                            </ToggleButton>
+                            <!--  F18: Slate  -->
+                            <ToggleButton
+                                Grid.Row="9"
+                                Grid.Column="0"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Background="{x:Bind ViewModel.IsF18On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#525E54}"
+                                Command="{x:Bind ViewModel.ToggleF18Command}"
+                                CornerRadius="6"
+                                IsChecked="{x:Bind ViewModel.IsF18On, Mode=OneWay}">
+                                <TextBlock
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Text="F18" />
+                            </ToggleButton>
+                            <!--  F19: Dark Gray  -->
+                            <ToggleButton
+                                Grid.Row="9"
+                                Grid.Column="1"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Background="{x:Bind ViewModel.IsF19On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#4A5459}"
+                                Command="{x:Bind ViewModel.ToggleF19Command}"
+                                CornerRadius="6"
+                                IsChecked="{x:Bind ViewModel.IsF19On, Mode=OneWay}">
+                                <TextBlock
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Text="F19" />
+                            </ToggleButton>
+                            <!--  F20: Steel Blue (spans both columns)  -->
+                            <ToggleButton
+                                Grid.Row="10"
+                                Grid.Column="0"
+                                Grid.ColumnSpan="2"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Background="{x:Bind ViewModel.IsF20On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#69797E}"
+                                Command="{x:Bind ViewModel.ToggleF20Command}"
+                                CornerRadius="6"
+                                IsChecked="{x:Bind ViewModel.IsF20On, Mode=OneWay}">
+                                <TextBlock
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Text="F20" />
+                            </ToggleButton>
                         </Grid>
-                    </Border>
-
-                    <!--  FUNCTIONS PANEL: F0-F20 with accent colors (2 columns)  -->
-                    <Border
-                        Grid.Column="2"
-                        Margin="8,0"
-                        Padding="8"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8">
-                        <ScrollViewer Padding="0,0,4,0" VerticalScrollBarVisibility="Auto">
-                            <StackPanel Spacing="4">
-                                <TextBlock Margin="0,0,0,4" FontSize="12" FontWeight="SemiBold" Text="Functions" />
-                                <Grid ColumnSpacing="4" RowSpacing="4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
-                                        <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
-                                    <!--  F0: Light - Yellow with glow  -->
-                                    <Grid Grid.Row="0" Grid.Column="0">
-                                        <!-- Outer glow layer -->
-                                        <Border Margin="-6" Background="#FFD700" CornerRadius="10" Opacity="{x:Bind ViewModel.IsF0On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}">
-                                            <Border.OpacityTransition>
-                                                <ScalarTransition Duration="0:0:0.2" />
-                                            </Border.OpacityTransition>
-                                        </Border>
-                                        <!-- Middle glow layer -->
-                                        <Border Margin="-3" Background="#FFEA00" CornerRadius="7" Opacity="{x:Bind ViewModel.IsF0On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <!-- Inner bright glow -->
-                                        <Border Background="#FFFACD" CornerRadius="4" Opacity="{x:Bind ViewModel.IsF0On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <ToggleButton Height="32" HorizontalAlignment="Stretch" Background="#3DFFD700" Command="{x:Bind ViewModel.ToggleF0Command}" CornerRadius="4" IsChecked="{x:Bind ViewModel.IsF0On, Mode=OneWay}">
-                                            <StackPanel Orientation="Horizontal" Spacing="2"><FontIcon FontSize="11" Foreground="#FFD700" Glyph="&#xE793;" /><TextBlock FontSize="10" Text="F0" /></StackPanel>
-                                        </ToggleButton>
-                                    </Grid>
-                                    <!--  F1: Sound - Blue with glow  -->
-                                    <Grid Grid.Row="0" Grid.Column="1">
-                                        <!-- Outer glow layer -->
-                                        <Border Margin="-6" Background="#0078D4" CornerRadius="10" Opacity="{x:Bind ViewModel.IsF1On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}">
-                                            <Border.OpacityTransition>
-                                                <ScalarTransition Duration="0:0:0.2" />
-                                            </Border.OpacityTransition>
-                                        </Border>
-                                        <!-- Middle glow layer -->
-                                        <Border Margin="-3" Background="#1E90FF" CornerRadius="7" Opacity="{x:Bind ViewModel.IsF1On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <!-- Inner bright glow -->
-                                        <Border Background="#87CEEB" CornerRadius="4" Opacity="{x:Bind ViewModel.IsF1On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <ToggleButton Height="32" HorizontalAlignment="Stretch" Background="#3D0078D4" Command="{x:Bind ViewModel.ToggleF1Command}" CornerRadius="4" IsChecked="{x:Bind ViewModel.IsF1On, Mode=OneWay}">
-                                            <StackPanel Orientation="Horizontal" Spacing="2"><FontIcon FontSize="11" Foreground="#0078D4" Glyph="&#xE995;" /><TextBlock FontSize="10" Text="F1" /></StackPanel>
-                                        </ToggleButton>
-                                    </Grid>
-                                    <!--  F2: Horn - Orange with glow  -->
-                                    <Grid Grid.Row="1" Grid.Column="0">
-                                        <!-- Outer glow layer -->
-                                        <Border Margin="-6" Background="#FF8C00" CornerRadius="10" Opacity="{x:Bind ViewModel.IsF2On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}">
-                                            <Border.OpacityTransition>
-                                                <ScalarTransition Duration="0:0:0.2" />
-                                            </Border.OpacityTransition>
-                                        </Border>
-                                        <!-- Middle glow layer -->
-                                        <Border Margin="-3" Background="#FFA500" CornerRadius="7" Opacity="{x:Bind ViewModel.IsF2On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <!-- Inner bright glow -->
-                                        <Border Background="#FFD580" CornerRadius="4" Opacity="{x:Bind ViewModel.IsF2On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <ToggleButton Height="32" HorizontalAlignment="Stretch" Background="#3DFF8C00" Command="{x:Bind ViewModel.ToggleF2Command}" CornerRadius="4" IsChecked="{x:Bind ViewModel.IsF2On, Mode=OneWay}">
-                                            <StackPanel Orientation="Horizontal" Spacing="2"><FontIcon FontSize="11" Foreground="#FF8C00" Glyph="&#xE7ED;" /><TextBlock FontSize="10" Text="F2" /></StackPanel>
-                                        </ToggleButton>
-                                    </Grid>
-                                    <!--  F3: Door Close - Red with glow  -->
-                                    <Grid Grid.Row="1" Grid.Column="1">
-                                        <Border Margin="-6" Background="#E81123" CornerRadius="10" Opacity="{x:Bind ViewModel.IsF3On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}">
-                                            <Border.OpacityTransition><ScalarTransition Duration="0:0:0.2" /></Border.OpacityTransition>
-                                        </Border>
-                                        <Border Margin="-3" Background="#FF4444" CornerRadius="7" Opacity="{x:Bind ViewModel.IsF3On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <Border Background="#FF8888" CornerRadius="4" Opacity="{x:Bind ViewModel.IsF3On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <ToggleButton Height="32" HorizontalAlignment="Stretch" Background="#3DE81123" Command="{x:Bind ViewModel.ToggleF3Command}" CornerRadius="4" IsChecked="{x:Bind ViewModel.IsF3On, Mode=OneWay}">
-                                            <StackPanel Orientation="Horizontal" Spacing="2"><FontIcon FontSize="11" Foreground="#E81123" Glyph="&#xE7E8;" /><TextBlock FontSize="10" Text="F3" /></StackPanel>
-                                        </ToggleButton>
-                                    </Grid>
-                                    <!--  F4: Door Release - Green with glow  -->
-                                    <Grid Grid.Row="2" Grid.Column="0">
-                                        <Border Margin="-6" Background="#107C10" CornerRadius="10" Opacity="{x:Bind ViewModel.IsF4On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}">
-                                            <Border.OpacityTransition><ScalarTransition Duration="0:0:0.2" /></Border.OpacityTransition>
-                                        </Border>
-                                        <Border Margin="-3" Background="#32CD32" CornerRadius="7" Opacity="{x:Bind ViewModel.IsF4On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <Border Background="#90EE90" CornerRadius="4" Opacity="{x:Bind ViewModel.IsF4On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <ToggleButton Height="32" HorizontalAlignment="Stretch" Background="#3D107C10" Command="{x:Bind ViewModel.ToggleF4Command}" CornerRadius="4" IsChecked="{x:Bind ViewModel.IsF4On, Mode=OneWay}">
-                                            <StackPanel Orientation="Horizontal" Spacing="2"><FontIcon FontSize="11" Foreground="#107C10" Glyph="&#xE73E;" /><TextBlock FontSize="10" Text="F4" /></StackPanel>
-                                        </ToggleButton>
-                                    </Grid>
-                                    <!--  F5: Shunting Light - Teal with glow  -->
-                                    <Grid Grid.Row="2" Grid.Column="1">
-                                        <Border Margin="-6" Background="#00B7C3" CornerRadius="10" Opacity="{x:Bind ViewModel.IsF5On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}">
-                                            <Border.OpacityTransition><ScalarTransition Duration="0:0:0.2" /></Border.OpacityTransition>
-                                        </Border>
-                                        <Border Margin="-3" Background="#20C997" CornerRadius="7" Opacity="{x:Bind ViewModel.IsF5On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <Border Background="#7FFFD4" CornerRadius="4" Opacity="{x:Bind ViewModel.IsF5On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <ToggleButton Height="32" HorizontalAlignment="Stretch" Background="#3D00B7C3" Command="{x:Bind ViewModel.ToggleF5Command}" CornerRadius="4" IsChecked="{x:Bind ViewModel.IsF5On, Mode=OneWay}">
-                                            <StackPanel Orientation="Horizontal" Spacing="2"><FontIcon FontSize="11" Foreground="#00B7C3" Glyph="&#xE793;" /><TextBlock FontSize="10" Text="F5" /></StackPanel>
-                                        </ToggleButton>
-                                    </Grid>
-                                    <!--  F6: Interior Light - Warm Yellow with glow  -->
-                                    <Grid Grid.Row="3" Grid.Column="0">
-                                        <Border Margin="-6" Background="#FFB900" CornerRadius="10" Opacity="{x:Bind ViewModel.IsF6On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}">
-                                            <Border.OpacityTransition><ScalarTransition Duration="0:0:0.2" /></Border.OpacityTransition>
-                                        </Border>
-                                        <Border Margin="-3" Background="#FFD700" CornerRadius="7" Opacity="{x:Bind ViewModel.IsF6On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <Border Background="#FFFACD" CornerRadius="4" Opacity="{x:Bind ViewModel.IsF6On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <ToggleButton Height="32" HorizontalAlignment="Stretch" Background="#3DFFB900" Command="{x:Bind ViewModel.ToggleF6Command}" CornerRadius="4" IsChecked="{x:Bind ViewModel.IsF6On, Mode=OneWay}">
-                                            <StackPanel Orientation="Horizontal" Spacing="2"><FontIcon FontSize="11" Foreground="#FFB900" Glyph="&#xE7E8;" /><TextBlock FontSize="10" Text="F6" /></StackPanel>
-                                        </ToggleButton>
-                                    </Grid>
-                                    <!--  F7: Smoke - Gray with glow  -->
-                                    <Grid Grid.Row="3" Grid.Column="1">
-                                        <Border Margin="-6" Background="#767676" CornerRadius="10" Opacity="{x:Bind ViewModel.IsF7On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}">
-                                            <Border.OpacityTransition><ScalarTransition Duration="0:0:0.2" /></Border.OpacityTransition>
-                                        </Border>
-                                        <Border Margin="-3" Background="#A0A0A0" CornerRadius="7" Opacity="{x:Bind ViewModel.IsF7On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <Border Background="#C0C0C0" CornerRadius="4" Opacity="{x:Bind ViewModel.IsF7On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <ToggleButton Height="32" HorizontalAlignment="Stretch" Background="#3D767676" Command="{x:Bind ViewModel.ToggleF7Command}" CornerRadius="4" IsChecked="{x:Bind ViewModel.IsF7On, Mode=OneWay}">
-                                            <StackPanel Orientation="Horizontal" Spacing="2"><FontIcon FontSize="11" Foreground="#767676" Glyph="&#xE753;" /><TextBlock FontSize="10" Text="F7" /></StackPanel>
-                                        </ToggleButton>
-                                    </Grid>
-                                    <!--  F8: Pantograph - Magenta with glow  -->
-                                    <Grid Grid.Row="4" Grid.Column="0">
-                                        <Border Margin="-6" Background="#E3008C" CornerRadius="10" Opacity="{x:Bind ViewModel.IsF8On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}">
-                                            <Border.OpacityTransition><ScalarTransition Duration="0:0:0.2" /></Border.OpacityTransition>
-                                        </Border>
-                                        <Border Margin="-3" Background="#FF69B4" CornerRadius="7" Opacity="{x:Bind ViewModel.IsF8On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <Border Background="#FFB6C1" CornerRadius="4" Opacity="{x:Bind ViewModel.IsF8On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <ToggleButton Height="32" HorizontalAlignment="Stretch" Background="#3DE3008C" Command="{x:Bind ViewModel.ToggleF8Command}" CornerRadius="4" IsChecked="{x:Bind ViewModel.IsF8On, Mode=OneWay}">
-                                            <StackPanel Orientation="Horizontal" Spacing="2"><FontIcon FontSize="11" Foreground="#E3008C" Glyph="&#xE945;" /><TextBlock FontSize="10" Text="F8" /></StackPanel>
-                                        </ToggleButton>
-                                    </Grid>
-                                    <!--  F9: Purple with glow  -->
-                                    <Grid Grid.Row="4" Grid.Column="1">
-                                        <Border Margin="-6" Background="#8764B8" CornerRadius="10" Opacity="{x:Bind ViewModel.IsF9On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}">
-                                            <Border.OpacityTransition><ScalarTransition Duration="0:0:0.2" /></Border.OpacityTransition>
-                                        </Border>
-                                        <Border Margin="-3" Background="#9370DB" CornerRadius="7" Opacity="{x:Bind ViewModel.IsF9On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <Border Background="#DDA0DD" CornerRadius="4" Opacity="{x:Bind ViewModel.IsF9On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <ToggleButton Height="32" HorizontalAlignment="Stretch" Background="#3D8764B8" Command="{x:Bind ViewModel.ToggleF9Command}" CornerRadius="4" IsChecked="{x:Bind ViewModel.IsF9On, Mode=OneWay}">
-                                            <StackPanel Orientation="Horizontal" Spacing="2"><FontIcon FontSize="11" Foreground="#8764B8" Glyph="&#xE734;" /><TextBlock FontSize="10" Text="F9" /></StackPanel>
-                                        </ToggleButton>
-                                    </Grid>
-                                    <!--  F10-F20: Accent colors with glow  -->
-                                    <Grid Grid.Row="5" Grid.Column="0">
-                                        <Border Margin="-6" Background="#00CC6A" CornerRadius="10" Opacity="{x:Bind ViewModel.IsF10On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}">
-                                            <Border.OpacityTransition><ScalarTransition Duration="0:0:0.2" /></Border.OpacityTransition>
-                                        </Border>
-                                        <Border Margin="-3" Background="#32CD32" CornerRadius="7" Opacity="{x:Bind ViewModel.IsF10On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <Border Background="#98FB98" CornerRadius="4" Opacity="{x:Bind ViewModel.IsF10On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <ToggleButton Height="32" HorizontalAlignment="Stretch" Background="#3D00CC6A" Command="{x:Bind ViewModel.ToggleF10Command}" CornerRadius="4" IsChecked="{x:Bind ViewModel.IsF10On, Mode=OneWay}">
-                                            <TextBlock FontSize="10" Text="F10" />
-                                        </ToggleButton>
-                                    </Grid>
-                                    <Grid Grid.Row="5" Grid.Column="1">
-                                        <Border Margin="-6" Background="#038387" CornerRadius="10" Opacity="{x:Bind ViewModel.IsF11On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}">
-                                            <Border.OpacityTransition><ScalarTransition Duration="0:0:0.2" /></Border.OpacityTransition>
-                                        </Border>
-                                        <Border Margin="-3" Background="#20B2AA" CornerRadius="7" Opacity="{x:Bind ViewModel.IsF11On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <Border Background="#66CDAA" CornerRadius="4" Opacity="{x:Bind ViewModel.IsF11On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <ToggleButton Height="32" HorizontalAlignment="Stretch" Background="#3D038387" Command="{x:Bind ViewModel.ToggleF11Command}" CornerRadius="4" IsChecked="{x:Bind ViewModel.IsF11On, Mode=OneWay}">
-                                            <TextBlock FontSize="10" Text="F11" />
-                                        </ToggleButton>
-                                    </Grid>
-                                    <Grid Grid.Row="6" Grid.Column="0">
-                                        <Border Margin="-6" Background="#C239B3" CornerRadius="10" Opacity="{x:Bind ViewModel.IsF12On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}">
-                                            <Border.OpacityTransition><ScalarTransition Duration="0:0:0.2" /></Border.OpacityTransition>
-                                        </Border>
-                                        <Border Margin="-3" Background="#DA70D6" CornerRadius="7" Opacity="{x:Bind ViewModel.IsF12On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <Border Background="#EE82EE" CornerRadius="4" Opacity="{x:Bind ViewModel.IsF12On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <ToggleButton Height="32" HorizontalAlignment="Stretch" Background="#3DC239B3" Command="{x:Bind ViewModel.ToggleF12Command}" CornerRadius="4" IsChecked="{x:Bind ViewModel.IsF12On, Mode=OneWay}">
-                                            <TextBlock FontSize="10" Text="F12" />
-                                        </ToggleButton>
-                                    </Grid>
-                                    <Grid Grid.Row="6" Grid.Column="1">
-                                        <Border Margin="-6" Background="#EA005E" CornerRadius="10" Opacity="{x:Bind ViewModel.IsF13On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}">
-                                            <Border.OpacityTransition><ScalarTransition Duration="0:0:0.2" /></Border.OpacityTransition>
-                                        </Border>
-                                        <Border Margin="-3" Background="#FF1493" CornerRadius="7" Opacity="{x:Bind ViewModel.IsF13On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <Border Background="#FF69B4" CornerRadius="4" Opacity="{x:Bind ViewModel.IsF13On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <ToggleButton Height="32" HorizontalAlignment="Stretch" Background="#3DEA005E" Command="{x:Bind ViewModel.ToggleF13Command}" CornerRadius="4" IsChecked="{x:Bind ViewModel.IsF13On, Mode=OneWay}">
-                                            <TextBlock FontSize="10" Text="F13" />
-                                        </ToggleButton>
-                                    </Grid>
-                                    <Grid Grid.Row="7" Grid.Column="0">
-                                        <Border Margin="-6" Background="#7A7574" CornerRadius="10" Opacity="{x:Bind ViewModel.IsF14On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}">
-                                            <Border.OpacityTransition><ScalarTransition Duration="0:0:0.2" /></Border.OpacityTransition>
-                                        </Border>
-                                        <Border Margin="-3" Background="#A09999" CornerRadius="7" Opacity="{x:Bind ViewModel.IsF14On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <Border Background="#C0C0C0" CornerRadius="4" Opacity="{x:Bind ViewModel.IsF14On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <ToggleButton Height="32" HorizontalAlignment="Stretch" Background="#3D7A7574" Command="{x:Bind ViewModel.ToggleF14Command}" CornerRadius="4" IsChecked="{x:Bind ViewModel.IsF14On, Mode=OneWay}">
-                                            <TextBlock FontSize="10" Text="F14" />
-                                        </ToggleButton>
-                                    </Grid>
-                                    <Grid Grid.Row="7" Grid.Column="1">
-                                        <Border Margin="-6" Background="#567C73" CornerRadius="10" Opacity="{x:Bind ViewModel.IsF15On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}">
-                                            <Border.OpacityTransition><ScalarTransition Duration="0:0:0.2" /></Border.OpacityTransition>
-                                        </Border>
-                                        <Border Margin="-3" Background="#6B8E8B" CornerRadius="7" Opacity="{x:Bind ViewModel.IsF15On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <Border Background="#8FBC8F" CornerRadius="4" Opacity="{x:Bind ViewModel.IsF15On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <ToggleButton Height="32" HorizontalAlignment="Stretch" Background="#3D567C73" Command="{x:Bind ViewModel.ToggleF15Command}" CornerRadius="4" IsChecked="{x:Bind ViewModel.IsF15On, Mode=OneWay}">
-                                            <TextBlock FontSize="10" Text="F15" />
-                                        </ToggleButton>
-                                    </Grid>
-                                    <Grid Grid.Row="8" Grid.Column="0">
-                                        <Border Margin="-6" Background="#8E562E" CornerRadius="10" Opacity="{x:Bind ViewModel.IsF16On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}">
-                                            <Border.OpacityTransition><ScalarTransition Duration="0:0:0.2" /></Border.OpacityTransition>
-                                        </Border>
-                                        <Border Margin="-3" Background="#CD853F" CornerRadius="7" Opacity="{x:Bind ViewModel.IsF16On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <Border Background="#DEB887" CornerRadius="4" Opacity="{x:Bind ViewModel.IsF16On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <ToggleButton Height="32" HorizontalAlignment="Stretch" Background="#3D8E562E" Command="{x:Bind ViewModel.ToggleF16Command}" CornerRadius="4" IsChecked="{x:Bind ViewModel.IsF16On, Mode=OneWay}">
-                                            <TextBlock FontSize="10" Text="F16" />
-                                        </ToggleButton>
-                                    </Grid>
-                                    <Grid Grid.Row="8" Grid.Column="1">
-                                        <Border Margin="-6" Background="#847545" CornerRadius="10" Opacity="{x:Bind ViewModel.IsF17On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}">
-                                            <Border.OpacityTransition><ScalarTransition Duration="0:0:0.2" /></Border.OpacityTransition>
-                                        </Border>
-                                        <Border Margin="-3" Background="#A08050" CornerRadius="7" Opacity="{x:Bind ViewModel.IsF17On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <Border Background="#D2B48C" CornerRadius="4" Opacity="{x:Bind ViewModel.IsF17On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <ToggleButton Height="32" HorizontalAlignment="Stretch" Background="#3D847545" Command="{x:Bind ViewModel.ToggleF17Command}" CornerRadius="4" IsChecked="{x:Bind ViewModel.IsF17On, Mode=OneWay}">
-                                            <TextBlock FontSize="10" Text="F17" />
-                                        </ToggleButton>
-                                    </Grid>
-                                    <Grid Grid.Row="9" Grid.Column="0">
-                                        <Border Margin="-6" Background="#525E54" CornerRadius="10" Opacity="{x:Bind ViewModel.IsF18On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}">
-                                            <Border.OpacityTransition><ScalarTransition Duration="0:0:0.2" /></Border.OpacityTransition>
-                                        </Border>
-                                        <Border Margin="-3" Background="#708090" CornerRadius="7" Opacity="{x:Bind ViewModel.IsF18On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <Border Background="#B0C4DE" CornerRadius="4" Opacity="{x:Bind ViewModel.IsF18On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <ToggleButton Height="32" HorizontalAlignment="Stretch" Background="#3D525E54" Command="{x:Bind ViewModel.ToggleF18Command}" CornerRadius="4" IsChecked="{x:Bind ViewModel.IsF18On, Mode=OneWay}">
-                                            <TextBlock FontSize="10" Text="F18" />
-                                        </ToggleButton>
-                                    </Grid>
-                                    <Grid Grid.Row="9" Grid.Column="1">
-                                        <Border Margin="-6" Background="#4A5459" CornerRadius="10" Opacity="{x:Bind ViewModel.IsF19On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}">
-                                            <Border.OpacityTransition><ScalarTransition Duration="0:0:0.2" /></Border.OpacityTransition>
-                                        </Border>
-                                        <Border Margin="-3" Background="#696969" CornerRadius="7" Opacity="{x:Bind ViewModel.IsF19On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <Border Background="#A9A9A9" CornerRadius="4" Opacity="{x:Bind ViewModel.IsF19On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                        <ToggleButton Height="32" HorizontalAlignment="Stretch" Background="#3D4A5459" Command="{x:Bind ViewModel.ToggleF19Command}" CornerRadius="4" IsChecked="{x:Bind ViewModel.IsF19On, Mode=OneWay}">
-                                            <TextBlock FontSize="10" Text="F19" />
-                                        </ToggleButton>
-                                    </Grid>
-                                                    <Grid Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="2">
-                                                        <Border Margin="-6" Background="#69797E" CornerRadius="10" Opacity="{x:Bind ViewModel.IsF20On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}">
-                                                            <Border.OpacityTransition><ScalarTransition Duration="0:0:0.2" /></Border.OpacityTransition>
-                                                        </Border>
-                                                        <Border Margin="-3" Background="#778899" CornerRadius="7" Opacity="{x:Bind ViewModel.IsF20On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                                        <Border Background="#B0C4DE" CornerRadius="4" Opacity="{x:Bind ViewModel.IsF20On, Mode=OneWay, Converter={StaticResource GlowOpacityConverter}}" />
-                                                        <ToggleButton Height="32" HorizontalAlignment="Stretch" Background="#3D69797E" Command="{x:Bind ViewModel.ToggleF20Command}" CornerRadius="4" IsChecked="{x:Bind ViewModel.IsF20On, Mode=OneWay}">
-                                                            <TextBlock FontSize="10" Text="F20" />
-                                                        </ToggleButton>
-                                                    </Grid>
-                                                </Grid>
-                                            </StackPanel>
-                                        </ScrollViewer>
-                                    </Border>
-
-                                    <!--  RIGHT PANEL: Speed Categories  -->
-                    <Border
-                        Grid.Column="3"
-                        Margin="8,0,0,0"
-                        Padding="12,12,4,12"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+            <!--  RIGHT PANEL: Speed Categories  -->
+            <Border
+                Grid.Column="3"
+                Margin="8,0,0,0"
+                Padding="12,12,4,12"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="8">
                 <ScrollViewer Padding="0,0,12,0" VerticalScrollBarVisibility="Auto">
@@ -659,15 +779,15 @@
                                         Height="32"
                                         Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
                                         CommandParameter="126"
-                                                        Content="MAX"
-                                                        CornerRadius="4"
-                                                        FontSize="10"
-                                                        FontWeight="Bold" />
-                                                </StackPanel>
-                                            </StackPanel>
-                                        </Border>
+                                        Content="MAX"
+                                        CornerRadius="4"
+                                        FontSize="10"
+                                        FontWeight="Bold" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
 
-                                        <!--  Hauptbahn  -->
+                        <!--  Hauptbahn  -->
                         <Border
                             Padding="12"
                             Background="{ThemeResource LayerFillColorDefaultBrush}"

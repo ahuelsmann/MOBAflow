@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Converter;
 
 using Microsoft.UI.Xaml.Data;
@@ -12,11 +12,19 @@ public class BoolToGlowOpacityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {
-        if (value is bool isOn && isOn)
+        if (value is not bool isOn || !isOn)
         {
-            return 0.85; // Strong visible glow when ON
+            return 0.0;
         }
-        return 0.0; // No glow when OFF
+
+        // Subtle backlight: keep glow present but avoid harsh outer halos (notably for light/pastel accents).
+        // Optional parameter can attenuate the layer intensity further (outer layers should be lower).
+        if (parameter is string s && double.TryParse(s, out var multiplier))
+        {
+            return 0.45 * multiplier;
+        }
+
+        return 0.45;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)

@@ -37,15 +37,17 @@ public class IoService : IIoService
     /// </summary>
     private void EnsureInitialized()
     {
-        if (_windowId == null)
+        if (!_windowId.HasValue)
+        {
             throw new InvalidOperationException("WindowId must be set before using IoService. Call SetWindowId() first.");
+        }
     }
 
     public async Task<(Solution? solution, string? path, string? error)> LoadAsync()
     {
         EnsureInitialized();
 
-        var picker = new FileOpenPicker(_windowId.Value)
+        var picker = new FileOpenPicker(_windowId.GetValueOrDefault())
         {
             SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
             FileTypeFilter = { ".json" }
@@ -95,7 +97,7 @@ public class IoService : IIoService
         string? path = currentPath;
         if (string.IsNullOrEmpty(path))
         {
-            var picker = new FileSavePicker(_windowId.Value)
+            var picker = new FileSavePicker(_windowId.GetValueOrDefault())
             {
                 SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
                 SuggestedFileName = "solution",
@@ -185,7 +187,7 @@ public class IoService : IIoService
     {
         EnsureInitialized();
 
-        var picker = new FileOpenPicker(_windowId.Value)
+        var picker = new FileOpenPicker(_windowId.GetValueOrDefault())
         {
             SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
             FileTypeFilter = { ".json" }
@@ -203,7 +205,7 @@ public class IoService : IIoService
     {
         EnsureInitialized();
 
-        var picker = new FileOpenPicker(_windowId.Value)
+        var picker = new FileOpenPicker(_windowId.GetValueOrDefault())
         {
             SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
             FileTypeFilter = { ".xml" }
@@ -220,7 +222,7 @@ public class IoService : IIoService
     {
         EnsureInitialized();
 
-        var picker = new FileSavePicker(_windowId.Value)
+        var picker = new FileSavePicker(_windowId.GetValueOrDefault())
         {
             SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
             SuggestedFileName = suggestedFileName,
@@ -240,7 +242,7 @@ public class IoService : IIoService
     {
         EnsureInitialized();
 
-        var picker = new FileOpenPicker(_windowId.Value)
+        var picker = new FileOpenPicker(_windowId.GetValueOrDefault())
         {
             SuggestedStartLocation = PickerLocationId.MusicLibrary,
             FileTypeFilter = { ".wav", ".mp3", ".ogg", ".flac", ".m4a" }
@@ -258,7 +260,7 @@ public class IoService : IIoService
     {
         EnsureInitialized();
 
-        var picker = new FileOpenPicker(_windowId.Value)
+        var picker = new FileOpenPicker(_windowId.GetValueOrDefault())
         {
             SuggestedStartLocation = PickerLocationId.PicturesLibrary,
             FileTypeFilter = { ".jpg", ".jpeg", ".png", ".bmp", ".gif" }
@@ -299,15 +301,23 @@ public class IoService : IIoService
             var destinationPath = Path.Combine(categoryFolder, fileName);
 
             // Copy file asynchronously
-                await Task.Run(() => File.Copy(sourceFilePath, destinationPath, overwrite: true));
+            await FileCopyAsync(sourceFilePath, destinationPath);
 
-                // ✅ Return absolute path so Image control can load it
-                return destinationPath;
-            }
-            catch
-            {
-                return null;
-            }
+            // ✅ Return absolute path so Image control can load it
+            return destinationPath;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static async Task FileCopyAsync(string sourceFilePath, string destinationPath)
+    {
+        const int bufferSize = 81920;
+        await using var source = new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize, useAsync: true);
+        await using var destination = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize, useAsync: true);
+        await source.CopyToAsync(destination);
     }
 
     /// <summary>
