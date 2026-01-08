@@ -82,4 +82,9 @@
     <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\TrackPlan\TrackPlan.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="Resources\ControlStyles.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
+  </ItemGroup>
 </Project>

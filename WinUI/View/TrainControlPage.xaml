@@ -35,6 +35,7 @@
                 Text="Train Control" />
             <Button
                 Grid.Column="2"
+                Width="275"
                 Height="48"
                 Padding="24,0"
                 Background="#E81123"
@@ -55,13 +56,12 @@
             </Button>
         </Grid>
 
-        <!--  Main Content: 4 Columns - Left Panel | Speedometer | Functions | Speed Categories  -->
+        <!--  Main Content: 4 Columns - Left Panel | Speedometer | Functions  -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="240" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="135" />
-                <ColumnDefinition Width="185" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <!--  LEFT PANEL: Locomotive Settings  -->
@@ -226,11 +226,11 @@
                                 OffContent="Instant"
                                 OnContent="Gradual" />
                             <Grid ColumnSpacing="8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" Spacing="4">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <StackPanel Grid.Row="0" Spacing="4">
                                     <TextBlock
                                         FontSize="10"
                                         Foreground="{ThemeResource TextFillColorTertiaryBrush}"
@@ -243,7 +243,7 @@
                                         SpinButtonPlacementMode="Compact"
                                         Value="{x:Bind ViewModel.RampStepSize, Mode=TwoWay}" />
                                 </StackPanel>
-                                <StackPanel Grid.Column="1" Spacing="4">
+                                <StackPanel Grid.Row="1" Spacing="4">
                                     <TextBlock
                                         FontSize="10"
                                         Foreground="{ThemeResource TextFillColorTertiaryBrush}"
@@ -339,7 +339,7 @@
                                 <Slider
                                     Grid.Column="1"
                                     Margin="16,0"
-                                    Maximum="126"
+                                    Maximum="128"
                                     Minimum="0"
                                     TickFrequency="10"
                                     TickPlacement="BottomRight"
@@ -349,13 +349,21 @@
                                     VerticalAlignment="Center"
                                     FontSize="12"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="126" />
+                                    Text="128" />
                             </Grid>
                         </StackPanel>
 
                         <!--  Quick Presets  -->
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
@@ -373,10 +381,37 @@
                                 <TextBlock
                                     FontWeight="Bold"
                                     Foreground="White"
-                                    Text="STOP" />
+                                    Text="0" />
                             </Button>
                             <Button
                                 Grid.Column="1"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                CommandParameter="5"
+                                CornerRadius="6">
+                                <TextBlock Text="5" />
+                            </Button>
+                            <Button
+                                Grid.Column="2"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                CommandParameter="10"
+                                CornerRadius="6">
+                                <TextBlock Text="10" />
+                            </Button>
+                            <Button
+                                Grid.Column="3"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                CommandParameter="15"
+                                CornerRadius="6">
+                                <TextBlock Text="15" />
+                            </Button>
+                            <Button
+                                Grid.Column="4"
                                 Height="40"
                                 HorizontalAlignment="Stretch"
                                 Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
@@ -385,7 +420,25 @@
                                 <TextBlock Text="20" />
                             </Button>
                             <Button
-                                Grid.Column="2"
+                                Grid.Column="5"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                CommandParameter="25"
+                                CornerRadius="6">
+                                <TextBlock Text="25" />
+                            </Button>
+                            <Button
+                                Grid.Column="6"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                CommandParameter="30"
+                                CornerRadius="6">
+                                <TextBlock Text="30" />
+                            </Button>
+                            <Button
+                                Grid.Column="7"
                                 Height="40"
                                 HorizontalAlignment="Stretch"
                                 Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
@@ -394,7 +447,16 @@
                                 <TextBlock Text="40" />
                             </Button>
                             <Button
-                                Grid.Column="3"
+                                Grid.Column="8"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                CommandParameter="50"
+                                CornerRadius="6">
+                                <TextBlock Text="50" />
+                            </Button>
+                            <Button
+                                Grid.Column="9"
                                 Height="40"
                                 HorizontalAlignment="Stretch"
                                 Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
@@ -403,7 +465,7 @@
                                 <TextBlock Text="60" />
                             </Button>
                             <Button
-                                Grid.Column="4"
+                                Grid.Column="10"
                                 Height="40"
                                 HorizontalAlignment="Stretch"
                                 Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
@@ -412,13 +474,34 @@
                                 <TextBlock Text="80" />
                             </Button>
                             <Button
-                                Grid.Column="5"
+                                Grid.Column="11"
                                 Height="40"
                                 HorizontalAlignment="Stretch"
                                 Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                CommandParameter="126"
+                                CommandParameter="100"
                                 CornerRadius="6">
-                                <TextBlock FontWeight="Bold" Text="MAX" />
+                                <TextBlock Text="100" />
+                            </Button>
+                            <Button
+                                Grid.Column="12"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                CommandParameter="120"
+                                CornerRadius="6">
+                                <TextBlock Text="120" />
+                            </Button>
+                            <Button
+                                Grid.Column="13"
+                                Height="40"
+                                HorizontalAlignment="Stretch"
+                                Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                CommandParameter="128"
+                                CornerRadius="6">
+                                <TextBlock
+                                    FontWeight="Bold"
+                                    Foreground="White"
+                                    Text="128" />
                             </Button>
                         </Grid>
                     </StackPanel>
@@ -436,11 +519,6 @@
                 CornerRadius="8">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Spacing="6">
-                        <TextBlock
-                            Margin="0,0,0,4"
-                            FontSize="14"
-                            FontWeight="SemiBold"
-                            Text="Functions" />
                         <Grid ColumnSpacing="4" RowSpacing="4">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -468,7 +546,8 @@
                                 Background="{x:Bind ViewModel.IsF0On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#FFD700}"
                                 Command="{x:Bind ViewModel.ToggleF0Command}"
                                 CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF0On, Mode=OneWay}">
+                                IsChecked="{x:Bind ViewModel.IsF0On, Mode=OneWay}"
+                                Style="{StaticResource BacklightToggleButtonStyle}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <FontIcon FontSize="14" Glyph="&#xE793;" />
                                     <TextBlock
@@ -486,7 +565,8 @@
                                 Background="{x:Bind ViewModel.IsF1On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#0078D4}"
                                 Command="{x:Bind ViewModel.ToggleF1Command}"
                                 CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF1On, Mode=OneWay}">
+                                IsChecked="{x:Bind ViewModel.IsF1On, Mode=OneWay}"
+                                Style="{StaticResource BacklightToggleButtonStyle}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <FontIcon FontSize="14" Glyph="&#xE995;" />
                                     <TextBlock
@@ -504,7 +584,8 @@
                                 Background="{x:Bind ViewModel.IsF2On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#FF8C00}"
                                 Command="{x:Bind ViewModel.ToggleF2Command}"
                                 CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF2On, Mode=OneWay}">
+                                IsChecked="{x:Bind ViewModel.IsF2On, Mode=OneWay}"
+                                Style="{StaticResource BacklightToggleButtonStyle}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <FontIcon FontSize="14" Glyph="&#xE7ED;" />
                                     <TextBlock
@@ -522,7 +603,8 @@
                                 Background="{x:Bind ViewModel.IsF3On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#E81123}"
                                 Command="{x:Bind ViewModel.ToggleF3Command}"
                                 CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF3On, Mode=OneWay}">
+                                IsChecked="{x:Bind ViewModel.IsF3On, Mode=OneWay}"
+                                Style="{StaticResource BacklightToggleButtonStyle}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <FontIcon FontSize="14" Glyph="&#xE7E8;" />
                                     <TextBlock
@@ -540,7 +622,8 @@
                                 Background="{x:Bind ViewModel.IsF4On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#107C10}"
                                 Command="{x:Bind ViewModel.ToggleF4Command}"
                                 CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF4On, Mode=OneWay}">
+                                IsChecked="{x:Bind ViewModel.IsF4On, Mode=OneWay}"
+                                Style="{StaticResource BacklightToggleButtonStyle}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <FontIcon FontSize="14" Glyph="&#xE73E;" />
                                     <TextBlock
@@ -558,7 +641,8 @@
                                 Background="{x:Bind ViewModel.IsF5On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#00B7C3}"
                                 Command="{x:Bind ViewModel.ToggleF5Command}"
                                 CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF5On, Mode=OneWay}">
+                                IsChecked="{x:Bind ViewModel.IsF5On, Mode=OneWay}"
+                                Style="{StaticResource BacklightToggleButtonStyle}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <FontIcon FontSize="14" Glyph="&#xE793;" />
                                     <TextBlock
@@ -576,7 +660,8 @@
                                 Background="{x:Bind ViewModel.IsF6On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#FFB900}"
                                 Command="{x:Bind ViewModel.ToggleF6Command}"
                                 CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF6On, Mode=OneWay}">
+                                IsChecked="{x:Bind ViewModel.IsF6On, Mode=OneWay}"
+                                Style="{StaticResource BacklightToggleButtonStyle}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <FontIcon FontSize="14" Glyph="&#xE7E8;" />
                                     <TextBlock
@@ -594,7 +679,8 @@
                                 Background="{x:Bind ViewModel.IsF7On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#767676}"
                                 Command="{x:Bind ViewModel.ToggleF7Command}"
                                 CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF7On, Mode=OneWay}">
+                                IsChecked="{x:Bind ViewModel.IsF7On, Mode=OneWay}"
+                                Style="{StaticResource BacklightToggleButtonStyle}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <FontIcon FontSize="14" Glyph="&#xE753;" />
                                     <TextBlock
@@ -612,7 +698,8 @@
                                 Background="{x:Bind ViewModel.IsF8On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#E040FB}"
                                 Command="{x:Bind ViewModel.ToggleF8Command}"
                                 CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF8On, Mode=OneWay}">
+                                IsChecked="{x:Bind ViewModel.IsF8On, Mode=OneWay}"
+                                Style="{StaticResource BacklightToggleButtonStyle}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <FontIcon FontSize="14" Glyph="&#xE945;" />
                                     <TextBlock
@@ -630,7 +717,8 @@
                                 Background="{x:Bind ViewModel.IsF9On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#8764B8}"
                                 Command="{x:Bind ViewModel.ToggleF9Command}"
                                 CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF9On, Mode=OneWay}">
+                                IsChecked="{x:Bind ViewModel.IsF9On, Mode=OneWay}"
+                                Style="{StaticResource BacklightToggleButtonStyle}">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <FontIcon FontSize="14" Glyph="&#xE734;" />
                                     <TextBlock
@@ -648,7 +736,8 @@
                                 Background="{x:Bind ViewModel.IsF10On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#00CC6A}"
                                 Command="{x:Bind ViewModel.ToggleF10Command}"
                                 CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF10On, Mode=OneWay}">
+                                IsChecked="{x:Bind ViewModel.IsF10On, Mode=OneWay}"
+                                Style="{StaticResource BacklightToggleButtonStyle}">
                                 <TextBlock
                                     FontSize="12"
                                     FontWeight="SemiBold"
@@ -663,7 +752,8 @@
                                 Background="{x:Bind ViewModel.IsF11On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#038387}"
                                 Command="{x:Bind ViewModel.ToggleF11Command}"
                                 CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF11On, Mode=OneWay}">
+                                IsChecked="{x:Bind ViewModel.IsF11On, Mode=OneWay}"
+                                Style="{StaticResource BacklightToggleButtonStyle}">
                                 <TextBlock
                                     FontSize="12"
                                     FontWeight="SemiBold"
@@ -678,7 +768,8 @@
                                 Background="{x:Bind ViewModel.IsF12On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#C239B3}"
                                 Command="{x:Bind ViewModel.ToggleF12Command}"
                                 CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF12On, Mode=OneWay}">
+                                IsChecked="{x:Bind ViewModel.IsF12On, Mode=OneWay}"
+                                Style="{StaticResource BacklightToggleButtonStyle}">
                                 <TextBlock
                                     FontSize="12"
                                     FontWeight="SemiBold"
@@ -693,7 +784,8 @@
                                 Background="{x:Bind ViewModel.IsF13On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#FF1493}"
                                 Command="{x:Bind ViewModel.ToggleF13Command}"
                                 CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF13On, Mode=OneWay}">
+                                IsChecked="{x:Bind ViewModel.IsF13On, Mode=OneWay}"
+                                Style="{StaticResource BacklightToggleButtonStyle}">
                                 <TextBlock
                                     FontSize="12"
                                     FontWeight="SemiBold"
@@ -708,7 +800,8 @@
                                 Background="{x:Bind ViewModel.IsF14On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#7A7574}"
                                 Command="{x:Bind ViewModel.ToggleF14Command}"
                                 CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF14On, Mode=OneWay}">
+                                IsChecked="{x:Bind ViewModel.IsF14On, Mode=OneWay}"
+                                Style="{StaticResource BacklightToggleButtonStyle}">
                                 <TextBlock
                                     FontSize="12"
                                     FontWeight="SemiBold"
@@ -723,7 +816,8 @@
                                 Background="{x:Bind ViewModel.IsF15On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#567C73}"
                                 Command="{x:Bind ViewModel.ToggleF15Command}"
                                 CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF15On, Mode=OneWay}">
+                                IsChecked="{x:Bind ViewModel.IsF15On, Mode=OneWay}"
+                                Style="{StaticResource BacklightToggleButtonStyle}">
                                 <TextBlock
                                     FontSize="12"
                                     FontWeight="SemiBold"
@@ -738,7 +832,8 @@
                                 Background="{x:Bind ViewModel.IsF16On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#8E562E}"
                                 Command="{x:Bind ViewModel.ToggleF16Command}"
                                 CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF16On, Mode=OneWay}">
+                                IsChecked="{x:Bind ViewModel.IsF16On, Mode=OneWay}"
+                                Style="{StaticResource BacklightToggleButtonStyle}">
                                 <TextBlock
                                     FontSize="12"
                                     FontWeight="SemiBold"
@@ -753,7 +848,8 @@
                                 Background="{x:Bind ViewModel.IsF17On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#847545}"
                                 Command="{x:Bind ViewModel.ToggleF17Command}"
                                 CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF17On, Mode=OneWay}">
+                                IsChecked="{x:Bind ViewModel.IsF17On, Mode=OneWay}"
+                                Style="{StaticResource BacklightToggleButtonStyle}">
                                 <TextBlock
                                     FontSize="12"
                                     FontWeight="SemiBold"
@@ -768,7 +864,8 @@
                                 Background="{x:Bind ViewModel.IsF18On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#525E54}"
                                 Command="{x:Bind ViewModel.ToggleF18Command}"
                                 CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF18On, Mode=OneWay}">
+                                IsChecked="{x:Bind ViewModel.IsF18On, Mode=OneWay}"
+                                Style="{StaticResource BacklightToggleButtonStyle}">
                                 <TextBlock
                                     FontSize="12"
                                     FontWeight="SemiBold"
@@ -783,7 +880,8 @@
                                 Background="{x:Bind ViewModel.IsF19On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#4A5459}"
                                 Command="{x:Bind ViewModel.ToggleF19Command}"
                                 CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF19On, Mode=OneWay}">
+                                IsChecked="{x:Bind ViewModel.IsF19On, Mode=OneWay}"
+                                Style="{StaticResource BacklightToggleButtonStyle}">
                                 <TextBlock
                                     FontSize="12"
                                     FontWeight="SemiBold"
@@ -799,7 +897,8 @@
                                 Background="{x:Bind ViewModel.IsF20On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#69797E}"
                                 Command="{x:Bind ViewModel.ToggleF20Command}"
                                 CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF20On, Mode=OneWay}">
+                                IsChecked="{x:Bind ViewModel.IsF20On, Mode=OneWay}"
+                                Style="{StaticResource BacklightToggleButtonStyle}">
                                 <TextBlock
                                     FontSize="12"
                                     FontWeight="SemiBold"
@@ -809,277 +908,6 @@
                     </StackPanel>
                 </ScrollViewer>
             </Border>
-                        <!--  RIGHT PANEL: Speed Categories  -->
-                        <Border
-                            Grid.Column="3"
-                            Margin="8,0,0,0"
-                            Padding="8,8,4,8"
-                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                            BorderThickness="1"
-                            CornerRadius="8">
-                            <ScrollViewer Padding="0,0,8,0" VerticalScrollBarVisibility="Auto">
-                                <StackPanel Spacing="8">
-                                    <!--  Header  -->
-                                    <StackPanel Spacing="2">
-                                        <TextBlock
-                                            FontSize="14"
-                                            FontWeight="SemiBold"
-                                            Text="Speed Categories" />
-                                        <TextBlock
-                                            FontSize="10"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Text="German railway speed limits" />
-                                    </StackPanel>
-
-                                    <!--  Fernverkehr / ICE  -->
-                                    <Border
-                                        Padding="8"
-                                        Background="{ThemeResource LayerFillColorDefaultBrush}"
-                                        CornerRadius="4">
-                                        <StackPanel Spacing="4">
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <FontIcon
-                                                    FontSize="12"
-                                                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                    Glyph="&#xE806;" />
-                                                <TextBlock FontSize="12" FontWeight="SemiBold" Text="Fernverkehr / ICE" />
-                                            </StackPanel>
-                                            <TextBlock
-                                                FontSize="10"
-                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                Text="200-300 km/h" />
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <Button
-                                                    Width="44"
-                                                    Height="28"
-                                                    Padding="2"
-                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                                    CommandParameter="100"
-                                                    Content="100"
-                                                    CornerRadius="4"
-                                                    FontSize="11" />
-                                                <Button
-                                                    Width="44"
-                                                    Height="28"
-                                                    Padding="2"
-                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                                    CommandParameter="115"
-                                                    Content="115"
-                                                    CornerRadius="4"
-                                                    FontSize="11" />
-                                                <Button
-                                                    Width="44"
-                                                    Height="28"
-                                                    Padding="2"
-                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                                    CommandParameter="126"
-                                                    Content="MAX"
-                                                    CornerRadius="4"
-                                                    FontSize="10"
-                                                    FontWeight="Bold" />
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Border>
-
-                                    <!--  Hauptbahn  -->
-                                    <Border
-                                        Padding="8"
-                                        Background="{ThemeResource LayerFillColorDefaultBrush}"
-                                        CornerRadius="4">
-                                        <StackPanel Spacing="4">
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <FontIcon
-                                                    FontSize="12"
-                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                    Glyph="&#xE7C0;" />
-                                                <TextBlock FontSize="12" FontWeight="SemiBold" Text="Hauptbahn" />
-                                            </StackPanel>
-                                            <TextBlock
-                                                FontSize="10"
-                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                Text="120-160 km/h" />
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <Button
-                                                    Width="44"
-                                                    Height="28"
-                                                    Padding="2"
-                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                                    CommandParameter="75"
-                                                    Content="75"
-                                                    CornerRadius="4"
-                                                    FontSize="11" />
-                                                <Button
-                                                    Width="44"
-                                                    Height="28"
-                                                    Padding="2"
-                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                                    CommandParameter="90"
-                                                    Content="90"
-                                                    CornerRadius="4"
-                                                    FontSize="11" />
-                                                <Button
-                                                    Width="44"
-                                                    Height="28"
-                                                    Padding="2"
-                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                                    CommandParameter="100"
-                                                    Content="100"
-                                                    CornerRadius="4"
-                                                    FontSize="11" />
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Border>
-
-                                    <!--  Nebenbahn  -->
-                                    <Border
-                                        Padding="8"
-                                        Background="{ThemeResource LayerFillColorDefaultBrush}"
-                                        CornerRadius="4">
-                                        <StackPanel Spacing="4">
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <FontIcon
-                                                    FontSize="12"
-                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                    Glyph="&#xE7C0;" />
-                                                <TextBlock FontSize="12" FontWeight="SemiBold" Text="Nebenbahn" />
-                                            </StackPanel>
-                                            <TextBlock
-                                                FontSize="10"
-                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                Text="80-100 km/h" />
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <Button
-                                                    Width="44"
-                                                    Height="28"
-                                                    Padding="2"
-                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                                    CommandParameter="50"
-                                                    Content="50"
-                                                    CornerRadius="4"
-                                                    FontSize="11" />
-                                                <Button
-                                                    Width="44"
-                                                    Height="28"
-                                                    Padding="2"
-                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                                    CommandParameter="55"
-                                                    Content="55"
-                                                    CornerRadius="4"
-                                                    FontSize="11" />
-                                                <Button
-                                                    Width="44"
-                                                    Height="28"
-                                                    Padding="2"
-                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                                    CommandParameter="60"
-                                                    Content="60"
-                                                    CornerRadius="4"
-                                                    FontSize="11" />
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Border>
-
-                                    <!--  Bahnhof / Langsam  -->
-                                    <Border
-                                        Padding="8"
-                                        Background="{ThemeResource LayerFillColorDefaultBrush}"
-                                        CornerRadius="4">
-                                        <StackPanel Spacing="4">
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <FontIcon
-                                                    FontSize="12"
-                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                    Glyph="&#xE81A;" />
-                                                <TextBlock FontSize="12" FontWeight="SemiBold" Text="Bahnhof" />
-                                            </StackPanel>
-                                            <TextBlock
-                                                FontSize="10"
-                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                Text="40-60 km/h" />
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <Button
-                                                    Width="44"
-                                                    Height="28"
-                                                    Padding="2"
-                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                                    CommandParameter="25"
-                                                    Content="25"
-                                                    CornerRadius="4"
-                                                    FontSize="11" />
-                                                <Button
-                                                    Width="44"
-                                                    Height="28"
-                                                    Padding="2"
-                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                                    CommandParameter="30"
-                                                    Content="30"
-                                                    CornerRadius="4"
-                                                    FontSize="11" />
-                                                <Button
-                                                    Width="44"
-                                                    Height="28"
-                                                    Padding="2"
-                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                                    CommandParameter="40"
-                                                    Content="40"
-                                                    CornerRadius="4"
-                                                    FontSize="11" />
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Border>
-
-                                    <!--  Rangierfahrt  -->
-                                    <Border
-                                        Padding="8"
-                                        Background="{ThemeResource LayerFillColorDefaultBrush}"
-                                        CornerRadius="4">
-                                        <StackPanel Spacing="4">
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <FontIcon
-                                                    FontSize="12"
-                                                    Foreground="{ThemeResource SystemFillColorCautionBrush}"
-                                                    Glyph="&#xE7C0;" />
-                                                <TextBlock FontSize="12" FontWeight="SemiBold" Text="Rangieren" />
-                                            </StackPanel>
-                                            <TextBlock
-                                                FontSize="10"
-                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                Text="25-40 km/h" />
-                                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <Button
-                                                    Width="44"
-                                                    Height="28"
-                                                    Padding="2"
-                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                                    CommandParameter="10"
-                                                    Content="10"
-                                                    CornerRadius="4"
-                                                    FontSize="11" />
-                                                <Button
-                                                    Width="44"
-                                                    Height="28"
-                                                    Padding="2"
-                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                                    CommandParameter="15"
-                                                    Content="15"
-                                                    CornerRadius="4"
-                                                    FontSize="11" />
-                                                <Button
-                                                    Width="44"
-                                                    Height="28"
-                                                    Padding="2"
-                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                                    CommandParameter="25"
-                                                    Content="25"
-                                                    CornerRadius="4"
-                                                    FontSize="11" />
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
-                            </ScrollViewer>
-                        </Border>
-                    </Grid>
-                </Grid>
-            </Page>
+        </Grid>
+    </Grid>
+</Page>
