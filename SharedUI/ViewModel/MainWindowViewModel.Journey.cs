@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Service;
@@ -178,21 +178,23 @@ public partial class MainWindowViewModel
     {
         if (SelectedJourney == null) return;
 
-        // If JourneyManager is available, reset the session state
+        // Use JourneyManager.Reset() to properly reset state (respects FirstPos)
         if (_journeyManager != null)
         {
+            _journeyManager.Reset(SelectedJourney.Model);
+
+            // Get the updated state and sync to ViewModel
             var state = _journeyManager.GetState(SelectedJourney.Model.Id);
             if (state != null)
             {
-                state.Counter = 0;
-                state.CurrentPos = 0;
-                state.CurrentStationName = string.Empty;
-                state.LastFeedbackTime = null;
+                SelectedJourney.UpdateFromSessionState(state);
             }
         }
-        
-        // Always trigger UI update to reflect reset
-        OnPropertyChanged(nameof(SelectedJourney));
+        else
+        {
+            // Fallback when JourneyManager not available (e.g., tests)
+            SelectedJourney.ResetCommand.Execute(null);
+        }
     }
 
     private bool CanResetJourneyCounter() => SelectedJourney != null;

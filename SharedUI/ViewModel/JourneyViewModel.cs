@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Manager;
@@ -172,6 +172,12 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
         _state.CurrentStationName = state.CurrentStationName;
         _state.LastFeedbackTime = state.LastFeedbackTime;
         _state.IsActive = state.IsActive;
+
+        // Update station highlighting based on CurrentPos
+        for (int i = 0; i < Stations.Count; i++)
+        {
+            Stations[i].IsCurrentStation = (i == state.CurrentPos);
+        }
 
         // Notify UI about property changes
         OnPropertyChanged(nameof(CurrentStation));

@@ -1,10 +1,12 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Interface;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
+using Common.Configuration;
 
 using Interface;
 
@@ -15,11 +17,12 @@ using Microsoft.Extensions.Logging;
 /// Implements a "digital throttle" similar to the Roco Z21 app hand controller.
 /// 
 /// Features:
-/// - DCC address input (1-9999)
+/// - 3 locomotive presets with persistent DCC addresses, speed, and function states
 /// - Speed control (0-126 for 128 speed steps)
 /// - Direction toggle (Forward/Backward)
-/// - Function keys F0 (Light) and F1 (Sound)
+/// - Function keys F0-F20
 /// - Emergency stop
+/// - Speed ramping for smooth direction changes
 /// 
 /// Cross-platform: Used by WinUI and MAUI.
 /// </summary>
@@ -27,7 +30,10 @@ public partial class TrainControlViewModel : ObservableObject
 {
     private readonly IZ21 _z21;
     private readonly IUiDispatcher _uiDispatcher;
+    private readonly ISettingsService _settingsService;
     private readonly ILogger<TrainControlViewModel>? _logger;
+
+    private bool _isLoadingPreset;
 
     /// <summary>
     /// DCC locomotive address (1-9999).
@@ -38,6 +44,110 @@ public partial class TrainControlViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(ToggleF1Command))]
     [NotifyCanExecuteChangedFor(nameof(EmergencyStopCommand))]
     private int locoAddress = 3;
+
+    // === Locomotive Presets ===
+
+    /// <summary>
+    /// Currently selected preset index (0, 1, or 2).
+    /// </summary>
+    [ObservableProperty]
+    private int selectedPresetIndex;
+
+    /// <summary>
+    /// First locomotive preset.
+    /// </summary>
+    [ObservableProperty]
+    private LocomotivePreset preset1 = new() { Name = "Lok 1", DccAddress = 3 };
+
+    /// <summary>
+    /// Second locomotive preset.
+    /// </summary>
+    [ObservableProperty]
+    private LocomotivePreset preset2 = new() { Name = "Lok 2", DccAddress = 4 };
+
+    /// <summary>
+    /// Third locomotive preset.
+    /// </summary>
+    [ObservableProperty]
+    private LocomotivePreset preset3 = new() { Name = "Lok 3", DccAddress = 5 };
+
+    /// <summary>
+    /// Gets the currently selected preset.
+    /// </summary>
+    public LocomotivePreset CurrentPreset => SelectedPresetIndex switch
+    {
+        0 => Preset1,
+        1 => Preset2,
+        2 => Preset3,
+        _ => Preset1
+    };
+
+    // === Preset Address Wrapper Properties ===
+    // These properties provide TwoWay binding for the NumberBox controls
+    // and automatically sync LocoAddress when the active preset's address changes.
+
+    /// <summary>
+    /// DCC address for Preset 1. Syncs to LocoAddress when Preset 1 is selected.
+    /// </summary>
+    public int Preset1Address
+    {
+        get => Preset1.DccAddress;
+        set
+        {
+            if (Preset1.DccAddress != value)
+            {
+                Preset1.DccAddress = value;
+                OnPropertyChanged();
+                if (SelectedPresetIndex == 0)
+                {
+                    LocoAddress = value;
+                }
+                _ = SavePresetsToSettingsAsync();
+            }
+        }
+    }
+
+    /// <summary>
+    /// DCC address for Preset 2. Syncs to LocoAddress when Preset 2 is selected.
+    /// </summary>
+    public int Preset2Address
+    {
+        get => Preset2.DccAddress;
+        set
+        {
+            if (Preset2.DccAddress != value)
+            {
+                Preset2.DccAddress = value;
+                OnPropertyChanged();
+                if (SelectedPresetIndex == 1)
+                {
+                    LocoAddress = value;
+                }
+                _ = SavePresetsToSettingsAsync();
+            }
+        }
+    }
+
+    /// <summary>
+    /// DCC address for Preset 3. Syncs to LocoAddress when Preset 3 is selected.
+    /// </summary>
+    public int Preset3Address
+    {
+        get => Preset3.DccAddress;
+        set
+        {
+            if (Preset3.DccAddress != value)
+            {
+                Preset3.DccAddress = value;
+                OnPropertyChanged();
+                if (SelectedPresetIndex == 2)
+                {
+                    LocoAddress = value;
+                }
+                _ = SavePresetsToSettingsAsync();
+            }
+        }
+    }
 
     /// <summary>
     /// Current speed (0-126 for 128 speed steps).
@@ -167,17 +277,146 @@ public partial class TrainControlViewModel : ObservableObject
 
     private CancellationTokenSource? _rampCancellationTokenSource;
 
-    public TrainControlViewModel(IZ21 z21, IUiDispatcher uiDispatcher, ILogger<TrainControlViewModel>? logger = null)
+    public TrainControlViewModel(
+        IZ21 z21, 
+        IUiDispatcher uiDispatcher, 
+        ISettingsService settingsService,
+        ILogger<TrainControlViewModel>? logger = null)
     {
         _z21 = z21;
         _uiDispatcher = uiDispatcher;
+        _settingsService = settingsService;
         _logger = logger;
+
+        // Load presets from settings
+        LoadPresetsFromSettings();
 
         // Subscribe to connection changes
         _z21.OnConnectedChanged += OnZ21ConnectionChanged;
 
         // Subscribe to loco info updates
         _z21.OnLocoInfoChanged += OnLocoInfoReceived;
+    }
+
+    /// <summary>
+    /// Loads locomotive presets from persistent settings.
+    /// </summary>
+    private void LoadPresetsFromSettings()
+    {
+        var settings = _settingsService.GetSettings();
+        var trainControl = settings.TrainControl;
+
+        if (trainControl.Presets.Count >= 3)
+        {
+            Preset1 = trainControl.Presets[0];
+            Preset2 = trainControl.Presets[1];
+            Preset3 = trainControl.Presets[2];
+
+            // Notify UI about loaded addresses
+            OnPropertyChanged(nameof(Preset1Address));
+            OnPropertyChanged(nameof(Preset2Address));
+            OnPropertyChanged(nameof(Preset3Address));
+        }
+
+        SelectedPresetIndex = trainControl.SelectedPresetIndex;
+        RampStepSize = trainControl.SpeedRampStepSize;
+        RampIntervalMs = trainControl.SpeedRampIntervalMs;
+
+        // Apply current preset
+        ApplyCurrentPreset();
+    }
+
+    /// <summary>
+    /// Saves locomotive presets to persistent settings.
+    /// </summary>
+    private async Task SavePresetsToSettingsAsync()
+    {
+        var settings = _settingsService.GetSettings();
+        settings.TrainControl.Presets =
+        [
+            Preset1,
+            Preset2,
+            Preset3
+        ];
+        settings.TrainControl.SelectedPresetIndex = SelectedPresetIndex;
+        settings.TrainControl.SpeedRampStepSize = (int)RampStepSize;
+        settings.TrainControl.SpeedRampIntervalMs = (int)RampIntervalMs;
+
+        await _settingsService.SaveSettingsAsync(settings);
+        _logger?.LogDebug("Locomotive presets saved to settings");
+    }
+
+    /// <summary>
+    /// Applies the current preset to the ViewModel state.
+    /// </summary>
+    private void ApplyCurrentPreset()
+    {
+        _isLoadingPreset = true;
+        try
+        {
+            var preset = CurrentPreset;
+            LocoAddress = preset.DccAddress;
+            Speed = preset.Speed;
+            IsForward = preset.IsForward;
+
+            // Apply function states from bitmask
+            for (int i = 0; i <= 20; i++)
+            {
+                SetFunctionState(i, preset.GetFunction(i));
+            }
+
+            StatusMessage = $"Loaded: {preset.Name} (DCC {preset.DccAddress})";
+            OnPropertyChanged(nameof(CurrentPreset));
+        }
+        finally
+        {
+            _isLoadingPreset = false;
+        }
+    }
+
+    /// <summary>
+    /// Saves current state to the selected preset.
+    /// </summary>
+    private void SaveCurrentStateToPreset()
+    {
+        if (_isLoadingPreset) return;
+
+        var preset = CurrentPreset;
+        preset.DccAddress = LocoAddress;
+        preset.Speed = Speed;
+        preset.IsForward = IsForward;
+
+        // Save function states to bitmask
+        for (int i = 0; i <= 20; i++)
+        {
+            preset.SetFunction(i, GetFunctionState(i));
+        }
+
+        // Save to persistent storage (fire and forget)
+        _ = SavePresetsToSettingsAsync();
+    }
+
+    /// <summary>
+    /// Called when SelectedPresetIndex changes - save current and load new preset.
+    /// </summary>
+    partial void OnSelectedPresetIndexChanged(int value)
+    {
+        // Save current preset before switching (if not loading)
+        if (!_isLoadingPreset)
+        {
+            // Get the OLD preset and save state to it
+            var oldPreset = value switch
+            {
+                0 => Preset2, // was 1, now 0
+                1 => SelectedPresetIndex == 0 ? Preset1 : Preset3,
+                2 => Preset2, // was 1, now 2
+                _ => Preset1
+            };
+            // Actually, we should save to the PREVIOUS preset, but we don't have it here
+            // So we save after applying the new preset
+        }
+
+        ApplyCurrentPreset();
     }
 
     private void OnZ21ConnectionChanged(bool isConnected)
@@ -205,15 +444,22 @@ public partial class TrainControlViewModel : ObservableObject
             IsForward = info.IsForward;
             IsF0On = info.IsF0On;
             IsF1On = info.IsF1On;
-            StatusMessage = $"Loco {info.Address}: {info.Speed} km/h {(info.IsForward ? "→" : "←")}";
+            StatusMessage = $"Loco {info.Address}: {info.Speed} km/h {(info.IsForward ? "â†’" : "â†")}";
         });
     }
 
     /// <summary>
-    /// Called when LocoAddress changes - request current state from Z21.
+    /// Called when LocoAddress changes - request current state from Z21 and save to preset.
     /// </summary>
     partial void OnLocoAddressChanged(int value)
     {
+        // Save to current preset
+        if (!_isLoadingPreset)
+        {
+            CurrentPreset.DccAddress = value;
+            _ = SavePresetsToSettingsAsync();
+        }
+
         if (value >= 1 && value <= 9999 && _z21.IsConnected)
         {
             _ = RequestLocoInfoAsync();
@@ -235,11 +481,15 @@ public partial class TrainControlViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Called when Speed changes - send to Z21 (unless ramp is handling it).
+    /// Called when Speed changes - send to Z21 and save to preset.
     /// </summary>
     partial void OnSpeedChanged(int value)
     {
-        if (_skipSpeedChangeHandler) return;
+        if (_skipSpeedChangeHandler || _isLoadingPreset) return;
+
+        // Save to current preset
+        CurrentPreset.Speed = value;
+        _ = SavePresetsToSettingsAsync();
 
         if (_z21.IsConnected && LocoAddress >= 1)
         {
@@ -253,6 +503,12 @@ public partial class TrainControlViewModel : ObservableObject
     /// </summary>
     partial void OnIsForwardChanged(bool value)
     {
+        if (_isLoadingPreset) return;
+
+        // Save to current preset
+        CurrentPreset.IsForward = value;
+        _ = SavePresetsToSettingsAsync();
+
         if (_z21.IsConnected && LocoAddress >= 1)
         {
             _ = HandleDirectionChangeAsync(value);
@@ -391,7 +647,7 @@ public partial class TrainControlViewModel : ObservableObject
         try
         {
             await _z21.SetLocoDriveAsync(LocoAddress, Speed, IsForward);
-            StatusMessage = $"Loco {LocoAddress}: {Speed} {(IsForward ? "→" : "←")}";
+            StatusMessage = $"Loco {LocoAddress}: {Speed} {(IsForward ? "â†’" : "â†")}";
                     _logger?.LogDebug("Drive command sent: Loco {Address}, Speed {Speed}, Forward {Forward}",
                         LocoAddress, Speed, IsForward);
                 }
@@ -480,6 +736,14 @@ public partial class TrainControlViewModel : ObservableObject
                 {
                     var newState = !GetFunctionState(functionNumber);
                     SetFunctionState(functionNumber, newState);
+
+                    // Save function state to current preset
+                    if (!_isLoadingPreset)
+                    {
+                        CurrentPreset.SetFunction(functionNumber, newState);
+                        _ = SavePresetsToSettingsAsync();
+                    }
+
                     await _z21.SetLocoFunctionAsync(LocoAddress, functionNumber, newState);
                     StatusMessage = $"F{functionNumber}: {(newState ? "ON" : "OFF")}";
                     _logger?.LogDebug("F{Function} toggled: {State}", functionNumber, newState);
@@ -540,7 +804,7 @@ public partial class TrainControlViewModel : ObservableObject
         {
             Speed = 0;
             await _z21.SetLocoDriveAsync(LocoAddress, 0, IsForward);
-            StatusMessage = $"🛑 EMERGENCY STOP - Loco {LocoAddress}";
+            StatusMessage = $"ðŸ›‘ EMERGENCY STOP - Loco {LocoAddress}";
             _logger?.LogWarning("Emergency stop executed for loco {Address}", LocoAddress);
         }
         catch (Exception ex)
@@ -598,7 +862,46 @@ public partial class TrainControlViewModel : ObservableObject
             _ => 0
         };
 
-        Speed = Math.Clamp(preset, 0, 126);
-        _logger?.LogDebug("Speed preset set to {Preset}", preset);
-    }
-}
+                Speed = Math.Clamp(preset, 0, 126);
+                _logger?.LogDebug("Speed preset set to {Preset}", preset);
+            }
+
+            /// <summary>
+            /// Selects locomotive preset 1.
+            /// </summary>
+            [RelayCommand]
+            private void SelectPreset1()
+            {
+                if (SelectedPresetIndex != 0)
+                {
+                    SaveCurrentStateToPreset();
+                    SelectedPresetIndex = 0;
+                }
+            }
+
+            /// <summary>
+            /// Selects locomotive preset 2.
+            /// </summary>
+            [RelayCommand]
+            private void SelectPreset2()
+            {
+                if (SelectedPresetIndex != 1)
+                {
+                    SaveCurrentStateToPreset();
+                    SelectedPresetIndex = 1;
+                }
+            }
+
+            /// <summary>
+            /// Selects locomotive preset 3.
+            /// </summary>
+            [RelayCommand]
+            private void SelectPreset3()
+            {
+                if (SelectedPresetIndex != 2)
+                {
+                    SaveCurrentStateToPreset();
+                    SelectedPresetIndex = 2;
+                }
+            }
+        }

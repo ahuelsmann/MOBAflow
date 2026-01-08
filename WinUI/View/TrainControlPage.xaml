@@ -11,6 +11,7 @@
 
     <Page.Resources>
         <converter:BoolToBacklightBrushConverter x:Key="BacklightConverter" />
+        <converter:IntToPresetCheckedConverter x:Key="IntToPresetCheckedConverter" />
     </Page.Resources>
 
     <Grid Padding="32,24">
@@ -57,10 +58,10 @@
         <!--  Main Content: 4 Columns - Left Panel | Speedometer | Functions | Speed Categories  -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="220" />
+                <ColumnDefinition Width="240" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="140" />
-                <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="135" />
+                <ColumnDefinition Width="185" />
             </Grid.ColumnDefinitions>
 
             <!--  LEFT PANEL: Locomotive Settings  -->
@@ -83,24 +84,115 @@
                             <TextBlock
                                 FontSize="11"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="Address and functions" />
+                                Text="Select preset and control" />
                         </StackPanel>
 
-                        <!--  DCC Address  -->
-                        <StackPanel Spacing="6">
+                        <!--  Locomotive Presets - Compact table layout  -->
+                        <StackPanel Spacing="8">
                             <TextBlock
                                 FontSize="11"
                                 FontWeight="SemiBold"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="DCC ADDRESS" />
-                            <NumberBox
-                                HorizontalAlignment="Stretch"
-                                LargeChange="10"
-                                Maximum="9999"
-                                Minimum="1"
-                                SmallChange="1"
-                                SpinButtonPlacementMode="Inline"
-                                Value="{x:Bind ViewModel.LocoAddress, Mode=TwoWay}" />
+                                Text="LOCOMOTIVE PRESET" />
+                            <!--  Preset 1  -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="70" />
+                                </Grid.ColumnDefinitions>
+                                <RadioButton
+                                    Grid.Column="0"
+                                    MinWidth="0"
+                                    Padding="0"
+                                    VerticalAlignment="Center"
+                                    Command="{x:Bind ViewModel.SelectPreset1Command}"
+                                    GroupName="LocoPreset"
+                                    IsChecked="{x:Bind ViewModel.SelectedPresetIndex, Mode=OneWay, Converter={StaticResource IntToPresetCheckedConverter}, ConverterParameter=0}" />
+                                <StackPanel
+                                    Grid.Column="1"
+                                    Margin="4,0,8,0"
+                                    VerticalAlignment="Center"
+                                    Orientation="Horizontal"
+                                    Spacing="6">
+                                    <FontIcon FontSize="14" Glyph="&#xE7C0;" />
+                                    <TextBlock FontWeight="SemiBold" Text="Lok 1" />
+                                </StackPanel>
+                                <NumberBox
+                                    Grid.Column="2"
+                                    Height="32"
+                                    VerticalAlignment="Center"
+                                    Maximum="9999"
+                                    Minimum="1"
+                                    SpinButtonPlacementMode="Compact"
+                                    Value="{x:Bind ViewModel.Preset1Address, Mode=TwoWay}" />
+                            </Grid>
+                            <!--  Preset 2  -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="70" />
+                                </Grid.ColumnDefinitions>
+                                <RadioButton
+                                    Grid.Column="0"
+                                    MinWidth="0"
+                                    Padding="0"
+                                    VerticalAlignment="Center"
+                                    Command="{x:Bind ViewModel.SelectPreset2Command}"
+                                    GroupName="LocoPreset"
+                                    IsChecked="{x:Bind ViewModel.SelectedPresetIndex, Mode=OneWay, Converter={StaticResource IntToPresetCheckedConverter}, ConverterParameter=1}" />
+                                <StackPanel
+                                    Grid.Column="1"
+                                    Margin="4,0,8,0"
+                                    VerticalAlignment="Center"
+                                    Orientation="Horizontal"
+                                    Spacing="6">
+                                    <FontIcon FontSize="14" Glyph="&#xE7C0;" />
+                                    <TextBlock FontWeight="SemiBold" Text="Lok 2" />
+                                </StackPanel>
+                                <NumberBox
+                                    Grid.Column="2"
+                                    Height="32"
+                                    VerticalAlignment="Center"
+                                    Maximum="9999"
+                                    Minimum="1"
+                                    SpinButtonPlacementMode="Compact"
+                                    Value="{x:Bind ViewModel.Preset2Address, Mode=TwoWay}" />
+                            </Grid>
+                            <!--  Preset 3  -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="70" />
+                                </Grid.ColumnDefinitions>
+                                <RadioButton
+                                    Grid.Column="0"
+                                    MinWidth="0"
+                                    Padding="0"
+                                    VerticalAlignment="Center"
+                                    Command="{x:Bind ViewModel.SelectPreset3Command}"
+                                    GroupName="LocoPreset"
+                                    IsChecked="{x:Bind ViewModel.SelectedPresetIndex, Mode=OneWay, Converter={StaticResource IntToPresetCheckedConverter}, ConverterParameter=2}" />
+                                <StackPanel
+                                    Grid.Column="1"
+                                    Margin="4,0,8,0"
+                                    VerticalAlignment="Center"
+                                    Orientation="Horizontal"
+                                    Spacing="6">
+                                    <FontIcon FontSize="14" Glyph="&#xE7C0;" />
+                                    <TextBlock FontWeight="SemiBold" Text="Lok 3" />
+                                </StackPanel>
+                                <NumberBox
+                                    Grid.Column="2"
+                                    Height="32"
+                                    VerticalAlignment="Center"
+                                    Maximum="9999"
+                                    Minimum="1"
+                                    SpinButtonPlacementMode="Compact"
+                                    Value="{x:Bind ViewModel.Preset3Address, Mode=TwoWay}" />
+                            </Grid>
                         </StackPanel>
 
                         <!--  Direction  -->
@@ -337,19 +429,19 @@
             <Border
                 Grid.Column="2"
                 Margin="8,0"
-                Padding="12"
+                Padding="8"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="8">
-                <ScrollViewer Padding="0,0,8,0" VerticalScrollBarVisibility="Auto">
-                    <StackPanel Spacing="8">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="6">
                         <TextBlock
-                            Margin="0,0,0,8"
+                            Margin="0,0,0,4"
                             FontSize="14"
                             FontWeight="SemiBold"
                             Text="Functions" />
-                        <Grid ColumnSpacing="6" RowSpacing="6">
+                        <Grid ColumnSpacing="4" RowSpacing="4">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
@@ -717,262 +809,277 @@
                     </StackPanel>
                 </ScrollViewer>
             </Border>
-            <!--  RIGHT PANEL: Speed Categories  -->
-            <Border
-                Grid.Column="3"
-                Margin="8,0,0,0"
-                Padding="12,12,4,12"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1"
-                CornerRadius="8">
-                <ScrollViewer Padding="0,0,12,0" VerticalScrollBarVisibility="Auto">
-                    <StackPanel Spacing="16">
-                        <!--  Header  -->
-                        <StackPanel Spacing="2">
-                            <TextBlock
-                                FontSize="16"
-                                FontWeight="SemiBold"
-                                Text="Speed Categories" />
-                            <TextBlock
-                                FontSize="11"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="German railway speed limits" />
-                        </StackPanel>
-
-                        <!--  Fernverkehr / ICE  -->
+                        <!--  RIGHT PANEL: Speed Categories  -->
                         <Border
-                            Padding="12"
-                            Background="{ThemeResource LayerFillColorDefaultBrush}"
-                            CornerRadius="6">
-                            <StackPanel Spacing="8">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <FontIcon
-                                        FontSize="14"
-                                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                        Glyph="&#xE806;" />
-                                    <TextBlock FontWeight="SemiBold" Text="Fernverkehr / ICE" />
-                                </StackPanel>
-                                <TextBlock
-                                    FontSize="11"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="200-300 km/h" />
-                                <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <Button
-                                        Width="42"
-                                        Height="32"
-                                        Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                        CommandParameter="100"
-                                        Content="100"
-                                        CornerRadius="4"
-                                        FontSize="11" />
-                                    <Button
-                                        Width="42"
-                                        Height="32"
-                                        Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                        CommandParameter="115"
-                                        Content="115"
-                                        CornerRadius="4"
-                                        FontSize="11" />
-                                    <Button
-                                        Width="42"
-                                        Height="32"
-                                        Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                        CommandParameter="126"
-                                        Content="MAX"
-                                        CornerRadius="4"
-                                        FontSize="10"
-                                        FontWeight="Bold" />
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
+                            Grid.Column="3"
+                            Margin="8,0,0,0"
+                            Padding="8,8,4,8"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8">
+                            <ScrollViewer Padding="0,0,8,0" VerticalScrollBarVisibility="Auto">
+                                <StackPanel Spacing="8">
+                                    <!--  Header  -->
+                                    <StackPanel Spacing="2">
+                                        <TextBlock
+                                            FontSize="14"
+                                            FontWeight="SemiBold"
+                                            Text="Speed Categories" />
+                                        <TextBlock
+                                            FontSize="10"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="German railway speed limits" />
+                                    </StackPanel>
 
-                        <!--  Hauptbahn  -->
-                        <Border
-                            Padding="12"
-                            Background="{ThemeResource LayerFillColorDefaultBrush}"
-                            CornerRadius="6">
-                            <StackPanel Spacing="8">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <FontIcon
-                                        FontSize="14"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Glyph="&#xE7C0;" />
-                                    <TextBlock FontWeight="SemiBold" Text="Hauptbahn" />
-                                </StackPanel>
-                                <TextBlock
-                                    FontSize="11"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="120-160 km/h" />
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <Button
-                                        Width="44"
-                                        Height="32"
-                                        Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                        CommandParameter="75"
-                                        Content="75"
-                                        CornerRadius="4"
-                                        FontSize="11" />
-                                    <Button
-                                        Width="44"
-                                        Height="32"
-                                        Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                        CommandParameter="90"
-                                        Content="90"
-                                        CornerRadius="4"
-                                        FontSize="11" />
-                                    <Button
-                                        Width="44"
-                                        Height="32"
-                                        Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                        CommandParameter="100"
-                                        Content="100"
-                                        CornerRadius="4"
-                                        FontSize="11" />
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
+                                    <!--  Fernverkehr / ICE  -->
+                                    <Border
+                                        Padding="8"
+                                        Background="{ThemeResource LayerFillColorDefaultBrush}"
+                                        CornerRadius="4">
+                                        <StackPanel Spacing="4">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <FontIcon
+                                                    FontSize="12"
+                                                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                                    Glyph="&#xE806;" />
+                                                <TextBlock FontSize="12" FontWeight="SemiBold" Text="Fernverkehr / ICE" />
+                                            </StackPanel>
+                                            <TextBlock
+                                                FontSize="10"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Text="200-300 km/h" />
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <Button
+                                                    Width="44"
+                                                    Height="28"
+                                                    Padding="2"
+                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                                    CommandParameter="100"
+                                                    Content="100"
+                                                    CornerRadius="4"
+                                                    FontSize="11" />
+                                                <Button
+                                                    Width="44"
+                                                    Height="28"
+                                                    Padding="2"
+                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                                    CommandParameter="115"
+                                                    Content="115"
+                                                    CornerRadius="4"
+                                                    FontSize="11" />
+                                                <Button
+                                                    Width="44"
+                                                    Height="28"
+                                                    Padding="2"
+                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                                    CommandParameter="126"
+                                                    Content="MAX"
+                                                    CornerRadius="4"
+                                                    FontSize="10"
+                                                    FontWeight="Bold" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
 
-                        <!--  Nebenbahn  -->
-                        <Border
-                            Padding="12"
-                            Background="{ThemeResource LayerFillColorDefaultBrush}"
-                            CornerRadius="6">
-                            <StackPanel Spacing="8">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <FontIcon
-                                        FontSize="14"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Glyph="&#xE7C0;" />
-                                    <TextBlock FontWeight="SemiBold" Text="Nebenbahn" />
-                                </StackPanel>
-                                <TextBlock
-                                    FontSize="11"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="80-100 km/h" />
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <Button
-                                        Width="44"
-                                        Height="32"
-                                        Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                        CommandParameter="50"
-                                        Content="50"
-                                        CornerRadius="4"
-                                        FontSize="11" />
-                                    <Button
-                                        Width="44"
-                                        Height="32"
-                                        Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                        CommandParameter="55"
-                                        Content="55"
-                                        CornerRadius="4"
-                                        FontSize="11" />
-                                    <Button
-                                        Width="44"
-                                        Height="32"
-                                        Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                        CommandParameter="60"
-                                        Content="60"
-                                        CornerRadius="4"
-                                        FontSize="11" />
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
+                                    <!--  Hauptbahn  -->
+                                    <Border
+                                        Padding="8"
+                                        Background="{ThemeResource LayerFillColorDefaultBrush}"
+                                        CornerRadius="4">
+                                        <StackPanel Spacing="4">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <FontIcon
+                                                    FontSize="12"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    Glyph="&#xE7C0;" />
+                                                <TextBlock FontSize="12" FontWeight="SemiBold" Text="Hauptbahn" />
+                                            </StackPanel>
+                                            <TextBlock
+                                                FontSize="10"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Text="120-160 km/h" />
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <Button
+                                                    Width="44"
+                                                    Height="28"
+                                                    Padding="2"
+                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                                    CommandParameter="75"
+                                                    Content="75"
+                                                    CornerRadius="4"
+                                                    FontSize="11" />
+                                                <Button
+                                                    Width="44"
+                                                    Height="28"
+                                                    Padding="2"
+                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                                    CommandParameter="90"
+                                                    Content="90"
+                                                    CornerRadius="4"
+                                                    FontSize="11" />
+                                                <Button
+                                                    Width="44"
+                                                    Height="28"
+                                                    Padding="2"
+                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                                    CommandParameter="100"
+                                                    Content="100"
+                                                    CornerRadius="4"
+                                                    FontSize="11" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
 
-                        <!--  Bahnhof / Langsam  -->
-                        <Border
-                            Padding="12"
-                            Background="{ThemeResource LayerFillColorDefaultBrush}"
-                            CornerRadius="6">
-                            <StackPanel Spacing="8">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <FontIcon
-                                        FontSize="14"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Glyph="&#xE81A;" />
-                                    <TextBlock FontWeight="SemiBold" Text="Bahnhof / Langsam" />
-                                </StackPanel>
-                                <TextBlock
-                                    FontSize="11"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="40-60 km/h" />
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <Button
-                                        Width="44"
-                                        Height="32"
-                                        Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                        CommandParameter="25"
-                                        Content="25"
-                                        CornerRadius="4"
-                                        FontSize="11" />
-                                    <Button
-                                        Width="44"
-                                        Height="32"
-                                        Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                        CommandParameter="30"
-                                        Content="30"
-                                        CornerRadius="4"
-                                        FontSize="11" />
-                                    <Button
-                                        Width="44"
-                                        Height="32"
-                                        Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                        CommandParameter="40"
-                                        Content="40"
-                                        CornerRadius="4"
-                                        FontSize="11" />
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
+                                    <!--  Nebenbahn  -->
+                                    <Border
+                                        Padding="8"
+                                        Background="{ThemeResource LayerFillColorDefaultBrush}"
+                                        CornerRadius="4">
+                                        <StackPanel Spacing="4">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <FontIcon
+                                                    FontSize="12"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    Glyph="&#xE7C0;" />
+                                                <TextBlock FontSize="12" FontWeight="SemiBold" Text="Nebenbahn" />
+                                            </StackPanel>
+                                            <TextBlock
+                                                FontSize="10"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Text="80-100 km/h" />
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <Button
+                                                    Width="44"
+                                                    Height="28"
+                                                    Padding="2"
+                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                                    CommandParameter="50"
+                                                    Content="50"
+                                                    CornerRadius="4"
+                                                    FontSize="11" />
+                                                <Button
+                                                    Width="44"
+                                                    Height="28"
+                                                    Padding="2"
+                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                                    CommandParameter="55"
+                                                    Content="55"
+                                                    CornerRadius="4"
+                                                    FontSize="11" />
+                                                <Button
+                                                    Width="44"
+                                                    Height="28"
+                                                    Padding="2"
+                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                                    CommandParameter="60"
+                                                    Content="60"
+                                                    CornerRadius="4"
+                                                    FontSize="11" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
 
-                        <!--  Rangierfahrt  -->
-                        <Border
-                            Padding="12"
-                            Background="{ThemeResource LayerFillColorDefaultBrush}"
-                            CornerRadius="6">
-                            <StackPanel Spacing="8">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <FontIcon
-                                        FontSize="14"
-                                        Foreground="{ThemeResource SystemFillColorCautionBrush}"
-                                        Glyph="&#xE7C0;" />
-                                    <TextBlock FontWeight="SemiBold" Text="Rangierfahrt" />
+                                    <!--  Bahnhof / Langsam  -->
+                                    <Border
+                                        Padding="8"
+                                        Background="{ThemeResource LayerFillColorDefaultBrush}"
+                                        CornerRadius="4">
+                                        <StackPanel Spacing="4">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <FontIcon
+                                                    FontSize="12"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    Glyph="&#xE81A;" />
+                                                <TextBlock FontSize="12" FontWeight="SemiBold" Text="Bahnhof" />
+                                            </StackPanel>
+                                            <TextBlock
+                                                FontSize="10"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Text="40-60 km/h" />
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <Button
+                                                    Width="44"
+                                                    Height="28"
+                                                    Padding="2"
+                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                                    CommandParameter="25"
+                                                    Content="25"
+                                                    CornerRadius="4"
+                                                    FontSize="11" />
+                                                <Button
+                                                    Width="44"
+                                                    Height="28"
+                                                    Padding="2"
+                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                                    CommandParameter="30"
+                                                    Content="30"
+                                                    CornerRadius="4"
+                                                    FontSize="11" />
+                                                <Button
+                                                    Width="44"
+                                                    Height="28"
+                                                    Padding="2"
+                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                                    CommandParameter="40"
+                                                    Content="40"
+                                                    CornerRadius="4"
+                                                    FontSize="11" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!--  Rangierfahrt  -->
+                                    <Border
+                                        Padding="8"
+                                        Background="{ThemeResource LayerFillColorDefaultBrush}"
+                                        CornerRadius="4">
+                                        <StackPanel Spacing="4">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <FontIcon
+                                                    FontSize="12"
+                                                    Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                                                    Glyph="&#xE7C0;" />
+                                                <TextBlock FontSize="12" FontWeight="SemiBold" Text="Rangieren" />
+                                            </StackPanel>
+                                            <TextBlock
+                                                FontSize="10"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Text="25-40 km/h" />
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <Button
+                                                    Width="44"
+                                                    Height="28"
+                                                    Padding="2"
+                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                                    CommandParameter="10"
+                                                    Content="10"
+                                                    CornerRadius="4"
+                                                    FontSize="11" />
+                                                <Button
+                                                    Width="44"
+                                                    Height="28"
+                                                    Padding="2"
+                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                                    CommandParameter="15"
+                                                    Content="15"
+                                                    CornerRadius="4"
+                                                    FontSize="11" />
+                                                <Button
+                                                    Width="44"
+                                                    Height="28"
+                                                    Padding="2"
+                                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                                    CommandParameter="25"
+                                                    Content="25"
+                                                    CornerRadius="4"
+                                                    FontSize="11" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
                                 </StackPanel>
-                                <TextBlock
-                                    FontSize="11"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="25-40 km/h" />
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <Button
-                                        Width="44"
-                                        Height="32"
-                                        Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                        CommandParameter="10"
-                                        Content="10"
-                                        CornerRadius="4"
-                                        FontSize="11" />
-                                    <Button
-                                        Width="44"
-                                        Height="32"
-                                        Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                        CommandParameter="15"
-                                        Content="15"
-                                        CornerRadius="4"
-                                        FontSize="11" />
-                                    <Button
-                                        Width="44"
-                                        Height="32"
-                                        Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                        CommandParameter="25"
-                                        Content="25"
-                                        CornerRadius="4"
-                                        FontSize="11" />
-                                </StackPanel>
-                            </StackPanel>
+                            </ScrollViewer>
                         </Border>
-                    </StackPanel>
-                </ScrollViewer>
-            </Border>
-        </Grid>
-    </Grid>
-</Page>
+                    </Grid>
+                </Grid>
+            </Page>

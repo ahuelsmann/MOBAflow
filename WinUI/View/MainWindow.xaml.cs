@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
 using Microsoft.UI.Windowing;
@@ -64,9 +64,16 @@ public sealed partial class MainWindow
 
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
-        
+
         // Set TitleBar subtitle with version
         AppTitleBar.Subtitle = $"flow  {AppVersion}";
+
+        // Set taskbar/window icon
+        var iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "mobaflow-icon.ico");
+        if (System.IO.File.Exists(iconPath))
+        {
+            AppWindow.SetIcon(iconPath);
+        }
 
         // Maximize window on startup
         var appWindow = AppWindow;

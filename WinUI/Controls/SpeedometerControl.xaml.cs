@@ -148,11 +148,14 @@ public sealed partial class SpeedometerControl : UserControl
         // Large arc flag (1 if > 180 deg, but we never exceed 180 deg)
         var largeArc = sweepAngle > 180 ? 1 : 0;
 
+        // Sweep flag: 1 = clockwise (arc curves outward from center)
+        const int sweepFlag = 1;
+
         // Create path data
         var pathData = string.Format(
             CultureInfo.InvariantCulture,
-            "M {0:F1},{1:F1} A {2},{2} 0 {3} 0 {4:F1},{5:F1}",
-            startX, startY, radius, largeArc, endX, endY);
+            "M {0:F1},{1:F1} A {2},{2} 0 {3} {4} {5:F1},{6:F1}",
+            startX, startY, radius, largeArc, sweepFlag, endX, endY);
 
         try
         {

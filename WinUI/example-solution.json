@@ -209,7 +209,9 @@
               "number": 1,
               "type": 0,
               "delayAfterMs": 0,
-              "parameters": {}
+              "parameters": {
+                "Rate": -1
+              }
             },
             {
               "id": "fe201181-f622-4442-b190-3253cf37433f",
@@ -308,7 +310,7 @@
             }
           ],
           "inPort": 2,
-          "isUsingTimerToIgnoreFeedbacks": false,
+          "isUsingTimerToIgnoreFeedbacks": true,
           "intervalForTimerToIgnoreFeedbacks": 20,
           "behaviorOnLastStop": 1,
           "firstPos": 0

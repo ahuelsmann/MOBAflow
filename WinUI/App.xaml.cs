@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+﻿﻿﻿﻿﻿﻿﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.WinUI;
 
@@ -212,7 +212,12 @@ public partial class App
         services.AddSingleton<TrackPlanEditorViewModel>();
         services.AddSingleton<JourneyMapViewModel>();
         services.AddSingleton<MonitorPageViewModel>();
-        services.AddSingleton<TrainControlViewModel>();
+        services.AddSingleton(sp => new TrainControlViewModel(
+            sp.GetRequiredService<IZ21>(),
+            sp.GetRequiredService<IUiDispatcher>(),
+            sp.GetRequiredService<ISettingsService>(),
+            sp.GetService<ILogger<TrainControlViewModel>>()
+        ));
 
         // Pages (Transient = new instance per navigation)
         services.AddTransient<OverviewPage>();

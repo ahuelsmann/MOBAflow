@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Common.Configuration;
 
 /// <summary>
@@ -15,6 +15,10 @@ public class AppSettings
     public CounterSettings Counter { get; set; } = new();
     public LoggingSettings Logging { get; set; } = new();
     public HealthCheckSettings HealthCheck { get; set; } = new();
+    /// <summary>
+    /// Train Control settings including locomotive presets for quick switching.
+    /// </summary>
+    public TrainControlSettings TrainControl { get; set; } = new();
     /// <summary>
     /// Feature toggles for experimental/preview features (WinUI only).
     /// This setting is optional - if not present in appsettings.json, defaults to new FeatureToggleSettings().

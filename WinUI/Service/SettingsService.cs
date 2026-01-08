@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
@@ -43,7 +43,7 @@ public class SettingsService : ISettingsService
             {
                 var json = File.ReadAllText(_settingsFilePath);
                 var loadedSettings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions.Default);
-                
+
                 if (loadedSettings != null)
                 {
                     // Copy all loaded values to the DI-registered singleton
@@ -56,7 +56,16 @@ public class SettingsService : ISettingsService
                     _settings.Counter.TargetLapCount = loadedSettings.Counter.TargetLapCount;
                     _settings.Counter.UseTimerFilter = loadedSettings.Counter.UseTimerFilter;
                     _settings.Counter.TimerIntervalSeconds = loadedSettings.Counter.TimerIntervalSeconds;
-                    
+
+                    // TrainControl settings (locomotive presets)
+                    _settings.TrainControl.SelectedPresetIndex = loadedSettings.TrainControl.SelectedPresetIndex;
+                    _settings.TrainControl.SpeedRampStepSize = loadedSettings.TrainControl.SpeedRampStepSize;
+                    _settings.TrainControl.SpeedRampIntervalMs = loadedSettings.TrainControl.SpeedRampIntervalMs;
+                    if (loadedSettings.TrainControl.Presets.Count >= 3)
+                    {
+                        _settings.TrainControl.Presets = loadedSettings.TrainControl.Presets;
+                    }
+
                     _logger.LogInformation("WinUI settings loaded from {SettingsFilePath}", _settingsFilePath);
                 }
             }
@@ -94,19 +103,28 @@ public class SettingsService : ISettingsService
                     _settings.Application.AutoStartWebApp = loadedSettings.Application.AutoStartWebApp;
                     _settings.Z21.CurrentIpAddress = loadedSettings.Z21.CurrentIpAddress;
                     _settings.Z21.DefaultPort = loadedSettings.Z21.DefaultPort;
-                    _settings.Counter.CountOfFeedbackPoints = loadedSettings.Counter.CountOfFeedbackPoints;
-                    _settings.Counter.TargetLapCount = loadedSettings.Counter.TargetLapCount;
-                    _settings.Counter.UseTimerFilter = loadedSettings.Counter.UseTimerFilter;
-                    _settings.Counter.TimerIntervalSeconds = loadedSettings.Counter.TimerIntervalSeconds;
-                    
-                    _logger.LogInformation("WinUI settings loaded from {SettingsFilePath}", _settingsFilePath);
-                }
+                            _settings.Counter.CountOfFeedbackPoints = loadedSettings.Counter.CountOfFeedbackPoints;
+                            _settings.Counter.TargetLapCount = loadedSettings.Counter.TargetLapCount;
+                            _settings.Counter.UseTimerFilter = loadedSettings.Counter.UseTimerFilter;
+                            _settings.Counter.TimerIntervalSeconds = loadedSettings.Counter.TimerIntervalSeconds;
 
-            }
-            else
-            {
-                _logger.LogInformation("No settings file found at {SettingsFilePath}, using defaults", _settingsFilePath);
-            }
+                            // TrainControl settings (locomotive presets)
+                            _settings.TrainControl.SelectedPresetIndex = loadedSettings.TrainControl.SelectedPresetIndex;
+                            _settings.TrainControl.SpeedRampStepSize = loadedSettings.TrainControl.SpeedRampStepSize;
+                            _settings.TrainControl.SpeedRampIntervalMs = loadedSettings.TrainControl.SpeedRampIntervalMs;
+                            if (loadedSettings.TrainControl.Presets.Count >= 3)
+                            {
+                                _settings.TrainControl.Presets = loadedSettings.TrainControl.Presets;
+                            }
+
+                            _logger.LogInformation("WinUI settings loaded from {SettingsFilePath}", _settingsFilePath);
+                        }
+
+                    }
+                    else
+                    {
+                        _logger.LogInformation("No settings file found at {SettingsFilePath}, using defaults", _settingsFilePath);
+                    }
         }
         catch (Exception ex)
         {

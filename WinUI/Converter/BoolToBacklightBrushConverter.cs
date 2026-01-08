@@ -1,14 +1,13 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Converter;
 
-using Microsoft.UI;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
 
 /// <summary>
 /// Converts a boolean to a backlight brush for function buttons.
-/// When ON: Returns the accent color with moderate opacity (backlit effect).
-/// When OFF: Returns transparent.
+/// When ON: Returns a lightened version of the accent color (glow effect).
+/// When OFF: Returns a subtle tint of the color.
 /// Pass the accent color hex as ConverterParameter (e.g., "#FFD700").
 /// </summary>
 public class BoolToBacklightBrushConverter : IValueConverter
@@ -16,7 +15,7 @@ public class BoolToBacklightBrushConverter : IValueConverter
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {
         bool isOn = value is bool b && b;
-        
+
         if (parameter is not string hexColor || string.IsNullOrEmpty(hexColor))
         {
             // Fallback: use a neutral gray
@@ -27,8 +26,10 @@ public class BoolToBacklightBrushConverter : IValueConverter
 
         if (isOn)
         {
-            // Backlit: moderate opacity for a soft glow from within
-            return new SolidColorBrush(Windows.UI.Color.FromArgb(180, color.R, color.G, color.B));
+            // ON: Lighten the color toward white for a "glow" effect
+            // Mix with white at 50% to create a brighter, more vibrant look
+            var lightenedColor = LightenColor(color, 0.4);
+            return new SolidColorBrush(Windows.UI.Color.FromArgb(220, lightenedColor.R, lightenedColor.G, lightenedColor.B));
         }
         else
         {
@@ -42,12 +43,28 @@ public class BoolToBacklightBrushConverter : IValueConverter
         throw new NotImplementedException();
     }
 
+    /// <summary>
+    /// Lightens a color by mixing it with white.
+    /// </summary>
+    /// <param name="color">The base color</param>
+    /// <param name="amount">How much to lighten (0.0 = no change, 1.0 = pure white)</param>
+    private static Windows.UI.Color LightenColor(Windows.UI.Color color, double amount)
+    {
+        amount = Math.Clamp(amount, 0, 1);
+
+        byte r = (byte)(color.R + (255 - color.R) * amount);
+        byte g = (byte)(color.G + (255 - color.G) * amount);
+        byte b = (byte)(color.B + (255 - color.B) * amount);
+
+        return Windows.UI.Color.FromArgb(255, r, g, b);
+    }
+
     private static Windows.UI.Color ParseHexColor(string hex)
     {
         hex = hex.TrimStart('#');
-        
+
         byte r = 128, g = 128, b = 128;
-        
+
         if (hex.Length == 6)
         {
             r = System.Convert.ToByte(hex.Substring(0, 2), 16);

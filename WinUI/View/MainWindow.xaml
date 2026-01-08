@@ -1,4 +1,4 @@
-﻿<Window
+<Window
     x:Class="Moba.WinUI.View.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -45,20 +45,35 @@
                     Tag="overview"
                     Visibility="{Binding ViewModel.IsOverviewPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
                 <NavigationViewItemSeparator />
+                <!--  Train Control: Prominent position, bold text  -->
+                <NavigationViewItem
+                    Tag="traincontrol"
+                    Visibility="{Binding ViewModel.IsTrainControlPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <NavigationViewItem.Content>
+                        <TextBlock FontWeight="SemiBold" Text="Train Control" />
+                    </NavigationViewItem.Content>
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xEC49;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <!--  Journeys: Bold text for emphasis  -->
+                <NavigationViewItem
+                    Tag="journeys"
+                    Visibility="{Binding ViewModel.IsJourneysPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <NavigationViewItem.Content>
+                        <TextBlock FontWeight="SemiBold" Text="Journeys" />
+                    </NavigationViewItem.Content>
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE7C1;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItemSeparator />
                 <NavigationViewItem
                     Content="Solution"
                     Tag="solution"
                     Visibility="{Binding ViewModel.IsSolutionPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE8B7;" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItem
-                    Content="Journeys"
-                    Tag="journeys"
-                    Visibility="{Binding ViewModel.IsJourneysPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE7C1;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem
@@ -75,14 +90,6 @@
                     Visibility="{Binding ViewModel.IsTrainsPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE7C0;" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItem
-                    Content="Train Control"
-                    Tag="traincontrol"
-                    Visibility="{Binding ViewModel.IsTrainControlPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xEC49;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItemSeparator />
