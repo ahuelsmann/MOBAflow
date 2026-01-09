@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+﻿﻿﻿﻿﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.WinUI;
 
@@ -249,6 +249,12 @@ public partial class App
 
         services.AddTransient<MonitorPage>();
         navigationRegistry.Register("monitor", "Monitor", "\uE7F4", typeof(MonitorPage), "Shell");
+
+        services.AddTransient<HelpPage>();
+        navigationRegistry.Register("help", "Help", "\uE897", typeof(HelpPage), "Shell");
+
+        services.AddTransient<SapTransactionPage>();
+        navigationRegistry.Register("sap", "SAP Transaction", "\uE756", typeof(SapTransactionPage), "Shell");
 
         // MainWindow (Singleton = one instance for app lifetime)
         services.AddSingleton<MainWindow>();

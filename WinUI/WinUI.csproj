@@ -47,6 +47,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup>
+    <Page Remove="View\SapTransactionPage.xaml" />
+  </ItemGroup>
   <!-- Content files -->
   <ItemGroup>
     <Content Include="appsettings.json">
@@ -84,6 +87,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Update="Resources\ControlStyles.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
+    <None Update="View\SapTransactionPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>
   </ItemGroup>
