@@ -46,9 +46,7 @@
                     Visibility="{Binding ViewModel.IsOverviewPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
                 <NavigationViewItemSeparator />
                 <!--  Train Control: Prominent position, bold text  -->
-                <NavigationViewItem
-                    Tag="traincontrol"
-                    Visibility="{Binding ViewModel.IsTrainControlPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                <NavigationViewItem Tag="traincontrol" Visibility="{Binding ViewModel.IsTrainControlPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <NavigationViewItem.Content>
                         <TextBlock FontWeight="SemiBold" Text="Train Control" />
                     </NavigationViewItem.Content>
@@ -57,9 +55,7 @@
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <!--  Journeys: Bold text for emphasis  -->
-                <NavigationViewItem
-                    Tag="journeys"
-                    Visibility="{Binding ViewModel.IsJourneysPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                <NavigationViewItem Tag="journeys" Visibility="{Binding ViewModel.IsJourneysPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <NavigationViewItem.Content>
                         <TextBlock FontWeight="SemiBold" Text="Journeys" />
                     </NavigationViewItem.Content>
@@ -142,14 +138,6 @@
                     ToolTipService.ToolTip="About, License, and Trademarks">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE946;" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItem
-                    Content="MOBAerp"
-                    Tag="erp"
-                    ToolTipService.ToolTip="Transaction Navigation System">
-                    <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE756;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem

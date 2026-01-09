@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
 using Microsoft.UI.Xaml;
@@ -38,7 +38,7 @@ public sealed partial class TrackPlanEditorPage
         {
             e.Data.SetText(template.ArticleCode);
             e.Data.RequestedOperation = DataPackageOperation.Copy;
-            Debug.WriteLine($"🎯 Dragging: {template.ArticleCode}");
+            Debug.WriteLine($"ðŸŽ¯ Dragging: {template.ArticleCode}");
         }
     }
 
@@ -57,7 +57,7 @@ public sealed partial class TrackPlanEditorPage
             if (template != null)
             {
                 ViewModel.AddSegmentCommand.Execute(template);
-                Debug.WriteLine($"✅ Dropped: {articleCode}");
+                Debug.WriteLine($"âœ… Dropped: {articleCode}");
             }
         }
     }
@@ -77,7 +77,7 @@ public sealed partial class TrackPlanEditorPage
             _lastPanPosition = pointer.Position;
             TrackCanvas.CapturePointer(e.Pointer);
             e.Handled = true;
-            Debug.WriteLine("🖐️ Pan started");
+            Debug.WriteLine("ðŸ–ï¸ Pan started");
             return;
         }
 
@@ -93,9 +93,18 @@ public sealed partial class TrackPlanEditorPage
         if (!_isPanning) return;
 
         var pointer = e.GetCurrentPoint(TrackCanvas);
+        
+        // Verify right/middle button is still pressed - if not, end panning
+        if (!pointer.Properties.IsRightButtonPressed && !pointer.Properties.IsMiddleButtonPressed)
+        {
+            _isPanning = false;
+            try { TrackCanvas.ReleasePointerCapture(e.Pointer); } catch { /* ignore */ }
+            return;
+        }
+
         var currentPosition = pointer.Position;
 
-        // Calculate delta (in screen space, so divide to zoom for canvas space)
+        // Calculate delta
         var deltaX = currentPosition.X - _lastPanPosition.X;
         var deltaY = currentPosition.Y - _lastPanPosition.Y;
 
@@ -113,7 +122,7 @@ public sealed partial class TrackPlanEditorPage
             _isPanning = false;
             TrackCanvas.ReleasePointerCapture(e.Pointer);
             e.Handled = true;
-            Debug.WriteLine("🖐️ Pan ended");
+            Debug.WriteLine("ðŸ–ï¸ Pan ended");
         }
     }
 
@@ -132,7 +141,7 @@ public sealed partial class TrackPlanEditorPage
                 StartSegmentDrag(segment, e, element);
 
                 e.Handled = true;
-                Debug.WriteLine($"🔵 Selected: {segment.ArticleCode}");
+                Debug.WriteLine($"ðŸ”µ Selected: {segment.ArticleCode}");
             }
         }
     }
@@ -167,10 +176,54 @@ public sealed partial class TrackPlanEditorPage
             groupSegment.DragOffsetY = canvasY - groupSegment.WorldTransform.TranslateY;
         }
 
-        // Capture pointer for drag tracking
+        // Subscribe to pointer events for drag tracking
+        captureElement.PointerMoved += Segment_PointerMoved;
+        captureElement.PointerReleased += Segment_PointerReleased;
         captureElement.CapturePointer(e.Pointer);
 
-        Debug.WriteLine($"🎯 Drag started: {segment.ArticleCode} (group size: {_dragGroup.Count})");
+        Debug.WriteLine($"ðŸŽ¯ Drag started: {segment.ArticleCode} (group size: {_dragGroup.Count})");
+    }
+
+    private void Segment_PointerMoved(object sender, PointerRoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement element) return;
+        if (element.DataContext is not TrackSegmentViewModel segment) return;
+        if (!segment.IsDragging) return;
+
+        var pointer = e.GetCurrentPoint(TrackCanvas);
+        var zoomFactor = ViewModel.ZoomFactor;
+        var canvasX = (pointer.Position.X - ViewModel.PanOffsetX) / zoomFactor;
+        var canvasY = (pointer.Position.Y - ViewModel.PanOffsetY) / zoomFactor;
+
+        // Update position for all segments in drag group
+        foreach (var groupSegment in _dragGroup)
+        {
+            ViewModel.UpdateSegmentPosition(groupSegment, canvasX, canvasY);
+        }
+
+        e.Handled = true;
+    }
+
+    private void Segment_PointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement element) return;
+        if (element.DataContext is not TrackSegmentViewModel segment) return;
+
+        // Unsubscribe from events
+        element.PointerMoved -= Segment_PointerMoved;
+        element.PointerReleased -= Segment_PointerReleased;
+        element.ReleasePointerCapture(e.Pointer);
+
+        // End drag and try snap
+        foreach (var groupSegment in _dragGroup)
+        {
+            ViewModel.OnSegmentDragEnded(groupSegment);
+        }
+
+        _dragGroup.Clear();
+        Debug.WriteLine($"ðŸŽ¯ Drag ended: {segment.ArticleCode}");
+
+        e.Handled = true;
     }
     #endregion
 }

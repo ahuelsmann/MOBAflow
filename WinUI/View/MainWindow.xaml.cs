@@ -86,7 +86,7 @@ public sealed partial class MainWindow
         if (ioService is IoService winUiIoService)
         {
             winUiIoService.SetWindowId(AppWindow.Id, Content.XamlRoot);
-            Debug.WriteLine("✅ IoService initialized with WindowId");
+            Debug.WriteLine("Ã¢Å“â€¦ IoService initialized with WindowId");
         }
 
         // Add plugin navigation items before initialization selects overview
@@ -116,28 +116,36 @@ public sealed partial class MainWindow
 
     private void AddPluginNavigationItems()
     {
-        var settingsItem = MainNavigation.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(item => (item.Tag as string) == "settings");
+        // Find Help item - plugins should be inserted BEFORE Help/Info/Settings group
+        var helpItem = MainNavigation.MenuItems.OfType<NavigationViewItem>()
+            .FirstOrDefault(item => (item.Tag as string) == "help");
         
-        if (settingsItem is null)
+        if (helpItem is null)
         {
-            return; // No settings page, no plugin insertion
+            return; // No help page found, cannot determine insertion point
         }
 
-        var pluginPages = _navigationRegistry.Pages.Where(p => !string.Equals(p.Source, "Shell", StringComparison.OrdinalIgnoreCase)).ToList();
+        var pluginPages = _navigationRegistry.Pages
+            .Where(p => !string.Equals(p.Source, "Shell", StringComparison.OrdinalIgnoreCase))
+            .ToList();
         
         if (pluginPages.Count == 0)
         {
             return; // No plugins to add
         }
 
-        // Find the separator BEFORE settings (the one that should remain AFTER plugins)
-        var settingsIndex = MainNavigation.MenuItems.IndexOf(settingsItem);
-        var existingSeparatorIndex = settingsIndex > 0 && MainNavigation.MenuItems[settingsIndex - 1] is NavigationViewItemSeparator
-            ? settingsIndex - 1
+        // Find the separator BEFORE Help (this is where we insert plugins)
+        var helpIndex = MainNavigation.MenuItems.IndexOf(helpItem);
+        var separatorBeforeHelpIndex = helpIndex > 0 && MainNavigation.MenuItems[helpIndex - 1] is NavigationViewItemSeparator
+            ? helpIndex - 1
             : -1;
 
-        // Insert position: before the existing separator (or before settings if no separator)
-        var insertIndex = existingSeparatorIndex != -1 ? existingSeparatorIndex : settingsIndex;
+        // Insert position: before the separator that precedes Help (or before Help if no separator)
+        var insertIndex = separatorBeforeHelpIndex != -1 ? separatorBeforeHelpIndex : helpIndex;
+
+        // Add separator BEFORE plugins (between Monitor and first plugin)
+        MainNavigation.MenuItems.Insert(insertIndex, new NavigationViewItemSeparator());
+        insertIndex++;
 
         // Insert plugin pages
         foreach (var page in pluginPages)
@@ -157,13 +165,8 @@ public sealed partial class MainWindow
             insertIndex++;
         }
 
-        // Add a second separator BEFORE the plugin pages (between Monitor and first plugin)
-        // Only if we actually inserted plugins
-        if (pluginPages.Count > 0)
-        {
-            var pluginStartIndex = existingSeparatorIndex != -1 ? existingSeparatorIndex : settingsIndex;
-            MainNavigation.MenuItems.Insert(pluginStartIndex, new NavigationViewItemSeparator());
-        }
+        // The existing separator before Help will now be AFTER plugins
+        // No need to add another separator - the one before Help already exists
     }
 
     /// <summary>

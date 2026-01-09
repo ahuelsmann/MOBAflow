@@ -1,7 +1,9 @@
 <Solution>
   <Folder Name="/Plugins/">
-    <Project Path="Plugins/ErpPlugin/ErpPlugin.csproj" />
-    <Project Path="Plugins/SamplePlugin/SamplePlugin.csproj" />
+    <Project Path="Plugins/ErpPlugin/ErpPlugin.csproj">
+      <Build Solution="Debug|*" Project="false" />
+    </Project>
+    <Project Path="Plugins/StatisticsPlugin/StatisticsPlugin.csproj" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
@@ -50,7 +52,6 @@
     <File Path="docs/copilot/MAUI-BACKGROUND-SERVICE-CONCEPT.md" />
     <File Path="docs/copilot/ICON-UPDATE-GUIDE.md" />
   </Folder>
-
   <Project Path="Backend/Backend.csproj">
     <Deploy />
   </Project>

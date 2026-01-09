@@ -1,5 +1,5 @@
 {
-  "name": "C:\\Repos\\ahuelsmann\\MOBAflow\\artifacts\\Debug\\example-solution-v2.json",
+  "name": "Example Solution",
   "projects": [
     {
       "name": "myMOBA",
@@ -16,19 +16,7 @@
           "prosodyRate": 0.0
         },
         {
-          "name": "KatjaNeural",
-          "prosodyRate": 0.0
-        },
-        {
           "name": "ConradNeural",
-          "prosodyRate": 0.0
-        },
-        {
-          "name": "MajaNeural",
-          "prosodyRate": 0.0
-        },
-        {
-          "name": "TanjaNeural",
           "prosodyRate": 0.0
         }
       ],
@@ -58,7 +46,7 @@
         {
           "id": "a1b2c3d4-e5f6-7890-1234-567890fedcba",
           "name": "BR 64 - Steam Loco",
-          "pos": 1,
+          "pos": 2,
           "digitalAddress": 64,
           "manufacturer": "Piko",
           "articleNumber": "50600",
@@ -74,8 +62,7 @@
             "description": "Steam locomotive for branch line services"
           },
           "invoiceDate": "2023-11-10T00:00:00",
-          "deliveryDate": "2023-11-18T00:00:00",
-          "photoPath": "locomotives/a1b2c3d4-e5f6-7890-1234-567890fedcba.jpg"
+          "deliveryDate": "2023-11-18T00:00:00"
         }
       ],
       "passengerWagons": [
@@ -93,33 +80,8 @@
             "axles": 2,
             "epoch": 5,
             "railroadCompany": "DB Regio",
-            "power": 0,
-            "digital": 0,
             "description": "First class passenger coach"
-          },
-          "invoiceDate": "2024-04-05T00:00:00",
-          "deliveryDate": "2024-04-12T00:00:00"
-        },
-        {
-          "wagonClass": 2,
-          "id": "c3d4e5f6-a7b8-9012-3456-789012defabc",
-          "name": "Bimz 264 - 2nd Class",
-          "pos": 2,
-          "manufacturer": "Piko",
-          "articleNumber": "58522",
-          "series": "Bimz 264",
-          "colorPrimary": 4,
-          "colorSecondary": 6,
-          "details": {
-            "axles": 2,
-            "epoch": 5,
-            "railroadCompany": "DB Regio",
-            "power": 0,
-            "digital": 0,
-            "description": "Second class passenger coach"
-          },
-          "invoiceDate": "2024-04-05T00:00:00",
-          "deliveryDate": "2024-04-12T00:00:00"
+          }
         }
       ],
       "goodsWagons": [
@@ -128,7 +90,6 @@
           "id": "d4e5f6a7-b8c9-0123-4567-890123efabcd",
           "name": "Container Wagon Sgns",
           "pos": 1,
-          "digitalAddress": 146,
           "manufacturer": "Piko",
           "articleNumber": "54771",
           "series": "Sgns",
@@ -137,32 +98,8 @@
             "axles": 4,
             "epoch": 6,
             "railroadCompany": "DB Cargo",
-            "power": 0,
-            "digital": 0,
             "description": "Container flat wagon"
-          },
-          "invoiceDate": "2024-05-20T00:00:00",
-          "deliveryDate": "2024-05-28T00:00:00"
-        },
-        {
-          "cargo": 3,
-          "id": "e5f6a7b8-c9d0-1234-5678-901234fabcde",
-          "name": "Open Wagon Eaos",
-          "pos": 2,
-          "manufacturer": "Piko",
-          "articleNumber": "54308",
-          "series": "Eaos",
-          "colorPrimary": 7,
-          "details": {
-            "axles": 4,
-            "epoch": 5,
-            "railroadCompany": "DB Cargo",
-            "power": 0,
-            "digital": 0,
-            "description": "Open goods wagon for bulk cargo"
-          },
-          "invoiceDate": "2024-06-10T00:00:00",
-          "deliveryDate": "2024-06-15T00:00:00"
+          }
         }
       ],
       "trains": [
@@ -177,23 +114,7 @@
             "f1e2d3c4-b5a6-7890-1234-567890abcdef"
           ],
           "wagonIds": [
-            "b2c3d4e5-f6a7-8901-2345-678901cdefab",
-            "c3d4e5f6-a7b8-9012-3456-789012defabc"
-          ]
-        },
-        {
-          "id": "f3e4d5c6-b7a8-9012-3456-789012cdef01",
-          "isDoubleTraction": false,
-          "name": "Freight Train 001",
-          "description": "Container freight service",
-          "trainType": 2,
-          "serviceType": 7,
-          "locomotiveIds": [
-            "a1b2c3d4-e5f6-7890-1234-567890fedcba"
-          ],
-          "wagonIds": [
-            "d4e5f6a7-b8c9-0123-4567-890123efabcd",
-            "e5f6a7b8-c9d0-1234-5678-901234fabcde"
+            "b2c3d4e5-f6a7-8901-2345-678901cdefab"
           ]
         }
       ],
@@ -201,26 +122,16 @@
         {
           "id": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
           "name": "Arrival Main Station",
-          "description": "",
+          "description": "Plays announcement on station arrival",
           "actions": [
             {
               "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
-              "name": "Arrival",
+              "name": "Arrival Announcement",
               "number": 1,
               "type": 0,
               "delayAfterMs": 0,
               "parameters": {
                 "Rate": -1
-              }
-            },
-            {
-              "id": "fe201181-f622-4442-b190-3253cf37433f",
-              "name": "Gong",
-              "number": 0,
-              "type": 2,
-              "delayAfterMs": 0,
-              "parameters": {
-                "FilePath": "C:\\Repo\\ahuelsmann\\MOBAflow\\Sound\\Resources\\Sounds\\273231__gollamar__announcement-04.wav"
               }
             }
           ],
@@ -234,82 +145,45 @@
         {
           "id": "c1d2e3f4-a5b6-7890-1234-567890abcdef",
           "name": "RE 78 (Porta-Express)",
-          "description": "",
-          "text": "N\u00E4chster Halt: {StationName}. Ausstieg in Fahrtrichtung {StationIsExitOnLeft}.",
+          "description": "Regional Express from Bielefeld to Minden",
+          "text": "Next stop: {StationName}. Exit on the {StationIsExitOnLeft}.",
           "stations": [
             {
               "id": "d1e2f3a4-b5c6-7890-1234-567890abcdef",
               "name": "Bielefeld Hauptbahnhof",
-              "inPort": 0,
+              "inPort": 1,
               "numberOfLapsToStop": 2,
               "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "isExitOnLeft": true,
               "track": 1,
-              "departure": "2025-12-29T00:01:00+01:00",
+              "departure": "2025-12-29T08:01:00+01:00",
               "connections": []
             },
             {
               "id": "d2e3f4a5-b6c7-8901-2345-678901bcdef0",
               "name": "Herford",
-              "inPort": 0,
+              "inPort": 2,
               "numberOfLapsToStop": 2,
               "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "isExitOnLeft": false,
               "track": 1,
-              "arrival": "2025-12-29T00:03:00+01:00",
-              "departure": "2025-12-29T00:04:00+01:00",
+              "arrival": "2025-12-29T08:15:00+01:00",
+              "departure": "2025-12-29T08:17:00+01:00",
               "connections": []
             },
             {
               "id": "d3e4f5a6-b7c8-9012-3456-789012cdef01",
-              "name": "L\u00F6hne in Westfalen",
-              "inPort": 0,
+              "name": "Minden (Westf)",
+              "inPort": 3,
               "numberOfLapsToStop": 2,
               "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "isExitOnLeft": true,
               "track": 1,
-              "arrival": "2025-12-29T00:06:00+01:00",
-              "departure": "2025-12-29T00:07:00+01:00",
-              "connections": []
-            },
-            {
-              "id": "d4e5f6a7-b8c9-0123-4567-890123def012",
-              "name": "Bad Oeynhausen",
-              "inPort": 0,
-              "numberOfLapsToStop": 2,
-              "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
-              "isExitOnLeft": false,
-              "track": 1,
-              "arrival": "2025-12-29T00:09:00+01:00",
-              "departure": "2025-12-29T00:10:00+01:00",
-              "connections": []
-            },
-            {
-              "id": "d5e6f7a8-b9c0-1234-5678-901234ef0123",
-              "name": "Porta Westfalica",
-              "inPort": 0,
-              "numberOfLapsToStop": 2,
-              "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
-              "isExitOnLeft": true,
-              "track": 1,
-              "arrival": "2025-12-29T00:12:00+01:00",
-              "departure": "2025-12-29T00:13:00+01:00",
-              "connections": []
-            },
-            {
-              "id": "a47ff93b-0d24-4a22-9fb3-25935c707e87",
-              "name": "Minden (Westf) Bahnhof",
-              "inPort": 0,
-              "numberOfLapsToStop": 2,
-              "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
-              "isExitOnLeft": false,
-              "track": 1,
-              "arrival": "2025-12-29T00:15:00+01:00",
-              "departure": "2025-12-29T00:16:00+01:00",
+              "arrival": "2025-12-29T08:45:00+01:00",
               "connections": []
             }
           ],
-          "inPort": 2,
+          "inPort": 1,
           "isUsingTimerToIgnoreFeedbacks": true,
           "intervalForTimerToIgnoreFeedbacks": 20,
           "behaviorOnLastStop": 1,
@@ -317,1051 +191,165 @@
         }
       ],
       "trackLayout": {
-        "name": "Untitled Layout",
+        "name": "Simple Oval Layout",
         "trackSystem": "Piko A-Gleis",
         "segments": [
           {
-            "id": "401",
+            "id": "seg-001",
+            "articleCode": "G231",
+            "assignedInPort": 1
+          },
+          {
+            "id": "seg-002",
             "articleCode": "G231"
           },
           {
-            "id": "402",
+            "id": "seg-003",
+            "articleCode": "R3"
+          },
+          {
+            "id": "seg-004",
+            "articleCode": "R3"
+          },
+          {
+            "id": "seg-005",
+            "articleCode": "R3"
+          },
+          {
+            "id": "seg-006",
+            "articleCode": "R3"
+          },
+          {
+            "id": "seg-007",
+            "articleCode": "G231",
+            "assignedInPort": 2
+          },
+          {
+            "id": "seg-008",
+            "articleCode": "G231"
+          },
+          {
+            "id": "seg-009",
+            "articleCode": "R3"
+          },
+          {
+            "id": "seg-010",
+            "articleCode": "R3"
+          },
+          {
+            "id": "seg-011",
+            "articleCode": "R3"
+          },
+          {
+            "id": "seg-012",
+            "articleCode": "R3"
+          },
+          {
+            "id": "seg-013",
+            "articleCode": "WR",
+            "assignedInPort": 3
+          },
+          {
+            "id": "seg-014",
             "articleCode": "G119"
-          },
-          {
-            "id": "400",
-            "articleCode": "G231"
-          },
-          {
-            "id": "68",
-            "articleCode": "R3"
-          },
-          {
-            "id": "25",
-            "articleCode": "R4"
-          },
-          {
-            "id": "55",
-            "articleCode": "G231"
-          },
-          {
-            "id": "316",
-            "articleCode": "G231"
-          },
-          {
-            "id": "304",
-            "articleCode": "R4"
-          },
-          {
-            "id": "86",
-            "articleCode": "G231"
-          },
-          {
-            "id": "74",
-            "articleCode": "R3"
-          },
-          {
-            "id": "275",
-            "articleCode": "G231"
-          },
-          {
-            "id": "96",
-            "articleCode": "G231"
-          },
-          {
-            "id": "403",
-            "articleCode": "G62"
-          },
-          {
-            "id": "14",
-            "articleCode": "G231"
-          },
-          {
-            "id": "13",
-            "articleCode": "R4"
-          },
-          {
-            "id": "63",
-            "articleCode": "R4"
-          },
-          {
-            "id": "174",
-            "articleCode": "R4"
-          },
-          {
-            "id": "379",
-            "articleCode": "G119"
-          },
-          {
-            "id": "376",
-            "articleCode": "G231"
-          },
-          {
-            "id": "382",
-            "articleCode": "G62"
-          },
-          {
-            "id": "386",
-            "articleCode": "G62"
-          },
-          {
-            "id": "49",
-            "articleCode": "G231"
-          },
-          {
-            "id": "58",
-            "articleCode": "R4"
-          },
-          {
-            "id": "404",
-            "articleCode": "G231"
-          },
-          {
-            "id": "57",
-            "articleCode": "G231"
-          },
-          {
-            "id": "30",
-            "articleCode": "R4"
-          },
-          {
-            "id": "54",
-            "articleCode": "G231"
-          },
-          {
-            "id": "53",
-            "articleCode": "G231"
-          },
-          {
-            "id": "70",
-            "articleCode": "G62"
-          },
-          {
-            "id": "31",
-            "articleCode": "R4"
-          },
-          {
-            "id": "173",
-            "articleCode": "G231"
-          },
-          {
-            "id": "36",
-            "articleCode": "R3"
-          },
-          {
-            "id": "176",
-            "articleCode": "WR"
-          },
-          {
-            "id": "40",
-            "articleCode": "G231"
-          },
-          {
-            "id": "77",
-            "articleCode": "R4"
-          },
-          {
-            "id": "405",
-            "articleCode": "G62"
-          },
-          {
-            "id": "279",
-            "articleCode": "G231"
-          },
-          {
-            "id": "171",
-            "articleCode": "G231"
-          },
-          {
-            "id": "20",
-            "articleCode": "R4"
-          },
-          {
-            "id": "24",
-            "articleCode": "R4"
-          },
-          {
-            "id": "69",
-            "articleCode": "R4"
-          },
-          {
-            "id": "60",
-            "articleCode": "R3"
-          },
-          {
-            "id": "50",
-            "articleCode": "G231"
-          },
-          {
-            "id": "182",
-            "articleCode": "G231"
-          },
-          {
-            "id": "33",
-            "articleCode": "R4"
-          },
-          {
-            "id": "306",
-            "articleCode": "R4"
-          },
-          {
-            "id": "73",
-            "articleCode": "R3"
-          },
-          {
-            "id": "42",
-            "articleCode": "G231"
-          },
-          {
-            "id": "95",
-            "articleCode": "WL"
-          },
-          {
-            "id": "48",
-            "articleCode": "G231"
-          },
-          {
-            "id": "333",
-            "articleCode": "G231"
-          },
-          {
-            "id": "43",
-            "articleCode": "G231"
-          },
-          {
-            "id": "183",
-            "articleCode": "WR"
-          },
-          {
-            "id": "303",
-            "articleCode": "R4"
-          },
-          {
-            "id": "332",
-            "articleCode": "DKW"
-          },
-          {
-            "id": "34",
-            "articleCode": "R3"
-          },
-          {
-            "id": "79",
-            "articleCode": "R4"
-          },
-          {
-            "id": "328",
-            "articleCode": "G231"
-          },
-          {
-            "id": "181",
-            "articleCode": "G231"
-          },
-          {
-            "id": "16",
-            "articleCode": "R3"
-          },
-          {
-            "id": "314",
-            "articleCode": "G231"
-          },
-          {
-            "id": "18",
-            "articleCode": "R3"
-          },
-          {
-            "id": "32",
-            "articleCode": "R4"
-          },
-          {
-            "id": "76",
-            "articleCode": "R3"
-          },
-          {
-            "id": "64",
-            "articleCode": "R4"
-          },
-          {
-            "id": "214",
-            "articleCode": "G231"
-          },
-          {
-            "id": "81",
-            "articleCode": "G231"
-          },
-          {
-            "id": "315",
-            "articleCode": "G231"
-          },
-          {
-            "id": "80",
-            "articleCode": "R4"
-          },
-          {
-            "id": "172",
-            "articleCode": "G231"
-          },
-          {
-            "id": "8",
-            "articleCode": "WR"
-          },
-          {
-            "id": "273",
-            "articleCode": "G231"
-          },
-          {
-            "id": "67",
-            "articleCode": "R3"
-          },
-          {
-            "id": "202",
-            "articleCode": "WR"
-          },
-          {
-            "id": "236",
-            "articleCode": "G231"
-          },
-          {
-            "id": "52",
-            "articleCode": "G231"
-          },
-          {
-            "id": "35",
-            "articleCode": "R3"
-          },
-          {
-            "id": "26",
-            "articleCode": "G62"
-          },
-          {
-            "id": "41",
-            "articleCode": "G231"
-          },
-          {
-            "id": "65",
-            "articleCode": "R4"
-          },
-          {
-            "id": "235",
-            "articleCode": "G231"
-          },
-          {
-            "id": "159",
-            "articleCode": "W3"
-          },
-          {
-            "id": "179",
-            "articleCode": "W3"
-          },
-          {
-            "id": "160",
-            "articleCode": "WL"
-          },
-          {
-            "id": "87",
-            "articleCode": "G231"
-          },
-          {
-            "id": "85",
-            "articleCode": "G231"
-          },
-          {
-            "id": "71",
-            "articleCode": "R4"
-          },
-          {
-            "id": "15",
-            "articleCode": "R3"
-          },
-          {
-            "id": "9",
-            "articleCode": "R4"
-          },
-          {
-            "id": "175",
-            "articleCode": "R4"
-          },
-          {
-            "id": "305",
-            "articleCode": "R4"
           }
         ],
         "connections": [
           {
-            "segment1Id": "202",
-            "segment1ConnectorIndex": 2,
-            "segment2Id": "332",
+            "segment1Id": "seg-001",
+            "segment1ConnectorIndex": 1,
+            "segment2Id": "seg-002",
             "segment2ConnectorIndex": 0,
             "constraintType": 0
           },
           {
-            "segment1Id": "404",
+            "segment1Id": "seg-002",
             "segment1ConnectorIndex": 1,
-            "segment2Id": "402",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "71",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "214",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "401",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "403",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "403",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "402",
+            "segment2Id": "seg-003",
             "segment2ConnectorIndex": 0,
             "constraintType": 0
           },
           {
-            "segment1Id": "405",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "400",
+            "segment1Id": "seg-003",
+            "segment1ConnectorIndex": 1,
+            "segment2Id": "seg-004",
             "segment2ConnectorIndex": 0,
             "constraintType": 0
           },
           {
-            "segment1Id": "30",
+            "segment1Id": "seg-004",
             "segment1ConnectorIndex": 1,
-            "segment2Id": "304",
+            "segment2Id": "seg-005",
             "segment2ConnectorIndex": 0,
             "constraintType": 0
           },
           {
-            "segment1Id": "76",
+            "segment1Id": "seg-005",
             "segment1ConnectorIndex": 1,
-            "segment2Id": "74",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "181",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "173",
+            "segment2Id": "seg-006",
             "segment2ConnectorIndex": 0,
             "constraintType": 0
           },
           {
-            "segment1Id": "160",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "159",
-            "segment2ConnectorIndex": 3,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "26",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "13",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "13",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "303",
+            "segment1Id": "seg-006",
+            "segment1ConnectorIndex": 1,
+            "segment2Id": "seg-007",
             "segment2ConnectorIndex": 0,
             "constraintType": 0
           },
           {
-            "segment1Id": "31",
+            "segment1Id": "seg-007",
             "segment1ConnectorIndex": 1,
-            "segment2Id": "25",
+            "segment2Id": "seg-008",
             "segment2ConnectorIndex": 0,
             "constraintType": 0
           },
           {
-            "segment1Id": "77",
+            "segment1Id": "seg-008",
             "segment1ConnectorIndex": 1,
-            "segment2Id": "65",
+            "segment2Id": "seg-009",
             "segment2ConnectorIndex": 0,
             "constraintType": 0
           },
           {
-            "segment1Id": "404",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "202",
+            "segment1Id": "seg-009",
+            "segment1ConnectorIndex": 1,
+            "segment2Id": "seg-010",
             "segment2ConnectorIndex": 0,
             "constraintType": 0
           },
           {
-            "segment1Id": "386",
+            "segment1Id": "seg-010",
             "segment1ConnectorIndex": 1,
-            "segment2Id": "376",
+            "segment2Id": "seg-011",
             "segment2ConnectorIndex": 0,
             "constraintType": 0
           },
           {
-            "segment1Id": "400",
+            "segment1Id": "seg-011",
             "segment1ConnectorIndex": 1,
-            "segment2Id": "401",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "332",
-            "segment1ConnectorIndex": 3,
-            "segment2Id": "183",
+            "segment2Id": "seg-012",
             "segment2ConnectorIndex": 0,
             "constraintType": 0
           },
           {
-            "segment1Id": "35",
+            "segment1Id": "seg-012",
             "segment1ConnectorIndex": 1,
-            "segment2Id": "34",
+            "segment2Id": "seg-001",
             "segment2ConnectorIndex": 0,
             "constraintType": 0
           },
           {
-            "segment1Id": "52",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "48",
+            "segment1Id": "seg-013",
+            "segment1ConnectorIndex": 1,
+            "segment2Id": "seg-014",
             "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "76",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "235",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "79",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "77",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "304",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "175",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "316",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "50",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "24",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "20",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "314",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "52",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "36",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "35",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "68",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "67",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "86",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "314",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "18",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "16",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "42",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "30",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "34",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "18",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "73",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "68",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "54",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "87",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "48",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "41",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "80",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "79",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "49",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "42",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "57",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "86",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "65",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "64",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "55",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "85",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "15",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "14",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "43",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "40",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "69",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "305",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "70",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "69",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "175",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "26",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "303",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "9",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "214",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "54",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "41",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "36",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "235",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "57",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "53",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "49",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "87",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "315",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "40",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "33",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "174",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "70",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "8",
-            "segment1ConnectorIndex": 2,
-            "segment2Id": "159",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "95",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "58",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "275",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "179",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "275",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "328",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "173",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "332",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "58",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "305",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "183",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "328",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "33",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "32",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "306",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "174",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "64",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "63",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "74",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "73",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "50",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "43",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "236",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "55",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "25",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "24",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "9",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "8",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "179",
-            "segment1ConnectorIndex": 3,
-            "segment2Id": "95",
-            "segment2ConnectorIndex": 2,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "80",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "236",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "95",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "273",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "279",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "176",
-            "segment2ConnectorIndex": 2,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "172",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "171",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "32",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "31",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "181",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "160",
-            "segment2ConnectorIndex": 2,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "60",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "81",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "315",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "53",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "179",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "81",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "273",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "96",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "96",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "333",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "176",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "179",
-            "segment2ConnectorIndex": 2,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "171",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "8",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "16",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "15",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "333",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "172",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "176",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "63",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "279",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "182",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "71",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "306",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "382",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "379",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "160",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "20",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "85",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "316",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "183",
-            "segment1ConnectorIndex": 2,
-            "segment2Id": "159",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "379",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "202",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "332",
-            "segment1ConnectorIndex": 2,
-            "segment2Id": "182",
-            "segment2ConnectorIndex": 1,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "376",
-            "segment1ConnectorIndex": 1,
-            "segment2Id": "382",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "67",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "60",
-            "segment2ConnectorIndex": 0,
-            "constraintType": 0
-          },
-          {
-            "segment1Id": "14",
-            "segment1ConnectorIndex": 0,
-            "segment2Id": "159",
-            "segment2ConnectorIndex": 2,
             "constraintType": 0
           }
         ]
       },
       "signalBoxPlan": {
-        "id": "c28247fe-797e-43e3-8b35-f082c1a61c8c",
+        "id": "c49342fb-3ea1-46f0-8fc8-ab8d3a6fffc6",
         "name": "Stellwerk",
         "gridWidth": 20,
         "gridHeight": 12,
@@ -1383,42 +371,6 @@
             "id": "c2ecf3d9-9212-41f6-b94e-d8f3599bd7d1",
             "symbol": "SwitchSimpleRight",
             "x": 5,
-            "y": 3,
-            "rotation": 0,
-            "name": "",
-            "address": 0,
-            "feedbackAddress": 0,
-            "signalSystem": "Ks",
-            "properties": {}
-          },
-          {
-            "id": "cefd4f79-e4cf-493d-977a-3dc7e196095a",
-            "symbol": "TrackStraight",
-            "x": 6,
-            "y": 4,
-            "rotation": 225,
-            "name": "",
-            "address": 0,
-            "feedbackAddress": 0,
-            "signalSystem": "Ks",
-            "properties": {}
-          },
-          {
-            "id": "ba87f713-52be-44b9-b884-c4200c6cf7b5",
-            "symbol": "SignalKsCombined",
-            "x": 4,
-            "y": 2,
-            "rotation": 0,
-            "name": "",
-            "address": 0,
-            "feedbackAddress": 0,
-            "signalSystem": "Ks",
-            "properties": {}
-          },
-          {
-            "id": "26a15ad7-4768-4ba0-9cb1-b69ae1600d7e",
-            "symbol": "TrackStraight",
-            "x": 6,
             "y": 3,
             "rotation": 0,
             "name": "",

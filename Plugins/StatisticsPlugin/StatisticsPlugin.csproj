@@ -1,9 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
     <UseWinUI>true</UseWinUI>
     <Nullable>enable</Nullable>
-    <RootNamespace>Moba.Plugin</RootNamespace>
+    <RootNamespace>Moba.Plugin.Statistics</RootNamespace>
     <EnableDynamicLoading>true</EnableDynamicLoading>
   </PropertyGroup>
 
@@ -28,7 +28,7 @@
   <!-- Copy plugin DLL and dependencies to WinUI Plugins folder after build -->
   <Target Name="CopyToWinUIPlugins" AfterTargets="Build">
     <PropertyGroup>
-      <PluginOutputDir>$(MSBuildThisFileDirectory)..\..\WinUI\bin\$(Configuration)\Plugins\SamplePlugin</PluginOutputDir>
+      <PluginOutputDir>$(MSBuildThisFileDirectory)..\..\WinUI\bin\$(Configuration)\Plugins\StatisticsPlugin</PluginOutputDir>
     </PropertyGroup>
     <MakeDir Directories="$(PluginOutputDir)" />
     <!-- Copy all output files including deps.json for AssemblyDependencyResolver -->

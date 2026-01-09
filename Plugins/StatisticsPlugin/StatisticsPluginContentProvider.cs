@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
@@ -11,10 +11,10 @@ using System.ComponentModel;
 
 using Windows.UI;
 
-namespace Moba.Plugin;
+namespace Moba.Plugin.Statistics;
 
 /// <summary>
-/// Sample Plugin Dashboard - Fluent Design System Implementation.
+/// Statistics Plugin Dashboard - Fluent Design System Implementation.
 /// Shows comprehensive project statistics, connection status, and settings overview.
 /// 
 /// CRITICAL WinUI 3 Plugin Architecture:
@@ -22,20 +22,19 @@ namespace Moba.Plugin;
 /// - WinUI cannot resolve Page types from dynamically loaded assemblies
 /// - Instead, return a UIElement via CreateContent()
 /// </summary>
-public sealed class SamplePluginContentProvider
+public sealed class StatisticsPluginContentProvider
 {
-    private readonly SamplePluginViewModel _vm;
+    private readonly StatisticsPluginViewModel _vm;
     private readonly Dictionary<string, TextBlock> _bindings = new();
 
     // Fluent Design Colors
     private static readonly Color AccentBlue = Color.FromArgb(255, 0, 120, 212);
     private static readonly Color SuccessGreen = Color.FromArgb(255, 16, 124, 16);
     private static readonly Color WarningOrange = Color.FromArgb(255, 255, 140, 0);
-    private static readonly Color ErrorRed = Color.FromArgb(255, 196, 43, 28);
     private static readonly Color CardBackground = Color.FromArgb(20, 255, 255, 255);
     private static readonly Color CardBorder = Color.FromArgb(40, 255, 255, 255);
 
-    public SamplePluginContentProvider(SamplePluginViewModel viewModel, MainWindowViewModel mainWindowViewModel)
+    public StatisticsPluginContentProvider(StatisticsPluginViewModel viewModel, MainWindowViewModel mainWindowViewModel)
     {
         _ = mainWindowViewModel;
         _vm = viewModel;
@@ -96,7 +95,7 @@ public sealed class SamplePluginContentProvider
 
     private string GetValue(string prop)
     {
-        var p = typeof(SamplePluginViewModel).GetProperty(prop);
+        var p = typeof(StatisticsPluginViewModel).GetProperty(prop);
         return p?.GetValue(_vm)?.ToString() ?? "-";
     }
 
@@ -112,12 +111,21 @@ public sealed class SamplePluginContentProvider
     {
         var stack = new StackPanel { Spacing = 4 };
 
-        stack.Children.Add(new TextBlock
+        var headerRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
+        headerRow.Children.Add(new FontIcon
         {
-            Text = "📊 MOBAflow Dashboard",
+            Glyph = "\uE9D2",
             FontSize = 32,
-            FontWeight = FontWeights.SemiBold
+            Foreground = new SolidColorBrush(AccentBlue)
         });
+        headerRow.Children.Add(new TextBlock
+        {
+            Text = "MOBAflow Statistics",
+            FontSize = 32,
+            FontWeight = FontWeights.SemiBold,
+            VerticalAlignment = VerticalAlignment.Center
+        });
+        stack.Children.Add(headerRow);
 
         stack.Children.Add(new TextBlock
         {
@@ -200,6 +208,8 @@ public sealed class SamplePluginContentProvider
 
     private Border CreateConnectionCard(string title, string statusProp, (string Label, string Prop)[] items, bool isZ21)
     {
+        _ = statusProp;
+
         var border = new Border
         {
             Background = new SolidColorBrush(CardBackground),
@@ -307,12 +317,12 @@ public sealed class SamplePluginContentProvider
 
         var cards = new[]
         {
-            ("🚂", "Journeys", "TotalJourneys", AccentBlue, 0, 0),
-            ("⚙️", "Workflows", "TotalWorkflows", WarningOrange, 0, 1),
-            ("🚃", "Trains", "TotalTrains", SuccessGreen, 0, 2),
-            ("🚄", "Locomotives", "TotalLocomotives", Color.FromArgb(255, 0, 99, 177), 1, 0),
-            ("🧳", "Passenger Wagons", "TotalPassengerWagons", Color.FromArgb(255, 136, 23, 152), 1, 1),
-            ("📦", "Goods Wagons", "TotalGoodsWagons", Color.FromArgb(255, 107, 107, 107), 1, 2)
+            ("\uE7C1", "Journeys", "TotalJourneys", AccentBlue, 0, 0),
+            ("\uE945", "Workflows", "TotalWorkflows", WarningOrange, 0, 1),
+            ("\uE7C0", "Trains", "TotalTrains", SuccessGreen, 0, 2),
+            ("\uEC49", "Locomotives", "TotalLocomotives", Color.FromArgb(255, 0, 99, 177), 1, 0),
+            ("\uE806", "Passenger Wagons", "TotalPassengerWagons", Color.FromArgb(255, 136, 23, 152), 1, 1),
+            ("\uE7B8", "Goods Wagons", "TotalGoodsWagons", Color.FromArgb(255, 107, 107, 107), 1, 2)
         };
 
         foreach (var (icon, label, prop, color, row, col) in cards)
@@ -326,7 +336,7 @@ public sealed class SamplePluginContentProvider
         return grid;
     }
 
-    private Border CreateStatCard(string icon, string label, string prop, Color accent)
+    private Border CreateStatCard(string iconGlyph, string label, string prop, Color accent)
     {
         var border = new Border
         {
@@ -341,7 +351,12 @@ public sealed class SamplePluginContentProvider
         var stack = new StackPanel { Spacing = 8 };
 
         var headerStack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-        headerStack.Children.Add(new TextBlock { Text = icon, FontSize = 18 });
+        headerStack.Children.Add(new FontIcon
+        {
+            Glyph = iconGlyph,
+            FontSize = 18,
+            Foreground = new SolidColorBrush(accent)
+        });
         headerStack.Children.Add(new TextBlock
         {
             Text = label,

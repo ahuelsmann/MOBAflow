@@ -4,41 +4,41 @@ using Microsoft.Extensions.DependencyInjection;
 
 using Moba.Common.Plugins;
 
-namespace Moba.Plugin.Erp;
+namespace Moba.Plugin.Statistics;
 
 /// <summary>
-/// ERP Plugin demonstrating MOBAerp system - a transaction-based navigation interface.
-/// Shows how to create a plugin with ERP-style transaction codes for quick navigation.
+/// Statistics Plugin providing comprehensive project statistics and system status.
+/// Shows real-time data about journeys, workflows, trains, Z21 connection, and REST API.
 /// 
 /// CRITICAL: Plugins must use ContentProvider pattern, NOT Page inheritance!
 /// WinUI cannot resolve Page types from dynamically loaded assemblies.
 /// </summary>
-public sealed class ErpPlugin : PluginBase
+public sealed class StatisticsPlugin : PluginBase
 {
-    public override string Name => "MOBAerp System";
+    public override string Name => "Statistics";
 
     public override PluginMetadata Metadata => new(
         Name,
         Version: "1.0.0",
         Author: "Andreas Huelsmann",
-        Description: "ERP-style transaction navigation with alphanumeric codes for quick access to MOBAflow pages.",
+        Description: "Real-time project statistics, connection status, and configuration overview for MOBAflow.",
         MinimumHostVersion: "3.15"
     );
 
     public override IEnumerable<PluginPageDescriptor> GetPages()
     {
         yield return new PluginPageDescriptor(
-            Tag: "erp",
-            Title: "MOBAerp",
-            IconGlyph: "\uE756",  // Keyboard icon
-            PageType: typeof(ErpTransactionContentProvider)
+            Tag: "statistics",
+            Title: "Statistics",
+            IconGlyph: "\uE9D2",  // Chart icon
+            PageType: typeof(StatisticsPluginContentProvider)
         );
     }
 
     public override void ConfigureServices(IServiceCollection services)
     {
-        services.AddTransient<ErpPluginViewModel>();
-        services.AddTransient<ErpTransactionContentProvider>();
+        services.AddTransient<StatisticsPluginViewModel>();
+        services.AddTransient<StatisticsPluginContentProvider>();
     }
 
     public override async Task OnInitializedAsync()

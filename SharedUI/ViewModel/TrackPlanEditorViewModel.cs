@@ -1,4 +1,4 @@
-// Copyright ...
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.SharedUI.ViewModel;
 
@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 using Interface;
 
 using Microsoft.Extensions.Logging;
+
 using Moba.TrackPlan.Service;
 
 using Service;
@@ -31,7 +32,6 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     private readonly FeedbackStateManager _feedbackStateManager;
     private readonly ILogger<TrackPlanEditorViewModel> _logger;
 
-    // ⭐ NEW: TopologySolver mit eigenem Logger
     private readonly TopologySolver _topologySolver;
 
     public TrackPlanEditorViewModel(
@@ -51,6 +51,10 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         _topologySolver = topologySolver;
         _logger = logger;
 
+        // Subscribe to Solution lifecycle events for persistence
+        _mainViewModel.SolutionSaving += OnSolutionSaving;
+        _mainViewModel.SolutionLoaded += OnSolutionLoaded;
+
         // Load Piko A-Gleis track library
         foreach (var template in Moba.TrackPlan.Domain.PikoATrackLibrary.Templates)
         {
@@ -58,6 +62,19 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         }
 
         _logger.LogInformation("Loaded {Count} Piko A-Gleis templates", TrackLibrary.Count);
+
+        // Load existing data if Solution was already loaded before this ViewModel was created
+        LoadFromProject();
+    }
+
+    private void OnSolutionSaving(object? sender, EventArgs e)
+    {
+        SaveToProject();
+    }
+
+    private void OnSolutionLoaded(object? sender, EventArgs e)
+    {
+        LoadFromProject();
     }
 
     // --------------------------------------------------------------------
@@ -169,23 +186,52 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     // Commands
     // --------------------------------------------------------------------
 
+    /// <summary>
+    /// Counter for positioning new unconnected segments in a grid pattern.
+    /// </summary>
+    private int _newSegmentCounter;
+
     [RelayCommand]
     private void AddSegment(TrackTemplateViewModel? template)
     {
         if (template == null) return;
 
+        // Calculate initial position for new segment
+        // Place in a grid pattern starting from center of canvas
+        const double startX = 300.0;
+        const double startY = 200.0;
+        const double spacingX = 250.0;
+        const double spacingY = 150.0;
+        const int columnsPerRow = 5;
+
+        var col = _newSegmentCounter % columnsPerRow;
+        var row = _newSegmentCounter / columnsPerRow;
+        var initialX = startX + col * spacingX;
+        var initialY = startY + row * spacingY;
+
+        _newSegmentCounter++;
+
         var segment = new TrackSegmentModel
         {
             Id = Guid.NewGuid().ToString(),
             ArticleCode = template.ArticleCode,
-            WorldTransform = Transform2D.Identity
+            WorldTransform = new Transform2D
+            {
+                TranslateX = initialX,
+                TranslateY = initialY,
+                RotationDegrees = 0
+            }
         };
 
         var vm = new TrackSegmentViewModel(segment);
         Segments.Add(vm);
         SelectedSegment = vm;
 
-        RenderLayout();
+        // Only update PathData for the new segment, don't re-solve topology
+        vm.PathData = GeneratePathData(segment);
+
+        OnPropertyChanged(nameof(SegmentCount));
+        OnPropertyChanged(nameof(StatusText));
     }
 
     [RelayCommand]
@@ -231,8 +277,40 @@ public partial class TrackPlanEditorViewModel : ObservableObject
 
     private void RenderLayout()
     {
-        // ⭐ NEW: Topologie lösen → WorldTransforms setzen
         _topologySolver.Solve(Segments, Connections);
+
+        // Domain-Layout erzeugen
+        var layout = new TrackLayoutModel
+        {
+            Name = LayoutName,
+            Description = LayoutDescription,
+            Segments = Segments.Select(s => s.Model).ToList(),
+            Connections = Connections.ToList()
+        };
+
+        // Renderer anwenden
+        _renderer.Render(layout);
+
+        // PathData aktualisieren
+        foreach (var vm in Segments)
+            vm.PathData = GeneratePathData(vm.Model);
+
+        // Feedback aktualisieren
+        _feedbackStateManager.RegisterSegments(layout.Segments);
+
+        // Canvas aktualisieren
+        CanvasWidth = 1200;
+        CanvasHeight = 800;
+
+        // UI aktualisieren
+        OnPropertyChanged(nameof(SegmentCount));
+        OnPropertyChanged(nameof(StatusText));
+    }
+
+    private void RenderLayout(string preferredRootId)
+    {
+        // Solve topology with specified root segment (keeps its position as anchor)
+        _topologySolver.Solve(Segments, Connections, preferredRootId);
 
         // Domain-Layout erzeugen
         var layout = new TrackLayoutModel
@@ -265,7 +343,83 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     private string GeneratePathData(TrackSegmentModel segment)
     {
         var geometry = _geometryLibrary.GetGeometry(segment.ArticleCode);
-        return geometry?.PathData ?? "M 0,0";
+        if (geometry == null)
+            return "M 0,0";
+
+        // Apply WorldTransform to the path data
+        var wt = segment.WorldTransform;
+        return PathDataTransformer.Transform(
+            geometry.PathData,
+            wt.TranslateX,
+            wt.TranslateY,
+            wt.RotationDegrees);
+    }
+
+    // --------------------------------------------------------------------
+    // Persistence: Save/Load to Project
+    // --------------------------------------------------------------------
+
+    private void SaveToProject()
+    {
+        var project = _mainViewModel.Solution?.Projects?.FirstOrDefault();
+        if (project == null)
+        {
+            _logger.LogWarning("Cannot save TrackLayout: No project available");
+            return;
+        }
+
+        var layout = new TrackLayoutModel
+        {
+            Name = LayoutName,
+            Description = LayoutDescription,
+            Segments = Segments.Select(s => s.Model).ToList(),
+            Connections = Connections.ToList()
+        };
+
+        project.TrackLayout = layout;
+        _logger.LogInformation("Saved TrackLayout with {SegmentCount} segments, {ConnectionCount} connections",
+            layout.Segments.Count, layout.Connections.Count);
+    }
+
+    private void LoadFromProject()
+    {
+        var project = _mainViewModel.Solution?.Projects?.FirstOrDefault();
+        if (project?.TrackLayout == null)
+        {
+            _logger.LogDebug("No TrackLayout in project to load");
+            return;
+        }
+
+        var layout = project.TrackLayout;
+
+        // Clear current state
+        Segments.Clear();
+        Connections.Clear();
+        _newSegmentCounter = 0;
+
+        // Load segments
+        foreach (var segmentModel in layout.Segments)
+        {
+            var vm = new TrackSegmentViewModel(segmentModel);
+            vm.PathData = GeneratePathData(segmentModel);
+            Segments.Add(vm);
+        }
+
+        // Load connections
+        Connections.AddRange(layout.Connections);
+
+        // Update properties
+        LayoutName = layout.Name;
+        LayoutDescription = layout.Description;
+
+        // Register feedback points
+        _feedbackStateManager.RegisterSegments(layout.Segments);
+
+        OnPropertyChanged(nameof(SegmentCount));
+        OnPropertyChanged(nameof(StatusText));
+
+        _logger.LogInformation("Loaded TrackLayout with {SegmentCount} segments, {ConnectionCount} connections",
+            Segments.Count, Connections.Count);
     }
 
     public void RefreshPathData()
@@ -411,5 +565,168 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         _logger.LogInformation(
             "Imported AnyRail layout: {SegmentCount} segments, {ConnectionCount} connections",
             Segments.Count, Connections.Count);
+    }
+
+    // --------------------------------------------------------------------
+    // Connector Docking (Snap-to-Connect)
+    // --------------------------------------------------------------------
+
+    private const double SnapThresholdMm = 20.0;
+
+    /// <summary>
+    /// Attempts to connect a segment to the nearest available connector.
+    /// Returns true if a connection was made.
+    /// </summary>
+    public bool TrySnapToNearestConnector(TrackSegmentViewModel draggedSegment)
+    {
+        var draggedGeom = _geometryLibrary.GetGeometry(draggedSegment.ArticleCode);
+        if (draggedGeom == null) return false;
+
+        double bestDistance = double.MaxValue;
+        TrackSegmentViewModel? bestTarget = null;
+        int bestDraggedConnectorIdx = -1;
+        int bestTargetConnectorIdx = -1;
+
+        // Get world positions of dragged segment's connectors
+        var draggedConnectors = GetWorldConnectorPositions(draggedSegment, draggedGeom);
+
+        foreach (var targetSegment in Segments)
+        {
+            if (targetSegment.Id == draggedSegment.Id) continue;
+
+            // Skip if already connected to this segment
+            if (IsConnected(draggedSegment.Id, targetSegment.Id)) continue;
+
+            var targetGeom = _geometryLibrary.GetGeometry(targetSegment.ArticleCode);
+            if (targetGeom == null) continue;
+
+            var targetConnectors = GetWorldConnectorPositions(targetSegment, targetGeom);
+
+            // Find closest pair of connectors
+            for (int di = 0; di < draggedConnectors.Count; di++)
+            {
+                // Skip if this dragged connector is already used
+                if (IsConnectorUsed(draggedSegment.Id, di)) continue;
+
+                for (int ti = 0; ti < targetConnectors.Count; ti++)
+                {
+                    // Skip if this target connector is already used
+                    if (IsConnectorUsed(targetSegment.Id, ti)) continue;
+
+                    var distance = Distance(draggedConnectors[di], targetConnectors[ti]);
+                    if (distance < SnapThresholdMm && distance < bestDistance)
+                    {
+                        bestDistance = distance;
+                        bestTarget = targetSegment;
+                        bestDraggedConnectorIdx = di;
+                        bestTargetConnectorIdx = ti;
+                    }
+                }
+            }
+        }
+
+        if (bestTarget != null && bestDraggedConnectorIdx >= 0 && bestTargetConnectorIdx >= 0)
+        {
+            // Create connection
+            var connection = new TrackConnectionModel
+            {
+                Segment1Id = draggedSegment.Id,
+                Segment1ConnectorIndex = bestDraggedConnectorIdx,
+                Segment2Id = bestTarget.Id,
+                Segment2ConnectorIndex = bestTargetConnectorIdx,
+                ConstraintType = TrackPlan.Domain.ConstraintType.Rigid
+            };
+
+            Connections.Add(connection);
+            _logger.LogInformation(
+                "Connected {Seg1}[{Conn1}] to {Seg2}[{Conn2}] (distance: {Dist:F1}mm)",
+                draggedSegment.ArticleCode, bestDraggedConnectorIdx,
+                bestTarget.ArticleCode, bestTargetConnectorIdx,
+                bestDistance);
+
+            // Use the target segment as root (it has the established position)
+            RenderLayout(bestTarget.Id);
+            return true;
+        }
+
+        return false;
+    }
+
+    private List<(double X, double Y)> GetWorldConnectorPositions(
+        TrackSegmentViewModel segment,
+        TrackPlan.Domain.TrackGeometry geometry)
+    {
+        var result = new List<(double X, double Y)>();
+        var wt = segment.WorldTransform;
+
+        foreach (var endpoint in geometry.Endpoints)
+        {
+            // Transform local to world coordinates
+            var radians = wt.RotationDegrees * Math.PI / 180.0;
+            var cos = Math.Cos(radians);
+            var sin = Math.Sin(radians);
+
+            var worldX = wt.TranslateX + endpoint.X * cos - endpoint.Y * sin;
+            var worldY = wt.TranslateY + endpoint.X * sin + endpoint.Y * cos;
+
+            result.Add((worldX, worldY));
+        }
+
+        return result;
+    }
+
+    private bool IsConnected(string segmentId1, string segmentId2)
+    {
+        return Connections.Any(c =>
+            (c.Segment1Id == segmentId1 && c.Segment2Id == segmentId2) ||
+            (c.Segment1Id == segmentId2 && c.Segment2Id == segmentId1));
+    }
+
+    private bool IsConnectorUsed(string segmentId, int connectorIndex)
+    {
+        return Connections.Any(c =>
+            (c.Segment1Id == segmentId && c.Segment1ConnectorIndex == connectorIndex) ||
+            (c.Segment2Id == segmentId && c.Segment2ConnectorIndex == connectorIndex));
+    }
+
+    private static double Distance((double X, double Y) a, (double X, double Y) b)
+    {
+        var dx = a.X - b.X;
+        var dy = a.Y - b.Y;
+        return Math.Sqrt(dx * dx + dy * dy);
+    }
+
+    /// <summary>
+    /// Called when a segment drag ends. Attempts to snap and connect.
+    /// </summary>
+    public void OnSegmentDragEnded(TrackSegmentViewModel segment)
+    {
+        segment.IsDragging = false;
+        segment.IsPartOfDragGroup = false;
+
+        // Try to snap to nearest connector
+        if (TrySnapToNearestConnector(segment))
+        {
+            _logger.LogInformation("Segment {ArticleCode} snapped and connected", segment.ArticleCode);
+        }
+    }
+
+    /// <summary>
+    /// Updates segment position during drag (without committing connections).
+    /// </summary>
+    public void UpdateSegmentPosition(TrackSegmentViewModel segment, double canvasX, double canvasY)
+    {
+        var newX = canvasX - segment.DragOffsetX;
+        var newY = canvasY - segment.DragOffsetY;
+
+        segment.Model.WorldTransform = new Transform2D
+        {
+            TranslateX = newX,
+            TranslateY = newY,
+            RotationDegrees = segment.WorldTransform.RotationDegrees
+        };
+
+        // Update PathData for visual feedback
+        segment.PathData = GeneratePathData(segment.Model);
     }
 }

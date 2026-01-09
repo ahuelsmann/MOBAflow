@@ -1,21 +1,21 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using Moba.SharedUI.ViewModel;
 
-namespace Moba.Plugin;
+namespace Moba.Plugin.Statistics;
 
 /// <summary>
-/// ViewModel for the Sample Plugin Dashboard.
+/// ViewModel for the Statistics Plugin Dashboard.
 /// Provides comprehensive statistics, settings, and connection status from MainWindowViewModel.
 /// </summary>
-public sealed partial class SamplePluginViewModel : ObservableObject
+public sealed partial class StatisticsPluginViewModel : ObservableObject
 {
     private readonly MainWindowViewModel _main;
 
-    public SamplePluginViewModel(MainWindowViewModel mainWindowViewModel)
+    public StatisticsPluginViewModel(MainWindowViewModel mainWindowViewModel)
     {
         _main = mainWindowViewModel ?? throw new ArgumentNullException(nameof(mainWindowViewModel));
         _main.PropertyChanged += (s, e) => RefreshAll();
@@ -39,23 +39,23 @@ public sealed partial class SamplePluginViewModel : ObservableObject
     #region Z21 Connection Status
     public bool IsZ21Connected => _main.IsConnected;
     public string Z21StatusText => _main.IsConnected ? "Connected" : "Disconnected";
-    public string Z21StatusIcon => _main.IsConnected ? "🟢" : "🔴";
+    public string Z21StatusIcon => _main.IsConnected ? "\u2705" : "\u274C";
     public string Z21IpAddress => _main.IpAddress ?? "-";
     public string Z21Port => _main.Port ?? "21105";
     public bool IsTrackPowerOn => _main.IsTrackPowerOn;
     public string TrackPowerText => _main.IsTrackPowerOn ? "ON" : "OFF";
-    public string TrackPowerIcon => _main.IsTrackPowerOn ? "⚡" : "⭕";
+    public string TrackPowerIcon => _main.IsTrackPowerOn ? "\u26A1" : "\u2B55";
 
     // Z21 System State (if available)
     public string Z21MainCurrent => $"{_main.MainCurrent:F1} A";
-    public string Z21Temperature => $"{_main.Temperature:F0} °C";
+    public string Z21Temperature => $"{_main.Temperature:F0} C";
     public string Z21SupplyVoltage => $"{_main.SupplyVoltage:F1} V";
     #endregion
 
     #region REST API Status
     public bool IsRestApiRunning => _main.Settings?.Application.AutoStartWebApp ?? false;
     public string RestApiStatusText => IsRestApiRunning ? "Running" : "Stopped";
-    public string RestApiStatusIcon => IsRestApiRunning ? "🟢" : "🔴";
+    public string RestApiStatusIcon => IsRestApiRunning ? "\u2705" : "\u274C";
     public int RestApiPort => _main.Settings?.RestApi.Port ?? 5001;
     public string LocalIpAddress => _main.LocalIpAddress;
     public string RestApiUrl => $"http://{LocalIpAddress}:{RestApiPort}";

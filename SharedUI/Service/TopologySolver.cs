@@ -1,4 +1,4 @@
-﻿namespace Moba.SharedUI.Service;
+namespace Moba.SharedUI.Service;
 
 using Microsoft.Extensions.Logging;
 using TrackPlan.Domain;
@@ -23,12 +23,15 @@ public class TopologySolver
 
     /// <summary>
     /// Computes world transforms for all segments using BFS.
+    /// Only processes connected components. Unconnected segments keep their current position.
+    /// The segment with the "most established" position (first in list that was already placed) is used as root.
     /// </summary>
     public void Solve(
         IList<TrackSegmentViewModel> segments,
-        IList<TrackConnection> connections)
+        IList<TrackConnection> connections,
+        string? preferredRootId = null)
     {
-        if (segments.Count == 0)
+        if (segments.Count == 0 || connections.Count == 0)
             return;
 
         // Build lookup
@@ -37,9 +40,37 @@ public class TopologySolver
         // Build adjacency list
         var graph = BuildGraph(connections);
 
-        // Pick a root (first segment)
-        var root = segments[0];
-        root.WorldTransform = Transform2D.Identity;
+        // Find all segments that are part of the connection graph
+        var connectedSegmentIds = new HashSet<string>();
+        foreach (var conn in connections)
+        {
+            connectedSegmentIds.Add(conn.Segment1Id);
+            connectedSegmentIds.Add(conn.Segment2Id);
+        }
+
+        // Only process segments that have at least one connection
+        var connectedSegments = segments.Where(s => connectedSegmentIds.Contains(s.Id)).ToList();
+        if (connectedSegments.Count == 0)
+            return;
+
+        // Pick root: prefer specified root, otherwise use first segment that isn't at origin
+        TrackSegmentViewModel? root = null;
+        
+        if (preferredRootId != null && byId.TryGetValue(preferredRootId, out var preferredRoot) 
+            && connectedSegmentIds.Contains(preferredRootId))
+        {
+            root = preferredRoot;
+        }
+        else
+        {
+            // Find a segment that already has a non-origin position (was previously placed)
+            root = connectedSegments.FirstOrDefault(s => 
+                Math.Abs(s.WorldTransform.TranslateX) > 1.0 || 
+                Math.Abs(s.WorldTransform.TranslateY) > 1.0);
+            
+            // Fallback to first connected segment
+            root ??= connectedSegments[0];
+        }
 
         var visited = new HashSet<string>();
         var queue = new Queue<string>();
@@ -47,7 +78,8 @@ public class TopologySolver
         visited.Add(root.Id);
         queue.Enqueue(root.Id);
 
-        _logger.LogInformation("TopologySolver: Root = {Root}", root.Id);
+        _logger.LogDebug("TopologySolver: Root = {Root} at ({X:F1}, {Y:F1})", 
+            root.Id, root.WorldTransform.TranslateX, root.WorldTransform.TranslateY);
 
         while (queue.Count > 0)
         {
@@ -73,7 +105,8 @@ public class TopologySolver
             }
         }
 
-        _logger.LogInformation("TopologySolver: Completed. {Count} segments positioned.", visited.Count);
+        _logger.LogDebug("TopologySolver: Completed. {Count}/{Total} segments positioned.", 
+            visited.Count, segments.Count);
     }
 
     // --------------------------------------------------------------------

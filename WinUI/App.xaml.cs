@@ -1,4 +1,4 @@
-﻿﻿﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.WinUI;
 
@@ -265,11 +265,9 @@ public partial class App
                         services.AddTransient<InfoPage>();
                         navigationRegistry.Register("info", "Info", "\uE946", typeof(InfoPage), "Shell");
 
-                        services.AddTransient<SignalBoxPage>();
+                        // SignalBoxPage as Singleton to ensure SolutionSaving subscription persists
+                        services.AddSingleton<SignalBoxPage>();
                         navigationRegistry.Register("signalbox", "MOBAixl", "\uE806", typeof(SignalBoxPage), "Shell");
-
-                        services.AddTransient<ErpPage>();
-                        navigationRegistry.Register("erp", "MOBAerp", "\uE756", typeof(ErpPage), "Shell");
 
                         // MainWindow (Singleton = one instance for app lifetime)
                         services.AddSingleton<MainWindow>();
