@@ -94,8 +94,9 @@
                 </NavigationViewItem>
                 <NavigationViewItemSeparator />
                 <NavigationViewItem
-                    Content="Track Plan"
+                    Content="MOBAtps"
                     Tag="trackplaneditor"
+                    ToolTipService.ToolTip="Track Planning System"
                     Visibility="{Binding ViewModel.IsTrackPlanEditorPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE809;" />
@@ -111,6 +112,14 @@
                 </NavigationViewItem>
                 <NavigationViewItemSeparator />
                 <NavigationViewItem
+                    Content="MOBAixl"
+                    Tag="signalbox"
+                    ToolTipService.ToolTip="Interlocking System (Stellwerk)">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE806;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem
                     Content="Monitor"
                     Tag="monitor"
                     Visibility="{Binding ViewModel.IsMonitorPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -118,21 +127,31 @@
                         <FontIcon Glyph="&#xE7F4;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
+                <NavigationViewItemSeparator />
                 <NavigationViewItem
                     Content="Help"
-                    Tag="help">
+                    Tag="help"
+                    ToolTipService.ToolTip="MOBAflow Wiki and Help">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE897;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem
-                    Content="SAP Transaction"
-                    Tag="sap">
+                    Content="Info"
+                    Tag="info"
+                    ToolTipService.ToolTip="About, License, and Trademarks">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE946;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem
+                    Content="MOBAerp"
+                    Tag="erp"
+                    ToolTipService.ToolTip="Transaction Navigation System">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE756;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItemSeparator />
                 <NavigationViewItem
                     Content="Settings"
                     Tag="settings"

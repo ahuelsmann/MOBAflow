@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Domain;
 
@@ -34,7 +34,14 @@ public class Project
     public List<Journey> Journeys { get; set; }
 
     /// <summary>
-    /// Track layout for this project (segments, connections, work surface size).
+    /// Track layout for this project (MOBAtps - Track Planner System).
+    /// Physical track segments, connections, and work surface.
     /// </summary>
     public TrackLayout? TrackLayout { get; set; }
+
+    /// <summary>
+    /// Signal box plan for this project (MOBAixl - Interlocking System).
+    /// Topological representation with signals, switches, and routes.
+    /// </summary>
+    public SignalBoxPlan? SignalBoxPlan { get; set; }
 }

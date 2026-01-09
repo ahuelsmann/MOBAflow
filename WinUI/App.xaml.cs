@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+﻿﻿﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.WinUI;
 
@@ -33,6 +33,9 @@ using SharedUI.ViewModel;
 using Sound;
 
 using System.IO;
+
+using TrackPlan.Renderer;
+using TrackPlan.Service;
 
 using View;
 
@@ -188,6 +191,12 @@ public partial class App
         services.AddSingleton<SpeechHealthCheck>();
         services.AddSingleton<HealthCheckService>();
 
+        // Track Plan Services (required by TrackPlanEditorViewModel)
+        services.AddSingleton<TrackGeometryLibrary>();
+        services.AddSingleton<TopologyRenderer>();
+        services.AddSingleton<FeedbackStateManager>();
+        services.AddSingleton<TopologySolver>();
+
         // ViewModels
         // Note: Wrapper ViewModels (SolutionViewModel, ProjectViewModel, JourneyViewModel, etc.)
         // are created with 'new' at runtime because they wrap Domain models.
@@ -239,33 +248,40 @@ public partial class App
         navigationRegistry.Register("traincontrol", "Train Control", "\uE7C0", typeof(TrainControlPage), "Shell");
 
         services.AddTransient<TrackPlanEditorPage>();
-        navigationRegistry.Register("trackplaneditor", "Track Plan", "\uE809", typeof(TrackPlanEditorPage), "Shell");
+        navigationRegistry.Register("trackplaneditor", "MOBAtps", "\uE809", typeof(TrackPlanEditorPage), "Shell");
 
         services.AddTransient<JourneyMapPage>();
         navigationRegistry.Register("journeymap", "Journey Map", "\uE81E", typeof(JourneyMapPage), "Shell");
 
-        services.AddTransient<SettingsPage>();
-        navigationRegistry.Register("settings", "Settings", "\uE713", typeof(SettingsPage), "Shell");
+                services.AddTransient<SettingsPage>();
+                navigationRegistry.Register("settings", "Settings", "\uE713", typeof(SettingsPage), "Shell");
 
-        services.AddTransient<MonitorPage>();
-        navigationRegistry.Register("monitor", "Monitor", "\uE7F4", typeof(MonitorPage), "Shell");
+                services.AddTransient<MonitorPage>();
+                        navigationRegistry.Register("monitor", "Monitor", "\uE7F4", typeof(MonitorPage), "Shell");
 
-        services.AddTransient<HelpPage>();
-        navigationRegistry.Register("help", "Help", "\uE897", typeof(HelpPage), "Shell");
+                        services.AddTransient<HelpPage>();
+                        navigationRegistry.Register("help", "Help", "\uE897", typeof(HelpPage), "Shell");
 
-        services.AddTransient<SapTransactionPage>();
-        navigationRegistry.Register("sap", "SAP Transaction", "\uE756", typeof(SapTransactionPage), "Shell");
+                        services.AddTransient<InfoPage>();
+                        navigationRegistry.Register("info", "Info", "\uE946", typeof(InfoPage), "Shell");
 
-        // MainWindow (Singleton = one instance for app lifetime)
-        services.AddSingleton<MainWindow>();
+                        services.AddTransient<SignalBoxPage>();
+                        navigationRegistry.Register("signalbox", "MOBAixl", "\uE806", typeof(SignalBoxPage), "Shell");
 
-        // Load plugins after core registrations so they can override/add
-        var pluginDirectory = Path.Combine(AppContext.BaseDirectory, "Plugins");
-        var pluginLoader = new PluginLoader(pluginDirectory, navigationRegistry);
+                        services.AddTransient<ErpPage>();
+                        navigationRegistry.Register("erp", "MOBAerp", "\uE756", typeof(ErpPage), "Shell");
 
-        // Note: We use synchronous Load here because ConfigureServices is synchronous
-        // Plugin initialization will happen later in OnLaunched after DI is fully set up
-        var loadTask = Task.Run(() => pluginLoader.LoadPluginsAsync(services, logger: null));
+                        // MainWindow (Singleton = one instance for app lifetime)
+                        services.AddSingleton<MainWindow>();
+
+                // Load plugins after core registrations so they can override/add
+                var pluginDirectory = Path.Combine(AppContext.BaseDirectory, "Plugins");
+                var pluginLoader = new PluginLoader(pluginDirectory, navigationRegistry);
+
+                // Note: We use synchronous Load here because ConfigureServices is synchronous
+                // Plugin initialization will happen later in OnLaunched after DI is fully set up
+
+                var loadTask = Task.Run(() => pluginLoader.LoadPluginsAsync(services, logger: null));
         loadTask.Wait(); // Block until plugins are loaded
 
         return services.BuildServiceProvider();

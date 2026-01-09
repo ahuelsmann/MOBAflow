@@ -3,53 +3,51 @@
 namespace Moba.WinUI.View;
 
 using Microsoft.UI;
+using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.Web.WebView2.Core;
 
-using System;
-using System.IO;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+
+using Windows.UI;
 
 /// <summary>
-/// Help page with integrated Wiki viewer using WebView2.
-/// Displays documentation with a navigation tree on the left.
-/// Built programmatically in C# without XAML for reliability.
+/// Help Page with TreeView navigation and RichTextBlock content.
+/// Uses 100% native WinUI controls for best performance and accessibility.
 /// </summary>
 public sealed class HelpPage : Page
 {
-    private readonly string _wikiBasePath;
-    private bool _webView2Initialized;
-    private readonly WebView2 _contentWebView;
-    private readonly TreeView _wikiTreeView;
-    private readonly TextBlock _fallbackTitle;
-    private readonly TextBlock _fallbackContent;
-    private readonly ScrollViewer _fallbackScrollViewer;
+    private readonly TreeView _navigationTreeView;
+    private readonly RichTextBlock _contentRichTextBlock;
+    private readonly TextBlock _headerTextBlock;
+    private readonly Dictionary<string, HelpArticle> _articles = [];
+    private readonly Dictionary<TreeViewNode, string> _nodeToArticleMap = [];
 
     public HelpPage()
     {
-        _wikiBasePath = Path.Combine(AppContext.BaseDirectory, "Resources", "Help");
+        _navigationTreeView = new TreeView { SelectionMode = TreeViewSelectionMode.Single };
+        _navigationTreeView.ItemInvoked += NavigationTreeView_ItemInvoked;
 
-        _contentWebView = new WebView2 { DefaultBackgroundColor = Colors.Transparent };
-        _wikiTreeView = new TreeView { SelectionMode = TreeViewSelectionMode.Single };
-        _wikiTreeView.ItemInvoked += WikiTreeView_ItemInvoked;
+        _contentRichTextBlock = new RichTextBlock
+        {
+            TextWrapping = TextWrapping.Wrap,
+            IsTextSelectionEnabled = true
+        };
 
-        _fallbackTitle = new TextBlock { FontSize = 24, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
-        _fallbackContent = new TextBlock { TextWrapping = TextWrapping.Wrap };
-        _fallbackScrollViewer = new ScrollViewer { Visibility = Visibility.Collapsed, Padding = new Thickness(24) };
+        _headerTextBlock = new TextBlock
+        {
+            FontSize = 28,
+            FontWeight = FontWeights.SemiBold,
+            Margin = new Thickness(0, 0, 0, 16)
+        };
 
-        Content = BuildLayout();
+        InitializeArticles();
         InitializeTreeView();
-        Loaded += HelpPage_Loaded;
-    }
+        Content = BuildLayout();
 
-    private async void HelpPage_Loaded(object sender, RoutedEventArgs e)
-    {
-        _ = sender;
-        _ = e;
-        await InitializeWebView2Async();
-        await LoadHomePageAsync();
+        LoadArticle("welcome");
     }
 
     private Grid BuildLayout()
@@ -59,21 +57,14 @@ public sealed class HelpPage : Page
         rootGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         rootGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-        // Left Panel: Wiki Navigation
         var leftPanel = BuildLeftPanel();
         Grid.SetColumn(leftPanel, 0);
         rootGrid.Children.Add(leftPanel);
 
-        // Divider
-        var divider = new Border
-        {
-            Width = 1,
-            Background = new SolidColorBrush(Colors.Gray)
-        };
+        var divider = new Border { Width = 1, Background = new SolidColorBrush(Colors.Gray) };
         Grid.SetColumn(divider, 1);
         rootGrid.Children.Add(divider);
 
-        // Right Panel: WebView Content
         var rightPanel = BuildRightPanel();
         Grid.SetColumn(rightPanel, 2);
         rootGrid.Children.Add(rightPanel);
@@ -85,259 +76,301 @@ public sealed class HelpPage : Page
     {
         var grid = new Grid { Padding = new Thickness(16) };
         grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
 
         var header = new TextBlock
         {
-            Text = "Wiki Navigation",
+            Text = "MOBAflow Wiki",
             FontSize = 18,
-            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+            FontWeight = FontWeights.SemiBold,
             Margin = new Thickness(0, 0, 0, 16)
         };
         Grid.SetRow(header, 0);
         grid.Children.Add(header);
 
-        var searchBox = new AutoSuggestBox
-        {
-            PlaceholderText = "Search wiki...",
-            Margin = new Thickness(0, 0, 0, 16)
-        };
-        Grid.SetRow(searchBox, 1);
-        grid.Children.Add(searchBox);
-
-        Grid.SetRow(_wikiTreeView, 2);
-        grid.Children.Add(_wikiTreeView);
+        Grid.SetRow(_navigationTreeView, 1);
+        grid.Children.Add(_navigationTreeView);
 
         return grid;
     }
 
-    private Grid BuildRightPanel()
+    private ScrollViewer BuildRightPanel()
     {
-        var grid = new Grid();
-        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        var scrollViewer = new ScrollViewer
+        {
+            Padding = new Thickness(24),
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+        };
 
-        // Toolbar
-        var commandBar = new CommandBar { DefaultLabelPosition = CommandBarDefaultLabelPosition.Right };
-        commandBar.PrimaryCommands.Add(new AppBarButton { Icon = new SymbolIcon(Symbol.Back), Label = "Back" });
-        commandBar.PrimaryCommands.Add(new AppBarButton { Icon = new SymbolIcon(Symbol.Forward), Label = "Forward" });
-        commandBar.PrimaryCommands.Add(new AppBarButton { Icon = new SymbolIcon(Symbol.Refresh), Label = "Refresh" });
-        commandBar.PrimaryCommands.Add(new AppBarSeparator());
+        var contentPanel = new StackPanel { Spacing = 16 };
+        contentPanel.Children.Add(_headerTextBlock);
+        contentPanel.Children.Add(_contentRichTextBlock);
 
-        var homeButton = new AppBarButton { Icon = new SymbolIcon(Symbol.Home), Label = "Home" };
-        homeButton.Click += async (s, e) => await LoadHomePageAsync();
-        commandBar.PrimaryCommands.Add(homeButton);
+        scrollViewer.Content = contentPanel;
+        return scrollViewer;
+    }
 
-        Grid.SetRow(commandBar, 0);
-        grid.Children.Add(commandBar);
+    private void InitializeArticles()
+    {
+        _articles["welcome"] = new HelpArticle
+        {
+            Title = "Welcome to MOBAflow",
+            Sections =
+            [
+                new HelpSection
+                {
+                    Heading = "About MOBAflow",
+                    Content = "MOBAflow is a comprehensive model railway control platform that integrates with Z21 digital command stations. It provides journey management, workflow automation, and real-time feedback monitoring."
+                },
+                new HelpSection
+                {
+                    Heading = "Platform Components",
+                    IsList = true,
+                    ListItems = [
+                        "MOBAflow (WinUI) - Full-featured Windows desktop application",
+                        "MOBAsmart (MAUI) - Mobile app for Android and iOS",
+                        "MOBAdash (Blazor) - Browser-based dashboard",
+                        "Plugin System - Extensible architecture for custom features"
+                    ]
+                },
+                new HelpSection
+                {
+                    Heading = "Getting Help",
+                    Content = "Select a topic from the navigation tree on the left to learn more about MOBAflow's features."
+                }
+            ]
+        };
 
-        // WebView
-        Grid.SetRow(_contentWebView, 1);
-        grid.Children.Add(_contentWebView);
+        _articles["getting-started"] = new HelpArticle
+        {
+            Title = "Getting Started",
+            Sections =
+            [
+                new HelpSection { Heading = "Prerequisites", IsList = true, ListItems = [
+                    "Roco/Fleischmann Z21 or z21 command station",
+                    "Windows 10/11 for MOBAflow desktop",
+                    "Network connection between PC and Z21"
+                ]},
+                new HelpSection { Heading = "First Steps", IsList = true, ListItems = [
+                    "1. Connect to Z21 via Settings page",
+                    "2. Create a new Solution or open an existing one",
+                    "3. Add your locomotives in the Trains section",
+                    "4. Configure feedback points for your layout",
+                    "5. Create journeys to automate train movements"
+                ]}
+            ]
+        };
 
-        // Fallback
-        var fallbackPanel = new StackPanel { Spacing = 16 };
-        fallbackPanel.Children.Add(_fallbackTitle);
-        fallbackPanel.Children.Add(_fallbackContent);
-        _fallbackScrollViewer.Content = fallbackPanel;
-        Grid.SetRow(_fallbackScrollViewer, 1);
-        grid.Children.Add(_fallbackScrollViewer);
+        _articles["train-control"] = new HelpArticle
+        {
+            Title = "Train Control",
+            Sections =
+            [
+                new HelpSection { Heading = "Overview", Content = "The Train Control page provides a comprehensive interface for controlling locomotives. It features a modern speedometer, function buttons (F0-F20), and configurable speed presets." },
+                new HelpSection { Heading = "Features", IsList = true, ListItems = [
+                    "Animated tachometer with speed display",
+                    "Speed Ramp (software momentum) for smooth acceleration",
+                    "Function buttons F0-F20 with custom icons",
+                    "Speed category presets (Stop, Slow, Normal, Fast)",
+                    "Direction control (Forward/Reverse)",
+                    "Emergency stop button"
+                ]},
+                new HelpSection { Heading = "Transaction Code", Content = "Quick access: Enter 'TC' in MOBAerp to open Train Control." }
+            ]
+        };
 
-        return grid;
+        _articles["journeys"] = new HelpArticle
+        {
+            Title = "Journey Configuration",
+            Sections =
+            [
+                new HelpSection { Heading = "What are Journeys?", Content = "Journeys define the path a train takes through your layout, including stops at stations, speed changes, and automated actions triggered by feedback points." },
+                new HelpSection { Heading = "Creating a Journey", IsList = true, ListItems = [
+                    "1. Go to the Journeys page (or enter 'JR' in MOBAerp)",
+                    "2. Click 'Add Journey' to create a new journey",
+                    "3. Select the locomotive for this journey",
+                    "4. Add stops by selecting feedback points",
+                    "5. Configure actions for each stop (announcements, sounds)",
+                    "6. Save the journey to your solution"
+                ]},
+                new HelpSection { Heading = "Automated Actions", IsList = true, ListItems = [
+                    "Station announcements (Azure Speech)",
+                    "Sound effects (WAV files)",
+                    "Speed changes",
+                    "Function toggles (lights, horn)",
+                    "Delays and wait times"
+                ]}
+            ]
+        };
+
+        _articles["signal-box"] = new HelpArticle
+        {
+            Title = "Signal Box (Stellwerk)",
+            Sections =
+            [
+                new HelpSection { Heading = "Overview", Content = "The Signal Box page provides an electronic interlocking (ESTW) interface similar to real railway control centers. It displays a track diagram showing the occupancy status of each section in real-time." },
+                new HelpSection { Heading = "Track Diagram Colors", IsList = true, ListItems = [
+                    "Gray: Track section is free (unoccupied)",
+                    "Red: Track section is occupied (train detected)",
+                    "Green: Route is set",
+                    "Yellow: Route is clearing",
+                    "Blue: Track is blocked"
+                ]},
+                new HelpSection { Heading = "Signal Systems", IsList = true, ListItems = [
+                    "Ks (Kombinationssignal) - Modern unified system",
+                    "H/V (Haupt-/Vorsignal) - Classic light signals",
+                    "Formsignale - Historical semaphore signals"
+                ]},
+                new HelpSection { Heading = "Controls", IsList = true, ListItems = [
+                    "NOTHALT: Emergency stop - immediately stops all trains",
+                    "Track Power: Toggle track power on/off",
+                    "Drag & Drop: Place elements from toolbox",
+                    "Mouse Wheel: Rotate selected element"
+                ]}
+            ]
+        };
+
+        _articles["workflows"] = new HelpArticle
+        {
+            Title = "Workflow Automation",
+            Sections =
+            [
+                new HelpSection { Heading = "Overview", Content = "Workflows allow you to automate complex sequences of actions triggered by events on your layout." },
+                new HelpSection { Heading = "Trigger Types", IsList = true, ListItems = [
+                    "Feedback point activation",
+                    "Manual button press",
+                    "Timer/schedule",
+                    "Journey events"
+                ]},
+                new HelpSection { Heading = "Available Actions", IsList = true, ListItems = [
+                    "Play audio file",
+                    "Text-to-speech announcement",
+                    "Locomotive command (speed, function)",
+                    "Switch turnout",
+                    "Set signal aspect",
+                    "Delay/wait"
+                ]}
+            ]
+        };
+
+        _articles["erp"] = new HelpArticle
+        {
+            Title = "MOBAerp System",
+            Sections =
+            [
+                new HelpSection { Heading = "Overview", Content = "MOBAerp provides ERP-style transaction code navigation for quick access to any page in MOBAflow." },
+                new HelpSection { Heading = "Common Transaction Codes", IsList = true, ListItems = [
+                    "TC - Train Control",
+                    "JR - Journeys",
+                    "WF - Workflows",
+                    "TR - Trains",
+                    "TP - Track Plan",
+                    "SB - Signal Box",
+                    "SET - Settings",
+                    "OV - Overview"
+                ]},
+                new HelpSection { Heading = "Usage", Content = "Enter a transaction code in the command field and press Enter to navigate directly to that page." }
+            ]
+        };
     }
 
     private void InitializeTreeView()
     {
-        var rootNode = new TreeViewNode { Content = "MOBAflow Platform Wiki", IsExpanded = true };
+        var rootNode = new TreeViewNode { Content = "MOBAflow Help", IsExpanded = true };
 
-        var quickStartNode = new TreeViewNode { Content = "Quick Start" };
-        quickStartNode.Children.Add(new TreeViewNode { Content = "Track Statistics" });
-        rootNode.Children.Add(quickStartNode);
+        var welcomeNode = new TreeViewNode { Content = "Welcome" };
+        _nodeToArticleMap[welcomeNode] = "welcome";
+        rootNode.Children.Add(welcomeNode);
 
-        var desktopNode = new TreeViewNode { Content = "MOBAflow (Desktop)", IsExpanded = true };
-        desktopNode.Children.Add(new TreeViewNode { Content = "User Guide" });
-        desktopNode.Children.Add(new TreeViewNode { Content = "Azure Speech Setup" });
-        rootNode.Children.Add(desktopNode);
+        var gettingStartedNode = new TreeViewNode { Content = "Getting Started" };
+        _nodeToArticleMap[gettingStartedNode] = "getting-started";
+        rootNode.Children.Add(gettingStartedNode);
 
-        var mobileNode = new TreeViewNode { Content = "MOBAsmart (Mobile)" };
-        mobileNode.Children.Add(new TreeViewNode { Content = "User Guide" });
-        mobileNode.Children.Add(new TreeViewNode { Content = "Wiki" });
-        rootNode.Children.Add(mobileNode);
+        var featuresNode = new TreeViewNode { Content = "Features", IsExpanded = true };
 
-        var webNode = new TreeViewNode { Content = "MOBAdash (Web)" };
-        webNode.Children.Add(new TreeViewNode { Content = "User Guide" });
-        rootNode.Children.Add(webNode);
+        var trainControlNode = new TreeViewNode { Content = "Train Control" };
+        _nodeToArticleMap[trainControlNode] = "train-control";
+        featuresNode.Children.Add(trainControlNode);
 
-        _wikiTreeView.RootNodes.Add(rootNode);
+        var journeysNode = new TreeViewNode { Content = "Journeys" };
+        _nodeToArticleMap[journeysNode] = "journeys";
+        featuresNode.Children.Add(journeysNode);
+
+        var workflowsNode = new TreeViewNode { Content = "Workflows" };
+        _nodeToArticleMap[workflowsNode] = "workflows";
+        featuresNode.Children.Add(workflowsNode);
+
+        var signalBoxNode = new TreeViewNode { Content = "Signal Box" };
+        _nodeToArticleMap[signalBoxNode] = "signal-box";
+        featuresNode.Children.Add(signalBoxNode);
+
+        var erpNode = new TreeViewNode { Content = "MOBAerp System" };
+        _nodeToArticleMap[erpNode] = "erp";
+        featuresNode.Children.Add(erpNode);
+
+        rootNode.Children.Add(featuresNode);
+
+        _navigationTreeView.RootNodes.Add(rootNode);
     }
 
-    private async Task InitializeWebView2Async()
-    {
-        try
-        {
-            await _contentWebView.EnsureCoreWebView2Async();
-            _webView2Initialized = true;
-
-            _contentWebView.CoreWebView2.Settings.IsScriptEnabled = false;
-            _contentWebView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
-            _contentWebView.CoreWebView2.Settings.IsZoomControlEnabled = true;
-        }
-        catch (Exception)
-        {
-            _webView2Initialized = false;
-            _contentWebView.Visibility = Visibility.Collapsed;
-            _fallbackScrollViewer.Visibility = Visibility.Visible;
-        }
-    }
-
-    private async Task LoadHomePageAsync()
-    {
-        var indexPath = Path.Combine(_wikiBasePath, "INDEX.html");
-        if (File.Exists(indexPath))
-        {
-            await LoadHtmlFileAsync(indexPath);
-        }
-        else
-        {
-            await LoadWelcomeContentAsync();
-        }
-    }
-
-    private async Task LoadHtmlFileAsync(string filePath)
-    {
-        if (!_webView2Initialized)
-        {
-            await LoadFallbackContentAsync(filePath);
-            return;
-        }
-
-        if (File.Exists(filePath))
-        {
-            _contentWebView.Source = new Uri(filePath);
-        }
-    }
-
-    private Task LoadWelcomeContentAsync()
-    {
-        var welcomeHtml = GenerateWelcomeHtml();
-
-        if (_webView2Initialized)
-        {
-            _contentWebView.NavigateToString(welcomeHtml);
-        }
-        else
-        {
-            _fallbackTitle.Text = "MOBAflow Wiki";
-            _fallbackContent.Text = "Welcome to the MOBAflow Platform Wiki!\n\n" +
-                "Select a topic from the navigation tree on the left to get started.\n\n" +
-                "Available sections:\n" +
-                "- Quick Start Guide\n" +
-                "- MOBAflow (Desktop) User Guide\n" +
-                "- MOBAsmart (Mobile) User Guide\n" +
-                "- MOBAdash (Web) User Guide";
-        }
-
-        return Task.CompletedTask;
-    }
-
-    private static string GenerateWelcomeHtml()
-    {
-        return """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <style>
-                    body {
-                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                        padding: 24px;
-                        background-color: transparent;
-                        color: #1a1a1a;
-                    }
-                    @media (prefers-color-scheme: dark) {
-                        body { color: #f0f0f0; }
-                    }
-                    h1 { font-size: 28px; font-weight: 600; margin-bottom: 16px; }
-                    h2 { font-size: 20px; font-weight: 600; margin-top: 24px; margin-bottom: 12px; }
-                    p { line-height: 1.6; margin-bottom: 12px; }
-                    .card {
-                        background: rgba(128, 128, 128, 0.1);
-                        border-radius: 8px;
-                        padding: 16px;
-                        margin: 16px 0;
-                    }
-                </style>
-            </head>
-            <body>
-                <h1>MOBAflow Platform Wiki</h1>
-                <p>Welcome to the MOBAflow Platform Wiki! Select a topic from the navigation tree to get started.</p>
-                
-                <div class="card">
-                    <h2>MOBAflow (Desktop)</h2>
-                    <p>Full-featured Windows application for journey management, workflow automation, and track plan editing.</p>
-                </div>
-                
-                <div class="card">
-                    <h2>MOBAsmart (Mobile)</h2>
-                    <p>Android app for mobile lap counting, Z21 monitoring, and feedback statistics.</p>
-                </div>
-                
-                <div class="card">
-                    <h2>MOBAdash (Web)</h2>
-                    <p>Browser-based dashboard for real-time monitoring and statistics from any device.</p>
-                </div>
-            </body>
-            </html>
-            """;
-    }
-
-    private Task LoadFallbackContentAsync(string filePath)
-    {
-        if (File.Exists(filePath))
-        {
-            var content = File.ReadAllText(filePath);
-            _fallbackTitle.Text = Path.GetFileNameWithoutExtension(filePath);
-            _fallbackContent.Text = StripHtmlTags(content);
-        }
-
-        return Task.CompletedTask;
-    }
-
-    private static string StripHtmlTags(string html)
-    {
-        return System.Text.RegularExpressions.Regex.Replace(html, "<[^>]*>", string.Empty);
-    }
-
-    private void WikiTreeView_ItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args)
+    private void NavigationTreeView_ItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args)
     {
         _ = sender;
 
-        if (args.InvokedItem is TreeViewNode node)
+        if (args.InvokedItem is TreeViewNode node && _nodeToArticleMap.TryGetValue(node, out var articleId))
         {
-            var content = node.Content?.ToString();
-            if (string.IsNullOrEmpty(content))
-                return;
+            LoadArticle(articleId);
+        }
+    }
 
-            var fileName = MapContentToFileName(content);
-            if (!string.IsNullOrEmpty(fileName))
+    private void LoadArticle(string articleId)
+    {
+        if (!_articles.TryGetValue(articleId, out var article)) return;
+
+        _headerTextBlock.Text = article.Title;
+        _contentRichTextBlock.Blocks.Clear();
+
+        foreach (var section in article.Sections)
+        {
+            var headingParagraph = new Paragraph { Margin = new Thickness(0, 16, 0, 8) };
+            headingParagraph.Inlines.Add(new Run
             {
-                var filePath = Path.Combine(_wikiBasePath, fileName);
-                _ = LoadHtmlFileAsync(filePath);
+                Text = section.Heading,
+                FontSize = 18,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = new SolidColorBrush(Color.FromArgb(255, 0, 120, 212))
+            });
+            _contentRichTextBlock.Blocks.Add(headingParagraph);
+
+            if (section.IsList && section.ListItems != null)
+            {
+                foreach (var item in section.ListItems)
+                {
+                    var listParagraph = new Paragraph { Margin = new Thickness(16, 4, 0, 4) };
+                    listParagraph.Inlines.Add(new Run { Text = "• " + item });
+                    _contentRichTextBlock.Blocks.Add(listParagraph);
+                }
+            }
+            else if (!string.IsNullOrEmpty(section.Content))
+            {
+                var contentParagraph = new Paragraph { Margin = new Thickness(0, 0, 0, 8) };
+                contentParagraph.Inlines.Add(new Run { Text = section.Content });
+                _contentRichTextBlock.Blocks.Add(contentParagraph);
             }
         }
     }
 
-    private static string? MapContentToFileName(string content)
+    private sealed class HelpArticle
     {
-        return content switch
-        {
-            "MOBAflow Platform Wiki" => "INDEX.html",
-            "Track Statistics" => "QUICK-START-TRACK-STATISTICS.html",
-            "User Guide" => "MOBAFLOW-USER-GUIDE.html",
-            "Azure Speech Setup" => "AZURE-SPEECH-SETUP.html",
-            "Wiki" => "MOBASMART-WIKI.html",
-            _ => null
-        };
+        public string Title { get; init; } = string.Empty;
+        public List<HelpSection> Sections { get; init; } = [];
+    }
+
+    private sealed class HelpSection
+    {
+        public string Heading { get; init; } = string.Empty;
+        public string Content { get; init; } = string.Empty;
+        public bool IsList { get; init; }
+        public List<string> ListItems { get; init; } = [];
     }
 }

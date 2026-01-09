@@ -1359,6 +1359,77 @@
             "constraintType": 0
           }
         ]
+      },
+      "signalBoxPlan": {
+        "id": "c28247fe-797e-43e3-8b35-f082c1a61c8c",
+        "name": "Stellwerk",
+        "gridWidth": 20,
+        "gridHeight": 12,
+        "cellSize": 60,
+        "elements": [
+          {
+            "id": "a1fcb22c-e16c-404d-bdd9-eb89509957fd",
+            "symbol": "TrackStraight",
+            "x": 4,
+            "y": 3,
+            "rotation": 0,
+            "name": "",
+            "address": 0,
+            "feedbackAddress": 0,
+            "signalSystem": "Ks",
+            "properties": {}
+          },
+          {
+            "id": "c2ecf3d9-9212-41f6-b94e-d8f3599bd7d1",
+            "symbol": "SwitchSimpleRight",
+            "x": 5,
+            "y": 3,
+            "rotation": 0,
+            "name": "",
+            "address": 0,
+            "feedbackAddress": 0,
+            "signalSystem": "Ks",
+            "properties": {}
+          },
+          {
+            "id": "cefd4f79-e4cf-493d-977a-3dc7e196095a",
+            "symbol": "TrackStraight",
+            "x": 6,
+            "y": 4,
+            "rotation": 225,
+            "name": "",
+            "address": 0,
+            "feedbackAddress": 0,
+            "signalSystem": "Ks",
+            "properties": {}
+          },
+          {
+            "id": "ba87f713-52be-44b9-b884-c4200c6cf7b5",
+            "symbol": "SignalKsCombined",
+            "x": 4,
+            "y": 2,
+            "rotation": 0,
+            "name": "",
+            "address": 0,
+            "feedbackAddress": 0,
+            "signalSystem": "Ks",
+            "properties": {}
+          },
+          {
+            "id": "26a15ad7-4768-4ba0-9cb1-b69ae1600d7e",
+            "symbol": "TrackStraight",
+            "x": 6,
+            "y": 3,
+            "rotation": 0,
+            "name": "",
+            "address": 0,
+            "feedbackAddress": 0,
+            "signalSystem": "Ks",
+            "properties": {}
+          }
+        ],
+        "connections": [],
+        "routes": []
       }
     }
   ]

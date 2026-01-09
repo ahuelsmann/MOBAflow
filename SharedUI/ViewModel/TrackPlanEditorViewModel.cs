@@ -1,4 +1,4 @@
-﻿// Copyright ...
+// Copyright ...
 
 namespace Moba.SharedUI.ViewModel;
 
@@ -33,6 +33,32 @@ public partial class TrackPlanEditorViewModel : ObservableObject
 
     // ⭐ NEW: TopologySolver mit eigenem Logger
     private readonly TopologySolver _topologySolver;
+
+    public TrackPlanEditorViewModel(
+        MainWindowViewModel mainViewModel,
+        IIoService ioService,
+        TopologyRenderer renderer,
+        TrackGeometryLibrary geometryLibrary,
+        FeedbackStateManager feedbackStateManager,
+        TopologySolver topologySolver,
+        ILogger<TrackPlanEditorViewModel> logger)
+    {
+        _mainViewModel = mainViewModel;
+        _ioService = ioService;
+        _renderer = renderer;
+        _geometryLibrary = geometryLibrary;
+        _feedbackStateManager = feedbackStateManager;
+        _topologySolver = topologySolver;
+        _logger = logger;
+
+        // Load Piko A-Gleis track library
+        foreach (var template in Moba.TrackPlan.Domain.PikoATrackLibrary.Templates)
+        {
+            TrackLibrary.Add(new TrackTemplateViewModel(template));
+        }
+
+        _logger.LogInformation("Loaded {Count} Piko A-Gleis templates", TrackLibrary.Count);
+    }
 
     // --------------------------------------------------------------------
     // Track Library

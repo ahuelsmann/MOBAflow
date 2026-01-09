@@ -1,11 +1,9 @@
-<ResourceDictionary
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!--
         BacklightToggleButtonStyle: A ToggleButton style that uses the Background property
         for the Checked state instead of the system accent color.
-        
+
         Usage:
         <ToggleButton Style="{StaticResource BacklightToggleButtonStyle}"
                       Background="{x:Bind IsOn, Converter={StaticResource BacklightConverter}, ConverterParameter=#FFD700}" />
