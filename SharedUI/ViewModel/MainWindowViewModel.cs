@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Interface;
@@ -285,6 +285,21 @@ public partial class MainWindowViewModel : ObservableObject
     private City? selectedCity;
 
     public event EventHandler? ExitApplicationRequested;
+
+    /// <summary>
+    /// Raised when navigation to a page is requested (e.g., from plugins).
+    /// The string parameter is the navigation tag (e.g., "traincontrol", "journeys").
+    /// </summary>
+    public event EventHandler<string>? NavigationRequested;
+
+    /// <summary>
+    /// Requests navigation to the specified page tag.
+    /// Used by plugins to trigger navigation without direct access to NavigationService.
+    /// </summary>
+    public void RequestNavigation(string tag)
+    {
+        NavigationRequested?.Invoke(this, tag);
+    }
 
     /// <summary>
     /// Handles changes to the selected object on JourneysPage.

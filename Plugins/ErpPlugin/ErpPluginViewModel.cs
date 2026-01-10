@@ -48,6 +48,10 @@ public sealed partial class ErpPluginViewModel : ObservableObject
         {
             AddToHistory(TransactionCode, "OK");
             StatusMessage = $"Transaction {TransactionCode} executed successfully";
+
+            // Request navigation via MainWindowViewModel event
+            _mainViewModel.RequestNavigation(navigationTag);
+
             TransactionCode = string.Empty;
         }
         else

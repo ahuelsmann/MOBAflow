@@ -86,7 +86,7 @@ public sealed partial class MainWindow
         if (ioService is IoService winUiIoService)
         {
             winUiIoService.SetWindowId(AppWindow.Id, Content.XamlRoot);
-            Debug.WriteLine("Ã¢Å“â€¦ IoService initialized with WindowId");
+            Debug.WriteLine("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ IoService initialized with WindowId");
         }
 
         // Add plugin navigation items before initialization selects overview
@@ -100,6 +100,7 @@ public sealed partial class MainWindow
 
         // Subscribe to ViewModel events
         ViewModel.ExitApplicationRequested += OnExitApplicationRequested;
+        ViewModel.NavigationRequested += OnNavigationRequested;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
         Closed += MainWindow_Closed;
 
@@ -205,6 +206,20 @@ public sealed partial class MainWindow
     private static void OnExitApplicationRequested(object? sender, EventArgs e)
     {
         Application.Current.Exit();
+    }
+
+    private async void OnNavigationRequested(object? sender, string tag)
+    {
+        _ = sender; // Suppress unused parameter warning
+        await _navigationService.NavigateToPageAsync(tag);
+
+        // Update NavigationView selection to match the navigated page
+        var navItem = MainNavigation.MenuItems.OfType<NavigationViewItem>()
+            .FirstOrDefault(item => string.Equals(item.Tag as string, tag, StringComparison.OrdinalIgnoreCase));
+        if (navItem != null)
+        {
+            MainNavigation.SelectedItem = navItem;
+        }
     }
 
     private void OnHealthStatusChanged(object? sender, HealthStatusChangedEventArgs e)

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel.Action;
 
 using CommunityToolkit.Mvvm.Input;
@@ -38,7 +38,7 @@ public partial class AudioViewModel : WorkflowActionViewModel
     [RelayCommand]
     private async Task BrowseForFileAsync()
     {
-        var path = await _ioService.BrowseForAudioFileAsync().ConfigureAwait(false);
+        var path = await _ioService.BrowseForAudioFileAsync();
         if (!string.IsNullOrEmpty(path))
         {
             FilePath = path;
