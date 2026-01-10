@@ -1,5 +1,7 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
+
+using Microsoft.UI.Dispatching;
 
 using SharedUI.ViewModel;
 
@@ -32,12 +34,22 @@ public sealed partial class MonitorPage
         // When new items are added at the top (index 0), scroll to show them
         if (e.Action == NotifyCollectionChangedAction.Add && e.NewStartingIndex == 0)
         {
-            // Scroll to the first item (newest) - use FirstOrDefault for safety
-            var firstItem = TrafficListView.Items.FirstOrDefault();
-            if (firstItem != null)
+            // Defer ScrollIntoView to next UI cycle to avoid COMException during collection update
+            DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
             {
-                TrafficListView.ScrollIntoView(firstItem);
-            }
+                var firstItem = TrafficListView.Items.FirstOrDefault();
+                if (firstItem != null)
+                {
+                    try
+                    {
+                        TrafficListView.ScrollIntoView(firstItem);
+                    }
+                    catch (System.Runtime.InteropServices.COMException)
+                    {
+                        // Ignore scroll failures during rapid updates
+                    }
+                }
+            });
         }
     }
 
@@ -51,12 +63,22 @@ public sealed partial class MonitorPage
         // When new items are added at the top (index 0), scroll to show them
         if (e.Action == NotifyCollectionChangedAction.Add && e.NewStartingIndex == 0)
         {
-            // Scroll to the first item (newest) - use FirstOrDefault for safety
-            var firstItem = ActivityLogListView.Items.FirstOrDefault();
-            if (firstItem != null)
+            // Defer ScrollIntoView to next UI cycle to avoid COMException during collection update
+            DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
             {
-                ActivityLogListView.ScrollIntoView(firstItem);
-            }
+                var firstItem = ActivityLogListView.Items.FirstOrDefault();
+                if (firstItem != null)
+                {
+                    try
+                    {
+                        ActivityLogListView.ScrollIntoView(firstItem);
+                    }
+                    catch (System.Runtime.InteropServices.COMException)
+                    {
+                        // Ignore scroll failures during rapid updates
+                    }
+                }
+            });
         }
     }
 }

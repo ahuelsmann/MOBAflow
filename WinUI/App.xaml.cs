@@ -266,6 +266,16 @@ public partial class App
         services.AddSingleton<SignalBoxPage>();
         navigationRegistry.Register("signalbox", "MOBAixl", "\uE806", typeof(SignalBoxPage), "Shell");
 
+        // Alternative Signal Box Pages (Prototypes)
+        services.AddSingleton<SignalBoxPage2>();
+        navigationRegistry.Register("signalbox2", "SpDrS60", "\uE806", typeof(SignalBoxPage2), "Shell");
+
+        services.AddSingleton<SignalBoxPage3>();
+        navigationRegistry.Register("signalbox3", "ESTW L90", "\uE806", typeof(SignalBoxPage3), "Shell");
+
+        services.AddSingleton<SignalBoxPage4>();
+        navigationRegistry.Register("signalbox4", "ILTIS", "\uE806", typeof(SignalBoxPage4), "Shell");
+
         // MainWindow (Singleton = one instance for app lifetime)
         services.AddSingleton<MainWindow>();
 

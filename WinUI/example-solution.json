@@ -207,10 +207,10 @@
         "connections": []
       },
       "signalBoxPlan": {
-        "id": "272a3ac3-c715-420b-9c93-c33565eae111",
-        "name": "Stellwerk",
-        "gridWidth": 20,
-        "gridHeight": 12,
+        "id": "339a730c-41c4-4e1e-a3e1-16e6d01545d0",
+        "name": "ILTIS Stellwerk",
+        "gridWidth": 24,
+        "gridHeight": 14,
         "cellSize": 60,
         "elements": [
           {

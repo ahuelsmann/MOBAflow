@@ -116,6 +116,30 @@
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem
+                    Content="SpDrS60"
+                    Tag="signalbox2"
+                    ToolTipService.ToolTip="Classic Relay Interlocking Style">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE806;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem
+                    Content="ESTW L90"
+                    Tag="signalbox3"
+                    ToolTipService.ToolTip="Modern Siemens ESTW Style">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE806;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem
+                    Content="ILTIS"
+                    Tag="signalbox4"
+                    ToolTipService.ToolTip="Swiss ILTIS/Thales Style">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE806;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem
                     Content="Monitor"
                     Tag="monitor"
                     Visibility="{Binding ViewModel.IsMonitorPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -180,8 +204,8 @@
                     <!--  Transaction Code Band (SAP-style command palette, center)  -->
                     <Border
                         Grid.Column="1"
-                        HorizontalAlignment="Center"
                         Padding="8,4"
+                        HorizontalAlignment="Center"
                         Background="#0066B3"
                         CornerRadius="4">
                         <StackPanel Orientation="Horizontal" Spacing="8">
