@@ -51,7 +51,7 @@ public partial class MainWindowViewModel : ObservableObject
     // Runtime State
     private JourneyManager? _journeyManager;
     private Timer? _z21AutoConnectTimer;
-    
+
     // Event handlers for model change tracking
     private JourneyViewModel? _currentJourneyWithModelChangedSubscription;
     private EventHandler? _journeyModelChangedHandler;
@@ -102,10 +102,10 @@ public partial class MainWindowViewModel : ObservableObject
 
         // ✅ Subscribe to Traffic Monitor immediately (before connection)
         InitializeTrafficMonitor();
-        
+
         // ✅ Initialize Track Statistics with defaults (will be updated when project loads)
         InitializeStatisticsFromFeedbackPoints();
-        
+
         // ✅ Auto-connect to Z21 at startup (fire-and-forget, non-blocking)
         // Connection status will be updated via OnConnectedChanged event when Z21 responds
         _ = TryAutoConnectToZ21Async();
@@ -273,6 +273,13 @@ public partial class MainWindowViewModel : ObservableObject
     private string simulateInPort = "1";
 
     /// <summary>
+    /// Transaction code for quick navigation (SAP-style command palette).
+    /// Supports codes like TC (Train Control), JR (Journeys), WF (Workflows), etc.
+    /// </summary>
+    [ObservableProperty]
+    private string transactionCode = string.Empty;
+
+    /// <summary>
     /// Available cities with stations (loaded from master data).
     /// </summary>
     [ObservableProperty]
@@ -302,6 +309,51 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
+    /// Transaction code to navigation tag mappings (SAP-style shortcuts).
+    /// </summary>
+    private static readonly Dictionary<string, string> TransactionMappings = new(StringComparer.OrdinalIgnoreCase)
+    {
+        { "TC", "traincontrol" },
+        { "TR", "trains" },
+        { "JR", "journeys" },
+        { "WF", "workflows" },
+        { "TP", "trackplaneditor" },
+        { "JM", "journeymap" },
+        { "SB", "signalbox" },
+        { "OV", "overview" },
+        { "SOL", "solution" },
+        { "SET", "settings" },
+        { "MON", "monitor" },
+        { "HELP", "help" },
+        { "INFO", "info" },
+        { "ERP", "erp" },
+        { "STAT", "statistics" },
+    };
+
+    /// <summary>
+    /// Executes navigation based on the current transaction code.
+    /// Clears the transaction code after successful navigation.
+    /// </summary>
+    [RelayCommand]
+    private void ExecuteTransactionCode()
+    {
+        if (string.IsNullOrWhiteSpace(TransactionCode))
+            return;
+
+        var cleanCode = TransactionCode.Trim();
+
+        // Support /N prefix (SAP convention)
+        if (cleanCode.StartsWith("/N", StringComparison.OrdinalIgnoreCase))
+            cleanCode = cleanCode[2..];
+
+        if (TransactionMappings.TryGetValue(cleanCode, out var tag))
+        {
+            RequestNavigation(tag);
+            TransactionCode = string.Empty;
+        }
+    }
+
+    /// <summary>
     /// Handles changes to the selected object on JourneysPage.
     /// Subscribes to ModelChanged events of journeys to track unsaved changes.
     /// </summary>
@@ -318,13 +370,13 @@ public partial class MainWindowViewModel : ObservableObject
         if (value is JourneyViewModel journeyVM)
         {
             _currentJourneyWithModelChangedSubscription = journeyVM;
-            
+
             // Create handler that marks solution as having unsaved changes
             _journeyModelChangedHandler = (_, _) =>
             {
                 HasUnsavedChanges = true;  // Mark as unsaved, but don't auto-save
             };
-            
+
             journeyVM.ModelChanged += _journeyModelChangedHandler;
         }
     }
@@ -453,7 +505,7 @@ public partial class MainWindowViewModel : ObservableObject
         _z21.OnVersionInfoChanged -= OnZ21VersionInfoChanged;
         _z21.OnConnectionLost -= HandleConnectionLost;
         _z21.OnConnectedChanged -= OnZ21ConnectedChanged;
-        
+
         ExitApplicationRequested?.Invoke(this, EventArgs.Empty);
     }
 

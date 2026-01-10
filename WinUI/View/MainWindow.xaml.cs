@@ -27,7 +27,7 @@ public sealed partial class MainWindow
     private readonly HealthCheckService _healthCheckService;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly NavigationRegistry _navigationRegistry;
-    
+
     /// <summary>
     /// Application version string for display in TitleBar.
     /// </summary>
@@ -49,13 +49,13 @@ public sealed partial class MainWindow
         IUiDispatcher uiDispatcher,
             IIoService ioService,
             NavigationRegistry navigationRegistry)
-        {
-            ViewModel = viewModel;
-            TrackPlanEditorViewModel = trackPlanEditorViewModel;
-            _navigationService = navigationService;
-            _healthCheckService = healthCheckService;
-            _uiDispatcher = uiDispatcher;
-            _navigationRegistry = navigationRegistry;
+    {
+        ViewModel = viewModel;
+        TrackPlanEditorViewModel = trackPlanEditorViewModel;
+        _navigationService = navigationService;
+        _healthCheckService = healthCheckService;
+        _uiDispatcher = uiDispatcher;
+        _navigationRegistry = navigationRegistry;
 
         InitializeComponent();
 
@@ -120,7 +120,7 @@ public sealed partial class MainWindow
         // Find Help item - plugins should be inserted BEFORE Help/Info/Settings group
         var helpItem = MainNavigation.MenuItems.OfType<NavigationViewItem>()
             .FirstOrDefault(item => (item.Tag as string) == "help");
-        
+
         if (helpItem is null)
         {
             return; // No help page found, cannot determine insertion point
@@ -129,7 +129,7 @@ public sealed partial class MainWindow
         var pluginPages = _navigationRegistry.Pages
             .Where(p => !string.Equals(p.Source, "Shell", StringComparison.OrdinalIgnoreCase))
             .ToList();
-        
+
         if (pluginPages.Count == 0)
         {
             return; // No plugins to add
@@ -177,6 +177,9 @@ public sealed partial class MainWindow
     {
         await _navigationService.InitializeAsync(ContentFrame);
         await _navigationService.NavigateToOverviewAsync();
+
+        // Set initial focus to Transaction Code TextBox for quick keyboard navigation
+        TransactionCodeTextBox.Focus(FocusState.Programmatic);
     }
 
     #region Event Handlers
@@ -225,10 +228,7 @@ public sealed partial class MainWindow
     private void OnHealthStatusChanged(object? sender, HealthStatusChangedEventArgs e)
     {
         // Update ViewModel on UI thread
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            ViewModel.UpdateHealthStatus(e.StatusMessage);
-        });
+        _uiDispatcher.InvokeOnUi(() => ViewModel.UpdateHealthStatus(e.StatusMessage));
     }
 
     private async void NavigationView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
@@ -249,6 +249,23 @@ public sealed partial class MainWindow
         if (ViewModel.SetTrackPowerCommand.CanExecute(toggleSwitch.IsOn))
         {
             ViewModel.SetTrackPowerCommand.Execute(toggleSwitch.IsOn);
+        }
+    }
+
+    private void ThemeToggleSwitch_Toggled(object sender, RoutedEventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        ApplyTheme(ViewModel.IsDarkMode);
+    }
+
+    private void TransactionCodeTextBox_KeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    {
+        _ = sender; // Suppress unused parameter warning
+        if (e.Key == Windows.System.VirtualKey.Enter)
+        {
+            ViewModel.ExecuteTransactionCodeCommand.Execute(null);
+            e.Handled = true;
         }
     }
     #endregion

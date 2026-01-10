@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.TrackPlan.Geometry;
 
 using Domain;
@@ -44,8 +44,8 @@ public static class TrackGeometryExtensions
         var cos = Math.Cos(rad);
         var sin = Math.Sin(rad);
         
-        var invertedX = -connectorTransform.TranslateX * cos + connectorTransform.TranslateY * sin;
-        var invertedY = -connectorTransform.TranslateX * sin - connectorTransform.TranslateY * cos;
+        var invertedX = (-connectorTransform.TranslateX * cos) + (connectorTransform.TranslateY * sin);
+        var invertedY = (-connectorTransform.TranslateX * sin) - (connectorTransform.TranslateY * cos);
 
         return new Transform2D
         {

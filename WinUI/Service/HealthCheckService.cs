@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 using Timer = System.Timers.Timer;
 
@@ -12,7 +12,7 @@ using Sound;
 /// Centralized health check service that monitors Azure Speech Service and other dependencies.
 /// Provides periodic health checks and status reporting for UI display.
 /// </summary>
-public class HealthCheckService : IDisposable
+public partial class HealthCheckService : IDisposable
 {
     private readonly SpeechHealthCheck _speechHealthCheck;
     private readonly ILogger<HealthCheckService> _logger;

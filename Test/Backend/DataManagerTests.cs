@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Test.Backend;
 
@@ -108,7 +108,7 @@ public class DataManagerTests
 
         // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(result!.Cities.Count, Is.EqualTo(2), "Should load 2 cities");
+        Assert.That(result!.Cities, Has.Count.EqualTo(2), "Should load 2 cities");
         Assert.That(result.Cities[0].Name, Is.EqualTo("Berlin"), "First city should be Berlin");
         Assert.That(result.Cities[1].Name, Is.EqualTo("Munich"), "Second city should be Munich");
     }
@@ -166,7 +166,7 @@ public class DataManagerTests
         var result = await DataManager.LoadAsync(_testFilePath);
 
         // Assert
-        Assert.That(result!.Cities.Count, Is.EqualTo(5), "Should load all 5 cities");
+        Assert.That(result!.Cities, Has.Count.EqualTo(5), "Should load all 5 cities");
         var cityNames = result.Cities.Select(c => c.Name).ToList();
         Assert.That(cityNames, Contains.Item("Berlin"));
         Assert.That(cityNames, Contains.Item("Munich"));

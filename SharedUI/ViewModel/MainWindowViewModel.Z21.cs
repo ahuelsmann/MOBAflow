@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using Backend;
@@ -40,7 +40,7 @@ public partial class MainWindowViewModel
         _journeyManager = new JourneyManager(_z21, project, _workflowService, _executionContext);
         _journeyManager.StationChanged += OnJourneyStationChanged;
         _journeyManager.FeedbackReceived += OnJourneyFeedbackReceived;
-        
+
         // ✅ Subscribe directly to WorkflowService (simplified event chain)
         _workflowService.ActionExecutionError += OnActionExecutionError;
 
@@ -201,10 +201,7 @@ public partial class MainWindowViewModel
             SelectedJourney.ResetCommand.Execute(null);
 
             // Also reset in JourneyManager if available
-            if (_journeyManager != null)
-            {
-                _journeyManager.Reset(SelectedJourney.Model);
-            }
+            _journeyManager?.Reset(SelectedJourney.Model);
 
             StatusText = $"Journey '{SelectedJourney.Name}' reset";
         }
@@ -239,7 +236,7 @@ public partial class MainWindowViewModel
     private bool CanConnect() => !IsConnected;
     private bool CanDisconnect() => IsConnected;
     private bool CanToggleTrackPower() => IsConnected;
-    
+
     /// <summary>
     /// Attempts to auto-connect to Z21 at startup.
     /// Non-blocking: returns immediately, connection status updated via OnConnectedChanged event.
@@ -256,10 +253,10 @@ public partial class MainWindowViewModel
 
         // Set initial status
         StatusText = $"Connecting to {_settings.Z21.CurrentIpAddress}...";
-        
+
         // Initial connection attempt
         await AttemptZ21ConnectionAsync().ConfigureAwait(false);
-        
+
         // Start retry timer (checks periodically if not connected)
         var retryInterval = TimeSpan.FromSeconds(_settings.Z21.AutoConnectRetryIntervalSeconds);
         _z21AutoConnectTimer = new Timer(
@@ -268,10 +265,10 @@ public partial class MainWindowViewModel
             retryInterval,  // First retry after configured interval
             retryInterval   // Subsequent retries at same interval
         );
-        
+
         Debug.WriteLine($"🔄 Z21 Auto-Connect retry timer started ({_settings.Z21.AutoConnectRetryIntervalSeconds}s interval)");
     }
-   
+
     /// <summary>
     /// Performs a single connection attempt to Z21.
     /// </summary>
@@ -295,7 +292,7 @@ public partial class MainWindowViewModel
 
             Debug.WriteLine($"🔄 Z21 Auto-Connect: Attempting connection to {address}:{port}...");
             await _z21.ConnectAsync(address, port).ConfigureAwait(false);
-            
+
             // Note: Status will be updated by OnConnectedChanged event when Z21 responds
             // Don't set "Waiting for..." status here - it gets overwritten by the event!
         }
@@ -305,7 +302,7 @@ public partial class MainWindowViewModel
             Debug.WriteLine($"⚠️ Z21 Auto-Connect failed: {ex.Message}");
         }
     }
-    
+
     /// <summary>
     /// Handles Z21 connected state changes from the backend.
     /// Called when Z21 starts or stops responding.
@@ -315,12 +312,12 @@ public partial class MainWindowViewModel
         _uiDispatcher.InvokeOnUi(() =>
         {
             IsConnected = connected;
-            
+
             if (connected)
             {
                 StatusText = $"Connected to {_settings.Z21.CurrentIpAddress}";
                 Debug.WriteLine("✅ Z21 connection confirmed - Z21 is responding");
-                
+
                 // Initialize JourneyManager if needed
                 if (_journeyManager == null)
                 {
@@ -336,7 +333,7 @@ public partial class MainWindowViewModel
                 StatusText = "Z21 disconnected";
                 Debug.WriteLine("❌ Z21 disconnected");
             }
-            
+
             ConnectCommand.NotifyCanExecuteChanged();
             DisconnectCommand.NotifyCanExecuteChanged();
             SetTrackPowerCommand.NotifyCanExecuteChanged();
@@ -356,8 +353,8 @@ public partial class MainWindowViewModel
         {
             // XBusStatus.TrackOff is the OPPOSITE of IsTrackPowerOn
             IsTrackPowerOn = !xBusStatus.TrackOff;
-            
-            _logger.LogInformation("XBus status updated: Track Power {PowerState}, EmergencyStop={EmergencyStop}, ShortCircuit={ShortCircuit}", 
+
+            _logger.LogInformation("XBus status updated: Track Power {PowerState}, EmergencyStop={EmergencyStop}, ShortCircuit={ShortCircuit}",
                 IsTrackPowerOn ? "ON" : "OFF", xBusStatus.EmergencyStop, xBusStatus.ShortCircuit);
         });
     }
@@ -370,7 +367,7 @@ public partial class MainWindowViewModel
             FirmwareVersion = versionInfo.FirmwareVersion;
             HardwareType = versionInfo.HardwareType;
 
-            _logger.LogInformation("Z21 Version Info: S/N={SerialNumber}, HW={HardwareType}, FW={FirmwareVersion}", 
+            _logger.LogInformation("Z21 Version Info: S/N={SerialNumber}, HW={HardwareType}, FW={FirmwareVersion}",
                 SerialNumber, HardwareType, FirmwareVersion);
         });
     }
@@ -406,11 +403,11 @@ public partial class MainWindowViewModel
         if (systemState.IsProgrammingMode)
             warnings.Add("Programming");
 
-        StatusText = warnings.Count > 0 
-            ? $"Connected | {string.Join(" | ", warnings)}" 
+        StatusText = warnings.Count > 0
+            ? $"Connected | {string.Join(" | ", warnings)}"
             : "Connected";
 
-        _logger.LogDebug("Z21 System State: Track Power {PowerState}, Current={Current}mA", 
+        _logger.LogDebug("Z21 System State: Track Power {PowerState}, Current={Current}mA",
             systemState.IsTrackPowerOn ? "ON" : "OFF", systemState.MainCurrent);
     }
 
@@ -441,20 +438,20 @@ public partial class MainWindowViewModel
             var journeyVM = SolutionViewModel?.Projects
                 .SelectMany(p => p.Journeys)
                 .FirstOrDefault(j => j.Id == e.JourneyId);
-            
+
             if (journeyVM != null)
             {
                 // Manually notify property changes since the ViewModel's SessionState 
                 // is a dummy one and doesn't receive updates from JourneyManager
                 journeyVM.UpdateFromSessionState(e.SessionState);
-                
+
                 // Update IsCurrentStation for all stations in this journey
                 // This highlights the current station in the UI
                 foreach (var stationVM in journeyVM.Stations)
                 {
                     stationVM.IsCurrentStation = stationVM.Model.Id == e.Station.Id;
                 }
-                
+
                 Debug.WriteLine($"📊 JourneyViewModel '{journeyVM.Name}' updated: Counter={e.SessionState.Counter}, Pos={e.SessionState.CurrentPos}, Station={e.SessionState.CurrentStationName}");
             }
             else
@@ -477,12 +474,12 @@ public partial class MainWindowViewModel
             var journeyVM = SolutionViewModel?.Projects
                 .SelectMany(p => p.Journeys)
                 .FirstOrDefault(j => j.Id == e.JourneyId);
-            
+
             if (journeyVM != null)
             {
                 // Update counter in UI
                 journeyVM.UpdateFromSessionState(e.SessionState);
-                
+
                 Debug.WriteLine($"🔔 JourneyViewModel '{journeyVM.Name}' feedback: Counter={e.SessionState.Counter}");
             }
             else

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 using System.Reflection;
 using System.Runtime.Loader;
@@ -78,11 +78,6 @@ public sealed class PluginLoadContext : AssemblyLoadContext
     protected override nint LoadUnmanagedDll(string unmanagedDllName)
     {
         var libraryPath = _resolver.ResolveUnmanagedDllToPath(unmanagedDllName);
-        if (libraryPath is not null)
-        {
-            return LoadUnmanagedDllFromPath(libraryPath);
-        }
-
-        return nint.Zero;
+        return libraryPath is not null ? LoadUnmanagedDllFromPath(libraryPath) : nint.Zero;
     }
 }

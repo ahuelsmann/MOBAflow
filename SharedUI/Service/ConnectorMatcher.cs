@@ -1,4 +1,4 @@
-﻿// Copyright ...
+// Copyright ...
 
 namespace Moba.SharedUI.Service;
 
@@ -59,7 +59,7 @@ public class ConnectorMatcher
         for (int i = 0; i < geom1.Endpoints.Count; i++)
         {
             var ep1 = geom1.Endpoints[i];
-            var world1 = seg1.WorldTransform.TransformPoint(ep1.X, ep1.Y);
+            var (X, Y) = seg1.WorldTransform.TransformPoint(ep1.X, ep1.Y);
             var heading1 = NormalizeAngle(geom1.EndpointHeadingsDeg[i] + seg1.WorldTransform.RotationDegrees);
 
             for (int j = 0; j < geom2.Endpoints.Count; j++)
@@ -68,9 +68,9 @@ public class ConnectorMatcher
                 var world2 = seg2.WorldTransform.TransformPoint(ep2.X, ep2.Y);
                 var heading2 = NormalizeAngle(geom2.EndpointHeadingsDeg[j] + seg2.WorldTransform.RotationDegrees);
 
-                var dx = world1.X - world2.X;
-                var dy = world1.Y - world2.Y;
-                var dist = Math.Sqrt(dx * dx + dy * dy);
+                var dx = X - world2.X;
+                var dy = Y - world2.Y;
+                var dist = Math.Sqrt((dx * dx) + (dy * dy));
 
                 // Heading soll in etwa entgegengesetzt sein → +180°
                 var headingExpected = NormalizeAngle(heading2 + 180);

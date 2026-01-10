@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.TrackPlan.Service;
 
 using Domain;
@@ -11,7 +11,7 @@ using System.Diagnostics;
 /// </summary>
 public class FeedbackStateManager
 {
-    private readonly Dictionary<uint, TrackSegment> _inPortToSegmentMap = new();
+    private readonly Dictionary<uint, TrackSegment> _inPortToSegmentMap = [];
 
     public event EventHandler<FeedbackStateChangedEventArgs>? FeedbackStateChanged;
 

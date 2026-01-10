@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WebApp.Service;
 
 using System.Net;
@@ -34,17 +34,19 @@ public class UdpDiscoveryService : BackgroundService
 
         try
         {
-            _udpListener = new UdpClient();
-            _udpListener.ExclusiveAddressUse = false;
-            
+            _udpListener = new UdpClient
+            {
+                ExclusiveAddressUse = false
+            };
+
             var localEndPoint = new IPEndPoint(IPAddress.Any, DISCOVERY_PORT);
             _udpListener.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             _udpListener.Client.Bind(localEndPoint);
-            
+
             // Join multicast group
             var multicastAddress = IPAddress.Parse(MULTICAST_ADDRESS);
             _udpListener.JoinMulticastGroup(multicastAddress);
-            
+
             _logger.LogInformation("✅ Joined Multicast group {MulticastAddress} on port {Port}", MULTICAST_ADDRESS, DISCOVERY_PORT);
 
             while (!stoppingToken.IsCancellationRequested)
@@ -60,12 +62,12 @@ public class UdpDiscoveryService : BackgroundService
 
                         // Get local IP and REST API port
                         var localIp = GetLocalIPAddress();
-                        
+
                         // ✅ Parse port from Kestrel URL (e.g., "http://localhost:5001")
                         // Default to 5001 if not configured
                         var kestrelUrl = _configuration["Kestrel:Endpoints:Http:Url"] ?? "http://localhost:5001";
                         var restPort = 5001; // Default
-                        
+
                         if (Uri.TryCreate(kestrelUrl, UriKind.Absolute, out var uri))
                         {
                             restPort = uri.Port;
@@ -78,7 +80,7 @@ public class UdpDiscoveryService : BackgroundService
                         // Send response back to client
                         await _udpListener.SendAsync(responseBytes, result.RemoteEndPoint, stoppingToken);
 
-                        _logger.LogInformation("Sent discovery response to {RemoteEndPoint}: {Response}", 
+                        _logger.LogInformation("Sent discovery response to {RemoteEndPoint}: {Response}",
                             result.RemoteEndPoint, response);
                     }
                 }
@@ -110,10 +112,10 @@ public class UdpDiscoveryService : BackgroundService
     private static string GetLocalIPAddress()
     {
         var host = Dns.GetHostEntry(Dns.GetHostName());
-        
+
         // Prefer 192.168.x.x addresses (common private network range)
         var privateIp = host.AddressList
-            .FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork 
+            .FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork
                                && ip.ToString().StartsWith("192.168."));
 
         if (privateIp != null)

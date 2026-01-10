@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Converter;
 
 using Microsoft.UI;
@@ -12,7 +12,7 @@ using Windows.UI;
 /// Empty string returns null (binding will use FallbackValue or default).
 /// Used for dynamic background colors in track cards and station highlighting.
 /// </summary>
-public class HexColorToBrushConverter : IValueConverter
+public partial class HexColorToBrushConverter : IValueConverter
 {
     public object? Convert(object value, Type targetType, object parameter, string language)
     {
@@ -32,7 +32,7 @@ public class HexColorToBrushConverter : IValueConverter
                 // Parse hex string (RRGGBB format)
                 if (hexColor.Length == 6)
                 {
-                    var r = System.Convert.ToByte(hexColor.Substring(0, 2), 16);
+                    var r = System.Convert.ToByte(hexColor[..2], 16);
                     var g = System.Convert.ToByte(hexColor.Substring(2, 2), 16);
                     var b = System.Convert.ToByte(hexColor.Substring(4, 2), 16);
                     

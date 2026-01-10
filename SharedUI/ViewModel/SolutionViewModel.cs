@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -31,7 +31,7 @@ public partial class SolutionViewModel : ObservableObject, IViewModelWrapper<Sol
     /// Manually synced with Model.Projects via Refresh().
     /// This is bound directly to TreeView.ItemsSource.
     /// </summary>
-    public ObservableCollection<ProjectViewModel> Projects { get; } = new();
+    public ObservableCollection<ProjectViewModel> Projects { get; } = [];
 
     public SolutionViewModel(Solution model, IUiDispatcher? dispatcher = null, IIoService? ioService = null)
     {

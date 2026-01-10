@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Model;
@@ -64,10 +64,7 @@ public partial class MonitorPageViewModel : ObservableObject
         _logger = logger;
 
         // Subscribe to TrafficPackets changes to update count
-        TrafficPackets.CollectionChanged += (_, _) =>
-        {
-            OnPropertyChanged(nameof(TrafficCount));
-        };
+        TrafficPackets.CollectionChanged += (_, _) => OnPropertyChanged(nameof(TrafficCount));
 
         // Subscribe to connection status changes
         _mainWindowViewModel.PropertyChanged += (_, e) =>

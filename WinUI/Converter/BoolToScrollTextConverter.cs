@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Converter;
 
 using Microsoft.UI.Xaml.Data;
@@ -7,7 +7,7 @@ using Microsoft.UI.Xaml.Data;
 /// Converter that converts scroll pause state to a label text.
 /// True (paused) → "Paused", False (auto-scroll) → "Live".
 /// </summary>
-public class BoolToScrollTextConverter : IValueConverter
+public partial class BoolToScrollTextConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {

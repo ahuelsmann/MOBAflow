@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.Input;
@@ -113,9 +113,9 @@ public partial class MainWindowViewModel
         var newProject = new Project
         {
             Name = "New Project",
-            Journeys = new List<Journey>(),
-            Workflows = new List<Workflow>(),
-            Trains = new List<Train>()
+            Journeys = [],
+            Workflows = [],
+            Trains = []
         };
         Solution.Projects.Add(newProject);
 

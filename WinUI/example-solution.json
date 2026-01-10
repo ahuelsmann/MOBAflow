@@ -133,6 +133,16 @@
               "parameters": {
                 "Rate": -1
               }
+            },
+            {
+              "id": "131d050b-a36c-4fb1-8f1b-370869537c5a",
+              "name": "New Audio",
+              "number": 2,
+              "type": 2,
+              "delayAfterMs": 0,
+              "parameters": {
+                "FilePath": "C:\\Repo\\ahuelsmann\\MOBAflow\\Sound\\Resources\\Sounds\\273231__gollamar__announcement-04.wav"
+              }
             }
           ],
           "executionMode": 1,

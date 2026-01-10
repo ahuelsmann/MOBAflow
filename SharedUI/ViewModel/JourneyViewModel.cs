@@ -176,7 +176,7 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
         // Update station highlighting based on CurrentPos
         for (int i = 0; i < Stations.Count; i++)
         {
-            Stations[i].IsCurrentStation = (i == state.CurrentPos);
+            Stations[i].IsCurrentStation = i == state.CurrentPos;
         }
 
         // Notify UI about property changes
@@ -295,7 +295,7 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
         // Create or clear the collection
         if (_stations == null)
         {
-            _stations = new ObservableCollection<StationViewModel>();
+            _stations = [];
         }
         else
         {
@@ -308,11 +308,13 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
         {
             Debug.WriteLine($"   - Station: {station.Name}");
 
-            var vm = new StationViewModel(station, _project);
-            vm.Position = index + 1;  // 1-based position
+            var vm = new StationViewModel(station, _project)
+            {
+                Position = index + 1,  // 1-based position
 
-            // Mark current station based on SessionState
-            vm.IsCurrentStation = (index == _state.CurrentPos);
+                // Mark current station based on SessionState
+                IsCurrentStation = index == _state.CurrentPos
+            };
 
             _stations.Add(vm);
             index++;

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
@@ -57,10 +57,10 @@ public class NullSettingsService : ISettingsService
     /// <summary>
     /// Always returns null (no last solution path).
     /// </summary>
-    public string? LastSolutionPath { get; set; } = null;
+    public string? LastSolutionPath { get; set; }
 
     /// <summary>
     /// Always returns false (auto-load disabled).
     /// </summary>
-    public bool AutoLoadLastSolution { get; set; } = false;
+    public bool AutoLoadLastSolution { get; set; }
 }

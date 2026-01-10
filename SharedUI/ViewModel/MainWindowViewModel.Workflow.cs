@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using Action;
@@ -37,16 +37,13 @@ public partial class MainWindowViewModel
         get
         {
             if (SelectedProject == null)
-                return new List<WorkflowViewModel>();
+                return [];
 
             var workflows = SelectedProject.Workflows;
 
-            if (string.IsNullOrWhiteSpace(WorkflowSearchText))
-                return workflows.ToList();
-
-            return workflows
-                .Where(w => w.Name.Contains(WorkflowSearchText, StringComparison.OrdinalIgnoreCase))
-                .ToList();
+            return string.IsNullOrWhiteSpace(WorkflowSearchText)
+                ? [.. workflows]
+                : [.. workflows.Where(w => w.Name.Contains(WorkflowSearchText, StringComparison.OrdinalIgnoreCase))];
         }
     }
     #endregion
@@ -76,7 +73,7 @@ public partial class MainWindowViewModel
             SelectedWorkflow,
             SelectedProject.Model.Workflows,
             SelectedProject.Workflows,
-            () => { SelectedWorkflow = null; });
+            () => SelectedWorkflow = null);
 
         OnPropertyChanged(nameof(FilteredWorkflows));
     }

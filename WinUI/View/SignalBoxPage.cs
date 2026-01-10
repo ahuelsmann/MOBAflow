@@ -37,7 +37,7 @@ using DomainSymbol = Moba.Domain.SignalBoxSymbol;
 /// - H/V (Haupt-/Vorsignal) - Classic light signals
 /// - Formsignale (semaphore) - Historical signals
 /// </summary>
-public sealed class SignalBoxPage : Page
+public sealed partial class SignalBoxPage : Page
 {
     // ESTW Color Scheme (based on real electronic interlocking displays)
     private static readonly Color ColorBackground = Color.FromArgb(255, 20, 40, 60);     // Dark blue background
@@ -552,7 +552,10 @@ public sealed class SignalBoxPage : Page
         var canvas = new Canvas { Width = 40, Height = 40 };
         canvas.Children.Add(new Line
         {
-            X1 = 8, Y1 = 20, X2 = 32, Y2 = 20,
+            X1 = 8,
+            Y1 = 20,
+            X2 = 32,
+            Y2 = 20,
             Stroke = new SolidColorBrush(ColorTrackFree),
             StrokeThickness = 6,
             StrokeStartLineCap = PenLineCap.Round,
@@ -847,8 +850,10 @@ public sealed class SignalBoxPage : Page
         {
             var line = new Line
             {
-                X1 = x * GridCellSize, Y1 = 0,
-                X2 = x * GridCellSize, Y2 = GridRows * GridCellSize,
+                X1 = x * GridCellSize,
+                Y1 = 0,
+                X2 = x * GridCellSize,
+                Y2 = GridRows * GridCellSize,
                 Stroke = new SolidColorBrush(Color.FromArgb(40, 100, 150, 200)),
                 StrokeThickness = 1
             };
@@ -858,8 +863,10 @@ public sealed class SignalBoxPage : Page
         {
             var line = new Line
             {
-                X1 = 0, Y1 = y * GridCellSize,
-                X2 = GridColumns * GridCellSize, Y2 = y * GridCellSize,
+                X1 = 0,
+                Y1 = y * GridCellSize,
+                X2 = GridColumns * GridCellSize,
+                Y2 = y * GridCellSize,
                 Stroke = new SolidColorBrush(Color.FromArgb(40, 100, 150, 200)),
                 StrokeThickness = 1
             };
@@ -1060,9 +1067,9 @@ public sealed class SignalBoxPage : Page
         var aspects = _selectedElement!.Type switch
         {
             SignalBoxElementType.SignalMain => new[] { ("Hp0 - Halt", SignalAspect.Hp0, ColorSignalRed), ("Hp1 - Fahrt", SignalAspect.Hp1, ColorSignalGreen), ("Hp2 - Langsamfahrt", SignalAspect.Hp2, ColorSignalYellow) },
-            SignalBoxElementType.SignalDistant => new[] { ("Vr0 - Halt erwarten", SignalAspect.Vr0, ColorSignalYellow), ("Vr1 - Fahrt erwarten", SignalAspect.Vr1, ColorSignalGreen), ("Vr2 - Langsamfahrt", SignalAspect.Vr2, ColorSignalYellow) },
-            SignalBoxElementType.SignalCombined => new[] { ("Hp0 - Halt", SignalAspect.Hp0, ColorSignalRed), ("Ks1 - Fahrt", SignalAspect.Ks1, ColorSignalGreen), ("Ks2 - Halt erwarten", SignalAspect.Ks2, ColorSignalYellow) },
-            _ => Array.Empty<(string, SignalAspect, Color)>()
+            SignalBoxElementType.SignalDistant => [("Vr0 - Halt erwarten", SignalAspect.Vr0, ColorSignalYellow), ("Vr1 - Fahrt erwarten", SignalAspect.Vr1, ColorSignalGreen), ("Vr2 - Langsamfahrt", SignalAspect.Vr2, ColorSignalYellow)],
+            SignalBoxElementType.SignalCombined => [("Hp0 - Halt", SignalAspect.Hp0, ColorSignalRed), ("Ks1 - Fahrt", SignalAspect.Ks1, ColorSignalGreen), ("Ks2 - Halt erwarten", SignalAspect.Ks2, ColorSignalYellow)],
+            _ => []
         };
 
         foreach (var (name, aspect, color) in aspects)
@@ -1174,23 +1181,12 @@ public sealed class SignalBoxPage : Page
     private void SelectElement(SignalBoxElement? element)
     {
         // Deselect previous
-        if (_selectedVisual != null)
-        {
-            _selectedVisual.Opacity = 1.0;
-        }
+        _selectedVisual?.Opacity = 1.0;
 
         _selectedElement = element;
 
         // Highlight new selection
-        if (element != null && _elementVisuals.TryGetValue(element.Id, out var visual))
-        {
-            _selectedVisual = visual;
-            // Add selection border effect (via opacity pulse or scale)
-        }
-        else
-        {
-            _selectedVisual = null;
-        }
+        _selectedVisual = element != null && _elementVisuals.TryGetValue(element.Id, out var visual) ? visual : null;
 
         UpdatePropertiesPanel();
     }
@@ -1247,88 +1243,88 @@ public sealed class SignalBoxPage : Page
         _ => type.ToString()
     };
 
-        private void OnCanvasDragOver(object sender, DragEventArgs e)
+    private void OnCanvasDragOver(object sender, DragEventArgs e)
+    {
+        e.AcceptedOperation = DataPackageOperation.Copy | DataPackageOperation.Move;
+        e.DragUIOverride.IsCaptionVisible = true;
+        e.DragUIOverride.IsGlyphVisible = true;
+    }
+
+    private async void OnCanvasDrop(object sender, DragEventArgs e)
+    {
+        if (!e.DataView.Contains(StandardDataFormats.Text))
+            return;
+
+        var text = await e.DataView.GetTextAsync();
+        var pos = e.GetPosition(_trackCanvas);
+        int gridX = Math.Clamp((int)(pos.X / GridCellSize), 0, GridColumns - 1);
+        int gridY = Math.Clamp((int)(pos.Y / GridCellSize), 0, GridRows - 1);
+
+        // Check if this is a move operation (existing element)
+        if (text.StartsWith(DragDataMoveElement))
         {
-            e.AcceptedOperation = DataPackageOperation.Copy | DataPackageOperation.Move;
-            e.DragUIOverride.IsCaptionVisible = true;
-            e.DragUIOverride.IsGlyphVisible = true;
-        }
-
-        private async void OnCanvasDrop(object sender, DragEventArgs e)
-        {
-            if (!e.DataView.Contains(StandardDataFormats.Text))
-                return;
-
-            var text = await e.DataView.GetTextAsync();
-            var pos = e.GetPosition(_trackCanvas);
-            int gridX = Math.Clamp((int)(pos.X / GridCellSize), 0, GridColumns - 1);
-            int gridY = Math.Clamp((int)(pos.Y / GridCellSize), 0, GridRows - 1);
-
-            // Check if this is a move operation (existing element)
-            if (text.StartsWith(DragDataMoveElement))
+            var idString = text[DragDataMoveElement.Length..];
+            if (Guid.TryParse(idString, out var elementId))
             {
-                var idString = text[DragDataMoveElement.Length..];
-                if (Guid.TryParse(idString, out var elementId))
+                var element = _elements.Find(el => el.Id == elementId);
+                if (element != null)
                 {
-                    var element = _elements.Find(el => el.Id == elementId);
-                    if (element != null)
+                    // Update element position
+                    int oldX = element.GridX;
+                    int oldY = element.GridY;
+                    element.GridX = gridX;
+                    element.GridY = gridY;
+
+                    // Update visual position
+                    if (_elementVisuals.TryGetValue(element.Id, out var visual))
                     {
-                        // Update element position
-                        int oldX = element.GridX;
-                        int oldY = element.GridY;
-                        element.GridX = gridX;
-                        element.GridY = gridY;
-
-                        // Update visual position
-                        if (_elementVisuals.TryGetValue(element.Id, out var visual))
-                        {
-                            Canvas.SetLeft(visual, gridX * GridCellSize);
-                            Canvas.SetTop(visual, gridY * GridCellSize);
-                        }
-
-                        LogMessage("MOVED", $"{element.Type} from ({oldX}, {oldY}) to ({gridX}, {gridY})");
+                        Canvas.SetLeft(visual, gridX * GridCellSize);
+                        Canvas.SetTop(visual, gridY * GridCellSize);
                     }
+
+                    LogMessage("MOVED", $"{element.Type} from ({oldX}, {oldY}) to ({gridX}, {gridY})");
                 }
-                return;
             }
-
-            // New element from toolbox
-            if (text.StartsWith(DragDataNewElement))
-            {
-                var typeString = text[DragDataNewElement.Length..];
-                if (!int.TryParse(typeString, out var typeInt))
-                    return;
-
-                var type = (SignalBoxElementType)typeInt;
-
-                var element = new SignalBoxElement
-                {
-                    Type = type,
-                    GridX = gridX,
-                    GridY = gridY,
-                    Rotation = 0
-                };
-                _elements.Add(element);
-
-                var visual = CreateElementVisual(element);
-                Canvas.SetLeft(visual, gridX * GridCellSize);
-                Canvas.SetTop(visual, gridY * GridCellSize);
-                _trackCanvas.Children.Add(visual);
-                _elementVisuals[element.Id] = visual;
-
-                LogMessage("PLACED", $"{type} at ({gridX}, {gridY})");
-            }
+            return;
         }
 
-        private void OnCanvasPointerWheelChanged(object sender, PointerRoutedEventArgs e)
+        // New element from toolbox
+        if (text.StartsWith(DragDataNewElement))
         {
-            var pos = e.GetCurrentPoint(_trackCanvas).Position;
-            int gridX = (int)(pos.X / GridCellSize);
-            int gridY = (int)(pos.Y / GridCellSize);
+            var typeString = text[DragDataNewElement.Length..];
+            if (!int.TryParse(typeString, out var typeInt))
+                return;
 
-            var element = _elements.Find(el => el.GridX == gridX && el.GridY == gridY);
-            if (element != null)
+            var type = (SignalBoxElementType)typeInt;
+
+            var element = new SignalBoxElement
             {
+                Type = type,
+                GridX = gridX,
+                GridY = gridY,
+                Rotation = 0
+            };
+            _elements.Add(element);
+
+            var visual = CreateElementVisual(element);
+            Canvas.SetLeft(visual, gridX * GridCellSize);
+            Canvas.SetTop(visual, gridY * GridCellSize);
+            _trackCanvas.Children.Add(visual);
+            _elementVisuals[element.Id] = visual;
+
+            LogMessage("PLACED", $"{type} at ({gridX}, {gridY})");
+        }
+    }
+
+    private void OnCanvasPointerWheelChanged(object sender, PointerRoutedEventArgs e)
+    {
+        var pos = e.GetCurrentPoint(_trackCanvas).Position;
+        int gridX = (int)(pos.X / GridCellSize);
+        int gridY = (int)(pos.Y / GridCellSize);
+
+        var element = _elements.Find(el => el.GridX == gridX && el.GridY == gridY);
+        if (element != null)
+        {
             var delta = e.GetCurrentPoint(_trackCanvas).Properties.MouseWheelDelta;
             element.Rotation = (element.Rotation + (delta > 0 ? 45 : -45) + 360) % 360;
 
@@ -1344,9 +1340,9 @@ public sealed class SignalBoxPage : Page
     private FrameworkElement CreateElementVisual(SignalBoxElement element)
     {
         // Background is required for hit-testing (drag & pointer events)
-        var container = new Grid 
-        { 
-            Width = GridCellSize, 
+        var container = new Grid
+        {
+            Width = GridCellSize,
             Height = GridCellSize,
             Background = new SolidColorBrush(Colors.Transparent)
         };
@@ -1390,76 +1386,79 @@ public sealed class SignalBoxPage : Page
 
         container.RenderTransform = new RotateTransform { Angle = element.Rotation, CenterX = GridCellSize / 2, CenterY = GridCellSize / 2 };
 
-                // Enable drag for moving placed elements
-                container.CanDrag = true;
-                container.DragStarting += (s, e) =>
-                {
-                    e.Data.SetText($"{DragDataMoveElement}{element.Id}");
-                    e.Data.RequestedOperation = DataPackageOperation.Move;
-                    LogMessage("DRAG", $"Moving: {element.Type} from ({element.GridX}, {element.GridY})");
-                };
+        // Enable drag for moving placed elements
+        container.CanDrag = true;
+        container.DragStarting += (s, e) =>
+        {
+            e.Data.SetText($"{DragDataMoveElement}{element.Id}");
+            e.Data.RequestedOperation = DataPackageOperation.Move;
+            LogMessage("DRAG", $"Moving: {element.Type} from ({element.GridX}, {element.GridY})");
+        };
 
-                // Hover effect
-                container.PointerEntered += (s, e) =>
-                {
-                    if (_selectedElement?.Id != element.Id)
-                        container.Opacity = 0.8;
-                };
-                container.PointerExited += (s, e) =>
-                {
-                    if (_selectedElement?.Id != element.Id)
-                        container.Opacity = 1.0;
-                };
+        // Hover effect
+        container.PointerEntered += (s, e) =>
+        {
+            if (_selectedElement?.Id != element.Id)
+                container.Opacity = 0.8;
+        };
+        container.PointerExited += (s, e) =>
+        {
+            if (_selectedElement?.Id != element.Id)
+                container.Opacity = 1.0;
+        };
 
-                // Click behavior depends on element type
-                container.PointerPressed += (s, e) =>
-                {
-                    if (!e.GetCurrentPoint(container).Properties.IsLeftButtonPressed)
-                        return;
+        // Click behavior depends on element type
+        container.PointerPressed += (s, e) =>
+        {
+            if (!e.GetCurrentPoint(container).Properties.IsLeftButtonPressed)
+                return;
 
-                    // Switches: Direct toggle on click
-                    if (element.Type is SignalBoxElementType.SwitchLeft or SignalBoxElementType.SwitchRight or SignalBoxElementType.SwitchDouble)
-                    {
-                        element.SwitchPosition = element.SwitchPosition == SwitchPosition.Straight ? SwitchPosition.Diverging : SwitchPosition.Straight;
-                        RefreshElementVisual(element);
-                        LogMessage("SWITCH", $"{element.Type} -> {element.SwitchPosition}");
-
-                        // Also select it to show properties
-                        SelectElement(element);
-                    }
-                    else
-                    {
-                        // Other elements: Select to show properties panel
-                        SelectElement(element);
-                    }
-
-                    e.Handled = true;
-                };
-
-                return container;
-            }
-
-            private void RefreshElementVisual(SignalBoxElement element)
+            // Switches: Direct toggle on click
+            if (element.Type is SignalBoxElementType.SwitchLeft or SignalBoxElementType.SwitchRight or SignalBoxElementType.SwitchDouble)
             {
-                if (_elementVisuals.TryGetValue(element.Id, out var visual))
-                {
-                    _trackCanvas.Children.Remove(visual);
-                    var newVisual = CreateElementVisual(element);
-                    Canvas.SetLeft(newVisual, element.GridX * GridCellSize);
-                    Canvas.SetTop(newVisual, element.GridY * GridCellSize);
-                    _trackCanvas.Children.Add(newVisual);
-                    _elementVisuals[element.Id] = newVisual;
+                element.SwitchPosition = element.SwitchPosition == SwitchPosition.Straight ? SwitchPosition.Diverging : SwitchPosition.Straight;
+                RefreshElementVisual(element);
+                LogMessage("SWITCH", $"{element.Type} -> {element.SwitchPosition}");
 
-                    if (_selectedElement?.Id == element.Id)
-                        _selectedVisual = newVisual;
-                }
+                // Also select it to show properties
+                SelectElement(element);
+            }
+            else
+            {
+                // Other elements: Select to show properties panel
+                SelectElement(element);
             }
 
-            private Line CreateTrackLine(double x1, double y1, double x2, double y2, SignalBoxElementState state)
+            e.Handled = true;
+        };
+
+        return container;
+    }
+
+    private void RefreshElementVisual(SignalBoxElement element)
+    {
+        if (_elementVisuals.TryGetValue(element.Id, out var visual))
+        {
+            _trackCanvas.Children.Remove(visual);
+            var newVisual = CreateElementVisual(element);
+            Canvas.SetLeft(newVisual, element.GridX * GridCellSize);
+            Canvas.SetTop(newVisual, element.GridY * GridCellSize);
+            _trackCanvas.Children.Add(newVisual);
+            _elementVisuals[element.Id] = newVisual;
+
+            if (_selectedElement?.Id == element.Id)
+                _selectedVisual = newVisual;
+        }
+    }
+
+    private Line CreateTrackLine(double x1, double y1, double x2, double y2, SignalBoxElementState state)
     {
         return new Line
         {
-            X1 = x1, Y1 = y1, X2 = x2, Y2 = y2,
+            X1 = x1,
+            Y1 = y1,
+            X2 = x2,
+            Y2 = y2,
             Stroke = new SolidColorBrush(GetStateColor(state)),
             StrokeThickness = 6,
             StrokeStartLineCap = PenLineCap.Round,
@@ -1496,7 +1495,8 @@ public sealed class SignalBoxPage : Page
         var divergeColor = element.SwitchPosition == SwitchPosition.Diverging ? ColorRouteSet : Color.FromArgb(100, 100, 100, 100);
         grid.Children.Add(new Line
         {
-            X1 = 30, Y1 = 30,
+            X1 = 30,
+            Y1 = 30,
             X2 = element.Type == SignalBoxElementType.SwitchLeft ? 50 : 50,
             Y2 = element.Type == SignalBoxElementType.SwitchLeft ? 10 : 50,
             Stroke = new SolidColorBrush(divergeColor),
@@ -1506,7 +1506,8 @@ public sealed class SignalBoxPage : Page
         // Switch motor indicator
         var motorLed = new Ellipse
         {
-            Width = 8, Height = 8,
+            Width = 8,
+            Height = 8,
             Fill = new SolidColorBrush(element.SwitchPosition == SwitchPosition.Straight ? ColorSignalGreen : ColorSignalYellow)
         };
         Canvas.SetLeft(motorLed, 26);
@@ -1723,7 +1724,7 @@ public sealed class SignalBoxPage : Page
             GridY = y,
             Rotation = rotation,
             SignalAspect = aspect,
-            Address = type == SignalBoxElementType.FeedbackPoint ? x + y * 10 : 0
+            Address = type == SignalBoxElementType.FeedbackPoint ? x + (y * 10) : 0
         };
         _elements.Add(element);
 
@@ -1739,7 +1740,7 @@ public sealed class SignalBoxPage : Page
         var entry = $"[{DateTime.Now:HH:mm:ss}] [{category}] {message}";
         _messageLog.Insert(0, entry);
         while (_messageLog.Count > 50) _messageLog.RemoveAt(_messageLog.Count - 1);
-        if (_statusTextBlock != null) _statusTextBlock.Text = message;
+        _statusTextBlock?.Text = message;
     }
 
     // Additional DB Signal Toolbox Icons

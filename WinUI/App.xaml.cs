@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.WinUI;
 
@@ -111,10 +111,7 @@ public partial class App
         ConfigureSerilog();
 
         // Logging (required by HealthCheckService and SpeechHealthCheck)
-        services.AddLogging(loggingBuilder =>
-        {
-            loggingBuilder.AddSerilog(Log.Logger, dispose: true);
-        });
+        services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(Log.Logger, dispose: true));
 
         // Navigation infrastructure
         var navigationRegistry = new NavigationRegistry();
@@ -253,33 +250,33 @@ public partial class App
         services.AddTransient<JourneyMapPage>();
         navigationRegistry.Register("journeymap", "Journey Map", "\uE81E", typeof(JourneyMapPage), "Shell");
 
-                services.AddTransient<SettingsPage>();
-                navigationRegistry.Register("settings", "Settings", "\uE713", typeof(SettingsPage), "Shell");
+        services.AddTransient<SettingsPage>();
+        navigationRegistry.Register("settings", "Settings", "\uE713", typeof(SettingsPage), "Shell");
 
-                services.AddTransient<MonitorPage>();
-                        navigationRegistry.Register("monitor", "Monitor", "\uE7F4", typeof(MonitorPage), "Shell");
+        services.AddTransient<MonitorPage>();
+        navigationRegistry.Register("monitor", "Monitor", "\uE7F4", typeof(MonitorPage), "Shell");
 
-                        services.AddTransient<HelpPage>();
-                        navigationRegistry.Register("help", "Help", "\uE897", typeof(HelpPage), "Shell");
+        services.AddTransient<HelpPage>();
+        navigationRegistry.Register("help", "Help", "\uE897", typeof(HelpPage), "Shell");
 
-                        services.AddTransient<InfoPage>();
-                        navigationRegistry.Register("info", "Info", "\uE946", typeof(InfoPage), "Shell");
+        services.AddTransient<InfoPage>();
+        navigationRegistry.Register("info", "Info", "\uE946", typeof(InfoPage), "Shell");
 
-                        // SignalBoxPage as Singleton to ensure SolutionSaving subscription persists
-                        services.AddSingleton<SignalBoxPage>();
-                        navigationRegistry.Register("signalbox", "MOBAixl", "\uE806", typeof(SignalBoxPage), "Shell");
+        // SignalBoxPage as Singleton to ensure SolutionSaving subscription persists
+        services.AddSingleton<SignalBoxPage>();
+        navigationRegistry.Register("signalbox", "MOBAixl", "\uE806", typeof(SignalBoxPage), "Shell");
 
-                        // MainWindow (Singleton = one instance for app lifetime)
-                        services.AddSingleton<MainWindow>();
+        // MainWindow (Singleton = one instance for app lifetime)
+        services.AddSingleton<MainWindow>();
 
-                // Load plugins after core registrations so they can override/add
-                var pluginDirectory = Path.Combine(AppContext.BaseDirectory, "Plugins");
-                var pluginLoader = new PluginLoader(pluginDirectory, navigationRegistry);
+        // Load plugins after core registrations so they can override/add
+        var pluginDirectory = Path.Combine(AppContext.BaseDirectory, "Plugins");
+        var pluginLoader = new PluginLoader(pluginDirectory, navigationRegistry);
 
-                // Note: We use synchronous Load here because ConfigureServices is synchronous
-                // Plugin initialization will happen later in OnLaunched after DI is fully set up
+        // Note: We use synchronous Load here because ConfigureServices is synchronous
+        // Plugin initialization will happen later in OnLaunched after DI is fully set up
 
-                var loadTask = Task.Run(() => pluginLoader.LoadPluginsAsync(services, logger: null));
+        var loadTask = Task.Run(() => pluginLoader.LoadPluginsAsync(services, logger: null));
         loadTask.Wait(); // Block until plugins are loaded
 
         return services.BuildServiceProvider();
@@ -414,10 +411,7 @@ public partial class App
 
             builder.ConfigureWebHostDefaults(webBuilder =>
             {
-                webBuilder.UseKestrel(options =>
-                {
-                    options.ListenAnyIP(restPort);
-                });
+                webBuilder.UseKestrel(options => options.ListenAnyIP(restPort));
 
                 webBuilder.Configure(app =>
                 {
@@ -460,10 +454,8 @@ public partial class App
             });
 
             builder.ConfigureLogging(loggingBuilder =>
-            {
                 // Use the same Serilog logger as WinUI
-                loggingBuilder.AddSerilog(Log.Logger, dispose: false);
-            });
+                loggingBuilder.AddSerilog(Log.Logger, dispose: false));
 
             _webAppHost = builder.Build();
 

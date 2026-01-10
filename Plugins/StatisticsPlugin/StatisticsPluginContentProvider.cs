@@ -25,7 +25,7 @@ namespace Moba.Plugin.Statistics;
 public sealed class StatisticsPluginContentProvider
 {
     private readonly StatisticsPluginViewModel _vm;
-    private readonly Dictionary<string, TextBlock> _bindings = new();
+    private readonly Dictionary<string, TextBlock> _bindings = [];
 
     // Fluent Design Colors
     private static readonly Color AccentBlue = Color.FromArgb(255, 0, 120, 212);

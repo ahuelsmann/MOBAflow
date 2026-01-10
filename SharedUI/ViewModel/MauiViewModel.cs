@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using Backend;
@@ -186,7 +186,7 @@ public partial class MauiViewModel : ObservableObject
     private double timerIntervalSeconds = 2.0;
 
     // Last feedback time tracking for timer filter
-    private readonly Dictionary<int, DateTime> _lastFeedbackTime = new();
+    private readonly Dictionary<int, DateTime> _lastFeedbackTime = [];
 
     partial void OnCountOfFeedbackPointsChanged(int value)
     {
@@ -324,10 +324,7 @@ public partial class MauiViewModel : ObservableObject
 
     private void OnZ21ConnectedChanged(bool connected)
     {
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            IsConnected = connected;
-        });
+        _uiDispatcher.InvokeOnUi(() => IsConnected = connected);
     }
 
     private void OnZ21SystemStateChanged(SystemState state)
@@ -377,7 +374,6 @@ public partial class MauiViewModel : ObservableObject
             }
         });
     }
-
 
     #endregion
 

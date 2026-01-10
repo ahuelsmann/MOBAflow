@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.TrackPlan.Domain;
 
 /// <summary>
@@ -7,7 +7,7 @@ namespace Moba.TrackPlan.Domain;
 public class TrackGeometry
 {
     public string ArticleCode { get; set; } = string.Empty;
-    public List<TrackPoint> Endpoints { get; set; } = new();
-    public List<double> EndpointHeadingsDeg { get; set; } = new();
+    public List<TrackPoint> Endpoints { get; set; } = [];
+    public List<double> EndpointHeadingsDeg { get; set; } = [];
     public string PathData { get; set; } = string.Empty;
 }

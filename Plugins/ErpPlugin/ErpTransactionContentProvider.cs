@@ -4,7 +4,6 @@ using Microsoft.UI;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 
 using Windows.UI;
@@ -30,7 +29,6 @@ public sealed class ErpTransactionContentProvider
     private static readonly Color ErpGreen = Color.FromArgb(255, 40, 167, 69);      // #28A745 - Success Green
 
     private readonly ErpPluginViewModel _viewModel;
-    private TextBox? _transactionCodeTextBox;
 
     public ErpTransactionContentProvider(ErpPluginViewModel viewModel)
     {
@@ -39,22 +37,6 @@ public sealed class ErpTransactionContentProvider
 
     public UIElement CreateContent()
     {
-        _transactionCodeTextBox = new TextBox
-        {
-            PlaceholderText = "/n[TCODE]...",
-            FontFamily = new FontFamily("Consolas"),
-            FontSize = 14,
-            Width = 300
-        };
-        _transactionCodeTextBox.KeyDown += TransactionCodeTextBox_KeyDown;
-        _transactionCodeTextBox.SetBinding(TextBox.TextProperty, new Microsoft.UI.Xaml.Data.Binding
-        {
-            Path = new PropertyPath(nameof(ErpPluginViewModel.TransactionCode)),
-            Source = _viewModel,
-            Mode = Microsoft.UI.Xaml.Data.BindingMode.TwoWay,
-            UpdateSourceTrigger = Microsoft.UI.Xaml.Data.UpdateSourceTrigger.PropertyChanged
-        });
-
         var content = BuildLayout();
         return content;
     }
@@ -63,164 +45,15 @@ public sealed class ErpTransactionContentProvider
     {
         var rootGrid = new Grid();
         rootGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        rootGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         rootGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
         rootGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-        // Row 0: Command Bar
-        var commandBar = BuildCommandBar();
-        Grid.SetRow(commandBar, 0);
-        rootGrid.Children.Add(commandBar);
-
-        // Row 1: Menu Bar
-        var menuBar = BuildMenuBar();
-        Grid.SetRow(menuBar, 1);
-        rootGrid.Children.Add(menuBar);
-
-        // Row 2: Main Content
+        // Row 1: Main Content
         var mainContent = BuildMainContent();
-        Grid.SetRow(mainContent, 2);
+        Grid.SetRow(mainContent, 1);
         rootGrid.Children.Add(mainContent);
 
-        // Row 3: Status Bar
-        var statusBar = BuildStatusBar();
-        Grid.SetRow(statusBar, 3);
-        rootGrid.Children.Add(statusBar);
-
         return rootGrid;
-    }
-
-    private Grid BuildCommandBar()
-    {
-        var grid = new Grid
-        {
-            Padding = new Thickness(8),
-            Background = new SolidColorBrush(ErpBlue)
-        };
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-        var label = new TextBlock
-        {
-            Text = "Transaction:",
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(8, 0, 8, 0),
-            FontWeight = FontWeights.SemiBold,
-            Foreground = new SolidColorBrush(Colors.White)
-        };
-        Grid.SetColumn(label, 0);
-        grid.Children.Add(label);
-
-        Grid.SetColumn(_transactionCodeTextBox!, 1);
-        grid.Children.Add(_transactionCodeTextBox!);
-
-        var executeButton = new Button
-        {
-            Margin = new Thickness(8, 0, 0, 0),
-            Background = new SolidColorBrush(ErpGold),
-            Foreground = new SolidColorBrush(ErpDarkBlue),
-            Command = _viewModel.ExecuteTransactionCommand
-        };
-        var executeContent = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
-        executeContent.Children.Add(new FontIcon { Glyph = "\uE768", FontSize = 14, Foreground = new SolidColorBrush(ErpDarkBlue) });
-        executeContent.Children.Add(new TextBlock { Text = "Execute", Foreground = new SolidColorBrush(ErpDarkBlue), FontWeight = FontWeights.SemiBold });
-        executeButton.Content = executeContent;
-        Grid.SetColumn(executeButton, 2);
-        grid.Children.Add(executeButton);
-
-        // Title
-        var titlePanel = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            Spacing = 8
-        };
-        titlePanel.Children.Add(new FontIcon { Glyph = "\uE7C0", FontSize = 20, Foreground = new SolidColorBrush(Colors.White) });
-        titlePanel.Children.Add(new TextBlock
-        {
-            Text = "MOBAerp System",
-            FontSize = 16,
-            FontWeight = FontWeights.Bold,
-            Foreground = new SolidColorBrush(Colors.White),
-            VerticalAlignment = VerticalAlignment.Center
-        });
-        Grid.SetColumn(titlePanel, 3);
-        grid.Children.Add(titlePanel);
-
-        var toolbarPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
-        toolbarPanel.Children.Add(CreateToolbarButton("\uE72B", BackButton_Click));
-        toolbarPanel.Children.Add(CreateToolbarButton("\uE711", ExitButton_Click));
-        toolbarPanel.Children.Add(CreateToolbarButton("\uE8BB", _viewModel.ClearTransactionCodeCommand));
-        toolbarPanel.Children.Add(new Border { Width = 1, Margin = new Thickness(8, 4, 8, 4), Background = new SolidColorBrush(Colors.White), Opacity = 0.5 });
-        toolbarPanel.Children.Add(CreateToolbarButton("\uE74E", SaveButton_Click));
-        toolbarPanel.Children.Add(CreateToolbarButton("\uE749", PrintButton_Click));
-        toolbarPanel.Children.Add(CreateToolbarButton("\uE721", FindButton_Click));
-        Grid.SetColumn(toolbarPanel, 4);
-        grid.Children.Add(toolbarPanel);
-
-        return grid;
-    }
-
-    private static Button CreateToolbarButton(string glyph, RoutedEventHandler handler)
-    {
-        var button = new Button
-        {
-            Background = new SolidColorBrush(Colors.Transparent),
-            BorderBrush = new SolidColorBrush(Colors.Transparent),
-            Content = new FontIcon
-            {
-                Glyph = glyph,
-                FontSize = 14,
-                Foreground = new SolidColorBrush(Colors.White)
-            }
-        };
-        button.Click += handler;
-        return button;
-    }
-
-    private static Button CreateToolbarButton(string glyph, System.Windows.Input.ICommand command)
-    {
-        return new Button
-        {
-            Background = new SolidColorBrush(Colors.Transparent),
-            BorderBrush = new SolidColorBrush(Colors.Transparent),
-            Command = command,
-            Content = new FontIcon
-            {
-                Glyph = glyph,
-                FontSize = 14,
-                Foreground = new SolidColorBrush(Colors.White)
-            }
-        };
-    }
-
-    private static MenuBar BuildMenuBar()
-    {
-        var menuBar = new MenuBar();
-
-        var systemMenu = new MenuBarItem { Title = "System" };
-        systemMenu.Items.Add(new MenuFlyoutItem { Text = "User Profile" });
-        systemMenu.Items.Add(new MenuFlyoutItem { Text = "Log Off" });
-        menuBar.Items.Add(systemMenu);
-
-        var editMenu = new MenuBarItem { Title = "Edit" };
-        editMenu.Items.Add(new MenuFlyoutItem { Text = "Copy" });
-        editMenu.Items.Add(new MenuFlyoutItem { Text = "Paste" });
-        menuBar.Items.Add(editMenu);
-
-        var favoritesMenu = new MenuBarItem { Title = "Favorites" };
-        favoritesMenu.Items.Add(new MenuFlyoutItem { Text = "Add to Favorites" });
-        menuBar.Items.Add(favoritesMenu);
-
-        var helpMenu = new MenuBarItem { Title = "Help" };
-        helpMenu.Items.Add(new MenuFlyoutItem { Text = "Transaction Codes" });
-        helpMenu.Items.Add(new MenuFlyoutItem { Text = "Application Help" });
-        menuBar.Items.Add(helpMenu);
-
-        return menuBar;
     }
 
     private Grid BuildMainContent()
@@ -358,60 +191,11 @@ public sealed class ErpTransactionContentProvider
         var tcodeCard = CreateTransactionCodesCard();
         contentPanel.Children.Add(tcodeCard);
 
-        // History Card
-        var historyCard = BuildHistoryCard();
-        contentPanel.Children.Add(historyCard);
-
         scrollViewer.Content = contentPanel;
         Grid.SetRow(scrollViewer, 1);
         grid.Children.Add(scrollViewer);
 
         return grid;
-    }
-
-    private Border BuildHistoryCard()
-    {
-        var historyCard = new Border
-        {
-            CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(24),
-            Background = new SolidColorBrush(Color.FromArgb(20, 0, 0, 0))
-        };
-
-        var historyPanel = new StackPanel { Spacing = 12 };
-        historyPanel.Children.Add(new TextBlock
-        {
-            Text = "Command History",
-            FontSize = 18,
-            FontWeight = FontWeights.SemiBold
-        });
-
-        var historyListView = new ListView
-        {
-            MaxHeight = 200,
-            SelectionMode = ListViewSelectionMode.Single,
-            IsItemClickEnabled = true,
-            ItemsSource = _viewModel.CommandHistory
-        };
-        historyListView.ItemClick += CommandHistoryListView_ItemClick;
-        historyPanel.Children.Add(historyListView);
-
-        var noHistoryText = new TextBlock
-        {
-            Text = "No commands executed yet.",
-            FontStyle = Windows.UI.Text.FontStyle.Italic,
-            Opacity = 0.7
-        };
-        noHistoryText.SetBinding(UIElement.VisibilityProperty, new Microsoft.UI.Xaml.Data.Binding
-        {
-            Path = new PropertyPath("Count"),
-            Source = _viewModel.CommandHistory,
-            Converter = new CountToVisibilityConverter()
-        });
-        historyPanel.Children.Add(noHistoryText);
-
-        historyCard.Child = historyPanel;
-        return historyCard;
     }
 
     private static Border CreateTransactionCodesCard()
@@ -498,83 +282,12 @@ public sealed class ErpTransactionContentProvider
         return card;
     }
 
-    private Grid BuildStatusBar()
-    {
-        var grid = new Grid
-        {
-            Padding = new Thickness(8, 4, 8, 4),
-            Background = new SolidColorBrush(ErpLightGray)
-        };
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-        var statusText = new TextBlock { Foreground = new SolidColorBrush(ErpDarkBlue) };
-        statusText.SetBinding(TextBlock.TextProperty, new Microsoft.UI.Xaml.Data.Binding
-        {
-            Path = new PropertyPath(nameof(ErpPluginViewModel.StatusMessage)),
-            Source = _viewModel
-        });
-        Grid.SetColumn(statusText, 0);
-        grid.Children.Add(statusText);
-
-        // Connection Status
-        var connectionIndicator = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, Margin = new Thickness(16, 0, 16, 0) };
-        var indicator = new Border
-        {
-            Width = 10,
-            Height = 10,
-            CornerRadius = new CornerRadius(5),
-            Background = new SolidColorBrush(_viewModel.IsZ21Connected ? ErpGreen : Colors.Red)
-        };
-        connectionIndicator.Children.Add(indicator);
-        connectionIndicator.Children.Add(new TextBlock
-        {
-            Text = _viewModel.IsZ21Connected ? "Z21 Online" : "Z21 Offline",
-            Foreground = new SolidColorBrush(ErpDarkBlue),
-            FontSize = 12
-        });
-        Grid.SetColumn(connectionIndicator, 1);
-        grid.Children.Add(connectionIndicator);
-
-        var clientText = new TextBlock
-        {
-            Text = "Client: MOBA",
-            Margin = new Thickness(16, 0, 16, 0),
-            Foreground = new SolidColorBrush(ErpDarkBlue)
-        };
-        Grid.SetColumn(clientText, 2);
-        grid.Children.Add(clientText);
-
-        var userText = new TextBlock
-        {
-            Text = "MOBAUSER",
-            Foreground = new SolidColorBrush(ErpDarkBlue)
-        };
-        Grid.SetColumn(userText, 3);
-        grid.Children.Add(userText);
-
-        return grid;
-    }
-
-    private void TransactionCodeTextBox_KeyDown(object sender, KeyRoutedEventArgs e)
-    {
-        _ = sender;
-        if (e.Key == Windows.System.VirtualKey.Enter)
-        {
-            _viewModel.ExecuteTransactionCommand.Execute(null);
-            e.Handled = true;
-        }
-    }
-
     private void CommandHistoryListView_ItemClick(object sender, ItemClickEventArgs e)
     {
         _ = sender;
         if (e.ClickedItem is CommandHistoryItem item)
         {
             _viewModel.SelectHistoryItemCommand.Execute(item);
-            _transactionCodeTextBox?.Focus(FocusState.Programmatic);
         }
     }
 
@@ -586,59 +299,19 @@ public sealed class ErpTransactionContentProvider
             _viewModel.ExecuteFromTreeViewCommand.Execute(node.Content?.ToString());
         }
     }
-
-    private void BackButton_Click(object sender, RoutedEventArgs e)
-    {
-        _ = sender;
-        _ = e;
-        // Back navigation not available in plugin context
-    }
-
-    private void ExitButton_Click(object sender, RoutedEventArgs e)
-    {
-        _ = sender;
-        _ = e;
-        // Use main navigation to exit
-    }
-
-    private void SaveButton_Click(object sender, RoutedEventArgs e)
-    {
-        _ = sender;
-        _ = e;
-        // Save not applicable
-    }
-
-    private void PrintButton_Click(object sender, RoutedEventArgs e)
-    {
-        _ = sender;
-        _ = e;
-        // Print not implemented
-    }
-
-    private void FindButton_Click(object sender, RoutedEventArgs e)
-    {
-        _ = sender;
-        _ = e;
-        _transactionCodeTextBox?.Focus(FocusState.Programmatic);
-        _transactionCodeTextBox?.SelectAll();
-    }
 }
 
 /// <summary>
 /// Converter to show "No history" text when command history is empty.
 /// </summary>
-public sealed class CountToVisibilityConverter : Microsoft.UI.Xaml.Data.IValueConverter
+public sealed partial class CountToVisibilityConverter : Microsoft.UI.Xaml.Data.IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {
         _ = targetType;
         _ = parameter;
         _ = language;
-        if (value is int count)
-        {
-            return count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        }
-        return Visibility.Visible;
+        return value is int count ? count == 0 ? Visibility.Visible : Visibility.Collapsed : Visibility.Visible;
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, string language)

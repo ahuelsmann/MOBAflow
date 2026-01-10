@@ -57,7 +57,7 @@ public class RestApiSettings
     /// <summary>
     /// List of recently used IP addresses.
     /// </summary>
-    public List<string> RecentIpAddresses { get; set; } = new();
+    public List<string> RecentIpAddresses { get; set; } = [];
 }
 
 /// <summary>
@@ -90,7 +90,7 @@ public class Z21Settings
     /// <summary>
     /// List of recently used IP addresses.
     /// </summary>
-    public List<string> RecentIpAddresses { get; set; } = new();
+    public List<string> RecentIpAddresses { get; set; } = [];
 }
 
 /// <summary>
@@ -171,7 +171,7 @@ public class ApplicationSettings
     /// NOTE: Since WinUI now has in-process REST API (Kestrel), this is typically not needed.
     /// Set to false to avoid port conflicts.
     /// </summary>
-    public bool AutoStartWebApp { get; set; } = false;
+    public bool AutoStartWebApp { get; set; }
 
     /// <summary>
     /// User-selected theme preference for MAUI app.
@@ -192,7 +192,7 @@ public class CounterSettings
     /// Example: If you have 3 feedback points, set this to 3 → Statistics will show InPorts 1, 2, 3.
     /// Note: InPort 0 means "disabled" or "not in use". InPort 1 = Feedback Point 1 (simple 1:1 mapping).
     /// </summary>
-    public int CountOfFeedbackPoints { get; set; } = 0;
+    public int CountOfFeedbackPoints { get; set; }
 
     /// <summary>
     /// Global target lap count for all tracks (default: 10).
@@ -247,7 +247,7 @@ public class HealthCheckSettings
 public class FeatureToggleSettings
 {
     // Core Features (Stable - ENABLED by default)
-    
+
     /// <summary>
     /// Enable Overview page (Dashboard with journey status).
     /// </summary>
@@ -267,7 +267,7 @@ public class FeatureToggleSettings
     public string? SettingsPageLabel { get; set; }
 
     // Journey Management (Stable - ENABLED by default)
-    
+
     /// <summary>
     /// Enable Journeys page (Train journey management with stations).
     /// </summary>
@@ -309,24 +309,24 @@ public class FeatureToggleSettings
     /// Enable Monitor page (Real-time system monitoring and diagnostics).
     /// Experimental feature - disabled by default for Open Source release.
     /// </summary>
-    public bool IsMonitorPageAvailable { get; set; } = false;
+    public bool IsMonitorPageAvailable { get; set; }
     public string? MonitorPageLabel { get; set; } = "Beta";
 
     // Train/Rolling Stock Management (Upcoming - DISABLED by default)
 
-        /// <summary>
-        /// Enable Trains page (Locomotive and wagon inventory management).
-        /// Upcoming feature - disabled by default.
-        /// </summary>
-        public bool IsTrainsPageAvailable { get; set; } = false;
-        public string? TrainsPageLabel { get; set; } = "Preview";
+    /// <summary>
+    /// Enable Trains page (Locomotive and wagon inventory management).
+    /// Upcoming feature - disabled by default.
+    /// </summary>
+    public bool IsTrainsPageAvailable { get; set; }
+    public string? TrainsPageLabel { get; set; } = "Preview";
 
-        // Train Control (Digital Throttle - DISABLED by default)
+    // Train Control (Digital Throttle - DISABLED by default)
 
-        /// <summary>
-        /// Enable Train Control page (Digital locomotive throttle for Z21).
-        /// New feature - disabled by default until fully tested.
-        /// </summary>
-        public bool IsTrainControlPageAvailable { get; set; } = false;
-        public string? TrainControlPageLabel { get; set; } = "Preview";
-    }
+    /// <summary>
+    /// Enable Train Control page (Digital locomotive throttle for Z21).
+    /// New feature - disabled by default until fully tested.
+    /// </summary>
+    public bool IsTrainControlPageAvailable { get; set; }
+    public string? TrainControlPageLabel { get; set; } = "Preview";
+}

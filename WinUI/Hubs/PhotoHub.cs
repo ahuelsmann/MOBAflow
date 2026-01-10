@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Hubs;
 
 using Microsoft.AspNetCore.SignalR;
@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.SignalR;
 /// SignalR Hub for real-time photo upload notifications.
 /// Notifies all connected clients (e.g., TrainsPage) when a photo is uploaded via MAUI.
 /// </summary>
-public class PhotoHub : Hub
+public partial class PhotoHub : Hub
 {
     /// <summary>
     /// Called when a new photo is uploaded.

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Converter;
 
 using Microsoft.UI.Xaml;
@@ -13,19 +13,14 @@ using Microsoft.UI.Xaml.Data;
 /// - Show content when data available: {Binding Data, Converter={StaticResource NullableConverter}}
 /// - Show empty state when no data: {Binding Data, Converter={StaticResource NullableConverter}, ConverterParameter=Invert}
 /// </summary>
-public class NullableConverter : IValueConverter
+public partial class NullableConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {
         var invert = parameter is string s && s.Equals("Invert", StringComparison.OrdinalIgnoreCase);
         var isNull = value == null;
 
-        if (invert)
-        {
-            return isNull ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        return isNull ? Visibility.Collapsed : Visibility.Visible;
+        return invert ? isNull ? Visibility.Visible : Visibility.Collapsed : isNull ? Visibility.Collapsed : Visibility.Visible;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)

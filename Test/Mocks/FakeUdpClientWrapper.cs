@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Test.Mocks;
 
@@ -11,7 +11,7 @@ public sealed class FakeUdpClientWrapper : IUdpClientWrapper
 
     public bool Connected { get; private set; }
     public bool IsConnected => Connected;
-    public List<byte[]> SentPayloads { get; } = new();
+    public List<byte[]> SentPayloads { get; } = [];
 
     public Task ConnectAsync(IPAddress address, int port = 21105, CancellationToken cancellationToken = default)
     {

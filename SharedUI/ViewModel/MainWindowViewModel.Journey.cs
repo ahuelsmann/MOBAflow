@@ -32,21 +32,18 @@ public partial class MainWindowViewModel
         }
 
         var state = _journeyManager.GetState(journey.Id);
-        
-        // If state doesn't exist yet (journey just created), create dummy state
-        if (state == null || SelectedProject == null)
-        {
-            return new JourneyViewModel(
-                journey, 
-                SelectedProject?.Model ?? new Project(), 
-                _uiDispatcher);
-        }
 
-        return new JourneyViewModel(
-            journey, 
-            SelectedProject.Model, 
-            state, 
-            _journeyManager, 
+        // If state doesn't exist yet (journey just created), create dummy state
+        return state == null || SelectedProject == null
+            ? new JourneyViewModel(
+                journey,
+                SelectedProject?.Model ?? new Project(),
+                _uiDispatcher)
+            : new JourneyViewModel(
+            journey,
+            SelectedProject.Model,
+            state,
+            _journeyManager,
             _uiDispatcher);
     }
     #endregion
@@ -74,16 +71,13 @@ public partial class MainWindowViewModel
         get
         {
             if (SelectedProject == null)
-                return new List<JourneyViewModel>();
+                return [];
 
             var journeys = SelectedProject.Journeys;
 
-            if (string.IsNullOrWhiteSpace(JourneySearchText))
-                return journeys.ToList();
-
-            return journeys
-                .Where(j => j.Name.Contains(JourneySearchText, StringComparison.OrdinalIgnoreCase))
-                .ToList();
+            return string.IsNullOrWhiteSpace(JourneySearchText)
+                ? [.. journeys]
+                : [.. journeys.Where(j => j.Name.Contains(JourneySearchText, StringComparison.OrdinalIgnoreCase))];
         }
     }
     #endregion
@@ -113,7 +107,7 @@ public partial class MainWindowViewModel
             SelectedJourney,
             SelectedProject.Model.Journeys,
             SelectedProject.Journeys,
-            () => { SelectedJourney = null; });
+            () => SelectedJourney = null);
         
         OnPropertyChanged(nameof(FilteredJourneys));
     }

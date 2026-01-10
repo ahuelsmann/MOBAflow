@@ -140,10 +140,10 @@ public sealed partial class SpeedometerControl : UserControl
         var startRad = startAngle * Math.PI / 180;
         var endRad = endAngle * Math.PI / 180;
 
-        var startX = centerX + radius * Math.Cos(startRad);
-        var startY = centerY - radius * Math.Sin(startRad);
-        var endX = centerX + radius * Math.Cos(endRad);
-        var endY = centerY - radius * Math.Sin(endRad);
+        var startX = centerX + (radius * Math.Cos(startRad));
+        var startY = centerY - (radius * Math.Sin(startRad));
+        var endX = centerX + (radius * Math.Cos(endRad));
+        var endY = centerY - (radius * Math.Sin(endRad));
 
         // Large arc flag (1 if > 180 deg, but we never exceed 180 deg)
         var largeArc = sweepAngle > 180 ? 1 : 0;
@@ -183,8 +183,8 @@ public sealed partial class SpeedometerControl : UserControl
             // Green to Yellow (0-50%)
             var t = normalizedValue * 2;
             color = Windows.UI.Color.FromArgb(255,
-                (byte)(76 + t * 179),   // 76 to 255 (green to yellow R)
-                (byte)(175 - t * 75),   // 175 to 100 (green to yellow G)
+                (byte)(76 + (t * 179)),   // 76 to 255 (green to yellow R)
+                (byte)(175 - (t * 75)),   // 175 to 100 (green to yellow G)
                 80);                     // Blue stays low
         }
         else
@@ -193,8 +193,8 @@ public sealed partial class SpeedometerControl : UserControl
             var t = (normalizedValue - 0.5) * 2;
             color = Windows.UI.Color.FromArgb(255,
                 255,                     // Red stays max
-                (byte)(100 - t * 100),  // 100 to 0 (yellow to red G)
-                (byte)(80 - t * 80));   // Blue goes to 0
+                (byte)(100 - (t * 100)),  // 100 to 0 (yellow to red G)
+                (byte)(80 - (t * 80)));   // Blue goes to 0
         }
 
         SpeedArc.Stroke = new SolidColorBrush(color);

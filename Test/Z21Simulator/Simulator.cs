@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Test.Z21Simulator;
 
@@ -11,7 +11,7 @@ public class Simulator : IDisposable
     private readonly int _port;
     private bool _disposed;
 
-    public IPEndPoint LocalEndpoint => new IPEndPoint(IPAddress.Loopback, _port);
+    public IPEndPoint LocalEndpoint => new(IPAddress.Loopback, _port);
 
     public Simulator(int port = 21105)
     {

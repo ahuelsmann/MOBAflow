@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -42,41 +42,41 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
     /// Hierarchical collection of Journey ViewModels.
     /// Manually synced with Model.Journeys via Refresh().
     /// </summary>
-    public ObservableCollection<JourneyViewModel> Journeys { get; } = new();
+    public ObservableCollection<JourneyViewModel> Journeys { get; } = [];
 
     /// <summary>
     /// Hierarchical collection of Workflow ViewModels.
     /// Manually synced with Model.Workflows via Refresh().
     /// </summary>
-    public ObservableCollection<WorkflowViewModel> Workflows { get; } = new();
+    public ObservableCollection<WorkflowViewModel> Workflows { get; } = [];
 
     /// <summary>
     /// Hierarchical collection of Train ViewModels.
     /// Manually synced with Model.Trains via Refresh().
     /// </summary>
-    public ObservableCollection<TrainViewModel> Trains { get; } = new();
+    public ObservableCollection<TrainViewModel> Trains { get; } = [];
 
     /// <summary>
     /// Hierarchical collection of Locomotive ViewModels.
     /// Manually synced with Model.Locomotives via Refresh().
     /// </summary>
-    public ObservableCollection<LocomotiveViewModel> Locomotives { get; } = new();
+    public ObservableCollection<LocomotiveViewModel> Locomotives { get; } = [];
 
     /// <summary>
     /// Hierarchical collection of Wagon ViewModels (combined PassengerWagons and GoodsWagons).
     /// Manually synced with Model via Refresh().
     /// </summary>
-    public ObservableCollection<WagonViewModel> Wagons { get; } = new();
+    public ObservableCollection<WagonViewModel> Wagons { get; } = [];
 
     /// <summary>
     /// Separate collection for PassengerWagon ViewModels (for Train Tab UI).
     /// </summary>
-    public ObservableCollection<PassengerWagonViewModel> PassengerWagons { get; } = new();
+    public ObservableCollection<PassengerWagonViewModel> PassengerWagons { get; } = [];
 
     /// <summary>
     /// Separate collection for GoodsWagon ViewModels (for Train Tab UI).
     /// </summary>
-    public ObservableCollection<GoodsWagonViewModel> GoodsWagons { get; } = new();
+    public ObservableCollection<GoodsWagonViewModel> GoodsWagons { get; } = [];
 
     public ProjectViewModel(Project model, IUiDispatcher? dispatcher = null, IIoService? ioService = null)
     {

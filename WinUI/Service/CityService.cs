@@ -1,10 +1,14 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
+
 using Domain;
+
 using Microsoft.Extensions.Logging;
+
 using SharedUI.Interface;
+
 using System.Text.Json;
 
 /// <summary>
@@ -22,12 +26,12 @@ public class CityService : ICityService
         _logger = logger;
         // Use configured path from appsettings.json
         var configuredPath = settings.CityLibrary.FilePath;
-        
+
         // Support absolute or relative paths
         _jsonFilePath = Path.IsPathRooted(configuredPath)
             ? configuredPath
             : Path.Combine(AppContext.BaseDirectory, configuredPath);
-            
+
         _logger.LogInformation("CityService initialized with path: {JsonFilePath}", _jsonFilePath);
     }
 
@@ -49,7 +53,7 @@ public class CityService : ICityService
         try
         {
             var json = await File.ReadAllTextAsync(_jsonFilePath);
-            
+
             // Simple deserialization with System.Text.Json - no complex options needed for POCOs
             var data = JsonSerializer.Deserialize<CitiesData>(json, JsonOptions.Default);
 
@@ -70,15 +74,11 @@ public class CityService : ICityService
     /// </summary>
     public List<City> FilterCities(string searchTerm)
     {
-        if (_cachedCities == null)
-            return [];
-
-        if (string.IsNullOrWhiteSpace(searchTerm))
-            return _cachedCities;
-
-        return _cachedCities
-            .Where(c => c.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
-            .ToList();
+        return _cachedCities == null
+            ? []
+            : string.IsNullOrWhiteSpace(searchTerm)
+            ? _cachedCities
+            : [.. _cachedCities.Where(c => c.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))];
     }
 
     /// <summary>

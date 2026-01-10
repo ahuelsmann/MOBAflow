@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
 using Microsoft.AspNetCore.SignalR.Client;
@@ -37,13 +37,13 @@ public class PhotoHubClient : IAsyncDisposable
 
             _hubConnection = new HubConnectionBuilder()
                 .WithUrl(hubUrl)
-                .WithAutomaticReconnect(new[]
-                {
+                .WithAutomaticReconnect(
+                [
                     TimeSpan.Zero,
                     TimeSpan.FromSeconds(2),
                     TimeSpan.FromSeconds(5),
                     TimeSpan.FromSeconds(10)
-                })
+                ])
                 .Build();
 
             // Register server event handlers  

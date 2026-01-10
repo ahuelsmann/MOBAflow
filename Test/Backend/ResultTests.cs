@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Backend;
 
 /// <summary>
@@ -31,7 +31,7 @@ public class ResultTests
         // Assert
         Assert.That(result.IsSuccess, Is.False);
         Assert.That(result.IsFailure, Is.True);
-        Assert.That(result.Value, Is.EqualTo(default(int)));
+        Assert.That(result.Value, Is.Default);
         Assert.That(result.Error, Is.EqualTo("Something went wrong"));
     }
 
@@ -281,7 +281,7 @@ public class ResultTests
 
         // Assert
         Assert.That(mapped.IsSuccess, Is.True);
-        Assert.That(mapped.Value, Is.EqualTo(0));
+        Assert.That(mapped.Value, Is.Zero);
     }
 
     [Test]
@@ -330,9 +330,7 @@ public class ResultTests
         // Simulate database query
         Result<User> QueryUser(int id)
         {
-            if (id > 0)
-                return Result<User>.Success(new User { Id = id, Name = "John" });
-            return Result<User>.Failure("Invalid ID");
+            return id > 0 ? Result<User>.Success(new User { Id = id, Name = "John" }) : Result<User>.Failure("Invalid ID");
         }
 
         // Act
@@ -349,11 +347,9 @@ public class ResultTests
         // Arrange
         Result<string> ValidateEmail(string email)
         {
-            if (string.IsNullOrEmpty(email))
-                return Result<string>.Failure("Email is required");
-            if (!email.Contains("@"))
-                return Result<string>.Failure("Invalid email format");
-            return Result<string>.Success(email);
+            return string.IsNullOrEmpty(email)
+                ? Result<string>.Failure("Email is required")
+                : !email.Contains('@') ? Result<string>.Failure("Invalid email format") : Result<string>.Success(email);
         }
 
         // Act
@@ -375,9 +371,7 @@ public class ResultTests
 
         Result<int> DivideNumbers(int a, int b)
         {
-            if (b == 0)
-                return Result<int>.Failure("Division by zero");
-            return Result<int>.Success(a / b);
+            return b == 0 ? Result<int>.Failure("Division by zero") : Result<int>.Success(a / b);
         }
 
         // Act

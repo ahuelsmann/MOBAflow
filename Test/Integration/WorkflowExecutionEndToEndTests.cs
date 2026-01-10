@@ -1,9 +1,11 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Test.Integration;
 
 using Domain.Enum;
+
 using Moba.Backend.Service;
+
 using Mocks;
 
 /// <summary>
@@ -37,6 +39,7 @@ public class WorkflowExecutionEndToEndTests
     public void TearDown()
     {
         _z21.Dispose();
+        _fakeUdp.Dispose();
     }
 
     [Test]
@@ -141,7 +144,7 @@ public class WorkflowExecutionEndToEndTests
         await _workflowService.ExecuteAsync(workflow, _executionContext);
 
         // Assert
-        Assert.That(_fakeUdp.SentPayloads.Count, Is.EqualTo(initialPayloadCount), "No commands should be sent");
+        Assert.That(_fakeUdp.SentPayloads, Has.Count.EqualTo(initialPayloadCount), "No commands should be sent");
     }
 
     [Test]
@@ -160,7 +163,7 @@ public class WorkflowExecutionEndToEndTests
                     Number = 1,
                     Name = "Invalid Action",
                     Type = (ActionType)999, // Invalid type
-                    Parameters = new Dictionary<string, object>()
+                    Parameters = []
                 }
             ]
         };
@@ -169,10 +172,7 @@ public class WorkflowExecutionEndToEndTests
         // Note: WorkflowService catches exceptions from ActionExecutor and logs them
         // but continues executing remaining actions. No exception is rethrown.
         // This is by design - workflow should be resilient to action failures.
-        Assert.DoesNotThrowAsync(async () =>
-        {
-            await _workflowService.ExecuteAsync(workflow, _executionContext);
-        });
+        Assert.DoesNotThrowAsync(async () => await _workflowService.ExecuteAsync(workflow, _executionContext));
         return Task.CompletedTask;
     }
 
@@ -206,6 +206,6 @@ public class WorkflowExecutionEndToEndTests
         await _workflowService.ExecuteAsync(workflow, _executionContext);
 
         // Assert
-        Assert.That(_fakeUdp.SentPayloads.Count, Is.GreaterThan(initialPayloads), "Z21 command should be sent");
+        Assert.That(_fakeUdp.SentPayloads, Has.Count.GreaterThan(initialPayloads), "Z21 command should be sent");
     }
 }

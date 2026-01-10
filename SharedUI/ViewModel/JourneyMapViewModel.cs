@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -101,8 +101,7 @@ public class JourneyMapViewModel : ObservableObject
     {
         get
         {
-            if (SelectedJourney == null) return "-";
-            return $"Lap {SelectedJourney.CurrentCounter}";
+            return SelectedJourney == null ? "-" : $"Lap {SelectedJourney.CurrentCounter}";
         }
     }
 
@@ -113,8 +112,7 @@ public class JourneyMapViewModel : ObservableObject
     {
         get
         {
-            if (SelectedJourney == null) return "-";
-            return SelectedJourney.BehaviorOnLastStop.ToString();
+            return SelectedJourney == null ? "-" : SelectedJourney.BehaviorOnLastStop.ToString();
         }
     }
 
@@ -125,8 +123,7 @@ public class JourneyMapViewModel : ObservableObject
     {
         get
         {
-            if (SelectedJourney == null) return "-";
-            return SelectedJourney.InPort.ToString();
+            return SelectedJourney == null ? "-" : SelectedJourney.InPort.ToString();
         }
     }
     #endregion

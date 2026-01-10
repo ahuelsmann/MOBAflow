@@ -1,11 +1,15 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Backend.Manager;
 
 using CommunityToolkit.Mvvm.Messaging;
+
 using Domain.Message;
+
 using Interface;
+
 using Service;
+
 using System.Diagnostics;
 
 /// <summary>
@@ -18,7 +22,7 @@ public abstract class BaseFeedbackManager<TEntity> : IFeedbackManager where TEnt
 {
     protected readonly IZ21 Z21;
     protected readonly List<TEntity> Entities;
-    protected readonly Dictionary<uint, DateTime> LastFeedbackTime = new();
+    protected readonly Dictionary<uint, DateTime> LastFeedbackTime = [];
     protected readonly ActionExecutionContext? ExecutionContext;
     protected bool Disposed;
 
@@ -32,17 +36,13 @@ public abstract class BaseFeedbackManager<TEntity> : IFeedbackManager where TEnt
     {
         Z21 = z21;
         Entities = entities;
-        
+
         // ✅ Subscribe to Messenger (new approach)
         // Handler is simple lambda that doesn't capture 'this', avoiding memory leak with WeakReferences
         WeakReferenceMessenger.Default.Register<FeedbackReceivedMessage>(
             this,
-            (_, message) =>
-            {
-                OnMessageReceived(message);
-            }
-        );
-        
+            (_, message) => OnMessageReceived(message));
+
         // Keep legacy Z21.Received subscription for backward compatibility
         Z21.Received += OnFeedbackReceived;
 
@@ -199,10 +199,10 @@ public abstract class BaseFeedbackManager<TEntity> : IFeedbackManager where TEnt
         {
             // ✅ Unregister from Messenger FIRST (stops new feedback events)
             WeakReferenceMessenger.Default.Unregister<FeedbackReceivedMessage>(this);
-            
+
             // Unsubscribe from Z21 events
             Z21.Received -= OnFeedbackReceived;
-            
+
             CleanupResources();
         }
 

@@ -206,8 +206,8 @@ public partial class TrackPlanEditorViewModel : ObservableObject
 
         var col = _newSegmentCounter % columnsPerRow;
         var row = _newSegmentCounter / columnsPerRow;
-        var initialX = startX + col * spacingX;
-        var initialY = startY + row * spacingY;
+        var initialX = startX + (col * spacingX);
+        var initialY = startY + (row * spacingY);
 
         _newSegmentCounter++;
 
@@ -284,8 +284,8 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         {
             Name = LayoutName,
             Description = LayoutDescription,
-            Segments = Segments.Select(s => s.Model).ToList(),
-            Connections = Connections.ToList()
+            Segments = [.. Segments.Select(s => s.Model)],
+            Connections = [.. Connections]
         };
 
         // Renderer anwenden
@@ -317,8 +317,8 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         {
             Name = LayoutName,
             Description = LayoutDescription,
-            Segments = Segments.Select(s => s.Model).ToList(),
-            Connections = Connections.ToList()
+            Segments = [.. Segments.Select(s => s.Model)],
+            Connections = [.. Connections]
         };
 
         // Renderer anwenden
@@ -372,8 +372,8 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         {
             Name = LayoutName,
             Description = LayoutDescription,
-            Segments = Segments.Select(s => s.Model).ToList(),
-            Connections = Connections.ToList()
+            Segments = [.. Segments.Select(s => s.Model)],
+            Connections = [.. Connections]
         };
 
         project.TrackLayout = layout;
@@ -400,8 +400,10 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         // Load segments
         foreach (var segmentModel in layout.Segments)
         {
-            var vm = new TrackSegmentViewModel(segmentModel);
-            vm.PathData = GeneratePathData(segmentModel);
+            var vm = new TrackSegmentViewModel(segmentModel)
+            {
+                PathData = GeneratePathData(segmentModel)
+            };
             Segments.Add(vm);
         }
 
@@ -544,8 +546,8 @@ public partial class TrackPlanEditorViewModel : ObservableObject
         {
             Name = LayoutName,
             Description = LayoutDescription,
-            Segments = Segments.Select(s => s.Model).ToList(),
-            Connections = Connections.ToList()
+            Segments = [.. Segments.Select(s => s.Model)],
+            Connections = [.. Connections]
         };
 
         _renderer.Render(layout);
@@ -666,8 +668,8 @@ public partial class TrackPlanEditorViewModel : ObservableObject
             var cos = Math.Cos(radians);
             var sin = Math.Sin(radians);
 
-            var worldX = wt.TranslateX + endpoint.X * cos - endpoint.Y * sin;
-            var worldY = wt.TranslateY + endpoint.X * sin + endpoint.Y * cos;
+            var worldX = wt.TranslateX + (endpoint.X * cos) - (endpoint.Y * sin);
+            var worldY = wt.TranslateY + (endpoint.X * sin) + (endpoint.Y * cos);
 
             result.Add((worldX, worldY));
         }
@@ -693,7 +695,7 @@ public partial class TrackPlanEditorViewModel : ObservableObject
     {
         var dx = a.X - b.X;
         var dy = a.Y - b.Y;
-        return Math.Sqrt(dx * dx + dy * dy);
+        return Math.Sqrt((dx * dx) + (dy * dy));
     }
 
     /// <summary>

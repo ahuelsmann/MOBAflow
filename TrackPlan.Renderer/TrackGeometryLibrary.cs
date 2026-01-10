@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT.
 // See LICENSE and README.md for details.
 using Moba.TrackPlan.Domain;
 
@@ -11,7 +11,7 @@ namespace Moba.TrackPlan.Renderer;
 /// </summary>
 public class TrackGeometryLibrary
 {
-    private readonly Dictionary<string, TrackGeometry> _templates = new();
+    private readonly Dictionary<string, TrackGeometry> _templates = [];
 
     public TrackGeometryLibrary()
     {

@@ -17,7 +17,7 @@ using Windows.UI;
 /// Help Page with TreeView navigation and RichTextBlock content.
 /// Uses 100% native WinUI controls for best performance and accessibility.
 /// </summary>
-public sealed class HelpPage : Page
+public sealed partial class HelpPage : Page
 {
     private readonly TreeView _navigationTreeView;
     private readonly RichTextBlock _contentRichTextBlock;

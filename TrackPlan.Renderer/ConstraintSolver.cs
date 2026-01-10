@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.TrackPlan.Renderer;
 
 using Domain;
@@ -70,11 +70,11 @@ public class ConstraintSolver
         var cHeading = childGeometry.EndpointHeadingsDeg[cIdx];
 
         var childRotation = parentWorldTransform.RotationDegrees + pHeading + 180 - cHeading;
-        var rotatedChildConnector = RotatePoint(cPoint.X, cPoint.Y, childRotation);
+        var (X, Y) = RotatePoint(cPoint.X, cPoint.Y, childRotation);
 
         var parentWorldConnector = parentWorldTransform.TransformPoint(pPoint.X, pPoint.Y);
-        var childWorldX = parentWorldConnector.X - rotatedChildConnector.X;
-        var childWorldY = parentWorldConnector.Y - rotatedChildConnector.Y;
+        var childWorldX = parentWorldConnector.X - X;
+        var childWorldY = parentWorldConnector.Y - Y;
 
         return new Transform2D
         {
@@ -129,10 +129,10 @@ public class ConstraintSolver
         var cHeading = childGeometry.EndpointHeadingsDeg[cIdx];
 
         var childRotation = parentWorldTransform.RotationDegrees + pHeading + branchAngle - cHeading;
-        var rotatedChildConnector = RotatePoint(cPoint.X, cPoint.Y, childRotation);
+        var (X, Y) = RotatePoint(cPoint.X, cPoint.Y, childRotation);
         var parentWorldConnector = parentWorldTransform.TransformPoint(pPoint.X, pPoint.Y);
-        var childWorldX = parentWorldConnector.X - rotatedChildConnector.X;
-        var childWorldY = parentWorldConnector.Y - rotatedChildConnector.Y;
+        var childWorldX = parentWorldConnector.X - X;
+        var childWorldY = parentWorldConnector.Y - Y;
 
         return new Transform2D
         {
@@ -149,8 +149,8 @@ public class ConstraintSolver
         var sin = Math.Sin(rad);
 
         return (
-            x * cos - y * sin,
-            x * sin + y * cos
+            (x * cos) - (y * sin),
+            (x * sin) + (y * cos)
         );
     }
 

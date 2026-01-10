@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -65,19 +65,10 @@ public class NavigationService
                 var contentProvider = _serviceProvider.GetRequiredService(registration.PageType);
                 
                 // Call CreateContent() method via reflection
-                var createContentMethod = registration.PageType.GetMethod("CreateContent", BindingFlags.Public | BindingFlags.Instance);
-                if (createContentMethod is null)
-                {
-                    throw new InvalidOperationException(
+                var createContentMethod = registration.PageType.GetMethod("CreateContent", BindingFlags.Public | BindingFlags.Instance) ?? throw new InvalidOperationException(
                         $"Plugin type {registration.PageType.Name} must have a public CreateContent() method that returns UIElement.");
-                }
-
-                var content = createContentMethod.Invoke(contentProvider, null) as UIElement;
-                if (content is null)
-                {
-                    throw new InvalidOperationException(
+                var content = createContentMethod.Invoke(contentProvider, null) as UIElement ?? throw new InvalidOperationException(
                         $"Plugin {registration.PageType.Name}.CreateContent() returned null or non-UIElement.");
-                }
 
                 // Wrap in PluginHostPage (which is a known type in WinUI project)
                 var hostPage = new PluginHostPage();

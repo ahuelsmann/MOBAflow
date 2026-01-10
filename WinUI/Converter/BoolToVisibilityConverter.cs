@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Converter;
 
 using Microsoft.UI.Xaml;
@@ -9,23 +9,15 @@ using Microsoft.UI.Xaml.Data;
 /// True → Visible, False → Collapsed.
 /// Use ConverterParameter="Invert" to invert the logic (True → Collapsed, False → Visible).
 /// </summary>
-public class BoolToVisibilityConverter : IValueConverter
+public partial class BoolToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {
         var invert = parameter is string s && s.Equals("Invert", StringComparison.OrdinalIgnoreCase);
 
-        if (value is bool boolValue)
-        {
-            if (invert)
-            {
-                return boolValue ? Visibility.Collapsed : Visibility.Visible;
-            }
-
-            return boolValue ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        return invert ? Visibility.Visible : Visibility.Collapsed;
+        return value is bool boolValue
+            ? invert ? boolValue ? Visibility.Collapsed : Visibility.Visible : boolValue ? Visibility.Visible : Visibility.Collapsed
+            : invert ? Visibility.Visible : Visibility.Collapsed;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)

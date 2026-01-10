@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 using Moba.Backend.Data;
 using Moba.Backend.Extensions;
@@ -26,8 +26,6 @@ if (string.IsNullOrEmpty(appSettings.Z21.CurrentIpAddress))
 }
 builder.Services.AddSingleton(appSettings);
 builder.Services.AddSingleton<ISettingsService, SettingsService>();
-
-
 
 // Blazor-specific services
 builder.Services.AddSingleton<IUiDispatcher, BlazorUiDispatcher>();

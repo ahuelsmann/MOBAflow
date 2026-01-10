@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 using Microsoft.Extensions.Logging;
 
@@ -34,10 +34,10 @@ public sealed class PluginDiscoveryService
         // Try to find plugin DLLs - search in root and immediate subdirectories
         // This supports both layouts: Plugins/*.dll and Plugins/PluginName/PluginName.dll
         var pluginDlls = new List<string>();
-        
+
         // Search root directory
         pluginDlls.AddRange(Directory.EnumerateFiles(pluginDirectory, "*.dll"));
-        
+
         // Search immediate subdirectories (each plugin in its own folder)
         foreach (var subDir in Directory.EnumerateDirectories(pluginDirectory))
         {
@@ -54,7 +54,7 @@ public sealed class PluginDiscoveryService
                 pluginDlls.AddRange(Directory.EnumerateFiles(subDir, "*.dll"));
             }
         }
-        
+
         if (pluginDlls.Count == 0)
         {
             logger?.LogInformation("No plugin DLLs found in: {PluginDirectory}. Starting without plugins.", pluginDirectory);
@@ -73,7 +73,7 @@ public sealed class PluginDiscoveryService
                     .Where(t => typeof(IPlugin).IsAssignableFrom(t) && !t.IsAbstract)
                     .ToList();
 
-                if (!pluginTypes.Any())
+                if (pluginTypes.Count == 0)
                 {
                     logger?.LogDebug("No IPlugin implementations found in {Dll}", Path.GetFileName(dll));
                     continue;
@@ -109,7 +109,7 @@ public sealed class PluginDiscoveryService
             }
         }
 
-        if (plugins.Any())
+        if (plugins.Count != 0)
         {
             logger?.LogInformation("Successfully discovered {PluginCount} plugin(s)", plugins.Count);
         }

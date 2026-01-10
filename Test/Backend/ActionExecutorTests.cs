@@ -1,9 +1,11 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Test.Backend;
 
 using Domain.Enum;
+
 using Moba.Backend.Service;
+
 using Mocks;
 
 /// <summary>
@@ -24,7 +26,7 @@ public class ActionExecutorTests
         _actionExecutor = new ActionExecutor(); // No AnnouncementService for basic tests
         _fakeUdp = new FakeUdpClientWrapper();
         _z21 = new Z21(_fakeUdp);
-        
+
         _context = new ActionExecutionContext
         {
             Z21 = _z21
@@ -35,6 +37,7 @@ public class ActionExecutorTests
     public void TearDown()
     {
         _z21.Dispose();
+        _fakeUdp.Dispose();
     }
 
     [Test]
@@ -59,9 +62,9 @@ public class ActionExecutorTests
 
         // Assert
         Assert.That(_fakeUdp.SentPayloads, Is.Not.Empty, "At least one packet should have been sent");
-        
+
         var lastPacket = _fakeUdp.SentPayloads[^1];
-        Assert.That(lastPacket.Length, Is.GreaterThanOrEqualTo(4), "Packet should have at least 4 bytes");
+        Assert.That(lastPacket, Has.Length.GreaterThanOrEqualTo(4), "Packet should have at least 4 bytes");
     }
 
     [Test]
@@ -78,10 +81,7 @@ public class ActionExecutorTests
         };
 
         // Act & Assert
-        Assert.ThrowsAsync<ArgumentException>(async () =>
-        {
-            await _actionExecutor.ExecuteAsync(action, _context);
-        });
+        Assert.ThrowsAsync<ArgumentException>(async () => await _actionExecutor.ExecuteAsync(action, _context));
     }
 
     [Test]
@@ -101,10 +101,7 @@ public class ActionExecutorTests
         };
 
         // Act & Assert
-        Assert.ThrowsAsync<ArgumentException>(async () =>
-        {
-            await _actionExecutor.ExecuteAsync(action, _context);
-        });
+        Assert.ThrowsAsync<ArgumentException>(async () => await _actionExecutor.ExecuteAsync(action, _context));
         return Task.CompletedTask;
     }
 
@@ -118,13 +115,10 @@ public class ActionExecutorTests
             Number = 4,
             Name = "Unsupported Action",
             Type = (ActionType)999,
-            Parameters = new Dictionary<string, object>()
+            Parameters = []
         };
 
         // Act & Assert
-        Assert.ThrowsAsync<NotSupportedException>(async () =>
-        {
-            await _actionExecutor.ExecuteAsync(action, _context);
-        });
+        Assert.ThrowsAsync<NotSupportedException>(async () => await _actionExecutor.ExecuteAsync(action, _context));
     }
 }

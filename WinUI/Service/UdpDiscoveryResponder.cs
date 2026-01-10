@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 using System.Net;
 using System.Net.Sockets;
@@ -13,7 +13,7 @@ namespace Moba.WinUI.Service;
 /// Listens for UDP Multicast discovery requests from MAUI clients and responds with server IP + Port.
 /// Runs alongside Kestrel to enable automatic server discovery on local network.
 /// </summary>
-public sealed class UdpDiscoveryResponder : IDisposable
+public sealed partial class UdpDiscoveryResponder : IDisposable
 {
     private const int DISCOVERY_PORT = 21106;
     private const string DISCOVERY_REQUEST = "MOBAFLOW_DISCOVER";
@@ -64,8 +64,10 @@ public sealed class UdpDiscoveryResponder : IDisposable
     {
         try
         {
-            _udpListener = new UdpClient();
-            _udpListener.ExclusiveAddressUse = false;
+            _udpListener = new UdpClient
+            {
+                ExclusiveAddressUse = false
+            };
 
             var localEndPoint = new IPEndPoint(IPAddress.Any, DISCOVERY_PORT);
             _udpListener.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);

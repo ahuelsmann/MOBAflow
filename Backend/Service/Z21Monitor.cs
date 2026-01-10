@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Service;
 
 using Microsoft.Extensions.Logging;
@@ -57,11 +57,10 @@ public class Z21Monitor
             IsSent = false,
             Data = data,
             PacketType = packetType,
-            Details = details
+            Details = details,
+            // Check if this is a feedback-related packet and extract InPort
+            IsFeedbackRelated = IsFeedbackPacket(data)
         };
-
-        // Check if this is a feedback-related packet and extract InPort
-        packet.IsFeedbackRelated = IsFeedbackPacket(data);
         if (packet.IsFeedbackRelated)
         {
             packet.InPort = ExtractInPort(data);

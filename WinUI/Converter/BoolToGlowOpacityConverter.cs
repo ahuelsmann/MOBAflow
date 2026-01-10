@@ -8,7 +8,7 @@ using Microsoft.UI.Xaml.Data;
 /// When true (ON), returns higher opacity for visible glow.
 /// When false (OFF), returns 0 for no glow.
 /// </summary>
-public class BoolToGlowOpacityConverter : IValueConverter
+public partial class BoolToGlowOpacityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {
@@ -19,12 +19,7 @@ public class BoolToGlowOpacityConverter : IValueConverter
 
         // Subtle backlight: keep glow present but avoid harsh outer halos (notably for light/pastel accents).
         // Optional parameter can attenuate the layer intensity further (outer layers should be lower).
-        if (parameter is string s && double.TryParse(s, out var multiplier))
-        {
-            return 0.45 * multiplier;
-        }
-
-        return 0.45;
+        return parameter is string s && double.TryParse(s, out var multiplier) ? 0.45 * multiplier : 0.45;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)

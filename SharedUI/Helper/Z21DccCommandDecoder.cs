@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.Helper;
 
 /// <summary>
@@ -132,14 +132,7 @@ public static class Z21DccCommandDecoder
                 byte addrL = bytes[4];
 
                 // Simple address extraction
-                if (addrH <= 127)
-                {
-                    result.Address = addrH;
-                }
-                else
-                {
-                    result.Address = ((addrH & 0x3F) << 8) | addrL;
-                }
+                result.Address = addrH <= 127 ? addrH : ((addrH & 0x3F) << 8) | addrL;
 
                 // Extract speed from byte 5 if available
                 if (bytes.Length >= 6)
@@ -167,32 +160,28 @@ public static class Z21DccCommandDecoder
         /// </summary>
         public static string FormatBytesAsHex(byte[]? bytes)
         {
-            if (bytes == null || bytes.Length == 0)
-                return "(empty)";
+        return bytes == null || bytes.Length == 0 ? "(empty)" : BitConverter.ToString(bytes).Replace("-", " ");
+    }
 
-            return BitConverter.ToString(bytes).Replace("-", " ");
-        }
-
-        /// <summary>
-        /// Formats decoded DCC command as human-readable string.
-        /// Example: "Addr: 101, Speed: 127, Direction: Forward"
-        /// </summary>
-        public static string FormatDccCommand(DccCommand? command)
+    /// <summary>
+    /// Formats decoded DCC command as human-readable string.
+    /// Example: "Addr: 101, Speed: 127, Direction: Forward"
+    /// </summary>
+    public static string FormatDccCommand(DccCommand? command)
         {
-            if (command == null || !command.IsValid)
-                return command?.ErrorMessage ?? "(Unknown format)";
+        return command == null || !command.IsValid
+                ? command?.ErrorMessage ?? "(Unknown format)"
+                : $"Addr: {command.Address}, Speed: {command.Speed}, Direction: {command.Direction}";
+    }
 
-            return $"Addr: {command.Address}, Speed: {command.Speed}, Direction: {command.Direction}";
-        }
-
-        /// <summary>
-        /// Encodes DCC command parameters (Address, Speed, Direction) into Z21 LAN_X_SET_LOCO_DRIVE bytes.
-        /// </summary>
-        /// <param name="address">DCC address (0-10239).</param>
-        /// <param name="speed">Speed (0-127, 128-step mode).</param>
-        /// <param name="direction">Direction ("Forward" or "Backward").</param>
-        /// <returns>Z21 command bytes ready to send to Z21.</returns>
-        public static byte[] EncodeLocoCommand(int address, int speed, string direction)
+    /// <summary>
+    /// Encodes DCC command parameters (Address, Speed, Direction) into Z21 LAN_X_SET_LOCO_DRIVE bytes.
+    /// </summary>
+    /// <param name="address">DCC address (0-10239).</param>
+    /// <param name="speed">Speed (0-127, 128-step mode).</param>
+    /// <param name="direction">Direction ("Forward" or "Backward").</param>
+    /// <returns>Z21 command bytes ready to send to Z21.</returns>
+    public static byte[] EncodeLocoCommand(int address, int speed, string direction)
         {
             // Validate inputs
             if (address < 0 || address > 10239)
@@ -244,9 +233,8 @@ public static class Z21DccCommandDecoder
         /// </summary>
         public static byte[] EncodeLocoCommand(DccCommand command)
         {
-            if (command == null)
-                throw new ArgumentNullException(nameof(command));
-
-            return EncodeLocoCommand(command.Address, command.Speed, command.Direction);
-        }
+        return command == null
+                ? throw new ArgumentNullException(nameof(command))
+                : EncodeLocoCommand(command.Address, command.Speed, command.Direction);
     }
+}

@@ -1,10 +1,12 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.Service;
 
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
+
 using TrackPlan.Domain;
+
 using ViewModel;
 
 /// <summary>
@@ -13,7 +15,7 @@ using ViewModel;
 /// Endpoints are extracted from PathData (absolute coordinates).
 /// All operations are async to avoid blocking UI thread during PathData parsing.
 /// </summary>
-public class SnapToConnectService
+public partial class SnapToConnectService
 {
     private const double SnapDistance = 40;
 
@@ -53,7 +55,7 @@ public class SnapToConnectService
         var points = new List<TrackPoint>();
         var ic = CultureInfo.InvariantCulture;
 
-        var regex = new Regex(@"(-?\d+\.?\d*),(-?\d+\.?\d*)");
+        var regex = MyRegex();
         var matches = regex.Matches(pathData);
 
         foreach (Match match in matches)
@@ -123,4 +125,7 @@ public class SnapToConnectService
         var ic = CultureInfo.InvariantCulture;
         return string.Format(ic, "M {0:F2},{1:F2} L {2:F2},{3:F2}", from.X, from.Y, to.X, to.Y);
     }
+
+    [GeneratedRegex(@"(-?\d+\.?\d*),(-?\d+\.?\d*)")]
+    private static partial Regex MyRegex();
 }

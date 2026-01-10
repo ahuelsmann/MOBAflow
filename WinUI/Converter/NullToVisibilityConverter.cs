@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Converter;
 
 using Microsoft.UI.Xaml;
@@ -7,7 +7,7 @@ using Microsoft.UI.Xaml.Data;
 /// <summary>
 /// Converts null values to Visibility.Collapsed, non-null values to Visibility.Visible.
 /// </summary>
-public class NullToVisibilityConverter : IValueConverter
+public partial class NullToVisibilityConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {

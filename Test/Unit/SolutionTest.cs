@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Unit;
 
 public class SolutionTest
@@ -24,26 +24,26 @@ public class SolutionTest
         // Assert
         Assert.That(solution, Is.Not.Null, "Solution sollte nicht null sein");
         Assert.That(solution.Projects, Is.Not.Null, "Projects sollte nicht null sein");
-        Assert.That(solution.Projects.Count, Is.EqualTo(1), "Es sollte genau ein Projekt vorhanden sein");
+        Assert.That(solution.Projects, Has.Count.EqualTo(1), "Es sollte genau ein Projekt vorhanden sein");
 
         var project = solution.Projects[0];
 
         // Settings are now in AppSettings (not in Solution)
         // This test is obsolete - Settings moved to Common.Configuration.AppSettings
         
-        Assert.That(project.SpeakerEngines.Count, Is.EqualTo(1));
+        Assert.That(project.SpeakerEngines, Has.Count.EqualTo(1));
         Assert.That(project.SpeakerEngines[0].Name, Is.EqualTo("Microsoft.CognitiveServices.Speech"));
 
-        Assert.That(project.Voices.Count, Is.EqualTo(5));
+        Assert.That(project.Voices, Has.Count.EqualTo(5));
         Assert.That(project.Voices[0].Name, Is.EqualTo("ElkeNeural"));
 
-        Assert.That(project.Trains.Count, Is.EqualTo(1));
+        Assert.That(project.Trains, Has.Count.EqualTo(1));
         Assert.That(project.Trains[0].Name, Is.EqualTo("RE 78"));
 
-        Assert.That(project.Workflows.Count, Is.EqualTo(2));
+        Assert.That(project.Workflows, Has.Count.EqualTo(2));
         Assert.That(project.Workflows[0].Name, Is.EqualTo("Platform Announcement"));
 
-        Assert.That(project.Journeys.Count, Is.EqualTo(1));
+        Assert.That(project.Journeys, Has.Count.EqualTo(1));
         Assert.That(project.Journeys[0].Name, Is.EqualTo("RE 78 (Porta-Express)"));
     }
 }

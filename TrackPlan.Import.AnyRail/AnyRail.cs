@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.TrackPlan.Import;
 
 using Domain;
@@ -42,12 +42,12 @@ public class AnyRail
         {
             foreach (var ep in endpointsEl.Elements("endpoint"))
             {
-                var coord = ParseCoord3(ep.Attribute("coord")?.Value);
+                var (X, Y, Z) = ParseCoord3(ep.Attribute("coord")?.Value);
                 layout.Endpoints.Add(new AnyRailEndpoint
                 {
                     Nr = int.Parse(ep.Attribute("nr")?.Value ?? "0", CultureInfo.InvariantCulture),
-                    X = coord.X,
-                    Y = coord.Y,
+                    X = X,
+                    Y = Y,
                     Direction = int.Parse(ep.Attribute("direction")?.Value ?? "0", CultureInfo.InvariantCulture)
                 });
             }
@@ -108,15 +108,15 @@ public class AnyRail
                     Endpoint2 = int.Parse(conn.Attribute("endpoint2")?.Value ?? "0", CultureInfo.InvariantCulture)
                 });
             }
-                }
+        }
 
-                return layout;
-            }
+        return layout;
+    }
 
-            /// <summary>
-            /// Converts AnyRail connections (endpoint-to-endpoint) to TrackConnections (segment-to-segment).
-            /// </summary>
-            public List<TrackConnection> ToTrackConnections()
+    /// <summary>
+    /// Converts AnyRail connections (endpoint-to-endpoint) to TrackConnections (segment-to-segment).
+    /// </summary>
+    public List<TrackConnection> ToTrackConnections()
     {
         var result = new List<TrackConnection>();
 
@@ -129,7 +129,7 @@ public class AnyRail
                 var ep = part.EndpointNrs[i];
                 if (!endpointToParts.TryGetValue(ep, out var list))
                 {
-                    list = new List<(string, int)>();
+                    list = [];
                     endpointToParts[ep] = list;
                 }
                 endpointToParts[ep].Add((part.Id, i));
@@ -139,7 +139,7 @@ public class AnyRail
         Debug.WriteLine($"AnyRail: Parts={Parts.Count}, Endpoints={Endpoints.Count}, Connections={Connections.Count}");
 
         // Build endpoint number -> coordinate lookup for fallback matching
-        var endpointCoords = Endpoints.ToDictionary(e => e.Nr, e => (X: e.X, Y: e.Y));
+        var endpointCoords = Endpoints.ToDictionary(e => e.Nr, e => (e.X, e.Y));
 
         // Convert each connection (endpoint-to-endpoint) to segment-to-segment connections
         foreach (var conn in Connections)
@@ -168,7 +168,7 @@ public class AnyRail
                                 {
                                     var dx = epCoord.X - coord1.X;
                                     var dy = epCoord.Y - coord1.Y;
-                                    var dist = Math.Sqrt(dx * dx + dy * dy);
+                                    var dist = Math.Sqrt((dx * dx) + (dy * dy));
                                     if (dist <= tolerance)
                                     {
                                         matches.Add((part.Id, i, dist));
@@ -179,7 +179,7 @@ public class AnyRail
 
                         if (matches.Count > 0)
                         {
-                            list1 = matches.OrderBy(m => m.Dist).Select(m => (m.PartId, m.EndpointIndex)).ToList();
+                            list1 = [.. matches.OrderBy(m => m.Dist).Select(m => (m.PartId, m.EndpointIndex))];
                             has1 = true;
                             Debug.WriteLine($"🔁 ToTrackConnections: Fallback matched endpoint {conn.Endpoint1} to parts: {string.Join(',', list1.Select(x => $"{x.PartId}.ep{x.EndpointIndex}"))}");
                         }
@@ -208,7 +208,7 @@ public class AnyRail
                                 {
                                     var dx = epCoord.X - coord2.X;
                                     var dy = epCoord.Y - coord2.Y;
-                                    var dist = Math.Sqrt(dx * dx + dy * dy);
+                                    var dist = Math.Sqrt((dx * dx) + (dy * dy));
                                     if (dist <= tolerance)
                                     {
                                         matches.Add((part.Id, i, dist));
@@ -219,7 +219,7 @@ public class AnyRail
 
                         if (matches.Count > 0)
                         {
-                            list2 = matches.OrderBy(m => m.Dist).Select(m => (m.PartId, m.EndpointIndex)).ToList();
+                            list2 = [.. matches.OrderBy(m => m.Dist).Select(m => (m.PartId, m.EndpointIndex))];
                             has2 = true;
                             Debug.WriteLine($"🔁 ToTrackConnections: Fallback matched endpoint {conn.Endpoint2} to parts: {string.Join(',', list2.Select(x => $"{x.PartId}.ep{x.EndpointIndex}"))}");
                         }
@@ -246,21 +246,21 @@ public class AnyRail
             var mappedList2 = list2 ?? [];
 
             // If multiple parts map to an endpoint, produce all pairwise connections
-            foreach (var p1 in mappedList1)
+            foreach (var (PartId, EndpointIndex) in mappedList1)
             {
                 foreach (var p2 in mappedList2)
                 {
-                    if (p1.PartId == p2.PartId && p1.EndpointIndex == p2.EndpointIndex)
+                    if (PartId == p2.PartId && EndpointIndex == p2.EndpointIndex)
                         continue;
 
                     result.Add(new TrackConnection
                     {
-                        Segment1Id = p1.PartId,
-                        Segment1ConnectorIndex = p1.EndpointIndex,
+                        Segment1Id = PartId,
+                        Segment1ConnectorIndex = EndpointIndex,
                         Segment2Id = p2.PartId,
                         Segment2ConnectorIndex = p2.EndpointIndex
                     });
-                    Debug.WriteLine($"🔗 ToTrackConnections: {p1.PartId}.ep{p1.EndpointIndex} <-> {p2.PartId}.ep{p2.EndpointIndex}");
+                    Debug.WriteLine($"🔗 ToTrackConnections: {PartId}.ep{EndpointIndex} <-> {p2.PartId}.ep{p2.EndpointIndex}");
                 }
             }
         }
@@ -322,20 +322,12 @@ public class AnyRailPart
 
     public double GetX()
     {
-        if (Lines.Count > 0)
-            return Lines[0].Pt1.X;
-        if (Arcs.Count > 0)
-            return Arcs[0].Pt1.X;
-        return 0;
+        return Lines.Count > 0 ? Lines[0].Pt1.X : Arcs.Count > 0 ? Arcs[0].Pt1.X : 0;
     }
 
     public double GetY()
     {
-        if (Lines.Count > 0)
-            return Lines[0].Pt1.Y;
-        if (Arcs.Count > 0)
-            return Arcs[0].Pt1.Y;
-        return 0;
+        return Lines.Count > 0 ? Lines[0].Pt1.Y : Arcs.Count > 0 ? Arcs[0].Pt1.Y : 0;
     }
 
     public double GetRotation()
@@ -466,10 +458,7 @@ public class AnyRailPart
 
     private TrackSegmentType DetermineTypeFromGeometry()
     {
-        if (Arcs.Count > Lines.Count)
-            return TrackSegmentType.Curve;
-
-        return TrackSegmentType.Straight;
+        return Arcs.Count > Lines.Count ? TrackSegmentType.Curve : TrackSegmentType.Straight;
     }
 
     public (double X, double Y) GetCenter()
@@ -512,7 +501,7 @@ public class AnyRailPart
             endpoints.Add(((int)Math.Round(arc.Pt2.X), (int)Math.Round(arc.Pt2.Y)));
         }
 
-        return endpoints.Select(e => ((double)e.X, (double)e.Y)).ToList();
+        return [.. endpoints.Select(e => ((double)e.X, (double)e.Y))];
     }
 }
 

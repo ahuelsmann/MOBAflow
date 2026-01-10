@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using Common.Configuration;
@@ -506,10 +506,7 @@ public partial class MainWindowViewModel
     /// Command to select a speech engine from the UI.
     /// </summary>
     public IRelayCommand<string?> SelectSpeechEngineCommand =>
-        field ??= new RelayCommand<string?>(engine =>
-        {
-            SelectedSpeechEngine = engine;
-        });
+        field ??= new RelayCommand<string?>(engine => SelectedSpeechEngine = engine);
 
     [RelayCommand]
     private async Task TestSpeechAsync()

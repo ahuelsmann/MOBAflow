@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using Backend;
@@ -69,7 +69,7 @@ public partial class MainWindowViewModel
     private int vccVoltage;
 
     // Last feedback time tracking for timer filter
-    private readonly Dictionary<int, DateTime> _lastFeedbackTime = new();
+    private readonly Dictionary<int, DateTime> _lastFeedbackTime = [];
 
     #endregion
 
@@ -235,10 +235,7 @@ public partial class MainWindowViewModel
     /// </summary>
     private void OnFeedbackReceived(FeedbackResult feedback)
     {
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            UpdateTrackStatistics((uint)feedback.InPort);
-        });
+        _uiDispatcher.InvokeOnUi(() => UpdateTrackStatistics((uint)feedback.InPort));
     }
 
     #endregion

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test;
 
 using Moba.SharedUI.Helper;
@@ -34,7 +34,7 @@ public class Z21DccCommandDecoderTests
         Assert.That(result, Is.Not.Null);
         Assert.That(result.IsValid, Is.True);
         Assert.That(result.Address, Is.EqualTo(101));  // DCC Address 101
-        Assert.That(result.Speed, Is.EqualTo(0));      // Speed 0 (stop)
+        Assert.That(result.Speed, Is.Zero);      // Speed 0 (stop)
         Assert.That(result.Direction, Is.EqualTo("Backward"));
     }
 
@@ -54,7 +54,7 @@ public class Z21DccCommandDecoderTests
 
         // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Length, Is.EqualTo(10));
+        Assert.That(result, Has.Length.EqualTo(10));
         Assert.That(result, Is.EqualTo(expectedBytes));
     }
 

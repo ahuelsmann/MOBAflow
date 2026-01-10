@@ -1,8 +1,9 @@
-﻿namespace Moba.WinUI.Behavior
+namespace Moba.WinUI.Behavior
 {
     using Microsoft.UI.Xaml;
     using Microsoft.UI.Xaml.Controls;
     using Microsoft.Xaml.Interactivity;
+
     using System.Windows.Input;
 
     /// <summary>
@@ -27,19 +28,13 @@
         protected override void OnAttached()
         {
             base.OnAttached();
-            if (AssociatedObject != null)
-            {
-                AssociatedObject.ItemClick += OnListViewItemClick;
-            }
+            AssociatedObject?.ItemClick += OnListViewItemClick;
         }
 
         protected override void OnDetaching()
         {
             base.OnDetaching();
-            if (AssociatedObject != null)
-            {
-                AssociatedObject.ItemClick -= OnListViewItemClick;
-            }
+            AssociatedObject?.ItemClick -= OnListViewItemClick;
         }
 
         private void OnListViewItemClick(object sender, ItemClickEventArgs e)

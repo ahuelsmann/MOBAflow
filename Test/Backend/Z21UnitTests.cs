@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Test.Backend;
 
@@ -46,7 +46,7 @@ public class Z21UnitTests
         // This is correct behavior - it means "connected and responded"
         
         // Verify that connection was initiated (payloads were sent)
-        Assert.That(fakeUdp.SentPayloads.Count, Is.GreaterThanOrEqualTo(2), "Connection should send handshake and broadcast flags");
+        Assert.That(fakeUdp.SentPayloads, Has.Count.GreaterThanOrEqualTo(2), "Connection should send handshake and broadcast flags");
 
         // Wait a bit to verify no exceptions from timer
         await Task.Delay(100);
@@ -65,7 +65,7 @@ public class Z21UnitTests
         await z21.ConnectAsync(address);
         
         // Verify connection was initiated
-        Assert.That(fakeUdp.SentPayloads.Count, Is.GreaterThanOrEqualTo(2));
+        Assert.That(fakeUdp.SentPayloads, Has.Count.GreaterThanOrEqualTo(2));
 
         await z21.DisconnectAsync();
         

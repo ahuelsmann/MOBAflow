@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.TrackPlan.Converter;
 
 using Domain;
@@ -16,15 +16,15 @@ public static class TopologyConverter
             Name = anyRailLayout.Name,
             Description = $"{anyRailLayout.Description} (Pure Topology)",
             TrackSystem = anyRailLayout.TrackSystem,
-            Segments = anyRailLayout.Segments.Select(s => new TrackSegment
+            Segments = [.. anyRailLayout.Segments.Select(s => new TrackSegment
             {
                 Id = s.Id,
                 ArticleCode = s.ArticleCode,
                 AssignedInPort = s.AssignedInPort,
                 Name = s.Name,
                 Layer = s.Layer
-            }).ToList(),
-            Connections = anyRailLayout.Connections.ToList()
+            })],
+            Connections = [.. anyRailLayout.Connections]
         };
     }
 

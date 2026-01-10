@@ -7,15 +7,11 @@ using Microsoft.UI.Xaml.Data;
 /// Converts an integer index to a boolean indicating if it matches the converter parameter.
 /// Used for RadioButton.IsChecked binding with preset selection.
 /// </summary>
-public class IntToPresetCheckedConverter : IValueConverter
+public partial class IntToPresetCheckedConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {
-        if (value is int selectedIndex && parameter is string paramStr && int.TryParse(paramStr, out var targetIndex))
-        {
-            return selectedIndex == targetIndex;
-        }
-        return false;
+        return value is int selectedIndex && parameter is string paramStr && int.TryParse(paramStr, out var targetIndex) && selectedIndex == targetIndex;
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, string language)

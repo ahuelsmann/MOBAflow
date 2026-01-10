@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Converter;
 
 using Microsoft.UI;
@@ -9,7 +9,7 @@ using Microsoft.UI.Xaml.Media;
 /// Converts track segment occupation state to stroke color.
 /// Occupied segments shown in warning color (orange).
 /// </summary>
-public class OccupiedToStrokeConverter : IValueConverter
+public partial class OccupiedToStrokeConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {

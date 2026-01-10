@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 using Microsoft.Extensions.Logging;
 
@@ -32,7 +32,7 @@ public sealed class PluginValidator
             .Where(g => g.Count() > 1)
             .ToList();
 
-        if (duplicateTags.Any())
+        if (duplicateTags.Count != 0)
         {
             var tags = string.Join(", ", duplicateTags.Select(g => g.Key));
             logger?.LogError("Plugin {PluginName} has duplicate page tags: {Tags}",
@@ -42,7 +42,7 @@ public sealed class PluginValidator
 
         // Check for invalid page tags
         var invalidTags = pages.Where(p => string.IsNullOrWhiteSpace(p.Tag)).ToList();
-        if (invalidTags.Any())
+        if (invalidTags.Count != 0)
         {
             logger?.LogError("Plugin {PluginName} has {Count} page(s) with empty tags",
                 plugin.Name, invalidTags.Count);
@@ -51,7 +51,7 @@ public sealed class PluginValidator
 
         // Check for null page types
         var nullPageTypes = pages.Where(p => p.PageType == null).ToList();
-        if (nullPageTypes.Any())
+        if (nullPageTypes.Count != 0)
         {
             logger?.LogError("Plugin {PluginName} has {Count} page(s) with null PageType",
                 plugin.Name, nullPageTypes.Count);
@@ -65,7 +65,7 @@ public sealed class PluginValidator
             .Where(p => reservedTags.Contains(p.Tag, StringComparer.OrdinalIgnoreCase))
             .ToList();
 
-        if (conflictingTags.Any())
+        if (conflictingTags.Count != 0)
         {
             var tags = string.Join(", ", conflictingTags.Select(p => p.Tag));
             logger?.LogWarning("Plugin {PluginName} uses reserved page tag(s): {Tags}. May cause navigation conflicts.",

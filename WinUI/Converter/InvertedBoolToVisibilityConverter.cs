@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Converter;
 
 using Microsoft.UI.Xaml;
@@ -7,15 +7,11 @@ using Microsoft.UI.Xaml.Data;
 /// <summary>
 /// Inverts BoolToVisibilityConverter: false → Visible, true → Collapsed.
 /// </summary>
-public class InvertedBoolToVisibilityConverter : IValueConverter
+public partial class InvertedBoolToVisibilityConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {
-        if (value is bool boolValue)
-        {
-            return boolValue ? Visibility.Collapsed : Visibility.Visible;
-        }
-        return Visibility.Collapsed;
+        return value is bool boolValue ? boolValue ? Visibility.Collapsed : Visibility.Visible : Visibility.Collapsed;
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, string language)

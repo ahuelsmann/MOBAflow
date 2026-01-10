@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -26,15 +26,15 @@ public abstract class PluginBase : IPlugin
     /// Override to return plugin pages.
     /// Default returns no pages.
     /// </summary>
-    public virtual IEnumerable<PluginPageDescriptor> GetPages() 
-        => Enumerable.Empty<PluginPageDescriptor>();
+    public virtual IEnumerable<PluginPageDescriptor> GetPages()
+        => [];
 
     /// <summary>
     /// Configures services for dependency injection.
     /// Override to register plugin services.
     /// Default does nothing.
     /// </summary>
-    public virtual void ConfigureServices(IServiceCollection services) 
+    public virtual void ConfigureServices(IServiceCollection services)
     {
         _ = services; // Suppress unused parameter warning
     }

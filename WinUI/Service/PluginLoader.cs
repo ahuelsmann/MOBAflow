@@ -1,8 +1,9 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-using Moba.Common.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+
+using Moba.Common.Plugins;
 
 namespace Moba.WinUI.Service;
 
@@ -15,7 +16,7 @@ public sealed class PluginLoader
 {
     private readonly string _pluginDirectory;
     private readonly NavigationRegistry _registry;
-    private readonly List<IPlugin> _loadedPlugins = new();
+    private readonly List<IPlugin> _loadedPlugins = [];
 
     public IReadOnlyList<IPlugin> LoadedPlugins => _loadedPlugins.AsReadOnly();
 
@@ -82,7 +83,7 @@ public sealed class PluginLoader
     /// </summary>
     public async Task InitializePluginsAsync(ILogger? logger = null)
     {
-        if (!_loadedPlugins.Any())
+        if (_loadedPlugins.Count == 0)
         {
             return;
         }
@@ -109,7 +110,7 @@ public sealed class PluginLoader
     /// </summary>
     public async Task UnloadPluginsAsync(ILogger? logger = null)
     {
-        if (!_loadedPlugins.Any())
+        if (_loadedPlugins.Count == 0)
         {
             return;
         }

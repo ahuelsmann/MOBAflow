@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Converter;
 
 using Microsoft.UI;
@@ -12,7 +12,7 @@ using Windows.UI;
 /// True → Accent color with opacity (feedback), False → Transparent.
 /// Uses theme-aware AccentFillColorDefaultBrush for Fluent Design 2 consistency.
 /// </summary>
-public class BoolToFeedbackBackgroundConverter : IValueConverter
+public partial class BoolToFeedbackBackgroundConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {

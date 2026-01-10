@@ -40,8 +40,7 @@ public class LocomotivePreset
     /// </summary>
     public bool GetFunction(int functionNumber)
     {
-        if (functionNumber < 0 || functionNumber > 28) return false;
-        return (FunctionStates & (1u << functionNumber)) != 0;
+        return functionNumber >= 0 && functionNumber <= 28 && (FunctionStates & (1u << functionNumber)) != 0;
     }
 
     /// <summary>
@@ -51,7 +50,7 @@ public class LocomotivePreset
     {
         if (functionNumber < 0 || functionNumber > 28) return;
         if (isOn)
-            FunctionStates |= (1u << functionNumber);
+            FunctionStates |= 1u << functionNumber;
         else
             FunctionStates &= ~(1u << functionNumber);
     }

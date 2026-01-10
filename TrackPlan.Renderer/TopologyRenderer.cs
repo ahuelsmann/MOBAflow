@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.TrackPlan.Renderer;
 
 using Domain;
@@ -76,7 +76,7 @@ public sealed class TopologyRenderer
             
             foreach (var seg in missing)
             {
-                var offsetX = componentIndex * 3000.0 + col * gridSpacingX;
+                var offsetX = (componentIndex * 3000.0) + (col * gridSpacingX);
                 var offsetY = row * gridSpacingY;
                 
                 seg.WorldTransform = new Transform2D

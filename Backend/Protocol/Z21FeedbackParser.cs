@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Protocol;
 
 /// <summary>
@@ -110,7 +110,7 @@ public static class Z21FeedbackParser
     /// <returns>8-byte array of feedback state, or empty array if invalid</returns>
     public static byte[] GetFeedbackState(byte[] data)
     {
-        if (data.Length < 13) return Array.Empty<byte>();
+        if (data.Length < 13) return [];
         
         var state = new byte[8];
         Array.Copy(data, 5, state, 0, 8);

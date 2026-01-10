@@ -1,9 +1,11 @@
 namespace Moba.SharedUI.Service;
 
 using Microsoft.Extensions.Logging;
+
 using TrackPlan.Domain;
 using TrackPlan.Geometry;
 using TrackPlan.Renderer;
+
 using ViewModel;
 
 /// <summary>
@@ -55,8 +57,8 @@ public class TopologySolver
 
         // Pick root: prefer specified root, otherwise use first segment that isn't at origin
         TrackSegmentViewModel? root = null;
-        
-        if (preferredRootId != null && byId.TryGetValue(preferredRootId, out var preferredRoot) 
+
+        if (preferredRootId != null && byId.TryGetValue(preferredRootId, out var preferredRoot)
             && connectedSegmentIds.Contains(preferredRootId))
         {
             root = preferredRoot;
@@ -64,10 +66,10 @@ public class TopologySolver
         else
         {
             // Find a segment that already has a non-origin position (was previously placed)
-            root = connectedSegments.FirstOrDefault(s => 
-                Math.Abs(s.WorldTransform.TranslateX) > 1.0 || 
+            root = connectedSegments.FirstOrDefault(s =>
+                Math.Abs(s.WorldTransform.TranslateX) > 1.0 ||
                 Math.Abs(s.WorldTransform.TranslateY) > 1.0);
-            
+
             // Fallback to first connected segment
             root ??= connectedSegments[0];
         }
@@ -78,7 +80,7 @@ public class TopologySolver
         visited.Add(root.Id);
         queue.Enqueue(root.Id);
 
-        _logger.LogDebug("TopologySolver: Root = {Root} at ({X:F1}, {Y:F1})", 
+        _logger.LogDebug("TopologySolver: Root = {Root} at ({X:F1}, {Y:F1})",
             root.Id, root.WorldTransform.TranslateX, root.WorldTransform.TranslateY);
 
         while (queue.Count > 0)
@@ -105,7 +107,7 @@ public class TopologySolver
             }
         }
 
-        _logger.LogDebug("TopologySolver: Completed. {Count}/{Total} segments positioned.", 
+        _logger.LogDebug("TopologySolver: Completed. {Count}/{Total} segments positioned.",
             visited.Count, segments.Count);
     }
 
@@ -135,7 +137,7 @@ public class TopologySolver
     {
         if (!graph.TryGetValue(from, out var list))
         {
-            list = new List<ConnectionEdge>();
+            list = [];
             graph[from] = list;
         }
 

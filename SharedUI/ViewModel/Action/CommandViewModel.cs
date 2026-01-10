@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel.Action;
 
 using Domain;
@@ -167,10 +167,7 @@ public class CommandViewModel : WorkflowActionViewModel
         get
         {
             var decoded = DecodedCommand;
-            if (decoded?.IsValid == true)
-                return Z21DccCommandDecoder.FormatDccCommand(decoded);
-            
-            return decoded?.ErrorMessage ?? "(No valid command)";
+            return decoded?.IsValid == true ? Z21DccCommandDecoder.FormatDccCommand(decoded) : decoded?.ErrorMessage ?? "(No valid command)";
         }
     }
 
@@ -180,17 +177,14 @@ public class CommandViewModel : WorkflowActionViewModel
         private Z21DccCommandDecoder.DccCommand? DecodeBytes()
         {
             var bytes = Bytes;
-            if (bytes == null || bytes.Length == 0)
-                return null;
+        return bytes == null || bytes.Length == 0 ? null : Z21DccCommandDecoder.DecodeLocoCommand(bytes);
+    }
 
-            return Z21DccCommandDecoder.DecodeLocoCommand(bytes);
-        }
-
-        /// <summary>
-        /// Updates the Bytes property from current Address, Speed, and Direction values.
-        /// Called automatically when any of these properties change.
-        /// </summary>
-        private void UpdateBytesFromProperties()
+    /// <summary>
+    /// Updates the Bytes property from current Address, Speed, and Direction values.
+    /// Called automatically when any of these properties change.
+    /// </summary>
+    private void UpdateBytesFromProperties()
         {
             try
             {

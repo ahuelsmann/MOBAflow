@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.TrackPlan.Geometry;
 
 /// <summary>
@@ -38,8 +38,8 @@ public record Transform2D
 
         var cos = Math.Cos(thisRad);
         var sin = Math.Sin(thisRad);
-        var rotatedX = other.TranslateX * cos - other.TranslateY * sin;
-        var rotatedY = other.TranslateX * sin + other.TranslateY * cos;
+        var rotatedX = (other.TranslateX * cos) - (other.TranslateY * sin);
+        var rotatedY = (other.TranslateX * sin) + (other.TranslateY * cos);
 
         return new Transform2D
         {
@@ -59,8 +59,8 @@ public record Transform2D
         var cos = Math.Cos(rad);
         var sin = Math.Sin(rad);
 
-        var invertedX = -TranslateX * cos + TranslateY * sin;
-        var invertedY = -TranslateX * sin - TranslateY * cos;
+        var invertedX = (-TranslateX * cos) + (TranslateY * sin);
+        var invertedY = (-TranslateX * sin) - (TranslateY * cos);
 
         return new Transform2D
         {
@@ -79,8 +79,8 @@ public record Transform2D
         var cos = Math.Cos(rad);
         var sin = Math.Sin(rad);
 
-        var rotatedX = x * cos - y * sin;
-        var rotatedY = x * sin + y * cos;
+        var rotatedX = (x * cos) - (y * sin);
+        var rotatedY = (x * sin) + (y * cos);
 
         return (TranslateX + rotatedX, TranslateY + rotatedY);
     }

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
 using System.Text.Json;
@@ -23,7 +23,7 @@ public class Solution
     /// </summary>
     public void UpdateFrom(Solution other)
     {
-        if (other == null) throw new ArgumentNullException(nameof(other));
+        ArgumentNullException.ThrowIfNull(other);
 
         Name = other.Name;
 
@@ -46,10 +46,7 @@ public class Solution
         if (!File.Exists(filePath)) throw new FileNotFoundException("Solution file not found", filePath);
 
         var json = await File.ReadAllTextAsync(filePath).ConfigureAwait(false);
-        var loaded = JsonSerializer.Deserialize<Solution>(json, JsonOptions.Default);
-
-        if (loaded == null) throw new InvalidOperationException("Failed to deserialize solution file");
-
+        var loaded = JsonSerializer.Deserialize<Solution>(json, JsonOptions.Default) ?? throw new InvalidOperationException("Failed to deserialize solution file");
         UpdateFrom(loaded);
     }
 }

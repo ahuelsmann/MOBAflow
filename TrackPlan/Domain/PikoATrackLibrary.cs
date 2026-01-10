@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.TrackPlan.Domain;
 
 /// <summary>
@@ -91,18 +91,18 @@ public static class PikoATrackLibrary
         => Templates.FirstOrDefault(t => t.ArticleCode.Equals(articleCode, StringComparison.OrdinalIgnoreCase));
 
     public static List<TrackTemplate> GetStraightTracks()
-        => Templates.Where(t => t.Type == TrackType.Straight).ToList();
+        => [.. Templates.Where(t => t.Type == TrackType.Straight)];
 
     public static List<TrackTemplate> GetCurvedTracks()
-        => Templates.Where(t => t.Type == TrackType.Curve).ToList();
+        => [.. Templates.Where(t => t.Type == TrackType.Curve)];
 
     public static List<TrackTemplate> GetTurnouts()
-        => Templates.Where(t => t.Type is TrackType.TurnoutLeft or TrackType.TurnoutRight
+        => [.. Templates.Where(t => t.Type is TrackType.TurnoutLeft or TrackType.TurnoutRight
                                         or TrackType.CurvedTurnoutLeft or TrackType.CurvedTurnoutRight
-                                        or TrackType.DoubleCrossover or TrackType.ThreeWay).ToList();
+                                        or TrackType.DoubleCrossover or TrackType.ThreeWay)];
 
     public static List<TrackTemplate> GetCrossings()
-        => Templates.Where(t => t.Type == TrackType.Crossing).ToList();
+        => [.. Templates.Where(t => t.Type == TrackType.Crossing)];
 
     public static double CalculateArcLength(double radiusMm, double angleDegrees)
         => angleDegrees / 360.0 * 2.0 * Math.PI * radiusMm;

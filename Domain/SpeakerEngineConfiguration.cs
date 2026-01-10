@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
 /// <summary>
@@ -11,7 +11,7 @@ public class SpeakerEngineConfiguration
     {
         Name = "AzureCognitiveSpeech";
         Type = "Microsoft.CognitiveServices.Speech";
-        Settings = new Dictionary<string, string>();
+        Settings = [];
     }
 
     public string Name { get; set; }

@@ -10,7 +10,7 @@ using Microsoft.UI.Xaml.Media;
 /// When OFF: Returns a subtle tint of the color.
 /// Pass the accent color hex as ConverterParameter (e.g., "#FFD700").
 /// </summary>
-public class BoolToBacklightBrushConverter : IValueConverter
+public partial class BoolToBacklightBrushConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {
@@ -52,9 +52,9 @@ public class BoolToBacklightBrushConverter : IValueConverter
     {
         amount = Math.Clamp(amount, 0, 1);
 
-        byte r = (byte)(color.R + (255 - color.R) * amount);
-        byte g = (byte)(color.G + (255 - color.G) * amount);
-        byte b = (byte)(color.B + (255 - color.B) * amount);
+        byte r = (byte)(color.R + ((255 - color.R) * amount));
+        byte g = (byte)(color.G + ((255 - color.G) * amount));
+        byte b = (byte)(color.B + ((255 - color.B) * amount));
 
         return Windows.UI.Color.FromArgb(255, r, g, b);
     }
@@ -67,7 +67,7 @@ public class BoolToBacklightBrushConverter : IValueConverter
 
         if (hex.Length == 6)
         {
-            r = System.Convert.ToByte(hex.Substring(0, 2), 16);
+            r = System.Convert.ToByte(hex[..2], 16);
             g = System.Convert.ToByte(hex.Substring(2, 2), 16);
             b = System.Convert.ToByte(hex.Substring(4, 2), 16);
         }

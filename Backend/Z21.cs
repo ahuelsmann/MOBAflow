@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Backend;
 
@@ -426,14 +426,11 @@ public class Z21 : IZ21
         {
             // ✅ Only call ParsePacketType when actually logging (deferred execution)
             // This prevents NullReferenceException if ParsePacketType throws
-            if (_trafficMonitor != null)
-            {
-                _trafficMonitor.LogSentPacket(
+            _trafficMonitor?.LogSentPacket(
                     data,
                     Z21Monitor.ParsePacketType(data),
                     $"Length: {data.Length} bytes"
                 );
-            }
 
             await _udp.SendAsync(data).ConfigureAwait(false);
         }
@@ -625,14 +622,11 @@ public class Z21 : IZ21
 
         // Log received packet to traffic monitor
         // ✅ Only call ParsePacketType when actually logging (deferred execution)
-        if (_trafficMonitor != null)
-        {
-            _trafficMonitor.LogReceivedPacket(
+        _trafficMonitor?.LogReceivedPacket(
                 content,
                 Z21Monitor.ParsePacketType(content),
                 $"Length: {content.Length} bytes"
             );
-        }
 
         // Log all received packets for debugging
         _logger?.LogDebug("UDP received {Length} bytes: {Payload}", content.Length, Z21Protocol.ToHex(content));
@@ -771,7 +765,7 @@ public class Z21 : IZ21
         // Convert InPort (1-based) to group/byte/bit representation per Z21 protocol
         var portIndex = Math.Max(inPort - 1, 0); // clamp 0 to first slot
         var groupNumber = portIndex / 64;        // 0-based module
-        var byteIndex = (portIndex % 64) / 8;    // which data byte (0-7)
+        var byteIndex = portIndex % 64 / 8;    // which data byte (0-7)
         var bitPosition = portIndex % 8;         // which bit inside the byte (0-7)
 
         var simulatedContent = new byte[15];

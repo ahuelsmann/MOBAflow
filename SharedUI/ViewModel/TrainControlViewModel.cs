@@ -3,10 +3,10 @@ namespace Moba.SharedUI.ViewModel;
 
 using Backend.Interface;
 
+using Common.Configuration;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
-using Common.Configuration;
 
 using Interface;
 
@@ -278,8 +278,8 @@ public partial class TrainControlViewModel : ObservableObject
     private CancellationTokenSource? _rampCancellationTokenSource;
 
     public TrainControlViewModel(
-        IZ21 z21, 
-        IUiDispatcher uiDispatcher, 
+        IZ21 z21,
+        IUiDispatcher uiDispatcher,
         ISettingsService settingsService,
         ILogger<TrainControlViewModel>? logger = null)
     {
@@ -594,14 +594,7 @@ public partial class TrainControlViewModel : ObservableObject
             cancellationToken.ThrowIfCancellationRequested();
 
             // Calculate next speed
-            if (step > 0)
-            {
-                currentSpeed = Math.Min(currentSpeed + stepSize, toSpeed);
-            }
-            else
-            {
-                currentSpeed = Math.Max(currentSpeed - stepSize, toSpeed);
-            }
+            currentSpeed = step > 0 ? Math.Min(currentSpeed + stepSize, toSpeed) : Math.Max(currentSpeed - stepSize, toSpeed);
 
             // Update the Speed property (this triggers UI update but NOT another ramp)
             _skipSpeedChangeHandler = true;
@@ -648,152 +641,168 @@ public partial class TrainControlViewModel : ObservableObject
         {
             await _z21.SetLocoDriveAsync(LocoAddress, Speed, IsForward);
             StatusMessage = $"Loco {LocoAddress}: {Speed} {(IsForward ? "â†’" : "â†")}";
-                    _logger?.LogDebug("Drive command sent: Loco {Address}, Speed {Speed}, Forward {Forward}",
-                        LocoAddress, Speed, IsForward);
-                }
-                catch (Exception ex)
-                {
-                    _logger?.LogError(ex, "Failed to send drive command");
-                    StatusMessage = $"Error: {ex.Message}";
-                }
+            _logger?.LogDebug("Drive command sent: Loco {Address}, Speed {Speed}, Forward {Forward}",
+                LocoAddress, Speed, IsForward);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Failed to send drive command");
+            StatusMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Toggles F0 (Light) function.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF0Async() => await ToggleFunctionAsync(0);
+
+    /// <summary>
+    /// Toggles F1 (Sound) function.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF1Async() => await ToggleFunctionAsync(1);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF2Async() => await ToggleFunctionAsync(2);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF3Async() => await ToggleFunctionAsync(3);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF4Async() => await ToggleFunctionAsync(4);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF5Async() => await ToggleFunctionAsync(5);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF6Async() => await ToggleFunctionAsync(6);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF7Async() => await ToggleFunctionAsync(7);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF8Async() => await ToggleFunctionAsync(8);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF9Async() => await ToggleFunctionAsync(9);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF10Async() => await ToggleFunctionAsync(10);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF11Async() => await ToggleFunctionAsync(11);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF12Async() => await ToggleFunctionAsync(12);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF13Async() => await ToggleFunctionAsync(13);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF14Async() => await ToggleFunctionAsync(14);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF15Async() => await ToggleFunctionAsync(15);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF16Async() => await ToggleFunctionAsync(16);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF17Async() => await ToggleFunctionAsync(17);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF18Async() => await ToggleFunctionAsync(18);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF19Async() => await ToggleFunctionAsync(19);
+
+    [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
+    private async Task ToggleF20Async() => await ToggleFunctionAsync(20);
+
+    /// <summary>
+    /// Generic function toggle implementation.
+    /// </summary>
+    private async Task ToggleFunctionAsync(int functionNumber)
+    {
+        try
+        {
+            var newState = !GetFunctionState(functionNumber);
+            SetFunctionState(functionNumber, newState);
+
+            // Save function state to current preset
+            if (!_isLoadingPreset)
+            {
+                CurrentPreset.SetFunction(functionNumber, newState);
+                _ = SavePresetsToSettingsAsync();
             }
 
-            /// <summary>
-            /// Toggles F0 (Light) function.
-            /// </summary>
-            [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-            private async Task ToggleF0Async() => await ToggleFunctionAsync(0);
+            await _z21.SetLocoFunctionAsync(LocoAddress, functionNumber, newState);
+            StatusMessage = $"F{functionNumber}: {(newState ? "ON" : "OFF")}";
+            _logger?.LogDebug("F{Function} toggled: {State}", functionNumber, newState);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Failed to toggle F{Function}", functionNumber);
+            StatusMessage = $"Error: {ex.Message}";
+        }
+    }
 
-            /// <summary>
-            /// Toggles F1 (Sound) function.
-            /// </summary>
-            [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-            private async Task ToggleF1Async() => await ToggleFunctionAsync(1);
+    private bool GetFunctionState(int functionNumber) => functionNumber switch
+    {
+        0 => IsF0On,
+        1 => IsF1On,
+        2 => IsF2On,
+        3 => IsF3On,
+        4 => IsF4On,
+        5 => IsF5On,
+        6 => IsF6On,
+        7 => IsF7On,
+        8 => IsF8On,
+        9 => IsF9On,
+        10 => IsF10On,
+        11 => IsF11On,
+        12 => IsF12On,
+        13 => IsF13On,
+        14 => IsF14On,
+        15 => IsF15On,
+        16 => IsF16On,
+        17 => IsF17On,
+        18 => IsF18On,
+        19 => IsF19On,
+        20 => IsF20On,
+        _ => false
+    };
 
-            [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-            private async Task ToggleF2Async() => await ToggleFunctionAsync(2);
+    private void SetFunctionState(int functionNumber, bool state)
+    {
+        switch (functionNumber)
+        {
+            case 0: IsF0On = state; break;
+            case 1: IsF1On = state; break;
+            case 2: IsF2On = state; break;
+            case 3: IsF3On = state; break;
+            case 4: IsF4On = state; break;
+            case 5: IsF5On = state; break;
+            case 6: IsF6On = state; break;
+            case 7: IsF7On = state; break;
+            case 8: IsF8On = state; break;
+            case 9: IsF9On = state; break;
+            case 10: IsF10On = state; break;
+            case 11: IsF11On = state; break;
+            case 12: IsF12On = state; break;
+            case 13: IsF13On = state; break;
+            case 14: IsF14On = state; break;
+            case 15: IsF15On = state; break;
+            case 16: IsF16On = state; break;
+            case 17: IsF17On = state; break;
+            case 18: IsF18On = state; break;
+            case 19: IsF19On = state; break;
+            case 20: IsF20On = state; break;
+        }
+    }
 
-            [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-            private async Task ToggleF3Async() => await ToggleFunctionAsync(3);
-
-            [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-            private async Task ToggleF4Async() => await ToggleFunctionAsync(4);
-
-            [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-            private async Task ToggleF5Async() => await ToggleFunctionAsync(5);
-
-            [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-            private async Task ToggleF6Async() => await ToggleFunctionAsync(6);
-
-            [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-            private async Task ToggleF7Async() => await ToggleFunctionAsync(7);
-
-            [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-            private async Task ToggleF8Async() => await ToggleFunctionAsync(8);
-
-            [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-            private async Task ToggleF9Async() => await ToggleFunctionAsync(9);
-
-            [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-            private async Task ToggleF10Async() => await ToggleFunctionAsync(10);
-
-            [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-            private async Task ToggleF11Async() => await ToggleFunctionAsync(11);
-
-            [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-            private async Task ToggleF12Async() => await ToggleFunctionAsync(12);
-
-            [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-            private async Task ToggleF13Async() => await ToggleFunctionAsync(13);
-
-            [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-            private async Task ToggleF14Async() => await ToggleFunctionAsync(14);
-
-            [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-            private async Task ToggleF15Async() => await ToggleFunctionAsync(15);
-
-            [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-            private async Task ToggleF16Async() => await ToggleFunctionAsync(16);
-
-            [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-            private async Task ToggleF17Async() => await ToggleFunctionAsync(17);
-
-            [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-            private async Task ToggleF18Async() => await ToggleFunctionAsync(18);
-
-            [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-            private async Task ToggleF19Async() => await ToggleFunctionAsync(19);
-
-            [RelayCommand(CanExecute = nameof(CanExecuteLocoCommand))]
-            private async Task ToggleF20Async() => await ToggleFunctionAsync(20);
-
-            /// <summary>
-            /// Generic function toggle implementation.
-            /// </summary>
-            private async Task ToggleFunctionAsync(int functionNumber)
-            {
-                try
-                {
-                    var newState = !GetFunctionState(functionNumber);
-                    SetFunctionState(functionNumber, newState);
-
-                    // Save function state to current preset
-                    if (!_isLoadingPreset)
-                    {
-                        CurrentPreset.SetFunction(functionNumber, newState);
-                        _ = SavePresetsToSettingsAsync();
-                    }
-
-                    await _z21.SetLocoFunctionAsync(LocoAddress, functionNumber, newState);
-                    StatusMessage = $"F{functionNumber}: {(newState ? "ON" : "OFF")}";
-                    _logger?.LogDebug("F{Function} toggled: {State}", functionNumber, newState);
-                }
-                catch (Exception ex)
-                {
-                    _logger?.LogError(ex, "Failed to toggle F{Function}", functionNumber);
-                    StatusMessage = $"Error: {ex.Message}";
-                }
-            }
-
-            private bool GetFunctionState(int functionNumber) => functionNumber switch
-            {
-                0 => IsF0On, 1 => IsF1On, 2 => IsF2On, 3 => IsF3On, 4 => IsF4On,
-                5 => IsF5On, 6 => IsF6On, 7 => IsF7On, 8 => IsF8On, 9 => IsF9On,
-                10 => IsF10On, 11 => IsF11On, 12 => IsF12On, 13 => IsF13On, 14 => IsF14On,
-                15 => IsF15On, 16 => IsF16On, 17 => IsF17On, 18 => IsF18On, 19 => IsF19On,
-                20 => IsF20On,
-                _ => false
-            };
-
-            private void SetFunctionState(int functionNumber, bool state)
-            {
-                switch (functionNumber)
-                {
-                    case 0: IsF0On = state; break;
-                    case 1: IsF1On = state; break;
-                    case 2: IsF2On = state; break;
-                    case 3: IsF3On = state; break;
-                    case 4: IsF4On = state; break;
-                    case 5: IsF5On = state; break;
-                    case 6: IsF6On = state; break;
-                    case 7: IsF7On = state; break;
-                    case 8: IsF8On = state; break;
-                    case 9: IsF9On = state; break;
-                    case 10: IsF10On = state; break;
-                    case 11: IsF11On = state; break;
-                    case 12: IsF12On = state; break;
-                    case 13: IsF13On = state; break;
-                    case 14: IsF14On = state; break;
-                    case 15: IsF15On = state; break;
-                    case 16: IsF16On = state; break;
-                    case 17: IsF17On = state; break;
-                    case 18: IsF18On = state; break;
-                    case 19: IsF19On = state; break;
-                    case 20: IsF20On = state; break;
-                }
-            }
-
-            /// <summary>
+    /// <summary>
     /// Emergency stop for the current locomotive.
     /// Sets speed to 0 immediately.
     /// </summary>
@@ -862,46 +871,46 @@ public partial class TrainControlViewModel : ObservableObject
             _ => 0
         };
 
-                Speed = Math.Clamp(preset, 0, 126);
-                _logger?.LogDebug("Speed preset set to {Preset}", preset);
-            }
+        Speed = Math.Clamp(preset, 0, 126);
+        _logger?.LogDebug("Speed preset set to {Preset}", preset);
+    }
 
-            /// <summary>
-            /// Selects locomotive preset 1.
-            /// </summary>
-            [RelayCommand]
-            private void SelectPreset1()
-            {
-                if (SelectedPresetIndex != 0)
-                {
-                    SaveCurrentStateToPreset();
-                    SelectedPresetIndex = 0;
-                }
-            }
-
-            /// <summary>
-            /// Selects locomotive preset 2.
-            /// </summary>
-            [RelayCommand]
-            private void SelectPreset2()
-            {
-                if (SelectedPresetIndex != 1)
-                {
-                    SaveCurrentStateToPreset();
-                    SelectedPresetIndex = 1;
-                }
-            }
-
-            /// <summary>
-            /// Selects locomotive preset 3.
-            /// </summary>
-            [RelayCommand]
-            private void SelectPreset3()
-            {
-                if (SelectedPresetIndex != 2)
-                {
-                    SaveCurrentStateToPreset();
-                    SelectedPresetIndex = 2;
-                }
-            }
+    /// <summary>
+    /// Selects locomotive preset 1.
+    /// </summary>
+    [RelayCommand]
+    private void SelectPreset1()
+    {
+        if (SelectedPresetIndex != 0)
+        {
+            SaveCurrentStateToPreset();
+            SelectedPresetIndex = 0;
         }
+    }
+
+    /// <summary>
+    /// Selects locomotive preset 2.
+    /// </summary>
+    [RelayCommand]
+    private void SelectPreset2()
+    {
+        if (SelectedPresetIndex != 1)
+        {
+            SaveCurrentStateToPreset();
+            SelectedPresetIndex = 1;
+        }
+    }
+
+    /// <summary>
+    /// Selects locomotive preset 3.
+    /// </summary>
+    [RelayCommand]
+    private void SelectPreset3()
+    {
+        if (SelectedPresetIndex != 2)
+        {
+            SaveCurrentStateToPreset();
+            SelectedPresetIndex = 2;
+        }
+    }
+}

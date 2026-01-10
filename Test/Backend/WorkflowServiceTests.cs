@@ -1,9 +1,11 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Test.Backend;
 
 using Domain.Enum;
+
 using Moba.Backend.Service;
+
 using Mocks;
 
 /// <summary>
@@ -37,6 +39,7 @@ public class WorkflowServiceTests
     public void TearDown()
     {
         _z21.Dispose();
+        _fakeUdp.Dispose();
     }
 
     [Test]
@@ -51,10 +54,7 @@ public class WorkflowServiceTests
         };
 
         // Act & Assert
-        Assert.DoesNotThrowAsync(async () =>
-        {
-            await _workflowService.ExecuteAsync(workflow, _context);
-        });
+        Assert.DoesNotThrowAsync(async () => await _workflowService.ExecuteAsync(workflow, _context));
         return Task.CompletedTask;
     }
 
@@ -97,7 +97,7 @@ public class WorkflowServiceTests
         await _workflowService.ExecuteAsync(workflow, _context);
 
         // Assert
-        Assert.That(_fakeUdp.SentPayloads.Count, Is.GreaterThanOrEqualTo(2), 
+        Assert.That(_fakeUdp.SentPayloads, Has.Count.GreaterThanOrEqualTo(2),
             "At least 2 command packets should have been sent");
     }
 

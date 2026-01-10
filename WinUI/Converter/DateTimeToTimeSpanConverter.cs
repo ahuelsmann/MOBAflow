@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Converter;
 
 using Microsoft.UI.Xaml.Data;
@@ -8,16 +8,11 @@ using Microsoft.UI.Xaml.Data;
 /// Used for TimePicker binding where only the time component is relevant.
 /// If DateTime is null, returns TimeSpan.Zero.
 /// </summary>
-public class DateTimeToTimeSpanConverter : IValueConverter
+public partial class DateTimeToTimeSpanConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {
-        if (value is DateTime dateTime)
-        {
-            return dateTime.TimeOfDay;
-        }
-
-        return TimeSpan.Zero;
+        return value is DateTime dateTime ? dateTime.TimeOfDay : TimeSpan.Zero;
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, string language)

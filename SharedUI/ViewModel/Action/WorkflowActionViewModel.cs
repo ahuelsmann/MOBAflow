@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel.Action;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -20,7 +20,7 @@ public abstract class WorkflowActionViewModel : ObservableObject
     {
         _action = action;
         _action.Type = type;
-        _action.Parameters ??= new Dictionary<string, object>();
+        _action.Parameters ??= [];
     }
 
     public Guid Id
@@ -76,7 +76,7 @@ public abstract class WorkflowActionViewModel : ObservableObject
 
     protected void SetParameter<T>(string key, T value)
     {
-        _action.Parameters ??= new Dictionary<string, object>();
+        _action.Parameters ??= [];
         
         if (EqualityComparer<T>.Default.Equals(value, GetParameter<T>(key)))
             return;

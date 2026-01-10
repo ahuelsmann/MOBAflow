@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Selector;
 
 using Domain;
@@ -11,7 +11,7 @@ using SharedUI.ViewModel.Action;
 /// Selects the appropriate DataTemplate based on the type of entity.
 /// Used by ContentControl to display type-specific property editors.
 /// </summary>
-public class EntityTemplateSelector : DataTemplateSelector
+public partial class EntityTemplateSelector : DataTemplateSelector
 {
     /// <summary>
     /// DataTemplate for JourneyViewModel

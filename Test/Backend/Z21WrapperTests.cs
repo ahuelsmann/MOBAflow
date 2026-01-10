@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Test.Backend;
 
@@ -22,11 +22,11 @@ public class Z21WrapperTests
         await Task.Delay(200);
 
         // ConnectAsync sends: Handshake + SetBroadcastFlags + GetStatus + RequestVersionInfo (4 commands)
-        Assert.That(fake.SentPayloads.Count, Is.GreaterThanOrEqualTo(2), "At least 2 payloads should be sent");
+        Assert.That(fake.SentPayloads, Has.Count.GreaterThanOrEqualTo(2), "At least 2 payloads should be sent");
         var handshake = fake.SentPayloads[0];
         var broadcast = fake.SentPayloads[1];
-        Assert.That(BitConverter.ToString(handshake.Take(4).ToArray()), Is.EqualTo("04-00-85-00"));
-        Assert.That(BitConverter.ToString(broadcast.Take(4).ToArray()), Is.EqualTo("08-00-50-00"));
+        Assert.That(BitConverter.ToString([.. handshake.Take(4)]), Is.EqualTo("04-00-85-00"));
+        Assert.That(BitConverter.ToString([.. broadcast.Take(4)]), Is.EqualTo("08-00-50-00"));
 
         await z21.DisconnectAsync();
     }

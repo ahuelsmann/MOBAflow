@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
 using Domain;
@@ -30,7 +30,7 @@ public class NullCityService : ICityService
     /// </summary>
     public List<City> FilterCities(string searchTerm)
     {
-        return new List<City>();
+        return [];
     }
 
     /// <summary>
@@ -38,7 +38,7 @@ public class NullCityService : ICityService
     /// </summary>
     public List<City> GetCachedCities()
     {
-        return new List<City>();
+        return [];
     }
 
     /// <summary>

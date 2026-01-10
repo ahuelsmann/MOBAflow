@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -100,7 +100,7 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
     /// Locomotives resolved from Project.Locomotives using LocomotiveIds.
     /// </summary>
     public ObservableCollection<LocomotiveViewModel> Locomotives =>
-        new ObservableCollection<LocomotiveViewModel>(
+        new(
             _model.LocomotiveIds
                 .Select(id => _project.Locomotives.FirstOrDefault(l => l.Id == id))
                 .Where(l => l != null)
@@ -111,14 +111,11 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
     /// Wagons resolved from Project wagons (PassengerWagons + GoodsWagons) using WagonIds.
     /// </summary>
     public ObservableCollection<WagonViewModel> Wagons =>
-        new ObservableCollection<WagonViewModel>(
+        new(
             _model.WagonIds
                 .Select(id => {
                     // Try PassengerWagons first
-                    Wagon? wagon = _project.PassengerWagons.FirstOrDefault(w => w.Id == id);
-                    // Then try GoodsWagons
-                    if (wagon == null)
-                        wagon = _project.GoodsWagons.FirstOrDefault(w => w.Id == id);
+                    Wagon? wagon = (Wagon?)_project.PassengerWagons.FirstOrDefault(w => w.Id == id) ?? _project.GoodsWagons.FirstOrDefault(w => w.Id == id);
                     return wagon;
                 })
                 .Where(w => w != null)

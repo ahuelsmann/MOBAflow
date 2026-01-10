@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Converter;
 
 using Microsoft.UI.Xaml.Data;
@@ -7,7 +7,7 @@ using Microsoft.UI.Xaml.Data;
 /// Converter that converts scroll pause state to an icon glyph.
 /// True (paused) → Pause icon (&#xE769;), False (auto-scroll) → Play icon (&#xE768;).
 /// </summary>
-public class BoolToScrollIconConverter : IValueConverter
+public partial class BoolToScrollIconConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {

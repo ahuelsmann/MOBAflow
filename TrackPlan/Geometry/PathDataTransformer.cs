@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Text;
 
 namespace Moba.TrackPlan.Geometry
@@ -27,13 +27,13 @@ namespace Moba.TrackPlan.Geometry
                             double x = Parse(tokens[i++]);
                             double y = Parse(tokens[i++]);
 
-                            var p = ApplyTransform(x, y, tx, ty, rotationDeg);
+                            var (X, Y) = ApplyTransform(x, y, tx, ty, rotationDeg);
 
                             sb.Append("M ");
-                            sb.Append(p.X.ToString("F1", CultureInfo.InvariantCulture));
-                            sb.Append(" ");
-                            sb.Append(p.Y.ToString("F1", CultureInfo.InvariantCulture));
-                            sb.Append(" ");
+                            sb.Append(X.ToString("F1", CultureInfo.InvariantCulture));
+                            sb.Append(' ');
+                            sb.Append(Y.ToString("F1", CultureInfo.InvariantCulture));
+                            sb.Append(' ');
                             break;
                         }
 
@@ -42,13 +42,13 @@ namespace Moba.TrackPlan.Geometry
                             double x = Parse(tokens[i++]);
                             double y = Parse(tokens[i++]);
 
-                            var p = ApplyTransform(x, y, tx, ty, rotationDeg);
+                            var (X, Y) = ApplyTransform(x, y, tx, ty, rotationDeg);
 
                             sb.Append("L ");
-                            sb.Append(p.X.ToString("F1", CultureInfo.InvariantCulture));
-                            sb.Append(" ");
-                            sb.Append(p.Y.ToString("F1", CultureInfo.InvariantCulture));
-                            sb.Append(" ");
+                            sb.Append(X.ToString("F1", CultureInfo.InvariantCulture));
+                            sb.Append(' ');
+                            sb.Append(Y.ToString("F1", CultureInfo.InvariantCulture));
+                            sb.Append(' ');
                             break;
                         }
 
@@ -62,17 +62,17 @@ namespace Moba.TrackPlan.Geometry
                             double endX = Parse(tokens[i++]);
                             double endY = Parse(tokens[i++]);
 
-                            foreach (var p in ApproximateArc(
+                            foreach (var (X, Y) in ApproximateArc(
                                          rx, ry, svgRotation,
                                          largeArcFlag, sweepFlag,
                                          endX, endY,
                                          tx, ty, rotationDeg))
                             {
                                 sb.Append("L ");
-                                sb.Append(p.X.ToString("F1", CultureInfo.InvariantCulture));
-                                sb.Append(" ");
-                                sb.Append(p.Y.ToString("F1", CultureInfo.InvariantCulture));
-                                sb.Append(" ");
+                                sb.Append(X.ToString("F1", CultureInfo.InvariantCulture));
+                                sb.Append(' ');
+                                sb.Append(Y.ToString("F1", CultureInfo.InvariantCulture));
+                                sb.Append(' ');
                             }
 
                             break;
@@ -92,7 +92,7 @@ namespace Moba.TrackPlan.Geometry
             double tx, double ty,
             double worldRot)
         {
-            double totalAngle = (largeArcFlag == 1 ? 330.0 : 30.0);
+            double totalAngle = largeArcFlag == 1 ? 330.0 : 30.0;
             if (sweepFlag == 0)
                 totalAngle = -totalAngle;
 
@@ -103,7 +103,7 @@ namespace Moba.TrackPlan.Geometry
 
             for (int i = 1; i <= steps; i++)
             {
-                double a = (stepAngle * i) * Math.PI / 180.0;
+                double a = stepAngle * i * Math.PI / 180.0;
 
                 double x = rx * Math.Sin(a);
                 double y = ry * (1.0 - Math.Cos(a));
@@ -111,9 +111,9 @@ namespace Moba.TrackPlan.Geometry
                 points.Add((x, y));
             }
 
-            foreach (var p in points)
+            foreach (var (X, Y) in points)
             {
-                var pt = ApplyTransform(p.X, p.Y, tx, ty, worldRot);
+                var pt = ApplyTransform(X, Y, tx, ty, worldRot);
                 yield return pt;
             }
         }
@@ -125,8 +125,8 @@ namespace Moba.TrackPlan.Geometry
         {
             double rad = rotDeg * Math.PI / 180.0;
 
-            double xr = x * Math.Cos(rad) - y * Math.Sin(rad);
-            double yr = x * Math.Sin(rad) + y * Math.Cos(rad);
+            double xr = (x * Math.Cos(rad)) - (y * Math.Sin(rad));
+            double yr = (x * Math.Sin(rad)) + (y * Math.Cos(rad));
 
             return (xr + tx, yr + ty);
         }

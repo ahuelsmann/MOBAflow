@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Controllers;
 
 using Microsoft.AspNetCore.Http;
@@ -8,7 +8,6 @@ using Microsoft.Extensions.Logging;
 using Moba.SharedUI.Service;
 using Hubs;
 
-
 [ApiController]
 [Route("api/photos")]
 public class PhotoUploadController : ControllerBase
@@ -17,7 +16,7 @@ public class PhotoUploadController : ControllerBase
     private readonly IHubContext<PhotoHub> _hubContext;
     private readonly ILogger<PhotoUploadController> _logger;
 
-    private static readonly HashSet<string> AllowedExtensions = new() { ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp" };
+    private static readonly HashSet<string> AllowedExtensions = [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp"];
     private const long MaxFileSize = 10 * 1024 * 1024;
 
     public PhotoUploadController(

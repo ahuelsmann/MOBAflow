@@ -157,26 +157,71 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <!--  Theme Toggle and CommandBar on same row  -->
+                <!--  Theme Toggle, Transaction Code, and CommandBar on same row  -->
                 <Grid Grid.Row="0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <!--  Theme Toggle (left side)  -->
+                    <!--  Theme Toggle (left)  -->
                     <ToggleSwitch
+                        x:Name="ThemeToggleSwitch"
                         Grid.Column="0"
-                        Margin="12,0,0,0"
+                        Margin="8,0,0,0"
                         VerticalAlignment="Center"
                         FontSize="12"
                         IsOn="{x:Bind ViewModel.IsDarkMode, Mode=TwoWay}"
                         OffContent="Light"
-                        OnContent="Dark" />
+                        OnContent="Dark"
+                        Toggled="ThemeToggleSwitch_Toggled" />
+
+                    <!--  Transaction Code Band (SAP-style command palette, center)  -->
+                    <Border
+                        Grid.Column="1"
+                        HorizontalAlignment="Center"
+                        Padding="8,4"
+                        Background="#0066B3"
+                        CornerRadius="4">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon
+                                VerticalAlignment="Center"
+                                FontSize="14"
+                                Foreground="White"
+                                Glyph="&#xE756;" />
+                            <TextBox
+                                x:Name="TransactionCodeTextBox"
+                                Width="120"
+                                VerticalAlignment="Center"
+                                FontFamily="Consolas"
+                                FontSize="13"
+                                KeyDown="TransactionCodeTextBox_KeyDown"
+                                PlaceholderText="page code"
+                                Text="{x:Bind ViewModel.TransactionCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <Button
+                                Padding="8,4"
+                                Background="#FFC107"
+                                Command="{x:Bind ViewModel.ExecuteTransactionCodeCommand}"
+                                CornerRadius="4"
+                                ToolTipService.ToolTip="Execute Transaction Code (Enter)">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <FontIcon
+                                        FontSize="12"
+                                        Foreground="#003366"
+                                        Glyph="&#xE768;" />
+                                    <TextBlock
+                                        FontWeight="SemiBold"
+                                        Foreground="#003366"
+                                        Text="Execute" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
 
                     <!--  Compact CommandBar (right side)  -->
                     <CommandBar
-                        Grid.Column="1"
+                        Grid.Column="2"
                         Background="Transparent"
                         DefaultLabelPosition="Right"
                         IsOpen="False"
