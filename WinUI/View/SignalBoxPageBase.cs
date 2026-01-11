@@ -2,8 +2,6 @@
 
 namespace Moba.WinUI.View;
 
-using Microsoft.UI;
-using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;

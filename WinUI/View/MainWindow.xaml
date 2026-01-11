@@ -140,6 +140,38 @@
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem
+                    Content="Classic"
+                    Tag="signalbox5"
+                    ToolTipService.ToolTip="Classic ESTW-ZN Style (Yellow/Black)">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE806;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem
+                    Content="Network"
+                    Tag="signalbox6"
+                    ToolTipService.ToolTip="Network Operations Style (Green/Red Routes)">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE806;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem
+                    Content="Operations"
+                    Tag="signalbox7"
+                    ToolTipService.ToolTip="High-Density Operations Style">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE806;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem
+                    Content="Minimal"
+                    Tag="signalbox8"
+                    ToolTipService.ToolTip="Ultra-Clean Minimal Style">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE806;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem
                     Content="Monitor"
                     Tag="monitor"
                     Visibility="{Binding ViewModel.IsMonitorPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -265,16 +297,6 @@
                             Command="{x:Bind ViewModel.SaveSolutionCommand}"
                             Icon="Save"
                             Label="Save" />
-                        <AppBarSeparator />
-                        <!--  Import Export  -->
-                        <AppBarButton
-                            Command="{x:Bind TrackPlanEditorViewModel.ImportFromAnyRailXmlCommand}"
-                            Label="Import"
-                            ToolTipService.ToolTip="AnyRail XML Import">
-                            <AppBarButton.Icon>
-                                <FontIcon Glyph="&#xE896;" />
-                            </AppBarButton.Icon>
-                        </AppBarButton>
                         <AppBarSeparator />
                         <!--  Simulation  -->
                         <AppBarButton

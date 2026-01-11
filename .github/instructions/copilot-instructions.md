@@ -40,6 +40,7 @@
 - Consistent spacing: `Padding="8"` or `Padding="16"`, `Spacing="8"` or `Spacing="16"`
 - Theme-aware colors: `{ThemeResource TextFillColorSecondaryBrush}`, `{ThemeResource DividerStrokeColorDefaultBrush}`
 - Typography: `{StaticResource SubtitleTextBlockStyle}`, `{StaticResource BodyTextBlockStyle}`
+- **List Controls:** Use `ItemsControl` for lists (NOT `ListView`) - see `winui.instructions.md`
 
 ### **2. Holistic Thinking - Never Implement in Isolation**
 - **When changing ONE Page, check ALL Pages** for consistency

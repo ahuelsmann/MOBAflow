@@ -21,7 +21,6 @@ public sealed partial class MainWindow
 {
     #region Fields
     public MainWindowViewModel ViewModel { get; }
-    public TrackPlanEditorViewModel TrackPlanEditorViewModel { get; }
 
     private readonly NavigationService _navigationService;
     private readonly HealthCheckService _healthCheckService;
@@ -43,7 +42,6 @@ public sealed partial class MainWindow
 
     public MainWindow(
         MainWindowViewModel viewModel,
-        TrackPlanEditorViewModel trackPlanEditorViewModel,
         NavigationService navigationService,
         HealthCheckService healthCheckService,
         IUiDispatcher uiDispatcher,
@@ -51,7 +49,6 @@ public sealed partial class MainWindow
             NavigationRegistry navigationRegistry)
     {
         ViewModel = viewModel;
-        TrackPlanEditorViewModel = trackPlanEditorViewModel;
         _navigationService = navigationService;
         _healthCheckService = healthCheckService;
         _uiDispatcher = uiDispatcher;

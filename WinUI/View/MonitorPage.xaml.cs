@@ -37,6 +37,9 @@ public sealed partial class MonitorPage
             // Defer ScrollIntoView to next UI cycle to avoid COMException during collection update
             DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
             {
+                // Guard against uninitialized ListView during page construction
+                if (TrafficListView?.Items is null) return;
+
                 var firstItem = TrafficListView.Items.FirstOrDefault();
                 if (firstItem != null)
                 {
@@ -66,6 +69,9 @@ public sealed partial class MonitorPage
             // Defer ScrollIntoView to next UI cycle to avoid COMException during collection update
             DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
             {
+                // Guard against uninitialized ListView during page construction
+                if (ActivityLogListView?.Items is null) return;
+
                 var firstItem = ActivityLogListView.Items.FirstOrDefault();
                 if (firstItem != null)
                 {

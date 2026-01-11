@@ -2,7 +2,7 @@
 
 namespace Moba.Domain;
 
-using TrackPlan.Domain;
+using Moba.TrackPlan.Graph;
 
 /// <summary>
 /// Project - Pure Data Object.
@@ -35,9 +35,9 @@ public class Project
 
     /// <summary>
     /// Track layout for this project (MOBAtps - Track Planner System).
-    /// Physical track segments, connections, and work surface.
+    /// Uses the new TopologyGraph-based architecture from TrackPlan project.
     /// </summary>
-    public TrackLayout? TrackLayout { get; set; }
+    public TopologyGraph? TrackPlan { get; set; }
 
     /// <summary>
     /// Signal box plan for this project (MOBAixl - Interlocking System).

@@ -47,9 +47,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  <ItemGroup>
-    <Page Remove="View\SapTransactionPage.xaml" />
-  </ItemGroup>
   <!-- Content files -->
   <ItemGroup>
     <Content Include="appsettings.json">
@@ -81,13 +78,7 @@
     <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\TrackPlan\TrackPlan.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="Resources\ControlStyles.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
-    <None Update="View\SapTransactionPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
+    <ProjectReference Include="..\TrackPlan.Editor\TrackPlan.Editor.csproj" />
+    <ProjectReference Include="..\TrackLibrary.PikoA\TrackLibrary.PikoA.csproj" />
   </ItemGroup>
 </Project>

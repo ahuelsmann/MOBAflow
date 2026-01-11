@@ -21,6 +21,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
 
 using Moba.SharedUI.Service;
+using Moba.TrackPlan.Editor;
 
 using Serilog;
 using Serilog.Events;
@@ -32,10 +33,8 @@ using SharedUI.ViewModel;
 
 using Sound;
 
-using System.IO;
 
-using TrackPlan.Renderer;
-using TrackPlan.Service;
+using System.IO;
 
 using View;
 
@@ -181,18 +180,16 @@ public partial class App
         });
 
         services.AddSingleton<NavigationService>();
-        services.AddSingleton<SnapToConnectService>();
+        // SnapToConnectService removed - depends on old TrackPlan.Domain architecture
 
         // Sound Services (required by HealthCheckService)
         services.AddSingleton<ISoundPlayer, WindowsSoundPlayer>();
         services.AddSingleton<SpeechHealthCheck>();
         services.AddSingleton<HealthCheckService>();
 
-        // Track Plan Services (required by TrackPlanEditorViewModel)
-        services.AddSingleton<TrackGeometryLibrary>();
-        services.AddSingleton<TopologyRenderer>();
-        services.AddSingleton<FeedbackStateManager>();
-        services.AddSingleton<TopologySolver>();
+        // TrackPlan.Editor Services (new TopologyGraph-based architecture)
+        // Replaces old TrackPlan.Domain/Service/Renderer architecture
+        services.AddTrackPlanServices();
 
         // ViewModels
         // Note: Wrapper ViewModels (SolutionViewModel, ProjectViewModel, JourneyViewModel, etc.)
@@ -215,7 +212,7 @@ public partial class App
             sp.GetRequiredService<AnnouncementService>(),  // For TestSpeech command
             sp.GetRequiredService<PhotoHubClient>()  // Real-time photo notifications
         ));
-        services.AddSingleton<TrackPlanEditorViewModel>();
+        // Old TrackPlanEditorViewModel removed - now using TrackPlanEditorViewModel2 from TrackPlan.Editor
         services.AddSingleton<JourneyMapViewModel>();
         services.AddSingleton<MonitorPageViewModel>();
         services.AddSingleton(sp => new TrainControlViewModel(
@@ -241,11 +238,16 @@ public partial class App
         services.AddTransient<TrainsPage>();
         navigationRegistry.Register("trains", "Trains", "\uEB4D", typeof(TrainsPage), "Shell");
 
+
         services.AddTransient<TrainControlPage>();
         navigationRegistry.Register("traincontrol", "Train Control", "\uE7C0", typeof(TrainControlPage), "Shell");
 
-        services.AddTransient<TrackPlanEditorPage>();
-        navigationRegistry.Register("trackplaneditor", "MOBAtps", "\uE809", typeof(TrackPlanEditorPage), "Shell");
+        // Old TrackPlanEditorPage temporarily disabled - depends on removed SharedUI.ViewModel.TrackPlanEditorViewModel
+        // services.AddTransient<TrackPlanEditorPage>();
+        // navigationRegistry.Register("trackplaneditor", "MOBAtps", "\uE809", typeof(TrackPlanEditorPage), "Shell");
+
+        services.AddTransient<TrackPlanEditorPage2>();
+        navigationRegistry.Register("trackplaneditor", "MOBAtps", "\uE809", typeof(TrackPlanEditorPage2), "Shell");
 
         services.AddTransient<JourneyMapPage>();
         navigationRegistry.Register("journeymap", "Journey Map", "\uE81E", typeof(JourneyMapPage), "Shell");
@@ -275,6 +277,19 @@ public partial class App
 
         services.AddSingleton<SignalBoxPage4>();
         navigationRegistry.Register("signalbox4", "ILTIS", "\uE806", typeof(SignalBoxPage4), "Shell");
+
+        // Classic ESTW-style Signal Box Pages (SignalBoxPageBase2 derivatives)
+        services.AddSingleton<SignalBoxPage5>();
+        navigationRegistry.Register("signalbox5", "Classic", "\uE806", typeof(SignalBoxPage5), "Shell");
+
+        services.AddSingleton<SignalBoxPage6>();
+        navigationRegistry.Register("signalbox6", "Network", "\uE806", typeof(SignalBoxPage6), "Shell");
+
+        services.AddSingleton<SignalBoxPage7>();
+        navigationRegistry.Register("signalbox7", "Operations", "\uE806", typeof(SignalBoxPage7), "Shell");
+
+        services.AddSingleton<SignalBoxPage8>();
+        navigationRegistry.Register("signalbox8", "Minimal", "\uE806", typeof(SignalBoxPage8), "Shell");
 
         // MainWindow (Singleton = one instance for app lifetime)
         services.AddSingleton<MainWindow>();

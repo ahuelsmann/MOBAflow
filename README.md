@@ -15,8 +15,43 @@
 - 🎯 **Journey Management** - Define train routes with multiple stations
 - 🔊 **Text-to-Speech** - Azure Cognitive Services & Windows Speech
 - ⚡ **Workflow Automation** - Event-driven action sequences
-- 🎨 **Track Plan Import** - Import layouts from AnyRail (user-exported XML files)
+- 🎨 **MOBAtps Track Plan System** - Visual track layout editor with drag & drop
+- 🛤️ **Track Libraries** - Extensible track system support (Piko A-Gleis, more coming)
 - 📱 **Multi-Platform** - WinUI (Windows), MAUI (Android), Blazor (Web)
+
+## 🛤️ Track Plan System (MOBAtps)
+
+MOBAflow includes a full-featured **Track Plan System** for designing model railroad layouts:
+
+### Features
+- ✅ Drag & Drop track placement from toolbox
+- ✅ Snap-to-connect for easy track joining
+- ✅ Grid alignment and rotation controls
+- ✅ Light & Dark theme support
+- ✅ Zoom & Pan navigation
+- ✅ Feedback point assignment
+- ✅ Validation constraints
+
+### Track Libraries
+Track systems are modular - each manufacturer's track system is a separate library:
+
+| Library | Status | Templates |
+|---------|--------|-----------|
+| **TrackLibrary.PikoA** | ✅ Active | G231, G119, G62, G56, G31, R1-R9, BWL, BWR, K30 |
+| TrackLibrary.RocoLine | 🚧 Planned | Coming soon |
+| TrackLibrary.Tillig | 🚧 Planned | Coming soon |
+| TrackLibrary.Maerklin | 🚧 Planned | Coming soon |
+
+### Architecture
+```
+TrackPlan (Domain)
+  ↑
+TrackPlan.Renderer (Geometry/Layout)
+  ↑
+TrackPlan.Editor (ViewModels/Commands)
+  ↑
+TrackLibrary.PikoA (Track Templates)
+```
 
 ## 🛤️ AnyRail Integration
 

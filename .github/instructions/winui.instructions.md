@@ -298,11 +298,221 @@ WinUI/
 
 // ✅ Use x:Bind instead of Binding (compiled, faster)
 <TextBlock Text="{x:Bind ViewModel.Title, Mode=OneWay}" />
-
-// ❌ Avoid
-<TextBlock Text="{Binding Title}" /> <!-- Runtime, slower -->
 ```
 
+## 📋 List Controls: ItemsControl vs ListView (WICHTIG!)
+
+**Grundregel:** Verwende **ItemsControl** als Standard für Listen. ListView nur bei speziellen Anforderungen.
+
+### Wann ItemsControl verwenden (BEVORZUGT)
+
+| Anwendungsfall | Grund |
+|----------------|-------|
+| Toolbox/Palette | Kein interner ScrollViewer, scrollt mit Parent |
+| Statische Listen | Einfacher, weniger Overhead |
+| Custom Layouts | Volle Kontrolle über ItemsPanel |
+| Drag-Source | PointerPressed + StartDragAsync |
+| Nested in ScrollViewer | Kein Scroll-Konflikt |
+
+### Wann ListView verwenden
+
+| Anwendungsfall | Grund |
+|----------------|-------|
+| Große Listen (1000+ Items) | Virtualisierung eingebaut |
+| Selektion erforderlich | SelectedItem/SelectedItems |
+| Built-in Keyboard Navigation | Arrow keys, Home, End |
+
+### ItemsControl Pattern (Standard)
+
+```xaml
+<!-- ✅ RICHTIG: ItemsControl für Toolbox/Listen -->
+<ScrollViewer>
+    <StackPanel>
+        <TextBlock Text="KATEGORIE" Style="{StaticResource CaptionTextBlockStyle}" />
+        <ItemsControl ItemsSource="{x:Bind Items}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="local:MyItem">
+                    <Border 
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                        CornerRadius="4"
+                        Margin="0,1"
+                        Padding="8,4"
+                        PointerPressed="Item_PointerPressed">
+                        <TextBlock Text="{x:Bind Name}" />
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </StackPanel>
+</ScrollViewer>
+```
+
+### Drag-Support für ItemsControl
+
+```csharp
+// Code-Behind für Drag aus ItemsControl
+private async void Item_PointerPressed(object sender, PointerRoutedEventArgs e)
+{
+    if (sender is not FrameworkElement element) return;
+    if (element.DataContext is not MyItem item) return;
+
+    var dataPackage = new DataPackage();
+    dataPackage.SetText(item.Id);
+    dataPackage.RequestedOperation = DataPackageOperation.Copy;
+
+    await element.StartDragAsync(e.GetCurrentPoint(element));
+}
+```
+
+### FALSCH: ListView in ScrollViewer
+
+```xaml
+<!-- ❌ FALSCH: ListView blockiert Parent-Scrolling -->
+<ScrollViewer>
+    <StackPanel>
+        <ListView ItemsSource="{x:Bind Items}" />  <!-- Hat eigenen ScrollViewer! -->
+        <ListView ItemsSource="{x:Bind MoreItems}" />
+    </StackPanel>
+</ScrollViewer>
+
+<!-- ❌ AUCH FALSCH: Workaround mit Disabled ScrollViewer -->
+<ListView ScrollViewer.VerticalScrollBarVisibility="Disabled" />
+<!-- Warum einen ScrollViewer deaktivieren? Nutze ItemsControl! -->
+```
+
+### Custom ItemsPanel
+
+```xaml
+<!-- Horizontal Layout -->
+<ItemsControl ItemsSource="{x:Bind Items}">
+    <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+            <StackPanel Orientation="Horizontal" Spacing="8" />
+        </ItemsPanelTemplate>
+    </ItemsControl.ItemsPanel>
+</ItemsControl>
+
+<!-- Wrap Layout -->
+<ItemsControl ItemsSource="{x:Bind Items}">
+    <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+            <ItemsWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="3" />
+        </ItemsPanelTemplate>
+    </ItemsControl.ItemsPanel>
+</ItemsControl>
+```
+
+## 🎯 Drag & Drop Best Practices (WinUI 3)
+
+### Grundregeln
+
+1. **CanDrag="True" muss in XAML gesetzt werden** - nicht zur Laufzeit in PointerPressed
+2. **DragStarting Event** ist der einzige Ort um DataPackage zu setzen
+3. **PointerPressed** nur für visuelles Feedback, NICHT für Drag-Initiierung
+4. **AllowDrop="True"** auf dem Drop-Target setzen
+
+### Drag Source Pattern (XAML)
+
+```xaml
+<!-- ✅ RICHTIG: CanDrag und DragStarting in XAML -->
+<Border 
+    CanDrag="True"
+    DragStarting="Element_DragStarting"
+    DropCompleted="Element_DropCompleted">
+    <TextBlock Text="{x:Bind Name}" />
+</Border>
+```
+
+### Drag Source Pattern (Code-Behind)
+
+```csharp
+/// <summary>
+/// DragStarting wird von WinUI aufgerufen wenn CanDrag="True" und User zieht.
+/// Hier wird das DataPackage gesetzt.
+/// </summary>
+private void Element_DragStarting(UIElement sender, DragStartingEventArgs args)
+{
+    if (sender is FrameworkElement { DataContext: MyItem item })
+    {
+        // Daten für Drag setzen
+        args.Data.SetText(item.Id);
+        args.Data.RequestedOperation = DataPackageOperation.Copy;
+        args.AllowedOperations = DataPackageOperation.Copy;
+    }
+    else
+    {
+        // Drag abbrechen wenn keine gültigen Daten
+        args.Cancel = true;
+    }
+}
+
+/// <summary>
+/// Optional: Wird aufgerufen wenn Drag abgeschlossen (Erfolg oder Abbruch).
+/// </summary>
+private void Element_DropCompleted(UIElement sender, DropCompletedEventArgs args)
+{
+    var success = args.DropResult == DataPackageOperation.Copy;
+}
+```
+
+### Drop Target Pattern (XAML)
+
+```xaml
+<!-- ✅ Drop Target -->
+<Canvas 
+    AllowDrop="True"
+    DragOver="Canvas_DragOver"
+    Drop="Canvas_Drop" />
+```
+
+### Drop Target Pattern (Code-Behind)
+
+```csharp
+private void Canvas_DragOver(object sender, DragEventArgs e)
+{
+    // Akzeptierte Operation anzeigen
+    e.AcceptedOperation = DataPackageOperation.Copy;
+    e.DragUIOverride.Caption = "Drop to place";
+    e.DragUIOverride.IsCaptionVisible = true;
+}
+
+private async void Canvas_Drop(object sender, DragEventArgs e)
+{
+    if (!e.DataView.Contains(StandardDataFormats.Text))
+        return;
+
+    var data = await e.DataView.GetTextAsync();
+    var position = e.GetPosition((UIElement)sender);
+    
+    // Objekt erstellen und platzieren...
+}
+```
+
+### FALSCH: CanDrag zur Laufzeit setzen
+
+```csharp
+// ❌ FALSCH: CanDrag in PointerPressed setzen
+private void Item_PointerPressed(object sender, PointerRoutedEventArgs e)
+{
+    element.CanDrag = true;  // Zu spät! Funktioniert nicht beim ersten Drag
+    element.DragStarting += ...;  // Event-Handler sollten in XAML sein
+}
+
+// ❌ FALSCH: StartDragAsync mit DataPackage
+await element.StartDragAsync(point);  // DataPackage wird nicht übergeben!
+
+// ❌ FALSCH: SetContentFromBitmapImage(null)
+args.DragUI.SetContentFromBitmapImage(null);  // Wirft ArgumentException!
+```
+
+### Häufige Fehler
+
+| Fehler | Ursache | Lösung |
+|--------|---------|--------|
+| Drag startet nicht | `CanDrag` nicht in XAML | `CanDrag="True"` in XAML |
+| Keine Daten im Drop | DataPackage nicht gesetzt | In `DragStarting` setzen |
+| ArgumentException | `SetContentFromBitmapImage(null)` | Zeile entfernen |
+| Drag nur beim 2. Mal | `CanDrag` in PointerPressed | XAML verwenden |
 
 ## 🎨 DataTemplate Binding Rules (x:Bind vs Binding)
 
@@ -324,6 +534,7 @@ WinUI/
 <Page x:Class="Moba.WinUI.View.EditorPage"
       xmlns:vm="using:Moba.SharedUI.ViewModel"
       DataContext="{x:Bind ViewModel}">
+    
     
     <TextBox Header="Name" Text="{x:Bind ViewModel.Name, Mode=TwoWay}" />
     <CheckBox Content="Active" IsChecked="{x:Bind ViewModel.IsActive, Mode=TwoWay}" />

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <RootNamespace>Moba.SharedUI</RootNamespace>
     <TargetFramework>net9.0</TargetFramework>
@@ -12,9 +12,6 @@
     <PackageReference Include="CommunityToolkit.Mvvm" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TrackPlan\TrackPlan.csproj" />
-    <ProjectReference Include="..\TrackPlan.Renderer\TrackPlan.Renderer.csproj" />
-    <ProjectReference Include="..\TrackPlan.Import.AnyRail\TrackPlan.Import.csproj" />
     <ProjectReference Include="..\Backend\Backend.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
