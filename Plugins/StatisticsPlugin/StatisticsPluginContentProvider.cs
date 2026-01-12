@@ -73,9 +73,6 @@ public sealed class StatisticsPluginContentProvider
         root.Children.Add(CreateSectionHeader("Settings Overview", "\uE713"));
         root.Children.Add(CreateSettingsGrid());
 
-        // Actions Section
-        root.Children.Add(CreateActionsSection());
-
         scroll.Content = root;
 
         // Subscribe to changes
@@ -209,6 +206,7 @@ public sealed class StatisticsPluginContentProvider
     private Border CreateConnectionCard(string title, string statusProp, (string Label, string Prop)[] items, bool isZ21)
     {
         _ = statusProp;
+        _ = isZ21;
 
         var border = new Border
         {
@@ -221,22 +219,13 @@ public sealed class StatisticsPluginContentProvider
 
         var stack = new StackPanel { Spacing = 12 };
 
-        // Header with status indicator
-        var header = new Grid();
-        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-        header.Children.Add(new TextBlock
+        // Header without status indicator
+        var header = new TextBlock
         {
             Text = title,
             FontWeight = FontWeights.SemiBold,
             FontSize = 16
-        });
-
-        var statusIndicator = CreateBoundTextBlock(isZ21 ? "Z21StatusIcon" : "RestApiStatusIcon");
-        statusIndicator.FontSize = 20;
-        Grid.SetColumn(statusIndicator, 1);
-        header.Children.Add(statusIndicator);
+        };
 
         stack.Children.Add(header);
 
@@ -419,57 +408,6 @@ public sealed class StatisticsPluginContentProvider
         }
 
         border.Child = grid;
-        return border;
-    }
-
-    #endregion
-
-    #region Actions
-
-    private UIElement CreateActionsSection()
-    {
-        var border = new Border
-        {
-            Background = new SolidColorBrush(CardBackground),
-            BorderBrush = new SolidColorBrush(CardBorder),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(16)
-        };
-
-        var stack = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
-
-        var refreshBtn = new Button
-        {
-            Content = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 8,
-                Children =
-                {
-                    new FontIcon { Glyph = "\uE72C", FontSize = 14 },
-                    new TextBlock { Text = "Refresh All", VerticalAlignment = VerticalAlignment.Center }
-                }
-            }
-        };
-        refreshBtn.Click += (s, e) =>
-        {
-            _vm.RefreshAllCommand.Execute(null);
-            RefreshAllBindings();
-        };
-
-        var infoText = new TextBlock
-        {
-            Text = "Data refreshes automatically when changes occur",
-            Opacity = 0.6,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(12, 0, 0, 0)
-        };
-
-        stack.Children.Add(refreshBtn);
-        stack.Children.Add(infoText);
-
-        border.Child = stack;
         return border;
     }
 

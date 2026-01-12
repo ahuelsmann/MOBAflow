@@ -15,7 +15,6 @@ using Moba.WinUI.Model;
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 
@@ -28,45 +27,41 @@ using DomainPlan = Moba.Domain.SignalBoxPlan;
 using DomainSymbol = Moba.Domain.SignalBoxSymbol;
 
 /// <summary>
-/// Abstract base class for all Signal Box page implementations.
-/// Provides shared functionality for track diagram editing, drag/drop, element interaction.
-/// Subclasses implement visual styling (colors, icon designs) for different ESTW styles.
+/// Base class for the MOBAesb (Electronic Signal Box) page.
+/// Uses Fluent Design System with standard WinUI ThemeResources.
+/// Signal-specific colors (Red/Yellow/Green) are defined in <see cref="SignalColors"/>.
 /// </summary>
 public abstract class SignalBoxPageBase : Page
 {
-    // Drag operation identifiers
     protected const string DragDataNewElement = "NewElement:";
     protected const string DragDataMoveElement = "MoveElement:";
 
-    // Grid settings
     protected const int GridCellSize = 60;
     protected const int GridColumns = 24;
     protected const int GridRows = 14;
 
-    // Core dependencies
     protected readonly MainWindowViewModel ViewModel;
     protected readonly IZ21 Z21;
 
-    // Data collections
     protected readonly List<SignalBoxElement> Elements = [];
     protected readonly Dictionary<Guid, FrameworkElement> ElementVisuals = [];
 
-    // UI elements
     protected Canvas TrackCanvas = null!;
     protected StackPanel Toolbox = null!;
     protected StackPanel PropertiesPanel = null!;
     protected ScrollViewer CanvasScrollViewer = null!;
 
-    // Selection state
     protected SignalBoxElement? SelectedElement;
     protected FrameworkElement? SelectedVisual;
-    protected TextBlock? StatusTextBlock;
 
-    // Grid visibility
     private bool _isGridVisible = true;
     private readonly List<Line> _gridLines = [];
 
-    /// <summary>Gets or sets whether the grid lines are visible.</summary>
+    private bool _isPanning;
+    private Point _panStartPoint;
+    private double _panStartHorizontalOffset;
+    private double _panStartVerticalOffset;
+
     public bool IsGridVisible
     {
         get => _isGridVisible;
@@ -77,12 +72,6 @@ public abstract class SignalBoxPageBase : Page
                 line.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
         }
     }
-
-    // Pan state for right-mouse-button panning
-    private bool _isPanning;
-    private Point _panStartPoint;
-    private double _panStartHorizontalOffset;
-    private double _panStartVerticalOffset;
 
     protected SignalBoxPageBase(MainWindowViewModel viewModel, IZ21 z21)
     {
@@ -97,28 +86,15 @@ public abstract class SignalBoxPageBase : Page
         Unloaded += OnUnloaded;
     }
 
-    #region Abstract Methods - Subclass Implementation Required
+    #region Abstract Members
 
-    /// <summary>Gets the display name for this signal box style.</summary>
-    protected abstract string StyleName { get; }
+    protected abstract string PageTitle { get; }
 
-    /// <summary>Gets the color scheme for this style.</summary>
-    protected abstract SignalBoxColorScheme Colors { get; }
-
-    /// <summary>Creates the toolbox icon for the given element type.</summary>
     protected abstract UIElement CreateToolboxIcon(SignalBoxElementType type);
 
-    /// <summary>Creates the track diagram visual for an element.</summary>
     protected abstract FrameworkElement CreateElementVisual(SignalBoxElement element);
 
-    /// <summary>Builds the style-specific header/toolbar.</summary>
     protected abstract Border BuildHeader();
-
-    /// <summary>Whether to show the status bar at the bottom. Override to return false to hide it.</summary>
-    protected virtual bool ShowStatusBar => true;
-
-    /// <summary>Builds the style-specific status bar at the bottom. Only called if ShowStatusBar is true.</summary>
-    protected virtual Border? BuildStatusBar() => null;
 
     #endregion
 
@@ -134,11 +110,6 @@ public abstract class SignalBoxPageBase : Page
             if (project?.SignalBoxPlan != null && project.SignalBoxPlan.Elements.Count > 0)
             {
                 LoadFromDomainPlan(project.SignalBoxPlan);
-                LogMessage("INFO", string.Format(CultureInfo.InvariantCulture, "Loaded {0} elements", Elements.Count));
-            }
-            else
-            {
-                LogMessage("INFO", string.Format(CultureInfo.InvariantCulture, "{0} initialized", StyleName));
             }
         }
     }
@@ -174,7 +145,6 @@ public abstract class SignalBoxPageBase : Page
         DispatcherQueue.TryEnqueue(() =>
         {
             UpdateFeedbackPoint(feedback.InPort);
-            LogMessage("FEEDBACK", string.Format(CultureInfo.InvariantCulture, "InPort {0}: OCCUPIED", feedback.InPort));
         });
     }
 
@@ -189,7 +159,7 @@ public abstract class SignalBoxPageBase : Page
 
         var plan = new DomainPlan
         {
-            Name = StyleName,
+            Name = PageTitle,
             GridWidth = GridColumns,
             GridHeight = GridRows,
             CellSize = GridCellSize
@@ -210,7 +180,6 @@ public abstract class SignalBoxPageBase : Page
         }
 
         project.SignalBoxPlan = plan;
-        LogMessage("SAVE", string.Format(CultureInfo.InvariantCulture, "Saved {0} elements", plan.Elements.Count));
     }
 
     private void LoadFromDomainPlan(DomainPlan plan)
@@ -247,73 +216,70 @@ public abstract class SignalBoxPageBase : Page
         SignalBoxElementType.TrackStraight => DomainSymbol.TrackStraight,
         SignalBoxElementType.TrackCurve45 => DomainSymbol.TrackCurve45,
         SignalBoxElementType.TrackCurve90 => DomainSymbol.TrackCurve90,
-            SignalBoxElementType.TrackEndStop => DomainSymbol.TrackEnd,
-            SignalBoxElementType.SwitchLeft => DomainSymbol.SwitchSimpleLeft,
-            SignalBoxElementType.SwitchRight => DomainSymbol.SwitchSimpleRight,
-            SignalBoxElementType.SwitchDouble => DomainSymbol.SwitchDoubleSlip,
-            SignalBoxElementType.SwitchCrossing => DomainSymbol.SwitchDiamond,
-            SignalBoxElementType.SignalMain => DomainSymbol.SignalKsMain,
-            SignalBoxElementType.SignalDistant => DomainSymbol.SignalKsDistant,
-            SignalBoxElementType.SignalCombined => DomainSymbol.SignalKsCombined,
-            SignalBoxElementType.SignalHvHp => DomainSymbol.SignalHvMain,
-            SignalBoxElementType.SignalHvVr => DomainSymbol.SignalHvDistant,
-            SignalBoxElementType.SignalKsMain => DomainSymbol.SignalKsMain,
-            SignalBoxElementType.SignalKsDistant => DomainSymbol.SignalKsDistant,
-            SignalBoxElementType.SignalKsCombined => DomainSymbol.SignalKsCombined,
-            SignalBoxElementType.SignalSvMain => DomainSymbol.SignalKsMain,
-            SignalBoxElementType.SignalSvDistant => DomainSymbol.SignalKsDistant,
-            SignalBoxElementType.SignalShunting => DomainSymbol.SignalSh,
-            SignalBoxElementType.SignalSpeed => DomainSymbol.SignalZs3,
-            SignalBoxElementType.Platform => DomainSymbol.Platform,
-            SignalBoxElementType.FeedbackPoint => DomainSymbol.Detector,
-            SignalBoxElementType.Label => DomainSymbol.Label,
-            _ => DomainSymbol.TrackStraight
-        };
+        SignalBoxElementType.TrackEndStop => DomainSymbol.TrackEnd,
+        SignalBoxElementType.SwitchLeft => DomainSymbol.SwitchSimpleLeft,
+        SignalBoxElementType.SwitchRight => DomainSymbol.SwitchSimpleRight,
+        SignalBoxElementType.SwitchDouble => DomainSymbol.SwitchDoubleSlip,
+        SignalBoxElementType.SwitchCrossing => DomainSymbol.SwitchDiamond,
+        SignalBoxElementType.SignalMain => DomainSymbol.SignalKsMain,
+        SignalBoxElementType.SignalDistant => DomainSymbol.SignalKsDistant,
+        SignalBoxElementType.SignalCombined => DomainSymbol.SignalKsCombined,
+        SignalBoxElementType.SignalHvHp => DomainSymbol.SignalHvMain,
+        SignalBoxElementType.SignalHvVr => DomainSymbol.SignalHvDistant,
+        SignalBoxElementType.SignalKsMain => DomainSymbol.SignalKsMain,
+        SignalBoxElementType.SignalKsDistant => DomainSymbol.SignalKsDistant,
+        SignalBoxElementType.SignalKsCombined => DomainSymbol.SignalKsCombined,
+        SignalBoxElementType.SignalSvMain => DomainSymbol.SignalKsMain,
+        SignalBoxElementType.SignalSvDistant => DomainSymbol.SignalKsDistant,
+        SignalBoxElementType.SignalShunting => DomainSymbol.SignalSh,
+        SignalBoxElementType.SignalSpeed => DomainSymbol.SignalZs3,
+        SignalBoxElementType.Platform => DomainSymbol.Platform,
+        SignalBoxElementType.FeedbackPoint => DomainSymbol.Detector,
+        SignalBoxElementType.Label => DomainSymbol.Label,
+        _ => DomainSymbol.TrackStraight
+    };
 
-        private static SignalBoxElementType MapFromSymbol(DomainSymbol symbol) => symbol switch
-        {
-            DomainSymbol.TrackStraight => SignalBoxElementType.TrackStraight,
-            DomainSymbol.TrackCurve45 => SignalBoxElementType.TrackCurve45,
-            DomainSymbol.TrackCurve90 => SignalBoxElementType.TrackCurve90,
-            DomainSymbol.TrackEnd => SignalBoxElementType.TrackEndStop,
-            DomainSymbol.SwitchSimpleLeft => SignalBoxElementType.SwitchLeft,
-            DomainSymbol.SwitchSimpleRight => SignalBoxElementType.SwitchRight,
-            DomainSymbol.SwitchDoubleSlip => SignalBoxElementType.SwitchDouble,
-            DomainSymbol.SwitchDiamond => SignalBoxElementType.SwitchCrossing,
-            DomainSymbol.SignalKsMain => SignalBoxElementType.SignalKsMain,
-            DomainSymbol.SignalKsDistant => SignalBoxElementType.SignalKsDistant,
-            DomainSymbol.SignalKsCombined => SignalBoxElementType.SignalKsCombined,
-            DomainSymbol.SignalHvMain => SignalBoxElementType.SignalHvHp,
-            DomainSymbol.SignalHvDistant => SignalBoxElementType.SignalHvVr,
-                DomainSymbol.SignalHvCombined => SignalBoxElementType.SignalCombined,
-                DomainSymbol.SignalHlMain or DomainSymbol.SignalHlDistant => SignalBoxElementType.SignalMain,
-                DomainSymbol.SignalSh or DomainSymbol.SignalDwarf => SignalBoxElementType.SignalShunting,
-                DomainSymbol.SignalZs3 => SignalBoxElementType.SignalSpeed,
-                DomainSymbol.Platform or DomainSymbol.PlatformEdge => SignalBoxElementType.Platform,
-                DomainSymbol.Detector or DomainSymbol.AxleCounter => SignalBoxElementType.FeedbackPoint,
-                DomainSymbol.Label or DomainSymbol.TrackNumber => SignalBoxElementType.Label,
-                _ => SignalBoxElementType.TrackStraight
-            };
+    private static SignalBoxElementType MapFromSymbol(DomainSymbol symbol) => symbol switch
+    {
+        DomainSymbol.TrackStraight => SignalBoxElementType.TrackStraight,
+        DomainSymbol.TrackCurve45 => SignalBoxElementType.TrackCurve45,
+        DomainSymbol.TrackCurve90 => SignalBoxElementType.TrackCurve90,
+        DomainSymbol.TrackEnd => SignalBoxElementType.TrackEndStop,
+        DomainSymbol.SwitchSimpleLeft => SignalBoxElementType.SwitchLeft,
+        DomainSymbol.SwitchSimpleRight => SignalBoxElementType.SwitchRight,
+        DomainSymbol.SwitchDoubleSlip => SignalBoxElementType.SwitchDouble,
+        DomainSymbol.SwitchDiamond => SignalBoxElementType.SwitchCrossing,
+        DomainSymbol.SignalKsMain => SignalBoxElementType.SignalKsMain,
+        DomainSymbol.SignalKsDistant => SignalBoxElementType.SignalKsDistant,
+        DomainSymbol.SignalKsCombined => SignalBoxElementType.SignalKsCombined,
+        DomainSymbol.SignalHvMain => SignalBoxElementType.SignalHvHp,
+        DomainSymbol.SignalHvDistant => SignalBoxElementType.SignalHvVr,
+        DomainSymbol.SignalHvCombined => SignalBoxElementType.SignalCombined,
+        DomainSymbol.SignalHlMain or DomainSymbol.SignalHlDistant => SignalBoxElementType.SignalMain,
+        DomainSymbol.SignalSh or DomainSymbol.SignalDwarf => SignalBoxElementType.SignalShunting,
+        DomainSymbol.SignalZs3 => SignalBoxElementType.SignalSpeed,
+        DomainSymbol.Platform or DomainSymbol.PlatformEdge => SignalBoxElementType.Platform,
+        DomainSymbol.Detector or DomainSymbol.AxleCounter => SignalBoxElementType.FeedbackPoint,
+        DomainSymbol.Label or DomainSymbol.TrackNumber => SignalBoxElementType.Label,
+        _ => SignalBoxElementType.TrackStraight
+    };
 
-        #endregion
+    #endregion
 
     #region Layout Building
 
     private Grid BuildLayout()
     {
-        var rootGrid = new Grid { Background = new SolidColorBrush(Colors.Background) };
+        var rootGrid = new Grid();
         rootGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(200) });
-        rootGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         rootGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        rootGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        rootGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(240) });
+        rootGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(260) });
         rootGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         rootGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-        rootGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
         var header = BuildHeader();
         Grid.SetRow(header, 0);
-        Grid.SetColumnSpan(header, 5);
+        Grid.SetColumnSpan(header, 3);
         rootGrid.Children.Add(header);
 
         var toolboxPanel = BuildToolbox();
@@ -321,73 +287,25 @@ public abstract class SignalBoxPageBase : Page
         Grid.SetColumn(toolboxPanel, 0);
         rootGrid.Children.Add(toolboxPanel);
 
-        var divider1 = new Border { Width = 2, Background = new SolidColorBrush(Colors.Border) };
-        Grid.SetRow(divider1, 1);
-        Grid.SetColumn(divider1, 1);
-        rootGrid.Children.Add(divider1);
-
         var canvasPanel = BuildCanvasPanel();
         Grid.SetRow(canvasPanel, 1);
-        Grid.SetColumn(canvasPanel, 2);
+        Grid.SetColumn(canvasPanel, 1);
         rootGrid.Children.Add(canvasPanel);
 
-        var divider2 = new Border { Width = 2, Background = new SolidColorBrush(Colors.Border) };
-        Grid.SetRow(divider2, 1);
-        Grid.SetColumn(divider2, 3);
-        rootGrid.Children.Add(divider2);
+        var propertiesPanel = BuildPropertiesPanel();
+        Grid.SetRow(propertiesPanel, 1);
+        Grid.SetColumn(propertiesPanel, 2);
+        rootGrid.Children.Add(propertiesPanel);
 
-            var propertiesPanel = BuildPropertiesPanel();
-            Grid.SetRow(propertiesPanel, 1);
-            Grid.SetColumn(propertiesPanel, 4);
-            rootGrid.Children.Add(propertiesPanel);
-
-            if (ShowStatusBar)
-            {
-                var statusBar = BuildStatusBar();
-                if (statusBar != null)
-                {
-                    Grid.SetRow(statusBar, 2);
-                    Grid.SetColumnSpan(statusBar, 5);
-                    rootGrid.Children.Add(statusBar);
-                }
-            }
-
-            return rootGrid;
-        }
+        return rootGrid;
+    }
 
     protected virtual Border BuildToolbox()
     {
         var scroll = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
         Toolbox = new StackPanel { Spacing = 12, Padding = new Thickness(12) };
 
-        // Header
-        var headerPanel = new StackPanel { Spacing = 4, Margin = new Thickness(0, 0, 0, 16) };
-        headerPanel.Children.Add(new TextBlock
-        {
-            Text = "TOOLBOX",
-            FontSize = 11,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
-            Foreground = new SolidColorBrush(Colors.TextSecondary),
-            CharacterSpacing = 100
-        });
-        headerPanel.Children.Add(new Border
-        {
-            Height = 2,
-            Background = new LinearGradientBrush
-            {
-                StartPoint = new Point(0, 0),
-                EndPoint = new Point(1, 0),
-                GradientStops =
-                {
-                    new GradientStop { Color = Colors.Accent, Offset = 0 },
-                    new GradientStop { Color = Microsoft.UI.Colors.Transparent, Offset = 1 }
-                }
-            }
-        });
-        Toolbox.Children.Add(headerPanel);
-
-        // Track Elements
-        Toolbox.Children.Add(CreateToolboxCategory("GLEISE", "\uE909"));
+        Toolbox.Children.Add(CreateToolboxCategory("GLEISE"));
         Toolbox.Children.Add(CreateIconGrid([
             ("Gerade", SignalBoxElementType.TrackStraight),
             ("Kurve 45", SignalBoxElementType.TrackCurve45),
@@ -395,8 +313,7 @@ public abstract class SignalBoxPageBase : Page
             ("Prellbock", SignalBoxElementType.TrackEndStop)
         ]));
 
-        // Switch Elements
-        Toolbox.Children.Add(CreateToolboxCategory("WEICHEN", "\uE8AB"));
+        Toolbox.Children.Add(CreateToolboxCategory("WEICHEN"));
         Toolbox.Children.Add(CreateIconGrid([
             ("EW links", SignalBoxElementType.SwitchLeft),
             ("EW rechts", SignalBoxElementType.SwitchRight),
@@ -404,19 +321,33 @@ public abstract class SignalBoxPageBase : Page
             ("Kreuzung", SignalBoxElementType.SwitchCrossing)
         ]));
 
-        // Main Signals
-        Toolbox.Children.Add(CreateToolboxCategory("SIGNALE", "\uE8B8"));
+        Toolbox.Children.Add(CreateToolboxCategory("H/V-SYSTEM"));
         Toolbox.Children.Add(CreateIconGrid([
-            ("Hauptsig", SignalBoxElementType.SignalMain),
-            ("Vorsignal", SignalBoxElementType.SignalDistant),
-            ("Ks-Signal", SignalBoxElementType.SignalCombined),
-            ("Rangiersig", SignalBoxElementType.SignalShunting)
+            ("Hp-Signal", SignalBoxElementType.SignalHvHp),
+            ("Vr-Signal", SignalBoxElementType.SignalHvVr)
         ]));
 
-        // Additional
-        Toolbox.Children.Add(CreateToolboxCategory("ZUSATZ", "\uE946"));
+        Toolbox.Children.Add(CreateToolboxCategory("Ks-SYSTEM"));
         Toolbox.Children.Add(CreateIconGrid([
-            ("Zs3", SignalBoxElementType.SignalSpeed),
+            ("Ks-Haupt", SignalBoxElementType.SignalKsMain),
+            ("Ks-Vor", SignalBoxElementType.SignalKsDistant),
+            ("Ks-Kombi", SignalBoxElementType.SignalKsCombined)
+        ]));
+
+        Toolbox.Children.Add(CreateToolboxCategory("Sv-SYSTEM"));
+        Toolbox.Children.Add(CreateIconGrid([
+            ("Sv-Haupt", SignalBoxElementType.SignalSvMain),
+            ("Sv-Vor", SignalBoxElementType.SignalSvDistant)
+        ]));
+
+        Toolbox.Children.Add(CreateToolboxCategory("RANGIERSIGNALE"));
+        Toolbox.Children.Add(CreateIconGrid([
+            ("Rangier", SignalBoxElementType.SignalShunting),
+            ("Zs 3", SignalBoxElementType.SignalSpeed)
+        ]));
+
+        Toolbox.Children.Add(CreateToolboxCategory("ZUSATZ"));
+        Toolbox.Children.Add(CreateIconGrid([
             ("Bahnsteig", SignalBoxElementType.Platform),
             ("Melder", SignalBoxElementType.FeedbackPoint),
             ("Label", SignalBoxElementType.Label)
@@ -426,35 +357,27 @@ public abstract class SignalBoxPageBase : Page
 
         return new Border
         {
-            Background = new SolidColorBrush(Colors.PanelBackground),
+            Background = (Brush)Application.Current.Resources["LayerFillColorDefaultBrush"],
+            BorderBrush = (Brush)Application.Current.Resources["DividerStrokeColorDefaultBrush"],
+            BorderThickness = new Thickness(0, 0, 1, 0),
             Child = scroll
         };
     }
 
-    private Border CreateToolboxCategory(string name, string glyph)
+    private static TextBlock CreateToolboxCategory(string name)
     {
-        var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-        panel.Children.Add(new FontIcon
-        {
-            Glyph = glyph,
-            FontSize = 12,
-            Foreground = new SolidColorBrush(Colors.Accent)
-        });
-        panel.Children.Add(new TextBlock
+        return new TextBlock
         {
             Text = name,
-            FontSize = 11,
-            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-            Foreground = new SolidColorBrush(Colors.Accent),
-            CharacterSpacing = 50
-        });
-
-        return new Border { Padding = new Thickness(0, 8, 0, 4), Child = panel };
+            Style = (Style)Application.Current.Resources["CaptionTextBlockStyle"],
+            Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
+            Margin = new Thickness(0, 8, 0, 4)
+        };
     }
 
     private Grid CreateIconGrid((string tooltip, SignalBoxElementType type)[] items)
     {
-        var grid = new Grid { ColumnSpacing = 8, RowSpacing = 8 };
+        var grid = new Grid { ColumnSpacing = 6, RowSpacing = 6 };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
@@ -465,7 +388,7 @@ public abstract class SignalBoxPageBase : Page
                 grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
             var (tooltip, type) = items[i];
-            var button = CreateToolboxIconButton(tooltip, type);
+            var button = CreateToolboxButton(tooltip, type);
             Grid.SetRow(button, row);
             Grid.SetColumn(button, i % 2);
             grid.Children.Add(button);
@@ -476,54 +399,46 @@ public abstract class SignalBoxPageBase : Page
         return grid;
     }
 
-    private Border CreateToolboxIconButton(string tooltip, SignalBoxElementType type)
+    private Border CreateToolboxButton(string tooltip, SignalBoxElementType type)
     {
         var button = new Border
         {
-            Width = 72,
-            Height = 56,
-            CornerRadius = new CornerRadius(8),
-            Background = new SolidColorBrush(Colors.ButtonBackground),
-            BorderBrush = new SolidColorBrush(Colors.ButtonBorder),
+            Height = 52,
+            CornerRadius = new CornerRadius(4),
+            Background = (Brush)Application.Current.Resources["SubtleFillColorSecondaryBrush"],
+            BorderBrush = (Brush)Application.Current.Resources["ControlStrokeColorDefaultBrush"],
             BorderThickness = new Thickness(1),
+            Padding = new Thickness(4),
             Tag = type,
-            CanDrag = true,
-            HorizontalAlignment = HorizontalAlignment.Center
+            CanDrag = true
         };
 
-        var content = new Grid();
+        var content = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
         content.Children.Add(CreateToolboxIcon(type));
-
-        var label = new TextBlock
+        content.Children.Add(new TextBlock
         {
             Text = tooltip,
-            FontSize = 9,
-            Foreground = new SolidColorBrush(Colors.TextMuted),
+            Style = (Style)Application.Current.Resources["CaptionTextBlockStyle"],
             HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Bottom,
-            Margin = new Thickness(0, 0, 0, 4)
-        };
-        content.Children.Add(label);
+            Margin = new Thickness(0, 2, 0, 0)
+        });
         button.Child = content;
 
         ToolTipService.SetToolTip(button, tooltip);
 
         button.PointerEntered += (s, e) =>
         {
-            button.Background = new SolidColorBrush(Colors.ButtonHover);
-            button.BorderBrush = new SolidColorBrush(Colors.Accent);
+            button.Background = (Brush)Application.Current.Resources["SubtleFillColorTertiaryBrush"];
         };
         button.PointerExited += (s, e) =>
         {
-            button.Background = new SolidColorBrush(Colors.ButtonBackground);
-            button.BorderBrush = new SolidColorBrush(Colors.ButtonBorder);
+            button.Background = (Brush)Application.Current.Resources["SubtleFillColorSecondaryBrush"];
         };
 
         button.DragStarting += (s, e) =>
         {
             e.Data.SetText(string.Format(CultureInfo.InvariantCulture, "{0}{1}", DragDataNewElement, (int)type));
             e.Data.RequestedOperation = DataPackageOperation.Copy;
-            LogMessage("DRAG", string.Format(CultureInfo.InvariantCulture, "New: {0}", type));
         };
 
         return button;
@@ -544,7 +459,7 @@ public abstract class SignalBoxPageBase : Page
         {
             Width = GridColumns * GridCellSize,
             Height = GridRows * GridCellSize,
-            Background = new SolidColorBrush(Colors.Background),
+            Background = (Brush)Application.Current.Resources["SolidBackgroundFillColorBaseBrush"],
             AllowDrop = true
         };
 
@@ -558,12 +473,14 @@ public abstract class SignalBoxPageBase : Page
         DrawGrid();
         CanvasScrollViewer.Content = TrackCanvas;
 
-        return new Border { Background = new SolidColorBrush(Colors.Background), Child = CanvasScrollViewer };
+        return new Border { Child = CanvasScrollViewer };
     }
 
     protected virtual void DrawGrid()
     {
         _gridLines.Clear();
+        var gridBrush = (Brush)Application.Current.Resources["DividerStrokeColorDefaultBrush"];
+
         for (int x = 0; x <= GridColumns; x++)
         {
             var line = new Line
@@ -572,8 +489,9 @@ public abstract class SignalBoxPageBase : Page
                 Y1 = 0,
                 X2 = x * GridCellSize,
                 Y2 = GridRows * GridCellSize,
-                Stroke = new SolidColorBrush(Colors.GridLine),
-                StrokeThickness = 1,
+                Stroke = gridBrush,
+                StrokeThickness = 0.5,
+                Opacity = 0.3,
                 Visibility = _isGridVisible ? Visibility.Visible : Visibility.Collapsed
             };
             _gridLines.Add(line);
@@ -587,8 +505,9 @@ public abstract class SignalBoxPageBase : Page
                 Y1 = y * GridCellSize,
                 X2 = GridColumns * GridCellSize,
                 Y2 = y * GridCellSize,
-                Stroke = new SolidColorBrush(Colors.GridLine),
-                StrokeThickness = 1,
+                Stroke = gridBrush,
+                StrokeThickness = 0.5,
+                Opacity = 0.3,
                 Visibility = _isGridVisible ? Visibility.Visible : Visibility.Collapsed
             };
             _gridLines.Add(line);
@@ -599,38 +518,20 @@ public abstract class SignalBoxPageBase : Page
     private Border BuildPropertiesPanel()
     {
         var scroll = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
-        PropertiesPanel = new StackPanel { Spacing = 12, Padding = new Thickness(12) };
+        PropertiesPanel = new StackPanel { Spacing = 12, Padding = new Thickness(16) };
 
-        var headerPanel = new StackPanel { Spacing = 4, Margin = new Thickness(0, 0, 0, 16) };
-        headerPanel.Children.Add(new TextBlock
+        PropertiesPanel.Children.Add(new TextBlock
         {
             Text = "EIGENSCHAFTEN",
-            FontSize = 11,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
-            Foreground = new SolidColorBrush(Colors.TextSecondary),
-            CharacterSpacing = 100
+            Style = (Style)Application.Current.Resources["CaptionTextBlockStyle"],
+            Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]
         });
-        headerPanel.Children.Add(new Border
-        {
-            Height = 2,
-            Background = new LinearGradientBrush
-            {
-                StartPoint = new Point(0, 0),
-                EndPoint = new Point(1, 0),
-                GradientStops =
-                {
-                    new GradientStop { Color = Colors.Accent, Offset = 0 },
-                    new GradientStop { Color = Microsoft.UI.Colors.Transparent, Offset = 1 }
-                }
-            }
-        });
-        PropertiesPanel.Children.Add(headerPanel);
 
         PropertiesPanel.Children.Add(new TextBlock
         {
             Text = "Kein Element ausgewaehlt",
-            FontSize = 12,
-            Foreground = new SolidColorBrush(Colors.TextMuted),
+            Style = (Style)Application.Current.Resources["BodyTextBlockStyle"],
+            Foreground = (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"],
             TextWrapping = TextWrapping.Wrap
         });
 
@@ -638,7 +539,9 @@ public abstract class SignalBoxPageBase : Page
 
         return new Border
         {
-            Background = new SolidColorBrush(Colors.PanelBackground),
+            Background = (Brush)Application.Current.Resources["LayerFillColorDefaultBrush"],
+            BorderBrush = (Brush)Application.Current.Resources["DividerStrokeColorDefaultBrush"],
+            BorderThickness = new Thickness(1, 0, 0, 0),
             Child = scroll
         };
     }
@@ -647,7 +550,7 @@ public abstract class SignalBoxPageBase : Page
 
     #region Canvas Interaction
 
-    private void OnCanvasDragOver(object sender, DragEventArgs e)
+    private static void OnCanvasDragOver(object sender, DragEventArgs e)
     {
         e.AcceptedOperation = DataPackageOperation.Copy | DataPackageOperation.Move;
         e.DragUIOverride.IsCaptionVisible = true;
@@ -680,8 +583,6 @@ public abstract class SignalBoxPageBase : Page
                         Canvas.SetLeft(visual, gridX * GridCellSize);
                         Canvas.SetTop(visual, gridY * GridCellSize);
                     }
-
-                    LogMessage("MOVE", string.Format(CultureInfo.InvariantCulture, "{0} to ({1}, {2})", element.Type, gridX, gridY));
                 }
             }
             return;
@@ -708,8 +609,6 @@ public abstract class SignalBoxPageBase : Page
             Canvas.SetTop(visual, gridY * GridCellSize);
             TrackCanvas.Children.Add(visual);
             ElementVisuals[element.Id] = visual;
-
-            LogMessage("PLACED", string.Format(CultureInfo.InvariantCulture, "{0} at ({1}, {2})", type, gridX, gridY));
         }
     }
 
@@ -734,7 +633,6 @@ public abstract class SignalBoxPageBase : Page
                     CenterY = GridCellSize / 2
                 };
             }
-            LogMessage("ROTATE", string.Format(CultureInfo.InvariantCulture, "{0} to {1} deg", element.Type, element.Rotation));
             e.Handled = true;
         }
     }
@@ -818,51 +716,88 @@ public abstract class SignalBoxPageBase : Page
                     ? SwitchPosition.Diverging
                     : SwitchPosition.Straight;
                 RefreshElementVisual(element);
-                LogMessage("SWITCH", string.Format(CultureInfo.InvariantCulture, "{0} -> {1}", element.Type, element.SwitchPosition));
             }
-                    else if (IsSignalType(element.Type))
-                    {
-                        CycleSignalAspect(element);
-                        RefreshElementVisual(element);
-                        LogMessage("SIGNAL", string.Format(CultureInfo.InvariantCulture, "{0} -> {1}", element.Type, element.SignalAspect));
-                    }
-
-                    SelectElement(element);
-                    e.Handled = true;
-                };
-            }
-
-            private static bool IsSignalType(SignalBoxElementType type)
+            else if (IsSignalType(element.Type))
             {
-                return type is SignalBoxElementType.SignalMain
-                    or SignalBoxElementType.SignalDistant
-                    or SignalBoxElementType.SignalCombined
-                    or SignalBoxElementType.SignalShunting
-                    or SignalBoxElementType.SignalHvHp
-                    or SignalBoxElementType.SignalHvVr
-                    or SignalBoxElementType.SignalKsMain
-                    or SignalBoxElementType.SignalKsDistant
-                    or SignalBoxElementType.SignalKsCombined
-                    or SignalBoxElementType.SignalSvMain
-                    or SignalBoxElementType.SignalSvDistant;
+                CycleSignalAspect(element);
+                RefreshElementVisual(element);
             }
 
-                    private void CycleSignalAspect(SignalBoxElement element)
+            SelectElement(element);
+            e.Handled = true;
+        };
+    }
+
+    protected static bool IsSignalType(SignalBoxElementType type)
+    {
+        return type is SignalBoxElementType.SignalMain
+            or SignalBoxElementType.SignalDistant
+            or SignalBoxElementType.SignalCombined
+            or SignalBoxElementType.SignalShunting
+            or SignalBoxElementType.SignalHvHp
+            or SignalBoxElementType.SignalHvVr
+            or SignalBoxElementType.SignalKsMain
+            or SignalBoxElementType.SignalKsDistant
+            or SignalBoxElementType.SignalKsCombined
+            or SignalBoxElementType.SignalSvMain
+            or SignalBoxElementType.SignalSvDistant;
+    }
+
+    /// <summary>
+    /// Creates a PathIcon for Ks signals based on type and aspect.
+    /// Represents authentic Ks-Signalsystem with triangle lamp layout.
+    /// </summary>
+    protected static PathIcon CreateKsSignalPathIcon(SignalBoxElementType type, SignalAspect? aspect = null)
+    {
+        string pathData = type switch
+        {
+            // Ks-Hauptsignal: Vertical mast + Red (top) + Green (bottom)
+            SignalBoxElementType.SignalKsMain => 
+                "M7,1 L9,1 L9,15 L7,15 Z " + // Mast
+                "M5,2 A2,2 0 1,1 9,2 A2,2 0 1,1 5,2 " + // Red top
+                "M5,12 A2,2 0 1,1 9,12 A2,2 0 1,1 5,12", // Green bottom
+
+            // Ks-Vorsignal: Horizontal lights (Green + Yellow)
+            SignalBoxElementType.SignalKsDistant =>
+                "M7,1 L9,1 L9,15 L7,15 Z " + // Mast
+                "M2,7 A2,2 0 1,1 6,7 A2,2 0 1,1 2,7 " + // Green left
+                "M10,7 A2,2 0 1,1 14,7 A2,2 0 1,1 10,7", // Yellow right
+
+            // Ks-Kombinationssignal: Triangle (Red top, Green left, Yellow right)
+            SignalBoxElementType.SignalKsCombined =>
+                "M7,1 L9,1 L9,15 L7,15 Z " + // Mast
+                "M6,2 A2,2 0 1,1 10,2 A2,2 0 1,1 6,2 " + // Red top
+                "M2,11 A2,2 0 1,1 6,11 A2,2 0 1,1 2,11 " + // Green bottom-left
+                "M10,11 A2,2 0 1,1 14,11 A2,2 0 1,1 10,11", // Yellow bottom-right
+
+            _ => "M7,1 L9,1 L9,15 L7,15 Z M5,7 A2,2 0 1,1 9,7 A2,2 0 1,1 5,7"
+        };
+
+        return new PathIcon
+        {
+            Data = (Microsoft.UI.Xaml.Media.Geometry)Microsoft.UI.Xaml.Markup.XamlBindingHelper.ConvertValue(
+                typeof(Microsoft.UI.Xaml.Media.Geometry), pathData),
+            Width = 16,
+            Height = 16
+        };
+    }
+
+    private static void CycleSignalAspect(SignalBoxElement element)
+    {
+        element.SignalAspect = element.Type switch
+        {
+            SignalBoxElementType.SignalMain or SignalBoxElementType.SignalHvHp => element.SignalAspect switch
             {
-                element.SignalAspect = element.Type switch
-                {
-                    SignalBoxElementType.SignalMain or SignalBoxElementType.SignalHvHp => element.SignalAspect switch
-                    {
-                        SignalAspect.Hp0 => SignalAspect.Hp1,
-                        SignalAspect.Hp1 => SignalAspect.Hp2,
-                        _ => SignalAspect.Hp0
-                    },
-                    SignalBoxElementType.SignalDistant or SignalBoxElementType.SignalHvVr => element.SignalAspect switch
-                    {
-                        SignalAspect.Vr0 => SignalAspect.Vr1,
-                        SignalAspect.Vr1 => SignalAspect.Vr2,
-                        _ => SignalAspect.Vr0
-                    },
+                SignalAspect.Hp0 => SignalAspect.Hp1,
+                SignalAspect.Hp1 => SignalAspect.Hp2,
+                _ => SignalAspect.Hp0
+            },
+            SignalBoxElementType.SignalDistant or SignalBoxElementType.SignalHvVr => element.SignalAspect switch
+            {
+                SignalAspect.Vr0 => SignalAspect.Vr1,
+                SignalAspect.Vr1 => SignalAspect.Vr2,
+                _ => SignalAspect.Vr0
+            },
             SignalBoxElementType.SignalCombined or SignalBoxElementType.SignalKsCombined => element.SignalAspect switch
             {
                 SignalAspect.Hp0 => SignalAspect.Ks1,
@@ -942,16 +877,23 @@ public abstract class SignalBoxPageBase : Page
 
     protected virtual void UpdatePropertiesPanel()
     {
-        while (PropertiesPanel.Children.Count > 1)
-            PropertiesPanel.Children.RemoveAt(1);
+        PropertiesPanel.Children.Clear();
+
+        PropertiesPanel.Children.Add(new TextBlock
+        {
+            Text = "EIGENSCHAFTEN",
+            Style = (Style)Application.Current.Resources["CaptionTextBlockStyle"],
+            Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
+            Margin = new Thickness(0, 0, 0, 12)
+        });
 
         if (SelectedElement == null)
         {
             PropertiesPanel.Children.Add(new TextBlock
             {
                 Text = "Kein Element ausgewaehlt",
-                FontSize = 12,
-                Foreground = new SolidColorBrush(Colors.TextMuted),
+                Style = (Style)Application.Current.Resources["BodyTextBlockStyle"],
+                Foreground = (Brush)Application.Current.Resources["TextFillColorTertiaryBrush"],
                 TextWrapping = TextWrapping.Wrap
             });
             return;
@@ -960,170 +902,91 @@ public abstract class SignalBoxPageBase : Page
         PropertiesPanel.Children.Add(new TextBlock
         {
             Text = GetElementTypeName(SelectedElement.Type),
-            FontSize = 14,
-            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-            Foreground = new SolidColorBrush(Colors.TextPrimary),
-            Margin = new Thickness(0, 0, 0, 8)
+            Style = (Style)Application.Current.Resources["SubtitleTextBlockStyle"],
+            Margin = new Thickness(0, 0, 0, 16)
         });
 
-        PropertiesPanel.Children.Add(new TextBlock
+        var infoCard = new Border
+        {
+            Background = (Brush)Application.Current.Resources["CardBackgroundFillColorDefaultBrush"],
+            CornerRadius = new CornerRadius(4),
+            Padding = new Thickness(12),
+            Margin = new Thickness(0, 0, 0, 12)
+        };
+
+        var infoPanel = new StackPanel { Spacing = 4 };
+        infoPanel.Children.Add(new TextBlock
         {
             Text = string.Format(CultureInfo.InvariantCulture, "Position: ({0}, {1})", SelectedElement.GridX, SelectedElement.GridY),
-            FontSize = 11,
-            Foreground = new SolidColorBrush(Colors.TextSecondary)
+            Style = (Style)Application.Current.Resources["BodyTextBlockStyle"]
         });
-
-        PropertiesPanel.Children.Add(new TextBlock
+        infoPanel.Children.Add(new TextBlock
         {
             Text = string.Format(CultureInfo.InvariantCulture, "Rotation: {0} Grad", SelectedElement.Rotation),
-            FontSize = 11,
-            Foreground = new SolidColorBrush(Colors.TextSecondary),
-            Margin = new Thickness(0, 0, 0, 12)
+            Style = (Style)Application.Current.Resources["BodyTextBlockStyle"]
         });
-
-        if (IsSignalType(SelectedElement.Type))
-        {
-            PropertiesPanel.Children.Add(CreateSignalAspectSelector());
-        }
+        infoCard.Child = infoPanel;
+        PropertiesPanel.Children.Add(infoCard);
 
         if (SelectedElement.Type is SignalBoxElementType.SwitchLeft or SignalBoxElementType.SwitchRight or SignalBoxElementType.SwitchDouble)
         {
-            PropertiesPanel.Children.Add(CreateSwitchPositionDisplay());
+            PropertiesPanel.Children.Add(CreateSwitchControls());
         }
 
         if (SelectedElement.Type == SignalBoxElementType.FeedbackPoint)
         {
-            PropertiesPanel.Children.Add(CreateFeedbackAddressInput());
+            PropertiesPanel.Children.Add(CreateFeedbackControls());
+        }
+
+        if (SelectedElement.Type == SignalBoxElementType.Label)
+        {
+            PropertiesPanel.Children.Add(CreateLabelControls());
         }
 
         var deleteBtn = new Button
         {
-            Content = "Loeschen",
+            Content = "Element loeschen",
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            Margin = new Thickness(0, 20, 0, 0),
-            Background = new SolidColorBrush(Color.FromArgb(255, 120, 40, 40))
+            Margin = new Thickness(0, 24, 0, 0)
         };
         deleteBtn.Click += (s, e) => DeleteSelectedElement();
         PropertiesPanel.Children.Add(deleteBtn);
     }
 
-    private StackPanel CreateSignalAspectSelector()
+    private StackPanel CreateSwitchControls()
     {
         var panel = new StackPanel { Spacing = 8 };
         panel.Children.Add(new TextBlock
         {
-            Text = "SIGNALBILD",
-            FontSize = 10,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
-            Foreground = new SolidColorBrush(Colors.Accent),
-            CharacterSpacing = 50
-        });
-
-        var aspects = SelectedElement!.Type switch
-        {
-            SignalBoxElementType.SignalMain => new[] {
-                ("Hp0 - Halt", SignalAspect.Hp0, Colors.SignalRed),
-                ("Hp1 - Fahrt", SignalAspect.Hp1, Colors.SignalGreen),
-                ("Hp2 - Langsam", SignalAspect.Hp2, Colors.SignalYellow)
-            },
-            SignalBoxElementType.SignalDistant => new[] {
-                ("Vr0 - Halt erwarten", SignalAspect.Vr0, Colors.SignalYellow),
-                ("Vr1 - Fahrt erwarten", SignalAspect.Vr1, Colors.SignalGreen),
-                ("Vr2 - Langsam", SignalAspect.Vr2, Colors.SignalYellow)
-            },
-            SignalBoxElementType.SignalCombined => new[] {
-                ("Hp0 - Halt", SignalAspect.Hp0, Colors.SignalRed),
-                ("Ks1 - Fahrt", SignalAspect.Ks1, Colors.SignalGreen),
-                ("Ks2 - Halt erwarten", SignalAspect.Ks2, Colors.SignalYellow)
-            },
-            _ => Array.Empty<(string, SignalAspect, Color)>()
-        };
-
-        foreach (var (name, aspect, color) in aspects)
-        {
-            var isSelected = SelectedElement.SignalAspect == aspect;
-            var btn = new Button
-            {
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                Padding = new Thickness(8, 6, 8, 6),
-                Background = new SolidColorBrush(isSelected ? Colors.ButtonHover : Colors.ButtonBackground),
-                BorderBrush = new SolidColorBrush(isSelected ? color : Colors.ButtonBorder),
-                BorderThickness = new Thickness(isSelected ? 2 : 1)
-            };
-
-            var content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-            content.Children.Add(new Ellipse { Width = 12, Height = 12, Fill = new SolidColorBrush(color) });
-            content.Children.Add(new TextBlock { Text = name, FontSize = 11, Foreground = new SolidColorBrush(Microsoft.UI.Colors.White) });
-            btn.Content = content;
-
-            var capturedAspect = aspect;
-            btn.Click += (s, e) =>
-            {
-                SelectedElement!.SignalAspect = capturedAspect;
-                RefreshElementVisual(SelectedElement);
-                UpdatePropertiesPanel();
-                LogMessage("SIGNAL", string.Format(CultureInfo.InvariantCulture, "Aspect: {0}", capturedAspect));
-            };
-
-            panel.Children.Add(btn);
-        }
-
-        return panel;
-    }
-
-    private StackPanel CreateSwitchPositionDisplay()
-    {
-        var panel = new StackPanel { Spacing = 8 };
-        panel.Children.Add(new TextBlock
-        {
-            Text = "WEICHENSTELLUNG",
-            FontSize = 10,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
-            Foreground = new SolidColorBrush(Colors.Accent),
-            CharacterSpacing = 50
-        });
-
-        var position = SelectedElement!.SwitchPosition == SwitchPosition.Straight ? "Grundstellung" : "Abzweig";
-        var color = SelectedElement.SwitchPosition == SwitchPosition.Straight ? Colors.SignalGreen : Colors.SignalYellow;
-
-        panel.Children.Add(new TextBlock
-        {
-            Text = position,
-            FontSize = 14,
-            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-            Foreground = new SolidColorBrush(color)
+            Text = "Weichenstellung",
+            Style = (Style)Application.Current.Resources["BodyStrongTextBlockStyle"]
         });
 
         var toggleBtn = new Button
         {
-            Content = "Umstellen",
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            Margin = new Thickness(0, 4, 0, 0)
+            Content = SelectedElement!.SwitchPosition == SwitchPosition.Straight ? "Grundstellung" : "Abzweig",
+            HorizontalAlignment = HorizontalAlignment.Stretch
         };
         toggleBtn.Click += (s, e) =>
         {
             SelectedElement!.SwitchPosition = SelectedElement.SwitchPosition == SwitchPosition.Straight
                 ? SwitchPosition.Diverging
                 : SwitchPosition.Straight;
+            toggleBtn.Content = SelectedElement.SwitchPosition == SwitchPosition.Straight ? "Grundstellung" : "Abzweig";
             RefreshElementVisual(SelectedElement);
-            UpdatePropertiesPanel();
-            LogMessage("SWITCH", string.Format(CultureInfo.InvariantCulture, "Position: {0}", SelectedElement.SwitchPosition));
         };
         panel.Children.Add(toggleBtn);
 
         return panel;
     }
 
-    private StackPanel CreateFeedbackAddressInput()
+    private StackPanel CreateFeedbackControls()
     {
         var panel = new StackPanel { Spacing = 8 };
         panel.Children.Add(new TextBlock
         {
-            Text = "RUECKMELDER-ADRESSE",
-            FontSize = 10,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
-            Foreground = new SolidColorBrush(Colors.Accent),
-            CharacterSpacing = 50
+            Text = "Rueckmelder-Adresse",
+            Style = (Style)Application.Current.Resources["BodyStrongTextBlockStyle"]
         });
 
         var input = new NumberBox
@@ -1131,8 +994,7 @@ public abstract class SignalBoxPageBase : Page
             Value = SelectedElement!.Address,
             Minimum = 1,
             Maximum = 2048,
-            SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact,
-            Header = "InPort"
+            SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact
         };
         input.ValueChanged += (s, e) =>
         {
@@ -1140,8 +1002,31 @@ public abstract class SignalBoxPageBase : Page
             {
                 SelectedElement!.Address = (int)e.NewValue;
                 RefreshElementVisual(SelectedElement);
-                LogMessage("FEEDBACK", string.Format(CultureInfo.InvariantCulture, "Address: {0}", SelectedElement.Address));
             }
+        };
+        panel.Children.Add(input);
+
+        return panel;
+    }
+
+    private StackPanel CreateLabelControls()
+    {
+        var panel = new StackPanel { Spacing = 8 };
+        panel.Children.Add(new TextBlock
+        {
+            Text = "Beschriftung",
+            Style = (Style)Application.Current.Resources["BodyStrongTextBlockStyle"]
+        });
+
+        var input = new TextBox
+        {
+            Text = SelectedElement!.Name,
+            PlaceholderText = "Text eingeben..."
+        };
+        input.TextChanged += (s, e) =>
+        {
+            SelectedElement!.Name = input.Text;
+            RefreshElementVisual(SelectedElement);
         };
         panel.Children.Add(input);
 
@@ -1159,7 +1044,6 @@ public abstract class SignalBoxPageBase : Page
         }
 
         Elements.Remove(SelectedElement);
-        LogMessage("DELETE", string.Format(CultureInfo.InvariantCulture, "Removed {0}", SelectedElement.Type));
         SelectElement(null);
     }
 
@@ -1173,11 +1057,15 @@ public abstract class SignalBoxPageBase : Page
         SignalBoxElementType.SwitchRight => "Weiche Rechts",
         SignalBoxElementType.SwitchDouble => "DKW",
         SignalBoxElementType.SwitchCrossing => "Kreuzung",
-        SignalBoxElementType.SignalMain => "Hauptsignal",
-        SignalBoxElementType.SignalDistant => "Vorsignal",
-        SignalBoxElementType.SignalCombined => "Ks-Signal",
+        SignalBoxElementType.SignalMain or SignalBoxElementType.SignalHvHp => "Hauptsignal (H/V)",
+        SignalBoxElementType.SignalDistant or SignalBoxElementType.SignalHvVr => "Vorsignal (H/V)",
+        SignalBoxElementType.SignalKsMain => "Ks-Hauptsignal",
+        SignalBoxElementType.SignalKsDistant => "Ks-Vorsignal",
+        SignalBoxElementType.SignalCombined or SignalBoxElementType.SignalKsCombined => "Ks-Mehrabschnitt",
+        SignalBoxElementType.SignalSvMain => "Sv-Hauptsignal",
+        SignalBoxElementType.SignalSvDistant => "Sv-Vorsignal",
         SignalBoxElementType.SignalShunting => "Rangiersignal",
-        SignalBoxElementType.SignalSpeed => "Zs3",
+        SignalBoxElementType.SignalSpeed => "Zs 3",
         SignalBoxElementType.Platform => "Bahnsteig",
         SignalBoxElementType.FeedbackPoint => "Rueckmelder",
         SignalBoxElementType.Label => "Beschriftung",
@@ -1186,42 +1074,40 @@ public abstract class SignalBoxPageBase : Page
 
     #endregion
 
-    #region Logging
-
-    protected static void LogMessage(string category, string message)
-    {
-        System.Diagnostics.Debug.WriteLine(string.Format(CultureInfo.InvariantCulture, "[{0:HH:mm:ss}] [{1}] {2}", DateTime.Now, category, message));
-    }
-
-    #endregion
-
     #region Helper Methods
 
-    protected static Color GetStateColor(SignalBoxElementState state, SignalBoxColorScheme colors) => state switch
+    protected static Color GetTrackStateColor(SignalBoxElementState state) => state switch
     {
-        SignalBoxElementState.Free => colors.TrackFree,
-        SignalBoxElementState.Occupied => colors.TrackOccupied,
-        SignalBoxElementState.RouteSet => colors.RouteSet,
-        SignalBoxElementState.RouteClearing => colors.RouteClearing,
-        SignalBoxElementState.Blocked => colors.Blocked,
-        _ => colors.TrackFree
+        SignalBoxElementState.Free => SignalColors.TrackFree,
+        SignalBoxElementState.Occupied => SignalColors.TrackOccupied,
+        SignalBoxElementState.RouteSet => SignalColors.RouteSet,
+        SignalBoxElementState.RouteClearing => SignalColors.SignalYellow,
+        SignalBoxElementState.Blocked => SignalColors.Blocked,
+        _ => SignalColors.TrackFree
     };
 
-    protected static Ellipse CreateLed(double x, double y, Color color, double size = 10)
+    protected static Line CreateTrackLine(double x1, double y1, double x2, double y2, Color color, double thickness = 4)
+    {
+        return new Line
+        {
+            X1 = x1,
+            Y1 = y1,
+            X2 = x2,
+            Y2 = y2,
+            Stroke = new SolidColorBrush(color),
+            StrokeThickness = thickness,
+            StrokeStartLineCap = PenLineCap.Flat,
+            StrokeEndLineCap = PenLineCap.Flat
+        };
+    }
+
+    protected static Ellipse CreateSignalLed(double x, double y, Color color, double size = 10)
     {
         var led = new Ellipse
         {
             Width = size,
             Height = size,
-            Fill = new RadialGradientBrush
-            {
-                GradientStops =
-                {
-                    new GradientStop { Color = Microsoft.UI.Colors.White, Offset = 0 },
-                    new GradientStop { Color = color, Offset = 0.3 },
-                    new GradientStop { Color = Color.FromArgb(200, color.R, color.G, color.B), Offset = 1 }
-                }
-            }
+            Fill = new SolidColorBrush(color)
         };
         Canvas.SetLeft(led, x);
         Canvas.SetTop(led, y);
@@ -1232,96 +1118,20 @@ public abstract class SignalBoxPageBase : Page
 }
 
 /// <summary>
-/// Theme options for the Signal Box display.
+/// Signal-specific colors that remain constant regardless of app theme.
+/// These represent real-world signal colors.
 /// </summary>
-public enum SignalBoxTheme
+public static class SignalColors
 {
-    Light,
-    Dark
-}
+    public static Color SignalRed { get; } = Color.FromArgb(255, 255, 0, 0);
+    public static Color SignalGreen { get; } = Color.FromArgb(255, 0, 200, 0);
+    public static Color SignalYellow { get; } = Color.FromArgb(255, 255, 200, 0);
+    public static Color SignalWhite { get; } = Color.FromArgb(255, 255, 255, 255);
 
-/// <summary>
-/// Color scheme for a signal box style.
-/// </summary>
-public record SignalBoxColorScheme
-{
-    public required Color Background { get; init; }
-    public required Color PanelBackground { get; init; }
-    public required Color MessagePanelBackground { get; init; }
-    public required Color Border { get; init; }
-    public required Color GridLine { get; init; }
-    public required Color Accent { get; init; }
-    public required Color ButtonBackground { get; init; }
-    public required Color ButtonHover { get; init; }
-    public required Color ButtonBorder { get; init; }
-    public required Color TrackFree { get; init; }
-    public required Color TrackOccupied { get; init; }
-    public required Color RouteSet { get; init; }
-    public required Color RouteClearing { get; init; }
-    public required Color Blocked { get; init; }
-    public required Color SignalRed { get; init; }
-    public required Color SignalGreen { get; init; }
-    public required Color SignalYellow { get; init; }
+    public static Color TrackFree { get; } = Color.FromArgb(255, 100, 100, 100);
+    public static Color TrackOccupied { get; } = Color.FromArgb(255, 255, 60, 60);
+    public static Color RouteSet { get; } = Color.FromArgb(255, 60, 200, 60);
+    public static Color Blocked { get; } = Color.FromArgb(255, 100, 150, 220);
 
-    public Color TextPrimary { get; init; } = Color.FromArgb(255, 255, 255, 255);
-    public Color TextSecondary { get; init; } = Color.FromArgb(180, 255, 255, 255);
-    public Color TextMuted { get; init; } = Color.FromArgb(120, 255, 255, 255);
-
-    /// <summary>Light theme (ILTIS-inspired).</summary>
-    public static SignalBoxColorScheme Light { get; } = new()
-    {
-        Background = Color.FromArgb(255, 235, 235, 235),
-        PanelBackground = Color.FromArgb(255, 245, 245, 245),
-        MessagePanelBackground = Color.FromArgb(255, 250, 250, 250),
-        Border = Color.FromArgb(255, 180, 180, 180),
-        GridLine = Color.FromArgb(40, 100, 100, 100),
-        Accent = Color.FromArgb(255, 236, 0, 0),
-        ButtonBackground = Color.FromArgb(255, 255, 255, 255),
-        ButtonHover = Color.FromArgb(255, 245, 245, 245),
-        ButtonBorder = Color.FromArgb(80, 150, 150, 150),
-        TrackFree = Color.FromArgb(255, 80, 80, 80),
-        TrackOccupied = Color.FromArgb(255, 220, 20, 20),
-        RouteSet = Color.FromArgb(255, 20, 180, 20),
-        RouteClearing = Color.FromArgb(255, 240, 200, 20),
-        Blocked = Color.FromArgb(255, 60, 120, 200),
-        SignalRed = Color.FromArgb(255, 220, 20, 20),
-        SignalGreen = Color.FromArgb(255, 20, 180, 20),
-        SignalYellow = Color.FromArgb(255, 240, 200, 20),
-        TextPrimary = Color.FromArgb(255, 40, 40, 40),
-        TextSecondary = Color.FromArgb(255, 80, 80, 80),
-        TextMuted = Color.FromArgb(180, 100, 100, 100)
-    };
-
-    /// <summary>Dark theme (Classic ESTW-inspired).</summary>
-    public static SignalBoxColorScheme Dark { get; } = new()
-    {
-        Background = Color.FromArgb(255, 0, 0, 0),
-        PanelBackground = Color.FromArgb(255, 15, 15, 15),
-        MessagePanelBackground = Color.FromArgb(255, 5, 5, 5),
-        Border = Color.FromArgb(255, 40, 40, 40),
-        GridLine = Color.FromArgb(15, 60, 60, 60),
-        Accent = Color.FromArgb(255, 255, 220, 0),
-        ButtonBackground = Color.FromArgb(255, 25, 25, 25),
-        ButtonHover = Color.FromArgb(255, 45, 45, 45),
-        ButtonBorder = Color.FromArgb(60, 80, 80, 80),
-        TrackFree = Color.FromArgb(255, 255, 220, 0),
-        TrackOccupied = Color.FromArgb(255, 255, 0, 0),
-        RouteSet = Color.FromArgb(255, 0, 255, 0),
-        RouteClearing = Color.FromArgb(255, 255, 255, 0),
-        Blocked = Color.FromArgb(255, 0, 150, 255),
-        SignalRed = Color.FromArgb(255, 255, 0, 0),
-        SignalGreen = Color.FromArgb(255, 0, 255, 0),
-        SignalYellow = Color.FromArgb(255, 255, 255, 0),
-        TextPrimary = Color.FromArgb(255, 255, 255, 255),
-        TextSecondary = Color.FromArgb(180, 255, 255, 255),
-        TextMuted = Color.FromArgb(120, 255, 255, 255)
-    };
-
-    /// <summary>Gets the color scheme for the specified theme.</summary>
-    public static SignalBoxColorScheme GetTheme(SignalBoxTheme theme) => theme switch
-    {
-        SignalBoxTheme.Light => Light,
-        SignalBoxTheme.Dark => Dark,
-        _ => Dark
-    };
+    public static Color LedOff { get; } = Color.FromArgb(40, 80, 80, 80);
 }

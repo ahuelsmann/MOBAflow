@@ -8,10 +8,10 @@ using Microsoft.UI.Xaml.Media;
 
 using Windows.UI;
 
-namespace Moba.Plugin.Erp;
+namespace Moba.Plugin.Cmd;
 
 /// <summary>
-/// MOBAerp Transaction Page - ERP-style navigation interface.
+/// MOBAcmd Transaction Page - Command-style navigation interface.
 /// Provides transaction codes for quick navigation to MOBAflow pages.
 /// 
 /// CRITICAL WinUI 3 Plugin Architecture:
@@ -19,18 +19,18 @@ namespace Moba.Plugin.Erp;
 /// - WinUI cannot resolve Page types from dynamically loaded assemblies
 /// - Instead, return a UIElement via CreateContent()
 /// </summary>
-public sealed class ErpTransactionContentProvider
+public sealed class CmdTransactionContentProvider
 {
-    // MOBAerp Corporate Colors (inspired by enterprise systems)
-    private static readonly Color ErpBlue = Color.FromArgb(255, 0, 102, 179);       // #0066B3 - Corporate Blue
-    private static readonly Color ErpGold = Color.FromArgb(255, 255, 193, 7);       // #FFC107 - Accent Gold
-    private static readonly Color ErpDarkBlue = Color.FromArgb(255, 0, 51, 102);    // #003366 - Dark Blue
-    private static readonly Color ErpLightGray = Color.FromArgb(255, 240, 240, 240); // #F0F0F0 - Light Gray
-    private static readonly Color ErpGreen = Color.FromArgb(255, 40, 167, 69);      // #28A745 - Success Green
+    // MOBAcmd Corporate Colors (inspired by command-line interfaces)
+    private static readonly Color CmdBlue = Color.FromArgb(255, 0, 102, 179);       // #0066B3 - Corporate Blue
+    private static readonly Color CmdGold = Color.FromArgb(255, 255, 193, 7);       // #FFC107 - Accent Gold
+    private static readonly Color CmdDarkBlue = Color.FromArgb(255, 0, 51, 102);    // #003366 - Dark Blue
+    private static readonly Color CmdLightGray = Color.FromArgb(255, 240, 240, 240); // #F0F0F0 - Light Gray
+    private static readonly Color CmdGreen = Color.FromArgb(255, 40, 167, 69);      // #28A745 - Success Green
 
-    private readonly ErpPluginViewModel _viewModel;
+    private readonly CmdPluginViewModel _viewModel;
 
-    public ErpTransactionContentProvider(ErpPluginViewModel viewModel)
+    public CmdTransactionContentProvider(CmdPluginViewModel viewModel)
     {
         _viewModel = viewModel;
     }
@@ -63,17 +63,17 @@ public sealed class ErpTransactionContentProvider
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-        // Left: ERP Menu TreeView
+        // Left: CMD Menu TreeView
         var leftPanel = new Grid();
         leftPanel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         leftPanel.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
 
         var menuTitle = new TextBlock
         {
-            Text = "MOBAerp Easy Access",
+            Text = "MOBAcmd Easy Access",
             FontSize = 18,
             FontWeight = FontWeights.SemiBold,
-            Foreground = new SolidColorBrush(ErpBlue),
+            Foreground = new SolidColorBrush(CmdBlue),
             Margin = new Thickness(0, 0, 0, 16)
         };
         Grid.SetRow(menuTitle, 0);
@@ -107,14 +107,14 @@ public sealed class ErpTransactionContentProvider
     private TreeView BuildTreeView()
     {
         var treeView = new TreeView { SelectionMode = TreeViewSelectionMode.Single };
-        treeView.ItemInvoked += ErpMenuTreeView_ItemInvoked;
+        treeView.ItemInvoked += CmdMenuTreeView_ItemInvoked;
 
         var rootNode = new TreeViewNode { Content = "Favorites", IsExpanded = true };
         rootNode.Children.Add(new TreeViewNode { Content = "TC - Train Control" });
         rootNode.Children.Add(new TreeViewNode { Content = "JR - Journeys" });
         treeView.RootNodes.Add(rootNode);
 
-        var mobaMenuNode = new TreeViewNode { Content = "MOBAerp Menu", IsExpanded = true };
+        var mobaMenuNode = new TreeViewNode { Content = "MOBAcmd Menu", IsExpanded = true };
 
         var operationsNode = new TreeViewNode { Content = "Train Operations", IsExpanded = true };
         operationsNode.Children.Add(CreateMenuNode("TC", "Train Control"));
@@ -170,14 +170,14 @@ public sealed class ErpTransactionContentProvider
         var titlePanel = new StackPanel { Margin = new Thickness(0, 0, 0, 16) };
         titlePanel.Children.Add(new TextBlock
         {
-            Text = "MOBAerp Easy Access",
+            Text = "MOBAcmd Easy Access",
             FontSize = 24,
             FontWeight = FontWeights.SemiBold,
-            Foreground = new SolidColorBrush(ErpBlue)
+            Foreground = new SolidColorBrush(CmdBlue)
         });
         titlePanel.Children.Add(new TextBlock
         {
-            Text = "Model Railway ERP-Style Navigation Interface",
+            Text = "Model Railway Command-Style Navigation Interface",
             Opacity = 0.7
         });
         Grid.SetRow(titlePanel, 0);
@@ -190,6 +190,10 @@ public sealed class ErpTransactionContentProvider
         // Transaction Codes Card
         var tcodeCard = CreateTransactionCodesCard();
         contentPanel.Children.Add(tcodeCard);
+
+        // Keyboard Shortcuts Card
+        var shortcutsCard = CreateKeyboardShortcutsCard();
+        contentPanel.Children.Add(shortcutsCard);
 
         scrollViewer.Content = contentPanel;
         Grid.SetRow(scrollViewer, 1);
@@ -243,7 +247,7 @@ public sealed class ErpTransactionContentProvider
                 Text = codes[i].Code,
                 FontFamily = new FontFamily("Consolas"),
                 FontWeight = FontWeights.Bold,
-                Foreground = new SolidColorBrush(ErpBlue)
+                Foreground = new SolidColorBrush(CmdBlue)
             };
             Grid.SetRow(code1, row);
             Grid.SetColumn(code1, 0);
@@ -262,7 +266,7 @@ public sealed class ErpTransactionContentProvider
                     Text = codes[i + 1].Code,
                     FontFamily = new FontFamily("Consolas"),
                     FontWeight = FontWeights.Bold,
-                    Foreground = new SolidColorBrush(ErpBlue)
+                    Foreground = new SolidColorBrush(CmdBlue)
                 };
                 Grid.SetRow(code2, row);
                 Grid.SetColumn(code2, 2);
@@ -282,6 +286,126 @@ public sealed class ErpTransactionContentProvider
         return card;
     }
 
+    private static Border CreateKeyboardShortcutsCard()
+    {
+        var card = new Border
+        {
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(24),
+            Background = new SolidColorBrush(Color.FromArgb(20, 0, 0, 0))
+        };
+
+        var panel = new StackPanel { Spacing = 16 };
+
+        panel.Children.Add(new TextBlock
+        {
+            Text = "Keyboard Shortcuts",
+            FontSize = 18,
+            FontWeight = FontWeights.SemiBold
+        });
+
+        panel.Children.Add(new TextBlock
+        {
+            Text = "Global keyboard shortcuts for quick access to common functions:",
+            Opacity = 0.7,
+            Margin = new Thickness(0, 0, 0, 8)
+        });
+
+        // Shortcuts Grid
+        var shortcutGrid = new Grid { ColumnSpacing = 24, RowSpacing = 8 };
+        shortcutGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        shortcutGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        shortcutGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        shortcutGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+        var shortcuts = new[]
+        {
+            (Key: "F5", Description: "Connect to Z21"),
+            (Key: "Space", Description: "Toggle Track Power"),
+            (Key: "R", Description: "Reset Journey"),
+            (Key: "Ctrl+N", Description: "New Solution"),
+            (Key: "Ctrl+O", Description: "Open Solution"),
+            (Key: "Ctrl+S", Description: "Save Solution"),
+            (Key: "Enter", Description: "Execute Transaction Code"),
+            (Key: "Esc", Description: "Clear Transaction Code")
+        };
+
+        int row = 0;
+        for (int i = 0; i < shortcuts.Length; i += 2)
+        {
+            shortcutGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            // First column
+            var key1 = new Border
+            {
+                Background = new SolidColorBrush(CmdBlue),
+                CornerRadius = new CornerRadius(4),
+                Padding = new Thickness(8, 4, 8, 4),
+                HorizontalAlignment = HorizontalAlignment.Left
+            };
+            var keyText1 = new TextBlock
+            {
+                Text = shortcuts[i].Key,
+                FontFamily = new FontFamily("Consolas"),
+                FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(Colors.White)
+            };
+            key1.Child = keyText1;
+            Grid.SetRow(key1, row);
+            Grid.SetColumn(key1, 0);
+            shortcutGrid.Children.Add(key1);
+
+            var desc1 = new TextBlock
+            {
+                Text = shortcuts[i].Description,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextWrapping = TextWrapping.Wrap
+            };
+            Grid.SetRow(desc1, row);
+            Grid.SetColumn(desc1, 1);
+            shortcutGrid.Children.Add(desc1);
+
+            // Second column (if exists)
+            if (i + 1 < shortcuts.Length)
+            {
+                var key2 = new Border
+                {
+                    Background = new SolidColorBrush(CmdBlue),
+                    CornerRadius = new CornerRadius(4),
+                    Padding = new Thickness(8, 4, 8, 4),
+                    HorizontalAlignment = HorizontalAlignment.Left
+                };
+                var keyText2 = new TextBlock
+                {
+                    Text = shortcuts[i + 1].Key,
+                    FontFamily = new FontFamily("Consolas"),
+                    FontWeight = FontWeights.Bold,
+                    Foreground = new SolidColorBrush(Colors.White)
+                };
+                key2.Child = keyText2;
+                Grid.SetRow(key2, row);
+                Grid.SetColumn(key2, 2);
+                shortcutGrid.Children.Add(key2);
+
+                var desc2 = new TextBlock
+                {
+                    Text = shortcuts[i + 1].Description,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    TextWrapping = TextWrapping.Wrap
+                };
+                Grid.SetRow(desc2, row);
+                Grid.SetColumn(desc2, 3);
+                shortcutGrid.Children.Add(desc2);
+            }
+
+            row++;
+        }
+
+        panel.Children.Add(shortcutGrid);
+        card.Child = panel;
+        return card;
+    }
+
     private void CommandHistoryListView_ItemClick(object sender, ItemClickEventArgs e)
     {
         _ = sender;
@@ -291,7 +415,7 @@ public sealed class ErpTransactionContentProvider
         }
     }
 
-    private void ErpMenuTreeView_ItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args)
+    private void CmdMenuTreeView_ItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args)
     {
         _ = sender;
         if (args.InvokedItem is TreeViewNode node)
@@ -325,7 +449,7 @@ public sealed partial class CountToVisibilityConverter : Microsoft.UI.Xaml.Data.
 }
 
 /// <summary>
-/// Represents a command history entry for MOBAerp.
+/// Represents a command history entry for MOBAcmd.
 /// </summary>
 public sealed class CommandHistoryItem
 {

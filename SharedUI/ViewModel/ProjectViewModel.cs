@@ -4,6 +4,7 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Domain;
 using Interface;
+using Moba.Sound;
 using System.Collections.ObjectModel;
 
 /// <summary>
@@ -19,6 +20,7 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
     // Optional Services
     private readonly IUiDispatcher? _dispatcher;
     private readonly IIoService? _ioService;
+    private readonly ISoundPlayer? _soundPlayer;
 
     // Properties (ObservableProperty fields)
     [ObservableProperty]
@@ -78,11 +80,12 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
     /// </summary>
     public ObservableCollection<GoodsWagonViewModel> GoodsWagons { get; } = [];
 
-    public ProjectViewModel(Project model, IUiDispatcher? dispatcher = null, IIoService? ioService = null)
+    public ProjectViewModel(Project model, IUiDispatcher? dispatcher = null, IIoService? ioService = null, ISoundPlayer? soundPlayer = null)
     {
         Model = model;
         _dispatcher = dispatcher;
         _ioService = ioService;
+        _soundPlayer = soundPlayer;
         _name = model.Name;  // Initialize from Model
         Refresh();
 
@@ -118,7 +121,7 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
 
         Workflows.Clear();
         foreach (var w in Model.Workflows)
-            Workflows.Add(new WorkflowViewModel(w, ioService: _ioService));
+            Workflows.Add(new WorkflowViewModel(w, ioService: _ioService, soundPlayer: _soundPlayer));
 
         Trains.Clear();
         foreach (var t in Model.Trains)

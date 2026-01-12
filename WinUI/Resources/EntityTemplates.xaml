@@ -533,6 +533,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBox
                             Grid.Column="0"
@@ -540,6 +541,15 @@
                             Text="{Binding FilePath, Mode=TwoWay}" />
                         <Button
                             Grid.Column="1"
+                            Command="{Binding PlayAudioCommand}"
+                            ToolTipService.ToolTip="Preview audio file">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon FontSize="14" Glyph="&#xE768;" />
+                                <TextBlock Text="Play" />
+                            </StackPanel>
+                        </Button>
+                        <Button
+                            Grid.Column="2"
                             Command="{Binding BrowseForFileCommand}"
                             Content="Browse..."
                             ToolTipService.ToolTip="Select an audio file" />

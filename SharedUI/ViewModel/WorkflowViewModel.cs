@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using Domain;
 using Domain.Enum;
 using Interface;
+using Moba.Sound;
 using Service;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -19,12 +20,14 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
 
     // Optional Services - Reserved for future use
     private readonly IIoService? _ioService;
+    private readonly ISoundPlayer? _soundPlayer;
     #endregion
 
-    public WorkflowViewModel(Workflow model, IIoService? ioService = null)
+    public WorkflowViewModel(Workflow model, IIoService? ioService = null, ISoundPlayer? soundPlayer = null)
     {
         _model = model;
         _ioService = ioService;
+        _soundPlayer = soundPlayer;
 
         // Sort actions by Number before creating ViewModels to preserve correct order
         Actions = new ObservableCollection<object>(
@@ -210,7 +213,7 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
         return action.Type switch
         {
             ActionType.Announcement => new AnnouncementViewModel(action),
-            ActionType.Audio => new AudioViewModel(action, _ioService ?? new NullIoService()),
+            ActionType.Audio => new AudioViewModel(action, _ioService ?? new NullIoService(), _soundPlayer),
             ActionType.Command => new CommandViewModel(action),
             _ => throw new NotSupportedException($"Action-Typ {action.Type} wird nicht unterstützt")
         };

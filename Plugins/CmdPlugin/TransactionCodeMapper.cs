@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.Plugin.Erp;
+namespace Moba.Plugin.Cmd;
 
 /// <summary>
-/// Maps MOBAerp transaction codes to navigation tags.
-/// Transaction codes follow ERP-style conventions (e.g., TC, JR, WF).
+/// Maps MOBAcmd transaction codes to navigation tags.
+/// Transaction codes follow command-style conventions (e.g., TC, JR, WF).
 /// Only simple codes are supported - no numeric suffixes.
 /// </summary>
 public static class TransactionCodeMapper
@@ -36,8 +36,8 @@ public static class TransactionCodeMapper
         // Info
         { "INFO", "info" },
 
-        // ERP
-        { "ERP", "erp" },
+        // CMD
+        { "CMD", "cmd" },
 
         // Statistics
         { "STAT", "statistics" },
@@ -81,7 +81,7 @@ public static class TransactionCodeMapper
             ("HELP", "Help - Documentation"),
             ("INFO", "Info - About MOBAflow"),
             ("STAT", "Statistics - Project statistics"),
-            ("ERP", "ERP - Transaction navigation (this page)"),
+            ("CMD", "CMD - Command navigation (this page)"),
         ];
     }
 }

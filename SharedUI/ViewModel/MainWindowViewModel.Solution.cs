@@ -33,7 +33,7 @@ public partial class MainWindowViewModel
             value.Projects.Add(new Project { Name = "(Untitled Project)" });
         }
 
-        SolutionViewModel = new SolutionViewModel(value, _uiDispatcher, _ioService);
+        SolutionViewModel = new SolutionViewModel(value, _uiDispatcher, _ioService, _executionContext.SoundPlayer);
         HasSolution = value.Projects.Count > 0;
 
         // Auto-select first project if no project is selected

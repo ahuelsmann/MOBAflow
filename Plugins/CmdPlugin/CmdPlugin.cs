@@ -4,41 +4,41 @@ using Microsoft.Extensions.DependencyInjection;
 
 using Moba.Common.Plugins;
 
-namespace Moba.Plugin.Erp;
+namespace Moba.Plugin.Cmd;
 
 /// <summary>
-/// ERP Plugin demonstrating MOBAerp system - a transaction-based navigation interface.
-/// Shows how to create a plugin with ERP-style transaction codes for quick navigation.
+/// Command Plugin demonstrating MOBAcmd system - a command-based navigation interface.
+/// Shows how to create a plugin with command-style transaction codes for quick navigation.
 /// 
 /// CRITICAL: Plugins must use ContentProvider pattern, NOT Page inheritance!
 /// WinUI cannot resolve Page types from dynamically loaded assemblies.
 /// </summary>
-public sealed class ErpPlugin : PluginBase
+public sealed class CmdPlugin : PluginBase
 {
-    public override string Name => "MOBAerp System";
+    public override string Name => "MOBAcmd System";
 
     public override PluginMetadata Metadata => new(
         Name,
         Version: "1.0.0",
         Author: "Andreas Huelsmann",
-        Description: "ERP-style transaction navigation with alphanumeric codes for quick access to MOBAflow pages.",
+        Description: "Command-style transaction navigation with alphanumeric codes for quick access to MOBAflow pages.",
         MinimumHostVersion: "3.15"
     );
 
     public override IEnumerable<PluginPageDescriptor> GetPages()
     {
         yield return new PluginPageDescriptor(
-            Tag: "erp",
-            Title: "MOBAerp",
+            Tag: "cmd",
+            Title: "MOBAcmd",
             IconGlyph: "\uE756",  // Keyboard icon
-            PageType: typeof(ErpTransactionContentProvider)
+            PageType: typeof(CmdTransactionContentProvider)
         );
     }
 
     public override void ConfigureServices(IServiceCollection services)
     {
-        services.AddTransient<ErpPluginViewModel>();
-        services.AddTransient<ErpTransactionContentProvider>();
+        services.AddTransient<CmdPluginViewModel>();
+        services.AddTransient<CmdTransactionContentProvider>();
     }
 
     public override async Task OnInitializedAsync()

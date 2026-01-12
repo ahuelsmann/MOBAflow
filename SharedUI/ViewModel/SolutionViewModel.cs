@@ -4,6 +4,7 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Domain;
 using Interface;
+using Moba.Sound;
 using System.Collections.ObjectModel;
 
 /// <summary>
@@ -20,6 +21,7 @@ public partial class SolutionViewModel : ObservableObject, IViewModelWrapper<Sol
     // Optional Services
     private readonly IUiDispatcher? _dispatcher;
     private readonly IIoService? _ioService;
+    private readonly ISoundPlayer? _soundPlayer;
     
     // Properties
     [ObservableProperty]
@@ -33,11 +35,12 @@ public partial class SolutionViewModel : ObservableObject, IViewModelWrapper<Sol
     /// </summary>
     public ObservableCollection<ProjectViewModel> Projects { get; } = [];
 
-    public SolutionViewModel(Solution model, IUiDispatcher? dispatcher = null, IIoService? ioService = null)
+    public SolutionViewModel(Solution model, IUiDispatcher? dispatcher = null, IIoService? ioService = null, ISoundPlayer? soundPlayer = null)
     {
         Model = model;
         _dispatcher = dispatcher;
         _ioService = ioService;
+        _soundPlayer = soundPlayer;
         Refresh();
     }
 
@@ -53,7 +56,7 @@ public partial class SolutionViewModel : ObservableObject, IViewModelWrapper<Sol
         Projects.Clear();
         foreach (var project in Model.Projects)
         {
-            Projects.Add(new ProjectViewModel(project, _dispatcher, _ioService));
+            Projects.Add(new ProjectViewModel(project, _dispatcher, _ioService, _soundPlayer));
         }
     }
 }

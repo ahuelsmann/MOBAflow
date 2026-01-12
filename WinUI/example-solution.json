@@ -136,7 +136,7 @@
             },
             {
               "id": "131d050b-a36c-4fb1-8f1b-370869537c5a",
-              "name": "New Audio",
+              "name": "Gong",
               "number": 2,
               "type": 2,
               "delayAfterMs": 0,
@@ -200,15 +200,9 @@
           "firstPos": 0
         }
       ],
-      "trackLayout": {
-        "name": "Simple Oval Layout",
-        "trackSystem": "Piko A-Gleis",
-        "segments": [],
-        "connections": []
-      },
       "signalBoxPlan": {
-        "id": "339a730c-41c4-4e1e-a3e1-16e6d01545d0",
-        "name": "ILTIS Stellwerk",
+        "id": "3b46aec1-2a20-4596-9595-1b9f61deb49b",
+        "name": "MOBAesb",
         "gridWidth": 24,
         "gridHeight": 14,
         "cellSize": 60,

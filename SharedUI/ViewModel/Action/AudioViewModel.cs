@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using Domain;
 using Domain.Enum;
 using Interface;
+using Moba.Sound;
 
 /// <summary>
 /// ViewModel for Audio playback actions.
@@ -16,11 +17,13 @@ public partial class AudioViewModel : WorkflowActionViewModel
 {
     #region Fields
     private readonly IIoService _ioService;
+    private readonly ISoundPlayer? _soundPlayer;
     #endregion
 
-    public AudioViewModel(WorkflowAction action, IIoService ioService) : base(action, ActionType.Audio) 
+    public AudioViewModel(WorkflowAction action, IIoService ioService, ISoundPlayer? soundPlayer = null) : base(action, ActionType.Audio) 
     {
         _ioService = ioService;
+        _soundPlayer = soundPlayer;
     }
 
     /// <summary>
@@ -44,6 +47,20 @@ public partial class AudioViewModel : WorkflowActionViewModel
             FilePath = path;
         }
     }
+
+    /// <summary>
+    /// Command to preview/play the audio file.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanPlayAudio))]
+    private async Task PlayAudioAsync()
+    {
+        if (_soundPlayer != null && !string.IsNullOrWhiteSpace(FilePath))
+        {
+            await _soundPlayer.PlayAsync(FilePath);
+        }
+    }
+
+    private bool CanPlayAudio() => _soundPlayer != null && !string.IsNullOrWhiteSpace(FilePath) && File.Exists(FilePath);
 
     public override string ToString() => !string.IsNullOrEmpty(Name) ? $"{Name} (Audio)" : $"Audio: {Path.GetFileName(FilePath)}";
 }

@@ -261,7 +261,7 @@ public partial class App
 
         // SignalBoxPage as Singleton to ensure SolutionSaving subscription persists
         services.AddSingleton<SignalBoxPage>();
-        navigationRegistry.Register("signalbox", "MOBAixl", "\uE806", typeof(SignalBoxPage), "Shell");
+        navigationRegistry.Register("signalbox", "MOBAesb", "\uE806", typeof(SignalBoxPage), "Shell");
 
         // MainWindow (Singleton = one instance for app lifetime)
         services.AddSingleton<MainWindow>();

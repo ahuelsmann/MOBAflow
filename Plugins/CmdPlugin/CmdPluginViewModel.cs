@@ -7,13 +7,13 @@ using Moba.SharedUI.ViewModel;
 
 using System.Collections.ObjectModel;
 
-namespace Moba.Plugin.Erp;
+namespace Moba.Plugin.Cmd;
 
 /// <summary>
-/// ViewModel for the MOBAerp Transaction Page.
-/// Provides transaction-based navigation with command history and status tracking.
+/// ViewModel for the MOBAcmd Transaction Page.
+/// Provides command-based navigation with command history and status tracking.
 /// </summary>
-public sealed partial class ErpPluginViewModel : ObservableObject
+public sealed partial class CmdPluginViewModel : ObservableObject
 {
     private readonly MainWindowViewModel _mainViewModel;
 
@@ -21,13 +21,13 @@ public sealed partial class ErpPluginViewModel : ObservableObject
     private string _transactionCode = string.Empty;
 
     [ObservableProperty]
-    private string _statusMessage = "MOBAerp System Ready";
+    private string _statusMessage = "MOBAcmd System Ready";
 
     public ObservableCollection<CommandHistoryItem> CommandHistory { get; } = [];
 
     public bool IsZ21Connected => _mainViewModel.IsConnected;
 
-    public ErpPluginViewModel(MainWindowViewModel mainViewModel)
+    public CmdPluginViewModel(MainWindowViewModel mainViewModel)
     {
         _mainViewModel = mainViewModel;
     }

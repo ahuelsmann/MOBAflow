@@ -1,6 +1,6 @@
 <Solution>
   <Folder Name="/Plugins/">
-    <Project Path="Plugins/ErpPlugin/ErpPlugin.csproj" />
+    <Project Path="Plugins/CmdPlugin/CmdPlugin.csproj" />
     <Project Path="Plugins/StatisticsPlugin/StatisticsPlugin.csproj" />
   </Folder>
   <Folder Name="/Solution Items/">
@@ -50,6 +50,7 @@
     <File Path="docs/copilot/MAUI-BACKGROUND-SERVICE-CONCEPT.md" />
     <File Path="docs/copilot/ICON-UPDATE-GUIDE.md" />
   </Folder>
+  <Folder Name="/TrackLibrary/" />
   <Project Path="Backend/Backend.csproj">
     <Deploy />
   </Project>

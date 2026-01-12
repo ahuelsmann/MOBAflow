@@ -40,7 +40,7 @@ public class Project
     public TopologyGraph? TrackPlan { get; set; }
 
     /// <summary>
-    /// Signal box plan for this project (MOBAixl - Interlocking System).
+    /// Signal box plan for this project (MOBAesb - Electronic Signal Box).
     /// Topological representation with signals, switches, and routes.
     /// </summary>
     public SignalBoxPlan? SignalBoxPlan { get; set; }
