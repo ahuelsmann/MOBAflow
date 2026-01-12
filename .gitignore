@@ -55,3 +55,9 @@ PublishProfiles/
 # Environment variables
 .env
 *.env.local
+
+# Copilot temporary files
+Copilot-Processing.md
+
+# ReSharper user settings (personal preferences)
+*.sln.DotSettings.user

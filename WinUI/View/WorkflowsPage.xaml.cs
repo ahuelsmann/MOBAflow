@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
 using Microsoft.UI.Xaml;
@@ -54,39 +54,26 @@ public sealed partial class WorkflowsPage
         }
     }
 
-    private void ActionListView_Drop(object sender, DragEventArgs e)
-    {
-        _ = e;
-        if (ViewModel.SelectedWorkflow == null) return;
-
-        // ListView CanReorderItems="True" handles reordering automatically
-        // We just need to update the Number property to reflect the new order
-        UpdateActionNumbers();
-    }
-
-    private void ActionListView_KeyDown(object sender, KeyRoutedEventArgs e)
-    {
-        if (e.Key == VirtualKey.Delete && ViewModel.DeleteActionCommand.CanExecute(null))
+        private void ActionListView_Drop(object sender, DragEventArgs e)
         {
-            ViewModel.DeleteActionCommand.Execute(null);
-            e.Handled = true;
+            _ = e;
+            if (ViewModel.SelectedWorkflow == null) return;
+
+            // ListView CanReorderItems="True" handles reordering automatically
+            // We just need to update the Number property to reflect the new order
+            ViewModel.SelectedWorkflow.UpdateActionNumbers();
+
+            // Mark solution as unsaved after reordering actions
+            ViewModel.HasUnsavedChanges = true;
         }
-    }
 
-    private void UpdateActionNumbers()
-    {
-        if (ViewModel.SelectedWorkflow == null) return;
-
-        for (int i = 0; i < ViewModel.SelectedWorkflow.Actions.Count; i++)
+        private void ActionListView_KeyDown(object sender, KeyRoutedEventArgs e)
         {
-            if (ViewModel.SelectedWorkflow.Actions[i] is WorkflowActionViewModel actionVM)
+            if (e.Key == VirtualKey.Delete && ViewModel.DeleteActionCommand.CanExecute(null))
             {
-                actionVM.Number = (uint)(i + 1);
+                ViewModel.DeleteActionCommand.Execute(null);
+                e.Handled = true;
             }
         }
-
-        // Mark solution as unsaved after reordering actions
-        ViewModel.HasUnsavedChanges = true;
+        #endregion
     }
-    #endregion
-}

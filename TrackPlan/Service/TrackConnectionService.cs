@@ -173,19 +173,107 @@ public class TrackConnectionService
         if (!edge.Connections.TryGetValue(portId, out var endpoint))
             return null;
 
-        // Find another edge that shares this node
-        foreach (var otherEdge in _graph.Edges.Where(e => e.Id != edgeId))
-        {
-            foreach (var kvp in otherEdge.Connections)
-            {
-                if (kvp.Value.NodeId == endpoint.NodeId)
+                // Find another edge that shares this node
+                foreach (var otherEdge in _graph.Edges.Where(e => e.Id != edgeId))
                 {
-                    return (otherEdge.Id, kvp.Key);
+                    foreach (var kvp in otherEdge.Connections)
+                    {
+                        if (kvp.Value.NodeId == endpoint.NodeId)
+                        {
+                            return (otherEdge.Id, kvp.Key);
+                        }
+                    }
                 }
+
+                return null;
+            }
+
+            /// <summary>
+            /// Gets all edges that are transitively connected to the given edge.
+            /// Returns a set of edge IDs including the starting edge.
+            /// </summary>
+            public HashSet<Guid> GetConnectedGroup(Guid startEdgeId)
+            {
+                var result = new HashSet<Guid>();
+                var queue = new Queue<Guid>();
+
+                queue.Enqueue(startEdgeId);
+
+                while (queue.Count > 0)
+                {
+                    var currentId = queue.Dequeue();
+                    if (!result.Add(currentId))
+                        continue;
+
+                    var edge = _graph.Edges.FirstOrDefault(e => e.Id == currentId);
+                    if (edge is null)
+                        continue;
+
+                    foreach (var portId in edge.Connections.Keys)
+                    {
+                        var connected = GetConnectedPort(currentId, portId);
+                        if (connected.HasValue && !result.Contains(connected.Value.EdgeId))
+                        {
+                            queue.Enqueue(connected.Value.EdgeId);
+                        }
+                    }
+                }
+
+                return result;
+            }
+
+            /// <summary>
+            /// Finds the shortest path between two edges using BFS.
+            /// Returns list of edge IDs from start to end (inclusive).
+            /// </summary>
+            public List<Guid> FindShortestPath(Guid fromEdgeId, Guid toEdgeId)
+            {
+                if (fromEdgeId == toEdgeId)
+                    return [fromEdgeId];
+
+                var visited = new HashSet<Guid>();
+                var parent = new Dictionary<Guid, Guid>();
+                var queue = new Queue<Guid>();
+
+                queue.Enqueue(fromEdgeId);
+                visited.Add(fromEdgeId);
+
+                while (queue.Count > 0)
+                {
+                    var currentId = queue.Dequeue();
+
+                    if (currentId == toEdgeId)
+                    {
+                        // Reconstruct path
+                        var path = new List<Guid>();
+                        var current = toEdgeId;
+                        while (current != fromEdgeId)
+                        {
+                            path.Add(current);
+                            current = parent[current];
+                        }
+                        path.Add(fromEdgeId);
+                        path.Reverse();
+                        return path;
+                    }
+
+                    var edge = _graph.Edges.FirstOrDefault(e => e.Id == currentId);
+                    if (edge is null)
+                        continue;
+
+                    foreach (var portId in edge.Connections.Keys)
+                    {
+                        var connected = GetConnectedPort(currentId, portId);
+                        if (connected.HasValue && !visited.Contains(connected.Value.EdgeId))
+                        {
+                            visited.Add(connected.Value.EdgeId);
+                            parent[connected.Value.EdgeId] = currentId;
+                            queue.Enqueue(connected.Value.EdgeId);
+                        }
+                    }
+                }
+
+                return []; // No path found
             }
         }
-
-        return null;
-    }
-}
 

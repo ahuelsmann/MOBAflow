@@ -1,0 +1,592 @@
+<Page
+    x:Class="Moba.WinUI.View.TrackPlanEditorPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!--  Toolbar  -->
+        <CommandBar
+            Grid.Row="0"
+            DefaultLabelPosition="Right"
+            OverflowButtonVisibility="Auto">
+            <AppBarButton
+                Click="NewPlan_Click"
+                Icon="Add"
+                Label="New" />
+            <AppBarButton
+                Click="LoadPlan_Click"
+                Icon="OpenFile"
+                Label="Load" />
+            <AppBarButton
+                Click="SavePlan_Click"
+                Icon="Save"
+                Label="Save" />
+            <AppBarSeparator />
+            <AppBarButton
+                Click="ValidateButton_Click"
+                Icon="Accept"
+                Label="Validate" />
+            <AppBarButton
+                Click="ZoomFit_Click"
+                Icon="ZoomIn"
+                Label="Fit" />
+            <AppBarButton
+                Click="ZoomReset_Click"
+                Icon="Zoom"
+                Label="100%" />
+            <AppBarSeparator />
+            <AppBarToggleButton
+                x:Name="SnapToggle"
+                Icon="Trim"
+                IsChecked="True"
+                Label="Snap" />
+            <AppBarToggleButton
+                x:Name="GridToggle"
+                Icon="ViewAll"
+                IsChecked="True"
+                Label="Grid" />
+        </CommandBar>
+
+        <!--  Main Content  -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="180" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="240" />
+            </Grid.ColumnDefinitions>
+
+            <!--  Left Panel: Toolbox  -->
+            <Border
+                Grid.Column="0"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="0,0,1,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock
+                        Grid.Row="0"
+                        Padding="16,12"
+                        Style="{StaticResource SubtitleTextBlockStyle}"
+                        Text="Piko A-Gleis" />
+
+                    <ScrollViewer Grid.Row="1" Padding="8,0">
+                        <StackPanel Spacing="4">
+                            <!--  Straights  -->
+                            <TextBlock
+                                Margin="8,8,0,4"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="STRAIGHT TRACKS" />
+                            <ItemsControl x:Name="StraightsListView" ItemsSource="{x:Bind StraightTemplates}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border
+                                            Margin="0,1"
+                                            Padding="4,2"
+                                            Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                            CanDrag="True"
+                                            CornerRadius="4"
+                                            DragStarting="Element_DragStarting">
+                                            <Grid ColumnSpacing="8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="40" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border
+                                                    Grid.Column="0"
+                                                    Width="40"
+                                                    Height="24"
+                                                    Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+                                                    CornerRadius="4">
+                                                    <Line
+                                                        Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                                        StrokeThickness="3"
+                                                        X1="4"
+                                                        X2="36"
+                                                        Y1="12"
+                                                        Y2="12" />
+                                                </Border>
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    Text="{Binding Id}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!--  Curves  -->
+                            <TextBlock
+                                Margin="8,12,0,4"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="CURVES" />
+                            <ItemsControl x:Name="CurvesListView" ItemsSource="{x:Bind CurveTemplates}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border
+                                            Margin="0,1"
+                                            Padding="4,2"
+                                            Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                            CanDrag="True"
+                                            CornerRadius="4"
+                                            DragStarting="Element_DragStarting">
+                                            <Grid ColumnSpacing="8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="40" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border
+                                                    Grid.Column="0"
+                                                    Width="40"
+                                                    Height="24"
+                                                    Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+                                                    CornerRadius="4">
+                                                    <Path
+                                                        Data="M 4,20 Q 20,20 36,4"
+                                                        Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                                        StrokeThickness="3" />
+                                                </Border>
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    Text="{Binding Id}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!--  Switches  -->
+                            <TextBlock
+                                Margin="8,12,0,4"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="SWITCHES" />
+                            <ItemsControl x:Name="SwitchesListView" ItemsSource="{x:Bind SwitchTemplates}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border
+                                            Margin="0,1"
+                                            Padding="4,2"
+                                            Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                            CanDrag="True"
+                                            CornerRadius="4"
+                                            DragStarting="Element_DragStarting">
+                                            <Grid ColumnSpacing="8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="40" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border
+                                                    Grid.Column="0"
+                                                    Width="40"
+                                                    Height="24"
+                                                    Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+                                                    CornerRadius="4">
+                                                    <Canvas>
+                                                        <Line
+                                                            Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                                            StrokeThickness="3"
+                                                            X1="4"
+                                                            X2="36"
+                                                            Y1="12"
+                                                            Y2="12" />
+                                                        <Line
+                                                            Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                                            StrokeThickness="2"
+                                                            X1="20"
+                                                            X2="36"
+                                                            Y1="12"
+                                                            Y2="4" />
+                                                    </Canvas>
+                                                </Border>
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    Text="{Binding Id}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!--  Center: Canvas with Pan/Zoom  -->
+            <Border Grid.Column="1" Background="{ThemeResource SolidBackgroundFillColorBaseAltBrush}">
+                <ScrollViewer
+                    x:Name="CanvasScrollViewer"
+                    HorizontalScrollBarVisibility="Auto"
+                    HorizontalScrollMode="Enabled"
+                    VerticalScrollBarVisibility="Auto"
+                    VerticalScrollMode="Enabled"
+                    ZoomMode="Enabled">
+                    <Canvas
+                        x:Name="GraphCanvas"
+                        Width="3000"
+                        Height="2000"
+                        AllowDrop="True"
+                        Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+                        DragOver="GraphCanvas_DragOver"
+                        Drop="GraphCanvas_Drop"
+                        PointerMoved="GraphCanvas_PointerMoved"
+                        PointerPressed="GraphCanvas_PointerPressed"
+                        PointerReleased="GraphCanvas_PointerReleased"
+                        PointerWheelChanged="GraphCanvas_PointerWheelChanged" />
+                </ScrollViewer>
+            </Border>
+
+            <!--  Right Panel: Properties  -->
+            <Border
+                Grid.Column="2"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1,0,0,0">
+                <ScrollViewer Padding="16">
+                    <StackPanel Spacing="16">
+                        <!--  Selection Info  -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Selection" />
+                            <TextBlock
+                                x:Name="SelectionInfoText"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="No selection"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <!--  Properties Panel  -->
+                        <StackPanel
+                            x:Name="PropertiesPanel"
+                            Spacing="12"
+                            Visibility="Collapsed">
+                            <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Properties" />
+
+                            <TextBox
+                                x:Name="TrackIdTextBox"
+                                Header="Track ID"
+                                IsReadOnly="True" />
+
+                            <TextBox
+                                x:Name="TemplateIdTextBox"
+                                Header="Template"
+                                IsReadOnly="True" />
+
+                            <NumberBox
+                                x:Name="PositionXBox"
+                                Header="Position X (mm)"
+                                ValueChanged="PositionBox_ValueChanged" />
+
+                            <NumberBox
+                                x:Name="PositionYBox"
+                                Header="Position Y (mm)"
+                                ValueChanged="PositionBox_ValueChanged" />
+
+                            <NumberBox
+                                x:Name="RotationBox"
+                                Header="Rotation (deg)"
+                                Maximum="360"
+                                Minimum="0"
+                                SmallChange="15"
+                                ValueChanged="RotationBox_ValueChanged" />
+
+                            <NumberBox
+                                x:Name="FeedbackPointBox"
+                                Header="Feedback Point"
+                                Minimum="0"
+                                PlaceholderText="None"
+                                ValueChanged="FeedbackPointBox_ValueChanged" />
+
+
+                            <Button
+                                Margin="0,8,4,0"
+                                Click="DisconnectSelected_Click"
+                                Content="Disconnect"
+                                ToolTipService.ToolTip="Disconnect (R)" />
+                            <Button
+                                Margin="0,8,0,0"
+                                Click="DeleteSelected_Click"
+                                Content="Delete"
+                                Style="{ThemeResource AccentButtonStyle}"
+                                ToolTipService.ToolTip="Delete (D/Del)" />
+                        </StackPanel>
+
+                        <!--  Sections (Blocks)  -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Sections" />
+                            <TextBlock
+                                x:Name="SectionInfoText"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="No section assigned"
+                                TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button
+                                    x:Name="CreateSectionButton"
+                                    Click="CreateSection_Click"
+                                    Content="Create Section"
+                                    IsEnabled="False" />
+                                <Button
+                                    x:Name="ToggleIsolatorButton"
+                                    Click="ToggleIsolator_Click"
+                                    Content="Toggle Isolator"
+                                    IsEnabled="False" />
+                            </StackPanel>
+
+                            <!--  Section Editor (shown when section selected)  -->
+                            <StackPanel
+                                x:Name="SectionEditorPanel"
+                                Spacing="8"
+                                Visibility="Collapsed">
+                                <TextBox
+                                    x:Name="SectionNameBox"
+                                    Header="Section Name"
+                                    PlaceholderText="Enter section name"
+                                    TextChanged="SectionNameBox_TextChanged" />
+                                <ComboBox
+                                    x:Name="SectionFunctionCombo"
+                                    HorizontalAlignment="Stretch"
+                                    Header="Function"
+                                    SelectionChanged="SectionFunctionCombo_SelectionChanged">
+                                    <ComboBoxItem Content="Strecke" Tag="Track" />
+                                    <ComboBoxItem Content="Bahnhof" Tag="Station" />
+                                    <ComboBoxItem Content="Abstellgleis" Tag="Siding" />
+                                    <ComboBoxItem Content="Rangiergleis" Tag="Shunting" />
+                                    <ComboBoxItem Content="Hauptgleis" Tag="Main" />
+                                    <ComboBoxItem Content="Nebengleis" Tag="Branch" />
+                                </ComboBox>
+                                <StackPanel>
+                                    <TextBlock Margin="0,0,0,4" Text="Color" />
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <Button
+                                            Width="28"
+                                            Height="28"
+                                            Padding="0"
+                                            Background="#FF5733"
+                                            Click="SectionColorButton_Click"
+                                            CornerRadius="4"
+                                            Tag="#FF5733" />
+                                        <Button
+                                            Width="28"
+                                            Height="28"
+                                            Padding="0"
+                                            Background="#33FF57"
+                                            Click="SectionColorButton_Click"
+                                            CornerRadius="4"
+                                            Tag="#33FF57" />
+                                        <Button
+                                            Width="28"
+                                            Height="28"
+                                            Padding="0"
+                                            Background="#3357FF"
+                                            Click="SectionColorButton_Click"
+                                            CornerRadius="4"
+                                            Tag="#3357FF" />
+                                        <Button
+                                            Width="28"
+                                            Height="28"
+                                            Padding="0"
+                                            Background="#FFFF33"
+                                            Click="SectionColorButton_Click"
+                                            CornerRadius="4"
+                                            Tag="#FFFF33" />
+                                        <Button
+                                            Width="28"
+                                            Height="28"
+                                            Padding="0"
+                                            Background="#FF33FF"
+                                            Click="SectionColorButton_Click"
+                                            CornerRadius="4"
+                                            Tag="#FF33FF" />
+                                        <Button
+                                            Width="28"
+                                            Height="28"
+                                            Padding="0"
+                                            Background="#33FFFF"
+                                            Click="SectionColorButton_Click"
+                                            CornerRadius="4"
+                                            Tag="#33FFFF" />
+                                        <Button
+                                            Width="28"
+                                            Height="28"
+                                            Padding="0"
+                                            Background="#FF9933"
+                                            Click="SectionColorButton_Click"
+                                            CornerRadius="4"
+                                            Tag="#FF9933" />
+                                        <Button
+                                            Width="28"
+                                            Height="28"
+                                            Padding="0"
+                                            Background="#9933FF"
+                                            Click="SectionColorButton_Click"
+                                            CornerRadius="4"
+                                            Tag="#9933FF" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <Button
+                                    Click="DeleteSection_Click"
+                                    Content="Delete Section"
+                                    Style="{ThemeResource AccentButtonStyle}" />
+                            </StackPanel>
+
+                            <ListView
+                                x:Name="SectionsList"
+                                MaxHeight="120"
+                                SelectionChanged="SectionsList_SelectionChanged">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Padding="4" ColumnSpacing="8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="16" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Ellipse
+                                                Grid.Column="0"
+                                                Width="12"
+                                                Height="12"
+                                                Fill="{Binding Color}" />
+                                            <TextBlock
+                                                Grid.Column="1"
+                                                VerticalAlignment="Center"
+                                                Text="{Binding Name}" />
+                                            <TextBlock
+                                                Grid.Column="2"
+                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                Text="{Binding TrackCount}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </StackPanel>
+
+                        <!--  Statistics  -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Statistics" />
+                            <Grid ColumnSpacing="8" RowSpacing="4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="Tracks:" />
+                                <TextBlock
+                                    x:Name="NodeCountText"
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    Text="0" />
+
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="0"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="Connections:" />
+                                <TextBlock
+                                    x:Name="EdgeCountText"
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    Text="0" />
+
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="0"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="Open Ends:" />
+                                <TextBlock
+                                    x:Name="EndcapCountText"
+                                    Grid.Row="2"
+                                    Grid.Column="1"
+                                    Text="0" />
+
+                                <TextBlock
+                                    Grid.Row="3"
+                                    Grid.Column="0"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="Zoom:" />
+                                <TextBlock
+                                    x:Name="ZoomLevelText"
+                                    Grid.Row="3"
+                                    Grid.Column="1"
+                                    Text="100%" />
+                            </Grid>
+                        </StackPanel>
+
+                        <!--  Validation  -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Validation" />
+                            <ItemsControl
+                                x:Name="ViolationsList"
+                                MaxHeight="200"
+                                ItemsSource="{x:Bind Violations}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Padding="4" Spacing="2">
+                                            <TextBlock
+                                                FontSize="12"
+                                                FontWeight="SemiBold"
+                                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                                Text="{Binding Kind}" />
+                                            <TextBlock
+                                                FontSize="11"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Text="{Binding Message}"
+                                                TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!--  Status Bar  -->
+        <Border
+            Grid.Row="2"
+            Padding="16,8"
+            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    x:Name="StatusText"
+                    Grid.Column="0"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Ready. Drag tracks from toolbox to canvas." />
+                <TextBlock
+                    x:Name="CoordinatesText"
+                    Grid.Column="1"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Text="X: 0  Y: 0" />
+            </Grid>
+        </Border>
+    </Grid>
+</Page>

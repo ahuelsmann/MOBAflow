@@ -1,4 +1,4 @@
-﻿<ResourceDictionary
+<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:behavior="using:Moba.WinUI.Behavior"
@@ -733,7 +733,7 @@
                             Padding="0"
                             Background="Transparent"
                             BorderThickness="0"
-                            Click="PhotoImage_Click"
+                            Command="{Binding OpenPhotoCommand}"
                             Visibility="{Binding HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                             <Image
                                 Height="140"
@@ -893,7 +893,7 @@
                             Padding="0"
                             Background="Transparent"
                             BorderThickness="0"
-                            Click="PhotoImage_Click"
+                            Command="{Binding OpenPhotoCommand}"
                             Visibility="{Binding HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                             <Image
                                 Height="140"

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -133,12 +133,18 @@ public partial class WagonViewModel : ObservableObject, IViewModelWrapper<Wagon>
     /// </summary>
     public bool HasPhoto => !string.IsNullOrWhiteSpace(Model.PhotoPath);
 
-    [ObservableProperty]
-    private IAsyncRelayCommand? browsePhotoCommand;
+        [ObservableProperty]
+        private IAsyncRelayCommand? browsePhotoCommand;
 
-    [ObservableProperty]
-    private IRelayCommand? deletePhotoCommand;
+        [ObservableProperty]
+        private IRelayCommand? deletePhotoCommand;
 
-    [ObservableProperty]
-    private IRelayCommand? showInExplorerCommand;
-}
+        [ObservableProperty]
+        private IRelayCommand? showInExplorerCommand;
+
+        /// <summary>
+        /// Command to open/preview the photo. Set by the hosting page.
+        /// </summary>
+        [ObservableProperty]
+        private IRelayCommand? openPhotoCommand;
+    }

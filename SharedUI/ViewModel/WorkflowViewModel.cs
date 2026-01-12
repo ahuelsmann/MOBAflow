@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using Action;
@@ -147,6 +147,22 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
         {
             _model.Actions.Remove(actionModel);
             Actions.Remove(actionVM);
+            UpdateActionNumbers();
+        }
+    }
+
+    /// <summary>
+    /// Updates the Number property of all actions to reflect their current order.
+    /// Call this after reordering actions via drag &amp; drop.
+    /// </summary>
+    public void UpdateActionNumbers()
+    {
+        for (int i = 0; i < Actions.Count; i++)
+        {
+            if (Actions[i] is WorkflowActionViewModel actionVM)
+            {
+                actionVM.Number = (uint)(i + 1);
+            }
         }
     }
 

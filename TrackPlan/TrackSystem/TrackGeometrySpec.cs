@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+
 namespace Moba.TrackPlan.TrackSystem;
 
 /// <summary>
@@ -11,5 +13,6 @@ public sealed record TrackGeometrySpec(
     TrackGeometryKind GeometryKind,
     double? LengthMm = null,
     double? RadiusMm = null,
-    double? AngleDeg = null
+    double? AngleDeg = null,
+    double? JunctionOffsetMm = null  // neu: nur für Weichen
 );

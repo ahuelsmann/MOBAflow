@@ -238,16 +238,11 @@ public partial class App
         services.AddTransient<TrainsPage>();
         navigationRegistry.Register("trains", "Trains", "\uEB4D", typeof(TrainsPage), "Shell");
 
-
         services.AddTransient<TrainControlPage>();
         navigationRegistry.Register("traincontrol", "Train Control", "\uE7C0", typeof(TrainControlPage), "Shell");
 
-        // Old TrackPlanEditorPage temporarily disabled - depends on removed SharedUI.ViewModel.TrackPlanEditorViewModel
-        // services.AddTransient<TrackPlanEditorPage>();
-        // navigationRegistry.Register("trackplaneditor", "MOBAtps", "\uE809", typeof(TrackPlanEditorPage), "Shell");
-
-        services.AddTransient<TrackPlanEditorPage2>();
-        navigationRegistry.Register("trackplaneditor", "MOBAtps", "\uE809", typeof(TrackPlanEditorPage2), "Shell");
+        services.AddTransient<TrackPlanEditorPage>();
+        navigationRegistry.Register("trackplaneditor", "MOBAtps", "\uE809", typeof(TrackPlanEditorPage), "Shell");
 
         services.AddTransient<JourneyMapPage>();
         navigationRegistry.Register("journeymap", "Journey Map", "\uE81E", typeof(JourneyMapPage), "Shell");
