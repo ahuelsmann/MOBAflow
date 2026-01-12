@@ -31,13 +31,9 @@ Style: Strict, deterministic, machine‑optimized.
 # 3. ARCHITECTURE & PATTERNS
 
 - [backend.instructions.md](./backend.instructions.md)  
-- [csharp.instructions.md](./csharp.instructions.md)  
 - [collections.instructions.md](./collections.instructions.md)  
 - [di-pattern-consistency.instructions.md](./di-pattern-consistency.instructions.md)  
-- [dotnet-architecture-good-practices.instructions.md](./dotnet-architecture-good-practices.instructions.md)  
-- [dotnet-framework.instructions.md](./dotnet-framework.instructions.md)  
-- [genaiscript.instructions.md](./genaiscript.instructions.md)  
-- [memory-bank.instructions.md](./memory-bank.instructions.md)  
+- [dotnet-framework.instructions.md](./dotnet-framework.instructions.md)
 - [self-explanatory-code-commenting.instructions.md](./self-explanatory-code-commenting.instructions.md)  
 
 ---
@@ -47,33 +43,27 @@ Style: Strict, deterministic, machine‑optimized.
 - [winui.instructions.md](./winui.instructions.md)  
 - [maui.instructions.md](./maui.instructions.md)  
 - [blazor.instructions.md](./blazor.instructions.md)  
-- [a11y.instructions.md](./a11y.instructions.md)  
-- [pcf-fluent-modern-theming.instructions.md](./pcf-fluent-modern-theming.instructions.md)  
+- [xaml-page-registration.instructions.md](./xaml-page-registration.instructions.md)  
 
 ---
 
 # 5. TESTING & QUALITY
 
 - [test.instructions.md](./test.instructions.md)  
-- [code-review-generic.instructions.md](./code-review-generic.instructions.md)  
 - [hasunsavedchanges-patterns.instructions.md](./hasunsavedchanges-patterns.instructions.md)  
-- [update-docs-on-code-change.instructions.md](./update-docs-on-code-change.instructions.md)  
 
 ---
 
 # 6. DEVOPS & AUTOMATION
 
-- [azure-devops-pipelines.instructions.md](./azure-devops-pipelines.instructions.md)  
 - [github-actions-ci-cd-best-practices.instructions.md](./github-actions-ci-cd-best-practices.instructions.md)  
 - [powershell.instructions.md](./powershell.instructions.md)  
-- [devops-core-principles.instructions.md](./devops-core-principles.instructions.md)  
 
 ---
 
 # 7. LOCALIZATION & CONTENT
 
-- [localization.instructions.md](./localization.instructions.md)  
-- [markdown.instructions.md](./markdown.instructions.md)  
+*(No active instruction files in this category)*
 
 ---
 
@@ -81,14 +71,13 @@ Style: Strict, deterministic, machine‑optimized.
 
 - [instructions.instructions.md](./instructions.instructions.md)  
 - [prompt.instructions.md](./prompt.instructions.md)  
-- [copilot-thought-logging.instructions.md](./copilot-thought-logging.instructions.md)  
+- [no-terminal.instructions.md](./no-terminal.instructions.md)  
 
 ---
 
 # 9. PCF & CANVAS APPS
 
-- [pcf-canvas-apps.instructions.md](./pcf-canvas-apps.instructions.md)  
-- [pcf-code-components.instructions.md](./pcf-code-components.instructions.md)  
+*(No active instruction files in this category)*
 
 ---
 
@@ -100,6 +89,7 @@ Style: Strict, deterministic, machine‑optimized.
 - MUST NOT remove Track‑Planning documents from top priority.  
 - MUST NOT duplicate entries.  
 - MUST NOT add explanations or narrative text.  
+- README.md is the authoritative source for project overview and high-level context.
 
 ---
 

@@ -401,7 +401,7 @@ public partial class TrainControlViewModel : ObservableObject
     /// </summary>
     partial void OnSelectedPresetIndexChanged(int value)
     {
-        // Save current preset before switching (if not loading)
+        // Save current preset before switching - if not loading
         if (!_isLoadingPreset)
         {
             // Get the OLD preset and save state to it
@@ -640,7 +640,7 @@ public partial class TrainControlViewModel : ObservableObject
         try
         {
             await _z21.SetLocoDriveAsync(LocoAddress, Speed, IsForward);
-            StatusMessage = $"Loco {LocoAddress}: {Speed} {(IsForward ? "â†’" : "â†")}";
+            StatusMessage = $"Loco {LocoAddress}: {Speed} {(IsForward ? "FWD" : "REV")}";
             _logger?.LogDebug("Drive command sent: Loco {Address}, Speed {Speed}, Forward {Forward}",
                 LocoAddress, Speed, IsForward);
         }
@@ -813,7 +813,7 @@ public partial class TrainControlViewModel : ObservableObject
         {
             Speed = 0;
             await _z21.SetLocoDriveAsync(LocoAddress, 0, IsForward);
-            StatusMessage = $"ðŸ›‘ EMERGENCY STOP - Loco {LocoAddress}";
+            StatusMessage = $"[STOP] Emergency stop - Loco {LocoAddress}";
             _logger?.LogWarning("Emergency stop executed for loco {Address}", LocoAddress);
         }
         catch (Exception ex)

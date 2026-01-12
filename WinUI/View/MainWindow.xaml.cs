@@ -83,7 +83,7 @@ public sealed partial class MainWindow
         if (ioService is IoService winUiIoService)
         {
             winUiIoService.SetWindowId(AppWindow.Id, Content.XamlRoot);
-            Debug.WriteLine("ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ IoService initialized with WindowId");
+            Debug.WriteLine("[OK] IoService initialized with WindowId");
         }
 
         // Add plugin navigation items before initialization selects overview

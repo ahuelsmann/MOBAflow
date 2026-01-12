@@ -47,6 +47,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup>
+    <Page Remove="View\FeedbackPointsPage.xaml" />
+  </ItemGroup>
   <!-- Content files -->
   <ItemGroup>
     <Content Include="appsettings.json">
@@ -80,5 +83,10 @@
     <ProjectReference Include="..\TrackPlan\TrackPlan.csproj" />
     <ProjectReference Include="..\TrackPlan.Editor\TrackPlan.Editor.csproj" />
     <ProjectReference Include="..\TrackLibrary.PikoA\TrackLibrary.PikoA.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="View\FeedbackPointsPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
   </ItemGroup>
 </Project>

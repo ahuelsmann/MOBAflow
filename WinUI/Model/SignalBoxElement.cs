@@ -81,12 +81,25 @@ public enum SignalBoxElementType
     SwitchDouble,      // Doppelweiche / Kreuzungsweiche
     SwitchCrossing,    // Kreuzung
 
-    // Signals
-    SignalMain,        // Hauptsignal (Hp)
-    SignalDistant,     // Vorsignal (Vr)
-    SignalCombined,    // Kombinationssignal (Ks)
+    // Signals - Generic
+    SignalMain,        // Hauptsignal (generic)
+    SignalDistant,     // Vorsignal (generic)
+    SignalCombined,    // Kombinationssignal (generic)
     SignalShunting,    // Rangiersignal
     SignalSpeed,       // Geschwindigkeitsanzeiger (Zs 3)
+
+    // Signals - H/V System (Hp/Vr)
+    SignalHvHp,        // Hp-Signal (Hauptsignal H/V)
+    SignalHvVr,        // Vr-Signal (Vorsignal H/V)
+
+    // Signals - Ks System
+    SignalKsMain,      // Ks-Hauptsignal
+    SignalKsDistant,   // Ks-Vorsignal
+    SignalKsCombined,  // Ks-Mehrabschnittssignal
+
+    // Signals - Sv System (S-Bahn)
+    SignalSvMain,      // Sv-Hauptsignal
+    SignalSvDistant,   // Sv-Vorsignal
 
     // Other elements
     Platform,          // Bahnsteig
@@ -154,8 +167,8 @@ public enum SignalAspect
 /// </summary>
 public enum SignalSystem
 {
-    Ks,                // Kombinationssignal (modern)
-    HV,                // H/V-System (Licht- und Formsignale)
-    Hl,                // Haupt-Licht-Signale
+    Ks,                // Kombinationssignal (modern, seit 1993)
+    HV,                // H/V-System (Licht- und Formsignale, klassisch)
+    Sv,                // Sv-System (S-Bahn Berlin/Hamburg)
     Form               // Formsignale (Flügelsignale)
 }
