@@ -443,15 +443,9 @@
                         FontWeight="SemiBold"
                         Style="{StaticResource BodyStrongTextBlockStyle}"
                         Text="Core Features" />
-                    <CheckBox 
-                        Content="Overview Page" 
-                        IsChecked="{x:Bind ViewModel.IsOverviewPageAvailableSetting, Mode=TwoWay}" />
-                    <CheckBox 
-                        Content="Solution Page" 
-                        IsChecked="{x:Bind ViewModel.IsSolutionPageAvailableSetting, Mode=TwoWay}" />
-                    <CheckBox 
-                        Content="Settings Page" 
-                        IsChecked="{x:Bind ViewModel.IsSettingsPageAvailableSetting, Mode=TwoWay}" />
+                    <CheckBox Content="Overview Page" IsChecked="{x:Bind ViewModel.IsOverviewPageAvailableSetting, Mode=TwoWay}" />
+                    <CheckBox Content="Solution Page" IsChecked="{x:Bind ViewModel.IsSolutionPageAvailableSetting, Mode=TwoWay}" />
+                    <CheckBox Content="Settings Page" IsChecked="{x:Bind ViewModel.IsSettingsPageAvailableSetting, Mode=TwoWay}" />
 
                     <!--  Journey Management  -->
                     <TextBlock
@@ -459,12 +453,8 @@
                         FontWeight="SemiBold"
                         Style="{StaticResource BodyStrongTextBlockStyle}"
                         Text="Journey Management" />
-                    <CheckBox 
-                        Content="Journeys Page" 
-                        IsChecked="{x:Bind ViewModel.IsJourneysPageAvailableSetting, Mode=TwoWay}" />
-                    <CheckBox 
-                        Content="Workflows Page" 
-                        IsChecked="{x:Bind ViewModel.IsWorkflowsPageAvailableSetting, Mode=TwoWay}" />
+                    <CheckBox Content="Journeys Page" IsChecked="{x:Bind ViewModel.IsJourneysPageAvailableSetting, Mode=TwoWay}" />
+                    <CheckBox Content="Workflows Page" IsChecked="{x:Bind ViewModel.IsWorkflowsPageAvailableSetting, Mode=TwoWay}" />
 
                     <!--  Track Management (Experimental)  -->
                     <TextBlock
@@ -473,17 +463,13 @@
                         Style="{StaticResource BodyStrongTextBlockStyle}"
                         Text="Track Management (Experimental)" />
 
-                    <CheckBox 
-                        Content="{x:Bind ViewModel.TrackPlanEditorCheckBoxContent, Mode=OneWay}" 
-                        IsChecked="{x:Bind ViewModel.IsTrackPlanEditorPageAvailableSetting, Mode=TwoWay}">
+                    <CheckBox Content="{x:Bind ViewModel.TrackPlanEditorCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.IsTrackPlanEditorPageAvailableSetting, Mode=TwoWay}">
                         <ToolTipService.ToolTip>
                             <TextBlock Text="Visual track layout designer (experimental)" />
                         </ToolTipService.ToolTip>
                     </CheckBox>
 
-                    <CheckBox 
-                        Content="{x:Bind ViewModel.JourneyMapCheckBoxContent, Mode=OneWay}" 
-                        IsChecked="{x:Bind ViewModel.IsJourneyMapPageAvailableSetting, Mode=TwoWay}">
+                    <CheckBox Content="{x:Bind ViewModel.JourneyMapCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.IsJourneyMapPageAvailableSetting, Mode=TwoWay}">
                         <ToolTipService.ToolTip>
                             <TextBlock Text="Journey visualization map (experimental)" />
                         </ToolTipService.ToolTip>
@@ -496,9 +482,7 @@
                         Style="{StaticResource BodyStrongTextBlockStyle}"
                         Text="Monitoring &amp; Debugging" />
 
-                    <CheckBox 
-                        Content="{x:Bind ViewModel.MonitorCheckBoxContent, Mode=OneWay}" 
-                        IsChecked="{x:Bind ViewModel.IsMonitorPageAvailableSetting, Mode=TwoWay}">
+                    <CheckBox Content="{x:Bind ViewModel.MonitorCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.IsMonitorPageAvailableSetting, Mode=TwoWay}">
                         <ToolTipService.ToolTip>
                             <TextBlock Text="Z21 traffic monitor and diagnostics" />
                         </ToolTipService.ToolTip>
