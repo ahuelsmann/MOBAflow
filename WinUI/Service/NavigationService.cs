@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
+using Moba.SharedUI.Shell;
 using View;
 
 using System.Diagnostics;
@@ -17,11 +18,12 @@ using System.Reflection;
 /// For plugins: Uses ContentProvider pattern to avoid XamlTypeInfo resolution issues.
 /// Plugins provide a class with CreateContent() method that returns UIElement.
 /// </summary>
-public class NavigationService
+public class NavigationService : INavigationService
 {
     #region Fields
     private readonly IServiceProvider _serviceProvider;
     private readonly NavigationRegistry _navigationRegistry;
+    private readonly Stack<string> _navigationHistory = new();
     private Frame? _contentFrame;
     #endregion
 
@@ -30,6 +32,15 @@ public class NavigationService
         _serviceProvider = serviceProvider;
         _navigationRegistry = navigationRegistry;
     }
+
+    /// <inheritdoc />
+    public string? CurrentPageTag { get; private set; }
+
+    /// <inheritdoc />
+    public bool CanGoBack => _navigationHistory.Count > 0;
+
+    /// <inheritdoc />
+    public event EventHandler<NavigationEventArgs>? Navigated;
 
     /// <summary>
     /// Initialize the navigation service with the content frame.
@@ -58,6 +69,12 @@ public class NavigationService
                 throw new ArgumentException($"Unknown navigation tag: {tag}", nameof(tag));
             }
 
+            var previousTag = CurrentPageTag;
+            if (previousTag is not null)
+            {
+                _navigationHistory.Push(previousTag);
+            }
+
             // Check if this is a plugin (Source != "Shell") 
             if (registration.Source != "Shell")
             {
@@ -77,18 +94,71 @@ public class NavigationService
             }
             else
             {
-                // Core page: Direct instantiation (type is known to XamlTypeInfo)
+            // Core page: Direct instantiation (type is known to XamlTypeInfo)
                 var page = _serviceProvider.GetRequiredService(registration.PageType);
                 _contentFrame.Content = page;
             }
+
+            CurrentPageTag = tag;
+            Navigated?.Invoke(this, new NavigationEventArgs
+            {
+                PageTag = tag,
+                PreviousPageTag = previousTag
+            });
 
             await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"❌ Navigation to '{tag}' failed: {ex.Message}");
+            Debug.WriteLine($"[ERROR] Navigation to '{tag}' failed: {ex.Message}");
             throw;
         }
+    }
+
+    /// <inheritdoc />
+    public bool NavigateTo(string pageTag, object? parameter = null)
+    {
+        try
+        {
+            NavigateToPageAsync(pageTag).GetAwaiter().GetResult();
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <inheritdoc />
+    public bool GoBack()
+    {
+        if (!CanGoBack) return false;
+
+        var previousTag = _navigationHistory.Pop();
+        try
+        {
+            // Navigate without adding to history
+            if (_navigationRegistry.TryGetPage(previousTag, out var registration))
+            {
+                var page = _serviceProvider.GetRequiredService(registration.PageType);
+                _contentFrame!.Content = page;
+                
+                var oldTag = CurrentPageTag;
+                CurrentPageTag = previousTag;
+                
+                Navigated?.Invoke(this, new NavigationEventArgs
+                {
+                    PageTag = previousTag,
+                    PreviousPageTag = oldTag
+                });
+                return true;
+            }
+        }
+        catch
+        {
+            // Ignore
+        }
+        return false;
     }
 
     /// <summary>

@@ -11,6 +11,7 @@ artifacts/
 
 # Rider
 .idea/
+*.sln.iml
 
 # User-specific files
 *.rsuser
@@ -35,13 +36,29 @@ TestResults/
 .nuget/
 packages/
 
-# Windows
+# Secrets / appsettings
+appsettings.json
+appsettings.Development.json
+appsettings.*.json
+*.user.secrets
+
+# MAUI / mobile artifacts
+**/Android/**/Resource.designer.cs
+**/iOS/**/*.storyboard.cs
+*.ipa
+*.dSYM/
+*.app/
+
+# OS / tooling
 Thumbs.db
 Desktop.ini
 $RECYCLE.BIN/
+.DS_Store
 
 # Logs
 *.log
+logs/
+*.log.*
 
 # Temporary files
 *.tmp

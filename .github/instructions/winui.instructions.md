@@ -1077,3 +1077,207 @@ Before creating ANY Properties Panel:
 - [ ] ❌ NEVER create separate UserControl `.xaml` files for Properties Panels
 
 **Violation of these patterns = Immediate refactoring required!**
+
+---
+
+## 🔧 Custom Controls in WinUI 3 (CRITICAL!)
+
+### Unterschiede zu WPF/UWP
+
+WinUI 3 Custom Controls haben wichtige Unterschiede zu WPF:
+
+| Feature | WPF | WinUI 3 |
+|---------|-----|---------|
+| **Implizite Styles** | Funktioniert | ❌ NICHT in ResourceDictionary! |
+| **GridLength Konvertierung** | Automatisch | ❌ Manuelles Parsing erforderlich |
+| **Resource-Zugriff** | Direkter Cast | TryGetValue() empfohlen |
+| **TypeConverter** | Eingebaut | Nur fuer Framework-Typen |
+
+### ❌ FALSCH: Impliziter Style fuer Custom Control
+
+```xaml
+<!-- ❌ FALSCH: Funktioniert NICHT in WinUI 3 -->
+<ResourceDictionary xmlns:controls="using:MyApp.Controls">
+    <Style TargetType="controls:MyCustomControl">
+        <Setter Property="Width" Value="100" />
+    </Style>
+</ResourceDictionary>
+```
+
+**Warum:** Der XAML-Parser versucht den Typ aufzuloesen bevor das Assembly geladen ist.
+
+### ✅ RICHTIG: Expliziter Style mit x:Key
+
+```xaml
+<!-- ✅ RICHTIG: Expliziter Key -->
+<Style x:Key="MyCustomControlStyle" TargetType="Button">
+    <Setter Property="Width" Value="100" />
+</Style>
+
+<!-- Oder: Properties direkt in XAML setzen -->
+<controls:MyCustomControl Width="100" />
+```
+
+---
+
+### ❌ FALSCH: GridLength als DependencyProperty-Typ
+
+```csharp
+// ❌ FALSCH: XAML kann GridLength nicht aus String parsen
+public static readonly DependencyProperty WidthProperty =
+    DependencyProperty.Register(nameof(Width), typeof(GridLength), ...);
+
+public GridLength Width
+{
+    get => (GridLength)GetValue(WidthProperty);
+    set => SetValue(WidthProperty, value);
+}
+```
+
+### ✅ RICHTIG: String mit Parser-Methode
+
+```csharp
+// ✅ RICHTIG: String-Property mit Parser
+public static readonly DependencyProperty WidthProperty =
+    DependencyProperty.Register(nameof(Width), typeof(string), typeof(MyControl),
+        new PropertyMetadata("*"));
+
+public string Width
+{
+    get => (string)GetValue(WidthProperty);
+    set => SetValue(WidthProperty, value);
+}
+
+public GridLength GetGridLength()
+{
+    var width = Width?.Trim() ?? "*";
+
+    if (string.Equals(width, "Auto", StringComparison.OrdinalIgnoreCase))
+        return GridLength.Auto;
+
+    if (width == "*")
+        return new GridLength(1, GridUnitType.Star);
+
+    if (width.EndsWith('*'))
+    {
+        if (double.TryParse(width.AsSpan(0, width.Length - 1), out var starValue))
+            return new GridLength(starValue, GridUnitType.Star);
+        return new GridLength(1, GridUnitType.Star);
+    }
+
+    if (double.TryParse(width, out var pixelValue))
+        return new GridLength(pixelValue, GridUnitType.Pixel);
+
+    return new GridLength(1, GridUnitType.Star);
+}
+```
+
+---
+
+### ❌ FALSCH: Direkter Resource-Cast
+
+```csharp
+// ❌ FALSCH: Kann Exception werfen wenn App nicht vollstaendig geladen
+var brush = (Brush)Application.Current.Resources["MyBrush"];
+```
+
+### ✅ RICHTIG: TryGetValue Pattern
+
+```csharp
+// ✅ RICHTIG: Sicherer Zugriff
+if (Application.Current.Resources.TryGetValue("MyBrush", out var resource))
+{
+    myElement.Background = resource as Brush;
+}
+```
+
+---
+
+### Custom Control Checklist
+
+- [ ] ❌ KEINE impliziten Styles in ResourceDictionary
+- [ ] ✅ String statt GridLength fuer Width/Height Properties
+- [ ] ✅ TryGetValue() fuer Resource-Zugriff
+- [ ] ✅ Parser-Methoden fuer komplexe Typen (GetGridLength(), etc.)
+- [ ] ✅ Null-Checks in Loaded-Event statt Konstruktor
+- [ ] ✅ DI via Constructor Injection (nicht Service Locator)
+
+---
+
+## 📐 AdaptivePanel - Responsive Multi-Column Layout
+
+### Verwendung
+
+Das `AdaptivePanel` ist ein Custom Control fuer responsive Multi-Column-Layouts in MOBAflow.
+
+```xaml
+<controls:AdaptivePanel
+    x:Name="AdaptiveLayout"
+    CompactBreakpoint="640"
+    WideBreakpoint="1024">
+
+    <controls:AdaptivePanelItem
+        Title="Panel 1"
+        IconGlyph="&#xE80F;"
+        MinWidth="200"
+        PanelWidth="300">
+        <!-- Content -->
+    </controls:AdaptivePanelItem>
+
+    <controls:AdaptivePanelItem
+        Title="Panel 2"
+        IconGlyph="&#xE946;"
+        MinWidth="300"
+        PanelWidth="*">
+        <!-- Content -->
+    </controls:AdaptivePanelItem>
+
+</controls:AdaptivePanel>
+```
+
+### Properties
+
+| Property | Typ | Beschreibung |
+|----------|-----|--------------|
+| `CompactBreakpoint` | double | Breite unter der Compact-Mode aktiviert wird (Standard: 640) |
+| `WideBreakpoint` | double | Breite ueber der Wide-Mode aktiviert wird (Standard: 1024) |
+| `ShowSplitters` | bool | Zeigt Trennlinien zwischen Panels (Standard: true) |
+| `ActivePanelIndex` | int | Aktiver Panel-Index im Compact-Mode |
+| `CurrentMode` | AdaptiveLayoutMode | Aktueller Modus (Compact/Medium/Wide) |
+
+### AdaptivePanelItem Properties
+
+| Property | Typ | Beschreibung |
+|----------|-----|--------------|
+| `Title` | string | Titel fuer Tab-Navigation im Compact-Mode |
+| `IconGlyph` | string | Segoe MDL2 Icon-Glyph (z.B. "&#xE80F;") |
+| `PanelWidth` | string | Breite: "300", "*", "2*", "Auto" |
+| `MinWidth` | double | Minimale Breite (geerbt von ContentControl) |
+| `MaxWidth` | double | Maximale Breite (geerbt von ContentControl) |
+
+### Wichtige Hinweise
+
+1. **PanelWidth statt Width** - `Width` ist bereits von `FrameworkElement` geerbt
+2. **Erbt von ContentControl** - Nicht von `DependencyObject` (WinUI 3 Requirement)
+3. **Keine impliziten Styles** - In ResourceDictionary nicht moeglich
+
+### Layout-Modi
+
+| Modus | Fensterbreite | Verhalten |
+|-------|---------------|-----------|
+| **Compact** | < CompactBreakpoint | Tab-Navigation, ein Panel sichtbar |
+| **Medium** | CompactBreakpoint - WideBreakpoint | Reduzierte Spalten |
+| **Wide** | > WideBreakpoint | Alle Panels nebeneinander |
+
+### Pages mit AdaptivePanel
+
+- `WorkflowsPage` - 3 Panels (Workflows, Actions, Properties)
+- `JourneysPage` - 5 Panels (Journeys, Stations, City Library, Workflow Library, Properties)
+- `TrainsPage` - 4 Panels (Locomotives, Passenger Wagons, Goods Wagons, Properties)
+
+---
+
+**Last Updated:** 2026-01-15  
+**Related:** AdaptivePanel, AdaptivePanelItem
+
+

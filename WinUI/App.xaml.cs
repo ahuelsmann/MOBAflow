@@ -21,6 +21,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
 
 using Moba.SharedUI.Service;
+using Moba.SharedUI.Shell;
 using Moba.TrackPlan.Editor;
 
 using Serilog;
@@ -180,6 +181,9 @@ public partial class App
         });
 
         services.AddSingleton<NavigationService>();
+        services.AddSingleton<INavigationService>(sp => sp.GetRequiredService<NavigationService>());
+        services.AddSingleton<IPageFactory, PageFactory>();
+        services.AddSingleton<IShellService, ShellService>();
         // SnapToConnectService removed - depends on old TrackPlan.Domain architecture
 
         // Sound Services (required by HealthCheckService)
