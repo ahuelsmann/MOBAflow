@@ -1204,80 +1204,77 @@ if (Application.Current.Resources.TryGetValue("MyBrush", out var resource))
 
 ---
 
-## 📐 AdaptivePanel - Responsive Multi-Column Layout
+## 📐 Responsive Layouts - VisualStateManager (Empfohlen)
 
-### Verwendung
+### Warum VisualStateManager statt Custom Controls?
 
-Das `AdaptivePanel` ist ein Custom Control fuer responsive Multi-Column-Layouts in MOBAflow.
+WinUI 3 hat erhebliche Einschraenkungen bei Custom Controls:
+- ContentProperty mit ObservableCollection funktioniert nicht zuverlaessig
+- Implizite Styles fuer Custom Controls crashen
+- DependencyObject-basierte Items werden nicht korrekt geparsed
+
+**Empfehlung:** Verwende den nativen VisualStateManager mit AdaptiveTrigger.
+
+### Beispiel: Responsive Multi-Column Layout
 
 ```xaml
-<controls:AdaptivePanel
-    x:Name="AdaptiveLayout"
-    CompactBreakpoint="640"
-    WideBreakpoint="1024">
+<Grid>
+    <VisualStateManager.VisualStateGroups>
+        <VisualStateGroup>
+            <VisualState x:Name="WideState">
+                <VisualState.StateTriggers>
+                    <AdaptiveTrigger MinWindowWidth="1024" />
+                </VisualState.StateTriggers>
+                <!-- Alle Panels sichtbar (Standardzustand) -->
+            </VisualState>
+            <VisualState x:Name="MediumState">
+                <VisualState.StateTriggers>
+                    <AdaptiveTrigger MinWindowWidth="640" />
+                </VisualState.StateTriggers>
+                <VisualState.Setters>
+                    <Setter Target="LibraryPanel.Visibility" Value="Collapsed" />
+                </VisualState.Setters>
+            </VisualState>
+            <VisualState x:Name="CompactState">
+                <VisualState.StateTriggers>
+                    <AdaptiveTrigger MinWindowWidth="0" />
+                </VisualState.StateTriggers>
+                <VisualState.Setters>
+                    <Setter Target="LibraryPanel.Visibility" Value="Collapsed" />
+                    <Setter Target="PropertiesPanel.Visibility" Value="Collapsed" />
+                </VisualState.Setters>
+            </VisualState>
+        </VisualStateGroup>
+    </VisualStateManager.VisualStateGroups>
 
-    <controls:AdaptivePanelItem
-        Title="Panel 1"
-        IconGlyph="&#xE80F;"
-        MinWidth="200"
-        PanelWidth="300">
-        <!-- Content -->
-    </controls:AdaptivePanelItem>
+    <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="250" MinWidth="200" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition x:Name="LibraryColumn" Width="200" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition x:Name="PropertiesColumn" Width="350" />
+    </Grid.ColumnDefinitions>
 
-    <controls:AdaptivePanelItem
-        Title="Panel 2"
-        IconGlyph="&#xE946;"
-        MinWidth="300"
-        PanelWidth="*">
-        <!-- Content -->
-    </controls:AdaptivePanelItem>
-
-</controls:AdaptivePanel>
+    <!-- Panels hier -->
+</Grid>
 ```
 
-### Properties
+### Vorteile
 
-| Property | Typ | Beschreibung |
-|----------|-----|--------------|
-| `CompactBreakpoint` | double | Breite unter der Compact-Mode aktiviert wird (Standard: 640) |
-| `WideBreakpoint` | double | Breite ueber der Wide-Mode aktiviert wird (Standard: 1024) |
-| `ShowSplitters` | bool | Zeigt Trennlinien zwischen Panels (Standard: true) |
-| `ActivePanelIndex` | int | Aktiver Panel-Index im Compact-Mode |
-| `CurrentMode` | AdaptiveLayoutMode | Aktueller Modus (Compact/Medium/Wide) |
+- ✅ Native WinUI 3-Loesung
+- ✅ Keine Custom Control-Probleme
+- ✅ Bessere Performance
+- ✅ Gut dokumentiert von Microsoft
 
-### AdaptivePanelItem Properties
+### Verfuegbares Behavior
 
-| Property | Typ | Beschreibung |
-|----------|-----|--------------|
-| `Title` | string | Titel fuer Tab-Navigation im Compact-Mode |
-| `IconGlyph` | string | Segoe MDL2 Icon-Glyph (z.B. "&#xE80F;") |
-| `PanelWidth` | string | Breite: "300", "*", "2*", "Auto" |
-| `MinWidth` | double | Minimale Breite (geerbt von ContentControl) |
-| `MaxWidth` | double | Maximale Breite (geerbt von ContentControl) |
-
-### Wichtige Hinweise
-
-1. **PanelWidth statt Width** - `Width` ist bereits von `FrameworkElement` geerbt
-2. **Erbt von ContentControl** - Nicht von `DependencyObject` (WinUI 3 Requirement)
-3. **Keine impliziten Styles** - In ResourceDictionary nicht moeglich
-
-### Layout-Modi
-
-| Modus | Fensterbreite | Verhalten |
-|-------|---------------|-----------|
-| **Compact** | < CompactBreakpoint | Tab-Navigation, ein Panel sichtbar |
-| **Medium** | CompactBreakpoint - WideBreakpoint | Reduzierte Spalten |
-| **Wide** | > WideBreakpoint | Alle Panels nebeneinander |
-
-### Pages mit AdaptivePanel
-
-- `WorkflowsPage` - 3 Panels (Workflows, Actions, Properties)
-- `JourneysPage` - 5 Panels (Journeys, Stations, City Library, Workflow Library, Properties)
-- `TrainsPage` - 4 Panels (Locomotives, Passenger Wagons, Goods Wagons, Properties)
+`WinUI/Behavior/ResponsiveLayoutBehavior.cs` kann fuer programmatische Layout-Anpassungen verwendet werden.
 
 ---
 
 **Last Updated:** 2026-01-15  
-**Related:** AdaptivePanel, AdaptivePanelItem
+**Related:** VisualStateManager, AdaptiveTrigger, ResponsiveLayoutBehavior
 
 

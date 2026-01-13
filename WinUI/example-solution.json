@@ -201,7 +201,7 @@
         }
       ],
       "signalBoxPlan": {
-        "id": "3b46aec1-2a20-4596-9595-1b9f61deb49b",
+        "id": "0cee01a0-7d2f-4f7f-b383-b9669a275b87",
         "name": "MOBAesb",
         "gridWidth": 24,
         "gridHeight": 14,
@@ -223,6 +223,18 @@
             "id": "c2ecf3d9-9212-41f6-b94e-d8f3599bd7d1",
             "symbol": "SwitchSimpleRight",
             "x": 5,
+            "y": 3,
+            "rotation": 0,
+            "name": "",
+            "address": 0,
+            "feedbackAddress": 0,
+            "signalSystem": "Ks",
+            "properties": {}
+          },
+          {
+            "id": "f3167b12-5d50-46b6-aaae-9ca8c52c7447",
+            "symbol": "TrackStraight",
+            "x": 6,
             "y": 3,
             "rotation": 0,
             "name": "",
