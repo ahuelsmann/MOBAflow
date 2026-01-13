@@ -2,9 +2,12 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Microsoft.Extensions.Logging;
+
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 
@@ -109,10 +112,10 @@ public partial class MainWindowViewModel
     {
         // Save to AppSettings (RAM)
         _settings.Counter.TargetLapCount = value;
-        
+
         // Persist to appsettings.json (Disk) - fire and forget
         _settingsService?.SaveSettingsAsync(_settings);
-        
+
         // Update all existing statistics when global target changes
         foreach (var stat in Statistics)
         {
@@ -124,7 +127,7 @@ public partial class MainWindowViewModel
     {
         // Save to AppSettings (RAM)
         _settings.Counter.UseTimerFilter = value;
-        
+
         // Persist to appsettings.json (Disk) - fire and forget
         _settingsService?.SaveSettingsAsync(_settings);
     }
@@ -133,10 +136,10 @@ public partial class MainWindowViewModel
     {
         // Save to AppSettings (RAM)
         _settings.Counter.TimerIntervalSeconds = value;
-        
+
         // ✅ DEBUG: Log to verify this method is called
         Debug.WriteLine($"🔥 OnTimerIntervalSecondsChanged called! Value={value}, SettingsService={(_settingsService != null ? "EXISTS" : "NULL")}");
-        
+
         // Persist to appsettings.json (Disk) - fire and forget
         if (_settingsService != null)
         {
@@ -152,17 +155,24 @@ public partial class MainWindowViewModel
     /// <summary>
     /// Called when SelectedProject changes.
     /// Re-initializes track statistics based on the new project's FeedbackPoints.
+    /// Subscribes to PropertyChanged for auto-save.
     /// </summary>
     partial void OnSelectedProjectChanged(ProjectViewModel? value)
     {
         _ = value; // Suppress unused parameter warning
-        
+
         // ✅ Defer collection update to avoid COMException during WinUI binding callback
         // This ensures the Statistics collection is modified AFTER the property change callback completes
         _uiDispatcher.InvokeOnUi(() =>
         {
             InitializeStatisticsFromFeedbackPoints();
         });
+
+        // Subscribe to PropertyChanged for auto-save
+        if (value != null)
+        {
+            value.PropertyChanged += OnViewModelPropertyChanged;
+        }
     }
 
     #endregion
@@ -206,7 +216,7 @@ public partial class MainWindowViewModel
                 var elapsed = DateTime.Now - lastTime;
                 if (elapsed.TotalSeconds < TimerIntervalSeconds)
                 {
-                    _logger.LogDebug("InPort {InPort}: Ignored (timer filter: {Elapsed:F1}s < {Threshold}s)", 
+                    _logger.LogDebug("InPort {InPort}: Ignored (timer filter: {Elapsed:F1}s < {Threshold}s)",
                         inPort, elapsed.TotalSeconds, TimerIntervalSeconds);
                     return;
                 }
@@ -226,7 +236,7 @@ public partial class MainWindowViewModel
         stat.Count++;
         stat.LastFeedbackTime = DateTime.Now;
 
-        _logger.LogInformation("InPort {InPort}: Lap {Count}/{Target} | Lap time: {LapTime}", 
+        _logger.LogInformation("InPort {InPort}: Lap {Count}/{Target} | Lap time: {LapTime}",
             inPort, stat.Count, stat.TargetLapCount, stat.LastLapTimeFormatted);
     }
 
@@ -240,4 +250,3 @@ public partial class MainWindowViewModel
 
     #endregion
 }
-

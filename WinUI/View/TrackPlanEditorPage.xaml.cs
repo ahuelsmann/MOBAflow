@@ -17,6 +17,7 @@ using Moba.TrackPlan.TrackSystem;
 using Moba.WinUI.Rendering;
 
 using System.Collections.ObjectModel;
+using System.Globalization;
 
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
@@ -37,8 +38,6 @@ public sealed partial class TrackPlanEditorPage : Page
 
     private bool _isPanning;
     private Point _panStart;
-    private double _panStartH;
-    private double _panStartV;
 
     // Click tracking for double/triple click detection
     private DateTime _lastClickTime;
@@ -482,16 +481,6 @@ public sealed partial class TrackPlanEditorPage : Page
 
         CoordinatesText.Text = $"X: {pos.X:F0}  Y: {pos.Y:F0}";
 
-        if (_isPanning)
-        {
-            CanvasScrollViewer.ChangeView(
-                _panStartH + (_panStart.X - pos.X),
-                _panStartV + (_panStart.Y - pos.Y),
-                null,
-                disableAnimation: true);
-            return;
-        }
-
         // Handle rotation drag
         if (_isRotatingGroup)
         {
@@ -537,13 +526,6 @@ public sealed partial class TrackPlanEditorPage : Page
 
     private void GraphCanvas_PointerReleased(object sender, PointerRoutedEventArgs e)
     {
-        if (_isPanning)
-        {
-            _isPanning = false;
-            GraphCanvas.ReleasePointerCaptures();
-            return;
-        }
-
         // Handle rotation completion
         if (_isRotatingGroup)
         {
@@ -863,9 +845,9 @@ public sealed partial class TrackPlanEditorPage : Page
         if (hex.Length == 6)
         {
             return Color.FromArgb(255,
-                byte.Parse(hex[..2], System.Globalization.NumberStyles.HexNumber),
-                byte.Parse(hex[2..4], System.Globalization.NumberStyles.HexNumber),
-                byte.Parse(hex[4..6], System.Globalization.NumberStyles.HexNumber));
+                byte.Parse(hex[..2], NumberStyles.HexNumber),
+                byte.Parse(hex[2..4], NumberStyles.HexNumber),
+                byte.Parse(hex[4..6], NumberStyles.HexNumber));
         }
         return Colors.Gray;
     }
@@ -1200,7 +1182,7 @@ public sealed partial class TrackPlanEditorPage : Page
                                     {
                                         Width = maxX - minX,
                                         Height = maxY - minY,
-                                        Stroke = new SolidColorBrush(Microsoft.UI.Colors.LimeGreen),
+                                        Stroke = new SolidColorBrush(Colors.LimeGreen),
                                         StrokeThickness = 2,
                                         StrokeDashArray = new DoubleCollection { 5, 3 },
                                         Fill = null
@@ -1218,8 +1200,8 @@ public sealed partial class TrackPlanEditorPage : Page
                                     {
                                         Width = 12,
                                         Height = 12,
-                                        Fill = new SolidColorBrush(Microsoft.UI.Colors.LimeGreen),
-                                        Stroke = new SolidColorBrush(Microsoft.UI.Colors.White),
+                                        Fill = new SolidColorBrush(Colors.LimeGreen),
+                                        Stroke = new SolidColorBrush(Colors.White),
                                         StrokeThickness = 2
                                     };
 
@@ -1234,7 +1216,7 @@ public sealed partial class TrackPlanEditorPage : Page
                                         Y1 = handleY,
                                         X2 = handleX,
                                         Y2 = minY,
-                                        Stroke = new SolidColorBrush(Microsoft.UI.Colors.LimeGreen),
+                                        Stroke = new SolidColorBrush(Colors.LimeGreen),
                                         StrokeThickness = 1
                                     };
                                     GraphCanvas.Children.Add(handleLine);

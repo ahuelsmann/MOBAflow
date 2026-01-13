@@ -16,16 +16,16 @@ public class SettingsService : ISettingsService
     private readonly AppSettings _settings;
     private readonly string _settingsFilePath;
     private readonly SemaphoreSlim _saveLock = new(1, 1);
-    private readonly Timer _debounceTimer;
     private readonly ILogger<SettingsService> _logger;
-    private bool _hasPendingSave;
 
     public SettingsService(AppSettings settings, ILogger<SettingsService> logger)
     {
         _settings = settings;
         _logger = logger;
         _settingsFilePath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
-        _debounceTimer = new Timer(OnDebounceElapsed, null, Timeout.Infinite, Timeout.Infinite);
+        
+        // Ensure FeatureToggles is initialized
+        _settings.FeatureToggles ??= new FeatureToggleSettings();
         
         // ✅ Load settings synchronously to avoid deadlock
         // WinUI 3 Desktop apps cannot use async in DI constructors
@@ -66,6 +66,12 @@ public class SettingsService : ISettingsService
                         _settings.TrainControl.Presets = loadedSettings.TrainControl.Presets;
                     }
 
+                    // FeatureToggles (if present in loaded settings)
+                    if (loadedSettings.FeatureToggles != null)
+                    {
+                        _settings.FeatureToggles = loadedSettings.FeatureToggles;
+                    }
+
                     _logger.LogInformation("WinUI settings loaded from {SettingsFilePath}", _settingsFilePath);
                 }
             }
@@ -103,28 +109,34 @@ public class SettingsService : ISettingsService
                     _settings.Application.AutoStartWebApp = loadedSettings.Application.AutoStartWebApp;
                     _settings.Z21.CurrentIpAddress = loadedSettings.Z21.CurrentIpAddress;
                     _settings.Z21.DefaultPort = loadedSettings.Z21.DefaultPort;
-                            _settings.Counter.CountOfFeedbackPoints = loadedSettings.Counter.CountOfFeedbackPoints;
-                            _settings.Counter.TargetLapCount = loadedSettings.Counter.TargetLapCount;
-                            _settings.Counter.UseTimerFilter = loadedSettings.Counter.UseTimerFilter;
-                            _settings.Counter.TimerIntervalSeconds = loadedSettings.Counter.TimerIntervalSeconds;
+                    _settings.Counter.CountOfFeedbackPoints = loadedSettings.Counter.CountOfFeedbackPoints;
+                    _settings.Counter.TargetLapCount = loadedSettings.Counter.TargetLapCount;
+                    _settings.Counter.UseTimerFilter = loadedSettings.Counter.UseTimerFilter;
+                    _settings.Counter.TimerIntervalSeconds = loadedSettings.Counter.TimerIntervalSeconds;
 
-                            // TrainControl settings (locomotive presets)
-                            _settings.TrainControl.SelectedPresetIndex = loadedSettings.TrainControl.SelectedPresetIndex;
-                            _settings.TrainControl.SpeedRampStepSize = loadedSettings.TrainControl.SpeedRampStepSize;
-                            _settings.TrainControl.SpeedRampIntervalMs = loadedSettings.TrainControl.SpeedRampIntervalMs;
-                            if (loadedSettings.TrainControl.Presets.Count >= 3)
-                            {
-                                _settings.TrainControl.Presets = loadedSettings.TrainControl.Presets;
-                            }
-
-                            _logger.LogInformation("WinUI settings loaded from {SettingsFilePath}", _settingsFilePath);
-                        }
-
-                    }
-                    else
+                    // TrainControl settings (locomotive presets)
+                    _settings.TrainControl.SelectedPresetIndex = loadedSettings.TrainControl.SelectedPresetIndex;
+                    _settings.TrainControl.SpeedRampStepSize = loadedSettings.TrainControl.SpeedRampStepSize;
+                    _settings.TrainControl.SpeedRampIntervalMs = loadedSettings.TrainControl.SpeedRampIntervalMs;
+                    if (loadedSettings.TrainControl.Presets.Count >= 3)
                     {
-                        _logger.LogInformation("No settings file found at {SettingsFilePath}, using defaults", _settingsFilePath);
+                        _settings.TrainControl.Presets = loadedSettings.TrainControl.Presets;
                     }
+
+                    // FeatureToggles (if present in loaded settings)
+                    if (loadedSettings.FeatureToggles != null)
+                    {
+                        _settings.FeatureToggles = loadedSettings.FeatureToggles;
+                    }
+
+                    _logger.LogInformation("WinUI settings loaded from {SettingsFilePath}", _settingsFilePath);
+                }
+
+            }
+            else
+            {
+                _logger.LogInformation("No settings file found at {SettingsFilePath}, using defaults", _settingsFilePath);
+            }
         }
         catch (Exception ex)
         {
@@ -141,23 +153,10 @@ public class SettingsService : ISettingsService
     }
 
     /// <summary>
-    /// Saves settings to appsettings.json file with debouncing (500ms delay).
-    /// Multiple rapid calls are batched into a single write operation.
+    /// Saves settings to appsettings.json file immediately.
     /// </summary>
-    public Task SaveSettingsAsync(AppSettings settings)
+    public async Task SaveSettingsAsync(AppSettings settings)
     {
-        _hasPendingSave = true;
-        _debounceTimer.Change(500, Timeout.Infinite); // 500ms debounce
-        return Task.CompletedTask;
-    }
-
-    private async void OnDebounceElapsed(object? state)
-    {
-        if (!_hasPendingSave)
-            return;
-
-        _hasPendingSave = false;
-
         await _saveLock.WaitAsync();
         try
         {

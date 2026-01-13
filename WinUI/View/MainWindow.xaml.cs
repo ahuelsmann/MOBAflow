@@ -8,7 +8,6 @@ using Microsoft.UI.Xaml.Controls;
 using Service;
 
 using SharedUI.Interface;
-using SharedUI.ViewModel;
 
 using System;
 using System.ComponentModel;

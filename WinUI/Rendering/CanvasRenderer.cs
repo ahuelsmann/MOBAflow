@@ -2,12 +2,14 @@
 
 namespace Moba.WinUI.Rendering;
 
+using Microsoft.UI;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 
 using Moba.TrackPlan.Editor.ViewModel;
 using Moba.TrackPlan.TrackSystem;
 
+using System.Globalization;
 using Windows.UI;
 
 /// <summary>
@@ -37,7 +39,7 @@ public sealed class CanvasRenderer
     {
         foreach (var edge in viewModel.Graph.Edges)
         {
-            if (!viewModel.Positions.TryGetValue(edge.Id, out var pos))
+            if (!viewModel.Positions.TryGetValue(edge.Id, out _))
                 continue;
 
             var primitives = viewModel.RenderEdge(edge.Id);
@@ -79,10 +81,10 @@ public sealed class CanvasRenderer
         if (hex.Length == 6)
         {
             return Color.FromArgb(255,
-                byte.Parse(hex[..2], System.Globalization.NumberStyles.HexNumber),
-                byte.Parse(hex[2..4], System.Globalization.NumberStyles.HexNumber),
-                byte.Parse(hex[4..6], System.Globalization.NumberStyles.HexNumber));
+                byte.Parse(hex[..2], NumberStyles.HexNumber),
+                byte.Parse(hex[2..4], NumberStyles.HexNumber),
+                byte.Parse(hex[4..6], NumberStyles.HexNumber));
         }
-        return Microsoft.UI.Colors.Gray;
+        return Colors.Gray;
     }
 }

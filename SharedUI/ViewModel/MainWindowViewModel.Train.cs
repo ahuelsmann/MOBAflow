@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -31,19 +31,19 @@ public partial class MainWindowViewModel
 
     /// <summary>
     /// Search text for filtering locomotives.
-    /// </summary>
+    /// </summary]
     [ObservableProperty]
     private string locomotiveSearchText = string.Empty;
 
     /// <summary>
     /// Search text for filtering passenger wagons.
-    /// </summary>
+    /// </summary]
     [ObservableProperty]
     private string passengerWagonSearchText = string.Empty;
 
     /// <summary>
     /// Search text for filtering goods wagons.
-    /// </summary>
+    /// </summary]
     [ObservableProperty]
     private string goodsWagonSearchText = string.Empty;
 
@@ -52,6 +52,12 @@ public partial class MainWindowViewModel
         TrainsPageSelectedObject = value;
         AttachLocomotivePhotoCommand(value);
         DeleteLocomotiveCommand.NotifyCanExecuteChanged();
+        
+        // Subscribe to PropertyChanged for auto-save
+        if (value != null)
+        {
+            value.PropertyChanged += OnViewModelPropertyChanged;
+        }
     }
 
     partial void OnSelectedPassengerWagonChanged(PassengerWagonViewModel? value)
@@ -59,6 +65,12 @@ public partial class MainWindowViewModel
         TrainsPageSelectedObject = value;
         AttachWagonPhotoCommand(value);
         DeletePassengerWagonCommand.NotifyCanExecuteChanged();
+        
+        // Subscribe to PropertyChanged for auto-save
+        if (value != null)
+        {
+            value.PropertyChanged += OnViewModelPropertyChanged;
+        }
     }
 
     partial void OnSelectedGoodsWagonChanged(GoodsWagonViewModel? value)
@@ -66,6 +78,12 @@ public partial class MainWindowViewModel
         TrainsPageSelectedObject = value;
         AttachWagonPhotoCommand(value);
         DeleteGoodsWagonCommand.NotifyCanExecuteChanged();
+        
+        // Subscribe to PropertyChanged for auto-save
+        if (value != null)
+        {
+            value.PropertyChanged += OnViewModelPropertyChanged;
+        }
     }
 
     private void AttachWagonPhotoCommand(WagonViewModel? wagonVm)
@@ -82,7 +100,6 @@ public partial class MainWindowViewModel
             if (saved != null)
             {
                 wagonVm.PhotoPath = saved;
-                HasUnsavedChanges = true;
                 _logger.LogInformation("Photo saved for wagon: {Name}", wagonVm.Name);
             }
         });
@@ -90,7 +107,6 @@ public partial class MainWindowViewModel
         wagonVm.DeletePhotoCommand = new RelayCommand(() =>
         {
             wagonVm.PhotoPath = null;
-            HasUnsavedChanges = true;
             _logger.LogInformation("Photo deleted for wagon: {Name}", wagonVm.Name);
         });
 
@@ -131,7 +147,6 @@ public partial class MainWindowViewModel
             if (saved != null)
             {
                 locoVm.PhotoPath = saved;
-                HasUnsavedChanges = true;
                 _logger.LogInformation("Photo saved for locomotive: {Name}", locoVm.Name);
             }
         });
@@ -139,7 +154,6 @@ public partial class MainWindowViewModel
         locoVm.DeletePhotoCommand = new RelayCommand(() =>
         {
             locoVm.PhotoPath = null;
-            HasUnsavedChanges = true;
             _logger.LogInformation("Photo deleted for locomotive: {Name}", locoVm.Name);
         });
 
@@ -185,7 +199,6 @@ public partial class MainWindowViewModel
         SelectedProject.Model.Locomotives.Add(locomotive);
         SelectedLocomotive = new LocomotiveViewModel(locomotive);
         AttachLocomotivePhotoCommand(SelectedLocomotive);
-        HasUnsavedChanges = true;
 
         _logger.LogInformation("Added new locomotive: {Name}", locomotive.Name);
     }
@@ -199,7 +212,6 @@ public partial class MainWindowViewModel
         var locomotiveName = SelectedLocomotive.Name;
         SelectedProject.Model.Locomotives.Remove(SelectedLocomotive.Model);
         SelectedLocomotive = null;
-        HasUnsavedChanges = true;
 
         _logger.LogInformation("Deleted locomotive: {Name}", locomotiveName);
     }
@@ -225,7 +237,6 @@ public partial class MainWindowViewModel
         SelectedProject.Model.PassengerWagons.Add(wagon);
         SelectedPassengerWagon = new PassengerWagonViewModel(wagon);
         AttachWagonPhotoCommand(SelectedPassengerWagon);
-        HasUnsavedChanges = true;
 
         _logger.LogInformation("Added new passenger wagon: {Name}", wagon.Name);
     }
@@ -239,7 +250,6 @@ public partial class MainWindowViewModel
         var wagonName = SelectedPassengerWagon.Name;
         SelectedProject.Model.PassengerWagons.Remove((PassengerWagon)SelectedPassengerWagon.Model);
         SelectedPassengerWagon = null;
-        HasUnsavedChanges = true;
 
         _logger.LogInformation("Deleted passenger wagon: {Name}", wagonName);
     }
@@ -265,7 +275,6 @@ public partial class MainWindowViewModel
         SelectedProject.Model.GoodsWagons.Add(wagon);
         SelectedGoodsWagon = new GoodsWagonViewModel(wagon);
         AttachWagonPhotoCommand(SelectedGoodsWagon);
-        HasUnsavedChanges = true;
 
         _logger.LogInformation("Added new goods wagon: {Name}", wagon.Name);
     }
@@ -279,7 +288,6 @@ public partial class MainWindowViewModel
         var wagonName = SelectedGoodsWagon.Name;
         SelectedProject.Model.GoodsWagons.Remove((GoodsWagon)SelectedGoodsWagon.Model);
         SelectedGoodsWagon = null;
-        HasUnsavedChanges = true;
 
         _logger.LogInformation("Deleted goods wagon: {Name}", wagonName);
     }
@@ -301,7 +309,6 @@ public partial class MainWindowViewModel
         if (savedPath != null)
         {
             SelectedLocomotive.PhotoPath = savedPath;
-            HasUnsavedChanges = true;
             _logger.LogInformation("Photo saved for locomotive: {Name}", SelectedLocomotive.Name);
         }
     }
@@ -321,7 +328,6 @@ public partial class MainWindowViewModel
         if (savedPath != null)
         {
             SelectedPassengerWagon.PhotoPath = savedPath;
-            HasUnsavedChanges = true;
             _logger.LogInformation("Photo saved for passenger wagon: {Name}", SelectedPassengerWagon.Name);
         }
     }
@@ -341,7 +347,6 @@ public partial class MainWindowViewModel
         if (savedPath != null)
         {
             SelectedGoodsWagon.PhotoPath = savedPath;
-            HasUnsavedChanges = true;
             _logger.LogInformation("Photo saved for goods wagon: {Name}", SelectedGoodsWagon.Name);
         }
     }
@@ -359,7 +364,6 @@ public partial class MainWindowViewModel
             if (saved != null)
             {
                 SelectedPassengerWagon.PhotoPath = saved;
-                HasUnsavedChanges = true;
                 _logger.LogInformation("Photo saved for passenger wagon: {Name}", SelectedPassengerWagon.Name);
             }
             return;
@@ -373,7 +377,6 @@ public partial class MainWindowViewModel
             if (saved != null)
             {
                 SelectedGoodsWagon.PhotoPath = saved;
-                HasUnsavedChanges = true;
                 _logger.LogInformation("Photo saved for goods wagon: {Name}", SelectedGoodsWagon.Name);
             }
         }
@@ -443,7 +446,6 @@ public partial class MainWindowViewModel
                     Debug.WriteLine($"✅ Photo path valid, setting on ViewModel...");
                     // ✅ Set via ViewModel property to trigger INotifyPropertyChanged!
                     SelectedLocomotive.PhotoPath = newPhotoPath;
-                    HasUnsavedChanges = true;
                     Debug.WriteLine($"✅ Photo assigned to locomotive: {SelectedLocomotive.Name} → {newPhotoPath}");
                     _logger.LogInformation("✅ Photo assigned to locomotive: {Name} → {Path}", SelectedLocomotive.Name, newPhotoPath);
                 }
@@ -462,7 +464,6 @@ public partial class MainWindowViewModel
                 {
                     // ✅ Set via ViewModel property to trigger INotifyPropertyChanged!
                     SelectedPassengerWagon.PhotoPath = newPhotoPath;
-                    HasUnsavedChanges = true;
                     _logger.LogInformation("✅ Photo assigned to passenger wagon: {Name} → {Path}", SelectedPassengerWagon.Name, newPhotoPath);
                 }
                 else
@@ -479,7 +480,6 @@ public partial class MainWindowViewModel
                 {
                     // ✅ Set via ViewModel property to trigger INotifyPropertyChanged!
                     SelectedGoodsWagon.PhotoPath = newPhotoPath;
-                    HasUnsavedChanges = true;
                     _logger.LogInformation("✅ Photo assigned to goods wagon: {Name} → {Path}", SelectedGoodsWagon.Name, newPhotoPath);
                 }
                 else

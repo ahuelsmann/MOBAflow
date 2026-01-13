@@ -1,4 +1,4 @@
-﻿<Page
+<Page
     x:Class="Moba.WinUI.View.SettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -443,9 +443,15 @@
                         FontWeight="SemiBold"
                         Style="{StaticResource BodyStrongTextBlockStyle}"
                         Text="Core Features" />
-                    <CheckBox Content="Overview Page" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsOverviewPageAvailable, Mode=TwoWay}" />
-                    <CheckBox Content="Solution Page" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsSolutionPageAvailable, Mode=TwoWay}" />
-                    <CheckBox Content="Settings Page" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsSettingsPageAvailable, Mode=TwoWay}" />
+                    <CheckBox 
+                        Content="Overview Page" 
+                        IsChecked="{x:Bind ViewModel.IsOverviewPageAvailableSetting, Mode=TwoWay}" />
+                    <CheckBox 
+                        Content="Solution Page" 
+                        IsChecked="{x:Bind ViewModel.IsSolutionPageAvailableSetting, Mode=TwoWay}" />
+                    <CheckBox 
+                        Content="Settings Page" 
+                        IsChecked="{x:Bind ViewModel.IsSettingsPageAvailableSetting, Mode=TwoWay}" />
 
                     <!--  Journey Management  -->
                     <TextBlock
@@ -453,8 +459,12 @@
                         FontWeight="SemiBold"
                         Style="{StaticResource BodyStrongTextBlockStyle}"
                         Text="Journey Management" />
-                    <CheckBox Content="Journeys Page" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsJourneysPageAvailable, Mode=TwoWay}" />
-                    <CheckBox Content="Workflows Page" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsWorkflowsPageAvailable, Mode=TwoWay}" />
+                    <CheckBox 
+                        Content="Journeys Page" 
+                        IsChecked="{x:Bind ViewModel.IsJourneysPageAvailableSetting, Mode=TwoWay}" />
+                    <CheckBox 
+                        Content="Workflows Page" 
+                        IsChecked="{x:Bind ViewModel.IsWorkflowsPageAvailableSetting, Mode=TwoWay}" />
 
                     <!--  Track Management (Experimental)  -->
                     <TextBlock
@@ -463,13 +473,17 @@
                         Style="{StaticResource BodyStrongTextBlockStyle}"
                         Text="Track Management (Experimental)" />
 
-                    <CheckBox Content="{x:Bind ViewModel.TrackPlanEditorCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsTrackPlanEditorPageAvailable, Mode=TwoWay}">
+                    <CheckBox 
+                        Content="{x:Bind ViewModel.TrackPlanEditorCheckBoxContent, Mode=OneWay}" 
+                        IsChecked="{x:Bind ViewModel.IsTrackPlanEditorPageAvailableSetting, Mode=TwoWay}">
                         <ToolTipService.ToolTip>
                             <TextBlock Text="Visual track layout designer (experimental)" />
                         </ToolTipService.ToolTip>
                     </CheckBox>
 
-                    <CheckBox Content="{x:Bind ViewModel.JourneyMapCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsJourneyMapPageAvailable, Mode=TwoWay}">
+                    <CheckBox 
+                        Content="{x:Bind ViewModel.JourneyMapCheckBoxContent, Mode=OneWay}" 
+                        IsChecked="{x:Bind ViewModel.IsJourneyMapPageAvailableSetting, Mode=TwoWay}">
                         <ToolTipService.ToolTip>
                             <TextBlock Text="Journey visualization map (experimental)" />
                         </ToolTipService.ToolTip>
@@ -482,11 +496,14 @@
                         Style="{StaticResource BodyStrongTextBlockStyle}"
                         Text="Monitoring &amp; Debugging" />
 
-                    <CheckBox Content="{x:Bind ViewModel.MonitorCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.Settings.FeatureToggles.IsMonitorPageAvailable, Mode=TwoWay}">
+                    <CheckBox 
+                        Content="{x:Bind ViewModel.MonitorCheckBoxContent, Mode=OneWay}" 
+                        IsChecked="{x:Bind ViewModel.IsMonitorPageAvailableSetting, Mode=TwoWay}">
                         <ToolTipService.ToolTip>
                             <TextBlock Text="Z21 traffic monitor and diagnostics" />
                         </ToolTipService.ToolTip>
                     </CheckBox>
+
                 </StackPanel>
             </Expander>
 
@@ -497,19 +514,15 @@
                 Orientation="Horizontal"
                 Spacing="12">
                 <Button Command="{x:Bind ViewModel.ResetToDefaultsCommand}" Content="Reset to Defaults" />
-                <Button
-                    Command="{x:Bind ViewModel.SaveSettingsCommand}"
-                    Content="Save Settings"
-                    Style="{StaticResource AccentButtonStyle}" />
             </StackPanel>
 
-            <!--  Status Bar  -->
+            <!--  Status Messages  -->
             <InfoBar
                 Title="Settings Saved"
                 Margin="0,16,0,0"
                 IsClosable="True"
                 IsOpen="{x:Bind ViewModel.ShowSuccessMessage, Mode=OneWay}"
-                Message="Your settings have been saved successfully."
+                Message="Your settings have been saved automatically."
                 Severity="Success" />
 
             <InfoBar

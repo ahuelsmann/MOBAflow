@@ -2,8 +2,11 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
+
 using Service;
+
 using System.Diagnostics;
 
 /// <summary>
@@ -56,6 +59,14 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanSaveSolution))]
     private async Task SaveSolutionAsync()
     {
+        await SaveSolutionInternalAsync();
+    }
+
+    /// <summary>
+    /// Internal save method that can be called directly for auto-save.
+    /// </summary>
+    public async Task SaveSolutionInternalAsync()
+    {
         // Skip if IoService not available (WebApp/MAUI)
         if (_ioService is NullIoService)
         {
@@ -86,7 +97,6 @@ public partial class MainWindowViewModel
             _uiDispatcher.InvokeOnUi(() =>
             {
                 CurrentSolutionPath = path;
-                HasUnsavedChanges = false;  // Clear the unsaved changes flag after successful save
             });
             Debug.WriteLine($"✅ Solution saved to {path}");
         }
@@ -122,7 +132,6 @@ public partial class MainWindowViewModel
         SolutionViewModel?.Refresh();
 
         CurrentSolutionPath = null;
-        HasUnsavedChanges = false;  // New solution starts as "clean"
 
         // ✅ Clear all selections to reset property panels across all pages
         ClearAllSelections();
@@ -205,7 +214,6 @@ public partial class MainWindowViewModel
 
         CurrentSolutionPath = path;
         HasSolution = Solution.Projects.Count > 0;
-        HasUnsavedChanges = false;  // Just loaded, so no unsaved changes
 
         // Re-initialize JourneyManager with the loaded project
         // This is critical because the initial JourneyManager was created with an empty project
@@ -213,7 +221,7 @@ public partial class MainWindowViewModel
         {
             InitializeJourneyManager(Solution.Projects[0]);
             Debug.WriteLine($"✅ JourneyManager initialized after loading solution with {Solution.Projects[0].Journeys.Count} journeys");
-            
+
             // Auto-select first project after loading
             SelectedProject = SolutionViewModel?.Projects.FirstOrDefault();
             if (SelectedProject != null)
@@ -251,23 +259,23 @@ public partial class MainWindowViewModel
         // Solution Page
         SelectedProject = null;
         SolutionPageSelectedObject = null;
-        
+
         // Journeys Page
         SelectedJourney = null;
         SelectedStation = null;
         JourneysPageSelectedObject = null;
-        
+
         // Workflows Page
         SelectedWorkflow = null;
         SelectedAction = null;
         WorkflowsPageSelectedObject = null;
-        
+
         // Trains Page
         SelectedLocomotive = null;
         SelectedPassengerWagon = null;
         SelectedGoodsWagon = null;
         TrainsPageSelectedObject = null;
-        
+
         // General
         CurrentSelectedObject = null;
     }
@@ -284,4 +292,3 @@ public partial class MainWindowViewModel
     }
     #endregion
 }
-

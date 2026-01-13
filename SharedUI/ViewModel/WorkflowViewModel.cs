@@ -157,9 +157,11 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
     /// <summary>
     /// Updates the Number property of all actions to reflect their current order.
     /// Call this after reordering actions via drag &amp; drop.
+    /// Synchronizes the ObservableCollection order back to Model.Actions list.
     /// </summary>
     public void UpdateActionNumbers()
     {
+        // Update Number property on ViewModels
         for (int i = 0; i < Actions.Count; i++)
         {
             if (Actions[i] is WorkflowActionViewModel actionVM)
@@ -167,6 +169,16 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
                 actionVM.Number = (uint)(i + 1);
             }
         }
+
+        // Synchronize order back to Model.Actions list
+        _model.Actions.Clear();
+        foreach (var actionVM in Actions.OfType<WorkflowActionViewModel>())
+        {
+            _model.Actions.Add(actionVM.ToWorkflowAction());
+        }
+
+        // Trigger PropertyChanged to notify MainWindowViewModel for auto-save
+        OnPropertyChanged(nameof(Actions));
     }
 
     public Task StartAsync(Journey journey, Station station)

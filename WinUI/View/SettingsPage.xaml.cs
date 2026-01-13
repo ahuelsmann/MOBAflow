@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
 using SharedUI.ViewModel;
@@ -8,6 +8,7 @@ using Windows.ApplicationModel.DataTransfer;
 /// <summary>
 /// Settings page for application-wide configuration.
 /// Uses MainWindowViewModel.Settings for data binding.
+/// Settings are auto-saved immediately after changes.
 /// </summary>
 public sealed partial class SettingsPage
 {

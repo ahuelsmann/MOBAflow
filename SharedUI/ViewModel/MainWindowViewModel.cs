@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using Action;
 using Backend.Interface;
 using Backend.Manager;
 using Backend.Service;
@@ -140,12 +141,6 @@ public partial class MainWindowViewModel : ObservableObject
     private bool isDarkMode = true;  // Dark theme is default for WinUI
 
     /// <summary>
-    /// Indicates whether the current solution has unsaved changes.
-    /// </summary>
-    [ObservableProperty]
-    private bool hasUnsavedChanges;
-
-    /// <summary>
     /// Indicates whether a solution with projects is currently loaded.
     /// </summary>
     [ObservableProperty]
@@ -191,14 +186,69 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private StationViewModel? selectedStation;
 
+    /// <summary>
+    /// Called when SelectedStation changes. Subscribes to PropertyChanged for auto-save.
+    /// </summary>
+    partial void OnSelectedStationChanged(StationViewModel? value)
+    {
+        if (value != null)
+        {
+            value.PropertyChanged += OnViewModelPropertyChanged;
+        }
+    }
+
     [ObservableProperty]
     private WorkflowViewModel? selectedWorkflow;
+
+    /// <summary>
+    /// Called when SelectedWorkflow changes. Subscribes to PropertyChanged for auto-save.
+    /// Also subscribes to all Actions for property changes.
+    /// </summary>
+    partial void OnSelectedWorkflowChanged(WorkflowViewModel? value)
+    {
+        if (value != null)
+        {
+            value.PropertyChanged += OnViewModelPropertyChanged;
+
+            // Subscribe to all Actions for property changes
+            foreach (var action in value.Actions.OfType<WorkflowActionViewModel>())
+            {
+                action.PropertyChanged += OnViewModelPropertyChanged;
+            }
+        }
+    }
 
     [ObservableProperty]
     private object? selectedAction;
 
     [ObservableProperty]
     private TrainViewModel? selectedTrain;
+
+    /// <summary>
+    /// Called when SelectedTrain changes. Subscribes to PropertyChanged for auto-save.
+    /// </summary>
+    partial void OnSelectedTrainChanged(TrainViewModel? value)
+    {
+        if (value != null)
+        {
+            value.PropertyChanged += OnViewModelPropertyChanged;
+        }
+    }
+
+    /// <summary>
+    /// Generic handler for ViewModel PropertyChanged events.
+    /// Triggers auto-save for any model property change.
+    /// </summary>
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        // Ignore certain properties that don't affect the model
+        var ignoredProperties = new[] { "IsSelected", "IsExpanded", "IsHighlighted" };
+        
+        if (!ignoredProperties.Contains(e.PropertyName))
+        {
+            _ = SaveSolutionInternalAsync();
+        }
+    }
 
     /// <summary>
     /// The currently selected object to display in the properties panel.
@@ -355,7 +405,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     /// <summary>
     /// Handles changes to the selected object on JourneysPage.
-    /// Subscribes to ModelChanged events of journeys to track unsaved changes.
+    /// Subscribes to ModelChanged events of journeys to auto-save immediately.
     /// </summary>
     partial void OnJourneysPageSelectedObjectChanged(object? value)
     {
@@ -371,10 +421,10 @@ public partial class MainWindowViewModel : ObservableObject
         {
             _currentJourneyWithModelChangedSubscription = journeyVM;
 
-            // Create handler that marks solution as having unsaved changes
+            // Auto-save solution immediately when journey model changes
             _journeyModelChangedHandler = (_, _) =>
             {
-                HasUnsavedChanges = true;  // Mark as unsaved, but don't auto-save
+                _ = SaveSolutionInternalAsync();
             };
 
             journeyVM.ModelChanged += _journeyModelChangedHandler;
@@ -439,19 +489,8 @@ public partial class MainWindowViewModel : ObservableObject
     #region Lifecycle
     public void OnWindowClosing()
     {
-        // Auto-save solution if there are unsaved changes
-        if (HasUnsavedChanges && SaveSolutionCommand.CanExecute(null))
-        {
-            Debug.WriteLine("💾 Auto-saving solution on window close...");
-            _ = SaveSolutionCommand.ExecuteAsync(null);
-        }
-
-        // Auto-save settings (Z21 IP, Counter settings, etc.)
-        if (_settingsService != null && SaveSettingsCommand.CanExecute(null))
-        {
-            Debug.WriteLine("💾 Auto-saving settings on window close...");
-            _ = SaveSettingsCommand.ExecuteAsync(null);
-        }
+        // Settings and Solution changes are now auto-saved immediately via PropertyChanged subscriptions
+        // No need for conditional save on window close
 
         // Stop Z21 auto-connect retry timer
         if (_z21AutoConnectTimer != null)

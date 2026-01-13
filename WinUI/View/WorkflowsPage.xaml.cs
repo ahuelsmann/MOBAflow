@@ -6,7 +6,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 
 using SharedUI.ViewModel;
-using SharedUI.ViewModel.Action;
 
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
@@ -54,26 +53,23 @@ public sealed partial class WorkflowsPage
         }
     }
 
-        private void ActionListView_Drop(object sender, DragEventArgs e)
-        {
-            _ = e;
-            if (ViewModel.SelectedWorkflow == null) return;
+    private void ActionListView_Drop(object sender, DragEventArgs e)
+    {
+        _ = e;
+        if (ViewModel.SelectedWorkflow == null) return;
 
-            // ListView CanReorderItems="True" handles reordering automatically
-            // We just need to update the Number property to reflect the new order
-            ViewModel.SelectedWorkflow.UpdateActionNumbers();
-
-            // Mark solution as unsaved after reordering actions
-            ViewModel.HasUnsavedChanges = true;
-        }
-
-        private void ActionListView_KeyDown(object sender, KeyRoutedEventArgs e)
-        {
-            if (e.Key == VirtualKey.Delete && ViewModel.DeleteActionCommand.CanExecute(null))
-            {
-                ViewModel.DeleteActionCommand.Execute(null);
-                e.Handled = true;
-            }
-        }
-        #endregion
+        // ListView CanReorderItems="True" handles reordering automatically
+        // We just need to update the Number property to reflect the new order
+        ViewModel.SelectedWorkflow.UpdateActionNumbers();
     }
+
+    private void ActionListView_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == VirtualKey.Delete && ViewModel.DeleteActionCommand.CanExecute(null))
+        {
+            ViewModel.DeleteActionCommand.Execute(null);
+            e.Handled = true;
+        }
+    }
+    #endregion
+}

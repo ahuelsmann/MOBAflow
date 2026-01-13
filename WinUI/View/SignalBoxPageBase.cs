@@ -583,6 +583,9 @@ public abstract class SignalBoxPageBase : Page
                         Canvas.SetLeft(visual, gridX * GridCellSize);
                         Canvas.SetTop(visual, gridY * GridCellSize);
                     }
+
+                    // Trigger auto-save after element position change
+                    _ = ViewModel.SaveSolutionInternalAsync();
                 }
             }
             return;
@@ -609,6 +612,9 @@ public abstract class SignalBoxPageBase : Page
             Canvas.SetTop(visual, gridY * GridCellSize);
             TrackCanvas.Children.Add(visual);
             ElementVisuals[element.Id] = visual;
+
+            // Trigger auto-save after adding new element
+            _ = ViewModel.SaveSolutionInternalAsync();
         }
     }
 
@@ -633,6 +639,10 @@ public abstract class SignalBoxPageBase : Page
                     CenterY = GridCellSize / 2
                 };
             }
+
+            // Trigger auto-save after element rotation
+            _ = ViewModel.SaveSolutionInternalAsync();
+
             e.Handled = true;
         }
     }
@@ -710,20 +720,31 @@ public abstract class SignalBoxPageBase : Page
             if (!e.GetCurrentPoint(visual).Properties.IsLeftButtonPressed)
                 return;
 
+            bool elementChanged = false;
+
             if (element.Type is SignalBoxElementType.SwitchLeft or SignalBoxElementType.SwitchRight or SignalBoxElementType.SwitchDouble)
             {
                 element.SwitchPosition = element.SwitchPosition == SwitchPosition.Straight
                     ? SwitchPosition.Diverging
                     : SwitchPosition.Straight;
                 RefreshElementVisual(element);
+                elementChanged = true;
             }
             else if (IsSignalType(element.Type))
             {
                 CycleSignalAspect(element);
                 RefreshElementVisual(element);
+                elementChanged = true;
             }
 
             SelectElement(element);
+
+            // Trigger auto-save after element state change
+            if (elementChanged)
+            {
+                _ = ViewModel.SaveSolutionInternalAsync();
+            }
+
             e.Handled = true;
         };
     }
@@ -974,6 +995,9 @@ public abstract class SignalBoxPageBase : Page
                 : SwitchPosition.Straight;
             toggleBtn.Content = SelectedElement.SwitchPosition == SwitchPosition.Straight ? "Grundstellung" : "Abzweig";
             RefreshElementVisual(SelectedElement);
+
+            // Trigger auto-save after switch position change
+            _ = ViewModel.SaveSolutionInternalAsync();
         };
         panel.Children.Add(toggleBtn);
 
@@ -1002,6 +1026,9 @@ public abstract class SignalBoxPageBase : Page
             {
                 SelectedElement!.Address = (int)e.NewValue;
                 RefreshElementVisual(SelectedElement);
+
+                // Trigger auto-save after feedback address change
+                _ = ViewModel.SaveSolutionInternalAsync();
             }
         };
         panel.Children.Add(input);
@@ -1027,6 +1054,9 @@ public abstract class SignalBoxPageBase : Page
         {
             SelectedElement!.Name = input.Text;
             RefreshElementVisual(SelectedElement);
+
+            // Trigger auto-save after label text change
+            _ = ViewModel.SaveSolutionInternalAsync();
         };
         panel.Children.Add(input);
 
@@ -1045,6 +1075,9 @@ public abstract class SignalBoxPageBase : Page
 
         Elements.Remove(SelectedElement);
         SelectElement(null);
+
+        // Trigger auto-save after element deletion
+        _ = ViewModel.SaveSolutionInternalAsync();
     }
 
     protected static string GetElementTypeName(SignalBoxElementType type) => type switch

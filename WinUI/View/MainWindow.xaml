@@ -242,10 +242,6 @@
                                 <FontIcon Glyph="&#xE838;" />
                             </AppBarButton.Icon>
                         </AppBarButton>
-                        <AppBarButton
-                            Command="{x:Bind ViewModel.SaveSolutionCommand}"
-                            Icon="Save"
-                            Label="Save" />
                         <AppBarSeparator />
                         <!--  Simulation  -->
                         <AppBarButton
