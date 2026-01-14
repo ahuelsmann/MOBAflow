@@ -1,95 +1,119 @@
-# copilot-instructions.md  
-Purpose: Central index and knowledge map for all instruction documents.  
-Audience: Copilot (primary), Developers (secondary).  
-Style: Strict, deterministic, machine‑optimized.
+---
+description: 'Central index and knowledge map for all instruction documents. References only existing files; see .copilot-todos.md for dynamic cross-session knowledge.'
+applyTo: '**'
+---
+
+# Copilot Instructions Index
+
+**Purpose:** Central index for all instruction documents.  
+**Audience:** Copilot (primary), Developers (secondary).  
+**Style:** Strict, deterministic, machine‑optimized.
+
+**Important:** This is a minimal index of **active files**. For dynamic cross-session knowledge and complete inventory, see [.copilot-todos.md](./.copilot-todos.md).
 
 ---
 
-# 1. PRIORITY ORDER (TOP → BOTTOM)
+## [ACTIVE] Instruction Files (4 - Production-Ready)
 
-1. Track Planning (Geometry, Topology, Snapping, Rendering, Editor Behavior)  
-2. Architecture & Patterns  
-3. UI & UX  
-4. Testing & Quality  
-5. DevOps & Automation  
-6. Localization & Content  
-7. Copilot Behavior  
-8. PCF & Canvas Apps  
+### 1. Architecture & Patterns
 
----
-
-# 2. TRACK PLANNING (CORE DOMAIN)
-
-- [geometry.md](./geometry.md)  
-- [topology.md](./topology.md)  
-- [snapping.md](./snapping.md)  
-- [rendering.md](./rendering.md)  
-- [editor-behavior.md](./editor-behavior.md)  
-
----
-
-# 3. ARCHITECTURE & PATTERNS
-
-- [backend.instructions.md](./backend.instructions.md)  
-- [collections.instructions.md](./collections.instructions.md)  
-- [di-pattern-consistency.instructions.md](./di-pattern-consistency.instructions.md)  
-- [dotnet-framework.instructions.md](./dotnet-framework.instructions.md)
 - [self-explanatory-code-commenting.instructions.md](./self-explanatory-code-commenting.instructions.md)  
+  Guidelines for writing self-documenting code with minimal comments. Explains WHY, not WHAT.
+
+### 2. Dynamic Index & Knowledge Bridge
+
+- [.copilot-todos.md](./.copilot-todos.md)  
+  **AUTHORITATIVE for cross-session knowledge.** Contains:
+  - Session histories and learned patterns
+  - TODO lists and pending work
+  - Technical discoveries and decision logs
+  - Instruction file status and planned additions
+  - ReSharper warnings analysis and fixes
+
+### 3. Terminal & PowerShell Standards
+
+- [terminal.instructions.md](./terminal.instructions.md)  
+  Hard rules for PowerShell 7 terminal usage in Copilot. Command chaining, syntax requirements, error handling.
+
+### 4. Project Overview
+
+- [README.md](../../README.md)  
+  Authoritative source for project overview, architecture, and high-level context.
 
 ---
 
-# 4. UI & UX
+## [DRAFT] PLACEHOLDER Files (19 - Need Substantial Content)
 
-- [winui.instructions.md](./winui.instructions.md)  
-- [maui.instructions.md](./maui.instructions.md)  
-- [blazor.instructions.md](./blazor.instructions.md)  
-- [xaml-page-registration.instructions.md](./xaml-page-registration.instructions.md)  
+These files exist but contain placeholder/incomplete content. **Do not reference** until content is verified:
 
----
+**Track Planning (5):**
+- geometry.md, topology.md, snapping.md, rendering.md, editor-behavior.md
 
-# 5. TESTING & QUALITY
+**Architecture & Patterns (4):**
+- backend.instructions.md, collections.instructions.md, di-pattern-consistency.instructions.md, dotnet-framework.instructions.md
 
-- [test.instructions.md](./test.instructions.md)  
-- [hasunsavedchanges-patterns.instructions.md](./hasunsavedchanges-patterns.instructions.md)  
+**UI & UX (4):**
+- winui.instructions.md, maui.instructions.md, blazor.instructions.md, xaml-page-registration.instructions.md
 
----
+**Testing & Quality (2):**
+- test.instructions.md, hasunsavedchanges-patterns.instructions.md
 
-# 6. DEVOPS & AUTOMATION
+**DevOps & Automation (2):**
+- github-actions-ci-cd-best-practices.instructions.md, powershell.instructions.md
 
-- [github-actions-ci-cd-best-practices.instructions.md](./github-actions-ci-cd-best-practices.instructions.md)  
-- [powershell.instructions.md](./powershell.instructions.md)  
-
----
-
-# 7. LOCALIZATION & CONTENT
-
-*(No active instruction files in this category)*
+**Copilot Behavior (2):**
+- instructions.instructions.md, prompt.instructions.md
 
 ---
 
-# 8. COPILOT BEHAVIOR
+## [INACTIVE] DEPRECATED Files (1 - Do Not Use)
 
-- [instructions.instructions.md](./instructions.instructions.md)  
-- [prompt.instructions.md](./prompt.instructions.md)  
-- [no-terminal.instructions.md](./no-terminal.instructions.md)  
+- **no-terminal.instructions.md** (Replaced by `terminal.instructions.md` - See [ACTIVE] section above)
 
 ---
 
-# 9. PCF & CANVAS APPS
+## YAML Frontmatter Standard
 
-*(No active instruction files in this category)*
+All instruction files MUST have YAML Frontmatter with these fields:
+
+```yaml
+---
+description: 'One-line description of the instruction file'
+applyTo: '** (applies to all) or specific glob patterns'
+---
+
+# Title
+[Content follows...]
+```
+
+**Example:**
+```yaml
+---
+description: 'Guidelines for self-explanatory code with minimal comments'
+applyTo: '**'
+---
+
+# Self-explanatory Code Commenting
+...
+```
 
 ---
 
-# 10. RULES FOR THIS INDEX
+## Rules for This Index
 
-- MUST keep all referenced files in `.github/instructions/`.  
-- MUST update this index when new instruction files are added.  
-- MUST maintain the priority order defined in Section 1.  
-- MUST NOT remove Track‑Planning documents from top priority.  
-- MUST NOT duplicate entries.  
-- MUST NOT add explanations or narrative text.  
-- README.md is the authoritative source for project overview and high-level context.
+- MUST reference only **[ACTIVE] files** in primary documentation.
+- MUST NOT cite [DRAFT] or [INACTIVE] files as authoritative sources.
+- MUST maintain YAML Frontmatter across all instruction files.
+- When adding new instruction files: update this index AND [.copilot-todos.md](./.copilot-todos.md) with status.
+- For planned files (not yet created), document in [.copilot-todos.md](./.copilot-todos.md) first.
+- To promote [DRAFT] to [ACTIVE]: Move from DRAFT section to ACTIVE section above, remove from DRAFT list.
+
+---
+
+## Complete Inventory Reference
+
+For complete tracking of all 24 instruction files, their status, and cross-session history, see:
+**[.copilot-todos.md](./.copilot-todos.md) - INSTRUCTION FILES STATUS (Dynamischer Index)**
 
 ---
 

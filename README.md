@@ -1,10 +1,5 @@
 # MOBAflow
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![.NET](https://img.shields.io/badge/.NET-10.0-blue)](https://dotnet.microsoft.com/)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Android%20%7C%20Web-brightgreen)](#)
-[![Build Status](https://dev.azure.com/ahuelsmann/MOBAflow/_apis/build/status/MOBAflow?branchName=main)](https://dev.azure.com/ahuelsmann/MOBAflow/_build)
-
 **MOBAflow** is an event-driven automation solution for model railroads. The system enables complex workflow sequences, train control with station announcements, and real-time feedback monitoring via direct UDP connection to the Roco Z21 Digital Command Station.
 
 > ⚖️ **Legal Notice:** MOBAflow is an independent open-source project. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for details on third-party software, formats, and trademarks (AnyRail, Piko, Roco).
@@ -586,53 +581,6 @@ MOBAflow uses several open-source packages. See [`THIRD-PARTY-NOTICES.md`](THIRD
 - **CommunityToolkit** contributors for MVVM helpers
 - **GitHub Copilot** for AI-assisted development and code quality improvements
 - **All contributors** who help improve MOBAflow
-
----
-
-## 🔧 Scripts & Maintenance
-
-This section documents the PowerShell scripts in the `scripts/` directory for maintenance and build processes.
-
-### Icon Management Scripts
-
-| Script | Purpose |
-|--------|---------|
-| `resize-icons-dotnet.ps1` | Scales the base icon to all required sizes for WinUI 3 |
-| `create-ico.ps1` | Creates a multi-resolution `.ico` file for Windows .exe |
-| `fix-manifest.ps1` | Updates `Package.appxmanifest` with correct values |
-| `generate-icons.ps1` | ⚠️ Legacy (use `resize-icons-dotnet.ps1` instead) |
-
-### Icon Update Workflow
-
-```powershell
-# 1. Scale icons to all sizes
-.\scripts\resize-icons-dotnet.ps1
-
-# 2. Create ICO file for Windows
-.\scripts\create-ico.ps1
-
-# 3. Update manifest
-.\scripts\fix-manifest.ps1
-
-# 4. Rebuild project
-dotnet clean WinUI\WinUI.csproj
-dotnet build WinUI\WinUI.csproj
-
-# 5. Clear Windows icon cache
-ie4uinit.exe -show
-```
-
-### Script Parameters
-
-**resize-icons-dotnet.ps1:**
-- `-SourceIcon` (optional): Path to base PNG (default: `WinUI\Assets\mobaflow-icon.png`)
-- `-AssetsDir` (optional): Target directory (default: `WinUI\Assets`)
-- **Output:** 12 PNG files in various sizes (44x44 to 1240x600)
-
-**create-ico.ps1:**
-- `-SourcePng` (optional): Path to base PNG
-- `-OutputIco` (optional): Path to target ICO file
-- **Output:** `mobaflow-icon.ico` with 4 resolutions (16, 32, 48, 256px)
 
 ---
 
