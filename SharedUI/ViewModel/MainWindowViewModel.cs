@@ -52,10 +52,6 @@ public partial class MainWindowViewModel : ObservableObject
     // Runtime State
     private JourneyManager? _journeyManager;
     private Timer? _z21AutoConnectTimer;
-
-    // Event handlers for model change tracking
-    private JourneyViewModel? _currentJourneyWithModelChangedSubscription;
-    private EventHandler? _journeyModelChangedHandler;
     #endregion
 
     #region Constructor
@@ -175,11 +171,14 @@ public partial class MainWindowViewModel : ObservableObject
     private JourneyViewModel? selectedJourney;
 
     /// <summary>
-    /// Called when SelectedJourney changes. Notifies ResetJourneyCommand to update its CanExecute state.
+    /// Called when SelectedJourney changes. Subscribes to PropertyChanged for auto-save.
     /// </summary>
     partial void OnSelectedJourneyChanged(JourneyViewModel? value)
     {
-        _ = value; // Suppress unused parameter warning
+        if (value != null)
+        {
+            value.PropertyChanged += OnViewModelPropertyChanged;
+        }
         ResetJourneyCommand.NotifyCanExecuteChanged();
     }
 
@@ -199,24 +198,6 @@ public partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private WorkflowViewModel? selectedWorkflow;
-
-    /// <summary>
-    /// Called when SelectedWorkflow changes. Subscribes to PropertyChanged for auto-save.
-    /// Also subscribes to all Actions for property changes.
-    /// </summary>
-    partial void OnSelectedWorkflowChanged(WorkflowViewModel? value)
-    {
-        if (value != null)
-        {
-            value.PropertyChanged += OnViewModelPropertyChanged;
-
-            // Subscribe to all Actions for property changes
-            foreach (var action in value.Actions.OfType<WorkflowActionViewModel>())
-            {
-                action.PropertyChanged += OnViewModelPropertyChanged;
-            }
-        }
-    }
 
     [ObservableProperty]
     private object? selectedAction;
@@ -403,33 +384,6 @@ public partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    /// <summary>
-    /// Handles changes to the selected object on JourneysPage.
-    /// Subscribes to ModelChanged events of journeys to auto-save immediately.
-    /// </summary>
-    partial void OnJourneysPageSelectedObjectChanged(object? value)
-    {
-        // Unsubscribe from previous journey's ModelChanged event
-        if (_currentJourneyWithModelChangedSubscription != null && _journeyModelChangedHandler != null)
-        {
-            _currentJourneyWithModelChangedSubscription.ModelChanged -= _journeyModelChangedHandler;
-            _currentJourneyWithModelChangedSubscription = null;
-        }
-
-        // Subscribe to new journey's ModelChanged event if selected object is a journey
-        if (value is JourneyViewModel journeyVM)
-        {
-            _currentJourneyWithModelChangedSubscription = journeyVM;
-
-            // Auto-save solution immediately when journey model changes
-            _journeyModelChangedHandler = (_, _) =>
-            {
-                _ = SaveSolutionInternalAsync();
-            };
-
-            journeyVM.ModelChanged += _journeyModelChangedHandler;
-        }
-    }
     #endregion
 
     #region Project Management

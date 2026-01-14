@@ -35,6 +35,12 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
                 .OrderBy(a => a.Number)
                 .Select(CreateViewModelForAction)
         );
+
+        // Subscribe to PropertyChanged events from all actions
+        foreach (var actionVM in Actions.OfType<WorkflowActionViewModel>())
+        {
+            actionVM.PropertyChanged += OnActionPropertyChanged;
+        }
     }
 
     /// <summary>
@@ -132,7 +138,17 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
         _model.Actions.Add(newAction);
 
         var actionVM = CreateViewModelForAction(newAction);
+        
+        // Subscribe to PropertyChanged events from new action
+        if (actionVM is WorkflowActionViewModel workflowActionVM)
+        {
+            workflowActionVM.PropertyChanged += OnActionPropertyChanged;
+        }
+        
         Actions.Add(actionVM);
+        
+        // Trigger PropertyChanged for Actions collection to notify auto-save
+        OnPropertyChanged(nameof(Actions));
     }
 
     [RelayCommand]
@@ -148,20 +164,29 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
 
         if (actionModel != null)
         {
+            // Unsubscribe from PropertyChanged events before removing
+            if (actionVM is WorkflowActionViewModel workflowActionVM)
+            {
+                workflowActionVM.PropertyChanged -= OnActionPropertyChanged;
+            }
+            
             _model.Actions.Remove(actionModel);
             Actions.Remove(actionVM);
             UpdateActionNumbers();
+            
+            // Trigger PropertyChanged for Actions collection to notify auto-save
+            OnPropertyChanged(nameof(Actions));
         }
     }
 
     /// <summary>
     /// Updates the Number property of all actions to reflect their current order.
-    /// Call this after reordering actions via drag &amp; drop.
+    /// Call this after reordering actions via drag & drop.
     /// Synchronizes the ObservableCollection order back to Model.Actions list.
     /// </summary>
     public void UpdateActionNumbers()
     {
-        // Update Number property on ViewModels
+        // Update Number property on ViewModels (won't trigger save - Number is ignored)
         for (int i = 0; i < Actions.Count; i++)
         {
             if (Actions[i] is WorkflowActionViewModel actionVM)
@@ -177,7 +202,7 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
             _model.Actions.Add(actionVM.ToWorkflowAction());
         }
 
-        // Trigger PropertyChanged to notify MainWindowViewModel for auto-save
+        // Trigger PropertyChanged ONCE to save with correct order
         OnPropertyChanged(nameof(Actions));
     }
 
@@ -229,5 +254,25 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
             ActionType.Command => new CommandViewModel(action),
             _ => throw new NotSupportedException($"Action-Typ {action.Type} wird nicht unterstützt")
         };
+    }
+
+    /// <summary>
+    /// Handler for PropertyChanged events from child actions.
+    /// Propagates changes upward as PropertyChanged("Actions") to trigger auto-save.
+    /// Ignores internal properties (Number) that don't require saving.
+    /// </summary>
+    private void OnActionPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        // Ignore internal properties that are managed by UpdateActionNumbers()
+        // Only user-edited properties (Name, Message, VoiceName, etc.) should trigger save
+        if (e.PropertyName == nameof(WorkflowActionViewModel.Number))
+        {
+            Debug.WriteLine($"[SKIP] Action.Number changed - internal property, no save needed");
+            return;
+        }
+
+        Debug.WriteLine($"🔔 Action property '{e.PropertyName}' changed, propagating as PropertyChanged(Actions)");
+        // Propagate as PropertyChanged to maintain consistency with other ViewModels
+        OnPropertyChanged(nameof(Actions));
     }
 }

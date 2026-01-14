@@ -155,7 +155,7 @@ public partial class MainWindowViewModel
     /// <summary>
     /// Called when SelectedProject changes.
     /// Re-initializes track statistics based on the new project's FeedbackPoints.
-    /// Subscribes to PropertyChanged for auto-save.
+    /// Subscribes to PropertyChanged for auto-save (Project + all Workflows).
     /// </summary>
     partial void OnSelectedProjectChanged(ProjectViewModel? value)
     {
@@ -172,6 +172,14 @@ public partial class MainWindowViewModel
         if (value != null)
         {
             value.PropertyChanged += OnViewModelPropertyChanged;
+            
+            // Subscribe to PropertyChanged events for all workflows (including newly loaded ones)
+            foreach (var workflow in value.Workflows)
+            {
+                // Avoid duplicate subscriptions
+                workflow.PropertyChanged -= OnViewModelPropertyChanged;
+                workflow.PropertyChanged += OnViewModelPropertyChanged;
+            }
         }
     }
 

@@ -7,6 +7,8 @@ using Microsoft.UI.Xaml.Input;
 
 using SharedUI.ViewModel;
 
+using System.Diagnostics;
+
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 
@@ -22,6 +24,8 @@ public sealed partial class WorkflowsPage
     {
         ViewModel = viewModel;
         InitializeComponent();
+
+        Debug.WriteLine("✅ ✅ ✅ WorkflowsPage LOADED - Debug Output is WORKING! ✅ ✅ ✅");
     }
 
     #region Drag & Drop Event Handlers
@@ -55,11 +59,19 @@ public sealed partial class WorkflowsPage
 
     private void ActionListView_Drop(object sender, DragEventArgs e)
     {
+        // No longer needed - DragItemsCompleted handles drag & drop reordering
         _ = e;
+    }
+
+    private void ActionListView_DragItemsCompleted(object sender, DragItemsCompletedEventArgs e)
+    {
         if (ViewModel.SelectedWorkflow == null) return;
 
-        // ListView CanReorderItems="True" handles reordering automatically
-        // We just need to update the Number property to reflect the new order
+        // Log to file - check WinUI/bin/Debug/logs/mobaflow-YYYYMMDD.txt
+        System.Diagnostics.Trace.WriteLine($"[DRAG] DragItemsCompleted - Items were reordered!");
+        Debug.WriteLine($"🔄 DragItemsCompleted - Items were reordered!");
+
+        // Update action numbers and save after drag & drop completes
         ViewModel.SelectedWorkflow.UpdateActionNumbers();
     }
 

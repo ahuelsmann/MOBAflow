@@ -60,14 +60,26 @@ public partial class MainWindowViewModel
             () => new Workflow { Name = "New Workflow" },
             model => new WorkflowViewModel(model));
 
+        // Subscribe to PropertyChanged for auto-save (consistent with other ViewModels)
+        workflow.PropertyChanged += OnViewModelPropertyChanged;
+
         SelectedWorkflow = workflow;
         OnPropertyChanged(nameof(FilteredWorkflows));
+        
+        // Trigger auto-save after adding workflow
+        _ = SaveSolutionInternalAsync();
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteWorkflow))]
     private void DeleteWorkflow()
     {
         if (SelectedProject == null) return;
+
+        // Unsubscribe from PropertyChanged events before deleting
+        if (SelectedWorkflow != null)
+        {
+            SelectedWorkflow.PropertyChanged -= OnViewModelPropertyChanged;
+        }
 
         EntityEditorHelper.DeleteEntity(
             SelectedWorkflow,
@@ -76,6 +88,9 @@ public partial class MainWindowViewModel
             () => SelectedWorkflow = null);
 
         OnPropertyChanged(nameof(FilteredWorkflows));
+        
+        // Trigger auto-save after deleting workflow
+        _ = SaveSolutionInternalAsync();
     }
 
     private bool CanDeleteWorkflow() => SelectedWorkflow != null;
@@ -102,6 +117,9 @@ public partial class MainWindowViewModel
         SelectedWorkflow.Model.Actions.Add(newAction);
         var viewModel = new AnnouncementViewModel(newAction);
         SelectedWorkflow.Actions.Add(viewModel);
+        
+        // Trigger auto-save after adding action
+        _ = SaveSolutionInternalAsync();
     }
 
     [RelayCommand]
@@ -127,6 +145,9 @@ public partial class MainWindowViewModel
         Debug.WriteLine($"➕ Added Command action '{newAction.Name}' to workflow '{SelectedWorkflow.Name}'");
         Debug.WriteLine($"   Workflow now has {SelectedWorkflow.Model.Actions.Count} actions in Model");
         Debug.WriteLine($"   Workflow now has {SelectedWorkflow.Actions.Count} actions in ViewModel");
+        
+        // Trigger auto-save after adding action
+        _ = SaveSolutionInternalAsync();
     }
 
     [RelayCommand]
@@ -148,6 +169,9 @@ public partial class MainWindowViewModel
         SelectedWorkflow.Model.Actions.Add(newAction);
         var viewModel = new AudioViewModel(newAction, _ioService, _executionContext.SoundPlayer);
         SelectedWorkflow.Actions.Add(viewModel);
+        
+        // Trigger auto-save after adding action
+        _ = SaveSolutionInternalAsync();
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteAction))]
@@ -170,6 +194,9 @@ public partial class MainWindowViewModel
         // Remove from ViewModel's ObservableCollection
         SelectedWorkflow.Actions.Remove(actionVM);
         SelectedAction = null;
+        
+        // Trigger auto-save after deleting action
+        _ = SaveSolutionInternalAsync();
     }
 
     private bool CanDeleteAction() => SelectedAction != null;

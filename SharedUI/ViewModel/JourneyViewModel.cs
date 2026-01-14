@@ -30,11 +30,6 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     #endregion
 
     /// <summary>
-    /// Event fired when the Journey model is modified and should be saved.
-    /// </summary>
-    public event EventHandler? ModelChanged;
-
-    /// <summary>
     /// Full constructor with SessionState support (for runtime journey execution).
     /// </summary>
     public JourneyViewModel(
@@ -261,9 +256,7 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
 
         // Refresh collection
         RefreshStations();
-
-        // Notify that model changed
-        ModelChanged?.Invoke(this, EventArgs.Empty);
+        // PropertyChanged fires automatically via Stations property
     }
 
     [RelayCommand]
@@ -278,9 +271,7 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
 
         // Refresh collection
         RefreshStations();
-
-        // Notify that model changed
-        ModelChanged?.Invoke(this, EventArgs.Empty);
+        // PropertyChanged fires automatically via Stations property
     }
 
     /// <summary>
@@ -360,8 +351,7 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
             Stations[i].Position = i + 1;
         }
 
-        // Notify that model changed
-        ModelChanged?.Invoke(this, EventArgs.Empty);
+        // PropertyChanged fires automatically via Stations property
     }
 
     /// <summary>
@@ -397,25 +387,6 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
 
             // Trigger reorder logic (updates Model + renumbers)
             StationsReorderedCommand.Execute(null);
-        }
-    }
-
-    /// <summary>
-    /// Overrides OnPropertyChanged to fire ModelChanged event for model properties.
-    /// This ensures that any change to journey data (Text, Name, Description, etc.)
-    /// automatically triggers a save notification.
-    /// </summary>
-    protected override void OnPropertyChanged(PropertyChangedEventArgs e)
-    {
-        base.OnPropertyChanged(e);
-
-        // Don't fire ModelChanged for runtime state properties (these are read-only from UI)
-        var runtimeProperties = new[] { nameof(CurrentStation), nameof(CurrentCounter), nameof(CurrentPos) };
-        
-        if (!runtimeProperties.Contains(e.PropertyName) && e.PropertyName != nameof(Stations))
-        {
-            // Fire ModelChanged for any other property change
-            ModelChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 }
