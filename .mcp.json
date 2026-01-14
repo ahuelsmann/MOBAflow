@@ -1,0 +1,31 @@
+{
+  "$schema": "https://aka.ms/vs/mcp/schema",
+  "servers": {
+    "azure-devops": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@azure-devops/mcp@latest"],
+      "env": {
+        "AZURE_DEVOPS_ORG_URL": "https://dev.azure.com/ahuelsmann"
+      }
+    },
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/"
+    },
+    "microsoft-learn": {
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp"
+    },
+    "azure": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@azure/mcp@latest", "server", "start"]
+    },
+    "markitdown": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@phdcoder/markitdown-mcp@latest"]
+    }
+  }
+}
