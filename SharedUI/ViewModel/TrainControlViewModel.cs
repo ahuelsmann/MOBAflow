@@ -42,6 +42,25 @@ public partial class TrainControlViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(SetSpeedCommand))]
     [NotifyCanExecuteChangedFor(nameof(ToggleF0Command))]
     [NotifyCanExecuteChangedFor(nameof(ToggleF1Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF2Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF3Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF4Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF5Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF6Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF7Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF8Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF9Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF10Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF11Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF12Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF13Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF14Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF15Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF16Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF17Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF18Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF19Command))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleF20Command))]
     [NotifyCanExecuteChangedFor(nameof(EmergencyStopCommand))]
     private int locoAddress = 3;
 
@@ -427,6 +446,25 @@ public partial class TrainControlViewModel : ObservableObject
             SetSpeedCommand.NotifyCanExecuteChanged();
             ToggleF0Command.NotifyCanExecuteChanged();
             ToggleF1Command.NotifyCanExecuteChanged();
+            ToggleF2Command.NotifyCanExecuteChanged();
+            ToggleF3Command.NotifyCanExecuteChanged();
+            ToggleF4Command.NotifyCanExecuteChanged();
+            ToggleF5Command.NotifyCanExecuteChanged();
+            ToggleF6Command.NotifyCanExecuteChanged();
+            ToggleF7Command.NotifyCanExecuteChanged();
+            ToggleF8Command.NotifyCanExecuteChanged();
+            ToggleF9Command.NotifyCanExecuteChanged();
+            ToggleF10Command.NotifyCanExecuteChanged();
+            ToggleF11Command.NotifyCanExecuteChanged();
+            ToggleF12Command.NotifyCanExecuteChanged();
+            ToggleF13Command.NotifyCanExecuteChanged();
+            ToggleF14Command.NotifyCanExecuteChanged();
+            ToggleF15Command.NotifyCanExecuteChanged();
+            ToggleF16Command.NotifyCanExecuteChanged();
+            ToggleF17Command.NotifyCanExecuteChanged();
+            ToggleF18Command.NotifyCanExecuteChanged();
+            ToggleF19Command.NotifyCanExecuteChanged();
+            ToggleF20Command.NotifyCanExecuteChanged();
             EmergencyStopCommand.NotifyCanExecuteChanged();
             StatusMessage = isConnected ? "Z21 Connected" : "Z21 Disconnected";
         });
@@ -624,7 +662,19 @@ public partial class TrainControlViewModel : ObservableObject
 
     private bool _skipSpeedChangeHandler;
 
-    private bool CanExecuteLocoCommand() => _z21.IsConnected && LocoAddress >= 1 && LocoAddress <= 9999;
+    /// <summary>
+    /// Locomotive command execution check.
+    /// TEMP: Disabled Z21 connection check for UI testing (2026-01-16).
+    /// Commands will be attempted even without Z21 hardware, but will fail gracefully.
+    /// </summary>
+    /// <remarks>
+    /// TODO: Re-enable Z21 connection check when hardware is available.
+    /// To restore: Uncomment the line below and delete the "=> true" line.
+    /// This was temporarily disabled to test function button UI without Z21 connected.
+    /// </remarks>
+    private bool CanExecuteLocoCommand() => true;
+    
+    // private bool CanExecuteLocoCommand() => _z21.IsConnected && LocoAddress >= 1 && LocoAddress <= 9999;
 
     /// <summary>
     /// Sends the current speed and direction to Z21.
@@ -722,8 +772,9 @@ public partial class TrainControlViewModel : ObservableObject
 
     /// <summary>
     /// Generic function toggle implementation.
+    /// Public method to allow direct UI event handling (bypasses CanExecute).
     /// </summary>
-    private async Task ToggleFunctionAsync(int functionNumber)
+    public async Task ToggleFunctionAsync(int functionNumber)
     {
         try
         {
