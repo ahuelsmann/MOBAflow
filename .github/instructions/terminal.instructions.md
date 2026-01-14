@@ -1,4 +1,10 @@
-﻿# Terminal (PowerShell) – Hard Rules
+# Terminal (PowerShell) – Hard Rules
+
+- Avoid `... | Select-Object -Last N` with long-running native commands (buffers entire output → appears to hang).
+- Prefer:
+  - live + tail: `... | Tee-Object file; Get-Content file -Tail N`
+  - streaming subset: `... | Select-Object -First N`
+- When checking success of native tools (`dotnet`, `git`, `npm`), capture `$LASTEXITCODE` immediately after the native command.
 
 ## Command Chaining
 - NEVER use `&&` (Bash/CMD).
@@ -16,21 +22,17 @@
   - `awk '{print $1}'` → `... | ForEach-Object { ($_ -split '\s+')[0] }`
   - `wc -l` → `(... | Measure-Object -Line).Lines`
 
+## Redirection & Output Streams
+- For native commands, redirect error to stdout when piping: `2>&1`.
+- Avoid `Out-Host` in automation; prefer returning objects or plain text.
+
 ## Paths & Quoting
 - Use Windows paths (`\`). Quote spaces: `"C:\Program Files\..."`.
-- Avoid backtick escapes in favor of quoting (single `'` or double `"`).
+- Prefer quoting (single `'` or double `"`); avoid backtick escapes where possible.
 
 ## Exit / Errors
 - Scripts **must** return non-zero exit codes on failure: `throw` or `exit 1`.
 - Do not swallow errors; use `-ErrorAction Stop` in setup.
 - For native tools, rely on `$LASTEXITCODE`. In PS7 set:
-  `$PSNativeCommandUseErrorActionPreference = $true` (recommended).
-
-## Output
-- Use UTF-8; avoid ANSI art unless explicitly requested.
-- Keep output concise for agent parsing; prefer `-v minimal/quiet` switches in CLIs.
-
-## Environment
-- Assume PowerShell 7 (`pwsh`) inside Visual Studio Terminal.
-
-**Updated:** 2026-01-14
+  ```powershell
+  $PSNativeCommandUseErrorActionPreference = $true

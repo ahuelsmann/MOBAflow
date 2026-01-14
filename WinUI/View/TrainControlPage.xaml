@@ -27,45 +27,48 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBlock
-                Grid.Column="0"
-                VerticalAlignment="Center"
-                FontSize="28"
-                FontWeight="SemiBold"
-                Text="Train Control" />
-            <Button
-                Grid.Column="2"
-                Width="275"
-                Height="48"
-                Padding="24,0"
-                Background="#E81123"
-                Command="{x:Bind ViewModel.EmergencyStopCommand}"
-                CornerRadius="8">
-                <StackPanel Orientation="Horizontal" Spacing="12">
-                    <FontIcon
-                        FontSize="20"
-                        Foreground="White"
-                        Glyph="&#xE711;" />
-                    <TextBlock
-                        VerticalAlignment="Center"
-                        FontSize="16"
-                        FontWeight="Bold"
-                        Foreground="White"
-                        Text="EMERGENCY STOP" />
-                </StackPanel>
-            </Button>
-        </Grid>
+                <TextBlock
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    FontSize="28"
+                    FontWeight="SemiBold"
+                    Text="Train Control" />
+                <Button
+                    Grid.Column="2"
+                    Width="275"
+                    Height="48"
+                    Command="{x:Bind ViewModel.EmergencyStopCommand}"
+                    Style="{StaticResource DangerButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <FontIcon
+                            FontSize="20"
+                            Foreground="White"
+                            Glyph="&#xE711;" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="16"
+                            FontWeight="Bold"
+                            Foreground="White"
+                            Text="EMERGENCY STOP" />
+                    </StackPanel>
+                </Button>
+            </Grid>
 
-        <!--  Main Content: 4 Columns - Left Panel | Speedometer | Functions  -->
-        <Grid Grid.Row="1">
+        <!--  Main Content with Responsive Layout  -->
+        <Grid x:Name="MainContentGrid" Grid.Row="1">
+            <!--  COLUMN DEFINITIONS: Will be modified by VisualStateManager  -->
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
+                <!--  Col 0: Settings Panel (260px on Wide, 250px on Medium, hidden on Compact)  -->
+                <ColumnDefinition Width="260" />
+                <!--  Col 1: Tachometer (flexible, grows to fill space)  -->
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
+                <!--  Col 2: Functions Panel (180px on Wide, hidden on Medium/Compact)  -->
+                <ColumnDefinition Width="180" />
             </Grid.ColumnDefinitions>
 
-            <!--  LEFT PANEL: Locomotive Settings  -->
+            <!--  LEFT PANEL: Locomotive Settings (Grid.Column="0")  -->
             <Border
+                x:Name="SettingsPanel"
                 Grid.Column="0"
                 Margin="0,0,8,0"
                 Padding="12,12,4,12"
@@ -295,7 +298,7 @@
                 </ScrollViewer>
             </Border>
 
-            <!--  CENTER: Speedometer  -->
+            <!--  CENTER: Speedometer (Grid.Column="1") - Always visible  -->
             <Border
                 Grid.Column="1"
                 Margin="0"
@@ -320,7 +323,7 @@
                         MinValue="0"
                         Value="{x:Bind ViewModel.Speed, Mode=OneWay}" />
 
-                    <!--  Slider and Presets  -->
+                    <!--  Slider and Presets (below Speedometer on all sizes)  -->
                     <StackPanel Grid.Row="1" Spacing="16">
                         <!--  Horizontal Speed Slider  -->
                         <StackPanel Spacing="8">
@@ -353,561 +356,391 @@
                             </Grid>
                         </StackPanel>
 
-                        <!--  Quick Presets  -->
-                        <Grid ColumnSpacing="8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Button
-                                Grid.Column="0"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="#E81123"
-                                Command="{x:Bind ViewModel.StopCommand}"
-                                CornerRadius="6">
-                                <TextBlock
-                                    FontWeight="Bold"
-                                    Foreground="White"
-                                    Text="0" />
-                            </Button>
-                            <Button
-                                Grid.Column="1"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                CommandParameter="5"
-                                CornerRadius="6">
-                                <TextBlock Text="5" />
-                            </Button>
-                            <Button
-                                Grid.Column="2"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                CommandParameter="10"
-                                CornerRadius="6">
-                                <TextBlock Text="10" />
-                            </Button>
-                            <Button
-                                Grid.Column="3"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                CommandParameter="15"
-                                CornerRadius="6">
-                                <TextBlock Text="15" />
-                            </Button>
-                            <Button
-                                Grid.Column="4"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                CommandParameter="20"
-                                CornerRadius="6">
-                                <TextBlock Text="20" />
-                            </Button>
-                            <Button
-                                Grid.Column="5"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                CommandParameter="25"
-                                CornerRadius="6">
-                                <TextBlock Text="25" />
-                            </Button>
-                            <Button
-                                Grid.Column="6"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                CommandParameter="30"
-                                CornerRadius="6">
-                                <TextBlock Text="30" />
-                            </Button>
-                            <Button
-                                Grid.Column="7"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                CommandParameter="40"
-                                CornerRadius="6">
-                                <TextBlock Text="40" />
-                            </Button>
-                            <Button
-                                Grid.Column="8"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                CommandParameter="50"
-                                CornerRadius="6">
-                                <TextBlock Text="50" />
-                            </Button>
-                            <Button
-                                Grid.Column="9"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                CommandParameter="60"
-                                CornerRadius="6">
-                                <TextBlock Text="60" />
-                            </Button>
-                            <Button
-                                Grid.Column="10"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                CommandParameter="80"
-                                CornerRadius="6">
-                                <TextBlock Text="80" />
-                            </Button>
-                            <Button
-                                Grid.Column="11"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                CommandParameter="100"
-                                CornerRadius="6">
-                                <TextBlock Text="100" />
-                            </Button>
-                            <Button
-                                Grid.Column="12"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                CommandParameter="120"
-                                CornerRadius="6">
-                                <TextBlock Text="120" />
-                            </Button>
-                            <Button
-                                Grid.Column="13"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
-                                CommandParameter="128"
-                                CornerRadius="6">
-                                <TextBlock
-                                    FontWeight="Bold"
-                                    Foreground="White"
-                                    Text="128" />
-                            </Button>
-                        </Grid>
+                        <!--  Speed Presets (on Compact and Medium: shown here instead of column 3)  -->
+                        <StackPanel Spacing="8" Visibility="Collapsed">
+                            <TextBlock
+                                FontSize="10"
+                                FontWeight="SemiBold"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                Text="SPEED PRESETS" />
+                            <Grid ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Button
+                                    Grid.Column="0"
+                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                    CommandParameter="0"
+                                    Content="STOP" />
+                                <Button
+                                    Grid.Column="1"
+                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                    CommandParameter="32"
+                                    Content="Slow" />
+                                <Button
+                                    Grid.Column="2"
+                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                    CommandParameter="64"
+                                    Content="Normal" />
+                                <Button
+                                    Grid.Column="3"
+                                    Command="{x:Bind ViewModel.SetSpeedPresetCommand}"
+                                    CommandParameter="96"
+                                    Content="Fast" />
+                            </Grid>
+                        </StackPanel>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!--  FUNCTIONS PANEL: F0-F20 with Backlit Effect  -->
+            <!--  RIGHT PANEL: Functions F0-F20 (Grid.Column="2") - Hidden on Medium/Compact  -->
             <Border
+                x:Name="FunctionsPanel"
                 Grid.Column="2"
-                Margin="8,0"
-                Padding="8"
+                Margin="8,0,0,0"
+                Padding="12"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="8">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Spacing="6">
-                        <Grid ColumnSpacing="4" RowSpacing="4">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <!--  F0: Light - Yellow  -->
-                            <ToggleButton
-                                Grid.Row="0"
-                                Grid.Column="0"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="{x:Bind ViewModel.IsF0On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#FFD700}"
-                                Command="{x:Bind ViewModel.ToggleF0Command}"
-                                CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF0On, Mode=OneWay}"
-                                Style="{StaticResource BacklightToggleButtonStyle}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <FontIcon FontSize="14" Glyph="&#xE793;" />
-                                    <TextBlock
-                                        FontSize="12"
-                                        FontWeight="SemiBold"
-                                        Text="F0" />
-                                </StackPanel>
-                            </ToggleButton>
-                            <!--  F1: Sound - Blue  -->
-                            <ToggleButton
-                                Grid.Row="0"
-                                Grid.Column="1"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="{x:Bind ViewModel.IsF1On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#0078D4}"
-                                Command="{x:Bind ViewModel.ToggleF1Command}"
-                                CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF1On, Mode=OneWay}"
-                                Style="{StaticResource BacklightToggleButtonStyle}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <FontIcon FontSize="14" Glyph="&#xE995;" />
-                                    <TextBlock
-                                        FontSize="12"
-                                        FontWeight="SemiBold"
-                                        Text="F1" />
-                                </StackPanel>
-                            </ToggleButton>
-                            <!--  F2: Horn - Orange  -->
-                            <ToggleButton
-                                Grid.Row="1"
-                                Grid.Column="0"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="{x:Bind ViewModel.IsF2On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#FF8C00}"
-                                Command="{x:Bind ViewModel.ToggleF2Command}"
-                                CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF2On, Mode=OneWay}"
-                                Style="{StaticResource BacklightToggleButtonStyle}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <FontIcon FontSize="14" Glyph="&#xE7ED;" />
-                                    <TextBlock
-                                        FontSize="12"
-                                        FontWeight="SemiBold"
-                                        Text="F2" />
-                                </StackPanel>
-                            </ToggleButton>
-                            <!--  F3: Door Close - Red  -->
-                            <ToggleButton
-                                Grid.Row="1"
-                                Grid.Column="1"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="{x:Bind ViewModel.IsF3On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#E81123}"
-                                Command="{x:Bind ViewModel.ToggleF3Command}"
-                                CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF3On, Mode=OneWay}"
-                                Style="{StaticResource BacklightToggleButtonStyle}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <FontIcon FontSize="14" Glyph="&#xE7E8;" />
-                                    <TextBlock
-                                        FontSize="12"
-                                        FontWeight="SemiBold"
-                                        Text="F3" />
-                                </StackPanel>
-                            </ToggleButton>
-                            <!--  F4: Door Release - Green  -->
-                            <ToggleButton
-                                Grid.Row="2"
-                                Grid.Column="0"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="{x:Bind ViewModel.IsF4On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#107C10}"
-                                Command="{x:Bind ViewModel.ToggleF4Command}"
-                                CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF4On, Mode=OneWay}"
-                                Style="{StaticResource BacklightToggleButtonStyle}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <FontIcon FontSize="14" Glyph="&#xE73E;" />
-                                    <TextBlock
-                                        FontSize="12"
-                                        FontWeight="SemiBold"
-                                        Text="F4" />
-                                </StackPanel>
-                            </ToggleButton>
-                            <!--  F5: Shunting Light - Teal  -->
-                            <ToggleButton
-                                Grid.Row="2"
-                                Grid.Column="1"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="{x:Bind ViewModel.IsF5On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#00B7C3}"
-                                Command="{x:Bind ViewModel.ToggleF5Command}"
-                                CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF5On, Mode=OneWay}"
-                                Style="{StaticResource BacklightToggleButtonStyle}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <FontIcon FontSize="14" Glyph="&#xE793;" />
-                                    <TextBlock
-                                        FontSize="12"
-                                        FontWeight="SemiBold"
-                                        Text="F5" />
-                                </StackPanel>
-                            </ToggleButton>
-                            <!--  F6: Interior Light - Warm Yellow  -->
-                            <ToggleButton
-                                Grid.Row="3"
-                                Grid.Column="0"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="{x:Bind ViewModel.IsF6On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#FFB900}"
-                                Command="{x:Bind ViewModel.ToggleF6Command}"
-                                CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF6On, Mode=OneWay}"
-                                Style="{StaticResource BacklightToggleButtonStyle}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <FontIcon FontSize="14" Glyph="&#xE7E8;" />
-                                    <TextBlock
-                                        FontSize="12"
-                                        FontWeight="SemiBold"
-                                        Text="F6" />
-                                </StackPanel>
-                            </ToggleButton>
-                            <!--  F7: Smoke - Gray  -->
-                            <ToggleButton
-                                Grid.Row="3"
-                                Grid.Column="1"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="{x:Bind ViewModel.IsF7On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#767676}"
-                                Command="{x:Bind ViewModel.ToggleF7Command}"
-                                CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF7On, Mode=OneWay}"
-                                Style="{StaticResource BacklightToggleButtonStyle}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <FontIcon FontSize="14" Glyph="&#xE753;" />
-                                    <TextBlock
-                                        FontSize="12"
-                                        FontWeight="SemiBold"
-                                        Text="F7" />
-                                </StackPanel>
-                            </ToggleButton>
-                            <!--  F8: Pantograph - Magenta  -->
-                            <ToggleButton
-                                Grid.Row="4"
-                                Grid.Column="0"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="{x:Bind ViewModel.IsF8On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#E040FB}"
-                                Command="{x:Bind ViewModel.ToggleF8Command}"
-                                CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF8On, Mode=OneWay}"
-                                Style="{StaticResource BacklightToggleButtonStyle}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <FontIcon FontSize="14" Glyph="&#xE945;" />
-                                    <TextBlock
-                                        FontSize="12"
-                                        FontWeight="SemiBold"
-                                        Text="F8" />
-                                </StackPanel>
-                            </ToggleButton>
-                            <!--  F9: Purple  -->
-                            <ToggleButton
-                                Grid.Row="4"
-                                Grid.Column="1"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="{x:Bind ViewModel.IsF9On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#8764B8}"
-                                Command="{x:Bind ViewModel.ToggleF9Command}"
-                                CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF9On, Mode=OneWay}"
-                                Style="{StaticResource BacklightToggleButtonStyle}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <FontIcon FontSize="14" Glyph="&#xE734;" />
-                                    <TextBlock
-                                        FontSize="12"
-                                        FontWeight="SemiBold"
-                                        Text="F9" />
-                                </StackPanel>
-                            </ToggleButton>
-                            <!--  F10: Lime Green  -->
-                            <ToggleButton
-                                Grid.Row="5"
-                                Grid.Column="0"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="{x:Bind ViewModel.IsF10On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#00CC6A}"
-                                Command="{x:Bind ViewModel.ToggleF10Command}"
-                                CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF10On, Mode=OneWay}"
-                                Style="{StaticResource BacklightToggleButtonStyle}">
-                                <TextBlock
-                                    FontSize="12"
-                                    FontWeight="SemiBold"
-                                    Text="F10" />
-                            </ToggleButton>
-                            <!--  F11: Teal  -->
-                            <ToggleButton
-                                Grid.Row="5"
-                                Grid.Column="1"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="{x:Bind ViewModel.IsF11On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#038387}"
-                                Command="{x:Bind ViewModel.ToggleF11Command}"
-                                CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF11On, Mode=OneWay}"
-                                Style="{StaticResource BacklightToggleButtonStyle}">
-                                <TextBlock
-                                    FontSize="12"
-                                    FontWeight="SemiBold"
-                                    Text="F11" />
-                            </ToggleButton>
-                            <!--  F12: Orchid  -->
-                            <ToggleButton
-                                Grid.Row="6"
-                                Grid.Column="0"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="{x:Bind ViewModel.IsF12On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#C239B3}"
-                                Command="{x:Bind ViewModel.ToggleF12Command}"
-                                CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF12On, Mode=OneWay}"
-                                Style="{StaticResource BacklightToggleButtonStyle}">
-                                <TextBlock
-                                    FontSize="12"
-                                    FontWeight="SemiBold"
-                                    Text="F12" />
-                            </ToggleButton>
-                            <!--  F13: Hot Pink  -->
-                            <ToggleButton
-                                Grid.Row="6"
-                                Grid.Column="1"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="{x:Bind ViewModel.IsF13On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#FF1493}"
-                                Command="{x:Bind ViewModel.ToggleF13Command}"
-                                CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF13On, Mode=OneWay}"
-                                Style="{StaticResource BacklightToggleButtonStyle}">
-                                <TextBlock
-                                    FontSize="12"
-                                    FontWeight="SemiBold"
-                                    Text="F13" />
-                            </ToggleButton>
-                            <!--  F14: Gray  -->
-                            <ToggleButton
-                                Grid.Row="7"
-                                Grid.Column="0"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="{x:Bind ViewModel.IsF14On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#7A7574}"
-                                Command="{x:Bind ViewModel.ToggleF14Command}"
-                                CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF14On, Mode=OneWay}"
-                                Style="{StaticResource BacklightToggleButtonStyle}">
-                                <TextBlock
-                                    FontSize="12"
-                                    FontWeight="SemiBold"
-                                    Text="F14" />
-                            </ToggleButton>
-                            <!--  F15: Sage  -->
-                            <ToggleButton
-                                Grid.Row="7"
-                                Grid.Column="1"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="{x:Bind ViewModel.IsF15On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#567C73}"
-                                Command="{x:Bind ViewModel.ToggleF15Command}"
-                                CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF15On, Mode=OneWay}"
-                                Style="{StaticResource BacklightToggleButtonStyle}">
-                                <TextBlock
-                                    FontSize="12"
-                                    FontWeight="SemiBold"
-                                    Text="F15" />
-                            </ToggleButton>
-                            <!--  F16: Brown  -->
-                            <ToggleButton
-                                Grid.Row="8"
-                                Grid.Column="0"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="{x:Bind ViewModel.IsF16On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#8E562E}"
-                                Command="{x:Bind ViewModel.ToggleF16Command}"
-                                CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF16On, Mode=OneWay}"
-                                Style="{StaticResource BacklightToggleButtonStyle}">
-                                <TextBlock
-                                    FontSize="12"
-                                    FontWeight="SemiBold"
-                                    Text="F16" />
-                            </ToggleButton>
-                            <!--  F17: Tan  -->
-                            <ToggleButton
-                                Grid.Row="8"
-                                Grid.Column="1"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="{x:Bind ViewModel.IsF17On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#847545}"
-                                Command="{x:Bind ViewModel.ToggleF17Command}"
-                                CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF17On, Mode=OneWay}"
-                                Style="{StaticResource BacklightToggleButtonStyle}">
-                                <TextBlock
-                                    FontSize="12"
-                                    FontWeight="SemiBold"
-                                    Text="F17" />
-                            </ToggleButton>
-                            <!--  F18: Slate  -->
-                            <ToggleButton
-                                Grid.Row="9"
-                                Grid.Column="0"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="{x:Bind ViewModel.IsF18On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#525E54}"
-                                Command="{x:Bind ViewModel.ToggleF18Command}"
-                                CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF18On, Mode=OneWay}"
-                                Style="{StaticResource BacklightToggleButtonStyle}">
-                                <TextBlock
-                                    FontSize="12"
-                                    FontWeight="SemiBold"
-                                    Text="F18" />
-                            </ToggleButton>
-                            <!--  F19: Dark Gray  -->
-                            <ToggleButton
-                                Grid.Row="9"
-                                Grid.Column="1"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="{x:Bind ViewModel.IsF19On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#4A5459}"
-                                Command="{x:Bind ViewModel.ToggleF19Command}"
-                                CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF19On, Mode=OneWay}"
-                                Style="{StaticResource BacklightToggleButtonStyle}">
-                                <TextBlock
-                                    FontSize="12"
-                                    FontWeight="SemiBold"
-                                    Text="F19" />
-                            </ToggleButton>
-                            <!--  F20: Steel Blue (spans both columns)  -->
-                            <ToggleButton
-                                Grid.Row="10"
-                                Grid.Column="0"
-                                Grid.ColumnSpan="2"
-                                Height="40"
-                                HorizontalAlignment="Stretch"
-                                Background="{x:Bind ViewModel.IsF20On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#69797E}"
-                                Command="{x:Bind ViewModel.ToggleF20Command}"
-                                CornerRadius="6"
-                                IsChecked="{x:Bind ViewModel.IsF20On, Mode=OneWay}"
-                                Style="{StaticResource BacklightToggleButtonStyle}">
-                                <TextBlock
-                                    FontSize="12"
-                                    FontWeight="SemiBold"
-                                    Text="F20" />
-                            </ToggleButton>
-                        </Grid>
+                    <StackPanel Spacing="12">
+                        <!--  Header  -->
+                        <TextBlock
+                            FontSize="11"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Text="FUNCTIONS" />
+
+                        <!--  Functions F0-F10 (Left Column)  -->
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                FontSize="9"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="F0 - F10" />
+                            <Grid ColumnSpacing="4" RowSpacing="4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <!--  F0 (Light - Yellow)  -->
+                                <ToggleButton
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Bind ViewModel.IsF0On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#FFD700}"
+                                    Command="{x:Bind ViewModel.ToggleF0Command}"
+                                    Content="F0"
+                                    IsChecked="{x:Bind ViewModel.IsF0On, Mode=OneWay}"
+                                    Style="{StaticResource BacklightToggleButtonStyle}" />
+
+                                <!--  F1 (Sound - Blue)  -->
+                                <ToggleButton
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Bind ViewModel.IsF1On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#0078D4}"
+                                    Command="{x:Bind ViewModel.ToggleF1Command}"
+                                    Content="F1"
+                                    IsChecked="{x:Bind ViewModel.IsF1On, Mode=OneWay}"
+                                    Style="{StaticResource BacklightToggleButtonStyle}" />
+
+                                <!--  F2 (Horn - Orange)  -->
+                                <ToggleButton
+                                    Grid.Row="1"
+                                    Grid.Column="0"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Bind ViewModel.IsF2On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#FF8C00}"
+                                    Command="{x:Bind ViewModel.ToggleF2Command}"
+                                    Content="F2"
+                                    IsChecked="{x:Bind ViewModel.IsF2On, Mode=OneWay}"
+                                    Style="{StaticResource BacklightToggleButtonStyle}" />
+
+                                <!--  F3 (Door Close - Red)  -->
+                                <ToggleButton
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Bind ViewModel.IsF3On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#E81123}"
+                                    Command="{x:Bind ViewModel.ToggleF3Command}"
+                                    Content="F3"
+                                    IsChecked="{x:Bind ViewModel.IsF3On, Mode=OneWay}"
+                                    Style="{StaticResource BacklightToggleButtonStyle}" />
+
+                                <!--  F4 (Door Release - Green)  -->
+                                <ToggleButton
+                                    Grid.Row="2"
+                                    Grid.Column="0"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Bind ViewModel.IsF4On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#107C10}"
+                                    Command="{x:Bind ViewModel.ToggleF4Command}"
+                                    Content="F4"
+                                    IsChecked="{x:Bind ViewModel.IsF4On, Mode=OneWay}"
+                                    Style="{StaticResource BacklightToggleButtonStyle}" />
+
+                                <!--  F5 (Shunting Light - Teal)  -->
+                                <ToggleButton
+                                    Grid.Row="2"
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Bind ViewModel.IsF5On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#00B7C3}"
+                                    Command="{x:Bind ViewModel.ToggleF5Command}"
+                                    Content="F5"
+                                    IsChecked="{x:Bind ViewModel.IsF5On, Mode=OneWay}"
+                                    Style="{StaticResource BacklightToggleButtonStyle}" />
+
+                                <!--  F6 (Interior Light - Warm Yellow)  -->
+                                <ToggleButton
+                                    Grid.Row="3"
+                                    Grid.Column="0"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Bind ViewModel.IsF6On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#FFB900}"
+                                    Command="{x:Bind ViewModel.ToggleF6Command}"
+                                    Content="F6"
+                                    IsChecked="{x:Bind ViewModel.IsF6On, Mode=OneWay}"
+                                    Style="{StaticResource BacklightToggleButtonStyle}" />
+
+                                <!--  F7 (Smoke - Gray)  -->
+                                <ToggleButton
+                                    Grid.Row="3"
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Bind ViewModel.IsF7On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#767676}"
+                                    Command="{x:Bind ViewModel.ToggleF7Command}"
+                                    Content="F7"
+                                    IsChecked="{x:Bind ViewModel.IsF7On, Mode=OneWay}"
+                                    Style="{StaticResource BacklightToggleButtonStyle}" />
+
+                                <!--  F8 (Pantograph - Magenta)  -->
+                                <ToggleButton
+                                    Grid.Row="4"
+                                    Grid.Column="0"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Bind ViewModel.IsF8On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#E040FB}"
+                                    Command="{x:Bind ViewModel.ToggleF8Command}"
+                                    Content="F8"
+                                    IsChecked="{x:Bind ViewModel.IsF8On, Mode=OneWay}"
+                                    Style="{StaticResource BacklightToggleButtonStyle}" />
+
+                                <!--  F9 (Purple)  -->
+                                <ToggleButton
+                                    Grid.Row="4"
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Bind ViewModel.IsF9On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#8764B8}"
+                                    Command="{x:Bind ViewModel.ToggleF9Command}"
+                                    Content="F9"
+                                    IsChecked="{x:Bind ViewModel.IsF9On, Mode=OneWay}"
+                                    Style="{StaticResource BacklightToggleButtonStyle}" />
+
+                                <!--  F10 (Lime Green)  -->
+                                <ToggleButton
+                                    Grid.Row="5"
+                                    Grid.Column="0"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Bind ViewModel.IsF10On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#00CC6A}"
+                                    Command="{x:Bind ViewModel.ToggleF10Command}"
+                                    Content="F10"
+                                    IsChecked="{x:Bind ViewModel.IsF10On, Mode=OneWay}"
+                                    Style="{StaticResource BacklightToggleButtonStyle}" />
+                            </Grid>
+                        </StackPanel>
+
+                        <!--  Functions F11-F20 (Right Column)  -->
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                FontSize="9"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="F11 - F20" />
+                            <Grid ColumnSpacing="4" RowSpacing="4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <!--  F11 (Teal)  -->
+                                <ToggleButton
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Bind ViewModel.IsF11On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#038387}"
+                                    Command="{x:Bind ViewModel.ToggleF11Command}"
+                                    Content="F11"
+                                    IsChecked="{x:Bind ViewModel.IsF11On, Mode=OneWay}"
+                                    Style="{StaticResource BacklightToggleButtonStyle}" />
+
+                                <!--  F12 (Orchid)  -->
+                                <ToggleButton
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Bind ViewModel.IsF12On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#C239B3}"
+                                    Command="{x:Bind ViewModel.ToggleF12Command}"
+                                    Content="F12"
+                                    IsChecked="{x:Bind ViewModel.IsF12On, Mode=OneWay}"
+                                    Style="{StaticResource BacklightToggleButtonStyle}" />
+
+                                <!--  F13 (Hot Pink)  -->
+                                <ToggleButton
+                                    Grid.Row="1"
+                                    Grid.Column="0"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Bind ViewModel.IsF13On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#FF1493}"
+                                    Command="{x:Bind ViewModel.ToggleF13Command}"
+                                    Content="F13"
+                                    IsChecked="{x:Bind ViewModel.IsF13On, Mode=OneWay}"
+                                    Style="{StaticResource BacklightToggleButtonStyle}" />
+
+                                <!--  F14 (Gray)  -->
+                                <ToggleButton
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Bind ViewModel.IsF14On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#7A7574}"
+                                    Command="{x:Bind ViewModel.ToggleF14Command}"
+                                    Content="F14"
+                                    IsChecked="{x:Bind ViewModel.IsF14On, Mode=OneWay}"
+                                    Style="{StaticResource BacklightToggleButtonStyle}" />
+
+                                <!--  F15 (Sage)  -->
+                                <ToggleButton
+                                    Grid.Row="2"
+                                    Grid.Column="0"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Bind ViewModel.IsF15On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#567C73}"
+                                    Command="{x:Bind ViewModel.ToggleF15Command}"
+                                    Content="F15"
+                                    IsChecked="{x:Bind ViewModel.IsF15On, Mode=OneWay}"
+                                    Style="{StaticResource BacklightToggleButtonStyle}" />
+
+                                <!--  F16 (Brown)  -->
+                                <ToggleButton
+                                    Grid.Row="2"
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Bind ViewModel.IsF16On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#8E562E}"
+                                    Command="{x:Bind ViewModel.ToggleF16Command}"
+                                    Content="F16"
+                                    IsChecked="{x:Bind ViewModel.IsF16On, Mode=OneWay}"
+                                    Style="{StaticResource BacklightToggleButtonStyle}" />
+
+                                <!--  F17 (Tan)  -->
+                                <ToggleButton
+                                    Grid.Row="3"
+                                    Grid.Column="0"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Bind ViewModel.IsF17On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#847545}"
+                                    Command="{x:Bind ViewModel.ToggleF17Command}"
+                                    Content="F17"
+                                    IsChecked="{x:Bind ViewModel.IsF17On, Mode=OneWay}"
+                                    Style="{StaticResource BacklightToggleButtonStyle}" />
+
+                                <!--  F18 (Slate)  -->
+                                <ToggleButton
+                                    Grid.Row="3"
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Bind ViewModel.IsF18On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#525E54}"
+                                    Command="{x:Bind ViewModel.ToggleF18Command}"
+                                    Content="F18"
+                                    IsChecked="{x:Bind ViewModel.IsF18On, Mode=OneWay}"
+                                    Style="{StaticResource BacklightToggleButtonStyle}" />
+
+                                <!--  F19 (Dark Gray)  -->
+                                <ToggleButton
+                                    Grid.Row="4"
+                                    Grid.Column="0"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Bind ViewModel.IsF19On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#4A5459}"
+                                    Command="{x:Bind ViewModel.ToggleF19Command}"
+                                    Content="F19"
+                                    IsChecked="{x:Bind ViewModel.IsF19On, Mode=OneWay}"
+                                    Style="{StaticResource BacklightToggleButtonStyle}" />
+
+                                <!--  F20 (Steel Blue)  -->
+                                <ToggleButton
+                                    Grid.Row="4"
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{x:Bind ViewModel.IsF20On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#69797E}"
+                                    Command="{x:Bind ViewModel.ToggleF20Command}"
+                                    Content="F20"
+                                    IsChecked="{x:Bind ViewModel.IsF20On, Mode=OneWay}"
+                                    Style="{StaticResource BacklightToggleButtonStyle}" />
+                            </Grid>
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
             </Border>
+            <!--  VISUAL STATE MANAGER: Responsive Layout States  -->
+            <VisualStateManager.VisualStateGroups>
+                <VisualStateGroup x:Name="TrainControlResponsiveStates">
+
+                    <!--  STATE 1: WIDE (1200px+) - Desktop with 4 columns visible  -->
+                    <VisualState x:Name="WideState">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="1200" />
+                        </VisualState.StateTriggers>
+                        <VisualState.Setters>
+                            <!--  Show all panels  -->
+                            <Setter Target="SettingsPanel.Visibility" Value="Visible" />
+                            <Setter Target="FunctionsPanel.Visibility" Value="Visible" />
+                            <!--  3-column layout: Settings | Tachometer | Functions  -->
+                            <Setter Target="MainContentGrid.ColumnDefinitions" Value="260,*,180" />
+                        </VisualState.Setters>
+                    </VisualState>
+
+                    <!--  STATE 2: MEDIUM (641-1199px) - Tablet with 2 columns visible  -->
+                    <VisualState x:Name="MediumState">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="641" />
+                        </VisualState.StateTriggers>
+                        <VisualState.Setters>
+                            <!--  Hide Functions panel (shown below Tachometer as Tabs)  -->
+                            <Setter Target="SettingsPanel.Visibility" Value="Visible" />
+                            <Setter Target="FunctionsPanel.Visibility" Value="Collapsed" />
+                            <!--  2-column layout: Settings | Tachometer (larger)  -->
+                            <Setter Target="MainContentGrid.ColumnDefinitions" Value="250,*" />
+                        </VisualState.Setters>
+                    </VisualState>
+
+                    <!--  STATE 3: COMPACT (0-640px) - Mobile with single column  -->
+                    <VisualState x:Name="CompactState">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="0" />
+                        </VisualState.StateTriggers>
+                        <VisualState.Setters>
+                            <!--  Hide all side panels, show as expandable sections below  -->
+                            <Setter Target="SettingsPanel.Visibility" Value="Collapsed" />
+                            <Setter Target="FunctionsPanel.Visibility" Value="Collapsed" />
+                            <!--  Single column layout  -->
+                            <Setter Target="MainContentGrid.ColumnDefinitions" Value="*" />
+                            <!--  Adjust padding for smaller screens  -->
+                            <Setter Target="MainContentGrid.Padding" Value="8,12,8,12" />
+                        </VisualState.Setters>
+                    </VisualState>
+
+                </VisualStateGroup>
+            </VisualStateManager.VisualStateGroups>
         </Grid>
     </Grid>
 </Page>

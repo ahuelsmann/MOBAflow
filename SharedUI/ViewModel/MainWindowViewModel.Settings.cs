@@ -500,61 +500,67 @@ public partial class MainWindowViewModel
     /// Gets whether the Overview page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
-    public bool IsOverviewPageAvailable => _settings.FeatureToggles is { IsOverviewPageAvailable: true };
+    public bool IsOverviewPageAvailable => _settings.FeatureToggles.IsOverviewPageAvailable;
 
     /// <summary>
     /// Gets whether the Solution page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
-    public bool IsSolutionPageAvailable => _settings.FeatureToggles is { IsSolutionPageAvailable: true };
+    public bool IsSolutionPageAvailable => _settings.FeatureToggles.IsSolutionPageAvailable;
 
     /// <summary>
     /// Gets whether the Journeys page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
-    public bool IsJourneysPageAvailable => _settings.FeatureToggles is { IsJourneysPageAvailable: true };
+    public bool IsJourneysPageAvailable => _settings.FeatureToggles.IsJourneysPageAvailable;
 
     /// <summary>
     /// Gets whether the Workflows page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
-    public bool IsWorkflowsPageAvailable => _settings.FeatureToggles is { IsWorkflowsPageAvailable: true };
+    public bool IsWorkflowsPageAvailable => _settings.FeatureToggles.IsWorkflowsPageAvailable;
 
     /// <summary>
     /// Gets whether the Track Plan Editor page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
-    public bool IsTrackPlanEditorPageAvailable => _settings.FeatureToggles is { IsTrackPlanEditorPageAvailable: true };
+    public bool IsTrackPlanEditorPageAvailable => _settings.FeatureToggles.IsTrackPlanEditorPageAvailable;
 
     /// <summary>
     /// Gets whether the Journey Map page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
-    public bool IsJourneyMapPageAvailable => _settings.FeatureToggles is { IsJourneyMapPageAvailable: true };
+    public bool IsJourneyMapPageAvailable => _settings.FeatureToggles.IsJourneyMapPageAvailable;
 
     /// <summary>
     /// Gets whether the Settings page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
-    public bool IsSettingsPageAvailable => _settings.FeatureToggles is { IsSettingsPageAvailable: true };
+    public bool IsSettingsPageAvailable => _settings.FeatureToggles.IsSettingsPageAvailable;
 
     /// <summary>
     /// Gets whether the Monitor page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
-    public bool IsMonitorPageAvailable => _settings.FeatureToggles is { IsMonitorPageAvailable: true };
+    public bool IsMonitorPageAvailable => _settings.FeatureToggles.IsMonitorPageAvailable;
 
     /// <summary>
     /// Gets whether the Trains page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
-    public bool IsTrainsPageAvailable => _settings.FeatureToggles is { IsTrainsPageAvailable: true };
+    public bool IsTrainsPageAvailable => _settings.FeatureToggles.IsTrainsPageAvailable;
 
     /// <summary>
     /// Gets whether the Train Control page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
-    public bool IsTrainControlPageAvailable => _settings.FeatureToggles is { IsTrainControlPageAvailable: true };
+    public bool IsTrainControlPageAvailable => _settings.FeatureToggles.IsTrainControlPageAvailable;
+
+    /// <summary>
+    /// Gets whether the Feedback Points page is available.
+    /// Bound to NavigationView item visibility.
+    /// </summary>
+    public bool IsFeedbackPointsPageAvailable => _settings.FeatureToggles.IsFeedbackPointsPageAvailable;
 
     // Feature Toggle Labels (optional)
 
@@ -566,12 +572,18 @@ public partial class MainWindowViewModel
     public string? JourneyMapPageLabel => _settings.FeatureToggles?.JourneyMapPageLabel;
     public string? SettingsPageLabel => _settings.FeatureToggles?.SettingsPageLabel;
     public string? MonitorPageLabel => _settings.FeatureToggles?.MonitorPageLabel;
+    public string? TrainsPageLabel => _settings.FeatureToggles?.TrainsPageLabel;
+    public string? TrainControlPageLabel => _settings.FeatureToggles?.TrainControlPageLabel;
+    public string? FeedbackPointsPageLabel => _settings.FeatureToggles?.FeedbackPointsPageLabel;
 
     // Settings Page CheckBox Content (with labels)
 
     public string TrackPlanEditorCheckBoxContent => FormatPageContent("Track Plan Editor Page", TrackPlanEditorPageLabel);
     public string JourneyMapCheckBoxContent => FormatPageContent("Journey Map Page", JourneyMapPageLabel);
     public string MonitorCheckBoxContent => FormatPageContent("Monitor Page", MonitorPageLabel);
+    public string TrainsCheckBoxContent => FormatPageContent("Trains Page", TrainsPageLabel);
+    public string TrainControlCheckBoxContent => FormatPageContent("Train Control Page", TrainControlPageLabel);
+    public string FeedbackPointsCheckBoxContent => FormatPageContent("Feedback Points Page", FeedbackPointsPageLabel);
 
     private static string FormatPageContent(string pageName, string? label)
     {

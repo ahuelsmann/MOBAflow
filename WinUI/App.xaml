@@ -13,19 +13,18 @@
             </ResourceDictionary.MergedDictionaries>
             <!--  Global Converters  -->
             <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
-            <converter:InvertedBoolToVisibilityConverter x:Key="InvertedBoolToVisibilityConverter" />
-            <converter:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+            <converter:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+            <converter:NullableConverter x:Key="NullableConverter" />
+            <converter:BoolToOpacityConverter x:Key="BoolToOpacityConverter" />
             <converter:HexColorToBrushConverter x:Key="HexColorToBrushConverter" />
             <converter:BoolToFontWeightConverter x:Key="BoolToFontWeightConverter" />
             <converter:BoolToAccentBrushConverter x:Key="BoolToAccentBrushConverter" />
             <converter:TrackNumberConverter x:Key="TrackNumberConverter" />
             <converter:ExitSideConverter x:Key="ExitSideConverter" />
-            <converter:NullableConverter x:Key="NullableConverter" />
             <converter:NullableUIntConverter x:Key="NullableUIntConverter" />
             <converter:DateTimeToTimeSpanConverter x:Key="DateTimeToTimeSpanConverter" />
             <converter:DateTimeOffsetConverter x:Key="DateTimeOffsetConverter" />
             <converter:PhotoPathToImageConverter x:Key="PhotoPathToImageConverter" />
-            <converter:BoolToOpacityConverter x:Key="BoolToOpacityConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

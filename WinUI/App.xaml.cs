@@ -83,26 +83,39 @@ public partial class App
     /// <summary>
     /// Configures the services for the application.
     /// </summary>
-    private static IServiceProvider ConfigureServices()
-    {
-        var services = new ServiceCollection();
+        private static IServiceProvider ConfigureServices()
+        {
+            var services = new ServiceCollection();
 
-        // Load appsettings.json configuration
-        // In DEBUG mode, also load appsettings.Development.json to enable all feature toggles
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(AppContext.BaseDirectory)
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-#if DEBUG
-            .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
-#endif
-            .Build();
+            // Load appsettings.json configuration
+            // In DEBUG mode, also load appsettings.Development.json to enable all feature toggles
+            var basePath = AppContext.BaseDirectory;
+            var devJsonPath = Path.Combine(basePath, "appsettings.Development.json");
+            var devJsonExists = File.Exists(devJsonPath);
 
-        // Register IConfiguration
-        services.AddSingleton<IConfiguration>(configuration);
+            System.Diagnostics.Debug.WriteLine($"[CONFIG] BaseDirectory: {basePath}");
+            System.Diagnostics.Debug.WriteLine($"[CONFIG] appsettings.Development.json exists: {devJsonExists}");
 
-        // Register AppSettings with IOptions pattern
-        services.Configure<AppSettings>(configuration);
-        services.AddSingleton(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value);
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(basePath)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    #if DEBUG
+                .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
+    #endif
+                .Build();
+
+            // Debug: Print loaded FeatureToggle values
+            System.Diagnostics.Debug.WriteLine($"[CONFIG] IsTrainControlPageAvailable: {configuration["FeatureToggles:IsTrainControlPageAvailable"]}");
+            System.Diagnostics.Debug.WriteLine($"[CONFIG] IsTrackPlanEditorPageAvailable: {configuration["FeatureToggles:IsTrackPlanEditorPageAvailable"]}");
+            System.Diagnostics.Debug.WriteLine($"[CONFIG] IsJourneyMapPageAvailable: {configuration["FeatureToggles:IsJourneyMapPageAvailable"]}");
+            System.Diagnostics.Debug.WriteLine($"[CONFIG] IsMonitorPageAvailable: {configuration["FeatureToggles:IsMonitorPageAvailable"]}");
+
+            // Register IConfiguration
+            services.AddSingleton<IConfiguration>(configuration);
+
+            // Register AppSettings with IOptions pattern
+            services.Configure<AppSettings>(configuration);
+            services.AddSingleton(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value);
 
         // Register SpeechOptions (Sound service configuration)
         services.Configure<SpeechOptions>(configuration.GetSection("Speech"));

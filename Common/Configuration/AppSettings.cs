@@ -23,7 +23,7 @@ public class AppSettings
     /// Feature toggles for experimental/preview features (WinUI only).
     /// This setting is optional - if not present in appsettings.json, defaults to new FeatureToggleSettings().
     /// </summary>
-    public FeatureToggleSettings? FeatureToggles { get; set; }
+    public FeatureToggleSettings FeatureToggles { get; set; } = new();
 
     /// <summary>
     /// Gets Azure Speech Service subscription key (convenience property).

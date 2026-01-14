@@ -5,13 +5,14 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
 
 /// <summary>
-/// Converts null values to Visibility.Collapsed, non-null values to Visibility.Visible.
+/// Converts non-empty strings to Visibility.Visible, null or empty strings to Visibility.Collapsed.
+/// Used for conditionally showing labels like "Preview" or "Beta" in NavigationView.
 /// </summary>
-public partial class NullToVisibilityConverter : IValueConverter
+public partial class StringToVisibilityConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {
-        return value != null ? Visibility.Visible : Visibility.Collapsed;
+        return !string.IsNullOrWhiteSpace(value as string) ? Visibility.Visible : Visibility.Collapsed;
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, string language)

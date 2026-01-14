@@ -1,6 +1,6 @@
 ---
-description: WinUI 3 specific patterns for desktop development with DispatcherQueue and navigation
-applyTo: "WinUI/**/*.cs"
+description: WinUI 3 specific patterns for desktop development with DispatcherQueue, navigation, and responsive layout
+applyTo: "WinUI/**/*.xaml,WinUI/**/*.cs"
 ---
 
 # WinUI 3 Development Guidelines
@@ -113,33 +113,260 @@ private void NavigationView_ItemInvoked(NavigationView sender, NavigationViewIte
 <FontIcon Glyph="&#xE74E;" /> <!-- Save icon -->
 ```
 
-### Responsive Layout
+---
+
+## 📱 Responsive Layout with VisualStateManager (CRITICAL FOR MOBAflow)
+
+### What is VisualStateManager?
+
+**VisualStateManager (VSM)** is a WinUI feature that **automatically switches between different UI layouts** based on **window/screen size**. This makes your application responsive across desktop, tablet, and touch scenarios.
+
+### Why VSM? (Architecture Decision)
+
+| Issue | Without VSM | With VSM |
+|-------|------------|----------|
+| **Hardcoded Layout** | UI breaks when user resizes window | Adapts automatically |
+| **Tablet/Touch** | Single-column only | Optimize per screen size |
+| **Maintainability** | Multiple XAML files needed | One file, multiple states |
+| **Performance** | Custom code in code-behind | Native WinUI optimization |
+
+### MOBAflow Responsive Breakpoints
+
+MOBAflow targets three responsive states based on **window width**:
+
+| State | Width | Use Case | Layout Strategy |
+|-------|-------|----------|-----------------|
+| **Compact** | 0-640px | Mobile/Tablet Portrait | Single column, hide secondary panels |
+| **Medium** | 641-1199px | Tablet Landscape | 2-column, vertical stacking where needed |
+| **Wide** | 1200px+ | Desktop | Full multi-column layout (3-4 columns) |
+
+### Basic VSM Pattern
 
 ```xaml
-<!-- ✅ Use VisualStateManager for adaptive layout -->
-<Grid>
-    <VisualStateManager.VisualStateGroups>
-        <VisualStateGroup>
-            <VisualState x:Name="WideState">
-                <VisualState.StateTriggers>
-                    <AdaptiveTrigger MinWindowWidth="720" />
-                </VisualState.StateTriggers>
-                <VisualState.Setters>
-                    <Setter Target="ContentGrid.ColumnDefinitions" Value="300,*" />
-                </VisualState.Setters>
-            </VisualState>
-            <VisualState x:Name="NarrowState">
-                <VisualState.StateTriggers>
-                    <AdaptiveTrigger MinWindowWidth="0" />
-                </VisualState.StateTriggers>
-                <VisualState.Setters>
-                    <Setter Target="ContentGrid.ColumnDefinitions" Value="*" />
-                </VisualState.Setters>
-            </VisualState>
-        </VisualStateGroup>
-    </VisualStateManager.VisualStateGroups>
-</Grid>
+<!-- ✅ TEMPLATE: Use this pattern for all responsive Pages -->
+<Page>
+    <Grid x:Name="RootGrid">
+        <!-- Define VisualStateGroups FIRST -->
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="AdaptiveStates">
+                
+                <!-- STATE 1: Wide (Desktop with plenty of space) -->
+                <VisualState x:Name="WideState">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="1200" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <!-- Apply Wide-specific layout changes -->
+                        <Setter Target="ContentGrid.ColumnDefinitions" Value="300,*,150" />
+                        <Setter Target="SidebarPanel.Visibility" Value="Visible" />
+                        <Setter Target="ToolsPanel.Width" Value="200" />
+                    </VisualState.Setters>
+                </VisualState>
+                
+                <!-- STATE 2: Medium (Tablet or resized window) -->
+                <VisualState x:Name="MediumState">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="641" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <!-- Apply Medium-specific layout changes -->
+                        <Setter Target="ContentGrid.ColumnDefinitions" Value="*" />
+                        <Setter Target="SidebarPanel.Visibility" Value="Collapsed" />
+                        <Setter Target="ToolsPanel.Width" Value="*" />
+                    </VisualState.Setters>
+                </VisualState>
+                
+                <!-- STATE 3: Compact (Mobile or very small window) -->
+                <VisualState x:Name="CompactState">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="0" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <!-- Apply Compact-specific layout changes -->
+                        <Setter Target="ContentGrid.ColumnDefinitions" Value="*" />
+                        <Setter Target="SidebarPanel.Visibility" Value="Collapsed" />
+                        <Setter Target="ToolsPanel.Visibility" Value="Collapsed" />
+                        <Setter Target="ToolsPanel.Margin" Value="0,10,0,0" />
+                    </VisualState.Setters>
+                </VisualState>
+                
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+        
+        <!-- Your actual layout (same for all states) -->
+        <Grid x:Name="ContentGrid" ColumnSpacing="10">
+            <Grid.ColumnDefinitions>
+                <!-- Values will be changed by VisualState.Setters -->
+                <ColumnDefinition Width="300" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="150" />
+            </Grid.ColumnDefinitions>
+            
+            <StackPanel x:Name="SidebarPanel" Grid.Column="0">
+                <!-- Sidebar content (hidden in Medium/Compact) -->
+            </StackPanel>
+            
+            <Grid Grid.Column="1">
+                <!-- Main content -->
+            </Grid>
+            
+            <StackPanel x:Name="ToolsPanel" Grid.Column="2" Width="200">
+                <!-- Tools panel (hidden in Medium/Compact) -->
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>
 ```
+
+### Real-World Example: TrainControlPage with VSM
+
+```xaml
+<Page x:Class="Moba.WinUI.View.TrainControlPage">
+    <Grid x:Name="TrainControlRoot">
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="TrainControlStates">
+                
+                <!-- WIDE: All 4 columns visible -->
+                <VisualState x:Name="WideState">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="1200" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="ControlGrid.ColumnDefinitions" 
+                                Value="260,*,100,200" />
+                        <Setter Target="SettingsPanel.Visibility" Value="Visible" />
+                        <Setter Target="SpeedPanel.Visibility" Value="Visible" />
+                    </VisualState.Setters>
+                </VisualState>
+                
+                <!-- MEDIUM: Settings + Tachometer only, Functions hidden -->
+                <VisualState x:Name="MediumState">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="641" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="ControlGrid.ColumnDefinitions" 
+                                Value="250,*" />
+                        <Setter Target="FunctionsPanel.Visibility" Value="Collapsed" />
+                        <Setter Target="SpeedPanel.Visibility" Value="Collapsed" />
+                        <!-- Functions shown in TabView below Tachometer -->
+                    </VisualState.Setters>
+                </VisualState>
+                
+                <!-- COMPACT: Stacked, Settings as Expander -->
+                <VisualState x:Name="CompactState">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="0" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="ControlGrid.ColumnDefinitions" 
+                                Value="*" />
+                        <Setter Target="SettingsPanel.Visibility" Value="Collapsed" />
+                        <Setter Target="FunctionsPanel.Visibility" Value="Collapsed" />
+                        <Setter Target="SpeedPanel.Visibility" Value="Collapsed" />
+                        <!-- All in expandable sections -->
+                    </VisualState.Setters>
+                </VisualState>
+                
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+        
+        <Grid x:Name="ControlGrid" ColumnSpacing="10" Padding="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="260" /> <!-- Settings -->
+                <ColumnDefinition Width="*" />   <!-- Tachometer -->
+                <ColumnDefinition Width="100" /> <!-- Functions -->
+                <ColumnDefinition Width="200" /> <!-- Speed -->
+            </Grid.ColumnDefinitions>
+            
+            <!-- Column 0: Locomotive Settings -->
+            <StackPanel x:Name="SettingsPanel" Grid.Column="0" Spacing="10">
+                <TextBlock Text="Locomotive Settings" FontWeight="Bold" />
+                <ComboBox Header="Locomotive" ItemsSource="{x:Bind ViewModel.Locomotives}" />
+                <Slider Header="Address" />
+                <!-- ... more settings -->
+            </StackPanel>
+            
+            <!-- Column 1: Tachometer Display -->
+            <Canvas x:Name="TachometerCanvas" Grid.Column="1" />
+            
+            <!-- Column 2: Function Buttons F0-F20 -->
+            <StackPanel x:Name="FunctionsPanel" Grid.Column="2" Spacing="5">
+                <TextBlock Text="Functions" FontWeight="Bold" />
+                <Button Content="F0" />
+                <Button Content="F1" />
+                <!-- ... F2 through F20 -->
+            </StackPanel>
+            
+            <!-- Column 3: Speed Presets -->
+            <StackPanel x:Name="SpeedPanel" Grid.Column="3" Spacing="5">
+                <TextBlock Text="Speed Presets" FontWeight="Bold" />
+                <Button Content="Stop" />
+                <Button Content="Slow" />
+                <Button Content="Normal" />
+                <Button Content="Fast" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>
+```
+
+### How VisualStateManager Works (Under the Hood)
+
+1. **Initialization:** When page loads, VSM checks current `ActualWidth`
+2. **Trigger Matching:** Finds first matching `AdaptiveTrigger` (highest MinWindowWidth that fits)
+3. **Apply Setters:** Sets values from matching `VisualState.Setters`
+4. **Listen to Resize:** When window resizes, re-evaluates triggers automatically
+5. **Smooth Transition:** Changes apply smoothly (not abruptly)
+
+**No code-behind required!** VSM handles everything.
+
+---
+
+### When to Use Each State in MOBAflow
+
+| Page | Wide (1200px+) | Medium (641-1199px) | Compact (0-640px) |
+|------|----------------|-------------------|------------------|
+| **TrainControlPage** | 4 columns visible | Settings hidden, Tabs for Functions | Full stack, Expanders |
+| **TrackPlanEditorPage** | Canvas + Toolbox | Canvas full-width, Toolbox as CommandBar | Canvas full, Toolbox modal |
+| **SignalBoxPage** | Grid + Log side-by-side | Grid full, Log below | Grid full-width |
+| **WorkflowsPage** | List + Editor side-by-side | List full, Editor modal | List full-width, swipe to edit |
+| **MainWindow** | 3-column (Rail + Content + Details) | 2-column (Rail + Content) | Hamburger menu |
+
+### Common VSM Patterns for MOBAflow
+
+#### Pattern 1: Hide/Show Panels
+
+```xaml
+<!-- ✅ Common: Hide sidebar in Compact/Medium -->
+<Setter Target="SidebarPanel.Visibility" Value="Collapsed" />
+```
+
+#### Pattern 2: Change Column Widths
+
+```xaml
+<!-- ✅ Common: Adjust grid columns -->
+<Setter Target="MainGrid.ColumnDefinitions" Value="300,*,150" />
+<!-- After state change: 300px | auto-fill | 150px -->
+```
+
+#### Pattern 3: Stack Vertically (Remove Columns)
+
+```xaml
+<!-- ✅ Common: Single column layout -->
+<Setter Target="MainGrid.ColumnDefinitions" Value="*" />
+<!-- Single column, all controls stack vertically -->
+```
+
+#### Pattern 4: Show/Hide with Margin Adjustment
+
+```xaml
+<!-- ✅ Hide panel and remove spacing -->
+<Setter Target="Panel.Visibility" Value="Collapsed" />
+<Setter Target="Panel.Margin" Value="0" />
+```
+
+---
 
 ## 🪟 Window Management
 
@@ -154,7 +381,7 @@ public partial class MainWindow : Window
         // Set title
         Title = "MOBAflow - Railway Automation";
         
-        // Set window size
+        // Set window size (important for testing responsive layouts!)
         this.AppWindow.Resize(new SizeInt32(1200, 800));
         
         // Center window
@@ -240,7 +467,9 @@ When modifying WinUI code:
 - [ ] DispatcherQueue obtained from UI element or DI
 - [ ] Navigation via Frame or NavigationView
 - [ ] Use Fluent Design System (Acrylic, Icons)
-- [ ] Responsive layout with VisualStateManager
+- [ ] **Responsive layout with VisualStateManager** (NEW - CRITICAL)
+  - [ ] Three states defined: Wide (1200px+), Medium (641-1199px), Compact (0-640px)
+  - [ ] Tested by resizing window
 - [ ] File pickers initialized with window handle
 - [ ] Window properly configured (size, title)
 - [ ] Factory pattern for ViewModels (DI)
@@ -300,373 +529,18 @@ WinUI/
 <TextBlock Text="{x:Bind ViewModel.Title, Mode=OneWay}" />
 ```
 
-## 📋 List Controls: ItemsControl vs ListView (WICHTIG!)
-
-**Grundregel:** Verwende **ItemsControl** als Standard für Listen. ListView nur bei speziellen Anforderungen.
-
-### Wann ItemsControl verwenden (BEVORZUGT)
-
-| Anwendungsfall | Grund |
-|----------------|-------|
-| Toolbox/Palette | Kein interner ScrollViewer, scrollt mit Parent |
-| Statische Listen | Einfacher, weniger Overhead |
-| Custom Layouts | Volle Kontrolle über ItemsPanel |
-| Drag-Source | PointerPressed + StartDragAsync |
-| Nested in ScrollViewer | Kein Scroll-Konflikt |
-
-### Wann ListView verwenden
-
-| Anwendungsfall | Grund |
-|----------------|-------|
-| Große Listen (1000+ Items) | Virtualisierung eingebaut |
-| Selektion erforderlich | SelectedItem/SelectedItems |
-| Built-in Keyboard Navigation | Arrow keys, Home, End |
-
-### ItemsControl Pattern (Standard)
-
-```xaml
-<!-- ✅ RICHTIG: ItemsControl für Toolbox/Listen -->
-<ScrollViewer>
-    <StackPanel>
-        <TextBlock Text="KATEGORIE" Style="{StaticResource CaptionTextBlockStyle}" />
-        <ItemsControl ItemsSource="{x:Bind Items}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="local:MyItem">
-                    <Border 
-                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                        CornerRadius="4"
-                        Margin="0,1"
-                        Padding="8,4"
-                        PointerPressed="Item_PointerPressed">
-                        <TextBlock Text="{x:Bind Name}" />
-                    </Border>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-    </StackPanel>
-</ScrollViewer>
-```
-
-### Drag-Support für ItemsControl
+## 🧪 Testing Responsive Layouts
 
 ```csharp
-// Code-Behind für Drag aus ItemsControl
-private async void Item_PointerPressed(object sender, PointerRoutedEventArgs e)
-{
-    if (sender is not FrameworkElement element) return;
-    if (element.DataContext is not MyItem item) return;
+// Test your VSM implementation:
+// 1. Resize window from 1920px down to 320px
+// 2. Verify each state activates at correct breakpoints
+// 3. Verify all elements visible/hidden as expected
+// 4. Check no layout overflow or clipping
+// 5. Verify smooth transition (no jarring jumps)
 
-    var dataPackage = new DataPackage();
-    dataPackage.SetText(item.Id);
-    dataPackage.RequestedOperation = DataPackageOperation.Copy;
-
-    await element.StartDragAsync(e.GetCurrentPoint(element));
-}
+// Window resize keyboard shortcut: Win+Left/Right Arrow (snap to half)
 ```
-
-### FALSCH: ListView in ScrollViewer
-
-```xaml
-<!-- ❌ FALSCH: ListView blockiert Parent-Scrolling -->
-<ScrollViewer>
-    <StackPanel>
-        <ListView ItemsSource="{x:Bind Items}" />  <!-- Hat eigenen ScrollViewer! -->
-        <ListView ItemsSource="{x:Bind MoreItems}" />
-    </StackPanel>
-</ScrollViewer>
-
-<!-- ❌ AUCH FALSCH: Workaround mit Disabled ScrollViewer -->
-<ListView ScrollViewer.VerticalScrollBarVisibility="Disabled" />
-<!-- Warum einen ScrollViewer deaktivieren? Nutze ItemsControl! -->
-```
-
-### Custom ItemsPanel
-
-```xaml
-<!-- Horizontal Layout -->
-<ItemsControl ItemsSource="{x:Bind Items}">
-    <ItemsControl.ItemsPanel>
-        <ItemsPanelTemplate>
-            <StackPanel Orientation="Horizontal" Spacing="8" />
-        </ItemsPanelTemplate>
-    </ItemsControl.ItemsPanel>
-</ItemsControl>
-
-<!-- Wrap Layout -->
-<ItemsControl ItemsSource="{x:Bind Items}">
-    <ItemsControl.ItemsPanel>
-        <ItemsPanelTemplate>
-            <ItemsWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="3" />
-        </ItemsPanelTemplate>
-    </ItemsControl.ItemsPanel>
-</ItemsControl>
-```
-
-## 🎯 Drag & Drop Best Practices (WinUI 3)
-
-### Grundregeln
-
-1. **CanDrag="True" muss in XAML gesetzt werden** - nicht zur Laufzeit in PointerPressed
-2. **DragStarting Event** ist der einzige Ort um DataPackage zu setzen
-3. **PointerPressed** nur für visuelles Feedback, NICHT für Drag-Initiierung
-4. **AllowDrop="True"** auf dem Drop-Target setzen
-
-### Drag Source Pattern (XAML)
-
-```xaml
-<!-- ✅ RICHTIG: CanDrag und DragStarting in XAML -->
-<Border 
-    CanDrag="True"
-    DragStarting="Element_DragStarting"
-    DropCompleted="Element_DropCompleted">
-    <TextBlock Text="{x:Bind Name}" />
-</Border>
-```
-
-### Drag Source Pattern (Code-Behind)
-
-```csharp
-/// <summary>
-/// DragStarting wird von WinUI aufgerufen wenn CanDrag="True" und User zieht.
-/// Hier wird das DataPackage gesetzt.
-/// </summary>
-private void Element_DragStarting(UIElement sender, DragStartingEventArgs args)
-{
-    if (sender is FrameworkElement { DataContext: MyItem item })
-    {
-        // Daten für Drag setzen
-        args.Data.SetText(item.Id);
-        args.Data.RequestedOperation = DataPackageOperation.Copy;
-        args.AllowedOperations = DataPackageOperation.Copy;
-    }
-    else
-    {
-        // Drag abbrechen wenn keine gültigen Daten
-        args.Cancel = true;
-    }
-}
-
-/// <summary>
-/// Optional: Wird aufgerufen wenn Drag abgeschlossen (Erfolg oder Abbruch).
-/// </summary>
-private void Element_DropCompleted(UIElement sender, DropCompletedEventArgs args)
-{
-    var success = args.DropResult == DataPackageOperation.Copy;
-}
-```
-
-### Drop Target Pattern (XAML)
-
-```xaml
-<!-- ✅ Drop Target -->
-<Canvas 
-    AllowDrop="True"
-    DragOver="Canvas_DragOver"
-    Drop="Canvas_Drop" />
-```
-
-### Drop Target Pattern (Code-Behind)
-
-```csharp
-private void Canvas_DragOver(object sender, DragEventArgs e)
-{
-    // Akzeptierte Operation anzeigen
-    e.AcceptedOperation = DataPackageOperation.Copy;
-    e.DragUIOverride.Caption = "Drop to place";
-    e.DragUIOverride.IsCaptionVisible = true;
-}
-
-private async void Canvas_Drop(object sender, DragEventArgs e)
-{
-    if (!e.DataView.Contains(StandardDataFormats.Text))
-        return;
-
-    var data = await e.DataView.GetTextAsync();
-    var position = e.GetPosition((UIElement)sender);
-    
-    // Objekt erstellen und platzieren...
-}
-```
-
-### FALSCH: CanDrag zur Laufzeit setzen
-
-```csharp
-// ❌ FALSCH: CanDrag in PointerPressed setzen
-private void Item_PointerPressed(object sender, PointerRoutedEventArgs e)
-{
-    element.CanDrag = true;  // Zu spät! Funktioniert nicht beim ersten Drag
-    element.DragStarting += ...;  // Event-Handler sollten in XAML sein
-}
-
-// ❌ FALSCH: StartDragAsync mit DataPackage
-await element.StartDragAsync(point);  // DataPackage wird nicht übergeben!
-
-// ❌ FALSCH: SetContentFromBitmapImage(null)
-args.DragUI.SetContentFromBitmapImage(null);  // Wirft ArgumentException!
-```
-
-### Häufige Fehler
-
-| Fehler | Ursache | Lösung |
-|--------|---------|--------|
-| Drag startet nicht | `CanDrag` nicht in XAML | `CanDrag="True"` in XAML |
-| Keine Daten im Drop | DataPackage nicht gesetzt | In `DragStarting` setzen |
-| ArgumentException | `SetContentFromBitmapImage(null)` | Zeile entfernen |
-| Drag nur beim 2. Mal | `CanDrag` in PointerPressed | XAML verwenden |
-
-## 🎨 DataTemplate Binding Rules (x:Bind vs Binding)
-
-### **Decision Matrix:**
-
-| Context | Binding Type | Performance | Reason |
-|---------|--------------|-------------|--------|
-| **Page/UserControl** | `{x:Bind}` ✅ | 10x faster | Compiled, Type-Safe |
-| **Inline DataTemplate (in Page)** | `{x:Bind}` ✅ | 10x faster | With x:DataType attribute |
-| **ResourceDictionary DataTemplate** | `{Binding}` ⚠️ | Slower | No Code-Behind available! |
-| **Control Template** | `{TemplateBinding}` ✅ | Fast | Template-Specific |
-
----
-
-### **Rule 1: Page/UserControl → x:Bind**
-
-```xaml
-<!-- ✅ CORRECT: Page with x:Bind -->
-<Page x:Class="Moba.WinUI.View.EditorPage"
-      xmlns:vm="using:Moba.SharedUI.ViewModel"
-      DataContext="{x:Bind ViewModel}">
-    
-    
-    <TextBox Header="Name" Text="{x:Bind ViewModel.Name, Mode=TwoWay}" />
-    <CheckBox Content="Active" IsChecked="{x:Bind ViewModel.IsActive, Mode=TwoWay}" />
-</Page>
-```
-
-**Why x:Bind?**
-- ✅ Compile-time type checking (errors during build)
-- ✅ 10x faster than `Binding` (no Reflection)
-- ✅ `Mode=OneTime` is default (Performance!)
-- ✅ IntelliSense support
-
----
-
-### **Rule 2: Inline DataTemplate → x:Bind with x:DataType**
-
-```xaml
-<!-- ✅ CORRECT: Inline DataTemplate with x:DataType -->
-<ListView ItemsSource="{x:Bind ViewModel.Stations}">
-    <ListView.ItemTemplate>
-        <DataTemplate x:DataType="vm:StationViewModel">
-            <StackPanel>
-                <TextBlock Text="{x:Bind Name}" FontWeight="Bold" />
-                <TextBlock Text="{x:Bind InPort}" Foreground="Gray" />
-            </StackPanel>
-        </DataTemplate>
-    </ListView.ItemTemplate>
-</ListView>
-```
-
-**Important:** `x:DataType` is **mandatory** for x:Bind in DataTemplate!
-
----
-
-### **Rule 3: ResourceDictionary DataTemplate → Binding**
-
-```xaml
-<!-- ❌ WRONG: ResourceDictionary with x:Bind -->
-<ResourceDictionary>
-    <DataTemplate x:Key="StationTemplate">
-        <TextBox Text="{x:Bind Name, Mode=TwoWay}" />  
-        <!-- ❌ Compiler Error WMC1119: No code-behind! -->
-    </DataTemplate>
-</ResourceDictionary>
-
-<!-- ✅ CORRECT: ResourceDictionary with Binding -->
-<ResourceDictionary>
-    <DataTemplate x:Key="StationTemplate">
-        <StackPanel Padding="16" Spacing="16">
-            <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
-            <NumberBox Header="InPort" Value="{Binding InPort, Mode=TwoWay}" />
-        </StackPanel>
-    </DataTemplate>
-</ResourceDictionary>
-```
-
-**Why Binding?**
-- ⚠️ ResourceDictionary files have **no Code-Behind**
-- ⚠️ `x:Bind` requires Code-Behind at compile-time
-- ✅ `Binding` is runtime binding (DataContext-based)
-
----
-
-### **Compiler Error: WMC1119**
-
-```
-WMC1119: This Xaml file must have a code-behind class to use {x:Bind}
-```
-
-**Solution:**
-1. **Option A:** Use Binding instead of x:Bind
-2. **Option B:** Move DataTemplate from ResourceDictionary into Page/UserControl
-
----
-
-### **Real-World Example: MOBAflow EntityTemplates.xaml**
-
-```xaml
-<!-- WinUI/Resources/EntityTemplates.xaml -->
-<ResourceDictionary>
-    <!-- ✅ CORRECT: Use Binding in ResourceDictionary -->
-    <DataTemplate x:Key="JourneyTemplate">
-        <ScrollViewer>
-            <StackPanel Padding="16" Spacing="16">
-                <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Journey Properties" />
-                <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
-                <NumberBox Header="InPort" Value="{Binding InPort, Mode=TwoWay}" SpinButtonPlacementMode="Inline" />
-            </StackPanel>
-        </ScrollViewer>
-    </DataTemplate>
-</ResourceDictionary>
-```
-
-**Usage in Page:**
-
-```xaml
-<!-- EditorPage.xaml -->
-<Page x:Class="Moba.WinUI.View.EditorPage">
-    <Page.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Resources/EntityTemplates.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
-    </Page.Resources>
-    
-    <!-- ContentControl applies template based on object type -->
-    <ContentControl Content="{x:Bind ViewModel.CurrentSelectedObject, Mode=OneWay}"
-                    ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
-</Page>
-```
-
----
-
-### **Performance Comparison:**
-
-| Binding Type | Resolution | Type Safety | Performance |
-|--------------|------------|-------------|-------------|
-| `{x:Bind}` | Compile-time | ✅ Yes | 🚀 10x |
-| `{Binding}` | Runtime | ❌ No | ⚠️ 1x |
-| `{TemplateBinding}` | Compile-time | ✅ Yes | 🚀 10x |
-
-**Recommendation:**
-- Use `x:Bind` **always** when possible (Page, UserControl, Inline Templates)
-- Use `Binding` **only** in ResourceDictionary DataTemplates
-
----
-
-**Last Updated:** 2025-12-09  
-**Related Error:** WMC1119
-
-
 
 ## 🚫 Anti-Patterns to Avoid
 
@@ -864,10 +738,9 @@ WinUI 3 CommandBar **does not automatically** move buttons to overflow menu when
     <AppBarButton Label="Connect" />  <!-- Will be cut off! -->
 </CommandBar>
 
-// ✅ CORRECT: Explicit priority
-<CommandBar OverflowButtonVisibility="Auto">
-    <AppBarButton Label="Connect" CommandBar.DynamicOverflowOrder="0" />
-</CommandBar>
+<!-- ❌ AUCH FALSCH: Workaround mit Disabled ScrollViewer -->
+<ListView ScrollViewer.VerticalScrollBarVisibility="Disabled" />
+<!-- Warum einen ScrollViewer deaktivieren? Nutze ItemsControl! -->
 ```
 
 ---
@@ -1246,18 +1119,6 @@ WinUI 3 hat erhebliche Einschraenkungen bei Custom Controls:
             </VisualState>
         </VisualStateGroup>
     </VisualStateManager.VisualStateGroups>
-
-    <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="250" MinWidth="200" />
-        <ColumnDefinition Width="Auto" />
-        <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="Auto" />
-        <ColumnDefinition x:Name="LibraryColumn" Width="200" />
-        <ColumnDefinition Width="Auto" />
-        <ColumnDefinition x:Name="PropertiesColumn" Width="350" />
-    </Grid.ColumnDefinitions>
-
-    <!-- Panels hier -->
 </Grid>
 ```
 
