@@ -16,19 +16,6 @@
             DefaultLabelPosition="Right"
             OverflowButtonVisibility="Auto">
             <AppBarButton
-                Click="NewPlan_Click"
-                Icon="Add"
-                Label="New" />
-            <AppBarButton
-                Click="LoadPlan_Click"
-                Icon="OpenFile"
-                Label="Load" />
-            <AppBarButton
-                Click="SavePlan_Click"
-                Icon="Save"
-                Label="Save" />
-            <AppBarSeparator />
-            <AppBarButton
                 Click="ValidateButton_Click"
                 Icon="Accept"
                 Label="Validate" />
@@ -53,8 +40,8 @@
                 Label="Grid" />
         </CommandBar>
 
-        <!--  Main Content  -->
-        <Grid Grid.Row="1">
+        <!--  Main Content with VisualStateManager for responsive layout  -->
+        <Grid x:Name="MainGrid" Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="180" />
                 <ColumnDefinition Width="*" />
@@ -63,6 +50,7 @@
 
             <!--  Left Panel: Toolbox  -->
             <Border
+                x:Name="ToolboxPanel"
                 Grid.Column="0"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -226,7 +214,7 @@
                 </Grid>
             </Border>
 
-            <!--  Center: Canvas with Pan/Zoom  -->
+            <!--  Center: Canvas with Pan/Zoom (Column index adjusts per breakpoint)  -->
             <Border Grid.Column="1" Background="{ThemeResource SolidBackgroundFillColorBaseAltBrush}">
                 <ScrollViewer
                     x:Name="CanvasScrollViewer"
@@ -250,14 +238,15 @@
                 </ScrollViewer>
             </Border>
 
-            <!--  Right Panel: Properties  -->
+            <!--  Right Panel: Properties (Column index adjusts per breakpoint)  -->
             <Border
+                x:Name="PropertiesPanelBorder"
                 Grid.Column="2"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1,0,0,0">
                 <ScrollViewer Padding="16">
-                    <StackPanel Spacing="16">
+                    <StackPanel x:Name="PropertiesPanel" Spacing="16">
                         <!--  Selection Info  -->
                         <StackPanel Spacing="8">
                             <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Selection" />
@@ -269,10 +258,7 @@
                         </StackPanel>
 
                         <!--  Properties Panel  -->
-                        <StackPanel
-                            x:Name="PropertiesPanel"
-                            Spacing="12"
-                            Visibility="Collapsed">
+                        <StackPanel Spacing="12" Visibility="Collapsed">
                             <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Properties" />
 
                             <TextBox
@@ -562,6 +548,46 @@
                     </StackPanel>
                 </ScrollViewer>
             </Border>
+
+            <VisualStateManager.VisualStateGroups>
+                <VisualStateGroup x:Name="WindowSizeStates">
+                    <!--  Wide State (1200px+): All panels visible  -->
+                    <VisualState x:Name="WideState">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="1200" />
+                        </VisualState.StateTriggers>
+                        <VisualState.Setters>
+                            <Setter Target="ToolboxPanel.Visibility" Value="Visible" />
+                            <Setter Target="PropertiesPanel.Visibility" Value="Visible" />
+                            <Setter Target="MainGrid.ColumnDefinitions" Value="180,*,240" />
+                        </VisualState.Setters>
+                    </VisualState>
+
+                    <!--  Medium State (641-1199px): Canvas full-width, Properties hidden  -->
+                    <VisualState x:Name="MediumState">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="641" />
+                        </VisualState.StateTriggers>
+                        <VisualState.Setters>
+                            <Setter Target="ToolboxPanel.Visibility" Value="Collapsed" />
+                            <Setter Target="PropertiesPanel.Visibility" Value="Visible" />
+                            <Setter Target="MainGrid.ColumnDefinitions" Value="*,240" />
+                        </VisualState.Setters>
+                    </VisualState>
+
+                    <!--  Compact State (0-640px): Canvas full-screen, Toolbox and Properties hidden  -->
+                    <VisualState x:Name="CompactState">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="0" />
+                        </VisualState.StateTriggers>
+                        <VisualState.Setters>
+                            <Setter Target="ToolboxPanel.Visibility" Value="Collapsed" />
+                            <Setter Target="PropertiesPanel.Visibility" Value="Collapsed" />
+                            <Setter Target="MainGrid.ColumnDefinitions" Value="*" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateManager.VisualStateGroups>
         </Grid>
 
         <!--  Status Bar  -->

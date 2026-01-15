@@ -29,15 +29,15 @@
             </TitleBar.IconSource>
         </TitleBar>
 
-        <!--  NavigationView  -->
+        <!--  NavigationView with Auto pane display mode for responsive behavior  -->
         <NavigationView
             x:Name="MainNavigation"
             Grid.Row="1"
-            CompactModeThresholdWidth="400"
+            CompactModeThresholdWidth="600"
             IsSettingsVisible="False"
             ItemInvoked="NavigationView_ItemInvoked"
-            OpenPaneLength="200"
-            PaneDisplayMode="Left">
+            OpenPaneLength="240"
+            PaneDisplayMode="Auto">
             <NavigationView.MenuItems>
                 <NavigationViewItem
                     Content="Overview"
@@ -49,18 +49,23 @@
                 <NavigationViewItem Tag="traincontrol" Visibility="{Binding ViewModel.IsTrainControlPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <NavigationViewItem.Content>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock FontWeight="SemiBold" Text="Train Control" />
-                            <Border
-                                Padding="4,2"
+                            <TextBlock
                                 VerticalAlignment="Center"
-                                Background="{ThemeResource SubtleFillColorTransparentBrush}"
-                                BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                FontWeight="SemiBold"
+                                Text="Train Control" />
+                            <Border
+                                Padding="3,3"
+                                VerticalAlignment="Center"
                                 BorderThickness="1"
                                 CornerRadius="3"
+                                Style="{StaticResource PreviewBadgeStyle}"
                                 Visibility="{Binding ViewModel.TrainControlPageLabel, Mode=OneWay, Converter={StaticResource StringToVisibilityConverter}}">
+
                                 <TextBlock
+                                    VerticalAlignment="Center"
                                     FontSize="9"
                                     Opacity="0.7"
+                                    Style="{StaticResource PreviewBadgeTextStyle}"
                                     Text="{Binding ViewModel.TrainControlPageLabel, Mode=OneWay}" />
                             </Border>
                         </StackPanel>
@@ -81,18 +86,20 @@
                 <NavigationViewItem Tag="journeymap" Visibility="{Binding ViewModel.IsJourneyMapPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <NavigationViewItem.Content>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="Journey Map" />
+                            <TextBlock VerticalAlignment="Center" Text="Journey Map" />
                             <Border
-                                Padding="4,2"
+                                Padding="3,3"
                                 VerticalAlignment="Center"
-                                Background="{ThemeResource SubtleFillColorTransparentBrush}"
-                                BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
                                 BorderThickness="1"
                                 CornerRadius="3"
+                                Style="{StaticResource PreviewBadgeStyle}"
                                 Visibility="{Binding ViewModel.JourneyMapPageLabel, Mode=OneWay, Converter={StaticResource StringToVisibilityConverter}}">
+
                                 <TextBlock
+                                    VerticalAlignment="Center"
                                     FontSize="9"
                                     Opacity="0.7"
+                                    Style="{StaticResource PreviewBadgeTextStyle}"
                                     Text="{Binding ViewModel.JourneyMapPageLabel, Mode=OneWay}" />
                             </Border>
                         </StackPanel>
@@ -118,23 +125,23 @@
                         <FontIcon Glyph="&#xE945;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem
-                    Tag="trains"
-                    Visibility="{Binding ViewModel.IsTrainsPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                <NavigationViewItem Tag="trains" Visibility="{Binding ViewModel.IsTrainsPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <NavigationViewItem.Content>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="Trains" />
+                            <TextBlock VerticalAlignment="Center" Text="Trains" />
                             <Border
-                                Padding="4,2"
+                                Padding="3,3"
                                 VerticalAlignment="Center"
-                                Background="{ThemeResource SubtleFillColorTransparentBrush}"
-                                BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
                                 BorderThickness="1"
                                 CornerRadius="3"
+                                Style="{StaticResource PreviewBadgeStyle}"
                                 Visibility="{Binding ViewModel.TrainsPageLabel, Mode=OneWay, Converter={StaticResource StringToVisibilityConverter}}">
+
                                 <TextBlock
+                                    VerticalAlignment="Center"
                                     FontSize="9"
                                     Opacity="0.7"
+                                    Style="{StaticResource PreviewBadgeTextStyle}"
                                     Text="{Binding ViewModel.TrainsPageLabel, Mode=OneWay}" />
                             </Border>
                         </StackPanel>
@@ -152,18 +159,20 @@
                     Visibility="{Binding ViewModel.IsTrackPlanEditorPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <NavigationViewItem.Content>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="MOBAtps" />
+                            <TextBlock VerticalAlignment="Center" Text="MOBAtps" />
                             <Border
-                                Padding="4,2"
+                                Padding="3,3"
                                 VerticalAlignment="Center"
-                                Background="{ThemeResource SubtleFillColorTransparentBrush}"
-                                BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
                                 BorderThickness="1"
                                 CornerRadius="3"
+                                Style="{StaticResource PreviewBadgeStyle}"
                                 Visibility="{Binding ViewModel.TrackPlanEditorPageLabel, Mode=OneWay, Converter={StaticResource StringToVisibilityConverter}}">
+
                                 <TextBlock
+                                    VerticalAlignment="Center"
                                     FontSize="9"
                                     Opacity="0.7"
+                                    Style="{StaticResource PreviewBadgeTextStyle}"
                                     Text="{Binding ViewModel.TrackPlanEditorPageLabel, Mode=OneWay}" />
                             </Border>
                         </StackPanel>
@@ -184,23 +193,23 @@
                 </NavigationViewItem>
 
                 <NavigationViewItemSeparator />
-                <NavigationViewItem
-                    Tag="monitor"
-                    Visibility="{Binding ViewModel.IsMonitorPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                <NavigationViewItem Tag="monitor" Visibility="{Binding ViewModel.IsMonitorPageAvailable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <NavigationViewItem.Content>
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="Monitor" />
+                            <TextBlock VerticalAlignment="Center" Text="Monitor" />
                             <Border
-                                Padding="4,2"
+                                Padding="3,3"
                                 VerticalAlignment="Center"
-                                Background="{ThemeResource SubtleFillColorTransparentBrush}"
-                                BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
                                 BorderThickness="1"
                                 CornerRadius="3"
+                                Style="{StaticResource PreviewBadgeStyle}"
                                 Visibility="{Binding ViewModel.MonitorPageLabel, Mode=OneWay, Converter={StaticResource StringToVisibilityConverter}}">
+
                                 <TextBlock
+                                    VerticalAlignment="Center"
                                     FontSize="9"
                                     Opacity="0.7"
+                                    Style="{StaticResource PreviewBadgeTextStyle}"
                                     Text="{Binding ViewModel.MonitorPageLabel, Mode=OneWay}" />
                             </Border>
                         </StackPanel>
@@ -404,7 +413,7 @@
                     <DropDownButton MinWidth="160">
                         <DropDownButton.Content>
                             <TextBlock
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Text="{x:Bind ViewModel.SelectedSpeechEngine, Mode=OneWay}" />
                         </DropDownButton.Content>

@@ -142,6 +142,59 @@
                 </StackPanel>
             </Expander>
 
+            <!--  Locomotive Library Section  -->
+            <Expander
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                Header="Locomotive Library"
+                IsExpanded="False">
+                <Expander.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon FontSize="20" Glyph="&#xE7C8;" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Style="{StaticResource SubtitleTextBlockStyle}"
+                                Text="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </Expander.HeaderTemplate>
+
+                <StackPanel Padding="56,16,0,16" Spacing="16">
+                    <StackPanel Spacing="4">
+                        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="Locomotive Data File" />
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox
+                                Grid.Column="0"
+                                PlaceholderText="germany-locomotives.json"
+                                Text="{x:Bind ViewModel.LocomotiveLibraryPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <Button
+                                Grid.Column="1"
+                                VerticalAlignment="Stretch"
+                                Command="{x:Bind ViewModel.BrowseLocomotiveLibraryCommand}"
+                                ToolTipService.ToolTip="Browse for locomotive library file">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon FontSize="16" Glyph="&#xED25;" />
+                                    <TextBlock Text="Browse" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="Path to JSON file with locomotive master data (series, Vmax, epoch)" />
+                    </StackPanel>
+
+                    <CheckBox Content="Auto-reload when file changes" IsChecked="{x:Bind ViewModel.LocomotiveLibraryAutoReload, Mode=TwoWay}" />
+                </StackPanel>
+            </Expander>
+
             <!--  Speech Synthesis Section  -->
             <Expander
                 HorizontalAlignment="Stretch"

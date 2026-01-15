@@ -1,5 +1,7 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Protocol;
+
+using Model;
 
 public record XBusStatus(bool EmergencyStop, bool TrackOff, bool ShortCircuit, bool Programming);
 
@@ -75,5 +77,112 @@ public static class Z21MessageParser
         centralState = data[16];
         centralStateEx = data[17];
         return true;
+    }
+
+    public static bool IsLocoInfo(byte[] data)
+        => data.Length >= 7 && IsLanXHeader(data) && data[4] == Z21Protocol.XHeader.X_LOCO_INFO;
+
+    /// <summary>
+    /// Parses the LAN_X_LOCO_INFO response (X-Bus Loco Information).
+    /// Format: 40-00-EF + Adr_MSB Adr_LSB + Speedsteps(1) + Speed(1) + Functions0-4(1) + Functions5-8(1) + Functions9-12(1) + Functions13-20(1) + Functions21-28(1)
+    /// Speed encoding: 0=stop, 1=e-stop, 2-127=speed 1-126 (for 128 speed steps)
+    /// </summary>
+    public static bool TryParseLocoInfo(byte[] data, out LocoInfo? locoInfo)
+    {
+        locoInfo = null;
+        if (data.Length < 11 || !IsLocoInfo(data))
+            return false;
+
+        try
+        {
+            // Parse address (little-endian, but Z21 uses big-endian for addresses)
+            ushort address = (ushort)((data[5] << 8) | data[6]);
+
+            // Mask out the C0 bit for 14-bit addresses
+            address = (ushort)(address & 0x3FFF);
+
+            // Parse speed steps and current speed
+            byte speedSteps = (byte)(data[7] & 0x0F); // Lower 4 bits: 0=14, 2=28, 3=128
+            byte speedByte = data[8];
+            
+            // Speed: bit 7 = direction, bits 0-6 = speed value
+            bool forward = (speedByte & 0x80) != 0;
+            int speed = speedByte & 0x7F;
+            
+            // Decode speed: 0=stop, 1=e-stop, 2-127=speed 1-126
+            if (speed > 1) speed--; // Adjust encoding
+
+            // Parse function status (F0-F28 in 5 bytes) as bitmask (uint)
+            uint functions = 0;
+            
+            if (data.Length >= 9)
+            {
+                byte f0_4 = data[9];
+                if ((f0_4 & 0x10) != 0) functions |= 0x01; // F0 (light)
+                if ((f0_4 & 0x01) != 0) functions |= 0x02; // F1
+                if ((f0_4 & 0x02) != 0) functions |= 0x04; // F2
+                if ((f0_4 & 0x04) != 0) functions |= 0x08; // F3
+                if ((f0_4 & 0x08) != 0) functions |= 0x10; // F4
+            }
+
+            if (data.Length >= 10)
+            {
+                byte f5_8 = data[10];
+                if ((f5_8 & 0x01) != 0) functions |= 0x20; // F5
+                if ((f5_8 & 0x02) != 0) functions |= 0x40; // F6
+                if ((f5_8 & 0x04) != 0) functions |= 0x80; // F7
+                if ((f5_8 & 0x08) != 0) functions |= 0x100; // F8
+            }
+
+            if (data.Length >= 11)
+            {
+                byte f9_12 = data[11];
+                if ((f9_12 & 0x01) != 0) functions |= 0x200; // F9
+                if ((f9_12 & 0x02) != 0) functions |= 0x400; // F10
+                if ((f9_12 & 0x04) != 0) functions |= 0x800; // F11
+                if ((f9_12 & 0x08) != 0) functions |= 0x1000; // F12
+            }
+
+            if (data.Length >= 12)
+            {
+                byte f13_20 = data[12];
+                if ((f13_20 & 0x01) != 0) functions |= 0x2000; // F13
+                if ((f13_20 & 0x02) != 0) functions |= 0x4000; // F14
+                if ((f13_20 & 0x04) != 0) functions |= 0x8000; // F15
+                if ((f13_20 & 0x08) != 0) functions |= 0x10000; // F16
+                if ((f13_20 & 0x10) != 0) functions |= 0x20000; // F17
+                if ((f13_20 & 0x20) != 0) functions |= 0x40000; // F18
+                if ((f13_20 & 0x40) != 0) functions |= 0x80000; // F19
+                if ((f13_20 & 0x80) != 0) functions |= 0x100000; // F20
+            }
+
+            if (data.Length >= 13)
+            {
+                byte f21_28 = data[13];
+                if ((f21_28 & 0x01) != 0) functions |= 0x200000; // F21
+                if ((f21_28 & 0x02) != 0) functions |= 0x400000; // F22
+                if ((f21_28 & 0x04) != 0) functions |= 0x800000; // F23
+                if ((f21_28 & 0x08) != 0) functions |= 0x1000000; // F24
+                if ((f21_28 & 0x10) != 0) functions |= 0x2000000; // F25
+                if ((f21_28 & 0x20) != 0) functions |= 0x4000000; // F26
+                if ((f21_28 & 0x40) != 0) functions |= 0x8000000; // F27
+                if ((f21_28 & 0x80) != 0) functions |= 0x10000000; // F28
+            }
+
+            locoInfo = new LocoInfo
+            {
+                Address = (int)address,
+                Speed = speed,
+                IsForward = forward,
+                SpeedSteps = speedSteps switch { 0 => 14, 2 => 28, 3 => 128, _ => 128 },
+                Functions = functions
+            };
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

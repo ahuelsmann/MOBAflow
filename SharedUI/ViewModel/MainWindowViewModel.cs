@@ -88,6 +88,9 @@ public partial class MainWindowViewModel : ObservableObject
         UseTimerFilter = settings.Counter.UseTimerFilter;
         TimerIntervalSeconds = settings.Counter.TimerIntervalSeconds;
 
+        // ✅ Initialize Theme settings from AppSettings.Application
+        IsDarkMode = settings.Application.IsDarkMode;
+
         // ✅ Subscribe to Z21 events immediately (like CounterViewModel does)
         // This ensures we receive status updates regardless of how connection was established
         _z21.Received += OnFeedbackReceived;  // For counter statistics
@@ -135,6 +138,20 @@ public partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private bool isDarkMode = true;  // Dark theme is default for WinUI
+
+    /// <summary>
+    /// Called when IsDarkMode changes. Persists to AppSettings.
+    /// </summary>
+    partial void OnIsDarkModeChanged(bool value)
+    {
+        _settings.Application.IsDarkMode = value;
+        
+        // Auto-save settings when theme changes
+        if (_settingsService != null)
+        {
+            _ = _settingsService.SaveSettingsAsync(_settings);
+        }
+    }
 
     /// <summary>
     /// Indicates whether a solution with projects is currently loaded.

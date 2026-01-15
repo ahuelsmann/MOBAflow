@@ -123,12 +123,13 @@ public sealed class SignalBoxPage : SignalBoxPageBase
                 break;
 
             case SignalBoxElementType.TrackCurve45:
-                canvas.Children.Add(CreateTrackLine(2, 12, 26, 20, SignalColors.TrackFree, 3));
+                // 45° arc from left to top-right (similar to MOBAtps)
+                canvas.Children.Add(CreateTrackArc(2, -14, 26, 90, -45, SignalColors.TrackFree, 3));
                 break;
 
             case SignalBoxElementType.TrackCurve90:
-                canvas.Children.Add(CreateTrackLine(2, 12, 16, 12, SignalColors.TrackFree, 3));
-                canvas.Children.Add(CreateTrackLine(16, 12, 16, 22, SignalColors.TrackFree, 3));
+                // 90° arc from left to bottom (similar to MOBAtps)
+                canvas.Children.Add(CreateTrackArc(30, 12, 26, 180, 90, SignalColors.TrackFree, 3));
                 break;
 
             case SignalBoxElementType.TrackEndStop:
@@ -181,7 +182,6 @@ public sealed class SignalBoxPage : SignalBoxPageBase
             case SignalBoxElementType.SignalKsDistant:
                 // Use PathIcon for Ks-Distant signal
                 return CreateKsSignalPathIcon(SignalBoxElementType.SignalKsDistant);
-                break;
 
             case SignalBoxElementType.SignalSvMain:
             case SignalBoxElementType.SignalSvDistant:
@@ -237,7 +237,8 @@ public sealed class SignalBoxPage : SignalBoxPageBase
             default:
                 canvas.Children.Add(new Rectangle
                 {
-                    Width = 28, Height = 20,
+                    Width = 28,
+                    Height = 20,
                     Stroke = new SolidColorBrush(SignalColors.TrackFree),
                     StrokeThickness = 2
                 });
@@ -267,12 +268,13 @@ public sealed class SignalBoxPage : SignalBoxPageBase
                 break;
 
             case SignalBoxElementType.TrackCurve45:
-                container.Children.Add(CreateTrackLine(4, 30, 56, 4, trackColor));
+                // 45° arc from left-center to top-right (similar to MOBAtps)
+                container.Children.Add(CreateTrackArc(4, -22, 52, 90, -45, trackColor));
                 break;
 
             case SignalBoxElementType.TrackCurve90:
-                container.Children.Add(CreateTrackLine(4, 30, 30, 30, trackColor));
-                container.Children.Add(CreateTrackLine(30, 30, 30, 56, trackColor));
+                // 90° arc from left-center to bottom-center (similar to MOBAtps)
+                container.Children.Add(CreateTrackArc(56, 30, 52, 180, 90, trackColor));
                 break;
 
             case SignalBoxElementType.TrackEndStop:
@@ -419,7 +421,8 @@ public sealed class SignalBoxPage : SignalBoxPageBase
         var discColor = isExpectStop ? SignalColors.SignalYellow : SignalColors.SignalGreen;
         grid.Children.Add(new Ellipse
         {
-            Width = 22, Height = 22,
+            Width = 22,
+            Height = 22,
             Fill = new SolidColorBrush(discColor),
             Stroke = new SolidColorBrush(Color.FromArgb(255, 50, 60, 80)),
             StrokeThickness = 2

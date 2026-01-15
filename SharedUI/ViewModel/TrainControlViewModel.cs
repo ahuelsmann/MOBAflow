@@ -116,7 +116,7 @@ public partial class TrainControlViewModel : ObservableObject
             if (Preset1.DccAddress != value)
             {
                 Preset1.DccAddress = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(Preset1Address));
                 if (SelectedPresetIndex == 0)
                 {
                     LocoAddress = value;
@@ -137,7 +137,7 @@ public partial class TrainControlViewModel : ObservableObject
             if (Preset2.DccAddress != value)
             {
                 Preset2.DccAddress = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(Preset2Address));
                 if (SelectedPresetIndex == 1)
                 {
                     LocoAddress = value;
@@ -158,7 +158,7 @@ public partial class TrainControlViewModel : ObservableObject
             if (Preset3.DccAddress != value)
             {
                 Preset3.DccAddress = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(Preset3Address));
                 if (SelectedPresetIndex == 2)
                 {
                     LocoAddress = value;
@@ -173,12 +173,44 @@ public partial class TrainControlViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ApproximateKmh))]
+    [NotifyPropertyChangedFor(nameof(SpeedKmh))]
     private int speed;
 
     /// <summary>
     /// Approximate km/h based on speed step (assuming 200 km/h max for typical model trains).
     /// </summary>
     public int ApproximateKmh => (int)Math.Round(Speed * 1.6); // ~200 km/h at max speed (126)
+
+    // === Locomotive Series (Baureihe) for Vmax calculation ===
+
+    /// <summary>
+    /// Selected locomotive series name (e.g., "BR 103", "ICE 3").
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SpeedKmh))]
+    [NotifyPropertyChangedFor(nameof(HasValidLocoSeries))]
+    private string selectedLocoSeries = string.Empty;
+
+    /// <summary>
+    /// Maximum speed (Vmax) of the selected locomotive series in km/h.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SpeedKmh))]
+    [NotifyPropertyChangedFor(nameof(HasValidLocoSeries))]
+    private int selectedVmax;
+
+    /// <summary>
+    /// Indicates whether a valid locomotive series with Vmax is selected.
+    /// </summary>
+    public bool HasValidLocoSeries => SelectedVmax > 0;
+
+    /// <summary>
+    /// Calculated speed in km/h based on current speed step and selected Vmax.
+    /// Returns 0 if no valid locomotive series is selected.
+    /// </summary>
+    public int SpeedKmh => HasValidLocoSeries
+        ? (int)Math.Round((double)Speed / 126.0 * SelectedVmax)
+        : 0;
 
     /// <summary>
     /// Direction: true = forward, false = backward.

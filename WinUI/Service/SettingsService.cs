@@ -2,9 +2,13 @@
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
+
 using Domain;
+
 using Microsoft.Extensions.Logging;
+
 using SharedUI.Interface;
+
 using System.Text.Json;
 
 /// <summary>
@@ -23,10 +27,10 @@ public class SettingsService : ISettingsService
         _settings = settings;
         _logger = logger;
         _settingsFilePath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
-        
+
         // Ensure FeatureToggles is initialized
         _settings.FeatureToggles ??= new FeatureToggleSettings();
-        
+
         // ✅ Load settings synchronously to avoid deadlock
         // WinUI 3 Desktop apps cannot use async in DI constructors
         LoadSettingsSync();
@@ -100,7 +104,7 @@ public class SettingsService : ISettingsService
             {
                 var json = await File.ReadAllTextAsync(_settingsFilePath);
                 var loadedSettings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions.Default);
-                
+
                 if (loadedSettings != null)
                 {
                     // Copy all loaded values to the DI-registered singleton
@@ -143,7 +147,7 @@ public class SettingsService : ISettingsService
             _logger.LogWarning(ex, "Failed to load settings, using defaults");
         }
     }
-    
+
     /// <summary>
     /// Gets the current application settings from IOptions.
     /// </summary>
@@ -189,7 +193,7 @@ public class SettingsService : ISettingsService
     /// Gets or sets the path to the last loaded solution file.
     /// Stored in AppSettings.Application.LastSolutionPath.
     /// </summary>
-    public string? LastSolutionPath
+    public string LastSolutionPath
     {
         get => _settings.Application.LastSolutionPath;
         set

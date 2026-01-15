@@ -1,7 +1,8 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI;
 
 using Common.Configuration;
+
 using SharedUI.Interface;
 using SharedUI.ViewModel;
 
@@ -23,17 +24,27 @@ public partial class MainPage
 
         // Set initial theme switch state based on saved preference
         // Switch ON = Light theme, Switch OFF = Dark theme
-        var savedTheme = _settings.Application.Theme;
-        var isLightTheme = savedTheme == "Light" || 
-                           (savedTheme == "System" && Application.Current?.RequestedTheme == AppTheme.Light);
+        var isDarkMode = _settings.Application.IsDarkMode;
+        var useSystemTheme = _settings.Application.UseSystemTheme;
+
+        bool isLightTheme;
+        if (useSystemTheme)
+        {
+            isLightTheme = Application.Current?.RequestedTheme == AppTheme.Light;
+        }
+        else
+        {
+            isLightTheme = !isDarkMode;
+        }
+
         ThemeSwitch.IsToggled = isLightTheme;
-        
+
         // Update theme icon based on current state
         UpdateThemeIcon(isLightTheme);
-        
+
         // Subscribe to connection changes for pulse animation
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
-        
+
         // Start pulse animation if already connected
         if (ViewModel.IsConnected)
         {
@@ -59,20 +70,20 @@ public partial class MainPage
     private async void TrackPowerSwitch_Toggled(object sender, ToggledEventArgs e)
     {
         _ = sender; // Suppress unused parameter warning
-        
+
         // Haptic feedback for track power toggle
         PerformHapticFeedback();
-        
+
         await ViewModel.SetTrackPowerCommand.ExecuteAsync(e.Value);
     }
 
     private async void ConnectionSwitch_Toggled(object sender, ToggledEventArgs e)
     {
         _ = sender; // Suppress unused parameter warning
-        
+
         // Haptic feedback for connection toggle
         PerformHapticFeedback();
-        
+
         if (e.Value)
             await ViewModel.ConnectCommand.ExecuteAsync(null);
         else
@@ -89,19 +100,23 @@ public partial class MainPage
         PerformHapticFeedback();
 
         // Switch ON = Light, Switch OFF = Dark
-        var themePreference = e.Value ? "Light" : "Dark";
-        
+        var isLightTheme = e.Value;
+        var isDarkMode = !isLightTheme;
+
+        // Disable UseSystemTheme when manually toggling
+        _settings.Application.UseSystemTheme = false;
+        _settings.Application.IsDarkMode = isDarkMode;
+
         // Apply theme immediately
-        app.ApplyTheme(themePreference);
-        
+        app.ApplyTheme(isDarkMode, useSystemTheme: false);
+
         // Update the theme icon
-        UpdateThemeIcon(e.Value);
-        
+        UpdateThemeIcon(isLightTheme);
+
         // Save preference to settings
-        _settings.Application.Theme = themePreference;
         await _settingsService.SaveSettingsAsync(_settings);
     }
-    
+
     /// <summary>
     /// Updates the theme icon label to reflect current theme state.
     /// </summary>
@@ -110,7 +125,7 @@ public partial class MainPage
         // Update the icon - ☀️ for light, 🌙 for dark
         ThemeIcon.Text = isLightTheme ? "☀️" : "🌙";
     }
-    
+
     /// <summary>
     /// Performs haptic feedback (vibration) on user interaction.
     /// </summary>
@@ -125,7 +140,7 @@ public partial class MainPage
             // Haptic feedback not available on all devices
         }
     }
-    
+
     /// <summary>
     /// Starts a pulsing animation on the connection indicator when connected.
     /// </summary>
@@ -133,7 +148,7 @@ public partial class MainPage
     {
         StopPulseAnimation();
         _pulseAnimationCts = new CancellationTokenSource();
-        
+
         _ = Task.Run(async () =>
         {
             while (!_pulseAnimationCts.Token.IsCancellationRequested)
@@ -143,11 +158,11 @@ public partial class MainPage
                     await MainThread.InvokeOnMainThreadAsync(async () =>
                     {
                         // Pulse: Scale up
-                        await ConnectionIndicator.ScaleTo(1.3, 500, Easing.SinInOut);
+                        await ConnectionIndicator.ScaleToAsync(1.3, 500, Easing.SinInOut);
                         // Pulse: Scale down
-                        await ConnectionIndicator.ScaleTo(1.0, 500, Easing.SinInOut);
+                        await ConnectionIndicator.ScaleToAsync(1.0, 500, Easing.SinInOut);
                     });
-                    
+
                     // Pause between pulses
                     await Task.Delay(1500, _pulseAnimationCts.Token);
                 }
@@ -163,7 +178,7 @@ public partial class MainPage
             }
         }, _pulseAnimationCts.Token);
     }
-    
+
     /// <summary>
     /// Stops the pulsing animation on the connection indicator.
     /// </summary>
@@ -172,7 +187,7 @@ public partial class MainPage
         _pulseAnimationCts?.Cancel();
         _pulseAnimationCts?.Dispose();
         _pulseAnimationCts = null;
-        
+
         // Reset scale
         MainThread.BeginInvokeOnMainThread(() =>
         {

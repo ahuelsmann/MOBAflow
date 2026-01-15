@@ -58,7 +58,7 @@ public class JourneyMapViewModel : ObservableObject
             if (_mainViewModel.SelectedJourney != value)
             {
                 _mainViewModel.SelectedJourney = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(SelectedJourney));
                 OnPropertyChanged(nameof(HasSelectedJourney));
                 OnPropertyChanged(nameof(RouteStations));
             }

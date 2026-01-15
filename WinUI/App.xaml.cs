@@ -196,6 +196,22 @@ public partial class App
             }
         });
 
+        // ILocomotiveService with NullObject fallback
+        // Always register a service (real or no-op)
+        services.AddSingleton<ILocomotiveService>(sp =>
+        {
+            try
+            {
+                var appSettings = sp.GetRequiredService<AppSettings>();
+                var logger = sp.GetRequiredService<ILogger<LocomotiveService>>();
+                return new LocomotiveService(appSettings, logger);
+            }
+            catch
+            {
+                return new NullLocomotiveService();
+            }
+        });
+
         // ISettingsService with NullObject fallback
         // Always register a service (real or no-op)
         services.AddSingleton<ISettingsService>(sp =>

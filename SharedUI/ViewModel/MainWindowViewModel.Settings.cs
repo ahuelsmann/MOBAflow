@@ -39,7 +39,7 @@ public partial class MainWindowViewModel
             if (_settings.Z21.CurrentIpAddress != value)
             {
                 _settings.Z21.CurrentIpAddress = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(IpAddress));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
         }
@@ -53,7 +53,7 @@ public partial class MainWindowViewModel
             if (_settings.Z21.DefaultPort != value)
             {
                 _settings.Z21.DefaultPort = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(Port));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
         }
@@ -67,7 +67,7 @@ public partial class MainWindowViewModel
             if (_settings.Z21.AutoConnectRetryIntervalSeconds != (int)value)
             {
                 _settings.Z21.AutoConnectRetryIntervalSeconds = (int)value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(Z21AutoConnectRetryInterval));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
         }
@@ -81,7 +81,7 @@ public partial class MainWindowViewModel
             if (_settings.Z21.SystemStatePollingIntervalSeconds != (int)value)
             {
                 _settings.Z21.SystemStatePollingIntervalSeconds = (int)value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(Z21SystemStatePollingInterval));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
         }
@@ -95,7 +95,7 @@ public partial class MainWindowViewModel
             if (_settings.CityLibrary.FilePath != value)
             {
                 _settings.CityLibrary.FilePath = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(CityLibraryPath));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
         }
@@ -109,7 +109,35 @@ public partial class MainWindowViewModel
             if (_settings.CityLibrary.AutoReload != value)
             {
                 _settings.CityLibrary.AutoReload = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(CityLibraryAutoReload));
+                _ = _settingsService?.SaveSettingsAsync(_settings);
+            }
+        }
+    }
+
+    public string LocomotiveLibraryPath
+    {
+        get => _settings.LocomotiveLibrary.FilePath;
+        set
+        {
+            if (_settings.LocomotiveLibrary.FilePath != value)
+            {
+                _settings.LocomotiveLibrary.FilePath = value;
+                OnPropertyChanged(nameof(LocomotiveLibraryPath));
+                _ = _settingsService?.SaveSettingsAsync(_settings);
+            }
+        }
+    }
+
+    public bool LocomotiveLibraryAutoReload
+    {
+        get => _settings.LocomotiveLibrary.AutoReload;
+        set
+        {
+            if (_settings.LocomotiveLibrary.AutoReload != value)
+            {
+                _settings.LocomotiveLibrary.AutoReload = value;
+                OnPropertyChanged(nameof(LocomotiveLibraryAutoReload));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
         }
@@ -123,7 +151,7 @@ public partial class MainWindowViewModel
             if (_settings.Speech.Key != value)
             {
                 _settings.Speech.Key = value ?? string.Empty;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(SpeechKey));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
         }
@@ -137,7 +165,7 @@ public partial class MainWindowViewModel
             if (_settings.Speech.Region != value)
             {
                 _settings.Speech.Region = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(SpeechRegion));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
         }
@@ -151,7 +179,7 @@ public partial class MainWindowViewModel
             if (_settings.Speech.Rate != value)
             {
                 _settings.Speech.Rate = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(SpeechRate));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
         }
@@ -165,7 +193,7 @@ public partial class MainWindowViewModel
             if ((uint)value != _settings.Speech.Volume)
             {
                 _settings.Speech.Volume = (uint)value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(SpeechVolume));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
         }
@@ -179,7 +207,7 @@ public partial class MainWindowViewModel
             if (_settings.Speech.VoiceName != value)
             {
                 _settings.Speech.VoiceName = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(VoiceName));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
         }
@@ -227,7 +255,7 @@ public partial class MainWindowViewModel
             if (_settings.Speech.SpeakerEngineName != value)
             {
                 _settings.Speech.SpeakerEngineName = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(SelectedSpeechEngine));
                 OnPropertyChanged(nameof(IsAzureSpeechEngineSelected));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
@@ -249,7 +277,7 @@ public partial class MainWindowViewModel
             if (_settings.Application.AutoLoadLastSolution != value)
             {
                 _settings.Application.AutoLoadLastSolution = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(AutoLoadLastSolution));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
         }
@@ -263,7 +291,7 @@ public partial class MainWindowViewModel
             if (_settings.Application.AutoStartWebApp != value)
             {
                 _settings.Application.AutoStartWebApp = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(AutoStartWebApp));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
         }
@@ -278,7 +306,7 @@ public partial class MainWindowViewModel
             if (_settings.RestApi.Port != value)
             {
                 _settings.RestApi.Port = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(RestApiPort));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
         }
@@ -321,7 +349,7 @@ public partial class MainWindowViewModel
             if (_settings.HealthCheck.Enabled != value)
             {
                 _settings.HealthCheck.Enabled = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(HealthCheckEnabled));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
         }
@@ -335,7 +363,7 @@ public partial class MainWindowViewModel
             if (_settings.HealthCheck.IntervalSeconds != (int)value)
             {
                 _settings.HealthCheck.IntervalSeconds = (int)value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(HealthCheckIntervalSeconds));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
         }
@@ -349,7 +377,7 @@ public partial class MainWindowViewModel
             if (_settings.Counter.CountOfFeedbackPoints != (int)value)
             {
                 _settings.Counter.CountOfFeedbackPoints = (int)value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(CountOfFeedbackPoints));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
 
                 // Immediately update Track Statistics on Overview page
@@ -370,7 +398,7 @@ public partial class MainWindowViewModel
             if (_settings.FeatureToggles.IsOverviewPageAvailable != value)
             {
                 _settings.FeatureToggles.IsOverviewPageAvailable = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsOverviewPageAvailableSetting));
                 OnPropertyChanged(nameof(IsOverviewPageAvailable));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
@@ -385,7 +413,7 @@ public partial class MainWindowViewModel
             if (_settings.FeatureToggles.IsSolutionPageAvailable != value)
             {
                 _settings.FeatureToggles.IsSolutionPageAvailable = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsSolutionPageAvailableSetting));
                 OnPropertyChanged(nameof(IsSolutionPageAvailable));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
@@ -400,7 +428,7 @@ public partial class MainWindowViewModel
             if (_settings.FeatureToggles.IsSettingsPageAvailable != value)
             {
                 _settings.FeatureToggles.IsSettingsPageAvailable = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsSettingsPageAvailableSetting));
                 OnPropertyChanged(nameof(IsSettingsPageAvailable));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
@@ -415,7 +443,7 @@ public partial class MainWindowViewModel
             if (_settings.FeatureToggles.IsJourneysPageAvailable != value)
             {
                 _settings.FeatureToggles.IsJourneysPageAvailable = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsJourneysPageAvailableSetting));
                 OnPropertyChanged(nameof(IsJourneysPageAvailable));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
@@ -430,7 +458,7 @@ public partial class MainWindowViewModel
             if (_settings.FeatureToggles.IsWorkflowsPageAvailable != value)
             {
                 _settings.FeatureToggles.IsWorkflowsPageAvailable = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsWorkflowsPageAvailableSetting));
                 OnPropertyChanged(nameof(IsWorkflowsPageAvailable));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
@@ -445,7 +473,7 @@ public partial class MainWindowViewModel
             if (_settings.FeatureToggles.IsTrackPlanEditorPageAvailable != value)
             {
                 _settings.FeatureToggles.IsTrackPlanEditorPageAvailable = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsTrackPlanEditorPageAvailableSetting));
                 OnPropertyChanged(nameof(IsTrackPlanEditorPageAvailable));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
@@ -460,7 +488,7 @@ public partial class MainWindowViewModel
             if (_settings.FeatureToggles.IsSignalBoxPageAvailable != value)
             {
                 _settings.FeatureToggles.IsSignalBoxPageAvailable = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsSignalBoxPageAvailableSetting));
                 OnPropertyChanged(nameof(IsSignalBoxPageAvailable));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
@@ -475,7 +503,7 @@ public partial class MainWindowViewModel
             if (_settings.FeatureToggles.IsJourneyMapPageAvailable != value)
             {
                 _settings.FeatureToggles.IsJourneyMapPageAvailable = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsJourneyMapPageAvailableSetting));
                 OnPropertyChanged(nameof(IsJourneyMapPageAvailable));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
@@ -490,7 +518,7 @@ public partial class MainWindowViewModel
             if (_settings.FeatureToggles.IsMonitorPageAvailable != value)
             {
                 _settings.FeatureToggles.IsMonitorPageAvailable = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsMonitorPageAvailableSetting));
                 OnPropertyChanged(nameof(IsMonitorPageAvailable));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
@@ -505,7 +533,7 @@ public partial class MainWindowViewModel
             if (_settings.FeatureToggles.IsTrainsPageAvailable != value)
             {
                 _settings.FeatureToggles.IsTrainsPageAvailable = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsTrainsPageAvailableSetting));
                 OnPropertyChanged(nameof(IsTrainsPageAvailable));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
@@ -520,7 +548,7 @@ public partial class MainWindowViewModel
             if (_settings.FeatureToggles.IsTrainControlPageAvailable != value)
             {
                 _settings.FeatureToggles.IsTrainControlPageAvailable = value;
-                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsTrainControlPageAvailableSetting));
                 OnPropertyChanged(nameof(IsTrainControlPageAvailable));
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
@@ -663,6 +691,32 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand]
+    private async Task BrowseLocomotiveLibraryAsync()
+    {
+        // Skip if IoService not available (WebApp/MAUI)
+        if (_ioService is NullIoService)
+        {
+            ErrorMessage = "File browsing not supported on this platform";
+            ShowErrorMessage = true;
+            return;
+        }
+
+        try
+        {
+            var path = await _ioService.BrowseForJsonFileAsync().ConfigureAwait(false);
+            if (!string.IsNullOrEmpty(path))
+            {
+                LocomotiveLibraryPath = path;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+            ShowErrorMessage = true;
+        }
+    }
+
+    [RelayCommand]
     private async Task ResetToDefaultsAsync()
     {
         if (_settingsService == null) return;
@@ -679,6 +733,8 @@ public partial class MainWindowViewModel
             OnPropertyChanged(nameof(Z21SystemStatePollingInterval));
             OnPropertyChanged(nameof(CityLibraryPath));
             OnPropertyChanged(nameof(CityLibraryAutoReload));
+            OnPropertyChanged(nameof(LocomotiveLibraryPath));
+            OnPropertyChanged(nameof(LocomotiveLibraryAutoReload));
             OnPropertyChanged(nameof(SpeechKey));
             OnPropertyChanged(nameof(SpeechRegion));
             OnPropertyChanged(nameof(SpeechRate));

@@ -1,9 +1,9 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI;
 
-using Common.Configuration;
 using SharedUI.Interface;
 using SharedUI.ViewModel;
+
 using System.Diagnostics;
 
 public partial class App
@@ -13,43 +13,41 @@ public partial class App
     public App(IServiceProvider services)
     {
         _services = services;
-        
+
         // ⚠️ CRITICAL: Load default dark theme resources BEFORE InitializeComponent
         // Theme will be properly applied after settings are loaded in CreateWindow
         LoadThemeResources(isDark: true);
-        
+
         InitializeComponent();
     }
 
     /// <summary>
-    /// Applies the theme based on the saved preference or system default.
+    /// Applies the theme based on settings (manual or system theme).
     /// </summary>
-    public void ApplyTheme(string themePreference)
+    /// <param name="isDarkMode">Manual theme preference (true = Dark, false = Light)</param>
+    /// <param name="useSystemTheme">Follow OS theme preference instead of manual</param>
+    public void ApplyTheme(bool isDarkMode, bool useSystemTheme = false)
     {
         AppTheme targetTheme;
-        
-        switch (themePreference)
+        bool effectiveIsDark;
+
+        if (useSystemTheme)
         {
-            case "Light":
-                targetTheme = AppTheme.Light;
-                break;
-            case "Dark":
-                targetTheme = AppTheme.Dark;
-                break;
-            default: // "System" or unknown
-                targetTheme = AppTheme.Unspecified;
-                break;
+            // Follow OS theme
+            targetTheme = AppTheme.Unspecified;
+            effectiveIsDark = RequestedTheme == AppTheme.Dark;
+        }
+        else
+        {
+            // Manual theme control
+            targetTheme = isDarkMode ? AppTheme.Dark : AppTheme.Light;
+            effectiveIsDark = isDarkMode;
         }
         
         UserAppTheme = targetTheme;
+        LoadThemeResources(effectiveIsDark);
         
-        // Apply theme-specific resources
-        var isDark = targetTheme == AppTheme.Dark || 
-                     (targetTheme == AppTheme.Unspecified && RequestedTheme == AppTheme.Dark);
-        
-        LoadThemeResources(isDark);
-        
-        Debug.WriteLine($"🎨 Theme applied: {themePreference} (isDark: {isDark})");
+        Debug.WriteLine($"🎨 Theme applied: {(useSystemTheme ? "System" : isDarkMode ? "Dark" : "Light")} (isDark: {effectiveIsDark})");
     }
 
     /// <summary>
@@ -58,7 +56,7 @@ public partial class App
     private void LoadThemeResources(bool isDark)
     {
         var resources = Resources;
-        
+
         if (isDark)
         {
             // Dark theme colors
@@ -69,19 +67,19 @@ public partial class App
             resources["SurfaceDark"] = Color.FromArgb("#1E1E1E");
             resources["SurfaceVariant"] = Color.FromArgb("#2C2C2C");
             resources["Surface"] = Color.FromArgb("#1E1E1E");
-            
+
             resources["RailwayPrimary"] = Color.FromArgb("#64B5F6");
             resources["RailwaySecondary"] = Color.FromArgb("#FF9800");
             resources["RailwayAccent"] = Color.FromArgb("#81C784");
             resources["RailwayDanger"] = Color.FromArgb("#EF5350");
             resources["RailwayWarning"] = Color.FromArgb("#FFB74D");
-            
+
             resources["TextPrimary"] = Color.FromArgb("#FFFFFF");
             resources["TextSecondary"] = Color.FromArgb("#B0B0B0");
             resources["TextDisabled"] = Color.FromArgb("#606060");
             resources["TextOnPrimary"] = Color.FromArgb("#000000");
             resources["BorderColor"] = Color.FromArgb("#4D4D4D");
-            
+
             resources["PageBackgroundColor"] = Color.FromArgb("#121212");
             resources["FrameBackgroundColor"] = Color.FromArgb("#1E1E1E");
             resources["Primary"] = Color.FromArgb("#64B5F6");
@@ -101,19 +99,19 @@ public partial class App
             resources["SurfaceDark"] = Color.FromArgb("#F5F5F5");
             resources["SurfaceVariant"] = Color.FromArgb("#EEEEEE");
             resources["Surface"] = Color.FromArgb("#FFFFFF");
-            
+
             resources["RailwayPrimary"] = Color.FromArgb("#1976D2");
             resources["RailwaySecondary"] = Color.FromArgb("#FF6F00");
             resources["RailwayAccent"] = Color.FromArgb("#4CAF50");
             resources["RailwayDanger"] = Color.FromArgb("#D32F2F");
             resources["RailwayWarning"] = Color.FromArgb("#FFA000");
-            
+
             resources["TextPrimary"] = Color.FromArgb("#212121");
             resources["TextSecondary"] = Color.FromArgb("#757575");
             resources["TextDisabled"] = Color.FromArgb("#BDBDBD");
             resources["TextOnPrimary"] = Color.FromArgb("#FFFFFF");
             resources["BorderColor"] = Color.FromArgb("#E0E0E0");
-            
+
             resources["PageBackgroundColor"] = Color.FromArgb("#FAFAFA");
             resources["FrameBackgroundColor"] = Color.FromArgb("#FFFFFF");
             resources["Primary"] = Color.FromArgb("#1976D2");
@@ -123,7 +121,7 @@ public partial class App
             resources["Gray400"] = Color.FromArgb("#BDBDBD");
             resources["Gray600"] = Color.FromArgb("#F5F5F5");
         }
-        
+
         Resources = resources;
     }
 
@@ -132,14 +130,14 @@ public partial class App
         // ✅ CRITICAL: Load settings BEFORE creating MainPage
         Debug.WriteLine("🚀 App.CreateWindow: Loading settings...");
         var settingsService = _services.GetRequiredService<ISettingsService>();
-        
+
         // ⚠️ BLOCKING: Wait for settings to load (on background thread to avoid UI freeze)
         Task.Run(async () => await settingsService.LoadSettingsAsync()).Wait();
-        
-        // ✅ Apply saved theme preference (defaults to "System" if not set)
+
+        // ✅ Apply saved theme preference
         var settings = settingsService.GetSettings();
-        ApplyTheme(settings.Application.Theme);
-        Debug.WriteLine($"✅ App.CreateWindow: Theme '{settings.Application.Theme}' applied");
+        ApplyTheme(settings.Application.IsDarkMode, settings.Application.UseSystemTheme);
+        Debug.WriteLine($"✅ App.CreateWindow: Theme applied (IsDarkMode={settings.Application.IsDarkMode}, UseSystemTheme={settings.Application.UseSystemTheme})");
 
         Debug.WriteLine("✅ App.CreateWindow: Settings loaded, creating SplashPage...");
 
@@ -176,7 +174,7 @@ public partial class App
     private async void OnWindowDestroying(object? sender, EventArgs e)
     {
         _ = sender; // Suppress unused parameter warning
-        
+
         try
         {
             Debug.WriteLine("🔄 App: OnWindowDestroying - Starting cleanup...");

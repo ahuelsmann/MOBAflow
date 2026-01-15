@@ -642,6 +642,17 @@ public class Z21 : IZ21
                 OnXBusStatusChanged?.Invoke(xStatus);
                 _logger?.LogDebug("XBus Status: EmergencyStop={EmergencyStop}, TrackOff={TrackOff}, ShortCircuit={ShortCircuit}, Programming={Programming}", xStatus.EmergencyStop, xStatus.TrackOff, xStatus.ShortCircuit, xStatus.Programming);
             }
+
+            // Parse LocoInfo response
+            if (Z21MessageParser.TryParseLocoInfo(content, out var locoInfo) && locoInfo != null)
+            {
+                // Z21 is responding - mark as connected
+                SetConnectedIfNotAlready();
+                
+                OnLocoInfoChanged?.Invoke(locoInfo);
+                _logger?.LogInformation("🚂 Loco Info: {LocoInfo}", locoInfo);
+            }
+
             return;
         }
 

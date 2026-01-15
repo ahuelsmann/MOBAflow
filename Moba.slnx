@@ -14,42 +14,14 @@
     <File Path="Directory.Build.props" />
     <File Path="Directory.Build.targets" />
     <File Path="Directory.Packages.props" />
-    <File Path="LICENSE" />
     <File Path="README.md" />
-    <File Path="THIRD-PARTY-NOTICES.md" />
   </Folder>
   <Folder Name="/Solution Items/scripts/">
     <File Path="scripts/Enable-MAUIWifiDebug.ps1" />
   </Folder>
-  <Folder Name="/Solution Items/docs/">
-    <File Path="docs/ARCHITECTURE.md" />
-    <File Path="docs/ASYNC-PATTERNS.md" />
-    <File Path="docs/Backend-Z21.md" />
-    <File Path="docs/CI.md" />
-    <File Path="docs/DI-INSTRUCTIONS.md" />
-    <File Path="docs/DI-REGISTRATION.md" />
-    <File Path="docs/ISSUE_TEMPLATE.md" />
-    <File Path="docs/PR_TEMPLATE.md" />
-    <File Path="docs/README.md" />
-    <File Path="docs/SECURITY-SECRETS.md" />
-    <File Path="docs/TESTING-SIMULATION.md" />
-    <File Path="docs/THREADING.md" />
-    <File Path="docs/UI-GUIDELINES.md" />
-    <File Path="docs/Z21-PROTOCOL.md" />
-  </Folder>
+  <Folder Name="/Solution Items/docs/" />
   <Folder Name="/Solution Items/docs/wiki/">
     <File Path="docs/wiki/INDEX.md" />
-    <File Path="docs/wiki/MOBAFLOW-USER-GUIDE.md" />
-    <File Path="docs/wiki/MOBASMART-USER-GUIDE.md" />
-    <File Path="docs/wiki/MOBASMART-WIKI.md" />
-    <File Path="docs/wiki/MOBADASH-USER-GUIDE.md" />
-    <File Path="docs/wiki/QUICK-START-TRACK-STATISTICS.md" />
-  </Folder>
-  <Folder Name="/Solution Items/docs/copilot/">
-    <File Path="docs/copilot/ARCHITECTURE-REVIEW-2025-12-23.md" />
-    <File Path="docs/copilot/MAUI-PERSISTIERUNG-TEST.md" />
-    <File Path="docs/copilot/MAUI-BACKGROUND-SERVICE-CONCEPT.md" />
-    <File Path="docs/copilot/ICON-UPDATE-GUIDE.md" />
   </Folder>
   <Folder Name="/TrackLibrary/" />
   <Project Path="Backend/Backend.csproj">

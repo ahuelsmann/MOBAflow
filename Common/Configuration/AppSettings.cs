@@ -11,6 +11,7 @@ public class AppSettings
     public RestApiSettings RestApi { get; set; } = new();
     public SpeechSettings Speech { get; set; } = new();
     public CityLibrarySettings CityLibrary { get; set; } = new();
+    public LocomotiveLibrarySettings LocomotiveLibrary { get; set; } = new();
     public ApplicationSettings Application { get; set; } = new();
     public CounterSettings Counter { get; set; } = new();
     public HealthCheckSettings HealthCheck { get; set; } = new();
@@ -146,10 +147,40 @@ public class CityLibrarySettings
 }
 
 /// <summary>
+/// Locomotive library (master data) configuration.
+/// </summary>
+public class LocomotiveLibrarySettings
+{
+    /// <summary>
+    /// Path to locomotive library JSON file (e.g., "germany-locomotives.json").
+    /// Supports absolute or relative paths.
+    /// </summary>
+    public string FilePath { get; set; } = "germany-locomotives.json";
+
+    /// <summary>
+    /// Enable auto-reload when file changes.
+    /// </summary>
+    public bool AutoReload { get; set; } = true;
+}
+
+/// <summary>
 /// Application behavior settings.
 /// </summary>
 public class ApplicationSettings
 {
+    /// <summary>
+    /// Dark mode enabled (true = Dark theme, false = Light theme).
+    /// Default: true (Dark mode).
+    /// </summary>
+    public bool IsDarkMode { get; set; } = true;
+
+    /// <summary>
+    /// Follow system theme preference (OS dark/light mode).
+    /// When true, IsDarkMode is ignored and OS theme is used instead.
+    /// Default: false (manual theme control).
+    /// </summary>
+    public bool UseSystemTheme { get; set; } = false;
+
     /// <summary>
     /// Auto-load last opened solution on startup.
     /// </summary>

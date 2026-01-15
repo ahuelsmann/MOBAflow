@@ -13,9 +13,102 @@ applyTo: '**'
 
 ---
 
-## [ACTIVE] Instruction Files (4 - Production-Ready)
+## Project Overview: MOBAflow
+
+**MOBAflow** is an event-driven automation solution for model railroads (German: Modellbahn). The system enables complex workflow sequences, train control with station announcements, and real-time feedback monitoring via direct UDP connection to the Roco Z21 Digital Command Station.
+
+### Core Features
+
+| Feature | Description |
+|---------|-------------|
+| **Z21 Direct UDP Control** | Real-time communication with Roco Z21 command station |
+| **Journey Management** | Define train routes with multiple stations |
+| **Text-to-Speech** | Azure Cognitive Services & Windows Speech for announcements |
+| **Workflow Automation** | Event-driven action sequences |
+| **MOBAtps Track Plan System** | Visual track layout editor with drag & drop |
+| **Track Libraries** | Extensible track system support (Piko A-Gleis active, more planned) |
+| **Multi-Platform** | WinUI (Windows), MAUI (Android), Blazor (Web) |
+
+### Technology Stack
+
+| Component | Technology |
+|-----------|------------|
+| **Framework** | .NET 10 |
+| **UI Frameworks** | WinUI 3, .NET MAUI, Blazor Server |
+| **MVVM** | CommunityToolkit.Mvvm |
+| **Logging** | Serilog (File + In-Memory Sink) |
+| **Speech** | Azure Cognitive Services, Windows Speech API |
+| **Networking** | Direct UDP to Z21 (no external dependencies) |
+| **Testing** | NUnit |
+
+### Architecture (Clean Architecture)
+
+```
+Domain (Pure POCOs)
+  ↑
+Backend (Platform-independent logic)
+  ↑
+SharedUI (Base ViewModels)
+  ↑
+WinUI / MAUI / Blazor (Platform-specific)
+```
+
+### Track Plan System Architecture
+
+```
+TrackPlan (Domain)
+  ↑
+TrackPlan.Renderer (Geometry/Layout)
+  ↑
+TrackPlan.Editor (ViewModels/Commands)
+  ↑
+TrackLibrary.PikoA (Track Templates)
+```
+
+### Key Terminology
+
+| Term | Meaning |
+|------|---------|
+| **MOBA** | Short for **Mo**dell**ba**hn (Model Railroad) |
+| **MOBAflow** | Main WinUI desktop application |
+| **MOBAsmart** | Mobile app (MAUI/Android) |
+| **MOBAdash** | Browser-based dashboard (Blazor) |
+| **MOBAtps** | Track Plan System |
+| **Z21** | Roco Z21 Digital Command Station (DCC controller) |
+| **Journey** | A train route with multiple stations |
+| **Workflow** | Event-driven action sequence |
+| **FeedbackPoint** | Track sensor for train detection |
+
+### Build & Run Commands
+
+```bash
+# Build all
+dotnet restore && dotnet build
+
+# Run WinUI (Windows Desktop)
+dotnet run --project WinUI
+
+# Run WebApp (Blazor Dashboard)
+dotnet run --project WebApp
+
+# Run Tests
+dotnet test
+```
+
+---
+
+## [ACTIVE] Instruction Files (7 - Production-Ready)
 
 ### 1. Architecture & Patterns
+
+- [architecture.instructions.md](./architecture.instructions.md)  
+  **Detailed architecture overview**: Layers, data flow, key interfaces, project structure, plugin system.
+
+- [mvvm-best-practices.instructions.md](./mvvm-best-practices.instructions.md)  
+  **MVVM patterns with CommunityToolkit.Mvvm**: Attributes, commands, property notifications, ViewModel lifecycle.
+
+- [fluent-design.instructions.md](./fluent-design.instructions.md)  
+  **Fluent Design System for WinUI 3**: Materials, spacing, typography, icons, theming.
 
 - [self-explanatory-code-commenting.instructions.md](./self-explanatory-code-commenting.instructions.md)  
   Guidelines for writing self-documenting code with minimal comments. Explains WHY, not WHAT.
@@ -29,6 +122,50 @@ applyTo: '**'
   - Technical discoveries and decision logs
   - Instruction file status and planned additions
   - ReSharper warnings analysis and fixes
+
+#### 🚨 KRITISCHE REGELN für .copilot-todos.md
+
+> **Diese Regeln sind VERBINDLICH und dürfen NIEMALS verletzt werden!**
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  REGEL 1: NIEMALS offene Tasks löschen                          │
+│  ─────────────────────────────────────────────────────────────── │
+│  ❌ VERBOTEN: Sektionen mit ⏳ Status löschen oder überschreiben │
+│  ❌ VERBOTEN: "altes durch neues ersetzen" bei TODO-Listen      │
+│  ❌ VERBOTEN: Fortschritts-Tracking entfernen                   │
+│                                                                   │
+│  ✅ ERLAUBT: Neue Sektionen HINZUFÜGEN (append)                 │
+│  ✅ ERLAUBT: Status von ⏳ auf ✅ ändern (mit Datum)            │
+│  ✅ ERLAUBT: Erledigte Tasks (✅) nach 30 Tagen archivieren     │
+└──────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────┐
+│  REGEL 2: Vollständig lesen vor Änderungen                       │
+│  ─────────────────────────────────────────────────────────────── │
+│  Vor JEDER Änderung an .copilot-todos.md:                        │
+│  1. Komplette Datei lesen (alle Sektionen)                       │
+│  2. Prüfen welche Aufgaben noch ⏳ offen sind                    │
+│  3. Keine bereits ✅ erledigten Empfehlungen wiederholen         │
+│  4. Neue Inhalte am Ende der passenden Sektion hinzufügen        │
+└──────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────┐
+│  REGEL 3: Thematische Sektionen beibehalten                      │
+│  ─────────────────────────────────────────────────────────────── │
+│  Diese Sektionen MÜSSEN immer existieren:                        │
+│  • 🚨 SECURITY (vor GitHub-Release)                              │
+│  • 📋 OFFENE AUFGABEN ÜBERSICHT                                  │
+│  • 📄 DOKUMENTATION & REPOSITORY                                 │
+│  • 🧹 CODE-BEREINIGUNG                                           │
+│  • 🧪 TESTS                                                       │
+│  • 🚀 FEATURE-BACKLOG                                            │
+│  • ✅ ABGESCHLOSSEN (letzte 7 Tage)                              │
+│  • 🤖 FÜR COPILOT: Session-Regeln                                │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**Konsequenz bei Regelverletzung:** Datenverlust wie in Commit 2a22af7, wo ~150 Zeilen wichtiger Checklisten verloren gingen.
 
 ### 3. Terminal & PowerShell Standards
 

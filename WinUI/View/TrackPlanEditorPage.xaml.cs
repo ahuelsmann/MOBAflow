@@ -36,8 +36,11 @@ public sealed partial class TrackPlanEditorPage : Page
     private readonly ITrackCatalog _catalog = new PikoATrackCatalog();
     private readonly CanvasRenderer _renderer = new();
 
+    // Pan state (right mouse button)
     private bool _isPanning;
     private Point _panStart;
+    private double _panScrollHorizontalStart;
+    private double _panScrollVerticalStart;
 
     // Click tracking for double/triple click detection
     private DateTime _lastClickTime;
@@ -375,9 +378,16 @@ public sealed partial class TrackPlanEditorPage : Page
             var p = e.GetCurrentPoint(GraphCanvas);
             var pos = p.Position;
 
+            // Right mouse button: Start panning
             if (p.Properties.IsRightButtonPressed)
             {
-                ShowContextMenu(pos);
+                _isPanning = true;
+                _panStart = pos;
+                _panScrollHorizontalStart = CanvasScrollViewer.HorizontalOffset;
+                _panScrollVerticalStart = CanvasScrollViewer.VerticalOffset;
+                GraphCanvas.CapturePointer(e.Pointer);
+                ProtectedCursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.SizeAll);
+                e.Handled = true;
                 return;
             }
 
@@ -481,6 +491,23 @@ public sealed partial class TrackPlanEditorPage : Page
 
         CoordinatesText.Text = $"X: {pos.X:F0}  Y: {pos.Y:F0}";
 
+        // Handle panning (right mouse button)
+        if (_isPanning)
+        {
+            var deltaX = pos.X - _panStart.X;
+            var deltaY = pos.Y - _panStart.Y;
+
+            // Pan in opposite direction of mouse movement (natural scrolling)
+            CanvasScrollViewer.ChangeView(
+                _panScrollHorizontalStart - deltaX,
+                _panScrollVerticalStart - deltaY,
+                null,
+                disableAnimation: true);
+
+            e.Handled = true;
+            return;
+        }
+
         // Handle rotation drag
         if (_isRotatingGroup)
         {
@@ -526,6 +553,27 @@ public sealed partial class TrackPlanEditorPage : Page
 
     private void GraphCanvas_PointerReleased(object sender, PointerRoutedEventArgs e)
     {
+        var point = e.GetCurrentPoint(GraphCanvas);
+
+        // Handle pan completion (right mouse button)
+        if (_isPanning)
+        {
+            _isPanning = false;
+            GraphCanvas.ReleasePointerCaptures();
+            ProtectedCursor = null;
+
+            // Show context menu only if we didn't move much (was a click, not a drag)
+            var deltaX = Math.Abs(point.Position.X - _panStart.X);
+            var deltaY = Math.Abs(point.Position.Y - _panStart.Y);
+            if (deltaX < 5 && deltaY < 5)
+            {
+                ShowContextMenu(point.Position);
+            }
+
+            e.Handled = true;
+            return;
+        }
+
         // Handle rotation completion
         if (_isRotatingGroup)
         {
@@ -539,8 +587,7 @@ public sealed partial class TrackPlanEditorPage : Page
             return;
         }
 
-        var p = e.GetCurrentPoint(GraphCanvas);
-        var pos = p.Position;
+        var pos = point.Position;
         var world = new Point2D(pos.X / DisplayScale, pos.Y / DisplayScale);
         var isCtrlPressed = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control)
             .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
@@ -855,28 +902,6 @@ public sealed partial class TrackPlanEditorPage : Page
     // --------------------------------------------------------------------
     // Toolbar
     // --------------------------------------------------------------------
-
-    private void NewPlan_Click(object sender, RoutedEventArgs e)
-    {
-        _viewModel.Clear();
-        Violations.Clear();
-        UpdateStatistics();
-        RenderGraph();
-        UpdatePropertiesPanel();
-        StatusText.Text = "New plan created";
-    }
-
-    private void SavePlan_Click(object sender, RoutedEventArgs e)
-    {
-        var json = _viewModel.Serialize();
-        StatusText.Text = $"Serialized {_viewModel.Graph.Edges.Count} tracks";
-        // TODO: Save json to file
-    }
-
-    private void LoadPlan_Click(object sender, RoutedEventArgs e)
-    {
-        StatusText.Text = "Load not implemented";
-    }
 
     private void ValidateButton_Click(object sender, RoutedEventArgs e)
     {

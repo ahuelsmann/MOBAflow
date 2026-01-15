@@ -60,10 +60,13 @@ MOBAflow supports **importing track layouts from AnyRail** (user-exported XML fi
 ## 📋 Quick Links
 
 - 📖 **Documentation:** [`docs/wiki/INDEX.md`](docs/wiki/INDEX.md)
-- 🏗️ **Architecture:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-- 🤖 **AI Instructions:** [`.github/copilot-instructions.md`](.github/copilot-instructions.md)
+- 🏗️ **Architecture:** [`ARCHITECTURE.md`](ARCHITECTURE.md)
+- 📝 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)
+- 📜 **Code of Conduct:** [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
 - 🤝 **Contributing:** [`CONTRIBUTING.md`](CONTRIBUTING.md)
-- 📜 **Third-Party Licenses:** [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md)
+- 🔒 **Security Policy:** [`SECURITY.md`](SECURITY.md)
+- ⚖️ **Third-Party Notices:** [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md)
+- 🤖 **AI Instructions:** [`.github/copilot-instructions.md`](.github/copilot-instructions.md)
 
 ## 🚀 Getting Started
 

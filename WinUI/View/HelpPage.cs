@@ -112,34 +112,45 @@ public sealed partial class HelpPage : Page
 
     private void InitializeArticles()
     {
-        _articles["welcome"] = new HelpArticle
+        // Load all wiki markdown files from docs/wiki/
+        // Path from bin\Debug\net10.0-windows10.0.22621.0\ to solution root
+        var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        var wikiPath = Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "..", "docs", "wiki"));
+        
+        if (!Directory.Exists(wikiPath))
         {
-            Title = "Welcome to MOBAflow",
-            Sections =
-            [
-                new HelpSection
+            // Fallback: hard-coded welcome message
+            _articles["welcome"] = new HelpArticle
+            {
+                Title = "Welcome to MOBAflow",
+                Sections = [
+                    new HelpSection { Heading = "Wiki Not Found", Content = $"Wiki directory not found: {wikiPath}\nBase directory: {baseDir}" }
+                ]
+            };
+            return;
+        }
+
+        // Load all .md files
+        var mdFiles = Directory.GetFiles(wikiPath, "*.md");
+        foreach (var mdFile in mdFiles.OrderBy(f => f))
+        {
+            var fileName = Path.GetFileNameWithoutExtension(mdFile);
+            var articleId = fileName.ToLowerInvariant();
+            
+            try
+            {
+                var markdown = File.ReadAllText(mdFile);
+                _articles[articleId] = ParseMarkdownToArticle(fileName, markdown);
+            }
+            catch (Exception ex)
+            {
+                _articles[articleId] = new HelpArticle
                 {
-                    Heading = "About MOBAflow",
-                    Content = "MOBAflow is a comprehensive model railway control platform that integrates with Z21 digital command stations. It provides journey management, workflow automation, and real-time feedback monitoring."
-                },
-                new HelpSection
-                {
-                    Heading = "Platform Components",
-                    IsList = true,
-                    ListItems = [
-                        "MOBAflow (WinUI) - Full-featured Windows desktop application",
-                        "MOBAsmart (MAUI) - Mobile app for Android and iOS",
-                        "MOBAdash (Blazor) - Browser-based dashboard",
-                        "Plugin System - Extensible architecture for custom features"
-                    ]
-                },
-                new HelpSection
-                {
-                    Heading = "Getting Help",
-                    Content = "Select a topic from the navigation tree on the left to learn more about MOBAflow's features."
-                }
-            ]
-        };
+                    Title = fileName,
+                    Sections = [ new HelpSection { Heading = "Error", Content = $"Failed to load: {ex.Message}" } ]
+                };
+            }
+        }
 
         _articles["getting-started"] = new HelpArticle
         {
@@ -276,41 +287,105 @@ public sealed partial class HelpPage : Page
 
     private void InitializeTreeView()
     {
-        var rootNode = new TreeViewNode { Content = "MOBAflow Help", IsExpanded = true };
+        var rootNode = new TreeViewNode { Content = "MOBAflow Wiki", IsExpanded = true };
 
-        var welcomeNode = new TreeViewNode { Content = "Welcome" };
-        _nodeToArticleMap[welcomeNode] = "welcome";
-        rootNode.Children.Add(welcomeNode);
-
-        var gettingStartedNode = new TreeViewNode { Content = "Getting Started" };
-        _nodeToArticleMap[gettingStartedNode] = "getting-started";
-        rootNode.Children.Add(gettingStartedNode);
-
-        var featuresNode = new TreeViewNode { Content = "Features", IsExpanded = true };
-
-        var trainControlNode = new TreeViewNode { Content = "Train Control" };
-        _nodeToArticleMap[trainControlNode] = "train-control";
-        featuresNode.Children.Add(trainControlNode);
-
-        var journeysNode = new TreeViewNode { Content = "Journeys" };
-        _nodeToArticleMap[journeysNode] = "journeys";
-        featuresNode.Children.Add(journeysNode);
-
-        var workflowsNode = new TreeViewNode { Content = "Workflows" };
-        _nodeToArticleMap[workflowsNode] = "workflows";
-        featuresNode.Children.Add(workflowsNode);
-
-        var signalBoxNode = new TreeViewNode { Content = "Signal Box" };
-        _nodeToArticleMap[signalBoxNode] = "signal-box";
-        featuresNode.Children.Add(signalBoxNode);
-
-        var erpNode = new TreeViewNode { Content = "MOBAerp System" };
-        _nodeToArticleMap[erpNode] = "erp";
-        featuresNode.Children.Add(erpNode);
-
-        rootNode.Children.Add(featuresNode);
+        // Dynamically create TreeViewNodes from loaded articles
+        foreach (var article in _articles.OrderBy(a => GetArticleSortOrder(a.Key)))
+        {
+            var node = new TreeViewNode { Content = article.Value.Title };
+            _nodeToArticleMap[node] = article.Key;
+            rootNode.Children.Add(node);
+        }
 
         _navigationTreeView.RootNodes.Add(rootNode);
+    }
+
+    private static int GetArticleSortOrder(string articleId) => articleId switch
+    {
+        "index" => 0,
+        "mobaflow-user-guide" => 1,
+        "mobasmart-user-guide" => 2,
+        "mobadash-user-guide" => 3,
+        "mobatps" => 4,
+        "azure-speech-setup" => 5,
+        "plugin-development" => 6,
+        "quick-start-track-statistics" => 7,
+        "mobasmart-wiki" => 8,
+        _ => 99
+    };
+
+    private static HelpArticle ParseMarkdownToArticle(string fileName, string markdown)
+    {
+        var lines = markdown.Split('\n');
+        var title = fileName.Replace("-", " ").Replace("_", " ");
+        var sections = new List<HelpSection>();
+        
+        string? currentHeading = null;
+        var currentContent = new System.Text.StringBuilder();
+        var currentListItems = new List<string>();
+        bool inList = false;
+
+        foreach (var line in lines)
+        {
+            var trimmed = line.Trim();
+
+            // Extract title from # heading
+            if (trimmed.StartsWith("# ") && title == fileName.Replace("-", " ").Replace("_", " "))
+            {
+                title = trimmed.Substring(2).Trim();
+                continue;
+            }
+
+            // Section heading (## or ###)
+            if (trimmed.StartsWith("## ") || trimmed.StartsWith("### "))
+            {
+                // Save previous section
+                if (currentHeading != null)
+                {
+                    sections.Add(new HelpSection
+                    {
+                        Heading = currentHeading,
+                        Content = currentContent.ToString().Trim(),
+                        IsList = inList,
+                        ListItems = [.. currentListItems]
+                    });
+                }
+
+                currentHeading = trimmed.TrimStart('#', ' ');
+                currentContent.Clear();
+                currentListItems.Clear();
+                inList = false;
+                continue;
+            }
+
+            // List item
+            if (trimmed.StartsWith("- ") || trimmed.StartsWith("* "))
+            {
+                inList = true;
+                currentListItems.Add(trimmed.Substring(2));
+                continue;
+            }
+
+            // Regular content
+            if (!string.IsNullOrWhiteSpace(trimmed) && !trimmed.StartsWith("---"))
+            {
+                currentContent.AppendLine(trimmed);
+            }
+        }
+
+        // Save last section
+        if (currentHeading != null)
+        {
+            sections.Add(new HelpSection
+            {
+                Heading = currentHeading,
+                Content = currentContent.ToString().Trim(),
+                IsList = inList,
+                ListItems = [.. currentListItems]
+            });
+        }
+
+        return new HelpArticle { Title = title, Sections = sections };
     }
 
     private void NavigationTreeView_ItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args)

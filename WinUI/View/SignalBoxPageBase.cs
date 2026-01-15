@@ -1637,6 +1637,62 @@ public abstract class SignalBoxPageBase : Page
         };
     }
 
+    /// <summary>
+    /// Creates a track arc (quarter circle) similar to MOBAtps track rendering.
+    /// </summary>
+    /// <param name="centerX">Center X of the arc circle.</param>
+    /// <param name="centerY">Center Y of the arc circle.</param>
+    /// <param name="radius">Radius of the arc.</param>
+    /// <param name="startAngleDeg">Start angle in degrees (0 = right, 90 = down).</param>
+    /// <param name="sweepAngleDeg">Sweep angle in degrees (positive = clockwise).</param>
+    /// <param name="color">Track color.</param>
+    /// <param name="thickness">Line thickness.</param>
+    protected static Microsoft.UI.Xaml.Shapes.Path CreateTrackArc(
+        double centerX, double centerY, double radius,
+        double startAngleDeg, double sweepAngleDeg,
+        Color color, double thickness = 4)
+    {
+        double startRad = startAngleDeg * Math.PI / 180.0;
+        double sweepRad = sweepAngleDeg * Math.PI / 180.0;
+
+        var startPoint = new Point(
+            centerX + radius * Math.Cos(startRad),
+            centerY + radius * Math.Sin(startRad));
+
+        var endPoint = new Point(
+            centerX + radius * Math.Cos(startRad + sweepRad),
+            centerY + radius * Math.Sin(startRad + sweepRad));
+
+        var figure = new PathFigure
+        {
+            StartPoint = startPoint,
+            IsClosed = false,
+            IsFilled = false
+        };
+
+        var segment = new ArcSegment
+        {
+            Point = endPoint,
+            Size = new Size(radius, radius),
+            SweepDirection = sweepRad >= 0 ? SweepDirection.Clockwise : SweepDirection.Counterclockwise,
+            IsLargeArc = Math.Abs(sweepRad) > Math.PI
+        };
+
+        figure.Segments.Add(segment);
+
+        var geometry = new PathGeometry();
+        geometry.Figures.Add(figure);
+
+        return new Microsoft.UI.Xaml.Shapes.Path
+        {
+            Data = geometry,
+            Stroke = new SolidColorBrush(color),
+            StrokeThickness = thickness,
+            StrokeStartLineCap = PenLineCap.Flat,
+            StrokeEndLineCap = PenLineCap.Flat
+        };
+    }
+
     protected static Ellipse CreateSignalLed(double x, double y, Color color, double size = 10)
     {
         var led = new Ellipse
