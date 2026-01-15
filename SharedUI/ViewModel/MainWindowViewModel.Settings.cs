@@ -171,21 +171,57 @@ public partial class MainWindowViewModel
         }
     }
 
+    public string VoiceName
+    {
+        get => _settings.Speech.VoiceName;
+        set
+        {
+            if (_settings.Speech.VoiceName != value)
+            {
+                _settings.Speech.VoiceName = value;
+                OnPropertyChanged();
+                _ = _settingsService?.SaveSettingsAsync(_settings);
+            }
+        }
+    }
+
     /// <summary>
     /// List of available speech engines for selection.
     /// </summary>
-    public string[] AvailableSpeechEngines { get; } =
+    public ObservableCollection<string> AvailableSpeechEngines { get; } =
     [
         "System Speech (Windows SAPI)",
         "Azure Cognitive Services"
     ];
 
     /// <summary>
+    /// List of available Azure Cognitive Services voices (German).
+    /// </summary>
+    public ObservableCollection<string> AvailableVoiceNames { get; } =
+    [
+        "de-DE-KatjaNeural",
+        "de-DE-ConradNeural",
+        "de-DE-AmalaNeural",
+        "de-DE-BerndNeural",
+        "de-DE-ChristophNeural",
+        "de-DE-ElkeNeural",
+        "de-DE-GiselaNeural",
+        "de-DE-KasperNeural",
+        "de-DE-KillianNeural",
+        "de-DE-KlarissaNeural",
+        "de-DE-KlausNeural",
+        "de-DE-LouisaNeural",
+        "de-DE-MajaNeural",
+        "de-DE-RalfNeural",
+        "de-DE-TanjaNeural"
+    ];
+
+    /// <summary>
     /// Currently selected speech engine name.
     /// </summary>
-    public string? SelectedSpeechEngine
+    public string SelectedSpeechEngine
     {
-        get => _settings.Speech.SpeakerEngineName ?? AvailableSpeechEngines.FirstOrDefault() ?? "None";
+        get => _settings.Speech.SpeakerEngineName;
         set
         {
             if (_settings.Speech.SpeakerEngineName != value)
@@ -203,21 +239,7 @@ public partial class MainWindowViewModel
     /// Used to show/hide Azure-specific settings.
     /// </summary>
     public bool IsAzureSpeechEngineSelected =>
-        SelectedSpeechEngine?.Contains("Azure", StringComparison.OrdinalIgnoreCase) == true;
-
-    public bool ResetWindowLayoutOnStart
-    {
-        get => _settings.Application.ResetWindowLayoutOnStart;
-        set
-        {
-            if (_settings.Application.ResetWindowLayoutOnStart != value)
-            {
-                _settings.Application.ResetWindowLayoutOnStart = value;
-                OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
-            }
-        }
-    }
+        SelectedSpeechEngine.Contains("Azure", StringComparison.OrdinalIgnoreCase);
 
     public bool AutoLoadLastSolution
     {
@@ -281,17 +303,15 @@ public partial class MainWindowViewModel
                     ? string.Join(", ", addresses)
                     : "No network connection";
             }
-            catch
+            catch (Exception ex)
             {
-                return "Unable to determine";
+                ErrorMessage = ex.Message;
+                ShowErrorMessage = true;
+
+                return $"Unable to determine {ex.Message}";
             }
         }
     }
-
-    /// <summary>
-    /// Gets the full REST API URL including port.
-    /// </summary>
-    public string RestApiUrl => $"http://{LocalIpAddress}:{RestApiPort}";
 
     public bool HealthCheckEnabled
     {
@@ -344,10 +364,10 @@ public partial class MainWindowViewModel
 
     public bool IsOverviewPageAvailableSetting
     {
-        get => _settings.FeatureToggles?.IsOverviewPageAvailable ?? true;
+        get => _settings.FeatureToggles.IsOverviewPageAvailable;
         set
         {
-            if (_settings.FeatureToggles != null && _settings.FeatureToggles.IsOverviewPageAvailable != value)
+            if (_settings.FeatureToggles.IsOverviewPageAvailable != value)
             {
                 _settings.FeatureToggles.IsOverviewPageAvailable = value;
                 OnPropertyChanged();
@@ -359,10 +379,10 @@ public partial class MainWindowViewModel
 
     public bool IsSolutionPageAvailableSetting
     {
-        get => _settings.FeatureToggles?.IsSolutionPageAvailable ?? true;
+        get => _settings.FeatureToggles.IsSolutionPageAvailable;
         set
         {
-            if (_settings.FeatureToggles != null && _settings.FeatureToggles.IsSolutionPageAvailable != value)
+            if (_settings.FeatureToggles.IsSolutionPageAvailable != value)
             {
                 _settings.FeatureToggles.IsSolutionPageAvailable = value;
                 OnPropertyChanged();
@@ -374,10 +394,10 @@ public partial class MainWindowViewModel
 
     public bool IsSettingsPageAvailableSetting
     {
-        get => _settings.FeatureToggles?.IsSettingsPageAvailable ?? true;
+        get => _settings.FeatureToggles.IsSettingsPageAvailable;
         set
         {
-            if (_settings.FeatureToggles != null && _settings.FeatureToggles.IsSettingsPageAvailable != value)
+            if (_settings.FeatureToggles.IsSettingsPageAvailable != value)
             {
                 _settings.FeatureToggles.IsSettingsPageAvailable = value;
                 OnPropertyChanged();
@@ -389,10 +409,10 @@ public partial class MainWindowViewModel
 
     public bool IsJourneysPageAvailableSetting
     {
-        get => _settings.FeatureToggles?.IsJourneysPageAvailable ?? true;
+        get => _settings.FeatureToggles.IsJourneysPageAvailable;
         set
         {
-            if (_settings.FeatureToggles != null && _settings.FeatureToggles.IsJourneysPageAvailable != value)
+            if (_settings.FeatureToggles.IsJourneysPageAvailable != value)
             {
                 _settings.FeatureToggles.IsJourneysPageAvailable = value;
                 OnPropertyChanged();
@@ -404,10 +424,10 @@ public partial class MainWindowViewModel
 
     public bool IsWorkflowsPageAvailableSetting
     {
-        get => _settings.FeatureToggles?.IsWorkflowsPageAvailable ?? true;
+        get => _settings.FeatureToggles.IsWorkflowsPageAvailable;
         set
         {
-            if (_settings.FeatureToggles != null && _settings.FeatureToggles.IsWorkflowsPageAvailable != value)
+            if (_settings.FeatureToggles.IsWorkflowsPageAvailable != value)
             {
                 _settings.FeatureToggles.IsWorkflowsPageAvailable = value;
                 OnPropertyChanged();
@@ -419,10 +439,10 @@ public partial class MainWindowViewModel
 
     public bool IsTrackPlanEditorPageAvailableSetting
     {
-        get => _settings.FeatureToggles?.IsTrackPlanEditorPageAvailable ?? false;
+        get => _settings.FeatureToggles.IsTrackPlanEditorPageAvailable;
         set
         {
-            if (_settings.FeatureToggles != null && _settings.FeatureToggles.IsTrackPlanEditorPageAvailable != value)
+            if (_settings.FeatureToggles.IsTrackPlanEditorPageAvailable != value)
             {
                 _settings.FeatureToggles.IsTrackPlanEditorPageAvailable = value;
                 OnPropertyChanged();
@@ -432,12 +452,27 @@ public partial class MainWindowViewModel
         }
     }
 
-    public bool IsJourneyMapPageAvailableSetting
+    public bool IsSignalBoxPageAvailableSetting
     {
-        get => _settings.FeatureToggles?.IsJourneyMapPageAvailable ?? false;
+        get => _settings.FeatureToggles.IsSignalBoxPageAvailable;
         set
         {
-            if (_settings.FeatureToggles != null && _settings.FeatureToggles.IsJourneyMapPageAvailable != value)
+            if (_settings.FeatureToggles.IsSignalBoxPageAvailable != value)
+            {
+                _settings.FeatureToggles.IsSignalBoxPageAvailable = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsSignalBoxPageAvailable));
+                _ = _settingsService?.SaveSettingsAsync(_settings);
+            }
+        }
+    }
+
+    public bool IsJourneyMapPageAvailableSetting
+    {
+        get => _settings.FeatureToggles.IsJourneyMapPageAvailable;
+        set
+        {
+            if (_settings.FeatureToggles.IsJourneyMapPageAvailable != value)
             {
                 _settings.FeatureToggles.IsJourneyMapPageAvailable = value;
                 OnPropertyChanged();
@@ -449,10 +484,10 @@ public partial class MainWindowViewModel
 
     public bool IsMonitorPageAvailableSetting
     {
-        get => _settings.FeatureToggles?.IsMonitorPageAvailable ?? false;
+        get => _settings.FeatureToggles.IsMonitorPageAvailable;
         set
         {
-            if (_settings.FeatureToggles != null && _settings.FeatureToggles.IsMonitorPageAvailable != value)
+            if (_settings.FeatureToggles.IsMonitorPageAvailable != value)
             {
                 _settings.FeatureToggles.IsMonitorPageAvailable = value;
                 OnPropertyChanged();
@@ -464,10 +499,10 @@ public partial class MainWindowViewModel
 
     public bool IsTrainsPageAvailableSetting
     {
-        get => _settings.FeatureToggles?.IsTrainsPageAvailable ?? false;
+        get => _settings.FeatureToggles.IsTrainsPageAvailable;
         set
         {
-            if (_settings.FeatureToggles != null && _settings.FeatureToggles.IsTrainsPageAvailable != value)
+            if (_settings.FeatureToggles.IsTrainsPageAvailable != value)
             {
                 _settings.FeatureToggles.IsTrainsPageAvailable = value;
                 OnPropertyChanged();
@@ -479,10 +514,10 @@ public partial class MainWindowViewModel
 
     public bool IsTrainControlPageAvailableSetting
     {
-        get => _settings.FeatureToggles?.IsTrainControlPageAvailable ?? false;
+        get => _settings.FeatureToggles.IsTrainControlPageAvailable;
         set
         {
-            if (_settings.FeatureToggles != null && _settings.FeatureToggles.IsTrainControlPageAvailable != value)
+            if (_settings.FeatureToggles.IsTrainControlPageAvailable != value)
             {
                 _settings.FeatureToggles.IsTrainControlPageAvailable = value;
                 OnPropertyChanged();
@@ -527,6 +562,12 @@ public partial class MainWindowViewModel
     public bool IsTrackPlanEditorPageAvailable => _settings.FeatureToggles.IsTrackPlanEditorPageAvailable;
 
     /// <summary>
+    /// Gets whether the Signal Box page is available.
+    /// Bound to NavigationView item visibility.
+    /// </summary>
+    public bool IsSignalBoxPageAvailable => _settings.FeatureToggles.IsSignalBoxPageAvailable;
+
+    /// <summary>
     /// Gets whether the Journey Map page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
@@ -564,21 +605,23 @@ public partial class MainWindowViewModel
 
     // Feature Toggle Labels (optional)
 
-    public string? OverviewPageLabel => _settings.FeatureToggles?.OverviewPageLabel;
-    public string? SolutionPageLabel => _settings.FeatureToggles?.SolutionPageLabel;
-    public string? JourneysPageLabel => _settings.FeatureToggles?.JourneysPageLabel;
-    public string? WorkflowsPageLabel => _settings.FeatureToggles?.WorkflowsPageLabel;
-    public string? TrackPlanEditorPageLabel => _settings.FeatureToggles?.TrackPlanEditorPageLabel;
-    public string? JourneyMapPageLabel => _settings.FeatureToggles?.JourneyMapPageLabel;
-    public string? SettingsPageLabel => _settings.FeatureToggles?.SettingsPageLabel;
-    public string? MonitorPageLabel => _settings.FeatureToggles?.MonitorPageLabel;
-    public string? TrainsPageLabel => _settings.FeatureToggles?.TrainsPageLabel;
-    public string? TrainControlPageLabel => _settings.FeatureToggles?.TrainControlPageLabel;
-    public string? FeedbackPointsPageLabel => _settings.FeatureToggles?.FeedbackPointsPageLabel;
+    public string OverviewPageLabel => _settings.FeatureToggles.OverviewPageLabel;
+    public string SolutionPageLabel => _settings.FeatureToggles.SolutionPageLabel;
+    public string JourneysPageLabel => _settings.FeatureToggles.JourneysPageLabel;
+    public string WorkflowsPageLabel => _settings.FeatureToggles.WorkflowsPageLabel;
+    public string TrackPlanEditorPageLabel => _settings.FeatureToggles.TrackPlanEditorPageLabel;
+    public string SignalBoxPageLabel => _settings.FeatureToggles.SignalBoxPageLabel;
+    public string JourneyMapPageLabel => _settings.FeatureToggles.JourneyMapPageLabel;
+    public string SettingsPageLabel => _settings.FeatureToggles.SettingsPageLabel;
+    public string MonitorPageLabel => _settings.FeatureToggles.MonitorPageLabel;
+    public string TrainsPageLabel => _settings.FeatureToggles.TrainsPageLabel;
+    public string TrainControlPageLabel => _settings.FeatureToggles.TrainControlPageLabel;
+    public string FeedbackPointsPageLabel => _settings.FeatureToggles.FeedbackPointsPageLabel;
 
     // Settings Page CheckBox Content (with labels)
 
     public string TrackPlanEditorCheckBoxContent => FormatPageContent("Track Plan Editor Page", TrackPlanEditorPageLabel);
+    public string SignalBoxCheckBoxContent => FormatPageContent("Signal Box Page", SignalBoxPageLabel);
     public string JourneyMapCheckBoxContent => FormatPageContent("Journey Map Page", JourneyMapPageLabel);
     public string MonitorCheckBoxContent => FormatPageContent("Monitor Page", MonitorPageLabel);
     public string TrainsCheckBoxContent => FormatPageContent("Trains Page", TrainsPageLabel);
@@ -640,16 +683,16 @@ public partial class MainWindowViewModel
             OnPropertyChanged(nameof(SpeechRegion));
             OnPropertyChanged(nameof(SpeechRate));
             OnPropertyChanged(nameof(SpeechVolume));
+            OnPropertyChanged(nameof(VoiceName));
             OnPropertyChanged(nameof(SelectedSpeechEngine));
             OnPropertyChanged(nameof(IsAzureSpeechEngineSelected));
-            OnPropertyChanged(nameof(ResetWindowLayoutOnStart));
             OnPropertyChanged(nameof(AutoLoadLastSolution));
             OnPropertyChanged(nameof(AutoStartWebApp));
             OnPropertyChanged(nameof(RestApiPort));
             OnPropertyChanged(nameof(HealthCheckEnabled));
             OnPropertyChanged(nameof(HealthCheckIntervalSeconds));
             OnPropertyChanged(nameof(CountOfFeedbackPoints));
-            
+
             // FeatureToggle wrapper properties
             OnPropertyChanged(nameof(IsOverviewPageAvailableSetting));
             OnPropertyChanged(nameof(IsSolutionPageAvailableSetting));
@@ -661,7 +704,7 @@ public partial class MainWindowViewModel
             OnPropertyChanged(nameof(IsMonitorPageAvailableSetting));
             OnPropertyChanged(nameof(IsTrainsPageAvailableSetting));
             OnPropertyChanged(nameof(IsTrainControlPageAvailableSetting));
-            
+
             // FeatureToggle read-only properties (for NavigationView)
             OnPropertyChanged(nameof(IsOverviewPageAvailable));
             OnPropertyChanged(nameof(IsSolutionPageAvailable));
@@ -688,8 +731,8 @@ public partial class MainWindowViewModel
     /// <summary>
     /// Command to select a speech engine from the UI.
     /// </summary>
-    public IRelayCommand<string?> SelectSpeechEngineCommand =>
-        field ??= new RelayCommand<string?>(engine => SelectedSpeechEngine = engine);
+    public IRelayCommand<string> SelectSpeechEngineCommand =>
+        field ??= new RelayCommand<string>(engine => SelectedSpeechEngine = engine);
 
     [RelayCommand]
     private async Task TestSpeechAsync()

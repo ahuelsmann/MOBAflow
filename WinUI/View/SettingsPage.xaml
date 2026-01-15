@@ -225,6 +225,18 @@
                         </NumberBox.Description>
                     </NumberBox>
 
+                    <ComboBox
+                        MaxWidth="400"
+                        HorizontalAlignment="Left"
+                        Header="Voice Name"
+                        ItemsSource="{x:Bind ViewModel.AvailableVoiceNames}"
+                        SelectedItem="{x:Bind ViewModel.VoiceName, Mode=TwoWay}"
+                        Visibility="{x:Bind ViewModel.IsAzureSpeechEngineSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <ComboBox.Description>
+                            <TextBlock Text="Select Azure voice for speech synthesis (e.g., de-DE-KatjaNeural)" TextWrapping="Wrap" />
+                        </ComboBox.Description>
+                    </ComboBox>
+
                     <!--  Test Button  -->
                     <Button
                         Command="{x:Bind ViewModel.TestSpeechCommand}"
@@ -456,22 +468,28 @@
                     <CheckBox Content="Journeys Page" IsChecked="{x:Bind ViewModel.IsJourneysPageAvailableSetting, Mode=TwoWay}" />
                     <CheckBox Content="Workflows Page" IsChecked="{x:Bind ViewModel.IsWorkflowsPageAvailableSetting, Mode=TwoWay}" />
 
-                    <!--  Track Management (Experimental)  -->
+                    <!--  Track Management  -->
                     <TextBlock
                         Margin="0,16,0,4"
                         FontWeight="SemiBold"
                         Style="{StaticResource BodyStrongTextBlockStyle}"
-                        Text="Track Management (Experimental)" />
+                        Text="Track Management" />
 
                     <CheckBox Content="{x:Bind ViewModel.TrackPlanEditorCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.IsTrackPlanEditorPageAvailableSetting, Mode=TwoWay}">
                         <ToolTipService.ToolTip>
-                            <TextBlock Text="Visual track layout designer (experimental)" />
+                            <TextBlock Text="Visual track layout designer" />
+                        </ToolTipService.ToolTip>
+                    </CheckBox>
+
+                    <CheckBox Content="{x:Bind ViewModel.SignalBoxCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.IsSignalBoxPageAvailableSetting, Mode=TwoWay}">
+                        <ToolTipService.ToolTip>
+                            <TextBlock Text="Visual signal and turnout control panel" />
                         </ToolTipService.ToolTip>
                     </CheckBox>
 
                     <CheckBox Content="{x:Bind ViewModel.JourneyMapCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.IsJourneyMapPageAvailableSetting, Mode=TwoWay}">
                         <ToolTipService.ToolTip>
-                            <TextBlock Text="Journey visualization map (experimental)" />
+                            <TextBlock Text="Journey visualization map" />
                         </ToolTipService.ToolTip>
                     </CheckBox>
 
@@ -485,6 +503,25 @@
                     <CheckBox Content="{x:Bind ViewModel.MonitorCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.IsMonitorPageAvailableSetting, Mode=TwoWay}">
                         <ToolTipService.ToolTip>
                             <TextBlock Text="Z21 traffic monitor and diagnostics" />
+                        </ToolTipService.ToolTip>
+                    </CheckBox>
+
+                    <!--  Train Management  -->
+                    <TextBlock
+                        Margin="0,16,0,4"
+                        FontWeight="SemiBold"
+                        Style="{StaticResource BodyStrongTextBlockStyle}"
+                        Text="Train Management" />
+
+                    <CheckBox Content="{x:Bind ViewModel.TrainsCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.IsTrainsPageAvailableSetting, Mode=TwoWay}">
+                        <ToolTipService.ToolTip>
+                            <TextBlock Text="Locomotive and wagon inventory management" />
+                        </ToolTipService.ToolTip>
+                    </CheckBox>
+
+                    <CheckBox Content="{x:Bind ViewModel.TrainControlCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.IsTrainControlPageAvailableSetting, Mode=TwoWay}">
+                        <ToolTipService.ToolTip>
+                            <TextBlock Text="Digital locomotive throttle for Z21" />
                         </ToolTipService.ToolTip>
                     </CheckBox>
 
@@ -516,7 +553,6 @@
                 IsOpen="{x:Bind ViewModel.ShowErrorMessage, Mode=OneWay}"
                 Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
                 Severity="Error" />
-
         </StackPanel>
     </ScrollViewer>
 </Page>

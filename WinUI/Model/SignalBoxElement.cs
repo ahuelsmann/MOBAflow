@@ -53,16 +53,22 @@ public class SignalBoxElement
     /// </summary>
     public SwitchPosition SwitchPosition { get; set; } = SwitchPosition.Straight;
 
-    /// <summary>
-    /// For signals: Current signal aspect.
-    /// </summary>
-    public SignalAspect SignalAspect { get; set; } = SignalAspect.Hp0;
+        /// <summary>
+        /// For signals: Current signal aspect.
+        /// </summary>
+        public SignalAspect SignalAspect { get; set; } = SignalAspect.Hp0;
 
-    /// <summary>
-    /// Signal system type (for signals only).
-    /// </summary>
-    public SignalSystem SignalSystem { get; set; } = SignalSystem.Ks;
-}
+        /// <summary>
+        /// Signal system type (for signals only).
+        /// </summary>
+        public SignalSystem SignalSystem { get; set; } = SignalSystem.Ks;
+
+        /// <summary>
+        /// For Ks signals: The specific type of Ks signal.
+        /// Determines which signal aspects are available.
+        /// </summary>
+        public KsSignalType KsSignalType { get; set; } = KsSignalType.Hauptsignal;
+    }
 
 /// <summary>
 /// Types of signal box elements.
@@ -152,6 +158,14 @@ public enum SignalAspect
     Ks1Blink,          // Fahrt mit Geschwindigkeitsbegrenzung (Gruen blinkend)
     Ks2,               // Halt erwarten (Gelb)
 
+    // Ks-Signale mit Zusatzlicht (verkuerzter Bremsweg)
+    Ks1ShortBraking,   // Fahrt mit verkuerztem Bremsweg (Gruen + weisses Zusatzlicht oben)
+    Ks2ShortBraking,   // Halt erwarten mit verkuerztem Bremsweg (Gelb + weisses Zusatzlicht oben)
+
+    // Ks-Signale als Vorsignalwiederholer
+    Ks1Repeater,       // Fahrt Wiederholer (Gruen + weisses Zusatzlicht unten)
+    Ks2Repeater,       // Halt erwarten Wiederholer (Gelb + weisses Zusatzlicht unten)
+
     // Rangiersignale
     Sh0,               // Halt (Rot + Rot)
     Sh1,               // Rangierfahrt erlaubt (Weiss + Weiss)
@@ -171,4 +185,26 @@ public enum SignalSystem
     HV,                // H/V-System (Licht- und Formsignale, klassisch)
     Sv,                // Sv-System (S-Bahn Berlin/Hamburg)
     Form               // Formsignale (Flügelsignale)
+}
+
+/// <summary>
+/// Ks signal type classification based on DB signaling rules.
+/// Determines which signal aspects (Signalbilder) are available.
+/// </summary>
+public enum KsSignalType
+{
+    /// <summary>Reines Vorsignal (ohne Zusatzlicht)</summary>
+    Vorsignal,
+
+    /// <summary>Vorsignal mit verkuerztem Bremsweg (Zusatzlicht oben)</summary>
+    VorsignalShortBraking,
+
+    /// <summary>Vorsignalwiederholer (Zusatzlicht unten)</summary>
+    VorsignalRepeater,
+
+    /// <summary>Reines Hauptsignal (Hp0, Ks1)</summary>
+    Hauptsignal,
+
+    /// <summary>Mehrabschnittssignal (Haupt- und Vorsignalfunktion)</summary>
+    Mehrabschnittssignal
 }

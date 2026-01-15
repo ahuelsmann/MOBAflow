@@ -62,12 +62,31 @@ public partial class App
             Services = ConfigureServices();
             _logger = Services.GetRequiredService<ILogger<App>>();
             InitializeComponent();
+
+            // Register global UnhandledException handler for better diagnostics
+            UnhandledException += OnUnhandledException;
         }
         catch (Exception ex)
         {
             _logger?.LogCritical(ex, "FATAL ERROR during App initialization");
             throw;
         }
+    }
+
+    private void OnUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
+    {
+        // Log the exception with full details before the debugger breaks
+        var message = $"UNHANDLED EXCEPTION: {e.Exception.GetType().Name}: {e.Exception.Message}";
+        var stackTrace = e.Exception.StackTrace ?? "(no stack trace)";
+
+        System.Diagnostics.Debug.WriteLine(message);
+        System.Diagnostics.Debug.WriteLine(stackTrace);
+
+        _logger?.LogCritical(e.Exception, "Unhandled exception in WinUI application");
+
+        // Mark as handled to prevent immediate termination (allows logging)
+        // The debugger will still break due to App.g.i.cs handler
+        e.Handled = false;
     }
 
     /// <summary>

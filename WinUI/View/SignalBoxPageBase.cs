@@ -62,6 +62,12 @@ public abstract class SignalBoxPageBase : Page
     private double _panStartHorizontalOffset;
     private double _panStartVerticalOffset;
 
+    // Blinking animation support
+    private DispatcherTimer? _blinkTimer;
+    private bool _blinkState;
+    private readonly List<Ellipse> _blinkingLeds = [];
+    private readonly Dictionary<Guid, List<Ellipse>> _canvasBlinkingLeds = [];
+
     public bool IsGridVisible
     {
         get => _isGridVisible;
@@ -80,6 +86,10 @@ public abstract class SignalBoxPageBase : Page
 
         ViewModel.SolutionSaving += OnSolutionSaving;
         ViewModel.SolutionLoaded += OnSolutionLoaded;
+
+        // Initialize blink timer for signal animations
+        _blinkTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        _blinkTimer.Tick += OnBlinkTimerTick;
 
         Content = BuildLayout();
         Loaded += OnLoaded;
@@ -103,6 +113,7 @@ public abstract class SignalBoxPageBase : Page
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         Z21.Received += OnZ21FeedbackReceived;
+        _blinkTimer?.Start();
 
         if (Elements.Count == 0)
         {
@@ -117,6 +128,7 @@ public abstract class SignalBoxPageBase : Page
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         Z21.Received -= OnZ21FeedbackReceived;
+        _blinkTimer?.Stop();
     }
 
     private void OnSolutionSaving(object? sender, EventArgs e)
@@ -126,6 +138,9 @@ public abstract class SignalBoxPageBase : Page
 
     private void OnSolutionLoaded(object? sender, EventArgs e)
     {
+        // Clear all canvas blinking LEDs before loading new plan
+        _canvasBlinkingLeds.Clear();
+
         var project = ViewModel.Solution?.Projects?.FirstOrDefault();
         if (project?.SignalBoxPlan != null)
         {
@@ -146,6 +161,82 @@ public abstract class SignalBoxPageBase : Page
         {
             UpdateFeedbackPoint(feedback.InPort);
         });
+    }
+
+    /// <summary>
+    /// Handles the blink timer tick for signal animation.
+    /// Toggles visibility of registered blinking LEDs (both properties panel and canvas).
+    /// </summary>
+    private void OnBlinkTimerTick(object? sender, object e)
+    {
+        _blinkState = !_blinkState;
+        var opacity = _blinkState ? 1.0 : 0.15;
+
+        // Properties panel LEDs
+        foreach (var led in _blinkingLeds)
+        {
+            led.Opacity = opacity;
+        }
+
+        // Canvas LEDs
+        foreach (var leds in _canvasBlinkingLeds.Values)
+        {
+            foreach (var led in leds)
+            {
+                led.Opacity = opacity;
+            }
+        }
+
+        // Debug output
+        System.Diagnostics.Debug.WriteLine($"[BLINK] Timer tick: state={_blinkState}, opacity={opacity}, propsLeds={_blinkingLeds.Count}, canvasLeds={_canvasBlinkingLeds.Values.Sum(l => l.Count)}");
+    }
+
+    /// <summary>
+    /// Registers an LED ellipse for blinking animation in the properties panel.
+    /// </summary>
+    protected void RegisterBlinkingLed(Ellipse led)
+    {
+        if (!_blinkingLeds.Contains(led))
+        {
+            _blinkingLeds.Add(led);
+            System.Diagnostics.Debug.WriteLine($"[BLINK] Registered properties LED, total={_blinkingLeds.Count}");
+        }
+    }
+
+    /// <summary>
+    /// Registers an LED ellipse for blinking animation on the canvas for a specific element.
+    /// </summary>
+    protected void RegisterCanvasBlinkingLed(Guid elementId, Ellipse led)
+    {
+        if (!_canvasBlinkingLeds.TryGetValue(elementId, out var leds))
+        {
+            leds = [];
+            _canvasBlinkingLeds[elementId] = leds;
+        }
+
+        if (!leds.Contains(led))
+        {
+            leds.Add(led);
+            System.Diagnostics.Debug.WriteLine($"[BLINK] Registered canvas LED for element {elementId}, total for element={leds.Count}");
+        }
+    }
+
+    /// <summary>
+    /// Clears blinking LEDs for a specific canvas element.
+    /// Called when refreshing a single element visual.
+    /// </summary>
+    protected void ClearCanvasBlinkingLeds(Guid elementId)
+    {
+        _canvasBlinkingLeds.Remove(elementId);
+    }
+
+    /// <summary>
+    /// Clears all registered blinking LEDs (properties panel only).
+    /// Called when refreshing the properties panel.
+    /// </summary>
+    protected void ClearBlinkingLeds()
+    {
+        _blinkingLeds.Clear();
     }
 
     #endregion
@@ -603,7 +694,8 @@ public abstract class SignalBoxPageBase : Page
                 Type = type,
                 GridX = gridX,
                 GridY = gridY,
-                Rotation = 0
+                Rotation = 0,
+                KsSignalType = GetDefaultKsSignalType(type)
             };
             Elements.Add(element);
 
@@ -791,71 +883,85 @@ public abstract class SignalBoxPageBase : Page
                 "M2,11 A2,2 0 1,1 6,11 A2,2 0 1,1 2,11 " + // Green bottom-left
                 "M10,11 A2,2 0 1,1 14,11 A2,2 0 1,1 10,11", // Yellow bottom-right
 
-            _ => "M7,1 L9,1 L9,15 L7,15 Z M5,7 A2,2 0 1,1 9,7 A2,2 0 1,1 5,7"
-        };
+                    _ => "M7,1 L9,1 L9,15 L7,15 Z M5,7 A2,2 0 1,1 9,7 A2,2 0 1,1 5,7"
+                };
 
-        return new PathIcon
-        {
-            Data = (Microsoft.UI.Xaml.Media.Geometry)Microsoft.UI.Xaml.Markup.XamlBindingHelper.ConvertValue(
-                typeof(Microsoft.UI.Xaml.Media.Geometry), pathData),
-            Width = 16,
-            Height = 16
-        };
-    }
+                return new PathIcon
+                {
+                    Data = (Microsoft.UI.Xaml.Media.Geometry)Microsoft.UI.Xaml.Markup.XamlBindingHelper.ConvertValue(
+                        typeof(Microsoft.UI.Xaml.Media.Geometry), pathData),
+                    Width = 16,
+                    Height = 16
+                };
+            }
 
-    private static void CycleSignalAspect(SignalBoxElement element)
-    {
-        element.SignalAspect = element.Type switch
-        {
-            SignalBoxElementType.SignalMain or SignalBoxElementType.SignalHvHp => element.SignalAspect switch
+            /// <summary>
+            /// Gets the default KsSignalType for a given element type.
+            /// </summary>
+            private static KsSignalType GetDefaultKsSignalType(SignalBoxElementType elementType) => elementType switch
             {
-                SignalAspect.Hp0 => SignalAspect.Hp1,
-                SignalAspect.Hp1 => SignalAspect.Hp2,
-                _ => SignalAspect.Hp0
-            },
-            SignalBoxElementType.SignalDistant or SignalBoxElementType.SignalHvVr => element.SignalAspect switch
-            {
-                SignalAspect.Vr0 => SignalAspect.Vr1,
-                SignalAspect.Vr1 => SignalAspect.Vr2,
-                _ => SignalAspect.Vr0
-            },
-            SignalBoxElementType.SignalCombined or SignalBoxElementType.SignalKsCombined => element.SignalAspect switch
-            {
-                SignalAspect.Hp0 => SignalAspect.Ks1,
-                SignalAspect.Ks1 => SignalAspect.Ks2,
-                _ => SignalAspect.Hp0
-            },
-            SignalBoxElementType.SignalKsMain => element.SignalAspect switch
-            {
-                SignalAspect.Hp0 => SignalAspect.Ks1,
-                SignalAspect.Ks1 => SignalAspect.Ks1Blink,
-                _ => SignalAspect.Hp0
-            },
-            SignalBoxElementType.SignalKsDistant => element.SignalAspect switch
-            {
-                SignalAspect.Ks2 => SignalAspect.Ks1,
-                _ => SignalAspect.Ks2
-            },
-            SignalBoxElementType.SignalSvMain => element.SignalAspect switch
-            {
-                SignalAspect.Hp0 => SignalAspect.Hp1,
-                _ => SignalAspect.Hp0
-            },
-            SignalBoxElementType.SignalSvDistant => element.SignalAspect switch
-            {
-                SignalAspect.Vr0 => SignalAspect.Vr1,
-                _ => SignalAspect.Vr0
-            },
-            SignalBoxElementType.SignalShunting => element.SignalAspect switch
-            {
-                SignalAspect.Sh0 => SignalAspect.Sh1,
-                _ => SignalAspect.Sh0
-            },
-            _ => element.SignalAspect
-        };
-    }
+                SignalBoxElementType.SignalKsMain => KsSignalType.Hauptsignal,
+                SignalBoxElementType.SignalKsDistant => KsSignalType.Vorsignal,
+                SignalBoxElementType.SignalKsCombined => KsSignalType.Mehrabschnittssignal,
+                _ => KsSignalType.Hauptsignal
+            };
 
-    protected void SelectElement(SignalBoxElement? element)
+            private static void CycleSignalAspect(SignalBoxElement element)
+            {
+                // For Ks signals, cycle through available aspects based on KsSignalType
+                if (IsKsSignalType(element.Type))
+                {
+                    var availableAspects = GetAvailableKsAspects(element.KsSignalType);
+                    if (availableAspects.Count > 0)
+                    {
+                        var currentIndex = availableAspects.IndexOf(element.SignalAspect);
+                        var nextIndex = (currentIndex + 1) % availableAspects.Count;
+                        element.SignalAspect = availableAspects[nextIndex];
+                        return;
+                    }
+                }
+
+                // Non-Ks signals
+                element.SignalAspect = element.Type switch
+                {
+                    SignalBoxElementType.SignalMain or SignalBoxElementType.SignalHvHp => element.SignalAspect switch
+                    {
+                        SignalAspect.Hp0 => SignalAspect.Hp1,
+                        SignalAspect.Hp1 => SignalAspect.Hp2,
+                        _ => SignalAspect.Hp0
+                    },
+                    SignalBoxElementType.SignalDistant or SignalBoxElementType.SignalHvVr => element.SignalAspect switch
+                    {
+                        SignalAspect.Vr0 => SignalAspect.Vr1,
+                        SignalAspect.Vr1 => SignalAspect.Vr2,
+                        _ => SignalAspect.Vr0
+                    },
+                    SignalBoxElementType.SignalCombined => element.SignalAspect switch
+                    {
+                        SignalAspect.Hp0 => SignalAspect.Ks1,
+                        SignalAspect.Ks1 => SignalAspect.Ks2,
+                        _ => SignalAspect.Hp0
+                    },
+                    SignalBoxElementType.SignalSvMain => element.SignalAspect switch
+                    {
+                        SignalAspect.Hp0 => SignalAspect.Hp1,
+                        _ => SignalAspect.Hp0
+                    },
+                    SignalBoxElementType.SignalSvDistant => element.SignalAspect switch
+                    {
+                        SignalAspect.Vr0 => SignalAspect.Vr1,
+                        _ => SignalAspect.Vr0
+                    },
+                    SignalBoxElementType.SignalShunting => element.SignalAspect switch
+                    {
+                        SignalAspect.Sh0 => SignalAspect.Sh1,
+                        _ => SignalAspect.Sh0
+                    },
+                    _ => element.SignalAspect
+                };
+            }
+
+            protected void SelectElement(SignalBoxElement? element)
     {
         if (SelectedVisual != null)
             SelectedVisual.Opacity = 1.0;
@@ -870,6 +976,9 @@ public abstract class SignalBoxPageBase : Page
     {
         if (!ElementVisuals.TryGetValue(element.Id, out var visual))
             return;
+
+        // Clear blinking LEDs for this element before recreating
+        ClearCanvasBlinkingLeds(element.Id);
 
         TrackCanvas.Children.Remove(visual);
         var newVisual = CreateElementVisual(element);
@@ -898,6 +1007,9 @@ public abstract class SignalBoxPageBase : Page
 
     protected virtual void UpdatePropertiesPanel()
     {
+        // Clear blinking LEDs from properties panel (will be re-added if needed)
+        ClearBlinkingLeds();
+
         PropertiesPanel.Children.Clear();
 
         PropertiesPanel.Children.Add(new TextBlock
@@ -962,6 +1074,12 @@ public abstract class SignalBoxPageBase : Page
         if (SelectedElement.Type == SignalBoxElementType.Label)
         {
             PropertiesPanel.Children.Add(CreateLabelControls());
+        }
+
+        // Ks-Signal controls
+        if (IsKsSignalType(SelectedElement.Type))
+        {
+            PropertiesPanel.Children.Add(CreateKsSignalControls());
         }
 
         var deleteBtn = new Button
@@ -1050,35 +1168,420 @@ public abstract class SignalBoxPageBase : Page
             Text = SelectedElement!.Name,
             PlaceholderText = "Text eingeben..."
         };
-        input.TextChanged += (s, e) =>
-        {
-            SelectedElement!.Name = input.Text;
-            RefreshElementVisual(SelectedElement);
+            input.TextChanged += (s, e) =>
+            {
+                SelectedElement!.Name = input.Text;
+                RefreshElementVisual(SelectedElement);
 
-            // Trigger auto-save after label text change
-            _ = ViewModel.SaveSolutionInternalAsync();
-        };
-        panel.Children.Add(input);
+                // Trigger auto-save after label text change
+                _ = ViewModel.SaveSolutionInternalAsync();
+            };
+            panel.Children.Add(input);
 
-        return panel;
-    }
-
-    private void DeleteSelectedElement()
-    {
-        if (SelectedElement == null) return;
-
-        if (ElementVisuals.TryGetValue(SelectedElement.Id, out var visual))
-        {
-            TrackCanvas.Children.Remove(visual);
-            ElementVisuals.Remove(SelectedElement.Id);
+            return panel;
         }
 
-        Elements.Remove(SelectedElement);
-        SelectElement(null);
+        /// <summary>
+        /// Checks if the element type is a Ks signal type.
+        /// </summary>
+        protected static bool IsKsSignalType(SignalBoxElementType type)
+        {
+            return type is SignalBoxElementType.SignalKsMain
+                or SignalBoxElementType.SignalKsDistant
+                or SignalBoxElementType.SignalKsCombined;
+        }
 
-        // Trigger auto-save after element deletion
-        _ = ViewModel.SaveSolutionInternalAsync();
-    }
+        /// <summary>
+        /// Gets the available signal aspects for a Ks signal based on its type.
+        /// </summary>
+        protected static List<SignalAspect> GetAvailableKsAspects(KsSignalType ksType)
+        {
+            return ksType switch
+            {
+                KsSignalType.Vorsignal => [SignalAspect.Ks1, SignalAspect.Ks2],
+                KsSignalType.VorsignalShortBraking => [SignalAspect.Ks1ShortBraking, SignalAspect.Ks2ShortBraking],
+                KsSignalType.VorsignalRepeater => [SignalAspect.Ks1Repeater, SignalAspect.Ks2Repeater],
+                KsSignalType.Hauptsignal => [SignalAspect.Hp0, SignalAspect.Ks1, SignalAspect.Ks1Blink],
+                KsSignalType.Mehrabschnittssignal => [SignalAspect.Hp0, SignalAspect.Ks1, SignalAspect.Ks1Blink, SignalAspect.Ks2],
+                _ => [SignalAspect.Hp0, SignalAspect.Ks1]
+            };
+        }
+
+        /// <summary>
+        /// Gets the display name for a Ks signal type.
+        /// </summary>
+        private static string GetKsSignalTypeName(KsSignalType type) => type switch
+        {
+            KsSignalType.Vorsignal => "Vorsignal",
+            KsSignalType.VorsignalShortBraking => "Vorsignal (verk. Bremsweg)",
+            KsSignalType.VorsignalRepeater => "Vorsignalwiederholer",
+            KsSignalType.Hauptsignal => "Hauptsignal",
+            KsSignalType.Mehrabschnittssignal => "Mehrabschnittssignal",
+            _ => type.ToString()
+        };
+
+        /// <summary>
+        /// Gets the display name for a signal aspect.
+        /// </summary>
+        private static string GetSignalAspectName(SignalAspect aspect) => aspect switch
+        {
+            SignalAspect.Hp0 => "Hp 0 - Halt",
+            SignalAspect.Ks1 => "Ks 1 - Fahrt",
+            SignalAspect.Ks1Blink => "Ks 1 - Fahrt (blinkend)",
+            SignalAspect.Ks2 => "Ks 2 - Halt erwarten",
+            SignalAspect.Ks1ShortBraking => "Ks 1 - Fahrt (verk. Bremswg)",
+            SignalAspect.Ks2ShortBraking => "Ks 2 - Halt erw. (verk. Bremswg)",
+            SignalAspect.Ks1Repeater => "Ks 1 - Fahrt (Wiederholer)",
+            SignalAspect.Ks2Repeater => "Ks 2 - Halt erw. (Wiederholer)",
+            _ => aspect.ToString()
+        };
+
+        /// <summary>
+        /// Creates the controls for Ks signal configuration.
+        /// </summary>
+        private StackPanel CreateKsSignalControls()
+        {
+            var panel = new StackPanel { Spacing = 12 };
+
+            // Ks Signal Type Selection
+            panel.Children.Add(new TextBlock
+            {
+                Text = "Signaltyp",
+                Style = (Style)Application.Current.Resources["BodyStrongTextBlockStyle"]
+            });
+
+            var typeCombo = new ComboBox
+            {
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+
+            // Add all Ks signal types
+            foreach (KsSignalType type in Enum.GetValues<KsSignalType>())
+            {
+                typeCombo.Items.Add(new ComboBoxItem
+                {
+                    Content = GetKsSignalTypeName(type),
+                    Tag = type
+                });
+            }
+
+            // Select current type
+            foreach (ComboBoxItem item in typeCombo.Items)
+            {
+                if ((KsSignalType)item.Tag! == SelectedElement!.KsSignalType)
+                {
+                    typeCombo.SelectedItem = item;
+                    break;
+                }
+            }
+
+            typeCombo.SelectionChanged += (s, e) =>
+            {
+                if (typeCombo.SelectedItem is ComboBoxItem selectedItem)
+                {
+                    SelectedElement!.KsSignalType = (KsSignalType)selectedItem.Tag!;
+
+                    // Reset signal aspect to first available for new type
+                    var availableAspects = GetAvailableKsAspects(SelectedElement.KsSignalType);
+                    if (availableAspects.Count > 0 && !availableAspects.Contains(SelectedElement.SignalAspect))
+                    {
+                        SelectedElement.SignalAspect = availableAspects[0];
+                    }
+
+                    RefreshElementVisual(SelectedElement);
+                    UpdatePropertiesPanel(); // Refresh to show new aspect options
+
+                    _ = ViewModel.SaveSolutionInternalAsync();
+                }
+            };
+            panel.Children.Add(typeCombo);
+
+            // Signal Aspect Selection (Signalbild)
+            panel.Children.Add(new TextBlock
+            {
+                Text = "Signalbild",
+                Style = (Style)Application.Current.Resources["BodyStrongTextBlockStyle"],
+                Margin = new Thickness(0, 8, 0, 0)
+            });
+
+            var aspectsGrid = new Grid { ColumnSpacing = 8, RowSpacing = 8 };
+            aspectsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            aspectsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            var availableAspects = GetAvailableKsAspects(SelectedElement!.KsSignalType);
+            int row = 0;
+
+            for (int i = 0; i < availableAspects.Count; i++)
+            {
+                if (i % 2 == 0)
+                {
+                    aspectsGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                }
+
+                var aspect = availableAspects[i];
+                var aspectButton = CreateSignalAspectButton(aspect);
+
+                Grid.SetRow(aspectButton, row);
+                Grid.SetColumn(aspectButton, i % 2);
+                aspectsGrid.Children.Add(aspectButton);
+
+                if (i % 2 == 1)
+                {
+                    row++;
+                }
+            }
+
+            panel.Children.Add(aspectsGrid);
+
+            // DCC Address
+            panel.Children.Add(new TextBlock
+            {
+                Text = "DCC-Adresse",
+                Style = (Style)Application.Current.Resources["BodyStrongTextBlockStyle"],
+                Margin = new Thickness(0, 8, 0, 0)
+            });
+
+            var addressInput = new NumberBox
+            {
+                Value = SelectedElement!.Address,
+                Minimum = 0,
+                Maximum = 2048,
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact,
+                PlaceholderText = "0 = nicht konfiguriert"
+            };
+            addressInput.ValueChanged += (s, e) =>
+            {
+                if (!double.IsNaN(e.NewValue))
+                {
+                    SelectedElement!.Address = (int)e.NewValue;
+                    _ = ViewModel.SaveSolutionInternalAsync();
+                }
+            };
+            panel.Children.Add(addressInput);
+
+            return panel;
+        }
+
+        /// <summary>
+        /// Creates a button for selecting a signal aspect with visual representation.
+        /// </summary>
+        private Border CreateSignalAspectButton(SignalAspect aspect)
+        {
+            var isSelected = SelectedElement?.SignalAspect == aspect;
+
+            var button = new Border
+            {
+                Height = 80,
+                CornerRadius = new CornerRadius(4),
+                Background = isSelected
+                    ? (Brush)Application.Current.Resources["AccentFillColorDefaultBrush"]
+                    : (Brush)Application.Current.Resources["SubtleFillColorSecondaryBrush"],
+                BorderBrush = isSelected
+                    ? (Brush)Application.Current.Resources["AccentFillColorDefaultBrush"]
+                    : (Brush)Application.Current.Resources["ControlStrokeColorDefaultBrush"],
+                BorderThickness = new Thickness(isSelected ? 2 : 1),
+                Padding = new Thickness(4),
+                Tag = aspect
+            };
+
+            var content = new StackPanel
+            {
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Spacing = 4
+            };
+
+            // Visual representation of the signal aspect
+            content.Children.Add(CreateSignalAspectVisual(aspect));
+
+            // Label
+            content.Children.Add(new TextBlock
+            {
+                Text = GetShortAspectName(aspect),
+                Style = (Style)Application.Current.Resources["CaptionTextBlockStyle"],
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Foreground = isSelected
+                    ? (Brush)Application.Current.Resources["TextOnAccentFillColorPrimaryBrush"]
+                    : (Brush)Application.Current.Resources["TextFillColorPrimaryBrush"]
+            });
+
+            button.Child = content;
+            ToolTipService.SetToolTip(button, GetSignalAspectName(aspect));
+
+            button.PointerPressed += (s, e) =>
+            {
+                if (!e.GetCurrentPoint(button).Properties.IsLeftButtonPressed)
+                    return;
+
+                SelectedElement!.SignalAspect = aspect;
+                RefreshElementVisual(SelectedElement);
+                UpdatePropertiesPanel();
+                _ = ViewModel.SaveSolutionInternalAsync();
+            };
+
+            button.PointerEntered += (s, e) =>
+            {
+                if (!isSelected)
+                {
+                    button.Background = (Brush)Application.Current.Resources["SubtleFillColorTertiaryBrush"];
+                }
+            };
+
+            button.PointerExited += (s, e) =>
+            {
+                if (!isSelected)
+                {
+                    button.Background = (Brush)Application.Current.Resources["SubtleFillColorSecondaryBrush"];
+                }
+            };
+
+            return button;
+        }
+
+        /// <summary>
+        /// Gets a short display name for a signal aspect.
+        /// </summary>
+        private static string GetShortAspectName(SignalAspect aspect) => aspect switch
+        {
+            SignalAspect.Hp0 => "Hp 0",
+            SignalAspect.Ks1 => "Ks 1",
+            SignalAspect.Ks1Blink => "Ks 1 blink",
+            SignalAspect.Ks2 => "Ks 2",
+            SignalAspect.Ks1ShortBraking => "Ks 1 vB",
+            SignalAspect.Ks2ShortBraking => "Ks 2 vB",
+            SignalAspect.Ks1Repeater => "Ks 1 W",
+            SignalAspect.Ks2Repeater => "Ks 2 W",
+            _ => aspect.ToString()
+        };
+
+        /// <summary>
+        /// Creates a visual representation of a Ks signal aspect for the properties panel.
+        /// Supports blinking animation for Ks1Blink aspect.
+        /// </summary>
+        private Canvas CreateSignalAspectVisual(SignalAspect aspect)
+        {
+            var canvas = new Canvas { Width = 32, Height = 48 };
+
+            // Signal housing (dark background)
+            var housing = new Rectangle
+            {
+                Width = 20,
+                Height = 44,
+                Fill = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30)),
+                RadiusX = 2,
+                RadiusY = 2
+            };
+            Canvas.SetLeft(housing, 6);
+            Canvas.SetTop(housing, 2);
+            canvas.Children.Add(housing);
+
+            switch (aspect)
+            {
+                case SignalAspect.Hp0:
+                    // Red light at top
+                    canvas.Children.Add(CreateAspectLed(11, 8, SignalColors.SignalRed));
+                    canvas.Children.Add(CreateAspectLed(11, 22, SignalColors.LedOff));
+                    canvas.Children.Add(CreateAspectLed(11, 36, SignalColors.LedOff));
+                    break;
+
+                case SignalAspect.Ks1:
+                    // Green light
+                    canvas.Children.Add(CreateAspectLed(11, 8, SignalColors.LedOff));
+                    canvas.Children.Add(CreateAspectLed(11, 22, SignalColors.SignalGreen));
+                    canvas.Children.Add(CreateAspectLed(11, 36, SignalColors.LedOff));
+                    break;
+
+                case SignalAspect.Ks1Blink:
+                    // Green light with blinking animation
+                    canvas.Children.Add(CreateAspectLed(11, 8, SignalColors.LedOff));
+                    var blinkLed = CreateAspectLed(11, 22, SignalColors.SignalGreen);
+                    canvas.Children.Add(blinkLed);
+                    canvas.Children.Add(CreateAspectLed(11, 36, SignalColors.LedOff));
+                    // Register for blinking
+                    RegisterBlinkingLed(blinkLed);
+                    break;
+
+                case SignalAspect.Ks2:
+                    // Yellow light
+                    canvas.Children.Add(CreateAspectLed(11, 8, SignalColors.LedOff));
+                    canvas.Children.Add(CreateAspectLed(11, 22, SignalColors.LedOff));
+                    canvas.Children.Add(CreateAspectLed(11, 36, SignalColors.SignalYellow));
+                    break;
+
+                case SignalAspect.Ks1ShortBraking:
+                    // Green + white additional light (top)
+                    canvas.Children.Add(CreateAspectLed(11, 5, SignalColors.SignalWhite, 6)); // Small white top
+                    canvas.Children.Add(CreateAspectLed(11, 22, SignalColors.SignalGreen));
+                    canvas.Children.Add(CreateAspectLed(11, 36, SignalColors.LedOff));
+                    break;
+
+                case SignalAspect.Ks2ShortBraking:
+                    // Yellow + white additional light (top)
+                    canvas.Children.Add(CreateAspectLed(11, 5, SignalColors.SignalWhite, 6)); // Small white top
+                    canvas.Children.Add(CreateAspectLed(11, 22, SignalColors.LedOff));
+                    canvas.Children.Add(CreateAspectLed(11, 36, SignalColors.SignalYellow));
+                    break;
+
+                case SignalAspect.Ks1Repeater:
+                    // Green + white additional light (bottom)
+                    canvas.Children.Add(CreateAspectLed(11, 8, SignalColors.LedOff));
+                    canvas.Children.Add(CreateAspectLed(11, 22, SignalColors.SignalGreen));
+                    canvas.Children.Add(CreateAspectLed(11, 40, SignalColors.SignalWhite, 6)); // Small white bottom
+                    break;
+
+                case SignalAspect.Ks2Repeater:
+                    // Yellow + white additional light (bottom)
+                    canvas.Children.Add(CreateAspectLed(11, 8, SignalColors.LedOff));
+                    canvas.Children.Add(CreateAspectLed(11, 22, SignalColors.SignalYellow));
+                    canvas.Children.Add(CreateAspectLed(11, 40, SignalColors.SignalWhite, 6)); // Small white bottom
+                    break;
+
+                default:
+                    // Default: all off
+                    canvas.Children.Add(CreateAspectLed(11, 8, SignalColors.LedOff));
+                    canvas.Children.Add(CreateAspectLed(11, 22, SignalColors.LedOff));
+                    canvas.Children.Add(CreateAspectLed(11, 36, SignalColors.LedOff));
+                    break;
+            }
+
+            return canvas;
+        }
+
+        /// <summary>
+        /// Creates an LED ellipse for signal aspect visualization.
+        /// </summary>
+        private static Ellipse CreateAspectLed(double x, double y, Color color, double size = 10)
+        {
+            var led = new Ellipse
+            {
+                Width = size,
+                Height = size,
+                Fill = new SolidColorBrush(color)
+            };
+            Canvas.SetLeft(led, x - size / 2);
+            Canvas.SetTop(led, y);
+            return led;
+        }
+
+            private void DeleteSelectedElement()
+        {
+            if (SelectedElement == null) return;
+
+            // Clear any blinking LEDs for this element
+            ClearCanvasBlinkingLeds(SelectedElement.Id);
+
+            if (ElementVisuals.TryGetValue(SelectedElement.Id, out var visual))
+            {
+                TrackCanvas.Children.Remove(visual);
+                ElementVisuals.Remove(SelectedElement.Id);
+            }
+
+            Elements.Remove(SelectedElement);
+            SelectElement(null);
+
+            // Trigger auto-save after element deletion
+            _ = ViewModel.SaveSolutionInternalAsync();
+        }
 
     protected static string GetElementTypeName(SignalBoxElementType type) => type switch
     {

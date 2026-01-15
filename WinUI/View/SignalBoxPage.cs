@@ -430,7 +430,7 @@ public sealed class SignalBoxPage : SignalBoxPageBase
         return grid;
     }
 
-    private static Grid CreateKsSignalVisual(SignalBoxElement element)
+    private Grid CreateKsSignalVisual(SignalBoxElement element)
     {
         var grid = new Grid();
 
@@ -449,9 +449,16 @@ public sealed class SignalBoxPage : SignalBoxPageBase
         var redOn = element.SignalAspect == SignalAspect.Hp0;
         grid.Children.Add(CreateSignalLed(26, 10, redOn ? SignalColors.SignalRed : SignalColors.LedOff, 10));
 
-        // Grüne Lampe unten links (Ks1 - Fahrt)
+        // Gruene Lampe unten links (Ks1 - Fahrt)
         var greenOn = element.SignalAspect is SignalAspect.Ks1 or SignalAspect.Ks1Blink;
-        grid.Children.Add(CreateSignalLed(20, 38, greenOn ? SignalColors.SignalGreen : SignalColors.LedOff, 10));
+        var greenLed = CreateSignalLed(20, 38, greenOn ? SignalColors.SignalGreen : SignalColors.LedOff, 10);
+        grid.Children.Add(greenLed);
+
+        // Register for blinking on canvas if Ks1Blink
+        if (element.SignalAspect == SignalAspect.Ks1Blink)
+        {
+            RegisterCanvasBlinkingLed(element.Id, greenLed);
+        }
 
         // Gelbe Lampe unten rechts (Ks2 - Halt erwarten)
         var yellowOn = element.SignalAspect == SignalAspect.Ks2;
@@ -460,7 +467,7 @@ public sealed class SignalBoxPage : SignalBoxPageBase
         return grid;
     }
 
-    private static Grid CreateKsDistantSignalVisual(SignalBoxElement element)
+    private Grid CreateKsDistantSignalVisual(SignalBoxElement element)
     {
         var grid = new Grid();
 
@@ -469,14 +476,21 @@ public sealed class SignalBoxPage : SignalBoxPageBase
         Canvas.SetLeft(grid.Children[^1], 28);
         Canvas.SetTop(grid.Children[^1], 11);
 
-        // Schwarzer Signalschirm (horizontal für Vorsignal)
+        // Schwarzer Signalschirm (horizontal fuer Vorsignal)
         grid.Children.Add(new Rectangle { Width = 32, Height = 18, Fill = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30)) });
         Canvas.SetLeft(grid.Children[^1], 14);
         Canvas.SetTop(grid.Children[^1], 21);
 
-        // Grüne Lampe links (Ks1 erwarten - Fahrt erwarten)
-        var greenOn = element.SignalAspect == SignalAspect.Ks1;
-        grid.Children.Add(CreateSignalLed(18, 26, greenOn ? SignalColors.SignalGreen : SignalColors.LedOff, 10));
+        // Gruene Lampe links (Ks1 erwarten - Fahrt erwarten)
+        var greenOn = element.SignalAspect is SignalAspect.Ks1 or SignalAspect.Ks1Blink;
+        var greenLed = CreateSignalLed(18, 26, greenOn ? SignalColors.SignalGreen : SignalColors.LedOff, 10);
+        grid.Children.Add(greenLed);
+
+        // Register for blinking on canvas if Ks1Blink
+        if (element.SignalAspect == SignalAspect.Ks1Blink)
+        {
+            RegisterCanvasBlinkingLed(element.Id, greenLed);
+        }
 
         // Gelbe Lampe rechts (Ks2 - Halt erwarten)
         var yellowOn = element.SignalAspect == SignalAspect.Ks2;

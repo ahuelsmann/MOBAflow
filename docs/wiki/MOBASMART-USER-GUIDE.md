@@ -211,15 +211,123 @@ Jeder Feedback Point hat seinen eigenen Zähler:
    - Sind Gleiskontakte zu nah beieinander?
    - Gleiskontakte richtig angeschlossen?
 
-### Problem: App stürzt ab / friert ein
+---
 
-**Lösung:**
+## 📸 Foto-Upload zu MOBAflow (Windows)
+
+MOBAsmart kann Fotos direkt an die MOBAflow Desktop-App senden. Damit dies funktioniert, muessen Handy und PC im **gleichen Netzwerk** sein und die **Windows Firewall** muss korrekt konfiguriert sein.
+
+### Netzwerk-Voraussetzungen
+
+| Anforderung | Details |
+|-------------|---------|
+| **Gleiches Netzwerk** | Handy und Windows-PC muessen im selben WLAN sein |
+| **Kein VPN aktiv** | Firmennetzwerk/VPN verhindert die Verbindung! |
+| **Kein "AP Isolation"** | Im Router muss Geraete-Kommunikation erlaubt sein |
+
+### Windows Firewall konfigurieren
+
+MOBAflow benoetigt zwei Firewall-Freigaben:
+
+| Dienst | Protokoll | Port | Zweck |
+|--------|-----------|------|-------|
+| REST API | **TCP** | 5001 | Foto-Upload |
+| Discovery | **UDP** | 21106 | Automatische Erkennung |
+
+#### Firewall-Regeln erstellen (PowerShell als Administrator):
+
+```powershell
+# TCP fuer REST API (Foto-Upload)
+New-NetFirewallRule -DisplayName "MOBAflow REST API" -Direction Inbound -Protocol TCP -LocalPort 5001 -Action Allow -Profile Private,Public
+
+# UDP fuer Discovery (automatische Erkennung)
+New-NetFirewallRule -DisplayName "MOBAflow Discovery" -Direction Inbound -Protocol UDP -LocalPort 21106 -Action Allow -Profile Private,Public
+```
+
+#### Alternative: Manuell ueber Windows 11 Einstellungen
+
+**Schritt 1: Windows Defender Firewall oeffnen**
+1. Druecke `Win + I` um **Einstellungen** zu oeffnen
+2. Gehe zu **Datenschutz und Sicherheit** → **Windows-Sicherheit**
+3. Klicke auf **Firewall- und Netzwerkschutz**
+4. Scrolle nach unten und klicke auf **Erweiterte Einstellungen**
+   - *(Alternativ: `Win + R`, dann `wf.msc` eingeben)*
+
+**Schritt 2: Neue eingehende Regel erstellen (TCP 5001)**
+1. Klicke links auf **Eingehende Regeln**
+2. Klicke rechts auf **Neue Regel...**
+3. Regeltyp: **Port** auswaehlen → **Weiter**
+4. Protokoll: **TCP** auswaehlen
+5. Ports: **Bestimmte lokale Ports** → `5001` eingeben → **Weiter**
+6. Aktion: **Verbindung zulassen** → **Weiter**
+7. Profil: ☑️ **Domäne**, ☑️ **Privat**, ☑️ **Öffentlich** → **Weiter**
+8. Name: `MOBAflow REST API` → **Fertig stellen**
+
+**Schritt 3: Zweite Regel erstellen (UDP 21106)**
+1. Wiederhole Schritt 2, aber waehle:
+   - Protokoll: **UDP**
+   - Port: `21106`
+   - Name: `MOBAflow Discovery`
+
+**Ergebnis pruefen:**
+Nach Abschluss solltest du zwei neue Regeln sehen:
+```
+✅ MOBAflow REST API      (TCP 5001)
+✅ MOBAflow Discovery     (UDP 21106)
+```
+
+> **💡 Tipp:** Die Regeln werden sofort aktiv - kein Neustart erforderlich!
+
+### Troubleshooting Foto-Upload
+
+#### Discovery funktioniert nicht (Handy findet PC nicht)
+
+**Ursachen:**
+- VPN/Firmennetzwerk aktiv -> **VPN trennen**
+- Router blockiert Multicast -> **AP Isolation deaktivieren**
+- Falsches Netzwerk-Profil -> Firewall-Regel fuer "Private" UND "Public" erstellen
+
+**Test:** Kann das Handy die IP des PCs anpingen?
+
+#### Upload-Timeout / Verbindung fehlgeschlagen
+
+**Ursachen:**
+- Firewall-Regel fehlt oder falsch -> **TCP** (nicht UDP!) fuer Port 5001
+- MOBAflow nicht gestartet -> WinUI-App muss laufen
+- Falscher Port -> REST API laeuft auf Port **5001**
+
+**Test am PC (PowerShell):**
+```powershell
+# Pruefen ob Port 5001 lauscht
+netstat -an | Select-String ":5001"
+
+# Sollte zeigen: TCP 0.0.0.0:5001 LISTENING
+```
+
+#### Handy und PC in verschiedenen Netzwerken
+
+**Symptom:** Discovery findet nichts, manueller Upload schlaegt fehl
+
+**Pruefen:**
+- PC: `ipconfig` -> IPv4-Adresse notieren (z.B. 192.168.1.100)
+- Handy: Einstellungen -> WLAN -> IP-Adresse (z.B. 192.168.1.xxx)
+- **Gleiche Netzwerk-ID?** (192.168.1.x vs 192.168.1.x = OK)
+
+**Typische Probleme:**
+- PC via Ethernet (192.168.0.x), Handy via WLAN (192.168.1.x) -> **Verschiedene Subnetze!**
+- PC mit VPN verbunden -> VPN hat eigenes Subnetz
+
+---
+
+### Problem: App stuerzt ab / friert ein
+
+**Loesung:**
 1. **App neu starten:**
-   - Task-Switcher → MOBAsmart schließen → Neu öffnen
+   - Task-Switcher -> MOBAsmart schliessen -> Neu oeffnen
 2. **Cache leeren:**
-   - Android Einstellungen → Apps → MOBAsmart → Speicher → Cache leeren
+   - Android Einstellungen -> Apps -> MOBAsmart -> Speicher -> Cache leeren
 3. **App neu installieren:**
-   - Deinstallieren → Neu installieren (Einstellungen bleiben erhalten!)
+   - Deinstallieren -> Neu installieren (Einstellungen bleiben erhalten!)
 
 ---
 

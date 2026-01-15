@@ -13,7 +13,6 @@ public class AppSettings
     public CityLibrarySettings CityLibrary { get; set; } = new();
     public ApplicationSettings Application { get; set; } = new();
     public CounterSettings Counter { get; set; } = new();
-    public LoggingSettings Logging { get; set; } = new();
     public HealthCheckSettings HealthCheck { get; set; } = new();
     /// <summary>
     /// Train Control settings including locomotive presets for quick switching.
@@ -28,12 +27,12 @@ public class AppSettings
     /// <summary>
     /// Gets Azure Speech Service subscription key (convenience property).
     /// </summary>
-    public string? AzureSpeechKey => string.IsNullOrEmpty(Speech.Key) ? null : Speech.Key;
+    public string AzureSpeechKey => string.IsNullOrEmpty(Speech.Key) ? string.Empty : Speech.Key;
 
     /// <summary>
     /// Gets Azure Speech Service region (convenience property).
     /// </summary>
-    public string? AzureSpeechRegion => string.IsNullOrEmpty(Speech.Region) ? null : Speech.Region;
+    public string AzureSpeechRegion => string.IsNullOrEmpty(Speech.Region) ? string.Empty : Speech.Region;
 }
 
 /// <summary>
@@ -104,7 +103,7 @@ public class SpeechSettings
     public string Key { get; set; } = string.Empty;
 
     /// <summary>
-    /// Azure Speech Service Region (e.g., "germanywestcentral").
+    /// Azure Speech Service Region.
     /// </summary>
     public string Region { get; set; } = "germanywestcentral";
 
@@ -121,12 +120,12 @@ public class SpeechSettings
     /// <summary>
     /// Default speaker engine name.
     /// </summary>
-    public string? SpeakerEngineName { get; set; }
+    public string SpeakerEngineName { get; set; } = string.Empty;
 
     /// <summary>
     /// Default voice name.
     /// </summary>
-    public string? VoiceName { get; set; }
+    public string VoiceName { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -143,7 +142,7 @@ public class CityLibrarySettings
     /// <summary>
     /// Enable auto-reload when file changes.
     /// </summary>
-    public bool AutoReload { get; set; }
+    public bool AutoReload { get; set; } = true;
 }
 
 /// <summary>
@@ -152,11 +151,6 @@ public class CityLibrarySettings
 public class ApplicationSettings
 {
     /// <summary>
-    /// Reset window layout (size, position) on startup.
-    /// </summary>
-    public bool ResetWindowLayoutOnStart { get; set; }
-
-    /// <summary>
     /// Auto-load last opened solution on startup.
     /// </summary>
     public bool AutoLoadLastSolution { get; set; } = true;
@@ -164,21 +158,13 @@ public class ApplicationSettings
     /// <summary>
     /// Path to last opened solution file.
     /// </summary>
-    public string? LastSolutionPath { get; set; }
+    public string LastSolutionPath { get; set; } = string.Empty;
 
     /// <summary>
     /// Automatically start the WebApp (Blazor REST/API) alongside WinUI.
     /// NOTE: Since WinUI now has in-process REST API (Kestrel), this is typically not needed.
-    /// Set to false to avoid port conflicts.
     /// </summary>
-    public bool AutoStartWebApp { get; set; }
-
-    /// <summary>
-    /// User-selected theme preference for MAUI app.
-    /// Values: "System" (follow OS), "Light", "Dark".
-    /// Default: "System" to follow the operating system theme.
-    /// </summary>
-    public string Theme { get; set; } = "System";
+    public bool AutoStartWebApp { get; set; } = true;
 }
 
 /// <summary>
@@ -211,19 +197,6 @@ public class CounterSettings
 }
 
 /// <summary>
-/// Logging configuration.
-/// </summary>
-public class LoggingSettings
-{
-    public Dictionary<string, string> LogLevel { get; set; } = new()
-    {
-        { "Default", "Information" },
-        { "Microsoft", "Warning" },
-        { "Moba", "Debug" }
-    };
-}
-
-/// <summary>
 /// Health check configuration.
 /// </summary>
 public class HealthCheckSettings
@@ -252,19 +225,19 @@ public class FeatureToggleSettings
     /// Enable Overview page (Dashboard with journey status).
     /// </summary>
     public bool IsOverviewPageAvailable { get; set; } = true;
-    public string? OverviewPageLabel { get; set; }
+    public string OverviewPageLabel { get; set; } = string.Empty;
 
     /// <summary>
     /// Enable Solution page (Project/Solution management).
     /// </summary>
     public bool IsSolutionPageAvailable { get; set; } = true;
-    public string? SolutionPageLabel { get; set; }
+    public string SolutionPageLabel { get; set; } = string.Empty;
 
     /// <summary>
     /// Enable Settings page (Application configuration).
     /// </summary>
     public bool IsSettingsPageAvailable { get; set; } = true;
-    public string? SettingsPageLabel { get; set; }
+    public string SettingsPageLabel { get; set; } = string.Empty;
 
     // Journey Management (Stable - ENABLED by default)
 
@@ -272,13 +245,13 @@ public class FeatureToggleSettings
     /// Enable Journeys page (Train journey management with stations).
     /// </summary>
     public bool IsJourneysPageAvailable { get; set; } = true;
-    public string? JourneysPageLabel { get; set; }
+    public string JourneysPageLabel { get; set; } = string.Empty;
 
     /// <summary>
     /// Enable Workflows page (Automation workflows for actions).
     /// </summary>
     public bool IsWorkflowsPageAvailable { get; set; } = true;
-    public string? WorkflowsPageLabel { get; set; }
+    public string WorkflowsPageLabel { get; set; } = string.Empty;
 
     // Track Management (Testing - DISABLED by default for Open Source)
 
@@ -287,21 +260,28 @@ public class FeatureToggleSettings
     /// Experimental feature - disabled by default for Open Source release.
     /// </summary>
     public bool IsFeedbackPointsPageAvailable { get; set; }
-    public string? FeedbackPointsPageLabel { get; set; } = "Preview";
+    public string FeedbackPointsPageLabel { get; set; } = "Preview";
 
     /// <summary>
     /// Enable Track Plan Editor page (Visual track layout designer).
     /// Experimental feature - disabled by default for Open Source release.
     /// </summary>
     public bool IsTrackPlanEditorPageAvailable { get; set; }
-    public string? TrackPlanEditorPageLabel { get; set; } = "Preview";
+    public string TrackPlanEditorPageLabel { get; set; } = "Preview";
+
+    /// <summary>
+    /// Enable Signal Box page (Visual signal and turnout control panel).
+    /// Experimental feature - disabled by default for Open Source release.
+    /// </summary>
+    public bool IsSignalBoxPageAvailable { get; set; }
+    public string SignalBoxPageLabel { get; set; } = "Preview";
 
     /// <summary>
     /// Enable Journey Map page (Visual journey path visualization).
     /// Experimental feature - disabled by default for Open Source release.
     /// </summary>
     public bool IsJourneyMapPageAvailable { get; set; }
-    public string? JourneyMapPageLabel { get; set; } = "Preview";
+    public string JourneyMapPageLabel { get; set; } = "Preview";
 
     // Monitoring (Testing - DISABLED by default)
 
@@ -310,7 +290,7 @@ public class FeatureToggleSettings
     /// Experimental feature - disabled by default for Open Source release.
     /// </summary>
     public bool IsMonitorPageAvailable { get; set; }
-    public string? MonitorPageLabel { get; set; } = "Beta";
+    public string MonitorPageLabel { get; set; } = "Preview";
 
     // Train/Rolling Stock Management (Upcoming - DISABLED by default)
 
@@ -319,7 +299,7 @@ public class FeatureToggleSettings
     /// Upcoming feature - disabled by default.
     /// </summary>
     public bool IsTrainsPageAvailable { get; set; }
-    public string? TrainsPageLabel { get; set; } = "Preview";
+    public string TrainsPageLabel { get; set; } = "Preview";
 
     // Train Control (Digital Throttle - DISABLED by default)
 
@@ -328,5 +308,5 @@ public class FeatureToggleSettings
     /// New feature - disabled by default until fully tested.
     /// </summary>
     public bool IsTrainControlPageAvailable { get; set; }
-    public string? TrainControlPageLabel { get; set; } = "Preview";
+    public string TrainControlPageLabel { get; set; } = "Preview";
 }
