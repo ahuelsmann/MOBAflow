@@ -6,10 +6,12 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
+using Windows.UI;
 
 /// <summary>
 /// A modern speedometer control for displaying locomotive speed.
 /// Features an arc-based gauge with animated needle and digital display.
+/// Supports dynamic theme colors via AccentColor property.
 /// </summary>
 public sealed partial class SpeedometerControl : UserControl
 {
@@ -41,6 +43,13 @@ public sealed partial class SpeedometerControl : UserControl
         DependencyProperty.Register(nameof(DisplayValue), typeof(int), typeof(SpeedometerControl),
             new PropertyMetadata(0, OnDisplayValueChanged));
 
+    /// <summary>
+    /// Accent color for needle and center circle. When set, overrides ThemeResource.
+    /// </summary>
+    public static readonly DependencyProperty AccentColorProperty =
+        DependencyProperty.Register(nameof(AccentColor), typeof(Color?), typeof(SpeedometerControl),
+            new PropertyMetadata(null, OnAccentColorChanged));
+
     public SpeedometerControl()
     {
         InitializeComponent();
@@ -52,6 +61,7 @@ public sealed partial class SpeedometerControl : UserControl
         UpdateNeedle();
         UpdateSpeedArc();
         UpdateDisplayText();
+        ApplyAccentColor();
     }
 
     public int MinValue
@@ -78,6 +88,15 @@ public sealed partial class SpeedometerControl : UserControl
         set => SetValue(DisplayValueProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets the accent color for the needle. Null uses default ThemeResource.
+    /// </summary>
+    public Color? AccentColor
+    {
+        get => (Color?)GetValue(AccentColorProperty);
+        set => SetValue(AccentColorProperty, value);
+    }
+
     private static void OnValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is SpeedometerControl control)
@@ -92,6 +111,34 @@ public sealed partial class SpeedometerControl : UserControl
         if (d is SpeedometerControl control)
         {
             control.UpdateDisplayText();
+        }
+    }
+
+    private static void OnAccentColorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is SpeedometerControl control)
+        {
+            control.ApplyAccentColor();
+        }
+    }
+
+    private void ApplyAccentColor()
+    {
+        if (AccentColor is not Color color)
+            return;
+
+        var brush = new SolidColorBrush(color);
+
+        // Apply to needle
+        if (Needle is Path needle)
+        {
+            needle.Fill = brush;
+        }
+
+        // Apply to center circle stroke
+        if (CenterCircle is Ellipse circle)
+        {
+            circle.Stroke = brush;
         }
     }
 

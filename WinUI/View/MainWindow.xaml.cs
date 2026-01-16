@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
+using Common.Configuration;
+
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -25,6 +27,7 @@ public sealed partial class MainWindow
     private readonly HealthCheckService _healthCheckService;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly NavigationRegistry _navigationRegistry;
+    private readonly NavigationItemFactory _navigationItemFactory;
 
     /// <summary>
     /// Application version string for display in TitleBar.
@@ -44,14 +47,16 @@ public sealed partial class MainWindow
         NavigationService navigationService,
         HealthCheckService healthCheckService,
         IUiDispatcher uiDispatcher,
-            IIoService ioService,
-            NavigationRegistry navigationRegistry)
+        IIoService ioService,
+        NavigationRegistry navigationRegistry,
+        AppSettings appSettings)
     {
         ViewModel = viewModel;
         _navigationService = navigationService;
         _healthCheckService = healthCheckService;
         _uiDispatcher = uiDispatcher;
         _navigationRegistry = navigationRegistry;
+        _navigationItemFactory = new NavigationItemFactory(appSettings);
 
         InitializeComponent();
 
@@ -85,8 +90,8 @@ public sealed partial class MainWindow
             Debug.WriteLine("[OK] IoService initialized with WindowId");
         }
 
-        // Add plugin navigation items before initialization selects overview
-        AddPluginNavigationItems();
+        // Build navigation items from registry (replaces hardcoded XAML items)
+        BuildNavigationFromRegistry();
 
         // Initialize NavigationService with ContentFrame (async initialization)
         _ = InitializeNavigationAsync();
@@ -111,59 +116,33 @@ public sealed partial class MainWindow
         ViewModel.UpdateHealthStatus(_healthCheckService.SpeechServiceStatus);
     }
 
-    private void AddPluginNavigationItems()
+    /// <summary>
+    /// Builds navigation items dynamically from NavigationRegistry.
+    /// Groups pages by Category with separators between groups.
+    /// </summary>
+    private void BuildNavigationFromRegistry()
     {
-        // Find Help item - plugins should be inserted BEFORE Help/Info/Settings group
-        var helpItem = MainNavigation.MenuItems.OfType<NavigationViewItem>()
-            .FirstOrDefault(item => (item.Tag as string) == "help");
+        // Clear existing items (remove hardcoded XAML items)
+        MainNavigation.MenuItems.Clear();
 
-        if (helpItem is null)
+        NavigationCategory? lastCategory = null;
+
+        foreach (var page in _navigationRegistry.Pages)
         {
-            return; // No help page found, cannot determine insertion point
-        }
-
-        var pluginPages = _navigationRegistry.Pages
-            .Where(p => !string.Equals(p.Source, "Shell", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        if (pluginPages.Count == 0)
-        {
-            return; // No plugins to add
-        }
-
-        // Find the separator BEFORE Help (this is where we insert plugins)
-        var helpIndex = MainNavigation.MenuItems.IndexOf(helpItem);
-        var separatorBeforeHelpIndex = helpIndex > 0 && MainNavigation.MenuItems[helpIndex - 1] is NavigationViewItemSeparator
-            ? helpIndex - 1
-            : -1;
-
-        // Insert position: before the separator that precedes Help (or before Help if no separator)
-        var insertIndex = separatorBeforeHelpIndex != -1 ? separatorBeforeHelpIndex : helpIndex;
-
-        // Add separator BEFORE plugins (between Monitor and first plugin)
-        MainNavigation.MenuItems.Insert(insertIndex, new NavigationViewItemSeparator());
-        insertIndex++;
-
-        // Insert plugin pages
-        foreach (var page in pluginPages)
-        {
-            var navItem = new NavigationViewItem
+            // Add separator between categories
+            if (lastCategory.HasValue && page.Category != lastCategory.Value)
             {
-                Content = page.Title,
-                Tag = page.Tag
-            };
-
-            if (!string.IsNullOrWhiteSpace(page.IconGlyph))
-            {
-                navItem.Icon = new FontIcon { Glyph = page.IconGlyph };
+                MainNavigation.MenuItems.Add(_navigationItemFactory.CreateSeparator());
             }
 
-            MainNavigation.MenuItems.Insert(insertIndex, navItem);
-            insertIndex++;
+            // Create and add navigation item
+            var navItem = _navigationItemFactory.CreateItem(page);
+            MainNavigation.MenuItems.Add(navItem);
+
+            lastCategory = page.Category;
         }
 
-        // The existing separator before Help will now be AFTER plugins
-        // No need to add another separator - the one before Help already exists
+        Debug.WriteLine($"[NAV] Built {MainNavigation.MenuItems.Count} navigation items from registry");
     }
 
     /// <summary>

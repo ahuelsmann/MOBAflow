@@ -91,7 +91,7 @@ public abstract class SignalBoxPageBase : Page
         _blinkTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _blinkTimer.Tick += OnBlinkTimerTick;
 
-        Content = BuildLayout();
+        // Layout is built in OnLoaded to ensure derived class fields are initialized
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
@@ -112,6 +112,13 @@ public abstract class SignalBoxPageBase : Page
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        // Build layout here to ensure derived class fields are initialized
+        // (virtual methods called from base constructor would access uninitialized fields)
+        if (Content is null)
+        {
+            Content = BuildLayout();
+        }
+
         Z21.Received += OnZ21FeedbackReceived;
         _blinkTimer?.Start();
 

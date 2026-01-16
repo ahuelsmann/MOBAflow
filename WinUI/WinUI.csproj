@@ -1,4 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
+    <!-- Project Identity -->
     <PropertyGroup>
         <RootNamespace>Moba.WinUI</RootNamespace>
         <AssemblyName>MOBAflow</AssemblyName>
@@ -6,73 +7,27 @@
         <ApplicationIcon>Assets\mobaflow-icon.ico</ApplicationIcon>
         <OutputType>WinExe</OutputType>
         <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
-        <UseWinUI>true</UseWinUI>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <UseWinUI>true</UseWinUI>
+        <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+        <GenerateAppxManifest>false</GenerateAppxManifest>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     </PropertyGroup>
-
-    <!-- Debug Performance Optimizations -->
+    <!-- Debug: Performance Optimizations -->
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-        <!-- Fast Up-to-Date Check: Allow VS to skip builds when nothing changed -->
-        <DisableFastUpToDateCheck>false</DisableFastUpToDateCheck>
-        <!-- Disable analyzers during Debug builds -->
+        <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
         <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
-        <!-- Disable XML doc generation -->
         <GenerateDocumentationFile>false</GenerateDocumentationFile>
     </PropertyGroup>
-
     <!-- Release: Enable all checks -->
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <DisableFastUpToDateCheck>false</DisableFastUpToDateCheck>
     </PropertyGroup>
-
-    <PropertyGroup>
-        <GenerateAppxManifest>false</GenerateAppxManifest>
-        <ApplicationManifest>app.manifest</ApplicationManifest>
-    </PropertyGroup>
-    <PropertyGroup>
-        <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
-    </PropertyGroup>
-    <!-- Mark generated manifest as a build output so Fast Up-to-Date check does not warn -->
-    <ItemGroup>
-        <UpToDateCheckBuilt Include="$(IntermediateOutputPath)Manifests\app.manifest" />
-    </ItemGroup>
-    <!-- App Icons for WinUI Package -->
-    <ItemGroup>
-        <Content Include="Assets\*.png">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="Assets\*.ico">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-    </ItemGroup>
-    <!-- Content files -->
-    <ItemGroup>
-        <Content Include="appsettings.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="appsettings.Development.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="example-solution.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="germany-stations.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="germany-locomotives.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="myMOBA2025b.xml">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-    </ItemGroup>
-    <!-- ASP.NET Core for in-process Kestrel hosting (REST API + SignalR) -->
+    <!-- Package References -->
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    </ItemGroup>
-    <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
         <PackageReference Include="Microsoft.WindowsAppSDK" />
         <PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" />
@@ -80,11 +35,26 @@
         <PackageReference Include="Serilog.Sinks.Debug" />
         <PackageReference Include="Serilog.Sinks.File" />
     </ItemGroup>
+    <!-- Project References -->
     <ItemGroup>
-        <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
         <ProjectReference Include="..\Common\Common.csproj" />
+        <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
         <ProjectReference Include="..\TrackPlan\TrackPlan.csproj" />
         <ProjectReference Include="..\TrackPlan.Editor\TrackPlan.Editor.csproj" />
         <ProjectReference Include="..\TrackLibrary.PikoA\TrackLibrary.PikoA.csproj" />
+    </ItemGroup>
+    <!-- Assets -->
+    <ItemGroup>
+        <Content Include="Assets\*.png" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="Assets\*.ico" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+    <!-- Data Files -->
+    <ItemGroup>
+        <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="appsettings.Development.json" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="example-solution.json" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="germany-stations.json" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="germany-locomotives.json" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="myMOBA2025b.xml" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 </Project>

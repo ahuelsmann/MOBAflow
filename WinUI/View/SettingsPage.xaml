@@ -22,6 +22,33 @@
                     Text="Settings" />
             </Grid>
 
+            <!--  Appearance Section  -->
+            <Expander
+                x:Name="AppearanceExpander"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                Header="Appearance"
+                IsExpanded="True">
+                <Expander.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon FontSize="20" Glyph="&#xE790;" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Style="{StaticResource SubtitleTextBlockStyle}"
+                                Text="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </Expander.HeaderTemplate>
+
+                <StackPanel
+                    x:Name="ThemeSelectorContainer"
+                    Padding="56,16,0,16"
+                    Spacing="16">
+                    <!--  ThemeSelectorControl injected via code-behind  -->
+                </StackPanel>
+            </Expander>
+
             <!--  Z21 Connection Section  -->
             <Expander
                 HorizontalAlignment="Stretch"

@@ -1,6 +1,13 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
+using Common.Configuration;
+
+using Controls;
+
+using Service;
+
+using SharedUI.Interface;
 using SharedUI.ViewModel;
 
 using Windows.ApplicationModel.DataTransfer;
@@ -14,10 +21,13 @@ public sealed partial class SettingsPage
 {
     public MainWindowViewModel ViewModel { get; }
 
-    public SettingsPage(MainWindowViewModel viewModel)
+    public SettingsPage(MainWindowViewModel viewModel, IThemeProvider themeProvider, AppSettings settings, ISettingsService settingsService)
     {
         ViewModel = viewModel;
         InitializeComponent();
+
+        var themeSelectorControl = new ThemeSelectorControl(themeProvider, settings, settingsService);
+        ThemeSelectorContainer.Children.Add(themeSelectorControl);
     }
 
     private void CopyIpToClipboard_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)

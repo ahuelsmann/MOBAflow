@@ -9,6 +9,8 @@ using Backend.Service;
 using Common.Configuration;
 using Common.Serilog;
 
+using Controls;
+
 using Domain;
 
 using Microsoft.AspNetCore.Builder;
@@ -33,7 +35,6 @@ using SharedUI.Interface;
 using SharedUI.ViewModel;
 
 using Sound;
-
 
 using System.IO;
 
@@ -102,39 +103,39 @@ public partial class App
     /// <summary>
     /// Configures the services for the application.
     /// </summary>
-        private static IServiceProvider ConfigureServices()
-        {
-            var services = new ServiceCollection();
+    private static IServiceProvider ConfigureServices()
+    {
+        var services = new ServiceCollection();
 
-            // Load appsettings.json configuration
-            // In DEBUG mode, also load appsettings.Development.json to enable all feature toggles
-            var basePath = AppContext.BaseDirectory;
-            var devJsonPath = Path.Combine(basePath, "appsettings.Development.json");
-            var devJsonExists = File.Exists(devJsonPath);
+        // Load appsettings.json configuration
+        // In DEBUG mode, also load appsettings.Development.json to enable all feature toggles
+        var basePath = AppContext.BaseDirectory;
+        var devJsonPath = Path.Combine(basePath, "appsettings.Development.json");
+        var devJsonExists = File.Exists(devJsonPath);
 
-            System.Diagnostics.Debug.WriteLine($"[CONFIG] BaseDirectory: {basePath}");
-            System.Diagnostics.Debug.WriteLine($"[CONFIG] appsettings.Development.json exists: {devJsonExists}");
+        System.Diagnostics.Debug.WriteLine($"[CONFIG] BaseDirectory: {basePath}");
+        System.Diagnostics.Debug.WriteLine($"[CONFIG] appsettings.Development.json exists: {devJsonExists}");
 
-            var configuration = new ConfigurationBuilder()
-                .SetBasePath(basePath)
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    #if DEBUG
-                .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
-    #endif
-                .Build();
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(basePath)
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+#if DEBUG
+            .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
+#endif
+            .Build();
 
-            // Debug: Print loaded FeatureToggle values
-            System.Diagnostics.Debug.WriteLine($"[CONFIG] IsTrainControlPageAvailable: {configuration["FeatureToggles:IsTrainControlPageAvailable"]}");
-            System.Diagnostics.Debug.WriteLine($"[CONFIG] IsTrackPlanEditorPageAvailable: {configuration["FeatureToggles:IsTrackPlanEditorPageAvailable"]}");
-            System.Diagnostics.Debug.WriteLine($"[CONFIG] IsJourneyMapPageAvailable: {configuration["FeatureToggles:IsJourneyMapPageAvailable"]}");
-            System.Diagnostics.Debug.WriteLine($"[CONFIG] IsMonitorPageAvailable: {configuration["FeatureToggles:IsMonitorPageAvailable"]}");
+        // Debug: Print loaded FeatureToggle values
+        System.Diagnostics.Debug.WriteLine($"[CONFIG] IsTrainControlPageAvailable: {configuration["FeatureToggles:IsTrainControlPageAvailable"]}");
+        System.Diagnostics.Debug.WriteLine($"[CONFIG] IsTrackPlanEditorPageAvailable: {configuration["FeatureToggles:IsTrackPlanEditorPageAvailable"]}");
+        System.Diagnostics.Debug.WriteLine($"[CONFIG] IsJourneyMapPageAvailable: {configuration["FeatureToggles:IsJourneyMapPageAvailable"]}");
+        System.Diagnostics.Debug.WriteLine($"[CONFIG] IsMonitorPageAvailable: {configuration["FeatureToggles:IsMonitorPageAvailable"]}");
 
-            // Register IConfiguration
-            services.AddSingleton<IConfiguration>(configuration);
+        // Register IConfiguration
+        services.AddSingleton<IConfiguration>(configuration);
 
-            // Register AppSettings with IOptions pattern
-            services.Configure<AppSettings>(configuration);
-            services.AddSingleton(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value);
+        // Register AppSettings with IOptions pattern
+        services.Configure<AppSettings>(configuration);
+        services.AddSingleton(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value);
 
         // Register SpeechOptions (Sound service configuration)
         services.Configure<SpeechOptions>(configuration.GetSection("Speech"));
@@ -275,45 +276,90 @@ public partial class App
         ));
 
         // Pages (Transient = new instance per navigation)
+        // Registration: tag, title, iconGlyph, pageType, source, category, order, featureToggleKey, badgeLabelKey, pathIconData, isBold
+
+        // Core: Overview
         services.AddTransient<OverviewPage>();
-        navigationRegistry.Register("overview", "Overview", "\uE80F", typeof(OverviewPage), "Shell");
+        navigationRegistry.Register("overview", "Overview", "\uE80F", typeof(OverviewPage), "Shell",
+            NavigationCategory.Core, 10, "IsOverviewPageAvailable", "OverviewPageLabel");
 
-        services.AddTransient<SolutionPage>();
-        navigationRegistry.Register("solution", "Solution", "\uE8B7", typeof(SolutionPage), "Shell");
+        // TrainControl: Train Control (bold, prominent)
+        services.AddTransient<TrainControlPage>();
+        navigationRegistry.Register("traincontrol", "Train Control", "\uEC49", typeof(TrainControlPage), "Shell",
+            NavigationCategory.TrainControl, 10, "IsTrainControlPageAvailable", "TrainControlPageLabel", null, true);
 
+        // TrainControl: Train Control 2 (Theme-enabled)
+        services.AddTransient<TrainControlPage2>();
+        navigationRegistry.Register("traincontrol2", "Train Control 2", "\uE790", typeof(TrainControlPage2), "Shell",
+            NavigationCategory.TrainControl, 20, "IsTrainControlPageAvailable", null, null, false);
+
+        // TrainControl: Train Control 3 (ESU CabControl Style)
+        services.AddTransient<TrainControlPage3>();
+        navigationRegistry.Register("traincontrol3", "Train Control 3", "\uE957", typeof(TrainControlPage3), "Shell",
+            NavigationCategory.TrainControl, 30, "IsTrainControlPageAvailable", "ESU", null, false);
+
+        // Journey: Journeys (bold)
         services.AddTransient<JourneysPage>();
-        navigationRegistry.Register("journeys", "Journeys", "\uE7C1", typeof(JourneysPage), "Shell");
+        navigationRegistry.Register("journeys", "Journeys", "\uE7C1", typeof(JourneysPage), "Shell",
+            NavigationCategory.Journey, 10, "IsJourneysPageAvailable", "JourneysPageLabel", null, true);
+
+        // Journey: Journey Map
+        services.AddTransient<JourneyMapPage>();
+        navigationRegistry.Register("journeymap", "Journey Map", "\uE81D", typeof(JourneyMapPage), "Shell",
+            NavigationCategory.Journey, 20, "IsJourneyMapPageAvailable", "JourneyMapPageLabel");
+
+        // Solution: Solution, Workflows, Trains
+        services.AddTransient<SolutionPage>();
+        navigationRegistry.Register("solution", "Solution", "\uE8B7", typeof(SolutionPage), "Shell",
+            NavigationCategory.Solution, 10, "IsSolutionPageAvailable", "SolutionPageLabel");
 
         services.AddTransient<WorkflowsPage>();
-        navigationRegistry.Register("workflows", "Workflows", "\uE945", typeof(WorkflowsPage), "Shell");
+        navigationRegistry.Register("workflows", "Workflows", "\uE945", typeof(WorkflowsPage), "Shell",
+            NavigationCategory.Solution, 20, "IsWorkflowsPageAvailable", "WorkflowsPageLabel");
 
         services.AddTransient<TrainsPage>();
-        navigationRegistry.Register("trains", "Trains", "\uEB4D", typeof(TrainsPage), "Shell");
+        navigationRegistry.Register("trains", "Trains", "\uE7C0", typeof(TrainsPage), "Shell",
+            NavigationCategory.Solution, 30, "IsTrainsPageAvailable", "TrainsPageLabel");
 
-        services.AddTransient<TrainControlPage>();
-        navigationRegistry.Register("traincontrol", "Train Control", "\uE7C0", typeof(TrainControlPage), "Shell");
-
+        // TrackManagement: MOBAtps, MOBAesb
         services.AddTransient<TrackPlanEditorPage>();
-        navigationRegistry.Register("trackplaneditor", "MOBAtps", "\uE809", typeof(TrackPlanEditorPage), "Shell");
+        navigationRegistry.Register("trackplaneditor", "MOBAtps", null, typeof(TrackPlanEditorPage), "Shell",
+            NavigationCategory.TrackManagement, 10, "IsTrackPlanEditorPageAvailable", "TrackPlanEditorPageLabel",
+            "M2,3 L4,3 L14,13 L12,13 Z M12,3 L14,3 L4,13 L2,13 Z");
 
-        services.AddTransient<JourneyMapPage>();
-        navigationRegistry.Register("journeymap", "Journey Map", "\uE81E", typeof(JourneyMapPage), "Shell");
+        services.AddSingleton<SignalBoxPage>();
+        navigationRegistry.Register("signalbox", "MOBAesb", null, typeof(SignalBoxPage), "Shell",
+            NavigationCategory.TrackManagement, 20, null, null,
+            "M7,2 A2,2 0 1,1 11,2 A2,2 0 1,1 7,2 M3,10 A2,2 0 1,1 7,10 A2,2 0 1,1 3,10 M11,10 A2,2 0 1,1 15,10 A2,2 0 1,1 11,10");
 
-        services.AddTransient<SettingsPage>();
-        navigationRegistry.Register("settings", "Settings", "\uE713", typeof(SettingsPage), "Shell");
+        services.AddSingleton<SignalBoxPage2>();
+        navigationRegistry.Register("signalbox2", "MOBAesb 2", null, typeof(SignalBoxPage2), "Shell",
+            NavigationCategory.TrackManagement, 25, null, null,
+            "M7,2 A2,2 0 1,1 11,2 A2,2 0 1,1 7,2 M3,10 A2,2 0 1,1 7,10 A2,2 0 1,1 3,10 M11,10 A2,2 0 1,1 15,10 A2,2 0 1,1 11,10");
 
+        // Monitoring: Monitor
         services.AddTransient<MonitorPage>();
-        navigationRegistry.Register("monitor", "Monitor", "\uE7F4", typeof(MonitorPage), "Shell");
+        navigationRegistry.Register("monitor", "Monitor", "\uE7F4", typeof(MonitorPage), "Shell",
+            NavigationCategory.Monitoring, 10, "IsMonitorPageAvailable", "MonitorPageLabel");
 
+        // Help: Help, Info, Settings
         services.AddTransient<HelpPage>();
-        navigationRegistry.Register("help", "Help", "\uE897", typeof(HelpPage), "Shell");
+        navigationRegistry.Register("help", "Help", "\uE897", typeof(HelpPage), "Shell",
+            NavigationCategory.Help, 10);
 
         services.AddTransient<InfoPage>();
-        navigationRegistry.Register("info", "Info", "\uE946", typeof(InfoPage), "Shell");
+        navigationRegistry.Register("info", "Info", "\uE946", typeof(InfoPage), "Shell",
+            NavigationCategory.Help, 20);
 
-        // SignalBoxPage as Singleton to ensure SolutionSaving subscription persists
-        services.AddSingleton<SignalBoxPage>();
-        navigationRegistry.Register("signalbox", "MOBAesb", "\uE806", typeof(SignalBoxPage), "Shell");
+        services.AddTransient<SettingsPage>();
+        navigationRegistry.Register("settings", "Settings", "\uE115", typeof(SettingsPage), "Shell",
+            NavigationCategory.Help, 30, "IsSettingsPageAvailable", "SettingsPageLabel");
+
+        // Theme Provider and Selector
+        services.AddSingleton<IThemeProvider, ThemeProvider>();
+        services.AddTransient<ThemeSelectorControl>();
+
+
 
         // MainWindow (Singleton = one instance for app lifetime)
         services.AddSingleton<MainWindow>();
@@ -358,6 +404,11 @@ public partial class App
     /// <param name="args">Details about the launch request and process.</param>
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        // Initialize ThemeProvider with saved settings before creating MainWindow
+        var themeProvider = Services.GetRequiredService<IThemeProvider>();
+        var appSettings = Services.GetRequiredService<AppSettings>();
+        themeProvider.Initialize(appSettings);
+
         _window = Services.GetRequiredService<MainWindow>();
         _window.Activate();
 

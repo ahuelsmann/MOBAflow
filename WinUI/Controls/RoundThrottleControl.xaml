@@ -1,0 +1,114 @@
+﻿<UserControl
+    x:Class="Moba.WinUI.Controls.RoundThrottleControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <!--
+    ESU CabControl-Style Round Throttle Control
+    - Circular speedometer with 0-28 DCC speed steps
+    - Yellow center circle showing current speed
+    - Gray arc showing position
+    - Tick marks around the dial
+    - DCC address and protocol info below
+    -->
+
+    <Grid>
+        <Viewbox Stretch="Uniform" MaxWidth="300" MaxHeight="300">
+            <Canvas Width="240" Height="280">
+                <!-- Outer dial background (dark circle) -->
+                <Ellipse
+                    Canvas.Left="20"
+                    Canvas.Top="20"
+                    Width="200"
+                    Height="200"
+                    Fill="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                    Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                    StrokeThickness="2" />
+
+                <!-- Speed arc background (full circle track) -->
+                <Path
+                    x:Name="ArcBackground"
+                    Stroke="{ThemeResource ControlStrongStrokeColorDefaultBrush}"
+                    StrokeThickness="12"
+                    StrokeStartLineCap="Round"
+                    StrokeEndLineCap="Round"
+                    Data="M 50,180 A 80,80 0 1 1 190,180" />
+
+                <!-- Speed arc (shows current position) -->
+                <Path
+                    x:Name="SpeedArc"
+                    Stroke="{ThemeResource TextFillColorSecondaryBrush}"
+                    StrokeThickness="12"
+                    StrokeStartLineCap="Round"
+                    StrokeEndLineCap="Round" />
+
+                <!-- Tick marks will be generated in code-behind -->
+                <Canvas x:Name="TickCanvas" />
+
+                <!-- Center circle with current speed (ESU yellow style) -->
+                <Ellipse
+                    x:Name="CenterCircle"
+                    Canvas.Left="75"
+                    Canvas.Top="75"
+                    Width="90"
+                    Height="90"
+                    Fill="#FFD700"
+                    Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                    StrokeThickness="2" />
+
+                <!-- Current speed number -->
+                <TextBlock
+                    x:Name="SpeedText"
+                    Canvas.Left="75"
+                    Canvas.Top="95"
+                    Width="90"
+                    FontSize="42"
+                    FontWeight="Bold"
+                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                    Text="0"
+                    TextAlignment="Center" />
+
+                <!-- DCC Address display -->
+                <Border
+                    Canvas.Left="70"
+                    Canvas.Top="230"
+                    Width="100"
+                    Height="20"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="4">
+                    <TextBlock
+                        x:Name="AddressText"
+                        FontSize="12"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="[0003]"
+                        TextAlignment="Center"
+                        VerticalAlignment="Center" />
+                </Border>
+
+                <!-- Protocol info -->
+                <TextBlock
+                    x:Name="ProtocolText"
+                    Canvas.Left="70"
+                    Canvas.Top="252"
+                    Width="100"
+                    FontSize="11"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Text="DCC 28"
+                    TextAlignment="Center" />
+
+                <!-- Direction indicator arrow (forward) -->
+                <Path
+                    x:Name="DirectionArrow"
+                    Canvas.Left="110"
+                    Canvas.Top="150"
+                    Data="M 0,15 L 10,0 L 20,15 Z"
+                    Fill="{ThemeResource AccentFillColorDefaultBrush}"
+                    Visibility="Visible" />
+
+            </Canvas>
+        </Viewbox>
+    </Grid>
+</UserControl>

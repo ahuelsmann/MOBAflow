@@ -182,6 +182,12 @@ public class ApplicationSettings
     public bool UseSystemTheme { get; set; } = false;
 
     /// <summary>
+    /// Selected skin/theme for theme-enabled pages (TrainControlPage2, SignalBoxPage2).
+    /// Values: "Modern", "Classic", "Dark", "EsuCabControl", "RocoZ21", "MaerklinCS"
+    /// </summary>
+    public string SelectedSkin { get; set; } = "Modern";
+
+    /// <summary>
     /// Auto-load last opened solution on startup.
     /// </summary>
     public bool AutoLoadLastSolution { get; set; } = true;
