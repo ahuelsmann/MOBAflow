@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <RootNamespace>Moba.TrackPlan.Renderer</RootNamespace>
-    <TargetFramework>net9.0</TargetFramework>
-    <OutputType>Library</OutputType>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <Description>Visualisierung, WorldTransform, Layout-Export.</Description>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\TrackPlan\TrackPlan.csproj" />
-  </ItemGroup>
+    <PropertyGroup>
+        <RootNamespace>Moba.TrackPlan.Renderer</RootNamespace>
+        <TargetFramework>net9.0</TargetFramework>
+        <OutputType>Library</OutputType>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Description>Visualisierung, WorldTransform, Layout-Export.</Description>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\TrackPlan\TrackPlan.csproj" />
+    </ItemGroup>
 </Project>

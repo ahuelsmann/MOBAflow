@@ -1,42 +1,39 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <RootNamespace>Moba.Sound</RootNamespace>
-    <TargetFramework>net9.0</TargetFramework>
-    <OutputType>Library</OutputType>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
-  <ItemGroup>
-    <!-- Legacy test sound -->
-
-    <!-- Sound Library - Workflow audio effects -->
-    <!-- All .wav files in Resources/Sounds/ will be copied to output directory -->
-    <Content Include="Resources\Sounds\**\*.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>Resources\Sounds\%(RecursiveDir)%(Filename)%(Extension)</Link>
-    </Content>
-
-    <!-- Sound Library - Documentation -->
-    <None Include="Resources\Sounds\**\*.md">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.CognitiveServices.Speech" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
-    <PackageReference Include="Microsoft.Extensions.Options" />
-    <PackageReference Include="System.Speech" />
-    <PackageReference Include="System.Windows.Extensions" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Common\Common.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Update="Resources\Sounds\273646__gollamar__announcement-06.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <None Update="Resources\Sounds\Station\README.md">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+    <PropertyGroup>
+        <RootNamespace>Moba.Sound</RootNamespace>
+        <TargetFramework>net9.0</TargetFramework>
+        <OutputType>Library</OutputType>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+    <ItemGroup>
+        <!-- Sound Library - Workflow audio effects -->
+        <!-- All .wav files in Resources/Sounds/ will be copied to output directory -->
+        <Content Include="Resources\Sounds\**\*.wav">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Link>Resources\Sounds\%(RecursiveDir)%(Filename)%(Extension)</Link>
+        </Content>
+        <!-- Sound Library - Documentation -->
+        <None Include="Resources\Sounds\**\*.md">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CognitiveServices.Speech" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+        <PackageReference Include="Microsoft.Extensions.Options" />
+        <PackageReference Include="System.Speech" />
+        <PackageReference Include="System.Windows.Extensions" />
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Common\Common.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <Content Update="Resources\Sounds\273646__gollamar__announcement-06.wav">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <None Update="Resources\Sounds\Station\README.md">
+            <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 </Project>

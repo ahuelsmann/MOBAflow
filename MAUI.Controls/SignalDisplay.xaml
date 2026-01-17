@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Moba.MAUI.Controls.SignalDisplay">
+    
+    <Border StrokeThickness="1"
+            Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}"
+            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
+            Padding="16"
+            StrokeShape="RoundRectangle 8">
+        
+        <!-- 6x6 Grid Template für Signalbilder -->
+        <Grid WidthRequest="180" HeightRequest="180">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Grid Gitterlinien zur Orientierung (optional, kann entfernt werden) -->
+            <BoxView Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="6" Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" HeightRequest="1" VerticalOptions="End"/>
+            <BoxView Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="6" Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" HeightRequest="1" VerticalOptions="End"/>
+            <BoxView Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="6" Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" HeightRequest="1" VerticalOptions="End"/>
+            <BoxView Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="6" Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" HeightRequest="1" VerticalOptions="End"/>
+            <BoxView Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="6" Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" HeightRequest="1" VerticalOptions="End"/>
+            
+            <BoxView Grid.Row="0" Grid.Column="0" Grid.RowSpan="6" Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" WidthRequest="1" HorizontalOptions="End"/>
+            <BoxView Grid.Row="0" Grid.Column="1" Grid.RowSpan="6" Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" WidthRequest="1" HorizontalOptions="End"/>
+            <BoxView Grid.Row="0" Grid.Column="2" Grid.RowSpan="6" Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" WidthRequest="1" HorizontalOptions="End"/>
+            <BoxView Grid.Row="0" Grid.Column="3" Grid.RowSpan="6" Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" WidthRequest="1" HorizontalOptions="End"/>
+            <BoxView Grid.Row="0" Grid.Column="4" Grid.RowSpan="6" Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" WidthRequest="1" HorizontalOptions="End"/>
+
+            <!-- Hier Signalelemente hinzufügen -->
+            <!-- Beispiel: Ellipse in Mitte für Signallampe -->
+            <Ellipse Grid.Row="2" Grid.Column="2" Grid.RowSpan="2" Grid.ColumnSpan="2"
+                     Fill="Red"
+                     Margin="4"/>
+            
+        </Grid>
+    </Border>
+</ContentView>

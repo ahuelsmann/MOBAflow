@@ -7,19 +7,55 @@ using System.Reflection;
 namespace Moba.Common.Plugins;
 
 /// <summary>
-/// Discovers and validates plugins in a specified directory.
-/// Uses PluginLoadContext for proper plugin isolation per Microsoft Best Practices.
-/// See: https://learn.microsoft.com/en-us/dotnet/core/tutorials/creating-app-with-plugin-support
+/// Discovers and loads plugins from a specified directory using isolated assembly loading.
 /// </summary>
+/// <remarks>
+/// <para>
+/// This service implements Microsoft's best practices for plugin systems with assembly isolation.
+/// Each plugin is loaded in its own <see cref="PluginLoadContext"/> to prevent dependency conflicts.
+/// </para>
+/// <para>
+/// <b>Directory Structure Support:</b>
+/// <list type="bullet">
+/// <item><description><b>Flat layout:</b> <c>Plugins/*.dll</c> - All plugin DLLs in one directory</description></item>
+/// <item><description><b>Nested layout:</b> <c>Plugins/PluginName/PluginName.dll</c> - Each plugin in its own folder</description></item>
+/// <item><description><b>Mixed layout:</b> Both flat and nested DLLs are supported simultaneously</description></item>
+/// </list>
+/// </para>
+/// <para>
+/// <b>Reference:</b> https://learn.microsoft.com/en-us/dotnet/core/tutorials/creating-app-with-plugin-support
+/// </para>
+/// </remarks>
 public sealed class PluginDiscoveryService
 {
     /// <summary>
-    /// Discovers all IPlugin implementations in DLL files within the plugin directory.
-    /// Each plugin is loaded in its own AssemblyLoadContext for isolation.
+    /// Discovers all <see cref="IPlugin"/> implementations in DLL files within the plugin directory.
     /// </summary>
-    /// <param name="pluginDirectory">Path to directory containing plugin DLLs or subdirectories with plugins</param>
-    /// <param name="logger">Optional logger for diagnostic information</param>
-    /// <returns>List of discovered plugin instances (empty if no plugins found or directory doesn't exist)</returns>
+    /// <param name="pluginDirectory">Path to directory containing plugin DLLs or subdirectories with plugins.</param>
+    /// <param name="logger">Optional logger for diagnostic information.</param>
+    /// <returns>A read-only list of discovered plugin instances. Returns an empty list if no plugins are found or the directory doesn't exist.</returns>
+    /// <remarks>
+    /// <para>
+    /// <b>Discovery Process:</b>
+    /// <list type="number">
+    /// <item><description>Checks if plugin directory exists (returns empty list if not)</description></item>
+    /// <item><description>Scans for DLL files in root directory</description></item>
+    /// <item><description>Scans for DLL files in immediate subdirectories</description></item>
+    /// <item><description>For each DLL, loads assembly in isolated <see cref="PluginLoadContext"/></description></item>
+    /// <item><description>Reflects on assembly to find public, non-abstract <see cref="IPlugin"/> implementations</description></item>
+    /// <item><description>Instantiates each plugin type using parameterless constructor</description></item>
+    /// <item><description>Returns collection of successfully instantiated plugins</description></item>
+    /// </list>
+    /// </para>
+    /// <para>
+    /// <b>Error Handling:</b> If a DLL fails to load or a plugin fails to instantiate, that plugin is skipped
+    /// and an error is logged. Other plugins continue to load. This ensures partial success is possible.
+    /// </para>
+    /// <para>
+    /// <b>Convention:</b> In nested layout, the service looks for <c>PluginName/PluginName.dll</c> first.
+    /// If not found, it scans all DLLs in the subdirectory.
+    /// </para>
+    /// </remarks>
     public static IReadOnlyList<IPlugin> DiscoverPlugins(string pluginDirectory, ILogger? logger = null)
     {
         var plugins = new List<IPlugin>();
@@ -122,19 +158,40 @@ public sealed class PluginDiscoveryService
     }
 
     /// <summary>
-    /// Loads a plugin assembly using a custom PluginLoadContext for isolation.
-    /// This allows plugins to have their own dependencies without conflicting with the host app.
+    /// Loads a plugin assembly using a custom <see cref="PluginLoadContext"/> for isolation.
     /// </summary>
-    private static Assembly LoadPluginAssembly(string pluginPath, ILogger? logger)
+    /// <param name="pluginPath">The full path to the plugin DLL file.</param>
+    /// <param name="logger">Optional logger for diagnostic information.</param>
+    /// <returns>The loaded assembly, or <c>null</c> if loading failed.</returns>
+    /// <remarks>
+    /// <para>
+    /// Each plugin is loaded in its own <see cref="PluginLoadContext"/>, which is a custom
+    /// <see cref="System.Runtime.Loader.AssemblyLoadContext"/>. This allows plugins to have their own
+    /// dependencies without conflicting with the host application or other plugins.
+    /// </para>
+    /// <para>
+    /// The assembly is loaded by name (not by path) through the custom context, ensuring
+    /// proper dependency resolution using the plugin's .deps.json file.
+    /// </para>
+    /// </remarks>
+    private static Assembly? LoadPluginAssembly(string pluginPath, ILogger? logger)
     {
         var pluginLocation = Path.GetFullPath(pluginPath);
         logger?.LogDebug("Loading plugin from: {PluginLocation}", pluginLocation);
 
-        // Create isolated load context for this plugin
-        var loadContext = new PluginLoadContext(pluginLocation);
+        try
+        {
+            // Create isolated load context for this plugin
+            var loadContext = new PluginLoadContext(pluginLocation);
 
-        // Load the plugin assembly by name (not path) through the custom context
-        var assemblyName = new AssemblyName(Path.GetFileNameWithoutExtension(pluginLocation));
-        return loadContext.LoadFromAssemblyName(assemblyName);
+            // Load the plugin assembly by name (not by path) through the custom context
+            var assemblyName = new AssemblyName(Path.GetFileNameWithoutExtension(pluginLocation));
+            return loadContext.LoadFromAssemblyName(assemblyName);
+        }
+        catch (Exception ex)
+        {
+            logger?.LogError(ex, "Failed to create load context or load assembly {PluginPath}", pluginPath);
+            return null;
+        }
     }
 }

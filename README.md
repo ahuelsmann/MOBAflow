@@ -61,6 +61,10 @@ MOBAflow supports **importing track layouts from AnyRail** (user-exported XML fi
 
 - 📖 **Documentation:** [`docs/wiki/INDEX.md`](docs/wiki/INDEX.md)
 - 🏗️ **Architecture:** [`ARCHITECTURE.md`](ARCHITECTURE.md)
+- 📚 **API Documentation:** [`docs/DOXYGEN.md`](docs/DOXYGEN.md) - Generate with Doxygen
+- 🧪 **Test Coverage:** [`docs/TEST-COVERAGE.md`](docs/TEST-COVERAGE.md) - Unit test status
+- 📝 **Documentation Status:** [`docs/DOCUMENTATION-STATUS.md`](docs/DOCUMENTATION-STATUS.md) - XML doc coverage
+- 🎯 **Quality Roadmap:** [`docs/QUALITY-ROADMAP.md`](docs/QUALITY-ROADMAP.md) - 6-week improvement plan
 - 📝 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)
 - 📜 **Code of Conduct:** [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
 - 🤝 **Contributing:** [`CONTRIBUTING.md`](CONTRIBUTING.md)
@@ -549,41 +553,120 @@ Features demonstrated:
 - **MVVM Toolkit Docs:** https://learn.microsoft.com/dotnet/communitytoolkit/mvvm/
 - **WinUI 3 Docs:** https://learn.microsoft.com/windows/apps/winui/
 
-## 🤝 Contributing
+## 🎨 Control Libraries
 
-We welcome contributions! Please read [`CONTRIBUTING.md`](CONTRIBUTING.md) for guidelines.
+MOBAflow provides **platform-specific control libraries** for building consistent, reusable UI components across different platforms.
 
-**Quick Start:**
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+### Overview
 
-## 📜 License
+| Project | Platform | Technology | Purpose |
+|---------|----------|------------|---------|
+| **WinUI.Controls** | Windows Desktop | WinUI 3 XAML | Controls for WinUI app & plugins |
+| **MAUI.Controls** | Android Mobile | .NET MAUI XAML | Controls for MAUI app |
+| **SharedUI** | Platform-agnostic | CommunityToolkit.Mvvm | ViewModels (shared) |
 
-This project is licensed under the **MIT License** - see the [`LICENSE`](LICENSE) file for details.
+### Architecture
 
-### Third-Party Dependencies
+```
+WinUI.Controls/          ← WinUI 3 XAML Controls (Windows)
+    ↓
+MAUI.Controls/           ← MAUI XAML Controls (Android)
+    ↓
+SharedUI/                ← ViewModels (CommunityToolkit.Mvvm)
+    ↓
+Domain/                  ← Business Models
+```
 
-MOBAflow uses several open-source packages. See [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md) for a complete list of dependencies and their licenses.
+### 🪟 WinUI.Controls (Windows Desktop)
 
-## 📞 Contact & Support
+Reusable **WinUI 3 User Controls** for Windows Desktop application and plugins.
 
-- **Repository:** [Azure DevOps](https://dev.azure.com/ahuelsmann/MOBAflow)
-- **Issues:** [Report a Bug](https://dev.azure.com/ahuelsmann/MOBAflow/_workitems)
-- **Maintainer:** Andreas Huelsmann ([@ahuelsmann](https://dev.azure.com/ahuelsmann))
+#### Technology
+- **Framework:** .NET 10 + WinUI 3
+- **Platform:** Windows (10.0.17763.0+)
+- **UI:** Windows App SDK XAML
 
-## 🙏 Acknowledgments
+#### Usage in WinUI App
 
-- **Roco** for the Z21 Digital Command Station and protocol documentation
-- **AnyRail** (Carsten Kühling & Paco Ahlqvist) - MOBAflow supports importing user-exported track plans (XML format) for interoperability
-- **Piko** for the A-Track system geometry specifications
-- **Freesound.org** - Audio library uses sound effects from [Freesound.org](https://freesound.org/) (licensed under Creative Commons 0 and Creative Commons Attribution). See [`Sound/Resources/Sounds/ATTRIBUTION.md`](Sound/Resources/Sounds/ATTRIBUTION.md) for detailed sound attributions.
-- **.NET Foundation** for the amazing .NET ecosystem
-- **CommunityToolkit** contributors for MVVM helpers
-- **GitHub Copilot** for AI-assisted development and code quality improvements
-- **All contributors** who help improve MOBAflow
+```xml
+<!-- MainWindow.xaml -->
+<Page xmlns:controls="using:Moba.WinUI.Controls">
+    <controls:TrainCard 
+        TrainName="ICE 1" 
+        Speed="120" 
+        IsForward="True" />
+</Page>
+```
+
+#### Usage in Plugins
+
+```csharp
+// Plugin ConfigureServices
+services.AddTransient<TrainCard>();
+
+// Plugin Page
+public sealed partial class MyPluginPage : Page
+{
+    public MyPluginPage()
+    {
+        InitializeComponent();
+        // TrainCard kann verwendet werden
+    }
+}
+```
+
+#### Guidelines
+
+- **DependencyProperty** für Bindable Properties verwenden
+- **x:Bind** bevorzugen (compiled bindings)
+- **ThemeResource** für Farben/Styles nutzen
+- Konsistent mit WinUI 3 Design System
+- Controls sollten mit ViewModels aus `SharedUI` funktionieren
+
+### 📱 MAUI.Controls (Android Mobile)
+
+Reusable **.NET MAUI Controls** for Android mobile application.
+
+#### Technology
+- **Framework:** .NET 10 + .NET MAUI
+- **Platform:** Android 26+ (Oreo)
+- **UI:** MAUI XAML
+
+#### Usage in MAUI App
+
+```xml
+<!-- MainPage.xaml -->
+<ContentPage xmlns:controls="clr-namespace:Moba.MAUI.Controls;assembly=MAUI.Controls">
+    <controls:TrainCard 
+        TrainName="ICE 1" 
+        Speed="120" 
+        IsForward="True" />
+</ContentPage>
+```
+
+#### Guidelines
+
+- **BindableProperty** für Bindable Properties verwenden
+- **RelativeSource** für Binding zu Control Properties
+- **AppThemeBinding** für Light/Dark Mode
+- Konsistent mit MAUI Design Patterns
+- Controls sollten mit ViewModels aus `SharedUI` funktionieren
+- Touch-optimiert für Android (mindestens 44x44 dp)
+
+### Platform Differences
+
+| Feature | WinUI.Controls | MAUI.Controls |
+|---------|----------------|---------------|
+| Bindable Properties | `DependencyProperty` | `BindableProperty` |
+| Binding Syntax | `{x:Bind}` | `{Binding}` |
+| Base Class | `UserControl` | `ContentView` |
+| Icons | `FontIcon` | `FontImageSource` |
+| Theming | `ThemeResource` | `AppThemeBinding` |
+
+### Available Controls
+
+- `TrainCard` - Lok-Anzeige mit Geschwindigkeit und Richtung
+- *(weitere Controls werden hier ergänzt)*
 
 ---
 

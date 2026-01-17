@@ -78,3 +78,8 @@ Copilot-Processing.md
 
 # ReSharper user settings (personal preferences)
 *.sln.DotSettings.user
+
+# Doxygen generated documentation
+docs/api/html/
+docs/api/xml/
+docs/api/latex/

@@ -1,164 +1,141 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <!-- .NET 10 with MAUI 10.0 workload -->
-    <TargetFrameworks>net10.0-android</TargetFrameworks>
-    <OutputType>Exe</OutputType>
-    <RootNamespace>Moba.MAUI</RootNamespace>
-    <UseMaui>true</UseMaui>
-    <SingleProject>true</SingleProject>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <!-- Suppress XC0103: BoolToObjectConverter requires attribute but is from external library (CommunityToolkit.Maui) -->
-    <NoWarn>XC0103</NoWarn>
-
-    <!-- Display name -->
-    <ApplicationTitle>MOBAsmart</ApplicationTitle>
-
-    <!-- App Identifier -->
-    <ApplicationId>com.mobaflow.mobasmart</ApplicationId>
-
-    <!-- Versions -->
-    <ApplicationDisplayVersion>1.1</ApplicationDisplayVersion>
-    <ApplicationVersion>5</ApplicationVersion>
-
-    <!-- Android 26+ (Oreo) - required for MediaElement support -->
-    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">26.0</SupportedOSPlatformVersion>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-    <!-- PERFORMANCE: Skip analyzers in Debug builds -->
-    <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
-    <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
-
-    <!-- PERFORMANCE: Skip XML doc generation -->
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
-
-    <!-- PERFORMANCE: Parallel build -->
-    <MaxCpuCount>0</MaxCpuCount>
-
-    <!-- ⚡ FAST DEPLOYMENT: Use shared runtime (faster deploy to physical devices) -->
-    <AndroidUseSharedRuntime>true</AndroidUseSharedRuntime>
-    <AndroidLinkMode>None</AndroidLinkMode>
-    <EmbedAssembliesIntoApk>false</EmbedAssembliesIntoApk>
-    <!-- ⚡ KEY CHANGE: Don't embed -->
-    <RunAOTCompilation>false</RunAOTCompilation>
-    <AndroidEnableProguard>false</AndroidEnableProguard>
-
-    <!-- Build only for target device ABI (50% faster!) -->
-    <RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
-
-    <!-- INCREMENTAL BUILD -->
-    <AndroidUseManagedDesignTimeResourceGenerator>true</AndroidUseManagedDesignTimeResourceGenerator>
-    <AndroidUseIncrementalNativeLibraryBuild>true</AndroidUseIncrementalNativeLibraryBuild>
-    <AndroidUseIncrementalManifestMerge>true</AndroidUseIncrementalManifestMerge>
-
-    <!-- Android Build Performance -->
-    <AndroidUseAapt2>true</AndroidUseAapt2>
-    <AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
-    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
-
-    <!-- Faster Java/DEX compilation -->
-    <AndroidDexTool>d8</AndroidDexTool>
-    <AndroidEnableD8R8>true</AndroidEnableD8R8>
-
-    <!-- Skip resource shrinking in Debug -->
-    <AndroidEnableSGenConcurrent>true</AndroidEnableSGenConcurrent>
-    <AndroidLinkSkip>true</AndroidLinkSkip>
-
-    <!-- Faster XAML compilation -->
-    <XamlCTask>Compile</XamlCTask>
-
-    <!-- Enable Hot Reload -->
-    <UseInterpreter>true</UseInterpreter>
-    <EnablePreviewMsixTooling>true</EnablePreviewMsixTooling>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <!-- RELEASE OPTIMIZATIONS -->
-    <AndroidLinkMode>SdkOnly</AndroidLinkMode>
-    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
-    <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
-    <AndroidPackageFormat>aab</AndroidPackageFormat>
-    <AndroidCreateDebugSymbols>true</AndroidCreateDebugSymbols>
-    <AndroidUseApkSigner>true</AndroidUseApkSigner>
-    <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-  </PropertyGroup>
-
-  <!-- Include Linker descriptor -->
-  <ItemGroup>
-    <TrimmerRootDescriptor Include="Linker.xml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- App Icon - PNG-basiert für bessere Android-Kompatibilität -->
-    <MauiIcon Include="Resources\AppIcon\modern_train_backup.png" Color="#512BD4" />
-
-    <!-- 
+    <PropertyGroup>
+        <!-- .NET 10 with MAUI 10.0 workload -->
+        <TargetFrameworks>net10.0-android</TargetFrameworks>
+        <OutputType>Exe</OutputType>
+        <RootNamespace>Moba.MAUI</RootNamespace>
+        <UseMaui>true</UseMaui>
+        <SingleProject>true</SingleProject>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <!-- Suppress XC0103: BoolToObjectConverter requires attribute but is from external library (CommunityToolkit.Maui) -->
+        <NoWarn>XC0103</NoWarn>
+        <!-- Display name -->
+        <ApplicationTitle>MOBAsmart</ApplicationTitle>
+        <!-- App Identifier -->
+        <ApplicationId>com.mobaflow.mobasmart</ApplicationId>
+        <!-- Versions -->
+        <ApplicationDisplayVersion>1.1</ApplicationDisplayVersion>
+        <ApplicationVersion>5</ApplicationVersion>
+        <!-- Android 26+ (Oreo) - required for MediaElement support -->
+        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">26.0</SupportedOSPlatformVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+        <!-- PERFORMANCE: Skip analyzers in Debug builds -->
+        <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+        <RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
+        <!-- PERFORMANCE: Skip XML doc generation -->
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+        <!-- PERFORMANCE: Parallel build -->
+        <MaxCpuCount>0</MaxCpuCount>
+        <!-- ⚡ FAST DEPLOYMENT: Use shared runtime (faster deploy to physical devices) -->
+        <AndroidUseSharedRuntime>true</AndroidUseSharedRuntime>
+        <AndroidLinkMode>None</AndroidLinkMode>
+        <EmbedAssembliesIntoApk>false</EmbedAssembliesIntoApk>
+        <!-- ⚡ KEY CHANGE: Don't embed -->
+        <RunAOTCompilation>false</RunAOTCompilation>
+        <AndroidEnableProguard>false</AndroidEnableProguard>
+        <!-- Build only for target device ABI (50% faster!) -->
+        <RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
+        <!-- INCREMENTAL BUILD -->
+        <AndroidUseManagedDesignTimeResourceGenerator>true</AndroidUseManagedDesignTimeResourceGenerator>
+        <AndroidUseIncrementalNativeLibraryBuild>true</AndroidUseIncrementalNativeLibraryBuild>
+        <AndroidUseIncrementalManifestMerge>true</AndroidUseIncrementalManifestMerge>
+        <!-- Android Build Performance -->
+        <AndroidUseAapt2>true</AndroidUseAapt2>
+        <AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
+        <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+        <!-- Faster Java/DEX compilation -->
+        <AndroidDexTool>d8</AndroidDexTool>
+        <AndroidEnableD8R8>true</AndroidEnableD8R8>
+        <!-- Skip resource shrinking in Debug -->
+        <AndroidEnableSGenConcurrent>true</AndroidEnableSGenConcurrent>
+        <AndroidLinkSkip>true</AndroidLinkSkip>
+        <!-- Faster XAML compilation -->
+        <XamlCTask>Compile</XamlCTask>
+        <!-- Enable Hot Reload -->
+        <UseInterpreter>true</UseInterpreter>
+        <EnablePreviewMsixTooling>true</EnablePreviewMsixTooling>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <!-- RELEASE OPTIMIZATIONS -->
+        <AndroidLinkMode>SdkOnly</AndroidLinkMode>
+        <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+        <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
+        <AndroidPackageFormat>aab</AndroidPackageFormat>
+        <AndroidCreateDebugSymbols>true</AndroidCreateDebugSymbols>
+        <AndroidUseApkSigner>true</AndroidUseApkSigner>
+        <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    </PropertyGroup>
+    <!-- Include Linker descriptor -->
+    <ItemGroup>
+        <TrimmerRootDescriptor Include="Linker.xml" />
+    </ItemGroup>
+    <ItemGroup>
+        <!-- App Icon - PNG-basiert für bessere Android-Kompatibilität -->
+        <MauiIcon Include="Resources\AppIcon\modern_train_backup.png" Color="#512BD4" />
+        <!-- 
       Splash Screen: Deaktiviert - wir verwenden eine eigene SplashPage
       Das erzeugt einen leeren/minimalen System-Splash mit nur der Hintergrundfarbe
     -->
-
-    <!-- Splash image as MauiImage for use in custom SplashPage -->
-    <MauiImage Include="Resources\Splash\splash_background.png" />
-
-    <!-- Images (includes all SVG icons automatically) -->
-    <MauiImage Include="Resources\Images\*" />
-    <!-- Custom Fonts -->
-    <MauiFont Include="Resources\Fonts\*" />
-    <!-- Raw Assets -->
-    <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- MAUI Core -->
-    <PackageReference Include="Microsoft.Maui.Controls" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
-    <!-- CommunityToolkit.Maui (UI features: Expander, Converters, Behaviors) -->
-    <PackageReference Include="CommunityToolkit.Maui" />
-    <!-- CommunityToolkit.Maui.MediaElement (Video/Audio support) -->
-    <PackageReference Include="CommunityToolkit.Maui.MediaElement" />
-    <!-- UraniumUI Material Design Components -->
-    <PackageReference Include="UraniumUI.Material" />
-    <!-- UraniumUI Material Icons -->
-    <PackageReference Include="UraniumUI.Icons.MaterialIcons" />
-    <!-- AndroidX Startup (required for initialization providers) -->
-    <PackageReference Include="Xamarin.AndroidX.Startup.StartupRuntime" />
-    <!-- Note: CommunityToolkit.Mvvm comes via SharedUI project reference -->
-  </ItemGroup>
-  <ItemGroup>
-    <!-- SharedUI provides ViewModels and CommunityToolkit.Mvvm -->
-    <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
-    <ProjectReference Include="..\Common\Common.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <MauiXaml Update="AppShell.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="App_fixed.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="MainPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="MainPage_Minimal.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="MainPage_New.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Resources\Styles\DarkTheme.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Resources\Styles\FluentStyles.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="Resources\Styles\LightTheme.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="View\SplashPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-  </ItemGroup>
+        <!-- Splash image as MauiImage for use in custom SplashPage -->
+        <MauiImage Include="Resources\Splash\splash_background.png" />
+        <!-- Images (includes all SVG icons automatically) -->
+        <MauiImage Include="Resources\Images\*" />
+        <!-- Custom Fonts -->
+        <MauiFont Include="Resources\Fonts\*" />
+        <!-- Raw Assets -->
+        <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+    </ItemGroup>
+    <ItemGroup>
+        <!-- MAUI Core -->
+        <PackageReference Include="Microsoft.Maui.Controls" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
+        <!-- CommunityToolkit.Maui (UI features: Expander, Converters, Behaviors) -->
+        <PackageReference Include="CommunityToolkit.Maui" />
+        <!-- CommunityToolkit.Maui.MediaElement (Video/Audio support) -->
+        <PackageReference Include="CommunityToolkit.Maui.MediaElement" />
+        <!-- UraniumUI Material Design Components -->
+        <PackageReference Include="UraniumUI.Material" />
+        <!-- UraniumUI Material Icons -->
+        <PackageReference Include="UraniumUI.Icons.MaterialIcons" />
+        <!-- AndroidX Startup (required for initialization providers) -->
+        <PackageReference Include="Xamarin.AndroidX.Startup.StartupRuntime" />
+        <!-- Note: CommunityToolkit.Mvvm comes via SharedUI project reference -->
+    </ItemGroup>
+    <ItemGroup>
+        <!-- SharedUI provides ViewModels and CommunityToolkit.Mvvm -->
+        <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
+        <ProjectReference Include="..\Common\Common.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <MauiXaml Update="AppShell.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
+        <MauiXaml Update="App_fixed.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
+        <MauiXaml Update="MainPage.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
+        <MauiXaml Update="MainPage_Minimal.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
+        <MauiXaml Update="MainPage_New.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
+        <MauiXaml Update="Resources\Styles\DarkTheme.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
+        <MauiXaml Update="Resources\Styles\FluentStyles.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
+        <MauiXaml Update="Resources\Styles\LightTheme.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
+        <MauiXaml Update="View\SplashPage.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </MauiXaml>
+    </ItemGroup>
 </Project>

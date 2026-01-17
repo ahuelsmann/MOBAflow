@@ -1,39 +1,42 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
-    <UseWinUI>true</UseWinUI>
-    <Nullable>enable</Nullable>
-    <RootNamespace>Moba.Plugin.Cmd</RootNamespace>
-    <EnableDynamicLoading>true</EnableDynamicLoading>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.WindowsAppSDK" />
-    <PackageReference Include="CommunityToolkit.Mvvm" />
-  </ItemGroup>
-
-  <!-- Plugin interface references: Private=false and ExcludeAssets=runtime 
-       prevent copying shared assemblies to plugin output (Microsoft Best Practice) -->
-  <ItemGroup>
-    <ProjectReference Include="..\..\Common\Common.csproj">
-      <Private>false</Private>
-      <ExcludeAssets>runtime</ExcludeAssets>
-    </ProjectReference>
-    <ProjectReference Include="..\..\SharedUI\SharedUI.csproj">
-      <Private>false</Private>
-      <ExcludeAssets>runtime</ExcludeAssets>
-    </ProjectReference>
-  </ItemGroup>
-
-  <!-- Copy plugin DLL and dependencies to WinUI Plugins folder after build -->
-  <Target Name="CopyToWinUIPlugins" AfterTargets="Build">
     <PropertyGroup>
-      <PluginOutputDir>$(MSBuildThisFileDirectory)..\..\WinUI\bin\$(Configuration)\Plugins\CmdPlugin</PluginOutputDir>
+        <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
+        <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+        <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <DisableRuntimeIdentifierInference>true</DisableRuntimeIdentifierInference>
+        <UseWinUI>true</UseWinUI>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>Moba.Plugin.Cmd</RootNamespace>
+        <EnableDynamicLoading>true</EnableDynamicLoading>
+        <OutputType>Library</OutputType>
     </PropertyGroup>
-    <MakeDir Directories="$(PluginOutputDir)" />
-    <!-- Copy all output files including deps.json for AssemblyDependencyResolver -->
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginOutputDir)" />
-    <Copy SourceFiles="$(TargetDir)$(TargetName).deps.json" DestinationFolder="$(PluginOutputDir)" Condition="Exists('$(TargetDir)$(TargetName).deps.json')" />
-    <Copy SourceFiles="$(TargetDir)$(TargetName).pdb" DestinationFolder="$(PluginOutputDir)" Condition="Exists('$(TargetDir)$(TargetName).pdb')" />
-  </Target>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.WindowsAppSDK" />
+        <PackageReference Include="CommunityToolkit.Mvvm" />
+    </ItemGroup>
+    <!-- Plugin interface references: Private=false and ExcludeAssets=runtime 
+       prevent copying shared assemblies to plugin output (Microsoft Best Practice) -->
+    <ItemGroup>
+        <ProjectReference Include="..\..\Common\Common.csproj">
+            <Private>false</Private>
+            <ExcludeAssets>runtime</ExcludeAssets>
+        </ProjectReference>
+        <ProjectReference Include="..\..\SharedUI\SharedUI.csproj">
+            <Private>false</Private>
+            <ExcludeAssets>runtime</ExcludeAssets>
+        </ProjectReference>
+    </ItemGroup>
+    <!-- Copy plugin DLL and dependencies to WinUI Plugins folder after build -->
+    <Target Name="CopyToWinUIPlugins" AfterTargets="Build">
+        <PropertyGroup>
+            <PluginOutputDir>$(MSBuildThisFileDirectory)..\..\WinUI\bin\$(Configuration)\Plugins\CmdPlugin</PluginOutputDir>
+        </PropertyGroup>
+        <MakeDir Directories="$(PluginOutputDir)" />
+        <!-- Copy all output files including deps.json for AssemblyDependencyResolver -->
+        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginOutputDir)" />
+        <Copy SourceFiles="$(TargetDir)$(TargetName).deps.json" DestinationFolder="$(PluginOutputDir)" Condition="Exists('$(TargetDir)$(TargetName).deps.json')" />
+        <Copy SourceFiles="$(TargetDir)$(TargetName).pdb" DestinationFolder="$(PluginOutputDir)" Condition="Exists('$(TargetDir)$(TargetName).pdb')" />
+    </Target>
 </Project>
