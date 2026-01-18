@@ -1,28 +1,195 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
+using Common.Configuration;
+
+using Controls;
+
 using Domain;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
+
+using Service;
 
 using SharedUI.Interface;
 using SharedUI.ViewModel;
 
+using Windows.UI;
+
+using AppTheme = Service.ApplicationTheme;
+
+/// <summary>
+/// TrainControlPage - Theme-aware train control interface.
+/// Supports multiple manufacturer-inspired color themes with system accent as default.
+/// Dynamically applies theme colors to all UI elements.
+/// </summary>
 public sealed partial class TrainControlPage
 {
     private readonly ILocomotiveService _locomotiveService;
+    private readonly IThemeProvider _themeProvider;
+    private readonly AppSettings _settings;
+    private readonly ISettingsService? _settingsService;
     private List<LocomotiveSeries> _allLocomotives = [];
+
+    // UI element references for theme application
+    private SpeedometerControl? _speedometer;
+    private TextBlock? _titleText;
+    private Border? _headerBorder;
+    private Grid? _headerGrid;
+    private Border? _settingsPanel;
+    private Border? _speedometerPanel;
+    private Border? _functionsPanel;
 
     public TrainControlViewModel ViewModel { get; }
 
-    public TrainControlPage(TrainControlViewModel viewModel, ILocomotiveService locomotiveService)
+    public TrainControlPage(
+        TrainControlViewModel viewModel,
+        ILocomotiveService locomotiveService,
+        IThemeProvider themeProvider,
+        AppSettings settings,
+        ISettingsService? settingsService = null)
     {
         ViewModel = viewModel;
         _locomotiveService = locomotiveService;
+        _themeProvider = themeProvider;
+        _settings = settings;
+        _settingsService = settingsService;
+
         InitializeComponent();
+
+        // Subscribe to theme changes for dynamic updates
+        _themeProvider.ThemeChanged += OnThemeProviderChanged;
+        _themeProvider.DarkModeChanged += OnDarkModeChanged;
+
         Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+    }
+
+    private void OnThemeProviderChanged(object? sender, ThemeChangedEventArgs e)
+    {
+        DispatcherQueue.TryEnqueue(ApplyThemeColors);
+    }
+
+    private void OnDarkModeChanged(object? sender, EventArgs e)
+    {
+        DispatcherQueue.TryEnqueue(ApplyThemeColors);
+    }
+
+    private void ApplyThemeColors()
+    {
+        var palette = ThemeColors.GetPalette(_themeProvider.CurrentTheme, _themeProvider.IsDarkMode);
+
+        // Set page RequestedTheme based on skin (controls Light/Dark for standard WinUI controls)
+        RequestedTheme = palette.IsDarkTheme
+            ? ElementTheme.Dark
+            : ElementTheme.Light;
+
+        // Check if this is the "Original" theme
+        var isOriginalTheme = _themeProvider.CurrentTheme == Service.ApplicationTheme.Original;
+
+        // Header border background - use theme-appropriate color
+        if (_headerBorder != null)
+        {
+            if (isOriginalTheme)
+            {
+                // Original theme: Use Acrylic background
+                _headerBorder.ClearValue(Border.BackgroundProperty);
+            }
+            else
+            {
+                // Manufacturer themes: Use HeaderBackground color with opacity
+                _headerBorder.Background = palette.HeaderBackgroundBrush;
+            }
+        }
+
+        // Header grid background - use theme-appropriate color for solid colored header
+        if (_headerGrid != null)
+        {
+            if (isOriginalTheme)
+            {
+                // Original theme: Use default/transparent background
+                _headerGrid.ClearValue(Grid.BackgroundProperty);
+            }
+            else
+            {
+                // Manufacturer themes: Use HeaderBackground color (fallback if border not available)
+                _headerGrid.Background = palette.HeaderBackgroundBrush;
+            }
+        }
+
+        // Title text color - use theme-appropriate color
+        if (_titleText != null)
+        {
+            if (isOriginalTheme)
+            {
+                // Original theme: Use standard text color
+                _titleText.ClearValue(TextBlock.ForegroundProperty);
+            }
+            else
+            {
+                // Manufacturer themes: Use HeaderForeground color
+                _titleText.Foreground = palette.HeaderForegroundBrush;
+            }
+        }
+
+        // Speedometer needle - use system accent color for Original theme
+        if (_speedometer != null)
+        {
+            if (isOriginalTheme)
+            {
+                // Use Windows system accent color (same as TrainControlPage)
+                _speedometer.AccentColor = GetSystemAccentColor();
+            }
+            else
+            {
+                _speedometer.AccentColor = palette.Accent;
+            }
+        }
+
+        // Panel backgrounds and borders - only apply if not transparent (Alpha > 0)
+        var hasCustomPanelColors = palette.PanelBackground.A > 0;
+
+        // Get default WinUI card brushes for Original theme
+        var defaultCardBackground = hasCustomPanelColors
+            ? palette.PanelBackgroundBrush
+            : (Brush)Application.Current.Resources["CardBackgroundFillColorDefaultBrush"];
+        var defaultCardBorder = hasCustomPanelColors
+            ? palette.PanelBorderBrush
+            : (Brush)Application.Current.Resources["CardStrokeColorDefaultBrush"];
+
+        if (_settingsPanel != null)
+        {
+            _settingsPanel.Background = defaultCardBackground;
+            _settingsPanel.BorderBrush = defaultCardBorder;
+        }
+
+        if (_speedometerPanel != null)
+        {
+            _speedometerPanel.Background = defaultCardBackground;
+            _speedometerPanel.BorderBrush = defaultCardBorder;
+        }
+
+        if (_functionsPanel != null)
+        {
+            _functionsPanel.Background = defaultCardBackground;
+            _functionsPanel.BorderBrush = defaultCardBorder;
+        }
+
+        // Update page background (only if not transparent)
+        if (Content is Grid rootGrid)
+        {
+            if (hasCustomPanelColors)
+            {
+                rootGrid.Background = palette.PanelBackgroundBrush;
+            }
+            else
+            {
+                rootGrid.ClearValue(Grid.BackgroundProperty);
+            }
+        }
     }
 
     private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -41,7 +208,25 @@ public sealed partial class TrainControlPage
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
+        // Find and store references to themed elements
+        _speedometer = FindName("Speedometer") as SpeedometerControl;
+        _titleText = FindName("TitleText") as TextBlock;
+        _headerBorder = FindName("HeaderBorder") as Border;
+        _headerGrid = FindName("HeaderGrid") as Grid;
+        _settingsPanel = FindName("SettingsPanel") as Border;
+        _speedometerPanel = FindName("SpeedometerPanel") as Border;
+        _functionsPanel = FindName("FunctionsPanel") as Border;
+
+        // Apply current theme colors
+        ApplyThemeColors();
+
         _allLocomotives = await _locomotiveService.GetAllSeriesAsync().ConfigureAwait(false);
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        _themeProvider.ThemeChanged -= OnThemeProviderChanged;
+        _themeProvider.DarkModeChanged -= OnDarkModeChanged;
     }
 
     private void LocoSeriesBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
@@ -49,63 +234,105 @@ public sealed partial class TrainControlPage
         if (args.Reason != AutoSuggestionBoxTextChangeReason.UserInput)
             return;
 
-        var query = sender.Text?.Trim() ?? string.Empty;
-        if (string.IsNullOrEmpty(query))
-        {
-            sender.ItemsSource = null;
-            ViewModel.SelectedLocoSeries = string.Empty;
-            ViewModel.SelectedVmax = 0;
-            return;
-        }
-
-        var suggestions = _locomotiveService.FilterSeries(query)
-            .Take(10)
-            .Select(s => new LocomotiveSeriesDisplay(s.Name, s.Vmax))
+        var query = sender.Text.ToLowerInvariant();
+        var filtered = _allLocomotives
+            .Where(s => s.Name.ToLowerInvariant().Contains(query))
+            .Take(5)
+            .Select(s => s.Name)
             .ToList();
 
-        sender.ItemsSource = suggestions;
+        sender.ItemsSource = filtered;
     }
 
     private void LocoSeriesBox_SuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
     {
-        if (args.SelectedItem is LocomotiveSeriesDisplay series)
+        var selected = _allLocomotives.FirstOrDefault(s => s.Name == (string)args.SelectedItem);
+        if (selected != null)
         {
-            sender.Text = series.Name;
-            ViewModel.SelectedLocoSeries = series.Name;
-            ViewModel.SelectedVmax = series.Vmax;
+            ViewModel.SelectedVmax = selected.Vmax;
         }
     }
 
     private void LocoSeriesBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
     {
-        if (args.ChosenSuggestion is LocomotiveSeriesDisplay series)
+        var selected = _allLocomotives.FirstOrDefault(s => s.Name == args.QueryText);
+        if (selected != null)
         {
-            ViewModel.SelectedLocoSeries = series.Name;
-            ViewModel.SelectedVmax = series.Vmax;
-        }
-        else
-        {
-            // Try to find exact match
-            var match = _locomotiveService.FindByName(args.QueryText ?? string.Empty);
-
-            if (match != null)
-            {
-                ViewModel.SelectedLocoSeries = match.Name;
-                ViewModel.SelectedVmax = match.Vmax;
-            }
-            else
-            {
-                ViewModel.SelectedLocoSeries = args.QueryText ?? string.Empty;
-                ViewModel.SelectedVmax = 0;
-            }
+            ViewModel.SelectedVmax = selected.Vmax;
         }
     }
-}
 
-/// <summary>
-/// Display wrapper for AutoSuggestBox items.
-/// </summary>
-internal record LocomotiveSeriesDisplay(string Name, int Vmax)
-{
-    public override string ToString() => $"{Name} ({Vmax} km/h)";
+    // Skin selection handlers for Flyout buttons
+    private async void OnSkinClassicClicked(object sender, RoutedEventArgs e)
+    {
+        _themeProvider.SetTheme(AppTheme.Classic);
+        if (_settingsService != null)
+        {
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+        }
+    }
+
+    private async void OnSkinModernClicked(object sender, RoutedEventArgs e)
+    {
+        _themeProvider.SetTheme(AppTheme.Modern);
+        if (_settingsService != null)
+        {
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+        }
+    }
+
+    private async void OnSkinDarkClicked(object sender, RoutedEventArgs e)
+    {
+        _themeProvider.SetTheme(AppTheme.Dark);
+        if (_settingsService != null)
+        {
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+        }
+    }
+
+    private async void OnSkinEsuClicked(object sender, RoutedEventArgs e)
+    {
+        _themeProvider.SetTheme(AppTheme.EsuCabControl);
+        if (_settingsService != null)
+        {
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+        }
+    }
+
+    private async void OnSkinRocoClicked(object sender, RoutedEventArgs e)
+    {
+        _themeProvider.SetTheme(AppTheme.RocoZ21);
+        if (_settingsService != null)
+        {
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+        }
+    }
+
+    private async void OnSkinMaerklinClicked(object sender, RoutedEventArgs e)
+    {
+        _themeProvider.SetTheme(AppTheme.MaerklinCS);
+        if (_settingsService != null)
+        {
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+        }
+    }
+
+    private async void OnSkinOriginalClicked(object sender, RoutedEventArgs e)
+    {
+        _themeProvider.SetTheme(AppTheme.Original);
+        if (_settingsService != null)
+        {
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Gets the Windows system accent color from UISettings.
+    /// This matches the behavior of {ThemeResource AccentFillColorDefaultBrush}.
+    /// </summary>
+    private static Color GetSystemAccentColor()
+    {
+        var uiSettings = new Windows.UI.ViewManagement.UISettings();
+        return uiSettings.GetColorValue(Windows.UI.ViewManagement.UIColorType.Accent);
+    }
 }

@@ -5,6 +5,7 @@
     xmlns:controls="using:Moba.WinUI.Controls"
     xmlns:converter="using:Moba.WinUI.Converter"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     DataContext="{x:Bind ViewModel}"
     mc:Ignorable="d">
@@ -15,49 +16,170 @@
         <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     </Page.Resources>
 
-    <Grid Padding="32,24">
+    <Grid Padding="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!--  Page Header  -->
-        <Grid Grid.Row="0" Margin="0,0,0,24">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock
-                Grid.Column="0"
-                VerticalAlignment="Center"
-                FontSize="28"
-                FontWeight="SemiBold"
-                Text="Train Control" />
+        <!--  Page Header - Fluent Design System with elevated background  -->
+        <Border
+            x:Name="HeaderBorder"
+            Grid.Row="0"
+            Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+            BorderThickness="0,0,0,1">
+            <Grid
+                x:Name="HeaderGrid"
+                Padding="32,20,32,20"
+                ColumnSpacing="24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-            <Button
-                Grid.Column="2"
-                Width="275"
-                Height="48"
-                Command="{x:Bind ViewModel.EmergencyStopCommand}"
-                Style="{StaticResource DangerButtonStyle}">
-                <StackPanel Orientation="Horizontal" Spacing="12">
-                    <FontIcon
-                        FontSize="20"
-                        Foreground="White"
-                        Glyph="&#xE711;" />
+                <StackPanel
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    Spacing="4">
                     <TextBlock
-                        VerticalAlignment="Center"
-                        FontSize="16"
-                        FontWeight="Bold"
-                        Foreground="White"
-                        Text="EMERGENCY STOP" />
+                        x:Name="TitleText"
+                        FontSize="32"
+                        FontWeight="SemiBold"
+                        Text="Train Control" />
                 </StackPanel>
-            </Button>
-        </Grid>
 
-        <!--  Main Content with Responsive Layout  -->
-        <Grid x:Name="MainContentGrid" Grid.Row="1">
+                <!--  Skin Selector Button with Flyout  -->
+                <Button
+                    x:Name="SkinSelectorButton"
+                    Grid.Column="2"
+                    VerticalAlignment="Center"
+                    ToolTipService.ToolTip="Select Skin">
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="16" Glyph="&#xE790;" />
+                            <TextBlock Text="Skin" />
+                        </StackPanel>
+                    </Button.Content>
+                    <Button.Flyout>
+                        <Flyout Placement="Bottom">
+                            <StackPanel Width="200" Spacing="8">
+                                <TextBlock
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="SELECT SKIN" />
+                                <Button HorizontalAlignment="Stretch" Click="OnSkinOriginalClicked">
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <Border
+                                            Width="20"
+                                            Height="20"
+                                            Background="{ThemeResource SystemAccentColor}"
+                                            CornerRadius="4" />
+                                        <TextBlock VerticalAlignment="Center" Text="System" />
+                                    </StackPanel>
+                                </Button>
+                                <Button HorizontalAlignment="Stretch" Click="OnSkinModernClicked">
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <Border
+                                            Width="20"
+                                            Height="20"
+                                            Background="#0078D0"
+                                            CornerRadius="4" />
+                                        <TextBlock VerticalAlignment="Center" Text="Blue" />
+                                    </StackPanel>
+                                </Button>
+                                <Button HorizontalAlignment="Stretch" Click="OnSkinClassicClicked">
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <Border
+                                            Width="20"
+                                            Height="20"
+                                            Background="#2ECC71"
+                                            CornerRadius="4" />
+                                        <TextBlock VerticalAlignment="Center" Text="Green" />
+                                    </StackPanel>
+                                </Button>
+                                <Button HorizontalAlignment="Stretch" Click="OnSkinDarkClicked">
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <Border
+                                            Width="20"
+                                            Height="20"
+                                            Background="#6A5ACD"
+                                            CornerRadius="4" />
+                                        <TextBlock VerticalAlignment="Center" Text="Violet" />
+                                    </StackPanel>
+                                </Button>
+                                <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                                <TextBlock
+                                    FontSize="10"
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    Text="COLOR SKINS" />
+                                <Button HorizontalAlignment="Stretch" Click="OnSkinEsuClicked">
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <Border
+                                            Width="20"
+                                            Height="20"
+                                            Background="#FF8C00"
+                                            CornerRadius="4" />
+                                        <TextBlock VerticalAlignment="Center" Text="Orange" />
+                                    </StackPanel>
+                                </Button>
+                                <Button HorizontalAlignment="Stretch" Click="OnSkinRocoClicked">
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <Border
+                                            Width="20"
+                                            Height="20"
+                                            Background="#FF6600"
+                                            CornerRadius="4" />
+                                        <TextBlock VerticalAlignment="Center" Text="Dark Orange" />
+                                    </StackPanel>
+                                </Button>
+                                <Button HorizontalAlignment="Stretch" Click="OnSkinMaerklinClicked">
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <Border
+                                            Width="20"
+                                            Height="20"
+                                            Background="#CC0000"
+                                            CornerRadius="4" />
+                                        <TextBlock VerticalAlignment="Center" Text="Red" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+
+                <Button
+                    Grid.Column="3"
+                    Padding="16,8"
+                    VerticalAlignment="Center"
+                    Command="{x:Bind ViewModel.EmergencyStopCommand}"
+                    Style="{StaticResource DangerButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <FontIcon
+                            FontSize="18"
+                            Foreground="White"
+                            Glyph="&#xE711;" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="14"
+                            FontWeight="Bold"
+                            Foreground="White"
+                            Text="EMERGENCY STOP" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!--  Main Content with Responsive Layout - Fluent Design  -->
+        <Grid
+            x:Name="MainContentGrid"
+            Grid.Row="1"
+            Padding="32,24,32,32"
+            ColumnSpacing="16"
+            RowSpacing="16">
             <!--  COLUMN DEFINITIONS: Will be modified by VisualStateManager  -->
             <Grid.ColumnDefinitions>
                 <!--  Col 0: Settings Panel (260px on Wide, 250px on Medium, hidden on Compact)  -->
@@ -72,13 +194,12 @@
             <Border
                 x:Name="SettingsPanel"
                 Grid.Column="0"
-                Margin="0,0,8,0"
-                Padding="12,12,4,12"
+                Padding="16"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="8">
-                <ScrollViewer Padding="0,0,12,0" VerticalScrollBarVisibility="Auto">
+                <ScrollViewer Padding="0,0,8,0" VerticalScrollBarVisibility="Auto">
                     <StackPanel Spacing="20">
                         <!--  Header  -->
                         <StackPanel Spacing="2">
@@ -302,6 +423,7 @@
 
             <!--  CENTER: Speedometer (Grid.Column="1") - Always visible  -->
             <Border
+                x:Name="SpeedometerPanel"
                 Grid.Column="1"
                 Margin="0"
                 Padding="16"
@@ -317,6 +439,7 @@
 
                     <!--  Speedometer  -->
                     <controls:SpeedometerControl
+                        x:Name="Speedometer"
                         Grid.Row="0"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
@@ -442,8 +565,7 @@
             <Border
                 x:Name="FunctionsPanel"
                 Grid.Column="2"
-                Margin="8,0,0,0"
-                Padding="12"
+                Padding="16"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"

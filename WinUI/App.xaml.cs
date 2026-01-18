@@ -288,11 +288,6 @@ public partial class App
         navigationRegistry.Register("traincontrol", "Train Control", "\uEC49", typeof(TrainControlPage), "Shell",
             NavigationCategory.TrainControl, 10, "IsTrainControlPageAvailable", "TrainControlPageLabel", null, true);
 
-        // TrainControl: Train Control 2 (Theme-enabled)
-        services.AddTransient<TrainControlPage2>();
-        navigationRegistry.Register("traincontrol2", "Train Control 2", "\uE790", typeof(TrainControlPage2), "Shell",
-            NavigationCategory.TrainControl, 20, "IsTrainControlPageAvailable", null, null, false);
-
         // Journey: Journeys (bold)
         services.AddTransient<JourneysPage>();
         navigationRegistry.Register("journeys", "Journeys", "\uE7C1", typeof(JourneysPage), "Shell",
@@ -317,19 +312,14 @@ public partial class App
             NavigationCategory.Solution, 30, "IsTrainsPageAvailable", "TrainsPageLabel");
 
         // TrackManagement: MOBAtps, MOBAesb
-        services.AddTransient<TrackPlanEditorPage>();
-        navigationRegistry.Register("trackplaneditor", "MOBAtps", null, typeof(TrackPlanEditorPage), "Shell",
+        services.AddTransient<TrackPlanPage>();
+        navigationRegistry.Register("trackplaneditor", "MOBAtps", null, typeof(TrackPlanPage), "Shell",
             NavigationCategory.TrackManagement, 10, "IsTrackPlanEditorPageAvailable", "TrackPlanEditorPageLabel",
             "M2,3 L4,3 L14,13 L12,13 Z M12,3 L14,3 L4,13 L2,13 Z");
 
         services.AddSingleton<SignalBoxPage>();
         navigationRegistry.Register("signalbox", "MOBAesb", null, typeof(SignalBoxPage), "Shell",
             NavigationCategory.TrackManagement, 20, null, null,
-            "M7,2 A2,2 0 1,1 11,2 A2,2 0 1,1 7,2 M3,10 A2,2 0 1,1 7,10 A2,2 0 1,1 3,10 M11,10 A2,2 0 1,1 15,10 A2,2 0 1,1 11,10");
-
-        services.AddSingleton<SignalBoxPage2>();
-        navigationRegistry.Register("signalbox2", "MOBAesb 2", null, typeof(SignalBoxPage2), "Shell",
-            NavigationCategory.TrackManagement, 25, null, null,
             "M7,2 A2,2 0 1,1 11,2 A2,2 0 1,1 7,2 M3,10 A2,2 0 1,1 7,10 A2,2 0 1,1 3,10 M11,10 A2,2 0 1,1 15,10 A2,2 0 1,1 11,10");
 
         // Monitoring: Monitor
@@ -350,10 +340,9 @@ public partial class App
         navigationRegistry.Register("settings", "Settings", "\uE115", typeof(SettingsPage), "Shell",
             NavigationCategory.Help, 30, "IsSettingsPageAvailable", "SettingsPageLabel");
 
-        // Theme Provider and Selector
+        // Theme Provider
         services.AddSingleton<IThemeProvider, ThemeProvider>();
-        services.AddTransient<ThemeSelectorControl>();
-
+        // NOTE: ThemeSelectorControl wird dynamisch in SettingsPage erstellt
 
 
         // MainWindow (Singleton = one instance for app lifetime)

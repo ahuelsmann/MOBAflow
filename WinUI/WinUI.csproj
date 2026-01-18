@@ -35,6 +35,7 @@
         <PackageReference Include="Serilog.Sinks.Debug" />
         <PackageReference Include="Serilog.Sinks.File" />
     </ItemGroup>
+
     <!-- Project References -->
     <ItemGroup>
         <ProjectReference Include="..\Common\Common.csproj" />
@@ -43,11 +44,13 @@
         <ProjectReference Include="..\TrackPlan.Editor\TrackPlan.Editor.csproj" />
         <ProjectReference Include="..\TrackLibrary.PikoA\TrackLibrary.PikoA.csproj" />
     </ItemGroup>
+
     <!-- Assets -->
     <ItemGroup>
         <Content Include="Assets\*.png" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="Assets\*.ico" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
+
     <!-- Data Files -->
     <ItemGroup>
         <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />

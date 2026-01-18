@@ -99,20 +99,39 @@ dotnet test
 
 ## [ACTIVE] Instruction Files
 
+### Workflow & Prozess
+- [implementation-workflow.instructions.md](./implementation-workflow.instructions.md) - **PFLICHT:** 5-Schritte-Workflow (Analyse → Best Practices → Fluent Design → Plan → Code)
+
 ### Architecture & Patterns
 - [architecture.instructions.md](./architecture.instructions.md) - Layers, data flow, interfaces
 - [mvvm-best-practices.instructions.md](./mvvm-best-practices.instructions.md) - MVVM with CommunityToolkit
 - [fluent-design.instructions.md](./fluent-design.instructions.md) - Fluent Design System
 - [self-explanatory-code-commenting.instructions.md](./self-explanatory-code-commenting.instructions.md) - Code commenting
 
-### TODOs & Session Knowledge
-- [.copilot-todos.md](./.copilot-todos.md) - Aktive TODOs und Entscheidungen
+### Terminal & Tools
+- [terminal.instructions.md](./terminal.instructions.md) - **WICHTIG:** PowerShell-Regeln, erlaubte/verbotene Befehle
 
-### Terminal
-- [terminal.instructions.md](./terminal.instructions.md) - PowerShell Standards
+### TODOs & Session Knowledge
+- [todos.instructions.md](./todos.instructions.md) - Aktive TODOs und Entscheidungen
 
 ### Project Overview
 - [README.md](../../README.md) - Project documentation
+
+---
+
+## Terminal-Regeln (Kurzfassung)
+
+**ERLAUBT:**
+- `dotnet build`, `dotnet test`
+- `git status`, `git diff`
+- `Select-String` für Suchen
+
+**VERBOTEN:**
+- Dateien erstellen/ändern via Terminal
+- XAML via Terminal schreiben
+- Komplexe Datei-Operationen
+
+→ Siehe [terminal.instructions.md](./terminal.instructions.md) für Details
 
 ---
 

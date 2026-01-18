@@ -1,5 +1,21 @@
 # Terminal (PowerShell) – Hard Rules
 
+⚠️ **COPILOT LIMITATION WARNING:**
+The terminal execution through Copilot tools currently has significant reliability issues when creating or modifying files, especially XAML files. The tool frequently produces encoding errors, incomplete writes, or syntax failures that require manual recovery.
+
+**DO NOT use terminal for:**
+- Creating XAML files (use create_file via Git + manual verification)
+- Modifying project files or creating infrastructure
+- Complex file operations
+- Anything that can be done with standard file tools instead
+
+**DO use terminal for:**
+- Checking Git status and running simple Git commands
+- Running `dotnet build` or `dotnet test`
+- Verifying tool installations
+
+---
+
 - Avoid `... | Select-Object -Last N` with long-running native commands (buffers entire output → appears to hang).
 - Prefer:
   - live + tail: `... | Tee-Object file; Get-Content file -Tail N`
