@@ -289,4 +289,86 @@ public static class ThemeResourceBuilder
 
             return dict;
         }
+
+        /// <summary>
+        /// Creates the Original theme ResourceDictionary (Light and Dark variants).
+        /// This is the default MOBAflow theme, extracted from original TrainControlPage and SignalBoxPage.
+        /// Used as a skin option in Page2 variants for backward compatibility.
+        /// </summary>
+        public static ResourceDictionary BuildOriginalTheme()
+        {
+            var dict = new ResourceDictionary();
+
+            // Primary Accent Colors - Subtle Blue (from original MOBAflow)
+            dict["ThemeAccentColor"] = Color.FromArgb(255, 51, 102, 153); // #336699
+            dict["ThemeAccentDarkColor"] = Color.FromArgb(255, 32, 64, 102); // #204066
+            dict["ThemeAccentLightColor"] = Color.FromArgb(255, 102, 153, 204); // #6699CC
+
+            // Control Backgrounds - Light variant (original default)
+            dict["ThemeControlBackgroundColor"] = Color.FromArgb(255, 248, 248, 248); // #F8F8F8
+            dict["ThemeControlBackgroundHoverColor"] = Color.FromArgb(255, 240, 240, 240); // #F0F0F0
+            dict["ThemeControlBackgroundPressedColor"] = Color.FromArgb(255, 224, 224, 224); // #E0E0E0
+
+            // Dark variant colors
+            dict["ThemeControlBackgroundColorDark"] = Color.FromArgb(255, 50, 50, 50); // #323232
+            dict["ThemeControlBackgroundHoverColorDark"] = Color.FromArgb(255, 68, 68, 68); // #444444
+            dict["ThemeControlBackgroundPressedColorDark"] = Color.FromArgb(255, 85, 85, 85); // #555555
+
+            // Text Colors
+            dict["ThemeTextPrimaryColor"] = Color.FromArgb(255, 0, 0, 0); // Black
+            dict["ThemeTextSecondaryColor"] = Color.FromArgb(255, 102, 102, 102); // #666666
+            dict["ThemeTextPrimaryColorDark"] = Color.FromArgb(255, 255, 255, 255); // White
+            dict["ThemeTextSecondaryColorDark"] = Color.FromArgb(255, 170, 170, 170); // #AAAAAA
+
+            // Brushes
+            dict["ThemeAccentBrush"] = new SolidColorBrush((Color)dict["ThemeAccentColor"]);
+            dict["ThemeAccentDarkBrush"] = new SolidColorBrush((Color)dict["ThemeAccentDarkColor"]);
+            dict["ThemeAccentLightBrush"] = new SolidColorBrush((Color)dict["ThemeAccentLightColor"]);
+
+            // TrainControlPage Original Colors (Light)
+            dict["TrainControlHeaderColor"] = Color.FromArgb(255, 240, 240, 240);
+            dict["TrainControlHeaderTextColor"] = Color.FromArgb(255, 0, 0, 0);
+            dict["TrainControlPanelBackgroundColor"] = Color.FromArgb(255, 250, 250, 250);
+            dict["TachometerBackgroundColor"] = Color.FromArgb(255, 255, 255, 255);
+            dict["TachometerNeedleColor"] = Color.FromArgb(255, 51, 102, 153);
+            dict["TachometerScaleColor"] = Color.FromArgb(255, 64, 64, 64);
+            dict["SpeedDisplayBackgroundColor"] = Color.FromArgb(255, 40, 40, 40);
+            dict["SpeedDisplayTextColor"] = Color.FromArgb(255, 200, 200, 200);
+            dict["FunctionButtonBackgroundColor"] = Color.FromArgb(255, 224, 224, 224);
+            dict["FunctionButtonActiveColor"] = Color.FromArgb(255, 102, 153, 204);
+            dict["FunctionButtonBorderColor"] = Color.FromArgb(255, 170, 170, 170);
+
+            // Dark variant for TrainControlPage
+            dict["TrainControlHeaderColorDark"] = Color.FromArgb(255, 50, 50, 50);
+            dict["TrainControlHeaderTextColorDark"] = Color.FromArgb(255, 255, 255, 255);
+            dict["TrainControlPanelBackgroundColorDark"] = Color.FromArgb(255, 40, 40, 40);
+            dict["TachometerBackgroundColorDark"] = Color.FromArgb(255, 20, 20, 20);
+            dict["TachometerNeedleColorDark"] = Color.FromArgb(255, 102, 153, 204);
+
+            // SignalBoxPage Original Colors (Light)
+            dict["ToolboxHeaderColor"] = Color.FromArgb(255, 240, 240, 240);
+            dict["ToolboxHeaderTextColor"] = Color.FromArgb(255, 0, 0, 0);
+            dict["ToolboxBackgroundColor"] = Color.FromArgb(255, 250, 250, 250);
+            dict["ToolboxItemHoverColor"] = Color.FromArgb(255, 235, 235, 235);
+            dict["ToolboxItemActiveColor"] = Color.FromArgb(255, 102, 153, 204);
+            dict["PropertiesPanelBackgroundColor"] = Color.FromArgb(255, 248, 248, 248);
+            dict["ElementSelectionColor"] = Color.FromArgb(255, 51, 102, 153);
+            dict["CanvasBackgroundColor"] = Color.FromArgb(255, 255, 255, 255);
+            dict["GridLineColor"] = Color.FromArgb(255, 220, 220, 220);
+
+            // Dark variant for SignalBoxPage
+            dict["ToolboxHeaderColorDark"] = Color.FromArgb(255, 50, 50, 50);
+            dict["ToolboxHeaderTextColorDark"] = Color.FromArgb(255, 255, 255, 255);
+            dict["ToolboxBackgroundColorDark"] = Color.FromArgb(255, 40, 40, 40);
+            dict["ToolboxItemHoverColorDark"] = Color.FromArgb(255, 60, 60, 60);
+            dict["CanvasBackgroundColorDark"] = Color.FromArgb(255, 20, 20, 20);
+            dict["GridLineColorDark"] = Color.FromArgb(255, 50, 50, 50);
+
+            // Track Colors (Original MOBAflow)
+            dict["TrackFreeColor"] = Color.FromArgb(255, 150, 150, 150);
+            dict["TrackOccupiedColor"] = Color.FromArgb(255, 204, 0, 0);
+            dict["TrackRouteSetColor"] = Color.FromArgb(255, 0, 153, 0);
+
+            return dict;
+        }
     }

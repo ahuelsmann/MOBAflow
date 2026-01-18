@@ -7,14 +7,19 @@ using Controls;
 
 using Domain;
 
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+
+using Model;
 
 using Service;
 
 using SharedUI.Interface;
 using SharedUI.ViewModel;
+
+using AppTheme = Service.ApplicationTheme;
 
 /// <summary>
 /// TrainControlPage2 - Theme-aware variant of TrainControlPage.
@@ -54,35 +59,13 @@ public sealed partial class TrainControlPage2
 
         InitializeComponent();
 
-        // Add Skin Selector to header
-        AddSkinSelector();
-
         // Subscribe to theme changes for dynamic updates
         _themeProvider.ThemeChanged += OnThemeProviderChanged;
+        _themeProvider.DarkModeChanged += OnDarkModeChanged;
 
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
-    }
-
-    private void AddSkinSelector()
-    {
-        var skinPanel = SkinSelectorComboBox.CreateWithLabel(_themeProvider, _settings, _settingsService, out var skinComboBox);
-        skinComboBox.SkinChanged += OnSkinChanged;
-
-        // Find HeaderGrid and add to right side
-        if (FindName("HeaderGrid") is Grid headerGrid)
-        {
-            Grid.SetColumn(skinPanel, 1);
-            skinPanel.HorizontalAlignment = HorizontalAlignment.Right;
-            skinPanel.Margin = new Thickness(0, 0, 16, 0);
-            headerGrid.Children.Add(skinPanel);
-        }
-    }
-
-    private void OnSkinChanged(object? sender, Service.ApplicationTheme newTheme)
-    {
-        ApplyThemeColors();
     }
 
     private void OnThemeProviderChanged(object? sender, ThemeChangedEventArgs e)
@@ -90,9 +73,14 @@ public sealed partial class TrainControlPage2
         DispatcherQueue.TryEnqueue(ApplyThemeColors);
     }
 
+    private void OnDarkModeChanged(object? sender, EventArgs e)
+    {
+        DispatcherQueue.TryEnqueue(ApplyThemeColors);
+    }
+
     private void ApplyThemeColors()
     {
-        var palette = ThemeColors.GetPalette(_themeProvider.CurrentTheme);
+        var palette = ThemeColors.GetPalette(_themeProvider.CurrentTheme, _themeProvider.IsDarkMode);
 
         // Set page RequestedTheme based on skin (controls Light/Dark for standard WinUI controls)
         RequestedTheme = palette.IsDarkTheme
@@ -105,41 +93,98 @@ public sealed partial class TrainControlPage2
             _speedometer.AccentColor = palette.Accent;
         }
 
+        // Check if this is the "Original" theme (transparent header = no colored strip)
+        var isOriginalTheme = _themeProvider.CurrentTheme == Service.ApplicationTheme.Original;
+
         // Header background (themed strip at top)
         if (_headerBorder != null)
         {
-            _headerBorder.Background = palette.HeaderBackgroundBrush;
+            if (isOriginalTheme)
+            {
+                // Original theme: No colored header strip - make background transparent
+                // but keep the header content (title, skin buttons, emergency stop) visible
+                _headerBorder.Background = new SolidColorBrush(Colors.Transparent);
+            }
+            else
+            {
+                // Other themes: Show colored header strip
+                _headerBorder.Background = palette.HeaderBackgroundBrush;
+            }
         }
 
-        // Title text color
+        // Title text color - use theme-appropriate color for Original theme
         if (_titleText != null)
         {
-            _titleText.Foreground = palette.HeaderForegroundBrush;
+            if (isOriginalTheme)
+            {
+                // Original theme: Use standard text color based on light/dark mode
+                _titleText.Foreground = _themeProvider.IsDarkMode 
+                    ? new SolidColorBrush(Colors.White) 
+                    : new SolidColorBrush(Colors.Black);
+            }
+            else
+            {
+                _titleText.Foreground = palette.HeaderForegroundBrush;
+            }
         }
 
-        // Panel backgrounds and borders
+        // Panel backgrounds and borders - only apply if not transparent (Alpha > 0)
+        var hasCustomPanelColors = palette.PanelBackground.A > 0;
+
         if (_settingsPanel != null)
         {
-            _settingsPanel.Background = palette.PanelBackgroundBrush;
-            _settingsPanel.BorderBrush = palette.PanelBorderBrush;
+            if (hasCustomPanelColors)
+            {
+                _settingsPanel.Background = palette.PanelBackgroundBrush;
+                _settingsPanel.BorderBrush = palette.PanelBorderBrush;
+            }
+            else
+            {
+                // Use default WinUI ThemeResources
+                _settingsPanel.ClearValue(Border.BackgroundProperty);
+                _settingsPanel.ClearValue(Border.BorderBrushProperty);
+            }
         }
 
         if (_speedometerPanel != null)
         {
-            _speedometerPanel.Background = palette.PanelBackgroundBrush;
-            _speedometerPanel.BorderBrush = palette.PanelBorderBrush;
+            if (hasCustomPanelColors)
+            {
+                _speedometerPanel.Background = palette.PanelBackgroundBrush;
+                _speedometerPanel.BorderBrush = palette.PanelBorderBrush;
+            }
+            else
+            {
+                _speedometerPanel.ClearValue(Border.BackgroundProperty);
+                _speedometerPanel.ClearValue(Border.BorderBrushProperty);
+            }
         }
 
         if (_functionsPanel != null)
         {
-            _functionsPanel.Background = palette.PanelBackgroundBrush;
-            _functionsPanel.BorderBrush = palette.PanelBorderBrush;
+            if (hasCustomPanelColors)
+            {
+                _functionsPanel.Background = palette.PanelBackgroundBrush;
+                _functionsPanel.BorderBrush = palette.PanelBorderBrush;
+            }
+            else
+            {
+                _functionsPanel.ClearValue(Border.BackgroundProperty);
+                _functionsPanel.ClearValue(Border.BorderBrushProperty);
+            }
         }
 
-        // Update page background
+        // Update page background (only if not transparent)
         if (Content is Grid rootGrid)
         {
-            rootGrid.Background = palette.PanelBackgroundBrush;
+            if (hasCustomPanelColors)
+            {
+                rootGrid.Background = palette.PanelBackgroundBrush;
+            }
+            else
+            {
+                rootGrid.ClearValue(Grid.BackgroundProperty);
+            }
         }
     }
 
@@ -176,6 +221,7 @@ public sealed partial class TrainControlPage2
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         _themeProvider.ThemeChanged -= OnThemeProviderChanged;
+        _themeProvider.DarkModeChanged -= OnDarkModeChanged;
     }
 
     private void LocoSeriesBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
@@ -210,4 +256,69 @@ public sealed partial class TrainControlPage2
             ViewModel.SelectedVmax = selected.Vmax;
         }
     }
+
+    // Skin selection handlers for CommandBar buttons
+    private async void OnSkinClassicClicked(object sender, RoutedEventArgs e)
+    {
+        _themeProvider.SetTheme(AppTheme.Classic);
+        if (_settingsService != null)
+        {
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+        }
+    }
+
+    private async void OnSkinModernClicked(object sender, RoutedEventArgs e)
+    {
+        _themeProvider.SetTheme(AppTheme.Modern);
+        if (_settingsService != null)
+        {
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+        }
+    }
+
+    private async void OnSkinDarkClicked(object sender, RoutedEventArgs e)
+    {
+        _themeProvider.SetTheme(AppTheme.Dark);
+        if (_settingsService != null)
+        {
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+        }
+    }
+
+    private async void OnSkinEsuClicked(object sender, RoutedEventArgs e)
+    {
+        _themeProvider.SetTheme(AppTheme.EsuCabControl);
+        if (_settingsService != null)
+        {
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+        }
+    }
+
+    private async void OnSkinRocoClicked(object sender, RoutedEventArgs e)
+    {
+        _themeProvider.SetTheme(AppTheme.RocoZ21);
+        if (_settingsService != null)
+        {
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+        }
+    }
+
+    private async void OnSkinMaerklinClicked(object sender, RoutedEventArgs e)
+    {
+        _themeProvider.SetTheme(AppTheme.MaerklinCS);
+        if (_settingsService != null)
+        {
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+        }
+    }
+
+    private async void OnSkinOriginalClicked(object sender, RoutedEventArgs e)
+    {
+        _themeProvider.SetTheme(AppTheme.Original);
+        if (_settingsService != null)
+        {
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+        }
+    }
 }
+

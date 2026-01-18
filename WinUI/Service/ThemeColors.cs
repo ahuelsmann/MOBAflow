@@ -7,6 +7,7 @@ using Windows.UI;
 
 /// <summary>
 /// Centralized theme color definitions for all manufacturer-inspired skins.
+/// Each theme supports both Light and Dark mode.
 /// Colors extracted from official product documentation:
 /// - ESU CabControl Betriebsanleitung (Mai 2025)
 /// - Märklin Central Station 2 (60215) Anleitung
@@ -15,31 +16,38 @@ using Windows.UI;
 public static class ThemeColors
 {
     /// <summary>
-    /// Gets the complete color palette for a given theme.
+    /// Gets the complete color palette for a given theme and mode.
     /// </summary>
-    public static ThemePalette GetPalette(ApplicationTheme theme)
+    /// <param name="theme">The theme (Classic, Modern, ESU, etc.)</param>
+    /// <param name="isDarkMode">True for dark mode, false for light mode</param>
+    public static ThemePalette GetPalette(ApplicationTheme theme, bool isDarkMode)
     {
-        return theme switch
+        return (theme, isDarkMode) switch
         {
-            ApplicationTheme.Modern => Modern,
-            ApplicationTheme.Classic => Classic,
-            ApplicationTheme.Dark => Dark,
-            ApplicationTheme.EsuCabControl => EsuCabControl,
-            ApplicationTheme.RocoZ21 => RocoZ21,
-            ApplicationTheme.MaerklinCS => MaerklinCS,
-            _ => Modern
+            (ApplicationTheme.Modern, false) => ModernLight,
+            (ApplicationTheme.Modern, true) => ModernDark,
+            (ApplicationTheme.Classic, false) => ClassicLight,
+            (ApplicationTheme.Classic, true) => ClassicDark,
+            (ApplicationTheme.Dark, _) => DarkMode,  // Dark theme is always dark
+            (ApplicationTheme.EsuCabControl, false) => EsuLight,
+            (ApplicationTheme.EsuCabControl, true) => EsuDark,
+            (ApplicationTheme.RocoZ21, false) => RocoLight,
+            (ApplicationTheme.RocoZ21, true) => RocoDark,
+            (ApplicationTheme.MaerklinCS, false) => MaerklinLight,
+            (ApplicationTheme.MaerklinCS, true) => MaerklinDark,
+            (ApplicationTheme.Original, false) => OriginalLight,
+            (ApplicationTheme.Original, true) => OriginalDark,
+            _ => ModernLight
         };
     }
 
-    /// <summary>
-    /// Modern: Microsoft Fluent Design - Blue accents, clean and minimal.
-    /// </summary>
-    public static ThemePalette Modern { get; } = new()
+    // MODERN THEME
+    public static ThemePalette ModernLight { get; } = new()
     {
-        Name = "Modern",
-        Accent = Color.FromArgb(255, 0, 120, 212),         // #0078D4 - Microsoft Blue
-        AccentDark = Color.FromArgb(255, 0, 90, 158),      // #005A9E
-        AccentLight = Color.FromArgb(255, 80, 180, 247),   // #50B4F7
+        Name = "Modern Light",
+        Accent = Color.FromArgb(255, 0, 120, 212),
+        AccentDark = Color.FromArgb(255, 0, 90, 158),
+        AccentLight = Color.FromArgb(255, 80, 180, 247),
         HeaderBackground = Color.FromArgb(255, 0, 120, 212),
         HeaderForeground = Color.FromArgb(255, 255, 255, 255),
         PanelBackground = Color.FromArgb(255, 243, 243, 243),
@@ -51,16 +59,30 @@ public static class ThemeColors
         IsDarkTheme = false
     };
 
-    /// <summary>
-    /// Classic: Märklin-inspired - Green accents, professional silver/black.
-    /// Based on Märklin Digital product line styling.
-    /// </summary>
-    public static ThemePalette Classic { get; } = new()
+    public static ThemePalette ModernDark { get; } = new()
     {
-        Name = "Classic",
-        Accent = Color.FromArgb(255, 42, 164, 55),         // #2AA437 - Märklin Green
-        AccentDark = Color.FromArgb(255, 30, 125, 45),     // #1E7D2D
-        AccentLight = Color.FromArgb(255, 94, 200, 103),   // #5EC867
+        Name = "Modern Dark",
+        Accent = Color.FromArgb(255, 96, 205, 255),  // Lighter blue for dark mode
+        AccentDark = Color.FromArgb(255, 0, 120, 212),
+        AccentLight = Color.FromArgb(255, 150, 220, 255),
+        HeaderBackground = Color.FromArgb(255, 0, 90, 158),
+        HeaderForeground = Color.FromArgb(255, 255, 255, 255),
+        PanelBackground = Color.FromArgb(255, 32, 32, 32),
+        PanelBorder = Color.FromArgb(255, 60, 60, 60),
+        ButtonActive = Color.FromArgb(255, 96, 205, 255),
+        ButtonInactive = Color.FromArgb(255, 80, 80, 80),
+        TextPrimary = Color.FromArgb(255, 255, 255, 255),
+        TextSecondary = Color.FromArgb(255, 180, 180, 180),
+        IsDarkTheme = true
+    };
+
+    // CLASSIC THEME
+    public static ThemePalette ClassicLight { get; } = new()
+    {
+        Name = "Classic Light",
+        Accent = Color.FromArgb(255, 42, 164, 55),
+        AccentDark = Color.FromArgb(255, 30, 125, 45),
+        AccentLight = Color.FromArgb(255, 94, 200, 103),
         HeaderBackground = Color.FromArgb(255, 42, 164, 55),
         HeaderForeground = Color.FromArgb(255, 255, 255, 255),
         PanelBackground = Color.FromArgb(255, 218, 218, 218),
@@ -72,16 +94,30 @@ public static class ThemeColors
         IsDarkTheme = false
     };
 
-    /// <summary>
-    /// Dark: Night-friendly dark theme with violet accents.
-    /// Reduced eye strain for evening/night operation.
-    /// </summary>
-    public static ThemePalette Dark { get; } = new()
+    public static ThemePalette ClassicDark { get; } = new()
+    {
+        Name = "Classic Dark",
+        Accent = Color.FromArgb(255, 94, 200, 103),  // Lighter green for dark mode
+        AccentDark = Color.FromArgb(255, 42, 164, 55),
+        AccentLight = Color.FromArgb(255, 150, 230, 160),
+        HeaderBackground = Color.FromArgb(255, 30, 125, 45),
+        HeaderForeground = Color.FromArgb(255, 255, 255, 255),
+        PanelBackground = Color.FromArgb(255, 28, 28, 28),
+        PanelBorder = Color.FromArgb(255, 60, 60, 60),
+        ButtonActive = Color.FromArgb(255, 94, 200, 103),
+        ButtonInactive = Color.FromArgb(255, 80, 80, 80),
+        TextPrimary = Color.FromArgb(255, 255, 255, 255),
+        TextSecondary = Color.FromArgb(255, 180, 180, 180),
+        IsDarkTheme = true
+    };
+
+    // DARK THEME (always dark, regardless of mode)
+    public static ThemePalette DarkMode { get; } = new()
     {
         Name = "Dark",
-        Accent = Color.FromArgb(255, 155, 95, 255),        // #9B5FFF - Violet
-        AccentDark = Color.FromArgb(255, 122, 71, 212),    // #7A47D4
-        AccentLight = Color.FromArgb(255, 185, 141, 255),  // #B98DFF
+        Accent = Color.FromArgb(255, 155, 95, 255),
+        AccentDark = Color.FromArgb(255, 122, 71, 212),
+        AccentLight = Color.FromArgb(255, 185, 141, 255),
         HeaderBackground = Color.FromArgb(255, 45, 45, 48),
         HeaderForeground = Color.FromArgb(255, 255, 255, 255),
         PanelBackground = Color.FromArgb(255, 37, 37, 38),
@@ -93,17 +129,30 @@ public static class ThemeColors
         IsDarkTheme = true
     };
 
-    /// <summary>
-    /// ESU CabControl: Orange/Amber accents on dark background.
-    /// Inspired by ESU CabControl DCC System (Mobile Control Pro).
-    /// Colors extracted from ESU Betriebsanleitung Mai 2025.
-    /// </summary>
-    public static ThemePalette EsuCabControl { get; } = new()
+    // ESU CABCONTROL THEME
+    public static ThemePalette EsuLight { get; } = new()
     {
-        Name = "ESU CabControl",
-        Accent = Color.FromArgb(255, 255, 140, 0),         // #FF8C00 - ESU Orange
-        AccentDark = Color.FromArgb(255, 204, 112, 0),     // #CC7000
-        AccentLight = Color.FromArgb(255, 255, 179, 71),   // #FFB347
+        Name = "ESU Light",
+        Accent = Color.FromArgb(255, 255, 140, 0),
+        AccentDark = Color.FromArgb(255, 204, 112, 0),
+        AccentLight = Color.FromArgb(255, 255, 179, 71),
+        HeaderBackground = Color.FromArgb(255, 255, 140, 0),
+        HeaderForeground = Color.FromArgb(255, 0, 0, 0),  // Black text on orange
+        PanelBackground = Color.FromArgb(255, 250, 250, 250),
+        PanelBorder = Color.FromArgb(255, 220, 220, 220),
+        ButtonActive = Color.FromArgb(255, 255, 140, 0),
+        ButtonInactive = Color.FromArgb(255, 200, 200, 200),
+        TextPrimary = Color.FromArgb(255, 0, 0, 0),
+        TextSecondary = Color.FromArgb(255, 96, 96, 96),
+        IsDarkTheme = false
+    };
+
+    public static ThemePalette EsuDark { get; } = new()
+    {
+        Name = "ESU Dark",
+        Accent = Color.FromArgb(255, 255, 140, 0),
+        AccentDark = Color.FromArgb(255, 204, 112, 0),
+        AccentLight = Color.FromArgb(255, 255, 179, 71),
         HeaderBackground = Color.FromArgb(255, 35, 35, 35),
         HeaderForeground = Color.FromArgb(255, 255, 140, 0),
         PanelBackground = Color.FromArgb(255, 26, 26, 26),
@@ -115,16 +164,30 @@ public static class ThemeColors
         IsDarkTheme = true
     };
 
-    /// <summary>
-    /// Roco Z21: Orange accents on black background, minimalist.
-    /// Inspired by Roco Z21 App interface design.
-    /// </summary>
-    public static ThemePalette RocoZ21 { get; } = new()
+    // ROCO Z21 THEME
+    public static ThemePalette RocoLight { get; } = new()
     {
-        Name = "Roco Z21",
-        Accent = Color.FromArgb(255, 255, 102, 0),         // #FF6600 - Z21 Orange
-        AccentDark = Color.FromArgb(255, 204, 82, 0),      // #CC5200
-        AccentLight = Color.FromArgb(255, 255, 153, 51),   // #FF9933
+        Name = "Roco Light",
+        Accent = Color.FromArgb(255, 255, 102, 0),
+        AccentDark = Color.FromArgb(255, 204, 82, 0),
+        AccentLight = Color.FromArgb(255, 255, 153, 51),
+        HeaderBackground = Color.FromArgb(255, 255, 102, 0),
+        HeaderForeground = Color.FromArgb(255, 255, 255, 255),
+        PanelBackground = Color.FromArgb(255, 248, 248, 248),
+        PanelBorder = Color.FromArgb(255, 215, 215, 215),
+        ButtonActive = Color.FromArgb(255, 255, 102, 0),
+        ButtonInactive = Color.FromArgb(255, 200, 200, 200),
+        TextPrimary = Color.FromArgb(255, 0, 0, 0),
+        TextSecondary = Color.FromArgb(255, 96, 96, 96),
+        IsDarkTheme = false
+    };
+
+    public static ThemePalette RocoDark { get; } = new()
+    {
+        Name = "Roco Dark",
+        Accent = Color.FromArgb(255, 255, 102, 0),
+        AccentDark = Color.FromArgb(255, 204, 82, 0),
+        AccentLight = Color.FromArgb(255, 255, 153, 51),
         HeaderBackground = Color.FromArgb(255, 0, 0, 0),
         HeaderForeground = Color.FromArgb(255, 255, 102, 0),
         PanelBackground = Color.FromArgb(255, 20, 20, 20),
@@ -136,17 +199,13 @@ public static class ThemeColors
         IsDarkTheme = true
     };
 
-    /// <summary>
-    /// Märklin CS: Classic red/white/grey color scheme.
-    /// Inspired by Märklin Central Station 2/3 (60215) hardware and software.
-    /// Colors extracted from CS2 Bedienungsanleitung.
-    /// </summary>
-    public static ThemePalette MaerklinCS { get; } = new()
+    // MÄRKLIN CS THEME
+    public static ThemePalette MaerklinLight { get; } = new()
     {
-        Name = "Märklin CS",
-        Accent = Color.FromArgb(255, 200, 0, 0),           // #C80000 - Märklin Red
-        AccentDark = Color.FromArgb(255, 160, 0, 0),       // #A00000
-        AccentLight = Color.FromArgb(255, 230, 80, 80),    // #E65050
+        Name = "Märklin Light",
+        Accent = Color.FromArgb(255, 200, 0, 0),
+        AccentDark = Color.FromArgb(255, 160, 0, 0),
+        AccentLight = Color.FromArgb(255, 230, 80, 80),
         HeaderBackground = Color.FromArgb(255, 200, 0, 0),
         HeaderForeground = Color.FromArgb(255, 255, 255, 255),
         PanelBackground = Color.FromArgb(255, 235, 235, 235),
@@ -156,6 +215,63 @@ public static class ThemeColors
         TextPrimary = Color.FromArgb(255, 0, 0, 0),
         TextSecondary = Color.FromArgb(255, 80, 80, 80),
         IsDarkTheme = false
+    };
+
+    public static ThemePalette MaerklinDark { get; } = new()
+    {
+        Name = "Märklin Dark",
+        Accent = Color.FromArgb(255, 230, 80, 80),  // Lighter red for dark mode
+        AccentDark = Color.FromArgb(255, 200, 0, 0),
+        AccentLight = Color.FromArgb(255, 255, 120, 120),
+        HeaderBackground = Color.FromArgb(255, 160, 0, 0),
+        HeaderForeground = Color.FromArgb(255, 255, 255, 255),
+        PanelBackground = Color.FromArgb(255, 30, 30, 30),
+        PanelBorder = Color.FromArgb(255, 60, 60, 60),
+        ButtonActive = Color.FromArgb(255, 230, 80, 80),
+        ButtonInactive = Color.FromArgb(255, 80, 80, 80),
+        TextPrimary = Color.FromArgb(255, 255, 255, 255),
+        TextSecondary = Color.FromArgb(255, 180, 180, 180),
+        IsDarkTheme = true
+    };
+
+    // ORIGINAL THEME
+    /// <summary>
+    /// Original: MOBAflow TrainControlPage default theme.
+    /// Pure WinUI 3 Fluent Design without custom header colors.
+    /// Matches the classic TrainControlPage.xaml design (no colored header strip).
+    /// </summary>
+    public static ThemePalette OriginalLight { get; } = new()
+    {
+        Name = "Original Light",
+        Accent = Color.FromArgb(255, 0, 95, 184),          // #005FB8 - Fluent Blue (darker than Modern)
+        AccentDark = Color.FromArgb(255, 0, 75, 145),      // #004B91
+        AccentLight = Color.FromArgb(255, 51, 153, 255),   // #3399FF
+        HeaderBackground = Color.FromArgb(0, 0, 0, 0),     // Transparent (no colored header bar!)
+        HeaderForeground = Color.FromArgb(255, 0, 0, 0),   // Black text
+        PanelBackground = Color.FromArgb(0, 0, 0, 0),      // Transparent (uses default CardBackground)
+        PanelBorder = Color.FromArgb(0, 0, 0, 0),          // Transparent (uses default CardStroke)
+        ButtonActive = Color.FromArgb(255, 51, 153, 255),
+        ButtonInactive = Color.FromArgb(255, 200, 200, 200),
+        TextPrimary = Color.FromArgb(255, 0, 0, 0),
+        TextSecondary = Color.FromArgb(255, 96, 96, 96),
+        IsDarkTheme = false
+    };
+
+    public static ThemePalette OriginalDark { get; } = new()
+    {
+        Name = "Original Dark",
+        Accent = Color.FromArgb(255, 100, 181, 246),       // Lighter blue for dark mode
+        AccentDark = Color.FromArgb(255, 0, 95, 184),
+        AccentLight = Color.FromArgb(255, 144, 202, 249),
+        HeaderBackground = Color.FromArgb(0, 0, 0, 0),     // Transparent (no colored header bar!)
+        HeaderForeground = Color.FromArgb(255, 255, 255, 255),  // White text in dark mode
+        PanelBackground = Color.FromArgb(0, 0, 0, 0),      // Transparent (uses default CardBackground)
+        PanelBorder = Color.FromArgb(0, 0, 0, 0),          // Transparent (uses default CardStroke)
+        ButtonActive = Color.FromArgb(255, 100, 181, 246),
+        ButtonInactive = Color.FromArgb(255, 80, 80, 80),
+        TextPrimary = Color.FromArgb(255, 255, 255, 255),
+        TextSecondary = Color.FromArgb(255, 180, 180, 180),
+        IsDarkTheme = true
     };
 }
 

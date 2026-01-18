@@ -5,6 +5,7 @@
     xmlns:controls="using:Moba.WinUI.Controls"
     xmlns:converter="using:Moba.WinUI.Converter"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     DataContext="{x:Bind ViewModel}"
     mc:Ignorable="d">
@@ -14,7 +15,6 @@
         <converter:IntToPresetCheckedConverter x:Key="IntToPresetCheckedConverter" />
         <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     </Page.Resources>
-
 
     <Grid Padding="0">
         <Grid.RowDefinitions>
@@ -44,7 +44,62 @@
                     Foreground="White"
                     Text="Train Control 2" />
 
-                <!--  Skin Selector will be added here via code-behind (Column 1)  -->
+                <!--  Skin Selector CommandBar  -->
+                <CommandBar
+                    Grid.Column="1"
+                    HorizontalAlignment="Center"
+                    Background="Transparent"
+                    DefaultLabelPosition="Collapsed">
+
+                    <!--  Classic Skin (Green)  -->
+                    <AppBarButton
+                        Width="35"
+                        Height="45"
+                        Background="#2ECC71"
+                        Click="OnSkinClassicClicked" />
+
+                    <!--  Modern Skin (Blue)  -->
+                    <AppBarButton
+                        Width="35"
+                        Height="45"
+                        Background="#0078D0"
+                        Click="OnSkinModernClicked" />
+
+                    <!--  Dark Skin (Violet)  -->
+                    <AppBarButton
+                        Width="35"
+                        Height="45"
+                        Background="#6A5ACD"
+                        Click="OnSkinDarkClicked" />
+
+                    <!--  ESU CabControl Skin (Orange)  -->
+                    <AppBarButton
+                        Width="35"
+                        Height="45"
+                        Background="#FF8C00"
+                        Click="OnSkinEsuClicked" />
+
+                    <!--  Roco Z21 Skin (Orange)  -->
+                    <AppBarButton
+                        Width="35"
+                        Height="45"
+                        Background="#FF6600"
+                        Click="OnSkinRocoClicked" />
+
+                    <!--  Maerklin CS Skin (Red)  -->
+                    <AppBarButton
+                        Width="35"
+                        Height="45"
+                        Background="#CC0000"
+                        Click="OnSkinMaerklinClicked" />
+
+                    <!--  Original Skin (White)  -->
+                    <AppBarButton
+                        Width="35"
+                        Height="45"
+                        Background="Gray"
+                        Click="OnSkinOriginalClicked" />
+                </CommandBar>
 
                 <Button
                     Grid.Column="2"

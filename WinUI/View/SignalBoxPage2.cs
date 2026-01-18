@@ -6,6 +6,7 @@ using Common.Configuration;
 
 using Controls;
 
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -22,6 +23,8 @@ using System;
 using System.Globalization;
 
 using Windows.UI;
+
+using AppTheme = Moba.WinUI.Service.ApplicationTheme;
 
 /// <summary>
 /// MOBAesb 2 - Theme-enabled Electronic Signal Box page.
@@ -51,6 +54,7 @@ public sealed class SignalBoxPage2 : SignalBoxPageBase
 
         // Subscribe to theme changes
         _themeProvider.ThemeChanged += OnThemeChanged;
+        _themeProvider.DarkModeChanged += OnDarkModeChanged;
 
         StartClock();
         ApplyThemeColors();
@@ -63,28 +67,63 @@ public sealed class SignalBoxPage2 : SignalBoxPageBase
         DispatcherQueue.TryEnqueue(ApplyThemeColors);
     }
 
+    private void OnDarkModeChanged(object? sender, EventArgs e)
+    {
+        DispatcherQueue.TryEnqueue(ApplyThemeColors);
+    }
+
     private void ApplyThemeColors()
     {
-        var palette = ThemeColors.GetPalette(_themeProvider.CurrentTheme);
+        var palette = ThemeColors.GetPalette(_themeProvider.CurrentTheme, _themeProvider.IsDarkMode);
 
         // Set page RequestedTheme for standard WinUI controls
         RequestedTheme = palette.IsDarkTheme
             ? ElementTheme.Dark
             : ElementTheme.Light;
 
+        // Check if this is the "Original" theme (transparent header = no colored strip)
+        var isOriginalTheme = _themeProvider.CurrentTheme == Service.ApplicationTheme.Original;
+
         if (_headerBorder != null)
         {
-            _headerBorder.Background = palette.HeaderBackgroundBrush;
+            if (isOriginalTheme)
+            {
+                // Original theme: No colored header strip - make background transparent
+                _headerBorder.Background = new SolidColorBrush(Colors.Transparent);
+            }
+            else
+            {
+                _headerBorder.Background = palette.HeaderBackgroundBrush;
+            }
         }
 
         if (_titleText != null)
         {
-            _titleText.Foreground = palette.HeaderForegroundBrush;
+            if (isOriginalTheme)
+            {
+                // Original theme: Use standard text color based on light/dark mode
+                _titleText.Foreground = _themeProvider.IsDarkMode
+                    ? new SolidColorBrush(Colors.White)
+                    : new SolidColorBrush(Colors.Black);
+            }
+            else
+            {
+                _titleText.Foreground = palette.HeaderForegroundBrush;
+            }
         }
 
         if (_clockText != null)
         {
-            _clockText.Foreground = palette.HeaderForegroundBrush;
+            if (isOriginalTheme)
+            {
+                _clockText.Foreground = _themeProvider.IsDarkMode
+                    ? new SolidColorBrush(Colors.White)
+                    : new SolidColorBrush(Colors.Black);
+            }
+            else
+            {
+                _clockText.Foreground = palette.HeaderForegroundBrush;
+            }
         }
     }
 
@@ -102,7 +141,7 @@ public sealed class SignalBoxPage2 : SignalBoxPageBase
 
     protected override Border BuildHeader()
     {
-        var palette = ThemeColors.GetPalette(_themeProvider.CurrentTheme);
+        var palette = ThemeColors.GetPalette(_themeProvider.CurrentTheme, _themeProvider.IsDarkMode);
 
         var grid = new Grid { Padding = new Thickness(16, 12, 16, 12) };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -152,12 +191,72 @@ public sealed class SignalBoxPage2 : SignalBoxPageBase
         Grid.SetColumn(leftPanel, 0);
         grid.Children.Add(leftPanel);
 
-        // Center: Skin Selector
-        var skinPanel = SkinSelectorComboBox.CreateWithLabel(_themeProvider, _settings, _settingsService, out var skinComboBox);
-        skinPanel.HorizontalAlignment = HorizontalAlignment.Center;
-        skinComboBox.SkinChanged += (s, e) => ApplyThemeColors();
-        Grid.SetColumn(skinPanel, 1);
-        grid.Children.Add(skinPanel);
+        // Center: Skin Selector Buttons
+        var skinCommandBar = new CommandBar
+        {
+            HorizontalAlignment = HorizontalAlignment.Center,
+            DefaultLabelPosition = CommandBarDefaultLabelPosition.Collapsed,
+            Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0))  // Transparent
+        };
+
+        // Classic Skin (Green)
+        var classicButton = new AppBarButton
+        {
+            Icon = new FontIcon { FontFamily = new FontFamily("Segoe MDL2 Assets"), Glyph = "\uE91F", Foreground = new SolidColorBrush(Color.FromArgb(255, 46, 204, 113)) }
+        };
+        classicButton.Click += (s, e) => SetSkin(AppTheme.Classic);
+        skinCommandBar.PrimaryCommands.Add(classicButton);
+
+        // Modern Skin (Blue)
+        var modernButton = new AppBarButton
+        {
+            Icon = new FontIcon { FontFamily = new FontFamily("Segoe MDL2 Assets"), Glyph = "\uE91F", Foreground = new SolidColorBrush(Color.FromArgb(255, 0, 120, 212)) }
+        };
+        modernButton.Click += (s, e) => SetSkin(AppTheme.Modern);
+        skinCommandBar.PrimaryCommands.Add(modernButton);
+
+        // Dark Skin (Violet)
+        var darkButton = new AppBarButton
+        {
+            Icon = new FontIcon { FontFamily = new FontFamily("Segoe MDL2 Assets"), Glyph = "\uE91F", Foreground = new SolidColorBrush(Color.FromArgb(255, 106, 90, 205)) }
+        };
+        darkButton.Click += (s, e) => SetSkin(AppTheme.Dark);
+        skinCommandBar.PrimaryCommands.Add(darkButton);
+
+        // ESU CabControl Skin (Orange)
+        var esuButton = new AppBarButton
+        {
+            Icon = new FontIcon { FontFamily = new FontFamily("Segoe MDL2 Assets"), Glyph = "\uE91F", Foreground = new SolidColorBrush(Color.FromArgb(255, 255, 140, 0)) }
+        };
+        esuButton.Click += (s, e) => SetSkin(AppTheme.EsuCabControl);
+        skinCommandBar.PrimaryCommands.Add(esuButton);
+
+        // Roco Z21 Skin (Orange)
+        var rocoButton = new AppBarButton
+        {
+            Icon = new FontIcon { FontFamily = new FontFamily("Segoe MDL2 Assets"), Glyph = "\uE91F", Foreground = new SolidColorBrush(Color.FromArgb(255, 255, 102, 0)) }
+        };
+        rocoButton.Click += (s, e) => SetSkin(AppTheme.RocoZ21);
+        skinCommandBar.PrimaryCommands.Add(rocoButton);
+
+        // Maerklin CS Skin (Red)
+        var maerklinButton = new AppBarButton
+        {
+            Icon = new FontIcon { FontFamily = new FontFamily("Segoe MDL2 Assets"), Glyph = "\uE91F", Foreground = new SolidColorBrush(Color.FromArgb(255, 204, 0, 0)) }
+        };
+        maerklinButton.Click += (s, e) => SetSkin(AppTheme.MaerklinCS);
+        skinCommandBar.PrimaryCommands.Add(maerklinButton);
+
+        // Original Skin (White)
+        var originalButton = new AppBarButton
+        {
+            Icon = new FontIcon { FontFamily = new FontFamily("Segoe MDL2 Assets"), Glyph = "\uE91F", Foreground = new SolidColorBrush(Color.FromArgb(255, 128, 128, 128)) }  // Gray
+        };
+        originalButton.Click += (s, e) => SetSkin(AppTheme.Original);
+        skinCommandBar.PrimaryCommands.Add(originalButton);
+
+        Grid.SetColumn(skinCommandBar, 1);
+        grid.Children.Add(skinCommandBar);
 
         // Right: Grid toggle
         var rightPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, HorizontalAlignment = HorizontalAlignment.Right };
@@ -181,6 +280,15 @@ public sealed class SignalBoxPage2 : SignalBoxPageBase
         };
 
         return _headerBorder;
+    }
+
+    private async void SetSkin(AppTheme theme)
+    {
+        _themeProvider.SetTheme(theme);
+        if (_settingsService != null)
+        {
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+        }
     }
 
     protected override UIElement CreateToolboxIcon(SignalBoxElementType type)
@@ -323,6 +431,11 @@ public sealed class SignalBoxPage2 : SignalBoxPageBase
 
     protected override FrameworkElement CreateElementVisual(SignalBoxElement element)
     {
+        return CreateElementVisualAsModern(element);
+    }
+
+    private FrameworkElement CreateElementVisualAsModern(SignalBoxElement element)
+    {
         var container = new Grid
         {
             Width = GridCellSize,
@@ -339,12 +452,10 @@ public sealed class SignalBoxPage2 : SignalBoxPageBase
                 break;
 
             case SignalBoxElementType.TrackCurve45:
-                // 45° arc from left-center to top-right (similar to MOBAtps)
                 container.Children.Add(CreateTrackArc(4, -22, 52, 90, -45, trackColor));
                 break;
 
             case SignalBoxElementType.TrackCurve90:
-                // 90° arc from left-center to bottom-center (similar to MOBAtps)
                 container.Children.Add(CreateTrackArc(56, 30, 52, 180, 90, trackColor));
                 break;
 
@@ -401,6 +512,7 @@ public sealed class SignalBoxPage2 : SignalBoxPageBase
                 break;
 
             case SignalBoxElementType.FeedbackPoint:
+                container.Children.Add(CreateTrackLine(4, 30, 56, 30, trackColor));
                 container.Children.Add(CreateFeedbackVisual(element, trackColor));
                 break;
 

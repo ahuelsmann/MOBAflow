@@ -41,7 +41,13 @@ public enum ApplicationTheme
     /// Maerklin CS: Inspired by Maerklin Central Station 2/3.
     /// Classic red/white/grey color scheme.
     /// </summary>
-    MaerklinCS
+    MaerklinCS,
+
+    /// <summary>
+    /// Original: Default MOBAflow theme (Light and Dark variants).
+    /// Used as fallback and embedded in Page2 variants as "Original" layout.
+    /// </summary>
+    Original
 }
 
 /// <summary>
@@ -54,6 +60,11 @@ public interface IThemeProvider
     /// Gets the currently active theme.
     /// </summary>
     ApplicationTheme CurrentTheme { get; }
+
+    /// <summary>
+    /// Gets or sets whether dark mode is enabled.
+    /// </summary>
+    bool IsDarkMode { get; set; }
 
     /// <summary>
     /// Initializes the theme provider with saved settings.
@@ -75,6 +86,11 @@ public interface IThemeProvider
     /// Occurs when the theme changes.
     /// </summary>
     event EventHandler<ThemeChangedEventArgs>? ThemeChanged;
+    
+    /// <summary>
+    /// Occurs when the dark mode setting changes.
+    /// </summary>
+    event EventHandler? DarkModeChanged;
 }
 
 /// <summary>

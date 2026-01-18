@@ -11,215 +11,281 @@
     DataContext="{x:Bind ViewModel}"
     mc:Ignorable="d">
 
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="300" MinWidth="200" />
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" MinWidth="200" />
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition
-                Width="350"
-                MinWidth="300"
-                MaxWidth="450" />
-        </Grid.ColumnDefinitions>
+    <Grid x:Name="RootGrid">
+        <!-- VisualStateManager for responsive layout -->
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="AdaptiveStates">
+                
+                <!-- WIDE STATE: All 5 columns visible (1200px+) -->
+                <VisualState x:Name="WideState">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="1200" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="MainGrid.ColumnDefinitions" Value="300,Auto,*,Auto,350" />
+                        <Setter Target="WorkflowsPanel.Visibility" Value="Visible" />
+                        <Setter Target="ActionsPanel.Visibility" Value="Visible" />
+                        <Setter Target="PropertiesPanel.Visibility" Value="Visible" />
+                        <Setter Target="Column1Divider.Visibility" Value="Visible" />
+                        <Setter Target="Column3Divider.Visibility" Value="Visible" />
+                    </VisualState.Setters>
+                </VisualState>
+                
+                <!-- MEDIUM STATE: List + Actions/Editor, Properties hidden (641-1199px) -->
+                <VisualState x:Name="MediumState">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="641" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="MainGrid.ColumnDefinitions" Value="250,Auto,*" />
+                        <Setter Target="WorkflowsPanel.Visibility" Value="Visible" />
+                        <Setter Target="ActionsPanel.Visibility" Value="Visible" />
+                        <Setter Target="PropertiesPanel.Visibility" Value="Collapsed" />
+                        <Setter Target="Column1Divider.Visibility" Value="Visible" />
+                        <Setter Target="Column3Divider.Visibility" Value="Collapsed" />
+                    </VisualState.Setters>
+                </VisualState>
+                
+                <!-- COMPACT STATE: Stacked full-width with collapsible sections (0-640px) -->
+                <VisualState x:Name="CompactState">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="0" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="MainGrid.ColumnDefinitions" Value="*" />
+                        <Setter Target="MainGrid.RowDefinitions" Value="Auto,Auto,Auto" />
+                        <Setter Target="WorkflowsPanel.Visibility" Value="Visible" />
+                        <Setter Target="ActionsPanel.Visibility" Value="Visible" />
+                        <Setter Target="PropertiesPanel.Visibility" Value="Visible" />
+                        <Setter Target="Column1Divider.Visibility" Value="Collapsed" />
+                        <Setter Target="Column3Divider.Visibility" Value="Collapsed" />
+                        <!-- Move panels to rows instead of columns -->
+                        <Setter Target="Grid.Column" Value="0" />
+                    </VisualState.Setters>
+                </VisualState>
+                
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
 
-        <!--  Column 0: Workflows  -->
-        <Grid Grid.Column="0" Padding="8">
+        <!-- Main layout grid - same structure for all states -->
+        <Grid x:Name="MainGrid" ColumnSpacing="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300" MinWidth="200" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" MinWidth="200" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="350" MinWidth="300" MaxWidth="450" />
+            </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!--  Header: Title + Actions  -->
-            <Grid Grid.Row="0" Margin="0,0,0,8">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBlock
-                    Grid.Column="0"
-                    Padding="8,0,0,0"
-                    VerticalAlignment="Center"
-                    FontWeight="SemiBold"
-                    Style="{StaticResource SubtitleTextBlockStyle}"
-                    Text="Workflows" />
-                <StackPanel
-                    Grid.Column="1"
-                    Orientation="Horizontal"
-                    Spacing="2">
-                    <Button
-                        Padding="4"
-                        Command="{x:Bind ViewModel.AddWorkflowCommand}"
-                        ToolTipService.ToolTip="Create a new workflow">
-                        <FontIcon FontSize="14" Glyph="&#xE710;" />
-                    </Button>
-                    <Button
-                        Padding="4"
-                        Command="{x:Bind ViewModel.DeleteWorkflowCommand}"
-                        ToolTipService.ToolTip="Remove the selected workflow">
-                        <FontIcon FontSize="14" Glyph="&#xE74D;" />
-                    </Button>
-                </StackPanel>
+            <!--  Column 0: Workflows  -->
+            <Grid x:Name="WorkflowsPanel" Grid.Column="0" Grid.Row="0" Padding="8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!--  Header: Title + Actions  -->
+                <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        Grid.Column="0"
+                        Padding="8,0,0,0"
+                        VerticalAlignment="Center"
+                        FontWeight="SemiBold"
+                        Style="{StaticResource SubtitleTextBlockStyle}"
+                        Text="Workflows" />
+                    <StackPanel
+                        Grid.Column="1"
+                        Orientation="Horizontal"
+                        Spacing="2">
+                        <Button
+                            Padding="4"
+                            Command="{x:Bind ViewModel.AddWorkflowCommand}"
+                            ToolTipService.ToolTip="Create a new workflow">
+                            <FontIcon FontSize="14" Glyph="&#xE710;" />
+                        </Button>
+                        <Button
+                            Padding="4"
+                            Command="{x:Bind ViewModel.DeleteWorkflowCommand}"
+                            ToolTipService.ToolTip="Remove the selected workflow">
+                            <FontIcon FontSize="14" Glyph="&#xE74D;" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <AutoSuggestBox
+                    Grid.Row="1"
+                    Margin="0,0,0,8"
+                    PlaceholderText="Search workflows..."
+                    QueryIcon="Find"
+                    Text="{x:Bind ViewModel.WorkflowSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                <ListView
+                    Grid.Row="2"
+                    CanDragItems="True"
+                    DragItemsStarting="WorkflowListView_DragItemsStarting"
+                    IsItemClickEnabled="True"
+                    ItemsSource="{x:Bind ViewModel.SelectedProject.Workflows, Mode=OneWay}"
+                    KeyDown="WorkflowListView_KeyDown"
+                    SelectedItem="{x:Bind ViewModel.SelectedWorkflow, Mode=TwoWay}"
+                    SelectionMode="Single">
+                    <i:Interaction.Behaviors>
+                        <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.WorkflowsPageItemClickedCommand}" />
+                    </i:Interaction.Behaviors>
+                    <ListView.ContextFlyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem Command="{x:Bind ViewModel.AddWorkflowCommand}" Text="Add Workflow">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xE710;" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem Command="{x:Bind ViewModel.DeleteWorkflowCommand}" Text="Delete Workflow">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xE738;" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                        </MenuFlyout>
+                    </ListView.ContextFlyout>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="vm:WorkflowViewModel">
+                            <Grid Padding="6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <FontIcon
+                                    Grid.Column="0"
+                                    Margin="0,0,8,0"
+                                    FontSize="16"
+                                    Glyph="&#xEF90;" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    Text="{x:Bind Name, Mode=OneWay}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
             </Grid>
 
-            <AutoSuggestBox
-                Grid.Row="1"
-                Margin="0,0,0,8"
-                PlaceholderText="Search workflows..."
-                QueryIcon="Find"
-                Text="{x:Bind ViewModel.WorkflowSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-
-            <ListView
-                Grid.Row="2"
-                CanDragItems="True"
-                DragItemsStarting="WorkflowListView_DragItemsStarting"
-                IsItemClickEnabled="True"
-                ItemsSource="{x:Bind ViewModel.SelectedProject.Workflows, Mode=OneWay}"
-                KeyDown="WorkflowListView_KeyDown"
-                SelectedItem="{x:Bind ViewModel.SelectedWorkflow, Mode=TwoWay}"
-                SelectionMode="Single">
-                <i:Interaction.Behaviors>
-                    <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.WorkflowsPageItemClickedCommand}" />
-                </i:Interaction.Behaviors>
-                <ListView.ContextFlyout>
-                    <MenuFlyout>
-                        <MenuFlyoutItem Command="{x:Bind ViewModel.AddWorkflowCommand}" Text="Add Workflow">
-                            <MenuFlyoutItem.Icon>
-                                <FontIcon Glyph="&#xE710;" />
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutItem Command="{x:Bind ViewModel.DeleteWorkflowCommand}" Text="Delete Workflow">
-                            <MenuFlyoutItem.Icon>
-                                <FontIcon Glyph="&#xE738;" />
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                    </MenuFlyout>
-                </ListView.ContextFlyout>
-                <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="vm:WorkflowViewModel">
-                        <Grid Padding="6">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <FontIcon
-                                Grid.Column="0"
-                                Margin="0,0,8,0"
-                                FontSize="16"
-                                Glyph="&#xEF90;" />
-                            <TextBlock
-                                Grid.Column="1"
-                                VerticalAlignment="Center"
-                                Text="{x:Bind Name, Mode=OneWay}" />
-                        </Grid>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
-        </Grid>
-
-        <Border
-            Grid.Column="1"
-            Width="1"
-            Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
-        <!--  Column 2: Actions (of selected Workflow)  -->
-        <Grid Grid.Column="2" Padding="8">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-            <TextBlock
+            <Border
+                x:Name="Column1Divider"
+                Grid.Column="1"
                 Grid.Row="0"
-                Padding="8,0,0,8"
-                FontWeight="SemiBold"
-                Style="{StaticResource SubtitleTextBlockStyle}"
-                Text="Actions" />
-            <!--  CommandBar for Actions  -->
-            <CommandBar
-                Grid.Row="1"
-                DefaultLabelPosition="Right"
-                OverflowButtonVisibility="Auto">
-                <AppBarButton
-                    Command="{x:Bind ViewModel.AddAnnouncementCommand}"
-                    Icon="Comment"
-                    Label="Announcement"
-                    ToolTipService.ToolTip="Add an announcement action" />
-                <AppBarButton
-                    Command="{x:Bind ViewModel.AddCommandCommand}"
-                    Icon="Paste"
-                    Label="Command"
-                    ToolTipService.ToolTip="Add a command action" />
-                <AppBarButton
-                    Command="{x:Bind ViewModel.AddAudioCommand}"
-                    Icon="Volume"
-                    Label="Audio"
-                    ToolTipService.ToolTip="Add an audio action" />
-                <AppBarSeparator />
-                <AppBarButton
-                    Command="{x:Bind ViewModel.DeleteActionCommand}"
-                    Icon="Delete"
-                    Label="Delete"
-                    ToolTipService.ToolTip="Remove the selected action" />
-            </CommandBar>
-            <ListView
-                Grid.Row="2"
-                AllowDrop="True"
-                CanDragItems="True"
-                CanReorderItems="True"
-                DragItemsStarting="ActionListView_DragItemsStarting"
-                DragItemsCompleted="ActionListView_DragItemsCompleted"
-                Drop="ActionListView_Drop"
-                IsItemClickEnabled="True"
-                ItemsSource="{x:Bind ViewModel.SelectedWorkflow.Actions, Mode=OneWay}"
-                KeyDown="ActionListView_KeyDown"
-                SelectedItem="{x:Bind ViewModel.SelectedAction, Mode=TwoWay}"
-                SelectionMode="Single">
-                <i:Interaction.Behaviors>
-                    <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.WorkflowsPageItemClickedCommand}" />
-                </i:Interaction.Behaviors>
-                <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="vmAction:WorkflowActionViewModel">
-                        <Grid Padding="6">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <FontIcon
-                                Grid.Column="0"
-                                Margin="0,0,8,0"
-                                FontSize="16"
-                                Glyph="&#xE945;" />
-                            <TextBlock Grid.Column="1" VerticalAlignment="Center">
-                                <Run FontWeight="SemiBold" Text="{x:Bind Name, Mode=OneWay}" />
-                                <Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text=" (" />
-                                <Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind Type, Mode=OneWay}" />
-                                <Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text=")" />
-                            </TextBlock>
-                        </Grid>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
-        </Grid>
+                Grid.RowSpan="3"
+                Width="1"
+                Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
-        <Border
-            Grid.Column="3"
-            Width="1"
-            Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+            <!--  Column 2: Actions (of selected Workflow)  -->
+            <Grid x:Name="ActionsPanel" Grid.Column="2" Grid.Row="0" Padding="8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <TextBlock
+                    Grid.Row="0"
+                    Padding="8,0,0,8"
+                    FontWeight="SemiBold"
+                    Style="{StaticResource SubtitleTextBlockStyle}"
+                    Text="Actions" />
+                <!--  CommandBar for Actions  -->
+                <CommandBar
+                    Grid.Row="1"
+                    DefaultLabelPosition="Right"
+                    OverflowButtonVisibility="Auto">
+                    <AppBarButton
+                        Command="{x:Bind ViewModel.AddAnnouncementCommand}"
+                        Icon="Comment"
+                        Label="Announcement"
+                        ToolTipService.ToolTip="Add an announcement action" />
+                    <AppBarButton
+                        Command="{x:Bind ViewModel.AddCommandCommand}"
+                        Icon="Paste"
+                        Label="Command"
+                        ToolTipService.ToolTip="Add a command action" />
+                    <AppBarButton
+                        Command="{x:Bind ViewModel.AddAudioCommand}"
+                        Icon="Volume"
+                        Label="Audio"
+                        ToolTipService.ToolTip="Add an audio action" />
+                    <AppBarSeparator />
+                    <AppBarButton
+                        Command="{x:Bind ViewModel.DeleteActionCommand}"
+                        Icon="Delete"
+                        Label="Delete"
+                        ToolTipService.ToolTip="Remove the selected action" />
+                </CommandBar>
+                <ListView
+                    Grid.Row="2"
+                    AllowDrop="True"
+                    CanDragItems="True"
+                    CanReorderItems="True"
+                    DragItemsStarting="ActionListView_DragItemsStarting"
+                    DragItemsCompleted="ActionListView_DragItemsCompleted"
+                    Drop="ActionListView_Drop"
+                    IsItemClickEnabled="True"
+                    ItemsSource="{x:Bind ViewModel.SelectedWorkflow.Actions, Mode=OneWay}"
+                    KeyDown="ActionListView_KeyDown"
+                    SelectedItem="{x:Bind ViewModel.SelectedAction, Mode=TwoWay}"
+                    SelectionMode="Single">
+                    <i:Interaction.Behaviors>
+                        <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.WorkflowsPageItemClickedCommand}" />
+                    </i:Interaction.Behaviors>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="vmAction:WorkflowActionViewModel">
+                            <Grid Padding="6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <FontIcon
+                                    Grid.Column="0"
+                                    Margin="0,0,8,0"
+                                    FontSize="16"
+                                    Glyph="&#xE945;" />
+                                <TextBlock Grid.Column="1" VerticalAlignment="Center">
+                                    <Run FontWeight="SemiBold" Text="{x:Bind Name, Mode=OneWay}" />
+                                    <Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text=" (" />
+                                    <Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind Type, Mode=OneWay}" />
+                                    <Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text=")" />
+                                </TextBlock>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
 
-        <!--  Column 4: Properties Panel  -->
-        <Grid Grid.Column="4" Padding="8">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-
-            <ContentControl
+            <Border
+                x:Name="Column3Divider"
+                Grid.Column="3"
                 Grid.Row="0"
-                HorizontalContentAlignment="Stretch"
-                VerticalContentAlignment="Stretch"
-                Content="{x:Bind ViewModel.WorkflowsPageSelectedObject, Mode=OneWay}"
-                ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
+                Grid.RowSpan="3"
+                Width="1"
+                Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+            <!--  Column 4: Properties Panel  -->
+            <Grid x:Name="PropertiesPanel" Grid.Column="4" Grid.Row="0" Padding="8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <ContentControl
+                    Grid.Row="0"
+                    HorizontalContentAlignment="Stretch"
+                    VerticalContentAlignment="Stretch"
+                    Content="{x:Bind ViewModel.WorkflowsPageSelectedObject, Mode=OneWay}"
+                    ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
+            </Grid>
         </Grid>
     </Grid>
 </Page>

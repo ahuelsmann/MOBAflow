@@ -14,6 +14,7 @@ using Microsoft.UI.Xaml;
 public class ThemeProvider : IThemeProvider
 {
     private ApplicationTheme _currentTheme = ApplicationTheme.Modern;
+    private bool _isDarkMode = false;
 
     public ThemeProvider()
     {
@@ -36,7 +37,21 @@ public class ThemeProvider : IThemeProvider
         get => _currentTheme;
     }
 
+    public bool IsDarkMode
+    {
+        get => _isDarkMode;
+        set
+        {
+            if (_isDarkMode != value)
+            {
+                _isDarkMode = value;
+                DarkModeChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
+    }
+
     public event EventHandler<ThemeChangedEventArgs>? ThemeChanged;
+    public event EventHandler? DarkModeChanged;
 
     /// <summary>
     /// Sets the application theme by switching ResourceDictionaries.
@@ -66,6 +81,7 @@ public class ThemeProvider : IThemeProvider
             ApplicationTheme.EsuCabControl => ThemeResourceBuilder.BuildEsuCabControlTheme(),
             ApplicationTheme.RocoZ21 => ThemeResourceBuilder.BuildRocoZ21Theme(),
             ApplicationTheme.MaerklinCS => ThemeResourceBuilder.BuildMaerklinCSTheme(),
+            ApplicationTheme.Original => ThemeResourceBuilder.BuildOriginalTheme(),
             _ => ThemeResourceBuilder.BuildModernTheme()
         };
 
@@ -107,3 +123,4 @@ public class ThemeProvider : IThemeProvider
         return null;
     }
 }
+

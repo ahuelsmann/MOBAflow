@@ -293,11 +293,6 @@ public partial class App
         navigationRegistry.Register("traincontrol2", "Train Control 2", "\uE790", typeof(TrainControlPage2), "Shell",
             NavigationCategory.TrainControl, 20, "IsTrainControlPageAvailable", null, null, false);
 
-        // TrainControl: Train Control 3 (ESU CabControl Style)
-        services.AddTransient<TrainControlPage3>();
-        navigationRegistry.Register("traincontrol3", "Train Control 3", "\uE957", typeof(TrainControlPage3), "Shell",
-            NavigationCategory.TrainControl, 30, "IsTrainControlPageAvailable", "ESU", null, false);
-
         // Journey: Journeys (bold)
         services.AddTransient<JourneysPage>();
         navigationRegistry.Register("journeys", "Journeys", "\uE7C1", typeof(JourneysPage), "Shell",
