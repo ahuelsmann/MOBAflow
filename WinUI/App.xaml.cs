@@ -317,7 +317,19 @@ public partial class App
             NavigationCategory.TrackManagement, 10, "IsTrackPlanEditorPageAvailable", "TrackPlanEditorPageLabel",
             "M2,3 L4,3 L14,13 L12,13 Z M12,3 L14,3 L4,13 L2,13 Z");
 
-        services.AddSingleton<SignalBoxPage>();
+        // PagePersistenceCoordinator - coordinates Solution save/load for all IPersistablePage instances
+        services.AddSingleton<PagePersistenceCoordinator>();
+
+        services.AddSingleton<SignalBoxPage>(sp =>
+        {
+            var page = new SignalBoxPage(
+                sp.GetRequiredService<MainWindowViewModel>(),
+                sp.GetRequiredService<IThemeProvider>(),
+                sp.GetRequiredService<AppSettings>(),
+                sp.GetService<ISettingsService>());
+            sp.GetRequiredService<PagePersistenceCoordinator>().RegisterPage(page);
+            return page;
+        });
         navigationRegistry.Register("signalbox", "MOBAesb", null, typeof(SignalBoxPage), "Shell",
             NavigationCategory.TrackManagement, 20, null, null,
             "M7,2 A2,2 0 1,1 11,2 A2,2 0 1,1 7,2 M3,10 A2,2 0 1,1 7,10 A2,2 0 1,1 3,10 M11,10 A2,2 0 1,1 15,10 A2,2 0 1,1 11,10");

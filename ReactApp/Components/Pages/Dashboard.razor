@@ -1,0 +1,83 @@
+@page "/blazor/dashboard"
+
+<PageTitle>Dashboard - Blazor</PageTitle>
+
+<div class="dashboard">
+    <h1>📊 Blazor Dashboard</h1>
+    
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Verbindungsstatus</h3>
+            <span class="status disconnected">Nicht verbunden</span>
+        </div>
+        <div class="stat-card">
+            <h3>Züge</h3>
+            <span class="number">0</span>
+        </div>
+        <div class="stat-card">
+            <h3>Fahrten</h3>
+            <span class="number">0</span>
+        </div>
+        <div class="stat-card">
+            <h3>Workflows</h3>
+            <span class="number">0</span>
+        </div>
+    </div>
+
+    <div class="info-box">
+        <h2>ℹ️ Blazor Server Rendering</h2>
+        <p>Diese Seite wird serverseitig mit Blazor Server gerendert.</p>
+        <p>Die UI-Updates erfolgen über eine SignalR-Verbindung in Echtzeit.</p>
+    </div>
+</div>
+
+<style>
+    .dashboard {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 2rem 0;
+    }
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    .stat-card h3 {
+        margin: 0 0 1rem 0;
+        color: #666;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+    }
+    .number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #667eea;
+    }
+    .status {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+    .status.connected {
+        background: #d4edda;
+        color: #155724;
+    }
+    .status.disconnected {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    .info-box {
+        background: #e7f3ff;
+        padding: 1.5rem;
+        border-radius: 8px;
+        border-left: 4px solid #0078d4;
+    }
+</style>

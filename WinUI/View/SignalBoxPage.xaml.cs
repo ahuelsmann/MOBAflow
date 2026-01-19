@@ -1,11 +1,20 @@
 namespace Moba.WinUI.View;
 
+using Common.Configuration;
+
+using Domain;
+
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
+
+using Service;
+
+using SharedUI.Interface;
+using SharedUI.ViewModel;
 
 using System;
 using System.Collections.Generic;
@@ -15,22 +24,41 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.UI;
 
+using AppTheme = Service.ApplicationTheme;
+
 /// <summary>
 /// Modernes elektronisches Stellwerk (ESTW) - Gleisbildstellwerk.
 /// Ermöglicht die grafische Planung von Gleisanlagen mit Signalen und Weichen.
+/// Uses SignalBoxPlanViewModel for MVVM-compliant data management.
+/// Supports theme/skin switching via IThemeProvider.
 /// </summary>
-public sealed partial class SignalBoxPage : Page
+public sealed partial class SignalBoxPage : Page, IPersistablePage
 {
     private const int GridCellSize = 60;
     private const int GridColumns = 32;
     private const int GridRows = 18;
 
-    private readonly List<TrackElement> _elements = [];
     private readonly Dictionary<Guid, FrameworkElement> _elementVisuals = [];
     private readonly List<Line> _gridLines = [];
+    private readonly IThemeProvider _themeProvider;
+    private readonly AppSettings _settings;
+    private readonly ISettingsService? _settingsService;
+
+    /// <summary>
+    /// MainWindowViewModel for accessing the active project.
+    /// </summary>
+    public MainWindowViewModel ViewModel { get; }
+
+    /// <summary>
+    /// SignalBoxPlan ViewModel - the source of truth for element data.
+    /// </summary>
+    private SignalBoxPlanViewModel? _planViewModel;
+
+    /// <inheritdoc />
+    public bool HasUnsavedChanges { get; private set; }
+
     private readonly List<Ellipse> _blinkingLeds = [];
 
-    private TrackElement? _selectedElement;
     private bool _isGridVisible = true;
     private bool _isPanning;
     private Point _panStartPoint;
@@ -40,13 +68,35 @@ public sealed partial class SignalBoxPage : Page
     private DispatcherTimer? _blinkTimer;
     private bool _blinkState;
 
-    private string _currentSkin = "System";
-
-    public SignalBoxPage()
+    public SignalBoxPage(
+        MainWindowViewModel viewModel,
+        IThemeProvider themeProvider,
+        AppSettings settings,
+        ISettingsService? settingsService = null)
     {
+        ViewModel = viewModel;
+        _themeProvider = themeProvider;
+        _settings = settings;
+        _settingsService = settingsService;
+
         InitializeComponent();
+
+        // Subscribe to theme changes for dynamic updates
+        _themeProvider.ThemeChanged += OnThemeProviderChanged;
+        _themeProvider.DarkModeChanged += OnDarkModeChanged;
+
         Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
+    }
+
+    private void OnThemeProviderChanged(object? sender, ThemeChangedEventArgs e)
+    {
+        DispatcherQueue.TryEnqueue(ApplyThemeColors);
+    }
+
+    private void OnDarkModeChanged(object? sender, EventArgs e)
+    {
+        DispatcherQueue.TryEnqueue(ApplyThemeColors);
     }
 
     private void OnPageLoaded(object sender, RoutedEventArgs e)
@@ -54,14 +104,44 @@ public sealed partial class SignalBoxPage : Page
         InitializeCanvas();
         InitializeBlinkTimer();
         InitializeAspectButtons();
+        LoadFromModel();
         UpdateStatistics();
         UpdatePropertiesPanel();
+        ApplyThemeColors();
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
         _blinkTimer?.Stop();
+        _themeProvider.ThemeChanged -= OnThemeProviderChanged;
+        _themeProvider.DarkModeChanged -= OnDarkModeChanged;
     }
+
+    /// <summary>
+    /// Gets or creates the SignalBoxPlanViewModel for the current project.
+    /// </summary>
+    private SignalBoxPlanViewModel? GetOrCreatePlanViewModel()
+    {
+        var project = ViewModel.SelectedProject?.Model;
+        if (project == null)
+            return null;
+
+        project.SignalBoxPlan ??= new SignalBoxPlan
+        {
+            Name = "Stellwerk",
+            GridWidth = GridColumns,
+            GridHeight = GridRows,
+            CellSize = GridCellSize
+        };
+
+        _planViewModel ??= new SignalBoxPlanViewModel(project.SignalBoxPlan);
+        return _planViewModel;
+    }
+
+    /// <summary>
+    /// Shortcut to access the currently selected element from the ViewModel.
+    /// </summary>
+    private SignalBoxPlanElementViewModel? SelectedElement => _planViewModel?.SelectedElement;
 
     private void InitializeCanvas()
     {
@@ -160,22 +240,42 @@ public sealed partial class SignalBoxPage : Page
 
     #region Skin System
 
-    private void OnSkinSystemClicked(object sender, RoutedEventArgs e) => ApplySkin("System");
-    private void OnSkinBlueClicked(object sender, RoutedEventArgs e) => ApplySkin("Blue");
-    private void OnSkinGreenClicked(object sender, RoutedEventArgs e) => ApplySkin("Green");
-    private void OnSkinDarkClicked(object sender, RoutedEventArgs e) => ApplySkin("Dark");
-    private void OnSkinClassicClicked(object sender, RoutedEventArgs e) => ApplySkin("Classic");
+    // Skin selection handlers - same pattern as TrainControlPage
+    private async void OnSkinSystemClicked(object sender, RoutedEventArgs e) => await SetThemeAsync(AppTheme.Original);
+    private async void OnSkinBlueClicked(object sender, RoutedEventArgs e) => await SetThemeAsync(AppTheme.Modern);
+    private async void OnSkinGreenClicked(object sender, RoutedEventArgs e) => await SetThemeAsync(AppTheme.Classic);
+    private async void OnSkinDarkClicked(object sender, RoutedEventArgs e) => await SetThemeAsync(AppTheme.Dark);
+    private async void OnSkinClassicClicked(object sender, RoutedEventArgs e) => await SetThemeAsync(AppTheme.Dark);
+    private async void OnSkinOrangeClicked(object sender, RoutedEventArgs e) => await SetThemeAsync(AppTheme.EsuCabControl);
+    private async void OnSkinDarkOrangeClicked(object sender, RoutedEventArgs e) => await SetThemeAsync(AppTheme.RocoZ21);
+    private async void OnSkinRedClicked(object sender, RoutedEventArgs e) => await SetThemeAsync(AppTheme.MaerklinCS);
 
-    private void ApplySkin(string skinName)
+    private async Task SetThemeAsync(AppTheme theme)
     {
-        _currentSkin = skinName;
-
-        var (canvasBg, gridColor) = skinName switch
+        _themeProvider.SetTheme(theme);
+        if (_settingsService != null)
         {
-            "Blue" => (Color.FromArgb(255, 10, 30, 50), Color.FromArgb(100, 0, 120, 212)),
-            "Green" => (Color.FromArgb(255, 10, 40, 20), Color.FromArgb(100, 16, 124, 16)),
-            "Dark" => (Color.FromArgb(255, 15, 15, 15), Color.FromArgb(80, 60, 60, 60)),
-            "Classic" => (Color.FromArgb(255, 30, 30, 35), Color.FromArgb(100, 80, 80, 90)),
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Applies theme colors to canvas and grid based on current IThemeProvider settings.
+    /// </summary>
+    private void ApplyThemeColors()
+    {
+        var palette = ThemeColors.GetPalette(_themeProvider.CurrentTheme, _themeProvider.IsDarkMode);
+        var isOriginalTheme = _themeProvider.CurrentTheme == AppTheme.Original;
+
+        // Canvas background - Stellwerk always uses dark backgrounds for better contrast
+        var (canvasBg, gridColor) = _themeProvider.CurrentTheme switch
+        {
+            AppTheme.Modern => (Color.FromArgb(255, 10, 30, 50), Color.FromArgb(100, 0, 120, 212)),
+            AppTheme.Classic => (Color.FromArgb(255, 10, 40, 20), Color.FromArgb(100, 16, 124, 16)),
+            AppTheme.Dark => (Color.FromArgb(255, 15, 15, 15), Color.FromArgb(80, 60, 60, 60)),
+            AppTheme.EsuCabControl => (Color.FromArgb(255, 25, 15, 5), Color.FromArgb(100, 255, 140, 0)),
+            AppTheme.RocoZ21 => (Color.FromArgb(255, 20, 12, 5), Color.FromArgb(100, 255, 102, 0)),
+            AppTheme.MaerklinCS => (Color.FromArgb(255, 30, 10, 10), Color.FromArgb(100, 204, 0, 0)),
             _ => ((Color?)null, (Color?)null)
         };
 
@@ -197,13 +297,25 @@ public sealed partial class SignalBoxPage : Page
             }
         }
 
-        // Alle Elemente neu zeichnen mit neuem Skin
+        // Header styling (if applicable)
+        if (!isOriginalTheme && FindName("HeaderBorder") is Border headerBorder)
+        {
+            headerBorder.Background = palette.HeaderBackgroundBrush;
+        }
+
+        if (!isOriginalTheme && FindName("TitleText") is TextBlock titleText)
+        {
+            titleText.Foreground = palette.HeaderForegroundBrush;
+        }
+
+        // Refresh all track elements with new theme colors
         RefreshAllElements();
     }
 
     private void RefreshAllElements()
     {
-        foreach (var element in _elements)
+        if (_planViewModel == null) return;
+        foreach (var element in _planViewModel.Elements)
         {
             RefreshElementVisual(element);
         }
@@ -249,7 +361,7 @@ public sealed partial class SignalBoxPage : Page
 
     private async void OnCanvasDrop(object sender, DragEventArgs e)
     {
-        if (!e.DataView.Contains(StandardDataFormats.Text))
+        if (!e.DataView.Contains(StandardDataFormats.Text) || _planViewModel == null)
             return;
 
         var text = await e.DataView.GetTextAsync();
@@ -257,16 +369,16 @@ public sealed partial class SignalBoxPage : Page
         int gridX = Math.Clamp((int)(pos.X / GridCellSize), 0, GridColumns - 1);
         int gridY = Math.Clamp((int)(pos.Y / GridCellSize), 0, GridRows - 1);
 
-        // Prüfen ob bereits ein Element an dieser Position existiert
-        var existingElement = _elements.FirstOrDefault(el => el.GridX == gridX && el.GridY == gridY);
+        // Check if an element already exists at this position
+        var existingElement = _planViewModel.HitTest(gridX, gridY);
 
         if (text.StartsWith("NEW:"))
         {
             var typeTag = text[4..];
-            
-            if (Enum.TryParse<TrackElementType>(typeTag, out var elementType))
+
+            if (Enum.TryParse<SignalBoxSymbol>(typeTag, out var symbol))
             {
-                // Wenn bereits ein Element existiert, dieses zuerst entfernen
+                // If an element exists, remove it first
                 if (existingElement != null)
                 {
                     if (_elementVisuals.TryGetValue(existingElement.Id, out var visual))
@@ -274,20 +386,15 @@ public sealed partial class SignalBoxPage : Page
                         TrackCanvas.Children.Remove(visual);
                         _elementVisuals.Remove(existingElement.Id);
                     }
-                    _elements.Remove(existingElement);
-                    
-                    if (_selectedElement?.Id == existingElement.Id)
-                    {
-                        _selectedElement = null;
-                    }
+                    _planViewModel.RemoveElement(existingElement);
                 }
-                
-                CreateElement(elementType, gridX, gridY);
+
+                CreateElement(symbol, gridX, gridY);
             }
         }
         else if (text.StartsWith("MOVE:") && Guid.TryParse(text[5..], out var elementId))
         {
-            var element = _elements.FirstOrDefault(el => el.Id == elementId);
+            var element = _planViewModel.FindById(elementId);
             if (element != null && (existingElement == null || existingElement.Id == elementId))
             {
                 MoveElement(element, gridX, gridY);
@@ -299,7 +406,7 @@ public sealed partial class SignalBoxPage : Page
     {
         // Wenn das Event bereits behandelt wurde (z.B. von einem Element), ignorieren
         if (e.Handled) return;
-        
+
         var point = e.GetCurrentPoint(TrackCanvas);
 
         if (point.Properties.IsRightButtonPressed)
@@ -314,7 +421,8 @@ public sealed partial class SignalBoxPage : Page
         else if (point.Properties.IsLeftButtonPressed)
         {
             // Klick auf leeren Canvas-Bereich - deselektieren
-            SelectElement(null);
+            _planViewModel?.ClearSelection();
+            UpdatePropertiesPanel();
         }
     }
 
@@ -346,59 +454,42 @@ public sealed partial class SignalBoxPage : Page
 
     #region Element Management
 
-    private void CreateElement(TrackElementType type, int gridX, int gridY)
+    private void CreateElement(SignalBoxSymbol symbol, int gridX, int gridY)
     {
-        var element = new TrackElement
-        {
-            Id = Guid.NewGuid(),
-            Type = type,
-            GridX = gridX,
-            GridY = gridY,
-            Rotation = 0,
-            Address = GetNextAddress(type),
-            SignalAspect = IsSignalType(type) ? SignalAspect.Hp0 : SignalAspect.Hp0,
-            SwitchPosition = IsSwitchType(type) ? SwitchPosition.Straight : SwitchPosition.Straight
-        };
+        if (_planViewModel == null) return;
 
-        _elements.Add(element);
-        CreateElementVisual(element);
-        SelectElement(element);
+        var elementVm = _planViewModel.AddElement(symbol, gridX, gridY);
+        CreateElementVisual(elementVm);
+        SelectElement(elementVm);
         UpdateStatistics();
+        MarkDirty();
     }
 
-    private int GetNextAddress(TrackElementType type)
+    private void MoveElement(SignalBoxPlanElementViewModel element, int newGridX, int newGridY)
     {
-        var relevantElements = _elements.Where(e =>
-            (IsSignalType(type) && IsSignalType(e.Type)) ||
-            (IsSwitchType(type) && IsSwitchType(e.Type)));
-
-        return relevantElements.Any() ? relevantElements.Max(e => e.Address) + 1 : 1;
-    }
-
-    private void MoveElement(TrackElement element, int newGridX, int newGridY)
-    {
-        element.GridX = newGridX;
-        element.GridY = newGridY;
+        element.X = newGridX;
+        element.Y = newGridY;
         RefreshElementVisual(element);
+        MarkDirty();
     }
 
-    private void CreateElementVisual(TrackElement element)
+    private void CreateElementVisual(SignalBoxPlanElementViewModel element)
     {
         var visual = BuildElementVisual(element);
-        Canvas.SetLeft(visual, element.GridX * GridCellSize);
-        Canvas.SetTop(visual, element.GridY * GridCellSize);
+        Canvas.SetLeft(visual, element.X * GridCellSize);
+        Canvas.SetTop(visual, element.Y * GridCellSize);
         TrackCanvas.Children.Add(visual);
         _elementVisuals[element.Id] = visual;
     }
 
-    private FrameworkElement BuildElementVisual(TrackElement element)
+    private FrameworkElement BuildElementVisual(SignalBoxPlanElementViewModel element)
     {
         var container = new Canvas
         {
             Width = GridCellSize,
             Height = GridCellSize,
             Tag = element.Id,
-            CanDrag = _selectedElement?.Id == element.Id, // Nur selektierte Elemente können gedraggt werden
+            CanDrag = SelectedElement?.Id == element.Id, // Nur selektierte Elemente können gedraggt werden
             Background = new SolidColorBrush(Colors.Transparent),
             RenderTransform = new RotateTransform
             {
@@ -409,7 +500,7 @@ public sealed partial class SignalBoxPage : Page
         };
 
         // Highlight-Rahmen für selektiertes Element
-        if (_selectedElement?.Id == element.Id)
+        if (SelectedElement?.Id == element.Id)
         {
             var highlight = new Rectangle
             {
@@ -427,49 +518,49 @@ public sealed partial class SignalBoxPage : Page
         }
 
         // Element-spezifische Grafik erstellen
-        var graphic = element.Type switch
+        var graphic = element.Symbol switch
         {
-            TrackElementType.StraightTrack => CreateStraightTrackGraphic(),
-            TrackElementType.Curve45 => CreateCurve45Graphic(),
-            TrackElementType.Curve90 => CreateCurve90Graphic(),
-            TrackElementType.BufferStop => CreateBufferStopGraphic(),
-            TrackElementType.SwitchLeft => CreateSwitchGraphic(element, isLeft: true),
-            TrackElementType.SwitchRight => CreateSwitchGraphic(element, isLeft: false),
-            TrackElementType.SwitchThreeWay => CreateThreeWaySwitchGraphic(element),
-            TrackElementType.SwitchDouble => CreateDoubleSwitchGraphic(element),
-            TrackElementType.Crossing => CreateCrossingGraphic(),
-            TrackElementType.SignalKsMain => CreateKsMainSignalGraphic(element),
-            TrackElementType.SignalKsDistant => CreateKsDistantSignalGraphic(element),
-            TrackElementType.SignalShunt => CreateShuntSignalGraphic(element),
-            TrackElementType.SignalBlock => CreateBlockSignalGraphic(element),
-            TrackElementType.SignalKsScreen => CreateKsSignalScreenGraphic(element),
-            TrackElementType.Platform => CreatePlatformGraphic(),
-            TrackElementType.Feedback => CreateFeedbackGraphic(),
+            SignalBoxSymbol.TrackStraight => CreateStraightTrackGraphic(),
+            SignalBoxSymbol.TrackCurve45 => CreateCurve45Graphic(),
+            SignalBoxSymbol.TrackCurve90 => CreateCurve90Graphic(),
+            SignalBoxSymbol.TrackEnd => CreateBufferStopGraphic(),
+            SignalBoxSymbol.SwitchSimpleLeft => CreateSwitchGraphic(element, isLeft: true),
+            SignalBoxSymbol.SwitchSimpleRight => CreateSwitchGraphic(element, isLeft: false),
+            SignalBoxSymbol.SwitchThreeWay => CreateThreeWaySwitchGraphic(element),
+            SignalBoxSymbol.SwitchDoubleSlip => CreateDoubleSwitchGraphic(element),
+            SignalBoxSymbol.TrackCrossing => CreateCrossingGraphic(),
+            SignalBoxSymbol.SignalKsMain => CreateKsMainSignalGraphic(element),
+            SignalBoxSymbol.SignalKsDistant => CreateKsDistantSignalGraphic(element),
+            SignalBoxSymbol.SignalSh or SignalBoxSymbol.SignalDwarf => CreateShuntSignalGraphic(element),
+            SignalBoxSymbol.SignalBlock => CreateBlockSignalGraphic(element),
+            SignalBoxSymbol.SignalKsCombined => CreateKsSignalScreenGraphic(element),
+            SignalBoxSymbol.Platform => CreatePlatformGraphic(),
+            SignalBoxSymbol.Detector or SignalBoxSymbol.AxleCounter => CreateFeedbackGraphic(),
             _ => CreatePlaceholderGraphic()
         };
 
         container.Children.Add(graphic);
 
             // Event-Handler für Klick
-            container.PointerPressed += (s, e) =>
-            {
-                e.Handled = true;
-                var point = e.GetCurrentPoint(container);
-                if (point.Properties.IsLeftButtonPressed)
-                {
-                    SelectElement(element);
-                }
-            };
-
-            // Doppelklick für Weichen/Signale schalten
-            container.DoubleTapped += (s, e) =>
-            {
-                e.Handled = true;
-                if (IsSwitchType(element.Type))
-                {
-                    ToggleSwitchPosition(element);
+                    container.PointerPressed += (s, e) =>
+                    {
+                        e.Handled = true;
+                        var point = e.GetCurrentPoint(container);
+                        if (point.Properties.IsLeftButtonPressed)
+                        {
+                            SelectElement(element);
                         }
-                        else if (IsSignalType(element.Type))
+                    };
+
+                    // Doppelklick für Weichen/Signale schalten
+                    container.DoubleTapped += (s, e) =>
+                    {
+                        e.Handled = true;
+                        if (SignalBoxPlanViewModel.IsSwitchSymbol(element.Symbol))
+                        {
+                            ToggleSwitchPosition(element);
+                        }
+                        else if (SignalBoxPlanViewModel.IsSignalSymbol(element.Symbol))
                         {
                             ToggleSignalAspect(element);
                         }
@@ -483,53 +574,53 @@ public sealed partial class SignalBoxPage : Page
                     };
 
                     return container;
-        }
+            }
 
-        private void ToggleSwitchPosition(TrackElement element)
-        {
-            element.SwitchPosition = element.Type switch
+            private void ToggleSwitchPosition(SignalBoxPlanElementViewModel element)
+            {
+                element.SwitchPosition = element.Symbol switch
                 {
-                    TrackElementType.SwitchThreeWay => element.SwitchPosition switch
+                    SignalBoxSymbol.SwitchThreeWay => element.SwitchPosition switch
                     {
-                        SwitchPosition.Straight => SwitchPosition.DivergingLeft,
-                        SwitchPosition.DivergingLeft => SwitchPosition.DivergingRight,
-                        _ => SwitchPosition.Straight
+                        Domain.SwitchPosition.Straight => Domain.SwitchPosition.DivergingLeft,
+                        Domain.SwitchPosition.DivergingLeft => Domain.SwitchPosition.DivergingRight,
+                        _ => Domain.SwitchPosition.Straight
                     },
-                    TrackElementType.SwitchDouble => element.SwitchPosition switch
+                    SignalBoxSymbol.SwitchDoubleSlip => element.SwitchPosition switch
                     {
-                        SwitchPosition.Straight => SwitchPosition.DivergingLeft,
-                        _ => SwitchPosition.Straight
+                        Domain.SwitchPosition.Straight => Domain.SwitchPosition.DivergingLeft,
+                        _ => Domain.SwitchPosition.Straight
                     },
-                    TrackElementType.SwitchLeft => element.SwitchPosition switch
+                    SignalBoxSymbol.SwitchSimpleLeft => element.SwitchPosition switch
                     {
-                        SwitchPosition.Straight => SwitchPosition.DivergingLeft,
-                        _ => SwitchPosition.Straight
+                        Domain.SwitchPosition.Straight => Domain.SwitchPosition.DivergingLeft,
+                        _ => Domain.SwitchPosition.Straight
                     },
-                    TrackElementType.SwitchRight => element.SwitchPosition switch
+                    SignalBoxSymbol.SwitchSimpleRight => element.SwitchPosition switch
                     {
-                        SwitchPosition.Straight => SwitchPosition.DivergingRight,
-                        _ => SwitchPosition.Straight
+                        Domain.SwitchPosition.Straight => Domain.SwitchPosition.DivergingRight,
+                        _ => Domain.SwitchPosition.Straight
                     },
-                    _ => SwitchPosition.Straight
+                    _ => Domain.SwitchPosition.Straight
                 };
                 RefreshElementVisual(element);
                 UpdatePropertiesPanel();
             }
 
-            private void ToggleSignalAspect(TrackElement element)
+            private void ToggleSignalAspect(SignalBoxPlanElementViewModel element)
             {
                 element.SignalAspect = element.SignalAspect switch
                 {
-                    SignalAspect.Hp0 => SignalAspect.Ks1,
-                    SignalAspect.Ks1 => SignalAspect.Ks2,
-                    SignalAspect.Ks2 => SignalAspect.Hp0,
-                    _ => SignalAspect.Hp0
+                    Domain.SignalAspect.Hp0 => Domain.SignalAspect.Ks1,
+                    Domain.SignalAspect.Ks1 => Domain.SignalAspect.Ks2,
+                    Domain.SignalAspect.Ks2 => Domain.SignalAspect.Hp0,
+                    _ => Domain.SignalAspect.Hp0
                 };
                 RefreshElementVisual(element);
                 UpdatePropertiesPanel();
             }
 
-            private void RefreshElementVisual(TrackElement element)
+            private void RefreshElementVisual(SignalBoxPlanElementViewModel element)
             {
                 if (_elementVisuals.TryGetValue(element.Id, out var oldVisual))
                 {
@@ -539,20 +630,20 @@ public sealed partial class SignalBoxPage : Page
                 CreateElementVisual(element);
             }
 
-            private void SelectElement(TrackElement? element)
+            private void SelectElement(SignalBoxPlanElementViewModel? element)
             {
-                if (_selectedElement?.Id == element?.Id) return;
-        
-                var previousSelection = _selectedElement;
-                _selectedElement = element;
+                if (SelectedElement?.Id == element?.Id) return;
+
+                var previousSelection = SelectedElement;
+                _planViewModel?.Select(element);
 
                 DispatcherQueue.TryEnqueue(() =>
                 {
-                    if (previousSelection != null && _elements.Contains(previousSelection))
+                    if (previousSelection != null && _planViewModel?.Elements.Contains(previousSelection) == true)
                     {
                         RefreshElementVisual(previousSelection);
                     }
-                    if (element != null && _elements.Contains(element))
+                    if (element != null && _planViewModel?.Elements.Contains(element) == true)
                     {
                         RefreshElementVisual(element);
                     }
@@ -564,680 +655,86 @@ public sealed partial class SignalBoxPage : Page
 
             private void DeleteSelectedElement()
             {
-                if (_selectedElement == null) return;
+                if (SelectedElement == null || _planViewModel == null) return;
 
-                var elementToDelete = _selectedElement;
+                var elementToDelete = SelectedElement;
 
-                _selectedElement = null;
+                _planViewModel.ClearSelection();
                 _blinkingLeds.Clear();
                 UpdatePropertiesPanel();
 
-        // Dann aus Canvas und Listen entfernen
-        if (_elementVisuals.TryGetValue(elementToDelete.Id, out var visual))
-        {
-            TrackCanvas.Children.Remove(visual);
-            _elementVisuals.Remove(elementToDelete.Id);
-        }
+                // Dann aus Canvas und Listen entfernen
+                if (_elementVisuals.TryGetValue(elementToDelete.Id, out var visual))
+                {
+                    TrackCanvas.Children.Remove(visual);
+                    _elementVisuals.Remove(elementToDelete.Id);
+                }
 
-        _elements.Remove(elementToDelete);
-        UpdateStatistics();
-    }
-
-    #endregion
-
-    #region Element Graphics - Simplified Track Display
-
-    // Verbindungspunkte für alle Elemente (60x60 Zelle):
-    // Links:  (0, 30)   Rechts: (60, 30)
-    // Oben:   (30, 0)   Unten:  (30, 60)
-    
-    private static readonly SolidColorBrush TrackBrush = new(Color.FromArgb(255, 200, 200, 200));
-    private static readonly SolidColorBrush TrackActiveBrush = new(Color.FromArgb(255, 0, 200, 0));
-    private static readonly SolidColorBrush BufferStopBrush = new(Color.FromArgb(255, 200, 60, 60));
-    private const double TrackThickness = 4;
-
-    private static Canvas CreateStraightTrackGraphic()
-    {
-        // Horizontal: Links (0,30) → Rechts (60,30)
-        var canvas = new Canvas { Width = 60, Height = 60 };
-        canvas.Children.Add(new Line
-        {
-            X1 = 0, Y1 = 30, X2 = 60, Y2 = 30,
-            Stroke = TrackBrush,
-            StrokeThickness = TrackThickness
-        });
-        return canvas;
-    }
-
-    private static Canvas CreateCurve45Graphic()
-    {
-        // 45° Kurve (flach): Links (0,30) → Oben (30,0)
-        // Flachere Biegung als 90°-Kurve
-        var canvas = new Canvas { Width = 60, Height = 60 };
-        canvas.Children.Add(new Path
-        {
-            Data = (Geometry)Microsoft.UI.Xaml.Markup.XamlBindingHelper.ConvertValue(typeof(Geometry), 
-                "M 0,30 C 20,30 30,15 30,0"),
-            Stroke = TrackBrush,
-            StrokeThickness = TrackThickness
-        });
-        return canvas;
-    }
-
-    private static Canvas CreateCurve90Graphic()
-    {
-        // 90° Kurve (eng): Links (0,30) → Oben (30,0)
-        // Enge Biegung wie ein Viertelkreis
-        var canvas = new Canvas { Width = 60, Height = 60 };
-        canvas.Children.Add(new Path
-        {
-            Data = (Geometry)Microsoft.UI.Xaml.Markup.XamlBindingHelper.ConvertValue(typeof(Geometry), 
-                "M 0,30 C 0,13 13,0 30,0"),
-            Stroke = TrackBrush,
-            StrokeThickness = TrackThickness
-        });
-        return canvas;
-    }
-
-    private static Canvas CreateBufferStopGraphic()
-    {
-        // Prellbock: Links (0,30) → Mitte, dann Stopp
-        var canvas = new Canvas { Width = 60, Height = 60 };
-        
-        canvas.Children.Add(new Line
-        {
-            X1 = 0, Y1 = 30, X2 = 45, Y2 = 30,
-            Stroke = TrackBrush,
-            StrokeThickness = TrackThickness
-        });
-        
-        canvas.Children.Add(new Line
-        {
-            X1 = 45, Y1 = 18, X2 = 45, Y2 = 42,
-            Stroke = BufferStopBrush,
-            StrokeThickness = 5
-        });
-        
-        return canvas;
-    }
-
-    private static Canvas CreateSwitchGraphic(TrackElement element, bool isLeft)
-    {
-        // Weiche: Links (0,30) → Rechts (60,30) + Abzweig nach Oben/Unten
-        var canvas = new Canvas { Width = 60, Height = 60 };
-        var isStraight = element.SwitchPosition == SwitchPosition.Straight;
-        var isDiverging = isLeft 
-            ? element.SwitchPosition == SwitchPosition.DivergingLeft 
-            : element.SwitchPosition == SwitchPosition.DivergingRight;
-
-        // Hauptgleis durchgehend
-        canvas.Children.Add(new Line
-        {
-            X1 = 0, Y1 = 30, X2 = 60, Y2 = 30,
-            Stroke = isStraight ? TrackActiveBrush : TrackBrush,
-            StrokeThickness = TrackThickness
-        });
-
-        // Abzweig: Von Mitte (30,30) nach Rechts-Oben (60,0) oder Rechts-Unten (60,60)
-        canvas.Children.Add(new Line
-        {
-            X1 = 30, Y1 = 30,
-            X2 = 60, Y2 = isLeft ? 0 : 60,
-            Stroke = isDiverging ? TrackActiveBrush : TrackBrush,
-            StrokeThickness = TrackThickness
-        });
-
-        return canvas;
-    }
-
-    private static Canvas CreateThreeWaySwitchGraphic(TrackElement element)
-    {
-        // Dreiwege-Weiche: Gerade + Abzweig nach oben + Abzweig nach unten
-        var canvas = new Canvas { Width = 60, Height = 60 };
-        var isStraight = element.SwitchPosition == SwitchPosition.Straight;
-        var isLeft = element.SwitchPosition == SwitchPosition.DivergingLeft;
-        var isRight = element.SwitchPosition == SwitchPosition.DivergingRight;
-
-        // Hauptgleis durchgehend: (0,30) → (60,30)
-        canvas.Children.Add(new Line
-        {
-            X1 = 0, Y1 = 30, X2 = 60, Y2 = 30,
-            Stroke = isStraight ? TrackActiveBrush : TrackBrush,
-            StrokeThickness = TrackThickness
-        });
-
-        // Abzweig nach oben: (30,30) → (60,0)
-        canvas.Children.Add(new Line
-        {
-            X1 = 30, Y1 = 30,
-            X2 = 60, Y2 = 0,
-            Stroke = isLeft ? TrackActiveBrush : TrackBrush,
-            StrokeThickness = TrackThickness
-        });
-
-        // Abzweig nach unten: (30,30) → (60,60)
-        canvas.Children.Add(new Line
-        {
-            X1 = 30, Y1 = 30,
-            X2 = 60, Y2 = 60,
-            Stroke = isRight ? TrackActiveBrush : TrackBrush,
-            StrokeThickness = TrackThickness
-        });
-
-        return canvas;
-    }
-
-    private static Canvas CreateDoubleSwitchGraphic(TrackElement element)
-    {
-        // DKW (Doppelkreuzungsweiche): 4 Fahrwege möglich
-        // Straight = Beide geradeaus, DivergingLeft = Kreuzung aktiv
-        var canvas = new Canvas { Width = 60, Height = 60 };
-        var isStraight = element.SwitchPosition == SwitchPosition.Straight;
-        var isCrossing = element.SwitchPosition != SwitchPosition.Straight;
-
-        // Oberes Gleis: (0,15) → (60,15)
-        canvas.Children.Add(new Line
-        {
-            X1 = 0, Y1 = 15, X2 = 60, Y2 = 15,
-            Stroke = isStraight ? TrackActiveBrush : TrackBrush,
-            StrokeThickness = TrackThickness
-        });
-
-        // Unteres Gleis: (0,45) → (60,45)
-        canvas.Children.Add(new Line
-        {
-            X1 = 0, Y1 = 45, X2 = 60, Y2 = 45,
-            Stroke = isStraight ? TrackActiveBrush : TrackBrush,
-            StrokeThickness = TrackThickness
-        });
-
-        // Kreuzverbindung oben-links nach unten-rechts: (0,15) → (60,45)
-        canvas.Children.Add(new Line
-        {
-            X1 = 0, Y1 = 15, X2 = 60, Y2 = 45,
-            Stroke = isCrossing ? TrackActiveBrush : TrackBrush,
-            StrokeThickness = TrackThickness - 1
-        });
-        
-        // Kreuzverbindung unten-links nach oben-rechts: (0,45) → (60,15)
-        canvas.Children.Add(new Line
-        {
-            X1 = 0, Y1 = 45, X2 = 60, Y2 = 15,
-            Stroke = isCrossing ? TrackActiveBrush : TrackBrush,
-            StrokeThickness = TrackThickness - 1
-        });
-
-        return canvas;
-    }
-
-    private static Canvas CreateCrossingGraphic()
-    {
-        // Kreuzung: Horizontal + Vertikal
-        var canvas = new Canvas { Width = 60, Height = 60 };
-
-        // Horizontal: (0,30) → (60,30)
-        canvas.Children.Add(new Line
-        {
-            X1 = 0, Y1 = 30, X2 = 60, Y2 = 30,
-            Stroke = TrackBrush,
-            StrokeThickness = TrackThickness
-        });
-
-        // Vertikal: (30,0) → (30,60)
-        canvas.Children.Add(new Line
-        {
-            X1 = 30, Y1 = 0, X2 = 30, Y2 = 60,
-            Stroke = TrackBrush,
-            StrokeThickness = TrackThickness
-        });
-
-        return canvas;
-    }
-
-    private Canvas CreateKsMainSignalGraphic(TrackElement element)
-    {
-        var canvas = new Canvas { Width = 60, Height = 60 };
-
-        // Use KsSignalScreen for realistic display
-        var signalScreen = new Controls.KsSignalScreen
-        {
-            Width = 50,
-            Height = 50,
-            Aspect = element.SignalAspect.ToString()
-        };
-        Canvas.SetLeft(signalScreen, 5);
-        Canvas.SetTop(signalScreen, 5);
-        canvas.Children.Add(signalScreen);
-
-        return canvas;
-    }
-
-    private Canvas CreateKsDistantSignalGraphic(TrackElement element)
-    {
-        var canvas = new Canvas { Width = 60, Height = 60 };
-
-        // Use KsSignalScreen for realistic display
-        var signalScreen = new Controls.KsSignalScreen
-        {
-            Width = 50,
-            Height = 50,
-            Aspect = element.SignalAspect.ToString()
-        };
-        Canvas.SetLeft(signalScreen, 5);
-        Canvas.SetTop(signalScreen, 5);
-        canvas.Children.Add(signalScreen);
-
-        return canvas;
-    }
-
-    private static Canvas CreateShuntSignalGraphic(TrackElement element)
-    {
-        var canvas = new Canvas { Width = 60, Height = 60 };
-
-        // Signalmast
-        canvas.Children.Add(new Rectangle { Width = 4, Height = 30, Fill = new SolidColorBrush(Color.FromArgb(255, 44, 44, 44)) });
-        Canvas.SetLeft(canvas.Children[^1], 28);
-        Canvas.SetTop(canvas.Children[^1], 25);
-
-        // Signalgehäuse
-        canvas.Children.Add(new Rectangle { Width = 22, Height = 16, Fill = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30)), RadiusX = 2, RadiusY = 2 });
-        Canvas.SetLeft(canvas.Children[^1], 19);
-        Canvas.SetTop(canvas.Children[^1], 12);
-
-        // Zwei weiße LEDs (Ra12)
-        canvas.Children.Add(new Ellipse { Width = 7, Height = 7, Fill = new SolidColorBrush(Colors.White) });
-        Canvas.SetLeft(canvas.Children[^1], 22);
-        Canvas.SetTop(canvas.Children[^1], 17);
-
-        canvas.Children.Add(new Ellipse { Width = 7, Height = 7, Fill = new SolidColorBrush(Colors.White) });
-        Canvas.SetLeft(canvas.Children[^1], 31);
-        Canvas.SetTop(canvas.Children[^1], 17);
-
-        return canvas;
-    }
-
-    private static Canvas CreateBlockSignalGraphic(TrackElement element)
-    {
-        var canvas = new Canvas { Width = 60, Height = 60 };
-
-        // Signalmast
-        canvas.Children.Add(new Rectangle { Width = 4, Height = 30, Fill = new SolidColorBrush(Color.FromArgb(255, 44, 44, 44)) });
-        Canvas.SetLeft(canvas.Children[^1], 28);
-        Canvas.SetTop(canvas.Children[^1], 25);
-
-        // Rundes Gehäuse
-        canvas.Children.Add(new Ellipse { Width = 22, Height = 22, Fill = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30)), Stroke = new SolidColorBrush(Color.FromArgb(255, 96, 96, 96)), StrokeThickness = 1 });
-        Canvas.SetLeft(canvas.Children[^1], 19);
-        Canvas.SetTop(canvas.Children[^1], 8);
-
-        // Rote LED
-        canvas.Children.Add(new Ellipse { Width = 10, Height = 10, Fill = new SolidColorBrush(Color.FromArgb(255, 255, 0, 0)) });
-        Canvas.SetLeft(canvas.Children[^1], 25);
-        Canvas.SetTop(canvas.Children[^1], 14);
-
-        return canvas;
-    }
-
-    /// <summary>
-    /// Creates a KsSignalScreen graphic using the actual KsSignalScreen UserControl.
-    /// The control uses Viewbox internally, so it scales to any size.
-    /// </summary>
-    private static UIElement CreateKsSignalScreenGraphic(TrackElement element)
-    {
-        // Use the actual KsSignalScreen UserControl - it has a Viewbox so it scales automatically
-        var signalScreen = new Controls.KsSignalScreen
-        {
-            Width = 55,
-            Height = 55,
-            Aspect = element.SignalAspect.ToString()
-        };
-        
-        return signalScreen;
-    }
-
-    private static Canvas CreatePlatformGraphic()
-    {
-        var canvas = new Canvas { Width = 60, Height = 60 };
-
-        // Gleis
-        canvas.Children.Add(new Line
-        {
-            X1 = 0, Y1 = 40, X2 = 60, Y2 = 40,
-            Stroke = TrackBrush,
-            StrokeThickness = TrackThickness
-        });
-
-        // Bahnsteig (einfaches Rechteck)
-        canvas.Children.Add(new Rectangle 
-        { 
-            Width = 50, 
-            Height = 12, 
-            Fill = new SolidColorBrush(Color.FromArgb(255, 150, 150, 150)),
-            Stroke = new SolidColorBrush(Color.FromArgb(255, 100, 100, 100)),
-            StrokeThickness = 1
-        });
-        Canvas.SetLeft(canvas.Children[^1], 5);
-        Canvas.SetTop(canvas.Children[^1], 15);
-
-        return canvas;
-    }
-
-    private static Canvas CreateFeedbackGraphic()
-    {
-        var canvas = new Canvas { Width = 60, Height = 60 };
-
-        // Gleis
-        canvas.Children.Add(new Line
-        {
-            X1 = 0, Y1 = 30, X2 = 60, Y2 = 30,
-            Stroke = TrackBrush,
-            StrokeThickness = TrackThickness
-        });
-
-        // Rückmelder-Markierung (kleiner Kreis)
-        var marker = new Ellipse 
-        { 
-            Width = 10, 
-            Height = 10, 
-            Fill = new SolidColorBrush(Color.FromArgb(255, 255, 200, 0)),
-            Stroke = new SolidColorBrush(Color.FromArgb(255, 200, 150, 0)),
-            StrokeThickness = 1
-        };
-        Canvas.SetLeft(marker, 25);
-        Canvas.SetTop(marker, 25);
-        canvas.Children.Add(marker);
-
-        return canvas;
-    }
-
-    private static Canvas CreatePlaceholderGraphic()
-    {
-        var canvas = new Canvas { Width = 60, Height = 60 };
-        canvas.Children.Add(new Rectangle
-        {
-            Width = 56,
-            Height = 56,
-            Fill = new SolidColorBrush(Color.FromArgb(30, 100, 100, 100)),
-            Stroke = new SolidColorBrush(Color.FromArgb(60, 150, 150, 150)),
-            StrokeThickness = 1
-        });
-        Canvas.SetLeft(canvas.Children[^1], 2);
-        Canvas.SetTop(canvas.Children[^1], 2);
-        return canvas;
-    }
-
-    #endregion
-
-    #region Properties Panel
-
-    private void UpdatePropertiesPanel()
-    {
-        if (_selectedElement == null)
-        {
-            NoSelectionInfo.Visibility = Visibility.Visible;
-            ElementPropertiesPanel.Visibility = Visibility.Collapsed;
-            return;
-        }
-
-        NoSelectionInfo.Visibility = Visibility.Collapsed;
-        ElementPropertiesPanel.Visibility = Visibility.Visible;
-
-        // Element-Info aktualisieren
-        ElementTypeText.Text = GetElementTypeName(_selectedElement.Type);
-        ElementPositionText.Text = $"({_selectedElement.GridX}, {_selectedElement.GridY})";
-        ElementIdText.Text = _selectedElement.Id.ToString()[..8];
-
-        // Adresse
-        ElementAddressBox.Value = _selectedElement.Address;
-
-        // Signal-Panel Sichtbarkeit
-        SignalAspectPanel.Visibility = IsSignalType(_selectedElement.Type) ? Visibility.Visible : Visibility.Collapsed;
-
-        // Update SignalPreview with current aspect
-            if (IsSignalType(_selectedElement.Type))
-            {
-                SignalPreview.Aspect = _selectedElement.SignalAspect.ToString();
+                _planViewModel.RemoveElement(elementToDelete);
+                UpdateStatistics();
+                MarkDirty();
             }
 
-            // Weichen-Panel Sichtbarkeit
-            SwitchPositionPanel.Visibility = IsSwitchType(_selectedElement.Type) ? Visibility.Visible : Visibility.Collapsed;
+            #endregion
 
-            // Aspekt-Buttons aktualisieren
-            UpdateAspectButtons();
-        
-            // Weichen-Buttons aktualisieren
-            if (IsSwitchType(_selectedElement.Type))
-            {
-                UpdateSwitchButtons();
+                // Properties Panel methods moved to SignalBoxPage.Properties.cs
+
+                #region IPersistablePage Implementation
+
+                /// <inheritdoc />
+                public void SyncToModel()
+                {
+                    // ViewModel already syncs to Model automatically via property setters
+                    // Just ensure the plan exists
+                    var project = ViewModel.SelectedProject?.Model;
+                    if (project == null)
+                        return;
+
+                    project.SignalBoxPlan ??= new SignalBoxPlan
+                    {
+                        Name = "Stellwerk",
+                        GridWidth = GridColumns,
+                        GridHeight = GridRows,
+                        CellSize = GridCellSize
+                    };
+
+                    HasUnsavedChanges = false;
+                }
+
+                /// <inheritdoc />
+                public void LoadFromModel()
+                {
+                    // Clear existing visuals
+                    foreach (var visual in _elementVisuals.Values)
+                    {
+                        TrackCanvas.Children.Remove(visual);
+                    }
+                    _elementVisuals.Clear();
+
+                    // Get or create ViewModel and refresh from model
+                    var planVm = GetOrCreatePlanViewModel();
+                    if (planVm == null)
+                        return;
+
+                    planVm.Refresh();
+
+                    // Recreate visuals for all elements
+                    foreach (var element in planVm.Elements)
+                    {
+                        CreateElementVisual(element);
+                    }
+
+                    HasUnsavedChanges = false;
+                    UpdateStatistics();
+                }
+
+                /// <summary>
+                /// Mark page as having unsaved changes.
+                /// </summary>
+                private void MarkDirty()
+                {
+                    HasUnsavedChanges = true;
+                }
+
+                #endregion
             }
-        }
-
-        private void UpdateAspectButtons()
-    {
-        if (_selectedElement == null) return;
-
-        var accentBrush = (Brush)Application.Current.Resources["AccentFillColorDefaultBrush"];
-        var normalBrush = (Brush)Application.Current.Resources["SubtleFillColorSecondaryBrush"];
-
-        AspectHp0Button.Background = _selectedElement.SignalAspect == SignalAspect.Hp0 ? accentBrush : normalBrush;
-        AspectKs1Button.Background = _selectedElement.SignalAspect == SignalAspect.Ks1 ? accentBrush : normalBrush;
-        AspectKs2Button.Background = _selectedElement.SignalAspect == SignalAspect.Ks2 ? accentBrush : normalBrush;
-        AspectKs1BlinkButton.Background = _selectedElement.SignalAspect == SignalAspect.Ks1Blink ? accentBrush : normalBrush;
-        AspectKennlichtButton.Background = _selectedElement.SignalAspect == SignalAspect.Kennlicht ? accentBrush : normalBrush;
-        AspectDunkelButton.Background = _selectedElement.SignalAspect == SignalAspect.Dunkel ? accentBrush : normalBrush;
-        AspectRa12Button.Background = _selectedElement.SignalAspect == SignalAspect.Ra12 ? accentBrush : normalBrush;
-        AspectZs1Button.Background = _selectedElement.SignalAspect == SignalAspect.Zs1 ? accentBrush : normalBrush;
-        AspectZs7Button.Background = _selectedElement.SignalAspect == SignalAspect.Zs7 ? accentBrush : normalBrush;
-
-        // Update SignalType ComboBox
-        SignalTypeComboBox.SelectedIndex = _selectedElement.Type switch
-        {
-            TrackElementType.SignalKsMain => 0,
-            TrackElementType.SignalKsDistant => 1,
-            TrackElementType.SignalKsScreen => 2,
-            TrackElementType.SignalShunt => 3,
-            TrackElementType.SignalBlock => 4,
-            _ => 0
-        };
-    }
-
-    private static string GetElementTypeName(TrackElementType type) => type switch
-    {
-        TrackElementType.StraightTrack => "Gerades Gleis",
-        TrackElementType.Curve45 => "Kurve 45°",
-        TrackElementType.Curve90 => "Kurve 90°",
-        TrackElementType.BufferStop => "Prellbock",
-        TrackElementType.SwitchLeft => "Weiche Links",
-        TrackElementType.SwitchRight => "Weiche Rechts",
-        TrackElementType.SwitchThreeWay => "Dreiwege-Weiche",
-        TrackElementType.SwitchDouble => "Doppelkreuzungsweiche",
-        TrackElementType.Crossing => "Kreuzung",
-        TrackElementType.SignalKsMain => "Ks-Hauptsignal",
-        TrackElementType.SignalKsDistant => "Ks-Vorsignal",
-        TrackElementType.SignalShunt => "Rangiersignal",
-        TrackElementType.SignalBlock => "Gleissperrsignal",
-        TrackElementType.SignalKsScreen => "Ks-Signalschirm",
-        TrackElementType.Platform => "Bahnsteig",
-        TrackElementType.Feedback => "Rückmelder",
-        _ => "Unbekannt"
-    };
-
-    private static bool IsSignalType(TrackElementType type) =>
-        type is TrackElementType.SignalKsMain or TrackElementType.SignalKsDistant or TrackElementType.SignalShunt or TrackElementType.SignalBlock or TrackElementType.SignalKsScreen;
-
-    private static bool IsSwitchType(TrackElementType type) =>
-    type is TrackElementType.SwitchLeft or TrackElementType.SwitchRight or TrackElementType.SwitchThreeWay or TrackElementType.SwitchDouble;
-
-    private static bool IsTrackType(TrackElementType type) =>
-        type is TrackElementType.StraightTrack or TrackElementType.Curve45 or TrackElementType.Curve90 or TrackElementType.BufferStop or TrackElementType.Crossing;
-
-    private void UpdateStatistics()
-    {
-        TrackCountText.Text = _elements.Count(e => IsTrackType(e.Type)).ToString();
-        SwitchCountText.Text = _elements.Count(e => IsSwitchType(e.Type)).ToString();
-        SignalCountText.Text = _elements.Count(e => IsSignalType(e.Type)).ToString();
-    }
-
-    #endregion
-
-    #region Property Panel Event Handlers
-
-    private void OnRotateClicked(object sender, RoutedEventArgs e)
-    {
-        if (_selectedElement == null || sender is not Button { Tag: string rotationStr }) return;
-
-        if (int.TryParse(rotationStr, out var rotation))
-        {
-            _selectedElement.Rotation = rotation;
-            RefreshElementVisual(_selectedElement);
-        }
-    }
-
-    private void OnAspectClicked(object sender, PointerRoutedEventArgs e)
-    {
-        if (_selectedElement == null || sender is not Border { Tag: string aspectStr }) return;
-
-        if (Enum.TryParse<SignalAspect>(aspectStr, out var aspect))
-        {
-            _blinkingLeds.Clear();
-            _selectedElement.SignalAspect = aspect;
-
-            // Update preview signal
-            SignalPreview.Aspect = aspectStr;
-
-            // Update canvas element
-            RefreshElementVisual(_selectedElement);
-            UpdateAspectButtons();
-        }
-    }
-
-    private void OnSwitchPositionClicked(object sender, RoutedEventArgs e)
-    {
-        if (_selectedElement == null || sender is not Button { Tag: string positionStr }) return;
-
-        _selectedElement.SwitchPosition = positionStr switch
-        {
-            "Straight" => SwitchPosition.Straight,
-            "DivergingLeft" => SwitchPosition.DivergingLeft,
-            "DivergingRight" => SwitchPosition.DivergingRight,
-            _ => SwitchPosition.Straight
-        };
-        
-        RefreshElementVisual(_selectedElement);
-        UpdateSwitchButtons();
-    }
-
-    private void UpdateSwitchButtons()
-    {
-        if (_selectedElement == null || !IsSwitchType(_selectedElement.Type)) return;
-
-        var isThreeWay = _selectedElement.Type == TrackElementType.SwitchThreeWay;
-        var isLeftSwitch = _selectedElement.Type == TrackElementType.SwitchLeft;
-        
-        // Dritte Spalte nur bei Dreiwege-Weiche oder Links/Rechts-Weiche zeigen
-        ThirdSwitchColumn.Width = isThreeWay ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
-        SwitchRightButton.Visibility = isThreeWay || !isLeftSwitch ? Visibility.Visible : Visibility.Collapsed;
-        SwitchLeftButton.Visibility = isThreeWay || isLeftSwitch ? Visibility.Visible : Visibility.Collapsed;
-
-        // Aktiven Button hervorheben
-        var accentStyle = (Style)Application.Current.Resources["AccentButtonStyle"];
-        var defaultStyle = (Style)Application.Current.Resources["DefaultButtonStyle"];
-
-        SwitchStraightButton.Style = _selectedElement.SwitchPosition == SwitchPosition.Straight ? accentStyle : defaultStyle;
-        SwitchLeftButton.Style = _selectedElement.SwitchPosition == SwitchPosition.DivergingLeft ? accentStyle : defaultStyle;
-        SwitchRightButton.Style = _selectedElement.SwitchPosition == SwitchPosition.DivergingRight ? accentStyle : defaultStyle;
-    }
-
-    private void OnAddressChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
-    {
-        if (_selectedElement == null || double.IsNaN(args.NewValue)) return;
-        _selectedElement.Address = (int)args.NewValue;
-    }
-
-    private void OnDeleteElementClicked(object sender, RoutedEventArgs e)
-    {
-        DeleteSelectedElement();
-    }
-
-    private void OnSignalTypeChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (_selectedElement == null || SignalTypeComboBox.SelectedItem is not ComboBoxItem { Tag: string typeTag })
-            return;
-
-        var newType = typeTag switch
-        {
-            "KsMain" => TrackElementType.SignalKsMain,
-            "KsDistant" => TrackElementType.SignalKsDistant,
-            "KsMulti" => TrackElementType.SignalKsScreen,
-            "Shunt" => TrackElementType.SignalShunt,
-            "Block" => TrackElementType.SignalBlock,
-            _ => _selectedElement.Type
-        };
-
-        if (newType != _selectedElement.Type)
-        {
-            _selectedElement.Type = newType;
-            ElementTypeText.Text = GetElementTypeName(newType);
-            RefreshElementVisual(_selectedElement);
-            UpdateStatistics();
-        }
-    }
-
-    #endregion
-}
-
-#region Data Models
-
-public enum TrackElementType
-{
-    StraightTrack,
-    Curve45,
-    Curve90,
-    BufferStop,
-    SwitchLeft,
-    SwitchRight,
-    SwitchThreeWay,
-    SwitchDouble,
-    Crossing,
-    SignalKsMain,
-    SignalKsDistant,
-    SignalShunt,
-    SignalBlock,
-    SignalKsScreen,
-    Platform,
-    Feedback
-}
-
-public enum SignalAspect
-{
-    Hp0,        // Halt (Rot)
-    Ks1,        // Fahrt (Grün)
-    Ks2,        // Halt erwarten (Gelb)
-    Ks1Blink,   // Fahrt mit Geschwindigkeitsbeschränkung (Grün blinkend)
-    Kennlicht,  // Signal betrieblich abgeschaltet (Weiß oben)
-    Dunkel,     // Signal aus (alle dunkel)
-    Ra12,       // Sh1/Ra12 Rangierfahrt erlaubt (2x Weiß diagonal)
-    Zs1,        // Ersatzsignal (Weiß blinkend)
-    Zs7         // Vorsichtsignal (3x Gelb dreieckig)
-}
-
-public enum SwitchPosition
-{
-    Straight,       // Gerade
-    DivergingLeft,  // Abzweig Links (für Dreiwege-Weiche)
-    DivergingRight  // Abzweig Rechts
-}
-
-public class TrackElement
-{
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public TrackElementType Type { get; set; }
-    public int GridX { get; set; }
-    public int GridY { get; set; }
-    public int Rotation { get; set; }
-    public int Address { get; set; } = 1;
-    public SignalAspect SignalAspect { get; set; } = SignalAspect.Hp0;
-    public SwitchPosition SwitchPosition { get; set; } = SwitchPosition.Straight;
-}
-
-#endregion

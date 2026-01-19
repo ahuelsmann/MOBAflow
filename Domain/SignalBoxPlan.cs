@@ -94,16 +94,26 @@ public class SignalBoxPlanElement
     /// </summary>
     public int FeedbackAddress { get; set; }
 
-    /// <summary>
-    /// Signal system type (for signals).
-    /// </summary>
-    public SignalSystemType SignalSystem { get; set; } = SignalSystemType.Ks;
+        /// <summary>
+        /// Signal system type (for signals).
+        /// </summary>
+        public SignalSystemType SignalSystem { get; set; } = SignalSystemType.Ks;
 
-    /// <summary>
-    /// Additional properties as key-value pairs.
-    /// </summary>
-    public Dictionary<string, string> Properties { get; set; } = [];
-}
+        /// <summary>
+        /// Current signal aspect (for signal elements).
+        /// </summary>
+        public SignalAspect SignalAspect { get; set; } = SignalAspect.Hp0;
+
+        /// <summary>
+        /// Current switch position (for switch elements).
+        /// </summary>
+        public SwitchPosition SwitchPosition { get; set; } = SwitchPosition.Straight;
+
+        /// <summary>
+        /// Additional properties as key-value pairs.
+        /// </summary>
+        public Dictionary<string, string> Properties { get; set; } = [];
+    }
 
 /// <summary>
 /// Connection between two elements (topological link).
@@ -406,16 +416,67 @@ public enum SignalSystemType
 {
     /// <summary>Kombinationssignal - Modern unified system (since 1993)</summary>
     Ks,
-    
+
     /// <summary>Haupt-/Vorsignal - Classic West German light signals</summary>
     Hv,
-    
+
     /// <summary>Hl-System - East German signals (DR)</summary>
     Hl,
-    
+
     /// <summary>Formsignale - Semaphore signals (historical)</summary>
     Form,
-    
+
     /// <summary>Simplified Ks - (Sv) for S-Bahn</summary>
     Sv
+}
+
+/// <summary>
+/// Signal aspect (current display state).
+/// Based on German Ks-Signalsystem but applicable to other systems.
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum SignalAspect
+{
+    /// <summary>Hp0 - Stop (red)</summary>
+    Hp0,
+
+    /// <summary>Ks1 - Proceed (green)</summary>
+    Ks1,
+
+    /// <summary>Ks2 - Expect stop (yellow)</summary>
+    Ks2,
+
+    /// <summary>Ks1 Blinking - Proceed with speed restriction (green blinking)</summary>
+    Ks1Blink,
+
+    /// <summary>Kennlicht - Signal operationally switched off (white top)</summary>
+    Kennlicht,
+
+    /// <summary>Dunkel - Signal off (all dark)</summary>
+    Dunkel,
+
+    /// <summary>Ra12/Sh1 - Shunting allowed (2x white diagonal)</summary>
+    Ra12,
+
+    /// <summary>Zs1 - Replacement signal (white blinking)</summary>
+    Zs1,
+
+    /// <summary>Zs7 - Caution signal (3x yellow triangular)</summary>
+    Zs7
+}
+
+/// <summary>
+/// Switch position (current state).
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum SwitchPosition
+{
+    /// <summary>Straight position (Grundstellung)</summary>
+    Straight,
+
+    /// <summary>Diverging left position</summary>
+    DivergingLeft,
+
+    /// <summary>Diverging right position (for three-way switches)</summary>
+    DivergingRight
 }

@@ -5,123 +5,159 @@ applyTo: '**'
 
 # MOBAflow TODOs
 
-> Letzte Aktualisierung: 2026-01-23 (SignalBoxPage Stellwerk-Funktionalität)
+> Letzte Aktualisierung: 2026-01-24
 
 ---
 
-## 🎯 AKTUELLE SESSION - SignalBoxPage Stellwerk
+## 🚨 NAECHSTE AUFGABEN
 
-### ✅ HEUTE ERLEDIGT (2026-01-23)
+### 1. Skin-System Refactoring (Naming Convention)
 
-**Gleisdarstellung:**
-- ✅ Vereinfachte Gleislinien (keine Schwellen, einfache Linien/Bögen)
-- ✅ Kurven mit kubischen Bezier-Kurven für exakte Endpunkte
-- ✅ Verbindungspunkte standardisiert: (0,30), (60,30), (30,0), (30,60)
-- ✅ 90°-Kurve: `M 0,30 C 0,13 13,0 30,0`
-- ✅ 45°-Kurve: `M 0,30 C 30,30 30,0 60,0`
+> **Status:** OFFEN
+> **Prioritaet:** MITTEL
 
-**Weichen:**
-- ✅ Dreiwege-Weiche (SwitchThreeWay) hinzugefügt
-- ✅ SwitchPosition Enum erweitert (Straight, DivergingLeft, DivergingRight)
-- ✅ Alle Weichen zeigen aktive Stellung in Grün
-- ✅ Doppelklick auf Weiche schaltet Stellung um
-- ✅ Properties-Panel mit 3 Buttons (Gerade/Links/Rechts)
+**Aktuelle Situation:**
+- Interface heisst `IThemeProvider` (verwirrend mit WinUI ElementTheme)
+- Skin-Namen verwenden Markennamen (EsuCabControl, RocoZ21, MaerklinCS)
 
-**Signale:**
-- ✅ KsSignalScreen Blink-Animation für Ks1Blink und Zs1
-- ✅ Doppelklick auf Signal schaltet Aspekt (Hp0→Ks1→Ks2→Hp0)
+**Gewuenschte Aenderungen:**
 
-**Drag & Drop:**
-- ✅ Bug behoben: Drag Gleis → Drop Signal
-- ✅ Element-Drag nur wenn selektiert (verhindert Konflikt mit Toolbox)
-- ✅ Debug-Logging für Drop-Events
+| Aktuell | Neu |
+|---------|-----|
+| `IThemeProvider` | `ISkinProvider` |
+| `ThemeChanged` Event | `SkinChanged` Event |
+| `CurrentTheme` Property | `CurrentSkin` Property |
+| `SetTheme()` Method | `SetSkin()` Method |
+| `ApplicationTheme` Enum | `AppSkin` Enum |
+| `ThemeColors` Class | `SkinColors` Class |
 
-**Instructions:**
-- ✅ implementation-workflow.instructions.md erstellt (5-Schritte-Workflow)
+**Skin-Namen (Farben statt Marken):**
 
-### 🔧 NOCH OFFEN
+| Aktuell | Neu (Farbe) | Akzentfarbe |
+|---------|-------------|-------------|
+| `Original` | `System` | Windows Akzentfarbe |
+| `Modern` | `Blue` | Blau |
+| `Classic` | `Green` | Gruen |
+| `Dark` | `Violet` | Violett |
+| `EsuCabControl` | `Orange` | Orange |
+| `RocoZ21` | `DarkOrange` | Dunkelorange |
+| `MaerklinCS` | `Red` | Rot |
 
-**Kurven-Darstellung (Screenshot zeigt Problem):**
-- [ ] Kurven-Endpunkte prüfen - verbinden sich noch nicht korrekt
-- [ ] Rotation der Kurven testen (nach 90° Rotation korrekt?)
-
-**DWW Drag & Drop:**
-- [ ] Dreiwege-Weiche Drag & Drop testen (User meldete Problem)
-
----
-
-## 🎯 PHASE 3: XAML REFACTORING + GRAPHICS UPGRADE (Week 3-5)
-
-> **Current Status:** 🟡 **PAUSED - SignalBoxPage Funktionalität Priorität**
-
-### Phase 0: KsSignalScreen Control Fix ✅ COMPLETE
-- ✅ Fixed grid layout (Added Height="Auto" and Width="Auto")
-- ✅ Increased circle size (20 → 24)
-- ✅ Reduced spacing (16 → 12)
-- ✅ KsSignalScreen now renders complete signal matrix correctly
-- ✅ Blink-Animation für Ks1Blink und Zs1 hinzugefügt
-
-### Phase 1-8: Siehe ursprüngliche Planung
-*Zurückgestellt bis Stellwerk-Funktionalität stabil*
+**Betroffene Dateien:**
+- `WinUI/Service/IThemeProvider.cs` -> `ISkinProvider.cs`
+- `WinUI/Service/ThemeProvider.cs` -> `SkinProvider.cs`
+- `WinUI/Service/ThemeColors.cs` -> `SkinColors.cs`
+- `WinUI/Service/ApplicationTheme.cs` -> `AppSkin.cs`
+- `WinUI/View/TrainControlPage.xaml.cs`
+- `WinUI/View/SignalBoxPage.xaml.cs`
+- `WinUI/View/TrainControlPage.xaml` (Flyout Labels)
+- `WinUI/View/SignalBoxPage.xaml` (Flyout Labels)
+- `WinUI/App.xaml.cs` (DI Registration)
+- `Common/Configuration/AppSettings.cs` (falls Theme dort gespeichert)
 
 ---
 
-## 📊 LEGACY TASKS (Week 2 - Quality)
+### 2. ReactApp SPA 404-Fehler
 
-### Week 2: Quality Tasks ✅ PHASE 1-2 COMPLETE
+> **Status:** OFFEN - Middleware fehlt
+> **Prioritaet:** NIEDRIG (WinUI hat Prioritaet)
 
-**✅ COMPLETED (2026-01-22):**
-- ✅ WorkflowsPage VSM refactoring (3 states)
-- ✅ Header/Title color support with theme switching
-- ✅ Fluent Design System implementation (spacing, cards, headers)
-- ✅ Skin selector button on TrainControlPage and SignalBoxPage
-- ✅ KsSignalScreen control layout fixed
+**Problem:**
+- ReactApp zeigt HTTP 404 fuer alle Routen
+- `Microsoft.AspNetCore.SpaProxy` Paket installiert
+- Aber: Kein SPA-Middleware im Pipeline!
 
-**📌 NEXT (Quality):**
-- [ ] Domain-Enums documentation (11 types)
-- [ ] Test coverage improvements
-- [ ] Other Pages VSM audit (JourneysPage, TrainsPage, SettingsPage)
+**Loesung:**
+```csharp
+// In ReactApp/Program.cs vor app.RunAsync():
+app.MapFallbackToFile("index.html");
+// ODER
+app.UseSpa(spa =>
+{
+    spa.UseProxyToSpaDevelopmentServer("http://localhost:5173");
+});
+```
+
+**Hinweis:** Vite Dev-Server muss auf Port 5173 laufen (`npm run dev` im reactclient Ordner)
 
 ---
 
-## 🏗️ ARCHITECTURE DECISIONS
+## ✅ ERLEDIGT (2026-01-24)
 
-### C# vs XAML Trade-offs
-- **HelpPage/InfoPage**: Pure XAML (simple content)
-- **SignalBoxPageBase**: Hybrid (complex canvas operations stay in C#, layout in XAML)
-- **SignalBoxPage**: Hybrid (header/toolbox in XAML, canvas logic in C#)
-- **TrainControlPage**: Already XAML (best practices established)
+### SignalBoxPage MVVM Refactoring
+- SignalBoxPage.Mapping.cs geloescht
+- Lokale Typen (TrackElement, TrackElementType) entfernt
+- Domain-Enums (SignalBoxSymbol, SignalAspect, SwitchPosition) verwendet
+- SignalBoxPlanViewModel mit Editor-Methoden erweitert
 
-### Skin Support Strategy
-- Apply `HeaderBackgroundBrush` to page headers
-- Apply `HeaderForegroundBrush` to titles
-- Theme colors update automatically via `ApplyThemeColors()` in code-behind
-- Use ThemeResources for standard controls
+### SignalBoxPage Skin-System Integration
+- IThemeProvider injiziert (wie TrainControlPage)
+- ApplyThemeColors() implementiert
+- Skin-Flyout mit allen 7 Skins
+- Event-Handler fuer ThemeChanged/DarkModeChanged
+- DI-Registration in App.xaml.cs aktualisiert
 
-### Responsive Design
-- VisualStateManager with 3 states: Compact (0-640px), Medium (641-1199px), Wide (1200px+)
-- Grid columns adjust dynamically
-- Toolbox/Properties panels collapse on Compact
+### SignalBoxPage Stellwerk-Funktionalitaet
+- Gleisdarstellung (vereinfachte Linien, Bezier-Kurven)
+- Weichen mit aktiver Stellung in Gruen
+- Dreiwege-Weiche hinzugefuegt
+- Signale mit Blink-Animation (Ks1Blink, Zs1)
+- Doppelklick zum Umschalten
+
+---
+
+## 📊 OFFENE QUALITY TASKS
+
+- [ ] Domain-Enums Dokumentation (11 Typen)
+- [ ] Test Coverage verbessern
+- [ ] VSM Audit: JourneysPage, TrainsPage, SettingsPage
+
+---
+
+## 🏗️ ARCHITEKTUR-ENTSCHEIDUNGEN
+
+### Skin-System Pattern
+```
+ISkinProvider (Interface)
+    |
+    +-- CurrentSkin: AppSkin
+    +-- IsDarkMode: bool
+    +-- SetSkin(AppSkin skin)
+    +-- SkinChanged Event
+    +-- DarkModeChanged Event
+    |
+SkinColors.GetPalette(skin, isDark) -> SkinPalette
+    |
+    +-- HeaderBackground/Foreground
+    +-- PanelBackground/Border
+    +-- Accent Color
+```
+
+### Page-Pattern fuer Skin-Support
+```csharp
+public sealed partial class MyPage : Page
+{
+    private readonly ISkinProvider _skinProvider;  // Injected
+
+    // In constructor:
+    _skinProvider.SkinChanged += (s, e) => DispatcherQueue.TryEnqueue(ApplyThemeColors);
+
+    // In Loaded:
+    ApplyThemeColors();
+
+    // In Unloaded:
+    _skinProvider.SkinChanged -= ...;
+}
+```
 
 ---
 
 ## 📋 REGELN
 
-1. XAML zuerst schreiben → Code-Behind Logik
+1. XAML zuerst schreiben, dann Code-Behind
 2. Fluent Design System konsistent anwenden
-3. Skin-Support auf allen neuen Pages
-4. Responsive Layout mit VisualStateManager
-5. Keine hardcodierten Farben (Theme-Resources verwenden)
-6. Moderne SVG-basierte Grafiken für Symbole
-
----
-
-## 🎉 ERFOLGSKRITERIEN
-
-- ✅ Alle Pages verwenden XAML + Code-Behind
-- ✅ Konsistente Fluent Design System Implementierung
-- ✅ Skin-Switching funktioniert auf allen Pages
-- ✅ Responsive Layout (VisualStateManager) aktiv
-- ✅ KsSignalScreen und andere Grafiken professionell
-- ✅ Ks-Signal Konfiguration vollständig funktional
+3. Skin-Support auf allen neuen Pages (ISkinProvider Pattern)
+4. Responsive Layout mit VisualStateManager (3 States)
+5. Keine hardcodierten Farben (Theme-Resources oder SkinColors)
+6. Markennamen vermeiden (Farbnamen verwenden)
 

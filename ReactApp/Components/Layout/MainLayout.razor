@@ -1,0 +1,72 @@
+@inherits LayoutComponentBase
+
+<div class="layout">
+    <header class="header">
+        <div class="header-left">
+            <h1>MOBAflow - Blazor Validation</h1>
+        </div>
+        <div class="header-right">
+            <a href="/" class="nav-link">← Back to React</a>
+            <a href="/swagger" class="nav-link" target="_blank">API Docs</a>
+        </div>
+    </header>
+
+    <nav class="nav-menu">
+        <NavLink class="nav-link" href="blazor/" Match="NavLinkMatch.All">Home</NavLink>
+        <NavLink class="nav-link" href="blazor/dashboard">Dashboard</NavLink>
+    </nav>
+
+    <main class="main-content">
+        @Body
+    </main>
+</div>
+
+<style>
+    .layout {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .header h1 {
+        margin: 0;
+        font-size: 1.5rem;
+    }
+    .header-right {
+        display: flex;
+        gap: 1rem;
+    }
+    .nav-menu {
+        display: flex;
+        gap: 1rem;
+        padding: 0.5rem 2rem;
+        background: #f5f5f5;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    .nav-link {
+        color: #333;
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+    }
+    .nav-link:hover, .nav-link.active {
+        background: #e0e0e0;
+    }
+    .header .nav-link {
+        color: white;
+    }
+    .main-content {
+        flex: 1;
+        padding: 2rem;
+    }
+</style>
+
+@code {
+}

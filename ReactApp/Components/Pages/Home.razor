@@ -1,0 +1,98 @@
+@page "/blazor"
+@page "/blazor/"
+
+<PageTitle>Blazor Home - MOBAflow</PageTitle>
+
+<div class="home-container">
+    <h1>🚂 Willkommen zur Blazor Validation</h1>
+    
+    <div class="info-card">
+        <h2>Technologie-Vergleich</h2>
+        <p>Diese Seite läuft mit <strong>Blazor Server</strong> (.NET 10).</p>
+        <p>Die Hauptanwendung unter <code>/</code> läuft mit <strong>React + MobX + Ant Design</strong>.</p>
+    </div>
+
+    <div class="comparison-grid">
+        <div class="tech-card blazor">
+            <h3>Blazor</h3>
+            <ul>
+                <li>✅ C# im Frontend</li>
+                <li>✅ Shared Code mit Backend</li>
+                <li>✅ Keine JavaScript-Kenntnisse nötig</li>
+                <li>⚠️ SignalR-Verbindung erforderlich</li>
+            </ul>
+            <a href="/blazor/dashboard" class="button">Dashboard öffnen</a>
+        </div>
+
+        <div class="tech-card react">
+            <h3>React</h3>
+            <ul>
+                <li>✅ Größeres Ökosystem</li>
+                <li>✅ Offline-fähig (PWA)</li>
+                <li>✅ Bessere Mobile-Performance</li>
+                <li>⚠️ TypeScript erforderlich</li>
+            </ul>
+            <a href="/" class="button">React App öffnen</a>
+        </div>
+    </div>
+
+    <div class="api-info">
+        <h2>REST API</h2>
+        <p>Die REST API ist unter <code>/api</code> verfügbar und wird von beiden Frontends genutzt.</p>
+        <a href="/swagger" target="_blank" class="button secondary">Swagger UI öffnen</a>
+    </div>
+</div>
+
+<style>
+    .home-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .info-card, .api-info {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin: 1.5rem 0;
+        border-left: 4px solid #667eea;
+    }
+    .comparison-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+    .tech-card {
+        padding: 1.5rem;
+        border-radius: 8px;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .tech-card.blazor {
+        border-top: 4px solid #512bd4;
+    }
+    .tech-card.react {
+        border-top: 4px solid #61dafb;
+    }
+    .tech-card ul {
+        list-style: none;
+        padding: 0;
+    }
+    .tech-card li {
+        padding: 0.5rem 0;
+    }
+    .button {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        background: #667eea;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        margin-top: 1rem;
+    }
+    .button:hover {
+        background: #5a6fd6;
+    }
+    .button.secondary {
+        background: #6c757d;
+    }
+</style>

@@ -923,8 +923,12 @@ public sealed partial class TrackPlanPage : Page
         {
             GraphCanvas.Children.Add(new Line
             {
-                X1 = x, Y1 = 0, X2 = x, Y2 = h,
-                Stroke = _gridBrush, StrokeThickness = 1
+                X1 = x,
+                Y1 = 0,
+                X2 = x,
+                Y2 = h,
+                Stroke = _gridBrush,
+                StrokeThickness = 1
             });
         }
 
@@ -932,8 +936,12 @@ public sealed partial class TrackPlanPage : Page
         {
             GraphCanvas.Children.Add(new Line
             {
-                X1 = 0, Y1 = y, X2 = w, Y2 = y,
-                Stroke = _gridBrush, StrokeThickness = 1
+                X1 = 0,
+                Y1 = y,
+                X2 = w,
+                Y2 = y,
+                Stroke = _gridBrush,
+                StrokeThickness = 1
             });
         }
     }
@@ -1139,7 +1147,8 @@ public sealed partial class TrackPlanPage : Page
 
         var handle = new Ellipse
         {
-            Width = 12, Height = 12,
+            Width = 12,
+            Height = 12,
             Fill = new SolidColorBrush(Colors.LimeGreen),
             Stroke = new SolidColorBrush(Colors.White),
             StrokeThickness = 2
@@ -1151,7 +1160,10 @@ public sealed partial class TrackPlanPage : Page
 
         var handleLine = new Line
         {
-            X1 = handleX, Y1 = handleY, X2 = handleX, Y2 = minY,
+            X1 = handleX,
+            Y1 = handleY,
+            X2 = handleX,
+            Y2 = minY,
             Stroke = new SolidColorBrush(Colors.LimeGreen),
             StrokeThickness = 1
         };
@@ -1171,7 +1183,10 @@ public sealed partial class TrackPlanPage : Page
 
         var line = new Line
         {
-            X1 = fromX, Y1 = fromY, X2 = toX, Y2 = toY,
+            X1 = fromX,
+            Y1 = fromY,
+            X2 = toX,
+            Y2 = toY,
             Stroke = _snapPreviewBrush,
             StrokeThickness = 2,
             StrokeDashArray = new DoubleCollection { 4, 2 }
@@ -1180,8 +1195,11 @@ public sealed partial class TrackPlanPage : Page
 
         var ring = new Ellipse
         {
-            Width = PortRadius * 3, Height = PortRadius * 3,
-            Stroke = _snapPreviewBrush, StrokeThickness = 3, Fill = null
+            Width = PortRadius * 3,
+            Height = PortRadius * 3,
+            Stroke = _snapPreviewBrush,
+            StrokeThickness = 3,
+            Fill = null
         };
 
         Canvas.SetLeft(ring, toX - PortRadius * 1.5);
@@ -1193,7 +1211,10 @@ public sealed partial class TrackPlanPage : Page
 
         var previewDot = new Ellipse
         {
-            Width = 12, Height = 12, Fill = _snapPreviewBrush, Opacity = 0.6
+            Width = 12,
+            Height = 12,
+            Fill = _snapPreviewBrush,
+            Opacity = 0.6
         };
 
         Canvas.SetLeft(previewDot, previewX - 6);
@@ -1221,7 +1242,8 @@ public sealed partial class TrackPlanPage : Page
 
         var selectionRect = new Rectangle
         {
-            Width = width, Height = height,
+            Width = width,
+            Height = height,
             Stroke = _trackSelectedBrush,
             StrokeThickness = 1,
             StrokeDashArray = new DoubleCollection { 4, 2 },
