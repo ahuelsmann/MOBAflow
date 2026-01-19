@@ -28,7 +28,7 @@ public sealed partial class MainWindow
     private readonly IUiDispatcher _uiDispatcher;
     private readonly NavigationRegistry _navigationRegistry;
     private readonly NavigationItemFactory _navigationItemFactory;
-    private readonly IThemeProvider _themeProvider;
+    private readonly ISkinProvider _skinProvider;
 
     /// <summary>
     /// Application version string for display in TitleBar.
@@ -51,7 +51,7 @@ public sealed partial class MainWindow
         IIoService ioService,
         NavigationRegistry navigationRegistry,
         AppSettings appSettings,
-        IThemeProvider themeProvider)
+        ISkinProvider skinProvider)
     {
         ViewModel = viewModel;
         _navigationService = navigationService;
@@ -59,7 +59,7 @@ public sealed partial class MainWindow
         _uiDispatcher = uiDispatcher;
         _navigationRegistry = navigationRegistry;
         _navigationItemFactory = new NavigationItemFactory(appSettings);
-        _themeProvider = themeProvider;
+        _skinProvider = skinProvider;
 
         InitializeComponent();
 
@@ -176,7 +176,7 @@ public sealed partial class MainWindow
     private void ApplyTheme(bool isDarkMode)
     {
         RootGrid.RequestedTheme = isDarkMode ? ElementTheme.Dark : ElementTheme.Light;
-        _themeProvider.IsDarkMode = isDarkMode;
+        _skinProvider.IsDarkMode = isDarkMode;
     }
 
     private void MainWindow_Closed(object sender, WindowEventArgs args)

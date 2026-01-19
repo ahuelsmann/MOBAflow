@@ -71,7 +71,7 @@
                                     FontWeight="SemiBold"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Text="SELECT SKIN" />
-                                <Button HorizontalAlignment="Stretch" Click="OnSkinOriginalClicked">
+                                <Button HorizontalAlignment="Stretch" Click="OnSkinSystemClicked">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Border
                                             Width="20"
@@ -81,7 +81,7 @@
                                         <TextBlock VerticalAlignment="Center" Text="System" />
                                     </StackPanel>
                                 </Button>
-                                <Button HorizontalAlignment="Stretch" Click="OnSkinModernClicked">
+                                <Button HorizontalAlignment="Stretch" Click="OnSkinBlueClicked">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Border
                                             Width="20"
@@ -91,7 +91,7 @@
                                         <TextBlock VerticalAlignment="Center" Text="Blue" />
                                     </StackPanel>
                                 </Button>
-                                <Button HorizontalAlignment="Stretch" Click="OnSkinClassicClicked">
+                                <Button HorizontalAlignment="Stretch" Click="OnSkinGreenClicked">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Border
                                             Width="20"
@@ -101,7 +101,7 @@
                                         <TextBlock VerticalAlignment="Center" Text="Green" />
                                     </StackPanel>
                                 </Button>
-                                <Button HorizontalAlignment="Stretch" Click="OnSkinDarkClicked">
+                                <Button HorizontalAlignment="Stretch" Click="OnSkinVioletClicked">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Border
                                             Width="20"
@@ -116,7 +116,7 @@
                                     FontSize="10"
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                     Text="COLOR SKINS" />
-                                <Button HorizontalAlignment="Stretch" Click="OnSkinEsuClicked">
+                                <Button HorizontalAlignment="Stretch" Click="OnSkinOrangeClicked">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Border
                                             Width="20"
@@ -126,7 +126,7 @@
                                         <TextBlock VerticalAlignment="Center" Text="Orange" />
                                     </StackPanel>
                                 </Button>
-                                <Button HorizontalAlignment="Stretch" Click="OnSkinRocoClicked">
+                                <Button HorizontalAlignment="Stretch" Click="OnSkinDarkOrangeClicked">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Border
                                             Width="20"
@@ -136,7 +136,7 @@
                                         <TextBlock VerticalAlignment="Center" Text="Dark Orange" />
                                     </StackPanel>
                                 </Button>
-                                <Button HorizontalAlignment="Stretch" Click="OnSkinMaerklinClicked">
+                                <Button HorizontalAlignment="Stretch" Click="OnSkinRedClicked">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Border
                                             Width="20"

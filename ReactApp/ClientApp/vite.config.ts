@@ -19,19 +19,19 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'https://localhost:7001',
+        target: 'https://localhost:49913',
         changeOrigin: true,
         secure: false,
       },
       '/swagger': {
-        target: 'https://localhost:7001',
+        target: 'https://localhost:49913',
         changeOrigin: true,
         secure: false,
       },
     },
   },
   build: {
-    outDir: 'dist',
+    outDir: '../wwwroot',
     emptyOutDir: true,
     sourcemap: true,
   },

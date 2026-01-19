@@ -3,7 +3,6 @@ import { Row, Col, Card, Statistic, Button, Space, Alert, Select, Tag, Progress,
 import {
   ApiOutlined,
   ThunderboltOutlined,
-  PoweroffOutlined,
   WarningOutlined,
   ReloadOutlined,
   DisconnectOutlined,

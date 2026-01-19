@@ -9,100 +9,120 @@ applyTo: '**'
 
 ---
 
+## ✅ ERLEDIGT (2026-01-24)
+
+### Skin-System Refactoring (Naming Convention)
+- `IThemeProvider` -> `ISkinProvider`
+- `ThemeProvider` -> `SkinProvider`
+- `ThemeColors` -> `SkinColors`
+- `ThemeResourceBuilder` -> `SkinResourceBuilder`
+- `ApplicationTheme` enum -> `AppSkin` enum
+- Skin-Namen: System, Blue, Green, Violet, Orange, DarkOrange, Red
+- Alle Pages aktualisiert (TrainControlPage, SignalBoxPage, MainWindow, SettingsPage)
+- XAML Event-Handler umbenannt
+
+### ReactApp SPA Fix
+- **Development:** Vite Dev-Server auf Port 5173 (`cd ClientApp && npm run dev`)
+  - React-App direkt unter http://localhost:5173 aufrufen
+  - ASP.NET Backend laeuft auf separatem Port fuer API-Calls
+- **Production:** `app.MapFallbackToFile("index.html")` served aus wwwroot
+
+### SignalBoxPage MVVM Refactoring
+- SignalBoxPage.Mapping.cs geloescht
+- Domain-Enums (SignalBoxSymbol, SignalAspect, SwitchPosition) verwendet
+- SignalBoxPlanViewModel mit Editor-Methoden erweitert
+- ISkinProvider injiziert, ApplySkinColors() implementiert
+
+---
+
 ## 🚨 NAECHSTE AUFGABEN
 
-### 1. Skin-System Refactoring (Naming Convention)
+### 1. VisualStateManager (VSM) fuer Responsive Layout
 
 > **Status:** OFFEN
 > **Prioritaet:** MITTEL
 
-**Aktuelle Situation:**
-- Interface heisst `IThemeProvider` (verwirrend mit WinUI ElementTheme)
-- Skin-Namen verwenden Markennamen (EsuCabControl, RocoZ21, MaerklinCS)
+**Analyse durchgefuehrt:**
 
-**Gewuenschte Aenderungen:**
+| Page | VSM Status | Prioritaet |
+|------|------------|------------|
+| TrainControlPage.xaml | ✅ HAT VSM | - |
+| SignalBoxPage.xaml | ✅ HAT VSM | - |
+| TrackPlanPage.xaml | ✅ HAT VSM | - |
+| WorkflowsPage.xaml | ✅ HAT VSM | - |
+| JourneysPage.xaml | ❌ KEIN VSM | HOCH |
+| TrainsPage.xaml | ❌ KEIN VSM | HOCH |
+| SettingsPage.xaml | ❌ KEIN VSM | MITTEL |
+| SolutionPage.xaml | ❌ KEIN VSM | MITTEL |
+| OverviewPage.xaml | ❌ KEIN VSM | NIEDRIG |
+| MonitorPage.xaml | ❌ KEIN VSM | NIEDRIG |
+| JourneyMapPage.xaml | ❌ KEIN VSM | NIEDRIG |
+| HelpPage.xaml | ❌ KEIN VSM | NIEDRIG |
+| InfoPage.xaml | ❌ KEIN VSM | NIEDRIG |
 
-| Aktuell | Neu |
-|---------|-----|
-| `IThemeProvider` | `ISkinProvider` |
-| `ThemeChanged` Event | `SkinChanged` Event |
-| `CurrentTheme` Property | `CurrentSkin` Property |
-| `SetTheme()` Method | `SetSkin()` Method |
-| `ApplicationTheme` Enum | `AppSkin` Enum |
-| `ThemeColors` Class | `SkinColors` Class |
-
-**Skin-Namen (Farben statt Marken):**
-
-| Aktuell | Neu (Farbe) | Akzentfarbe |
-|---------|-------------|-------------|
-| `Original` | `System` | Windows Akzentfarbe |
-| `Modern` | `Blue` | Blau |
-| `Classic` | `Green` | Gruen |
-| `Dark` | `Violet` | Violett |
-| `EsuCabControl` | `Orange` | Orange |
-| `RocoZ21` | `DarkOrange` | Dunkelorange |
-| `MaerklinCS` | `Red` | Rot |
-
-**Betroffene Dateien:**
-- `WinUI/Service/IThemeProvider.cs` -> `ISkinProvider.cs`
-- `WinUI/Service/ThemeProvider.cs` -> `SkinProvider.cs`
-- `WinUI/Service/ThemeColors.cs` -> `SkinColors.cs`
-- `WinUI/Service/ApplicationTheme.cs` -> `AppSkin.cs`
-- `WinUI/View/TrainControlPage.xaml.cs`
-- `WinUI/View/SignalBoxPage.xaml.cs`
-- `WinUI/View/TrainControlPage.xaml` (Flyout Labels)
-- `WinUI/View/SignalBoxPage.xaml` (Flyout Labels)
-- `WinUI/App.xaml.cs` (DI Registration)
-- `Common/Configuration/AppSettings.cs` (falls Theme dort gespeichert)
+**VSM Breakpoints (aus winui.instructions.md):**
+- Compact: 0-640px (Mobile/Tablet Portrait)
+- Medium: 641-1199px (Tablet Landscape)
+- Wide: 1200px+ (Desktop)
 
 ---
 
-### 2. ReactApp SPA 404-Fehler
+### 2. IPersistablePage Architektur-Review
 
-> **Status:** OFFEN - Middleware fehlt
-> **Prioritaet:** NIEDRIG (WinUI hat Prioritaet)
+> **Status:** OFFEN - Architektur-Entscheidung erforderlich
+> **Prioritaet:** MITTEL
 
-**Problem:**
-- ReactApp zeigt HTTP 404 fuer alle Routen
-- `Microsoft.AspNetCore.SpaProxy` Paket installiert
-- Aber: Kein SPA-Middleware im Pipeline!
+**Aktuelle Implementierung:**
+- `IPersistablePage` wird von **Pages** implementiert (z.B. SignalBoxPage)
+- `PagePersistenceCoordinator` sammelt alle registrierten Pages
+- Bei SolutionSaving/SolutionLoaded werden SyncToModel()/LoadFromModel() aufgerufen
 
-**Loesung:**
-```csharp
-// In ReactApp/Program.cs vor app.RunAsync():
-app.MapFallbackToFile("index.html");
-// ODER
-app.UseSpa(spa =>
-{
-    spa.UseProxyToSpaDevelopmentServer("http://localhost:5173");
-});
+**Analyse:**
+
+| Page | IPersistablePage | Hat eigene Daten? |
+|------|------------------|-------------------|
+| SignalBoxPage | ✅ JA | ✅ SignalBoxPlan |
+| TrackPlanPage | ❌ NEIN | ✅ TrackPlan |
+| JourneysPage | ❌ NEIN | ✅ Journeys (via ViewModel) |
+| TrainsPage | ❌ NEIN | ✅ Trains (via ViewModel) |
+| WorkflowsPage | ❌ NEIN | ✅ Workflows (via ViewModel) |
+| Andere | ❌ NEIN | ❌ NEIN |
+
+**Frage: Sollten ViewModels statt Pages IPersistablePage implementieren?**
+
+**Pro ViewModel:**
+- ViewModels sind bereits fuer Datenverwaltung zustaendig
+- Besser testbar (Unit Tests ohne UI)
+- Klare Trennung: ViewModel = Daten, Page = UI
+- ViewModels existieren unabhaengig von Pages
+
+**Pro Page:**
+- Page weiss wann UI-Elemente initialisiert sind
+- Direkter Zugriff auf UI-State (z.B. ScrollPosition)
+- Einfachere DI-Registration (Page ist bereits Singleton)
+
+**Empfehlung:**
+```
+HYBRID-ANSATZ:
+1. IPersistableViewModel fuer Datenlogik (SyncToModel, LoadFromModel)
+2. Page ruft ViewModel.SyncToModel() auf (fuer UI-spezifische Dinge)
+3. PagePersistenceCoordinator arbeitet mit ViewModels
 ```
 
-**Hinweis:** Vite Dev-Server muss auf Port 5173 laufen (`npm run dev` im reactclient Ordner)
-
 ---
 
-## ✅ ERLEDIGT (2026-01-24)
+### 3. Fehlende IPersistablePage Implementierungen
 
-### SignalBoxPage MVVM Refactoring
-- SignalBoxPage.Mapping.cs geloescht
-- Lokale Typen (TrackElement, TrackElementType) entfernt
-- Domain-Enums (SignalBoxSymbol, SignalAspect, SwitchPosition) verwendet
-- SignalBoxPlanViewModel mit Editor-Methoden erweitert
+> **Status:** OFFEN
+> **Prioritaet:** HOCH (Datenverlust moeglich)
 
-### SignalBoxPage Skin-System Integration
-- IThemeProvider injiziert (wie TrainControlPage)
-- ApplyThemeColors() implementiert
-- Skin-Flyout mit allen 7 Skins
-- Event-Handler fuer ThemeChanged/DarkModeChanged
-- DI-Registration in App.xaml.cs aktualisiert
+Folgende Pages verwalten Daten, implementieren aber NICHT IPersistablePage:
+- [ ] TrackPlanPage
+- [ ] JourneysPage (via JourneyViewModel)
+- [ ] TrainsPage (via TrainViewModel)
+- [ ] WorkflowsPage (via WorkflowViewModel)
 
-### SignalBoxPage Stellwerk-Funktionalitaet
-- Gleisdarstellung (vereinfachte Linien, Bezier-Kurven)
-- Weichen mit aktiver Stellung in Gruen
-- Dreiwege-Weiche hinzugefuegt
-- Signale mit Blink-Animation (Ks1Blink, Zs1)
-- Doppelklick zum Umschalten
+**Risiko:** Aenderungen koennten bei Solution-Wechsel verloren gehen.
 
 ---
 
@@ -110,13 +130,14 @@ app.UseSpa(spa =>
 
 - [ ] Domain-Enums Dokumentation (11 Typen)
 - [ ] Test Coverage verbessern
-- [ ] VSM Audit: JourneysPage, TrainsPage, SettingsPage
+- [ ] VSM fuer JourneysPage und TrainsPage implementieren
+- [ ] IPersistablePage fuer alle datenverwaltenden Pages
 
 ---
 
-## 🏗️ ARCHITEKTUR-ENTSCHEIDUNGEN
+## 🏗️ ARCHITEKTUR-REFERENZ
 
-### Skin-System Pattern
+### Skin-System Pattern (AKTUELL)
 ```
 ISkinProvider (Interface)
     |
@@ -140,10 +161,10 @@ public sealed partial class MyPage : Page
     private readonly ISkinProvider _skinProvider;  // Injected
 
     // In constructor:
-    _skinProvider.SkinChanged += (s, e) => DispatcherQueue.TryEnqueue(ApplyThemeColors);
+    _skinProvider.SkinChanged += (s, e) => DispatcherQueue.TryEnqueue(ApplySkinColors);
 
     // In Loaded:
-    ApplyThemeColors();
+    ApplySkinColors();
 
     // In Unloaded:
     _skinProvider.SkinChanged -= ...;

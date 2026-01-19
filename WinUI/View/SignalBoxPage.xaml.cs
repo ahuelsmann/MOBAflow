@@ -24,13 +24,11 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.UI;
 
-using AppTheme = Service.ApplicationTheme;
-
 /// <summary>
 /// Modernes elektronisches Stellwerk (ESTW) - Gleisbildstellwerk.
 /// Ermöglicht die grafische Planung von Gleisanlagen mit Signalen und Weichen.
 /// Uses SignalBoxPlanViewModel for MVVM-compliant data management.
-/// Supports theme/skin switching via IThemeProvider.
+/// Supports skin switching via ISkinProvider.
 /// </summary>
 public sealed partial class SignalBoxPage : Page, IPersistablePage
 {
@@ -40,7 +38,7 @@ public sealed partial class SignalBoxPage : Page, IPersistablePage
 
     private readonly Dictionary<Guid, FrameworkElement> _elementVisuals = [];
     private readonly List<Line> _gridLines = [];
-    private readonly IThemeProvider _themeProvider;
+    private readonly ISkinProvider _skinProvider;
     private readonly AppSettings _settings;
     private readonly ISettingsService? _settingsService;
 
@@ -70,33 +68,33 @@ public sealed partial class SignalBoxPage : Page, IPersistablePage
 
     public SignalBoxPage(
         MainWindowViewModel viewModel,
-        IThemeProvider themeProvider,
+        ISkinProvider skinProvider,
         AppSettings settings,
         ISettingsService? settingsService = null)
     {
         ViewModel = viewModel;
-        _themeProvider = themeProvider;
+        _skinProvider = skinProvider;
         _settings = settings;
         _settingsService = settingsService;
 
         InitializeComponent();
 
-        // Subscribe to theme changes for dynamic updates
-        _themeProvider.ThemeChanged += OnThemeProviderChanged;
-        _themeProvider.DarkModeChanged += OnDarkModeChanged;
+        // Subscribe to skin changes for dynamic updates
+        _skinProvider.SkinChanged += OnSkinProviderChanged;
+        _skinProvider.DarkModeChanged += OnDarkModeChanged;
 
         Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
     }
 
-    private void OnThemeProviderChanged(object? sender, ThemeChangedEventArgs e)
+    private void OnSkinProviderChanged(object? sender, SkinChangedEventArgs e)
     {
-        DispatcherQueue.TryEnqueue(ApplyThemeColors);
+        DispatcherQueue.TryEnqueue(ApplySkinColors);
     }
 
     private void OnDarkModeChanged(object? sender, EventArgs e)
     {
-        DispatcherQueue.TryEnqueue(ApplyThemeColors);
+        DispatcherQueue.TryEnqueue(ApplySkinColors);
     }
 
     private void OnPageLoaded(object sender, RoutedEventArgs e)
@@ -107,14 +105,14 @@ public sealed partial class SignalBoxPage : Page, IPersistablePage
         LoadFromModel();
         UpdateStatistics();
         UpdatePropertiesPanel();
-        ApplyThemeColors();
+        ApplySkinColors();
     }
 
     private void OnPageUnloaded(object sender, RoutedEventArgs e)
     {
         _blinkTimer?.Stop();
-        _themeProvider.ThemeChanged -= OnThemeProviderChanged;
-        _themeProvider.DarkModeChanged -= OnDarkModeChanged;
+        _skinProvider.SkinChanged -= OnSkinProviderChanged;
+        _skinProvider.DarkModeChanged -= OnDarkModeChanged;
     }
 
     /// <summary>
@@ -241,18 +239,17 @@ public sealed partial class SignalBoxPage : Page, IPersistablePage
     #region Skin System
 
     // Skin selection handlers - same pattern as TrainControlPage
-    private async void OnSkinSystemClicked(object sender, RoutedEventArgs e) => await SetThemeAsync(AppTheme.Original);
-    private async void OnSkinBlueClicked(object sender, RoutedEventArgs e) => await SetThemeAsync(AppTheme.Modern);
-    private async void OnSkinGreenClicked(object sender, RoutedEventArgs e) => await SetThemeAsync(AppTheme.Classic);
-    private async void OnSkinDarkClicked(object sender, RoutedEventArgs e) => await SetThemeAsync(AppTheme.Dark);
-    private async void OnSkinClassicClicked(object sender, RoutedEventArgs e) => await SetThemeAsync(AppTheme.Dark);
-    private async void OnSkinOrangeClicked(object sender, RoutedEventArgs e) => await SetThemeAsync(AppTheme.EsuCabControl);
-    private async void OnSkinDarkOrangeClicked(object sender, RoutedEventArgs e) => await SetThemeAsync(AppTheme.RocoZ21);
-    private async void OnSkinRedClicked(object sender, RoutedEventArgs e) => await SetThemeAsync(AppTheme.MaerklinCS);
+    private async void OnSkinSystemClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.System);
+    private async void OnSkinBlueClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Blue);
+    private async void OnSkinGreenClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Green);
+    private async void OnSkinVioletClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Violet);
+    private async void OnSkinOrangeClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Orange);
+    private async void OnSkinDarkOrangeClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.DarkOrange);
+    private async void OnSkinRedClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Red);
 
-    private async Task SetThemeAsync(AppTheme theme)
+    private async Task SetSkinAsync(AppSkin skin)
     {
-        _themeProvider.SetTheme(theme);
+        _skinProvider.SetSkin(skin);
         if (_settingsService != null)
         {
             await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
@@ -260,22 +257,46 @@ public sealed partial class SignalBoxPage : Page, IPersistablePage
     }
 
     /// <summary>
-    /// Applies theme colors to canvas and grid based on current IThemeProvider settings.
+    /// Applies skin colors to canvas and grid based on current ISkinProvider settings.
+    /// Properly handles both skin selection AND dark/light mode.
     /// </summary>
-    private void ApplyThemeColors()
+    private void ApplySkinColors()
     {
-        var palette = ThemeColors.GetPalette(_themeProvider.CurrentTheme, _themeProvider.IsDarkMode);
-        var isOriginalTheme = _themeProvider.CurrentTheme == AppTheme.Original;
+        var palette = SkinColors.GetPalette(_skinProvider.CurrentSkin, _skinProvider.IsDarkMode);
+        var isSystemSkin = _skinProvider.CurrentSkin == AppSkin.System;
+        var isDark = _skinProvider.IsDarkMode;
 
-        // Canvas background - Stellwerk always uses dark backgrounds for better contrast
-        var (canvasBg, gridColor) = _themeProvider.CurrentTheme switch
+        // Set page RequestedTheme based on palette (controls Light/Dark for standard WinUI controls)
+        RequestedTheme = palette.IsDarkTheme ? ElementTheme.Dark : ElementTheme.Light;
+
+        // Canvas background - use skin-aware colors for signal box
+        // Signal boxes typically work better with darker backgrounds for contrast
+        var (canvasBg, gridColor) = (_skinProvider.CurrentSkin, isDark) switch
         {
-            AppTheme.Modern => (Color.FromArgb(255, 10, 30, 50), Color.FromArgb(100, 0, 120, 212)),
-            AppTheme.Classic => (Color.FromArgb(255, 10, 40, 20), Color.FromArgb(100, 16, 124, 16)),
-            AppTheme.Dark => (Color.FromArgb(255, 15, 15, 15), Color.FromArgb(80, 60, 60, 60)),
-            AppTheme.EsuCabControl => (Color.FromArgb(255, 25, 15, 5), Color.FromArgb(100, 255, 140, 0)),
-            AppTheme.RocoZ21 => (Color.FromArgb(255, 20, 12, 5), Color.FromArgb(100, 255, 102, 0)),
-            AppTheme.MaerklinCS => (Color.FromArgb(255, 30, 10, 10), Color.FromArgb(100, 204, 0, 0)),
+            // Blue skin
+            (AppSkin.Blue, true) => (Color.FromArgb(255, 10, 30, 50), Color.FromArgb(100, 0, 120, 212)),
+            (AppSkin.Blue, false) => (Color.FromArgb(255, 220, 235, 250), Color.FromArgb(120, 0, 120, 212)),
+            
+            // Green skin
+            (AppSkin.Green, true) => (Color.FromArgb(255, 10, 40, 20), Color.FromArgb(100, 16, 124, 16)),
+            (AppSkin.Green, false) => (Color.FromArgb(255, 220, 245, 220), Color.FromArgb(120, 16, 124, 16)),
+            
+            // Violet skin (always dark-ish)
+            (AppSkin.Violet, _) => (Color.FromArgb(255, 25, 25, 30), Color.FromArgb(80, 106, 90, 205)),
+            
+            // Orange skin
+            (AppSkin.Orange, true) => (Color.FromArgb(255, 25, 15, 5), Color.FromArgb(100, 255, 140, 0)),
+            (AppSkin.Orange, false) => (Color.FromArgb(255, 255, 245, 230), Color.FromArgb(120, 255, 140, 0)),
+            
+            // Dark Orange skin
+            (AppSkin.DarkOrange, true) => (Color.FromArgb(255, 20, 12, 5), Color.FromArgb(100, 255, 102, 0)),
+            (AppSkin.DarkOrange, false) => (Color.FromArgb(255, 255, 240, 225), Color.FromArgb(120, 255, 102, 0)),
+            
+            // Red skin
+            (AppSkin.Red, true) => (Color.FromArgb(255, 30, 10, 10), Color.FromArgb(100, 204, 0, 0)),
+            (AppSkin.Red, false) => (Color.FromArgb(255, 255, 235, 235), Color.FromArgb(120, 204, 0, 0)),
+            
+            // System skin - use theme resources
             _ => ((Color?)null, (Color?)null)
         };
 
@@ -289,6 +310,7 @@ public sealed partial class SignalBoxPage : Page, IPersistablePage
         }
         else
         {
+            // System skin: use WinUI theme resources
             TrackCanvas.Background = (Brush)Application.Current.Resources["SolidBackgroundFillColorBaseBrush"];
             var defaultBrush = (Brush)Application.Current.Resources["DividerStrokeColorDefaultBrush"];
             foreach (var line in _gridLines)
@@ -297,18 +319,57 @@ public sealed partial class SignalBoxPage : Page, IPersistablePage
             }
         }
 
-        // Header styling (if applicable)
-        if (!isOriginalTheme && FindName("HeaderBorder") is Border headerBorder)
+        // Header styling
+        if (FindName("HeaderBorder") is Border headerBorder)
         {
-            headerBorder.Background = palette.HeaderBackgroundBrush;
+            if (isSystemSkin)
+            {
+                headerBorder.ClearValue(Border.BackgroundProperty);
+            }
+            else
+            {
+                headerBorder.Background = palette.HeaderBackgroundBrush;
+            }
         }
 
-        if (!isOriginalTheme && FindName("TitleText") is TextBlock titleText)
+        if (FindName("TitleText") is TextBlock titleText)
         {
-            titleText.Foreground = palette.HeaderForegroundBrush;
+            if (isSystemSkin)
+            {
+                titleText.ClearValue(TextBlock.ForegroundProperty);
+            }
+            else
+            {
+                titleText.Foreground = palette.HeaderForegroundBrush;
+            }
         }
 
-        // Refresh all track elements with new theme colors
+        // Apply panel backgrounds using palette colors
+        if (FindName("ToolboxPanel") is Border toolboxPanel)
+        {
+            if (isSystemSkin)
+            {
+                toolboxPanel.ClearValue(Border.BackgroundProperty);
+            }
+            else
+            {
+                toolboxPanel.Background = palette.PanelBackgroundBrush;
+            }
+        }
+
+        if (FindName("PropertiesPanel") is Border propertiesPanel)
+        {
+            if (isSystemSkin)
+            {
+                propertiesPanel.ClearValue(Border.BackgroundProperty);
+            }
+            else
+            {
+                propertiesPanel.Background = palette.PanelBackgroundBrush;
+            }
+        }
+
+        // Refresh all track elements with new skin colors
         RefreshAllElements();
     }
 
@@ -541,200 +602,200 @@ public sealed partial class SignalBoxPage : Page, IPersistablePage
 
         container.Children.Add(graphic);
 
-            // Event-Handler für Klick
-                    container.PointerPressed += (s, e) =>
-                    {
-                        e.Handled = true;
-                        var point = e.GetCurrentPoint(container);
-                        if (point.Properties.IsLeftButtonPressed)
-                        {
-                            SelectElement(element);
-                        }
-                    };
-
-                    // Doppelklick für Weichen/Signale schalten
-                    container.DoubleTapped += (s, e) =>
-                    {
-                        e.Handled = true;
-                        if (SignalBoxPlanViewModel.IsSwitchSymbol(element.Symbol))
-                        {
-                            ToggleSwitchPosition(element);
-                        }
-                        else if (SignalBoxPlanViewModel.IsSignalSymbol(element.Symbol))
-                        {
-                            ToggleSignalAspect(element);
-                        }
-                    };
-
-                    // Drag-Daten setzen (CanDrag ist bereits nur für selektierte Elemente true)
-                    container.DragStarting += (s, e) =>
-                    {
-                        e.Data.SetText($"MOVE:{element.Id}");
-                        e.Data.RequestedOperation = DataPackageOperation.Move;
-                    };
-
-                    return container;
-            }
-
-            private void ToggleSwitchPosition(SignalBoxPlanElementViewModel element)
+        // Event-Handler fuer Klick
+        container.PointerPressed += (s, e) =>
+        {
+            e.Handled = true;
+            var point = e.GetCurrentPoint(container);
+            if (point.Properties.IsLeftButtonPressed)
             {
-                element.SwitchPosition = element.Symbol switch
-                {
-                    SignalBoxSymbol.SwitchThreeWay => element.SwitchPosition switch
-                    {
-                        Domain.SwitchPosition.Straight => Domain.SwitchPosition.DivergingLeft,
-                        Domain.SwitchPosition.DivergingLeft => Domain.SwitchPosition.DivergingRight,
-                        _ => Domain.SwitchPosition.Straight
-                    },
-                    SignalBoxSymbol.SwitchDoubleSlip => element.SwitchPosition switch
-                    {
-                        Domain.SwitchPosition.Straight => Domain.SwitchPosition.DivergingLeft,
-                        _ => Domain.SwitchPosition.Straight
-                    },
-                    SignalBoxSymbol.SwitchSimpleLeft => element.SwitchPosition switch
-                    {
-                        Domain.SwitchPosition.Straight => Domain.SwitchPosition.DivergingLeft,
-                        _ => Domain.SwitchPosition.Straight
-                    },
-                    SignalBoxSymbol.SwitchSimpleRight => element.SwitchPosition switch
-                    {
-                        Domain.SwitchPosition.Straight => Domain.SwitchPosition.DivergingRight,
-                        _ => Domain.SwitchPosition.Straight
-                    },
-                    _ => Domain.SwitchPosition.Straight
-                };
+                SelectElement(element);
+            }
+        };
+
+        // Doppelklick fuer Weichen/Signale schalten
+        container.DoubleTapped += (s, e) =>
+        {
+            e.Handled = true;
+            if (SignalBoxPlanViewModel.IsSwitchSymbol(element.Symbol))
+            {
+                ToggleSwitchPosition(element);
+            }
+            else if (SignalBoxPlanViewModel.IsSignalSymbol(element.Symbol))
+            {
+                ToggleSignalAspect(element);
+            }
+        };
+
+        // Drag-Daten setzen (CanDrag ist bereits nur fuer selektierte Elemente true)
+        container.DragStarting += (s, e) =>
+        {
+            e.Data.SetText($"MOVE:{element.Id}");
+            e.Data.RequestedOperation = DataPackageOperation.Move;
+        };
+
+        return container;
+    }
+
+    private void ToggleSwitchPosition(SignalBoxPlanElementViewModel element)
+    {
+        element.SwitchPosition = element.Symbol switch
+        {
+            SignalBoxSymbol.SwitchThreeWay => element.SwitchPosition switch
+            {
+                Domain.SwitchPosition.Straight => Domain.SwitchPosition.DivergingLeft,
+                Domain.SwitchPosition.DivergingLeft => Domain.SwitchPosition.DivergingRight,
+                _ => Domain.SwitchPosition.Straight
+            },
+            SignalBoxSymbol.SwitchDoubleSlip => element.SwitchPosition switch
+            {
+                Domain.SwitchPosition.Straight => Domain.SwitchPosition.DivergingLeft,
+                _ => Domain.SwitchPosition.Straight
+            },
+            SignalBoxSymbol.SwitchSimpleLeft => element.SwitchPosition switch
+            {
+                Domain.SwitchPosition.Straight => Domain.SwitchPosition.DivergingLeft,
+                _ => Domain.SwitchPosition.Straight
+            },
+            SignalBoxSymbol.SwitchSimpleRight => element.SwitchPosition switch
+            {
+                Domain.SwitchPosition.Straight => Domain.SwitchPosition.DivergingRight,
+                _ => Domain.SwitchPosition.Straight
+            },
+            _ => Domain.SwitchPosition.Straight
+        };
+        RefreshElementVisual(element);
+        UpdatePropertiesPanel();
+    }
+
+    private void ToggleSignalAspect(SignalBoxPlanElementViewModel element)
+    {
+        element.SignalAspect = element.SignalAspect switch
+        {
+            Domain.SignalAspect.Hp0 => Domain.SignalAspect.Ks1,
+            Domain.SignalAspect.Ks1 => Domain.SignalAspect.Ks2,
+            Domain.SignalAspect.Ks2 => Domain.SignalAspect.Hp0,
+            _ => Domain.SignalAspect.Hp0
+        };
+        RefreshElementVisual(element);
+        UpdatePropertiesPanel();
+    }
+
+    private void RefreshElementVisual(SignalBoxPlanElementViewModel element)
+    {
+        if (_elementVisuals.TryGetValue(element.Id, out var oldVisual))
+        {
+            TrackCanvas.Children.Remove(oldVisual);
+            _elementVisuals.Remove(element.Id);
+        }
+        CreateElementVisual(element);
+    }
+
+    private void SelectElement(SignalBoxPlanElementViewModel? element)
+    {
+        if (SelectedElement?.Id == element?.Id) return;
+
+        var previousSelection = SelectedElement;
+        _planViewModel?.Select(element);
+
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            if (previousSelection != null && _planViewModel?.Elements.Contains(previousSelection) == true)
+            {
+                RefreshElementVisual(previousSelection);
+            }
+            if (element != null && _planViewModel?.Elements.Contains(element) == true)
+            {
                 RefreshElementVisual(element);
-                UpdatePropertiesPanel();
             }
+        });
 
-            private void ToggleSignalAspect(SignalBoxPlanElementViewModel element)
-            {
-                element.SignalAspect = element.SignalAspect switch
-                {
-                    Domain.SignalAspect.Hp0 => Domain.SignalAspect.Ks1,
-                    Domain.SignalAspect.Ks1 => Domain.SignalAspect.Ks2,
-                    Domain.SignalAspect.Ks2 => Domain.SignalAspect.Hp0,
-                    _ => Domain.SignalAspect.Hp0
-                };
-                RefreshElementVisual(element);
-                UpdatePropertiesPanel();
-            }
+        _blinkingLeds.Clear();
+        UpdatePropertiesPanel();
+    }
 
-            private void RefreshElementVisual(SignalBoxPlanElementViewModel element)
-            {
-                if (_elementVisuals.TryGetValue(element.Id, out var oldVisual))
-                {
-                    TrackCanvas.Children.Remove(oldVisual);
-                    _elementVisuals.Remove(element.Id);
-                }
-                CreateElementVisual(element);
-            }
+    private void DeleteSelectedElement()
+    {
+        if (SelectedElement == null || _planViewModel == null) return;
 
-            private void SelectElement(SignalBoxPlanElementViewModel? element)
-            {
-                if (SelectedElement?.Id == element?.Id) return;
+        var elementToDelete = SelectedElement;
 
-                var previousSelection = SelectedElement;
-                _planViewModel?.Select(element);
+        _planViewModel.ClearSelection();
+        _blinkingLeds.Clear();
+        UpdatePropertiesPanel();
 
-                DispatcherQueue.TryEnqueue(() =>
-                {
-                    if (previousSelection != null && _planViewModel?.Elements.Contains(previousSelection) == true)
-                    {
-                        RefreshElementVisual(previousSelection);
-                    }
-                    if (element != null && _planViewModel?.Elements.Contains(element) == true)
-                    {
-                        RefreshElementVisual(element);
-                    }
-                });
+        // Dann aus Canvas und Listen entfernen
+        if (_elementVisuals.TryGetValue(elementToDelete.Id, out var visual))
+        {
+            TrackCanvas.Children.Remove(visual);
+            _elementVisuals.Remove(elementToDelete.Id);
+        }
 
-                _blinkingLeds.Clear();
-                UpdatePropertiesPanel();
-            }
+        _planViewModel.RemoveElement(elementToDelete);
+        UpdateStatistics();
+        MarkDirty();
+    }
 
-            private void DeleteSelectedElement()
-            {
-                if (SelectedElement == null || _planViewModel == null) return;
+    #endregion
 
-                var elementToDelete = SelectedElement;
+    // Properties Panel methods moved to SignalBoxPage.Properties.cs
 
-                _planViewModel.ClearSelection();
-                _blinkingLeds.Clear();
-                UpdatePropertiesPanel();
+    #region IPersistablePage Implementation
 
-                // Dann aus Canvas und Listen entfernen
-                if (_elementVisuals.TryGetValue(elementToDelete.Id, out var visual))
-                {
-                    TrackCanvas.Children.Remove(visual);
-                    _elementVisuals.Remove(elementToDelete.Id);
-                }
+    /// <inheritdoc />
+    public void SyncToModel()
+    {
+        // ViewModel already syncs to Model automatically via property setters
+        // Just ensure the plan exists
+        var project = ViewModel.SelectedProject?.Model;
+        if (project == null)
+            return;
 
-                _planViewModel.RemoveElement(elementToDelete);
-                UpdateStatistics();
-                MarkDirty();
-            }
+        project.SignalBoxPlan ??= new SignalBoxPlan
+        {
+            Name = "Stellwerk",
+            GridWidth = GridColumns,
+            GridHeight = GridRows,
+            CellSize = GridCellSize
+        };
 
-            #endregion
+        HasUnsavedChanges = false;
+    }
 
-                // Properties Panel methods moved to SignalBoxPage.Properties.cs
+    /// <inheritdoc />
+    public void LoadFromModel()
+    {
+        // Clear existing visuals
+        foreach (var visual in _elementVisuals.Values)
+        {
+            TrackCanvas.Children.Remove(visual);
+        }
+        _elementVisuals.Clear();
 
-                #region IPersistablePage Implementation
+        // Get or create ViewModel and refresh from model
+        var planVm = GetOrCreatePlanViewModel();
+        if (planVm == null)
+            return;
 
-                /// <inheritdoc />
-                public void SyncToModel()
-                {
-                    // ViewModel already syncs to Model automatically via property setters
-                    // Just ensure the plan exists
-                    var project = ViewModel.SelectedProject?.Model;
-                    if (project == null)
-                        return;
+        planVm.Refresh();
 
-                    project.SignalBoxPlan ??= new SignalBoxPlan
-                    {
-                        Name = "Stellwerk",
-                        GridWidth = GridColumns,
-                        GridHeight = GridRows,
-                        CellSize = GridCellSize
-                    };
+        // Recreate visuals for all elements
+        foreach (var element in planVm.Elements)
+        {
+            CreateElementVisual(element);
+        }
 
-                    HasUnsavedChanges = false;
-                }
+        HasUnsavedChanges = false;
+        UpdateStatistics();
+    }
 
-                /// <inheritdoc />
-                public void LoadFromModel()
-                {
-                    // Clear existing visuals
-                    foreach (var visual in _elementVisuals.Values)
-                    {
-                        TrackCanvas.Children.Remove(visual);
-                    }
-                    _elementVisuals.Clear();
+    /// <summary>
+    /// Mark page as having unsaved changes.
+    /// </summary>
+    private void MarkDirty()
+    {
+        HasUnsavedChanges = true;
+    }
 
-                    // Get or create ViewModel and refresh from model
-                    var planVm = GetOrCreatePlanViewModel();
-                    if (planVm == null)
-                        return;
-
-                    planVm.Refresh();
-
-                    // Recreate visuals for all elements
-                    foreach (var element in planVm.Elements)
-                    {
-                        CreateElementVisual(element);
-                    }
-
-                    HasUnsavedChanges = false;
-                    UpdateStatistics();
-                }
-
-                /// <summary>
-                /// Mark page as having unsaved changes.
-                /// </summary>
-                private void MarkDirty()
-                {
-                    HasUnsavedChanges = true;
-                }
-
-                #endregion
-            }
+    #endregion
+}

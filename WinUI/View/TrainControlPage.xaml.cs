@@ -18,8 +18,6 @@ using SharedUI.ViewModel;
 
 using Windows.UI;
 
-using AppTheme = Service.ApplicationTheme;
-
 /// <summary>
 /// TrainControlPage - Theme-aware train control interface.
 /// Supports multiple manufacturer-inspired color themes with system accent as default.
@@ -28,7 +26,7 @@ using AppTheme = Service.ApplicationTheme;
 public sealed partial class TrainControlPage
 {
     private readonly ILocomotiveService _locomotiveService;
-    private readonly IThemeProvider _themeProvider;
+    private readonly ISkinProvider _skinProvider;
     private readonly AppSettings _settings;
     private readonly ISettingsService? _settingsService;
     private List<LocomotiveSeries> _allLocomotives = [];
@@ -47,100 +45,100 @@ public sealed partial class TrainControlPage
     public TrainControlPage(
         TrainControlViewModel viewModel,
         ILocomotiveService locomotiveService,
-        IThemeProvider themeProvider,
+        ISkinProvider skinProvider,
         AppSettings settings,
         ISettingsService? settingsService = null)
     {
         ViewModel = viewModel;
         _locomotiveService = locomotiveService;
-        _themeProvider = themeProvider;
+        _skinProvider = skinProvider;
         _settings = settings;
         _settingsService = settingsService;
 
         InitializeComponent();
 
-        // Subscribe to theme changes for dynamic updates
-        _themeProvider.ThemeChanged += OnThemeProviderChanged;
-        _themeProvider.DarkModeChanged += OnDarkModeChanged;
+        // Subscribe to skin changes for dynamic updates
+        _skinProvider.SkinChanged += OnSkinProviderChanged;
+        _skinProvider.DarkModeChanged += OnDarkModeChanged;
 
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
     }
 
-    private void OnThemeProviderChanged(object? sender, ThemeChangedEventArgs e)
+    private void OnSkinProviderChanged(object? sender, SkinChangedEventArgs e)
     {
-        DispatcherQueue.TryEnqueue(ApplyThemeColors);
+        DispatcherQueue.TryEnqueue(ApplySkinColors);
     }
 
     private void OnDarkModeChanged(object? sender, EventArgs e)
     {
-        DispatcherQueue.TryEnqueue(ApplyThemeColors);
+        DispatcherQueue.TryEnqueue(ApplySkinColors);
     }
 
-    private void ApplyThemeColors()
+    private void ApplySkinColors()
     {
-        var palette = ThemeColors.GetPalette(_themeProvider.CurrentTheme, _themeProvider.IsDarkMode);
+        var palette = SkinColors.GetPalette(_skinProvider.CurrentSkin, _skinProvider.IsDarkMode);
 
         // Set page RequestedTheme based on skin (controls Light/Dark for standard WinUI controls)
         RequestedTheme = palette.IsDarkTheme
             ? ElementTheme.Dark
             : ElementTheme.Light;
 
-        // Check if this is the "Original" theme
-        var isOriginalTheme = _themeProvider.CurrentTheme == Service.ApplicationTheme.Original;
+        // Check if this is the "System" skin (uses Windows accent color)
+        var isSystemSkin = _skinProvider.CurrentSkin == AppSkin.System;
 
-        // Header border background - use theme-appropriate color
+        // Header border background - use skin-appropriate color
         if (_headerBorder != null)
         {
-            if (isOriginalTheme)
+            if (isSystemSkin)
             {
-                // Original theme: Use Acrylic background
+                // System skin: Use Acrylic background
                 _headerBorder.ClearValue(Border.BackgroundProperty);
             }
             else
             {
-                // Manufacturer themes: Use HeaderBackground color with opacity
+                // Color skins: Use HeaderBackground color with opacity
                 _headerBorder.Background = palette.HeaderBackgroundBrush;
             }
         }
 
-        // Header grid background - use theme-appropriate color for solid colored header
+        // Header grid background - use skin-appropriate color for solid colored header
         if (_headerGrid != null)
         {
-            if (isOriginalTheme)
+            if (isSystemSkin)
             {
-                // Original theme: Use default/transparent background
+                // System skin: Use default/transparent background
                 _headerGrid.ClearValue(Grid.BackgroundProperty);
             }
             else
             {
-                // Manufacturer themes: Use HeaderBackground color (fallback if border not available)
+                // Color skins: Use HeaderBackground color (fallback if border not available)
                 _headerGrid.Background = palette.HeaderBackgroundBrush;
             }
         }
 
-        // Title text color - use theme-appropriate color
+        // Title text color - use skin-appropriate color
         if (_titleText != null)
         {
-            if (isOriginalTheme)
+            if (isSystemSkin)
             {
-                // Original theme: Use standard text color
+                // System skin: Use standard text color
                 _titleText.ClearValue(TextBlock.ForegroundProperty);
             }
             else
             {
-                // Manufacturer themes: Use HeaderForeground color
+                // Color skins: Use HeaderForeground color
                 _titleText.Foreground = palette.HeaderForegroundBrush;
             }
         }
 
-        // Speedometer needle - use system accent color for Original theme
+        // Speedometer needle - use system accent color for System skin
         if (_speedometer != null)
         {
-            if (isOriginalTheme)
+            if (isSystemSkin)
             {
-                // Use Windows system accent color (same as TrainControlPage)
+                // Use Windows system accent color
                 _speedometer.AccentColor = GetSystemAccentColor();
             }
             else
@@ -217,16 +215,16 @@ public sealed partial class TrainControlPage
         _speedometerPanel = FindName("SpeedometerPanel") as Border;
         _functionsPanel = FindName("FunctionsPanel") as Border;
 
-        // Apply current theme colors
-        ApplyThemeColors();
+        // Apply current skin colors
+        ApplySkinColors();
 
         _allLocomotives = await _locomotiveService.GetAllSeriesAsync().ConfigureAwait(false);
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
-        _themeProvider.ThemeChanged -= OnThemeProviderChanged;
-        _themeProvider.DarkModeChanged -= OnDarkModeChanged;
+        _skinProvider.SkinChanged -= OnSkinProviderChanged;
+        _skinProvider.DarkModeChanged -= OnDarkModeChanged;
     }
 
     private void LocoSeriesBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
@@ -263,63 +261,17 @@ public sealed partial class TrainControlPage
     }
 
     // Skin selection handlers for Flyout buttons
-    private async void OnSkinClassicClicked(object sender, RoutedEventArgs e)
-    {
-        _themeProvider.SetTheme(AppTheme.Classic);
-        if (_settingsService != null)
-        {
-            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
-        }
-    }
+    private async void OnSkinGreenClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Green);
+    private async void OnSkinBlueClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Blue);
+    private async void OnSkinVioletClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Violet);
+    private async void OnSkinOrangeClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Orange);
+    private async void OnSkinDarkOrangeClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.DarkOrange);
+    private async void OnSkinRedClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Red);
+    private async void OnSkinSystemClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.System);
 
-    private async void OnSkinModernClicked(object sender, RoutedEventArgs e)
+    private async Task SetSkinAsync(AppSkin skin)
     {
-        _themeProvider.SetTheme(AppTheme.Modern);
-        if (_settingsService != null)
-        {
-            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
-        }
-    }
-
-    private async void OnSkinDarkClicked(object sender, RoutedEventArgs e)
-    {
-        _themeProvider.SetTheme(AppTheme.Dark);
-        if (_settingsService != null)
-        {
-            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
-        }
-    }
-
-    private async void OnSkinEsuClicked(object sender, RoutedEventArgs e)
-    {
-        _themeProvider.SetTheme(AppTheme.EsuCabControl);
-        if (_settingsService != null)
-        {
-            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
-        }
-    }
-
-    private async void OnSkinRocoClicked(object sender, RoutedEventArgs e)
-    {
-        _themeProvider.SetTheme(AppTheme.RocoZ21);
-        if (_settingsService != null)
-        {
-            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
-        }
-    }
-
-    private async void OnSkinMaerklinClicked(object sender, RoutedEventArgs e)
-    {
-        _themeProvider.SetTheme(AppTheme.MaerklinCS);
-        if (_settingsService != null)
-        {
-            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
-        }
-    }
-
-    private async void OnSkinOriginalClicked(object sender, RoutedEventArgs e)
-    {
-        _themeProvider.SetTheme(AppTheme.Original);
+        _skinProvider.SetSkin(skin);
         if (_settingsService != null)
         {
             await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);

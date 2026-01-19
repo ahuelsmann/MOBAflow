@@ -108,7 +108,9 @@ app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-// React SPA - SpaProxy auto-starts Vite dev server in Development
-// Configured via SpaProxyServerUrl and SpaProxyLaunchCommand in csproj
+// React SPA routing:
+// Exclude /api, /blazor, /_blazor, /_framework paths from SPA fallback
+// These are handled by their respective middleware
+app.MapFallbackToFile("{*path:regex(^(?!api|blazor|_blazor|_framework|swagger).*$)}", "index.html");
 
 await app.RunAsync();

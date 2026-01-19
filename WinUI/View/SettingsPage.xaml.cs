@@ -16,14 +16,14 @@ public sealed partial class SettingsPage
 {
     public MainWindowViewModel ViewModel { get; }
 
-    public SettingsPage(MainWindowViewModel viewModel, IThemeProvider themeProvider)
+    public SettingsPage(MainWindowViewModel viewModel, ISkinProvider skinProvider)
     {
         ViewModel = viewModel;
         InitializeComponent();
 
-        // TODO: ThemeSelectorControl Umbenennung zu SkinSelector - siehe issue #XXX
-        // var skinSelector = new SkinSelector(themeProvider);
-        // ThemeSelectorContainer.Children.Add(skinSelector);
+        // TODO: SkinSelectorControl erstellen - siehe TODOs
+        // var skinSelector = new SkinSelector(skinProvider);
+        // SkinSelectorContainer.Children.Add(skinSelector);
     }
 
     private void CopyIpToClipboard_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)

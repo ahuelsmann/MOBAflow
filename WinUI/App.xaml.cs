@@ -324,7 +324,7 @@ public partial class App
         {
             var page = new SignalBoxPage(
                 sp.GetRequiredService<MainWindowViewModel>(),
-                sp.GetRequiredService<IThemeProvider>(),
+                sp.GetRequiredService<ISkinProvider>(),
                 sp.GetRequiredService<AppSettings>(),
                 sp.GetService<ISettingsService>());
             sp.GetRequiredService<PagePersistenceCoordinator>().RegisterPage(page);
@@ -352,9 +352,9 @@ public partial class App
         navigationRegistry.Register("settings", "Settings", "\uE115", typeof(SettingsPage), "Shell",
             NavigationCategory.Help, 30, "IsSettingsPageAvailable", "SettingsPageLabel");
 
-        // Theme Provider
-        services.AddSingleton<IThemeProvider, ThemeProvider>();
-        // NOTE: ThemeSelectorControl wird dynamisch in SettingsPage erstellt
+        // Skin Provider
+        services.AddSingleton<ISkinProvider, SkinProvider>();
+        // NOTE: SkinSelectorControl wird dynamisch in SettingsPage erstellt
 
 
         // MainWindow (Singleton = one instance for app lifetime)
@@ -400,10 +400,10 @@ public partial class App
     /// <param name="args">Details about the launch request and process.</param>
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-        // Initialize ThemeProvider with saved settings before creating MainWindow
-        var themeProvider = Services.GetRequiredService<IThemeProvider>();
+        // Initialize SkinProvider with saved settings before creating MainWindow
+        var skinProvider = Services.GetRequiredService<ISkinProvider>();
         var appSettings = Services.GetRequiredService<AppSettings>();
-        themeProvider.Initialize(appSettings);
+        skinProvider.Initialize(appSettings);
 
         _window = Services.GetRequiredService<MainWindow>();
         _window.Activate();
