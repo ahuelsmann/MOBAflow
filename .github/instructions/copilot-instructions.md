@@ -100,19 +100,52 @@ dotnet test
 ## [ACTIVE] Instruction Files
 
 ### Workflow & Prozess
-- [implementation-workflow.instructions.md](./implementation-workflow.instructions.md) - **PFLICHT:** 5-Schritte-Workflow (Analyse → Best Practices → Fluent Design → Plan → Code)
+- [implementation-workflow.instructions.md](./implementation-workflow.instructions.md) - **PFLICHT:** 5-Schritte-Workflow
+- [terminal.instructions.md](./terminal.instructions.md) - PowerShell-Regeln
+- [powershell.instructions.md](./powershell.instructions.md) - PowerShell-Details
+- [editor-behavior.md](./editor-behavior.md) - Editor-Verhalten
 
 ### Architecture & Patterns
-- [architecture.instructions.md](./architecture.instructions.md) - Layers, data flow, interfaces
-- [mvvm-best-practices.instructions.md](./mvvm-best-practices.instructions.md) - MVVM with CommunityToolkit
+- [architecture.instructions.md](./architecture.instructions.md) - Layers, data flow
+- [di-pattern-consistency.instructions.md](./di-pattern-consistency.instructions.md) - DI Patterns
+- [backend.instructions.md](./backend.instructions.md) - Backend Services
+- [dotnet-framework.instructions.md](./dotnet-framework.instructions.md) - .NET Framework
+
+### MVVM
+- [mvvm.instructions.md](./mvvm.instructions.md) - MVVM Grundlagen
+- [mvvm-best-practices.instructions.md](./mvvm-best-practices.instructions.md) - MVVM Details
+- [collections.instructions.md](./collections.instructions.md) - Collections & ObservableCollection
+- [hasunsavedchanges-patterns.instructions.md](./hasunsavedchanges-patterns.instructions.md) - Dirty-Tracking
+
+### UI Frameworks
+- [winui.instructions.md](./winui.instructions.md) - WinUI 3 Grundlagen
+- [winui-compact.instructions.md](./winui-compact.instructions.md) - WinUI Kompakt
 - [fluent-design.instructions.md](./fluent-design.instructions.md) - Fluent Design System
-- [self-explanatory-code-commenting.instructions.md](./self-explanatory-code-commenting.instructions.md) - Code commenting
+- [xaml-page-registration.instructions.md](./xaml-page-registration.instructions.md) - XAML Page Registration
+- [winui3-best-practices-steps-4-12.md](./winui3-best-practices-steps-4-12.md) - WinUI Best Practices
+- [winui3-vsm-detailed-guide.md](./winui3-vsm-detailed-guide.md) - Visual State Manager
+- [blazor.instructions.md](./blazor.instructions.md) - Blazor WebApp
+- [maui.instructions.md](./maui.instructions.md) - .NET MAUI
 
-### Terminal & Tools
-- [terminal.instructions.md](./terminal.instructions.md) - **WICHTIG:** PowerShell-Regeln, erlaubte/verbotene Befehle
+### TrackPlan System (MOBAtps)
+- [geometry.md](./geometry.md) - Gleisgeometrie
+- [rendering.md](./rendering.md) - Rendering Pipeline
+- [snapping.md](./snapping.md) - Snap-Logik
+- [topology.md](./topology.md) - Topologie-System
 
-### TODOs & Session Knowledge
-- [todos.instructions.md](./todos.instructions.md) - Aktive TODOs und Entscheidungen
+### Code Quality
+- [self-explanatory-code-commenting.instructions.md](./self-explanatory-code-commenting.instructions.md) - Kommentare
+- [no-special-chars.instructions.md](./no-special-chars.instructions.md) - Zeichensatz
+- [test.instructions.md](./test.instructions.md) - Unit Tests
+
+### CI/CD
+- [github-actions-ci-cd-best-practices.instructions.md](./github-actions-ci-cd-best-practices.instructions.md) - GitHub Actions
+
+### Meta & TODOs
+- [instructions.instructions.md](./instructions.instructions.md) - Instruction-Regeln
+- [prompt.instructions.md](./prompt.instructions.md) - Prompt-Guidelines
+- [todos.instructions.md](./todos.instructions.md) - Aktive TODOs
+- [todos/](./todos/) - TODO-Unterordner (5 Dateien)
 
 ### Project Overview
 - [README.md](../../README.md) - Project documentation
