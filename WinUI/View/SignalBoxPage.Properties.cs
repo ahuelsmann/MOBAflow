@@ -154,7 +154,6 @@ public sealed partial class SignalBoxPage
         {
             SelectedElement.Rotation = rotation;
             RefreshElementVisual(SelectedElement);
-            MarkDirty();
         }
     }
 
@@ -173,7 +172,6 @@ public sealed partial class SignalBoxPage
             // Update canvas element
             RefreshElementVisual(SelectedElement);
             UpdateAspectButtons();
-            MarkDirty();
         }
     }
 
@@ -181,55 +179,52 @@ public sealed partial class SignalBoxPage
     {
         if (SelectedElement == null || sender is not Button { Tag: string positionStr }) return;
 
-        SelectedElement.SwitchPosition = positionStr switch
-        {
-            "Straight" => Domain.SwitchPosition.Straight,
-            "DivergingLeft" => Domain.SwitchPosition.DivergingLeft,
-            "DivergingRight" => Domain.SwitchPosition.DivergingRight,
-            _ => Domain.SwitchPosition.Straight
-        };
+            SelectedElement.SwitchPosition = positionStr switch
+            {
+                "Straight" => Domain.SwitchPosition.Straight,
+                "DivergingLeft" => Domain.SwitchPosition.DivergingLeft,
+                "DivergingRight" => Domain.SwitchPosition.DivergingRight,
+                _ => Domain.SwitchPosition.Straight
+            };
 
-        RefreshElementVisual(SelectedElement);
-        UpdateSwitchButtons();
-        MarkDirty();
-    }
-
-    private void OnAddressChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
-    {
-        if (SelectedElement == null || double.IsNaN(args.NewValue)) return;
-        SelectedElement.Address = (int)args.NewValue;
-        MarkDirty();
-    }
-
-    private void OnDeleteElementClicked(object sender, RoutedEventArgs e)
-    {
-        DeleteSelectedElement();
-    }
-
-    private void OnSignalTypeChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (SelectedElement == null || SignalTypeComboBox.SelectedItem is not ComboBoxItem { Tag: string typeTag })
-            return;
-
-        var newSymbol = typeTag switch
-        {
-            "KsMain" => SignalBoxSymbol.SignalKsMain,
-            "KsDistant" => SignalBoxSymbol.SignalKsDistant,
-            "KsMulti" => SignalBoxSymbol.SignalKsCombined,
-            "Shunt" => SignalBoxSymbol.SignalSh,
-            "Block" => SignalBoxSymbol.SignalBlock,
-            _ => SelectedElement.Symbol
-        };
-
-        if (newSymbol != SelectedElement.Symbol)
-        {
-            SelectedElement.Symbol = newSymbol;
-            ElementTypeText.Text = GetElementTypeName(newSymbol);
             RefreshElementVisual(SelectedElement);
-            UpdateStatistics();
-            MarkDirty();
+            UpdateSwitchButtons();
         }
-    }
 
-    #endregion
-}
+        private void OnAddressChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+        {
+            if (SelectedElement == null || double.IsNaN(args.NewValue)) return;
+            SelectedElement.Address = (int)args.NewValue;
+        }
+
+        private void OnDeleteElementClicked(object sender, RoutedEventArgs e)
+        {
+            DeleteSelectedElement();
+        }
+
+        private void OnSignalTypeChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (SelectedElement == null || SignalTypeComboBox.SelectedItem is not ComboBoxItem { Tag: string typeTag })
+                return;
+
+            var newSymbol = typeTag switch
+            {
+                "KsMain" => SignalBoxSymbol.SignalKsMain,
+                "KsDistant" => SignalBoxSymbol.SignalKsDistant,
+                "KsMulti" => SignalBoxSymbol.SignalKsCombined,
+                "Shunt" => SignalBoxSymbol.SignalSh,
+                "Block" => SignalBoxSymbol.SignalBlock,
+                _ => SelectedElement.Symbol
+            };
+
+            if (newSymbol != SelectedElement.Symbol)
+            {
+                SelectedElement.Symbol = newSymbol;
+                ElementTypeText.Text = GetElementTypeName(newSymbol);
+                RefreshElementVisual(SelectedElement);
+                UpdateStatistics();
+            }
+        }
+
+        #endregion
+    }

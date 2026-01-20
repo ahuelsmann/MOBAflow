@@ -1,265 +1,46 @@
 ---
-description: 'MOBAflow architecture overview - layers, data flow, key interfaces, and project structure for Copilot context.'
-applyTo: '**'
+description: 'MOBAflow architecture - layers, projects, key interfaces'
+applyTo: '**/*.cs'
 ---
 
 # MOBAflow Architecture
 
-> **Reference:** Full documentation in [`ARCHITECTURE.md`](../../ARCHITECTURE.md)
+> Full docs: [`ARCHITECTURE.md`](../../ARCHITECTURE.md)
 
----
+## Layer Overview
 
-## Layer Overview (Clean Architecture)
+Presentation (WinUI/MAUI/Blazor) → SharedUI (ViewModels) → Domain/Backend/TrackPlan → External (Z21 UDP)
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                   Presentation Layer                         │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
-│  │  WinUI   │  │  MAUI    │  │  Blazor  │  │  Plugins │    │
-│  │(Windows) │  │(Android) │  │  (Web)   │  │(Dynamic) │    │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘    │
-└───────┼──────────────┼────────────┼────────────┼────────────┘
-        └──────────────┼────────────┼────────────┘
-                       ↓            ↓
-          ┌────────────────────────────────────┐
-          │     SharedUI (Base ViewModels)     │
-          │   MVVM, Commands, Observable Props │
-          └────────────────┬───────────────────┘
-                           ↓
-┌──────────────────────────────────────────────────────────────┐
-│              Domain & Business Logic Layer                   │
-│  ┌────────────┐  ┌──────────────┐  ┌──────────────┐         │
-│  │  Domain    │  │   Backend    │  │  TrackPlan   │         │
-│  │ (Models)   │  │  (Services)  │  │  (Geometry)  │         │
-│  └────────────┘  └──────────────┘  └──────────────┘         │
-└──────────────────────────┬───────────────────────────────────┘
-                           ↓
-            ┌──────────────┴──────────────┐
-            │                             │
-        ┌───────────┐              ┌────────────┐
-        │ External  │              │ Logging &  │
-        │ Services  │              │ Config     │
-        │ (Z21 UDP) │              │ (Serilog)  │
-        └───────────┘              └────────────┘
-```
-
----
-
-## Project Structure
+## Projects
 
 | Project | Layer | Purpose |
 |---------|-------|---------|
-| `Domain/` | Domain | Pure POCOs (Solution, Journey, Workflow, Train, FeedbackPoint) |
-| `Backend/` | Service | Z21 communication, WorkflowService, ActionExecutor |
-| `Common/` | Shared | Configuration, Logging, Plugin interfaces |
-| `SharedUI/` | Presentation | Base ViewModels (MainWindowViewModel, etc.) |
-| `WinUI/` | Platform | Windows Desktop (XAML Pages, WinUI Services) |
-| `MAUI/` | Platform | Android Mobile (XAML Pages, MAUI Services) |
-| `WebApp/` | Platform | Blazor Server (Razor Components) |
-| `TrackPlan/` | Domain | Track plan models and validation |
-| `TrackPlan.Renderer/` | Service | Geometry calculations, SVG rendering |
-| `TrackPlan.Editor/` | Presentation | Editor ViewModels, drag & drop logic |
-| `TrackLibrary.PikoA/` | Plugin | Piko A-Gleis track templates |
-
----
+| `Domain/` | Domain | POCOs: Solution, Journey, Workflow, Train |
+| `Backend/` | Service | Z21, WorkflowService, ActionExecutor |
+| `SharedUI/` | Presentation | Base ViewModels |
+| `WinUI/` | Platform | Windows Desktop |
+| `MAUI/` | Platform | Android Mobile |
+| `WebApp/` | Platform | Blazor Server |
+| `TrackPlan*/` | Domain | Track models, geometry, editor |
 
 ## Key Interfaces
 
-### IZ21 (Z21 Communication)
+- `IZ21`: ConnectAsync, SetLocomotiveSpeedAsync, FeedbackReceived event
+- `IActionExecutor`: ExecuteActionAsync(WorkflowAction, ExecutionContext)
+- `ISpeakerEngine`: SpeakAsync, StopAsync
+- `IIoService`: LoadAsync, SaveAsync
 
-```csharp
-public interface IZ21
-{
-    bool IsConnected { get; }
-    Task ConnectAsync(string ipAddress);
-    Task DisconnectAsync();
-    Task SetTrackPowerAsync(bool on);
-    Task SetLocomotiveSpeedAsync(int address, int speed, bool forward);
-    Task SetLocomotiveFunctionAsync(int address, int function, bool on);
-    event EventHandler<FeedbackReceivedEventArgs> FeedbackReceived;
-    event EventHandler<SystemStateEventArgs> SystemStateChanged;
-}
-```
+## Data Flow
 
-### IActionExecutor (Workflow Actions)
+Z21 UDP → IZ21.FeedbackReceived → MainWindowViewModel → Journey.HandleFeedback → WorkflowService → UI Update
 
-```csharp
-public interface IActionExecutor
-{
-    Task ExecuteActionAsync(WorkflowAction action, ExecutionContext context);
-}
-```
+## Conventions
 
-### ISpeakerEngine (Text-to-Speech)
-
-```csharp
-public interface ISpeakerEngine
-{
-    Task SpeakAsync(string text, CancellationToken cancellationToken = default);
-    Task StopAsync();
-}
-```
-
-### IIoService (File Operations)
-
-```csharp
-public interface IIoService
-{
-    Task<(Solution? solution, string? path, string? error)> LoadAsync();
-    Task<(bool success, string? path, string? error)> SaveAsync(Solution solution, string? path);
-    Task<string?> BrowseForJsonFileAsync();
-}
-```
-
----
-
-## Data Flow: Z21 Feedback
-
-```
-Z21 Station (UDP broadcast Port 21105)
-  ↓ UDP packet
-IZ21.ReceiveFeedback()
-  ↓
-[FeedbackReceivedEventArgs]
-  ├─ InPort (track sensor address)
-  └─ Value (1=occupied, 0=free)
-  ↓
-MainWindowViewModel.OnFeedbackReceived()
-  ↓
-Journey.HandleFeedback()
-  ├─ Match station by FeedbackPoint
-  └─ Trigger associated Workflow
-  ↓
-WorkflowService.ExecuteWorkflow()
-  ├─ Execute action sequence
-  ├─ TTS announcements
-  └─ Update UI state
-  ↓
-UI Updates (ObservableProperty)
-  └─ WinUI/MAUI/Blazor re-render
-```
-
----
-
-## Data Flow: Command Execution
-
-```
-User clicks button
-  ↓
-XAML Command binding
-  ↓
-[RelayCommand] in ViewModel
-  ↓
-await _z21.SetLocomotiveSpeedAsync(...)
-  ↓
-IZ21 builds UDP packet
-  ↓
-UDP send to Z21 (Port 21105)
-  ↓
-Z21 executes command
-  ↓
-Train moves on track
-```
-
----
-
-## ViewModel Pattern (CommunityToolkit.Mvvm)
-
-```csharp
-public partial class MainWindowViewModel : ObservableObject
-{
-    private readonly IZ21 _z21;
-    private readonly ILogger<MainWindowViewModel> _logger;
-
-    // Observable property (source generator)
-    [ObservableProperty]
-    private bool _isConnected;
-
-    // Command (source generator)
-    [RelayCommand]
-    private async Task ConnectAsync()
-    {
-        try
-        {
-            await _z21.ConnectAsync(IpAddress);
-            IsConnected = true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Connection failed");
-            ErrorMessage = ex.Message;
-        }
-    }
-
-    // Property change notification
-    partial void OnIsConnectedChanged(bool value)
-    {
-        _logger.LogInformation("Connection state: {IsConnected}", value);
-    }
-}
-```
-
----
-
-## Plugin System
-
-### Plugin Lifecycle
-
-```
-[1] DISCOVERY  → Scan Plugins/*.dll, reflect IPlugin
-[2] VALIDATION → Check names, tags, reserved words
-[3] CONFIGURE  → Plugin.ConfigureServices(services)
-[4] INITIALIZE → Plugin.OnInitializedAsync()
-[5] RUNTIME    → Pages available in NavigationView
-[6] UNLOAD     → Plugin.OnUnloadingAsync()
-```
-
-### Plugin Implementation
-
-```csharp
-public class MyPlugin : PluginBase
-{
-    public override string Name => "My Plugin";
-    public override string Description => "Example plugin";
-
-    public override IEnumerable<PageDescriptor> GetPages()
-    {
-        yield return new PageDescriptor(
-            Tag: "MyPage",
-            Title: "My Page",
-            Icon: Symbol.Page,
-            PageType: typeof(MyPluginPage));
-    }
-
-    public override void ConfigureServices(IServiceCollection services)
-    {
-        services.AddTransient<MyPluginViewModel>();
-        services.AddTransient<MyPluginPage>();
-    }
-}
-```
-
----
-
-## Domain Models (Key Entities)
-
-| Entity | Description | Key Properties |
-|--------|-------------|----------------|
-| `Solution` | Root aggregate, saved as .mobaflow file | Name, Projects, Settings |
-| `Project` | Container for journeys, workflows, trains | Name, Journeys, Workflows, Trains |
-| `Journey` | Train route with stations | Name, Stations, Text (announcement template) |
-| `Station` | Stop on a journey | Name, FeedbackPointId, IsExitOnLeft |
-| `Workflow` | Action sequence | Name, Trigger, Actions, ExecutionMode |
-| `WorkflowAction` | Single action in workflow | ActionType, Parameters, DelayAfterMs |
-| `Train` | Locomotive definition | Name, Address, MaxSpeed, Functions |
-| `FeedbackPoint` | Track sensor | Id, Address, Name |
-
----
-
-## File Locations
-
-| File Type | Location | Format |
-|-----------|----------|--------|
+- Async suffix on all async methods
+- Constructor injection (no service locator)
+- `[ObservableProperty]`, `[RelayCommand]` attributes
+- `ArgumentNullException.ThrowIfNull()` for null checks
+- `.ConfigureAwait(false)` in library code
 | Solution | User-selected | `.mobaflow` (JSON) |
 | Settings | `WinUI/appsettings.json` | JSON |
 | Logs | `bin/Debug/logs/mobaflow-*.log` | Rolling text |

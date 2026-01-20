@@ -42,12 +42,13 @@ public sealed partial class SignalBoxPage
 
     private static Canvas CreateCurve45Graphic()
     {
-        // 45 degree curve (flat): Left (0,30) -> Top (30,0)
+        // 45 degree curve: Left (0,30) -> Right-Top diagonal (60,0)
+        // Flatter curve for gradual direction change
         var canvas = new Canvas { Width = 60, Height = 60 };
         canvas.Children.Add(new Path
         {
             Data = (Geometry)Microsoft.UI.Xaml.Markup.XamlBindingHelper.ConvertValue(typeof(Geometry),
-                "M 0,30 C 20,30 30,15 30,0"),
+                "M 0,30 Q 30,30 60,0"),
             Stroke = TrackBrush,
             StrokeThickness = TrackThickness
         });
@@ -56,12 +57,13 @@ public sealed partial class SignalBoxPage
 
     private static Canvas CreateCurve90Graphic()
     {
-        // 90 degree curve (tight): Left (0,30) -> Top (30,0)
+        // 90 degree curve: Left (0,30) -> Top (30,0)
+        // Tighter curve for sharper direction change (quarter circle)
         var canvas = new Canvas { Width = 60, Height = 60 };
         canvas.Children.Add(new Path
         {
             Data = (Geometry)Microsoft.UI.Xaml.Markup.XamlBindingHelper.ConvertValue(typeof(Geometry),
-                "M 0,30 C 0,13 13,0 30,0"),
+                "M 0,30 Q 0,0 30,0"),
             Stroke = TrackBrush,
             StrokeThickness = TrackThickness
         });

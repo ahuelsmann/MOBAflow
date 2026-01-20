@@ -325,7 +325,7 @@
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
                                     Tag="TrackCurve45"
-                                    ToolTipService.ToolTip="Kurve 45°">
+                                    ToolTipService.ToolTip="Kurve 45° (flach)">
                                     <StackPanel
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
@@ -336,7 +336,7 @@
                                             Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
                                             CornerRadius="4">
                                             <Path
-                                                Data="M 4,24 Q 24,14 44,4"
+                                                Data="M 4,20 Q 24,20 44,4"
                                                 Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
                                                 StrokeThickness="3" />
                                         </Border>
@@ -362,7 +362,7 @@
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
                                     Tag="TrackCurve90"
-                                    ToolTipService.ToolTip="Kurve 90°">
+                                    ToolTipService.ToolTip="Kurve 90° (eng)">
                                     <StackPanel
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
@@ -373,7 +373,7 @@
                                             Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
                                             CornerRadius="4">
                                             <Path
-                                                Data="M 4,24 Q 4,4 44,4"
+                                                Data="M 4,20 Q 4,4 24,4"
                                                 Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
                                                 StrokeThickness="3" />
                                         </Border>

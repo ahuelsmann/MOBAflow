@@ -87,33 +87,39 @@ public class SignalBoxPlanElement
     /// <summary>
     /// DCC address for Z21 control (0 = not configured).
     /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public int Address { get; set; }
 
     /// <summary>
     /// Feedback address for occupancy detection (0 = not configured).
     /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public int FeedbackAddress { get; set; }
 
-        /// <summary>
-        /// Signal system type (for signals).
-        /// </summary>
-        public SignalSystemType SignalSystem { get; set; } = SignalSystemType.Ks;
+    /// <summary>
+    /// Signal system type (only relevant for signal elements).
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public SignalSystemType SignalSystem { get; set; } = SignalSystemType.Ks;
 
-        /// <summary>
-        /// Current signal aspect (for signal elements).
-        /// </summary>
-        public SignalAspect SignalAspect { get; set; } = SignalAspect.Hp0;
+    /// <summary>
+    /// Current signal aspect (only relevant for signal elements).
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public SignalAspect SignalAspect { get; set; } = SignalAspect.Hp0;
 
-        /// <summary>
-        /// Current switch position (for switch elements).
-        /// </summary>
-        public SwitchPosition SwitchPosition { get; set; } = SwitchPosition.Straight;
+    /// <summary>
+    /// Current switch position (only relevant for switch elements).
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public SwitchPosition SwitchPosition { get; set; } = SwitchPosition.Straight;
 
-        /// <summary>
-        /// Additional properties as key-value pairs.
-        /// </summary>
-        public Dictionary<string, string> Properties { get; set; } = [];
-    }
+    /// <summary>
+    /// Additional properties as key-value pairs.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, string>? Properties { get; set; }
+}
 
 /// <summary>
 /// Connection between two elements (topological link).

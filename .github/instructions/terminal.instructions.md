@@ -1,4 +1,9 @@
-# Terminal (PowerShell) – Hard Rules
+---
+description: 'PowerShell terminal rules'
+applyTo: '**/*.ps1'
+---
+
+# Terminal (PowerShell) Rules
 
 ⚠️ **COPILOT LIMITATION WARNING:**
 The terminal execution through Copilot tools currently has significant reliability issues when creating or modifying files, especially XAML files. The tool frequently produces encoding errors, incomplete writes, or syntax failures that require manual recovery.

@@ -30,7 +30,7 @@ using Windows.UI;
 /// Uses SignalBoxPlanViewModel for MVVM-compliant data management.
 /// Supports skin switching via ISkinProvider.
 /// </summary>
-public sealed partial class SignalBoxPage : Page, IPersistablePage
+public sealed partial class SignalBoxPage : Page
 {
     private const int GridCellSize = 60;
     private const int GridColumns = 32;
@@ -51,9 +51,6 @@ public sealed partial class SignalBoxPage : Page, IPersistablePage
     /// SignalBoxPlan ViewModel - the source of truth for element data.
     /// </summary>
     private SignalBoxPlanViewModel? _planViewModel;
-
-    /// <inheritdoc />
-    public bool HasUnsavedChanges { get; private set; }
 
     private readonly List<Ellipse> _blinkingLeds = [];
 
@@ -404,10 +401,15 @@ public sealed partial class SignalBoxPage : Page, IPersistablePage
 
     private void OnToolDragStarting(UIElement sender, DragStartingEventArgs e)
     {
-        if (sender is Border { Tag: string typeTag })
+        if (sender is Border border && border.Tag is string typeTag && !string.IsNullOrEmpty(typeTag))
         {
             e.Data.SetText($"NEW:{typeTag}");
             e.Data.RequestedOperation = DataPackageOperation.Copy;
+        }
+        else
+        {
+            // Cancel drag if no valid tag found - prevents stale drag data issues
+            e.Cancel = true;
         }
     }
 
@@ -426,6 +428,11 @@ public sealed partial class SignalBoxPage : Page, IPersistablePage
             return;
 
         var text = await e.DataView.GetTextAsync();
+
+        // Validate that we have valid drag data
+        if (string.IsNullOrEmpty(text))
+            return;
+
         var pos = e.GetPosition(TrackCanvas);
         int gridX = Math.Clamp((int)(pos.X / GridCellSize), 0, GridColumns - 1);
         int gridY = Math.Clamp((int)(pos.Y / GridCellSize), 0, GridRows - 1);
@@ -520,10 +527,15 @@ public sealed partial class SignalBoxPage : Page, IPersistablePage
         if (_planViewModel == null) return;
 
         var elementVm = _planViewModel.AddElement(symbol, gridX, gridY);
+
+        // Verify the element was created with the correct symbol
+        System.Diagnostics.Debug.Assert(
+            elementVm.Symbol == symbol, 
+            $"Element symbol mismatch: expected {symbol}, got {elementVm.Symbol}");
+
         CreateElementVisual(elementVm);
         SelectElement(elementVm);
         UpdateStatistics();
-        MarkDirty();
     }
 
     private void MoveElement(SignalBoxPlanElementViewModel element, int newGridX, int newGridY)
@@ -531,7 +543,6 @@ public sealed partial class SignalBoxPage : Page, IPersistablePage
         element.X = newGridX;
         element.Y = newGridY;
         RefreshElementVisual(element);
-        MarkDirty();
     }
 
     private void CreateElementVisual(SignalBoxPlanElementViewModel element)
@@ -712,90 +723,58 @@ public sealed partial class SignalBoxPage : Page, IPersistablePage
 
         _blinkingLeds.Clear();
         UpdatePropertiesPanel();
-    }
-
-    private void DeleteSelectedElement()
-    {
-        if (SelectedElement == null || _planViewModel == null) return;
-
-        var elementToDelete = SelectedElement;
-
-        _planViewModel.ClearSelection();
-        _blinkingLeds.Clear();
-        UpdatePropertiesPanel();
-
-        // Dann aus Canvas und Listen entfernen
-        if (_elementVisuals.TryGetValue(elementToDelete.Id, out var visual))
-        {
-            TrackCanvas.Children.Remove(visual);
-            _elementVisuals.Remove(elementToDelete.Id);
         }
 
-        _planViewModel.RemoveElement(elementToDelete);
-        UpdateStatistics();
-        MarkDirty();
-    }
-
-    #endregion
-
-    // Properties Panel methods moved to SignalBoxPage.Properties.cs
-
-    #region IPersistablePage Implementation
-
-    /// <inheritdoc />
-    public void SyncToModel()
-    {
-        // ViewModel already syncs to Model automatically via property setters
-        // Just ensure the plan exists
-        var project = ViewModel.SelectedProject?.Model;
-        if (project == null)
-            return;
-
-        project.SignalBoxPlan ??= new SignalBoxPlan
+        private void DeleteSelectedElement()
         {
-            Name = "Stellwerk",
-            GridWidth = GridColumns,
-            GridHeight = GridRows,
-            CellSize = GridCellSize
-        };
+            if (SelectedElement == null || _planViewModel == null) return;
 
-        HasUnsavedChanges = false;
-    }
+            var elementToDelete = SelectedElement;
 
-    /// <inheritdoc />
-    public void LoadFromModel()
-    {
-        // Clear existing visuals
-        foreach (var visual in _elementVisuals.Values)
-        {
-            TrackCanvas.Children.Remove(visual);
-        }
-        _elementVisuals.Clear();
+            _planViewModel.ClearSelection();
+            _blinkingLeds.Clear();
+            UpdatePropertiesPanel();
 
-        // Get or create ViewModel and refresh from model
-        var planVm = GetOrCreatePlanViewModel();
-        if (planVm == null)
-            return;
+            // Dann aus Canvas und Listen entfernen
+            if (_elementVisuals.TryGetValue(elementToDelete.Id, out var visual))
+            {
+                TrackCanvas.Children.Remove(visual);
+                _elementVisuals.Remove(elementToDelete.Id);
+            }
 
-        planVm.Refresh();
-
-        // Recreate visuals for all elements
-        foreach (var element in planVm.Elements)
-        {
-            CreateElementVisual(element);
+            _planViewModel.RemoveElement(elementToDelete);
+            UpdateStatistics();
         }
 
-        HasUnsavedChanges = false;
-        UpdateStatistics();
-    }
+        #endregion
 
-    /// <summary>
-    /// Mark page as having unsaved changes.
-    /// </summary>
-    private void MarkDirty()
-    {
-        HasUnsavedChanges = true;
-    }
+        /// <summary>
+        /// Loads the signal box plan from the domain model and recreates all visuals.
+        /// </summary>
+        private void LoadFromModel()
+        {
+            // Clear existing visuals
+            foreach (var visual in _elementVisuals.Values)
+            {
+                TrackCanvas.Children.Remove(visual);
+            }
+            _elementVisuals.Clear();
 
-    #endregion
-}
+            // Get or create ViewModel and refresh from model
+            var planVm = GetOrCreatePlanViewModel();
+            if (planVm == null)
+                return;
+
+            planVm.Refresh();
+
+            // Recreate visuals for all elements
+            foreach (var element in planVm.Elements)
+            {
+                CreateElementVisual(element);
+            }
+
+            UpdateStatistics();
+        }
+
+        // Properties Panel methods moved to SignalBoxPage.Properties.cs
+    }

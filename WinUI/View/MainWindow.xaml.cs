@@ -79,10 +79,12 @@ public sealed partial class MainWindow
             AppWindow.SetIcon(iconPath);
         }
 
-        // Maximize window on startup
+        // Maximize window on startup and set minimum size
         var appWindow = AppWindow;
         if (appWindow.Presenter is OverlappedPresenter presenter)
         {
+            presenter.PreferredMinimumWidth = 1024;
+            presenter.PreferredMinimumHeight = 768;
             presenter.Maximize();
         }
 
@@ -179,9 +181,13 @@ public sealed partial class MainWindow
         _skinProvider.IsDarkMode = isDarkMode;
     }
 
-    private void MainWindow_Closed(object sender, WindowEventArgs args)
+    private async void MainWindow_Closed(object sender, WindowEventArgs args)
     {
         _healthCheckService.StopPeriodicChecks();
+
+        // Auto-save solution before closing to prevent data loss
+        await ViewModel.SaveSolutionInternalAsync();
+
         ViewModel.OnWindowClosing();
     }
 
