@@ -6,8 +6,6 @@
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
     <File Path=".gitattributes" />
-    <File Path=".github/instructions/.copilot-todos.md" />
-    <File Path=".github/instructions/copilot-instructions.md" />
     <File Path=".gitignore" />
     <File Path=".mcp.json" />
     <File Path=".sln.DotSettings" />

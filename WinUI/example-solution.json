@@ -201,95 +201,103 @@
         }
       ],
       "signalBoxPlan": {
-        "id": "7a874991-324d-45a0-9097-c3607699d5c6",
-        "name": "MOBAesb",
-        "gridWidth": 24,
-        "gridHeight": 14,
+        "id": "f1d3dd73-dcd5-4faa-b180-e687659598ea",
+        "name": "Stellwerk",
+        "gridWidth": 20,
+        "gridHeight": 12,
         "cellSize": 60,
         "elements": [
           {
-            "id": "a1fcb22c-e16c-404d-bdd9-eb89509957fd",
-            "symbol": "TrackStraight",
-            "x": 4,
+            "$type": "TrackCurve",
+            "id": "f364d7d8-8fc3-4217-a84f-31e9805a88b2",
+            "x": 2,
             "y": 3,
-            "rotation": 0,
-            "name": "",
-            "address": 0,
-            "feedbackAddress": 0,
-            "signalSystem": "Ks",
-            "signalAspect": "Hp0",
-            "switchPosition": "Straight",
-            "properties": {}
+            "rotation": 270,
+            "name": ""
           },
           {
-            "id": "c2ecf3d9-9212-41f6-b94e-d8f3599bd7d1",
-            "symbol": "SwitchSimpleRight",
-            "x": 5,
-            "y": 3,
-            "rotation": 0,
-            "name": "",
-            "address": 0,
-            "feedbackAddress": 0,
-            "signalSystem": "Ks",
-            "signalAspect": "Hp0",
-            "switchPosition": "Straight",
-            "properties": {}
-          },
-          {
-            "id": "f3167b12-5d50-46b6-aaae-9ca8c52c7447",
-            "symbol": "TrackStraight",
-            "x": 6,
-            "y": 3,
-            "rotation": 180,
-            "name": "",
-            "address": 0,
-            "feedbackAddress": 0,
-            "signalSystem": "Ks",
-            "signalAspect": "Hp0",
-            "switchPosition": "Straight",
-            "properties": {}
-          },
-          {
-            "id": "0b12a7df-7902-4136-bdb3-badafa3cf793",
-            "symbol": "SignalKsMain",
-            "x": 5,
-            "y": 2,
-            "rotation": 0,
-            "name": "",
-            "address": 0,
-            "feedbackAddress": 0,
-            "signalSystem": "Ks",
-            "signalAspect": "Hp0",
-            "switchPosition": "Straight",
-            "properties": {}
-          },
-          {
-            "id": "c9eba940-8a95-4536-87d2-5c25063ad51b",
-            "symbol": "TrackCurve45",
-            "x": 7,
-            "y": 3,
-            "rotation": 0,
-            "name": "",
-            "address": 0,
-            "feedbackAddress": 0,
-            "signalSystem": "Ks",
-            "signalAspect": "Hp0",
-            "switchPosition": "Straight",
-            "properties": {}
-          },
-          {
-            "id": "93f18b95-a57f-48d4-a63f-68a8d4f69ef9",
-            "symbol": "TrackCurve90",
+            "$type": "TrackStraight",
+            "id": "f52c9e75-8a52-4c3c-9bd4-f88cb8fb8903",
             "x": 3,
             "y": 3,
             "rotation": 0,
-            "name": "",
+            "name": ""
+          },
+          {
+            "$type": "TrackStraight",
+            "id": "3bcaa969-8d75-447c-9bf8-a5540d274de4",
+            "x": 4,
+            "y": 3,
+            "rotation": 0,
+            "name": ""
+          },
+          {
+            "$type": "TrackCurve",
+            "id": "d2d86731-9122-4c16-8e08-00fdef17989c",
+            "x": 5,
+            "y": 3,
+            "rotation": 0,
+            "name": ""
+          },
+          {
+            "$type": "Signal",
             "address": 1,
-            "feedbackAddress": 0,
             "signalSystem": "Ks",
-            "signalAspect": "Hp0",
-            "switchPosition": "Straight",
-            "properties": {}
+            "signalAspect": "Ks1Blink",
+            "id": "1837507c-6f91-47cc-a825-0cedf92e4f89",
+            "x": 3,
+            "y": 2,
+            "rotation": 0,
+            "name": ""
+          },
+          {
+            "$type": "Detector",
+            "feedbackAddress": 1,
+            "id": "89a8b660-1623-4edb-99b5-c0cf01afba72",
+            "x": 2,
+            "y": 4,
+            "rotation": 90,
+            "name": ""
+          },
+          {
+            "$type": "TrackStraight",
+            "id": "339647eb-4cc2-41d6-8517-e540f6c16e5c",
+            "x": 5,
+            "y": 4,
+            "rotation": 90,
+            "name": ""
+          },
+          {
+            "$type": "TrackCurve",
+            "id": "ad566a5c-60be-429a-bff4-720c93c9854a",
+            "x": 5,
+            "y": 5,
+            "rotation": 90,
+            "name": ""
+          },
+          {
+            "$type": "TrackStraight",
+            "id": "ae0dd7a5-5505-4051-8a81-35fc7409984a",
+            "x": 4,
+            "y": 5,
+            "rotation": 0,
+            "name": ""
+          },
+          {
+            "$type": "TrackStraight",
+            "id": "b9edfafb-611b-4e20-a98a-7c1ce739c00e",
+            "x": 3,
+            "y": 5,
+            "rotation": 0,
+            "name": ""
+          },
+          {
+            "$type": "TrackCurve",
+            "id": "ac4d1724-c7cd-4740-91d0-85bc9c14992c",
+            "x": 2,
+            "y": 5,
+            "rotation": 180,
+            "name": ""
           }
         ],
         "connections": [],

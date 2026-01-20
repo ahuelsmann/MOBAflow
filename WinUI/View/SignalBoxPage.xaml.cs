@@ -136,7 +136,7 @@ public sealed partial class SignalBoxPage : Page
     /// <summary>
     /// Shortcut to access the currently selected element from the ViewModel.
     /// </summary>
-    private SignalBoxPlanElementViewModel? SelectedElement => _planViewModel?.SelectedElement;
+    private SbElementViewModel? SelectedElement => _planViewModel?.SelectedElement;
 
     private void InitializeCanvas()
     {
@@ -444,21 +444,18 @@ public sealed partial class SignalBoxPage : Page
         {
             var typeTag = text[4..];
 
-            if (Enum.TryParse<SignalBoxSymbol>(typeTag, out var symbol))
+            // If an element exists, remove it first
+            if (existingElement != null)
             {
-                // If an element exists, remove it first
-                if (existingElement != null)
+                if (_elementVisuals.TryGetValue(existingElement.Id, out var visual))
                 {
-                    if (_elementVisuals.TryGetValue(existingElement.Id, out var visual))
-                    {
-                        TrackCanvas.Children.Remove(visual);
-                        _elementVisuals.Remove(existingElement.Id);
-                    }
-                    _planViewModel.RemoveElement(existingElement);
+                    TrackCanvas.Children.Remove(visual);
+                    _elementVisuals.Remove(existingElement.Id);
                 }
-
-                CreateElement(symbol, gridX, gridY);
+                _planViewModel.RemoveElement(existingElement);
             }
+
+            CreateElementByType(typeTag, gridX, gridY);
         }
         else if (text.StartsWith("MOVE:") && Guid.TryParse(text[5..], out var elementId))
         {
@@ -522,30 +519,38 @@ public sealed partial class SignalBoxPage : Page
 
     #region Element Management
 
-    private void CreateElement(SignalBoxSymbol symbol, int gridX, int gridY)
+    /// <summary>
+    /// Creates an element based on the type tag from drag-drop.
+    /// </summary>
+    private void CreateElementByType(string typeTag, int gridX, int gridY)
     {
         if (_planViewModel == null) return;
 
-        var elementVm = _planViewModel.AddElement(symbol, gridX, gridY);
+        SbElementViewModel? elementVm = typeTag switch
+        {
+            "TrackStraight" => _planViewModel.AddTrackStraight(gridX, gridY),
+            "TrackCurve" => _planViewModel.AddTrackCurve(gridX, gridY),
+            "Switch" => _planViewModel.AddSwitch(gridX, gridY),
+            "Signal" => _planViewModel.AddSignal(gridX, gridY),
+            "Detector" => _planViewModel.AddDetector(gridX, gridY),
+            _ => null
+        };
 
-        // Verify the element was created with the correct symbol
-        System.Diagnostics.Debug.Assert(
-            elementVm.Symbol == symbol, 
-            $"Element symbol mismatch: expected {symbol}, got {elementVm.Symbol}");
+        if (elementVm == null) return;
 
         CreateElementVisual(elementVm);
         SelectElement(elementVm);
         UpdateStatistics();
     }
 
-    private void MoveElement(SignalBoxPlanElementViewModel element, int newGridX, int newGridY)
+    private void MoveElement(SbElementViewModel element, int newGridX, int newGridY)
     {
         element.X = newGridX;
         element.Y = newGridY;
         RefreshElementVisual(element);
     }
 
-    private void CreateElementVisual(SignalBoxPlanElementViewModel element)
+    private void CreateElementVisual(SbElementViewModel element)
     {
         var visual = BuildElementVisual(element);
         Canvas.SetLeft(visual, element.X * GridCellSize);
@@ -554,7 +559,7 @@ public sealed partial class SignalBoxPage : Page
         _elementVisuals[element.Id] = visual;
     }
 
-    private FrameworkElement BuildElementVisual(SignalBoxPlanElementViewModel element)
+    private FrameworkElement BuildElementVisual(SbElementViewModel element)
     {
         var container = new Canvas
         {
@@ -589,25 +594,14 @@ public sealed partial class SignalBoxPage : Page
             container.Children.Add(highlight);
         }
 
-        // Element-spezifische Grafik erstellen
-        var graphic = element.Symbol switch
+        // Element-spezifische Grafik erstellen (type-based dispatch)
+        var graphic = element switch
         {
-            SignalBoxSymbol.TrackStraight => CreateStraightTrackGraphic(),
-            SignalBoxSymbol.TrackCurve45 => CreateCurve45Graphic(),
-            SignalBoxSymbol.TrackCurve90 => CreateCurve90Graphic(),
-            SignalBoxSymbol.TrackEnd => CreateBufferStopGraphic(),
-            SignalBoxSymbol.SwitchSimpleLeft => CreateSwitchGraphic(element, isLeft: true),
-            SignalBoxSymbol.SwitchSimpleRight => CreateSwitchGraphic(element, isLeft: false),
-            SignalBoxSymbol.SwitchThreeWay => CreateThreeWaySwitchGraphic(element),
-            SignalBoxSymbol.SwitchDoubleSlip => CreateDoubleSwitchGraphic(element),
-            SignalBoxSymbol.TrackCrossing => CreateCrossingGraphic(),
-            SignalBoxSymbol.SignalKsMain => CreateKsMainSignalGraphic(element),
-            SignalBoxSymbol.SignalKsDistant => CreateKsDistantSignalGraphic(element),
-            SignalBoxSymbol.SignalSh or SignalBoxSymbol.SignalDwarf => CreateShuntSignalGraphic(element),
-            SignalBoxSymbol.SignalBlock => CreateBlockSignalGraphic(element),
-            SignalBoxSymbol.SignalKsCombined => CreateKsSignalScreenGraphic(element),
-            SignalBoxSymbol.Platform => CreatePlatformGraphic(),
-            SignalBoxSymbol.Detector or SignalBoxSymbol.AxleCounter => CreateFeedbackGraphic(),
+            SbTrackStraightViewModel => CreateStraightTrackGraphic(),
+            SbTrackCurveViewModel => CreateCurve90Graphic(),
+            SbSwitchViewModel sw => CreateSwitchGraphic(sw),
+            SbSignalViewModel sig => CreateSignalGraphic(sig),
+            SbDetectorViewModel => CreateFeedbackGraphic(),
             _ => CreatePlaceholderGraphic()
         };
 
@@ -628,13 +622,13 @@ public sealed partial class SignalBoxPage : Page
         container.DoubleTapped += (s, e) =>
         {
             e.Handled = true;
-            if (SignalBoxPlanViewModel.IsSwitchSymbol(element.Symbol))
+            if (element is SbSwitchViewModel sw)
             {
-                ToggleSwitchPosition(element);
+                ToggleSwitchPosition(sw);
             }
-            else if (SignalBoxPlanViewModel.IsSignalSymbol(element.Symbol))
+            else if (element is SbSignalViewModel sig)
             {
-                ToggleSignalAspect(element);
+                ToggleSignalAspect(sig);
             }
         };
 
@@ -648,38 +642,19 @@ public sealed partial class SignalBoxPage : Page
         return container;
     }
 
-    private void ToggleSwitchPosition(SignalBoxPlanElementViewModel element)
+    private void ToggleSwitchPosition(SbSwitchViewModel element)
     {
-        element.SwitchPosition = element.Symbol switch
+        element.SwitchPosition = element.SwitchPosition switch
         {
-            SignalBoxSymbol.SwitchThreeWay => element.SwitchPosition switch
-            {
-                Domain.SwitchPosition.Straight => Domain.SwitchPosition.DivergingLeft,
-                Domain.SwitchPosition.DivergingLeft => Domain.SwitchPosition.DivergingRight,
-                _ => Domain.SwitchPosition.Straight
-            },
-            SignalBoxSymbol.SwitchDoubleSlip => element.SwitchPosition switch
-            {
-                Domain.SwitchPosition.Straight => Domain.SwitchPosition.DivergingLeft,
-                _ => Domain.SwitchPosition.Straight
-            },
-            SignalBoxSymbol.SwitchSimpleLeft => element.SwitchPosition switch
-            {
-                Domain.SwitchPosition.Straight => Domain.SwitchPosition.DivergingLeft,
-                _ => Domain.SwitchPosition.Straight
-            },
-            SignalBoxSymbol.SwitchSimpleRight => element.SwitchPosition switch
-            {
-                Domain.SwitchPosition.Straight => Domain.SwitchPosition.DivergingRight,
-                _ => Domain.SwitchPosition.Straight
-            },
+            Domain.SwitchPosition.Straight => Domain.SwitchPosition.DivergingLeft,
+            Domain.SwitchPosition.DivergingLeft => Domain.SwitchPosition.DivergingRight,
             _ => Domain.SwitchPosition.Straight
         };
         RefreshElementVisual(element);
         UpdatePropertiesPanel();
     }
 
-    private void ToggleSignalAspect(SignalBoxPlanElementViewModel element)
+    private void ToggleSignalAspect(SbSignalViewModel element)
     {
         element.SignalAspect = element.SignalAspect switch
         {
@@ -692,7 +667,7 @@ public sealed partial class SignalBoxPage : Page
         UpdatePropertiesPanel();
     }
 
-    private void RefreshElementVisual(SignalBoxPlanElementViewModel element)
+    private void RefreshElementVisual(SbElementViewModel element)
     {
         if (_elementVisuals.TryGetValue(element.Id, out var oldVisual))
         {
@@ -702,7 +677,7 @@ public sealed partial class SignalBoxPage : Page
         CreateElementVisual(element);
     }
 
-    private void SelectElement(SignalBoxPlanElementViewModel? element)
+    private void SelectElement(SbElementViewModel? element)
     {
         if (SelectedElement?.Id == element?.Id) return;
 

@@ -30,31 +30,49 @@ public sealed partial class SignalBoxPage
         NoSelectionInfo.Visibility = Visibility.Collapsed;
         ElementPropertiesPanel.Visibility = Visibility.Visible;
 
-        // Update element info
-        ElementTypeText.Text = GetElementTypeName(SelectedElement.Symbol);
+        // Update element info (type-based)
+        ElementTypeText.Text = GetElementTypeName(SelectedElement);
         ElementPositionText.Text = $"({SelectedElement.X}, {SelectedElement.Y})";
         ElementIdText.Text = SelectedElement.Id.ToString()[..8];
 
-        // Address
-        ElementAddressBox.Value = SelectedElement.Address;
+        // Address (only for SbSwitch and SbSignal)
+        if (SelectedElement is SbSwitchViewModel sw)
+        {
+            ElementAddressBox.Value = sw.Address;
+            ElementAddressBox.Visibility = Visibility.Visible;
+        }
+        else if (SelectedElement is SbSignalViewModel sig)
+        {
+            ElementAddressBox.Value = sig.Address;
+            ElementAddressBox.Visibility = Visibility.Visible;
+        }
+        else if (SelectedElement is SbDetectorViewModel det)
+        {
+            ElementAddressBox.Value = det.FeedbackAddress;
+            ElementAddressBox.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            ElementAddressBox.Visibility = Visibility.Collapsed;
+        }
 
         // Signal panel visibility
-        SignalAspectPanel.Visibility = SignalBoxPlanViewModel.IsSignalSymbol(SelectedElement.Symbol) ? Visibility.Visible : Visibility.Collapsed;
+        SignalAspectPanel.Visibility = SelectedElement is SbSignalViewModel ? Visibility.Visible : Visibility.Collapsed;
 
         // Update SignalPreview with current aspect
-        if (SignalBoxPlanViewModel.IsSignalSymbol(SelectedElement.Symbol))
+        if (SelectedElement is SbSignalViewModel signalVm)
         {
-            SignalPreview.Aspect = SelectedElement.SignalAspect.ToString();
+            SignalPreview.Aspect = signalVm.SignalAspect.ToString();
         }
 
         // Switch panel visibility
-        SwitchPositionPanel.Visibility = SignalBoxPlanViewModel.IsSwitchSymbol(SelectedElement.Symbol) ? Visibility.Visible : Visibility.Collapsed;
+        SwitchPositionPanel.Visibility = SelectedElement is SbSwitchViewModel ? Visibility.Visible : Visibility.Collapsed;
 
         // Update aspect buttons
         UpdateAspectButtons();
 
         // Update switch buttons
-        if (SignalBoxPlanViewModel.IsSwitchSymbol(SelectedElement.Symbol))
+        if (SelectedElement is SbSwitchViewModel)
         {
             UpdateSwitchButtons();
         }
@@ -62,85 +80,60 @@ public sealed partial class SignalBoxPage
 
     private void UpdateAspectButtons()
     {
-        if (SelectedElement == null) return;
+        if (SelectedElement is not SbSignalViewModel sig) return;
 
         var accentBrush = (Brush)Application.Current.Resources["AccentFillColorDefaultBrush"];
         var normalBrush = (Brush)Application.Current.Resources["SubtleFillColorSecondaryBrush"];
 
-        AspectHp0Button.Background = SelectedElement.SignalAspect == Domain.SignalAspect.Hp0 ? accentBrush : normalBrush;
-        AspectKs1Button.Background = SelectedElement.SignalAspect == Domain.SignalAspect.Ks1 ? accentBrush : normalBrush;
-        AspectKs2Button.Background = SelectedElement.SignalAspect == Domain.SignalAspect.Ks2 ? accentBrush : normalBrush;
-        AspectKs1BlinkButton.Background = SelectedElement.SignalAspect == Domain.SignalAspect.Ks1Blink ? accentBrush : normalBrush;
-        AspectKennlichtButton.Background = SelectedElement.SignalAspect == Domain.SignalAspect.Kennlicht ? accentBrush : normalBrush;
-        AspectDunkelButton.Background = SelectedElement.SignalAspect == Domain.SignalAspect.Dunkel ? accentBrush : normalBrush;
-        AspectRa12Button.Background = SelectedElement.SignalAspect == Domain.SignalAspect.Ra12 ? accentBrush : normalBrush;
-        AspectZs1Button.Background = SelectedElement.SignalAspect == Domain.SignalAspect.Zs1 ? accentBrush : normalBrush;
-        AspectZs7Button.Background = SelectedElement.SignalAspect == Domain.SignalAspect.Zs7 ? accentBrush : normalBrush;
+        AspectHp0Button.Background = sig.SignalAspect == Domain.SignalAspect.Hp0 ? accentBrush : normalBrush;
+        AspectKs1Button.Background = sig.SignalAspect == Domain.SignalAspect.Ks1 ? accentBrush : normalBrush;
+        AspectKs2Button.Background = sig.SignalAspect == Domain.SignalAspect.Ks2 ? accentBrush : normalBrush;
+        AspectKs1BlinkButton.Background = sig.SignalAspect == Domain.SignalAspect.Ks1Blink ? accentBrush : normalBrush;
+        AspectKennlichtButton.Background = sig.SignalAspect == Domain.SignalAspect.Kennlicht ? accentBrush : normalBrush;
+        AspectDunkelButton.Background = sig.SignalAspect == Domain.SignalAspect.Dunkel ? accentBrush : normalBrush;
+        AspectRa12Button.Background = sig.SignalAspect == Domain.SignalAspect.Ra12 ? accentBrush : normalBrush;
+        AspectZs1Button.Background = sig.SignalAspect == Domain.SignalAspect.Zs1 ? accentBrush : normalBrush;
+        AspectZs7Button.Background = sig.SignalAspect == Domain.SignalAspect.Zs7 ? accentBrush : normalBrush;
 
-        // Update SignalType ComboBox
-        SignalTypeComboBox.SelectedIndex = SelectedElement.Symbol switch
-        {
-            SignalBoxSymbol.SignalKsMain => 0,
-            SignalBoxSymbol.SignalKsDistant => 1,
-            SignalBoxSymbol.SignalKsCombined => 2,
-            SignalBoxSymbol.SignalSh or SignalBoxSymbol.SignalDwarf => 3,
-            SignalBoxSymbol.SignalBlock => 4,
-            _ => 0
-        };
+        // Signal type is now fixed (SbSignal), ComboBox can be simplified
+        SignalTypeComboBox.SelectedIndex = 0;
     }
 
     private void UpdateSwitchButtons()
     {
-        if (SelectedElement == null || !SignalBoxPlanViewModel.IsSwitchSymbol(SelectedElement.Symbol)) return;
+        if (SelectedElement is not SbSwitchViewModel sw) return;
 
-        var isThreeWay = SelectedElement.Symbol == SignalBoxSymbol.SwitchThreeWay;
-        var isLeftSwitch = SelectedElement.Symbol == SignalBoxSymbol.SwitchSimpleLeft;
-
-        // Third column only for three-way switch or left/right switch
-        ThirdSwitchColumn.Width = isThreeWay ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
-        SwitchRightButton.Visibility = isThreeWay || !isLeftSwitch ? Visibility.Visible : Visibility.Collapsed;
-        SwitchLeftButton.Visibility = isThreeWay || isLeftSwitch ? Visibility.Visible : Visibility.Collapsed;
+        // All switches support all three positions now
+        ThirdSwitchColumn.Width = new GridLength(1, GridUnitType.Star);
+        SwitchRightButton.Visibility = Visibility.Visible;
+        SwitchLeftButton.Visibility = Visibility.Visible;
 
         // Highlight active button
         var accentStyle = (Style)Application.Current.Resources["AccentButtonStyle"];
         var defaultStyle = (Style)Application.Current.Resources["DefaultButtonStyle"];
 
-        SwitchStraightButton.Style = SelectedElement.SwitchPosition == Domain.SwitchPosition.Straight ? accentStyle : defaultStyle;
-        SwitchLeftButton.Style = SelectedElement.SwitchPosition == Domain.SwitchPosition.DivergingLeft ? accentStyle : defaultStyle;
-        SwitchRightButton.Style = SelectedElement.SwitchPosition == Domain.SwitchPosition.DivergingRight ? accentStyle : defaultStyle;
+        SwitchStraightButton.Style = sw.SwitchPosition == Domain.SwitchPosition.Straight ? accentStyle : defaultStyle;
+        SwitchLeftButton.Style = sw.SwitchPosition == Domain.SwitchPosition.DivergingLeft ? accentStyle : defaultStyle;
+        SwitchRightButton.Style = sw.SwitchPosition == Domain.SwitchPosition.DivergingRight ? accentStyle : defaultStyle;
     }
 
-    private static string GetElementTypeName(SignalBoxSymbol symbol) => symbol switch
+    private static string GetElementTypeName(SbElementViewModel element) => element switch
     {
-        SignalBoxSymbol.TrackStraight => "Gerades Gleis",
-        SignalBoxSymbol.TrackCurve45 => "Kurve 45 Grad",
-        SignalBoxSymbol.TrackCurve90 => "Kurve 90 Grad",
-        SignalBoxSymbol.TrackEnd => "Prellbock",
-        SignalBoxSymbol.SwitchSimpleLeft => "Weiche Links",
-        SignalBoxSymbol.SwitchSimpleRight => "Weiche Rechts",
-        SignalBoxSymbol.SwitchThreeWay => "Dreiwege-Weiche",
-        SignalBoxSymbol.SwitchDoubleSlip => "Doppelkreuzungsweiche",
-        SignalBoxSymbol.TrackCrossing => "Kreuzung",
-        SignalBoxSymbol.SignalKsMain => "Ks-Hauptsignal",
-        SignalBoxSymbol.SignalKsDistant => "Ks-Vorsignal",
-        SignalBoxSymbol.SignalSh or SignalBoxSymbol.SignalDwarf => "Rangiersignal",
-        SignalBoxSymbol.SignalBlock => "Gleissperrsignal",
-        SignalBoxSymbol.SignalKsCombined => "Ks-Signalschirm",
-        SignalBoxSymbol.Platform => "Bahnsteig",
-        SignalBoxSymbol.Detector or SignalBoxSymbol.AxleCounter => "Rueckmelder",
+        SbTrackStraightViewModel => "Gerades Gleis",
+        SbTrackCurveViewModel => "Kurve 90 Grad",
+        SbSwitchViewModel => "Weiche",
+        SbSignalViewModel => "Signal",
+        SbDetectorViewModel => "Rückmelder",
         _ => "Unbekannt"
     };
 
     private void UpdateStatistics()
     {
         if (_planViewModel == null) return;
-        TrackCountText.Text = _planViewModel.Elements.Count(e => IsTrackSymbol(e.Symbol)).ToString();
-        SwitchCountText.Text = _planViewModel.Elements.Count(e => SignalBoxPlanViewModel.IsSwitchSymbol(e.Symbol)).ToString();
-        SignalCountText.Text = _planViewModel.Elements.Count(e => SignalBoxPlanViewModel.IsSignalSymbol(e.Symbol)).ToString();
+        TrackCountText.Text = _planViewModel.Elements.Count(e => e is SbTrackStraightViewModel or SbTrackCurveViewModel).ToString();
+        SwitchCountText.Text = _planViewModel.Elements.OfType<SbSwitchViewModel>().Count().ToString();
+        SignalCountText.Text = _planViewModel.Elements.OfType<SbSignalViewModel>().Count().ToString();
     }
-
-    private static bool IsTrackSymbol(SignalBoxSymbol symbol) =>
-        symbol is SignalBoxSymbol.TrackStraight or SignalBoxSymbol.TrackCurve45 or SignalBoxSymbol.TrackCurve90 or SignalBoxSymbol.TrackEnd or SignalBoxSymbol.TrackCrossing;
 
     #endregion
 
@@ -159,72 +152,60 @@ public sealed partial class SignalBoxPage
 
     private void OnAspectClicked(object sender, PointerRoutedEventArgs e)
     {
-        if (SelectedElement == null || sender is not Border { Tag: string aspectStr }) return;
+        if (SelectedElement is not SbSignalViewModel sig || sender is not Border { Tag: string aspectStr }) return;
 
         if (System.Enum.TryParse<Domain.SignalAspect>(aspectStr, out var aspect))
         {
             _blinkingLeds.Clear();
-            SelectedElement.SignalAspect = aspect;
+            sig.SignalAspect = aspect;
 
             // Update preview signal
             SignalPreview.Aspect = aspectStr;
 
             // Update canvas element
-            RefreshElementVisual(SelectedElement);
+            RefreshElementVisual(sig);
             UpdateAspectButtons();
         }
     }
 
     private void OnSwitchPositionClicked(object sender, RoutedEventArgs e)
     {
-        if (SelectedElement == null || sender is not Button { Tag: string positionStr }) return;
+        if (SelectedElement is not SbSwitchViewModel sw || sender is not Button { Tag: string positionStr }) return;
 
-            SelectedElement.SwitchPosition = positionStr switch
-            {
-                "Straight" => Domain.SwitchPosition.Straight,
-                "DivergingLeft" => Domain.SwitchPosition.DivergingLeft,
-                "DivergingRight" => Domain.SwitchPosition.DivergingRight,
-                _ => Domain.SwitchPosition.Straight
-            };
-
-            RefreshElementVisual(SelectedElement);
-            UpdateSwitchButtons();
-        }
-
-        private void OnAddressChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+        sw.SwitchPosition = positionStr switch
         {
-            if (SelectedElement == null || double.IsNaN(args.NewValue)) return;
-            SelectedElement.Address = (int)args.NewValue;
-        }
+            "Straight" => Domain.SwitchPosition.Straight,
+            "DivergingLeft" => Domain.SwitchPosition.DivergingLeft,
+            "DivergingRight" => Domain.SwitchPosition.DivergingRight,
+            _ => Domain.SwitchPosition.Straight
+        };
 
-        private void OnDeleteElementClicked(object sender, RoutedEventArgs e)
-        {
-            DeleteSelectedElement();
-        }
-
-        private void OnSignalTypeChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (SelectedElement == null || SignalTypeComboBox.SelectedItem is not ComboBoxItem { Tag: string typeTag })
-                return;
-
-            var newSymbol = typeTag switch
-            {
-                "KsMain" => SignalBoxSymbol.SignalKsMain,
-                "KsDistant" => SignalBoxSymbol.SignalKsDistant,
-                "KsMulti" => SignalBoxSymbol.SignalKsCombined,
-                "Shunt" => SignalBoxSymbol.SignalSh,
-                "Block" => SignalBoxSymbol.SignalBlock,
-                _ => SelectedElement.Symbol
-            };
-
-            if (newSymbol != SelectedElement.Symbol)
-            {
-                SelectedElement.Symbol = newSymbol;
-                ElementTypeText.Text = GetElementTypeName(newSymbol);
-                RefreshElementVisual(SelectedElement);
-                UpdateStatistics();
-            }
-        }
-
-        #endregion
+        RefreshElementVisual(sw);
+        UpdateSwitchButtons();
     }
+
+    private void OnAddressChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+        if (SelectedElement == null || double.IsNaN(args.NewValue)) return;
+
+        if (SelectedElement is SbSwitchViewModel sw)
+            sw.Address = (int)args.NewValue;
+        else if (SelectedElement is SbSignalViewModel sig)
+            sig.Address = (int)args.NewValue;
+        else if (SelectedElement is SbDetectorViewModel det)
+            det.FeedbackAddress = (int)args.NewValue;
+    }
+
+    private void OnDeleteElementClicked(object sender, RoutedEventArgs e)
+    {
+        DeleteSelectedElement();
+    }
+
+    private void OnSignalTypeChanged(object sender, SelectionChangedEventArgs e)
+    {
+        // Signal type changes are no longer supported - SbSignal is a single type
+        // This method is kept for XAML binding compatibility
+    }
+
+    #endregion
+}

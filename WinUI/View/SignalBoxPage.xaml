@@ -309,9 +309,9 @@
                                             Text="Gerade" />
                                     </StackPanel>
                                 </Border>
-                                <!--  Kurve 45  -->
+                                <!--  Kurve 90°  -->
                                 <Border
-                                    x:Name="ToolCurve45"
+                                    x:Name="ToolCurve90"
                                     Grid.Row="0"
                                     Grid.Column="1"
                                     Height="60"
@@ -324,8 +324,8 @@
                                     DragStarting="OnToolDragStarting"
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
-                                    Tag="TrackCurve45"
-                                    ToolTipService.ToolTip="Kurve 45° (flach)">
+                                    Tag="TrackCurve"
+                                    ToolTipService.ToolTip="Kurve 90°">
                                     <StackPanel
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
@@ -336,19 +336,19 @@
                                             Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
                                             CornerRadius="4">
                                             <Path
-                                                Data="M 4,20 Q 24,20 44,4"
+                                                Data="M 4,14 Q 24,14 24,26"
                                                 Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
                                                 StrokeThickness="3" />
                                         </Border>
                                         <TextBlock
                                             HorizontalAlignment="Center"
                                             FontSize="10"
-                                            Text="Kurve 45" />
+                                            Text="Kurve" />
                                     </StackPanel>
                                 </Border>
-                                <!--  Kurve 90  -->
+                                <!--  Prellbock  -->
                                 <Border
-                                    x:Name="ToolCurve90"
+                                    x:Name="ToolBufferStop"
                                     Grid.Row="1"
                                     Grid.Column="0"
                                     Height="60"
@@ -361,44 +361,7 @@
                                     DragStarting="OnToolDragStarting"
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
-                                    Tag="TrackCurve90"
-                                    ToolTipService.ToolTip="Kurve 90° (eng)">
-                                    <StackPanel
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        Spacing="4">
-                                        <Border
-                                            Width="48"
-                                            Height="28"
-                                            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
-                                            CornerRadius="4">
-                                            <Path
-                                                Data="M 4,20 Q 4,4 24,4"
-                                                Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                StrokeThickness="3" />
-                                        </Border>
-                                        <TextBlock
-                                            HorizontalAlignment="Center"
-                                            FontSize="10"
-                                            Text="Kurve 90" />
-                                    </StackPanel>
-                                </Border>
-                                <!--  Prellbock  -->
-                                <Border
-                                    x:Name="ToolBufferStop"
-                                    Grid.Row="1"
-                                    Grid.Column="1"
-                                    Height="60"
-                                    Padding="4"
-                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                                    BorderThickness="1"
-                                    CanDrag="True"
-                                    CornerRadius="6"
-                                    DragStarting="OnToolDragStarting"
-                                    PointerEntered="OnToolPointerEntered"
-                                    PointerExited="OnToolPointerExited"
-                                    Tag="TrackEnd"
+                                    Tag="TrackStraight"
                                     ToolTipService.ToolTip="Prellbock">
                                     <StackPanel
                                         HorizontalAlignment="Center"
@@ -471,7 +434,7 @@
                                     DragStarting="OnToolDragStarting"
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
-                                    Tag="SwitchSimpleLeft"
+                                    Tag="Switch"
                                     ToolTipService.ToolTip="Einfache Weiche Links">
                                     <StackPanel
                                         HorizontalAlignment="Center"
@@ -522,7 +485,7 @@
                                     DragStarting="OnToolDragStarting"
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
-                                    Tag="SwitchSimpleRight"
+                                    Tag="Switch"
                                     ToolTipService.ToolTip="Einfache Weiche Rechts">
                                     <StackPanel
                                         HorizontalAlignment="Center"
@@ -573,7 +536,7 @@
                                     DragStarting="OnToolDragStarting"
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
-                                    Tag="SwitchDoubleSlip"
+                                    Tag="Switch"
                                     ToolTipService.ToolTip="Doppelkreuzungsweiche">
                                     <StackPanel
                                         HorizontalAlignment="Center"
@@ -639,7 +602,7 @@
                                     DragStarting="OnToolDragStarting"
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
-                                    Tag="TrackCrossing"
+                                    Tag="TrackStraight"
                                     ToolTipService.ToolTip="Kreuzung">
                                     <StackPanel
                                         HorizontalAlignment="Center"
@@ -688,7 +651,7 @@
                                     DragStarting="OnToolDragStarting"
                                     PointerEntered="OnToolPointerEntered"
                                     PointerExited="OnToolPointerExited"
-                                    Tag="SwitchThreeWay"
+                                    Tag="Switch"
                                     ToolTipService.ToolTip="Dreiwege-Weiche">
                                     <StackPanel
                                         HorizontalAlignment="Center"
@@ -758,7 +721,7 @@
                                 DragStarting="OnToolDragStarting"
                                 PointerEntered="OnToolPointerEntered"
                                 PointerExited="OnToolPointerExited"
-                                Tag="SignalKsCombined"
+                                Tag="Signal"
                                 ToolTipService.ToolTip="Ks-Signalschirm (Mehrabschnittssignal)">
                                 <StackPanel
                                     HorizontalAlignment="Center"

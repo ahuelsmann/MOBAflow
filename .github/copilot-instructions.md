@@ -58,6 +58,7 @@ Microsoft-Dokumentation via `azure_documentation` Tool konsultieren BEVOR Code g
 ## 📚 Weitere Instructions
 
 Details in `.github/instructions/`:
+- `todos.instructions.md` - **Offene Aufgaben & Quality Roadmap**
 - `implementation-workflow.instructions.md` - Detaillierter 5-Schritte-Workflow
 - `architecture.instructions.md` - Layer-Architektur
 - `mvvm-best-practices.instructions.md` - MVVM Details
