@@ -145,7 +145,7 @@ dotnet test
 - [instructions.instructions.md](./instructions.instructions.md) - Instruction-Regeln
 - [prompt.instructions.md](./prompt.instructions.md) - Prompt-Guidelines
 - [todos.instructions.md](./todos.instructions.md) - Aktive TODOs
-- [todos/](./todos/) - TODO-Unterordner (5 Dateien)
+- [todos/](./todos/) - TODO-Unterordner (4 Dateien)
 
 ### Project Overview
 - [README.md](../../README.md) - Project documentation
