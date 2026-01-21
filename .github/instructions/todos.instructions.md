@@ -5,7 +5,7 @@ applyTo: '**'
 
 # MOBAflow TODOs
 
-> Letzte Aktualisierung: 2026-01-24
+> Letzte Aktualisierung: 2025-01-24
 
 ---
 
@@ -15,15 +15,40 @@ _Keine kritischen Aufgaben offen._
 
 ---
 
+## 🚂 TrackPlan Roadmap
+
+**Instructions:** Siehe `.github/instructions/trackplan-*.instructions.md`
+
+| Phase | Fokus | Status |
+|-------|-------|--------|
+| 1 | Geometry Tests (Straight, Curve, Switch) | ✅ |
+| 2 | SVG Debug Exporter | ✅ |
+| 3 | Instructions (geometry, rendering, snapping, topology) | ✅ |
+| 4 | Snap-to-Connect Service | 📋 |
+| 5 | Piko A Track Catalog erweitern | 📋 |
+| 6 | TrackPlanPage UI verbessern | 📋 |
+
+**Test-Dateien:**
+- `Test\TrackPlan.Renderer\StraightGeometryTests.cs` (14 Tests)
+- `Test\TrackPlan.Renderer\CurveGeometryTests.cs` (12 Tests)
+- `Test\TrackPlan.Renderer\SwitchGeometryTests.cs` (13 Tests)
+- `Test\TrackPlan.Renderer\ArcPrimitiveTests.cs` (14 Tests)
+
+**Debug-Tool:** `TrackPlan.Renderer\Debug\SvgExporter.cs`
+
+---
+
 ## 📚 Quality Roadmap (Week 2-6)
 
-| Week | Fokus | Tasks |
-|------|-------|-------|
-| 2 | Domain | Enums dokumentieren, Tests (Journey, Station, Workflow, Train, Project) |
-| 3 | Backend | IoService, UdpClientWrapper, SettingsService - Docs + Tests |
-| 4 | SharedUI | ViewModels dokumentieren + Tests |
-| 5 | Sound | AudioFilePlayer Docs, SpeakerEngineFactory Tests |
-| 6 | CI/CD | Doxygen, Coverage-Report, Azure DevOps Pipeline |
+✅ **Week 2 abgeschlossen:** Domain Enums dokumentiert + Tests (Journey, Station, Workflow, Train, Project)
+
+✅ **Week 3 abgeschlossen:** IIoService, ISettingsService, UdpWrapper dokumentiert + Tests (NullIoService, SettingsService, UdpClientWrapper)
+
+✅ **Week 4 abgeschlossen:** ViewModels dokumentiert + Tests (WorkflowViewModel, TrainViewModel, StationViewModel)
+
+✅ **Week 5 abgeschlossen:** Sound dokumentiert + Tests (ISpeakerEngine, CognitiveSpeechEngine, NullSpeakerEngine, NullSoundPlayer)
+
+✅ **Week 6 abgeschlossen:** Azure DevOps Pipeline mit Coverage-Report (`pr-validation-with-coverage.yml`)
 
 ---
 

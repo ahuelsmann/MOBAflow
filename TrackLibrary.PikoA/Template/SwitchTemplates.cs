@@ -64,10 +64,33 @@ public static class SwitchTemplates
         null
     );
 
+    /// <summary>
+    /// Piko 55224 - Dreiwegweiche (W3).
+    /// 4 Ports: A (Eingang), B (gerade), C (links +15°), D (rechts -15°)
+    /// </summary>
+    public static TrackTemplate W3 => new(
+        "W3",
+        [
+            new TrackEnd("A", 0),
+            new TrackEnd("B", 0),
+            new TrackEnd("C", +PikoAConstants.ThreeWaySwitchAngle),
+            new TrackEnd("D", -PikoAConstants.ThreeWaySwitchAngle)
+        ],
+        new TrackGeometrySpec(
+            TrackGeometryKind.ThreeWaySwitch,
+            LengthMm: PikoAConstants.ThreeWaySwitchLengthMm,
+            RadiusMm: PikoAConstants.ThreeWaySwitchRadiusMm,
+            AngleDeg: PikoAConstants.ThreeWaySwitchAngle,
+            JunctionOffsetMm: 0
+        ),
+        null  // W3 hat kein einfaches Routing-Modell
+    );
+
     public static IReadOnlyList<TrackTemplate> All =>
     [
         BWL,
         BWR,
-        K30
+        K30,
+        W3
     ];
 }

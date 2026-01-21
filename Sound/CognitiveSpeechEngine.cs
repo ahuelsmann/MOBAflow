@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Sound;
 
@@ -8,6 +8,18 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
+/// <summary>
+/// Azure Cognitive Services Text-to-Speech implementation.
+/// Requires Azure Speech Service subscription (SPEECH_KEY and SPEECH_REGION).
+/// Supports high-quality neural voices like "de-DE-KatjaNeural".
+/// </summary>
+/// <remarks>
+/// Configuration via <see cref="SpeechOptions"/> or environment variables:
+/// - SPEECH_KEY: Azure Speech Service subscription key
+/// - SPEECH_REGION: Azure region (e.g., "germanywestcentral")
+/// 
+/// For setup instructions, see: docs/wiki/AZURE-SPEECH-SETUP.md
+/// </remarks>
 // https://learn.microsoft.com/de-de/azure/ai-services/speech-service/get-started-text-to-speech?tabs=windows%2Cterminal&pivots=programming-language-csharp
 public class CognitiveSpeechEngine : ISpeakerEngine
 {

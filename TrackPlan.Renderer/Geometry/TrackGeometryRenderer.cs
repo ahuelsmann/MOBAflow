@@ -25,6 +25,9 @@ public sealed class TrackGeometryRenderer
             TrackGeometryKind.Switch
                 => RenderSwitch(template, spec, start, startAngleDeg),
 
+            TrackGeometryKind.ThreeWaySwitch
+                => ThreeWaySwitchGeometry.Render(start, startAngleDeg, spec),
+
             _ => Array.Empty<IGeometryPrimitive>()
         };
     }

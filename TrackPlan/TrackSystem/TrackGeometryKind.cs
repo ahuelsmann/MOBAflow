@@ -6,5 +6,6 @@ public enum TrackGeometryKind
 {
     Straight,
     Curve,
-    Switch
+    Switch,
+    ThreeWaySwitch  // Dreiwegweiche (W3)
 }

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <RootNamespace>Moba.Test</RootNamespace>
         <TargetFramework>net9.0</TargetFramework>
@@ -32,6 +32,10 @@
         <ProjectReference Include="..\Backend\Backend.csproj" />
         <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
         <ProjectReference Include="..\Common\Common.csproj" />
+        <ProjectReference Include="..\TrackPlan\TrackPlan.csproj" />
+        <ProjectReference Include="..\TrackPlan.Renderer\TrackPlan.Renderer.csproj" />
+        <ProjectReference Include="..\TrackLibrary.PikoA\TrackLibrary.PikoA.csproj" />
+        <ProjectReference Include="..\Sound\Sound.csproj" />
     </ItemGroup>
     <ItemGroup>
         <None Update="TestFile\**">

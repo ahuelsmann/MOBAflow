@@ -47,16 +47,20 @@ public static class CurveTemplates
         null
     );
 
+    /// <summary>
+    /// Piko 55219 - R9 Kurve mit 15° Winkel.
+    /// 24 Stück ergeben einen vollen Kreis (24 × 15° = 360°).
+    /// </summary>
     public static TrackTemplate R9 => new(
         "R9",
         [
             new TrackEnd("A", 0),
-            new TrackEnd("B", PikoAConstants.SwitchAngle)
+            new TrackEnd("B", PikoAConstants.R9Angle)
         ],
         new TrackGeometrySpec(
             TrackGeometryKind.Curve,
             RadiusMm: PikoAConstants.R9,
-            AngleDeg: PikoAConstants.SwitchAngle
+            AngleDeg: PikoAConstants.R9Angle
         ),
         null
     );
