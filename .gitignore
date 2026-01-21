@@ -42,6 +42,13 @@ appsettings.Development.json
 appsettings.*.json
 *.user.secrets
 
+# ABER: WinUI/appsettings.json darf ins Repo (enthält keine Secrets mehr)
+!WinUI/appsettings.json
+
+# Azure App Configuration Secrets
+azure-appconfig-connection.txt
+scripts/azure-appconfig-connection.txt
+
 # MAUI / mobile artifacts
 **/Android/**/Resource.designer.cs
 **/iOS/**/*.storyboard.cs

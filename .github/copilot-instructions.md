@@ -15,6 +15,12 @@
 
 4. **Session-Details in dieser Datei** - NIEMALS "Completed This Session", Changelogs oder temporäre Notizen hier erfassen. Diese Datei enthält nur permanente Regeln.
 
+5. **Separate README.md Dateien** - NIEMALS separate README.md in Unterordnern erstellen!
+   - ✅ Nur EINE zentrale `README.md` im Root
+   - ✅ Neue Inhalte als Kapitel in die zentrale README.md aufnehmen
+   - ❌ KEINE `scripts/README.md`, `docs/README.md`, etc.
+   - **Beispiel:** Für Script-Dokumentation → Kapitel in `README.md` (z.B. "## 🔧 Setup Scripts")
+
 ## ✅ PFLICHT: 5-Schritte-Workflow
 
 **Bei JEDER Implementierung:**
@@ -51,6 +57,18 @@
 | `SharedUI/` | ViewModels |
 | `WinUI/` | Windows Desktop App |
 
+## 📖 Benutzer-Dokumentation
+
+**Wiki-Pfad:** `docs/wiki/`
+
+Bei Fragen zu Features oder Setup:
+- `docs/wiki/INDEX.md` - Haupt-Index für alle Plattformen
+- `docs/wiki/MOBAFLOW-USER-GUIDE.md` - WinUI Benutzerhandbuch
+- `docs/wiki/AZURE-SPEECH-SETUP.md` - Azure Speech Service einrichten
+- `docs/wiki/PLUGIN-DEVELOPMENT.md` - Plugin-Entwicklung
+
+**Regel:** Verweise Benutzer ohne Entwickler-Hintergrund auf das Wiki (nicht auf README.md oder Code).
+
 ## ⚠️ Bei Unsicherheit
 
 Microsoft-Dokumentation via `azure_documentation` Tool konsultieren BEVOR Code geschrieben wird.
@@ -58,9 +76,43 @@ Microsoft-Dokumentation via `azure_documentation` Tool konsultieren BEVOR Code g
 ## 📚 Weitere Instructions
 
 Details in `.github/instructions/`:
+
+**Workflow & Patterns:**
 - `todos.instructions.md` - **Offene Aufgaben & Quality Roadmap**
 - `implementation-workflow.instructions.md` - Detaillierter 5-Schritte-Workflow
+- `di-pattern-consistency.instructions.md` - Dependency Injection Patterns
+- `hasunsavedchanges-patterns.instructions.md` - Ungespeicherte Änderungen Pattern
+- `xaml-page-registration.instructions.md` - XAML Page Registration Pattern
+
+**Architektur & Frameworks:**
 - `architecture.instructions.md` - Layer-Architektur
+- `backend.instructions.md` - Backend Layer Details
+- `dotnet-framework.instructions.md` - .NET Framework Best Practices
+- `collections.instructions.md` - Collection Patterns
+
+**UI Frameworks:**
+- `winui.instructions.md` - WinUI 3 Spezifika
+- `winui3-best-practices-steps-4-12.md` - WinUI 3 Best Practices (Steps 4-12)
+- `maui.instructions.md` - .NET MAUI Spezifika
+- `blazor.instructions.md` - Blazor Spezifika
 - `mvvm-best-practices.instructions.md` - MVVM Details
 - `fluent-design.instructions.md` - Fluent Design System
+
+**Track Plan Editor:**
+- `geometry.md` - Geometrie-Berechnungen
+- `rendering.md` - Rendering Pipeline
+- `snapping.md` - Snap-to-Grid & Snap-to-Connect
+- `topology.md` - Track Topology
+
+**Code Quality:**
+- `self-explanatory-code-commenting.instructions.md` - Code-Kommentar-Regeln
+- `no-special-chars.instructions.md` - Keine Sonderzeichen in Identifiern
+- `test.instructions.md` - Testing Best Practices
+
+**Tooling:**
 - `terminal.instructions.md` - PowerShell-Regeln
+- `powershell.instructions.md` - PowerShell Best Practices
+- `github-actions-ci-cd-best-practices.instructions.md` - GitHub Actions CI/CD
+- `editor-behavior.md` - Editor-Verhalten
+- `prompt.instructions.md` - Prompt Engineering
+- `instructions.instructions.md` - Meta-Instructions (Instruction-Dateien schreiben)

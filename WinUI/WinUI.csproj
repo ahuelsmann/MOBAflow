@@ -14,6 +14,7 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+        <UserSecretsId>mobaflow-winui-secrets-2026</UserSecretsId>
     </PropertyGroup>
     <!-- Debug: Performance Optimizations -->
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -31,6 +32,8 @@
         <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
         <PackageReference Include="Microsoft.WindowsAppSDK" />
         <PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" />
+        <PackageReference Include="Microsoft.Azure.AppConfiguration.AspNetCore" />
         <PackageReference Include="Serilog.Extensions.Logging" />
         <PackageReference Include="Serilog.Sinks.Debug" />
         <PackageReference Include="Serilog.Sinks.File" />

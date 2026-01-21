@@ -11,10 +11,7 @@ applyTo: '**'
 
 ## 🔴 KRITISCH
 
-| Aufgabe | Beschreibung |
-|---------|--------------|
-| Azure Speech Key | `WinUI/appsettings.json` Zeile 24 - Key in Env-Variable oder User Secrets verschieben |
-| Git History | BFG Repo-Cleaner vor GitHub-Release (wegen Speech Key in History) |
+_Keine kritischen Aufgaben offen._
 
 ---
 
@@ -78,4 +75,5 @@ SbElement (abstract)
 1. Datei lesen vor Änderungen
 2. Offene Tasks nicht löschen
 3. Erledigte Tasks entfernen (nicht markieren)
+
 

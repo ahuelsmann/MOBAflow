@@ -260,12 +260,34 @@
 
                     <!--  Azure Settings (only shown when Azure engine selected)  -->
                     <StackPanel Spacing="16" Visibility="{x:Bind ViewModel.IsAzureSpeechEngineSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <!--  Help Section  -->
+                        <InfoBar
+                            IsClosable="False"
+                            IsOpen="True"
+                            Message="Need an Azure Speech Key? Follow our step-by-step guide to create one."
+                            Severity="Informational">
+                            <InfoBar.ActionButton>
+                                <HyperlinkButton
+                                    Content="📖 Setup Guide"
+                                    NavigateUri="https://github.com/ahuelsmann/MOBAflow/wiki/Azure-Speech-Setup"
+                                    ToolTipService.ToolTip="Open Azure Speech Setup guide in browser" />
+                            </InfoBar.ActionButton>
+                        </InfoBar>
+
                         <TextBox
                             MaxWidth="500"
                             HorizontalAlignment="Left"
                             Header="Azure Speech Key"
                             PlaceholderText="Enter your Azure Speech API key"
-                            Text="{x:Bind ViewModel.SpeechKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            Text="{x:Bind ViewModel.SpeechKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBox.Description>
+                                <TextBlock>
+                                    <Run Text="Get your key from the " />
+                                    <Hyperlink NavigateUri="https://portal.azure.com">Azure Portal</Hyperlink>
+                                    <Run Text=" → Cognitive Services → Speech" />
+                                </TextBlock>
+                            </TextBox.Description>
+                        </TextBox>
 
                         <TextBox
                             MaxWidth="300"
@@ -274,7 +296,7 @@
                             PlaceholderText="germanywestcentral"
                             Text="{x:Bind ViewModel.SpeechRegion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                             <TextBox.Description>
-                                <TextBlock Text="Azure region for Speech Service" />
+                                <TextBlock Text="Azure region for Speech Service (e.g., germanywestcentral, westeurope)" />
                             </TextBox.Description>
                         </TextBox>
                     </StackPanel>

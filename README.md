@@ -111,6 +111,80 @@ dotnet build MAUI -f net10.0-android
 dotnet test
 ```
 
+## 🔧 Azure Speech Configuration
+
+MOBAflow uses **Azure Cognitive Services Speech** for text-to-speech announcements. You need to configure your own Azure Speech API key.
+
+> 💡 **For Developer Teams:** We provide PowerShell scripts for automated setup! See [🔧 Setup Scripts](#-setup-scripts) below.
+
+### Option A: For Core Team (Azure App Configuration)
+
+**Quick Setup with Scripts:**
+
+```powershell
+# 1. Create Azure App Config (once)
+.\scripts\setup-azure-appconfig.ps1 -SpeechKey "YOUR-KEY" -SpeechRegion "germanywestcentral"
+
+# 2. Install on all systems
+.\scripts\install-appconfig-connection.ps1 -ConnectionString "YOUR-CONNECTION-STRING"
+
+# 3. Restart IDE
+```
+
+See [🔧 Setup Scripts](#-setup-scripts) section below for detailed instructions.
+
+**Manual Setup:**
+
+1. **Set Environment Variable:**
+   ```bash
+   # Windows (PowerShell)
+   [System.Environment]::SetEnvironmentVariable('AZURE_APPCONFIG_CONNECTION', 'your-connection-string', 'User')
+   
+   # Windows (Command Prompt)
+   setx AZURE_APPCONFIG_CONNECTION "your-connection-string"
+   ```
+
+2. **Restart your IDE** to pick up the new environment variable
+
+3. **Verify:** Speech settings are automatically loaded from Azure App Configuration
+
+### Option B: For Contributors/Developers (User Secrets)
+
+1. **Get Azure Speech Key:**
+   - Go to [Azure Portal](https://portal.azure.com)
+   - Create a **Cognitive Services** → **Speech** resource
+   - Copy your **Key** and **Region**
+
+2. **Configure User Secrets:**
+   ```bash
+   cd WinUI
+   dotnet user-secrets set "Speech:Key" "YOUR-AZURE-SPEECH-KEY"
+   dotnet user-secrets set "Speech:Region" "germanywestcentral"
+   ```
+
+3. **Verify:** Run the app - speech should work ✅
+
+### Option C: For End Users (Settings UI)
+
+1. **Launch the app**
+2. **Navigate to Settings** → **Speech Synthesis**
+3. **Enter your Azure Speech Key** in the text box
+4. **Select Region:** germanywestcentral (or your Azure region)
+5. **Click Save** - settings are stored in `appsettings.json`
+
+> ⚠️ **Note:** The Speech Key field in the Settings UI is password-protected and automatically saved. Never commit `appsettings.json` with your personal key to Git.
+
+### Configuration Priority
+
+The app loads configuration in this order (first found wins):
+
+1. **Azure App Configuration** (if `AZURE_APPCONFIG_CONNECTION` env var is set)
+2. **User Secrets** (Development mode only)
+3. **Settings UI** → saved to `appsettings.json`
+4. **Fallback:** Empty key → Speech features disabled
+
+---
+
 ## 📦 Architecture
 
 MOBAflow follows **Clean Architecture** principles:
@@ -668,8 +742,6 @@ Reusable **.NET MAUI Controls** for Android mobile application.
 - `TrainCard` - Lok-Anzeige mit Geschwindigkeit und Richtung
 - *(weitere Controls werden hier ergänzt)*
 
----
-
 ## 🎵 Audio Library
 
 MOBAflow includes an audio system for workflow actions. Sound files are stored in `Sound/Resources/Sounds/`.
@@ -746,4 +818,32 @@ Action #3: Audio
 
 ---
 
-**Made with ❤️ for model railroad enthusiasts**
+## 🔧 Setup Scripts
+
+MOBAflow provides PowerShell scripts for automated Azure App Configuration setup. These scripts are designed for **developer teams** managing multiple development systems.
+
+> 💡 **For End Users:** You don't need these scripts! Simply enter your Azure Speech Key in the Settings UI (see [Wiki](docs/wiki/AZURE-SPEECH-SETUP.md)).
+
+> 👨‍💻 **For Developer Teams:** Use these scripts to create a centralized configuration store shared across multiple systems.
+
+### Available Scripts
+
+| Script | Purpose | Run Where |
+|--------|---------|-----------|
+| `scripts/setup-azure-appconfig.ps1` | Create Azure resource | **Once on ONE system** |
+| `scripts/install-appconfig-connection.ps1` | Set environment variable | **On ALL systems** |
+
+---
+
+### Quick Setup
+
+**1. Create Azure App Config (once):**
+
+```powershell
+cd C:\Repos\ahuelsmann\MOBAflow
+.\scripts\setup-azure-appconfig.ps1 -SpeechKey "YOUR-KEY" -SpeechRegion "germanywestcentral"
+```
+
+**Output:** Connection String → Copy it!
+
+**2. Install on all systems:**

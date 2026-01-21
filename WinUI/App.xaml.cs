@@ -16,6 +16,7 @@ using Domain;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -116,13 +117,40 @@ public partial class App
         System.Diagnostics.Debug.WriteLine($"[CONFIG] BaseDirectory: {basePath}");
         System.Diagnostics.Debug.WriteLine($"[CONFIG] appsettings.Development.json exists: {devJsonExists}");
 
-        var configuration = new ConfigurationBuilder()
+        var configBuilder = new ConfigurationBuilder()
             .SetBasePath(basePath)
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
 #if DEBUG
             .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
 #endif
-            .Build();
+            ;
+
+        // Add User Secrets in Development (for developers without Azure App Config)
+#if DEBUG
+        configBuilder.AddUserSecrets<App>(optional: true);
+        System.Diagnostics.Debug.WriteLine("[CONFIG] User Secrets loaded (if configured)");
+#endif
+
+        // Add Azure App Configuration (if connection string is set)
+        var azureAppConfigConnection = Environment.GetEnvironmentVariable("AZURE_APPCONFIG_CONNECTION");
+        if (!string.IsNullOrWhiteSpace(azureAppConfigConnection))
+        {
+            try
+            {
+                configBuilder.AddAzureAppConfiguration(azureAppConfigConnection);
+                System.Diagnostics.Debug.WriteLine("[CONFIG] Azure App Configuration loaded");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[CONFIG] Azure App Configuration failed: {ex.Message}");
+            }
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine("[CONFIG] Azure App Configuration skipped (no connection string)");
+        }
+
+        var configuration = configBuilder.Build();
 
         // Debug: Print loaded FeatureToggle values
         System.Diagnostics.Debug.WriteLine($"[CONFIG] IsTrainControlPageAvailable: {configuration["FeatureToggles:IsTrainControlPageAvailable"]}");
