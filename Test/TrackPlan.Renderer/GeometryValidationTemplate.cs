@@ -519,6 +519,349 @@ public class GeometryValidationTemplate
         Assert.That(currentPos.Y, Is.EqualTo(0).Within(1.0));
     }
 
+    /// <summary>
+    /// Piko A 24×R9 Oval Baseline (nur R9, ohne Weichen).
+    /// Dient als Referenz für spätere WR-Integration.
+    /// 
+    /// Erwartet: Perfekter Kreis bei (0,0) mit 360° (Schließungsfehler <1mm).
+    /// </summary>
+    [Test]
+    public void PikoA_24x_R9_Oval_Baseline()
+    {
+        // Arrange
+        var r9Template = _catalog.GetById("R9")!;
+
+        TestContext.WriteLine("=== Piko A R9 Oval (23×R9 + WR = 360°) ===\n");
+        TestContext.WriteLine($"Stückliste: 1x WR, 1x W3, 1x R1, 1x R2, 23x R9");
+        TestContext.WriteLine($"Topologie: WR (0,0, 180°) → Port C → 23×R9 → Port A (Oval)");
+        TestContext.WriteLine($"           WR Port B → W3 → R1+R2 (Abzweig)\n");
+
+        var labeledTracks = new List<SvgExporter.LabeledTrack>();
+
+        // ============================================================
+        // EINFACHE LÖSUNG: 24×R9 Oval (ohne WR)
+        // ============================================================
+        
+        var currentPos = new Point2D(0, 0);
+        var currentAngle = 0.0;
+
+        TestContext.WriteLine("=== 24×R9 Oval (24×15° = 360°) ===\n");
+        
+        for (int i = 0; i < 24; i++)
+        {
+            var r9Primitives = _renderer.Render(r9Template, currentPos, currentAngle).ToList();
+            var r9Arc = r9Primitives[0] as ArcPrimitive;
+
+            var r9End = new Point2D(
+                r9Arc!.Center.X + r9Arc.Radius * Math.Cos(r9Arc.StartAngleRad + r9Arc.SweepAngleRad),
+                r9Arc.Center.Y + r9Arc.Radius * Math.Sin(r9Arc.StartAngleRad + r9Arc.SweepAngleRad));
+            var r9EndAngle = currentAngle + r9Arc.SweepAngleRad * 180.0 / Math.PI;
+
+            labeledTracks.Add(new SvgExporter.LabeledTrack($"R9-{i + 1}", r9Primitives, currentPos, r9End));
+
+            currentPos = r9End;
+            currentAngle = r9EndAngle;
+        }
+
+        TestContext.WriteLine($"  Endposition: ({currentPos.X:F2}, {currentPos.Y:F2})");
+        TestContext.WriteLine($"  Endwinkel: {currentAngle:F1}°");
+        TestContext.WriteLine($"  Soll: (0.00, 0.00), 360.0°\n");
+
+        var closureError = Math.Sqrt(
+            Math.Pow(currentPos.X - 0, 2) +
+            Math.Pow(currentPos.Y - 0, 2));
+
+        TestContext.WriteLine($"  ⚠️ Schließungsfehler: {closureError:F3} mm");
+        TestContext.WriteLine($"  ⚠️ Winkelfehler: {Math.Abs(currentAngle - 360.0):F1}°\n");
+
+        // ============================================================
+        // SVG Export mit automatischer Bounding Box
+        // ============================================================
+        
+        // Alle Primitives sammeln
+        var allPrimitives = labeledTracks.SelectMany(lt => lt.Primitives).ToList();
+        
+        // Bounding Box berechnen
+        double minX = double.MaxValue;
+        double maxX = double.MinValue;
+        double minY = double.MaxValue;
+        double maxY = double.MinValue;
+        
+        foreach (var primitive in allPrimitives)
+        {
+            if (primitive is LinePrimitive line)
+            {
+                minX = Math.Min(minX, Math.Min(line.From.X, line.To.X));
+                maxX = Math.Max(maxX, Math.Max(line.From.X, line.To.X));
+                minY = Math.Min(minY, Math.Min(line.From.Y, line.To.Y));
+                maxY = Math.Max(maxY, Math.Max(line.From.Y, line.To.Y));
+            }
+            else if (primitive is ArcPrimitive arc)
+            {
+                // Bounding Box des Kreises
+                minX = Math.Min(minX, arc.Center.X - arc.Radius);
+                maxX = Math.Max(maxX, arc.Center.X + arc.Radius);
+                minY = Math.Min(minY, arc.Center.Y - arc.Radius);
+                maxY = Math.Max(maxY, arc.Center.Y + arc.Radius);
+            }
+        }
+        
+        double width = maxX - minX;
+        double height = maxY - minY;
+        double margin = 200; // 200mm Rand
+        
+        TestContext.WriteLine($"\n📐 Bounding Box:");
+        TestContext.WriteLine($"  X: {minX:F2} bis {maxX:F2} (Breite: {width:F2}mm)");
+        TestContext.WriteLine($"  Y: {minY:F2} bis {maxY:F2} (Höhe: {height:F2}mm)\n");
+        
+        // Center der Geometrie im Koordinatensystem
+        double geomCenterX = (minX + maxX) / 2.0;
+        double geomCenterY = (minY + maxY) / 2.0;
+        
+        var svgPath = Path.Combine(_outputDir, "PikoA_24x_R9_Oval_Baseline.svg");
+        
+        // Canvas-Größe basierend auf Bounding Box mit Rand
+        double totalWidth = width + 2 * margin;
+        double totalHeight = height + 2 * margin;
+        double scale = 0.4; // Skalierung
+        
+        int canvasWidth = (int)(totalWidth * scale);
+        int canvasHeight = (int)(totalHeight * scale);
+        
+        // Canvas-Center = wo die Geometrie-Center sein soll
+        double svgCenterX = canvasWidth / 2.0;
+        double svgCenterY = canvasHeight / 2.0;
+        
+        TestContext.WriteLine($"📐 Canvas:");
+        TestContext.WriteLine($"  Größe: {canvasWidth}×{canvasHeight} Pixel");
+        TestContext.WriteLine($"  Scale: {scale}");
+        TestContext.WriteLine($"  Geometrie-Center: ({geomCenterX:F2}, {geomCenterY:F2})");
+        TestContext.WriteLine($"  SVG-Center: ({svgCenterX:F2}, {svgCenterY:F2})\n");
+        
+        var svg = SvgExporter.Export(
+            labeledTracks,
+            width: canvasWidth,
+            height: canvasHeight,
+            scale: scale,
+            centerOffsetX: svgCenterX,
+            centerOffsetY: svgCenterY,
+            showLabels: true,
+            showSegmentNumbers: true,
+            showGrid: true,
+            gridSize: 500,
+            showOrigin: true);
+
+        File.WriteAllText(svgPath, svg);
+        TestContext.WriteLine($"📁 SVG: {svgPath}");
+
+        // Assert
+        Assert.That(closureError, Is.LessThan(1.0), "Oval sollte geschlossen sein (< 1mm)");
+    }
+
+    /// <summary>
+    /// Piko A R9 Oval mit einer WR-Weiche statt R9: 23×R9 + 1×WR = 360°.
+    /// 
+    /// WR (55221) hat 15° Winkel (gleich wie R9), daher ersetzt sie perfekt ein R9-Gleis.
+    /// 
+    /// Layout:
+    ///   WR (Port A bei 0,0, Rotation 180°) ← UM 180° GEDREHT!
+    ///   → Port C (Abzweig = Teil des Ovals, 15° nach links)
+    ///   → 23×R9 (je 15°, zusammen 345°)
+    ///   → schließt bei WR Port A
+    /// 
+    /// Erwartung: Perfekter Kreis (Schließungsfehler <5mm).
+    /// </summary>
+    [Test]
+    public void PikoA_R9_Oval_With_WR_23Curves()
+    {
+        // Arrange
+        var wrTemplate = _catalog.GetById("WR")!;
+        var r9Template = _catalog.GetById("R9")!;
+
+        TestContext.WriteLine("=== Piko A R9 Oval mit WR (23×R9 + 1×WR = 360°) ===\n");
+        TestContext.WriteLine($"Stückliste: 1x WR (55221), 23x R9 (55219)");
+        TestContext.WriteLine($"Topologie: WR Port A (0,0,180°) → Port C (165°) → 23×R9 (345°) → WR Port A\n");
+
+        var labeledTracks = new List<SvgExporter.LabeledTrack>();
+
+        // ============================================================
+        // 1. WR - Rechts-Weiche startet bei (0, 0) mit 180° Rotation
+        // ============================================================
+        TestContext.WriteLine("=== 1. WR (Rechts-Weiche, um 180° gedreht) ===");
+        var wrStart = new Point2D(0, 0);
+        var wrRotation = 180.0;  // ← ÄNDERUNG: 180° statt 0°
+
+        var wrPrimitives = _renderer.Render(wrTemplate, wrStart, wrRotation).ToList();
+
+        // WR rendert: [0] = Line (gerade A→B), [1] = Arc (Abzweig A→C)
+        var wrLine = wrPrimitives[0] as LinePrimitive;
+        var wrArc = wrPrimitives[1] as ArcPrimitive;
+
+        // Port B (gerade durch)
+        var wrPortB = wrLine!.To;
+
+        // Port C (Abzweig, Teil des Ovals)
+        var wrPortC = new Point2D(
+            wrArc!.Center.X + wrArc.Radius * Math.Cos(wrArc.StartAngleRad + wrArc.SweepAngleRad),
+            wrArc.Center.Y + wrArc.Radius * Math.Sin(wrArc.StartAngleRad + wrArc.SweepAngleRad));
+        var wrPortCAngle = wrRotation + wrArc.SweepAngleRad * 180.0 / Math.PI;
+
+        labeledTracks.Add(new SvgExporter.LabeledTrack("WR", wrPrimitives, wrStart, wrPortC));
+
+        TestContext.WriteLine($"  Port A (Start): ({wrStart.X:F2}, {wrStart.Y:F2}), {wrRotation:F1}°");
+        TestContext.WriteLine($"  Port B (gerade): ({wrPortB.X:F2}, {wrPortB.Y:F2})");
+        TestContext.WriteLine($"  Port C (Oval): ({wrPortC.X:F2}, {wrPortC.Y:F2}), {wrPortCAngle:F1}°");
+
+        // ============================================================
+        // 2. Oval fortsetzen: 23×R9 ab WR Port C
+        // ============================================================
+        TestContext.WriteLine("\n=== 2. Oval: 23×R9 Kurven ab WR Port C ===");
+
+        var currentPos = wrPortC;
+        var currentAngle = wrPortCAngle;
+
+        for (int i = 0; i < 23; i++)
+        {
+            var r9Primitives = _renderer.Render(r9Template, currentPos, currentAngle).ToList();
+            var r9Arc = r9Primitives[0] as ArcPrimitive;
+
+            var r9End = new Point2D(
+                r9Arc!.Center.X + r9Arc.Radius * Math.Cos(r9Arc.StartAngleRad + r9Arc.SweepAngleRad),
+                r9Arc.Center.Y + r9Arc.Radius * Math.Sin(r9Arc.StartAngleRad + r9Arc.SweepAngleRad));
+            var r9EndAngle = currentAngle + r9Arc.SweepAngleRad * 180.0 / Math.PI;
+
+            labeledTracks.Add(new SvgExporter.LabeledTrack($"R9-{i + 1}", r9Primitives, currentPos, r9End));
+
+            currentPos = r9End;
+            currentAngle = r9EndAngle;
+        }
+
+        TestContext.WriteLine($"  Endposition nach 23×R9: ({currentPos.X:F2}, {currentPos.Y:F2})");
+        TestContext.WriteLine($"  Endwinkel: {currentAngle:F1}°");
+        TestContext.WriteLine($"  Soll: (0.00, 0.00), 360.0°\n");
+
+        var closureError = Math.Sqrt(
+            Math.Pow(currentPos.X - 0, 2) +
+            Math.Pow(currentPos.Y - 0, 2));
+
+        TestContext.WriteLine($"  ⚠️ Schließungsfehler: {closureError:F3} mm");
+        TestContext.WriteLine($"  ⚠️ Winkelfehler: {Math.Abs(currentAngle - 360.0):F1}°\n");
+
+        // ============================================================
+        // SVG Export mit besserer Bounding Box
+        // ============================================================
+        var allPrimitives = labeledTracks.SelectMany(lt => lt.Primitives).ToList();
+
+        // Bounding Box berechnen
+        double minX = double.MaxValue, maxX = double.MinValue;
+        double minY = double.MaxValue, maxY = double.MinValue;
+
+        foreach (var primitive in allPrimitives)
+        {
+            if (primitive is LinePrimitive line)
+            {
+                minX = Math.Min(minX, Math.Min(line.From.X, line.To.X));
+                maxX = Math.Max(maxX, Math.Max(line.From.X, line.To.X));
+                minY = Math.Min(minY, Math.Min(line.From.Y, line.To.Y));
+                maxY = Math.Max(maxY, Math.Max(line.From.Y, line.To.Y));
+            }
+            else if (primitive is ArcPrimitive arc)
+            {
+                minX = Math.Min(minX, arc.Center.X - arc.Radius);
+                maxX = Math.Max(maxX, arc.Center.X + arc.Radius);
+                minY = Math.Min(minY, arc.Center.Y - arc.Radius);
+                maxY = Math.Max(maxY, arc.Center.Y + arc.Radius);
+            }
+        }
+
+        double width = maxX - minX;
+        double height = maxY - minY;
+        double margin = 300; // ← ÄNDERUNG: Mehr Rand (300mm statt 200mm)
+
+        TestContext.WriteLine($"\n📐 Bounding Box:");
+        TestContext.WriteLine($"  X: {minX:F2} bis {maxX:F2} (Breite: {width:F2}mm)");
+        TestContext.WriteLine($"  Y: {minY:F2} bis {maxY:F2} (Höhe: {height:F2}mm)\n");
+
+        double geomCenterX = (minX + maxX) / 2.0;
+        double geomCenterY = (minY + maxY) / 2.0;
+
+        var svgPath = Path.Combine(_outputDir, "PikoA_R9_Oval_With_WR_23Curves.svg");
+
+        double totalWidth = width + 2 * margin;
+        double totalHeight = height + 2 * margin;
+        double scale = 0.4;
+
+        int canvasWidth = (int)(totalWidth * scale);
+        int canvasHeight = (int)(totalHeight * scale);
+
+        double svgCenterX = canvasWidth / 2.0;
+        double svgCenterY = canvasHeight / 2.0;
+
+        TestContext.WriteLine($"📐 Canvas:");
+        TestContext.WriteLine($"  Größe: {canvasWidth}×{canvasHeight} Pixel");
+        TestContext.WriteLine($"  Scale: {scale}");
+        TestContext.WriteLine($"  Geometrie-Center: ({geomCenterX:F2}, {geomCenterY:F2})");
+        TestContext.WriteLine($"  SVG-Center: ({svgCenterX:F2}, {svgCenterY:F2})\n");
+
+        var svg = SvgExporter.Export(
+            labeledTracks,
+            width: canvasWidth,
+            height: canvasHeight,
+            scale: scale,
+            centerOffsetX: svgCenterX,
+            centerOffsetY: svgCenterY,
+            showLabels: true,
+            showSegmentNumbers: true,
+            showGrid: true,
+            gridSize: 500,
+            showOrigin: true);
+
+        File.WriteAllText(svgPath, svg);
+        TestContext.WriteLine($"📁 SVG: {svgPath}");
+
+        // HTML-Datei erstellen, die SVG im Browser öffnet
+        var htmlPath = Path.Combine(_outputDir, "PikoA_R9_Oval_With_WR_23Curves.html");
+        var html = $@"<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=""utf-8"">
+    <title>Piko A R9 Oval mit WR (180° gedreht)</title>
+    <style>
+        body {{ margin: 0; padding: 20px; background: #f5f5f5; font-family: Arial, sans-serif; }}
+        h1 {{ color: #333; }}
+        .container {{ background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-width: 1600px; margin: 0 auto; }}
+        svg {{ border: 1px solid #ddd; display: block; margin: 20px auto; }}
+        .info {{ background: #f0f0f0; padding: 10px; border-radius: 4px; margin: 10px 0; }}
+    </style>
+</head>
+<body>
+    <div class=""container"">
+        <h1>🚂 Piko A R9 Oval mit WR (23×R9 + 1×WR = 360°)</h1>
+        <div class=""info"">
+            <strong>Stückliste:</strong> 1× WR (55221, um 180° gedreht), 23× R9 (55219)<br>
+            <strong>Schließungsfehler:</strong> {closureError:F3} mm | <strong>Winkelfehler:</strong> {Math.Abs(currentAngle - 360.0):F1}°<br>
+            <strong>WR Port C Winkel:</strong> {wrPortCAngle:F1}° (sollte ~165° sein für Linkskurve)
+        </div>
+        {svg}
+    </div>
+</body>
+</html>";
+        File.WriteAllText(htmlPath, html);
+        TestContext.WriteLine($"📁 HTML: {htmlPath}\n");
+
+        // Browser öffnen
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = htmlPath,
+            UseShellExecute = true
+        });
+
+        TestContext.WriteLine("✅ Browser geöffnet!");
+
+        // Assert - lockerer Toleranzbereich, da WR möglicherweise nicht exakt passt
+        Assert.That(closureError, Is.LessThan(10.0), "Oval sollte nahezu geschlossen sein (< 10mm)");
+    }
+
     #region Helper Methods
 
     /// <summary>

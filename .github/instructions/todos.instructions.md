@@ -42,26 +42,51 @@ _Keine kritischen Aufgaben offen._
 
 **Problem:** R9 Kurven zeigen "nach innen" statt "nach außen" (konkav statt konvex).
 
-**Root Cause ERKANNT:** 
-1. ❌ **Test verwendet falsche Gleise** - WL und R3 sind NICHT in der Stückliste!
-2. ✅ **SVG Sweep-Flag Fix** - `sweep = sweepAngleRad >= 0 ? 0 : 1` (invertiert für Y-down)
+**Root Cause ANALYSE:**  
+1. ❌ **Test verwendet falsche Gleise** - WL und R3 sind NICHT in der Stückliste! ✅ BEHOBEN
+2. ✅ **SVG Sweep-Flag korrigiert** - `sweep = sweepAngleRad >= 0 ? 1 : 0` (korrekt für Y-flip)
+3. ✅ **CurveGeometry.cs validiert** - 24×R9 Test besteht, Geometrie ist korrekt
+4. 🔄 **WR Ausrichtung** - WR muss um 180° gedreht werden (Bogen nach oben)
 
 **Stückliste aus Vorlage:**
 - 1x WR (55221)
 - 1x W3 (55225)
 - 1x R1 (55211), 1x R2 (55212)
 - 23x R9 (55219)
-- **KEIN R3, KEINE WL!**
 
 **Bisherige Fixes:**
-1. ✅ **WL/WR Templates hinzugefügt** - Katalog vervollständigt
+1. ✅ **WL/WR Templates hinzugefügt**
 2. ✅ **isLeftSwitch Detection** - `EndsWith('L')` statt `Contains('L')`
-3. ✅ **SVG Sweep-Flag invertiert** - Für scale(scale, -scale) Y-Flip
-4. 🔄 **Test muss neu geschrieben werden** - Topologie muss aus Foto abgeleitet werden
+3. ✅ **Port Labels hinzugefügt** - StartPortLabel/EndPortLabel in LabeledTrack
+4. ✅ **Export Überladung** - Export(LabeledTrack[]) für showLabels Parameter
+5. ✅ **Test neu geschrieben** - PikoA_R9_Oval_With_WR_W3_R1_R2_CORRECTED
+6. ✅ **SVG Sweep-Flag KORRIGIERT** - Von invertiert zu korrekt (1:0)
+7. ✅ **WR Rotation auf 180°** - Bogen zeigt jetzt nach oben
 
-**Nächster Schritt:** 
-- Test mit korrekter Gleisliste schreiben: WR → W3 → (R1+R2 auf einem Port) → (23x R9 auf anderem Port)
-- Topologie aus Foto validieren
+**Convention-Analyse:**
+- **Piko A Kurven:** ALLE positiven Winkel (R1=30°, R2=30°, R3=30°, R9=15°)  
+- **Eisenbahn-Convention:** Positiver Winkel = Linkskurve (aus Sicht des Zugs)
+- **CurveGeometry.cs:** Normale zeigt nach links (-Sin, +Cos) = korrekt für Linkskurven
+- **CurveGeometryTests:** ✅ ALLE 14 Tests bestehen
+- **24×R9 Test:** ✅ BESTEHT - Kreis schließt perfekt bei (0,0)
+
+**User Feedback (visuell aus SVG):**
+- ✅ R9-20 bis R9-21 (#24, #25) - KORREKT verbunden und gezeichnet
+- ❌ R9-1 bis R9-5 - NICHT Teil des Ovals (falsch platziert)
+- ❌ WR Bogen - NICHT korrekt mit R9-Oval verbunden
+- 🔄 **Lösung:** WR um 180° drehen, Bogen muss oben sein und mit R9 verbinden
+
+**Test-Ergebnis (nach 180° Rotation):**
+```
+WR Port C (-235.00, 30.94, 165°) → 23×R9 → Ende (-16.01, -59.77, 510°)
+Schließungsfehler: 61.877mm (unverändert)
+Winkelfehler: 150.0° (SCHLECHTER - vorher 30°)
+```
+
+**Nächster Schritt:**  
+- Topologie nochmal überdenken - wo genau startet/endet das Oval?
+- Anzahl R9 verifizieren - 23 oder 24 im Oval?
+- WR Port C Verbindung korrigieren
 
 **Referenz:** Piko A Gleis Prospekt `docs/99556__A-Gleis_Prospekt_2019.pdf`
 

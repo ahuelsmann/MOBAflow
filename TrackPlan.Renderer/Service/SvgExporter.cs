@@ -44,6 +44,30 @@ public static class SvgExporter
         string? ConnectedToPortId = null);
 
     /// <summary>
+    /// Exports labeled track segments with parameters matching ExportWithLabels signature.
+    /// </summary>
+    public static string Export(
+        IEnumerable<LabeledTrack> tracks,
+        int width = 1400,
+        int height = 1400,
+        double scale = 0.35,
+        double strokeWidth = 3,
+        string strokeColor = "#333333",
+        bool showLabels = true,
+        bool showSeparators = true,
+        bool showSegmentNumbers = true,
+        bool showGrid = true,
+        bool showOrigin = true,
+        double gridSize = 100,
+        double? centerOffsetX = null,
+        double? centerOffsetY = null)
+    {
+        return ExportWithLabels(tracks, width, height, scale, strokeWidth, strokeColor,
+            showLabels, showSeparators, showSegmentNumbers, showGrid, showOrigin, gridSize,
+            centerOffsetX, centerOffsetY);
+    }
+
+    /// <summary>
     /// Exports primitives to an SVG string.
     /// </summary>
     /// <param name="primitives">Geometry primitives to render.</param>
@@ -259,22 +283,24 @@ public static class SvgExporter
 
         var largeArc = Math.Abs(arc.SweepAngleRad) > Math.PI ? 1 : 0;
         
-        // Sweep-flag für SVG Y-down Koordinaten invertiert
-        // scale(scale, -scale) spiegelt Y-Achse, dadurch wird CCW zu CW (und umgekehrt)
-        var sweep = arc.SweepAngleRad >= 0 ? 0 : 1;
+        // Sweep-flag: Positiver Sweep-Winkel (CCW in Y-up) → sweep=1 (CW in SVG Y-down nach scale-Flip)
+        // Negativer Sweep-Winkel (CW in Y-up) → sweep=0 (CCW in SVG Y-down nach scale-Flip)
+        var sweep = arc.SweepAngleRad >= 0 ? 1 : 0;
 
         // SVG arc path: M startX,startY A rx,ry rotation large-arc-flag,sweep-flag endX,endY
         return $@"    <path class=""track"" stroke=""{strokeColor}"" stroke-width=""{F(strokeWidth)}"" d=""M {F(startX)},{F(startY)} A {F(arc.Radius)},{F(arc.Radius)} 0 {largeArc},{sweep} {F(endX)},{F(endY)}""/>";
     }
 
     /// <summary>
-    /// Labeled track segment for SVG export with track codes.
+    /// Labeled track segment for SVG export with track codes and port information.
     /// </summary>
     public sealed record LabeledTrack(
         string Label,
         IReadOnlyList<IGeometryPrimitive> Primitives,
         Point2D StartPoint,
-        Point2D EndPoint);
+        Point2D EndPoint,
+        string? StartPortLabel = null,
+        string? EndPortLabel = null);
 
     /// <summary>
     /// Exports track primitives with labels and separator marks between segments.
@@ -296,7 +322,9 @@ public static class SvgExporter
         bool showSegmentNumbers = true,
         bool showGrid = true,
         bool showOrigin = true,
-        double gridSize = 100)
+        double gridSize = 100,
+        double? centerOffsetX = null,
+        double? centerOffsetY = null)
     {
         var trackList = tracks.ToList();
         var sb = new StringBuilder();
@@ -312,8 +340,9 @@ public static class SvgExporter
         sb.AppendLine(@"    .legend { font-family: Arial, sans-serif; font-size: 11px; fill: #555; }");
         sb.AppendLine(@"  </style>");
 
-        var offsetX = width / 2.0;
-        var offsetY = height / 2.0;
+        // Use provided center offset or default to canvas center
+        var offsetX = centerOffsetX ?? (width / 2.0);
+        var offsetY = centerOffsetY ?? (height / 2.0);
 
         // Main transform group: Y-axis flip without affecting X-axis
         // SVG: positive Y goes DOWN by default, we want positive Y UP
@@ -398,6 +427,21 @@ public static class SvgExporter
                 {
                     var numOffsetY = showLabels ? -28 : -15;
                     sb.AppendLine($@"  <text class=""segment-num"" x=""{F(screenX)}"" y=""{F(screenY + numOffsetY)}"" text-anchor=""middle"">#{segmentNum}</text>");
+                }
+
+                // Port labels at start/end points
+                if (!string.IsNullOrEmpty(track.StartPortLabel))
+                {
+                    var startScreenX = offsetX + track.StartPoint.X * scale;
+                    var startScreenY = offsetY - track.StartPoint.Y * scale;
+                    sb.AppendLine($@"  <text class=""track-label"" x=""{F(startScreenX)}"" y=""{F(startScreenY - 8)}"" text-anchor=""middle"" style=""fill: #cc0000; font-size: 10px;"">{track.StartPortLabel}</text>");
+                }
+
+                if (!string.IsNullOrEmpty(track.EndPortLabel))
+                {
+                    var endScreenX = offsetX + track.EndPoint.X * scale;
+                    var endScreenY = offsetY - track.EndPoint.Y * scale;
+                    sb.AppendLine($@"  <text class=""track-label"" x=""{F(endScreenX)}"" y=""{F(endScreenY - 8)}"" text-anchor=""middle"" style=""fill: #cc0000; font-size: 10px;"">{track.EndPortLabel}</text>");
                 }
 
                 segmentNum++;
