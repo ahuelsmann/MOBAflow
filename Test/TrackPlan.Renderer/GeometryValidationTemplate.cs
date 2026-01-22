@@ -4,8 +4,8 @@ namespace Test.TrackPlan.Renderer;
 using Moba.TrackLibrary.PikoA.Catalog;
 using Moba.TrackLibrary.PikoA.Metadata;
 using Moba.TrackPlan.Graph;
-using Moba.TrackPlan.Renderer.Debug;
 using Moba.TrackPlan.Renderer.Geometry;
+using Moba.TrackPlan.Renderer.Service;
 using Moba.TrackPlan.Renderer.World;
 using Moba.TrackPlan.TrackSystem;
 
@@ -96,18 +96,18 @@ public class GeometryValidationTemplate
 
             // Geometrie rendern und Segment erstellen
             var primitives = _renderer.Render(template, currentPos, currentAngle).ToList();
-            
+
             // Port-Positionen berechnen
-            var ports = CalculatePortPositions(template, currentPos, currentAngle, primitives, 
-                i > 0 ? edges[i - 1].Id : (Guid?)null,  // Verbindung zum vorherigen
-                i == 11 ? edges[0].Id : (Guid?)null);   // Letztes verbindet mit erstem
-            
+            var ports = CalculatePortPositions(template, currentPos, currentAngle, primitives,
+                i > 0 ? edges[i - 1].Id : null,  // Verbindung zum vorherigen
+                i == 11 ? edges[0].Id : null);   // Letztes verbindet mit erstem
+
             segments.Add(new SvgExporter.TrackSegment(
-                edge.Id, 
-                template.Id, 
-                currentPos, 
-                currentAngle, 
-                primitives, 
+                edge.Id,
+                template.Id,
+                currentPos,
+                currentAngle,
+                primitives,
                 ports));
 
             // Nächste Position berechnen (Endpunkt dieser Kurve)
@@ -128,10 +128,10 @@ public class GeometryValidationTemplate
             var nextIdx = (i + 1) % segments.Count;
             var currentSeg = segments[i];
             var nextSeg = segments[nextIdx];
-            
+
             // Aktualisiere Ports mit Verbindungsinformation
-            var updatedPorts = currentSeg.Ports.Select(p => 
-                p.PortId == "B" 
+            var updatedPorts = currentSeg.Ports.Select(p =>
+                p.PortId == "B"
                     ? p with { ConnectedToEdgeId = nextSeg.Id, ConnectedToPortId = "A" }
                     : p.PortId == "A" && i > 0
                         ? p with { ConnectedToEdgeId = segments[i - 1].Id, ConnectedToPortId = "B" }
@@ -139,14 +139,14 @@ public class GeometryValidationTemplate
                             ? p with { ConnectedToEdgeId = segments[^1].Id, ConnectedToPortId = "B" }
                             : p
             ).ToList();
-            
+
             segments[i] = currentSeg with { Ports = updatedPorts };
         }
 
         // ============================================================
         // ACT: Export mit Schwellen, Ports und Verbindungen
         // ============================================================
-        
+
         // Einfaches SVG (nur Geometrie)
         var allPrimitives = segments.SelectMany(s => s.Primitives).ToList();
         var svgSimplePath = Path.Combine(_outputDir, "PikoA_R1_Oval_Simple.svg");
@@ -156,7 +156,7 @@ public class GeometryValidationTemplate
 
         // Vollständiges SVG mit Schwellen, Ports, Verbindungen
         var svgPath = Path.Combine(_outputDir, "PikoA_R1_Oval_12Curves.svg");
-        var svg = SvgExporter.ExportTrackPlan(segments, width: 1200, height: 1000, scale: 0.8, 
+        var svg = SvgExporter.ExportTrackPlan(segments, width: 1200, height: 1000, scale: 0.8,
             showSleepers: true, showPorts: true, showConnections: true);
         File.WriteAllText(svgPath, svg);
         TestContext.WriteLine($"📁 SVG (vollständig): {svgPath}");
@@ -168,13 +168,13 @@ public class GeometryValidationTemplate
         TestContext.WriteLine($"Endwinkel: {currentAngle:F1}° (erwartet: 360°)");
 
         // Winkel sollte 360° sein
-        Assert.That(currentAngle, Is.EqualTo(360.0).Within(0.1), 
+        Assert.That(currentAngle, Is.EqualTo(360.0).Within(0.1),
             "Nach 12 × 30° Kurven sollte der Winkel 360° sein");
 
         // Position sollte wieder am Start sein (0, 0)
-        Assert.That(currentPos.X, Is.EqualTo(0).Within(1.0), 
+        Assert.That(currentPos.X, Is.EqualTo(0).Within(1.0),
             $"Kreis schließt nicht! End-X sollte 0 sein, ist aber {currentPos.X:F2}");
-        Assert.That(currentPos.Y, Is.EqualTo(0).Within(1.0), 
+        Assert.That(currentPos.Y, Is.EqualTo(0).Within(1.0),
             $"Kreis schließt nicht! End-Y sollte 0 sein, ist aber {currentPos.Y:F2}");
 
         TestContext.WriteLine("\n✅ Oval schließt korrekt!");
@@ -226,9 +226,9 @@ public class GeometryValidationTemplate
         TestContext.WriteLine($"  Arc-Endpunkt: ({arcEnd.X:F2}, {arcEnd.Y:F2})");
 
         // Prüfe ob Arc am Input-Startpunkt beginnt
-        Assert.That(arcStart.X, Is.EqualTo(start.X).Within(0.1), 
+        Assert.That(arcStart.X, Is.EqualTo(start.X).Within(0.1),
             $"Arc startet nicht am Input! Erwartet X={start.X}, ist {arcStart.X:F2}");
-        Assert.That(arcStart.Y, Is.EqualTo(start.Y).Within(0.1), 
+        Assert.That(arcStart.Y, Is.EqualTo(start.Y).Within(0.1),
             $"Arc startet nicht am Input! Erwartet Y={start.Y}, ist {arcStart.Y:F2}");
     }
 
@@ -268,9 +268,9 @@ public class GeometryValidationTemplate
         TestContext.WriteLine($"📁 SVG: {svgPath}");
 
         // Kreis sollte schließen
-        Assert.That(currentPos.X, Is.EqualTo(0).Within(1.0), 
+        Assert.That(currentPos.X, Is.EqualTo(0).Within(1.0),
             $"{templateId}: End-X={currentPos.X:F2}, sollte 0 sein");
-        Assert.That(currentPos.Y, Is.EqualTo(0).Within(1.0), 
+        Assert.That(currentPos.Y, Is.EqualTo(0).Within(1.0),
             $"{templateId}: End-Y={currentPos.Y:F2}, sollte 0 sein");
     }
 
@@ -397,7 +397,7 @@ public class GeometryValidationTemplate
         // R1 Template hat +30° Winkel (Linkskurve), wir brauchen negativ für Rechtskurve
         // Wir rendern R1 mit dem Winkel von W3 Port D und drehen dann weiter nach rechts
         var r1Primitives = _renderer.Render(r1Template, w3PortD, w3PortDAngle).ToList();
-        
+
         var r1Arc = r1Primitives[0] as ArcPrimitive;
         var r1End = new Point2D(
             r1Arc!.Center.X + r1Arc.Radius * Math.Cos(r1Arc.StartAngleRad + r1Arc.SweepAngleRad),
@@ -413,7 +413,7 @@ public class GeometryValidationTemplate
         // ============================================================
         TestContext.WriteLine("\n=== 5. R2 (Linkskurve 30°) an R1 ===");
         var r2Primitives = _renderer.Render(r2Template, r1End, r1EndAngle).ToList();
-        
+
         var r2Arc = r2Primitives[0] as ArcPrimitive;
         var r2End = new Point2D(
             r2Arc!.Center.X + r2Arc.Radius * Math.Cos(r2Arc.StartAngleRad + r2Arc.SweepAngleRad),
@@ -441,7 +441,7 @@ public class GeometryValidationTemplate
                 endPos = new Point2D(
                     arc.Center.X + arc.Radius * Math.Cos(arc.StartAngleRad + arc.SweepAngleRad),
                     arc.Center.Y + arc.Radius * Math.Sin(arc.StartAngleRad + arc.SweepAngleRad));
-                
+
                 labeledTracks.Add(new SvgExporter.LabeledTrack("R9", primitives, currentPos, endPos));
                 currentPos = endPos;
             }
@@ -469,13 +469,13 @@ public class GeometryValidationTemplate
         // Assert
         // ============================================================
         TestContext.WriteLine($"\nOval-Endposition: ({currentPos.X:F2}, {currentPos.Y:F2})");
-        
+
         var distanceToStart = Math.Sqrt(currentPos.X * currentPos.X + currentPos.Y * currentPos.Y);
         TestContext.WriteLine($"Abstand zum Start: {distanceToStart:F2}mm");
 
-        Assert.That(currentPos.X, Is.EqualTo(0).Within(5.0), 
+        Assert.That(currentPos.X, Is.EqualTo(0).Within(5.0),
             $"Oval schließt nicht! End-X={currentPos.X:F2}");
-        Assert.That(currentPos.Y, Is.EqualTo(0).Within(5.0), 
+        Assert.That(currentPos.Y, Is.EqualTo(0).Within(5.0),
             $"Oval schließt nicht! End-Y={currentPos.Y:F2}");
     }
 
@@ -597,7 +597,7 @@ public class GeometryValidationTemplate
 
         // SVG exportieren
         var svgPath = Path.Combine(_outputDir, "PikoA_SwitchLeft_BWL.svg");
-        var svg = SvgExporter.Export(primitives, width: 800, height: 400, scale: 1.0, 
+        var svg = SvgExporter.Export(primitives, width: 800, height: 400, scale: 1.0,
             showGrid: true, gridSize: 50, showOrigin: true);
         File.WriteAllText(svgPath, svg);
         TestContext.WriteLine($"\n📁 SVG: {svgPath}");
@@ -634,7 +634,7 @@ public class GeometryValidationTemplate
         Assert.That(line.From.Y, Is.EqualTo(0).Within(0.1), "Line sollte bei Y=0 starten");
 
         // Prüfe Line-Länge
-        Assert.That(line.To.X, Is.EqualTo(PikoAConstants.SwitchStraightLengthMm).Within(0.1), 
+        Assert.That(line.To.X, Is.EqualTo(PikoAConstants.SwitchStraightLengthMm).Within(0.1),
             $"Line sollte Länge {PikoAConstants.SwitchStraightLengthMm}mm haben");
 
         // Links-Weiche: Arc sollte nach oben abzweigen (positiver Sweep)
