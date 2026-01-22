@@ -5,6 +5,62 @@ using Moba.TrackPlan.TrackSystem;
 
 public static class SwitchTemplates
 {
+    /// <summary>
+    /// Piko A - Einfache Weiche Links (WL).
+    /// 3 Ports: A (Eingang), B (gerade), C (links +15°)
+    /// </summary>
+    public static TrackTemplate WL => new(
+        "WL",
+        [
+            new TrackEnd("A", 0),
+            new TrackEnd("B", 0),
+            new TrackEnd("C", +PikoAConstants.SwitchAngle)
+        ],
+        new TrackGeometrySpec(
+            TrackGeometryKind.Switch,
+            LengthMm: PikoAConstants.SwitchStraightLengthMm,
+            RadiusMm: PikoAConstants.SwitchRadiusMm,
+            AngleDeg: PikoAConstants.SwitchAngle,
+            JunctionOffsetMm: PikoAConstants.SwitchJunctionOffsetMm
+        ),
+        new SwitchRoutingModel
+        {
+            InEndId = "A",
+            StraightEndId = "B",
+            DivergingEndId = "C"
+        }
+    );
+
+    /// <summary>
+    /// Piko A - Einfache Weiche Rechts (WR).
+    /// 3 Ports: A (Eingang), B (gerade), C (rechts -15°)
+    /// </summary>
+    public static TrackTemplate WR => new(
+        "WR",
+        [
+            new TrackEnd("A", 0),
+            new TrackEnd("B", 0),
+            new TrackEnd("C", -PikoAConstants.SwitchAngle)
+        ],
+        new TrackGeometrySpec(
+            TrackGeometryKind.Switch,
+            LengthMm: PikoAConstants.SwitchStraightLengthMm,
+            RadiusMm: PikoAConstants.SwitchRadiusMm,
+            AngleDeg: PikoAConstants.SwitchAngle,
+            JunctionOffsetMm: PikoAConstants.SwitchJunctionOffsetMm
+        ),
+        new SwitchRoutingModel
+        {
+            InEndId = "A",
+            StraightEndId = "B",
+            DivergingEndId = "C"
+        }
+    );
+
+    /// <summary>
+    /// Piko A - Bogenweiche Links (BWL).
+    /// 3 Ports: A (Eingang), B (gerade), C (links +15°)
+    /// </summary>
     public static TrackTemplate BWL => new(
         "BWL",
         [
@@ -27,6 +83,10 @@ public static class SwitchTemplates
         }
     );
 
+    /// <summary>
+    /// Piko A - Bogenweiche Rechts (BWR).
+    /// 3 Ports: A (Eingang), B (gerade), C (rechts -15°)
+    /// </summary>
     public static TrackTemplate BWR => new(
         "BWR",
         [
@@ -88,6 +148,8 @@ public static class SwitchTemplates
 
     public static IReadOnlyList<TrackTemplate> All =>
     [
+        WL,
+        WR,
         BWL,
         BWR,
         K30,

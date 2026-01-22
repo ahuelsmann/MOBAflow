@@ -24,17 +24,46 @@ _Keine kritischen Aufgaben offen._
 | 1 | Geometry Tests (Straight, Curve, Switch) | ✅ |
 | 2 | SVG Debug Exporter | ✅ |
 | 3 | Instructions (geometry, rendering, snapping, topology) | ✅ |
-| 4 | Snap-to-Connect Service | 📋 |
-| 5 | Piko A Track Catalog erweitern | 📋 |
-| 6 | TrackPlanPage UI verbessern | 📋 |
+| 4 | Renderer Y-Koordinaten Fix + WL/WR Templates | ✅ |
+| 5 | Snap-to-Connect Service | 📋 |
+| 6 | Piko A Track Catalog erweitern | 📋 |
+| 7 | TrackPlanPage UI verbessern | 📋 |
 
 **Test-Dateien:**
 - `Test\TrackPlan.Renderer\StraightGeometryTests.cs` (14 Tests)
 - `Test\TrackPlan.Renderer\CurveGeometryTests.cs` (12 Tests)
 - `Test\TrackPlan.Renderer\SwitchGeometryTests.cs` (13 Tests)
 - `Test\TrackPlan.Renderer\ArcPrimitiveTests.cs` (14 Tests)
+- `Test\TrackPlan.Renderer\GeometryValidationTemplate.cs` (inkl. R9 Oval Test)
 
-**Debug-Tool:** `TrackPlan.Renderer\Debug\SvgExporter.cs`
+**Debug-Tool:** `TrackPlan.Renderer\Service\SvgExporter.cs`
+
+### 📝 Session 2025-01-24: Renderer Y-Koordinaten Fix - ERKENNTNISSE
+
+**Problem:** R9 Kurven zeigen "nach innen" statt "nach außen" (konkav statt konvex).
+
+**Root Cause ERKANNT:** 
+1. ❌ **Test verwendet falsche Gleise** - WL und R3 sind NICHT in der Stückliste!
+2. ✅ **SVG Sweep-Flag Fix** - `sweep = sweepAngleRad >= 0 ? 0 : 1` (invertiert für Y-down)
+
+**Stückliste aus Vorlage:**
+- 1x WR (55221)
+- 1x W3 (55225)
+- 1x R1 (55211), 1x R2 (55212)
+- 23x R9 (55219)
+- **KEIN R3, KEINE WL!**
+
+**Bisherige Fixes:**
+1. ✅ **WL/WR Templates hinzugefügt** - Katalog vervollständigt
+2. ✅ **isLeftSwitch Detection** - `EndsWith('L')` statt `Contains('L')`
+3. ✅ **SVG Sweep-Flag invertiert** - Für scale(scale, -scale) Y-Flip
+4. 🔄 **Test muss neu geschrieben werden** - Topologie muss aus Foto abgeleitet werden
+
+**Nächster Schritt:** 
+- Test mit korrekter Gleisliste schreiben: WR → W3 → (R1+R2 auf einem Port) → (23x R9 auf anderem Port)
+- Topologie aus Foto validieren
+
+**Referenz:** Piko A Gleis Prospekt `docs/99556__A-Gleis_Prospekt_2019.pdf`
 
 ---
 

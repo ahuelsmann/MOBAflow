@@ -81,7 +81,15 @@ public static class SvgExporter
         // Also offset to center of canvas
         var offsetX = width / 2.0;
         var offsetY = height / 2.0;
-        sb.AppendLine($@"  <g transform=""translate({F(offsetX)},{F(offsetY)}) scale({F(scale)},{F(-scale)})"">");
+
+        // Main transform group: Y-axis flip without affecting X-axis
+        // SVG: positive Y goes DOWN by default, we want positive Y UP
+        // Solution: Use scaleY only without scaleX, via matrix transform
+        // matrix(a,b,c,d,e,f) = [a c e]
+        //                        [b d f]
+        //                        [0 0 1]
+        // For scale: a=scaleX, d=scaleY; translate via e,f
+        sb.AppendLine($@"  <g transform=""translate({F(offsetX)},{F(offsetY)}) scale({F(scale)}, {F(-scale)})"">");
 
         // Grid
         if (showGrid)
@@ -167,7 +175,15 @@ public static class SvgExporter
 
         var offsetX = width / 2.0;
         var offsetY = height / 2.0;
-        sb.AppendLine($@"  <g transform=""translate({F(offsetX)},{F(offsetY)}) scale({F(scale)},{F(-scale)})"">");
+
+        // Main transform group: Y-axis flip without affecting X-axis
+        // SVG: positive Y goes DOWN by default, we want positive Y UP
+        // Solution: Use scaleY only without scaleX, via matrix transform
+        // matrix(a,b,c,d,e,f) = [a c e]
+        //                        [b d f]
+        //                        [0 0 1]
+        // For scale: a=scaleX, d=scaleY; translate via e,f
+        sb.AppendLine($@"  <g transform=""translate({F(offsetX)},{F(offsetY)}) scale({F(scale)}, {F(-scale)})"">");
 
         // Render primitives with debug info
         foreach (var primitive in primitives)
@@ -242,7 +258,10 @@ public static class SvgExporter
         var endY = arc.Center.Y + arc.Radius * Math.Sin(arc.StartAngleRad + arc.SweepAngleRad);
 
         var largeArc = Math.Abs(arc.SweepAngleRad) > Math.PI ? 1 : 0;
-        var sweep = arc.SweepAngleRad >= 0 ? 1 : 0;
+        
+        // Sweep-flag für SVG Y-down Koordinaten invertiert
+        // scale(scale, -scale) spiegelt Y-Achse, dadurch wird CCW zu CW (und umgekehrt)
+        var sweep = arc.SweepAngleRad >= 0 ? 0 : 1;
 
         // SVG arc path: M startX,startY A rx,ry rotation large-arc-flag,sweep-flag endX,endY
         return $@"    <path class=""track"" stroke=""{strokeColor}"" stroke-width=""{F(strokeWidth)}"" d=""M {F(startX)},{F(startY)} A {F(arc.Radius)},{F(arc.Radius)} 0 {largeArc},{sweep} {F(endX)},{F(endY)}""/>";
@@ -296,8 +315,14 @@ public static class SvgExporter
         var offsetX = width / 2.0;
         var offsetY = height / 2.0;
 
-        // Main transform group (Y-axis flip)
-        sb.AppendLine($@"  <g transform=""translate({F(offsetX)},{F(offsetY)}) scale({F(scale)},{F(-scale)})"">");
+        // Main transform group: Y-axis flip without affecting X-axis
+        // SVG: positive Y goes DOWN by default, we want positive Y UP
+        // Solution: Use scaleY only without scaleX, via matrix transform
+        // matrix(a,b,c,d,e,f) = [a c e]
+        //                        [b d f]
+        //                        [0 0 1]
+        // For scale: a=scaleX, d=scaleY; translate via e,f
+        sb.AppendLine($@"  <g transform=""translate({F(offsetX)},{F(offsetY)}) scale({F(scale)}, {F(-scale)})"">");
 
         // Grid
         if (showGrid)
@@ -450,8 +475,14 @@ public static class SvgExporter
         var offsetX = width / 2.0;
         var offsetY = height / 2.0;
 
-        // Main transform group (Y-axis flip)
-        sb.AppendLine($@"  <g transform=""translate({F(offsetX)},{F(offsetY)}) scale({F(scale)},{F(-scale)})"">");
+        // Main transform group: Y-axis flip without affecting X-axis
+        // SVG: positive Y goes DOWN by default, we want positive Y UP
+        // Solution: Use scaleY only without scaleX, via matrix transform
+        // matrix(a,b,c,d,e,f) = [a c e]
+        //                        [b d f]
+        //                        [0 0 1]
+        // For scale: a=scaleX, d=scaleY; translate via e,f
+        sb.AppendLine($@"  <g transform=""translate({F(offsetX)},{F(offsetY)}) scale({F(scale)}, {F(-scale)})"">");
 
         // Grid
         var gridExtent = Math.Max(width, height) / scale;

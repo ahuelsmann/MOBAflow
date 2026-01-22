@@ -38,7 +38,7 @@ public sealed class TrackGeometryRenderer
         Point2D start,
         double startAngleDeg)
     {
-        bool isLeft = template.Id.Contains('L');
+        bool isLeft = template.Id.EndsWith('L');
         return SwitchGeometry.Render(start, startAngleDeg, spec, template.Routing!, isLeft);
     }
 }

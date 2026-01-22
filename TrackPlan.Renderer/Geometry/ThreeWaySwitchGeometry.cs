@@ -44,7 +44,7 @@ public static class ThreeWaySwitchGeometry
 
         // 2. Left diverging arc (Port C, +angle)
         var normalLeft = new Point2D(
-            -Math.Sin(startRad),  // perpendicular to track direction
+            -Math.Sin(startRad),
             Math.Cos(startRad)
         );
         var centerLeft = new Point2D(
@@ -59,12 +59,12 @@ public static class ThreeWaySwitchGeometry
             Center: centerLeft,
             Radius: radiusMm,
             StartAngleRad: startAngleArcLeft,
-            SweepAngleRad: sweepRad  // positive = counterclockwise = left
+            SweepAngleRad: sweepRad
         ));
 
         // 3. Right diverging arc (Port D, -angle)
         var normalRight = new Point2D(
-            Math.Sin(startRad),   // opposite perpendicular
+            Math.Sin(startRad),
             -Math.Cos(startRad)
         );
         var centerRight = new Point2D(
@@ -79,7 +79,7 @@ public static class ThreeWaySwitchGeometry
             Center: centerRight,
             Radius: radiusMm,
             StartAngleRad: startAngleArcRight,
-            SweepAngleRad: -sweepRad  // negative = clockwise = right
+            SweepAngleRad: -sweepRad
         ));
 
         return primitives;
