@@ -1,90 +1,134 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.WinUI.Rendering;
-
-using Microsoft.UI;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Shapes;
 
 using Moba.TrackPlan.Editor.ViewModel;
+using Moba.TrackPlan.Renderer.Geometry;
+using Moba.TrackPlan.Renderer.World;
 using Moba.TrackPlan.TrackSystem;
 
-using System.Globalization;
-using Windows.UI;
+namespace Moba.WinUI.Rendering;
 
 /// <summary>
-/// Renders track plan edges onto a WinUI Canvas.
-/// Converts world coordinates (mm) to screen coordinates (px) using displayScale.
+/// WinUI Canvas renderer using real geometry engine.
+/// Renders each track using actual Geometry classes (StraightGeometry, CurveGeometry, SwitchGeometry).
 /// </summary>
-public sealed class CanvasRenderer
+public class CanvasRenderer
 {
+    private const double DisplayScale = 0.5;
+    private const double TrackStrokeThickness = 6.0;
+    private const double RailStrokeThickness = 2.0;
+
     /// <summary>
-    /// Renders all edges from the view model onto the canvas.
+    /// Renders all tracks from ViewModel to WinUI Canvas using real geometry primitives.
     /// </summary>
-    /// <param name="canvas">The target WinUI Canvas.</param>
-    /// <param name="viewModel">The TrackPlanEditorViewModel containing edges and positions.</param>
-    /// <param name="catalog">The track catalog for template lookup.</param>
-    /// <param name="trackBrush">Default track color.</param>
-    /// <param name="selectedBrush">Selected track color.</param>
-    /// <param name="hoverBrush">Hovered track color.</param>
-    /// <param name="displayScale">Scale factor: 1mm = displayScale pixels (e.g., 0.5).</param>
     public void Render(
         Canvas canvas,
         TrackPlanEditorViewModel viewModel,
         ITrackCatalog catalog,
         SolidColorBrush trackBrush,
         SolidColorBrush selectedBrush,
-        SolidColorBrush hoverBrush,
-        double displayScale = 0.5)
+        SolidColorBrush hoverBrush)
     {
+        ArgumentNullException.ThrowIfNull(canvas);
+        ArgumentNullException.ThrowIfNull(viewModel);
+        ArgumentNullException.ThrowIfNull(catalog);
+
+        // Draw all edges using real geometry engine
         foreach (var edge in viewModel.Graph.Edges)
         {
-            if (!viewModel.Positions.TryGetValue(edge.Id, out _))
+            var template = catalog.GetById(edge.TemplateId);
+            if (template == null)
                 continue;
 
-            var primitives = viewModel.RenderEdge(edge.Id);
+            if (!viewModel.Positions.TryGetValue(edge.Id, out var pos))
+                continue;
 
-            var isSelected = viewModel.SelectedTrackId == edge.Id
-                          || viewModel.SelectedTrackIds.Contains(edge.Id);
-            var isHovered = viewModel.HoveredTrackId == edge.Id;
+            var rot = viewModel.Rotations.GetValueOrDefault(edge.Id, 0.0);
+            var isSelected = viewModel.SelectedTrackIds.Contains(edge.Id);
+            var brush = isSelected ? selectedBrush : trackBrush;
 
-            // Determine brush: selection > hover > section color > default
-            SolidColorBrush brush;
-            if (isSelected)
-            {
-                brush = selectedBrush;
-            }
-            else if (isHovered)
-            {
-                brush = hoverBrush;
-            }
-            else
-            {
-                var section = viewModel.GetSectionForTrack(edge.Id);
-                brush = section is not null
-                    ? new SolidColorBrush(ParseColor(section.Color))
-                    : trackBrush;
-            }
+            DrawTrackWithGeometry(canvas, template, pos, rot, brush);
+        }
+    }
 
-            foreach (var primitive in primitives)
+    private static void DrawTrackWithGeometry(
+        Canvas canvas,
+        TrackTemplate template,
+        Point2D position,
+        double rotationDeg,
+        SolidColorBrush brush)
+    {
+        // Generate primitives using real geometry engine
+        IEnumerable<IGeometryPrimitive> primitives = template.Geometry.GeometryKind switch
+        {
+            TrackGeometryKind.Straight => StraightGeometry.Render(template, position, rotationDeg),
+            TrackGeometryKind.Curve => CurveGeometry.Render(template, position, rotationDeg),
+            TrackGeometryKind.Switch => SwitchGeometry.Render(template, position, rotationDeg),
+            _ => Enumerable.Empty<IGeometryPrimitive>()
+        };
+
+        // Convert primitives to WinUI shapes
+        foreach (var primitive in primitives)
+        {
+            var shape = ConvertPrimitiveToShape(primitive, brush);
+            if (shape != null)
             {
-                var shape = PrimitiveShapeFactory.CreateShape(primitive, displayScale);
-                shape.Stroke = brush;
+                Canvas.SetZIndex(shape, 10);
                 canvas.Children.Add(shape);
             }
         }
     }
 
-    private static Color ParseColor(string hex)
+    private static Shape? ConvertPrimitiveToShape(IGeometryPrimitive primitive, SolidColorBrush brush)
     {
-        hex = hex.TrimStart('#');
-        if (hex.Length == 6)
+        if (primitive is LinePrimitive line)
         {
-            return Color.FromArgb(255,
-                byte.Parse(hex[..2], NumberStyles.HexNumber),
-                byte.Parse(hex[2..4], NumberStyles.HexNumber),
-                byte.Parse(hex[4..6], NumberStyles.HexNumber));
+            return new Line
+            {
+                X1 = line.From.X * DisplayScale,
+                Y1 = line.From.Y * DisplayScale,
+                X2 = line.To.X * DisplayScale,
+                Y2 = line.To.Y * DisplayScale,
+                Stroke = brush,
+                StrokeThickness = TrackStrokeThickness
+            };
         }
-        return Colors.Gray;
+
+        if (primitive is ArcPrimitive arc)
+        {
+            return ConvertArcToPolyline(arc, brush);
+        }
+
+        return null;
+    }
+
+    private static Polyline ConvertArcToPolyline(ArcPrimitive arc, SolidColorBrush brush)
+    {
+        // Approximate arc as polyline with enough segments for smooth rendering
+        // Use more segments for larger sweeps
+        int segments = Math.Max(6, (int)Math.Ceiling(Math.Abs(arc.SweepAngleRad * 180 / Math.PI / 3)));
+        var points = new PointCollection();
+
+        for (int i = 0; i <= segments; i++)
+        {
+            double t = (double)i / segments;
+            double angle = arc.StartAngleRad + t * arc.SweepAngleRad;
+
+            double x = arc.Center.X + arc.Radius * Math.Cos(angle);
+            double y = arc.Center.Y + arc.Radius * Math.Sin(angle);
+
+            points.Add(new Windows.Foundation.Point(x * DisplayScale, y * DisplayScale));
+        }
+
+        return new Polyline
+        {
+            Points = points,
+            Stroke = brush,
+            StrokeThickness = TrackStrokeThickness,
+            StrokeLineJoin = PenLineJoin.Round
+        };
     }
 }

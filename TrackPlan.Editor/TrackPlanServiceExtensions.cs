@@ -4,13 +4,14 @@ namespace Moba.TrackPlan.Editor;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using Moba.TrackLibrary.PikoA.Catalog;
 using Moba.TrackPlan.Constraint;
 using Moba.TrackPlan.Editor.Service;
 using Moba.TrackPlan.Editor.ViewModel;
-using Moba.TrackPlan.Renderer.Geometry;
 using Moba.TrackPlan.Renderer.Layout;
+using Moba.TrackPlan.Renderer.Rendering;
+using Moba.TrackPlan.Renderer.Service;
 using Moba.TrackPlan.TrackSystem;
-using Moba.TrackLibrary.PikoA.Catalog;
 
 /// <summary>
 /// Extension methods for registering TrackPlan services with DI container.
@@ -25,15 +26,16 @@ public static class TrackPlanServiceExtensions
         // Track Catalog (Geometry Library)
         services.AddSingleton<ITrackCatalog, PikoATrackCatalog>();
 
-        // Renderer services
-        services.AddSingleton<TrackGeometryRenderer>();
-
         // Layout Engines - multiple implementations available
         // Default: CircularLayoutEngine (simple visualization)
         // Alternative: SimpleLayoutEngine (geometry-based positioning)
         services.AddSingleton<ILayoutEngine, CircularLayoutEngine>();
         services.AddKeyedSingleton<ILayoutEngine, CircularLayoutEngine>("Circular");
         services.AddKeyedSingleton<ILayoutEngine, SimpleLayoutEngine>("Simple");
+
+        // Renderer services
+        services.AddSingleton<TrackPlanLayoutEngine>();
+        services.AddSingleton<SkiaSharpCanvasRenderer>();
 
         // Editor services
         services.AddSingleton<ValidationService>();

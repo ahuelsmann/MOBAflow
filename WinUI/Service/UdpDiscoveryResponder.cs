@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
+using Microsoft.Extensions.Logging;
+
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-
-using Microsoft.Extensions.Logging;
 
 namespace Moba.WinUI.Service;
 
@@ -46,7 +46,7 @@ public sealed partial class UdpDiscoveryResponder : IDisposable
 
         _cts = new CancellationTokenSource();
         _listenerTask = Task.Run(() => ListenAsync(_cts.Token));
-        _logger.LogInformation("🔍 UDP Discovery responder started on Multicast {MulticastAddress}:{Port}", 
+        _logger.LogInformation("🔍 UDP Discovery responder started on Multicast {MulticastAddress}:{Port}",
             MULTICAST_ADDRESS, DISCOVERY_PORT);
     }
 
@@ -77,7 +77,7 @@ public sealed partial class UdpDiscoveryResponder : IDisposable
             var multicastAddress = IPAddress.Parse(MULTICAST_ADDRESS);
             _udpListener.JoinMulticastGroup(multicastAddress);
 
-            _logger.LogInformation("✅ Joined Multicast group {MulticastAddress} - listening for MAUI discovery requests", 
+            _logger.LogInformation("✅ Joined Multicast group {MulticastAddress} - listening for MAUI discovery requests",
                 MULTICAST_ADDRESS);
 
             while (!cancellationToken.IsCancellationRequested)
@@ -116,7 +116,7 @@ public sealed partial class UdpDiscoveryResponder : IDisposable
         }
         catch (SocketException ex)
         {
-            _logger.LogWarning("UDP Discovery responder could not bind to port {Port}: {Message}", 
+            _logger.LogWarning("UDP Discovery responder could not bind to port {Port}: {Message}",
                 DISCOVERY_PORT, ex.Message);
         }
         catch (Exception ex)

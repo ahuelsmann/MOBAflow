@@ -272,6 +272,9 @@ public partial class App
         // Replaces old TrackPlan.Domain/Service/Renderer architecture
         services.AddTrackPlanServices();
 
+        // WinUI Rendering Bridge (UI layer - after TrackPlan services are registered)
+        services.AddSingleton<Moba.WinUI.Rendering.TrackPlanRenderingService>();
+
         // ViewModels
         // Note: Wrapper ViewModels (SolutionViewModel, ProjectViewModel, JourneyViewModel, etc.)
         // are created with 'new' at runtime because they wrap Domain models.

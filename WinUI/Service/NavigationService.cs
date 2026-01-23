@@ -6,10 +6,11 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 using Moba.SharedUI.Shell;
-using View;
 
 using System.Diagnostics;
 using System.Reflection;
+
+using View;
 
 /// <summary>
 /// Navigation service for MOBAflow WinUI application.
@@ -80,7 +81,7 @@ public class NavigationService : INavigationService
             {
                 // Plugin: Use ContentProvider pattern
                 var contentProvider = _serviceProvider.GetRequiredService(registration.PageType);
-                
+
                 // Call CreateContent() method via reflection
                 var createContentMethod = registration.PageType.GetMethod("CreateContent", BindingFlags.Public | BindingFlags.Instance) ?? throw new InvalidOperationException(
                         $"Plugin type {registration.PageType.Name} must have a public CreateContent() method that returns UIElement.");
@@ -94,7 +95,7 @@ public class NavigationService : INavigationService
             }
             else
             {
-            // Core page: Direct instantiation (type is known to XamlTypeInfo)
+                // Core page: Direct instantiation (type is known to XamlTypeInfo)
                 var page = _serviceProvider.GetRequiredService(registration.PageType);
                 _contentFrame.Content = page;
             }
@@ -142,10 +143,10 @@ public class NavigationService : INavigationService
             {
                 var page = _serviceProvider.GetRequiredService(registration.PageType);
                 _contentFrame!.Content = page;
-                
+
                 var oldTag = CurrentPageTag;
                 CurrentPageTag = previousTag;
-                
+
                 Navigated?.Invoke(this, new NavigationEventArgs
                 {
                     PageTag = previousTag,

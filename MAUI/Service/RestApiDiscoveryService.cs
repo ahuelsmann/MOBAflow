@@ -1,15 +1,15 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
-
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
 
 using Android.OS;
 
 using Common.Configuration;
 
 using Microsoft.Extensions.Logging;
+
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
 
 /// <summary>
 /// REST-API Server Discovery Service for MAUI.
@@ -78,7 +78,7 @@ public class RestApiDiscoveryService
             var requestBytes = Encoding.UTF8.GetBytes(DISCOVERY_REQUEST);
             var multicastEndpoint = new IPEndPoint(IPAddress.Parse(MULTICAST_ADDRESS), DISCOVERY_PORT);
 
-            _logger.LogDebug("📤 Sending discovery request to {MulticastAddress}:{Port}", 
+            _logger.LogDebug("📤 Sending discovery request to {MulticastAddress}:{Port}",
                 MULTICAST_ADDRESS, DISCOVERY_PORT);
 
             await udpClient.SendAsync(requestBytes, requestBytes.Length, multicastEndpoint);
@@ -131,7 +131,7 @@ public class RestApiDiscoveryService
         if (!string.IsNullOrWhiteSpace(_appSettings.RestApi.CurrentIpAddress))
         {
             var configuredIp = _appSettings.RestApi.CurrentIpAddress;
-            _logger.LogInformation("✅ Using manually configured server: {Ip}:{Port}", 
+            _logger.LogInformation("✅ Using manually configured server: {Ip}:{Port}",
                 configuredIp, _appSettings.RestApi.Port);
             return (configuredIp, _appSettings.RestApi.Port);
         }
@@ -170,13 +170,13 @@ public class RestApiDiscoveryService
             var product = Build.Product?.ToLowerInvariant() ?? string.Empty;
             var hardware = Build.Hardware?.ToLowerInvariant() ?? string.Empty;
 
-            return brand.Contains("generic") || 
+            return brand.Contains("generic") ||
                    device.Contains("generic") ||
-                   model.Contains("emulator") || 
+                   model.Contains("emulator") ||
                    model.Contains("sdk") ||
-                   product.Contains("sdk") || 
+                   product.Contains("sdk") ||
                    product.Contains("emulator") ||
-                   hardware.Contains("goldfish") || 
+                   hardware.Contains("goldfish") ||
                    hardware.Contains("ranchu");
         }
         catch

@@ -8,6 +8,12 @@
         <Description>Visualisierung, WorldTransform, Layout-Export.</Description>
     </PropertyGroup>
     <ItemGroup>
+      <PackageReference Include="SkiaSharp" />
+    </ItemGroup>
+    <ItemGroup>
         <ProjectReference Include="..\TrackPlan\TrackPlan.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Model\" />
     </ItemGroup>
 </Project>

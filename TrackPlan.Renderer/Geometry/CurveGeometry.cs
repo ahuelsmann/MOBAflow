@@ -7,13 +7,22 @@ using Moba.TrackPlan.TrackSystem;
 
 public static class CurveGeometry
 {
+    /// <summary>
+    /// Renders a curve track template to arc primitives.
+    /// Works with any track library (Piko R1-R9, Roco curves, Peco curves, etc.)
+    /// as long as the template provides RadiusMm and AngleDeg in its geometry spec.
+    /// </summary>
     public static IEnumerable<IGeometryPrimitive> Render(
+        TrackTemplate template,
         Point2D start,
-        double startAngleDeg,
-        TrackGeometrySpec spec)
+        double startAngleDeg)
     {
-        double radius = spec.RadiusMm!.Value;
-        double sweepDeg = spec.AngleDeg!.Value;
+        var spec = template.Geometry;
+
+        double radius = spec.RadiusMm ?? throw new InvalidOperationException(
+            $"Curve template '{template.Id}' is missing RadiusMm specification");
+        double sweepDeg = spec.AngleDeg ?? throw new InvalidOperationException(
+            $"Curve template '{template.Id}' is missing AngleDeg specification");
 
         double tangentRad = DegToRad(startAngleDeg);
         double sweepRad = DegToRad(sweepDeg);

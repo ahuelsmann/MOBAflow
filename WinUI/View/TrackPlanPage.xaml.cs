@@ -98,32 +98,59 @@ public sealed partial class TrackPlanPage : Page
 
     private void UpdateTheme()
     {
-        bool dark = ActualTheme == ElementTheme.Dark ||
-                    (ActualTheme == ElementTheme.Default &&
-                     App.Current.RequestedTheme == ApplicationTheme.Dark);
+        // Use Fluent Design System ThemeResources with safe fallbacks
+        var resources = Application.Current.Resources;
 
-        if (dark)
+        // Helper to safely get color from resources
+        Color GetColorResource(string key, Color fallback)
         {
-            _trackBrush = new SolidColorBrush(Colors.Silver);
-            _trackSelectedBrush = new SolidColorBrush(Colors.DeepSkyBlue);
-            _trackHoverBrush = new SolidColorBrush(Colors.LightSkyBlue);
-            _portOpenBrush = new SolidColorBrush(Colors.Orange);
-            _portConnectedBrush = new SolidColorBrush(Colors.LimeGreen);
-            _gridBrush = new SolidColorBrush(Color.FromArgb(40, 255, 255, 255));
-            _feedbackBrush = new SolidColorBrush(Colors.Red);
-            _snapPreviewBrush = new SolidColorBrush(Colors.Yellow);
+            try
+            {
+                if (resources.TryGetValue(key, out var value) && value is Color color)
+                    return color;
+            }
+            catch { }
+            return fallback;
         }
-        else
-        {
-            _trackBrush = new SolidColorBrush(Colors.DimGray);
-            _trackSelectedBrush = new SolidColorBrush(Colors.Blue);
-            _trackHoverBrush = new SolidColorBrush(Colors.CornflowerBlue);
-            _portOpenBrush = new SolidColorBrush(Colors.DarkOrange);
-            _portConnectedBrush = new SolidColorBrush(Colors.Green);
-            _gridBrush = new SolidColorBrush(Color.FromArgb(40, 0, 0, 0));
-            _feedbackBrush = new SolidColorBrush(Colors.DarkRed);
-            _snapPreviewBrush = new SolidColorBrush(Colors.Gold);
-        }
+
+        // Get theme colors with safe fallbacks
+        var accentColor = GetColorResource("SystemAccentColor", Color.FromArgb(255, 0, 120, 215)); // Windows blue
+        var textPrimaryColor = GetColorResource("TextFillColorPrimary", Colors.Black);
+        var textSecondaryColor = GetColorResource("TextFillColorSecondary", Colors.Gray);
+
+        // Track normal state - primary text color
+        _trackBrush = new SolidColorBrush(textPrimaryColor);
+
+        // Selected track - system accent
+        _trackSelectedBrush = new SolidColorBrush(accentColor);
+
+        // Hovered track - accent with reduced emphasis (slightly darker)
+        var hoverColor = accentColor;
+        if (hoverColor.A > 0)
+            hoverColor = Color.FromArgb(hoverColor.A, 
+                (byte)(hoverColor.R * 0.8), 
+                (byte)(hoverColor.G * 0.8), 
+                (byte)(hoverColor.B * 0.8));
+        _trackHoverBrush = new SolidColorBrush(hoverColor);
+
+        // Open port - warning/attention (orange)
+        var attentionColor = Color.FromArgb(255, 255, 140, 0); // Orange
+        _portOpenBrush = new SolidColorBrush(attentionColor);
+
+        // Connected port - success (green)
+        var successColor = Color.FromArgb(255, 34, 177, 76); // Green
+        _portConnectedBrush = new SolidColorBrush(successColor);
+
+        // Grid lines - subtle secondary text with opacity
+        var gridColor = textSecondaryColor;
+        _gridBrush = new SolidColorBrush(Color.FromArgb((byte)(255 * 0.15), gridColor.R, gridColor.G, gridColor.B));
+
+        // Feedback/error - system error (red)
+        var errorColor = Color.FromArgb(255, 196, 43, 28); // Red
+        _feedbackBrush = new SolidColorBrush(errorColor);
+
+        // Snap preview - warning/attention highlight
+        _snapPreviewBrush = new SolidColorBrush(attentionColor);
     }
 
     private void OnKeyDown(object sender, KeyRoutedEventArgs e)
@@ -229,10 +256,7 @@ public sealed partial class TrackPlanPage : Page
 
             menu.Items.Add(CreateMenuItem("Delete", Symbol.Delete, () =>
             {
-                _viewModel.RemoveTrack(hit.Value);
-                UpdateStatistics();
-                RenderGraph();
-                UpdatePropertiesPanel();
+                DeleteSelected_Click(this, new RoutedEventArgs());
             }));
 
             menu.Items.Add(CreateMenuItem("Rotate 15°", Symbol.Rotate, () =>
@@ -278,6 +302,31 @@ public sealed partial class TrackPlanPage : Page
             {
                 _viewModel.SelectConnectedGroup(hit.Value);
                 StatusText.Text = $"Selected {_viewModel.SelectedTrackIds.Count} connected tracks";
+                RenderGraph();
+                UpdatePropertiesPanel();
+            }));
+        }
+        else if (_viewModel.SelectedTrackIds.Count > 0)
+        {
+            // Multi-selection context menu (when no new track is hit)
+            var count = _viewModel.SelectedTrackIds.Count;
+            var countLabel = count == 1 ? "" : $" ({count})";
+
+            menu.Items.Add(CreateMenuItem($"Delete{countLabel}", Symbol.Delete, () =>
+            {
+                DeleteSelected_Click(this, new RoutedEventArgs());
+            }));
+
+            menu.Items.Add(CreateMenuItem($"Disconnect{countLabel}", Symbol.Cancel, () =>
+            {
+                DisconnectSelected_Click(this, new RoutedEventArgs());
+            }));
+
+            menu.Items.Add(new MenuFlyoutSeparator());
+
+            menu.Items.Add(CreateMenuItem("Clear Selection", Symbol.Clear, () =>
+            {
+                _viewModel.ClearSelection();
                 RenderGraph();
                 UpdatePropertiesPanel();
             }));
@@ -598,7 +647,7 @@ public sealed partial class TrackPlanPage : Page
             PropertiesPanel.Visibility = Visibility.Collapsed;
             SelectionInfoText.Text = _viewModel.SelectedTrackIds.Count > 0
                 ? $"{_viewModel.SelectedTrackIds.Count} tracks selected"
-                : "No selection";
+                : "No section assigned";
             return;
         }
 
@@ -661,11 +710,23 @@ public sealed partial class TrackPlanPage : Page
 
     private void DeleteSelected_Click(object sender, RoutedEventArgs e)
     {
-        if (_viewModel.SelectedTrackId is null)
+        if (_viewModel.SelectedTrackIds.Count == 0)
             return;
 
-        _viewModel.RemoveTrack(_viewModel.SelectedTrackId.Value);
+        // Get count before deletion
+        int count = _viewModel.SelectedTrackIds.Count;
+
+        // Remove all selected tracks
+        foreach (var id in _viewModel.SelectedTrackIds.ToList())
+        {
+            _viewModel.RemoveTrack(id);
+        }
+
         _viewModel.ClearSelection();
+
+        StatusText.Text = count == 1
+            ? "Track deleted"
+            : $"Deleted {count} tracks";
 
         UpdateStatistics();
         RenderGraph();
@@ -674,25 +735,34 @@ public sealed partial class TrackPlanPage : Page
 
     private void DisconnectSelected_Click(object sender, RoutedEventArgs e)
     {
-        if (_viewModel.SelectedTrackId is null)
+        if (_viewModel.SelectedTrackIds.Count == 0)
             return;
 
-        var id = _viewModel.SelectedTrackId.Value;
-        var edge = _viewModel.Graph.Edges.First(e => e.Id == id);
-
         var service = _viewModel.ConnectionService;
-        int count = 0;
+        int totalDisconnected = 0;
 
-        foreach (var port in edge.Connections.Keys.ToList())
+        // Disconnect all ports for all selected tracks
+        foreach (var id in _viewModel.SelectedTrackIds)
         {
-            if (service.IsPortConnected(id, port))
+            var edge = _viewModel.Graph.Edges.FirstOrDefault(e => e.Id == id);
+            if (edge is null) continue;
+
+            foreach (var port in edge.Connections.Keys.ToList())
             {
-                service.Disconnect(id, port);
-                count++;
+                if (service.IsPortConnected(id, port))
+                {
+                    service.Disconnect(id, port);
+                    totalDisconnected++;
+                }
             }
         }
 
-        StatusText.Text = count > 0 ? $"Disconnected {count} port(s)" : "No connections";
+        StatusText.Text = totalDisconnected == 0
+            ? "No connections to disconnect"
+            : totalDisconnected == 1
+                ? "Disconnected 1 port"
+                : $"Disconnected {totalDisconnected} ports";
+
         RenderGraph();
     }
 
@@ -1181,6 +1251,7 @@ public sealed partial class TrackPlanPage : Page
         var toX = preview.TargetPortPosition.X * DisplayScale;
         var toY = preview.TargetPortPosition.Y * DisplayScale;
 
+        // Connection line between ports
         var line = new Line
         {
             X1 = fromX,
@@ -1193,18 +1264,55 @@ public sealed partial class TrackPlanPage : Page
         };
         GraphCanvas.Children.Add(line);
 
-        var ring = new Ellipse
+        // Highlight moving port (which port will snap)
+        var movingRing = new Ellipse
         {
-            Width = PortRadius * 3,
-            Height = PortRadius * 3,
+            Width = PortRadius * 4,
+            Height = PortRadius * 4,
             Stroke = _snapPreviewBrush,
             StrokeThickness = 3,
             Fill = null
         };
+        Canvas.SetLeft(movingRing, fromX - PortRadius * 2);
+        Canvas.SetTop(movingRing, fromY - PortRadius * 2);
+        GraphCanvas.Children.Add(movingRing);
 
-        Canvas.SetLeft(ring, toX - PortRadius * 1.5);
-        Canvas.SetTop(ring, toY - PortRadius * 1.5);
-        GraphCanvas.Children.Add(ring);
+        // Label for moving port
+        var movingLabel = new TextBlock
+        {
+            Text = preview.MovingPortId,
+            FontSize = 12,
+            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            Foreground = _snapPreviewBrush
+        };
+        Canvas.SetLeft(movingLabel, fromX + 10);
+        Canvas.SetTop(movingLabel, fromY - 10);
+        GraphCanvas.Children.Add(movingLabel);
+
+        // Highlight target port
+        var targetRing = new Ellipse
+        {
+            Width = PortRadius * 4,
+            Height = PortRadius * 4,
+            Stroke = _snapPreviewBrush,
+            StrokeThickness = 3,
+            Fill = null
+        };
+        Canvas.SetLeft(targetRing, toX - PortRadius * 2);
+        Canvas.SetTop(targetRing, toY - PortRadius * 2);
+        GraphCanvas.Children.Add(targetRing);
+
+        // Label for target port
+        var targetLabel = new TextBlock
+        {
+            Text = preview.TargetPortId,
+            FontSize = 12,
+            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+            Foreground = _snapPreviewBrush
+        };
+        Canvas.SetLeft(targetLabel, toX + 10);
+        Canvas.SetTop(targetLabel, toY - 10);
+        GraphCanvas.Children.Add(targetLabel);
 
         var previewX = preview.PreviewPosition.X * DisplayScale;
         var previewY = preview.PreviewPosition.Y * DisplayScale;

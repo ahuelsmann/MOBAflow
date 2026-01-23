@@ -1,12 +1,14 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Controllers;
 
+using Hubs;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+
 using Moba.SharedUI.Service;
-using Hubs;
 
 [ApiController]
 [Route("api/photos")]
@@ -46,7 +48,7 @@ public class PhotoUploadController : ControllerBase
         // ✅ Category "latest" means: assign to currently selected item in WinUI
         // Generate new GUID for the photo filename
         var photoGuid = Guid.NewGuid();
-        
+
         using var stream = file.OpenReadStream();
         var relativePath = await _photoStorage.SavePhotoAsync(stream, "temp", photoGuid, extension);
 

@@ -7,30 +7,47 @@ using Moba.TrackPlan.TrackSystem;
 
 public static class SwitchGeometry
 {
+    /// <summary>
+    /// Renders a switch track template (WL, WR, BWL, BWR, etc.) to primitives.
+    /// Automatically detects left (WL, BWL) vs right (WR, BWR) from template ID.
+    /// Uses SwitchRoutingModel to determine port configuration.
+    /// Works with any track library that provides proper template metadata.
+    /// </summary>
     public static IEnumerable<IGeometryPrimitive> Render(
+        TrackTemplate template,
         Point2D start,
-        double startAngleDeg,
-        TrackGeometrySpec spec,
-        SwitchRoutingModel routing,
-        bool isLeftSwitch)
+        double startAngleDeg)
     {
-        var primitives = new List<IGeometryPrimitive>();
+        var spec = template.Geometry;
+        var routing = template.Routing ?? throw new InvalidOperationException(
+            $"Switch template '{template.Id}' is missing SwitchRoutingModel");
 
-        double lengthMm = spec.LengthMm!.Value;
-        double radiusMm = spec.RadiusMm!.Value;
-        double angleDeg = spec.AngleDeg!.Value;
-        double junctionOffsetMm = spec.JunctionOffsetMm!.Value;
+        double lengthMm = spec.LengthMm ?? throw new InvalidOperationException(
+            $"Switch template '{template.Id}' is missing LengthMm");
+        double radiusMm = spec.RadiusMm ?? throw new InvalidOperationException(
+            $"Switch template '{template.Id}' is missing RadiusMm");
+        double angleDeg = spec.AngleDeg ?? throw new InvalidOperationException(
+            $"Switch template '{template.Id}' is missing AngleDeg");
+        double junctionOffsetMm = spec.JunctionOffsetMm ?? throw new InvalidOperationException(
+            $"Switch template '{template.Id}' is missing JunctionOffsetMm");
+
+        // Auto-detect left vs right from template ID
+        // Left: WL, BWL, or contains "Left", "L"
+        // Right: WR, BWR, or contains "Right", "R"
+        bool isLeftSwitch = IsLeftVariant(template.Id);
 
         double startRad = DegToRad(startAngleDeg);
         double sweepRad = DegToRad(angleDeg);
 
+        // Straight path (A → B)
         var straightEnd = new Point2D(
             start.X + lengthMm * Math.Cos(startRad),
             start.Y + lengthMm * Math.Sin(startRad)
         );
 
-        primitives.Add(new LinePrimitive(start, straightEnd));
+        yield return new LinePrimitive(start, straightEnd);
 
+        // Diverging path (A → C), branches off at junction
         var junction = new Point2D(
             start.X + junctionOffsetMm * Math.Cos(startRad),
             start.Y + junctionOffsetMm * Math.Sin(startRad)
@@ -55,14 +72,38 @@ public static class SwitchGeometry
 
         double sweepArcRad = sweepRad * side;
 
-        primitives.Add(new ArcPrimitive(
+        yield return new ArcPrimitive(
             Center: center,
             Radius: radiusMm,
             StartAngleRad: startAngleArcRad,
             SweepAngleRad: sweepArcRad
-        ));
+        );
+    }
 
-        return primitives;
+    /// <summary>
+    /// Determines if a switch template is a left variant (WL, BWL) or right variant (WR, BWR).
+    /// Works across all track libraries.
+    /// </summary>
+    private static bool IsLeftVariant(string templateId)
+    {
+        // Explicit check: if template ID ends with 'L' (for Left)
+        if (templateId.EndsWith("L", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        // Explicit check: if template ID ends with 'R' (for Right)
+        if (templateId.EndsWith("R", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        // Fallback: contains "Left" or "left"
+        if (templateId.Contains("Left", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        // Fallback: contains "Right" or "right"
+        if (templateId.Contains("Right", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        // Default: assume left if unsure
+        return true;
     }
 
     private static double DegToRad(double deg) => deg * Math.PI / 180.0;

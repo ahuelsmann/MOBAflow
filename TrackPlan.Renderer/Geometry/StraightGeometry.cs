@@ -3,14 +3,26 @@
 namespace Moba.TrackPlan.Renderer.Geometry;
 
 using Moba.TrackPlan.Renderer.World;
+using Moba.TrackPlan.TrackSystem;
 
 public static class StraightGeometry
 {
+    /// <summary>
+    /// Renders a straight track template to line primitives.
+    /// Works with any track library (Piko, Roco, Peco, etc.) as long as 
+    /// the template provides valid LengthMm in its geometry spec.
+    /// </summary>
     public static IEnumerable<IGeometryPrimitive> Render(
+        TrackTemplate template,
         Point2D start,
-        double startAngleDeg,
-        double lengthMm)
+        double startAngleDeg)
     {
+        var spec = template.Geometry;
+        
+        // Get length from spec - all libraries must provide this
+        var lengthMm = spec.LengthMm ?? throw new InvalidOperationException(
+            $"Straight template '{template.Id}' is missing LengthMm specification");
+
         var angleRad = DegToRad(startAngleDeg);
 
         var end = new Point2D(

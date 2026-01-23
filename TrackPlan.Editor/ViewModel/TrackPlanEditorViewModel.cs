@@ -26,7 +26,6 @@ public sealed class TrackPlanEditorViewModel
     /// </summary>
     public const double SnapAngleTolerance = 5.0;
 
-    private readonly TrackGeometryRenderer _renderer;
     private readonly ILayoutEngine _layoutEngine;
     private readonly ValidationService _validationService;
     private readonly SerializationService _serializationService;
@@ -94,14 +93,12 @@ public sealed class TrackPlanEditorViewModel
         _connectionService ??= new TrackConnectionService(Graph);
 
     public TrackPlanEditorViewModel(
-        TrackGeometryRenderer renderer,
         ILayoutEngine layoutEngine,
         ValidationService validationService,
         SerializationService serializationService,
         ITrackCatalog catalog,
         IEnumerable<ITopologyConstraint> constraints)
     {
-        _renderer = renderer;
         _layoutEngine = layoutEngine;
         _validationService = validationService;
         _serializationService = serializationService;
@@ -116,7 +113,7 @@ public sealed class TrackPlanEditorViewModel
     // Track Management
     // ------------------------------------------------------------
 
-    public TrackEdge AddTrack(string templateId, Point2D position, double rotationDeg = 0)
+    public TrackEdge AddTrack(String templateId, Point2D position, double rotationDeg = 0)
     {
         var template = _catalog.GetById(templateId)
             ?? throw new InvalidOperationException($"Unknown template: {templateId}");
@@ -206,12 +203,19 @@ public sealed class TrackPlanEditorViewModel
         var movingEnd = movingTemplate.Ends.First(e => e.Id == movingPortId);
         var targetEnd = targetTemplate.Ends.First(e => e.Id == targetPortId);
 
-        double targetGlobalAngle = Rotations[targetEdgeId] + targetEnd.AngleDeg;
-        double desiredMovingGlobalAngle = targetGlobalAngle + 180.0;
-
+        // For curved tracks in a loop: ports should be COLLINEAR (same direction), not opposite
+        // Target port global angle
+        double targetGlobalAngle = Rotations.GetValueOrDefault(targetEdgeId, 0) + targetEnd.AngleDeg;
+        
+        // For Port A→Port B connection on curves: desired angle is the TARGET angle itself
+        // (continuing the curve in the same direction)
+        double desiredMovingGlobalAngle = targetGlobalAngle;
+        
+        // Adjust rotation so moving port points in desired direction
         double newRotation = NormalizeDeg(desiredMovingGlobalAngle - movingEnd.AngleDeg);
         Rotations[movingEdgeId] = newRotation;
 
+        // Snap position: move so ports align
         var targetPos = GetPortWorldPosition(targetEdgeId, targetPortId);
         var movingOffset = GetPortOffset(movingTemplate, movingPortId, newRotation);
 
@@ -219,6 +223,10 @@ public sealed class TrackPlanEditorViewModel
             targetPos.X - movingOffset.X,
             targetPos.Y - movingOffset.Y
         );
+        
+        System.Diagnostics.Debug.WriteLine(
+            $"SNAP: {moving.TemplateId}.{movingPortId} → {target.TemplateId}.{targetPortId} | " +
+            $"TargetAngle: {targetGlobalAngle:F1}° | DesiredAngle: {desiredMovingGlobalAngle:F1}° | NewRot: {newRotation:F1}°");
     }
 
     private bool TrySnapAndConnect(Guid newEdgeId, double snapDistance, out string? message)
@@ -238,14 +246,15 @@ public sealed class TrackPlanEditorViewModel
             return false;
         }
 
+        // Find best snap across ALL port combinations
+        (Guid newEdgeId, string newPortId, Guid existingEdgeId, string existingPortId, double distance)? bestSnap = null;
+
         foreach (var newEnd in newTemplate.Ends)
         {
             if (service.IsPortConnected(newEdgeId, newEnd.Id))
                 continue;
 
             var newPortWorldPos = GetPortWorldPosition(newEdgeId, newEnd.Id);
-
-            (Guid edgeId, string portId, double distance)? nearestPort = null;
 
             foreach (var existingEdge in Graph.Edges.Where(e => e.Id != newEdgeId))
             {
@@ -257,564 +266,576 @@ public sealed class TrackPlanEditorViewModel
                     if (service.IsPortConnected(existingEdge.Id, existingEnd.Id))
                         continue;
 
+                    // Port compatibility: A connects to B/C, B connects to A, C connects to A
+                    if (!IsPortCompatible(newEnd.Id, existingEnd.Id))
+                        continue;
+
                     var existingPortWorldPos = GetPortWorldPosition(existingEdge.Id, existingEnd.Id);
                     var dx = newPortWorldPos.X - existingPortWorldPos.X;
                     var dy = newPortWorldPos.Y - existingPortWorldPos.Y;
                     var distance = Math.Sqrt(dx * dx + dy * dy);
 
-                    if (distance < snapDistance && (nearestPort is null || distance < nearestPort.Value.distance))
+                    // Keep best snap across all combinations
+                    if (distance < snapDistance && (bestSnap is null || distance < bestSnap.Value.distance))
                     {
-                        nearestPort = (existingEdge.Id, existingEnd.Id, distance);
+                        bestSnap = (newEdgeId, newEnd.Id, existingEdge.Id, existingEnd.Id, distance);
                     }
-                }
-            }
-
-            if (nearestPort.HasValue)
-            {
-                SnapEdgeToPort(newEdgeId, newEnd.Id, nearestPort.Value.edgeId, nearestPort.Value.portId);
-
-                if (service.TryConnect(newEdgeId, newEnd.Id, nearestPort.Value.edgeId, nearestPort.Value.portId))
-                {
-                    var targetEdge = Graph.Edges.FirstOrDefault(e => e.Id == nearestPort.Value.edgeId);
-                    message = $"Connected {newEdge.TemplateId}.{newEnd.Id} to {targetEdge?.TemplateId}.{nearestPort.Value.portId}";
-                    return true;
                 }
             }
         }
 
-                message = null;
-                return false;
-            }
+        if (bestSnap.HasValue)
+        {
+            var snap = bestSnap.Value;
+            SnapEdgeToPort(snap.newEdgeId, snap.newPortId, snap.existingEdgeId, snap.existingPortId);
 
-            // ------------------------------------------------------------
-            // Section / Isolator Management
-            // ------------------------------------------------------------
-
-            /// <summary>
-            /// Creates a new section from the currently selected tracks.
-            /// </summary>
-            public Section? CreateSectionFromSelection(string name, string color)
+            if (service.TryConnect(snap.newEdgeId, snap.newPortId, snap.existingEdgeId, snap.existingPortId))
             {
-                if (SelectedTrackIds.Count == 0)
-                    return null;
-
-                var section = new Section
-                {
-                    Id = Guid.NewGuid(),
-                    Name = name,
-                    Color = color,
-                    TrackIds = [.. SelectedTrackIds]
-                };
-
-                Graph.Sections.Add(section);
-                return section;
-            }
-
-            /// <summary>
-            /// Removes a section. Does not remove the tracks.
-            /// </summary>
-            public void RemoveSection(Guid sectionId)
-            {
-                var section = Graph.Sections.FirstOrDefault(s => s.Id == sectionId);
-                if (section is not null)
-                    Graph.Sections.Remove(section);
-            }
-
-            /// <summary>
-            /// Gets the section a track belongs to, if any.
-            /// </summary>
-            public Section? GetSectionForTrack(Guid edgeId)
-                => Graph.Sections.FirstOrDefault(s => s.TrackIds.Contains(edgeId));
-
-            /// <summary>
-            /// Toggles an isolator at a specific port.
-            /// </summary>
-            public bool ToggleIsolator(Guid edgeId, string portId)
-            {
-                var existing = Graph.Isolators.FirstOrDefault(
-                    i => i.EdgeId == edgeId && i.PortId == portId);
-
-                if (existing is not null)
-                {
-                    Graph.Isolators.Remove(existing);
-                    return false;
-                }
-
-                Graph.Isolators.Add(new Isolator
-                {
-                    Id = Guid.NewGuid(),
-                    EdgeId = edgeId,
-                    PortId = portId
-                });
+                var targetEdge = Graph.Edges.FirstOrDefault(e => e.Id == snap.existingEdgeId);
+                var newE = Graph.Edges.FirstOrDefault(e => e.Id == snap.newEdgeId);
+                message = $"Snapped {newE?.TemplateId}.{snap.newPortId} → {targetEdge?.TemplateId}.{snap.existingPortId} ({snap.distance:F1}mm)";
                 return true;
             }
+        }
 
-            /// <summary>
-            /// Checks if a port has an isolator.
-            /// </summary>
-            public bool HasIsolator(Guid edgeId, string portId)
-                => Graph.Isolators.Any(i => i.EdgeId == edgeId && i.PortId == portId);
+        message = null;
+        return false;
+    }
 
-            /// <summary>
-            /// Finds the nearest snap target for a dragged edge within snap distance.
-            /// Does not modify any state - only calculates the potential snap.
-            /// </summary>
-            public SnapPreview? FindNearestSnapTarget(Guid movingEdgeId, double snapDistance)
+    private static bool IsPortCompatible(string portA, string portB)
+    {
+        // A/B/C ports: A connects to B/C, B/C connect to A
+        bool isAPort = portA == "A";
+        bool isBPort = portB == "B";
+        bool isCPort = portB == "C";
+        
+        if (isAPort)
+            return isBPort || isCPort;
+        
+        return portA == "B" || portA == "C";
+    }
+
+    // ------------------------------------------------------------
+    // Section / Isolator Management
+    // ------------------------------------------------------------
+
+    /// <summary>
+    /// Creates a new section from the currently selected tracks.
+    /// </summary>
+    public Section? CreateSectionFromSelection(string name, string color)
+    {
+        if (SelectedTrackIds.Count == 0)
+            return null;
+
+        var section = new Section
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            Color = color,
+            TrackIds = [.. SelectedTrackIds]
+        };
+
+        Graph.Sections.Add(section);
+        return section;
+    }
+
+    /// <summary>
+    /// Removes a section. Does not remove the tracks.
+    /// </summary>
+    public void RemoveSection(Guid sectionId)
+    {
+        var section = Graph.Sections.FirstOrDefault(s => s.Id == sectionId);
+        if (section is not null)
+            Graph.Sections.Remove(section);
+    }
+
+    /// <summary>
+    /// Gets the section a track belongs to, if any.
+    /// </summary>
+    public Section? GetSectionForTrack(Guid edgeId)
+        => Graph.Sections.FirstOrDefault(s => s.TrackIds.Contains(edgeId));
+
+    /// <summary>
+    /// Toggles an isolator at a specific port.
+    /// </summary>
+    public bool ToggleIsolator(Guid edgeId, string portId)
+    {
+        var existing = Graph.Isolators.FirstOrDefault(
+            i => i.EdgeId == edgeId && i.PortId == portId);
+
+        if (existing is not null)
+        {
+            Graph.Isolators.Remove(existing);
+            return false;
+        }
+
+        Graph.Isolators.Add(new Isolator
+        {
+            Id = Guid.NewGuid(),
+            EdgeId = edgeId,
+            PortId = portId
+        });
+        return true;
+    }
+
+    /// <summary>
+    /// Checks if a port has an isolator.
+    /// </summary>
+    public bool HasIsolator(Guid edgeId, string portId)
+        => Graph.Isolators.Any(i => i.EdgeId == edgeId && i.PortId == portId);
+
+    /// <summary>
+    /// Finds the nearest snap target for a dragged edge within snap distance.
+    /// Does not modify any state - only calculates the potential snap.
+    /// </summary>
+    public SnapPreview? FindNearestSnapTarget(Guid movingEdgeId, double snapDistance)
+    {
+    var service = ConnectionService;  // Verwende Cache statt new
+    var movingEdge = Graph.Edges.FirstOrDefault(e => e.Id == movingEdgeId);
+    if (movingEdge is null)
+        return null;
+
+    var movingTemplate = _catalog.GetById(movingEdge.TemplateId);
+    if (movingTemplate is null)
+        return null;
+
+    (Guid targetEdgeId, string targetPortId, string movingPortId, double distance)? best = null;
+
+    foreach (var movingEnd in movingTemplate.Ends)
+    {
+        if (service.IsPortConnected(movingEdgeId, movingEnd.Id))
+            continue;
+
+        var movingPortPos = GetPortWorldPosition(movingEdgeId, movingEnd.Id);
+
+        foreach (var targetEdge in Graph.Edges.Where(e => e.Id != movingEdgeId))
+        {
+            // Skip edges in the same drag group
+            if (_dragGroup?.Contains(targetEdge.Id) == true)
+                continue;
+
+            var targetTemplate = _catalog.GetById(targetEdge.TemplateId);
+            if (targetTemplate is null) continue;
+
+            foreach (var targetEnd in targetTemplate.Ends)
             {
-            var service = new TrackConnectionService(Graph);
-            var movingEdge = Graph.Edges.FirstOrDefault(e => e.Id == movingEdgeId);
-            if (movingEdge is null)
-                return null;
-
-            var movingTemplate = _catalog.GetById(movingEdge.TemplateId);
-            if (movingTemplate is null)
-                return null;
-
-            (Guid targetEdgeId, string targetPortId, string movingPortId, double distance)? best = null;
-
-            foreach (var movingEnd in movingTemplate.Ends)
-            {
-                if (service.IsPortConnected(movingEdgeId, movingEnd.Id))
+                if (service.IsPortConnected(targetEdge.Id, targetEnd.Id))
                     continue;
 
-                var movingPortPos = GetPortWorldPosition(movingEdgeId, movingEnd.Id);
-
-                foreach (var targetEdge in Graph.Edges.Where(e => e.Id != movingEdgeId))
-                {
-                    // Skip edges in the same drag group
-                    if (_dragGroup?.Contains(targetEdge.Id) == true)
-                        continue;
-
-                    var targetTemplate = _catalog.GetById(targetEdge.TemplateId);
-                    if (targetTemplate is null) continue;
-
-                    foreach (var targetEnd in targetTemplate.Ends)
-                    {
-                        if (service.IsPortConnected(targetEdge.Id, targetEnd.Id))
-                            continue;
-
-                        var targetPortPos = GetPortWorldPosition(targetEdge.Id, targetEnd.Id);
-                        var dx = movingPortPos.X - targetPortPos.X;
-                        var dy = movingPortPos.Y - targetPortPos.Y;
-                        var dist = Math.Sqrt(dx * dx + dy * dy);
-
-                        if (dist >= snapDistance)
-                            continue;
-
-                        // Check angle compatibility: ports must face each other (180° apart)
-                        double movingAngle = Rotations[movingEdgeId] + movingEnd.AngleDeg;
-                        double targetAngle = Rotations[targetEdge.Id] + targetEnd.AngleDeg;
-                        double angleDiff = Math.Abs(NormalizeDeg(movingAngle - targetAngle - 180.0));
-                        if (angleDiff > 180.0)
-                            angleDiff = 360.0 - angleDiff;
-
-                        if (angleDiff > SnapAngleTolerance)
-                            continue;
-
-                        if (best is null || dist < best.Value.distance)
-                        {
-                            best = (targetEdge.Id, targetEnd.Id, movingEnd.Id, dist);
-                        }
-                    }
-                }
-            }
-
-            if (!best.HasValue)
-                return null;
-
-            // Calculate preview position and rotation
-            var targetPos = GetPortWorldPosition(best.Value.targetEdgeId, best.Value.targetPortId);
-            var movingPos = GetPortWorldPosition(movingEdgeId, best.Value.movingPortId);
-
-            var targetEdgeObj = Graph.Edges.First(e => e.Id == best.Value.targetEdgeId);
-            var targetTemplateObj = _catalog.GetById(targetEdgeObj.TemplateId)!;
-            var targetEndObj = targetTemplateObj.Ends.First(e => e.Id == best.Value.targetPortId);
-
-            var movingEndObj = movingTemplate.Ends.First(e => e.Id == best.Value.movingPortId);
-
-            double targetGlobalAngle = Rotations[best.Value.targetEdgeId] + targetEndObj.AngleDeg;
-            double desiredMovingGlobalAngle = targetGlobalAngle + 180.0;
-            double previewRotation = NormalizeDeg(desiredMovingGlobalAngle - movingEndObj.AngleDeg);
-
-            var movingOffset = GetPortOffset(movingTemplate, best.Value.movingPortId, previewRotation);
-            var previewPosition = new Point2D(
-                targetPos.X - movingOffset.X,
-                targetPos.Y - movingOffset.Y);
-
-            return new SnapPreview(
-                MovingEdgeId: movingEdgeId,
-                MovingPortId: best.Value.movingPortId,
-                TargetEdgeId: best.Value.targetEdgeId,
-                TargetPortId: best.Value.targetPortId,
-                MovingPortPosition: movingPos,
-                TargetPortPosition: targetPos,
-                PreviewPosition: previewPosition,
-                PreviewRotation: previewRotation);
-        }
-
-        // ------------------------------------------------------------
-        // Auto Layout
-        // ------------------------------------------------------------
-
-        public void ApplyAutoLayout()
-        {
-            // LayoutEngine liefert nur Positionen
-            var layoutPositions = _layoutEngine.Layout(Graph);
-
-            foreach (var kvp in layoutPositions)
-            {
-                Positions[kvp.Key] = kvp.Value;
-
-                // Rotation bleibt, wie sie ist – wenn nicht vorhanden, 0°
-                if (!Rotations.ContainsKey(kvp.Key))
-                    Rotations[kvp.Key] = 0.0;
-            }
-        }
-
-        // ------------------------------------------------------------
-        // Rendering
-        // ------------------------------------------------------------
-
-        public IEnumerable<IGeometryPrimitive> RenderEdge(Guid edgeId)
-        {
-            var edge = Graph.Edges.First(e => e.Id == edgeId);
-            var template = _catalog.GetById(edge.TemplateId)!;
-
-            var pos = Positions[edge.Id];
-            var rot = Rotations[edge.Id];
-
-            return _renderer.Render(template, pos, rot);
-        }
-
-        // ------------------------------------------------------------
-        // Interaction API
-        // ------------------------------------------------------------
-
-        public Guid? HitTest(Point2D position, double hitRadius)
-        {
-            foreach (var (edgeId, pos) in Positions)
-            {
-                var dx = position.X - pos.X;
-                var dy = position.Y - pos.Y;
+                var targetPortPos = GetPortWorldPosition(targetEdge.Id, targetEnd.Id);
+                var dx = movingPortPos.X - targetPortPos.X;
+                var dy = movingPortPos.Y - targetPortPos.Y;
                 var dist = Math.Sqrt(dx * dx + dy * dy);
-                if (dist <= hitRadius)
-                    return edgeId;
+
+                if (dist >= snapDistance)
+                    continue;
+
+                // Check angle compatibility: ports must face each other (180° apart)
+                double movingAngle = Rotations.GetValueOrDefault(movingEdgeId, 0) + movingEnd.AngleDeg;
+                double targetAngle = Rotations.GetValueOrDefault(targetEdge.Id, 0) + targetEnd.AngleDeg;
+                double angleDiff = Math.Abs(NormalizeDeg(movingAngle - targetAngle - 180.0));
+                if (angleDiff > 180.0)
+                    angleDiff = 360.0 - angleDiff;
+
+                if (angleDiff > SnapAngleTolerance)
+                    continue;
+
+                if (best is null || dist < best.Value.distance)
+                {
+                    best = (targetEdge.Id, targetEnd.Id, movingEnd.Id, dist);
+                }
             }
-            return null;
         }
+    }
 
-        public void PointerDown(Point2D position, bool isLeftButton, bool isCtrlPressed = false)
+    if (!best.HasValue)
+        return null;
+
+    // Calculate preview position and rotation
+    var targetPos = GetPortWorldPosition(best.Value.targetEdgeId, best.Value.targetPortId);
+    var movingPos = GetPortWorldPosition(movingEdgeId, best.Value.movingPortId);
+
+    var targetEdgeObj = Graph.Edges.First(e => e.Id == best.Value.targetEdgeId);
+    var targetTemplateObj = _catalog.GetById(targetEdgeObj.TemplateId)!;
+    var targetEndObj = targetTemplateObj.Ends.First(e => e.Id == best.Value.targetPortId);
+
+    var movingEndObj = movingTemplate.Ends.First(e => e.Id == best.Value.movingPortId);
+
+    double targetGlobalAngle = Rotations[best.Value.targetEdgeId] + targetEndObj.AngleDeg;
+    double desiredMovingGlobalAngle = targetGlobalAngle + 180.0;
+    double previewRotation = NormalizeDeg(desiredMovingGlobalAngle - movingEndObj.AngleDeg);
+
+    var movingOffset = GetPortOffset(movingTemplate, best.Value.movingPortId, previewRotation);
+    var previewPosition = new Point2D(
+        targetPos.X - movingOffset.X,
+        targetPos.Y - movingOffset.Y);
+
+    return new SnapPreview(
+        MovingEdgeId: movingEdgeId,
+        MovingPortId: best.Value.movingPortId,
+        TargetEdgeId: best.Value.targetEdgeId,
+        TargetPortId: best.Value.targetPortId,
+        MovingPortPosition: movingPos,
+        TargetPortPosition: targetPos,
+        PreviewPosition: previewPosition,
+        PreviewRotation: previewRotation);
+}
+
+    // ------------------------------------------------------------
+    // Auto Layout
+    // ------------------------------------------------------------
+
+    public void ApplyAutoLayout()
+    {
+        // LayoutEngine liefert nur Positionen
+        var layoutPositions = _layoutEngine.Layout(Graph);
+
+        foreach (var kvp in layoutPositions)
         {
-            if (!isLeftButton)
-                return;
+            Positions[kvp.Key] = kvp.Value;
 
-            var hit = HitTest(position, hitRadius: 40.0);
-            _hoveredTrackId = hit;
+            // Rotation bleibt, wie sie ist – wenn nicht vorhanden, 0°
+            if (!Rotations.ContainsKey(kvp.Key))
+                Rotations[kvp.Key] = 0.0;
+        }
+    }
 
-            if (hit.HasValue)
+    // ------------------------------------------------------------
+    // Interaction API
+    // ------------------------------------------------------------
+
+    public Guid? HitTest(Point2D position, double hitRadius)
+    {
+        foreach (var (edgeId, pos) in Positions)
+        {
+            var dx = position.X - pos.X;
+            var dy = position.Y - pos.Y;
+            var dist = Math.Sqrt(dx * dx + dy * dy);
+            if (dist <= hitRadius)
+                return edgeId;
+        }
+        return null;
+    }
+
+    public void PointerDown(Point2D position, bool isLeftButton, bool isCtrlPressed = false)
+    {
+        if (!isLeftButton)
+            return;
+
+        var hit = HitTest(position, hitRadius: 60.0);
+        _hoveredTrackId = hit;
+
+        if (hit.HasValue)
+        {
+            if (isCtrlPressed)
             {
-                if (isCtrlPressed)
-                {
-                    // Ctrl+Click: toggle selection
-                    if (SelectedTrackIds.Contains(hit.Value))
-                        SelectedTrackIds.Remove(hit.Value);
-                    else
-                        SelectedTrackIds.Add(hit.Value);
-                }
+                // Ctrl+Click: toggle selection
+                if (SelectedTrackIds.Contains(hit.Value))
+                    SelectedTrackIds.Remove(hit.Value);
                 else
-                {
-                    // Normal click: single selection and start drag
-                    if (!SelectedTrackIds.Contains(hit.Value))
-                    {
-                        SelectedTrackIds.Clear();
-                        SelectedTrackIds.Add(hit.Value);
-                    }
-                }
-
-                _selectedTrackId = hit;
-                _draggedTrackId = hit.Value;
-                var pos = Positions[hit.Value];
-                _dragOffset = new Point2D(position.X - pos.X, position.Y - pos.Y);
-                _isDragging = true;
-
-                // Find all connected edges and calculate their offsets relative to drag start
-                var service = ConnectionService;
-                _dragGroup = service.GetConnectedGroup(hit.Value);
-                _dragGroupOffsets = new Dictionary<Guid, Point2D>();
-
-                foreach (var edgeId in _dragGroup)
-                {
-                    if (Positions.TryGetValue(edgeId, out var edgePos))
-                    {
-                        _dragGroupOffsets[edgeId] = new Point2D(
-                            edgePos.X - pos.X,
-                            edgePos.Y - pos.Y);
-                    }
-                }
+                    SelectedTrackIds.Add(hit.Value);
             }
             else
             {
-                // Click on empty space: start rectangle selection
-                if (!isCtrlPressed)
+                // Normal click: single selection and start drag
+                if (!SelectedTrackIds.Contains(hit.Value))
+                {
                     SelectedTrackIds.Clear();
+                    SelectedTrackIds.Add(hit.Value);
+                }
+            }
 
-                _selectedTrackId = null;
-                _draggedTrackId = null;
-                _isDragging = false;
-                _dragGroup = null;
-                _dragGroupOffsets = null;
+            _selectedTrackId = hit;
+            _draggedTrackId = hit.Value;
+            var pos = Positions[hit.Value];
+            _dragOffset = new Point2D(position.X - pos.X, position.Y - pos.Y);
+            _isDragging = true;
 
-                // Start rectangle selection
-                _isRectangleSelecting = true;
-                _selectionStart = position;
-                _selectionEnd = position;
+            // Find all connected edges and calculate their offsets relative to drag start
+            var service = ConnectionService;
+            _dragGroup = service.GetConnectedGroup(hit.Value);
+            _dragGroupOffsets = new Dictionary<Guid, Point2D>();
+
+            foreach (var edgeId in _dragGroup)
+            {
+                if (Positions.TryGetValue(edgeId, out var edgePos))
+                {
+                    _dragGroupOffsets[edgeId] = new Point2D(
+                        edgePos.X - pos.X,
+                        edgePos.Y - pos.Y);
+                }
             }
         }
-
-        public void PointerMove(Point2D position, bool gridSnap, double gridSize, double snapDistance = 30.0)
+        else
         {
-            // Rectangle selection update
-            if (_isRectangleSelecting)
-            {
-                _selectionEnd = position;
-                return;
-            }
+            // Click on empty space: start rectangle selection
+            if (!isCtrlPressed)
+                SelectedTrackIds.Clear();
 
-            if (_isDragging && _draggedTrackId.HasValue && _dragGroupOffsets is not null)
-            {
-                var newPos = new Point2D(position.X - _dragOffset.X, position.Y - _dragOffset.Y);
-
-                if (gridSnap)
-                {
-                    newPos = new Point2D(
-                        Math.Round(newPos.X / gridSize) * gridSize,
-                        Math.Round(newPos.Y / gridSize) * gridSize);
-                }
-
-                // Move all connected edges together
-                foreach (var (edgeId, offset) in _dragGroupOffsets)
-                {
-                    Positions[edgeId] = new Point2D(
-                        newPos.X + offset.X,
-                        newPos.Y + offset.Y);
-                }
-
-                // Update snap preview for visual feedback
-                CurrentSnapPreview = FindNearestSnapTarget(_draggedTrackId.Value, snapDistance);
-                return;
-            }
-
-            CurrentSnapPreview = null;
-            var hit = HitTest(position, hitRadius: 40.0);
-            _hoveredTrackId = hit;
-        }
-
-        public string PointerUp(Point2D position, bool snapEnabled, double snapDistance, bool gridSnap, double gridSize, bool isCtrlPressed = false)
-        {
-            string status = "Ready";
-
-            // Handle rectangle selection completion
-            if (_isRectangleSelecting)
-            {
-                var selectedInRect = GetEdgesInRectangle(_selectionStart, _selectionEnd);
-
-                if (isCtrlPressed)
-                {
-                    // Add to existing selection
-                    foreach (var id in selectedInRect)
-                        SelectedTrackIds.Add(id);
-                }
-                else
-                {
-                    // Replace selection
-                    SelectedTrackIds.Clear();
-                    foreach (var id in selectedInRect)
-                        SelectedTrackIds.Add(id);
-                }
-
-                _isRectangleSelecting = false;
-                status = selectedInRect.Count > 0
-                    ? $"Selected {selectedInRect.Count} track(s)"
-                    : "Ready";
-                return status;
-            }
-
-            if (_isDragging && _draggedTrackId.HasValue)
-            {
-                if (snapEnabled)
-                {
-                    if (TrySnapAndConnect(_draggedTrackId.Value, snapDistance, out var msg) && msg is not null)
-                    {
-                        status = msg;
-                    }
-                }
-
-                var pos = Positions[_draggedTrackId.Value];
-                var edge = Graph.Edges.First(e => e.Id == _draggedTrackId.Value);
-                status = status == "Ready"
-                    ? $"Placed {edge.TemplateId} at ({pos.X:F0}, {pos.Y:F0})"
-                    : status;
-            }
-
-            _isDragging = false;
+            _selectedTrackId = null;
             _draggedTrackId = null;
+            _isDragging = false;
             _dragGroup = null;
             _dragGroupOffsets = null;
-            CurrentSnapPreview = null;
+
+            // Start rectangle selection
+            _isRectangleSelecting = true;
+            _selectionStart = position;
+            _selectionEnd = position;
+        }
+    }
+
+    public void PointerMove(Point2D position, bool gridSnap, double gridSize, double snapDistance = 30.0)
+    {
+        // Rectangle selection update
+        if (_isRectangleSelecting)
+        {
+            _selectionEnd = position;
+            return;
+        }
+
+        if (_isDragging && _draggedTrackId.HasValue && _dragGroupOffsets is not null)
+        {
+            var newPos = new Point2D(position.X - _dragOffset.X, position.Y - _dragOffset.Y);
+
+            if (gridSnap)
+            {
+                newPos = new Point2D(
+                    Math.Round(newPos.X / gridSize) * gridSize,
+                    Math.Round(newPos.Y / gridSize) * gridSize);
+            }
+
+            // Move all connected edges together
+            foreach (var (edgeId, offset) in _dragGroupOffsets)
+            {
+                Positions[edgeId] = new Point2D(
+                    newPos.X + offset.X,
+                    newPos.Y + offset.Y);
+            }
+
+            // Update snap preview for visual feedback
+            CurrentSnapPreview = FindNearestSnapTarget(_draggedTrackId.Value, snapDistance);
+            return;
+        }
+
+        CurrentSnapPreview = null;
+        var hit = HitTest(position, hitRadius: 60.0);
+        _hoveredTrackId = hit;
+    }
+
+    public string PointerUp(Point2D position, bool snapEnabled, double snapDistance, bool gridSnap, double gridSize, bool isCtrlPressed = false)
+    {
+        string status = "Ready";
+
+        // Handle rectangle selection completion
+        if (_isRectangleSelecting)
+        {
+            var selectedInRect = GetEdgesInRectangle(_selectionStart, _selectionEnd);
+
+            if (isCtrlPressed)
+            {
+                // Add to existing selection
+                foreach (var id in selectedInRect)
+                    SelectedTrackIds.Add(id);
+            }
+            else
+            {
+                // Replace selection
+                SelectedTrackIds.Clear();
+                foreach (var id in selectedInRect)
+                    SelectedTrackIds.Add(id);
+            }
+
+            _isRectangleSelecting = false;
+            status = selectedInRect.Count > 0
+                ? $"Selected {selectedInRect.Count} track(s)"
+                : "Ready";
             return status;
         }
 
-        /// <summary>
-        /// Returns all edge IDs whose positions fall within the given rectangle.
-        /// </summary>
-        private List<Guid> GetEdgesInRectangle(Point2D start, Point2D end)
+        if (_isDragging && _draggedTrackId.HasValue)
         {
-            var minX = Math.Min(start.X, end.X);
-            var maxX = Math.Max(start.X, end.X);
-            var minY = Math.Min(start.Y, end.Y);
-            var maxY = Math.Max(start.Y, end.Y);
-
-            var result = new List<Guid>();
-            foreach (var (edgeId, pos) in Positions)
+            // Use the snap preview calculated during drag (most accurate nearest-port selection)
+            if (snapEnabled && CurrentSnapPreview is not null)
             {
-                if (pos.X >= minX && pos.X <= maxX && pos.Y >= minY && pos.Y <= maxY)
-                    result.Add(edgeId);
+                var snap = CurrentSnapPreview;
+                SnapEdgeToPort(snap.MovingEdgeId, snap.MovingPortId, snap.TargetEdgeId, snap.TargetPortId);
+
+                if (ConnectionService.TryConnect(
+                    snap.MovingEdgeId, snap.MovingPortId,
+                    snap.TargetEdgeId, snap.TargetPortId))
+                {
+                    var movingEdge = Graph.Edges.FirstOrDefault(e => e.Id == snap.MovingEdgeId);
+                    var targetEdge = Graph.Edges.FirstOrDefault(e => e.Id == snap.TargetEdgeId);
+                    status = $"Connected {movingEdge?.TemplateId}.{snap.MovingPortId} → {targetEdge?.TemplateId}.{snap.TargetPortId}";
+                }
             }
-            return result;
+
+            var pos = Positions[_draggedTrackId.Value];
+            var edge = Graph.Edges.First(e => e.Id == _draggedTrackId.Value);
+            if (status == "Ready")
+                status = $"Placed {edge.TemplateId} at ({pos.X:F0}, {pos.Y:F0})";
         }
 
-                    public string DropTrack(string templateId, Point2D position, bool gridSnap, double gridSize, bool snapEnabled, double snapDistance, out TrackEdge createdEdge)
-                    {
-                        if (gridSnap)
-                        {
-                            position = new Point2D(
-                                Math.Round(position.X / gridSize) * gridSize,
-                                Math.Round(position.Y / gridSize) * gridSize);
-                        }
-
-                        createdEdge = AddTrack(templateId, position, rotationDeg: 0);
-                        _selectedTrackId = createdEdge.Id;
-                        _hoveredTrackId = createdEdge.Id;
-
-                        string status = $"Placed {templateId} at ({position.X:F0}, {position.Y:F0})";
-
-                        if (snapEnabled)
-                        {
-                            if (TrySnapAndConnect(createdEdge.Id, snapDistance, out var msg) && msg is not null)
-                                status = msg;
-                        }
-
-                        return status;
-                    }
-
-                    public void ClearSelection()
-                    {
-                        _selectedTrackId = null;
-                        _hoveredTrackId = null;
-                        _draggedTrackId = null;
-                        _isDragging = false;
-                        _dragGroup = null;
-                        _dragGroupOffsets = null;
-                        _isRectangleSelecting = false;
-                        CurrentSnapPreview = null;
-                        SelectedTrackIds.Clear();
-                    }
-
-                    /// <summary>
-                    /// Selects all tracks connected to the specified track (for triple-click).
-                    /// </summary>
-                    public void SelectConnectedGroup(Guid edgeId)
-                    {
-                        var group = ConnectionService.GetConnectedGroup(edgeId);
-
-                        SelectedTrackIds.Clear();
-                        foreach (var id in group)
-                            SelectedTrackIds.Add(id);
-
-                        _selectedTrackId = edgeId;
-                    }
-
-                    /// <summary>
-                    /// Selects all tracks along the shortest path between two tracks (for Shift+Click).
-                    /// </summary>
-                    public void SelectPathBetween(Guid fromEdgeId, Guid toEdgeId)
-                    {
-                        var path = ConnectionService.FindShortestPath(fromEdgeId, toEdgeId);
-
-                        if (path.Count == 0)
-                            return;
-
-                        foreach (var id in path)
-                            SelectedTrackIds.Add(id);
-
-                        _selectedTrackId = toEdgeId;
-                    }
-
-                    /// <summary>
-                    /// Toggles the active branch for a switch track (for double-click).
-                    /// </summary>
-                    public void ToggleSwitchBranch(Guid edgeId)
-                    {
-                        var edge = Graph.Edges.FirstOrDefault(e => e.Id == edgeId);
-                        if (edge is null) return;
-
-                        var template = _catalog.GetById(edge.TemplateId);
-                        if (template?.Geometry.GeometryKind != TrackGeometryKind.Switch) return;
-
-                        // Get all branch ports (typically B, C, etc. - excluding the common A port)
-                        var branchPorts = template.Ends
-                            .Where(e => e.Id != "A")
-                            .Select(e => e.Id)
-                            .ToList();
-
-                        if (branchPorts.Count < 2) return;
-
-                        // Get current branch or default to first
-                        if (!_switchBranchStates.TryGetValue(edgeId, out var currentBranch))
-                        {
-                            currentBranch = branchPorts[0];
-                        }
-
-                        // Cycle to next branch
-                        var currentIndex = branchPorts.IndexOf(currentBranch);
-                        var nextIndex = (currentIndex + 1) % branchPorts.Count;
-                        _switchBranchStates[edgeId] = branchPorts[nextIndex];
-                    }
-
-                    /// <summary>
-                    /// Gets the currently active branch for a switch track.
-                    /// </summary>
-                    public string? GetActiveSwitchBranch(Guid edgeId) =>
-                        _switchBranchStates.TryGetValue(edgeId, out var branch) ? branch : null;
-
-                    // ------------------------------------------------------------
-                    // Validation & Serialization
-                    // ------------------------------------------------------------
-
-                    public void Validate()
-                    {
-                        Violations = _validationService.Validate(Graph);
-                    }
-
-                    public string Serialize()
-                        => _serializationService.Serialize(Graph);
-
-                    public void LoadFromJson(string json)
-                    {
-                        var loaded = _serializationService.Deserialize(json);
-
-        Graph.Nodes.Clear();
-        Graph.Edges.Clear();
-        Graph.Endcaps.Clear();
-
-        foreach (var n in loaded.Nodes) Graph.Nodes.Add(n);
-        foreach (var e in loaded.Edges) Graph.Edges.Add(e);
-        foreach (var c in loaded.Endcaps) Graph.Endcaps.Add(c);
-
-        Positions.Clear();
-        Rotations.Clear();
-        ClearSelection();
+        _isDragging = false;
+        _draggedTrackId = null;
+        _dragGroup = null;
+        _dragGroupOffsets = null;
+        CurrentSnapPreview = null;
+        return status;
     }
+
+    /// <summary>
+    /// Returns all edge IDs whose positions fall within the given rectangle.
+    /// </summary>
+    private List<Guid> GetEdgesInRectangle(Point2D start, Point2D end)
+    {
+        var minX = Math.Min(start.X, end.X);
+        var maxX = Math.Max(start.X, end.X);
+        var minY = Math.Min(start.Y, end.Y);
+        var maxY = Math.Max(start.Y, end.Y);
+
+        var result = new List<Guid>();
+        foreach (var (edgeId, pos) in Positions)
+        {
+            if (pos.X >= minX && pos.X <= maxX && pos.Y >= minY && pos.Y <= maxY)
+                result.Add(edgeId);
+        }
+        return result;
+    }
+
+                public string DropTrack(string templateId, Point2D position, bool gridSnap, double gridSize, bool snapEnabled, double snapDistance, out TrackEdge createdEdge)
+                {
+                    if (gridSnap)
+                    {
+                        position = new Point2D(
+                            Math.Round(position.X / gridSize) * gridSize,
+                            Math.Round(position.Y / gridSize) * gridSize);
+                    }
+
+                    createdEdge = AddTrack(templateId, position, rotationDeg: 0);
+                    _selectedTrackId = createdEdge.Id;
+                    _hoveredTrackId = createdEdge.Id;
+
+                    string status = $"Placed {templateId} at ({position.X:F0}, {position.Y:F0})";
+
+                    if (snapEnabled)
+                    {
+                        if (TrySnapAndConnect(createdEdge.Id, snapDistance, out var msg) && msg is not null)
+                            status = msg;
+                    }
+
+                    return status;
+                }
+
+                public void ClearSelection()
+                {
+                    _selectedTrackId = null;
+                    _hoveredTrackId = null;
+                    _draggedTrackId = null;
+                    _isDragging = false;
+                    _dragGroup = null;
+                    _dragGroupOffsets = null;
+                    _isRectangleSelecting = false;
+                    CurrentSnapPreview = null;
+                    SelectedTrackIds.Clear();
+                }
+
+                /// <summary>
+                /// Selects all tracks connected to the specified track (for triple-click).
+                /// </summary>
+                public void SelectConnectedGroup(Guid edgeId)
+                {
+                    var group = ConnectionService.GetConnectedGroup(edgeId);
+
+                    SelectedTrackIds.Clear();
+                    foreach (var id in group)
+                        SelectedTrackIds.Add(id);
+
+                    _selectedTrackId = edgeId;
+                }
+
+                /// <summary>
+                /// Selects all tracks along the shortest path between two tracks (for Shift+Click).
+                /// </summary>
+                public void SelectPathBetween(Guid fromEdgeId, Guid toEdgeId)
+                {
+                    var path = ConnectionService.FindShortestPath(fromEdgeId, toEdgeId);
+
+                    if (path.Count == 0)
+                        return;
+
+                    foreach (var id in path)
+                        SelectedTrackIds.Add(id);
+
+                    _selectedTrackId = toEdgeId;
+                }
+
+                /// <summary>
+                /// Toggles the active branch for a switch track (for double-click).
+                /// </summary>
+                public void ToggleSwitchBranch(Guid edgeId)
+                {
+                    var edge = Graph.Edges.FirstOrDefault(e => e.Id == edgeId);
+                    if (edge is null) return;
+
+                    var template = _catalog.GetById(edge.TemplateId);
+                    if (template?.Geometry.GeometryKind != TrackGeometryKind.Switch) return;
+
+                    // Get all branch ports (typically B, C, etc. - excluding the common A port)
+                    var branchPorts = template.Ends
+                        .Where(e => e.Id != "A")
+                        .Select(e => e.Id)
+                        .ToList();
+
+                    if (branchPorts.Count < 2) return;
+
+                    // Get current branch or default to first
+                    if (!_switchBranchStates.TryGetValue(edgeId, out var currentBranch))
+                    {
+                        currentBranch = branchPorts[0];
+                    }
+
+                    // Cycle to next branch
+                    var currentIndex = branchPorts.IndexOf(currentBranch);
+                    var nextIndex = (currentIndex + 1) % branchPorts.Count;
+                    _switchBranchStates[edgeId] = branchPorts[nextIndex];
+                }
+
+                /// <summary>
+                /// Gets the currently active branch for a switch track.
+                /// </summary>
+                public string? GetActiveSwitchBranch(Guid edgeId) =>
+                    _switchBranchStates.TryGetValue(edgeId, out var branch) ? branch : null;
+
+                // ------------------------------------------------------------
+                // Validation & Serialization
+                // ------------------------------------------------------------
+
+                public void Validate()
+                {
+                    Violations = _validationService.Validate(Graph);
+                }
+
+                public string Serialize()
+                    => _serializationService.Serialize(Graph);
+
+                public void LoadFromJson(string json)
+                {
+                    var loaded = _serializationService.Deserialize(json);
+
+    Graph.Nodes.Clear();
+    Graph.Edges.Clear();
+    Graph.Endcaps.Clear();
+
+    foreach (var n in loaded.Nodes) Graph.Nodes.Add(n);
+    foreach (var e in loaded.Edges) Graph.Edges.Add(e);
+    foreach (var c in loaded.Endcaps) Graph.Endcaps.Add(c);
+
+    Positions.Clear();
+    Rotations.Clear();
+    ClearSelection();
+}
 
     // ------------------------------------------------------------
     // Geometry Helpers
