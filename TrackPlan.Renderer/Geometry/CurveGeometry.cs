@@ -18,18 +18,22 @@ public static class CurveGeometry
         double tangentRad = DegToRad(startAngleDeg);
         double sweepRad = DegToRad(sweepDeg);
 
-        // Normalenvektor (links von der Tangente, zeigt zum Zentrum)
+        // Normal vector direction: left for positive sweep, right for negative sweep
+        int normalDir = sweepRad >= 0 ? 1 : -1;
+        
+        // Normal perpendicular to tangent, pointing left (for positive) or right (for negative)
         var normal = new Point2D(
-            -Math.Sin(tangentRad),
-            Math.Cos(tangentRad)
+            normalDir * -Math.Sin(tangentRad),
+            normalDir * Math.Cos(tangentRad)
         );
 
         // Mittelpunkt liegt auf dem Normalenvektor
         var center = start + normal * radius;
 
         // StartAngle des Bogens (vom Zentrum zum Startpunkt)
-        // = tangentRad - π/2 (senkrecht zur Tangente, zeigt von center zu start)
-        double arcStartRad = tangentRad - Math.PI / 2.0;
+        // For positive sweep: tangentRad - π/2
+        // For negative sweep: tangentRad + π/2  
+        double arcStartRad = tangentRad - normalDir * Math.PI / 2.0;
 
         yield return new ArcPrimitive(
             Center: center,

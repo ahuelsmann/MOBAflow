@@ -79,6 +79,8 @@ public static class SvgExporter
     /// <param name="showOrigin">Whether to show coordinate origin marker.</param>
     /// <param name="showGrid">Whether to show grid lines.</param>
     /// <param name="gridSize">Grid spacing in mm.</param>
+    /// <param name="centerOffsetX">Center offset X (for positioning geometry in canvas).</param>
+    /// <param name="centerOffsetY">Center offset Y (for positioning geometry in canvas).</param>
     public static string Export(
         IEnumerable<IGeometryPrimitive> primitives,
         int width = 800,
@@ -88,73 +90,60 @@ public static class SvgExporter
         string strokeColor = "#333333",
         bool showOrigin = true,
         bool showGrid = true,
-        double gridSize = 100)
+        double gridSize = 100,
+        double? centerOffsetX = null,
+        double? centerOffsetY = null)
     {
         var sb = new StringBuilder();
-
-        // SVG header with coordinate system transform (Y-axis flip)
+        
+        // ULTRA-SIMPLE: No viewBox tricks, no complex transforms
+        // Just render geometry directly with offset
         sb.AppendLine($@"<svg xmlns=""http://www.w3.org/2000/svg"" width=""{width}"" height=""{height}"" viewBox=""0 0 {width} {height}"">");
         sb.AppendLine(@"  <style>");
         sb.AppendLine(@"    .track { fill: none; stroke-linecap: round; }");
         sb.AppendLine(@"    .grid { stroke: #e0e0e0; stroke-width: 0.5; }");
         sb.AppendLine(@"    .origin { stroke: #ff0000; stroke-width: 2; }");
-        sb.AppendLine(@"    .label { font-family: Arial, sans-serif; font-size: 10px; fill: #666; }");
         sb.AppendLine(@"  </style>");
 
-        // Transform group to flip Y-axis (SVG has Y down, we want Y up)
-        // Also offset to center of canvas
-        var offsetX = width / 2.0;
-        var offsetY = height / 2.0;
+        // Canvas center
+        var centerX = width / 2.0;
+        var centerY = height / 2.0;
+        
+        // Apply offsets if provided (in mm, converted to pixels)
+        var offsetPixelX = (centerOffsetX ?? 0) * scale;
+        var offsetPixelY = (centerOffsetY ?? 0) * scale;
 
-        // Main transform group: Y-axis flip without affecting X-axis
-        // SVG: positive Y goes DOWN by default, we want positive Y UP
-        // Solution: Use scaleY only without scaleX, via matrix transform
-        // matrix(a,b,c,d,e,f) = [a c e]
-        //                        [b d f]
-        //                        [0 0 1]
-        // For scale: a=scaleX, d=scaleY; translate via e,f
-        sb.AppendLine($@"  <g transform=""translate({F(offsetX)},{F(offsetY)}) scale({F(scale)}, {F(-scale)})"">");
+        sb.AppendLine($@"  <g transform=""translate({F(centerX + offsetPixelX)}, {F(centerY - offsetPixelY)}) scale({F(scale)}, {F(-scale)})"">");
 
         // Grid
         if (showGrid)
         {
-            var gridExtent = Math.Max(width, height) / scale;
             sb.AppendLine(@"    <!-- Grid -->");
-            for (double x = -gridExtent; x <= gridExtent; x += gridSize)
+            var gridRange = 3000;
+            for (double i = -gridRange; i <= gridRange; i += gridSize)
             {
-                sb.AppendLine($@"    <line class=""grid"" x1=""{F(x)}"" y1=""{F(-gridExtent)}"" x2=""{F(x)}"" y2=""{F(gridExtent)}""/>");
-            }
-            for (double y = -gridExtent; y <= gridExtent; y += gridSize)
-            {
-                sb.AppendLine($@"    <line class=""grid"" x1=""{F(-gridExtent)}"" y1=""{F(y)}"" x2=""{F(gridExtent)}"" y2=""{F(y)}""/>");
+                sb.AppendLine($@"    <line class=""grid"" x1=""{F(i)}"" y1=""{F(-gridRange)}"" x2=""{F(i)}"" y2=""{F(gridRange)}""/>");
+                sb.AppendLine($@"    <line class=""grid"" x1=""{F(-gridRange)}"" y1=""{F(i)}"" x2=""{F(gridRange)}"" y2=""{F(i)}""/>");
             }
         }
 
-        // Origin marker
+        // Origin
         if (showOrigin)
         {
             sb.AppendLine(@"    <!-- Origin -->");
-            sb.AppendLine($@"    <line class=""origin"" x1=""-50"" y1=""0"" x2=""50"" y2=""0""/>");
-            sb.AppendLine($@"    <line class=""origin"" x1=""0"" y1=""-50"" x2=""0"" y2=""50""/>");
-            sb.AppendLine($@"    <circle cx=""0"" cy=""0"" r=""5"" fill=""red""/>");
+            sb.AppendLine($@"    <line class=""origin"" x1=""-100"" y1=""0"" x2=""100"" y2=""0""/>");
+            sb.AppendLine($@"    <line class=""origin"" x1=""0"" y1=""-100"" x2=""0"" y2=""100""/>");
+            sb.AppendLine($@"    <circle cx=""0"" cy=""0"" r=""10"" fill=""none"" stroke=""red"" stroke-width=""2""/>");
         }
 
-        // Primitives
+        // Primitives (in geometry space, transformed by the group)
         sb.AppendLine(@"    <!-- Primitives -->");
-        int index = 0;
         foreach (var primitive in primitives)
         {
-            sb.AppendLine($"    <!-- Primitive {index++} -->");
             sb.AppendLine(RenderPrimitive(primitive, strokeWidth / scale, strokeColor));
         }
 
         sb.AppendLine(@"  </g>");
-
-        // Labels (outside transform to keep text upright)
-        sb.AppendLine($@"  <text class=""label"" x=""10"" y=""20"">Scale: 1mm = {scale}px</text>");
-        sb.AppendLine($@"  <text class=""label"" x=""10"" y=""35"">Grid: {gridSize}mm</text>");
-        sb.AppendLine($@"  <text class=""label"" x=""10"" y=""{height - 10}"">+X →  |  +Y ↑</text>");
-
         sb.AppendLine(@"</svg>");
 
         return sb.ToString();
@@ -300,7 +289,13 @@ public static class SvgExporter
         Point2D StartPoint,
         Point2D EndPoint,
         string? StartPortLabel = null,
-        string? EndPortLabel = null);
+        string? EndPortLabel = null,
+        Point2D? MiddlePoint = null,
+        string? MiddlePortLabel = null,
+        Point2D? ExtraPoint1 = null,
+        string? ExtraPortLabel1 = null,
+        Point2D? ExtraPoint2 = null,
+        string? ExtraPortLabel2 = null);
 
     /// <summary>
     /// Exports track primitives with labels and separator marks between segments.
@@ -434,6 +429,7 @@ public static class SvgExporter
                 {
                     var startScreenX = offsetX + track.StartPoint.X * scale;
                     var startScreenY = offsetY - track.StartPoint.Y * scale;
+                    sb.AppendLine($@"  <circle cx=""{F(startScreenX)}"" cy=""{F(startScreenY)}"" r=""5"" fill=""#cc0000"" stroke=""#990000"" stroke-width=""1""/>");
                     sb.AppendLine($@"  <text class=""track-label"" x=""{F(startScreenX)}"" y=""{F(startScreenY - 8)}"" text-anchor=""middle"" style=""fill: #cc0000; font-size: 10px;"">{track.StartPortLabel}</text>");
                 }
 
@@ -441,7 +437,34 @@ public static class SvgExporter
                 {
                     var endScreenX = offsetX + track.EndPoint.X * scale;
                     var endScreenY = offsetY - track.EndPoint.Y * scale;
+                    sb.AppendLine($@"  <circle cx=""{F(endScreenX)}"" cy=""{F(endScreenY)}"" r=""5"" fill=""#cc0000"" stroke=""#990000"" stroke-width=""1""/>");
                     sb.AppendLine($@"  <text class=""track-label"" x=""{F(endScreenX)}"" y=""{F(endScreenY - 8)}"" text-anchor=""middle"" style=""fill: #cc0000; font-size: 10px;"">{track.EndPortLabel}</text>");
+                }
+
+                // Middle port label (for switches, e.g., Port C)
+                if (track.MiddlePoint.HasValue && !string.IsNullOrEmpty(track.MiddlePortLabel))
+                {
+                    var midScreenX = offsetX + track.MiddlePoint.Value.X * scale;
+                    var midScreenY = offsetY - track.MiddlePoint.Value.Y * scale;
+                    sb.AppendLine($@"  <circle cx=""{F(midScreenX)}"" cy=""{F(midScreenY)}"" r=""5"" fill=""#ff8800"" stroke=""#cc6600"" stroke-width=""1""/>");
+                    sb.AppendLine($@"  <text class=""track-label"" x=""{F(midScreenX)}"" y=""{F(midScreenY - 8)}"" text-anchor=""middle"" style=""fill: #ff8800; font-size: 10px;"">{track.MiddlePortLabel}</text>");
+                }
+
+                // Extra port labels (for W3 switches, e.g., Ports D and E)
+                if (track.ExtraPoint1.HasValue && !string.IsNullOrEmpty(track.ExtraPortLabel1))
+                {
+                    var extra1ScreenX = offsetX + track.ExtraPoint1.Value.X * scale;
+                    var extra1ScreenY = offsetY - track.ExtraPoint1.Value.Y * scale;
+                    sb.AppendLine($@"  <circle cx=""{F(extra1ScreenX)}"" cy=""{F(extra1ScreenY)}"" r=""5"" fill=""#ff8800"" stroke=""#cc6600"" stroke-width=""1""/>");
+                    sb.AppendLine($@"  <text class=""track-label"" x=""{F(extra1ScreenX)}"" y=""{F(extra1ScreenY - 8)}"" text-anchor=""middle"" style=""fill: #ff8800; font-size: 10px;"">{track.ExtraPortLabel1}</text>");
+                }
+
+                if (track.ExtraPoint2.HasValue && !string.IsNullOrEmpty(track.ExtraPortLabel2))
+                {
+                    var extra2ScreenX = offsetX + track.ExtraPoint2.Value.X * scale;
+                    var extra2ScreenY = offsetY - track.ExtraPoint2.Value.Y * scale;
+                    sb.AppendLine($@"  <circle cx=""{F(extra2ScreenX)}"" cy=""{F(extra2ScreenY)}"" r=""5"" fill=""#ff8800"" stroke=""#cc6600"" stroke-width=""1""/>");
+                    sb.AppendLine($@"  <text class=""track-label"" x=""{F(extra2ScreenX)}"" y=""{F(extra2ScreenY - 8)}"" text-anchor=""middle"" style=""fill: #ff8800; font-size: 10px;"">{track.ExtraPortLabel2}</text>");
                 }
 
                 segmentNum++;
