@@ -29,6 +29,7 @@ _Keine kritischen Aufgaben offen._
 | 6 | Snap-to-Connect Service | 📋 |
 | 7 | Piko A Track Catalog erweitern | 📋 |
 | 8 | TrackPlanPage Animation & Effects | 📋 |
+| 9 | Neuro-UI Design Improvements | 📋 |
 
 **Debug-Tool:** `TrackPlan.Renderer\Service\SvgExporter.cs`
 
@@ -52,20 +53,16 @@ _Keine kritischen Aufgaben offen._
 9. ✅ **Theme Testing** - Volle Fluent Design System Integration mit GetColorResource()
 10. ✅ **Build Verification** - 0 Compilation Errors, alle Tests grün
 
-**Implementierte Dateien:**
-- `WinUI/View/TrackPlanPage.xaml.cs` - Color Theme, Cursor Control, Dynamic Opacity
-- `WinUI/Rendering/CanvasRenderer.cs` - RenderGhostTrack mit Opacity Parameter
-- `.github/analysis/COLOR-THEME-ANALYSIS.md` - Umfassende Farb-Audit (neu)
-
 **Erkenntnisse:**
 - Fluent Design System Token-basiert (SystemFillColorCaution/Positive, SystemAccentColor)
 - Curve-Aware Snapping bereits im Kern implementiert (keine 180°-Rigidität nötig)
 - WinUI 3 ProtectedCursor für Cursor-Kontrolle während Drag
 - Theme-Aware Design requires dynamic opacity (visibility in Dark Mode kritisch)
+- Design System Switching ist möglich über IDesignSystemProvider Interface (siehe DESIGN-SYSTEMS-AND-EFFECTS.md)
 
 ---
 
-### 📋 Nächste Phase (Phase 6-8 - BACKLOG)
+### 📋 Nächste Phase (Phase 6-9 - BACKLOG)
 
 **Phase 6: Snap-to-Connect Service (QUEUED)**
 - Track-zu-Port Snap-Logik optimieren für weitere Szenarien
@@ -73,21 +70,42 @@ _Keine kritischen Aufgaben offen._
 - Snap-Preview Performance für große Layouts
 
 **Phase 7: Piko A Track Catalog (QUEUED)**
-- R9-Oval Topologie finalisieren (siehe unten)
+- R9-Oval Topologie finalisieren
 - Weitere Weichen-Typen hinzufügen
 - Switch Position States (Straight/Diverging) visualisieren
 
 **Phase 8: TrackPlanPage Animation & Effects (QUEUED)**
-- WinUI 3 Composition Effects für Ghost
-- Snap-Animation Feedback
+- WinUI 3 Composition Effects für Ghost (GaussianBlur, DropShadow)
+- Snap-Animation Feedback (Pulse, Spring)
 - Selection-State Transitions
-- siehe `.github/analysis/WINUI3-EFFECTS-ANALYSIS.md` (zu erstellen)
+- Siehe `.github/analysis/DESIGN-SYSTEMS-AND-EFFECTS.md` für Implementierungsdetails
+
+**Phase 9: Neuro-UI Design Improvements (QUEUED - Neuroscience-Based UX)**
+- **9.1: Attention Control** - Dimme nicht-relevante Tracks während Drag (Kognitive Belastung reduzieren)
+  - Nur ausgewählte Tracks: Opacity 1.0
+  - Andere Tracks: Opacity 0.3 (Gehirn ignoriert schwache Signale)
+  - Methode: DimIrrelevantTracks(selectedTrackIds)
+  - Neuro-Effekt: Chunking - fokussierte Aufmerksamkeit
+
+- **9.2: Type Indicators für Switch-Varianten** - Visuelles Pattern Recognition
+  - WL/WR/W3/BWL/BWR durch kleine Unicode-Symbole markieren (◀/▶/▼)
+  - Farbkodierung: WL=Blau, WR=Rot, W3=Grün
+  - Größe: 8pt, Opacity 0.5 (subtil aber erkennbar)
+  - Neuro-Effekt: Gestalt Law (Ähnlichkeit) - schnelle Mustererkennung
+
+- **9.3: Hover Affordances** - Zeige Interaktivität BEVOR User snappt
+  - Ports: Opacity 0.6 (base) → 1.0 + StrokeThickness 2 (hover)
+  - Ports: Optional Sound Effect (auditory feedback)
+  - Gleise: Hervorheben wenn draggable
+  - Neuro-Effekt: Affordances - Gehirn lernt "ich kann hier interagieren"
+
+**Dokumentation:** `.github/analysis/DESIGN-SYSTEMS-AND-EFFECTS.md` (Kapitel: Neuro-UI Design)
 
 ---
 
 ### 🔍 Offene Geometrie-Fragen
 
-**R9-Oval Topology (von Session 2):**
+**R9-Oval Topology:**
 - ❓ WR Port C Verbindung: Startet das Oval bei (-235.00, 30.94, 165°) oder anders?
 - ❓ Anzahl R9 im Oval: 23 oder 24 Stücke?
 - ❓ Schließungsfehler 61.877mm - akzeptabel oder muss korrigiert werden?
