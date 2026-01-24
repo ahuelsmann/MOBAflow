@@ -4,6 +4,22 @@
 
 > ⚖️ **Legal Notice:** MOBAflow is an independent open-source project. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for details on third-party software, formats, and trademarks (AnyRail, Piko, Roco).
 
+## 📊 Current Status (2025-01-24)
+
+**Build:** ✅ SUCCESS (0 errors)  
+**Track Plan Editor:** ✅ FUNCTIONAL  
+- ✅ Drag & Drop with ghost track preview
+- ✅ Snap-to-connect with visual indicators
+- ✅ Grid alignment and zoom controls
+- ✅ Validation framework integrated
+- 🚧 Sections & Isolators (planned - stubs ready)
+
+**Recent Fixes:**
+- Fixed NullReferenceException in keyboard state detection
+- Implemented Validate, ZoomFit, ZoomReset button handlers
+- Resolved API mismatches between UI and TopologyGraph
+- Added null-safety checks for CoreWindow operations
+
 ## ✨ Features
 
 - 🚂 **Z21 Direct UDP Control** - Real-time communication with Roco Z21
