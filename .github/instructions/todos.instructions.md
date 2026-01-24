@@ -75,44 +75,96 @@ _Keine kritischen Aufgaben offen._
 - Switch Position States (Straight/Diverging) visualisieren
 
 **Phase 8: TrackPlanPage Animation & Effects (QUEUED)**
-- WinUI 3 Composition Effects für Ghost (GaussianBlur, DropShadow)
-- Snap-Animation Feedback (Pulse, Spring)
-- Selection-State Transitions
-- Siehe `.github/analysis/DESIGN-SYSTEMS-AND-EFFECTS.md` für Implementierungsdetails
+
+**WinUI 3 Grafikeffekte - Verfügbar & Empfohlen:**
+| Feature | Effekt | Beschreibung |
+|---------|--------|-------------|
+| Ghost Track | GaussianBlurEffect + Fade Animation | Blur am Canvas während Drag |
+| Snap Highlight | DropShadow + Pulse Animation | Glow um Snap-Point mit Scale-out |
+| Selected Track | ColorAnimation Glow | Yellow Blink bei Selection |
+| Drag Start | DoubleAnimation Opacity | Smooth fade-in des Ghosts |
+| Connection Success | Expansion Pulse + Green Flash | Grün pulsierender Ring |
+| Grid | ExpressionAnimation Parallax | Subtiler Depth-Effekt |
+
+**Implementierungs-Roadmap:**
+- Siehe `.github/analysis/DESIGN-SYSTEMS-AND-EFFECTS.md` für Code-Beispiele
+- Phase 8a: Composition Effects für Ghost (GaussianBlur + Opacity Animation)
+- Phase 8b: Snap Highlight (DropShadow + ScaleAnimation Pulse)
+- Phase 8c: Selected Track (ColorAnimation Glow)
 
 **Phase 9: Neuro-UI Design Improvements (QUEUED - Neuroscience-Based UX)**
+
+**Design Token System Hybrid-Ansatz:**
+- Erweitern des existierenden ISkinProvider-Systems mit IDesignSystemProvider Interface
+- Fluent Design als Base (Windows-native), Custom Token Layer darüber
+- Runtime-Switching für Design Systems (Fluent, Material3, Minimal, etc.)
+- Siehe `.github/analysis/DESIGN-SYSTEMS-AND-EFFECTS.md` Kapitel 2 für Details
+
+**Phase 9.1-9.3: Konkrete Neuro-UI Implementierungen**
+
 - **9.1: Attention Control** - Dimme nicht-relevante Tracks während Drag (Kognitive Belastung reduzieren)
   - Nur ausgewählte Tracks: Opacity 1.0
   - Andere Tracks: Opacity 0.3 (Gehirn ignoriert schwache Signale)
   - Methode: DimIrrelevantTracks(selectedTrackIds)
   - Neuro-Effekt: Chunking - fokussierte Aufmerksamkeit
+  - Dauer: 40 min
 
 - **9.2: Type Indicators für Switch-Varianten** - Visuelles Pattern Recognition
   - WL/WR/W3/BWL/BWR durch kleine Unicode-Symbole markieren (◀/▶/▼)
-  - Farbkodierung: WL=Blau, WR=Rot, W3=Grün
+  - Farbkodierung: WL=Blau, WR=Rot, W3=Grün, Curved=Orange
   - Größe: 8pt, Opacity 0.5 (subtil aber erkennbar)
+  - Position: Top-Left von Switch (Leseverhalten)
   - Neuro-Effekt: Gestalt Law (Ähnlichkeit) - schnelle Mustererkennung
+  - Dauer: 30 min
 
 - **9.3: Hover Affordances** - Zeige Interaktivität BEVOR User snappt
   - Ports: Opacity 0.6 (base) → 1.0 + StrokeThickness 2 (hover)
+  - Tracks: Hover-State mit Yellow Highlight wenn draggable
   - Ports: Optional Sound Effect (auditory feedback)
-  - Gleise: Hervorheben wenn draggable
+  - Gleise: Hervorheben wenn draggbar
   - Neuro-Effekt: Affordances - Gehirn lernt "ich kann hier interagieren"
+  - Dauer: 20 min
 
-**Dokumentation:** `.github/analysis/DESIGN-SYSTEMS-AND-EFFECTS.md` (Kapitel: Neuro-UI Design)
+**Dokumentation:** `.github/analysis/DESIGN-SYSTEMS-AND-EFFECTS.md` + `.github/analysis/NEURO-UI-DESIGN.md`
+
+**Neuro-UI Checkliste für Phase 9 & beyond:**
+- [ ] **Attention Control:** Dimme nicht-relevante Elemente während Drag
+- [ ] **Visual Hierarchy:** Grid-Größe vs. Track-Größe (was ist wichtiger?)
+- [ ] **Type Indicators:** Kleine Symbole für Switch-Typen (WL/WR/W3)
+- [ ] **Affordances:** Hover-States auf allen interaktiven Elementen
+- [ ] **Predictability:** Ghost-Bewegung muss smooth & linear sein (keine Beschleunigung)
+- [ ] **Color Progression:** States durch Farbübergänge zeigen (SnapState: Grau → Orange → Gelb → Grün)
+- [ ] **Temporal Feedback:** Alle Animationen < 100ms (Gehirn erwartet instant feedback)
+- [ ] **Contrast Ratios:** WCAG AA minimum (auch neurodivergente Benutzer)
+- [ ] **Reduce Motion:** Option für Users mit vestibular disorders
 
 ---
 
-### 🔍 Offene Geometrie-Fragen
+### 📋 Design System Switching Implementation (Phase 1-3)
 
-**R9-Oval Topology:**
-- ❓ WR Port C Verbindung: Startet das Oval bei (-235.00, 30.94, 165°) oder anders?
-- ❓ Anzahl R9 im Oval: 23 oder 24 Stücke?
-- ❓ Schließungsfehler 61.877mm - akzeptabel oder muss korrigiert werden?
+**Phase 1 (Nächste Session): IDesignSystemProvider Foundation**
+- [ ] Erstelle IDesignSystemProvider Interface
+- [ ] Erstelle DesignTokens Record mit Track-spezifischen Farben
+- [ ] Implementiere DefaultDesignSystemProvider (Fluent Design Base)
+- [ ] Integriere in TrackPlanPage.UpdateTheme()
+- [ ] Dokumentation: Pattern für Page-Integration
+- ETA: 90 min
 
-**Lösung ausstehend:**
-- Piko A Prospekt verifizieren (docs/99556__A-Gleis_Prospekt_2019.pdf)
-- Testdatei `Test\TrackPlan.Renderer\GeometryValidationTemplate.cs` mit realen Messdaten abgleichen
+**Phase 2 (Session danach): Composition Effects + Settings UI**
+- [ ] Composition Effects für Ghost: GaussianBlur + Opacity Animation
+- [ ] Snap Highlight: DropShadow + ScaleAnimation (Pulse)
+- [ ] Selected Track: ColorAnimation Glow
+- [ ] Settings UI für Design System Selector (ComboBox)
+- [ ] Runtime Design System Switching testen
+- ETA: 120 min
+
+**Phase 3 (Optional): Material Design 3 + Alternative Systems**
+- [ ] NuGet: Material.WinUI.3 Integration
+- [ ] Erstelle Material3DesignSystemProvider Klasse
+- [ ] Erstelle MinimalDesignSystemProvider (Light/Dark/HighViz)
+- [ ] Theme-Preview im Settings Dialog
+- [ ] A/B Testing für Benutzer-Feedback
+- ETA: 150 min (optional)
 
 ---
 
