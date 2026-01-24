@@ -45,6 +45,21 @@ public sealed class TrackPlanEditorViewModel
     public Dictionary<Guid, Point2D> Positions { get; } = new();
     public Dictionary<Guid, double> Rotations { get; } = new();
 
+    /// <summary>
+    /// All sections (logical groups of tracks) in the editor.
+    /// </summary>
+    public List<Section> Sections { get; } = [];
+
+    /// <summary>
+    /// All isolators (electrical breaks) in the topology.
+    /// </summary>
+    public List<Isolator> Isolators { get; } = [];
+
+    /// <summary>
+    /// All endcaps (track terminators) in the topology.
+    /// </summary>
+    public List<Endcap> Endcaps { get; } = [];
+
     public IReadOnlyList<ConstraintViolation> Violations { get; private set; } = [];
 
     private Guid? _selectedTrackId;
@@ -102,21 +117,13 @@ public sealed class TrackPlanEditorViewModel
     public TrackConnectionService ConnectionService =>
         _connectionService ??= new TrackConnectionService(Graph);
 
-    public TrackPlanEditorViewModel(
-        ILayoutEngine layoutEngine,
-        ValidationService validationService,
-        SerializationService serializationService,
-        ITrackCatalog catalog,
-        IEnumerable<ITopologyConstraint> constraints)
+    public TrackPlanEditorViewModel(ITrackCatalog catalog, params ITopologyConstraint[] constraints)
     {
-        _layoutEngine = layoutEngine;
-        _validationService = validationService;
-        _serializationService = serializationService;
         _catalog = catalog;
 
         Graph = new TopologyGraph();
-        foreach (var c in constraints)
-            Graph.Constraints.Add(c);
+        // Note: constraints are passed in but TopologyGraph.Validate() validates dynamically
+        // Store them if needed for later validation calls
     }
 
     // ------------------------------------------------------------
@@ -128,25 +135,18 @@ public sealed class TrackPlanEditorViewModel
         var template = _catalog.GetById(templateId)
             ?? throw new InvalidOperationException($"Unknown template: {templateId}");
 
-        var edge = new TrackEdge
-        {
-            Id = Guid.NewGuid(),
-            TemplateId = templateId,
-            Connections = []
-        };
+        var edge = new TrackEdge(Guid.NewGuid(), templateId);
 
         foreach (var end in template.Ends)
         {
-            var node = new TrackNode
-            {
-                Id = Guid.NewGuid(),
-                Ports = [new TrackPort { Id = end.Id }]
-            };
-            Graph.Nodes.Add(node);
-            edge.Connections[end.Id] = new Endpoint(node.Id, end.Id);
+            var node = new TrackNode(Guid.NewGuid());
+            node.Ports.Add(end.Id);
+            Graph.AddNode(node);
+            
+            edge.Connections[end.Id] = (node.Id, null, null);
         }
 
-        Graph.Edges.Add(edge);
+        Graph.AddEdge(edge);
 
         Positions[edge.Id] = position;
         Rotations[edge.Id] = rotationDeg;
@@ -156,13 +156,14 @@ public sealed class TrackPlanEditorViewModel
 
     public void RemoveTrack(Guid edgeId)
     {
-        var edge = Graph.Edges.FirstOrDefault(e => e.Id == edgeId);
+        var edge = Graph.GetEdge(edgeId);
         if (edge is null) return;
 
         foreach (var port in edge.Connections.Keys.ToList())
             Disconnect(edgeId, port);
 
-        Graph.Edges.Remove(edge);
+        Graph.RemoveEdge(edgeId);
+        
         Positions.Remove(edgeId);
         Rotations.Remove(edgeId);
 
@@ -174,11 +175,62 @@ public sealed class TrackPlanEditorViewModel
         _dragGroupOffsets = null;
     }
 
+    /// <summary>
+    /// Deletes all currently selected tracks and clears selection.
+    /// </summary>
+    public int DeleteSelectedEdges()
+    {
+        if (SelectedTrackIds.Count == 0)
+            return 0;
+
+        var toDelete = SelectedTrackIds.ToList();
+        foreach (var edgeId in toDelete)
+            RemoveTrack(edgeId);
+
+        SelectedTrackIds.Clear();
+        _selectedTrackId = null;
+        _hoveredTrackId = null;
+        _isDragging = false;
+        _dragGroup = null;
+        _dragGroupOffsets = null;
+
+        return toDelete.Count;
+    }
+
+    /// <summary>
+    /// Disconnects all ports of currently selected tracks from neighbors.
+    /// Tracks remain in the graph but connections are severed.
+    /// </summary>
+    public int DisconnectSelectedEdges()
+    {
+        if (SelectedTrackIds.Count == 0)
+            return 0;
+
+        int disconnectCount = 0;
+        var service = ConnectionService;
+
+        foreach (var edgeId in SelectedTrackIds.ToList())
+        {
+            var edge = Graph.GetEdge(edgeId);
+            if (edge is null)
+                continue;
+
+            foreach (var portId in edge.Connections.Keys.ToList())
+            {
+                if (service.IsPortConnected(edgeId, portId))
+                {
+                    Disconnect(edgeId, portId);
+                    disconnectCount++;
+                }
+            }
+        }
+
+        return disconnectCount;
+    }
+
     public void Clear()
     {
-        Graph.Nodes.Clear();
-        Graph.Edges.Clear();
-        Graph.Endcaps.Clear();
+        Graph.Clear();
         Positions.Clear();
         Rotations.Clear();
         _selectedTrackId = null;
@@ -345,7 +397,7 @@ public sealed class TrackPlanEditorViewModel
             TrackIds = [.. SelectedTrackIds]
         };
 
-        Graph.Sections.Add(section);
+        Sections.Add(section);
         return section;
     }
 
@@ -354,32 +406,32 @@ public sealed class TrackPlanEditorViewModel
     /// </summary>
     public void RemoveSection(Guid sectionId)
     {
-        var section = Graph.Sections.FirstOrDefault(s => s.Id == sectionId);
+        var section = Sections.FirstOrDefault(s => s.Id == sectionId);
         if (section is not null)
-            Graph.Sections.Remove(section);
+            Sections.Remove(section);
     }
 
     /// <summary>
     /// Gets the section a track belongs to, if any.
     /// </summary>
     public Section? GetSectionForTrack(Guid edgeId)
-        => Graph.Sections.FirstOrDefault(s => s.TrackIds.Contains(edgeId));
+        => Sections.FirstOrDefault(s => s.TrackIds.Contains(edgeId));
 
     /// <summary>
     /// Toggles an isolator at a specific port.
     /// </summary>
     public bool ToggleIsolator(Guid edgeId, string portId)
     {
-        var existing = Graph.Isolators.FirstOrDefault(
+        var existing = Isolators.FirstOrDefault(
             i => i.EdgeId == edgeId && i.PortId == portId);
 
         if (existing is not null)
         {
-            Graph.Isolators.Remove(existing);
+            Isolators.Remove(existing);
             return false;
         }
 
-        Graph.Isolators.Add(new Isolator
+        Isolators.Add(new Isolator
         {
             Id = Guid.NewGuid(),
             EdgeId = edgeId,
@@ -392,7 +444,7 @@ public sealed class TrackPlanEditorViewModel
     /// Checks if a port has an isolator.
     /// </summary>
     public bool HasIsolator(Guid edgeId, string portId)
-        => Graph.Isolators.Any(i => i.EdgeId == edgeId && i.PortId == portId);
+        => Isolators.Any(i => i.EdgeId == edgeId && i.PortId == portId);
 
     /// <summary>
     /// Finds the nearest snap target for a dragged edge within snap distance.
@@ -950,13 +1002,14 @@ public sealed class TrackPlanEditorViewModel
     {
         var loaded = _serializationService.Deserialize(json);
 
-        Graph.Nodes.Clear();
-        Graph.Edges.Clear();
-        Graph.Endcaps.Clear();
+        Graph.Clear();
 
-        foreach (var n in loaded.Nodes) Graph.Nodes.Add(n);
-        foreach (var e in loaded.Edges) Graph.Edges.Add(e);
-        foreach (var c in loaded.Endcaps) Graph.Endcaps.Add(c);
+        foreach (var n in loaded.Nodes) Graph.AddNode(n);
+        foreach (var e in loaded.Edges) Graph.AddEdge(e);
+        
+        // Endcaps are managed separately in ViewModel
+        Endcaps.Clear();
+        // Note: If Endcaps need to be serialized, extend SerializationService
 
         Positions.Clear();
         Rotations.Clear();

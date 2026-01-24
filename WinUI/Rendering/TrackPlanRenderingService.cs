@@ -5,6 +5,7 @@ namespace Moba.WinUI.Rendering;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 
+using Moba.TrackPlan.Geometry;
 using Moba.TrackPlan.Graph;
 using Moba.TrackPlan.Renderer.Geometry;
 using Moba.TrackPlan.Renderer.Service;

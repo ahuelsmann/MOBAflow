@@ -237,4 +237,16 @@ public class TrackConnectionService
 
         return []; // No path found
     }
+
+    /// <summary>
+    /// Checks if a port is connected to another edge's port.
+    /// </summary>
+    /// <param name="edgeId">Edge ID</param>
+    /// <param name="portId">Port ID</param>
+    /// <returns>True if the port is connected to another edge</returns>
+    public bool IsPortConnected(Guid edgeId, string portId)
+    {
+        var connectedPort = GetConnectedPort(edgeId, portId);
+        return connectedPort.HasValue;
+    }
 }

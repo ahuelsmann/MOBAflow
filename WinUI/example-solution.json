@@ -302,7 +302,103 @@
         ],
         "connections": [],
         "routes": []
-      }
+      },
+      "trackPlans": [
+        {
+          "id": "12345678-1234-1234-1234-123456789012",
+          "name": "Main Layout - Piko A",
+          "description": "Primary track plan for the Porta region",
+          "catalogId": "PikoA",
+          "nodes": [
+            {
+              "id": "11111111-1111-1111-1111-111111111111",
+              "ports": ["A"]
+            },
+            {
+              "id": "22222222-2222-2222-2222-222222222222",
+              "ports": ["A"]
+            },
+            {
+              "id": "33333333-3333-3333-3333-333333333333",
+              "ports": ["A"]
+            }
+          ],
+          "edges": [
+            {
+              "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+              "templateId": "G231",
+              "rotationDeg": 0,
+              "startPortId": "A",
+              "endPortId": "B",
+              "startNodeId": "11111111-1111-1111-1111-111111111111",
+              "endNodeId": "22222222-2222-2222-2222-222222222222",
+              "feedbackPointNumber": null,
+              "connections": {
+                "A": {
+                  "nodeId": "11111111-1111-1111-1111-111111111111",
+                  "connectedEdgeId": null,
+                  "connectedPortId": null
+                },
+                "B": {
+                  "nodeId": "22222222-2222-2222-2222-222222222222",
+                  "connectedEdgeId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                  "connectedPortId": "A"
+                }
+              }
+            },
+            {
+              "id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+              "templateId": "R9",
+              "rotationDeg": 15,
+              "startPortId": "A",
+              "endPortId": "B",
+              "startNodeId": "22222222-2222-2222-2222-222222222222",
+              "endNodeId": "33333333-3333-3333-3333-333333333333",
+              "feedbackPointNumber": 1,
+              "connections": {
+                "A": {
+                  "nodeId": "22222222-2222-2222-2222-222222222222",
+                  "connectedEdgeId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                  "connectedPortId": "B"
+                },
+                "B": {
+                  "nodeId": "33333333-3333-3333-3333-333333333333",
+                  "connectedEdgeId": null,
+                  "connectedPortId": null
+                }
+              }
+            }
+          ],
+          "positions": {
+            "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb": {
+              "x": 231.0,
+              "y": 0.0
+            }
+          },
+          "rotations": {
+            "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa": 0.0,
+            "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb": 0.0
+          },
+          "sections": [
+            {
+              "id": "55555555-5555-5555-5555-555555555555",
+              "name": "Main Section",
+              "color": "#FF0000",
+              "trackIds": [
+                "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+                "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+              ]
+            }
+          ],
+          "isolators": [],
+          "endcaps": [],
+          "lastModified": "2025-01-24T10:00:00Z"
+        }
+      ]
     }
   ]
 }

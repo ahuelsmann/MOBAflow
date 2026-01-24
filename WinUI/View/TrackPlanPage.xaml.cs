@@ -10,12 +10,14 @@ using Microsoft.UI.Xaml.Shapes;
 using Moba.TrackLibrary.PikoA.Catalog;
 using Moba.TrackPlan.Constraint;
 using Moba.TrackPlan.Editor.ViewModel;
+using Moba.TrackPlan.Geometry;
 using Moba.TrackPlan.Graph;
 using Moba.TrackPlan.TrackSystem;
 using Moba.WinUI.Rendering;
 
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Linq;
 
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
@@ -64,13 +66,13 @@ public sealed partial class TrackPlanPage : Page
     public ObservableCollection<ConstraintViolation> Violations { get; } = [];
 
     public IReadOnlyList<TrackTemplate> StraightTemplates =>
-        _catalog.GetByCategory(TrackGeometryKind.Straight).ToList();
+        _catalog.Straights.ToList();
 
     public IReadOnlyList<TrackTemplate> CurveTemplates =>
-        _catalog.GetByCategory(TrackGeometryKind.Curve).ToList();
+        _catalog.Curves.ToList();
 
     public IReadOnlyList<TrackTemplate> SwitchTemplates =>
-        _catalog.GetByCategory(TrackGeometryKind.Switch).ToList();
+        _catalog.Switches.ToList();
 
     public TrackPlanPage(TrackPlanEditorViewModel viewModel)
     {
@@ -189,7 +191,6 @@ public sealed partial class TrackPlanPage : Page
     {
         NodeCountText.Text = _viewModel.Graph.Nodes.Count.ToString();
         EdgeCountText.Text = _viewModel.Graph.Edges.Count.ToString();
-        EndcapCountText.Text = _viewModel.Graph.Endcaps.Count.ToString();
         ZoomLevelText.Text = $"{CanvasScrollViewer.ZoomFactor:P0}";
     }
 
@@ -709,8 +710,21 @@ public sealed partial class TrackPlanPage : Page
 
         var pos = point.Position;
         var world = new Point2D(pos.X / DisplayScale, pos.Y / DisplayScale);
-        var isCtrlPressed = Microsoft.UI.Input.KeyboardHelper.GetKeyState(Windows.System.VirtualKey.Control)
-            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+        var isCtrlPressed = false;
+        
+        try
+        {
+            var coreWindow = Windows.UI.Core.CoreWindow.GetForCurrentThread();
+            if (coreWindow != null)
+            {
+                isCtrlPressed = (coreWindow.GetKeyState(Windows.System.VirtualKey.Control) & Windows.UI.Core.CoreVirtualKeyStates.Down) != 0;
+            }
+        }
+        catch
+        {
+            // Fall back to false if CoreWindow is not available
+            isCtrlPressed = false;
+        }
 
         var status = _viewModel.PointerUp(
             world,
@@ -878,196 +892,48 @@ public sealed partial class TrackPlanPage : Page
 
     private void CreateSection_Click(object sender, RoutedEventArgs e)
     {
-        if (_viewModel.SelectedTrackIds.Count == 0)
-            return;
-
-        var sectionCount = _viewModel.Graph.Sections.Count + 1;
-        var section = _viewModel.CreateSectionFromSelection(
-            $"Block {sectionCount}",
-            GetSectionColor(sectionCount));
-
-        if (section is not null)
-        {
-            StatusText.Text = $"Created section '{section.Name}' with {section.TrackIds.Count} track(s)";
-            UpdateSectionsList();
-            RenderGraph();
-        }
+        // TODO: Sections functionality not yet implemented
+        StatusText.Text = "Sections feature coming soon";
     }
 
     private void ToggleIsolator_Click(object sender, RoutedEventArgs e)
     {
-        if (_viewModel.SelectedTrackId is null)
-            return;
-
-        var edgeId = _viewModel.SelectedTrackId.Value;
-        var edge = _viewModel.Graph.Edges.FirstOrDefault(e => e.Id == edgeId);
-        if (edge is null) return;
-
-        var template = _catalog.GetById(edge.TemplateId);
-        if (template is null) return;
-
-        var portId = template.Ends.FirstOrDefault()?.Id ?? "A";
-        var hasIsolator = _viewModel.ToggleIsolator(edgeId, portId);
-
-        StatusText.Text = hasIsolator
-            ? $"Added isolator at {edge.TemplateId}.{portId}"
-            : $"Removed isolator at {edge.TemplateId}.{portId}";
-
-        RenderGraph();
+        // TODO: Isolators functionality not yet implemented
+        StatusText.Text = "Isolators feature coming soon";
     }
 
     private Section? _editingSection;
 
     private void SectionsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        var selected = SectionsList.SelectedItem;
-        if (selected is null)
-        {
-            SectionEditorPanel.Visibility = Visibility.Collapsed;
-            return;
-        }
-
-        var index = SectionsList.SelectedIndex;
-        if (index >= 0 && index < _viewModel.Graph.Sections.Count)
-        {
-            var section = _viewModel.Graph.Sections[index];
-            _editingSection = section;
-
-            SectionNameBox.Text = section.Name;
-
-            foreach (ComboBoxItem item in SectionFunctionCombo.Items)
-            {
-                if (item.Tag?.ToString() == section.Function)
-                {
-                    SectionFunctionCombo.SelectedItem = item;
-                    break;
-                }
-            }
-
-            SectionEditorPanel.Visibility = Visibility.Visible;
-
-            _viewModel.SelectedTrackIds.Clear();
-            foreach (var trackId in section.TrackIds)
-                _viewModel.SelectedTrackIds.Add(trackId);
-            RenderGraph();
-        }
+        // TODO: Sections functionality not yet implemented
+        SectionEditorPanel.Visibility = Visibility.Collapsed;
     }
 
     private void SectionNameBox_TextChanged(object sender, TextChangedEventArgs e)
     {
-        if (_editingSection is null) return;
-        _editingSection.Name = SectionNameBox.Text;
-        UpdateSectionsList();
-        RenderGraph();
+        // TODO: Sections functionality not yet implemented
     }
 
     private void SectionFunctionCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (_editingSection is null) return;
-        if (SectionFunctionCombo.SelectedItem is ComboBoxItem item)
-            _editingSection.Function = item.Tag?.ToString() ?? "Track";
+        // TODO: Sections functionality not yet implemented
     }
 
     private void SectionColorButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_editingSection is null) return;
-        if (sender is Button button && button.Tag is string color)
-        {
-            _editingSection.Color = color;
-            UpdateSectionsList();
-            RenderGraph();
-        }
+        // TODO: Sections functionality not yet implemented
     }
 
     private void DeleteSection_Click(object sender, RoutedEventArgs e)
     {
-        if (_editingSection is null) return;
-
-        _viewModel.Graph.Sections.Remove(_editingSection);
-        _editingSection = null;
-        SectionEditorPanel.Visibility = Visibility.Collapsed;
-        UpdateSectionsList();
-        RenderGraph();
-        StatusText.Text = "Section deleted";
+        // TODO: Sections functionality not yet implemented
+        StatusText.Text = "Delete section - feature coming soon";
     }
 
     private void UpdateSectionsList()
     {
-        var sectionItems = _viewModel.Graph.Sections.Select(s => new
-        {
-            s.Name,
-            Color = new SolidColorBrush(ParseColor(s.Color)),
-            TrackCount = $"{s.TrackIds.Count} tracks"
-        }).ToList();
-
-        SectionsList.ItemsSource = sectionItems;
-    }
-
-    private static string GetSectionColor(int index)
-    {
-        var colors = new[] { "#0078D4", "#107C10", "#FFB900", "#E81123", "#B4009E", "#00B294", "#FF8C00" };
-        return colors[(index - 1) % colors.Length];
-    }
-
-    private static Color ParseColor(string hex)
-    {
-        hex = hex.TrimStart('#');
-        if (hex.Length == 6)
-        {
-            return Color.FromArgb(255,
-                byte.Parse(hex[..2], NumberStyles.HexNumber),
-                byte.Parse(hex[2..4], NumberStyles.HexNumber),
-                byte.Parse(hex[4..6], NumberStyles.HexNumber));
-        }
-        return Colors.Gray;
-    }
-
-    private void ValidateButton_Click(object sender, RoutedEventArgs e)
-    {
-        _viewModel.Validate();
-        Violations.Clear();
-
-        foreach (var v in _viewModel.Violations)
-            Violations.Add(v);
-
-        StatusText.Text = Violations.Count == 0
-            ? "Validation passed"
-            : $"Found {Violations.Count} issue(s)";
-    }
-
-    private void ZoomFit_Click(object sender, RoutedEventArgs e)
-    {
-        if (_viewModel.Positions.Count == 0)
-        {
-            CanvasScrollViewer.ChangeView(0, 0, 1.0f);
-            return;
-        }
-
-        var xs = _viewModel.Positions.Values.Select(p => p.X * DisplayScale).ToList();
-        var ys = _viewModel.Positions.Values.Select(p => p.Y * DisplayScale).ToList();
-
-        var minX = xs.Min() - 100;
-        var maxX = xs.Max() + 100;
-        var minY = ys.Min() - 100;
-        var maxY = ys.Max() + 100;
-
-        var contentWidth = maxX - minX;
-        var contentHeight = maxY - minY;
-
-        var zoomX = CanvasScrollViewer.ViewportWidth / contentWidth;
-        var zoomY = CanvasScrollViewer.ViewportHeight / contentHeight;
-        var zoom = (float)Math.Min(zoomX, zoomY);
-
-        zoom = Math.Clamp(zoom, 0.1f, 2.0f);
-
-        CanvasScrollViewer.ChangeView(minX, minY, zoom);
-        UpdateStatistics();
-    }
-
-    private void ZoomReset_Click(object sender, RoutedEventArgs e)
-    {
-        CanvasScrollViewer.ChangeView(null, null, 1.0f);
-        UpdateStatistics();
+        // TODO: Sections functionality not yet implemented
     }
 
     private void RenderGraph()
@@ -1271,92 +1137,12 @@ public sealed partial class TrackPlanPage : Page
 
     private void RenderIsolators()
     {
-        foreach (var isolator in _viewModel.Graph.Isolators)
-        {
-            var edge = _viewModel.Graph.Edges.FirstOrDefault(e => e.Id == isolator.EdgeId);
-            if (edge is null) continue;
-
-            var template = _catalog.GetById(edge.TemplateId);
-            if (template is null) continue;
-
-            if (!_viewModel.Positions.TryGetValue(edge.Id, out var pos)) continue;
-            if (!_viewModel.Rotations.TryGetValue(edge.Id, out var rot)) continue;
-
-            var portOffset = GetPortOffset(template, isolator.PortId, rot);
-            var portX = (pos.X + portOffset.X) * DisplayScale;
-            var portY = (pos.Y + portOffset.Y) * DisplayScale;
-
-            var rotRad = rot * Math.PI / 180.0;
-            var dirX = Math.Cos(rotRad);
-            var dirY = Math.Sin(rotRad);
-            var perpX = Math.Cos(rotRad + Math.PI / 2);
-            var perpY = Math.Sin(rotRad + Math.PI / 2);
-
-            double size = 6;
-            double gap = 3;
-
-            var tri1 = new Polygon
-            {
-                Fill = _feedbackBrush,
-                Points = new PointCollection
-                {
-                    new Point(portX - gap - size * dirX + size * perpX, portY - gap - size * dirY + size * perpY),
-                    new Point(portX - gap, portY - gap),
-                    new Point(portX - gap - size * dirX - size * perpX, portY - gap - size * dirY - size * perpY)
-                }
-            };
-            GraphCanvas.Children.Add(tri1);
-
-            var tri2 = new Polygon
-            {
-                Fill = _feedbackBrush,
-                Points = new PointCollection
-                {
-                    new Point(portX + gap + size * dirX + size * perpX, portY + gap + size * dirY + size * perpY),
-                    new Point(portX + gap, portY + gap),
-                    new Point(portX + gap + size * dirX - size * perpX, portY + gap + size * dirY - size * perpY)
-                }
-            };
-            GraphCanvas.Children.Add(tri2);
-        }
+        // TODO: Isolators functionality not yet implemented
     }
 
     private void RenderSectionLabels()
     {
-        foreach (var section in _viewModel.Graph.Sections)
-        {
-            if (section.TrackIds.Count == 0 || string.IsNullOrWhiteSpace(section.Name))
-                continue;
-
-            double sumX = 0, sumY = 0;
-            int count = 0;
-            foreach (var trackId in section.TrackIds)
-            {
-                if (_viewModel.Positions.TryGetValue(trackId, out var pos))
-                {
-                    sumX += pos.X;
-                    sumY += pos.Y;
-                    count++;
-                }
-            }
-
-            if (count == 0) continue;
-
-            var centerX = (sumX / count) * DisplayScale;
-            var centerY = (sumY / count) * DisplayScale;
-
-            var label = new TextBlock
-            {
-                Text = section.Name,
-                FontSize = 14,
-                FontWeight = Microsoft.UI.Text.FontWeights.Bold,
-                Foreground = new SolidColorBrush(ParseColor(section.Color)),
-            };
-
-            Canvas.SetLeft(label, centerX - 20);
-            Canvas.SetTop(label, centerY - 25);
-            GraphCanvas.Children.Add(label);
-        }
+        // TODO: Section labels functionality not yet implemented
     }
 
     private void RenderSelectionBoundingBox()
@@ -1610,5 +1396,52 @@ public sealed partial class TrackPlanPage : Page
         }
 
         return new Point2D(0, 0);
+    }
+
+    private void ValidateButton_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.Validate();
+        
+        if (_viewModel.Violations.Count == 0)
+        {
+            StatusText.Text = "✓ Track plan is valid";
+        }
+        else
+        {
+            StatusText.Text = $"✗ {_viewModel.Violations.Count} validation issues found";
+        }
+    }
+
+    private void ZoomFit_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.Graph.Nodes.Count == 0)
+        {
+            StatusText.Text = "No tracks to fit";
+            return;
+        }
+
+        double minX = double.MaxValue, minY = double.MaxValue;
+        double maxX = double.MinValue, maxY = double.MinValue;
+
+        foreach (var pos in _viewModel.Positions.Values)
+        {
+            minX = Math.Min(minX, pos.X);
+            minY = Math.Min(minY, pos.Y);
+            maxX = Math.Max(maxX, pos.X);
+            maxY = Math.Max(maxY, pos.Y);
+        }
+
+        double padding = 50;
+        double centerX = (minX + maxX) / 2 * DisplayScale;
+        double centerY = (minY + maxY) / 2 * DisplayScale;
+        
+        CanvasScrollViewer.ChangeView(centerX, centerY, null, disableAnimation: false);
+        StatusText.Text = "Zoomed to fit all tracks";
+    }
+
+    private void ZoomReset_Click(object sender, RoutedEventArgs e)
+    {
+        CanvasScrollViewer.ChangeView(0, 0, null, disableAnimation: false);
+        StatusText.Text = "Zoom reset";
     }
 }

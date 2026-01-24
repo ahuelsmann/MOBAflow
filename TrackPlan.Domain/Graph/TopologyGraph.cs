@@ -57,6 +57,16 @@ public sealed class TopologyGraph
     public TrackNode? GetNode(Guid nodeId) => _nodes.FirstOrDefault(n => n.Id == nodeId);
 
     /// <summary>
+    /// Remove a node by its ID.
+    /// </summary>
+    public bool RemoveNode(Guid nodeId) => _nodes.RemoveAll(n => n.Id == nodeId) > 0;
+
+    /// <summary>
+    /// Remove an edge by its ID.
+    /// </summary>
+    public bool RemoveEdge(Guid edgeId) => _edges.RemoveAll(e => e.Id == edgeId) > 0;
+
+    /// <summary>
     /// Clear all nodes and edges.
     /// </summary>
     public void Clear()

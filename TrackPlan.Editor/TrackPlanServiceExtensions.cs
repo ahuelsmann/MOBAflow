@@ -45,6 +45,9 @@ public static class TrackPlanServiceExtensions
         services.AddSingleton<ITopologyConstraint, DuplicateFeedbackPointNumberConstraint>();
         services.AddSingleton<ITopologyConstraint, GeometryConnectionConstraint>();
 
+        // Register array of all ITopologyConstraint implementations
+        services.AddSingleton(sp => sp.GetRequiredService<IEnumerable<ITopologyConstraint>>().ToArray());
+
         // ViewModel (transient - one per editor instance)
         services.AddTransient<TrackPlanEditorViewModel>();
 

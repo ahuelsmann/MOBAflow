@@ -13,7 +13,4 @@
     <ItemGroup>
       <ProjectReference Include="..\TrackPlan.Domain\TrackPlan.Domain.csproj" />
     </ItemGroup>
-    <ItemGroup>
-      <Folder Include="Model\" />
-    </ItemGroup>
 </Project>

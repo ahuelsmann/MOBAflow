@@ -17,13 +17,13 @@ public sealed class ValidationService
 
     public IReadOnlyList<ConstraintViolation> Validate(TopologyGraph graph)
     {
-        graph.Constraints.Clear();
+        var constraints = new ITopologyConstraint[]
+        {
+            new GeometryConnectionConstraint(_catalog),
+            new DuplicateFeedbackPointNumberConstraint()
+        };
 
-        graph.Constraints.Add(new GeometryConnectionConstraint(_catalog));
-        graph.Constraints.Add(new DuplicateFeedbackPointNumberConstraint());
-        // weitere Constraints bei Bedarf…
-
-        return graph.Validate().ToList();
+        return graph.Validate(constraints).ToList();
     }
 
     // bestehende Serialize/Deserialize kannst du hier lassen
