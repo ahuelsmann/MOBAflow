@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Moba.TrackPlan.Geometry</RootNamespace>
+    <TargetFramework>net9.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\TrackPlan.Renderer\Geometry\ArcPrimitive.cs" Link="Geometry\ArcPrimitive.cs" />
+    <Compile Include="..\TrackPlan.Renderer\Geometry\CurveGeometry.cs" Link="Geometry\CurveGeometry.cs" />
+    <Compile Include="..\TrackPlan.Renderer\Geometry\IGeometryPrimitive.cs" Link="Geometry\IGeometryPrimitive.cs" />
+    <Compile Include="..\TrackPlan.Renderer\Geometry\LinePrimitive.cs" Link="Geometry\LinePrimitive.cs" />
+    <Compile Include="..\TrackPlan.Renderer\Geometry\StraightGeometry.cs" Link="Geometry\StraightGeometry.cs" />
+    <Compile Include="..\TrackPlan.Renderer\Geometry\SwitchGeometry.cs" Link="Geometry\SwitchGeometry.cs" />
+    <Compile Include="..\TrackPlan.Renderer\Geometry\ThreeWaySwitchGeometry.cs" Link="Geometry\ThreeWaySwitchGeometry.cs" />
+    <Compile Include="..\TrackPlan.Renderer\World\Point2D.cs" Link="World\Point2D.cs" />
+  </ItemGroup>
+</Project>

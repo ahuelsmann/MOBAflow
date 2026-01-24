@@ -37,7 +37,9 @@
   </Project>
   <Project Path="Test/Test.csproj" Id="0c1e5217-ca11-41f0-83b1-5b26ca7e3b4d" />
   <Project Path="TrackLibrary.PikoA/TrackLibrary.PikoA.csproj" />
+  <Project Path="TrackPlan.Domain/TrackPlan.Domain.csproj" />
   <Project Path="TrackPlan.Editor/TrackPlan.Editor.csproj" Id="9d710101-e897-4d8d-b2cb-65b001fa8064" />
+  <Project Path="TrackPlan.Geometry/TrackPlan.Geometry.csproj" />
   <Project Path="TrackPlan.Renderer/TrackPlan.Renderer.csproj" Id="8dafe6f3-0aa2-4cb9-bd6f-35282159ba7e" />
   <Project Path="TrackPlan/TrackPlan.csproj" Id="0683c0d6-96f6-4046-af87-177a6e5fc980" />
   <Project Path="WebApp/WebApp.csproj" />

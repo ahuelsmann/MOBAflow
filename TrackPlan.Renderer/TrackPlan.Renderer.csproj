@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <RootNamespace>Moba.TrackPlan.Renderer</RootNamespace>
         <TargetFramework>net9.0</TargetFramework>
@@ -11,9 +11,14 @@
       <PackageReference Include="SkiaSharp" />
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\TrackPlan\TrackPlan.csproj" />
+      <ProjectReference Include="..\TrackPlan.Geometry\TrackPlan.Geometry.csproj" />
+      <ProjectReference Include="..\TrackPlan.Domain\TrackPlan.Domain.csproj" />
     </ItemGroup>
     <ItemGroup>
       <Folder Include="Model\" />
+    </ItemGroup>
+    <ItemGroup>
+        <Compile Remove="Geometry\**\*.cs" />
+        <Compile Remove="World\Point2D.cs" />
     </ItemGroup>
 </Project>

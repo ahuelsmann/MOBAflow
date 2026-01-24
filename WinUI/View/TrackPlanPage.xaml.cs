@@ -11,7 +11,6 @@ using Moba.TrackLibrary.PikoA.Catalog;
 using Moba.TrackPlan.Constraint;
 using Moba.TrackPlan.Editor.ViewModel;
 using Moba.TrackPlan.Graph;
-using Moba.TrackPlan.Renderer.World;
 using Moba.TrackPlan.TrackSystem;
 using Moba.WinUI.Rendering;
 
@@ -30,6 +29,7 @@ public sealed partial class TrackPlanPage : Page
     private const double SnapDistance = 30.0;
     private const double GridSize = 50.0;
     private const double PortRadius = 8.0;
+    private const double SingleRotationHandleLength = 80.0;
 
     private readonly TrackPlanEditorViewModel _viewModel;
     private readonly ITrackCatalog _catalog = new PikoATrackCatalog();
@@ -127,9 +127,9 @@ public sealed partial class TrackPlanPage : Page
         // Hovered track - accent with reduced emphasis (slightly darker)
         var hoverColor = accentColor;
         if (hoverColor.A > 0)
-            hoverColor = Color.FromArgb(hoverColor.A, 
-                (byte)(hoverColor.R * 0.8), 
-                (byte)(hoverColor.G * 0.8), 
+            hoverColor = Color.FromArgb(hoverColor.A,
+                (byte)(hoverColor.R * 0.8),
+                (byte)(hoverColor.G * 0.8),
                 (byte)(hoverColor.B * 0.8));
         _trackHoverBrush = new SolidColorBrush(hoverColor);
 
@@ -204,30 +204,99 @@ public sealed partial class TrackPlanPage : Page
         else args.Cancel = true;
     }
 
-    private void GraphCanvas_DragOver(object sender, DragEventArgs e)
+    private async void GraphCanvas_DragEnter(object sender, DragEventArgs e)
+    {
+        if (!e.DataView.Contains(StandardDataFormats.Text))
+        {
+            _viewModel.CancelGhostPlacement();
+            return;
+        }
+
+        var deferral = e.GetDeferral();
+        try
+        {
+            var templateId = await e.DataView.GetTextAsync();
+            _viewModel.BeginGhostPlacement(templateId);
+        }
+        finally
+        {
+            deferral.Complete();
+        }
+    }
+
+    private void GraphCanvas_DragLeave(object sender, DragEventArgs e)
+    {
+        _viewModel.CancelGhostPlacement();
+        RenderGraph();
+    }
+
+    private async void GraphCanvas_DragOver(object sender, DragEventArgs e)
     {
         e.AcceptedOperation = DataPackageOperation.Copy;
         e.DragUIOverride.Caption = "Drop to place track";
+
+        if (!e.DataView.Contains(StandardDataFormats.Text))
+        {
+            _viewModel.CancelGhostPlacement();
+            RenderGraph();
+            return;
+        }
+
+        var deferral = e.GetDeferral();
+        try
+        {
+            var templateId = await e.DataView.GetTextAsync();
+            if (_viewModel.GhostPlacement is null || _viewModel.GhostPlacement.TemplateId != templateId)
+                _viewModel.BeginGhostPlacement(templateId);
+
+            var pos = e.GetPosition(GraphCanvas);
+            var world = new Point2D(pos.X / DisplayScale, pos.Y / DisplayScale);
+
+            _viewModel.UpdateGhostPlacement(
+                world,
+                gridSnap: GridToggle.IsChecked == true,
+                gridSize: GridSize,
+                snapDistance: SnapDistance,
+                snapEnabled: SnapToggle.IsChecked == true);
+
+            RenderGraph();
+        }
+        finally
+        {
+            deferral.Complete();
+        }
     }
 
     private async void GraphCanvas_Drop(object sender, DragEventArgs e)
     {
         if (!e.DataView.Contains(StandardDataFormats.Text))
+        {
+            _viewModel.CancelGhostPlacement();
             return;
+        }
 
         var templateId = await e.DataView.GetTextAsync();
         var pos = e.GetPosition(GraphCanvas);
 
         var world = new Point2D(pos.X / DisplayScale, pos.Y / DisplayScale);
+        var placement = _viewModel.GhostPlacement is not null
+            ? _viewModel.CommitGhostPlacement(SnapToggle.IsChecked == true, SnapDistance)
+            : null;
+
+        var finalPosition = placement?.Position ?? world;
+        var rotation = placement?.RotationDeg ?? 0.0;
+        var preview = placement?.Preview;
 
         var status = _viewModel.DropTrack(
             templateId,
-            world,
-            gridSnap: GridToggle.IsChecked == true,
+            finalPosition,
+            gridSnap: GridToggle.IsChecked == true && placement is null,
             gridSize: GridSize,
             snapEnabled: SnapToggle.IsChecked == true,
             snapDistance: SnapDistance,
-            out _);
+            out _,
+            rotationDegOverride: rotation,
+            snapPreview: preview);
 
         StatusText.Text = status;
 
@@ -400,6 +469,19 @@ public sealed partial class TrackPlanPage : Page
         return (new Point2D(centerX, centerY), new Point2D(centerX, handleY));
     }
 
+    private (Point2D Center, Point2D HandlePosition)? GetSingleRotationHandleInfo()
+    {
+        if (_viewModel.SelectedTrackIds.Count != 1)
+            return null;
+
+        var id = _viewModel.SelectedTrackId ?? _viewModel.SelectedTrackIds.First();
+        if (!_viewModel.Positions.TryGetValue(id, out var pos))
+            return null;
+
+        var handle = new Point2D(pos.X, pos.Y - SingleRotationHandleLength);
+        return (pos, handle);
+    }
+
     private void GraphCanvas_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
         var p = e.GetCurrentPoint(GraphCanvas);
@@ -450,6 +532,34 @@ public sealed partial class TrackPlanPage : Page
 
                     GraphCanvas.CapturePointer(e.Pointer);
                     StatusText.Text = "Rotating group...";
+                    return;
+                }
+            }
+
+            var singleHandleInfo = GetSingleRotationHandleInfo();
+            if (singleHandleInfo.HasValue)
+            {
+                var (center, handlePos) = singleHandleInfo.Value;
+                var distToHandle = Math.Sqrt(Math.Pow(world.X - handlePos.X, 2) + Math.Pow(world.Y - handlePos.Y, 2));
+
+                if (distToHandle < 20)
+                {
+                    _isRotatingGroup = true;
+                    _rotationCenter = center;
+                    _rotationStartAngle = Math.Atan2(world.Y - center.Y, world.X - center.X);
+                    _rotationStartRotations.Clear();
+                    _rotationStartPositions.Clear();
+
+                    foreach (var trackId in _viewModel.SelectedTrackIds)
+                    {
+                        if (_viewModel.Rotations.TryGetValue(trackId, out var rot))
+                            _rotationStartRotations[trackId] = rot;
+                        if (_viewModel.Positions.TryGetValue(trackId, out var pos2))
+                            _rotationStartPositions[trackId] = pos2;
+                    }
+
+                    GraphCanvas.CapturePointer(e.Pointer);
+                    StatusText.Text = "Rotating track...";
                     return;
                 }
             }
@@ -599,7 +709,7 @@ public sealed partial class TrackPlanPage : Page
 
         var pos = point.Position;
         var world = new Point2D(pos.X / DisplayScale, pos.Y / DisplayScale);
-        var isCtrlPressed = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control)
+        var isCtrlPressed = Microsoft.UI.Input.KeyboardHelper.GetKeyState(Windows.System.VirtualKey.Control)
             .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
 
         var status = _viewModel.PointerUp(
@@ -975,6 +1085,41 @@ public sealed partial class TrackPlanPage : Page
             _trackSelectedBrush,
             _trackHoverBrush);
 
+        if (_viewModel.GhostPlacement is { } ghostPlacement)
+        {
+            var ghostTemplate = _catalog.GetById(ghostPlacement.TemplateId);
+            if (ghostTemplate is not null)
+            {
+                var ghostPosition = ghostPlacement.Position;
+                var ghostRotation = ghostPlacement.RotationDeg;
+
+                if (_viewModel.CurrentSnapPreview is { } preview)
+                {
+                    ghostPosition = preview.PreviewPosition;
+                    ghostRotation = preview.PreviewRotation;
+                }
+
+                _renderer.RenderGhostTrack(
+                    GraphCanvas,
+                    ghostTemplate,
+                    ghostPosition,
+                    ghostRotation,
+                    _snapPreviewBrush);
+            }
+        }
+
+        var dragPreview = _viewModel.GetCurrentDragPreviewPose();
+        if (dragPreview is { } dp)
+        {
+            _renderer.RenderGhostTrack(
+                GraphCanvas,
+                dp.Template,
+                dp.Position,
+                dp.RotationDeg,
+                _snapPreviewBrush);
+        }
+
+        RenderSingleRotationHandle();
         RenderPorts();
         RenderFeedback();
         RenderIsolators();
@@ -982,6 +1127,45 @@ public sealed partial class TrackPlanPage : Page
         RenderSnapPreview();
         RenderSelectionRectangle();
         RenderSelectionBoundingBox();
+    }
+
+    private void RenderSingleRotationHandle()
+    {
+        if (_viewModel.SelectedTrackIds.Count != 1 || !_viewModel.SelectedTrackId.HasValue)
+            return;
+
+        var id = _viewModel.SelectedTrackId.Value;
+        if (!_viewModel.Positions.TryGetValue(id, out var pos))
+            return;
+
+        var startX = pos.X * DisplayScale;
+        var startY = pos.Y * DisplayScale;
+        var endY = startY - SingleRotationHandleLength * DisplayScale;
+
+        var line = new Line
+        {
+            X1 = startX,
+            Y1 = startY,
+            X2 = startX,
+            Y2 = endY,
+            Stroke = _trackSelectedBrush,
+            StrokeThickness = 2
+        };
+
+        var circle = new Ellipse
+        {
+            Width = 18,
+            Height = 18,
+            Fill = _trackSelectedBrush,
+            Stroke = new SolidColorBrush(Colors.White),
+            StrokeThickness = 2
+        };
+
+        Canvas.SetLeft(circle, startX - 9);
+        Canvas.SetTop(circle, endY - 9);
+
+        GraphCanvas.Children.Add(line);
+        GraphCanvas.Children.Add(circle);
     }
 
     private void RenderGrid()
@@ -1259,22 +1443,23 @@ public sealed partial class TrackPlanPage : Page
             X2 = toX,
             Y2 = toY,
             Stroke = _snapPreviewBrush,
-            StrokeThickness = 2,
-            StrokeDashArray = new DoubleCollection { 4, 2 }
+            StrokeThickness = 3,
+            StrokeDashArray = null,
+            Opacity = 0.85
         };
         GraphCanvas.Children.Add(line);
 
         // Highlight moving port (which port will snap)
         var movingRing = new Ellipse
         {
-            Width = PortRadius * 4,
-            Height = PortRadius * 4,
+            Width = PortRadius * 3,
+            Height = PortRadius * 3,
             Stroke = _snapPreviewBrush,
-            StrokeThickness = 3,
-            Fill = null
+            StrokeThickness = 2.5,
+            Fill = new SolidColorBrush(_snapPreviewBrush.Color) { Opacity = 0.2 }
         };
-        Canvas.SetLeft(movingRing, fromX - PortRadius * 2);
-        Canvas.SetTop(movingRing, fromY - PortRadius * 2);
+        Canvas.SetLeft(movingRing, fromX - PortRadius * 1.5);
+        Canvas.SetTop(movingRing, fromY - PortRadius * 1.5);
         GraphCanvas.Children.Add(movingRing);
 
         // Label for moving port
@@ -1283,7 +1468,8 @@ public sealed partial class TrackPlanPage : Page
             Text = preview.MovingPortId,
             FontSize = 12,
             FontWeight = Microsoft.UI.Text.FontWeights.Bold,
-            Foreground = _snapPreviewBrush
+            Foreground = _snapPreviewBrush,
+            Opacity = 0.9
         };
         Canvas.SetLeft(movingLabel, fromX + 10);
         Canvas.SetTop(movingLabel, fromY - 10);
@@ -1292,14 +1478,14 @@ public sealed partial class TrackPlanPage : Page
         // Highlight target port
         var targetRing = new Ellipse
         {
-            Width = PortRadius * 4,
-            Height = PortRadius * 4,
+            Width = PortRadius * 3,
+            Height = PortRadius * 3,
             Stroke = _snapPreviewBrush,
-            StrokeThickness = 3,
-            Fill = null
+            StrokeThickness = 2.5,
+            Fill = new SolidColorBrush(_snapPreviewBrush.Color) { Opacity = 0.2 }
         };
-        Canvas.SetLeft(targetRing, toX - PortRadius * 2);
-        Canvas.SetTop(targetRing, toY - PortRadius * 2);
+        Canvas.SetLeft(targetRing, toX - PortRadius * 1.5);
+        Canvas.SetTop(targetRing, toY - PortRadius * 1.5);
         GraphCanvas.Children.Add(targetRing);
 
         // Label for target port
@@ -1308,7 +1494,8 @@ public sealed partial class TrackPlanPage : Page
             Text = preview.TargetPortId,
             FontSize = 12,
             FontWeight = Microsoft.UI.Text.FontWeights.Bold,
-            Foreground = _snapPreviewBrush
+            Foreground = _snapPreviewBrush,
+            Opacity = 0.9
         };
         Canvas.SetLeft(targetLabel, toX + 10);
         Canvas.SetTop(targetLabel, toY - 10);
@@ -1319,14 +1506,14 @@ public sealed partial class TrackPlanPage : Page
 
         var previewDot = new Ellipse
         {
-            Width = 12,
-            Height = 12,
+            Width = 14,
+            Height = 14,
             Fill = _snapPreviewBrush,
-            Opacity = 0.6
+            Opacity = 0.7
         };
 
-        Canvas.SetLeft(previewDot, previewX - 6);
-        Canvas.SetTop(previewDot, previewY - 6);
+        Canvas.SetLeft(previewDot, previewX - 7);
+        Canvas.SetTop(previewDot, previewY - 7);
         GraphCanvas.Children.Add(previewDot);
     }
 

@@ -8,6 +8,6 @@
         <Description>Piko A-Gleis H0 track system library for MOBAflow</Description>
     </PropertyGroup>
     <ItemGroup>
-        <ProjectReference Include="..\TrackPlan\TrackPlan.csproj" />
+        <ProjectReference Include="..\TrackPlan.Domain\TrackPlan.Domain.csproj" />
     </ItemGroup>
 </Project>

@@ -34,10 +34,10 @@
                 IsChecked="True"
                 Label="Snap" />
             <AppBarToggleButton
-                x:Name="GridToggle"
-                Icon="ViewAll"
-                IsChecked="True"
-                Label="Grid" />
+                 x:Name="GridToggle"
+                 Icon="ViewAll"
+                 IsChecked="False"
+                 Label="Grid" />
         </CommandBar>
 
         <!--  Main Content with VisualStateManager for responsive layout  -->
@@ -229,6 +229,8 @@
                         Height="2000"
                         AllowDrop="True"
                         Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+                        DragEnter="GraphCanvas_DragEnter"
+                        DragLeave="GraphCanvas_DragLeave"
                         DragOver="GraphCanvas_DragOver"
                         Drop="GraphCanvas_Drop"
                         PointerMoved="GraphCanvas_PointerMoved"
