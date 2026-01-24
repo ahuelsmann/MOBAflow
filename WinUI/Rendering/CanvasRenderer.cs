@@ -63,11 +63,16 @@ public class CanvasRenderer
         TrackTemplate template,
         Point2D position,
         double rotationDeg,
-        SolidColorBrush ghostBrush)
+        SolidColorBrush ghostBrush,
+        double opacity = -1)
     {
+        // Use provided opacity, or default based on theme (0.75 light, 0.85 dark)
+        if (opacity < 0)
+            opacity = 0.75; // Default for light theme
+
         var brush = new SolidColorBrush(ghostBrush.Color)
         {
-            Opacity = GhostOpacity
+            Opacity = opacity
         };
         DrawTrackWithGeometry(canvas, template, position, rotationDeg, brush, isGhost: true);
     }

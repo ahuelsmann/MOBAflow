@@ -23,6 +23,15 @@ public sealed record GhostTrackPlacement(
     Point2D Position,
     double RotationDeg);
 
+/// <summary>
+/// Represents multiple ghost tracks from a selection drag operation.
+/// Stores initial positions and current offsets for all dragged tracks.
+/// </summary>
+public sealed record MultiGhostPlacement(
+    IReadOnlyList<Guid> TrackIds,
+    IReadOnlyDictionary<Guid, Point2D> InitialPositions,
+    Point2D CurrentOffset);
+
 public sealed class TrackPlanEditorViewModel
 {
     /// <summary>
@@ -95,6 +104,11 @@ public sealed class TrackPlanEditorViewModel
     /// Current ghost placement while dragging a template from the toolbox.
     /// </summary>
     public GhostTrackPlacement? GhostPlacement { get; private set; }
+
+    /// <summary>
+    /// Ghost placement for dragging multiple selected tracks.
+    /// </summary>
+    public MultiGhostPlacement? MultiGhostPlacement { get; private set; }
 
     /// <summary>
     /// Gets the current selection rectangle during rectangle selection.
@@ -905,86 +919,62 @@ public sealed class TrackPlanEditorViewModel
         CurrentSnapPreview = null;
     }
 
-    public void ClearSelection()
+    public void BeginMultiGhostPlacement(IReadOnlyList<Guid> trackIds)
     {
-        _selectedTrackId = null;
-        _hoveredTrackId = null;
-        _draggedTrackId = null;
-        _isDragging = false;
-        _dragGroup = null;
-        _dragGroupOffsets = null;
-        _isRectangleSelecting = false;
-        GhostPlacement = null;
-        CurrentSnapPreview = null;
-        SelectedTrackIds.Clear();
-    }
-
-    /// <summary>
-    /// Selects all tracks connected to the specified track (for triple-click).
-    /// </summary>
-    public void SelectConnectedGroup(Guid edgeId)
-    {
-        var group = ConnectionService.GetConnectedGroup(edgeId);
-
-        SelectedTrackIds.Clear();
-        foreach (var id in group)
-            SelectedTrackIds.Add(id);
-
-        _selectedTrackId = edgeId;
-    }
-
-    /// <summary>
-    /// Selects all tracks along the shortest path between two tracks (for Shift+Click).
-    /// </summary>
-    public void SelectPathBetween(Guid fromEdgeId, Guid toEdgeId)
-    {
-        var path = ConnectionService.FindShortestPath(fromEdgeId, toEdgeId);
-
-        if (path.Count == 0)
+        if (trackIds.Count == 0)
             return;
 
-        foreach (var id in path)
-            SelectedTrackIds.Add(id);
-
-        _selectedTrackId = toEdgeId;
-    }
-
-    /// <summary>
-    /// Toggles the active branch for a switch track (for double-click).
-    /// </summary>
-    public void ToggleSwitchBranch(Guid edgeId)
-    {
-        var edge = Graph.Edges.FirstOrDefault(e => e.Id == edgeId);
-        if (edge is null) return;
-
-        var template = _catalog.GetById(edge.TemplateId);
-        if (template?.Geometry.GeometryKind != TrackGeometryKind.Switch) return;
-
-        // Get all branch ports (typically B, C, etc. - excluding the common A port)
-        var branchPorts = template.Ends
-            .Where(e => e.Id != "A")
-            .Select(e => e.Id)
-            .ToList();
-
-        if (branchPorts.Count < 2) return;
-
-        // Get current branch or default to first
-        if (!_switchBranchStates.TryGetValue(edgeId, out var currentBranch))
+        var initialPositions = new Dictionary<Guid, Point2D>();
+        foreach (var trackId in trackIds)
         {
-            currentBranch = branchPorts[0];
+            if (Positions.TryGetValue(trackId, out var pos))
+                initialPositions[trackId] = pos;
         }
 
-        // Cycle to next branch
-        var currentIndex = branchPorts.IndexOf(currentBranch);
-        var nextIndex = (currentIndex + 1) % branchPorts.Count;
-        _switchBranchStates[edgeId] = branchPorts[nextIndex];
+        MultiGhostPlacement = new MultiGhostPlacement(trackIds, initialPositions, new Point2D(0, 0));
+        CurrentSnapPreview = null;
+    }
+
+    public void UpdateMultiGhostPlacement(Point2D newOffset, bool gridSnap, double gridSize)
+    {
+        if (MultiGhostPlacement is null)
+            return;
+
+        var offset = newOffset;
+
+        if (gridSnap)
+        {
+            offset = new Point2D(
+                Math.Round(offset.X / gridSize) * gridSize,
+                Math.Round(offset.Y / gridSize) * gridSize);
+        }
+
+        MultiGhostPlacement = MultiGhostPlacement with { CurrentOffset = offset };
+    }
+
+    public void CommitMultiGhostPlacement()
+    {
+        if (MultiGhostPlacement is null)
+            return;
+
+        // Offset wurde bereits in PointerMove auf Positionen angewendet
+        MultiGhostPlacement = null;
+        CurrentSnapPreview = null;
     }
 
     /// <summary>
-    /// Gets the currently active branch for a switch track.
+    /// Finds nearest snap target for the first track in the multi-ghost selection.
+    /// (First iteration: snap primary track; can be extended to snap all connected ports)
     /// </summary>
-    public string? GetActiveSwitchBranch(Guid edgeId) =>
-        _switchBranchStates.TryGetValue(edgeId, out var branch) ? branch : null;
+    public SnapPreview? FindNearestSnapTargetForMulti(IReadOnlyList<Guid> trackIds, double snapDistance)
+    {
+        if (trackIds.Count == 0)
+            return null;
+
+        // For now, snap the first track in selection
+        // TODO: Extended version could consider all ports of all tracks
+        return FindNearestSnapTarget(trackIds[0], snapDistance);
+    }
 
     // ------------------------------------------------------------
     // Validation & Serialization
@@ -1194,4 +1184,101 @@ public sealed class TrackPlanEditorViewModel
 
         return (template, CurrentSnapPreview.PreviewPosition, CurrentSnapPreview.PreviewRotation);
     }
+
+    public void FindAndSetSnapPreview(Guid trackId, double snapDistance)
+    {
+        CurrentSnapPreview = FindNearestSnapTarget(trackId, snapDistance);
+    }
+
+    public void FindAndSetSnapPreviewForMulti(IReadOnlyList<Guid> trackIds, double snapDistance)
+    {
+        CurrentSnapPreview = FindNearestSnapTargetForMulti(trackIds, snapDistance);
+    }
+
+    public void ClearSnapPreview()
+    {
+        CurrentSnapPreview = null;
+    }
+
+    public void ClearSelection()
+    {
+        _selectedTrackId = null;
+        _hoveredTrackId = null;
+        _draggedTrackId = null;
+        _isDragging = false;
+        _dragGroup = null;
+        _dragGroupOffsets = null;
+        _isRectangleSelecting = false;
+        GhostPlacement = null;
+        MultiGhostPlacement = null;
+        CurrentSnapPreview = null;
+        SelectedTrackIds.Clear();
+    }
+
+    /// <summary>
+    /// Selects all tracks connected to the specified track (for triple-click).
+    /// </summary>
+    public void SelectConnectedGroup(Guid edgeId)
+    {
+        var group = ConnectionService.GetConnectedGroup(edgeId);
+
+        SelectedTrackIds.Clear();
+        foreach (var id in group)
+            SelectedTrackIds.Add(id);
+
+        _selectedTrackId = edgeId;
+    }
+
+    /// <summary>
+    /// Selects all tracks along the shortest path between two tracks (for Shift+Click).
+    /// </summary>
+    public void SelectPathBetween(Guid fromEdgeId, Guid toEdgeId)
+    {
+        var path = ConnectionService.FindShortestPath(fromEdgeId, toEdgeId);
+
+        if (path.Count == 0)
+            return;
+
+        foreach (var id in path)
+            SelectedTrackIds.Add(id);
+
+        _selectedTrackId = toEdgeId;
+    }
+
+    /// <summary>
+    /// Toggles the active branch for a switch track (for double-click).
+    /// </summary>
+    public void ToggleSwitchBranch(Guid edgeId)
+    {
+        var edge = Graph.Edges.FirstOrDefault(e => e.Id == edgeId);
+        if (edge is null) return;
+
+        var template = _catalog.GetById(edge.TemplateId);
+        if (template?.Geometry.GeometryKind != TrackGeometryKind.Switch) return;
+
+        // Get all branch ports (typically B, C, etc. - excluding the common A port)
+        var branchPorts = template.Ends
+            .Where(e => e.Id != "A")
+            .Select(e => e.Id)
+            .ToList();
+
+        if (branchPorts.Count < 2) return;
+
+        // Get current branch or default to first
+        if (!_switchBranchStates.TryGetValue(edgeId, out var currentBranch))
+        {
+            currentBranch = branchPorts[0];
+        }
+
+        // Cycle to next branch
+        var currentIndex = branchPorts.IndexOf(currentBranch);
+        var nextIndex = (currentIndex + 1) % branchPorts.Count;
+        _switchBranchStates[edgeId] = branchPorts[nextIndex];
+    }
+
+    /// <summary>
+    /// Gets the currently active branch for a switch track.
+    /// </summary>
+    public string? GetActiveSwitchBranch(Guid edgeId) =>
+        _switchBranchStates.TryGetValue(edgeId, out var branch) ? branch : null;
 }

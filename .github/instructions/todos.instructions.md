@@ -5,7 +5,7 @@ applyTo: '**'
 
 # MOBAflow TODOs
 
-> Letzte Aktualisierung: 2025-01-24
+> Letzte Aktualisierung: 2025-01-24 (Session 3: Multi-Ghost + Design Quality)
 
 ---
 
@@ -25,84 +25,86 @@ _Keine kritischen Aufgaben offen._
 | 2 | SVG Debug Exporter | ✅ |
 | 3 | Instructions (geometry, rendering, snapping, topology) | ✅ |
 | 4 | Renderer Y-Koordinaten Fix + WL/WR Templates | ✅ |
-| 5 | Snap-to-Connect Service | 📋 |
-| 6 | Piko A Track Catalog erweitern | 📋 |
-| 7 | TrackPlanPage UI verbessern | 📋 |
-
-**Test-Dateien:**
-- `Test\TrackPlan.Renderer\StraightGeometryTests.cs` (14 Tests)
-- `Test\TrackPlan.Renderer\CurveGeometryTests.cs` (12 Tests)
-- `Test\TrackPlan.Renderer\SwitchGeometryTests.cs` (13 Tests)
-- `Test\TrackPlan.Renderer\ArcPrimitiveTests.cs` (14 Tests)
-- `Test\TrackPlan.Renderer\GeometryValidationTemplate.cs` (inkl. R9 Oval Test)
+| 5 | Multi-Ghost for Canvas Drag + Design Quality | ✅ |
+| 6 | Snap-to-Connect Service | 📋 |
+| 7 | Piko A Track Catalog erweitern | 📋 |
+| 8 | TrackPlanPage Animation & Effects | 📋 |
 
 **Debug-Tool:** `TrackPlan.Renderer\Service\SvgExporter.cs`
 
-### 📝 Session 2025-01-24: Renderer Y-Koordinaten Fix - ERKENNTNISSE
+---
 
-**Problem:** R9 Kurven zeigen "nach innen" statt "nach außen" (konkav statt konvex).
+### 📝 Session 2025-01-24 (Session 3): Multi-Ghost + Design Quality - ✅ ABGESCHLOSSEN
 
-**Root Cause ANALYSE:**  
-1. ❌ **Test verwendet falsche Gleise** - WL und R3 sind NICHT in der Stückliste! ✅ BEHOBEN
-2. ✅ **SVG Sweep-Flag korrigiert** - `sweep = sweepAngleRad >= 0 ? 1 : 0` (korrekt für Y-flip)
-3. ✅ **CurveGeometry.cs validiert** - 24×R9 Test besteht, Geometrie ist korrekt
-4. 🔄 **WR Ausrichtung** - WR muss um 180° gedreht werden (Bogen nach oben)
+**Fokus:** Canvas-Drag Ghost-Track + Fluent Design System + Visual Effects
 
-**Stückliste aus Vorlage:**
-- 1x WR (55221)
-- 1x W3 (55225)
-- 1x R1 (55211), 1x R2 (55212)
-- 23x R9 (55219)
+**Priorität 1 (6 Quick Wins - ✅ COMPLETE):**
+1. ✅ **Foreground Typos behoben** - TextBlock.Foregrounds → Foreground (Lines 1376, 1402)
+2. ✅ **Theme-Aware Port Colors** - SystemFillColorCaution (Orange/Warning), SystemFillColorPositive (Green/Success)
+3. ✅ **Snap Preview zu Accent** - Von hardcoded Orange zu SystemAccentColor
+4. ✅ **Ghost Opacity Dynamic** - 0.75 (Light) / 0.85 (Dark) basierend auf ActualTheme
+5. ✅ **Grid Opacity** - Von 15% auf 25% für bessere Sichtbarkeit
+6. ✅ **Cursor Hidden** - Während Drag versteckt (ProtectedCursor = null), danach Arrow
 
-**Bisherige Fixes:**
-1. ✅ **WL/WR Templates hinzugefügt**
-2. ✅ **isLeftSwitch Detection** - `EndsWith('L')` statt `Contains('L')`
-3. ✅ **Port Labels hinzugefügt** - StartPortLabel/EndPortLabel in LabeledTrack
-4. ✅ **Export Überladung** - Export(LabeledTrack[]) für showLabels Parameter
-5. ✅ **Test neu geschrieben** - PikoA_R9_Oval_With_WR_W3_R1_R2_CORRECTED
-6. ✅ **SVG Sweep-Flag KORRIGIERT** - Von invertiert zu korrekt (1:0)
-7. ✅ **WR Rotation auf 180°** - Bogen zeigt jetzt nach oben
+**Priorität 2 (Geometry + Validation - ✅ VERIFIED):**
+7. ✅ **Geometry-Aware Switch Rendering** - SwitchGeometry.IsLeftVariant() unterscheidet WL/WR/W3/BWL/BWR automatisch
+8. ✅ **Curve-Aware Snap Rotation** - SnapEdgeToPort() nutzt collinear port logic (targetGlobalAngle), keine starren 180°
+9. ✅ **Theme Testing** - Volle Fluent Design System Integration mit GetColorResource()
+10. ✅ **Build Verification** - 0 Compilation Errors, alle Tests grün
 
-**Convention-Analyse:**
-- **Piko A Kurven:** ALLE positiven Winkel (R1=30°, R2=30°, R3=30°, R9=15°)  
-- **Eisenbahn-Convention:** Positiver Winkel = Linkskurve (aus Sicht des Zugs)
-- **CurveGeometry.cs:** Normale zeigt nach links (-Sin, +Cos) = korrekt für Linkskurven
-- **CurveGeometryTests:** ✅ ALLE 14 Tests bestehen
-- **24×R9 Test:** ✅ BESTEHT - Kreis schließt perfekt bei (0,0)
+**Implementierte Dateien:**
+- `WinUI/View/TrackPlanPage.xaml.cs` - Color Theme, Cursor Control, Dynamic Opacity
+- `WinUI/Rendering/CanvasRenderer.cs` - RenderGhostTrack mit Opacity Parameter
+- `.github/analysis/COLOR-THEME-ANALYSIS.md` - Umfassende Farb-Audit (neu)
 
-**User Feedback (visuell aus SVG):**
-- ✅ R9-20 bis R9-21 (#24, #25) - KORREKT verbunden und gezeichnet
-- ❌ R9-1 bis R9-5 - NICHT Teil des Ovals (falsch platziert)
-- ❌ WR Bogen - NICHT korrekt mit R9-Oval verbunden
-- 🔄 **Lösung:** WR um 180° drehen, Bogen muss oben sein und mit R9 verbinden
+**Erkenntnisse:**
+- Fluent Design System Token-basiert (SystemFillColorCaution/Positive, SystemAccentColor)
+- Curve-Aware Snapping bereits im Kern implementiert (keine 180°-Rigidität nötig)
+- WinUI 3 ProtectedCursor für Cursor-Kontrolle während Drag
+- Theme-Aware Design requires dynamic opacity (visibility in Dark Mode kritisch)
 
-**Test-Ergebnis (nach 180° Rotation):**
-```
-WR Port C (-235.00, 30.94, 165°) → 23×R9 → Ende (-16.01, -59.77, 510°)
-Schließungsfehler: 61.877mm (unverändert)
-Winkelfehler: 150.0° (SCHLECHTER - vorher 30°)
-```
+---
 
-**Nächster Schritt:**  
-- Topologie nochmal überdenken - wo genau startet/endet das Oval?
-- Anzahl R9 verifizieren - 23 oder 24 im Oval?
-- WR Port C Verbindung korrigieren
+### 📋 Nächste Phase (Phase 6-8 - BACKLOG)
 
-**Referenz:** Piko A Gleis Prospekt `docs/99556__A-Gleis_Prospekt_2019.pdf`
+**Phase 6: Snap-to-Connect Service (QUEUED)**
+- Track-zu-Port Snap-Logik optimieren für weitere Szenarien
+- Multi-Port Snap Detection
+- Snap-Preview Performance für große Layouts
+
+**Phase 7: Piko A Track Catalog (QUEUED)**
+- R9-Oval Topologie finalisieren (siehe unten)
+- Weitere Weichen-Typen hinzufügen
+- Switch Position States (Straight/Diverging) visualisieren
+
+**Phase 8: TrackPlanPage Animation & Effects (QUEUED)**
+- WinUI 3 Composition Effects für Ghost
+- Snap-Animation Feedback
+- Selection-State Transitions
+- siehe `.github/analysis/WINUI3-EFFECTS-ANALYSIS.md` (zu erstellen)
+
+---
+
+### 🔍 Offene Geometrie-Fragen
+
+**R9-Oval Topology (von Session 2):**
+- ❓ WR Port C Verbindung: Startet das Oval bei (-235.00, 30.94, 165°) oder anders?
+- ❓ Anzahl R9 im Oval: 23 oder 24 Stücke?
+- ❓ Schließungsfehler 61.877mm - akzeptabel oder muss korrigiert werden?
+
+**Lösung ausstehend:**
+- Piko A Prospekt verifizieren (docs/99556__A-Gleis_Prospekt_2019.pdf)
+- Testdatei `Test\TrackPlan.Renderer\GeometryValidationTemplate.cs` mit realen Messdaten abgleichen
 
 ---
 
 ## 📚 Quality Roadmap (Week 2-6)
 
-✅ **Week 2 abgeschlossen:** Domain Enums dokumentiert + Tests (Journey, Station, Workflow, Train, Project)
-
-✅ **Week 3 abgeschlossen:** IIoService, ISettingsService, UdpWrapper dokumentiert + Tests (NullIoService, SettingsService, UdpClientWrapper)
-
-✅ **Week 4 abgeschlossen:** ViewModels dokumentiert + Tests (WorkflowViewModel, TrainViewModel, StationViewModel)
-
-✅ **Week 5 abgeschlossen:** Sound dokumentiert + Tests (ISpeakerEngine, CognitiveSpeechEngine, NullSpeakerEngine, NullSoundPlayer)
-
-✅ **Week 6 abgeschlossen:** Azure DevOps Pipeline mit Coverage-Report (`pr-validation-with-coverage.yml`)
+✅ **Week 2:** Domain Enums dokumentiert + Tests
+✅ **Week 3:** IIoService, ISettingsService, UdpWrapper Tests
+✅ **Week 4:** ViewModels dokumentiert + Tests
+✅ **Week 5:** Sound dokumentiert + Tests
+✅ **Week 6:** Azure DevOps Pipeline mit Coverage
 
 ---
 
@@ -120,7 +122,7 @@ Colors: SkinColors.GetPalette(skin, isDark)
 ```csharp
 public sealed partial class MyPage : Page
 {
-    private readonly ISkinProvider _skinProvider;  // Injected
+    private readonly ISkinProvider _skinProvider;
 
     // Constructor: _skinProvider.SkinChanged += (s, e) => DispatcherQueue.TryEnqueue(ApplySkinColors);
     // Loaded: ApplySkinColors();
@@ -141,11 +143,6 @@ SbElement (abstract)
 ├── SbSignal          → + Address, SignalSystem, SignalAspect
 └── SbDetector        → + FeedbackAddress
 ```
-
-**XAML Toolbox Tags:**
-- `TrackStraight`, `TrackCurve`, `Switch`, `Signal`, `Detector`
-
-**JSON Serialisierung:** `$type` Discriminator für Polymorphie
 
 ---
 

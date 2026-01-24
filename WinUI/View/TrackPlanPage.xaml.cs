@@ -53,6 +53,7 @@ public sealed partial class TrackPlanPage : Page
     private double _rotationStartAngle;
     private Dictionary<Guid, double> _rotationStartRotations = new();
     private Dictionary<Guid, Point2D> _rotationStartPositions = new();
+    private Point2D _dragStartWorldPos;  // For multi-ghost offset tracking
 
     private SolidColorBrush _trackBrush = null!;
     private SolidColorBrush _trackSelectedBrush = null!;
@@ -135,24 +136,24 @@ public sealed partial class TrackPlanPage : Page
                 (byte)(hoverColor.B * 0.8));
         _trackHoverBrush = new SolidColorBrush(hoverColor);
 
-        // Open port - warning/attention (orange)
-        var attentionColor = Color.FromArgb(255, 255, 140, 0); // Orange
+        // Open port - warning/attention (use Fluent Design CautionColor)
+        var attentionColor = GetColorResource("SystemFillColorCaution", Color.FromArgb(255, 255, 140, 0)); // Orange fallback
         _portOpenBrush = new SolidColorBrush(attentionColor);
 
-        // Connected port - success (green)
-        var successColor = Color.FromArgb(255, 34, 177, 76); // Green
+        // Connected port - success (use Fluent Design PositiveColor)
+        var successColor = GetColorResource("SystemFillColorPositive", Color.FromArgb(255, 34, 177, 76)); // Green fallback
         _portConnectedBrush = new SolidColorBrush(successColor);
 
-        // Grid lines - subtle secondary text with opacity
+        // Grid lines - subtle secondary text with improved opacity (25% instead of 15%)
         var gridColor = textSecondaryColor;
-        _gridBrush = new SolidColorBrush(Color.FromArgb((byte)(255 * 0.15), gridColor.R, gridColor.G, gridColor.B));
+        _gridBrush = new SolidColorBrush(Color.FromArgb((byte)(255 * 0.25), gridColor.R, gridColor.G, gridColor.B));
 
         // Feedback/error - system error (red)
         var errorColor = Color.FromArgb(255, 196, 43, 28); // Red
         _feedbackBrush = new SolidColorBrush(errorColor);
 
-        // Snap preview - warning/attention highlight
-        _snapPreviewBrush = new SolidColorBrush(attentionColor);
+        // Snap preview - use system accent instead of hardcoded attention
+        _snapPreviewBrush = new SolidColorBrush(accentColor);
     }
 
     private void OnKeyDown(object sender, KeyRoutedEventArgs e)
@@ -270,6 +271,7 @@ public sealed partial class TrackPlanPage : Page
 
     private async void GraphCanvas_Drop(object sender, DragEventArgs e)
     {
+
         if (!e.DataView.Contains(StandardDataFormats.Text))
         {
             _viewModel.CancelGhostPlacement();
@@ -610,6 +612,17 @@ public sealed partial class TrackPlanPage : Page
             }
 
             _viewModel.PointerDown(world, true, isCtrlPressed);
+            
+            // Start multi-ghost if dragging selected tracks
+            if (_viewModel.SelectedTrackIds.Count > 0 && _viewModel.GhostPlacement is null)
+            {
+                _dragStartWorldPos = world;
+                _viewModel.BeginMultiGhostPlacement(_viewModel.SelectedTrackIds.ToList());
+                
+                // Hide cursor during drag - show only ghost (setting to null hides it)
+                ProtectedCursor = null;
+            }
+            
             GraphCanvas.CapturePointer(e.Pointer);
             RenderGraph();
             UpdatePropertiesPanel();
@@ -666,7 +679,44 @@ public sealed partial class TrackPlanPage : Page
         }
 
         var worldPos = new Point2D(pos.X / DisplayScale, pos.Y / DisplayScale);
-        _viewModel.PointerMove(worldPos, GridToggle.IsChecked == true, GridSize, SnapDistance);
+
+        // Multi-track drag: start ghost if not already active
+        if (_viewModel.GhostPlacement is null && _viewModel.MultiGhostPlacement is null)
+        {
+            _viewModel.PointerMove(worldPos, GridToggle.IsChecked == true, GridSize, SnapDistance);
+        }
+        else if (_viewModel.MultiGhostPlacement is not null)
+        {
+            // Update multi-ghost position
+            _viewModel.UpdateMultiGhostPlacement(
+                new Point2D(
+                    worldPos.X - _dragStartWorldPos.X,
+                    worldPos.Y - _dragStartWorldPos.Y),
+                GridToggle.IsChecked == true,
+                GridSize);
+
+            // Apply offset to all tracks in multi-ghost
+            if (_viewModel.MultiGhostPlacement is { } mg)
+            {
+                foreach (var trackId in mg.TrackIds)
+                {
+                    if (mg.InitialPositions.TryGetValue(trackId, out var initialPos))
+                    {
+                        _viewModel.Positions[trackId] = new Point2D(
+                            initialPos.X + mg.CurrentOffset.X,
+                            initialPos.Y + mg.CurrentOffset.Y);
+                    }
+                }
+
+                // Check for snap targets
+                _viewModel.FindAndSetSnapPreviewForMulti(mg.TrackIds, SnapDistance);
+            }
+        }
+        else
+        {
+            _viewModel.PointerMove(worldPos, GridToggle.IsChecked == true, GridSize, SnapDistance);
+        }
+
         RenderGraph();
     }
 
@@ -724,6 +774,51 @@ public sealed partial class TrackPlanPage : Page
         {
             // Fall back to false if CoreWindow is not available
             isCtrlPressed = false;
+        }
+
+        // Handle multi-ghost commit (canvas selection drag)
+        if (_viewModel.MultiGhostPlacement is not null)
+        {
+            _viewModel.CommitMultiGhostPlacement();
+            
+            // Restore cursor after drag
+            ProtectedCursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.Arrow);
+            
+            // Apply snap if enabled
+            if (SnapToggle.IsChecked == true && _viewModel.CurrentSnapPreview is { } preview)
+            {
+                // Apply snap adjustment to the primary track in selection
+                if (_viewModel.SelectedTrackIds.Count > 0)
+                {
+                    var primaryTrackId = _viewModel.SelectedTrackIds.First();
+                    var delta = new Point2D(
+                        preview.PreviewPosition.X - _viewModel.Positions[primaryTrackId].X,
+                        preview.PreviewPosition.Y - _viewModel.Positions[primaryTrackId].Y);
+
+                    // Apply same delta to all selected tracks
+                    foreach (var trackId in _viewModel.SelectedTrackIds)
+                    {
+                        _viewModel.Positions[trackId] = new Point2D(
+                            _viewModel.Positions[trackId].X + delta.X,
+                            _viewModel.Positions[trackId].Y + delta.Y);
+                    }
+
+                    // Try to connect the primary track
+                    if (_viewModel.ConnectionService.TryConnect(
+                        preview.MovingEdgeId, preview.MovingPortId,
+                        preview.TargetEdgeId, preview.TargetPortId))
+                    {
+                        var targetEdge = _viewModel.Graph.Edges.FirstOrDefault(e => e.Id == preview.TargetEdgeId);
+                        StatusText.Text = $"Snapped {_viewModel.SelectedTrackIds.Count} tracks to {targetEdge?.TemplateId}";
+                      }
+                }
+            }
+
+            GraphCanvas.ReleasePointerCaptures();
+            RenderGraph();
+            UpdateStatistics();
+            UpdatePropertiesPanel();
+            return;
         }
 
         var status = _viewModel.PointerUp(
@@ -974,15 +1069,50 @@ public sealed partial class TrackPlanPage : Page
             }
         }
 
+        // Render multiple ghost tracks for canvas selection drag
+        if (_viewModel.MultiGhostPlacement is { } multiGhost)
+        {
+            foreach (var trackId in multiGhost.TrackIds)
+            {
+                if (multiGhost.InitialPositions.TryGetValue(trackId, out var initialPos))
+                {
+                    var ghostPos = new Point2D(
+                        initialPos.X + multiGhost.CurrentOffset.X,
+                        initialPos.Y + multiGhost.CurrentOffset.Y);
+
+                    var ghostRot = _viewModel.Rotations.GetValueOrDefault(trackId, 0);
+                    
+                    var edge = _viewModel.Graph.Edges.FirstOrDefault(e => e.Id == trackId);
+                    if (edge is not null)
+                    {
+                        var trackTemplate = _catalog.GetById(edge.TemplateId);
+                        if (trackTemplate is not null)
+                        {
+                            var ghostOpacity = ActualTheme == Microsoft.UI.Xaml.ElementTheme.Dark ? 0.85 : 0.75;
+                            _renderer.RenderGhostTrack(
+                                GraphCanvas,
+                                trackTemplate,
+                                ghostPos,
+                                ghostRot,
+                                _snapPreviewBrush,
+                                ghostOpacity);
+                        }
+                    }
+                }
+            }
+        }
+
         var dragPreview = _viewModel.GetCurrentDragPreviewPose();
         if (dragPreview is { } dp)
         {
+            var ghostOpacity = ActualTheme == Microsoft.UI.Xaml.ElementTheme.Dark ? 0.85 : 0.75;
             _renderer.RenderGhostTrack(
                 GraphCanvas,
                 dp.Template,
                 dp.Position,
                 dp.RotationDeg,
-                _snapPreviewBrush);
+                _snapPreviewBrush,
+                ghostOpacity);
         }
 
         RenderSingleRotationHandle();
