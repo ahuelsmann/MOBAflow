@@ -142,29 +142,47 @@ _Keine kritischen Aufgaben offen._
 
 ### 📋 Design System Switching Implementation (Phase 1-3)
 
+**Unterstützte Design Systems:**
+- **Fluent Design** (Default) - Windows 11 native, light/dark, WCAG A+
+- **Material Design 3** - Google Material, dynamic colors, modern
+- **Metro** - Windows 8/10 klassisch, clean lines, high contrast
+- **Minimal** - Minimalistische Varianten (Light/Dark/HighViz)
+
 **Phase 1 (Nächste Session): IDesignSystemProvider Foundation**
-- [ ] Erstelle IDesignSystemProvider Interface
+- [ ] Erstelle IDesignSystemProvider Interface mit Enum: DesignSystem (Fluent, Material3, Metro, MinimalLight, MinimalDark, MinimalHighViz)
 - [ ] Erstelle DesignTokens Record mit Track-spezifischen Farben
 - [ ] Implementiere DefaultDesignSystemProvider (Fluent Design Base)
+- [ ] Implementiere MetroDesignSystemProvider (klassisches Windows Metro)
 - [ ] Integriere in TrackPlanPage.UpdateTheme()
 - [ ] Dokumentation: Pattern für Page-Integration
-- ETA: 90 min
+- ETA: 120 min
 
 **Phase 2 (Session danach): Composition Effects + Settings UI**
 - [ ] Composition Effects für Ghost: GaussianBlur + Opacity Animation
 - [ ] Snap Highlight: DropShadow + ScaleAnimation (Pulse)
 - [ ] Selected Track: ColorAnimation Glow
-- [ ] Settings UI für Design System Selector (ComboBox)
-- [ ] Runtime Design System Switching testen
-- ETA: 120 min
+- [ ] Settings UI für Design System Selector (ComboBox mit 6 Optionen)
+- [ ] Runtime Design System Switching testen (alle 6 Systeme)
+- [ ] Theme-Preview bei Selection
+- ETA: 150 min
 
-**Phase 3 (Optional): Material Design 3 + Alternative Systems**
+**Phase 3 (Optional): Material Design 3 + weitere Alternative Systems**
 - [ ] NuGet: Material.WinUI.3 Integration
-- [ ] Erstelle Material3DesignSystemProvider Klasse
-- [ ] Erstelle MinimalDesignSystemProvider (Light/Dark/HighViz)
-- [ ] Theme-Preview im Settings Dialog
+- [ ] Erstelle Material3DesignSystemProvider Klasse (vollständig mit Dynamic Colors)
+- [ ] Erstelle MinimalDesignSystemProvider (Light/Dark/HighViz Varianten)
+- [ ] Settings Dialog mit Theme-Preview (Live-Vorschau)
 - [ ] A/B Testing für Benutzer-Feedback
-- ETA: 150 min (optional)
+- [ ] Export/Import Design System Preferences
+- ETA: 180 min (optional)
+
+**Design System Vergleich:**
+
+| System | Farbtiefe | Kontrast | Performance | Barrierefreiheit | Best For |
+|--------|-----------|----------|-------------|------------------|----------|
+| **Fluent** | Modern | WCAG A+ | Optimal | Excellent | Standard, Windows-nativ |
+| **Material3** | Vibrierend | WCAG AA | Gut | Gut | Modern, Cross-Platform |
+| **Metro** | Klassisch | WCAG A+ | Optimal | Excellent | Klassische Nutzer, Nostalgisch |
+| **Minimal** | Minimalistisch | WCAG AAA | Optimal | Excellent | Fokussiertes Arbeiten, Accessibility |
 
 ---
 

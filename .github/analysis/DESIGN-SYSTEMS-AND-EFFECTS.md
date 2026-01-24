@@ -20,11 +20,6 @@
 - ❌ Nur 2 Themes built-in (Light/Dark)
 - ❌ Farbpalette relativ konservativ
 
-**Verwendung:**
-```xml
-<SolidColorBrush x:Key="CustomBrush" Color="{StaticResource SystemAccentColor}" />
-```
-
 ---
 
 ### B. Material Design 3 (Google)
@@ -46,36 +41,43 @@
 - ❌ Einige Performance-Overhead
 - ❌ Learning curve für Design Rules
 
-**Verwendung:**
-```xml
-<!-- Material3 Palette -->
-<ResourceDictionary.MergedDictionaries>
-    <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
-    <Material3Resources />
-</ResourceDictionary.MergedDictionaries>
-
-<SolidColorBrush Color="{StaticResource MaterialPrimary}" />
-```
-
 ---
 
-### C. Uno Platform Design System
+### C. Metro Design System (Windows 8/10 Classic)
 
 **Für WinUI 3:**
-- 📦 NuGet: `Uno.Themes` + `Uno.Material`
-- 🎯 Multi-platform (WinUI, iOS, Android, Web)
-- 🎨 Material + Cupertino (iOS) Themes
-- 🔄 Runtime Theme Switching
+- 🎨 Clean, minimalist aesthetic (Modern flat design)
+- 📦 NuGet: `Microsoft.UI.Xaml` built-in support
+- ⚡ Ultra-high performance (low overhead)
+- 🔒 Conservative, proven design language
 
 **Vorteile:**
-- ✅ Multi-platform mit ONE codebase
-- ✅ Built-in Light/Dark/HighContrast
-- ✅ Komponenten-Theme Engine
-- ✅ Runtime switching out-of-box
+- ✅ Windows 8/10 Klassiker - viele kennen das Design
+- ✅ Extrem performant (keine extra dependencies)
+- ✅ WCAG A+ Accessibility (high contrast)
+- ✅ Clean typography, clear hierarchy
+- ✅ Nostalgisch für Power-User
 
 **Nachteile:**
-- ❌ Overhead vs pure WinUI
-- ❌ Learning curve für Uno Patterns
+- ❌ Wird von Microsoft nicht mehr aktiv entwickelt
+- ❌ Weniger "modern" wirken als Fluent
+- ❌ Limitierte Animation/Effect Support
+- ❌ Farbpalette kleiner
+
+**Verwendung (WinUI 3):**
+```xml
+<!-- Metro: Tile-basierte Farbpalette -->
+<SolidColorBrush x:Key="MetroPrimary" Color="#0078D4" />      <!-- Classic Blue -->
+<SolidColorBrush x:Key="MetroAccent" Color="#50E6FF" />       <!-- Cyan -->
+<SolidColorBrush x:Key="MetroBackground" Color="#FFFFFF" />   <!-- White -->
+<SolidColorBrush x:Key="MetroForeground" Color="#000000" />   <!-- Black -->
+```
+
+**Best For:**
+- Classic/retro aesthetic preference
+- Power-user workflows
+- Enterprise applications
+- Maximum performance on old hardware
 
 ---
 
