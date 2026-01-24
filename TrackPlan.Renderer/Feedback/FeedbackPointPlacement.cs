@@ -2,8 +2,8 @@
 
 namespace Moba.TrackPlan.Renderer.Feedback;
 
+using Moba.TrackPlan.Geometry;
 using Moba.TrackPlan.Graph;
-using Moba.TrackPlan.Renderer.World;
 
 public static class FeedbackPointPlacement
 {

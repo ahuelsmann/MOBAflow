@@ -241,36 +241,24 @@ public sealed class R9OvalTrackPlanExample
     {
         var nodes = new List<TrackNode>();
         for (int i = 0; i < 24; i++)
-            nodes.Add(new() { Id = Guid.NewGuid() });
+            nodes.Add(new TrackNode(Guid.NewGuid()));
 
         var edges = new List<TrackEdge>();
 
         // Segment 1: 12×R9 (180°)
         for (int i = 0; i < 12; i++)
         {
-            edges.Add(new TrackEdge
-            {
-                Id = Guid.NewGuid(),
-                TemplateId = "R9",
-                Connections = new Dictionary<string, Endpoint>
-                {
-                    { "A", new Endpoint(nodes[i].Id, "End") },
-                    { "B", new Endpoint(nodes[i + 1].Id, "Start") }
-                }
-            });
+            var edge = new TrackEdge(Guid.NewGuid(), "R9");
+            edge.Connections["A"] = (nodes[i].Id, null, null);
+            edge.Connections["B"] = (nodes[i + 1].Id, null, null);
+            edges.Add(edge);
         }
 
         // Segment 2: 1×WR (15°)
-        edges.Add(new TrackEdge
-        {
-            Id = Guid.NewGuid(),
-            TemplateId = "WR",
-            Connections = new Dictionary<string, Endpoint>
-            {
-                { "A", new Endpoint(nodes[12].Id, "End") },
-                { "B", new Endpoint(nodes[13].Id, "Start") }
-            }
-        });
+        var wrEdge = new TrackEdge(Guid.NewGuid(), "WR");
+        wrEdge.Connections["A"] = (nodes[12].Id, null, null);
+        wrEdge.Connections["B"] = (nodes[13].Id, null, null);
+        edges.Add(wrEdge);
 
         // Segment 3: 11×R9 (165°)
         for (int i = 0; i < 11; i++)
@@ -278,22 +266,19 @@ public sealed class R9OvalTrackPlanExample
             int fromNodeIdx = 13 + i;
             int toNodeIdx = (13 + i + 1) % 24;
 
-            edges.Add(new TrackEdge
-            {
-                Id = Guid.NewGuid(),
-                TemplateId = "R9",
-                Connections = new Dictionary<string, Endpoint>
-                {
-                    { "A", new Endpoint(nodes[fromNodeIdx].Id, "End") },
-                    { "B", new Endpoint(nodes[toNodeIdx].Id, "Start") }
-                }
-            });
+            var edge = new TrackEdge(Guid.NewGuid(), "R9");
+            edge.Connections["A"] = (nodes[fromNodeIdx].Id, null, null);
+            edge.Connections["B"] = (nodes[toNodeIdx].Id, null, null);
+            edges.Add(edge);
         }
 
-        return new TopologyGraph
-        {
-            Nodes = nodes,
-            Edges = edges
-        };
+        // Build and return graph
+        var graph = new TopologyGraph();
+        foreach (var node in nodes)
+            graph.AddNode(node);
+        foreach (var edge in edges)
+            graph.AddEdge(edge);
+        
+        return graph;
     }
 }

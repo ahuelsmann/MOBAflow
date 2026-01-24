@@ -2,6 +2,8 @@
 
 namespace Moba.TrackPlan.Renderer.World;
 
+using Moba.TrackPlan.Geometry;
+
 public sealed class WorldTransform
 {
     public double Scale { get; set; } = 1.0;

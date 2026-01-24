@@ -2,9 +2,6 @@
 
 namespace Moba.TrackPlan.Editor.Command;
 
-using Moba.TrackPlan.Graph;
-using Moba.TrackPlan.UseCase;
-
 public sealed class RemoveFeedbackPointCommand
 {
     private readonly TopologyGraph _graph;

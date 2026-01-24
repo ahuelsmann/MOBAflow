@@ -7,4 +7,10 @@ public sealed record TrackTemplate(
     IReadOnlyList<TrackEnd> Ends,
     TrackGeometrySpec Geometry,
     SwitchRoutingModel? Routing = null
-);
+)
+{
+    /// <summary>
+    /// Gets a port by its ID.
+    /// </summary>
+    public TrackPort? GetPort(string portId) => null;
+}

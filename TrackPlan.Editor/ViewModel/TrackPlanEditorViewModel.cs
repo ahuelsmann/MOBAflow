@@ -1,9 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 using Moba.TrackPlan.Renderer.Layout;
-using Moba.TrackPlan.Service;
 using Moba.TrackPlan.Renderer.Geometry;
-using Moba.TrackPlan.Renderer.World;
 
 namespace Moba.TrackPlan.Editor.ViewModel;
 

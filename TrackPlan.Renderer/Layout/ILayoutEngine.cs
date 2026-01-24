@@ -2,8 +2,8 @@
 
 namespace Moba.TrackPlan.Renderer.Layout;
 
+using Moba.TrackPlan.Geometry;
 using Moba.TrackPlan.Graph;
-using Moba.TrackPlan.Renderer.World;
 
 public interface ILayoutEngine
 {

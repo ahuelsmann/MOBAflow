@@ -7,9 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TrackPlan.Geometry\TrackPlan.Geometry.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="..\TrackPlan\**\*.cs" Exclude="..\TrackPlan\obj\**\*.*" />
+    <PackageReference Include="MathNet.Numerics" />
+    <PackageReference Include="QuikGraph" />
   </ItemGroup>
 </Project>

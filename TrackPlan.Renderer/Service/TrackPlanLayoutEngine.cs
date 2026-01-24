@@ -2,6 +2,7 @@
 
 namespace Moba.TrackPlan.Renderer.Service;
 
+using Moba.TrackPlan.Constraint;
 using Moba.TrackPlan.Renderer.Geometry;
 using Moba.TrackPlan.Renderer.World;
 
@@ -48,7 +49,12 @@ public sealed class TrackPlanLayoutEngine
         var analysis = _resolver.Analyze(topology);
 
         // Step 2: Validate topology
-        var violations = topology.Validate().ToList();
+        var constraints = new ITopologyConstraint[]
+        {
+            new DuplicateFeedbackPointNumberConstraint(),
+            new GeometryConnectionConstraint(_catalog)
+        };
+        var violations = topology.Validate(constraints).ToList();
 
         // Step 3: Calculate geometry
         _geometryEngine.Calculate(topology, startPosition.X, startPosition.Y, startAngleDeg);

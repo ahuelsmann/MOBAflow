@@ -1,13 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.TrackPlan.Geometry;
+namespace Moba.TrackPlan.Renderer.Geometry;
 
-using Moba.TrackPlan.Topology;
+using Moba.TrackPlan.Graph;
+using Moba.TrackPlan.Renderer.Service;
 using Moba.TrackPlan.TrackSystem;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 /// <summary>
 /// Represents a calculated position for a node in the track plan.
@@ -59,7 +56,7 @@ public sealed class GeometryCalculationEngine
     /// <summary>
     /// Calculates all node positions and orientations based on topology.
     /// </summary>
-    public void Calculate(Graph.TopologyGraph topology, double startX, double startY, double startAngleDeg)
+    public void Calculate(TopologyGraph topology, double startX, double startY, double startAngleDeg)
     {
         ArgumentNullException.ThrowIfNull(topology);
 
@@ -103,7 +100,7 @@ public sealed class GeometryCalculationEngine
     /// <summary>
     /// Validates that all connections are geometrically compatible.
     /// </summary>
-    public IEnumerable<GeometryValidationError> ValidateConnections(Graph.TopologyGraph topology)
+    public IEnumerable<GeometryValidationError> ValidateConnections(TopologyGraph topology)
     {
         var errors = new List<GeometryValidationError>();
 
@@ -155,8 +152,8 @@ public sealed class GeometryCalculationEngine
     }
 
     private void CalculateRecursive(
-        Graph.TopologyGraph topology,
-        Graph.TrackNode currentNode,
+        TopologyGraph topology,
+        TrackNode currentNode,
         double currentX,
         double currentY,
         double currentAngleDeg,

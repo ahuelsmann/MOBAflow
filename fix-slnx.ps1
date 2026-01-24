@@ -1,3 +1,16 @@
+#!/usr/bin/env pwsh
+# Fix Moba.slnx project build order
+
+$slnxPath = "C:\Repo\ahuelsmann\MOBAflow\Moba.slnx"
+$content = [IO.File]::ReadAllText($slnxPath)
+
+# Neue, korrekte Reihenfolge:
+# 1. Foundation projects (TrackPlan.Domain, TrackPlan.Renderer, TrackPlan.Geometry)
+# 2. Dann libraries, die davon abhängen (TrackLibrary.PikoA)
+# 3. Dann Services (Backend, Domain, SharedUI)
+# 4. Dann UI (WinUI, MAUI, etc.)
+
+$newContent = @"
 <Solution>
   <Folder Name="/Plugins/">
     <Project Path="Plugins/CmdPlugin/CmdPlugin.csproj" />
@@ -51,3 +64,10 @@
     <Deploy />
   </Project>
 </Solution>
+"@
+
+[IO.File]::WriteAllText($slnxPath, $newContent)
+Write-Host "✅ Moba.slnx fixed:"
+Write-Host "  - Removed Project=`"false`" from TrackPlan.Domain and TrackPlan.Geometry"
+Write-Host "  - Reordered projects for correct build sequence"
+Write-Host "  - TrackPlan.Domain/Renderer/Geometry now build BEFORE TrackLibrary.PikoA"

@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.TrackPlan.Topology;
+namespace Moba.TrackPlan.Renderer.Service;
 
-using System.Collections.Generic;
-using System.Linq;
+using Moba.TrackPlan.Graph;
+using Moba.TrackPlan.TrackSystem;
 
 /// <summary>
 /// Resolves topology information from a TopologyGraph.
@@ -91,45 +91,61 @@ public sealed class TopologyResolver
         while (stack.Count > 0)
         {
             var edge = stack.Pop();
-            if (visited.Add(edge.Id))
-            {
-                yield return edge;
 
-                var endNode = ResolveNodeFromEndpoint(topology, edge, "B");
-                if (endNode != null)
-                {
-                    var nextOutgoing = GetOutgoing(endNode);
-                    foreach (var nextEdge in nextOutgoing)
-                        stack.Push(nextEdge);
-                }
+            if (!visited.Add(edge.Id))
+                continue;
+
+            yield return edge;
+
+            var endNode = ResolveNodeFromEndpoint(topology, edge, "B");
+            if (endNode != null)
+            {
+                var nextEdges = GetOutgoing(endNode);
+                foreach (var nextEdge in nextEdges)
+                    stack.Push(nextEdge);
             }
         }
     }
 
     /// <summary>
-    /// Checks if the topology contains any cycles.
+    /// Checks if a directed path exists from source to target.
     /// </summary>
     public bool HasCycles(TopologyGraph topology)
     {
-        foreach (var edge in topology.Edges)
-        {
-            var endNode = ResolveNodeFromEndpoint(topology, edge, "B");
-            var startNode = ResolveNodeFromEndpoint(topology, edge, "A");
+        var visited = new HashSet<Guid>();
+        var recursionStack = new HashSet<Guid>();
 
-            if (startNode != null && endNode != null)
-            {
-                if (CanReachNode(topology, endNode, startNode))
-                    return true;
-            }
+        foreach (var node in topology.Nodes)
+        {
+            if (HasCycleDfs(node, topology, visited, recursionStack))
+                return true;
         }
 
         return false;
     }
 
+    private bool HasCycleDfs(TrackNode node, TopologyGraph topology, HashSet<Guid> visited, HashSet<Guid> recursionStack)
+    {
+        if (!visited.Add(node.Id))
+            return recursionStack.Contains(node.Id);
+
+        recursionStack.Add(node.Id);
+
+        foreach (var edge in GetOutgoing(node))
+        {
+            var nextNode = ResolveNodeFromEndpoint(topology, edge, "B");
+            if (nextNode != null && HasCycleDfs(nextNode, topology, visited, recursionStack))
+                return true;
+        }
+
+        recursionStack.Remove(node.Id);
+        return false;
+    }
+
     /// <summary>
-    /// Gets all connected components (separate track groups).
+    /// Gets all connected components in the topology.
     /// </summary>
-    public IEnumerable<IEnumerable<TrackNode>> GetConnectedComponents(TopologyGraph topology)
+    public IEnumerable<IReadOnlyList<TrackNode>> GetConnectedComponents(TopologyGraph topology)
     {
         var components = new List<List<TrackNode>>();
         var visited = new HashSet<Guid>();

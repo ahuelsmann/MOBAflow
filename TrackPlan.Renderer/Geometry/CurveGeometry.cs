@@ -1,8 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.TrackPlan.Renderer.Geometry;
+namespace Moba.TrackPlan.Geometry;
 
-using Moba.TrackPlan.Renderer.World;
 using Moba.TrackPlan.TrackSystem;
 
 public static class CurveGeometry
