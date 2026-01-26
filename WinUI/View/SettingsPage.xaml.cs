@@ -6,6 +6,7 @@ using Service;
 using SharedUI.ViewModel;
 
 using Windows.ApplicationModel.DataTransfer;
+using Microsoft.UI.Xaml.Controls;
 
 /// <summary>
 /// Settings page for application-wide configuration.
@@ -20,10 +21,6 @@ public sealed partial class SettingsPage
     {
         ViewModel = viewModel;
         InitializeComponent();
-
-        // TODO: SkinSelectorControl erstellen - siehe TODOs
-        // var skinSelector = new SkinSelector(skinProvider);
-        // SkinSelectorContainer.Children.Add(skinSelector);
     }
 
     private void CopyIpToClipboard_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
@@ -31,5 +28,19 @@ public sealed partial class SettingsPage
         var dataPackage = new DataPackage();
         dataPackage.SetText(ViewModel.LocalIpAddress);
         Clipboard.SetContent(dataPackage);
+    }
+
+    private void AzureSpeechSetupButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        var parent = this.Parent;
+        while (parent != null)
+        {
+            if (parent is Frame frame)
+            {
+                frame.Navigate(typeof(HelpPage), "Azure Speech Setup");
+                return;
+            }
+            parent = (parent as Microsoft.UI.Xaml.FrameworkElement)?.Parent;
+        }
     }
 }

@@ -797,8 +797,8 @@ public partial class MainWindowViewModel
         {
             ShowErrorMessage = false;
 
-            // Get the current speaker engine from DI (injected via AnnouncementService)
-            var testMessage = "Dies ist ein Test der Sprachausgabe. Nächster Halt: Bielefeld Hauptbahnhof.";
+            // Test message for speech synthesis
+            var testMessage = "This is a test of speech synthesis. Next stop: Central Station.";
 
             // Use the announcement service if available
             if (_announcementService != null)

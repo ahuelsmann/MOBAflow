@@ -290,60 +290,60 @@ public class FeatureToggleSettings
     public bool IsWorkflowsPageAvailable { get; set; } = true;
     public string WorkflowsPageLabel { get; set; } = string.Empty;
 
-    // Track Management (Testing - DISABLED by default for Open Source)
+    // Track Management (Testing - ENABLED by default)
 
     /// <summary>
     /// Enable Feedback Points page (Track sensor configuration).
-    /// Experimental feature - disabled by default for Open Source release.
+    /// Experimental feature marked as Preview.
     /// </summary>
-    public bool IsFeedbackPointsPageAvailable { get; set; }
+    public bool IsFeedbackPointsPageAvailable { get; set; } = true;
     public string FeedbackPointsPageLabel { get; set; } = "Preview";
 
     /// <summary>
     /// Enable Track Plan Editor page (Visual track layout designer).
-    /// Experimental feature - disabled by default for Open Source release.
+    /// Experimental feature marked as Preview.
     /// </summary>
-    public bool IsTrackPlanEditorPageAvailable { get; set; }
+    public bool IsTrackPlanEditorPageAvailable { get; set; } = true;
     public string TrackPlanEditorPageLabel { get; set; } = "Preview";
 
     /// <summary>
     /// Enable Signal Box page (Visual signal and turnout control panel).
-    /// Experimental feature - disabled by default for Open Source release.
+    /// Experimental feature marked as Preview.
     /// </summary>
-    public bool IsSignalBoxPageAvailable { get; set; }
+    public bool IsSignalBoxPageAvailable { get; set; } = true;
     public string SignalBoxPageLabel { get; set; } = "Preview";
 
     /// <summary>
     /// Enable Journey Map page (Visual journey path visualization).
-    /// Experimental feature - disabled by default for Open Source release.
+    /// Experimental feature marked as Preview.
     /// </summary>
-    public bool IsJourneyMapPageAvailable { get; set; }
+    public bool IsJourneyMapPageAvailable { get; set; } = true;
     public string JourneyMapPageLabel { get; set; } = "Preview";
 
-    // Monitoring (Testing - DISABLED by default)
+    // Monitoring (Testing - ENABLED by default)
 
     /// <summary>
     /// Enable Monitor page (Real-time system monitoring and diagnostics).
-    /// Experimental feature - disabled by default for Open Source release.
+    /// Experimental feature marked as Preview.
     /// </summary>
-    public bool IsMonitorPageAvailable { get; set; }
+    public bool IsMonitorPageAvailable { get; set; } = true;
     public string MonitorPageLabel { get; set; } = "Preview";
 
-    // Train/Rolling Stock Management (Upcoming - DISABLED by default)
+    // Train/Rolling Stock Management (Upcoming - ENABLED by default)
 
     /// <summary>
     /// Enable Trains page (Locomotive and wagon inventory management).
-    /// Upcoming feature - disabled by default.
+    /// Upcoming feature marked as Preview.
     /// </summary>
-    public bool IsTrainsPageAvailable { get; set; }
+    public bool IsTrainsPageAvailable { get; set; } = true;
     public string TrainsPageLabel { get; set; } = "Preview";
 
-    // Train Control (Digital Throttle - DISABLED by default)
+    // Train Control (Digital Throttle - ENABLED by default)
 
     /// <summary>
     /// Enable Train Control page (Digital locomotive throttle for Z21).
-    /// New feature - disabled by default until fully tested.
+    /// New feature marked as Preview until fully tested.
     /// </summary>
-    public bool IsTrainControlPageAvailable { get; set; }
+    public bool IsTrainControlPageAvailable { get; set; } = true;
     public string TrainControlPageLabel { get; set; } = "Preview";
 }

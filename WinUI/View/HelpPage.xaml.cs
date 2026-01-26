@@ -3,6 +3,7 @@ namespace Moba.WinUI.View;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
+using Microsoft.UI.Xaml.Navigation;
 
 using System.Collections.Generic;
 
@@ -16,55 +17,69 @@ public sealed partial class HelpPage : Page
         Loaded += (s, e) => InitializePage();
     }
 
+    protected override void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        if (e.Parameter is string section)
+        {
+            ShowContent(section);
+        }
+    }
+
     private void InitializePage()
     {
         // Getting Started
-        var gettingStarted = new TreeViewNode { Content = "Erste Schritte", IsExpanded = true };
-        AddSection(gettingStarted, "Willkommen");
+        var gettingStarted = new TreeViewNode { Content = "Getting Started", IsExpanded = true };
+        AddSection(gettingStarted, "Welcome");
         AddSection(gettingStarted, "Installation");
-        AddSection(gettingStarted, "Z21 Verbindung");
-        AddSection(gettingStarted, "Erste Fahrt");
+        AddSection(gettingStarted, "Z21 Connection");
+        AddSection(gettingStarted, "First Ride");
         NavigationTreeView.RootNodes.Add(gettingStarted);
 
         // Train Control
-        var trainControl = new TreeViewNode { Content = "Loksteuerung", IsExpanded = false };
-        AddSection(trainControl, "Geschwindigkeit");
-        AddSection(trainControl, "Funktionen F0-F28");
-        AddSection(trainControl, "Fahrtrichtung");
-        AddSection(trainControl, "Notaus");
+        var trainControl = new TreeViewNode { Content = "Train Control", IsExpanded = false };
+        AddSection(trainControl, "Speed Control");
+        AddSection(trainControl, "Functions F0-F28");
+        AddSection(trainControl, "Direction");
+        AddSection(trainControl, "Emergency Stop");
         NavigationTreeView.RootNodes.Add(trainControl);
 
-        // Journeys & Automation
-        var automation = new TreeViewNode { Content = "Automatisierung", IsExpanded = false };
-        AddSection(automation, "Fahrten erstellen");
-        AddSection(automation, "Stationen definieren");
+        // Automation
+        var automation = new TreeViewNode { Content = "Automation", IsExpanded = false };
+        AddSection(automation, "Create Journey");
+        AddSection(automation, "Define Stations");
         AddSection(automation, "Workflows");
-        AddSection(automation, "Durchsagen");
+        AddSection(automation, "Speech Announcements");
         NavigationTreeView.RootNodes.Add(automation);
 
         // Signal Box
-        var signalBox = new TreeViewNode { Content = "Stellwerk", IsExpanded = false };
-        AddSection(signalBox, "Gleisplan Editor");
-        AddSection(signalBox, "Signale");
-        AddSection(signalBox, "Weichen");
-        AddSection(signalBox, "Rueckmelder");
+        var signalBox = new TreeViewNode { Content = "Signal Box", IsExpanded = false };
+        AddSection(signalBox, "Track Plan Editor");
+        AddSection(signalBox, "Signals");
+        AddSection(signalBox, "Switches");
+        AddSection(signalBox, "Feedback Points");
         NavigationTreeView.RootNodes.Add(signalBox);
 
         // Track Plan
-        var trackPlan = new TreeViewNode { Content = "Gleisplan", IsExpanded = false };
-        AddSection(trackPlan, "Gleisbibliotheken");
-        AddSection(trackPlan, "Gleise platzieren");
-        AddSection(trackPlan, "Verbindungen");
+        var trackPlan = new TreeViewNode { Content = "Track Plan", IsExpanded = false };
+        AddSection(trackPlan, "Track Libraries");
+        AddSection(trackPlan, "Place Tracks");
+        AddSection(trackPlan, "Connections");
         NavigationTreeView.RootNodes.Add(trackPlan);
 
+        // Configuration
+        var config = new TreeViewNode { Content = "Configuration", IsExpanded = false };
+        AddSection(config, "Azure Speech Setup");
+        NavigationTreeView.RootNodes.Add(config);
+
         // Troubleshooting
-        var troubleshooting = new TreeViewNode { Content = "Problemloesung", IsExpanded = false };
-        AddSection(troubleshooting, "Keine Verbindung");
-        AddSection(troubleshooting, "Lok reagiert nicht");
-        AddSection(troubleshooting, "Rueckmelder fehlen");
+        var troubleshooting = new TreeViewNode { Content = "Troubleshooting", IsExpanded = false };
+        AddSection(troubleshooting, "No Connection");
+        AddSection(troubleshooting, "Locomotive Not Responding");
+        AddSection(troubleshooting, "Feedback Points Missing");
         NavigationTreeView.RootNodes.Add(troubleshooting);
 
-        ShowContent("Willkommen");
+        ShowContent("Welcome");
     }
 
     private void AddSection(TreeViewNode parent, string topic)
@@ -90,351 +105,395 @@ public sealed partial class HelpPage : Page
         var content = section switch
         {
             // Getting Started
-            "Willkommen" => """
-                Willkommen bei MOBAflow - Ihrer Steuerungszentrale fuer Modelleisenbahnen!
+            "Welcome" => """
+                Welcome to MOBAflow - Your control center for model railways!
 
-                MOBAflow verbindet sich direkt mit Ihrer Roco/Fleischmann Z21 Digitalzentrale und bietet:
+                MOBAflow connects directly to your Roco/Fleischmann Z21 digital command station and offers:
 
-                - Loksteuerung mit Geschwindigkeit und Funktionen
-                - Automatisierte Fahrten mit Stationsansagen
-                - Workflow-Automatisierung fuer komplexe Ablauefe
-                - Elektronisches Stellwerk (ESTW) fuer Signale und Weichen
-                - Gleisplan-Editor mit verschiedenen Gleisbibliotheken
+                - Locomotive control with speed and functions
+                - Automated journeys with station announcements
+                - Workflow automation for complex procedures
+                - Electronic Signal Box (ESTW) for signals and switches
+                - Track plan editor with various track libraries
 
-                Waehlen Sie links ein Thema, um mehr zu erfahren.
+                Select a topic on the left to learn more.
                 """,
 
             "Installation" => """
-                Systemanforderungen:
+                System Requirements:
                 - Windows 10/11 (64-bit)
                 - .NET 10 Runtime
-                - Netzwerkverbindung zur Z21
+                - Network connection to Z21
 
                 Installation:
-                1. Laden Sie MOBAflow von GitHub herunter
-                2. Entpacken Sie das Archiv
-                3. Starten Sie MOBAflow.exe
-                4. Bei erster Ausfuehrung wird .NET Runtime automatisch installiert
+                1. Download MOBAflow from GitHub
+                2. Extract the archive
+                3. Start MOBAflow.exe
+                4. .NET Runtime will be automatically installed on first run
 
                 Updates:
-                MOBAflow prueft automatisch auf Updates beim Start.
+                MOBAflow automatically checks for updates at startup.
                 """,
 
-            "Z21 Verbindung" => """
-                Verbindung zur Z21 herstellen:
+            "Z21 Connection" => """
+                Connect to Z21:
 
-                1. Stellen Sie sicher, dass Ihre Z21 eingeschaltet ist
-                2. Verbinden Sie Ihren PC mit dem gleichen Netzwerk
-                3. Geben Sie die IP-Adresse der Z21 ein (Standard: 192.168.0.111)
-                4. Klicken Sie auf "Verbinden"
+                1. Make sure your Z21 is powered on
+                2. Connect your PC to the same network
+                3. Enter the IP address of the Z21 (default: 192.168.0.111)
+                4. Click "Connect"
 
-                Die Z21 wird per UDP auf Port 21105 angesprochen.
+                The Z21 is addressed via UDP on port 21105.
 
                 Troubleshooting:
-                - Pruefen Sie die Netzwerkverbindung
-                - Stellen Sie sicher, dass keine Firewall blockiert
-                - Z21 App auf dem Smartphone vorher beenden
+                - Check your network connection
+                - Make sure no firewall is blocking
+                - Terminate Z21 app on smartphone beforehand
                 """,
 
-            "Erste Fahrt" => """
-                Ihre erste Lokfahrt:
+            "First Ride" => """
+                Your first locomotive ride:
 
-                1. Verbinden Sie sich mit der Z21
-                2. Gehen Sie zur Loksteuerung
-                3. Waehlen Sie eine Lok aus oder geben Sie die DCC-Adresse ein
-                4. Schalten Sie die Gleisspannung ein (Track Power)
-                5. Bewegen Sie den Geschwindigkeitsregler
+                1. Connect to the Z21
+                2. Go to Train Control
+                3. Select a locomotive or enter the DCC address
+                4. Switch on track power (Track Power)
+                5. Move the speed slider
 
-                Tipps:
-                - F0 schaltet meist das Licht
-                - Nutzen Sie die Fahrtrichtungs-Umschaltung
-                - Bei Notfall: STOP-Taste druecken
+                Tips:
+                - F0 usually switches lights
+                - Use the direction switch
+                - Press STOP button in case of emergency
                 """,
 
             // Train Control
-            "Geschwindigkeit" => """
-                Geschwindigkeitssteuerung:
+            "Speed Control" => """
+                Speed control:
 
-                Der Tachometer zeigt die aktuelle Fahrstufe (0-126).
+                The speedometer displays the current speed step (0-126).
                 
-                Bedienung:
-                - Schieberegler fuer stufenlose Regelung
-                - Voreinstellungen: Stop, Langsam, Normal, Schnell
-                - Mausrad zum Feinjustieren
+                Operation:
+                - Slider for smooth control
+                - Presets: Stop, Slow, Normal, Fast
+                - Mouse wheel for fine adjustment
 
-                DCC Fahrstufen:
-                - 14 Fahrstufen (aeltere Decoder)
-                - 28 Fahrstufen (Standard)
-                - 126 Fahrstufen (empfohlen)
+                DCC Speed Steps:
+                - 14 steps (older decoders)
+                - 28 steps (standard)
+                - 126 steps (recommended)
                 """,
 
-            "Funktionen F0-F28" => """
-                Lokfunktionen:
+            "Functions F0-F28" => """
+                Locomotive functions:
 
-                F0: Spitzensignal/Licht (fahrtrichtungsabhaengig)
-                F1-F4: Haeufig Sound (Horn, Pfeife, etc.)
-                F5-F8: Weitere Sounds oder Beleuchtung
-                F9-F28: Zusatzfunktionen je nach Decoder
+                F0: Headlight/Marker light
+                F1-F4: Often sound (horn, whistle, etc.)
+                F5-F8: Additional sounds or lighting
+                F9-F28: Additional functions depending on decoder
 
-                Bedienung:
-                - Klick auf Funktionstaste schaltet um
-                - Leuchtende Taste = Funktion aktiv
-                - Doppelklick fuer Momentfunktionen
+                Operation:
+                - Click function button to toggle
+                - Illuminated button = function active
+                - Double-click for momentary functions
                 """,
 
-            "Fahrtrichtung" => """
-                Fahrtrichtung aendern:
+            "Direction" => """
+                Change direction:
 
-                - Klicken Sie auf den Richtungspfeil
-                - Oder druecken Sie die Leertaste
-                - Bei Geschwindigkeit > 0 wird erst gebremst
+                - Click on the direction arrow
+                - Or press spacebar
+                - If speed > 0, locomotive will brake first
 
-                Hinweis:
-                Die Richtung bezieht sich auf die Decoder-Einstellung.
-                Bei falsch eingebauten Decodern kann die Richtung vertauscht sein.
+                Note:
+                The direction depends on the decoder setting.
+                If installed incorrectly, direction may be reversed.
                 """,
 
-            "Notaus" => """
-                Notaus-Funktion:
+            "Emergency Stop" => """
+                Emergency stop function:
 
-                STOP-Taste: Sofortiger Halt aller Loks
-                - Gleisspannung wird abgeschaltet
-                - Alle Geschwindigkeiten auf 0
+                STOP button: Immediate stop of all locomotives
+                - Track power is cut off
+                - All speeds set to 0
 
-                Tastenkuerzel: Escape oder F12
+                Keyboard shortcut: Escape or F12
 
-                Nach Notaus:
-                1. Ursache beheben
-                2. Track Power wieder einschalten
-                3. Loks fahren nicht automatisch weiter
+                After emergency stop:
+                1. Fix the cause
+                2. Switch track power back on
+                3. Locomotives will not resume automatically
                 """,
 
             // Automation
-            "Fahrten erstellen" => """
-                Eine Fahrt (Journey) definieren:
+            "Create Journey" => """
+                Define a journey:
 
-                1. Neues Projekt erstellen oder oeffnen
-                2. Gehen Sie zu "Fahrten"
-                3. Klicken Sie auf "Neue Fahrt"
-                4. Geben Sie einen Namen ein
-                5. Fuegen Sie Stationen hinzu
+                1. Create a new project or open existing one
+                2. Go to "Journeys"
+                3. Click "New Journey"
+                4. Enter a name
+                5. Add stations
 
-                Eine Fahrt besteht aus:
-                - Zugeordneter Lok (DCC-Adresse)
-                - Liste von Stationen
-                - Ansagetext-Vorlage
+                A journey consists of:
+                - Assigned locomotive (DCC address)
+                - List of stations
+                - Announcement template
                 """,
 
-            "Stationen definieren" => """
-                Stationen einer Fahrt:
+            "Define Stations" => """
+                Stations in a journey:
 
-                Jede Station hat:
-                - Name (z.B. "Hamburg Hbf")
-                - Rueckmelder-ID (Gleiskontakt)
-                - Ausfahrt links/rechts (fuer Ansagen)
+                Each station has:
+                - Name (e.g., "Hamburg Central")
+                - Feedback point ID (track sensor)
+                - Departure left/right (for announcements)
 
-                Workflow-Trigger:
-                Wenn ein Zug den Rueckmelder erreicht:
-                1. Geschwindigkeit wird reduziert
-                2. Ansage wird abgespielt
-                3. Optionaler Workflow wird gestartet
+                Workflow trigger:
+                When a train reaches the feedback point:
+                1. Speed is reduced
+                2. Announcement is played
+                3. Optional workflow starts
                 """,
 
             "Workflows" => """
-                Workflow-Automatisierung:
+                Workflow automation:
 
-                Ein Workflow ist eine Abfolge von Aktionen:
-                - Lok steuern (Geschwindigkeit, Funktionen)
-                - Warten (Zeit oder Rueckmelder)
-                - Ansage abspielen
-                - Weichen/Signale schalten
+                A workflow is a sequence of actions:
+                - Control locomotive (speed, functions)
+                - Wait (time or feedback point)
+                - Play announcement
+                - Switch/control signals
 
-                Ausfuehrungsmodi:
-                - Sequentiell: Aktionen nacheinander
-                - Parallel: Aktionen gleichzeitig
-                - Loop: Wiederholung
+                Execution modes:
+                - Sequential: Actions one after another
+                - Parallel: Actions simultaneously
+                - Loop: Repetition
                 """,
 
-            "Durchsagen" => """
-                Stationsansagen:
+            "Speech Announcements" => """
+                Station announcements:
 
-                MOBAflow unterstuetzt Text-to-Speech (TTS):
+                MOBAflow supports Text-to-Speech (TTS):
                 - Windows Speech API (offline)
-                - Azure Cognitive Services (online, natuerlicher)
+                - Azure Cognitive Services (online, more natural)
 
-                Ansagevorlagen:
-                Verwenden Sie Platzhalter:
-                {StationName} - Name der aktuellen Station
-                {NextStation} - Naechste Station
-                {TrainName} - Name des Zuges
-                {Time} - Aktuelle Uhrzeit
+                Announcement templates:
+                Use placeholders:
+                {StationName} - Name of current station
+                {NextStation} - Next station
+                {TrainName} - Name of train
+                {Time} - Current time
 
-                Beispiel: "Naechster Halt: {NextStation}"
+                Example: "Next stop: {NextStation}"
                 """,
 
             // Signal Box
-            "Gleisplan Editor" => """
-                ESTW - Elektronisches Stellwerk:
+            "Track Plan Editor" => """
+                Signal Box - Electronic Interlocking:
 
-                Der Gleisplan-Editor ermoeglicht:
-                - Grafische Darstellung Ihrer Anlage
-                - Platzieren von Gleisen, Signalen, Weichen
-                - Steuerung per Mausklick
+                The track plan editor allows:
+                - Graphical display of your layout
+                - Place tracks, signals, switches
+                - Control via mouse click
 
-                Bedienung:
-                - Drag & Drop aus der Werkzeugleiste
-                - Rechtsklick fuer Kontextmenue
-                - Doppelklick zum Schalten
-                - Rechte Maustaste zum Verschieben des Plans
+                Operation:
+                - Drag & drop from toolbar
+                - Right-click for context menu
+                - Double-click to control
+                - Right mouse button to move plan
                 """,
 
-            "Signale" => """
-                Signalsteuerung:
+            "Signals" => """
+                Signal control:
 
-                Unterstuetzte Signalsysteme:
-                - Ks-Signale (Kombinationssignale)
-                - H/V-Signale (Haupt-/Vorsignale)
-                - Rangiersignale (Sh/Ra)
+                Supported signal systems:
+                - KS signals (combined signals)
+                - H/V signals (main/distant signals)
+                - Shunting signals (Sh/Ra)
 
-                Signalbegriffe:
-                - Hp0: Halt
-                - Ks1: Fahrt (gruen)
-                - Ks2: Fahrt mit Geschwindigkeitsbegrenzung
-                - Kennlicht: weisses Licht
+                Signal aspects:
+                - Hp0: Stop
+                - Ks1: Clear (green)
+                - Ks2: Clear with speed restriction
+                - White light: Information
 
-                Doppelklick auf Signal wechselt den Begriff.
+                Double-click on signal to change aspect.
                 """,
 
-            "Weichen" => """
-                Weichensteuerung:
+            "Switches" => """
+                Switch control:
 
-                Weichentypen:
-                - Einfache Weiche (links/rechts)
-                - Dreiwegweiche
-                - Kreuzungsweiche (DKW)
+                Switch types:
+                - Simple switch (left/right)
+                - Three-way switch
+                - Crossing switch (DKW)
 
-                Bedienung:
-                - Doppelklick wechselt die Stellung
-                - Gruen = Geradeaus
-                - Gelb = Abzweig
+                Operation:
+                - Double-click to toggle position
+                - Green = straight
+                - Yellow = diverging
 
-                Die Weichenadresse wird in den Eigenschaften eingestellt.
+                Switch address is configured in properties.
                 """,
 
-            "Rueckmelder" => """
-                Rueckmelder / Gleisbelegtmelder:
+            "Feedback Points" => """
+                Feedback points / Track occupancy detection:
 
-                Rueckmelder erkennen, wo sich Zuege befinden.
-                Die Z21 sendet automatisch Meldungen bei Belegungsaenderungen.
+                Feedback points detect where trains are located.
+                The Z21 automatically sends feedback when occupancy changes.
 
-                Typen:
-                - Stromfuehler (Achszaehler)
-                - Reed-Kontakte
-                - Lichtschranken
+                Types:
+                - Current detectors (axle counters)
+                - Reed switches
+                - Light barriers
 
-                Konfiguration:
-                Jeder Rueckmelder hat eine Adresse (1-1024).
-                Diese wird in MOBAflow den Stationen zugeordnet.
+                Configuration:
+                Each feedback point has an address (1-1024).
+                This is assigned to stations in MOBAflow.
                 """,
 
             // Track Plan
-            "Gleisbibliotheken" => """
-                Verfuegbare Gleisbibliotheken:
+            "Track Libraries" => """
+                Available track libraries:
 
-                - Piko A-Gleis (aktiv)
-                - Weitere in Planung...
+                - Piko A Track (active)
+                - More coming...
 
-                Die Bibliotheken enthalten:
-                - Gerade Gleise (verschiedene Laengen)
-                - Kurven (verschiedene Radien/Winkel)
-                - Weichen
-                - Kreuzungen
-                - Prellboecke
+                Libraries contain:
+                - Straight tracks (various lengths)
+                - Curves (various radii/angles)
+                - Switches
+                - Crossings
+                - Buffers
 
-                Gleise werden massstaeblich dargestellt.
+                Tracks are displayed to scale.
                 """,
 
-            "Gleise platzieren" => """
-                Gleise im Editor platzieren:
+            "Place Tracks" => """
+                Place tracks in editor:
 
-                1. Waehlen Sie ein Gleis aus der Bibliothek
-                2. Ziehen Sie es auf den Gleisplan
-                3. Drehen Sie mit R-Taste oder Rechtsklick
-                4. Verbinden Sie mit anderen Gleisen
+                1. Select a track from library
+                2. Drag it onto the track plan
+                3. Rotate with R key or right-click
+                4. Connect with other tracks
 
-                Tipps:
-                - Raster-Einrastung kann deaktiviert werden
-                - Mehrfachauswahl mit Strg+Klick
-                - Kopieren mit Strg+C, Einfuegen mit Strg+V
+                Tips:
+                - Grid snapping can be disabled
+                - Multi-select with Ctrl+Click
+                - Copy with Ctrl+C, Paste with Ctrl+V
                 """,
 
-            "Verbindungen" => """
-                Gleisverbindungen:
+            "Connections" => """
+                Track connections:
 
-                Gleise verbinden sich automatisch, wenn:
-                - Die Enden nah genug sind
-                - Die Winkel kompatibel sind
+                Tracks connect automatically when:
+                - Ends are close enough
+                - Angles are compatible
 
-                Anzeige:
-                - Gruen: Verbunden
-                - Rot: Nicht verbunden
-                - Gelb: Warnung (Winkelabweichung)
+                Display:
+                - Green: Connected
+                - Red: Not connected
+                - Yellow: Warning (angle mismatch)
 
-                Nicht verbundene Enden sollten mit Prellboecken abgeschlossen werden.
+                Unconnected ends should be closed with buffers.
+                """,
+
+            // Configuration
+            "Azure Speech Setup" => """
+                Setting up Azure Speech Services:
+
+                Azure Speech Services provide high-quality text-to-speech for MOBAflow.
+
+                Step 1: Create Azure Account
+                Visit https://portal.azure.com and sign in with your Microsoft account.
+
+                Step 2: Create Speech Resource
+                1. Click "Create a resource"
+                2. Search for "Speech"
+                3. Click "Create"
+                4. Fill in details:
+                   - Resource name: e.g., "mobaflow-speech"
+                   - Region: Choose closest region (e.g., "Germany West Central")
+                   - Pricing tier: Free (S0) or Pay-As-You-Go (Standard)
+                5. Click "Review + Create" → "Create"
+
+                Step 3: Get Your API Key
+                1. Go to your new Speech resource
+                2. Click "Keys and Endpoint" in left menu
+                3. Copy "Key 1" or "Key 2"
+                4. Paste into MOBAflow Settings → Speech Synthesis → Azure Speech Key
+
+                Step 4: Configure Region
+                1. In the same "Keys and Endpoint" page, copy the Region value
+                   (e.g., "germanywestcentral")
+                2. Paste into MOBAflow Settings → Speech Synthesis → Azure Region
+
+                Step 5: Test
+                Go to Settings → Speech Synthesis and click "Test Speech" button.
+
+                Pricing:
+                - Free tier: 5,000 characters/month
+                - Standard: Charged per 1,000 characters
+
+                Troubleshooting:
+                - Check API key is correct (no extra spaces)
+                - Verify region matches resource location
+                - Ensure internet connection is active
                 """,
 
             // Troubleshooting
-            "Keine Verbindung" => """
-                Problem: Keine Verbindung zur Z21
+            "No Connection" => """
+                Problem: Cannot connect to Z21
 
-                Checkliste:
-                1. Z21 eingeschaltet? (LED leuchtet)
-                2. PC im gleichen Netzwerk?
-                3. IP-Adresse korrekt? (Standard: 192.168.0.111)
-                4. Z21 Maintenance Tool erreichbar?
-                5. Firewall blockiert UDP Port 21105?
-
-                Test:
-                - Ping 192.168.0.111 in der Eingabeaufforderung
-                - Z21 App auf Smartphone testen
-
-                Loesung oft: Z21 kurz aus- und einschalten
-                """,
-
-            "Lok reagiert nicht" => """
-                Problem: Lok reagiert nicht auf Befehle
-
-                Checkliste:
-                1. Gleisspannung eingeschaltet? (Track Power)
-                2. Korrekte DCC-Adresse eingestellt?
-                3. Lok auf dem Gleis aufgesetzt?
-                4. Decoder-Typ kompatibel?
+                Checklist:
+                1. Is Z21 powered on? (LED is lit)
+                2. Is PC on the same network?
+                3. Is IP address correct? (default: 192.168.0.111)
+                4. Can you access Z21 Maintenance Tool?
+                5. Is UDP port 21105 blocked by firewall?
 
                 Test:
-                - Andere Lok testen
-                - Lok auf Programmiergleis testen
-                - CV1 (Adresse) pruefen
+                - Ping 192.168.0.111 in command prompt
+                - Test Z21 app on smartphone
+                - Restart Z21 briefly
 
-                Haeufige Ursache: Falsche Adresse oder Kontaktprobleme
+                Solution: Usually Z21 needs brief power cycle
                 """,
 
-            "Rueckmelder fehlen" => """
-                Problem: Rueckmelder werden nicht erkannt
+            "Locomotive Not Responding" => """
+                Problem: Locomotive does not respond to commands
 
-                Checkliste:
-                1. Z21 erkennt Rueckmeldermodul?
-                2. Richtige Adresse konfiguriert?
-                3. Belegtmelder korrekt angeschlossen?
-                4. Lok hat Stromabnahme auf diesem Abschnitt?
+                Checklist:
+                1. Is track power switched on? (Track Power)
+                2. Is correct DCC address set?
+                3. Is locomotive on the track?
+                4. Is decoder compatible?
 
                 Test:
-                - Im Z21 Maintenance Tool pruefen
-                - Manuell Kontakt ausloesen
+                - Try different locomotive
+                - Test locomotive on programming track
+                - Check CV1 (address)
 
-                Hinweis: Rueckmeldungen kommen per UDP-Broadcast
+                Common cause: Wrong address or contact problems
                 """,
 
-            _ => "Waehlen Sie ein Thema aus dem Menue."
+            "Feedback Points Missing" => """
+                Problem: Feedback points not recognized
+
+                Checklist:
+                1. Does Z21 recognize feedback module?
+                2. Is correct address configured?
+                3. Is occupancy detector correctly wired?
+                4. Is locomotive drawing current in this section?
+
+                Test:
+                - Check in Z21 Maintenance Tool
+                - Manually trigger contact
+
+                Note: Feedback is received via UDP broadcast
+                """,
+
+            _ => "Select a topic from the menu."
         };
 
         var para = new Paragraph { Margin = new Thickness(0) };

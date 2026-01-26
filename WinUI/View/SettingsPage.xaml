@@ -22,33 +22,6 @@
                     Text="Settings" />
             </Grid>
 
-            <!--  Appearance Section  -->
-            <Expander
-                x:Name="AppearanceExpander"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Stretch"
-                Header="Appearance"
-                IsExpanded="True">
-                <Expander.HeaderTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal" Spacing="12">
-                            <FontIcon FontSize="20" Glyph="&#xE790;" />
-                            <TextBlock
-                                VerticalAlignment="Center"
-                                Style="{StaticResource SubtitleTextBlockStyle}"
-                                Text="{Binding}" />
-                        </StackPanel>
-                    </DataTemplate>
-                </Expander.HeaderTemplate>
-
-                <StackPanel
-                    x:Name="ThemeSelectorContainer"
-                    Padding="56,16,0,16"
-                    Spacing="16">
-                    <!--  ThemeSelectorControl injected via code-behind  -->
-                </StackPanel>
-            </Expander>
-
             <!--  Z21 Connection Section  -->
             <Expander
                 HorizontalAlignment="Stretch"
@@ -178,7 +151,7 @@
                 <Expander.HeaderTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal" Spacing="12">
-                            <FontIcon FontSize="20" Glyph="&#xE7C8;" />
+                            <FontIcon FontSize="20" Glyph="&#xE8A2;" />
                             <TextBlock
                                 VerticalAlignment="Center"
                                 Style="{StaticResource SubtitleTextBlockStyle}"
@@ -267,10 +240,11 @@
                             Message="Need an Azure Speech Key? Follow our step-by-step guide to create one."
                             Severity="Informational">
                             <InfoBar.ActionButton>
-                                <HyperlinkButton
+                                <Button
+                                    x:Name="AzureSpeechSetupButton"
+                                    Click="AzureSpeechSetupButton_Click"
                                     Content="📖 Setup Guide"
-                                    NavigateUri="https://github.com/ahuelsmann/MOBAflow/wiki/Azure-Speech-Setup"
-                                    ToolTipService.ToolTip="Open Azure Speech Setup guide in browser" />
+                                    ToolTipService.ToolTip="Open Azure Speech Setup guide in Help" />
                             </InfoBar.ActionButton>
                         </InfoBar>
 
@@ -375,7 +349,7 @@
                         <TextBlock
                             Margin="28,0,0,0"
                             Style="{StaticResource CaptionTextBlockStyle}"
-                            Text="Starts an in-process for photo uploads from MOBAsmart"
+                            Text="Starts an in-process server for photo uploads from MOBAsmart"
                             TextWrapping="Wrap" />
                     </StackPanel>
 

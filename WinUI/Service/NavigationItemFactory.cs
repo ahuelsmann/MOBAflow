@@ -8,7 +8,6 @@ using Microsoft.UI;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
 
 using Windows.UI;
@@ -136,12 +135,27 @@ public sealed class NavigationItemFactory
     {
         // SKIN badge = purple (#5C2D91)
         var isSkinBadge = label.Equals("SKIN", StringComparison.OrdinalIgnoreCase);
-        var backgroundColor = isSkinBadge
-            ? new SolidColorBrush(Color.FromArgb(255, 92, 45, 145)) // #5C2D91
-            : (Brush)Application.Current.Resources["SystemFillColorCautionBackgroundBrush"];
-        var foregroundColor = isSkinBadge
-            ? new SolidColorBrush(Colors.White)
-            : (Brush)Application.Current.Resources["SystemFillColorCautionBrush"];
+        var isPreviewBadge = label.Equals("Preview", StringComparison.OrdinalIgnoreCase);
+
+        Brush backgroundColor;
+        Brush foregroundColor;
+
+        if (isSkinBadge)
+        {
+            backgroundColor = new SolidColorBrush(Color.FromArgb(255, 92, 45, 145)); // #5C2D91
+            foregroundColor = new SolidColorBrush(Colors.White);
+        }
+        else if (isPreviewBadge)
+        {
+            backgroundColor = new SolidColorBrush(Color.FromArgb(255, 92, 45, 145)); // #5C2D91
+            //backgroundColor = (Brush)Application.Current.Resources["SystemAccentColorBrush"];
+            foregroundColor = new SolidColorBrush(Colors.White);
+        }
+        else
+        {
+            backgroundColor = (Brush)Application.Current.Resources["SystemFillColorCautionBackgroundBrush"];
+            foregroundColor = (Brush)Application.Current.Resources["SystemFillColorCautionBrush"];
+        }
 
         var badge = new Border
         {
@@ -159,7 +173,7 @@ public sealed class NavigationItemFactory
             Foreground = foregroundColor
         };
 
-        if (!isSkinBadge)
+        if (!isSkinBadge && !isPreviewBadge)
         {
             badgeText.Opacity = 0.7;
         }
