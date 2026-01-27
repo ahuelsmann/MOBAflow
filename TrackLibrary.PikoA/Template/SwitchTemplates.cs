@@ -109,21 +109,6 @@ public static class SwitchTemplates
         }
     );
 
-    public static TrackTemplate K30 => new(
-        "K30",
-        [
-            new TrackEnd("A", 0),
-            new TrackEnd("B", 180),
-            new TrackEnd("C", 30),
-            new TrackEnd("D", 210)
-        ],
-        new TrackGeometrySpec(
-            TrackGeometryKind.Straight,
-            AngleDeg: PikoAConstants.StandardAngle
-        ),
-        null
-    );
-
     /// <summary>
     /// Piko 55224 - Dreiwegweiche (W3).
     /// 4 Ports: A (Eingang), B (gerade), C (links +15°), D (rechts -15°)
@@ -152,7 +137,6 @@ public static class SwitchTemplates
         WR,
         BWL,
         BWR,
-        K30,
         W3
     ];
 }

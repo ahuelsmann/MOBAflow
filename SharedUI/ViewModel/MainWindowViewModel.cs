@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using Action;
 using Backend.Interface;
 using Backend.Manager;
 using Backend.Service;
@@ -145,7 +144,7 @@ public partial class MainWindowViewModel : ObservableObject
     partial void OnIsDarkModeChanged(bool value)
     {
         _settings.Application.IsDarkMode = value;
-        
+
         // Auto-save settings when theme changes
         if (_settingsService != null)
         {
@@ -241,7 +240,7 @@ public partial class MainWindowViewModel : ObservableObject
     {
         // Ignore certain properties that don't affect the model
         var ignoredProperties = new[] { "IsSelected", "IsExpanded", "IsHighlighted" };
-        
+
         if (!ignoredProperties.Contains(e.PropertyName))
         {
             _ = SaveSolutionInternalAsync();

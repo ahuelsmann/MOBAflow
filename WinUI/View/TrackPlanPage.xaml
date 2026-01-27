@@ -216,28 +216,74 @@
 
             <!--  Center: Canvas with Pan/Zoom  -->
             <Border Grid.Column="1" Background="{ThemeResource SolidBackgroundFillColorBaseAltBrush}">
-                <ScrollViewer
-                    x:Name="CanvasScrollViewer"
-                    HorizontalScrollBarVisibility="Auto"
-                    HorizontalScrollMode="Enabled"
-                    VerticalScrollBarVisibility="Auto"
-                    VerticalScrollMode="Enabled"
-                    ZoomMode="Enabled">
-                    <Canvas
-                        x:Name="GraphCanvas"
-                        Width="3000"
-                        Height="2000"
-                        AllowDrop="True"
-                        Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
-                        DragEnter="GraphCanvas_DragEnter"
-                        DragLeave="GraphCanvas_DragLeave"
-                        DragOver="GraphCanvas_DragOver"
-                        Drop="GraphCanvas_Drop"
-                        PointerMoved="GraphCanvas_PointerMoved"
-                        PointerPressed="GraphCanvas_PointerPressed"
-                        PointerReleased="GraphCanvas_PointerReleased"
-                        PointerWheelChanged="GraphCanvas_PointerWheelChanged" />
-                </ScrollViewer>
+                <Grid>
+                    <ScrollViewer
+                        x:Name="CanvasScrollViewer"
+                        HorizontalScrollBarVisibility="Auto"
+                        HorizontalScrollMode="Enabled"
+                        VerticalScrollBarVisibility="Auto"
+                        VerticalScrollMode="Enabled"
+                        ZoomMode="Enabled">
+                        <Canvas
+                            x:Name="GraphCanvas"
+                            Width="3000"
+                            Height="2000"
+                            AllowDrop="True"
+                            Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+                            DragEnter="GraphCanvas_DragEnter"
+                            DragLeave="GraphCanvas_DragLeave"
+                            DragOver="GraphCanvas_DragOver"
+                            Drop="GraphCanvas_Drop"
+                            PointerMoved="GraphCanvas_PointerMoved"
+                            PointerPressed="GraphCanvas_PointerPressed"
+                            PointerReleased="GraphCanvas_PointerReleased"
+                            PointerWheelChanged="GraphCanvas_PointerWheelChanged" />
+                    </ScrollViewer>
+
+                    <!--  Zoom Control Overlay (Bottom-Right)  -->
+                    <StackPanel
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Bottom"
+                        Margin="0,0,12,12"
+                        Padding="12,8"
+                        Orientation="Horizontal"
+                        Spacing="8"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6">
+                        <Button
+                            x:Name="ZoomOutButton"
+                            Width="32"
+                            Height="32"
+                            Click="ZoomOut_Click"
+                            Content="−"
+                            FontSize="16"
+                            ToolTipService.ToolTip="Zoom Out (Ctrl+−)" />
+                        <Slider
+                            x:Name="ZoomSlider"
+                            Width="120"
+                            Minimum="0.1"
+                            Maximum="3.0"
+                            Value="1.0"
+                            ValueChanged="ZoomSlider_ValueChanged"
+                            VerticalAlignment="Center" />
+                        <Button
+                            x:Name="ZoomInButton"
+                            Width="32"
+                            Height="32"
+                            Click="ZoomIn_Click"
+                            Content="+"
+                            FontSize="16"
+                            ToolTipService.ToolTip="Zoom In (Ctrl++)" />
+                        <TextBlock
+                            x:Name="ZoomPercentText"
+                            Width="50"
+                            Text="100%"
+                            VerticalAlignment="Center"
+                            TextAlignment="Center" />
+                    </StackPanel>
+                </Grid>
             </Border>
 
             <!--  Right Panel: Properties  -->

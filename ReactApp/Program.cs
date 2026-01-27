@@ -22,15 +22,6 @@ builder.Services.AddRazorComponents()
 // REST API Controllers with Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-    {
-        Title = "MOBAflow React API",
-        Version = "v1",
-        Description = "REST API for MOBAflow React/Blazor Validation App"
-    });
-});
 
 // CORS for React Development Server
 builder.Services.AddCors(options =>

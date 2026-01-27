@@ -3,7 +3,6 @@
 
 namespace Moba.WinUI.Service;
 
-using Microsoft.UI.Xaml;
 using Moba.SharedUI.Shell;
 
 /// <summary>

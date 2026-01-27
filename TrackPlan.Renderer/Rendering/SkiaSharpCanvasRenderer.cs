@@ -3,7 +3,6 @@
 namespace Moba.TrackPlan.Renderer.Rendering;
 
 using Moba.TrackPlan.Geometry;
-using Moba.TrackPlan.Renderer.World;
 
 using SkiaSharp;
 

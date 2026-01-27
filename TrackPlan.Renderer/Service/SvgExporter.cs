@@ -2,9 +2,6 @@
 
 namespace Moba.TrackPlan.Renderer.Service;
 
-using Moba.TrackPlan.Renderer.Geometry;
-using Moba.TrackPlan.Renderer.World;
-
 using System.Globalization;
 using System.Text;
 
@@ -95,7 +92,7 @@ public static class SvgExporter
         double? centerOffsetY = null)
     {
         var sb = new StringBuilder();
-        
+
         // ULTRA-SIMPLE: No viewBox tricks, no complex transforms
         // Just render geometry directly with offset
         sb.AppendLine($@"<svg xmlns=""http://www.w3.org/2000/svg"" width=""{width}"" height=""{height}"" viewBox=""0 0 {width} {height}"">");
@@ -108,7 +105,7 @@ public static class SvgExporter
         // Canvas center
         var centerX = width / 2.0;
         var centerY = height / 2.0;
-        
+
         // Apply offsets if provided (in mm, converted to pixels)
         var offsetPixelX = (centerOffsetX ?? 0) * scale;
         var offsetPixelY = (centerOffsetY ?? 0) * scale;
@@ -271,7 +268,7 @@ public static class SvgExporter
         var endY = arc.Center.Y + arc.Radius * Math.Sin(arc.StartAngleRad + arc.SweepAngleRad);
 
         var largeArc = Math.Abs(arc.SweepAngleRad) > Math.PI ? 1 : 0;
-        
+
         // Sweep-flag: Positiver Sweep-Winkel (CCW in Y-up) → sweep=1 (CW in SVG Y-down nach scale-Flip)
         // Negativer Sweep-Winkel (CW in Y-up) → sweep=0 (CCW in SVG Y-down nach scale-Flip)
         var sweep = arc.SweepAngleRad >= 0 ? 1 : 0;

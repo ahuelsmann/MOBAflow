@@ -1,8 +1,5 @@
 namespace Moba.WinUI.View;
 
-using Domain;
-
-using Microsoft.UI;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
@@ -33,7 +30,10 @@ public sealed partial class SignalBoxPage
         var canvas = new Canvas { Width = 60, Height = 60 };
         canvas.Children.Add(new Line
         {
-            X1 = 0, Y1 = 30, X2 = 60, Y2 = 30,
+            X1 = 0,
+            Y1 = 30,
+            X2 = 60,
+            Y2 = 30,
             Stroke = TrackBrush,
             StrokeThickness = TrackThickness
         });
@@ -63,14 +63,20 @@ public sealed partial class SignalBoxPage
 
         canvas.Children.Add(new Line
         {
-            X1 = 0, Y1 = 30, X2 = 45, Y2 = 30,
+            X1 = 0,
+            Y1 = 30,
+            X2 = 45,
+            Y2 = 30,
             Stroke = TrackBrush,
             StrokeThickness = TrackThickness
         });
 
         canvas.Children.Add(new Line
         {
-            X1 = 45, Y1 = 18, X2 = 45, Y2 = 42,
+            X1 = 45,
+            Y1 = 18,
+            X2 = 45,
+            Y2 = 42,
             Stroke = BufferStopBrush,
             StrokeThickness = 5
         });
@@ -88,7 +94,10 @@ public sealed partial class SignalBoxPage
         // Main track through
         canvas.Children.Add(new Line
         {
-            X1 = 0, Y1 = 30, X2 = 60, Y2 = 30,
+            X1 = 0,
+            Y1 = 30,
+            X2 = 60,
+            Y2 = 30,
             Stroke = isStraight ? TrackActiveBrush : TrackBrush,
             StrokeThickness = TrackThickness
         });
@@ -96,8 +105,10 @@ public sealed partial class SignalBoxPage
         // Branch: From center (30,30) to diverging
         canvas.Children.Add(new Line
         {
-            X1 = 30, Y1 = 30,
-            X2 = 60, Y2 = element.SwitchPosition == Domain.SwitchPosition.DivergingLeft ? 0 : 60,
+            X1 = 30,
+            Y1 = 30,
+            X2 = 60,
+            Y2 = element.SwitchPosition == Domain.SwitchPosition.DivergingLeft ? 0 : 60,
             Stroke = isDiverging ? TrackActiveBrush : TrackBrush,
             StrokeThickness = TrackThickness
         });
@@ -123,7 +134,8 @@ public sealed partial class SignalBoxPage
         canvas.Children.Add(signalScreen);
 
         return canvas;
-    }    private static Canvas CreateCrossingGraphic()
+    }
+    private static Canvas CreateCrossingGraphic()
     {
         // Crossing: Horizontal + Vertical
         var canvas = new Canvas { Width = 60, Height = 60 };
@@ -131,7 +143,10 @@ public sealed partial class SignalBoxPage
         // Horizontal: (0,30) -> (60,30)
         canvas.Children.Add(new Line
         {
-            X1 = 0, Y1 = 30, X2 = 60, Y2 = 30,
+            X1 = 0,
+            Y1 = 30,
+            X2 = 60,
+            Y2 = 30,
             Stroke = TrackBrush,
             StrokeThickness = TrackThickness
         });
@@ -139,7 +154,10 @@ public sealed partial class SignalBoxPage
         // Vertical: (30,0) -> (30,60)
         canvas.Children.Add(new Line
         {
-            X1 = 30, Y1 = 0, X2 = 30, Y2 = 60,
+            X1 = 30,
+            Y1 = 0,
+            X2 = 30,
+            Y2 = 60,
             Stroke = TrackBrush,
             StrokeThickness = TrackThickness
         });
@@ -154,7 +172,10 @@ public sealed partial class SignalBoxPage
         // Track
         canvas.Children.Add(new Line
         {
-            X1 = 0, Y1 = 40, X2 = 60, Y2 = 40,
+            X1 = 0,
+            Y1 = 40,
+            X2 = 60,
+            Y2 = 40,
             Stroke = TrackBrush,
             StrokeThickness = TrackThickness
         });
@@ -181,7 +202,10 @@ public sealed partial class SignalBoxPage
         // Track
         canvas.Children.Add(new Line
         {
-            X1 = 0, Y1 = 30, X2 = 60, Y2 = 30,
+            X1 = 0,
+            Y1 = 30,
+            X2 = 60,
+            Y2 = 30,
             Stroke = TrackBrush,
             StrokeThickness = TrackThickness
         });

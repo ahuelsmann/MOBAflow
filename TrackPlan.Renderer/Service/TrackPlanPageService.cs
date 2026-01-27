@@ -3,7 +3,6 @@
 namespace Moba.TrackPlan.Renderer.Service;
 
 using Moba.TrackPlan.Graph;
-using Moba.TrackPlan.Renderer.World;
 using Moba.TrackPlan.TrackSystem;
 
 using System;
@@ -278,7 +277,7 @@ public sealed class R9OvalTrackPlanExample
             graph.AddNode(node);
         foreach (var edge in edges)
             graph.AddEdge(edge);
-        
+
         return graph;
     }
 }

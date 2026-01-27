@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 using Moba.TrackPlan.Renderer.Layout;
-using Moba.TrackPlan.Renderer.Geometry;
 
 namespace Moba.TrackPlan.Editor.ViewModel;
 
@@ -134,6 +133,8 @@ public sealed class TrackPlanEditorViewModel
     public TrackPlanEditorViewModel(ITrackCatalog catalog, params ITopologyConstraint[] constraints)
     {
         _catalog = catalog;
+        _validationService = new ValidationService(catalog);
+        _serializationService = new SerializationService();
 
         Graph = new TopologyGraph();
         // Note: constraints are passed in but TopologyGraph.Validate() validates dynamically
@@ -156,7 +157,7 @@ public sealed class TrackPlanEditorViewModel
             var node = new TrackNode(Guid.NewGuid());
             node.Ports.Add(end.Id);
             Graph.AddNode(node);
-            
+
             edge.Connections[end.Id] = (node.Id, null, null);
         }
 
@@ -177,7 +178,7 @@ public sealed class TrackPlanEditorViewModel
             Disconnect(edgeId, port);
 
         Graph.RemoveEdge(edgeId);
-        
+
         Positions.Remove(edgeId);
         Rotations.Remove(edgeId);
 
@@ -282,11 +283,11 @@ public sealed class TrackPlanEditorViewModel
         // For curved tracks in a loop: ports should be COLLINEAR (same direction), not opposite
         // Target port global angle
         double targetGlobalAngle = Rotations.GetValueOrDefault(targetEdgeId, 0) + targetEnd.AngleDeg;
-        
+
         // For Port A→Port B connection on curves: desired angle is the TARGET angle itself
         // (continuing the curve in the same direction)
         double desiredMovingGlobalAngle = targetGlobalAngle;
-        
+
         // Adjust rotation so moving port points in desired direction
         double newRotation = NormalizeDeg(desiredMovingGlobalAngle - movingEnd.AngleDeg);
         Rotations[movingEdgeId] = newRotation;
@@ -299,7 +300,7 @@ public sealed class TrackPlanEditorViewModel
             targetPos.X - movingOffset.X,
             targetPos.Y - movingOffset.Y
         );
-        
+
         System.Diagnostics.Debug.WriteLine(
             $"SNAP: {moving.TemplateId}.{movingPortId} → {target.TemplateId}.{targetPortId} | " +
             $"TargetAngle: {targetGlobalAngle:F1}° | DesiredAngle: {desiredMovingGlobalAngle:F1}° | NewRot: {newRotation:F1}°");
@@ -384,10 +385,10 @@ public sealed class TrackPlanEditorViewModel
         bool isAPort = portA == "A";
         bool isBPort = portB == "B";
         bool isCPort = portB == "C";
-        
+
         if (isAPort)
             return isBPort || isCPort;
-        
+
         return portA == "B" || portA == "C";
     }
 
@@ -996,7 +997,7 @@ public sealed class TrackPlanEditorViewModel
 
         foreach (var n in loaded.Nodes) Graph.AddNode(n);
         foreach (var e in loaded.Edges) Graph.AddEdge(e);
-        
+
         // Endcaps are managed separately in ViewModel
         Endcaps.Clear();
         // Note: If Endcaps need to be serialized, extend SerializationService

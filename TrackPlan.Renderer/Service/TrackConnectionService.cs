@@ -3,7 +3,6 @@
 namespace Moba.TrackPlan.Renderer.Service;
 
 using Moba.TrackPlan.Graph;
-using Moba.TrackPlan.TrackSystem;
 
 /// <summary>
 /// Service for managing connections between track edges in a topology.

@@ -18,7 +18,6 @@ using SharedUI.ViewModel;
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
@@ -273,26 +272,26 @@ public sealed partial class SignalBoxPage : Page
             // Blue skin
             (AppSkin.Blue, true) => (Color.FromArgb(255, 10, 30, 50), Color.FromArgb(100, 0, 120, 212)),
             (AppSkin.Blue, false) => (Color.FromArgb(255, 220, 235, 250), Color.FromArgb(120, 0, 120, 212)),
-            
+
             // Green skin
             (AppSkin.Green, true) => (Color.FromArgb(255, 10, 40, 20), Color.FromArgb(100, 16, 124, 16)),
             (AppSkin.Green, false) => (Color.FromArgb(255, 220, 245, 220), Color.FromArgb(120, 16, 124, 16)),
-            
+
             // Violet skin (always dark-ish)
             (AppSkin.Violet, _) => (Color.FromArgb(255, 25, 25, 30), Color.FromArgb(80, 106, 90, 205)),
-            
+
             // Orange skin
             (AppSkin.Orange, true) => (Color.FromArgb(255, 25, 15, 5), Color.FromArgb(100, 255, 140, 0)),
             (AppSkin.Orange, false) => (Color.FromArgb(255, 255, 245, 230), Color.FromArgb(120, 255, 140, 0)),
-            
+
             // Dark Orange skin
             (AppSkin.DarkOrange, true) => (Color.FromArgb(255, 20, 12, 5), Color.FromArgb(100, 255, 102, 0)),
             (AppSkin.DarkOrange, false) => (Color.FromArgb(255, 255, 240, 225), Color.FromArgb(120, 255, 102, 0)),
-            
+
             // Red skin
             (AppSkin.Red, true) => (Color.FromArgb(255, 30, 10, 10), Color.FromArgb(100, 204, 0, 0)),
             (AppSkin.Red, false) => (Color.FromArgb(255, 255, 235, 235), Color.FromArgb(120, 204, 0, 0)),
-            
+
             // System skin - use theme resources
             _ => ((Color?)null, (Color?)null)
         };
@@ -698,58 +697,58 @@ public sealed partial class SignalBoxPage : Page
 
         _blinkingLeds.Clear();
         UpdatePropertiesPanel();
-        }
-
-        private void DeleteSelectedElement()
-        {
-            if (SelectedElement == null || _planViewModel == null) return;
-
-            var elementToDelete = SelectedElement;
-
-            _planViewModel.ClearSelection();
-            _blinkingLeds.Clear();
-            UpdatePropertiesPanel();
-
-            // Dann aus Canvas und Listen entfernen
-            if (_elementVisuals.TryGetValue(elementToDelete.Id, out var visual))
-            {
-                TrackCanvas.Children.Remove(visual);
-                _elementVisuals.Remove(elementToDelete.Id);
-            }
-
-            _planViewModel.RemoveElement(elementToDelete);
-            UpdateStatistics();
-        }
-
-        #endregion
-
-        /// <summary>
-        /// Loads the signal box plan from the domain model and recreates all visuals.
-        /// </summary>
-        private void LoadFromModel()
-        {
-            // Clear existing visuals
-            foreach (var visual in _elementVisuals.Values)
-            {
-                TrackCanvas.Children.Remove(visual);
-            }
-            _elementVisuals.Clear();
-
-            // Get or create ViewModel and refresh from model
-            var planVm = GetOrCreatePlanViewModel();
-            if (planVm == null)
-                return;
-
-            planVm.Refresh();
-
-            // Recreate visuals for all elements
-            foreach (var element in planVm.Elements)
-            {
-                CreateElementVisual(element);
-            }
-
-            UpdateStatistics();
-        }
-
-        // Properties Panel methods moved to SignalBoxPage.Properties.cs
     }
+
+    private void DeleteSelectedElement()
+    {
+        if (SelectedElement == null || _planViewModel == null) return;
+
+        var elementToDelete = SelectedElement;
+
+        _planViewModel.ClearSelection();
+        _blinkingLeds.Clear();
+        UpdatePropertiesPanel();
+
+        // Dann aus Canvas und Listen entfernen
+        if (_elementVisuals.TryGetValue(elementToDelete.Id, out var visual))
+        {
+            TrackCanvas.Children.Remove(visual);
+            _elementVisuals.Remove(elementToDelete.Id);
+        }
+
+        _planViewModel.RemoveElement(elementToDelete);
+        UpdateStatistics();
+    }
+
+    #endregion
+
+    /// <summary>
+    /// Loads the signal box plan from the domain model and recreates all visuals.
+    /// </summary>
+    private void LoadFromModel()
+    {
+        // Clear existing visuals
+        foreach (var visual in _elementVisuals.Values)
+        {
+            TrackCanvas.Children.Remove(visual);
+        }
+        _elementVisuals.Clear();
+
+        // Get or create ViewModel and refresh from model
+        var planVm = GetOrCreatePlanViewModel();
+        if (planVm == null)
+            return;
+
+        planVm.Refresh();
+
+        // Recreate visuals for all elements
+        foreach (var element in planVm.Elements)
+        {
+            CreateElementVisual(element);
+        }
+
+        UpdateStatistics();
+    }
+
+    // Properties Panel methods moved to SignalBoxPage.Properties.cs
+}

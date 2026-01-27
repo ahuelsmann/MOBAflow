@@ -1,16 +1,17 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-using System.Collections.Generic;
-using System.Linq;
+using Microsoft.UI;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 
 using Moba.TrackPlan.Editor.ViewModel;
 using Moba.TrackPlan.Geometry;
-using Moba.TrackPlan.Renderer.Geometry;
-using Moba.TrackPlan.Renderer.World;
+using Moba.TrackPlan.Renderer.Rendering;
 using Moba.TrackPlan.TrackSystem;
+
+using Windows.UI;
 
 namespace Moba.WinUI.Rendering;
 
@@ -157,5 +158,245 @@ public class CanvasRenderer
             StrokeLineJoin = PenLineJoin.Round,
             StrokeDashArray = dash
         };
+    }
+
+    /// <summary>
+    /// Phase 9.2: Renders switch type indicators (WL/WR/W3/BWL/BWR) on canvas.
+    /// Shows Unicode symbols with theme-aware colors at top-left of each switch.
+    /// </summary>
+    public void RenderTypeIndicators(
+        Canvas canvas,
+        TrackPlanEditorViewModel viewModel,
+        ITrackCatalog catalog,
+        bool isDarkTheme)
+    {
+        foreach (var edge in viewModel.Graph.Edges)
+        {
+            var template = catalog.GetById(edge.TemplateId);
+            if (template?.Geometry.GeometryKind != TrackGeometryKind.Switch)
+                continue;  // Only render for switches
+
+            if (!viewModel.Positions.TryGetValue(edge.Id, out var pos))
+                continue;
+
+            // Determine switch type variant
+            var typeVariant = GetSwitchTypeVariant(template);
+
+            // Get position for indicator (top-left of switch)
+            var (indicatorX, indicatorY) = PositionStateRenderer.CalculateTypeIndicatorPosition(
+                pos.X, pos.Y, 40, 8);
+
+            // Get symbol and color
+            var symbol = PositionStateRenderer.GetTypeSymbol(typeVariant);
+            var (r, g, b) = PositionStateRenderer.GetTypeColor(typeVariant, isDarkTheme);
+
+            // Create TextBlock for indicator
+            var textBlock = new TextBlock
+            {
+                Text = symbol,
+                FontSize = 10.0,
+                FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                Foreground = new SolidColorBrush(Color.FromArgb(255, r, g, b)),
+                TextAlignment = TextAlignment.Center,
+                Opacity = isDarkTheme ? 0.75 : 0.60
+            };
+
+            Canvas.SetLeft(textBlock, indicatorX * DisplayScale - 5);
+            Canvas.SetTop(textBlock, indicatorY * DisplayScale - 5);
+            Canvas.SetZIndex(textBlock, 50);  // Above tracks
+            canvas.Children.Add(textBlock);
+        }
+    }
+
+    /// <summary>
+    /// Phase 9.3: Renders hover effects for ports (scale + glow).
+    /// </summary>
+    public void RenderPortHoverEffects(
+        Canvas canvas,
+        IReadOnlySet<(System.Guid TrackId, string PortId)> highlightedPorts,
+        TrackPlanEditorViewModel viewModel,
+        ITrackCatalog catalog)
+    {
+        if (highlightedPorts.Count == 0)
+            return;
+
+        const double portRadius = 8.0;
+        const double hoverScale = 1.5;  // 1.5x larger on hover
+
+        foreach (var (trackId, portId) in highlightedPorts)
+        {
+            if (!viewModel.Positions.TryGetValue(trackId, out var pos))
+                continue;
+
+            var edge = viewModel.Graph.Edges.FirstOrDefault(e => e.Id == trackId);
+            if (edge is null)
+                continue;
+
+            var template = catalog.GetById(edge.TemplateId);
+            if (template is null)
+                continue;
+
+            // Get port offset from geometry
+            var end = template.Ends.FirstOrDefault(e => e.Id == portId);
+            if (end is null)
+                continue;
+
+            var rot = viewModel.Rotations.GetValueOrDefault(trackId, 0.0);
+            var portOffset = GetPortOffset(template, portId, rot);
+
+            var portX = (pos.X + portOffset.X) * DisplayScale;
+            var portY = (pos.Y + portOffset.Y) * DisplayScale;
+
+            // Draw hover halo (larger semi-transparent circle)
+            var halo = new Ellipse
+            {
+                Width = portRadius * 2 * hoverScale,
+                Height = portRadius * 2 * hoverScale,
+                Fill = new SolidColorBrush(Color.FromArgb(80, 100, 200, 255)),  // Subtle blue glow
+                Stroke = new SolidColorBrush(Color.FromArgb(150, 100, 150, 255)),
+                StrokeThickness = 1.0
+            };
+
+            Canvas.SetLeft(halo, portX - portRadius * hoverScale);
+            Canvas.SetTop(halo, portY - portRadius * hoverScale);
+            Canvas.SetZIndex(halo, 40);  // Below port but above tracks
+            canvas.Children.Add(halo);
+        }
+    }
+
+    /// <summary>
+    /// Phase 9.3: Renders hover effects for tracks (subtle outline).
+    /// </summary>
+    public void RenderTrackHoverEffects(
+        Canvas canvas,
+        IReadOnlySet<System.Guid> hoveredTracks,
+        TrackPlanEditorViewModel viewModel)
+    {
+        if (hoveredTracks.Count == 0)
+            return;
+
+        var selectedBrush = new SolidColorBrush(Color.FromArgb(200, 255, 200, 50));  // Yellow highlight
+
+        foreach (var trackId in hoveredTracks)
+        {
+            if (!viewModel.Positions.TryGetValue(trackId, out var pos))
+                continue;
+
+            // Draw subtle selection indicator
+            var hoverBox = new Rectangle
+            {
+                Width = 120,
+                Height = 120,
+                Stroke = selectedBrush,
+                StrokeThickness = 2.0,
+                Fill = new SolidColorBrush { Color = Colors.Yellow, Opacity = 0.05 },
+                StrokeDashArray = new DoubleCollection { 3, 3 }
+            };
+
+            Canvas.SetLeft(hoverBox, (pos.X - 60) * DisplayScale);
+            Canvas.SetTop(hoverBox, (pos.Y - 60) * DisplayScale);
+            Canvas.SetZIndex(hoverBox, 5);  // Below tracks
+            canvas.Children.Add(hoverBox);
+        }
+    }
+
+    /// <summary>
+    /// Determines switch type variant from geometry.
+    /// Maps SwitchGeometry properties to SwitchTypeVariant enum.
+    /// </summary>
+    private static SwitchTypeVariant GetSwitchTypeVariant(TrackTemplate template)
+    {
+        var geometry = template.Geometry;
+
+        // Use geometry shape analysis to determine type
+        // This is a simplified version - could be enhanced with more geometry analysis
+        if (geometry.LengthMm.HasValue && geometry.RadiusMm.HasValue)
+        {
+            // Check if it's a back-switch (curved) based on angle
+            var angle = geometry.AngleDeg ?? 0;
+            var isBack = angle < 0 || geometry.JunctionOffsetMm > (geometry.LengthMm.Value * 0.6);
+
+            // Check left vs right based on sweep direction
+            var isLeft = Math.Sign(angle) > 0 || template.Id.Contains("L");
+            var isRight = Math.Sign(angle) < 0 || template.Id.Contains("R");
+
+            // Three-way check
+            if (template.Id.Contains("3W") || template.Id.Contains("W3"))
+                return SwitchTypeVariant.W3;
+
+            // Back switches
+            if (isBack)
+                return isLeft ? SwitchTypeVariant.BWL : SwitchTypeVariant.BWR;
+
+            // Regular left/right
+            return isLeft ? SwitchTypeVariant.WL : SwitchTypeVariant.WR;
+        }
+
+        return SwitchTypeVariant.WR;  // Default
+    }
+
+    /// <summary>
+    /// Helper: Get port offset in world coordinates.
+    /// </summary>
+    private static Point2D GetPortOffset(TrackTemplate template, string portId, double rotationDeg)
+    {
+        var spec = template.Geometry;
+        double rotRad = rotationDeg * Math.PI / 180.0;
+
+        static Point2D Rot(Point2D p, double r) =>
+            new(p.X * Math.Cos(r) - p.Y * Math.Sin(r),
+                p.X * Math.Sin(r) + p.Y * Math.Cos(r));
+
+        if (spec.GeometryKind == TrackGeometryKind.Straight)
+        {
+            double length = spec.LengthMm!.Value;
+            var local = portId == "A" ? new Point2D(0, 0) : new Point2D(length, 0);
+            return Rot(local, rotRad);
+        }
+
+        if (spec.GeometryKind == TrackGeometryKind.Curve)
+        {
+            double radius = spec.RadiusMm!.Value;
+            double sweepRad = spec.AngleDeg!.Value * Math.PI / 180.0;
+
+            if (portId == "A")
+                return Rot(new Point2D(0, 0), rotRad);
+
+            var endLocal = new Point2D(
+                radius * Math.Sin(sweepRad),
+                radius - radius * Math.Cos(sweepRad));
+
+            return Rot(endLocal, rotRad);
+        }
+
+        if (spec.GeometryKind == TrackGeometryKind.Switch)
+        {
+            double length = spec.LengthMm!.Value;
+            double radius = spec.RadiusMm!.Value;
+            double sweepRad = spec.AngleDeg!.Value * Math.PI / 180.0;
+            double junction = spec.JunctionOffsetMm ?? (length / 2.0);
+
+            if (portId == "A")
+                return Rot(new Point2D(0, 0), rotRad);
+
+            if (portId == "B")
+                return Rot(new Point2D(length, 0), rotRad);
+
+            if (portId == "C")
+            {
+                var j = new Point2D(junction, 0);
+                var center = new Point2D(j.X, j.Y + radius);
+                double startAngle = Math.Atan2(j.Y - center.Y, j.X - center.X);
+
+                var endLocal = new Point2D(
+                    center.X + radius * Math.Cos(startAngle + sweepRad),
+                    center.Y + radius * Math.Sin(startAngle + sweepRad));
+
+                var rel = new Point2D(endLocal.X - 0.0, endLocal.Y - 0.0);
+                return Rot(rel, rotRad);
+            }
+        }
+
+        return new Point2D(0, 0);
     }
 }

@@ -13,4 +13,7 @@
     <ItemGroup>
       <ProjectReference Include="..\TrackPlan.Domain\TrackPlan.Domain.csproj" />
     </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Effects\" />
+    </ItemGroup>
 </Project>

@@ -68,7 +68,7 @@
                         OnContent="Dark"
                         Toggled="ThemeToggleSwitch_Toggled" />
 
-                    <!--  Transaction Code Band (SAP-style command palette, center)  -->
+                    <!--  Navigation command line  -->
                     <Border
                         Grid.Column="1"
                         Padding="8,4"

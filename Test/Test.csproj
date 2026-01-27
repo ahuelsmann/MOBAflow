@@ -35,6 +35,7 @@
         <ProjectReference Include="..\TrackPlan.Domain\TrackPlan.Domain.csproj" />
         <ProjectReference Include="..\TrackPlan.Geometry\TrackPlan.Geometry.csproj" />
         <ProjectReference Include="..\TrackPlan.Renderer\TrackPlan.Renderer.csproj" />
+        <ProjectReference Include="..\TrackPlan.Editor\TrackPlan.Editor.csproj" />
         <ProjectReference Include="..\TrackLibrary.PikoA\TrackLibrary.PikoA.csproj" />
         <ProjectReference Include="..\Sound\Sound.csproj" />
     </ItemGroup>
@@ -42,5 +43,8 @@
         <None Update="TestFile\**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="WinUI\Rendering\" />
     </ItemGroup>
 </Project>

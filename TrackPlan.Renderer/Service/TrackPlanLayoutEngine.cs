@@ -4,7 +4,6 @@ namespace Moba.TrackPlan.Renderer.Service;
 
 using Moba.TrackPlan.Constraint;
 using Moba.TrackPlan.Renderer.Geometry;
-using Moba.TrackPlan.Renderer.World;
 
 using System;
 using System.Collections.Generic;

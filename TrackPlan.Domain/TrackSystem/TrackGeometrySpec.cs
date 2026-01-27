@@ -9,10 +9,13 @@ namespace Moba.TrackPlan.TrackSystem;
 /// <param name="LengthMm">Length in mm (for straight tracks)</param>
 /// <param name="RadiusMm">Radius in mm (for curves and switches)</param>
 /// <param name="AngleDeg">Angle in degrees (for curves and switches)</param>
+/// <param name="JunctionOffsetMm">Offset in mm for switch junction (only for switches)</param>
+/// <param name="IsOvalComponent">True if this track is a component of oval/complex composition</param>
 public sealed record TrackGeometrySpec(
     TrackGeometryKind GeometryKind,
     double? LengthMm = null,
     double? RadiusMm = null,
     double? AngleDeg = null,
-    double? JunctionOffsetMm = null  // neu: nur für Weichen
+    double? JunctionOffsetMm = null,
+    bool IsOvalComponent = false
 );

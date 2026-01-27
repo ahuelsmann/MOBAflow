@@ -7,9 +7,7 @@ using Microsoft.UI.Xaml.Shapes;
 
 using Moba.TrackPlan.Geometry;
 using Moba.TrackPlan.Graph;
-using Moba.TrackPlan.Renderer.Geometry;
 using Moba.TrackPlan.Renderer.Service;
-using Moba.TrackPlan.Renderer.World;
 using Moba.TrackPlan.TrackSystem;
 
 using System;

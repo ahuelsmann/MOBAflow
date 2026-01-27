@@ -4,7 +4,6 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 
 using Moba.TrackPlan.Geometry;
-using Moba.TrackPlan.Renderer.Geometry;
 
 using Windows.Foundation;
 

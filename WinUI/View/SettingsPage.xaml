@@ -151,7 +151,7 @@
                 <Expander.HeaderTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal" Spacing="12">
-                            <FontIcon FontSize="20" Glyph="&#xE8A2;" />
+                            <FontIcon FontSize="20" Glyph="&#xE82D;" />
                             <TextBlock
                                 VerticalAlignment="Center"
                                 Style="{StaticResource SubtitleTextBlockStyle}"
