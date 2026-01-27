@@ -78,6 +78,127 @@ public class CanvasRenderer
         DrawTrackWithGeometry(canvas, template, position, rotationDeg, brush, isGhost: true);
     }
 
+    /// <summary>
+    /// Renders a track template as a small icon for toolbox display (40x24px viewport).
+    /// Calculates scale to fit the track geometry and centers it in the canvas.
+    /// Used for toolbox ItemTemplate DataTemplates to show accurate track geometries.
+    /// </summary>
+    public void RenderToolboxIcon(
+        Canvas toolboxCanvas,
+        TrackTemplate template,
+        SolidColorBrush accentBrush)
+    {
+        ArgumentNullException.ThrowIfNull(toolboxCanvas);
+        ArgumentNullException.ThrowIfNull(template);
+        ArgumentNullException.ThrowIfNull(accentBrush);
+
+        var spec = template.Geometry;
+
+        // Calculate scale to fit in ~36px width (leaving ~2px margin per side)
+        double maxDimension = spec.GeometryKind switch
+        {
+            TrackGeometryKind.Straight => spec.LengthMm!.Value,
+            TrackGeometryKind.Curve => spec.RadiusMm!.Value * 1.8,
+            TrackGeometryKind.Switch => Math.Max(spec.LengthMm!.Value, spec.RadiusMm!.Value * 1.5),
+            _ => 100
+        };
+
+        // Scale factor to fit in 36px viewport
+        double iconScale = 36.0 / maxDimension;
+        var centerPosition = new Point2D(20, 12);
+
+        var iconBrush = new SolidColorBrush(accentBrush.Color);
+        RenderTrackWithScale(toolboxCanvas, template, centerPosition, 0, iconBrush, iconScale, 2.0);
+    }
+
+    /// <summary>
+    /// Internal rendering with custom scale (used for toolbox icons).
+    /// </summary>
+    private static void RenderTrackWithScale(
+        Canvas canvas,
+        TrackTemplate template,
+        Point2D position,
+        double rotationDeg,
+        SolidColorBrush brush,
+        double scale,
+        double strokeThickness)
+    {
+        var primitives = template.Geometry.GeometryKind switch
+        {
+            TrackGeometryKind.Straight => StraightGeometry.Render(template, position, rotationDeg),
+            TrackGeometryKind.Curve => CurveGeometry.Render(template, position, rotationDeg),
+            TrackGeometryKind.Switch => SwitchGeometry.Render(template, position, rotationDeg),
+            _ => Enumerable.Empty<IGeometryPrimitive>()
+        };
+
+        foreach (var primitive in primitives)
+        {
+            var shape = ConvertPrimitiveToShapeWithScale(primitive, brush, scale, strokeThickness);
+            if (shape != null)
+            {
+                Canvas.SetZIndex(shape, 10);
+                canvas.Children.Add(shape);
+            }
+        }
+    }
+
+    private static Shape? ConvertPrimitiveToShapeWithScale(
+        IGeometryPrimitive primitive,
+        SolidColorBrush brush,
+        double scale,
+        double strokeThickness)
+    {
+        if (primitive is LinePrimitive line)
+        {
+            return new Line
+            {
+                X1 = line.From.X * scale,
+                Y1 = line.From.Y * scale,
+                X2 = line.To.X * scale,
+                Y2 = line.To.Y * scale,
+                Stroke = brush,
+                StrokeThickness = strokeThickness
+            };
+        }
+
+        if (primitive is ArcPrimitive arc)
+        {
+            return ConvertArcToPolylineWithScale(arc, brush, strokeThickness, scale);
+        }
+
+        return null;
+    }
+
+    private static Polyline ConvertArcToPolylineWithScale(
+        ArcPrimitive arc,
+        SolidColorBrush brush,
+        double strokeThickness,
+        double scale)
+    {
+        // Approximate arc as polyline with enough segments for smooth rendering
+        int segments = Math.Max(6, (int)Math.Ceiling(Math.Abs(arc.SweepAngleRad * 180 / Math.PI / 3)));
+        var points = new PointCollection();
+
+        for (int i = 0; i <= segments; i++)
+        {
+            double t = (double)i / segments;
+            double angle = arc.StartAngleRad + t * arc.SweepAngleRad;
+
+            double x = arc.Center.X + arc.Radius * Math.Cos(angle);
+            double y = arc.Center.Y + arc.Radius * Math.Sin(angle);
+
+            points.Add(new Windows.Foundation.Point(x * scale, y * scale));
+        }
+
+        return new Polyline
+        {
+            Points = points,
+            Stroke = brush,
+            StrokeThickness = strokeThickness,
+            StrokeLineJoin = PenLineJoin.Round
+        };
+    }
+
     private static void DrawTrackWithGeometry(
         Canvas canvas,
         TrackTemplate template,

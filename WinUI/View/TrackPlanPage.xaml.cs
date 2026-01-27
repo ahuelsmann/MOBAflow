@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Shapes;
 
 using Moba.TrackLibrary.PikoA.Catalog;
@@ -28,7 +29,7 @@ namespace Moba.WinUI.View;
 public sealed partial class TrackPlanPage : Page
 {
     private const double DisplayScale = 0.5;
-    private const double SnapDistance = 50.0;  // Soft-snap: increased from 30 for easier connection detection
+    private const double SnapDistance = 50.0;
     private const double GridSize = 50.0;
     private const double PortRadius = 8.0;
     private const double SingleRotationHandleLength = 80.0;
@@ -38,6 +39,7 @@ public sealed partial class TrackPlanPage : Page
     private readonly CanvasRenderer _renderer = new();
     private readonly IAttentionControlService _attentionControl = new DefaultAttentionControlService();
     private readonly IPortHoverAffordanceService _portHoverAffordance = new DefaultPortHoverAffordanceService();
+    private readonly RulerService _rulerService = new();
 
     private bool _isPanning;
     private Point _panStart;
@@ -55,7 +57,9 @@ public sealed partial class TrackPlanPage : Page
     private double _rotationStartAngle;
     private Dictionary<Guid, double> _rotationStartRotations = new();
     private Dictionary<Guid, Point2D> _rotationStartPositions = new();
-    private Point2D _dragStartWorldPos;  // For multi-ghost offset tracking
+    private Point2D _dragStartWorldPos;
+
+    private Point _movableRulerDragStart;
 
     private SolidColorBrush _trackBrush = null!;
     private SolidColorBrush _trackSelectedBrush = null!;
@@ -79,8 +83,12 @@ public sealed partial class TrackPlanPage : Page
 
     public TrackPlanPage(TrackPlanEditorViewModel viewModel)
     {
+        System.Diagnostics.Debug.WriteLine($"[TrackPlanPage] Constructor: viewModel={viewModel is not null}, GraphCanvas={GraphCanvas}");
+        
         _viewModel = viewModel;
         InitializeComponent();
+
+        System.Diagnostics.Debug.WriteLine($"[TrackPlanPage] After InitializeComponent: GraphCanvas={GraphCanvas}");
 
         Loaded += OnLoaded;
         ActualThemeChanged += OnThemeChanged;
@@ -89,10 +97,43 @@ public sealed partial class TrackPlanPage : Page
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        UpdateTheme();
-        UpdateStatistics();
-        RenderGraph();
-        Focus(FocusState.Programmatic);
+        System.Diagnostics.Debug.WriteLine($"[TrackPlanPage.OnLoaded] Started");
+        System.Diagnostics.Debug.WriteLine($"[TrackPlanPage.OnLoaded] GraphCanvas == null: {GraphCanvas == null}");
+        System.Diagnostics.Debug.WriteLine($"[TrackPlanPage.OnLoaded] _viewModel == null: {_viewModel == null}");
+        
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"[TrackPlanPage.OnLoaded] Calling UpdateTheme()...");
+            UpdateTheme();
+            System.Diagnostics.Debug.WriteLine($"[TrackPlanPage.OnLoaded] UpdateTheme() completed");
+            
+            System.Diagnostics.Debug.WriteLine($"[TrackPlanPage.OnLoaded] Calling UpdateStatistics()...");
+            UpdateStatistics();
+            System.Diagnostics.Debug.WriteLine($"[TrackPlanPage.OnLoaded] UpdateStatistics() completed");
+            
+            System.Diagnostics.Debug.WriteLine($"[TrackPlanPage.OnLoaded] Calling RenderGraph()...");
+            RenderGraph();
+            System.Diagnostics.Debug.WriteLine($"[TrackPlanPage.OnLoaded] RenderGraph() completed");
+            
+            System.Diagnostics.Debug.WriteLine($"[TrackPlanPage.OnLoaded] Setting Focus...");
+            Focus(FocusState.Programmatic);
+            System.Diagnostics.Debug.WriteLine($"[TrackPlanPage.OnLoaded] Focus set");
+        }
+        catch (NullReferenceException nre)
+        {
+            System.Diagnostics.Debug.WriteLine($"[TrackPlanPage.OnLoaded] NullReferenceException: {nre.Message}");
+            System.Diagnostics.Debug.WriteLine($"[TrackPlanPage.OnLoaded] StackTrace: {nre.StackTrace}");
+            System.Diagnostics.Debug.WriteLine($"[TrackPlanPage.OnLoaded] GraphCanvas: {GraphCanvas?.GetType().Name ?? "null"}");
+            System.Diagnostics.Debug.WriteLine($"[TrackPlanPage.OnLoaded] _viewModel: {_viewModel?.GetType().Name ?? "null"}");
+            System.Diagnostics.Debug.WriteLine($"[TrackPlanPage.OnLoaded] _renderer: {_renderer?.GetType().Name ?? "null"}");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[TrackPlanPage.OnLoaded] Exception ({ex.GetType().Name}): {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[TrackPlanPage.OnLoaded] StackTrace: {ex.StackTrace}");
+            throw;
+        }
     }
 
     private void OnThemeChanged(FrameworkElement sender, object args)
@@ -103,59 +144,58 @@ public sealed partial class TrackPlanPage : Page
 
     private void UpdateTheme()
     {
-        // Use Fluent Design System ThemeResources with safe fallbacks
-        var resources = Application.Current.Resources;
-
-        // Helper to safely get color from resources
-        Color GetColorResource(string key, Color fallback)
+        try
         {
-            try
+            var resources = Application.Current.Resources;
+
+            Color GetColorResource(string key, Color fallback)
             {
-                if (resources.TryGetValue(key, out var value) && value is Color color)
-                    return color;
+                try
+                {
+                    if (resources.TryGetValue(key, out var value) && value is Color color)
+                        return color;
+                }
+                catch { }
+                return fallback;
             }
-            catch { }
-            return fallback;
+
+            var accentColor = GetColorResource("SystemAccentColor", Color.FromArgb(255, 0, 120, 215));
+            var textPrimaryColor = GetColorResource("TextFillColorPrimary", Colors.Black);
+            var textSecondaryColor = GetColorResource("TextFillColorSecondary", Colors.Gray);
+
+            _trackBrush = new SolidColorBrush(textPrimaryColor);
+            _trackSelectedBrush = new SolidColorBrush(accentColor);
+
+            var hoverColor = accentColor;
+            if (hoverColor.A > 0)
+                hoverColor = Color.FromArgb(hoverColor.A,
+                    (byte)(hoverColor.R * 0.8),
+                    (byte)(hoverColor.G * 0.8),
+                    (byte)(hoverColor.B * 0.8));
+            _trackHoverBrush = new SolidColorBrush(hoverColor);
+
+            var attentionColor = GetColorResource("SystemFillColorCaution", Color.FromArgb(255, 255, 140, 0));
+            _portOpenBrush = new SolidColorBrush(attentionColor);
+
+            var successColor = GetColorResource("SystemFillColorPositive", Color.FromArgb(255, 34, 177, 76));
+            _portConnectedBrush = new SolidColorBrush(successColor);
+
+            var gridColor = textSecondaryColor;
+            _gridBrush = new SolidColorBrush(Color.FromArgb((byte)(255 * 0.25), gridColor.R, gridColor.G, gridColor.B));
+
+            var errorColor = Color.FromArgb(255, 196, 43, 28);
+            _feedbackBrush = new SolidColorBrush(errorColor);
+
+            _snapPreviewBrush = new SolidColorBrush(accentColor);
+            
+            System.Diagnostics.Debug.WriteLine("[UpdateTheme] Theme colors updated successfully");
         }
-
-        // Get theme colors with safe fallbacks
-        var accentColor = GetColorResource("SystemAccentColor", Color.FromArgb(255, 0, 120, 215)); // Windows blue
-        var textPrimaryColor = GetColorResource("TextFillColorPrimary", Colors.Black);
-        var textSecondaryColor = GetColorResource("TextFillColorSecondary", Colors.Gray);
-
-        // Track normal state - primary text color
-        _trackBrush = new SolidColorBrush(textPrimaryColor);
-
-        // Selected track - system accent
-        _trackSelectedBrush = new SolidColorBrush(accentColor);
-
-        // Hovered track - accent with reduced emphasis (slightly darker)
-        var hoverColor = accentColor;
-        if (hoverColor.A > 0)
-            hoverColor = Color.FromArgb(hoverColor.A,
-                (byte)(hoverColor.R * 0.8),
-                (byte)(hoverColor.G * 0.8),
-                (byte)(hoverColor.B * 0.8));
-        _trackHoverBrush = new SolidColorBrush(hoverColor);
-
-        // Open port - warning/attention (use Fluent Design CautionColor)
-        var attentionColor = GetColorResource("SystemFillColorCaution", Color.FromArgb(255, 255, 140, 0)); // Orange fallback
-        _portOpenBrush = new SolidColorBrush(attentionColor);
-
-        // Connected port - success (use Fluent Design PositiveColor)
-        var successColor = GetColorResource("SystemFillColorPositive", Color.FromArgb(255, 34, 177, 76)); // Green fallback
-        _portConnectedBrush = new SolidColorBrush(successColor);
-
-        // Grid lines - subtle secondary text with improved opacity (25% instead of 15%)
-        var gridColor = textSecondaryColor;
-        _gridBrush = new SolidColorBrush(Color.FromArgb((byte)(255 * 0.25), gridColor.R, gridColor.G, gridColor.B));
-
-        // Feedback/error - system error (red)
-        var errorColor = Color.FromArgb(255, 196, 43, 28); // Red
-        _feedbackBrush = new SolidColorBrush(errorColor);
-
-        // Snap preview - use system accent instead of hardcoded attention
-        _snapPreviewBrush = new SolidColorBrush(accentColor);
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[UpdateTheme] Exception: {ex.GetType().Name}: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[UpdateTheme] StackTrace: {ex.StackTrace}");
+            throw;
+        }
     }
 
     private void OnKeyDown(object sender, KeyRoutedEventArgs e)
@@ -192,6 +232,9 @@ public sealed partial class TrackPlanPage : Page
 
     private void UpdateStatistics()
     {
+        if (NodeCountText == null || CanvasScrollViewer == null)
+            return;
+
         NodeCountText.Text = _viewModel.Graph.Nodes.Count.ToString();
         EdgeCountText.Text = _viewModel.Graph.Edges.Count.ToString();
 
@@ -199,7 +242,6 @@ public sealed partial class TrackPlanPage : Page
         ZoomLevelText.Text = $"{zoomFactor:P0}";
         ZoomPercentText.Text = $"{zoomFactor:P0}";
 
-        // Sync slider with zoom factor (avoid circular updates)
         if (Math.Abs(ZoomSlider.Value - zoomFactor) > 0.01)
         {
             ZoomSlider.Value = zoomFactor;
@@ -246,7 +288,6 @@ public sealed partial class TrackPlanPage : Page
     private async void GraphCanvas_DragOver(object sender, DragEventArgs e)
     {
         e.AcceptedOperation = DataPackageOperation.Copy;
-        // Hide drag UI overlay caption - rely on ghost track rendering instead
         e.DragUIOverride.Caption = "";
 
         if (!e.DataView.Contains(StandardDataFormats.Text))
@@ -392,7 +433,6 @@ public sealed partial class TrackPlanPage : Page
         }
         else if (_viewModel.SelectedTrackIds.Count > 0)
         {
-            // Multi-selection context menu (when no new track is hit)
             var count = _viewModel.SelectedTrackIds.Count;
             var countLabel = count == 1 ? "" : $" ({count})";
 
@@ -499,10 +539,42 @@ public sealed partial class TrackPlanPage : Page
 
     private void GraphCanvas_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        var p = e.GetCurrentPoint(GraphCanvas);
-        var pos = p.Position;
+        var point = e.GetCurrentPoint(GraphCanvas);
+        var pos = point.Position;
 
-        if (p.Properties.IsRightButtonPressed)
+        // Check if user clicked on the fixed horizontal ruler (top edge, extended hit area)
+        if (_viewModel.ViewState.ShowFixedRulers && pos.Y < 10)
+        {
+            _viewModel.ViewState.IsDraggingMovableRuler = true;
+            var (rulerWorldX, rulerWorldY) = _viewModel.ViewState.MovableRulerPosition ?? (0, 0);
+            _movableRulerDragStart = new Point(rulerWorldX * DisplayScale, pos.Y);
+            GraphCanvas.CapturePointer(e.Pointer);
+            ProtectedCursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.Hand);
+            StatusText.Text = "Moving horizontal ruler...";
+            e.Handled = true;
+            return;
+        }
+
+        // Check if user clicked on the fixed vertical ruler (left edge, extended hit area)
+        if (_viewModel.ViewState.ShowFixedRulers && pos.X < 10)
+        {
+            _viewModel.ViewState.IsDraggingMovableRuler = true;
+            var (rulerWorldX, rulerWorldY) = _viewModel.ViewState.MovableRulerPosition ?? (0, 0);
+            _movableRulerDragStart = new Point(pos.X, rulerWorldY * DisplayScale);
+            GraphCanvas.CapturePointer(e.Pointer);
+            ProtectedCursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.Hand);
+            StatusText.Text = "Moving vertical ruler...";
+            e.Handled = true;
+            return;
+        }
+
+        if (_viewModel.ViewState.ShowMovableRuler && _viewModel.ViewState.MovableRulerPosition is not null)
+        {
+            GraphCanvas_PointerPressed_MovableRuler(sender, e);
+            if (e.Handled) return;
+        }
+
+        if (point.Properties.IsRightButtonPressed)
         {
             _isPanning = true;
             _panStart = pos;
@@ -514,7 +586,7 @@ public sealed partial class TrackPlanPage : Page
             return;
         }
 
-        if (p.Properties.IsLeftButtonPressed)
+        if (point.Properties.IsLeftButtonPressed)
         {
             var clickCount = DetectClickCount(pos);
             var world = new Point2D(pos.X / DisplayScale, pos.Y / DisplayScale);
@@ -625,17 +697,13 @@ public sealed partial class TrackPlanPage : Page
 
             _viewModel.PointerDown(world, true, isCtrlPressed);
 
-            // Start multi-ghost if dragging selected tracks
             if (_viewModel.SelectedTrackIds.Count > 0 && _viewModel.GhostPlacement is null)
             {
                 _dragStartWorldPos = world;
                 _viewModel.BeginMultiGhostPlacement(_viewModel.SelectedTrackIds.ToList());
 
-                // Hide cursor during drag - show only ghost (setting to null hides it)
                 ProtectedCursor = null;
 
-                // 🧠 Phase 9.1: Attention Control - Dim irrelevant tracks during drag
-                // This helps reduce cognitive load by highlighting the selected tracks
                 _ = _attentionControl.DimIrrelevantTracksAsync(
                     _viewModel.SelectedTrackIds.ToList(),
                     dimOpacity: 0.3f);
@@ -649,6 +717,12 @@ public sealed partial class TrackPlanPage : Page
 
     private void GraphCanvas_PointerMoved(object sender, PointerRoutedEventArgs e)
     {
+        if (_viewModel.ViewState.IsDraggingMovableRuler)
+        {
+            GraphCanvas_PointerMoved_FixedRulers(sender, e);
+            if (e.Handled) return;
+        }
+
         var p = e.GetCurrentPoint(GraphCanvas);
         var pos = p.Position;
 
@@ -698,11 +772,9 @@ public sealed partial class TrackPlanPage : Page
 
         var worldPos = new Point2D(pos.X / DisplayScale, pos.Y / DisplayScale);
 
-        // 🧠 Phase 9.3: Update port hover affordance for pointer feedback
         var hoveredPorts = FindHoveredPorts(worldPos, PortRadius);
         var previousPorts = _portHoverAffordance.HighlightedPorts;
 
-        // Unhighlight ports no longer hovered
         foreach (var (trackId, portId) in previousPorts)
         {
             if (!hoveredPorts.Contains((trackId, portId)))
@@ -711,7 +783,6 @@ public sealed partial class TrackPlanPage : Page
             }
         }
 
-        // Highlight newly hovered ports
         foreach (var (trackId, portId) in hoveredPorts)
         {
             if (!previousPorts.Contains((trackId, portId)))
@@ -723,7 +794,6 @@ public sealed partial class TrackPlanPage : Page
         var hoveredTracks = FindHoveredTracks(worldPos, hitRadius: 40.0);
         var previousTracks = _portHoverAffordance.HoveredTracks;
 
-        // Unhighlight tracks no longer hovered
         foreach (var trackId in previousTracks)
         {
             if (!hoveredTracks.Contains(trackId))
@@ -732,7 +802,6 @@ public sealed partial class TrackPlanPage : Page
             }
         }
 
-        // Highlight newly hovered tracks
         foreach (var trackId in hoveredTracks)
         {
             if (!previousTracks.Contains(trackId))
@@ -741,14 +810,12 @@ public sealed partial class TrackPlanPage : Page
             }
         }
 
-        // Multi-track drag: start ghost if not already active
         if (_viewModel.GhostPlacement is null && _viewModel.MultiGhostPlacement is null)
         {
             _viewModel.PointerMove(worldPos, GridToggle.IsChecked == true, GridSize, SnapDistance);
         }
         else if (_viewModel.MultiGhostPlacement is not null)
         {
-            // Update multi-ghost position
             _viewModel.UpdateMultiGhostPlacement(
                 new Point2D(
                     worldPos.X - _dragStartWorldPos.X,
@@ -756,7 +823,6 @@ public sealed partial class TrackPlanPage : Page
                 GridToggle.IsChecked == true,
                 GridSize);
 
-            // Apply offset to all tracks in multi-ghost
             if (_viewModel.MultiGhostPlacement is { } mg)
             {
                 foreach (var trackId in mg.TrackIds)
@@ -769,7 +835,6 @@ public sealed partial class TrackPlanPage : Page
                     }
                 }
 
-                // Check for snap targets
                 _viewModel.FindAndSetSnapPreviewForMulti(mg.TrackIds, SnapDistance);
             }
         }
@@ -781,6 +846,34 @@ public sealed partial class TrackPlanPage : Page
         RenderGraph();
     }
 
+    private void GraphCanvas_PointerMoved_FixedRulers(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_viewModel.ViewState.IsDraggingMovableRuler || !_viewModel.ViewState.ShowFixedRulers)
+            return;
+
+        var point = e.GetCurrentPoint(GraphCanvas);
+        var pos = point.Position;
+
+        var (currentX, currentY) = _viewModel.ViewState.MovableRulerPosition ?? (0, 0);
+        
+        // If dragging from horizontal ruler area (Y < 40), move horizontally
+        if (_movableRulerDragStart.Y < 40)
+        {
+            var deltaX = (pos.X - _movableRulerDragStart.X) / DisplayScale;
+            _viewModel.ViewState.MovableRulerPosition = (currentX + deltaX, 0);
+        }
+        // If dragging from vertical ruler area (X < 40), move vertically
+        else if (_movableRulerDragStart.X < 40)
+        {
+            var deltaY = (pos.Y - _movableRulerDragStart.Y) / DisplayScale;
+            _viewModel.ViewState.MovableRulerPosition = (0, currentY + deltaY);
+        }
+
+        _movableRulerDragStart = pos;
+        RenderGraph();
+        e.Handled = true;
+    }
+
     private static double NormalizeDeg(double deg)
     {
         while (deg < 0) deg += 360;
@@ -790,6 +883,12 @@ public sealed partial class TrackPlanPage : Page
 
     private void GraphCanvas_PointerReleased(object sender, PointerRoutedEventArgs e)
     {
+        if (_viewModel.ViewState.IsDraggingMovableRuler)
+        {
+            GraphCanvas_PointerReleased_MovableRuler(sender, e);
+            if (e.Handled) return;
+        }
+
         var point = e.GetCurrentPoint(GraphCanvas);
 
         if (_isPanning)
@@ -833,25 +932,19 @@ public sealed partial class TrackPlanPage : Page
         }
         catch
         {
-            // Fall back to false if CoreWindow is not available
             isCtrlPressed = false;
         }
 
-        // Handle multi-ghost commit (canvas selection drag)
         if (_viewModel.MultiGhostPlacement is not null)
         {
             _viewModel.CommitMultiGhostPlacement();
 
-            // Restore cursor after drag
             ProtectedCursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.Arrow);
 
-            // 🧠 Phase 9.1: Attention Control - Restore all tracks when drag ends
             _ = _attentionControl.RestoreAllTracksAsync();
 
-            // Apply snap if enabled
             if (SnapToggle.IsChecked == true && _viewModel.CurrentSnapPreview is { } preview)
             {
-                // Apply snap adjustment to the primary track in selection
                 if (_viewModel.SelectedTrackIds.Count > 0)
                 {
                     var primaryTrackId = _viewModel.SelectedTrackIds.First();
@@ -859,7 +952,6 @@ public sealed partial class TrackPlanPage : Page
                         preview.PreviewPosition.X - _viewModel.Positions[primaryTrackId].X,
                         preview.PreviewPosition.Y - _viewModel.Positions[primaryTrackId].Y);
 
-                    // Apply same delta to all selected tracks
                     foreach (var trackId in _viewModel.SelectedTrackIds)
                     {
                         _viewModel.Positions[trackId] = new Point2D(
@@ -867,15 +959,26 @@ public sealed partial class TrackPlanPage : Page
                             _viewModel.Positions[trackId].Y + delta.Y);
                     }
 
-                    // Try to connect the primary track
                     if (_viewModel.ConnectionService.TryConnect(
                         preview.MovingEdgeId, preview.MovingPortId,
                         preview.TargetEdgeId, preview.TargetPortId))
                     {
                         var targetEdge = _viewModel.Graph.Edges.FirstOrDefault(e => e.Id == preview.TargetEdgeId);
-                        StatusText.Text = $"Snapped {_viewModel.SelectedTrackIds.Count} tracks to {targetEdge?.TemplateId}";
+                        StatusText.Text = $"✓ Snapped {_viewModel.SelectedTrackIds.Count} tracks to {targetEdge?.TemplateId}";
+                      }
+                    else
+                    {
+                        var targetEdge = _viewModel.Graph.Edges.FirstOrDefault(e => e.Id == preview.TargetEdgeId);
+                        StatusText.Text = $"⚠ Snap failed: ports incompatible (from {preview.MovingPortId} to {preview.TargetPortId})";
+                        System.Diagnostics.Debug.WriteLine(
+                            $"[Snap] TryConnect failed: Edge {preview.MovingEdgeId} port {preview.MovingPortId} → " +
+                            $"Edge {preview.TargetEdgeId} port {preview.TargetPortId}");
                     }
                 }
+            }
+            else
+            {
+                StatusText.Text = $"Placed {_viewModel.SelectedTrackIds.Count} track(s)";
             }
 
             GraphCanvas.ReleasePointerCaptures();
@@ -896,7 +999,6 @@ public sealed partial class TrackPlanPage : Page
         StatusText.Text = status;
         GraphCanvas.ReleasePointerCaptures();
 
-        // 🧠 Phase 9.3: Clear hover affordances on release
         _ = _portHoverAffordance.ClearAllHighlightsAsync();
 
         RenderGraph();
@@ -999,10 +1101,8 @@ public sealed partial class TrackPlanPage : Page
         if (_viewModel.SelectedTrackIds.Count == 0)
             return;
 
-        // Get count before deletion
         int count = _viewModel.SelectedTrackIds.Count;
 
-        // Remove all selected tracks
         foreach (var id in _viewModel.SelectedTrackIds.ToList())
         {
             _viewModel.RemoveTrack(id);
@@ -1027,7 +1127,6 @@ public sealed partial class TrackPlanPage : Page
         var service = _viewModel.ConnectionService;
         int totalDisconnected = 0;
 
-        // Disconnect all ports for all selected tracks
         foreach (var id in _viewModel.SelectedTrackIds)
         {
             var edge = _viewModel.Graph.Edges.FirstOrDefault(e => e.Id == id);
@@ -1054,13 +1153,11 @@ public sealed partial class TrackPlanPage : Page
 
     private void CreateSection_Click(object sender, RoutedEventArgs e)
     {
-        // TODO: Sections functionality not yet implemented
         StatusText.Text = "Sections feature coming soon";
     }
 
     private void ToggleIsolator_Click(object sender, RoutedEventArgs e)
     {
-        // TODO: Isolators functionality not yet implemented
         StatusText.Text = "Isolators feature coming soon";
     }
 
@@ -1068,202 +1165,196 @@ public sealed partial class TrackPlanPage : Page
 
     private void SectionsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        // TODO: Sections functionality not yet implemented
         SectionEditorPanel.Visibility = Visibility.Collapsed;
     }
 
     private void SectionNameBox_TextChanged(object sender, TextChangedEventArgs e)
     {
-        // TODO: Sections functionality not yet implemented
     }
 
     private void SectionFunctionCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        // TODO: Sections functionality not yet implemented
     }
 
     private void SectionColorButton_Click(object sender, RoutedEventArgs e)
     {
-        // TODO: Sections functionality not yet implemented
     }
 
     private void DeleteSection_Click(object sender, RoutedEventArgs e)
     {
-        // TODO: Sections functionality not yet implemented
         StatusText.Text = "Delete section - feature coming soon";
     }
 
     private void UpdateSectionsList()
     {
-        // TODO: Sections functionality not yet implemented
     }
 
     private void RenderGraph()
     {
-        GraphCanvas.Children.Clear();
-
-        if (GridToggle.IsChecked == true)
-            RenderGrid();
-
-        _renderer.Render(
-            GraphCanvas,
-            _viewModel,
-            _catalog,
-            _trackBrush,
-            _trackSelectedBrush,
-            _trackHoverBrush);
-
-        // 🧠 Phase 9.1: Apply attention control opacity to rendered tracks
-        if (_attentionControl.IsActive)
+        try
         {
-            ApplyAttentionControlToRenderedTracks();
-        }
-
-        if (_viewModel.GhostPlacement is { } ghostPlacement)
-        {
-            var ghostTemplate = _catalog.GetById(ghostPlacement.TemplateId);
-            if (ghostTemplate is not null)
+            if (GraphCanvas == null)
             {
-                var ghostPosition = ghostPlacement.Position;
-                var ghostRotation = ghostPlacement.RotationDeg;
-
-                if (_viewModel.CurrentSnapPreview is { } preview)
-                {
-                    ghostPosition = preview.PreviewPosition;
-                    ghostRotation = preview.PreviewRotation;
-                }
-
-                _renderer.RenderGhostTrack(
-                    GraphCanvas,
-                    ghostTemplate,
-                    ghostPosition,
-                    ghostRotation,
-                    _snapPreviewBrush);
-
-                // Render gleiscode label on ghost track (centered)
-                var labelX = ghostPosition.X * DisplayScale;
-                var labelY = ghostPosition.Y * DisplayScale;
-
-                var gleiscode = new TextBlock
-                {
-                    Text = ghostPlacement.TemplateId,
-                    FontSize = 14,
-                    FontWeight = Microsoft.UI.Text.FontWeights.Bold,
-                    Foreground = _trackSelectedBrush,
-                    TextAlignment = TextAlignment.Center,
-                    Opacity = 0.8
-                };
-
-                Canvas.SetLeft(gleiscode, labelX - 20);
-                Canvas.SetTop(gleiscode, labelY - 8);
-                GraphCanvas.Children.Add(gleiscode);
+                System.Diagnostics.Debug.WriteLine("[RenderGraph] ERROR: GraphCanvas is null");
+                return;
             }
-        }
 
-        // Render multiple ghost tracks for canvas selection drag
-        if (_viewModel.MultiGhostPlacement is { } multiGhost)
-        {
-            foreach (var trackId in multiGhost.TrackIds)
+            GraphCanvas.Children.Clear();
+
+            if (GridToggle?.IsChecked == true)
+                RenderGrid();
+
+            if (_renderer != null && _viewModel != null && _catalog != null)
             {
-                if (multiGhost.InitialPositions.TryGetValue(trackId, out var initialPos))
+                _renderer.Render(
+                    GraphCanvas,
+                    _viewModel,
+                    _catalog,
+                    _trackBrush,
+                    _trackSelectedBrush,
+                    _trackHoverBrush);
+            }
+
+            if (_attentionControl.IsActive)
+            {
+                ApplyAttentionControlToRenderedTracks();
+            }
+
+            if (_viewModel.GhostPlacement is { } ghostPlacement)
+            {
+                var ghostTemplate = _catalog.GetById(ghostPlacement.TemplateId);
+                if (ghostTemplate is not null)
                 {
-                    var ghostPos = new Point2D(
-                        initialPos.X + multiGhost.CurrentOffset.X,
-                        initialPos.Y + multiGhost.CurrentOffset.Y);
+                    var ghostPosition = ghostPlacement.Position;
+                    var ghostRotation = ghostPlacement.RotationDeg;
 
-                    var ghostRot = _viewModel.Rotations.GetValueOrDefault(trackId, 0);
-
-                    var edge = _viewModel.Graph.Edges.FirstOrDefault(e => e.Id == trackId);
-                    if (edge is not null)
+                    if (_viewModel.CurrentSnapPreview is { } preview)
                     {
-                        var trackTemplate = _catalog.GetById(edge.TemplateId);
-                        if (trackTemplate is not null)
+                        ghostPosition = preview.PreviewPosition;
+                        ghostRotation = preview.PreviewRotation;
+                    }
+
+                    _renderer.RenderGhostTrack(
+                        GraphCanvas,
+                        ghostTemplate,
+                        ghostPosition,
+                        ghostRotation,
+                        _snapPreviewBrush);
+
+                    var labelX = ghostPosition.X * DisplayScale;
+                    var labelY = ghostPosition.Y * DisplayScale;
+
+                    var gleiscode = new TextBlock
+                    {
+                        Text = ghostPlacement.TemplateId,
+                        FontSize = 14,
+                        FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                        Foreground = _trackSelectedBrush,
+                        TextAlignment = TextAlignment.Center,
+                        Opacity = 0.8
+                    };
+
+                    Canvas.SetLeft(gleiscode, labelX - 20);
+                    Canvas.SetTop(gleiscode, labelY - 8);
+                    GraphCanvas.Children.Add(gleiscode);
+                }
+            }
+
+            if (_viewModel.MultiGhostPlacement is { } multiGhost)
+            {
+                foreach (var trackId in multiGhost.TrackIds)
+                {
+                    if (multiGhost.InitialPositions.TryGetValue(trackId, out var initialPos))
+                    {
+                        var ghostPos = new Point2D(
+                            initialPos.X + multiGhost.CurrentOffset.X,
+                            initialPos.Y + multiGhost.CurrentOffset.Y);
+
+                        var ghostRot = _viewModel.Rotations.GetValueOrDefault(trackId, 0);
+
+                        var edge = _viewModel.Graph.Edges.FirstOrDefault(e => e.Id == trackId);
+                        if (edge is not null)
                         {
-                            var ghostOpacity = ActualTheme == Microsoft.UI.Xaml.ElementTheme.Dark ? 0.85 : 0.75;
-                            _renderer.RenderGhostTrack(
-                                GraphCanvas,
-                                trackTemplate,
-                                ghostPos,
-                                ghostRot,
-                                _snapPreviewBrush,
-                                ghostOpacity);
-
-                            // Render gleiscode label on multi-ghost tracks (centered)
-                            var labelX = ghostPos.X * DisplayScale;
-                            var labelY = ghostPos.Y * DisplayScale;
-
-                            var gleiscode = new TextBlock
+                            var trackTemplate = _catalog.GetById(edge.TemplateId);
+                            if (trackTemplate is not null)
                             {
-                                Text = edge.TemplateId,
-                                FontSize = 12,
-                                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-                                Foreground = new SolidColorBrush(Colors.White),
-                                TextAlignment = TextAlignment.Center,
-                                Opacity = 0.9
-                            };
+                                var ghostOpacity = ActualTheme == Microsoft.UI.Xaml.ElementTheme.Dark ? 0.85 : 0.75;
+                                _renderer.RenderGhostTrack(
+                                    GraphCanvas,
+                                    trackTemplate,
+                                    ghostPos,
+                                    ghostRot,
+                                    _snapPreviewBrush,
+                                    ghostOpacity);
 
-                            Canvas.SetLeft(gleiscode, labelX - 18);
-                            Canvas.SetTop(gleiscode, labelY - 7);
-                            GraphCanvas.Children.Add(gleiscode);
+                                var labelX = ghostPos.X * DisplayScale;
+                                var labelY = ghostPos.Y * DisplayScale;
+
+                                var gleiscode = new TextBlock
+                                {
+                                    Text = edge.TemplateId,
+                                    FontSize = 12,
+                                    FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                                    Foreground = new SolidColorBrush(Colors.White),
+                                    TextAlignment = TextAlignment.Center,
+                                    Opacity = 0.9
+                                };
+
+                                Canvas.SetLeft(gleiscode, labelX - 18);
+                                Canvas.SetTop(gleiscode, labelY - 7);
+                                GraphCanvas.Children.Add(gleiscode);
+                            }
                         }
                     }
                 }
             }
-        }
 
-        var dragPreview = _viewModel.GetCurrentDragPreviewPose();
-        if (dragPreview is { } dp)
+            var dragPreview = _viewModel.GetCurrentDragPreviewPose();
+            if (dragPreview is { } dp)
+            {
+                var ghostOpacity = ActualTheme == Microsoft.UI.Xaml.ElementTheme.Dark ? 0.85 : 0.75;
+                _renderer.RenderGhostTrack(
+                    GraphCanvas,
+                    dp.Template,
+                    dp.Position,
+                    dp.RotationDeg,
+                    _snapPreviewBrush,
+                    ghostOpacity);
+            }
+
+            RenderSingleRotationHandle();
+            RenderPorts();
+            RenderFeedback();
+            RenderIsolators();
+            RenderSectionLabels();
+            RenderRulers();
+            RenderMovableRuler();
+            RenderSelectionRectangle();
+            RenderSelectionBoundingBox();
+
+            bool isDarkTheme = ActualTheme == Microsoft.UI.Xaml.ElementTheme.Dark;
+            _renderer.RenderTypeIndicators(GraphCanvas, _viewModel, _catalog, isDarkTheme);
+
+            _renderer.RenderPortHoverEffects(GraphCanvas, _portHoverAffordance.HighlightedPorts, _viewModel, _catalog);
+            _renderer.RenderTrackHoverEffects(GraphCanvas, _portHoverAffordance.HoveredTracks, _viewModel);
+        }
+        catch (Exception ex)
         {
-            var ghostOpacity = ActualTheme == Microsoft.UI.Xaml.ElementTheme.Dark ? 0.85 : 0.75;
-            _renderer.RenderGhostTrack(
-                GraphCanvas,
-                dp.Template,
-                dp.Position,
-                dp.RotationDeg,
-                _snapPreviewBrush,
-                ghostOpacity);
+            System.Diagnostics.Debug.WriteLine($"[RenderGraph] Exception: {ex.GetType().Name}: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[RenderGraph] StackTrace: {ex.StackTrace}");
+            throw;
         }
-
-        RenderSingleRotationHandle();
-        RenderPorts();
-        RenderFeedback();
-        RenderIsolators();
-        RenderSectionLabels();
-        RenderSnapPreview();
-        RenderSelectionRectangle();
-        RenderSelectionBoundingBox();
-
-        // 🧠 Phase 9.2: Render switch type indicators (WL/WR/W3/BWL/BWR)
-        bool isDarkTheme = ActualTheme == Microsoft.UI.Xaml.ElementTheme.Dark;
-        _renderer.RenderTypeIndicators(GraphCanvas, _viewModel, _catalog, isDarkTheme);
-
-        // 🧠 Phase 9.3: Render hover affordances (port + track hover effects)
-        _renderer.RenderPortHoverEffects(GraphCanvas, _portHoverAffordance.HighlightedPorts, _viewModel, _catalog);
-        _renderer.RenderTrackHoverEffects(GraphCanvas, _portHoverAffordance.HoveredTracks, _viewModel);
     }
 
-    /// <summary>
-    /// Apply attention control opacity to all rendered tracks.
-    /// Called after CanvasRenderer.Render() to adjust opacity based on selection.
-    /// </summary>
     private void ApplyAttentionControlToRenderedTracks()
     {
-        // Iterate through all shapes in GraphCanvas and adjust opacity
-        // Canvas.Children contains all rendered shapes (paths, ellipses, etc.)
-
         foreach (var child in GraphCanvas.Children.OfType<FrameworkElement>())
         {
-            // Skip non-shape elements
             if (child is not (Polyline or Polygon or Ellipse or Microsoft.UI.Xaml.Shapes.Path))
                 continue;
 
-            // For basic implementation: reduce opacity of all non-selected tracks
-            // TODO: Enhanced implementation would require CanvasRenderer changes to tag shapes
-            // Current implementation applies global dimming which is still effective
-
             if (child.Opacity > 0.3)
             {
-                // Apply dimming uniformly
                 child.Opacity = 0.3f;
             }
         }
@@ -1343,6 +1434,7 @@ public sealed partial class TrackPlanPage : Page
     private void RenderPorts()
     {
         var service = _viewModel.ConnectionService;
+        bool enableHoverAnimation = _viewModel.ViewState.ShowPortHoverAnimation;
 
         foreach (var edge in _viewModel.Graph.Edges)
         {
@@ -1362,20 +1454,157 @@ public sealed partial class TrackPlanPage : Page
 
                 bool connected = service.IsPortConnected(edge.Id, end.Id);
 
+                if (enableHoverAnimation)
+                {
+                    var shadow = new Ellipse
+                    {
+                        Width = PortRadius * 3,
+                        Height = PortRadius * 3,
+                        Fill = connected
+                            ? new SolidColorBrush(Colors.Yellow) { Opacity = 0.0 }
+                            : new SolidColorBrush(Colors.Orange) { Opacity = 0.0 },
+                        Opacity = 0.0
+                    };
+
+                    Canvas.SetLeft(shadow, x - PortRadius * 1.5);
+                    Canvas.SetTop(shadow, y - PortRadius * 1.5);
+                    GraphCanvas.Children.Add(shadow);
+                }
+
                 var ellipse = new Ellipse
                 {
                     Width = PortRadius * 2,
                     Height = PortRadius * 2,
                     Fill = connected ? _portConnectedBrush : _portOpenBrush,
                     Stroke = new SolidColorBrush(Colors.White),
-                    StrokeThickness = 2
+                    StrokeThickness = 2,
+                    RenderTransform = enableHoverAnimation ? new ScaleTransform { CenterX = PortRadius, CenterY = PortRadius } : null
                 };
 
                 Canvas.SetLeft(ellipse, x - PortRadius);
                 Canvas.SetTop(ellipse, y - PortRadius);
+                
+                if (enableHoverAnimation)
+                {
+                    ellipse.Tag = (edge.Id, end.Id);
+                    ellipse.PointerEntered += Port_PointerEntered;
+                    ellipse.PointerExited += Port_PointerExited;
+                }
+
                 GraphCanvas.Children.Add(ellipse);
             }
         }
+    }
+
+    private void Port_PointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        if (sender is not Ellipse ellipse)
+            return;
+
+        var scaleTransform = (ScaleTransform)ellipse.RenderTransform;
+        var scaleStoryboard = new Storyboard();
+
+        var scaleAnimation = new DoubleAnimation
+        {
+            From = 1.0,
+            To = 1.3,
+            Duration = new TimeSpan(0, 0, 0, 0, 150),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+
+        Storyboard.SetTarget(scaleAnimation, ellipse);
+        Storyboard.SetTargetProperty(scaleAnimation, "(UIElement.RenderTransform).(ScaleTransform.ScaleX)");
+        scaleStoryboard.Children.Add(scaleAnimation);
+
+        var scaleAnimationY = new DoubleAnimation
+        {
+            From = 1.0,
+            To = 1.3,
+            Duration = new TimeSpan(0, 0, 0, 0, 150),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+
+        Storyboard.SetTarget(scaleAnimationY, ellipse);
+        Storyboard.SetTargetProperty(scaleAnimationY, "(UIElement.RenderTransform).(ScaleTransform.ScaleY)");
+        scaleStoryboard.Children.Add(scaleAnimationY);
+
+        scaleStoryboard.Begin();
+
+        var index = GraphCanvas.Children.IndexOf(ellipse);
+        if (index > 0 && GraphCanvas.Children[index - 1] is Ellipse shadowEllipse)
+        {
+            var glowStoryboard = new Storyboard();
+            var glowAnimation = new DoubleAnimation
+            {
+                From = 0.0,
+                To = 0.4,
+                Duration = new TimeSpan(0, 0, 0, 0, 150),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+
+            Storyboard.SetTarget(glowAnimation, shadowEllipse);
+            Storyboard.SetTargetProperty(glowAnimation, "Opacity");
+            glowStoryboard.Children.Add(glowAnimation);
+
+            glowStoryboard.Begin();
+        }
+
+        e.Handled = true;
+    }
+
+    private void Port_PointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        if (sender is not Ellipse ellipse)
+            return;
+
+        var scaleStoryboard = new Storyboard();
+
+        var scaleAnimation = new DoubleAnimation
+        {
+            From = 1.3,
+            To = 1.0,
+            Duration = new TimeSpan(0, 0, 0, 0, 150),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+        };
+
+        Storyboard.SetTarget(scaleAnimation, ellipse);
+        Storyboard.SetTargetProperty(scaleAnimation, "(UIElement.RenderTransform).(ScaleTransform.ScaleX)");
+        scaleStoryboard.Children.Add(scaleAnimation);
+
+        var scaleAnimationY = new DoubleAnimation
+        {
+            From = 1.3,
+            To = 1.0,
+            Duration = new TimeSpan(0, 0, 0, 0, 150),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+        };
+
+        Storyboard.SetTarget(scaleAnimationY, ellipse);
+        Storyboard.SetTargetProperty(scaleAnimationY, "(UIElement.RenderTransform).(ScaleTransform.ScaleY)");
+        scaleStoryboard.Children.Add(scaleAnimationY);
+
+        scaleStoryboard.Begin();
+
+        var index = GraphCanvas.Children.IndexOf(ellipse);
+        if (index > 0 && GraphCanvas.Children[index - 1] is Ellipse shadowEllipse)
+        {
+            var glowStoryboard = new Storyboard();
+            var glowAnimation = new DoubleAnimation
+            {
+                From = 0.4,
+                To = 0.0,
+                Duration = new TimeSpan(0, 0, 0, 0, 150),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+            };
+
+            Storyboard.SetTarget(glowAnimation, shadowEllipse);
+            Storyboard.SetTargetProperty(glowAnimation, "Opacity");
+            glowStoryboard.Children.Add(glowAnimation);
+
+            glowStoryboard.Begin();
+        }
+
+        e.Handled = true;
     }
 
     private void RenderFeedback()
@@ -1411,12 +1640,10 @@ public sealed partial class TrackPlanPage : Page
 
     private void RenderIsolators()
     {
-        // TODO: Isolators functionality not yet implemented
     }
 
     private void RenderSectionLabels()
     {
-        // TODO: Section labels functionality not yet implemented
     }
 
     private void RenderSelectionBoundingBox()
@@ -1483,99 +1710,6 @@ public sealed partial class TrackPlanPage : Page
         GraphCanvas.Children.Add(handleLine);
     }
 
-    private void RenderSnapPreview()
-    {
-        var preview = _viewModel.CurrentSnapPreview;
-        if (preview is null)
-            return;
-
-        var fromX = preview.MovingPortPosition.X * DisplayScale;
-        var fromY = preview.MovingPortPosition.Y * DisplayScale;
-        var toX = preview.TargetPortPosition.X * DisplayScale;
-        var toY = preview.TargetPortPosition.Y * DisplayScale;
-
-        // Connection line between ports
-        var line = new Line
-        {
-            X1 = fromX,
-            Y1 = fromY,
-            X2 = toX,
-            Y2 = toY,
-            Stroke = _snapPreviewBrush,
-            StrokeThickness = 3,
-            StrokeDashArray = null,
-            Opacity = 0.85
-        };
-        GraphCanvas.Children.Add(line);
-
-        // Highlight moving port (which port will snap)
-        var movingRing = new Ellipse
-        {
-            Width = PortRadius * 3,
-            Height = PortRadius * 3,
-            Stroke = _snapPreviewBrush,
-            StrokeThickness = 2.5,
-            Fill = new SolidColorBrush(_snapPreviewBrush.Color) { Opacity = 0.2 }
-        };
-        Canvas.SetLeft(movingRing, fromX - PortRadius * 1.5);
-        Canvas.SetTop(movingRing, fromY - PortRadius * 1.5);
-        GraphCanvas.Children.Add(movingRing);
-
-        // Label for moving port
-        var movingLabel = new TextBlock
-        {
-            Text = preview.MovingPortId,
-            FontSize = 12,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
-            Foreground = _snapPreviewBrush,
-            Opacity = 0.9
-        };
-        Canvas.SetLeft(movingLabel, fromX + 10);
-        Canvas.SetTop(movingLabel, fromY - 10);
-        GraphCanvas.Children.Add(movingLabel);
-
-        // Highlight target port
-        var targetRing = new Ellipse
-        {
-            Width = PortRadius * 3,
-            Height = PortRadius * 3,
-            Stroke = _snapPreviewBrush,
-            StrokeThickness = 2.5,
-            Fill = new SolidColorBrush(_snapPreviewBrush.Color) { Opacity = 0.2 }
-        };
-        Canvas.SetLeft(targetRing, toX - PortRadius * 1.5);
-        Canvas.SetTop(targetRing, toY - PortRadius * 1.5);
-        GraphCanvas.Children.Add(targetRing);
-
-        // Label for target port
-        var targetLabel = new TextBlock
-        {
-            Text = preview.TargetPortId,
-            FontSize = 12,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
-            Foreground = _snapPreviewBrush,
-            Opacity = 0.9
-        };
-        Canvas.SetLeft(targetLabel, toX + 10);
-        Canvas.SetTop(targetLabel, toY - 10);
-        GraphCanvas.Children.Add(targetLabel);
-
-        var previewX = preview.PreviewPosition.X * DisplayScale;
-        var previewY = preview.PreviewPosition.Y * DisplayScale;
-
-        var previewDot = new Ellipse
-        {
-            Width = 14,
-            Height = 14,
-            Fill = _snapPreviewBrush,
-            Opacity = 0.7
-        };
-
-        Canvas.SetLeft(previewDot, previewX - 7);
-        Canvas.SetTop(previewDot, previewY - 7);
-        GraphCanvas.Children.Add(previewDot);
-    }
-
     private void RenderSelectionRectangle()
     {
         var rect = _viewModel.SelectionRectangle;
@@ -1609,10 +1743,6 @@ public sealed partial class TrackPlanPage : Page
         GraphCanvas.Children.Add(selectionRect);
     }
 
-    /// <summary>
-    /// Phase 9.3: Find ports near the given world position.
-    /// Returns a set of (TrackId, PortId) tuples for ports within the given radius.
-    /// </summary>
     private IReadOnlySet<(System.Guid TrackId, string PortId)> FindHoveredPorts(Point2D worldPos, double searchRadius)
     {
         var hoveredPorts = new HashSet<(System.Guid, string)>();
@@ -1644,10 +1774,6 @@ public sealed partial class TrackPlanPage : Page
         return hoveredPorts;
     }
 
-    /// <summary>
-    /// Phase 9.3: Find draggable tracks near the given world position.
-    /// Returns a set of TrackId values for tracks within the given radius.
-    /// </summary>
     private IReadOnlySet<System.Guid> FindHoveredTracks(Point2D worldPos, double hitRadius)
     {
         var hoveredTracks = new HashSet<System.Guid>();
@@ -1670,9 +1796,6 @@ public sealed partial class TrackPlanPage : Page
         return hoveredTracks;
     }
 
-    /// <summary>
-    /// Helper: Calculate port offset in world coordinates for hover detection.
-    /// </summary>
     private static Point2D CalculatePortOffset(TrackTemplate template, string portId, double rotationDeg)
     {
         var spec = template.Geometry;
@@ -1770,7 +1893,6 @@ public sealed partial class TrackPlanPage : Page
 
     private void ZoomSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
     {
-        // Skip if ScrollViewer not yet initialized (can happen during XAML loading)
         if (CanvasScrollViewer is null) return;
         
         CanvasScrollViewer.ChangeView(null, null, (float)e.NewValue, disableAnimation: true);
@@ -1804,5 +1926,468 @@ public sealed partial class TrackPlanPage : Page
     private void ValidateButton_Click(object sender, RoutedEventArgs e)
     {
         StatusText.Text = "Validation not yet implemented";
+    }
+
+    private void RenderRulers()
+    {
+        if (_viewModel.ViewState.ShowFixedRulers == false)
+            return;
+
+        double currentZoom = ZoomSlider?.Value ?? 1.0;
+        bool isDarkTheme = ActualTheme == Microsoft.UI.Xaml.ElementTheme.Dark;
+        
+        double scrollOffsetX = CanvasScrollViewer.HorizontalOffset;
+        double scrollOffsetY = CanvasScrollViewer.VerticalOffset;
+        
+        double viewportWidth = CanvasScrollViewer.ViewportWidth;
+        double viewportHeight = CanvasScrollViewer.ViewportHeight;
+
+        RenderHorizontalRuler(scrollOffsetX, scrollOffsetX + viewportWidth, viewportWidth, currentZoom, isDarkTheme);
+        RenderVerticalRuler(scrollOffsetY, scrollOffsetY + viewportHeight, viewportHeight, currentZoom, isDarkTheme);
+    }
+
+    private void RenderHorizontalRuler(
+        double viewportStartX,
+        double viewportEndX,
+        double viewportWidth,
+        double zoomLevel,
+        bool isDarkTheme)
+    {
+        const double RulerHeight = 40;  // Increased from 24 to 40 for better visibility
+        
+        var rulerGeometry = _rulerService.CreateHorizontalRuler(
+            viewportStartX,
+            viewportEndX,
+            viewportWidth,
+            zoomLevel,
+            DisplayScale);
+
+        var rulerBrush = isDarkTheme
+            ? new SolidColorBrush(Colors.White)
+            : new SolidColorBrush(Colors.Black);
+
+        var rulerBackground = new Rectangle
+        {
+            Width = GraphCanvas.Width,
+            Height = RulerHeight,
+            Fill = isDarkTheme
+                ? new SolidColorBrush(Color.FromArgb(255, 40, 40, 40))
+                : new SolidColorBrush(Color.FromArgb(255, 245, 245, 245))
+        };
+        Canvas.SetLeft(rulerBackground, 0);
+        Canvas.SetTop(rulerBackground, -RulerHeight);
+        GraphCanvas.Children.Add(rulerBackground);
+
+        foreach (var tick in rulerGeometry.Ticks)
+        {
+            var tickLine = new Line
+            {
+                X1 = tick.Position,
+                Y1 = -RulerHeight,
+                X2 = tick.Position,
+                Y2 = -RulerHeight + tick.Height,
+                Stroke = rulerBrush,
+                StrokeThickness = 1
+            };
+            GraphCanvas.Children.Add(tickLine);
+
+            if (tick.Label is not null)
+            {
+                var label = new TextBlock
+                {
+                    Text = tick.Label,
+                    FontSize = 11,
+                    Foreground = rulerBrush,
+                    TextAlignment = TextAlignment.Center,
+                    Opacity = 0.8
+                };
+                Canvas.SetLeft(label, tick.Position - 15);
+                Canvas.SetTop(label, -RulerHeight + 20);
+                GraphCanvas.Children.Add(label);
+            }
+        }
+    }
+
+    private void RenderVerticalRuler(
+        double viewportStartY,
+        double viewportEndY,
+        double viewportHeight,
+        double zoomLevel,
+        bool isDarkTheme)
+    {
+        const double RulerWidth = 40;  // Increased from 24 to 40 for better visibility
+        
+        var rulerGeometry = _rulerService.CreateVerticalRuler(
+            viewportStartY,
+            viewportEndY,
+            viewportHeight,
+            zoomLevel,
+            DisplayScale);
+
+        var rulerBrush = isDarkTheme
+            ? new SolidColorBrush(Colors.White)
+            : new SolidColorBrush(Colors.Black);
+
+        var rulerBackground = new Rectangle
+        {
+            Width = RulerWidth,
+            Height = GraphCanvas.Height,
+            Fill = isDarkTheme
+                ? new SolidColorBrush(Color.FromArgb(255, 40, 40, 40))
+                : new SolidColorBrush(Color.FromArgb(255, 245, 245, 245))
+        };
+        Canvas.SetLeft(rulerBackground, -RulerWidth);
+        Canvas.SetTop(rulerBackground, 0);
+        GraphCanvas.Children.Add(rulerBackground);
+
+        foreach (var tick in rulerGeometry.Ticks)
+        {
+            var tickLine = new Line
+            {
+                X1 = -RulerWidth,
+                Y1 = tick.Position,
+                X2 = -RulerWidth + tick.Height,
+                Y2 = tick.Position,
+                Stroke = rulerBrush,
+                StrokeThickness = 1
+            };
+            GraphCanvas.Children.Add(tickLine);
+        }
+    }
+
+    private void RulerToggle_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel == null) return;
+        _viewModel.ViewState.ShowFixedRulers = RulerToggle.IsChecked == true;
+        RenderGraph();
+    }
+
+    private void RenderMovableRuler()
+    {
+        if (_viewModel.ViewState.ShowMovableRuler == false || _viewModel.ViewState.MovableRulerPosition is null)
+            return;
+
+        double currentZoom = ZoomSlider?.Value ?? 1.0;
+        bool isDarkTheme = ActualTheme == Microsoft.UI.Xaml.ElementTheme.Dark;
+        var opacity = _viewModel.ViewState.MovableRulerOpacity;
+        var rotation = _viewModel.ViewState.MovableRulerRotationDeg;
+        var (rulerWorldX, rulerWorldY) = _viewModel.ViewState.MovableRulerPosition.Value;
+
+        var rulerDisplayX = rulerWorldX * DisplayScale;
+        var rulerDisplayY = rulerWorldY * DisplayScale;
+
+        var rotRad = rotation * Math.PI / 180.0;
+        var cosR = Math.Cos(rotRad);
+        var sinR = Math.Sin(rotRad);
+
+        var rulerBrush = isDarkTheme
+            ? new SolidColorBrush(Colors.White)
+            : new SolidColorBrush(Colors.Black);
+        rulerBrush.Opacity = opacity;
+
+        RenderMovableHorizontalRuler(rulerDisplayX, rulerDisplayY, currentZoom, isDarkTheme, opacity, cosR, sinR);
+        RenderMovableVerticalRuler(rulerDisplayX, rulerDisplayY, currentZoom, isDarkTheme, opacity, cosR, sinR);
+    }
+
+    private void RenderMovableHorizontalRuler(
+        double originX,
+        double originY,
+        double zoomLevel,
+        bool isDarkTheme,
+        double opacity,
+        double cosR,
+        double sinR)
+    {
+        const double rulerLengthMm = 1000.0;
+        const double rulerWidthMm = 50.0;
+
+        var rulerGeometry = _rulerService.CreateHorizontalRuler(
+            0,
+            rulerLengthMm,
+            rulerLengthMm * DisplayScale,
+            zoomLevel,
+            DisplayScale);
+
+        var tickBrush = isDarkTheme
+            ? new SolidColorBrush(Colors.White)
+            : new SolidColorBrush(Colors.Black);
+        tickBrush.Opacity = opacity;
+
+        var barLength = rulerLengthMm * DisplayScale;
+        var barWidth = rulerWidthMm * DisplayScale;
+
+        var barTopLeft = RotatePoint(0, 0, cosR, sinR, originX, originY);
+        var barTopRight = RotatePoint(barLength, 0, cosR, sinR, originX, originY);
+        var barBottomRight = RotatePoint(barLength, barWidth, cosR, sinR, originX, originY);
+        var barBottomLeft = RotatePoint(0, barWidth, cosR, sinR, originX, originY);
+
+        var barPoly = new Polygon
+        {
+            Points = new PointCollection
+            {
+                new Windows.Foundation.Point(barTopLeft.X, barTopLeft.Y),
+                new Windows.Foundation.Point(barTopRight.X, barTopRight.Y),
+                new Windows.Foundation.Point(barBottomRight.X, barBottomRight.Y),
+                new Windows.Foundation.Point(barBottomLeft.X, barBottomLeft.Y)
+            },
+            Fill = isDarkTheme
+                ? new SolidColorBrush(Color.FromArgb((byte)(255 * opacity), 40, 40, 40))
+                : new SolidColorBrush(Color.FromArgb((byte)(255 * opacity), 245, 245, 245)),
+            Opacity = opacity
+        };
+        GraphCanvas.Children.Add(barPoly);
+
+        foreach (var tick in rulerGeometry.Ticks)
+        {
+            var tickStart = RotatePoint(tick.Position, 0, cosR, sinR, originX, originY);
+            var tickEnd = RotatePoint(tick.Position, tick.Height, cosR, sinR, originX, originY);
+
+            var tickLine = new Line
+            {
+                X1 = tickStart.X,
+                Y1 = tickStart.Y,
+                X2 = tickEnd.X,
+                Y2 = tickEnd.Y,
+                Stroke = tickBrush,
+                StrokeThickness = 1,
+                Opacity = opacity
+            };
+            GraphCanvas.Children.Add(tickLine);
+
+            if (tick.Label is not null)
+            {
+                var label = new TextBlock
+                {
+                    Text = tick.Label,
+                    FontSize = 11,
+                    Foreground = tickBrush,
+                    TextAlignment = TextAlignment.Center,
+                    Opacity = opacity
+                };
+                Canvas.SetLeft(label, tick.Position - 15);
+                Canvas.SetTop(label, -30);
+                GraphCanvas.Children.Add(label);
+            }
+        }
+    }
+
+    private void RenderMovableVerticalRuler(
+        double originX,
+        double originY,
+        double zoomLevel,
+        bool isDarkTheme,
+        double opacity,
+        double cosR,
+        double sinR)
+    {
+        const double rulerLengthMm = 1000.0;
+        const double rulerWidthMm = 50.0;
+
+        var rulerGeometry = _rulerService.CreateVerticalRuler(
+            0,
+            rulerLengthMm,
+            rulerLengthMm * DisplayScale,
+            zoomLevel,
+            DisplayScale);
+
+        var tickBrush = isDarkTheme
+            ? new SolidColorBrush(Colors.White)
+            : new SolidColorBrush(Colors.Black);
+        tickBrush.Opacity = opacity;
+
+        var barLength = rulerLengthMm * DisplayScale;
+        var barWidth = rulerWidthMm * DisplayScale;
+
+        var offsetCosR = Math.Cos((Math.PI / 2.0) + Math.Atan2(sinR, cosR));
+        var offsetSinR = Math.Sin((Math.PI / 2.0) + Math.Atan2(sinR, cosR));
+
+        var barTopLeft = RotatePoint(0, 0, offsetCosR, offsetSinR, originX, originY);
+        var barTopRight = RotatePoint(0, barWidth, offsetCosR, offsetSinR, originX, originY);
+        var barBottomRight = RotatePoint(barLength, barWidth, offsetCosR, offsetSinR, originX, originY);
+        var barBottomLeft = RotatePoint(barLength, 0, offsetCosR, offsetSinR, originX, originY);
+
+        var barPoly = new Polygon
+        {
+            Points = new PointCollection
+            {
+                new Windows.Foundation.Point(barTopLeft.X, barTopLeft.Y),
+                new Windows.Foundation.Point(barTopRight.X, barTopRight.Y),
+                new Windows.Foundation.Point(barBottomRight.X, barBottomRight.Y),
+                new Windows.Foundation.Point(barBottomLeft.X, barBottomLeft.Y)
+            },
+            Fill = isDarkTheme
+                ? new SolidColorBrush(Color.FromArgb((byte)(255 * opacity), 40, 40, 40))
+                : new SolidColorBrush(Color.FromArgb((byte)(255 * opacity), 245, 245, 245)),
+            Opacity = opacity
+        };
+        GraphCanvas.Children.Add(barPoly);
+
+        foreach (var tick in rulerGeometry.Ticks)
+        {
+            var tickStart = RotatePoint(0, tick.Position, offsetCosR, offsetSinR, originX, originY);
+            var tickEnd = RotatePoint(tick.Height, tick.Position, offsetCosR, offsetSinR, originX, originY);
+
+            var tickLine = new Line
+            {
+                X1 = tickStart.X,
+                Y1 = tickStart.Y,
+                X2 = tickEnd.X,
+                Y2 = tickEnd.Y,
+                Stroke = tickBrush,
+                StrokeThickness = 1,
+                Opacity = opacity
+            };
+            GraphCanvas.Children.Add(tickLine);
+        }
+    }
+
+    private static (double X, double Y) RotatePoint(double x, double y, double cosR, double sinR, double originX, double originY)
+    {
+        var rotatedX = x * cosR - y * sinR;
+        var rotatedY = x * sinR + y * cosR;
+        return (originX + rotatedX, originY + rotatedY);
+    }
+
+    private void GraphCanvas_PointerPressed_MovableRuler(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_viewModel.ViewState.ShowMovableRuler || _viewModel.ViewState.MovableRulerPosition is null)
+            return;
+
+        var point = e.GetCurrentPoint(GraphCanvas);
+        var pos = point.Position;
+
+        var (rulerX, rulerY) = _viewModel.ViewState.MovableRulerPosition.Value;
+        var rulerDisplayX = rulerX * DisplayScale;
+        var rulerDisplayY = rulerY * DisplayScale;
+
+        var dist = Math.Sqrt(Math.Pow(pos.X - rulerDisplayX, 2) + Math.Pow(pos.Y - rulerDisplayY, 2));
+        if (dist > 100)
+            return;
+
+        _viewModel.ViewState.IsDraggingMovableRuler = true;
+        _movableRulerDragStart = new Point(rulerDisplayX, rulerDisplayY);
+        GraphCanvas.CapturePointer(e.Pointer);
+        ProtectedCursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.Hand);
+        e.Handled = true;
+    }
+
+    private void GraphCanvas_PointerMoved_MovableRuler(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_viewModel.ViewState.IsDraggingMovableRuler || _viewModel.ViewState.MovableRulerPosition is null)
+            return;
+
+        var point = e.GetCurrentPoint(GraphCanvas);
+        var pos = point.Position;
+
+        var deltaX = (pos.X - _movableRulerDragStart.X) / DisplayScale;
+        var deltaY = (pos.Y - _movableRulerDragStart.Y) / DisplayScale;
+
+        var (currentX, currentY) = _viewModel.ViewState.MovableRulerPosition.Value;
+        _viewModel.ViewState.MovableRulerPosition = (currentX + deltaX, currentY + deltaY);
+
+        _movableRulerDragStart = new Point(pos.X, pos.Y);
+        RenderGraph();
+        e.Handled = true;
+    }
+
+    private void GraphCanvas_PointerReleased_MovableRuler(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_viewModel.ViewState.IsDraggingMovableRuler)
+            return;
+
+        _viewModel.ViewState.IsDraggingMovableRuler = false;
+        GraphCanvas.ReleasePointerCaptures();
+        ProtectedCursor = null;
+        StatusText.Text = "Movable ruler repositioned";
+        RenderGraph();
+        e.Handled = true;
+    }
+
+    private void RotateMovableRulerLeft_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_viewModel.ViewState.ShowMovableRuler)
+            return;
+
+        var newRotation = _viewModel.ViewState.MovableRulerRotationDeg - 15.0;
+        _viewModel.ViewState.MovableRulerRotationDeg = NormalizeDeg(newRotation);
+        StatusText.Text = $"Ruler rotated: {_viewModel.ViewState.MovableRulerRotationDeg:F0}°";
+        RenderGraph();
+    }
+
+    private void RotateMovableRulerRight_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_viewModel.ViewState.ShowMovableRuler)
+            return;
+
+        var newRotation = _viewModel.ViewState.MovableRulerRotationDeg + 15.0;
+        _viewModel.ViewState.MovableRulerRotationDeg = NormalizeDeg(newRotation);
+        StatusText.Text = $"Ruler rotated: {_viewModel.ViewState.MovableRulerRotationDeg:F0}°";
+        RenderGraph();
+    }
+
+    private void ResetMovableRuler_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_viewModel.ViewState.ShowMovableRuler)
+            return;
+
+        _viewModel.ViewState.MovableRulerPosition = (0, 0);
+        _viewModel.ViewState.MovableRulerRotationDeg = 0;
+        StatusText.Text = "Movable ruler reset";
+        RenderGraph();
+    }
+
+    private void MovableRulerToggle_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel == null) return;
+        _viewModel.ViewState.ShowMovableRuler = MovableRulerToggle?.IsChecked == true;
+        
+        if (_viewModel.ViewState.ShowMovableRuler && _viewModel.ViewState.MovableRulerPosition is null)
+        {
+            _viewModel.ViewState.MovableRulerPosition = (0, 0);
+            _viewModel.ViewState.MovableRulerRotationDeg = 0;
+            _viewModel.ViewState.MovableRulerOpacity = 0.8;
+        }
+        
+        RenderGraph();
+    }
+
+    private void MovableRulerOpacitySlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+    {
+        if (_viewModel?.ViewState != null)
+        {
+            _viewModel.ViewState.MovableRulerOpacity = e.NewValue;
+            RenderGraph();
+        }
+    }
+
+    private void PortHoverAnimationToggle_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel == null) return;
+        _viewModel.ViewState.ShowPortHoverAnimation = PortHoverAnimationToggle?.IsChecked == true;
+        RenderGraph();
+    }
+
+    private void StraightIconCanvas_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is Canvas canvas && canvas.Tag is TrackTemplate template)
+        {
+            _renderer.RenderToolboxIcon(canvas, template, new SolidColorBrush(Colors.CornflowerBlue));
+        }
+    }
+
+    private void CurveIconCanvas_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is Canvas canvas && canvas.Tag is TrackTemplate template)
+        {
+            _renderer.RenderToolboxIcon(canvas, template, new SolidColorBrush(Colors.CornflowerBlue));
+        }
+    }
+
+    private void SwitchIconCanvas_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is Canvas canvas && canvas.Tag is TrackTemplate template)
+        {
+            _renderer.RenderToolboxIcon(canvas, template, new SolidColorBrush(Colors.CornflowerBlue));
+        }
     }
 }

@@ -38,6 +38,72 @@
                  Icon="ViewAll"
                  IsChecked="False"
                  Label="Grid" />
+            <AppBarToggleButton
+                x:Name="RulerToggle"
+                IsChecked="True"
+                Label="Rulers"
+                Checked="RulerToggle_Changed"
+                Unchecked="RulerToggle_Changed">
+                <AppBarToggleButton.Icon>
+                    <SymbolIcon Symbol="Trim" />
+                </AppBarToggleButton.Icon>
+            </AppBarToggleButton>
+            <AppBarToggleButton
+                x:Name="MovableRulerToggle"
+                IsChecked="False"
+                Label="Movable Ruler"
+                Checked="MovableRulerToggle_Changed"
+                Unchecked="MovableRulerToggle_Changed">
+                <AppBarToggleButton.Icon>
+                    <SymbolIcon Symbol="Rotate" />
+                </AppBarToggleButton.Icon>
+            </AppBarToggleButton>
+            <AppBarToggleButton
+                x:Name="PortHoverAnimationToggle"
+                IsChecked="True"
+                Label="Port Hover"
+                Checked="PortHoverAnimationToggle_Changed"
+                Unchecked="PortHoverAnimationToggle_Changed">
+                <AppBarToggleButton.Icon>
+                    <SymbolIcon Symbol="Highlight" />
+                </AppBarToggleButton.Icon>
+            </AppBarToggleButton>
+            <AppBarButton
+                x:Name="RotateRulerLeftButton"
+                Click="RotateMovableRulerLeft_Click"
+                Label="Rotate ←">
+                <AppBarButton.Icon>
+                    <SymbolIcon Symbol="Back" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton
+                x:Name="RotateRulerRightButton"
+                Click="RotateMovableRulerRight_Click"
+                Label="Rotate →">
+                <AppBarButton.Icon>
+                    <SymbolIcon Symbol="Forward" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton
+                x:Name="ResetRulerButton"
+                Click="ResetMovableRuler_Click"
+                Label="Reset Ruler">
+                <AppBarButton.Icon>
+                    <SymbolIcon Symbol="Home" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarSeparator />
+            <AppBarButton Label="Opacity:" />
+            <AppBarButton>
+                <Slider
+                    x:Name="MovableRulerOpacitySlider"
+                    Width="120"
+                    Margin="8,0"
+                    Maximum="1.0"
+                    Minimum="0.1"
+                    Value="0.8"
+                    ValueChanged="MovableRulerOpacitySlider_ValueChanged" />
+            </AppBarButton>
         </CommandBar>
 
         <!--  Main Content with VisualStateManager for responsive layout  -->
@@ -96,13 +162,12 @@
                                                     Height="24"
                                                     Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
                                                     CornerRadius="4">
-                                                    <Line
-                                                        Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                        StrokeThickness="3"
-                                                        X1="4"
-                                                        X2="36"
-                                                        Y1="12"
-                                                        Y2="12" />
+                                                    <Canvas
+                                                        x:Name="StraightIconCanvas"
+                                                        Width="40"
+                                                        Height="24"
+                                                        Loaded="StraightIconCanvas_Loaded"
+                                                        Tag="{Binding}" />
                                                 </Border>
                                                 <TextBlock
                                                     Grid.Column="1"
@@ -141,10 +206,12 @@
                                                     Height="24"
                                                     Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
                                                     CornerRadius="4">
-                                                    <Path
-                                                        Data="M 4,20 Q 20,20 36,4"
-                                                        Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                        StrokeThickness="3" />
+                                                    <Canvas
+                                                        x:Name="CurveIconCanvas"
+                                                        Width="40"
+                                                        Height="24"
+                                                        Loaded="CurveIconCanvas_Loaded"
+                                                        Tag="{Binding}" />
                                                 </Border>
                                                 <TextBlock
                                                     Grid.Column="1"
@@ -183,22 +250,12 @@
                                                     Height="24"
                                                     Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
                                                     CornerRadius="4">
-                                                    <Canvas>
-                                                        <Line
-                                                            Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                            StrokeThickness="3"
-                                                            X1="4"
-                                                            X2="36"
-                                                            Y1="12"
-                                                            Y2="12" />
-                                                        <Line
-                                                            Stroke="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                            StrokeThickness="2"
-                                                            X1="20"
-                                                            X2="36"
-                                                            Y1="12"
-                                                            Y2="4" />
-                                                    </Canvas>
+                                                    <Canvas
+                                                        x:Name="SwitchIconCanvas"
+                                                        Width="40"
+                                                        Height="24"
+                                                        Loaded="SwitchIconCanvas_Loaded"
+                                                        Tag="{Binding}" />
                                                 </Border>
                                                 <TextBlock
                                                     Grid.Column="1"

@@ -485,14 +485,18 @@ public sealed class TrackPlanEditorViewModel
             _dragGroup);
     }
 
-    public SnapPreview? FindNearestSnapTarget(String templateId, Point2D position, double rotationDeg, double snapDistance)
+    /// <summary>
+    /// Finds the nearest snap target for a ghost placement (using TemplateId and position/rotation).
+    /// Called during drag of a new track from toolbox.
+    /// </summary>
+    private SnapPreview? FindNearestSnapTarget(string templateId, Point2D position, double rotationDeg, double snapDistance)
     {
-        var movingTemplate = _catalog.GetById(templateId);
-        if (movingTemplate is null)
+        var template = _catalog.GetById(templateId);
+        if (template is null)
             return null;
 
         return FindNearestSnapTarget(
-            movingTemplate,
+            template,
             position,
             rotationDeg,
             movingEdgeId: null,
@@ -963,6 +967,22 @@ public sealed class TrackPlanEditorViewModel
         CurrentSnapPreview = null;
     }
 
+    public void CancelMultiGhostPlacement()
+    {
+        if (MultiGhostPlacement is null)
+            return;
+
+        // Restore original positions
+        foreach (var trackId in MultiGhostPlacement.TrackIds)
+        {
+            if (MultiGhostPlacement.InitialPositions.TryGetValue(trackId, out var originalPos))
+                Positions[trackId] = originalPos;
+        }
+
+        MultiGhostPlacement = null;
+        CurrentSnapPreview = null;
+    }
+
     /// <summary>
     /// Finds nearest snap target for the first track in the multi-ghost selection.
     /// (First iteration: snap primary track; can be extended to snap all connected ports)
@@ -975,6 +995,15 @@ public sealed class TrackPlanEditorViewModel
         // For now, snap the first track in selection
         // TODO: Extended version could consider all ports of all tracks
         return FindNearestSnapTarget(trackIds[0], snapDistance);
+    }
+
+    /// <summary>
+    /// Updates CurrentSnapPreview for multi-selection drag (called during PointerMove).
+    /// Sets CurrentSnapPreview if a valid snap target is found.
+    /// </summary>
+    public void FindAndSetSnapPreviewForMulti(IReadOnlyList<Guid> trackIds, double snapDistance)
+    {
+        CurrentSnapPreview = FindNearestSnapTargetForMulti(trackIds, snapDistance);
     }
 
     // ------------------------------------------------------------
@@ -1189,11 +1218,6 @@ public sealed class TrackPlanEditorViewModel
     public void FindAndSetSnapPreview(Guid trackId, double snapDistance)
     {
         CurrentSnapPreview = FindNearestSnapTarget(trackId, snapDistance);
-    }
-
-    public void FindAndSetSnapPreviewForMulti(IReadOnlyList<Guid> trackIds, double snapDistance)
-    {
-        CurrentSnapPreview = FindNearestSnapTargetForMulti(trackIds, snapDistance);
     }
 
     public void ClearSnapPreview()

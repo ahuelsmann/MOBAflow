@@ -22,6 +22,7 @@ builder.Services.AddRazorComponents()
 // REST API Controllers with Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 // CORS for React Development Server
 builder.Services.AddCors(options =>
@@ -71,6 +72,9 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
+    // CORS for React dev server
+    app.UseCors("ReactDev");
+    
     // Swagger UI for API documentation
     app.UseSwagger();
     app.UseSwaggerUI(options =>
@@ -78,9 +82,6 @@ if (app.Environment.IsDevelopment())
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "MOBAflow API v1");
         options.RoutePrefix = "swagger";
     });
-
-    // CORS for React dev server
-    app.UseCors("ReactDev");
 }
 else
 {
@@ -95,13 +96,10 @@ app.UseAntiforgery();
 // Map REST API Controllers under /api
 app.MapControllers();
 
-// Map Blazor components under /blazor for validation/comparison
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
-
 // React SPA routing:
-// Exclude /api, /blazor, /_blazor, /_framework paths from SPA fallback
-// These are handled by their respective middleware
-app.MapFallbackToFile("{*path:regex(^(?!api|blazor|_blazor|_framework|swagger).*$)}", "index.html");
+// Fallback to index.html for all unmatched requests (client-side routing)
+app.MapFallback(() => Results.File(
+    Path.Combine(app.Environment.ContentRootPath, "wwwroot", "index.html"), 
+    "text/html"));
 
 await app.RunAsync();
