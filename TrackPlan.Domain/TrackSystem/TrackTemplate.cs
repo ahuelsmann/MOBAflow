@@ -10,6 +10,11 @@ public sealed record TrackTemplate(
 )
 {
     /// <summary>
+    /// Display code for UI labels (defaults to Id if not set).
+    /// </summary>
+    public string DisplayCode => Id;
+
+    /// <summary>
     /// Gets a port by its ID.
     /// </summary>
     public TrackPort? GetPort(string portId) => null;

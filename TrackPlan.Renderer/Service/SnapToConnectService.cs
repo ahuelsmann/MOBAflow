@@ -173,46 +173,15 @@ public sealed class SnapToConnectService
         if (IsPortConnected(targetEdgeId, targetPortId))
             return new SnapValidationResult(false, "Target port already connected");
 
-        // Validate angle compatibility (ports should be opposing)
-        var angleCorrect = ValidateAngleCompatibility(sourceEnd.AngleDeg, targetEnd.AngleDeg);
-        if (!angleCorrect)
-            return new SnapValidationResult(false, "Port angles not compatible (expected opposing)");
+        // NOTE: Angle validation removed - all port combinations (A-A, A-B, B-A, B-B) 
+        // are geometrically valid. User controls track rotation to achieve physical fit.
+        // Only position proximity (snap radius) and port availability matter.
 
         // Check for topology cycles (optional)
         if (WouldCreateInvalidCycle(sourceEdgeId, targetEdgeId))
             return new SnapValidationResult(false, "Connection would create invalid cycle");
 
         return new SnapValidationResult(true, "Valid");
-    }
-
-    /// <summary>
-    /// Validates that two port angles are opposing (differ by ~180 degrees).
-    /// </summary>
-    private bool ValidateAngleCompatibility(double angle1Deg, double angle2Deg)
-    {
-        // Normalize angles to 0-360
-        var a1 = NormalizeAngle(angle1Deg);
-        var a2 = NormalizeAngle(angle2Deg);
-
-        // Calculate angle difference, accounting for wrap-around
-        var diff = Math.Abs(a1 - a2);
-        if (diff > 180)
-            diff = 360 - diff;
-
-        // Ports should be roughly opposing (within ±30 degrees tolerance)
-        return Math.Abs(diff - 180) <= 30;
-    }
-
-    /// <summary>
-    /// Normalizes an angle to 0-360 range.
-    /// </summary>
-    private double NormalizeAngle(double angleDeg)
-    {
-        while (angleDeg < 0)
-            angleDeg += 360;
-        while (angleDeg >= 360)
-            angleDeg -= 360;
-        return angleDeg;
     }
 
     /// <summary>

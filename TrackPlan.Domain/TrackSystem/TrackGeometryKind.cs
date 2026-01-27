@@ -3,7 +3,7 @@
 namespace Moba.TrackPlan.TrackSystem;
 
 /// <summary>
-/// Kinds of track geometry: straight segments, curves, and switches.
+/// Kinds of track geometry: straight segments, curves, switches, crossings, and special pieces.
 /// </summary>
 public enum TrackGeometryKind
 {
@@ -35,5 +35,15 @@ public enum TrackGeometryKind
     /// <summary>
     /// Crossing (no switch).
     /// </summary>
-    Crossing
+    Crossing,
+
+    /// <summary>
+    /// Double crossover (Doppelkreuzungsweiche - DKW).
+    /// </summary>
+    DoubleCrossover,
+
+    /// <summary>
+    /// Track endcap (Prellbock - buffer stop).
+    /// </summary>
+    Endcap
 }

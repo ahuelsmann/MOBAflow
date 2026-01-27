@@ -48,6 +48,23 @@ public static class CurveTemplates
     );
 
     /// <summary>
+    /// Piko 55214 - R4 Kurve mit 30° Winkel.
+    /// </summary>
+    public static TrackTemplate R4 => new(
+        "R4",
+        [
+            new TrackEnd("A", 0),
+            new TrackEnd("B", PikoAConstants.StandardAngle)
+        ],
+        new TrackGeometrySpec(
+            TrackGeometryKind.Curve,
+            RadiusMm: PikoAConstants.R4,
+            AngleDeg: PikoAConstants.StandardAngle
+        ),
+        null
+    );
+
+    /// <summary>
     /// Piko 55219 - R9 Kurve mit 15° Winkel.
     /// 24 Stück ergeben einen vollen Kreis (24 × 15° = 360°).
     /// </summary>
@@ -65,11 +82,48 @@ public static class CurveTemplates
         null
     );
 
+    /// <summary>
+    /// Piko 55290 - R1 Prellbock (Endstück mit 7.5°).
+    /// </summary>
+    public static TrackTemplate R1X => new(
+        "R1X",
+        [
+            new TrackEnd("A", 0)
+            // Nur ein Ende - Prellbock
+        ],
+        new TrackGeometrySpec(
+            TrackGeometryKind.Endcap,
+            RadiusMm: PikoAConstants.R1X,
+            AngleDeg: PikoAConstants.EndcapAngle
+        ),
+        null
+    );
+
+    /// <summary>
+    /// Piko 55291 - R2 Prellbock (Endstück mit 7.5°).
+    /// </summary>
+    public static TrackTemplate R2X => new(
+        "R2X",
+        [
+            new TrackEnd("A", 0)
+            // Nur ein Ende - Prellbock
+        ],
+        new TrackGeometrySpec(
+            TrackGeometryKind.Endcap,
+            RadiusMm: PikoAConstants.R2X,
+            AngleDeg: PikoAConstants.EndcapAngle
+        ),
+        null
+    );
+
     public static IReadOnlyList<TrackTemplate> All =>
     [
         R1,
         R2,
         R3,
-        R9
+        R4,
+        R9,
+        R1X,
+        R2X
     ];
 }
