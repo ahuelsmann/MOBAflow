@@ -130,15 +130,14 @@ public sealed class TrackPlanEditorViewModel
     public TrackConnectionService ConnectionService =>
         _connectionService ??= new TrackConnectionService(Graph);
 
-    public TrackPlanEditorViewModel(ITrackCatalog catalog, params ITopologyConstraint[] constraints)
+    public TrackPlanEditorViewModel(ITrackCatalog catalog, ILayoutEngine layoutEngine)
     {
         _catalog = catalog;
+        _layoutEngine = layoutEngine;
         _validationService = new ValidationService(catalog);
         _serializationService = new SerializationService();
 
         Graph = new TopologyGraph();
-        // Note: constraints are passed in but TopologyGraph.Validate() validates dynamically
-        // Store them if needed for later validation calls
     }
 
     // ------------------------------------------------------------
@@ -1150,6 +1149,42 @@ public sealed class TrackPlanEditorViewModel
             return status;
         }
 
+        // Handle ghost placement (new track from toolbox)
+        if (GhostPlacement is not null)
+        {
+            var result = CommitGhostPlacement(snapEnabled, snapDistance);
+            if (result is not null)
+            {
+                var createdEdge = AddTrack(GhostPlacement.TemplateId, result.Value.Position, result.Value.RotationDeg);
+                
+                if (snapEnabled && result.Value.Preview is not null)
+                {
+                    var snap = result.Value.Preview;
+                    if (ConnectionService.TryConnect(
+                        createdEdge.Id, snap.MovingPortId,
+                        snap.TargetEdgeId, snap.TargetPortId))
+                    {
+                        var targetEdge = Graph.Edges.FirstOrDefault(e => e.Id == snap.TargetEdgeId);
+                        status = $"✓ Snapped {createdEdge.TemplateId} to {targetEdge?.TemplateId}";
+                    }
+                    else
+                    {
+                        status = $"⚠ Placed {createdEdge.TemplateId} (snap failed)";
+                    }
+                }
+                else
+                {
+                    status = $"Placed {createdEdge.TemplateId} at ({result.Value.Position.X:F0}, {result.Value.Position.Y:F0})";
+                }
+                
+                _selectedTrackId = createdEdge.Id;
+            }
+            
+            GhostPlacement = null;
+            CurrentSnapPreview = null;
+            return status;
+        }
+
         if (_isDragging && _draggedTrackId.HasValue)
         {
             // Use the snap preview calculated during drag (most accurate nearest-port selection)
@@ -1302,10 +1337,4 @@ public sealed class TrackPlanEditorViewModel
         var nextIndex = (currentIndex + 1) % branchPorts.Count;
         _switchBranchStates[edgeId] = branchPorts[nextIndex];
     }
-
-    /// <summary>
-    /// Gets the currently active branch for a switch track.
-    /// </summary>
-    public string? GetActiveSwitchBranch(Guid edgeId) =>
-        _switchBranchStates.TryGetValue(edgeId, out var branch) ? branch : null;
 }

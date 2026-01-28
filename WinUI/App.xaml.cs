@@ -60,15 +60,27 @@ public partial class App
     {
         try
         {
+            System.Diagnostics.Debug.WriteLine("[App] Constructor START");
+            
             Services = ConfigureServices();
+            System.Diagnostics.Debug.WriteLine("[App] Services configured");
+            
             _logger = Services.GetRequiredService<ILogger<App>>();
+            System.Diagnostics.Debug.WriteLine("[App] Logger resolved");
+            
             InitializeComponent();
+            System.Diagnostics.Debug.WriteLine("[App] InitializeComponent completed");
 
             // Register global UnhandledException handler for better diagnostics
             UnhandledException += OnUnhandledException;
+            System.Diagnostics.Debug.WriteLine("[App] UnhandledException handler registered");
+            
+            System.Diagnostics.Debug.WriteLine("[App] Constructor COMPLETE");
         }
         catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[App] FATAL ERROR: {ex.GetType().Name}: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[App] StackTrace: {ex.StackTrace}");
             _logger?.LogCritical(ex, "FATAL ERROR during App initialization");
             throw;
         }
@@ -427,19 +439,41 @@ public partial class App
     /// <param name="args">Details about the launch request and process.</param>
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
-        // Initialize SkinProvider with saved settings before creating MainWindow
-        var skinProvider = Services.GetRequiredService<ISkinProvider>();
-        var appSettings = Services.GetRequiredService<AppSettings>();
-        skinProvider.Initialize(appSettings);
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("[OnLaunched] START");
 
-        _window = Services.GetRequiredService<MainWindow>();
-        _window.Activate();
+            // Initialize SkinProvider with saved settings before creating MainWindow
+            var skinProvider = Services.GetRequiredService<ISkinProvider>();
+            System.Diagnostics.Debug.WriteLine("[OnLaunched] SkinProvider resolved");
 
-        // Optionally start WebApp (REST/API) alongside WinUI
-        _ = StartWebAppIfEnabledAsync();
+            var appSettings = Services.GetRequiredService<AppSettings>();
+            System.Diagnostics.Debug.WriteLine("[OnLaunched] AppSettings resolved");
 
-        // Auto-load last solution if enabled
-        _ = AutoLoadLastSolutionAsync(((MainWindow)_window).ViewModel);
+            skinProvider.Initialize(appSettings);
+            System.Diagnostics.Debug.WriteLine("[OnLaunched] SkinProvider initialized");
+
+            _window = Services.GetRequiredService<MainWindow>();
+            System.Diagnostics.Debug.WriteLine("[OnLaunched] MainWindow created");
+
+            _window.Activate();
+            System.Diagnostics.Debug.WriteLine("[OnLaunched] MainWindow activated");
+
+            // Optionally start WebApp (REST/API) alongside WinUI
+            _ = StartWebAppIfEnabledAsync();
+
+            // Auto-load last solution if enabled
+            _ = AutoLoadLastSolutionAsync(((MainWindow)_window).ViewModel);
+
+            System.Diagnostics.Debug.WriteLine("[OnLaunched] COMPLETE");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[OnLaunched] FATAL ERROR: {ex.GetType().Name}: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[OnLaunched] StackTrace: {ex.StackTrace}");
+            _logger?.LogCritical(ex, "OnLaunched failed");
+            throw;
+        }
     }
 
     /// <summary>

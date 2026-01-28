@@ -53,72 +53,90 @@ public sealed partial class MainWindow
         AppSettings appSettings,
         ISkinProvider skinProvider)
     {
-        ViewModel = viewModel;
-        _navigationService = navigationService;
-        _healthCheckService = healthCheckService;
-        _uiDispatcher = uiDispatcher;
-        _navigationRegistry = navigationRegistry;
-        _navigationItemFactory = new NavigationItemFactory(appSettings);
-        _skinProvider = skinProvider;
-
-        InitializeComponent();
-
-        // Set DataContext for Binding (needed for NavigationView.MenuItems which don't support x:Bind)
-        RootGrid.DataContext = this;
-
-        ExtendsContentIntoTitleBar = true;
-        SetTitleBar(AppTitleBar);
-
-        // Set TitleBar subtitle with version
-        AppTitleBar.Subtitle = $"flow  {AppVersion}";
-
-        // Set taskbar/window icon
-        var iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "mobaflow-icon.ico");
-        if (System.IO.File.Exists(iconPath))
+        try
         {
-            AppWindow.SetIcon(iconPath);
-        }
+            System.Diagnostics.Debug.WriteLine("[MainWindow] Constructor START");
+            
+            ViewModel = viewModel;
+            _navigationService = navigationService;
+            _healthCheckService = healthCheckService;
+            _uiDispatcher = uiDispatcher;
+            _navigationRegistry = navigationRegistry;
+            _navigationItemFactory = new NavigationItemFactory(appSettings);
+            _skinProvider = skinProvider;
+            
+            System.Diagnostics.Debug.WriteLine("[MainWindow] Dependencies assigned");
 
-        // Maximize window on startup and set minimum size
-        var appWindow = AppWindow;
-        if (appWindow.Presenter is OverlappedPresenter presenter)
+            InitializeComponent();
+            
+            System.Diagnostics.Debug.WriteLine("[MainWindow] InitializeComponent completed");
+
+            // Set DataContext for Binding (needed for NavigationView.MenuItems which don't support x:Bind)
+            RootGrid.DataContext = this;
+
+            ExtendsContentIntoTitleBar = true;
+            SetTitleBar(AppTitleBar);
+
+            // Set TitleBar subtitle with version
+            AppTitleBar.Subtitle = $"flow  {AppVersion}";
+
+            // Set taskbar/window icon
+            var iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "mobaflow-icon.ico");
+            if (System.IO.File.Exists(iconPath))
+            {
+                AppWindow.SetIcon(iconPath);
+            }
+
+            // Maximize window on startup and set minimum size
+            var appWindow = AppWindow;
+            if (appWindow.Presenter is OverlappedPresenter presenter)
+            {
+                presenter.PreferredMinimumWidth = 1024;
+                presenter.PreferredMinimumHeight = 768;
+                presenter.Maximize();
+            }
+
+            // Initialize IoService with WindowId (required before any file operations)
+            if (ioService is IoService winUiIoService)
+            {
+                winUiIoService.SetWindowId(AppWindow.Id, Content.XamlRoot);
+                Debug.WriteLine("[OK] IoService initialized with WindowId");
+            }
+
+            // Build navigation items from registry (replaces hardcoded XAML items)
+            BuildNavigationFromRegistry();
+            System.Diagnostics.Debug.WriteLine("[MainWindow] Navigation built");
+
+            // Initialize NavigationService with ContentFrame (async initialization)
+            _ = InitializeNavigationAsync();
+
+            // Set first nav item as selected (Overview)
+            MainNavigation.SelectedItem = MainNavigation.MenuItems.FirstOrDefault();
+
+            // Subscribe to ViewModel events
+            ViewModel.ExitApplicationRequested += OnExitApplicationRequested;
+            ViewModel.NavigationRequested += OnNavigationRequested;
+            ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+            Closed += MainWindow_Closed;
+
+            // Apply initial theme
+            ApplyTheme(ViewModel.IsDarkMode);
+
+            // Subscribe to health check events and start monitoring
+            _healthCheckService.HealthStatusChanged += OnHealthStatusChanged;
+            _healthCheckService.StartPeriodicChecks();
+
+            // Initial health status
+            ViewModel.UpdateHealthStatus(_healthCheckService.SpeechServiceStatus);
+            
+            System.Diagnostics.Debug.WriteLine("[MainWindow] Constructor COMPLETE");
+        }
+        catch (Exception ex)
         {
-            presenter.PreferredMinimumWidth = 1024;
-            presenter.PreferredMinimumHeight = 768;
-            presenter.Maximize();
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] FATAL ERROR: {ex.GetType().Name}: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] StackTrace: {ex.StackTrace}");
+            throw;
         }
-
-        // Initialize IoService with WindowId (required before any file operations)
-        if (ioService is IoService winUiIoService)
-        {
-            winUiIoService.SetWindowId(AppWindow.Id, Content.XamlRoot);
-            Debug.WriteLine("[OK] IoService initialized with WindowId");
-        }
-
-        // Build navigation items from registry (replaces hardcoded XAML items)
-        BuildNavigationFromRegistry();
-
-        // Initialize NavigationService with ContentFrame (async initialization)
-        _ = InitializeNavigationAsync();
-
-        // Set first nav item as selected (Overview)
-        MainNavigation.SelectedItem = MainNavigation.MenuItems.FirstOrDefault();
-
-        // Subscribe to ViewModel events
-        ViewModel.ExitApplicationRequested += OnExitApplicationRequested;
-        ViewModel.NavigationRequested += OnNavigationRequested;
-        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
-        Closed += MainWindow_Closed;
-
-        // Apply initial theme
-        ApplyTheme(ViewModel.IsDarkMode);
-
-        // Subscribe to health check events and start monitoring
-        _healthCheckService.HealthStatusChanged += OnHealthStatusChanged;
-        _healthCheckService.StartPeriodicChecks();
-
-        // Initial health status
-        ViewModel.UpdateHealthStatus(_healthCheckService.SpeechServiceStatus);
     }
 
     /// <summary>

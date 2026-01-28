@@ -94,21 +94,17 @@ public class CanvasRenderer
 
         var spec = template.Geometry;
 
-        // Calculate scale to fit in ~36px width (leaving ~2px margin per side)
-        double maxDimension = spec.GeometryKind switch
-        {
-            TrackGeometryKind.Straight => spec.LengthMm!.Value,
-            TrackGeometryKind.Curve => spec.RadiusMm!.Value * 1.8,
-            TrackGeometryKind.Switch => Math.Max(spec.LengthMm!.Value, spec.RadiusMm!.Value * 1.5),
-            _ => 100
-        };
+        // Use fixed scale based on longest Piko A straight track (G107 = 107mm)
+        // This ensures proportional sizing across all templates
+        const double referenceLength = 107.0;  // G107 straight track
+        const double targetWidth = 56.0;       // Target pixel width for longest track
+        double iconScale = targetWidth / referenceLength;  // ~0.52 px/mm
 
-        // Scale factor to fit in 36px viewport
-        double iconScale = 36.0 / maxDimension;
-        var centerPosition = new Point2D(20, 12);
+        // Center position in 60x40 canvas
+        var centerPosition = new Point2D(30, 20);
 
         var iconBrush = new SolidColorBrush(accentBrush.Color);
-        RenderTrackWithScale(toolboxCanvas, template, centerPosition, 0, iconBrush, iconScale, 2.0);
+        RenderTrackWithScale(toolboxCanvas, template, centerPosition, 0, iconBrush, iconScale, 2.5);
     }
 
     /// <summary>
@@ -331,58 +327,98 @@ public class CanvasRenderer
 
     /// <summary>
     /// Phase 9.3: Renders hover effects for ports (scale + glow).
+    /// ENHANCED: Dual-Port Snap Feedback - differentiates between moving and target ports.
     /// </summary>
     public void RenderPortHoverEffects(
         Canvas canvas,
         IReadOnlySet<(System.Guid TrackId, string PortId)> highlightedPorts,
         TrackPlanEditorViewModel viewModel,
-        ITrackCatalog catalog)
+        ITrackCatalog catalog,
+        SnapPreview? snapPreview = null)
     {
-        if (highlightedPorts.Count == 0)
+        if (highlightedPorts.Count == 0 && snapPreview == null)
             return;
 
         const double portRadius = 8.0;
         const double hoverScale = 1.5;  // 1.5x larger on hover
 
+        // Render snap preview ports (if active)
+        if (snapPreview != null)
+        {
+            // Target Port (on existing track) - RED/ORANGE
+            RenderSnapPort(canvas, snapPreview.TargetEdgeId, snapPreview.TargetPortId, 
+                viewModel, catalog, portRadius, hoverScale, 
+                Color.FromArgb(200, 255, 107, 107), // Light Red
+                Color.FromArgb(180, 255, 50, 50));   // Red glow
+
+            // Moving Port (on ghost track) - GREEN/TURQUOISE
+            RenderSnapPort(canvas, snapPreview.MovingEdgeId, snapPreview.MovingPortId, 
+                viewModel, catalog, portRadius, hoverScale, 
+                Color.FromArgb(200, 78, 205, 196), // Turquoise
+                Color.FromArgb(180, 50, 255, 200)); // Green glow
+        }
+
+        // Render regular hover ports (not snap-related)
         foreach (var (trackId, portId) in highlightedPorts)
         {
-            if (!viewModel.Positions.TryGetValue(trackId, out var pos))
+            // Skip if already rendered via snap preview
+            if (snapPreview != null && 
+                ((trackId == snapPreview.TargetEdgeId && portId == snapPreview.TargetPortId) ||
+                 (trackId == snapPreview.MovingEdgeId && portId == snapPreview.MovingPortId)))
                 continue;
 
-            var edge = viewModel.Graph.Edges.FirstOrDefault(e => e.Id == trackId);
-            if (edge is null)
-                continue;
-
-            var template = catalog.GetById(edge.TemplateId);
-            if (template is null)
-                continue;
-
-            // Get port offset from geometry
-            var end = template.Ends.FirstOrDefault(e => e.Id == portId);
-            if (end is null)
-                continue;
-
-            var rot = viewModel.Rotations.GetValueOrDefault(trackId, 0.0);
-            var portOffset = GetPortOffset(template, portId, rot);
-
-            var portX = (pos.X + portOffset.X) * DisplayScale;
-            var portY = (pos.Y + portOffset.Y) * DisplayScale;
-
-            // Draw hover halo (larger semi-transparent circle)
-            var halo = new Ellipse
-            {
-                Width = portRadius * 2 * hoverScale,
-                Height = portRadius * 2 * hoverScale,
-                Fill = new SolidColorBrush(Color.FromArgb(80, 100, 200, 255)),  // Subtle blue glow
-                Stroke = new SolidColorBrush(Color.FromArgb(150, 100, 150, 255)),
-                StrokeThickness = 1.0
-            };
-
-            Canvas.SetLeft(halo, portX - portRadius * hoverScale);
-            Canvas.SetTop(halo, portY - portRadius * hoverScale);
-            Canvas.SetZIndex(halo, 40);  // Below port but above tracks
-            canvas.Children.Add(halo);
+            RenderSnapPort(canvas, trackId, portId, viewModel, catalog, portRadius, hoverScale,
+                Color.FromArgb(180, 100, 200, 255), // Subtle blue
+                Color.FromArgb(150, 100, 150, 255)); // Blue glow
         }
+    }
+
+    private static void RenderSnapPort(
+        Canvas canvas,
+        Guid trackId,
+        string portId,
+        TrackPlanEditorViewModel viewModel,
+        ITrackCatalog catalog,
+        double portRadius,
+        double hoverScale,
+        Color fillColor,
+        Color strokeColor)
+    {
+        if (!viewModel.Positions.TryGetValue(trackId, out var pos))
+            return;
+
+        var edge = viewModel.Graph.Edges.FirstOrDefault(e => e.Id == trackId);
+        if (edge is null)
+            return;
+
+        var template = catalog.GetById(edge.TemplateId);
+        if (template is null)
+            return;
+
+        var end = template.Ends.FirstOrDefault(e => e.Id == portId);
+        if (end is null)
+            return;
+
+        var rot = viewModel.Rotations.GetValueOrDefault(trackId, 0.0);
+        var portOffset = GetPortOffset(template, portId, rot);
+
+        var portX = (pos.X + portOffset.X) * DisplayScale;
+        var portY = (pos.Y + portOffset.Y) * DisplayScale;
+
+        // Draw hover halo with color-coded feedback
+        var halo = new Ellipse
+        {
+            Width = portRadius * 2 * hoverScale,
+            Height = portRadius * 2 * hoverScale,
+            Fill = new SolidColorBrush(fillColor),
+            Stroke = new SolidColorBrush(strokeColor),
+            StrokeThickness = 2.0
+        };
+
+        Canvas.SetLeft(halo, portX - portRadius * hoverScale);
+        Canvas.SetTop(halo, portY - portRadius * hoverScale);
+        Canvas.SetZIndex(halo, 40);  // Below port but above tracks
+        canvas.Children.Add(halo);
     }
 
     /// <summary>

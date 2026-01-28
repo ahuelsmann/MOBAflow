@@ -45,9 +45,6 @@
         <PackageReference Include="Serilog.Extensions.Logging" />
         <PackageReference Include="Serilog.Sinks.Debug" />
         <PackageReference Include="Serilog.Sinks.File" />
-
-        <!-- Exclude MSIX BuildTools to work around missing makepri.exe issue during development -->
-        <PackageReference Include="Microsoft.Windows.SDK.BuildTools.MSIX" ExcludeAssets="all" />
     </ItemGroup>
     <!-- Project References -->
     <ItemGroup>

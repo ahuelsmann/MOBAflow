@@ -5,109 +5,63 @@ applyTo: '**'
 
 # MOBAflow TODOs
 
-> Letzte Aktualisierung: 2025-01-24 Session 9 (Phase 3 - Architecture Refactoring STARTED)
+> Letzte Aktualisierung: 2025-01-24 Session 11 (Port Hover Animation + DI Fixes)
 
 ---
 
-## 🎊 SESSION 9 SUMMARY
+## 🎊 SESSION 11 SUMMARY
 
-### **Part 1: Domain Model Refactoring (POCO Compliance)** ✅ COMPLETE
-- ✅ TopologyGraph refactored to pure POCO (removed all methods)
-- ✅ TopologyGraphService created for graph operations
-- ✅ All POCO data classes verified: TrackNode, TrackEdge, Section, Isolator, Endcap, Endpoint
-- ✅ Removed all validation constraints (DuplicateFeedbackPointNumberConstraint, GeometryConnectionConstraint)
-- ✅ ValidationService disabled (returns empty list)
+### **Port Hover Animation - Dual-Port Snap Feedback** ✅ COMPLETE
+- ✅ Enhanced `RenderPortHoverEffects` with dual-port color-coding:
+  - 🔴 Target Port (existing track): Red (#FF6B6B)
+  - 🟢 Moving Port (ghost track): Turquoise (#4ECDC4)
+  - 🔵 Hover Port (non-snap): Blue (default)
+- ✅ Helper method `RenderSnapPort` for reusable port rendering
+- ✅ Integrated `CurrentSnapPreview` into `RenderGraph` pipeline
+- **User Benefit:** Clear visual feedback when dragging tracks near snap targets
+
+### **WinUI 3 Resource Deployment Fixed** ✅ COMPLETE
+- ✅ Re-enabled `XamlControlsResources` in App.xaml (was causing crash when disabled)
+- ✅ Removed `ExcludeAssets="all"` from Microsoft.Windows.SDK.BuildTools.MSIX
+- ✅ Fixed missing `SymbolThemeFontFamily` in MainWindow TitleBar
+- **Root Cause:** WinUI 3 requires XamlControlsResources for theme resources + control styles
+- **Solution:** Keep XamlControlsResources FIRST in MergedDictionaries (Microsoft best practice)
+
+### **MainWindow Initialization Restored** ✅ COMPLETE
+- ✅ Restored `BuildNavigationFromRegistry()` call (accidentally removed by edit_file)
+- ✅ Restored event handler wiring (Navigation, HealthCheck, ViewModel events)
+- ✅ Restored window maximization and IoService initialization
+- **Root Cause:** edit_file truncated constructor due to insufficient context markers
+- **Lesson:** Always use explicit `// ...existing code...` markers for large methods
+
+### **TrackPlanEditorViewModel DI Fixed** ✅ COMPLETE
+- ✅ Removed obsolete `ITopologyConstraint[]` parameter from constructor
+- ✅ Added `ILayoutEngine` parameter (required dependency)
+- ✅ Updated `AddTrackPlanServices()` with explicit factory registration
+- **Root Cause:** Constraints deleted in Session 9 but constructor not updated
 - **Build Status:** ✅ 0 C# Errors
 
-### **Part 2: SDK Build Issues (Windows App SDK)** ⚠️ MITIGATED
-- ⚠️ Windows App SDK BuildTools package incomplete (makepri.exe missing)
-- ✅ Mitigation: Disabled MSIX packaging in Debug builds
-- ✅ Excluded Microsoft.Windows.SDK.BuildTools.MSIX from WinUI + Plugins
-- ✅ App runs locally without packaging errors
-- **Build Status:** ✅ All projects compile (SDK packaging disabled for Dev)
+---
 
-### **Part 3: Phase 3 - Business Logic Migration** ⚠️ 50% COMPLETE
-#### Architektur-Refactoring GESTARTET:
-- ✅ **Option B (Interfaces)** designed:
-  - ✅ Created ISnapToConnectService interface in Renderer
-  - ✅ Created ITopologyResolver interface in Renderer
-  - ✅ Updated ISnapPreviewProvider to use interfaces
-  - ✅ Updated TrackPlanLayoutEngine to use ITopologyResolver
-  
-- ✅ **Service Migration begonnen:**
-  - ✅ SnapToConnectService copied to Editor.Service
-  - ✅ TopologyResolver copied to Editor.Service
-  - ✅ AssignFeedbackPointToTrackUseCase copied to Editor.Service
-  - ✅ TrackConnectionService consolidated in Editor (removed from Renderer)
+## 🔴 CRITICAL FOR SESSION 12
 
-- ⚠️ **BLOCKED:** Circular Dependency Issue
-  - Problem: Services exist in both Editor AND Renderer (duplicates)
-  - DI registration shows ambiguous references
-  - Need to clean up remaining Renderer duplicates in next session
-
-#### **Aktueller Build Status:** ⚠️ BLOCKED
-```
-Error: 'SnapToConnectService' is ambiguous between:
-  - Moba.TrackPlan.Editor.Service.SnapToConnectService
-  - Moba.TrackPlan.Renderer.Service.SnapToConnectService (old copy)
-```
-
-**Root Cause:** Old services still exist in Renderer directory - need cleanup.
+**NONE** - All blocking issues resolved. Ready for V-Shaped Track Angle Bug diagnosis.
 
 ---
 
-## 🔴 CRITICAL FOR SESSION 10
+## 📋 REMAINING WORK (Session 12+)
 
-### **PHASE 3 - SERVICE CONSOLIDATION (IMMEDIATE)**
-
-**Option A (Recommended - Quick Fix):**
-1. Delete ALL service copies from Renderer:
-   - Remove: TrackPlan.Renderer\Service\SnapToConnectService.cs (if exists)
-   - Remove: TrackPlan.Renderer\Service\TopologyResolver.cs (if exists)
-   - Remove: TrackPlan.Renderer\Service\AssignFeedbackPointToTrackUseCase.cs (if exists)
-   
-2. Update DI registration to use Editor implementations:
-   ```csharp
-   // In TrackPlanServiceExtensions.cs
-   services.AddSingleton<Editor.Service.SnapToConnectService>();
-   services.AddSingleton<Editor.Service.TopologyResolver>();
-   ```
-
-3. Fix TrackPlanPageService instantiation:
-   - Change `new TrackPlanLayoutEngine(catalog)` to use DI factory
-   - Register factory in AddTrackPlanServices
-
-4. Verify build succeeds with no ambiguous references
-
-**Alternative Option B (Cleaner - More Work):**
-- Keep full interface-based architecture
-- Explicit using statements in Editor for Renderer interfaces
-- Full DI wiring with concrete implementations
-- ~400 LOC refactoring needed
-
-**Recommendation:** **Go with Option A for Session 10** - pragmatic, working solution first.
-
----
-
-## 📋 REMAINING WORK (Session 10+)
-
-### **IMMEDIATE - SESSION 10** 
-- [ ] **Complete Service Consolidation (Phase 3)**
-  - Clean up ambiguous references (duplicate services in Renderer)
-  - Fix TrackPlanPageService DI
-  - Verify build succeeds
-  - Effort: ~2 hours
-
-### **TIER 3 PART 2 - UI ENHANCEMENTS (Session 10+)**
-- [ ] **Port Hover Animation**
-  - Scale up on hover (1.0x → 1.3x)
-  - Add glow effect (ScaleTransform + shadow)
-  - Effort: 80 LOC
-
-- [ ] **V-Shaped Track Angle Issue**
-  - Tracks rotate 90° incorrectly when snapped at certain angles
-  - Investigation: Rotation calculation, Y-axis inversion
-  - Effort: TBD (diagnosis first)
+### **TIER 3 - BUG FIXES (IMMEDIATE)**
+- [ ] **V-Shaped Track Angle Issue** 🐛 (NEXT PRIORITY)
+  - **Problem:** Tracks rotate 90° incorrectly when snapped at certain angles
+  - **Approach:** Unit Tests → SVG Export → Visual Validation Loop
+  - **Test Scenarios:** 0°, 45°, 90°, 135°, 180°, -45° snap angles
+  - **Investigation Targets:**
+    - `SnapToConnectService.FindSnapCandidates()` (angle calculation)
+    - `TrackPlanEditorViewModel.DropTrack()` (rotation application)
+    - `GetPortWorldPosition()` (coordinate transformation)
+    - Y-axis inversion in Canvas vs World coordinates
+  - **Effort:** TBD (diagnosis first, then targeted fix)
 
 ### **TIER 4 (FUTURE) - BACKLOG**
 - [ ] **SkiaSharp Integration Evaluation**
@@ -133,7 +87,7 @@ Project (User-JSON)
           └── CanvasRenderer (WinUI display)
 ```
 
-### **Layer Architecture** ✅ MOSTLY COMPLETE
+### **Layer Architecture** ✅ COMPLETE
 ```
 Domain (POCO layer) ✅
   ├── TrackPlan.Domain (Graph/Topology) ✅ 
@@ -142,20 +96,21 @@ Domain (POCO layer) ✅
 Rendering/Geometry ✅
   ├── TrackPlan.Geometry (Real module) ✅
   ├── TrackPlan.Renderer (Visualization) ✅
+  │   └── TypeForwarding.cs (re-exports Geometry types) ✅
   └── GeometryCalculationEngine ✅
 
-Editor (Business Logic) ✅ IN PROGRESS
-  ├── SnapToConnectService ✅ (copied)
-  ├── TopologyResolver ✅ (copied)
-  ├── TrackConnectionService ✅ (consolidated)
-  └── DI wiring ⚠️ (blocked by duplicates)
+Editor (Business Logic) ✅ COMPLETE
+  ├── SnapToConnectService ✅
+  ├── TopologyResolver ✅
+  ├── TrackConnectionService ✅
+  └── TrackPlanEditorViewModel (DI-ready) ✅
 ```
 
 ---
 
 ## 📚 CODE QUALITY IMPROVEMENTS PENDING
 
-### **High Priority (Session 11+):**
+### **High Priority (Session 12+):**
 - [ ] **Theme Resources in XAML**
   - Move hardcoded colors to `{ThemeResource}`
   - Effort: 40 LOC
@@ -165,43 +120,58 @@ Editor (Business Logic) ✅ IN PROGRESS
   - Add IDisposable where needed
   - Effort: 20 LOC
 
-### **Medium Priority (Session 12+):**
+### **Medium Priority (Session 13+):**
 - [ ] **Performance Monitoring**
   - Add WPR/WPA support if needed
   - Document baselines
 
 ---
 
-## 🗂️ SESSION 9 FILES MODIFIED
+## 🗂️ SESSION 11 FILES MODIFIED
 
 | Category | Files | Status |
 |----------|-------|--------|
-| **Domain Refactoring** | TopologyGraph.cs, ValidationService.cs | ✅ Complete |
-| **Services Created** | TopologyGraphService.cs, TopologyValidator.cs | ✅ Complete |
-| **Constraints Removed** | 3 constraint files deleted | ✅ Complete |
-| **SDK Packaging** | WinUI.csproj, Plugin .csproj files | ✅ Mitigated |
-| **Phase 3 Services** | 4 files copied to Editor | ✅ Partial |
-| **Interfaces** | ISnapToConnectService.cs, ITopologyResolver.cs | ✅ Created |
-| **DI Registration** | TrackPlanServiceExtensions.cs | ⚠️ Blocked |
+| **Port Hover** | WinUI/Rendering/CanvasRenderer.cs | ✅ Enhanced with dual-port colors |
+| **Port Hover** | WinUI/View/TrackPlanPage.xaml.cs | ✅ Pass SnapPreview to renderer |
+| **WinUI Resources** | WinUI/App.xaml | ✅ XamlControlsResources re-enabled |
+| **WinUI Resources** | WinUI/WinUI.csproj | ✅ BuildTools.MSIX re-enabled |
+| **WinUI Resources** | WinUI/View/MainWindow.xaml | ✅ SymbolThemeFontFamily restored |
+| **Navigation** | WinUI/View/MainWindow.xaml.cs | ✅ Constructor fully restored |
+| **DI Registration** | TrackPlan.Editor/TrackPlanServiceExtensions.cs | ✅ Factory registration |
+| **ViewModel** | TrackPlan.Editor/ViewModel/TrackPlanEditorViewModel.cs | ⚠️ Needs manual fix |
 
 ---
 
-## ⚠️ KNOWN ISSUES FOR SESSION 10
+## ⚠️ MANUAL FIX REQUIRED
 
-1. **Ambiguous References** - Services exist in both Editor + Renderer
-2. **TrackPlanPageService Instantiation** - Needs DI refactoring
-3. **Windows SDK BuildTools** - Disabled for Dev (not production issue)
-4. **ISnapPreviewProvider** - Uses interfaces but old concrete class still referenced
+**File:** `TrackPlan.Editor\ViewModel\TrackPlanEditorViewModel.cs`
+
+**Zeile 133** ändern:
+```csharp
+// VORHER:
+public TrackPlanEditorViewModel(ITrackCatalog catalog, params ITopologyConstraint[] constraints)
+
+// NACHHER:
+public TrackPlanEditorViewModel(ITrackCatalog catalog, ILayoutEngine layoutEngine)
+```
+
+**Zeile 135** NACH `_catalog = catalog;` EINFÜGEN:
+```csharp
+_layoutEngine = layoutEngine;
+```
+
+**Zeilen 140-141** (Constraint-Kommentare) LÖSCHEN
 
 ---
 
 ## 🗂️ RULES FOR CONTINUITY
 
-1. ✅ Phase-Struktur: Phase 1 ✅, Phase 2 ✅, Phase 3 (Session 10)
+1. ✅ Phase-Struktur: Session 10 ✅, Session 11 ✅
 2. ✅ Architektur dokumentiert (Topology-First, Layer-Based)
-3. ✅ TODOs für nächste Session klar
-4. ✅ Build-Status transparent (0 C# errors, SDK disabled)
-5. ✅ Empfehlung für nächste Aktion: Option A (Quick Fix)
+3. ✅ TODOs für nächste Session klar (V-Shaped Bug via Unit Tests)
+4. ✅ Build-Status transparent (0 C# errors nach manuellem Fix)
+5. ✅ Port Hover Animation implementiert (Dual-Port Feedback)
+6. ✅ Empfehlung für Session 12: V-Shaped Track Angle Bug (Unit Tests + SVG Validation)
 
 
 

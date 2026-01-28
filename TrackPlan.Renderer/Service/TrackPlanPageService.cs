@@ -27,9 +27,9 @@ public sealed class TrackPlanPageService
     private TrackPlanLayout? _currentLayout;
     private TopologyGraph? _currentTopology;
 
-    public TrackPlanPageService(ITrackCatalog catalog)
+    public TrackPlanPageService(TrackPlanLayoutEngine layoutEngine)
     {
-        _layoutEngine = new TrackPlanLayoutEngine(catalog ?? throw new ArgumentNullException(nameof(catalog)));
+        _layoutEngine = layoutEngine ?? throw new ArgumentNullException(nameof(layoutEngine));
     }
 
     /// <summary>
@@ -195,9 +195,9 @@ public sealed class R9OvalTrackPlanExample
 {
     private readonly TrackPlanPageService _service;
 
-    public R9OvalTrackPlanExample(ITrackCatalog catalog)
+    public R9OvalTrackPlanExample(TrackPlanLayoutEngine layoutEngine)
     {
-        _service = new TrackPlanPageService(catalog);
+        _service = new TrackPlanPageService(layoutEngine);
     }
 
     public void Create()

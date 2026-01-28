@@ -2,7 +2,6 @@
 
 global using Moba.TrackLibrary.Base.TrackSystem;
 global using Moba.TrackPlan.Constraint;
-global using Moba.TrackPlan.Geometry;
 global using Moba.TrackPlan.Graph;
 global using Moba.TrackPlan.Renderer.Rendering;
 

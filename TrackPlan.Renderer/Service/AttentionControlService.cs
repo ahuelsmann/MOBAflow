@@ -154,9 +154,7 @@ public sealed class DefaultAttentionControlService : IAttentionControlService
     {
         lock (_opacityLock)
         {
-            return _trackOpacities.TryGetValue(trackId, out var opacity)
-                ? opacity
-                : 1.0f;  // Default: fully visible
+            return _trackOpacities.GetValueOrDefault(trackId, 1.0f);  // Default: fully visible
         }
     }
 

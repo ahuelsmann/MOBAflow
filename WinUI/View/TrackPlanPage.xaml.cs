@@ -34,6 +34,10 @@ public sealed partial class TrackPlanPage : Page
     private const double PortRadius = 8.0;
     private const double SingleRotationHandleLength = 80.0;
 
+    // Drag threshold: Distance (in pixels) mouse must move before drag starts
+    // Based on Microsoft AutomaticDragHelper: SM_CXDRAG * 2.0 = 4 * 2 = 8 pixels
+    private const double DragThreshold = 8.0;
+
     private readonly TrackPlanEditorViewModel _viewModel;
     private readonly ITrackCatalog _catalog = new PikoATrackCatalog();
     private readonly CanvasRenderer _renderer = new();
@@ -58,6 +62,10 @@ public sealed partial class TrackPlanPage : Page
     private Dictionary<Guid, double> _rotationStartRotations = new();
     private Dictionary<Guid, Point2D> _rotationStartPositions = new();
     private Point2D _dragStartWorldPos;
+
+    // Track potential drag state (before threshold is crossed)
+    private bool _isWaitingForDragThreshold;
+    private Point _dragThresholdStartPos;
 
     private Point _movableRulerDragStart;
 
@@ -697,16 +705,13 @@ public sealed partial class TrackPlanPage : Page
 
             _viewModel.PointerDown(world, true, isCtrlPressed);
 
+            // Don't start drag immediately - wait for PointerMoved to cross threshold
+            // This follows Microsoft's AutomaticDragHelper pattern (WinUI source code)
             if (_viewModel.SelectedTrackIds.Count > 0 && _viewModel.GhostPlacement is null)
             {
+                _isWaitingForDragThreshold = true;
+                _dragThresholdStartPos = pos;
                 _dragStartWorldPos = world;
-                _viewModel.BeginMultiGhostPlacement(_viewModel.SelectedTrackIds.ToList());
-
-                ProtectedCursor = null;
-
-                _ = _attentionControl.DimIrrelevantTracksAsync(
-                    _viewModel.SelectedTrackIds.ToList(),
-                    dimOpacity: 0.3f);
             }
 
             GraphCanvas.CapturePointer(e.Pointer);
@@ -986,6 +991,13 @@ public sealed partial class TrackPlanPage : Page
             UpdateStatistics();
             UpdatePropertiesPanel();
             return;
+        }
+
+        // Handle GhostPlacement (new track from toolbox) - ViewModel.PointerUp now handles this
+        // But we need to clear cursor state here in UI layer
+        if (_viewModel.GhostPlacement is not null)
+        {
+            ProtectedCursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.Arrow);
         }
 
         var status = _viewModel.PointerUp(
@@ -1335,8 +1347,17 @@ public sealed partial class TrackPlanPage : Page
             bool isDarkTheme = ActualTheme == Microsoft.UI.Xaml.ElementTheme.Dark;
             _renderer.RenderTypeIndicators(GraphCanvas, _viewModel, _catalog, isDarkTheme);
 
-            _renderer.RenderPortHoverEffects(GraphCanvas, _portHoverAffordance.HighlightedPorts, _viewModel, _catalog);
-            _renderer.RenderTrackHoverEffects(GraphCanvas, _portHoverAffordance.HoveredTracks, _viewModel);
+            // Pass CurrentSnapPreview for dual-port highlighting
+            _renderer.RenderPortHoverEffects(
+                GraphCanvas, 
+                _portHoverAffordance.HighlightedPorts, 
+                _viewModel, 
+                _catalog,
+                _viewModel.CurrentSnapPreview);
+            
+            // Track hover effects removed - not implemented (no PointerEntered/Exited wiring)
+            // Only port hover is active via FindHoveredPorts()
+            // _renderer.RenderTrackHoverEffects(GraphCanvas, _portHoverAffordance.HoveredTracks, _viewModel);
         }
         catch (Exception ex)
         {
@@ -1489,6 +1510,7 @@ public sealed partial class TrackPlanPage : Page
                     ellipse.Tag = (edge.Id, end.Id);
                     ellipse.PointerEntered += Port_PointerEntered;
                     ellipse.PointerExited += Port_PointerExited;
+                    ellipse.PointerPressed += Port_PointerPressed;  // Prevent track drag when clicking port
                 }
 
                 GraphCanvas.Children.Add(ellipse);
@@ -1605,6 +1627,21 @@ public sealed partial class TrackPlanPage : Page
         }
 
         e.Handled = true;
+    }
+
+    private void Port_PointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        // Prevent event bubbling to GraphCanvas - clicking on port should NOT start track drag
+        // User can still drag the track by clicking on the track body itself
+        e.Handled = true;
+        
+        // Optional: Show port info in status bar
+        if (sender is Ellipse { Tag: (Guid trackId, string portId) })
+        {
+            var edge = _viewModel.Graph.Edges.FirstOrDefault(ed => ed.Id == trackId);
+            var isConnected = _viewModel.ConnectionService.IsConnected(trackId, portId);
+            StatusText.Text = $"Port {portId} of {edge?.TemplateId} ({(isConnected ? "connected" : "open")})";
+        }
     }
 
     private void RenderFeedback()
@@ -2262,7 +2299,7 @@ public sealed partial class TrackPlanPage : Page
         var point = e.GetCurrentPoint(GraphCanvas);
         var pos = point.Position;
 
-        var (rulerX, rulerY) = _viewModel.ViewState.MovableRulerPosition.Value;
+        var (rulerX, rulerY) = _viewModel.ViewState.MovableRulerPosition;
         var rulerDisplayX = rulerX * DisplayScale;
         var rulerDisplayY = rulerY * DisplayScale;
 
@@ -2288,7 +2325,7 @@ public sealed partial class TrackPlanPage : Page
         var deltaX = (pos.X - _movableRulerDragStart.X) / DisplayScale;
         var deltaY = (pos.Y - _movableRulerDragStart.Y) / DisplayScale;
 
-        var (currentX, currentY) = _viewModel.ViewState.MovableRulerPosition.Value;
+        var (currentX, currentY) = _viewModel.ViewState.MovableRulerPosition ?? (0, 0);
         _viewModel.ViewState.MovableRulerPosition = (currentX + deltaX, currentY + deltaY);
 
         _movableRulerDragStart = new Point(pos.X, pos.Y);

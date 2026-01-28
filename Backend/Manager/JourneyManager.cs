@@ -1,11 +1,14 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Backend.Manager;
 
 using Domain;
 using Domain.Enum;
+
 using Interface;
+
 using Microsoft.Extensions.Logging;
+
 using Service;
 
 /// <summary>
@@ -274,7 +277,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
     /// <returns>The journey session state, or null if not found</returns>
     public JourneySessionState? GetState(Guid journeyId)
     {
-        return _states.TryGetValue(journeyId, out var state) ? state : null;
+        return _states.GetValueOrDefault(journeyId);
     }
 
     public override void ResetAll()

@@ -41,9 +41,8 @@ public static class TrackPlanServiceExtensions
         services.AddSingleton<TopologyResolver>();
         services.AddSingleton<TrackConnectionService>();
 
-        // Register Editor implementations as interfaces for Renderer to use
-        services.AddSingleton<ISnapToConnectService>(sp => sp.GetRequiredService<SnapToConnectService>());
-        services.AddSingleton<ITopologyResolver>(sp => sp.GetRequiredService<TopologyResolver>());
+        // NOTE: Interface registrations removed - Editor services are standalone
+        // Renderer doesn't depend on Editor, so no need to expose via interfaces
 
         // Renderer services
         services.AddSingleton<SkiaSharpCanvasRenderer>();
@@ -58,7 +57,10 @@ public static class TrackPlanServiceExtensions
         services.AddSingleton<SerializationService>();
 
         // ViewModel (transient - one per editor instance)
-        services.AddTransient<TrackPlanEditorViewModel>();
+        services.AddTransient<TrackPlanEditorViewModel>(sp =>
+            new TrackPlanEditorViewModel(
+                sp.GetRequiredService<ITrackCatalog>(),
+                sp.GetRequiredService<ILayoutEngine>()));
 
         return services;
     }

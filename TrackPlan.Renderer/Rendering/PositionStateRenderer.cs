@@ -3,6 +3,7 @@
 namespace Moba.TrackPlan.Renderer.Rendering;
 
 using Moba.TrackLibrary.Base.TrackSystem;
+using Moba.TrackPlan.Geometry;
 
 using System;
 using System.Collections.Generic;

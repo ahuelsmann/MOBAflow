@@ -2,6 +2,8 @@
 
 namespace Moba.TrackPlan.Renderer.Layout;
 
+using Moba.TrackPlan.Geometry;
+
 /// <summary>
 /// Layout engine that positions track edges based on their geometric connections.
 /// Uses BFS traversal from a starting edge and calculates positions based on track geometry.

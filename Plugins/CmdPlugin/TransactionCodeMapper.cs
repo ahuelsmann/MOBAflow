@@ -56,7 +56,7 @@ public static class TransactionCodeMapper
             ? command[2..]
             : command;
 
-        return TransactionMappings.TryGetValue(cleanCommand, out var tag) ? tag : null;
+        return TransactionMappings.GetValueOrDefault(cleanCommand);
     }
 
     /// <summary>

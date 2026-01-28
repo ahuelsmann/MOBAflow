@@ -153,19 +153,19 @@
                                             DragStarting="Element_DragStarting">
                                             <Grid ColumnSpacing="8">
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="40" />
+                                                    <ColumnDefinition Width="60" />
                                                     <ColumnDefinition Width="*" />
                                                 </Grid.ColumnDefinitions>
                                                 <Border
                                                     Grid.Column="0"
-                                                    Width="40"
-                                                    Height="24"
+                                                    Width="60"
+                                                    Height="40"
                                                     Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
                                                     CornerRadius="4">
                                                     <Canvas
                                                         x:Name="StraightIconCanvas"
-                                                        Width="40"
-                                                        Height="24"
+                                                        Width="60"
+                                                        Height="40"
                                                         Loaded="StraightIconCanvas_Loaded"
                                                         Tag="{Binding}" />
                                                 </Border>
@@ -197,19 +197,19 @@
                                             DragStarting="Element_DragStarting">
                                             <Grid ColumnSpacing="8">
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="40" />
+                                                    <ColumnDefinition Width="60" />
                                                     <ColumnDefinition Width="*" />
                                                 </Grid.ColumnDefinitions>
                                                 <Border
                                                     Grid.Column="0"
-                                                    Width="40"
-                                                    Height="24"
+                                                    Width="60"
+                                                    Height="40"
                                                     Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
                                                     CornerRadius="4">
                                                     <Canvas
                                                         x:Name="CurveIconCanvas"
-                                                        Width="40"
-                                                        Height="24"
+                                                        Width="60"
+                                                        Height="40"
                                                         Loaded="CurveIconCanvas_Loaded"
                                                         Tag="{Binding}" />
                                                 </Border>
@@ -241,19 +241,19 @@
                                             DragStarting="Element_DragStarting">
                                             <Grid ColumnSpacing="8">
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="40" />
+                                                    <ColumnDefinition Width="60" />
                                                     <ColumnDefinition Width="*" />
                                                 </Grid.ColumnDefinitions>
                                                 <Border
                                                     Grid.Column="0"
-                                                    Width="40"
-                                                    Height="24"
+                                                    Width="60"
+                                                    Height="40"
                                                     Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
                                                     CornerRadius="4">
                                                     <Canvas
                                                         x:Name="SwitchIconCanvas"
-                                                        Width="40"
-                                                        Height="24"
+                                                        Width="60"
+                                                        Height="40"
                                                         Loaded="SwitchIconCanvas_Loaded"
                                                         Tag="{Binding}" />
                                                 </Border>
