@@ -2,9 +2,9 @@
 
 namespace Moba.TrackPlan.Editor.Service;
 
+using Moba.TrackLibrary.Base.TrackSystem;
 using Moba.TrackPlan.Constraint;
 using Moba.TrackPlan.Graph;
-using Moba.TrackPlan.TrackSystem;
 
 public sealed class ValidationService
 {

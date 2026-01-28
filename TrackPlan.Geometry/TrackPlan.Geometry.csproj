@@ -6,8 +6,11 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
-  <!-- TrackPlan.Geometry is a facade that re-exports geometry types from TrackPlan.Renderer -->
   <ItemGroup>
-    <ProjectReference Include="..\TrackPlan.Renderer\TrackPlan.Renderer.csproj" />
+    <PackageReference Include="MathNet.Numerics" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TrackLibrary.Base\TrackLibrary.Base.csproj" />
+    <ProjectReference Include="..\TrackPlan.Domain\TrackPlan.Domain.csproj" />
   </ItemGroup>
 </Project>

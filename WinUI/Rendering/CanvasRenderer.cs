@@ -6,10 +6,10 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 
+using Moba.TrackLibrary.Base.TrackSystem;
 using Moba.TrackPlan.Editor.ViewModel;
 using Moba.TrackPlan.Geometry;
 using Moba.TrackPlan.Renderer.Rendering;
-using Moba.TrackPlan.TrackSystem;
 
 using Windows.UI;
 

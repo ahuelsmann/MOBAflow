@@ -22,6 +22,8 @@ using Microsoft.UI.Xaml;
 
 using Moba.SharedUI.Service;
 using Moba.SharedUI.Shell;
+using Moba.TrackLibrary.Base.TrackSystem;
+using Moba.TrackLibrary.PikoA.Catalog;
 using Moba.TrackPlan.Editor;
 
 using Serilog;
@@ -267,6 +269,11 @@ public partial class App
 
         // TrackPlan.Editor Services (new TopologyGraph-based architecture)
         // Replaces old TrackPlan.Domain/Service/Renderer architecture
+
+        // IMPORTANT: Register ITrackCatalog BEFORE calling AddTrackPlanServices()
+        // This allows supporting different track systems (PikoA, Märklin, Fleischmann, etc.)
+        services.AddSingleton<ITrackCatalog, PikoATrackCatalog>();
+
         services.AddTrackPlanServices();
 
         // WinUI Rendering Bridge (UI layer - after TrackPlan services are registered)

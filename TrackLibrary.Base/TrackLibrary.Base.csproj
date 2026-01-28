@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <RootNamespace>Moba.TrackLibrary.PikoA</RootNamespace>
+        <RootNamespace>Moba.TrackLibrary.Base</RootNamespace>
         <TargetFramework>net9.0</TargetFramework>
         <OutputType>Library</OutputType>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <Description>Piko A-Gleis H0 track system library for MOBAflow</Description>
+        <Description>Base track system library providing reusable track model classes for all track systems</Description>
     </PropertyGroup>
     <ItemGroup>
-        <ProjectReference Include="..\TrackLibrary.Base\TrackLibrary.Base.csproj" />
+        <PackageReference Include="MathNet.Numerics" />
     </ItemGroup>
 </Project>

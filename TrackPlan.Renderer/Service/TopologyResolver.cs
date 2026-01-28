@@ -2,8 +2,8 @@
 
 namespace Moba.TrackPlan.Renderer.Service;
 
+using Moba.TrackLibrary.Base.TrackSystem;
 using Moba.TrackPlan.Graph;
-using Moba.TrackPlan.TrackSystem;
 
 /// <summary>
 /// Resolves topology information from a TopologyGraph.

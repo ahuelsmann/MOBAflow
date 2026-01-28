@@ -1,9 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.TrackPlan.TrackSystem;
+namespace Moba.TrackLibrary.Base.TrackSystem;
 
 /// <summary>
 /// Geometry specification for a track piece.
+/// Defines the geometric properties that determine how a track piece is rendered and connected.
 /// </summary>
 /// <param name="GeometryKind">Type of geometry (Straight, Curve, Switch)</param>
 /// <param name="LengthMm">Length in mm (for straight tracks)</param>

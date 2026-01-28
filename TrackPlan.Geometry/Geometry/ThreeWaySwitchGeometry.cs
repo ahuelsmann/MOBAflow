@@ -2,24 +2,28 @@
 
 namespace Moba.TrackPlan.Geometry;
 
-using Moba.TrackPlan.TrackSystem;
+using Moba.TrackLibrary.Base.TrackSystem;
 
 /// <summary>
-/// Renders a three-way switch (Dreiwegweiche / W3).
+/// Renders a three-way switch (Dreiwegweiche / W3) geometry.
 /// 
 /// Structure:
-/// - Port A: Entry point
-/// - Port B: Straight through
-/// - Port C: Left diverging (+angle)
-/// - Port D: Right diverging (-angle)
+/// - Port A: Entry point (Input)
+/// - Port B: Straight through (Straight output)
+/// - Port C: Left diverging (+angle deviation)
+/// - Port D: Right diverging (-angle deviation)
 /// 
 /// Renders 3 primitives:
-/// [0] Line: Straight through (A → B)
-/// [1] Arc: Left diverging (A → C, positive sweep)
-/// [2] Arc: Right diverging (A → D, negative sweep)
+/// [0] LinePrimitive: Straight through (A → B)
+/// [1] ArcPrimitive: Left diverging (A → C, positive sweep)
+/// [2] ArcPrimitive: Right diverging (A → D, negative sweep)
 /// </summary>
 public static class ThreeWaySwitchGeometry
 {
+    /// <summary>
+    /// Renders a three-way switch to geometry primitives.
+    /// Produces one straight line and two diverging arcs.
+    /// </summary>
     public static IEnumerable<IGeometryPrimitive> Render(
         Point2D start,
         double startAngleDeg,

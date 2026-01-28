@@ -1,9 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.TrackPlan.TrackSystem;
+namespace Moba.TrackLibrary.Base.TrackSystem;
 
 /// <summary>
 /// Kinds of track geometry: straight segments, curves, switches, crossings, and special pieces.
+/// This enum is used across all track systems to categorize track piece types.
 /// </summary>
 public enum TrackGeometryKind
 {

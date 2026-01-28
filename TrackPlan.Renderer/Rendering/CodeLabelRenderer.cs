@@ -2,8 +2,8 @@
 
 namespace Moba.TrackPlan.Renderer.Rendering;
 
-using Moba.TrackPlan.TrackSystem;
-using Moba.TrackPlan.Renderer.World;
+using Moba.TrackLibrary.Base.TrackSystem;
+using Moba.TrackPlan.Geometry;
 
 /// <summary>
 /// Renders track code labels (e.g., "G231", "R9", "BWL") centered on track pieces.

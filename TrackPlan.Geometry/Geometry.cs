@@ -3,14 +3,18 @@
 namespace Moba.TrackPlan.Geometry;
 
 /// <summary>
-/// TrackPlan.Geometry contains geometry primitives for rendering track elements.
-/// Re-exports types from TrackPlan.Renderer in the Moba.TrackPlan.Geometry namespace.
+/// TrackPlan.Geometry contains geometry primitives and calculators for rendering track elements.
 /// 
 /// Core types:
-/// - Point2D: 2D coordinate point
-/// - IGeometryPrimitive: Base interface for all primitive shapes
-/// - ArcPrimitive: Circular arc (for curves and switches)
-/// - LinePrimitive: Line segment (for straight tracks)
-/// - StraightGeometry, CurveGeometry, SwitchGeometry: Static geometry calculators
+/// - World/Point2D: 2D coordinate point with vector operations
+/// - World/WorldTransform: Viewport transformation (scale + offset)
+/// - Geometry/IGeometryPrimitive: Base interface for all primitive shapes
+/// - Geometry/LinePrimitive: Line segment (for straight tracks)
+/// - Geometry/ArcPrimitive: Circular arc (for curves and switches)
+/// - Geometry/StraightGeometry: Static calculator for straight track rendering
+/// - Geometry/CurveGeometry: Static calculator for curved track rendering
+/// - Geometry/SwitchGeometry: Static calculator for switch track rendering
+/// - Geometry/ThreeWaySwitchGeometry: Static calculator for three-way switch rendering
+/// - Geometry/GeometryCalculationEngine: Orchestrates geometry calculations
 /// </summary>
 internal static class GeometryMarker { }

@@ -7,7 +7,9 @@ namespace Moba.TrackPlan.Domain;
 /// 
 /// Namespaces:
 /// - Moba.TrackPlan.Graph: Topology graph structures (TopologyGraph, TrackNode, TrackEdge)
-/// - Moba.TrackPlan.TrackSystem: Track templates and catalog interfaces (TrackTemplate, TrackPort, ITrackCatalog)
 /// - Moba.TrackPlan.Constraint: Layout constraints
+/// 
+/// Note: Track templates and catalog interfaces have been moved to TrackLibrary.Base
+/// for reusability across different features and track systems.
 /// </summary>
 internal static class DomainMarker { }

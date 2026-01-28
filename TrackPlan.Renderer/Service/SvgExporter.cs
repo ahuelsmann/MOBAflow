@@ -2,22 +2,20 @@
 
 namespace Moba.TrackPlan.Renderer.Service;
 
+using Moba.TrackLibrary.Base.TrackSystem;
+using Moba.TrackPlan.Geometry;
+using Moba.TrackPlan.Graph;
+
+using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 
 /// <summary>
-/// Exports geometry primitives to SVG format for visual debugging.
-/// Useful for verifying geometry calculations without rendering in WinUI.
-/// 
-/// CONVENTION: Rails on top, sleepers (ties) on bottom.
-/// This defines track orientation - sleepers indicate the "underside" of the track.
-/// 
-/// Usage:
-///   var primitives = CurveGeometry.Render(start, angle, spec);
-///   var svg = SvgExporter.Export(primitives, width: 800, height: 600);
-///   File.WriteAllText("debug.svg", svg);
+/// Exports track plan to SVG format for visualization and documentation.
 /// </summary>
-public static class SvgExporter
+public sealed class SvgExporter
 {
     /// <summary>
     /// Track segment information for rendering with sleepers and ports.

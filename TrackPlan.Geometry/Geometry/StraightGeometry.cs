@@ -2,14 +2,17 @@
 
 namespace Moba.TrackPlan.Geometry;
 
-using Moba.TrackPlan.TrackSystem;
+using Moba.TrackLibrary.Base.TrackSystem;
 
+/// <summary>
+/// Calculates and renders straight track geometry.
+/// Works with any track library (Piko A, Trix C, etc.) as long as the template provides LengthMm.
+/// </summary>
 public static class StraightGeometry
 {
     /// <summary>
     /// Renders a straight track template to line primitives.
-    /// Works with any track library (Piko, Roco, Peco, etc.) as long as 
-    /// the template provides valid LengthMm in its geometry spec.
+    /// Converts the track's length into a line from start point to end point.
     /// </summary>
     public static IEnumerable<IGeometryPrimitive> Render(
         TrackTemplate template,

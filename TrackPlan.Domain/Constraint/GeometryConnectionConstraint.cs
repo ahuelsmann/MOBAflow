@@ -2,8 +2,8 @@
 
 namespace Moba.TrackPlan.Constraint;
 
+using Moba.TrackLibrary.Base.TrackSystem;
 using Moba.TrackPlan.Graph;
-using Moba.TrackPlan.TrackSystem;
 
 /// <summary>
 /// Validates that connected track ends have geometrically compatible angles,

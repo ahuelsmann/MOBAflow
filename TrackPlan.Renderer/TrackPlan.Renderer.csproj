@@ -11,9 +11,13 @@
       <PackageReference Include="SkiaSharp" />
     </ItemGroup>
     <ItemGroup>
+      <ProjectReference Include="..\TrackLibrary.Base\TrackLibrary.Base.csproj" />
       <ProjectReference Include="..\TrackPlan.Domain\TrackPlan.Domain.csproj" />
+      <ProjectReference Include="..\TrackPlan.Geometry\TrackPlan.Geometry.csproj" />
     </ItemGroup>
     <ItemGroup>
       <Folder Include="Effects\" />
+      <Folder Include="Geometry\" />
+      <Folder Include="World\" />
     </ItemGroup>
 </Project>

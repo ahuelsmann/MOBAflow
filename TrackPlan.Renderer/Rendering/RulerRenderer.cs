@@ -2,11 +2,13 @@
 
 namespace Moba.TrackPlan.Renderer.Rendering;
 
+using Moba.TrackPlan.Geometry;
+
 using SkiaSharp;
+
 using System;
 using System.Collections.Generic;
-using Moba.TrackPlan.Renderer.Service;
-using Moba.TrackPlan.Renderer.World;
+using System.Linq;
 
 /// <summary>
 /// Renders horizontal and vertical rulers (measures) for the track plan.
@@ -238,3 +240,17 @@ public sealed class RulerRenderer
         canvas.Restore();
     }
 }
+
+/// <summary>
+/// Represents the geometric data for a ruler, including tick positions and heights.
+/// </summary>
+public sealed record RulerGeometry(
+    IReadOnlyList<RulerTick> Ticks);
+
+/// <summary>
+/// Represents a single tick mark on a ruler.
+/// </summary>
+public sealed record RulerTick(
+    double Position,   // Position in pixels
+    double Height,     // Tick height in pixels
+    string? Label = null);  // Optional label for major ticks

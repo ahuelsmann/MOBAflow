@@ -2,14 +2,17 @@
 
 namespace Moba.TrackPlan.Geometry;
 
-using Moba.TrackPlan.TrackSystem;
+using Moba.TrackLibrary.Base.TrackSystem;
 
+/// <summary>
+/// Calculates and renders curved track geometry.
+/// Works with any track library (Piko R1-R9, Trix curves, etc.) as long as RadiusMm and AngleDeg are provided.
+/// </summary>
 public static class CurveGeometry
 {
     /// <summary>
     /// Renders a curve track template to arc primitives.
-    /// Works with any track library (Piko R1-R9, Roco curves, Peco curves, etc.)
-    /// as long as the template provides RadiusMm and AngleDeg in its geometry spec.
+    /// Calculates the arc center based on the track's radius and sweep angle.
     /// </summary>
     public static IEnumerable<IGeometryPrimitive> Render(
         TrackTemplate template,
@@ -35,10 +38,10 @@ public static class CurveGeometry
             normalDir * Math.Cos(tangentRad)
         );
 
-        // Mittelpunkt liegt auf dem Normalenvektor
+        // Arc center lies on the normal vector at distance radius
         var center = start + normal * radius;
 
-        // StartAngle des Bogens (vom Zentrum zum Startpunkt)
+        // Arc start angle (measured from center to start point)
         // For positive sweep: tangentRad - π/2
         // For negative sweep: tangentRad + π/2  
         double arcStartRad = tangentRad - normalDir * Math.PI / 2.0;

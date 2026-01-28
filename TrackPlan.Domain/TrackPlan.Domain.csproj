@@ -10,4 +10,10 @@
     <PackageReference Include="MathNet.Numerics" />
     <PackageReference Include="QuikGraph" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TrackLibrary.Base\TrackLibrary.Base.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="TrackSystem\" />
+  </ItemGroup>
 </Project>

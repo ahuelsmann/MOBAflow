@@ -2,8 +2,9 @@
 
 namespace Moba.TrackPlan.Renderer.Service;
 
+using Moba.TrackLibrary.Base.TrackSystem;
+using Moba.TrackPlan.Geometry;
 using Moba.TrackPlan.Graph;
-using Moba.TrackPlan.TrackSystem;
 
 using System;
 using System.Collections.Generic;

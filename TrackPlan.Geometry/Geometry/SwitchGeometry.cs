@@ -2,15 +2,18 @@
 
 namespace Moba.TrackPlan.Geometry;
 
-using Moba.TrackPlan.TrackSystem;
+using Moba.TrackLibrary.Base.TrackSystem;
 
+/// <summary>
+/// Calculates and renders switch (turnout) track geometry.
+/// Supports left and right variants (WL/WR, BWL/BWR, etc.) across all track libraries.
+/// </summary>
 public static class SwitchGeometry
 {
     /// <summary>
-    /// Renders a switch track template (WL, WR, BWL, BWR, etc.) to primitives.
+    /// Renders a switch track template to primitives (straight and diverging paths).
     /// Automatically detects left (WL, BWL) vs right (WR, BWR) from template ID.
     /// Uses SwitchRoutingModel to determine port configuration.
-    /// Works with any track library that provides proper template metadata.
     /// </summary>
     public static IEnumerable<IGeometryPrimitive> Render(
         TrackTemplate template,

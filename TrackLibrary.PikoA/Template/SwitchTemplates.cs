@@ -1,7 +1,7 @@
 namespace Moba.TrackLibrary.PikoA.Template;
 
+using Moba.TrackLibrary.Base.TrackSystem;
 using Moba.TrackLibrary.PikoA.Metadata;
-using Moba.TrackPlan.TrackSystem;
 
 public static class SwitchTemplates
 {

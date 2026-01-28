@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.TrackPlan.TrackSystem;
+namespace Moba.TrackLibrary.Base.TrackSystem;
 
 /// <summary>
 /// Describes the routing behavior of a switch/turnout.

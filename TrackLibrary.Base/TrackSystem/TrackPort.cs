@@ -1,9 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.TrackPlan.TrackSystem;
+namespace Moba.TrackLibrary.Base.TrackSystem;
 
 /// <summary>
 /// Represents a single connection port on a track segment.
+/// Ports define where tracks can connect to each other.
 /// </summary>
 public sealed record TrackPort(
     string Id,

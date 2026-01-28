@@ -27,9 +27,11 @@
   <Project Path="TrackPlan.Domain/TrackPlan.Domain.csproj" />
   <Project Path="TrackPlan.Renderer/TrackPlan.Renderer.csproj" Id="8dafe6f3-0aa2-4cb9-bd6f-35282159ba7e" />
   <Project Path="TrackPlan.Geometry/TrackPlan.Geometry.csproj" />
+  <Project Path="TrackLibrary.Base/TrackLibrary.Base.csproj" />
   <!-- Libraries using Foundation -->
   <Project Path="TrackLibrary.PikoA/TrackLibrary.PikoA.csproj" />
   <Project Path="TrackPlan.Editor/TrackPlan.Editor.csproj" Id="9d710101-e897-4d8d-b2cb-65b001fa8064" />
+  <Folder Name="/TrackPlan/" />
   <!-- Core Services -->
   <Project Path="Backend/Backend.csproj">
     <Deploy />

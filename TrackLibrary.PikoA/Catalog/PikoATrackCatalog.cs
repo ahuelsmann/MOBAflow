@@ -3,7 +3,7 @@
 namespace Moba.TrackLibrary.PikoA.Catalog;
 
 using Moba.TrackLibrary.PikoA.Template;
-using Moba.TrackPlan.TrackSystem;
+using Moba.TrackLibrary.Base.TrackSystem;
 
 /// <summary>
 /// Complete catalog of Piko A-Gleis track pieces.

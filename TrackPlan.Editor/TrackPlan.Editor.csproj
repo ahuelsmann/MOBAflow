@@ -10,7 +10,7 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\TrackLibrary.PikoA\TrackLibrary.PikoA.csproj" />
+        <ProjectReference Include="..\TrackLibrary.Base\TrackLibrary.Base.csproj" />
         <ProjectReference Include="..\TrackPlan.Domain\TrackPlan.Domain.csproj" />
         <ProjectReference Include="..\TrackPlan.Geometry\TrackPlan.Geometry.csproj" />
         <ProjectReference Include="..\TrackPlan.Renderer\TrackPlan.Renderer.csproj" />
