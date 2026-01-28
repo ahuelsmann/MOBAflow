@@ -4,8 +4,6 @@ namespace Moba.TrackPlan.Editor;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using Moba.TrackLibrary.Base.TrackSystem;
-using Moba.TrackPlan.Constraint;
 using Moba.TrackPlan.Editor.Service;
 using Moba.TrackPlan.Editor.ViewModel;
 using Moba.TrackPlan.Renderer.Layout;
@@ -38,20 +36,26 @@ public static class TrackPlanServiceExtensions
         services.AddKeyedSingleton<ILayoutEngine, CircularLayoutEngine>("Circular");
         services.AddKeyedSingleton<ILayoutEngine, SimpleLayoutEngine>("Simple");
 
+        // Editor Business Logic Services
+        services.AddSingleton<SnapToConnectService>();
+        services.AddSingleton<TopologyResolver>();
+        services.AddSingleton<TrackConnectionService>();
+
+        // Register Editor implementations as interfaces for Renderer to use
+        services.AddSingleton<ISnapToConnectService>(sp => sp.GetRequiredService<SnapToConnectService>());
+        services.AddSingleton<ITopologyResolver>(sp => sp.GetRequiredService<TopologyResolver>());
+
         // Renderer services
-        services.AddSingleton<TrackPlanLayoutEngine>();
         services.AddSingleton<SkiaSharpCanvasRenderer>();
+        services.AddSingleton<TopologyGraphService>();
+        services.AddSingleton(sp =>
+            new TrackPlanLayoutEngine(
+                sp.GetRequiredService<ITrackCatalog>(),
+                sp.GetRequiredService<ITopologyResolver>()));
 
         // Editor services
         services.AddSingleton<ValidationService>();
         services.AddSingleton<SerializationService>();
-
-        // Constraints
-        services.AddSingleton<ITopologyConstraint, DuplicateFeedbackPointNumberConstraint>();
-        services.AddSingleton<ITopologyConstraint, GeometryConnectionConstraint>();
-
-        // Register array of all ITopologyConstraint implementations
-        services.AddSingleton(sp => sp.GetRequiredService<IEnumerable<ITopologyConstraint>>().ToArray());
 
         // ViewModel (transient - one per editor instance)
         services.AddTransient<TrackPlanEditorViewModel>();

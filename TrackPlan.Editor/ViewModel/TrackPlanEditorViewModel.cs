@@ -156,12 +156,12 @@ public sealed class TrackPlanEditorViewModel
         {
             var node = new TrackNode(Guid.NewGuid());
             node.Ports.Add(end.Id);
-            Graph.AddNode(node);
+            Graph.Nodes.Add(node);
 
             edge.Connections[end.Id] = (node.Id, null, null);
         }
 
-        Graph.AddEdge(edge);
+        Graph.Edges.Add(edge);
 
         Positions[edge.Id] = position;
         Rotations[edge.Id] = rotationDeg;
@@ -171,13 +171,13 @@ public sealed class TrackPlanEditorViewModel
 
     public void RemoveTrack(Guid edgeId)
     {
-        var edge = Graph.GetEdge(edgeId);
+        var edge = Graph.Edges.FirstOrDefault(e => e.Id == edgeId);
         if (edge is null) return;
 
         foreach (var port in edge.Connections.Keys.ToList())
             Disconnect(edgeId, port);
 
-        Graph.RemoveEdge(edgeId);
+        Graph.Edges.RemoveAll(e => e.Id == edgeId);
 
         Positions.Remove(edgeId);
         Rotations.Remove(edgeId);
@@ -226,13 +226,13 @@ public sealed class TrackPlanEditorViewModel
 
         foreach (var edgeId in SelectedTrackIds.ToList())
         {
-            var edge = Graph.GetEdge(edgeId);
+            var edge = Graph.Edges.FirstOrDefault(e => e.Id == edgeId);
             if (edge is null)
                 continue;
 
             foreach (var portId in edge.Connections.Keys.ToList())
             {
-                if (service.IsPortConnected(edgeId, portId))
+                if (service.IsConnected(edgeId, portId))
                 {
                     Disconnect(edgeId, portId);
                     disconnectCount++;
@@ -245,7 +245,8 @@ public sealed class TrackPlanEditorViewModel
 
     public void Clear()
     {
-        Graph.Clear();
+        Graph.Nodes.Clear();
+        Graph.Edges.Clear();
         Positions.Clear();
         Rotations.Clear();
         _selectedTrackId = null;
@@ -267,7 +268,7 @@ public sealed class TrackPlanEditorViewModel
         => ConnectionService.Disconnect(edgeId, portId);
 
     public bool IsPortConnected(Guid edgeId, string portId)
-        => ConnectionService.IsPortConnected(edgeId, portId);
+        => ConnectionService.IsConnected(edgeId, portId);
 
     public void SnapEdgeToPort(Guid movingEdgeId, string movingPortId, Guid targetEdgeId, string targetPortId)
     {
@@ -328,7 +329,7 @@ public sealed class TrackPlanEditorViewModel
 
         foreach (var newEnd in newTemplate.Ends)
         {
-            if (service.IsPortConnected(newEdgeId, newEnd.Id))
+            if (service.IsConnected(newEdgeId, newEnd.Id))
                 continue;
 
             var newPortWorldPos = GetPortWorldPosition(newEdgeId, newEnd.Id);
@@ -340,7 +341,7 @@ public sealed class TrackPlanEditorViewModel
 
                 foreach (var existingEnd in existingTemplate.Ends)
                 {
-                    if (service.IsPortConnected(existingEdge.Id, existingEnd.Id))
+                    if (service.IsConnected(existingEdge.Id, existingEnd.Id))
                         continue;
 
                     // Port compatibility: A connects to B/C, B connects to A, C connects to A
@@ -520,7 +521,7 @@ public sealed class TrackPlanEditorViewModel
 
         foreach (var movingEnd in movingTemplate.Ends)
         {
-            if (movingEdgeId.HasValue && service.IsPortConnected(movingEdgeId.Value, movingEnd.Id))
+            if (movingEdgeId.HasValue && service.IsConnected(movingEdgeId.Value, movingEnd.Id))
                 continue;
 
             var movingPortPos = GetPortWorldPosition(movingTemplate, movingPosition, movingRotationDeg, movingEnd.Id);
@@ -535,7 +536,7 @@ public sealed class TrackPlanEditorViewModel
 
                 foreach (var targetEnd in targetTemplate.Ends)
                 {
-                    if (service.IsPortConnected(targetEdge.Id, targetEnd.Id))
+                    if (service.IsConnected(targetEdge.Id, targetEnd.Id))
                         continue;
 
                     var targetPortPos = GetPortWorldPosition(targetEdge.Id, targetEnd.Id);
@@ -750,7 +751,7 @@ public sealed class TrackPlanEditorViewModel
 
             // Find all connected edges and calculate their offsets relative to drag start
             var service = ConnectionService;
-            _dragGroup = service.GetConnectedGroup(hit.Value);
+            _dragGroup = new HashSet<Guid>(service.GetConnectedGroup(hit.Value));
             _dragGroupOffsets = new Dictionary<Guid, Point2D>();
 
             foreach (var edgeId in _dragGroup)
@@ -1022,10 +1023,11 @@ public sealed class TrackPlanEditorViewModel
     {
         var loaded = _serializationService.Deserialize(json);
 
-        Graph.Clear();
+        Graph.Nodes.Clear();
+        Graph.Edges.Clear();
 
-        foreach (var n in loaded.Nodes) Graph.AddNode(n);
-        foreach (var e in loaded.Edges) Graph.AddEdge(e);
+        foreach (var n in loaded.Nodes) Graph.Nodes.Add(n);
+        foreach (var e in loaded.Edges) Graph.Edges.Add(e);
 
         // Endcaps are managed separately in ViewModel
         Endcaps.Clear();
@@ -1259,7 +1261,7 @@ public sealed class TrackPlanEditorViewModel
     /// </summary>
     public void SelectPathBetween(Guid fromEdgeId, Guid toEdgeId)
     {
-        var path = ConnectionService.FindShortestPath(fromEdgeId, toEdgeId);
+        var path = ConnectionService.FindShortestPath(fromEdgeId, toEdgeId).ToList();
 
         if (path.Count == 0)
             return;

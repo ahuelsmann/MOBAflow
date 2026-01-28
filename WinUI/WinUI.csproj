@@ -15,12 +15,20 @@
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
         <UserSecretsId>mobaflow-winui-secrets-2026</UserSecretsId>
+
+        <!-- Disable MSIX packaging during development to avoid Windows SDK BuildTools issues -->
+        <WindowsPackageType>None</WindowsPackageType>
+        <GenerateMsixPackageOnBuild>false</GenerateMsixPackageOnBuild>
     </PropertyGroup>
     <!-- Debug: Performance Optimizations -->
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
         <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
         <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
         <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+        <!-- Disable MSIX/PRI generation during Debug builds to work around Windows SDK BuildTools issues -->
+        <EnableMsixTooling>false</EnableMsixTooling>
+        <AppxPackage>false</AppxPackage>
     </PropertyGroup>
     <!-- Release: Enable all checks -->
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -37,6 +45,9 @@
         <PackageReference Include="Serilog.Extensions.Logging" />
         <PackageReference Include="Serilog.Sinks.Debug" />
         <PackageReference Include="Serilog.Sinks.File" />
+
+        <!-- Exclude MSIX BuildTools to work around missing makepri.exe issue during development -->
+        <PackageReference Include="Microsoft.Windows.SDK.BuildTools.MSIX" ExcludeAssets="all" />
     </ItemGroup>
     <!-- Project References -->
     <ItemGroup>

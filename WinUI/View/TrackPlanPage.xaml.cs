@@ -1134,7 +1134,7 @@ public sealed partial class TrackPlanPage : Page
 
             foreach (var port in edge.Connections.Keys.ToList())
             {
-                if (service.IsPortConnected(id, port))
+                if (service.IsConnected(id, port))
                 {
                     service.Disconnect(id, port);
                     totalDisconnected++;
@@ -1452,7 +1452,7 @@ public sealed partial class TrackPlanPage : Page
                 var x = (pos.X + offset.X) * DisplayScale;
                 var y = (pos.Y + offset.Y) * DisplayScale;
 
-                bool connected = service.IsPortConnected(edge.Id, end.Id);
+                bool connected = service.IsConnected(edge.Id, end.Id);
 
                 if (enableHoverAnimation)
                 {
@@ -2040,6 +2040,11 @@ public sealed partial class TrackPlanPage : Page
         Canvas.SetTop(rulerBackground, 0);
         GraphCanvas.Children.Add(rulerBackground);
 
+        var tickBrush = isDarkTheme
+            ? new SolidColorBrush(Color.FromArgb(255, 180, 180, 180))
+            : new SolidColorBrush(Color.FromArgb(255, 100, 100, 100));
+        var opacity = isDarkTheme ? 0.6 : 0.7;
+
         foreach (var tick in rulerGeometry.Ticks)
         {
             var tickLine = new Line
@@ -2048,8 +2053,9 @@ public sealed partial class TrackPlanPage : Page
                 Y1 = tick.Position,
                 X2 = -RulerWidth + tick.Height,
                 Y2 = tick.Position,
-                Stroke = rulerBrush,
-                StrokeThickness = 1
+                Stroke = tickBrush,
+                StrokeThickness = 1,
+                Opacity = opacity
             };
             GraphCanvas.Children.Add(tickLine);
         }
@@ -2109,8 +2115,8 @@ public sealed partial class TrackPlanPage : Page
             DisplayScale);
 
         var tickBrush = isDarkTheme
-            ? new SolidColorBrush(Colors.White)
-            : new SolidColorBrush(Colors.Black);
+            ? new SolidColorBrush(Color.FromArgb(255, 180, 180, 180))
+            : new SolidColorBrush(Color.FromArgb(255, 100, 100, 100));
         tickBrush.Opacity = opacity;
 
         var barLength = rulerLengthMm * DisplayScale;
@@ -2131,8 +2137,8 @@ public sealed partial class TrackPlanPage : Page
                 new Windows.Foundation.Point(barBottomLeft.X, barBottomLeft.Y)
             },
             Fill = isDarkTheme
-                ? new SolidColorBrush(Color.FromArgb((byte)(255 * opacity), 40, 40, 40))
-                : new SolidColorBrush(Color.FromArgb((byte)(255 * opacity), 245, 245, 245)),
+                ? new SolidColorBrush(Color.FromArgb(255, 40, 40, 40))
+                : new SolidColorBrush(Color.FromArgb(255, 245, 245, 245)),
             Opacity = opacity
         };
         GraphCanvas.Children.Add(barPoly);
@@ -2191,8 +2197,8 @@ public sealed partial class TrackPlanPage : Page
             DisplayScale);
 
         var tickBrush = isDarkTheme
-            ? new SolidColorBrush(Colors.White)
-            : new SolidColorBrush(Colors.Black);
+            ? new SolidColorBrush(Color.FromArgb(255, 180, 180, 180))
+            : new SolidColorBrush(Color.FromArgb(255, 100, 100, 100));
         tickBrush.Opacity = opacity;
 
         var barLength = rulerLengthMm * DisplayScale;
@@ -2216,8 +2222,8 @@ public sealed partial class TrackPlanPage : Page
                 new Windows.Foundation.Point(barBottomLeft.X, barBottomLeft.Y)
             },
             Fill = isDarkTheme
-                ? new SolidColorBrush(Color.FromArgb((byte)(255 * opacity), 40, 40, 40))
-                : new SolidColorBrush(Color.FromArgb((byte)(255 * opacity), 245, 245, 245)),
+                ? new SolidColorBrush(Color.FromArgb(255, 40, 40, 40))
+                : new SolidColorBrush(Color.FromArgb(255, 245, 245, 245)),
             Opacity = opacity
         };
         GraphCanvas.Children.Add(barPoly);

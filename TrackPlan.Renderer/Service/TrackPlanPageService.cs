@@ -273,11 +273,11 @@ public sealed class R9OvalTrackPlanExample
         }
 
         // Build and return graph
-        var graph = new TopologyGraph();
-        foreach (var node in nodes)
-            graph.AddNode(node);
-        foreach (var edge in edges)
-            graph.AddEdge(edge);
+        var graph = new TopologyGraph
+        {
+            Nodes = nodes,
+            Edges = edges
+        };
 
         return graph;
     }

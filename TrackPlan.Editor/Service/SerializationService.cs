@@ -100,7 +100,8 @@ public sealed class SerializationService
         var root = trackPlanJson.RootElement;
 
         // Clear current state
-        viewModel.Graph.Clear();
+        viewModel.Graph.Nodes.Clear();
+        viewModel.Graph.Edges.Clear();
         viewModel.Positions.Clear();
         viewModel.Rotations.Clear();
         viewModel.Sections.Clear();
@@ -123,7 +124,7 @@ public sealed class SerializationService
                             n.Ports.Add(portElement.GetString() ?? string.Empty);
                         }
                     }
-                    viewModel.Graph.AddNode(n);
+                    viewModel.Graph.Nodes.Add(n);
                 }
             }
         }
@@ -154,7 +155,7 @@ public sealed class SerializationService
                     if (edgeElement.TryGetProperty("feedbackPointNumber", out var fbElement))
                         e.FeedbackPointNumber = fbElement.GetInt32();
 
-                    viewModel.Graph.AddEdge(e);
+                    viewModel.Graph.Edges.Add(e);
                 }
             }
         }

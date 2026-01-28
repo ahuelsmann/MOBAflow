@@ -79,40 +79,18 @@ Details in `.github/instructions/`:
 
 **Workflow & Patterns:**
 - `todos.instructions.md` - **Offene Aufgaben & Quality Roadmap**
-- `implementation-workflow.instructions.md` - Detaillierter 5-Schritte-Workflow
-- `di-pattern-consistency.instructions.md` - Dependency Injection Patterns
-- `hasunsavedchanges-patterns.instructions.md` - Ungespeicherte Änderungen Pattern
-- `xaml-page-registration.instructions.md` - XAML Page Registration Pattern
+- `implementation-workflow.instructions.md` - Detaillierter 5-Schritte-Workflow (falls existiert)
+- `di-pattern-consistency.instructions.md` - Dependency Injection Patterns (falls existiert)
 
 **Architektur & Frameworks:**
-- `architecture.instructions.md` - Layer-Architektur
-- `backend.instructions.md` - Backend Layer Details
-- `dotnet-framework.instructions.md` - .NET Framework Best Practices
-- `collections.instructions.md` - Collection Patterns
+- `architecture.instructions.md` - Layer-Architektur (falls existiert)
+- `backend.instructions.md` - Backend Layer Details (falls existiert)
 
 **UI Frameworks:**
-- `winui.instructions.md` - WinUI 3 Spezifika
-- `winui3-best-practices-steps-4-12.md` - WinUI 3 Best Practices (Steps 4-12)
-- `maui.instructions.md` - .NET MAUI Spezifika
-- `blazor.instructions.md` - Blazor Spezifika
-- `mvvm-best-practices.instructions.md` - MVVM Details
-- `fluent-design.instructions.md` - Fluent Design System
-
-**Track Plan Editor:**
-- `geometry.md` - Geometrie-Berechnungen
-- `rendering.md` - Rendering Pipeline
-- `snapping.md` - Snap-to-Grid & Snap-to-Connect
-- `topology.md` - Track Topology
+- `winui.instructions.md` - WinUI 3 Spezifika (falls existiert)
 
 **Code Quality:**
-- `self-explanatory-code-commenting.instructions.md` - Code-Kommentar-Regeln
-- `no-special-chars.instructions.md` - Keine Sonderzeichen in Identifiern
-- `test.instructions.md` - Testing Best Practices
+- `test.instructions.md` - Testing Best Practices (falls existiert)
+- `terminal.instructions.md` - PowerShell-Regeln (falls existiert)
 
-**Tooling:**
-- `terminal.instructions.md` - PowerShell-Regeln
-- `powershell.instructions.md` - PowerShell Best Practices
-- `github-actions-ci-cd-best-practices.instructions.md` - GitHub Actions CI/CD
-- `editor-behavior.md` - Editor-Verhalten
-- `prompt.instructions.md` - Prompt Engineering
-- `instructions.instructions.md` - Meta-Instructions (Instruction-Dateien schreiben)
+**Hinweis:** Nicht alle aufgelisteten Dateien existieren. Nutzen Sie diese Liste als Referenz für mögliche Patterns. Erstellen Sie neue Instructions-Dateien nach Bedarf für neue Domains.

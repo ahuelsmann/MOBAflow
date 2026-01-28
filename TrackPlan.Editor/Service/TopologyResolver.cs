@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.TrackPlan.Renderer.Service;
+namespace Moba.TrackPlan.Editor.Service;
 
 using Moba.TrackLibrary.Base.TrackSystem;
 using Moba.TrackPlan.Graph;

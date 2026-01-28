@@ -2,6 +2,8 @@
 
 namespace Moba.TrackPlan.Renderer.Service;
 
+using Moba.TrackPlan.Geometry;
+
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -39,12 +41,12 @@ public interface ISnapPreviewProvider
 }
 
 /// <summary>
-/// Represents the result of a snap preview query.
+/// Result of snap preview computation.
 /// </summary>
 public sealed record SnapPreviewResult(
     Guid DraggedEdgeId,
     string DraggedPortId,
-    List<SnapToConnectService.SnapCandidate> Candidates,
+    List<ISnapToConnectService.SnapCandidate> Candidates,
     DateTime ComputedAtUtc,
     bool IsFromCache);
 
@@ -53,7 +55,7 @@ public sealed record SnapPreviewResult(
 /// </summary>
 public sealed class DefaultSnapPreviewProvider : ISnapPreviewProvider
 {
-    private readonly SnapToConnectService _snapService;
+    private readonly ISnapToConnectService _snapService;
     private readonly int _maxCacheSize;
     private readonly Dictionary<string, SnapPreviewResult> _cache;
     private readonly object _cacheLock = new();
@@ -70,7 +72,7 @@ public sealed class DefaultSnapPreviewProvider : ISnapPreviewProvider
     }
 
     public DefaultSnapPreviewProvider(
-        SnapToConnectService snapService,
+        ISnapToConnectService snapService,
         int maxCacheSize = 100)
     {
         _snapService = snapService ?? throw new ArgumentNullException(nameof(snapService));
@@ -93,7 +95,7 @@ public sealed class DefaultSnapPreviewProvider : ISnapPreviewProvider
             draggedEdgeId,
             draggedPortId,
             worldPortLocation,
-            SnapToConnectService.DefaultSnapRadiusMm);
+            ISnapToConnectService.DefaultSnapRadiusMm);
 
         // Try to get from cache
         lock (_cacheLock)
@@ -114,7 +116,7 @@ public sealed class DefaultSnapPreviewProvider : ISnapPreviewProvider
                 draggedEdgeId,
                 draggedPortId,
                 worldPortLocation,
-                SnapToConnectService.DefaultSnapRadiusMm);
+                ISnapToConnectService.DefaultSnapRadiusMm);
 
             var result = new SnapPreviewResult(
                 DraggedEdgeId: draggedEdgeId,
@@ -173,9 +175,9 @@ public sealed class DefaultSnapPreviewProvider : ISnapPreviewProvider
 /// </summary>
 public sealed class NoOpSnapPreviewProvider : ISnapPreviewProvider
 {
-    private readonly SnapToConnectService _snapService;
+    private readonly ISnapToConnectService _snapService;
 
-    public NoOpSnapPreviewProvider(SnapToConnectService snapService)
+    public NoOpSnapPreviewProvider(ISnapToConnectService snapService)
     {
         _snapService = snapService ?? throw new ArgumentNullException(nameof(snapService));
     }
@@ -196,7 +198,7 @@ public sealed class NoOpSnapPreviewProvider : ISnapPreviewProvider
                 draggedEdgeId,
                 draggedPortId,
                 worldPortLocation,
-                SnapToConnectService.DefaultSnapRadiusMm);
+                ISnapToConnectService.DefaultSnapRadiusMm);
 
             return new SnapPreviewResult(
                 DraggedEdgeId: draggedEdgeId,

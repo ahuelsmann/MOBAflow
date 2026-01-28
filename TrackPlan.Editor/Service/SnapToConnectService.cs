@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.TrackPlan.Renderer.Service;
+namespace Moba.TrackPlan.Editor.Service;
 
 using Moba.TrackLibrary.Base.TrackSystem;
 using Moba.TrackPlan.Geometry;
@@ -296,40 +296,5 @@ public sealed class SnapToConnectService
     private bool IsValidPortId(string portId)
     {
         return portId.Length == 1 && char.IsUpper(portId[0]);
-    }
-
-    /// <summary>
-    /// Executes a snap connection if valid.
-    /// </summary>
-    public bool TryExecuteSnap(
-        Guid sourceEdgeId,
-        string sourcePortId,
-        Guid targetEdgeId,
-        string targetPortId)
-    {
-        var sourceEdge = _graph.Edges.FirstOrDefault(e => e.Id == sourceEdgeId);
-        var targetEdge = _graph.Edges.FirstOrDefault(e => e.Id == targetEdgeId);
-
-        if (sourceEdge is null || targetEdge is null)
-            return false;
-
-        var sourceTemplate = _catalog.GetById(sourceEdge.TemplateId);
-        var targetTemplate = _catalog.GetById(targetEdge.TemplateId);
-
-        if (sourceTemplate is null || targetTemplate is null)
-            return false;
-
-        var validation = ValidateSnapConnection(
-            sourceEdgeId,
-            sourcePortId,
-            targetEdgeId,
-            targetPortId,
-            sourceTemplate,
-            targetTemplate);
-
-        if (!validation.IsValid)
-            return false;
-
-        return _connectionService.TryConnect(sourceEdgeId, sourcePortId, targetEdgeId, targetPortId);
     }
 }

@@ -6,8 +6,6 @@ global using Moba.TrackPlan.Editor.Service;
 global using Moba.TrackPlan.Editor.ViewState;
 global using Moba.TrackPlan.Geometry;
 global using Moba.TrackPlan.Graph;
-global using Moba.TrackPlan.Renderer.Service;
-global using Moba.TrackPlan.Renderer.World;
 
 global using System;
 global using System.Collections.Generic;
