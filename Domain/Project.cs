@@ -44,4 +44,11 @@ public class Project
     /// Topological representation with signals, switches, and routes.
     /// </summary>
     public SignalBoxPlan? SignalBoxPlan { get; set; }
+
+    /// <summary>
+    /// Track catalogs for this project (Piko A, Roco, Mehano, etc.).
+    /// Aggregated catalog system containing all available track systems and components.
+    /// Used by TrackPlan editor to access templates for building topologies.
+    /// </summary>
+    public Catalogs? Catalogs { get; set; }
 }

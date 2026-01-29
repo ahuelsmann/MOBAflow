@@ -2,13 +2,9 @@
 
 namespace Moba.TrackPlan.Renderer.Rendering;
 
-using Moba.TrackPlan.Geometry;
-
 using SkiaSharp;
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
 
 /// <summary>
 /// Renders horizontal and vertical rulers (measures) for the track plan.

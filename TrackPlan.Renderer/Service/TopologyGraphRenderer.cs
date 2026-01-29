@@ -25,6 +25,9 @@ public class TopologyGraphRenderer
 
     private List<RenderedPort> _renderedPorts = new();
 
+    /// <summary>
+    /// Create renderer with explicit catalog.
+    /// </summary>
     public TopologyGraphRenderer(ITrackCatalog catalog)
     {
         _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
@@ -39,6 +42,7 @@ public class TopologyGraphRenderer
     /// Renders all edges in a topology graph starting from a given position and angle.
     /// Automatically selects the appropriate renderer (CurveGeometry, SwitchGeometry, etc.) for each template.
     /// Tracks ALL port positions (connected and unconnected) for visualization.
+    /// Supports branching topologies by respecting Connections dictionary.
     /// Optionally logs rendering details for debugging.
     /// </summary>
     public IEnumerable<IGeometryPrimitive> Render(
@@ -53,33 +57,53 @@ public class TopologyGraphRenderer
         _renderedPorts.Clear();
         var primitives = new List<IGeometryPrimitive>();
 
-        double currentX = startX;
-        double currentY = startY;
-        double currentAngleDeg = startAngleDeg;
+        // Track which edges have been rendered
+        var renderedEdges = new HashSet<Guid>();
+        
+        // Track positions for each node
+        var nodePositions = new Dictionary<Guid, (double X, double Y, double AngleDeg)>();
 
-        int edgeIndex = 0;
-        foreach (var edge in topology.Edges)
+        // Start with the first edge
+        if (!topology.Edges.Any())
         {
+            logger?.Invoke("No edges to render");
+            return primitives;
+        }
+
+        // Render edges iteratively, handling main path and branches
+        var edgesToProcess = new Queue<(TrackEdge edge, int index, double x, double y, double angleDeg)>();
+        edgesToProcess.Enqueue((topology.Edges[0], 0, startX, startY, startAngleDeg));
+
+        while (edgesToProcess.Count > 0)
+        {
+            var (edge, edgeIndex, currentX, currentY, currentAngleDeg) = edgesToProcess.Dequeue();
+
+            if (renderedEdges.Contains(edge.Id))
+                continue; // Already rendered
+
             var template = _catalog.GetById(edge.TemplateId)
                 ?? throw new InvalidOperationException($"Template '{edge.TemplateId}' not found in catalog");
 
+            // Apply edge rotation (if set)
+            var edgeAngleDeg = currentAngleDeg + edge.RotationDeg;
+
             logger?.Invoke($"\nEdge {edgeIndex}: {edge.TemplateId}");
             logger?.Invoke($"  Ports: {edge.StartPortId} → {edge.EndPortId}");
-            logger?.Invoke($"  Position: ({currentX:F2}, {currentY:F2}), Angle: {currentAngleDeg:F2}°");
+            logger?.Invoke($"  Position: ({currentX:F2}, {currentY:F2}), Angle: {edgeAngleDeg:F2}° (base: {currentAngleDeg:F2}°, edge rotation: {edge.RotationDeg:F2}°)");
             logger?.Invoke($"  Radius: {template.Geometry.RadiusMm}mm, Sweep: {template.Geometry.AngleDeg}°");
 
             var position = new Point2D(currentX, currentY);
 
             // Render all ports of this template (including diverging ports)
-            RenderAllPorts(template, position, currentAngleDeg, edgeIndex, edge, logger);
+            RenderAllPorts(template, position, edgeAngleDeg, edgeIndex, edge, logger);
 
             // Select appropriate renderer based on geometry type
             var edgePrimitives = template.Geometry.GeometryKind switch
             {
-                TrackGeometryKind.Curve => CurveGeometry.Render(template, position, currentAngleDeg),
-                TrackGeometryKind.Straight => StraightGeometry.Render(template, position, currentAngleDeg),
-                TrackGeometryKind.Switch => SwitchGeometry.Render(template, position, currentAngleDeg),
-                TrackGeometryKind.ThreeWaySwitch => ThreeWaySwitchGeometry.Render(position, currentAngleDeg, template.Geometry),
+                TrackGeometryKind.Curve => CurveGeometry.Render(template, position, edgeAngleDeg),
+                TrackGeometryKind.Straight => StraightGeometry.Render(template, position, edgeAngleDeg),
+                TrackGeometryKind.Switch => SwitchGeometry.Render(template, position, edgeAngleDeg),
+                TrackGeometryKind.ThreeWaySwitch => ThreeWaySwitchGeometry.Render(position, edgeAngleDeg, template.Geometry),
                 _ => Enumerable.Empty<IGeometryPrimitive>()
             };
 
@@ -87,16 +111,57 @@ public class TopologyGraphRenderer
             logger?.Invoke($"  Rendered {primitivesList.Count} primitives");
             
             primitives.AddRange(primitivesList);
+            renderedEdges.Add(edge.Id);
 
-            // Calculate exit point and angle for next edge
-            (currentX, currentY, currentAngleDeg) = CalculateNextPosition(
-                template,
-                currentX,
-                currentY,
-                currentAngleDeg
-            );
+            // Store end node position for this edge
+            var (exitX, exitY, exitAngleDeg) = CalculateNextPosition(template, currentX, currentY, edgeAngleDeg);
+            if (edge.EndNodeId.HasValue)
+            {
+                nodePositions[edge.EndNodeId.Value] = (exitX, exitY, exitAngleDeg);
+            }
 
-            edgeIndex++;
+            // Process branch connections (e.g., Port C on switches)
+            if (edge.Connections.Any())
+            {
+                foreach (var (portId, (nodeId, connectedEdgeId, connectedPortId)) in edge.Connections)
+                {
+                    // Calculate position for the diverging port
+                    var portPosition = _renderedPorts
+                        .FirstOrDefault(p => p.EdgeIndex == edgeIndex && p.PortId == portId);
+                    
+                    if (portPosition != null)
+                    {
+                        // Find the connected edge
+                        var connectedEdge = topology.Edges.FirstOrDefault(e => e.Id.ToString() == connectedEdgeId);
+                        if (connectedEdge != null && !renderedEdges.Contains(connectedEdge.Id))
+                        {
+                            var connectedIndex = topology.Edges.ToList().IndexOf(connectedEdge);
+                            edgesToProcess.Enqueue((
+                                connectedEdge,
+                                connectedIndex,
+                                portPosition.Position.X,
+                                portPosition.Position.Y,
+                                portPosition.AngleDeg
+                            ));
+                            
+                            logger?.Invoke($"  Branch queued: Port {portId} → Edge {connectedIndex} ({connectedEdge.TemplateId})");
+                        }
+                    }
+                }
+            }
+
+            // Continue with the next sequential edge (if connected via EndNode)
+            if (edge.EndNodeId.HasValue)
+            {
+                var nextEdge = topology.Edges.FirstOrDefault(e => 
+                    e.StartNodeId == edge.EndNodeId && !renderedEdges.Contains(e.Id));
+                
+                if (nextEdge != null)
+                {
+                    var nextIndex = topology.Edges.ToList().IndexOf(nextEdge);
+                    edgesToProcess.Enqueue((nextEdge, nextIndex, exitX, exitY, exitAngleDeg));
+                }
+            }
         }
 
         logger?.Invoke($"\n✓ Total: {primitives.Count} primitives, {_renderedPorts.Count} ports");
@@ -177,7 +242,10 @@ public class TopologyGraphRenderer
     }
 
     /// <summary>
-    /// Calculates exit position for a switch track (uses straight path A→B, not diverging).
+    /// Calculates exit position for a switch track.
+    /// Handles both straight switches and curved switches (Bogenweichen).
+    /// For curved switches (RadiusMm > 0), calculates arc exit.
+    /// For straight switches, calculates straight exit.
     /// </summary>
     private (double X, double Y, double AngleDeg) CalculateSwitchExit(
         TrackTemplate template,
@@ -185,16 +253,47 @@ public class TopologyGraphRenderer
         double startY,
         double startAngleDeg)
     {
-        // For switches in topology, we follow the main path (usually A→B)
-        // Diverging path (C) is optional and doesn't affect topology flow
-        double length = template.Geometry.LengthMm ?? 0;
-        double startRad = startAngleDeg * Math.PI / 180.0;
+        // Check if this is a curved switch (Bogenweiche) by checking RadiusMm
+        var radius = template.Geometry.RadiusMm ?? 0;
+        
+        if (radius > 0)
+        {
+            // Curved switch (e.g., WR, BWR, BWL) - treat main path as curve
+            // Use the same math as CalculateCurveExit
+            var sweepDeg = template.Geometry.AngleDeg ?? 0;
+            double startRad = startAngleDeg * Math.PI / 180.0;
+            double sweepRad = sweepDeg * Math.PI / 180.0;
 
-        var exitX = startX + length * Math.Cos(startRad);
-        var exitY = startY + length * Math.Sin(startRad);
+            int normalDir = sweepRad >= 0 ? 1 : -1;
+            var normal = new Point2D(
+                normalDir * -Math.Sin(startRad),
+                normalDir * Math.Cos(startRad)
+            );
 
-        // Exit angle remains unchanged (no sweep on main path)
-        return (exitX, exitY, startAngleDeg);
+            var center = new Point2D(startX, startY) + normal * radius;
+
+            // Exit point is at the arc end
+            double arcStartRad = startRad - normalDir * Math.PI / 2.0;
+            double arcEndRad = arcStartRad + sweepRad;
+
+            var exitX = center.X + radius * Math.Cos(arcEndRad);
+            var exitY = center.Y + radius * Math.Sin(arcEndRad);
+            var exitAngleDeg = startAngleDeg + sweepDeg;
+
+            return (exitX, exitY, exitAngleDeg);
+        }
+        else
+        {
+            // Straight switch - main path is a straight line
+            double length = template.Geometry.LengthMm ?? 0;
+            double startRad = startAngleDeg * Math.PI / 180.0;
+
+            var exitX = startX + length * Math.Cos(startRad);
+            var exitY = startY + length * Math.Sin(startRad);
+
+            // Exit angle remains unchanged (no sweep on main path)
+            return (exitX, exitY, startAngleDeg);
+        }
     }
 
     /// <summary>
@@ -213,7 +312,7 @@ public class TopologyGraphRenderer
 
         foreach (var trackEnd in templateEnds)
         {
-            var portPosition = CalculatePortPosition(template, trackEnd, startPos, startAngleDeg);
+            var portPosition = CalculatePortPosition(template, trackEnd, startPos, startAngleDeg, edge);
             var portAngle = startAngleDeg + trackEnd.AngleDeg;
 
             _renderedPorts.Add(new RenderedPort(
@@ -229,24 +328,26 @@ public class TopologyGraphRenderer
 
     /// <summary>
     /// Calculates the world position of a port on a template.
+    /// Respects StartPortId and EndPortId to determine which port is at start/exit position.
     /// </summary>
     private Point2D CalculatePortPosition(
         TrackTemplate template,
         TrackEnd trackEnd,
         Point2D startPos,
-        double startAngleDeg)
+        double startAngleDeg,
+        TrackEdge edge)
     {
         var templateEnds = template.Ends ?? new List<TrackEnd>();
 
-        // Port A is at start position
-        if (trackEnd.Id == templateEnds.FirstOrDefault()?.Id)
+        // Start port is determined by edge.StartPortId (not always Port A!)
+        if (trackEnd.Id == edge.StartPortId)
         {
             return startPos;
         }
 
-        // Port B (and main exit) position
+        // Exit port is determined by edge.EndPortId (not always Port B!)
         var (exitX, exitY, _) = CalculateNextPosition(template, startPos.X, startPos.Y, startAngleDeg);
-        if (trackEnd.Id == templateEnds.ElementAtOrDefault(1)?.Id)
+        if (trackEnd.Id == edge.EndPortId)
         {
             return new Point2D(exitX, exitY);
         }

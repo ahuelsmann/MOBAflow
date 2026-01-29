@@ -3,7 +3,6 @@
 using Moba.Backend.Data;
 using Moba.Backend.Extensions;
 using Moba.Common.Configuration;
-using Moba.ReactApp.Components;
 using Moba.ReactApp.Service;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.ViewModel;
@@ -74,7 +73,7 @@ if (app.Environment.IsDevelopment())
 {
     // CORS for React dev server
     app.UseCors("ReactDev");
-    
+
     // Swagger UI for API documentation
     app.UseSwagger();
     app.UseSwaggerUI(options =>
@@ -99,7 +98,7 @@ app.MapControllers();
 // React SPA routing:
 // Fallback to index.html for all unmatched requests (client-side routing)
 app.MapFallback(() => Results.File(
-    Path.Combine(app.Environment.ContentRootPath, "wwwroot", "index.html"), 
+    Path.Combine(app.Environment.ContentRootPath, "wwwroot", "index.html"),
     "text/html"));
 
 await app.RunAsync();

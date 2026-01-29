@@ -3,7 +3,6 @@
 namespace Moba.TrackPlan.Renderer.Service;
 
 using Moba.TrackPlan.Geometry;
-using Moba.TrackPlan.Graph;
 
 /// <summary>
 /// Interface for snap-to-connect service functionality.

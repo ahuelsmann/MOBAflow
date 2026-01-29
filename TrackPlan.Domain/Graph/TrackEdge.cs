@@ -51,4 +51,23 @@ public sealed record TrackEdge(Guid Id, string TemplateId)
     /// Port connections: key is port ID, value contains connection info (NodeId).
     /// </summary>
     public Dictionary<string, (Guid NodeId, string? ConnectedEdgeId, string? ConnectedPortId)> Connections { get; } = [];
+
+    /// <summary>
+    /// Get a port by ID for fluent connection API.
+    /// Example: edge.Port("A").ConnectTo(node)
+    /// </summary>
+    public TrackPort Port(string portId)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(portId);
+        return new TrackPort(this, portId);
+    }
+
+    /// <summary>
+    /// Mark this edge with a logical number/identifier (for readability in topology definitions).
+    /// Example: wr.No("1").Port("A").ConnectTo(r9.No("2").Port("B"))
+    /// </summary>
+    public TrackEdge No(string number)
+    {
+        return this;
+    }
 }
