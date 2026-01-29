@@ -17,16 +17,19 @@ public interface ISnapPreviewProvider
     /// <summary>
     /// Requests preview update for a dragging track.
     /// Provides cached or newly computed snap candidates with cancellation support.
+    /// Snap candidates are sorted by validity, pointer relevance (if provided), then distance.
     /// </summary>
     /// <param name="draggedEdgeId">The edge being dragged</param>
     /// <param name="draggedPortId">The port on the dragged edge</param>
     /// <param name="worldPortLocation">World space location of the port</param>
+    /// <param name="pointerLocationMm">Current mouse pointer location in world space (mm), or null if unavailable. Used to prioritize ports near cursor.</param>
     /// <param name="cancellationToken">Cancellation token for async work</param>
     /// <returns>Snap preview result with candidates and metadata</returns>
     SnapPreviewResult? GetSnapPreview(
         Guid draggedEdgeId,
         string draggedPortId,
         Point2D worldPortLocation,
+        Point2D? pointerLocationMm = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -87,15 +90,26 @@ public sealed class DefaultSnapPreviewProvider : ISnapPreviewProvider
         Guid draggedEdgeId,
         string draggedPortId,
         Point2D worldPortLocation,
+        Point2D? pointerLocationMm = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(worldPortLocation);
 
+        // Cache key includes pointer position to differentiate snap results
+        // Note: pointerLocationMm is rounded to 1mm for caching efficiency
         var cacheKey = CreateCacheKey(
             draggedEdgeId,
             draggedPortId,
             worldPortLocation,
             ISnapToConnectService.DefaultSnapRadiusMm);
+
+        // Append pointer position to cache key if provided
+        if (pointerLocationMm.HasValue)
+        {
+            var ptrX = Math.Round(pointerLocationMm.Value.X / 1.0) * 1.0;
+            var ptrY = Math.Round(pointerLocationMm.Value.Y / 1.0) * 1.0;
+            cacheKey = $"{cacheKey}_ptr_{ptrX}_{ptrY}";
+        }
 
         // Try to get from cache
         lock (_cacheLock)
@@ -116,7 +130,8 @@ public sealed class DefaultSnapPreviewProvider : ISnapPreviewProvider
                 draggedEdgeId,
                 draggedPortId,
                 worldPortLocation,
-                ISnapToConnectService.DefaultSnapRadiusMm);
+                ISnapToConnectService.DefaultSnapRadiusMm,
+                pointerLocationMm);
 
             var result = new SnapPreviewResult(
                 DraggedEdgeId: draggedEdgeId,
@@ -186,6 +201,7 @@ public sealed class NoOpSnapPreviewProvider : ISnapPreviewProvider
         Guid draggedEdgeId,
         string draggedPortId,
         Point2D worldPortLocation,
+        Point2D? pointerLocationMm = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(worldPortLocation);
@@ -198,7 +214,8 @@ public sealed class NoOpSnapPreviewProvider : ISnapPreviewProvider
                 draggedEdgeId,
                 draggedPortId,
                 worldPortLocation,
-                ISnapToConnectService.DefaultSnapRadiusMm);
+                ISnapToConnectService.DefaultSnapRadiusMm,
+                pointerLocationMm);
 
             return new SnapPreviewResult(
                 DraggedEdgeId: draggedEdgeId,

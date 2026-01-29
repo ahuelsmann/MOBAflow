@@ -44,6 +44,7 @@ public sealed partial class TrackPlanPage : Page
     private readonly IAttentionControlService _attentionControl = new DefaultAttentionControlService();
     private readonly IPortHoverAffordanceService _portHoverAffordance = new DefaultPortHoverAffordanceService();
     private readonly RulerService _rulerService = new();
+    private readonly DragThresholdHelper _dragThreshold = new();
 
     private bool _isPanning;
     private Point _panStart;
@@ -62,10 +63,6 @@ public sealed partial class TrackPlanPage : Page
     private Dictionary<Guid, double> _rotationStartRotations = new();
     private Dictionary<Guid, Point2D> _rotationStartPositions = new();
     private Point2D _dragStartWorldPos;
-
-    // Track potential drag state (before threshold is crossed)
-    private bool _isWaitingForDragThreshold;
-    private Point _dragThresholdStartPos;
 
     private Point _movableRulerDragStart;
 
@@ -705,13 +702,11 @@ public sealed partial class TrackPlanPage : Page
 
             _viewModel.PointerDown(world, true, isCtrlPressed);
 
-            // Don't start drag immediately - wait for PointerMoved to cross threshold
-            // This follows Microsoft's AutomaticDragHelper pattern (WinUI source code)
+            // Defer drag until threshold crossed (Microsoft pattern)
             if (_viewModel.SelectedTrackIds.Count > 0 && _viewModel.GhostPlacement is null)
             {
-                _isWaitingForDragThreshold = true;
-                _dragThresholdStartPos = pos;
                 _dragStartWorldPos = world;
+                _dragThreshold.BeginTracking(pos);  // Only tracking, no drag yet!
             }
 
             GraphCanvas.CapturePointer(e.Pointer);
@@ -812,6 +807,20 @@ public sealed partial class TrackPlanPage : Page
             if (!previousTracks.Contains(trackId))
             {
                 _ = _portHoverAffordance.HighlightDraggableTrackAsync(trackId);
+            }
+        }
+
+        // Check drag threshold (Microsoft AutomaticDragHelper pattern)
+        if (_dragThreshold.IsWaiting && _viewModel.SelectedTrackIds.Count > 0)
+        {
+            if (_dragThreshold.ShouldStartDrag(pos))
+            {
+                _dragThreshold.Reset();
+                _viewModel.BeginMultiGhostPlacement(_viewModel.SelectedTrackIds.ToList());
+                
+                ProtectedCursor = null;
+                _ = _attentionControl.DimIrrelevantTracksAsync(_viewModel.SelectedTrackIds.ToList(), dimOpacity: 0.3f);
+                StatusText.Text = $"Dragging {_viewModel.SelectedTrackIds.Count} track(s)...";
             }
         }
 
@@ -1012,6 +1021,7 @@ public sealed partial class TrackPlanPage : Page
         GraphCanvas.ReleasePointerCaptures();
 
         _ = _portHoverAffordance.ClearAllHighlightsAsync();
+        _dragThreshold.Reset();
 
         RenderGraph();
         UpdateStatistics();
@@ -2299,7 +2309,7 @@ public sealed partial class TrackPlanPage : Page
         var point = e.GetCurrentPoint(GraphCanvas);
         var pos = point.Position;
 
-        var (rulerX, rulerY) = _viewModel.ViewState.MovableRulerPosition;
+        var (rulerX, rulerY) = _viewModel.ViewState.MovableRulerPosition.Value;
         var rulerDisplayX = rulerX * DisplayScale;
         var rulerDisplayY = rulerY * DisplayScale;
 

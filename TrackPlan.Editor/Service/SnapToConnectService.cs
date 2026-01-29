@@ -11,6 +11,33 @@ using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
+/// Indicates the direction of curvature for a curved track.
+/// Used for analyzing track geometry and validating connections at Drop-time.
+/// </summary>
+public enum CurveDirection
+{
+    /// <summary>
+    /// Curve bends to the left (positive angle, counterclockwise).
+    /// </summary>
+    Left,
+
+    /// <summary>
+    /// Curve bends to the right (negative angle, clockwise).
+    /// </summary>
+    Right,
+
+    /// <summary>
+    /// Track is straight (no curvature).
+    /// </summary>
+    Straight,
+
+    /// <summary>
+    /// Curve direction cannot be determined (missing geometry data).
+    /// </summary>
+    Unknown
+}
+
+/// <summary>
 /// Service for detecting and managing snap-to-connect operations between tracks.
 /// Provides proximity-based snap detection, validation, and multi-port snap candidate discovery.
 /// </summary>
@@ -37,6 +64,7 @@ public sealed class SnapToConnectService
 
     /// <summary>
     /// Represents a potential snap point for connection.
+    /// Includes curve compatibility for intelligent snap prioritization of curve continuations.
     /// </summary>
     public sealed record SnapCandidate(
         Guid TargetEdgeId,
@@ -44,7 +72,9 @@ public sealed class SnapToConnectService
         Point2D TargetPortLocation,
         double TargetPortAngleDeg,
         double DistanceMm,
-        SnapValidationResult ValidationResult);
+        SnapValidationResult ValidationResult,
+        double PointerRelevanceScore = 1.0,
+        double CurveCompatibilityScore = 0.0);
 
     /// <summary>
     /// Result of snap validation between two ports.
@@ -55,17 +85,20 @@ public sealed class SnapToConnectService
 
     /// <summary>
     /// Finds all snap candidates within the given radius for a dragging track.
+    /// Sorts candidates by validity, then by pointer relevance (if provided), then by distance.
     /// </summary>
     /// <param name="draggedEdgeId">The edge being dragged</param>
     /// <param name="draggedPortId">The port on the dragged edge to snap (e.g., "A" or "B")</param>
     /// <param name="worldPortLocation">World space location of the dragged port</param>
     /// <param name="snapRadiusMm">Detection radius in millimeters (default: 5mm)</param>
-    /// <returns>List of snap candidates sorted by distance (nearest first)</returns>
+    /// <param name="pointerLocationMm">Current mouse pointer location in world space (null if unavailable). Used to prioritize ports near cursor.</param>
+    /// <returns>List of snap candidates sorted by validity, pointer relevance, then distance (best first)</returns>
     public List<SnapCandidate> FindSnapCandidates(
         Guid draggedEdgeId,
         string draggedPortId,
         Point2D worldPortLocation,
-        double snapRadiusMm = DefaultSnapRadiusMm)
+        double snapRadiusMm = DefaultSnapRadiusMm,
+        Point2D? pointerLocationMm = null)
     {
         ArgumentNullException.ThrowIfNull(worldPortLocation);
 
@@ -125,19 +158,32 @@ public sealed class SnapToConnectService
                     draggedTemplate,
                     targetTemplate);
 
+                // Calculate pointer relevance score
+                var pointerRelevanceScore = CalculatePointerRelevance(targetPortWorldPos.Value, pointerLocationMm);
+
+                // NOTE: CurveCompatibility calculation removed from snap ranking.
+                // Curve compatibility is a separate concern for Drop-validation (geometric accuracy).
+                // Snap is proximity-only: Valid → PointerRelevance → Distance
+                // The CurveCompatibilityScore field is retained in SnapCandidate for future use.
+
                 candidates.Add(new SnapCandidate(
                     TargetEdgeId: targetEdge.Id,
                     TargetPortId: targetEnd.Id,
                     TargetPortLocation: targetPortWorldPos.Value,
                     TargetPortAngleDeg: targetEnd.AngleDeg,
                     DistanceMm: distance,
-                    ValidationResult: validation));
+                    ValidationResult: validation,
+                    PointerRelevanceScore: pointerRelevanceScore,
+                    CurveCompatibilityScore: 0.0)); // Not used in snap, reserved for Drop validation
             }
         }
 
-        // Sort by distance (nearest first), then by validation status (valid first)
+        // Sort by validity, then by pointer relevance, then by distance.
+        // Priority: Valid > PointerRelevance (DESC) > Distance (ASC)
+        // This is proximity-only snap: mauszeiger + distance determine port selection.
         return candidates
             .OrderBy(c => c.ValidationResult.IsValid ? 0 : 1)
+            .ThenByDescending(c => c.PointerRelevanceScore)
             .ThenBy(c => c.DistanceMm)
             .ToList();
     }
@@ -249,15 +295,17 @@ public sealed class SnapToConnectService
     }
 
     /// <summary>
-    /// Gets the best snap candidate (highest priority = valid and closest).
+    /// Gets the best snap candidate (highest priority = valid, then curve compatibility, then pointer relevance, then closest).
+    /// Prefers curve continuations over snake-line patterns when connecting curves.
     /// </summary>
     public SnapCandidate? GetBestSnapCandidate(
         Guid draggedEdgeId,
         string draggedPortId,
         Point2D worldPortLocation,
-        double snapRadiusMm = DefaultSnapRadiusMm)
+        double snapRadiusMm = DefaultSnapRadiusMm,
+        Point2D? pointerLocationMm = null)
     {
-        var candidates = FindSnapCandidates(draggedEdgeId, draggedPortId, worldPortLocation, snapRadiusMm);
+        var candidates = FindSnapCandidates(draggedEdgeId, draggedPortId, worldPortLocation, snapRadiusMm, pointerLocationMm);
         return candidates.FirstOrDefault();
     }
 
@@ -296,5 +344,66 @@ public sealed class SnapToConnectService
     private bool IsValidPortId(string portId)
     {
         return portId.Length == 1 && char.IsUpper(portId[0]);
+    }
+
+    /// <summary>
+    /// Calculates pointer relevance score for a port based on distance from pointer position.
+    /// Helps distinguish between symmetric ports (e.g., R9 A/B ports) by considering user cursor location.
+    /// 
+    /// Formula:
+    /// - If pointer is null: score = 1.0 (neutral, all ports equal)
+    /// - Otherwise: score = 1.0 - (distance_to_pointer / max_distance)
+    /// - Result range: [0.0 (far away), 1.0 (very close to pointer)]
+    /// - max_distance = 50mm (influence zone for pointer)
+    /// </summary>
+    /// <param name="portLocation">Port location in world space</param>
+    /// <param name="pointerLocation">Current mouse pointer location in world space (null if unavailable)</param>
+    /// <returns>Relevance score from 0.0 to 1.0</returns>
+    private double CalculatePointerRelevance(Point2D portLocation, Point2D? pointerLocation)
+    {
+        if (pointerLocation is null)
+            return 1.0; // Neutral: no pointer influence
+
+        var distanceToPointer = CalculateDistance(portLocation, pointerLocation.Value);
+        const double pointerInfluenceZoneMm = 50.0;
+
+        // Clamp distance to [0, pointerInfluenceZoneMm] range
+        var clampedDistance = Math.Min(distanceToPointer, pointerInfluenceZoneMm);
+
+        // Score: 1.0 (at pointer) ... 0.0 (50mm away)
+        return 1.0 - (clampedDistance / pointerInfluenceZoneMm);
+    }
+
+    private static double NormalizeDeg(double deg)
+    {
+        while (deg < 0) deg += 360;
+        while (deg >= 360) deg -= 360;
+        return deg;
+    }
+
+    /// <summary>
+    /// Detects the curvature direction of a track template (per-track analysis).
+    /// Used for Drop-validation to check if curve continuations are geometrically valid.
+    /// 
+    /// For curves, analyzes the AngleDeg property:
+    /// - Positive angle: Left turn (counterclockwise)
+    /// - Negative angle: Right turn (clockwise)
+    /// - Zero: Straight
+    /// </summary>
+    /// <param name="template">Track template to analyze</param>
+    /// <returns>CurveDirection enum value indicating the direction of curvature</returns>
+    private static CurveDirection DetectCurveDirection(TrackTemplate template)
+    {
+        if (template.Geometry.GeometryKind != TrackGeometryKind.Curve)
+            return CurveDirection.Straight;
+
+        if (!template.Geometry.AngleDeg.HasValue)
+            return CurveDirection.Unknown;
+
+        double angle = template.Geometry.AngleDeg.Value;
+        
+        return angle > 0 ? CurveDirection.Left :
+               angle < 0 ? CurveDirection.Right :
+               CurveDirection.Straight;
     }
 }

@@ -490,6 +490,76 @@ public sealed class SvgExporter
     }
 
     /// <summary>
+    /// Renders port labels on top of primitives SVG.
+    /// Adds text labels and circles for each port at their calculated positions.
+    /// Uses the same coordinate transformation as the primitives (Y-axis inverted).
+    /// </summary>
+    public static string AddPortLabels(
+        string svgWithPrimitives,
+        IEnumerable<TopologyGraphRenderer.RenderedPort> ports,
+        double scale = 0.35,
+        int canvasWidth = 800,
+        int canvasHeight = 600,
+        double? centerOffsetX = null,
+        double? centerOffsetY = null)
+    {
+        if (string.IsNullOrEmpty(svgWithPrimitives) || !ports.Any())
+            return svgWithPrimitives;
+
+        var portList = ports.ToList();
+        var sb = new StringBuilder();
+
+        // Canvas center
+        var centerX = canvasWidth / 2.0;
+        var centerY = canvasHeight / 2.0;
+
+        // Apply offsets matching the primitives rendering:
+        // SVG transform: translate(centerX + offsetPixelX, centerY - offsetPixelY) scale(scale, -scale)
+        var offsetPixelX = (centerOffsetX ?? 0) * scale;
+        var offsetPixelY = (centerOffsetY ?? 0) * scale;
+
+        var portSvg = new StringBuilder();
+        portSvg.AppendLine(@"    <!-- Port Labels -->");
+
+        // Define port colors by ID (A=red, B=green, C=orange, D=purple)
+        var portColors = new Dictionary<string, (string circle, string text)>
+        {
+            { "A", ("#cc0000", "#990000") },  // Red - Input
+            { "B", ("#00aa00", "#006600") },  // Green - Straight
+            { "C", ("#ff8800", "#cc6600") },  // Orange - Left/diverging
+            { "D", ("#8800ff", "#6600cc") },  // Purple - Right/diverging
+            { "E", ("#00ccff", "#0099cc") }   // Cyan - Extra
+        };
+
+        foreach (var port in portList)
+        {
+            // Transform to screen coordinates: same as primitives
+            // In SVG: translate(centerX + offsetPixelX, centerY - offsetPixelY) scale(scale, -scale)
+            // This means:
+            //   screenX = centerX + offsetPixelX + port.X * scale
+            //   screenY = centerY - offsetPixelY - port.Y * scale (Y is inverted)
+            var screenX = centerX + offsetPixelX + port.Position.X * scale;
+            var screenY = centerY - offsetPixelY - port.Position.Y * scale;
+
+            var (circleFill, textFill) = portColors.ContainsKey(port.PortId)
+                ? portColors[port.PortId]
+                : ("#999999", "#666666");
+
+            // Port circle (small dot)
+            portSvg.AppendLine($@"    <circle cx=""{F(screenX)}"" cy=""{F(screenY)}"" r=""6"" fill=""{circleFill}"" stroke=""{textFill}"" stroke-width=""2"" opacity=""0.9""/>");
+
+            // Port label text
+            portSvg.AppendLine($@"    <text x=""{F(screenX)}"" y=""{F(screenY - 12)}"" font-family=""Arial"" font-size=""14"" font-weight=""bold"" fill=""{textFill}"" text-anchor=""middle"" style=""pointer-events: none;"">{port.PortId}</text>");
+        }
+
+        // Insert port SVG before closing </svg> tag
+        var svg = svgWithPrimitives.Replace("</svg>", portSvg.ToString() + @"
+</svg>");
+
+        return svg;
+    }
+
+    /// <summary>
     /// Formats a double for SVG (invariant culture, no trailing zeros).
     /// </summary>
     private static string F(double value) => value.ToString("0.###", CultureInfo.InvariantCulture);

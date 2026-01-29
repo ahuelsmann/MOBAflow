@@ -84,6 +84,12 @@ public sealed class TrackPlanEditorViewModel
     private Point2D _selectionEnd;
 
     /// <summary>
+    /// Current mouse pointer location in world space (mm).
+    /// Used for snap algorithm to prioritize ports near cursor (especially for symmetric elements like R9).
+    /// </summary>
+    private Point2D? _currentPointerPosition;
+
+    /// <summary>
     /// Tracks which branch is active for each switch edge.
     /// Key = EdgeId, Value = active branch port id (e.g., "B" or "C" for a 3-way switch).
     /// </summary>
@@ -242,155 +248,20 @@ public sealed class TrackPlanEditorViewModel
         return disconnectCount;
     }
 
-    public void Clear()
+    /// <summary>
+    /// Updates the current pointer position (in world space) for snap algorithm.
+    /// This helps prioritize ports near the cursor, especially for symmetric elements like R9.
+    /// </summary>
+    /// <param name="pointerPositionMm">Current mouse position in world space (mm), or null if pointer is outside canvas</param>
+    public void UpdatePointerPosition(Point2D? pointerPositionMm)
     {
-        Graph.Nodes.Clear();
-        Graph.Edges.Clear();
-        Positions.Clear();
-        Rotations.Clear();
-        _selectedTrackId = null;
-        _hoveredTrackId = null;
-        _draggedTrackId = null;
-        _isDragging = false;
-        _dragGroup = null;
-        _dragGroupOffsets = null;
+        _currentPointerPosition = pointerPositionMm;
     }
 
-    // ------------------------------------------------------------
-    // Connection / Snap
-    // ------------------------------------------------------------
-
-    public bool TryConnect(Guid edgeA, string portA, Guid edgeB, string portB)
-        => ConnectionService.TryConnect(edgeA, portA, edgeB, portB);
-
-    public void Disconnect(Guid edgeId, string portId)
-        => ConnectionService.Disconnect(edgeId, portId);
-
-    public bool IsPortConnected(Guid edgeId, string portId)
-        => ConnectionService.IsConnected(edgeId, portId);
-
-    public void SnapEdgeToPort(Guid movingEdgeId, string movingPortId, Guid targetEdgeId, string targetPortId)
-    {
-        var moving = Graph.Edges.First(e => e.Id == movingEdgeId);
-        var target = Graph.Edges.First(e => e.Id == targetEdgeId);
-
-        var movingTemplate = _catalog.GetById(moving.TemplateId)!;
-        var targetTemplate = _catalog.GetById(target.TemplateId)!;
-
-        var movingEnd = movingTemplate.Ends.First(e => e.Id == movingPortId);
-        var targetEnd = targetTemplate.Ends.First(e => e.Id == targetPortId);
-
-        // For curved tracks in a loop: ports should be COLLINEAR (same direction), not opposite
-        // Target port global angle
-        double targetGlobalAngle = Rotations.GetValueOrDefault(targetEdgeId, 0) + targetEnd.AngleDeg;
-
-        // For Port A→Port B connection on curves: desired angle is the TARGET angle itself
-        // (continuing the curve in the same direction)
-        double desiredMovingGlobalAngle = targetGlobalAngle;
-
-        // Adjust rotation so moving port points in desired direction
-        double newRotation = NormalizeDeg(desiredMovingGlobalAngle - movingEnd.AngleDeg);
-        Rotations[movingEdgeId] = newRotation;
-
-        // Snap position: move so ports align
-        var targetPos = GetPortWorldPosition(targetEdgeId, targetPortId);
-        var movingOffset = GetPortOffset(movingTemplate, movingPortId, newRotation);
-
-        Positions[movingEdgeId] = new Point2D(
-            targetPos.X - movingOffset.X,
-            targetPos.Y - movingOffset.Y
-        );
-
-        System.Diagnostics.Debug.WriteLine(
-            $"SNAP: {moving.TemplateId}.{movingPortId} → {target.TemplateId}.{targetPortId} | " +
-            $"TargetAngle: {targetGlobalAngle:F1}° | DesiredAngle: {desiredMovingGlobalAngle:F1}° | NewRot: {newRotation:F1}°");
-    }
-
-    private bool TrySnapAndConnect(Guid newEdgeId, double snapDistance, out string? message)
-    {
-        var service = ConnectionService;
-        var newEdge = Graph.Edges.FirstOrDefault(e => e.Id == newEdgeId);
-        if (newEdge is null)
-        {
-            message = null;
-            return false;
-        }
-
-        var newTemplate = _catalog.GetById(newEdge.TemplateId);
-        if (newTemplate is null)
-        {
-            message = null;
-            return false;
-        }
-
-        // Find best snap across ALL port combinations
-        (Guid newEdgeId, string newPortId, Guid existingEdgeId, string existingPortId, double distance)? bestSnap = null;
-
-        foreach (var newEnd in newTemplate.Ends)
-        {
-            if (service.IsConnected(newEdgeId, newEnd.Id))
-                continue;
-
-            var newPortWorldPos = GetPortWorldPosition(newEdgeId, newEnd.Id);
-
-            foreach (var existingEdge in Graph.Edges.Where(e => e.Id != newEdgeId))
-            {
-                var existingTemplate = _catalog.GetById(existingEdge.TemplateId);
-                if (existingTemplate is null) continue;
-
-                foreach (var existingEnd in existingTemplate.Ends)
-                {
-                    if (service.IsConnected(existingEdge.Id, existingEnd.Id))
-                        continue;
-
-                    // Port compatibility: A connects to B/C, B connects to A, C connects to A
-                    if (!IsPortCompatible(newEnd.Id, existingEnd.Id))
-                        continue;
-
-                    var existingPortWorldPos = GetPortWorldPosition(existingEdge.Id, existingEnd.Id);
-                    var dx = newPortWorldPos.X - existingPortWorldPos.X;
-                    var dy = newPortWorldPos.Y - existingPortWorldPos.Y;
-                    var distance = Math.Sqrt(dx * dx + dy * dy);
-
-                    // Keep best snap across all combinations
-                    if (distance < snapDistance && (bestSnap is null || distance < bestSnap.Value.distance))
-                    {
-                        bestSnap = (newEdgeId, newEnd.Id, existingEdge.Id, existingEnd.Id, distance);
-                    }
-                }
-            }
-        }
-
-        if (bestSnap.HasValue)
-        {
-            var snap = bestSnap.Value;
-            SnapEdgeToPort(snap.newEdgeId, snap.newPortId, snap.existingEdgeId, snap.existingPortId);
-
-            if (service.TryConnect(snap.newEdgeId, snap.newPortId, snap.existingEdgeId, snap.existingPortId))
-            {
-                var targetEdge = Graph.Edges.FirstOrDefault(e => e.Id == snap.existingEdgeId);
-                var newE = Graph.Edges.FirstOrDefault(e => e.Id == snap.newEdgeId);
-                message = $"Snapped {newE?.TemplateId}.{snap.newPortId} → {targetEdge?.TemplateId}.{snap.existingPortId} ({snap.distance:F1}mm)";
-                return true;
-            }
-        }
-
-        message = null;
-        return false;
-    }
-
-    private static bool IsPortCompatible(string portA, string portB)
-    {
-        // A/B/C ports: A connects to B/C, B/C connect to A
-        bool isAPort = portA == "A";
-        bool isBPort = portB == "B";
-        bool isCPort = portB == "C";
-
-        if (isAPort)
-            return isBPort || isCPort;
-
-        return portA == "B" || portA == "C";
-    }
+    /// <summary>
+    /// Gets the current pointer position for snap algorithm.
+    /// </summary>
+    internal Point2D? GetCurrentPointerPosition() => _currentPointerPosition;
 
     // ------------------------------------------------------------
     // Section / Isolator Management
@@ -780,6 +651,9 @@ public sealed class TrackPlanEditorViewModel
             _selectionStart = position;
             _selectionEnd = position;
         }
+
+        // Store current pointer position for snap algorithm
+        _currentPointerPosition = position;
     }
 
     public void PointerMove(Point2D position, bool gridSnap, double gridSize, double snapDistance = 30.0)
@@ -1336,5 +1210,93 @@ public sealed class TrackPlanEditorViewModel
         var currentIndex = branchPorts.IndexOf(currentBranch);
         var nextIndex = (currentIndex + 1) % branchPorts.Count;
         _switchBranchStates[edgeId] = branchPorts[nextIndex];
+    }
+
+    // Helper methods for connection management
+    
+    /// <summary>
+    /// Disconnects a specific port from its connected neighbor.
+    /// </summary>
+    private void Disconnect(Guid edgeId, string portId)
+    {
+        ConnectionService.Disconnect(edgeId, portId);
+    }
+
+    /// <summary>
+    /// Snaps an edge to a specific port on another edge and attempts connection.
+    /// </summary>
+    private void SnapEdgeToPort(Guid movingEdgeId, string movingPortId, Guid targetEdgeId, string targetPortId)
+    {
+        // Snap geometry: update moving edge position/rotation to align ports
+        var movingEdge = Graph.Edges.FirstOrDefault(e => e.Id == movingEdgeId);
+        var targetEdge = Graph.Edges.FirstOrDefault(e => e.Id == targetEdgeId);
+        
+        if (movingEdge is null || targetEdge is null)
+            return;
+
+        var movingTemplate = _catalog.GetById(movingEdge.TemplateId);
+        var targetTemplate = _catalog.GetById(targetEdge.TemplateId);
+        
+        if (movingTemplate is null || targetTemplate is null)
+            return;
+
+        // Calculate target port position in world space
+        var targetPortPos = GetPortWorldPosition(targetEdge.Id, targetPortId);
+        var movingEnd = movingTemplate.Ends.FirstOrDefault(e => e.Id == movingPortId);
+        
+        if (movingEnd is null)
+            return;
+
+        // Get target end and its angle
+        var targetEnd = targetTemplate.Ends.FirstOrDefault(e => e.Id == targetPortId);
+        if (targetEnd is null)
+            return;
+
+        // Calculate required rotation for moving edge to align ports
+        double targetGlobalAngle = Rotations.GetValueOrDefault(targetEdgeId, 0) + targetEnd.AngleDeg;
+        double desiredMovingGlobalAngle = targetGlobalAngle + 180.0;
+        double newRotation = NormalizeDeg(desiredMovingGlobalAngle - movingEnd.AngleDeg);
+
+        // Calculate offset to position moving port at target port location
+        var movingPortOffset = GetPortOffset(movingTemplate, movingPortId, newRotation);
+        var newPosition = new Point2D(
+            targetPortPos.X - movingPortOffset.X,
+            targetPortPos.Y - movingPortOffset.Y);
+
+        // Apply new position and rotation
+        Positions[movingEdgeId] = newPosition;
+        Rotations[movingEdgeId] = newRotation;
+    }
+
+    /// <summary>
+    /// Attempts to snap and connect a new ghost track placement.
+    /// </summary>
+    private bool TrySnapAndConnect(Guid edgeId, double snapDistance, out string? message)
+    {
+        var snap = FindNearestSnapTarget(edgeId, snapDistance);
+        if (snap is null)
+        {
+            message = null;
+            return false;
+        }
+
+        SnapEdgeToPort(snap.MovingEdgeId, snap.MovingPortId, snap.TargetEdgeId, snap.TargetPortId);
+        
+        var connected = ConnectionService.TryConnect(
+            snap.MovingEdgeId, snap.MovingPortId,
+            snap.TargetEdgeId, snap.TargetPortId);
+
+        if (connected)
+        {
+            var movingEdge = Graph.Edges.FirstOrDefault(e => e.Id == snap.MovingEdgeId);
+            var targetEdge = Graph.Edges.FirstOrDefault(e => e.Id == snap.TargetEdgeId);
+            message = $"✓ Snapped {movingEdge?.TemplateId} to {targetEdge?.TemplateId}";
+        }
+        else
+        {
+            message = "⚠ Snap geometry applied but connection failed";
+        }
+
+        return connected;
     }
 }
