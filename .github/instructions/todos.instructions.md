@@ -5,184 +5,137 @@ applyTo: '**'
 
 # MOBAflow TODOs
 
-> Letzte Aktualisierung: 2025-01-24 Session 11 FINAL (Drag Pattern + Port Click + Toolbox Icons)
+> Letzte Aktualisierung: 2025-01-29 Session 12 (Port C Topology + Rendering Architecture Complete)
 
 ---
 
-## 🎊 SESSION 11 SUMMARY (COMPLETE)
+## 🎊 SESSION 12 SUMMARY (CURRENT)
 
-### **1. Port Hover Animation - Dual-Port Snap Feedback** ✅
-- ✅ Enhanced `RenderPortHoverEffects` with dual-port color-coding
-  - Red (Target Port), Turquoise (Moving Port), Blue (Hover)
-- ✅ Helper method `RenderSnapPort` for reusable port rendering
-- **User Benefit:** Clear visual feedback when dragging tracks near snap targets
+### **1. Port Rendering Architecture** ✅ COMPLETE
+- ✅ `TopologyGraphRenderer` - Completely rewritten with proper exit point calculations
+- ✅ `RenderAllPorts()` - Iterates all template.Ends (not just connected A→B)
+- ✅ `CalculatePortPosition()` - Computes world coordinates for each port
+- ✅ `CalculateDivergingPortPosition()` - Switch Port C branching math
+- ✅ Port C now **visually rendered** in SVG with correct position (orange circle + label)
 
-### **2. WinUI 3 Resource Deployment Fixed** ✅
-- ✅ Re-enabled `XamlControlsResources` in App.xaml
-- ✅ Fixed missing `SymbolThemeFontFamily` in MainWindow TitleBar
-- **Root Cause:** WinUI 3 requires XamlControlsResources for theme resources
+**Renderers Implemented:**
+- ✅ `CalculateCurveExit()` - Curve track exit position/angle
+- ✅ `CalculateStraightExit()` - Straight track exit
+- ✅ `CalculateSwitchExit()` - Switch main path (A→B, Port C diverging)
 
-### **3. MainWindow Initialization Restored** ✅
-- ✅ Restored `BuildNavigationFromRegistry()` call
-- ✅ Restored event handler wiring
-- **Lesson:** Always use explicit `// ...existing code...` markers
+### **2. WR Switch with Port C Visualization** ✅ COMPLETE
+- ✅ WR template integrated into R9 circle (replaces position 0)
+- ✅ Port A (red) - Entry point visible
+- ✅ Port B (green) - Straight exit visible
+- ✅ Port C (orange) - Diverging branch now visible at correct offset
 
-### **4. TrackPlanEditorViewModel DI Fixed** ✅
-- ✅ Removed obsolete `ITopologyConstraint[]` parameter
-- ✅ Added `ILayoutEngine` parameter
+**SVG Output Verified:**
+```
+r9-circle-with-wr.svg (25334 bytes)
+- Port A: (458.163, 500) - Red
+- Port B: (541.837, 500) - Green
+- Port C: (540.413, 510.828) - Orange diverging offset
+```
 
-### **5. Ghost Track Drop** ✅
-- ✅ `PointerUp()` in ViewModel behandelt jetzt `GhostPlacement`
-- ✅ `CommitGhostPlacement()` + `AddTrack()` + Snap-Connection
-- ✅ Cursor-Reset in TrackPlanPage
-- **Fixed:** Ghost Track löst sich beim Loslassen
+### **3. Port C Topology Connection** ⚠️ PARTIAL (NEEDS CLARIFICATION)
+- ✅ Port C added to `wrEdge.Connections["C"]` dictionary
+- ✅ Connected to lastR9Edge.Id and Port B
+- ❓ **QUESTION: Is this functional or just data structure?**
 
-### **6. Port Click Prevention** ✅
-- ✅ `Port_PointerPressed` handler mit `e.Handled = true`
-- ✅ Zeigt Port-Info in StatusBar
-- **Fixed:** Klick auf Port startet KEIN Track-Drag mehr
+**Current Implementation:**
+```csharp
+wrEdge.Connections["C"] = (lastR9EndNode.Value, lastR9Edge.Id.ToString(), "B");
+```
 
-### **7. Toolbox Icons Proportional** ✅
-- ✅ Gemeinsame Skala basierend auf G107 (107mm)
-- ✅ `iconScale = 56.0 / 107.0` für alle Templates
-- ✅ StrokeThickness 2.5 für bessere Sichtbarkeit
-- **Result:** G107 länger als G62 sichtbar, Proportionen korrekt
+**CRITICAL QUESTION FOR SESSION 13:**
+What should Port C actually do topologically?
+
+**Option A: Port C = Abzweigung (Branch)** 
+- Port C führt zu einem ANDEREN Gleisstück ab (z.B. Ausweichgleis)
+- Würde eine neue Edge brauchen, die von Port C startet
+- Example: `WR_PortC_Edge` → R9 oder andere Track
+
+**Option B: Port C = Alternative Route im Kreis**
+- Port C verbindet zu einem anderen R9-Stück im Kreis (nicht zum letzten)
+- Schafft eine "innere" Route parallel zum Außenkreis
+- Example: WR Port C → R9[10] Port A
+
+**Option C: Port C = Nur Visualisierung**
+- Port C wird nur angezeigt, aber ist nicht in der echten Topologie aktiv
+- Wird nur für UI/Rendering verwendet
+- Keine funktionalen Auswirkungen
+
+**Needed from User:**
+1. Welche Topologie wünscht sich der Benutzer?
+2. Soll Port C in der Kreis-Topologie eine funktionale Rolle spielen?
+3. Oder ist Port C nur visuell zum Zeigen "dies ist eine Weiche"?
 
 ---
 
-## 🔴 CRITICAL FOR SESSION 12
+## 🔴 CRITICAL FOR SESSION 13
 
-### **1. Drag-Start Pattern (BROKEN UX)** 🚨 HIGHEST PRIORITY
-**Problem:**
-- ❌ Klick startet SOFORT Drag (falsches UX)
-- ❌ Kein Threshold → versehentliches Drag
-- ❌ Unmöglich nur zu selektieren
+### **1. Port C Topology Semantics - DECISION NEEDED** 🚨 BLOCKING
+**Current State:** Port C is rendered visually but topology connection unclear
 
-**Root Cause:**
-```csharp
-// FALSCH (aktuell):
-PointerPressed → BeginMultiGhostPlacement() SOFORT
+**Required Decision Points:**
+- [ ] Determine Port C functional role
+- [ ] Implement proper Edge/Node structure if needed
+- [ ] Update TopologyGraphRenderer if new connection type needed
+- [ ] Add test cases for Port C routing
 
-// RICHTIG (Microsoft Pattern):
-PointerPressed → Merke Start-Position
-PointerMoved → if (distance > 8px) → Drag Start
-PointerReleased → Cleanup
-```
-
-**Reference:** 
-- Microsoft AutomaticDragHelper (WinUI Source Code)
-- https://github.com/UnigramDev/Unigram/blob/main/Telegram/Common/AutomaticDragHelper.cs
-- Threshold: 8px (SM_CXDRAG * 2.0 multiplier)
-
-**Solution Prepared:**
-- ✅ `DragThresholdHelper.cs` created in `WinUI\View\`
-- ⚠️ **MANUAL IMPLEMENTATION REQUIRED:**
-
-**Changes Needed in TrackPlanPage.xaml.cs:**
-
-**A) Add Field (after line 46):**
-```csharp
-private readonly DragThresholdHelper _dragThreshold = new();
-```
-
-**B) PointerPressed (replace lines 698-710):**
-```csharp
-_viewModel.PointerDown(world, true, isCtrlPressed);
-
-// Defer drag until threshold crossed (Microsoft pattern)
-if (_viewModel.SelectedTrackIds.Count > 0 && _viewModel.GhostPlacement is null)
-{
-    _dragStartWorldPos = world;
-    _dragThreshold.BeginTracking(pos);  // ← Only tracking, no drag yet!
-}
-
-GraphCanvas.CapturePointer(e.Pointer);
-RenderGraph();
-UpdatePropertiesPanel();
-```
-
-**C) PointerMoved (insert BEFORE line 818 `if (_viewModel.GhostPlacement...`):**
-```csharp
-// Check drag threshold (Microsoft AutomaticDragHelper pattern)
-if (_dragThreshold.IsWaiting && _viewModel.SelectedTrackIds.Count > 0)
-{
-    if (_dragThreshold.ShouldStartDrag(pos))
-    {
-        _dragThreshold.Reset();
-        _viewModel.BeginMultiGhostPlacement(_viewModel.SelectedTrackIds.ToList());
-        
-        ProtectedCursor = null;
-        _= _attentionControl.DimIrrelevantTracksAsync(_viewModel.SelectedTrackIds.ToList(), dimOpacity: 0.3f);
-        StatusText.Text = $"Dragging {_viewModel.SelectedTrackIds.Count} track(s)...";
-    }
-}
-```
-
-**D) PointerReleased (after line 1002 `_portHoverAffordance.ClearAllHighlightsAsync();`):**
-```csharp
-_dragThreshold.Reset();
-```
-
-**Effort:** ~15 LOC changes, **MUST BE DONE** before V-Shaped Bug
+**Files Affected if Changes Needed:**
+- `Test\TrackPlan\R9OvalTest.cs` - `CreateR9CircleWithWr()`
+- `TrackPlan.Domain\Graph\TrackEdge.cs` - Connections dictionary usage
+- `TrackPlan.Renderer\Service\TopologyGraphRenderer.cs` - Port rendering logic
 
 ---
 
-## 📋 REMAINING WORK (Session 12+)
+## 📋 BACKLOG (Session 14+)
 
-### **TIER 3 - BUG FIXES**
-- [ ] **V-Shaped Track Angle Issue** 🐛 (After Drag-Threshold fix)
-  - **Problem:** Tracks rotate 90° incorrectly when snapped
-  - **Approach:** Unit Tests → SVG Export → Visual Validation
-  - **Test Scenarios:** 0°, 45°, 90°, 135°, 180°, -45° snap angles
-  - **Investigation Targets:**
-    - `SnapToConnectService.FindSnapCandidates()` (angle calculation)
-    - `TrackPlanEditorViewModel.DropTrack()` (rotation application)
-    - `GetPortWorldPosition()` (coordinate transformation)
-    - Y-axis inversion in Canvas vs World coordinates
-  - **Effort:** TBD (diagnosis first)
+### **TIER 1 - HIGH PRIORITY**
+- [ ] **Drag-Start Pattern** (from Session 11)
+  - Status: `DragThresholdHelper.cs` prepared
+  - Needs: Manual integration in `TrackPlanPage.xaml.cs`
+  - Blocker: False drag-starts on click
 
-### **TIER 4 (FUTURE) - BACKLOG**
+- [ ] **V-Shaped Track Angle Issue** 🐛
+  - Problem: Tracks rotate 90° incorrectly when snapped
+  - Approach: Unit Tests → SVG Export → Visual Validation
+  - Status: Needs investigation after Port C resolved
+
+### **TIER 2 - MEDIUM PRIORITY**
+- [ ] **Switch Three-Way (3WS)** Port rendering
+  - Similar to WR (2 diverging ports)
+  - May have Ports D, E depending on template
+  
+- [ ] **Port Connection Visualization**
+  - Optional: Draw lines between connected ports in SVG
+  - Useful for understanding topology visually
+
+### **TIER 3 - FUTURE**
 - [ ] **SkiaSharp Integration Evaluation**
 - [ ] **Section Labels Rendering**
 - [ ] **Feedback Points Optimization**
 - [ ] **Movable Ruler Implementation**
-- [ ] **C++ Performance Library** (Only if bottleneck detected)
 
 ---
 
-## 📚 CODE QUALITY IMPROVEMENTS PENDING
+## 📚 CODE QUALITY IMPROVEMENTS
 
-### **High Priority (Session 13+):**
-- [ ] **Theme Resources in XAML**
-  - Move hardcoded colors to `{ThemeResource}`
-  - Effort: 40 LOC
-
-- [ ] **Memory Cleanup**
-  - Verify event handler leaks
-  - Add IDisposable where needed
-  - Effort: 20 LOC
-
-### **Medium Priority (Session 14+):**
-- [ ] **Performance Monitoring**
-  - Add WPR/WPA support if needed
-  - Document baselines
+### **High Priority (Session 14+):**
+- [ ] **Theme Resources in XAML** - Move hardcoded colors to `{ThemeResource}`
+- [ ] **Memory Cleanup** - Verify event handler leaks, add IDisposable where needed
+- [ ] **Documentation** - Add XML comments to new renderer methods
 
 ---
 
-## 🗂️ SESSION 11 FILES MODIFIED
+## 🗂️ SESSION 12 FILES MODIFIED
 
-| Category | Files | Status |
-|----------|-------|--------|
-| **Port Hover** | WinUI/Rendering/CanvasRenderer.cs | ✅ Dual-port colors |
-| **Port Hover** | WinUI/View/TrackPlanPage.xaml.cs | ✅ Pass SnapPreview |
-| **WinUI Resources** | WinUI/App.xaml | ✅ XamlControlsResources |
-| **WinUI Resources** | WinUI/WinUI.csproj | ✅ BuildTools re-enabled |
-| **Navigation** | WinUI/View/MainWindow.xaml.cs | ✅ Constructor restored |
-| **DI Registration** | TrackPlan.Editor/TrackPlanServiceExtensions.cs | ✅ Factory registration |
-| **ViewModel** | TrackPlan.Editor/ViewModel/TrackPlanEditorViewModel.cs | ✅ GhostPlacement in PointerUp |
-| **Port Click** | WinUI/View/TrackPlanPage.xaml.cs | ✅ Port_PointerPressed handler |
-| **Toolbox Icons** | WinUI/Rendering/CanvasRenderer.cs | ✅ Proportional scale |
-| **Drag Helper** | WinUI/View/DragThresholdHelper.cs | ✅ NEW - Microsoft pattern |
+| File | Changes | Status |
+|------|---------|--------|
+| `TrackPlan.Renderer/Service/TopologyGraphRenderer.cs` | Complete rewrite with exit calculations | ✅ COMPLETE |
+| `Test/TrackPlan/R9OvalTest.cs` | Added Port C connection logic | ✅ COMPLETE |
+| `TrackPlan.Renderer/Service/SvgExporter.cs` | Port label rendering (Y-axis fix from S11) | ✅ WORKING |
 
 ---
 
@@ -194,83 +147,72 @@ Project (User-JSON)
   └── TopologyGraph (POCO: Nodes, Edges only)
       ├── Nodes: TrackNode[]
       ├── Edges: TrackEdge[] (with Connections dict)
+      │   └── Port A, B, C (Switch) defined via StartPortId/EndPortId/Connections
       └── Rendering Pipeline:
-          ├── TopologyResolver (analyze structure)
-          ├── GeometryCalculationEngine (positions/angles)
-          ├── SkiaSharpCanvasRenderer (visualization)
-          └── CanvasRenderer (WinUI display)
+          ├── TopologyGraphRenderer (geometry type detection + port tracking)
+          ├── CurveGeometry, SwitchGeometry, StraightGeometry renderers
+          ├── Exit point calculation (Curve, Straight, Switch variants)
+          └── SvgExporter (primitives → SVG + port labels)
 ```
 
-### **Layer Architecture** ✅ COMPLETE
-```
-Domain (POCO layer) ✅
-  ├── TrackPlan.Domain (Graph/Topology) ✅ 
-  └── All POCO classes ✅
-
-Rendering/Geometry ✅
-  ├── TrackPlan.Geometry (Real module) ✅
-  ├── TrackPlan.Renderer (Visualization) ✅
-  │   └── TypeForwarding.cs (re-exports Geometry types) ✅
-  └── GeometryCalculationEngine ✅
-
-Editor (Business Logic) ✅ COMPLETE
-  ├── SnapToConnectService ✅
-  ├── TopologyResolver ✅
-  ├── TrackConnectionService ✅
-  └── TrackPlanEditorViewModel (DI-ready) ✅
-```
+### **Port Rendering Architecture** ✅ COMPLETE
+- All template Ends (ports) rendered, not just connected ones
+- Each port gets world position + angle + visual (circle + label)
+- Color-coded by port ID (A=Red, B=Green, C=Orange, D=Purple, E=Cyan)
+- Supports arbitrary port counts per template
 
 ---
 
-## 🗂️ RULES FOR CONTINUITY
+## 📖 LESSONS LEARNED (Session 12)
 
-1. ✅ Phase-Struktur: Session 10 ✅, Session 11 ✅
-2. ✅ Architektur dokumentiert (Topology-First, Layer-Based)
-3. ✅ TODOs für nächste Session klar (Drag-Threshold FIRST)
-4. ✅ Build-Status transparent (0 C# errors)
-5. ✅ Port Hover Animation implementiert (Dual-Port Feedback)
-6. ✅ DragThresholdHelper.cs erstellt (Microsoft Pattern Reference)
-7. ✅ **Empfehlung für Session 12:** Drag-Threshold implementieren → dann V-Shaped Bug
+1. **Port Rendering Separation:**
+   - Visual rendering ≠ Topological function
+   - Port C can be drawn without it being an active route yet
 
----
+2. **Exit Point Calculations:**
+   - Each geometry type (Curve, Straight, Switch) needs custom exit logic
+   - Critical for multi-edge topology chaining
 
-## 📖 LESSONS LEARNED (Session 11)
+3. **Connections Dictionary Usage:**
+   - Current use is unclear - may need refactoring based on intended Port C role
+   - Tuple structure: `(NodeId, ConnectedEdgeId?, ConnectedPortId?)`
 
-### **UX Pattern Research:**
-1. **Microsoft AutomaticDragHelper** (UnigramDev/Unigram)
-   - Source: WinUI `dxaml\xcp\dxaml\lib\AutomaticDragHelper.cpp`
-   - Threshold: `SM_CXDRAG * 2.0 = 8 pixels`
-   - Pattern: Pressed → Track → Moved > Threshold → Start Drag
-
-2. **Port Click Handling:**
-   - Ports should have `PointerPressed` with `e.Handled = true`
-   - Prevents event bubbling to Canvas
-   - Allows click-to-inspect without dragging
-
-3. **Toolbox Icon Scaling:**
-   - Use COMMON scale for all templates
-   - Reference: Longest track (G107 = 107mm)
-   - Result: Proportional visual representation
-
-### **Anti-Patterns Identified:**
-- ❌ Immediate drag on PointerPressed
-- ❌ No threshold → accidental drags
-- ❌ Per-icon scaling → destroys proportions
-- ❌ Port clicks bubble to Canvas → unwanted drag
+4. **Template Port Variations:**
+   - Curves: Usually 2 ports (A, B)
+   - Switches: Usually 3 ports (A, B, C)
+   - Three-way: Usually 4 ports (A, B, C, D)
+   - Architecture now supports arbitrary counts
 
 ---
 
-## 🚀 SESSION 12 FOCUS
+## ❓ QUESTIONS FOR USER (Session 13)
 
-**Primary Goal:** Implement Microsoft Drag-Threshold Pattern
+**Before implementing further Port C changes:**
 
-**Why First:**
-- Blocks proper UX (can't click without dragging)
-- Reference implementation available (DragThresholdHelper.cs)
-- Small change (4 locations, ~15 LOC total)
-- Unblocks clean testing for V-Shaped Bug
+1. **Port C Functional Role:**
+   - Should Port C be an active routing choice in the topology?
+   - Or just a visual indicator that this is a switch?
 
-**Then:** V-Shaped Track Angle Bug (Unit Tests + SVG Validation)
+2. **Topology Structure:**
+   - If Port C routes somewhere, where should it go?
+   - Should it be a separate Edge (alternative path)?
+   - Or connect within the existing R9 circle?
+
+3. **Test Validation:**
+   - How should we validate Port C routing is correct?
+   - SVG visualization? Topology traversal test? Both?
+
+4. **Future Switch Types:**
+   - After Port C, should we support 3-way switches (3WS)?
+   - Should rendering generalize to N-port switches?
+
+---
+
+## 🚀 NEXT SESSION ENTRY POINT
+
+**Start with:** User answers to Port C topology questions
+**Then:** Implement proper Port C routing based on answers
+**Finally:** Add tests to validate Port C functionality
 
 
 
