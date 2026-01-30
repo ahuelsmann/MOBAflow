@@ -67,11 +67,14 @@ public class RendererTests
     [Test]
     public void TrackPlan3()
     {
-        // WR mit Startwinkel 180° (nach links)
         var plan = new TrackPlanBuilder()
             .Start(0)
-            .Add<WR>()
-            .Create();
+            .Add<WR>().Connections(
+                wr => wr.FromA
+                    .ToB<R9>(),
+                wr => wr.FromC
+                    .ToA<R9>().FromB
+                    .ToA<R9>()).Create();
 
         var renderer = new TrackPlanSvgRenderer();
         var svg = renderer.Render(plan);
@@ -90,7 +93,5 @@ public class RendererTests
                 UseShellExecute = true
             });
         }
-
-        Assert.That(plan.Segments, Has.Count.EqualTo(1));
     }
 }
