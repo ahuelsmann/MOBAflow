@@ -8,22 +8,6 @@
         <Description>Visualisierung, WorldTransform, Layout-Export.</Description>
     </PropertyGroup>
     <ItemGroup>
-      <Compile Remove="Geometry\**" />
-      <Compile Remove="World\**" />
-      <EmbeddedResource Remove="Geometry\**" />
-      <EmbeddedResource Remove="World\**" />
-      <None Remove="Geometry\**" />
-      <None Remove="World\**" />
-    </ItemGroup>
-    <ItemGroup>
-      <PackageReference Include="SkiaSharp" />
-    </ItemGroup>
-    <ItemGroup>
-      <ProjectReference Include="..\TrackLibrary.Base\TrackLibrary.Base.csproj" />
-      <ProjectReference Include="..\TrackPlan.Domain\TrackPlan.Domain.csproj" />
-      <ProjectReference Include="..\TrackPlan.Geometry\TrackPlan.Geometry.csproj" />
-    </ItemGroup>
-    <ItemGroup>
-      <Folder Include="Effects\" />
+        <ProjectReference Include="..\TrackLibrary.PikoA\TrackLibrary.PikoA.csproj" />
     </ItemGroup>
 </Project>

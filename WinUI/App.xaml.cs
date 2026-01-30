@@ -21,10 +21,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
 
 using Moba.SharedUI.Service;
-using Moba.SharedUI.Shell;
-using Moba.TrackLibrary.Base.TrackSystem;
-using Moba.TrackLibrary.PikoA.Catalog;
-using Moba.TrackPlan.Editor;
 
 using Serilog;
 using Serilog.Events;
@@ -32,6 +28,7 @@ using Serilog.Events;
 using Service;
 
 using SharedUI.Interface;
+using SharedUI.Shell;
 using SharedUI.ViewModel;
 
 using Sound;
@@ -61,20 +58,20 @@ public partial class App
         try
         {
             System.Diagnostics.Debug.WriteLine("[App] Constructor START");
-            
+
             Services = ConfigureServices();
             System.Diagnostics.Debug.WriteLine("[App] Services configured");
-            
+
             _logger = Services.GetRequiredService<ILogger<App>>();
             System.Diagnostics.Debug.WriteLine("[App] Logger resolved");
-            
+
             InitializeComponent();
             System.Diagnostics.Debug.WriteLine("[App] InitializeComponent completed");
 
             // Register global UnhandledException handler for better diagnostics
             UnhandledException += OnUnhandledException;
             System.Diagnostics.Debug.WriteLine("[App] UnhandledException handler registered");
-            
+
             System.Diagnostics.Debug.WriteLine("[App] Constructor COMPLETE");
         }
         catch (Exception ex)
@@ -86,7 +83,7 @@ public partial class App
         }
     }
 
-    private void OnUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
+    private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
     {
         // Log the exception with full details before the debugger breaks
         var message = $"UNHANDLED EXCEPTION: {e.Exception.GetType().Name}: {e.Exception.Message}";
@@ -278,18 +275,6 @@ public partial class App
         services.AddSingleton<ISoundPlayer, WindowsSoundPlayer>();
         services.AddSingleton<SpeechHealthCheck>();
         services.AddSingleton<HealthCheckService>();
-
-        // TrackPlan.Editor Services (new TopologyGraph-based architecture)
-        // Replaces old TrackPlan.Domain/Service/Renderer architecture
-
-        // IMPORTANT: Register ITrackCatalog BEFORE calling AddTrackPlanServices()
-        // This allows supporting different track systems (PikoA, Märklin, Fleischmann, etc.)
-        services.AddSingleton<ITrackCatalog, PikoATrackCatalog>();
-
-        services.AddTrackPlanServices();
-
-        // WinUI Rendering Bridge (UI layer - after TrackPlan services are registered)
-        services.AddSingleton<Moba.WinUI.Rendering.TrackPlanRenderingService>();
 
         // ViewModels
         // Note: Wrapper ViewModels (SolutionViewModel, ProjectViewModel, JourneyViewModel, etc.)

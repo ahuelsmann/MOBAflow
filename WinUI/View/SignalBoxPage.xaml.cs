@@ -645,9 +645,9 @@ public sealed partial class SignalBoxPage : Page
     {
         element.SwitchPosition = element.SwitchPosition switch
         {
-            Domain.SwitchPosition.Straight => Domain.SwitchPosition.DivergingLeft,
-            Domain.SwitchPosition.DivergingLeft => Domain.SwitchPosition.DivergingRight,
-            _ => Domain.SwitchPosition.Straight
+            SwitchPosition.Straight => SwitchPosition.DivergingLeft,
+            SwitchPosition.DivergingLeft => SwitchPosition.DivergingRight,
+            _ => SwitchPosition.Straight
         };
         RefreshElementVisual(element);
         UpdatePropertiesPanel();
@@ -657,10 +657,10 @@ public sealed partial class SignalBoxPage : Page
     {
         element.SignalAspect = element.SignalAspect switch
         {
-            Domain.SignalAspect.Hp0 => Domain.SignalAspect.Ks1,
-            Domain.SignalAspect.Ks1 => Domain.SignalAspect.Ks2,
-            Domain.SignalAspect.Ks2 => Domain.SignalAspect.Hp0,
-            _ => Domain.SignalAspect.Hp0
+            SignalAspect.Hp0 => SignalAspect.Ks1,
+            SignalAspect.Ks1 => SignalAspect.Ks2,
+            SignalAspect.Ks2 => SignalAspect.Hp0,
+            _ => SignalAspect.Hp0
         };
         RefreshElementVisual(element);
         UpdatePropertiesPanel();

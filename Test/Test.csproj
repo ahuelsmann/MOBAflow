@@ -9,11 +9,6 @@
         <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
     </PropertyGroup>
     <ItemGroup>
-      <Compile Remove="WinUI\Rendering\**" />
-      <EmbeddedResource Remove="WinUI\Rendering\**" />
-      <None Remove="WinUI\Rendering\**" />
-    </ItemGroup>
-    <ItemGroup>
         <PackageReference Include="coverlet.collector">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -37,10 +32,7 @@
         <ProjectReference Include="..\Backend\Backend.csproj" />
         <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
         <ProjectReference Include="..\Common\Common.csproj" />
-        <ProjectReference Include="..\TrackPlan.Domain\TrackPlan.Domain.csproj" />
-        <ProjectReference Include="..\TrackPlan.Geometry\TrackPlan.Geometry.csproj" />
         <ProjectReference Include="..\TrackPlan.Renderer\TrackPlan.Renderer.csproj" />
-        <ProjectReference Include="..\TrackPlan.Editor\TrackPlan.Editor.csproj" />
         <ProjectReference Include="..\TrackLibrary.PikoA\TrackLibrary.PikoA.csproj" />
         <ProjectReference Include="..\Sound\Sound.csproj" />
     </ItemGroup>

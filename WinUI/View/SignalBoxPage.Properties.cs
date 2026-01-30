@@ -152,7 +152,7 @@ public sealed partial class SignalBoxPage
     {
         if (SelectedElement is not SbSignalViewModel sig || sender is not Border { Tag: string aspectStr }) return;
 
-        if (System.Enum.TryParse<Domain.SignalAspect>(aspectStr, out var aspect))
+        if (Enum.TryParse<Domain.SignalAspect>(aspectStr, out var aspect))
         {
             _blinkingLeds.Clear();
             sig.SignalAspect = aspect;

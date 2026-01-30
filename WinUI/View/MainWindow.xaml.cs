@@ -55,8 +55,8 @@ public sealed partial class MainWindow
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine("[MainWindow] Constructor START");
-            
+            Debug.WriteLine("[MainWindow] Constructor START");
+
             ViewModel = viewModel;
             _navigationService = navigationService;
             _healthCheckService = healthCheckService;
@@ -64,12 +64,12 @@ public sealed partial class MainWindow
             _navigationRegistry = navigationRegistry;
             _navigationItemFactory = new NavigationItemFactory(appSettings);
             _skinProvider = skinProvider;
-            
-            System.Diagnostics.Debug.WriteLine("[MainWindow] Dependencies assigned");
+
+            Debug.WriteLine("[MainWindow] Dependencies assigned");
 
             InitializeComponent();
-            
-            System.Diagnostics.Debug.WriteLine("[MainWindow] InitializeComponent completed");
+
+            Debug.WriteLine("[MainWindow] InitializeComponent completed");
 
             // Set DataContext for Binding (needed for NavigationView.MenuItems which don't support x:Bind)
             RootGrid.DataContext = this;
@@ -81,8 +81,8 @@ public sealed partial class MainWindow
             AppTitleBar.Subtitle = $"flow  {AppVersion}";
 
             // Set taskbar/window icon
-            var iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "mobaflow-icon.ico");
-            if (System.IO.File.Exists(iconPath))
+            var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "mobaflow-icon.ico");
+            if (File.Exists(iconPath))
             {
                 AppWindow.SetIcon(iconPath);
             }
@@ -105,7 +105,7 @@ public sealed partial class MainWindow
 
             // Build navigation items from registry (replaces hardcoded XAML items)
             BuildNavigationFromRegistry();
-            System.Diagnostics.Debug.WriteLine("[MainWindow] Navigation built");
+            Debug.WriteLine("[MainWindow] Navigation built");
 
             // Initialize NavigationService with ContentFrame (async initialization)
             _ = InitializeNavigationAsync();
@@ -128,13 +128,13 @@ public sealed partial class MainWindow
 
             // Initial health status
             ViewModel.UpdateHealthStatus(_healthCheckService.SpeechServiceStatus);
-            
-            System.Diagnostics.Debug.WriteLine("[MainWindow] Constructor COMPLETE");
+
+            Debug.WriteLine("[MainWindow] Constructor COMPLETE");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[MainWindow] FATAL ERROR: {ex.GetType().Name}: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"[MainWindow] StackTrace: {ex.StackTrace}");
+            Debug.WriteLine($"[MainWindow] FATAL ERROR: {ex.GetType().Name}: {ex.Message}");
+            Debug.WriteLine($"[MainWindow] StackTrace: {ex.StackTrace}");
             throw;
         }
     }

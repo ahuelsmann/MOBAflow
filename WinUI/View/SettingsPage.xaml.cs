@@ -1,12 +1,13 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
+using Microsoft.UI.Xaml.Controls;
+
 using Service;
 
 using SharedUI.ViewModel;
 
 using Windows.ApplicationModel.DataTransfer;
-using Microsoft.UI.Xaml.Controls;
 
 /// <summary>
 /// Settings page for application-wide configuration.
@@ -32,7 +33,7 @@ public sealed partial class SettingsPage
 
     private void AzureSpeechSetupButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        var parent = this.Parent;
+        var parent = Parent;
         while (parent != null)
         {
             if (parent is Frame frame)

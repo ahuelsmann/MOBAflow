@@ -7,7 +7,4 @@
         <Nullable>enable</Nullable>
         <Description>Base track system library providing reusable track model classes for all track systems</Description>
     </PropertyGroup>
-    <ItemGroup>
-        <PackageReference Include="MathNet.Numerics" />
-    </ItemGroup>
 </Project>

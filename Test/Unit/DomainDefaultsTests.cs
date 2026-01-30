@@ -123,7 +123,6 @@ public class ProjectDefaultsTests
         Assert.That(project.Workflows, Is.Empty);
         Assert.That(project.Journeys, Is.Not.Null);
         Assert.That(project.Journeys, Is.Empty);
-        Assert.That(project.TrackPlan, Is.Null);
         Assert.That(project.SignalBoxPlan, Is.Null);
     }
 }

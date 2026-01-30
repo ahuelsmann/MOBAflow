@@ -4,7 +4,8 @@
 namespace Moba.WinUI.Service;
 
 using Microsoft.Extensions.DependencyInjection;
-using Moba.SharedUI.Shell;
+
+using SharedUI.Shell;
 
 /// <summary>
 /// Factory for creating pages with dependency injection support.

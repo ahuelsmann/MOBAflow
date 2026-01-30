@@ -1,6 +1,9 @@
 namespace Moba.TrackLibrary.PikoA;
 
-public class R1 : IArticle
+using Base;
+
+public class R1 : Curved
 {
-    public PikoA Code { get; set; } = PikoA.R1;
+    public double ArcInDegree { get; set; } = 30;
+    public int RadiusInMm { get; set; } = 360;
 }

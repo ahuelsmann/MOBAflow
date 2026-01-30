@@ -2,13 +2,19 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Action;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
 using Domain.Enum;
+
 using Interface;
-using Moba.Sound;
+
 using Service;
+
+using Sound;
+
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 
@@ -138,15 +144,15 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
         _model.Actions.Add(newAction);
 
         var actionVM = CreateViewModelForAction(newAction);
-        
+
         // Subscribe to PropertyChanged events from new action
         if (actionVM is WorkflowActionViewModel workflowActionVM)
         {
             workflowActionVM.PropertyChanged += OnActionPropertyChanged;
         }
-        
+
         Actions.Add(actionVM);
-        
+
         // Trigger PropertyChanged for Actions collection to notify auto-save
         OnPropertyChanged(nameof(Actions));
     }
@@ -169,11 +175,11 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
             {
                 workflowActionVM.PropertyChanged -= OnActionPropertyChanged;
             }
-            
+
             _model.Actions.Remove(actionModel);
             Actions.Remove(actionVM);
             UpdateActionNumbers();
-            
+
             // Trigger PropertyChanged for Actions collection to notify auto-save
             OnPropertyChanged(nameof(Actions));
         }

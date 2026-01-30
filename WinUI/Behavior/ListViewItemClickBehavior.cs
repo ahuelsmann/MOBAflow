@@ -1,45 +1,44 @@
-namespace Moba.WinUI.Behavior
+namespace Moba.WinUI.Behavior;
+
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.Xaml.Interactivity;
+
+using System.Windows.Input;
+
+/// <summary>
+/// Custom behavior for ListView ItemClick that passes the clicked item directly.
+/// This avoids the issue where CommandParameter binding returns null.
+/// </summary>
+public sealed class ListViewItemClickBehavior : Behavior<ListView>
 {
-    using Microsoft.UI.Xaml;
-    using Microsoft.UI.Xaml.Controls;
-    using Microsoft.Xaml.Interactivity;
+    public static readonly DependencyProperty CommandProperty =
+        DependencyProperty.Register(
+            nameof(Command),
+            typeof(ICommand),
+            typeof(ListViewItemClickBehavior),
+            new PropertyMetadata(null));
 
-    using System.Windows.Input;
-
-    /// <summary>
-    /// Custom behavior for ListView ItemClick that passes the clicked item directly.
-    /// This avoids the issue where CommandParameter binding returns null.
-    /// </summary>
-    public sealed class ListViewItemClickBehavior : Behavior<ListView>
+    public ICommand? Command
     {
-        public static readonly DependencyProperty CommandProperty =
-            DependencyProperty.Register(
-                nameof(Command),
-                typeof(ICommand),
-                typeof(ListViewItemClickBehavior),
-                new PropertyMetadata(null));
+        get => (ICommand?)GetValue(CommandProperty);
+        set => SetValue(CommandProperty, value);
+    }
 
-        public ICommand? Command
-        {
-            get => (ICommand?)GetValue(CommandProperty);
-            set => SetValue(CommandProperty, value);
-        }
+    protected override void OnAttached()
+    {
+        base.OnAttached();
+        AssociatedObject?.ItemClick += OnListViewItemClick;
+    }
 
-        protected override void OnAttached()
-        {
-            base.OnAttached();
-            AssociatedObject?.ItemClick += OnListViewItemClick;
-        }
+    protected override void OnDetaching()
+    {
+        base.OnDetaching();
+        AssociatedObject?.ItemClick -= OnListViewItemClick;
+    }
 
-        protected override void OnDetaching()
-        {
-            base.OnDetaching();
-            AssociatedObject?.ItemClick -= OnListViewItemClick;
-        }
-
-        private void OnListViewItemClick(object sender, ItemClickEventArgs e)
-        {
-            Command?.Execute(e.ClickedItem);
-        }
+    private void OnListViewItemClick(object sender, ItemClickEventArgs e)
+    {
+        Command?.Execute(e.ClickedItem);
     }
 }

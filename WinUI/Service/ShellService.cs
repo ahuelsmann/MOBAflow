@@ -3,7 +3,7 @@
 
 namespace Moba.WinUI.Service;
 
-using Moba.SharedUI.Shell;
+using SharedUI.Shell;
 
 /// <summary>
 /// Manages shell regions and content placement for WinUI.

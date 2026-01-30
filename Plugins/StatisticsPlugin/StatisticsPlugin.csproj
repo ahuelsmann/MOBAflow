@@ -12,7 +12,6 @@
         <EnableDynamicLoading>true</EnableDynamicLoading>
         <OutputType>Library</OutputType>
         <EnablePriGeneration>false</EnablePriGeneration>
-        
         <!-- Disable MSIX packaging for plugins during development -->
         <EnableMsixTooling>false</EnableMsixTooling>
         <AppxPackage>false</AppxPackage>
@@ -20,7 +19,6 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.WindowsAppSDK" />
         <PackageReference Include="CommunityToolkit.Mvvm" />
-        
         <!-- Exclude MSIX BuildTools to work around missing makepri.exe issue -->
         <PackageReference Include="Microsoft.Windows.SDK.BuildTools.MSIX" ExcludeAssets="all" />
     </ItemGroup>

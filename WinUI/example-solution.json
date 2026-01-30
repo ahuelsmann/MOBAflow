@@ -1,308 +1,308 @@
 {
-  "name": "Example Solution",
-  "projects": [
-    {
-      "name": "myMOBA",
-      "speakerEngines": [
+    "name": "Example Solution",
+    "projects": [
         {
-          "name": "Microsoft.CognitiveServices.Speech",
-          "type": "Microsoft.CognitiveServices.Speech",
-          "settings": {}
-        }
-      ],
-      "voices": [
-        {
-          "name": "ElkeNeural",
-          "prosodyRate": 0.0
-        },
-        {
-          "name": "ConradNeural",
-          "prosodyRate": 0.0
-        }
-      ],
-      "locomotives": [
-        {
-          "id": "f1e2d3c4-b5a6-7890-1234-567890abcdef",
-          "name": "BR 146 - DB Regio",
-          "pos": 1,
-          "digitalAddress": 101,
-          "manufacturer": "Piko",
-          "articleNumber": "51582",
-          "series": "146",
-          "colorPrimary": 4,
-          "colorSecondary": 6,
-          "isPushing": false,
-          "details": {
-            "axles": 4,
-            "epoch": 6,
-            "railroadCompany": "DB Regio",
-            "power": 1,
-            "digital": 2,
-            "description": "Electric locomotive for passenger services"
-          },
-          "invoiceDate": "2024-03-15T00:00:00",
-          "deliveryDate": "2024-03-20T00:00:00"
-        },
-        {
-          "id": "a1b2c3d4-e5f6-7890-1234-567890fedcba",
-          "name": "BR 64 - Steam Loco",
-          "pos": 2,
-          "digitalAddress": 64,
-          "manufacturer": "Piko",
-          "articleNumber": "50600",
-          "series": "BR 64",
-          "colorPrimary": 1,
-          "isPushing": false,
-          "details": {
-            "axles": 3,
-            "epoch": 3,
-            "railroadCompany": "DB",
-            "power": 0,
-            "digital": 2,
-            "description": "Steam locomotive for branch line services"
-          },
-          "invoiceDate": "2023-11-10T00:00:00",
-          "deliveryDate": "2023-11-18T00:00:00"
-        }
-      ],
-      "passengerWagons": [
-        {
-          "wagonClass": 1,
-          "id": "b2c3d4e5-f6a7-8901-2345-678901cdefab",
-          "name": "Avmz 107 - 1st Class",
-          "pos": 1,
-          "manufacturer": "Piko",
-          "articleNumber": "58520",
-          "series": "Avmz 107",
-          "colorPrimary": 4,
-          "colorSecondary": 6,
-          "details": {
-            "axles": 2,
-            "epoch": 5,
-            "railroadCompany": "DB Regio",
-            "description": "First class passenger coach"
-          }
-        }
-      ],
-      "goodsWagons": [
-        {
-          "cargo": 1,
-          "id": "d4e5f6a7-b8c9-0123-4567-890123efabcd",
-          "name": "Container Wagon Sgns",
-          "pos": 1,
-          "manufacturer": "Piko",
-          "articleNumber": "54771",
-          "series": "Sgns",
-          "colorPrimary": 8,
-          "details": {
-            "axles": 4,
-            "epoch": 6,
-            "railroadCompany": "DB Cargo",
-            "description": "Container flat wagon"
-          }
-        }
-      ],
-      "trains": [
-        {
-          "id": "e2d3c4b5-a6f7-8901-2345-678901bcdef0",
-          "isDoubleTraction": false,
-          "name": "RE 78",
-          "description": "Regional Express to Minden",
-          "trainType": 1,
-          "serviceType": 1,
-          "locomotiveIds": [
-            "f1e2d3c4-b5a6-7890-1234-567890abcdef"
-          ],
-          "wagonIds": [
-            "b2c3d4e5-f6a7-8901-2345-678901cdefab"
-          ]
-        }
-      ],
-      "workflows": [
-        {
-          "id": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
-          "name": "Arrival Main Station",
-          "description": "Plays announcement on station arrival",
-          "actions": [
-            {
-              "id": "131d050b-a36c-4fb1-8f1b-370869537c5a",
-              "name": "Gong",
-              "number": 1,
-              "type": 2,
-              "delayAfterMs": 0,
-              "parameters": {
-                "FilePath": "C:\\Repo\\ahuelsmann\\MOBAflow\\Sound\\Resources\\Sounds\\273231__gollamar__announcement-04.wav"
-              }
-            },
-            {
-              "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
-              "name": "Arrival Announcement",
-              "number": 2,
-              "type": 0,
-              "delayAfterMs": 0,
-              "parameters": {
-                "Rate": -1
-              }
+            "name": "myMOBA",
+            "speakerEngines": [
+                {
+                    "name": "Microsoft.CognitiveServices.Speech",
+                    "type": "Microsoft.CognitiveServices.Speech",
+                    "settings": {}
+                }
+            ],
+            "voices": [
+                {
+                    "name": "ElkeNeural",
+                    "prosodyRate": 0.0
+                },
+                {
+                    "name": "ConradNeural",
+                    "prosodyRate": 0.0
+                }
+            ],
+            "locomotives": [
+                {
+                    "id": "f1e2d3c4-b5a6-7890-1234-567890abcdef",
+                    "name": "BR 146 - DB Regio",
+                    "pos": 1,
+                    "digitalAddress": 101,
+                    "manufacturer": "Piko",
+                    "articleNumber": "51582",
+                    "series": "146",
+                    "colorPrimary": 4,
+                    "colorSecondary": 6,
+                    "isPushing": false,
+                    "details": {
+                        "axles": 4,
+                        "epoch": 6,
+                        "railroadCompany": "DB Regio",
+                        "power": 1,
+                        "digital": 2,
+                        "description": "Electric locomotive for passenger services"
+                    },
+                    "invoiceDate": "2024-03-15T00:00:00",
+                    "deliveryDate": "2024-03-20T00:00:00"
+                },
+                {
+                    "id": "a1b2c3d4-e5f6-7890-1234-567890fedcba",
+                    "name": "BR 64 - Steam Loco",
+                    "pos": 2,
+                    "digitalAddress": 64,
+                    "manufacturer": "Piko",
+                    "articleNumber": "50600",
+                    "series": "BR 64",
+                    "colorPrimary": 1,
+                    "isPushing": false,
+                    "details": {
+                        "axles": 3,
+                        "epoch": 3,
+                        "railroadCompany": "DB",
+                        "power": 0,
+                        "digital": 2,
+                        "description": "Steam locomotive for branch line services"
+                    },
+                    "invoiceDate": "2023-11-10T00:00:00",
+                    "deliveryDate": "2023-11-18T00:00:00"
+                }
+            ],
+            "passengerWagons": [
+                {
+                    "wagonClass": 1,
+                    "id": "b2c3d4e5-f6a7-8901-2345-678901cdefab",
+                    "name": "Avmz 107 - 1st Class",
+                    "pos": 1,
+                    "manufacturer": "Piko",
+                    "articleNumber": "58520",
+                    "series": "Avmz 107",
+                    "colorPrimary": 4,
+                    "colorSecondary": 6,
+                    "details": {
+                        "axles": 2,
+                        "epoch": 5,
+                        "railroadCompany": "DB Regio",
+                        "description": "First class passenger coach"
+                    }
+                }
+            ],
+            "goodsWagons": [
+                {
+                    "cargo": 1,
+                    "id": "d4e5f6a7-b8c9-0123-4567-890123efabcd",
+                    "name": "Container Wagon Sgns",
+                    "pos": 1,
+                    "manufacturer": "Piko",
+                    "articleNumber": "54771",
+                    "series": "Sgns",
+                    "colorPrimary": 8,
+                    "details": {
+                        "axles": 4,
+                        "epoch": 6,
+                        "railroadCompany": "DB Cargo",
+                        "description": "Container flat wagon"
+                    }
+                }
+            ],
+            "trains": [
+                {
+                    "id": "e2d3c4b5-a6f7-8901-2345-678901bcdef0",
+                    "isDoubleTraction": false,
+                    "name": "RE 78",
+                    "description": "Regional Express to Minden",
+                    "trainType": 1,
+                    "serviceType": 1,
+                    "locomotiveIds": [
+                        "f1e2d3c4-b5a6-7890-1234-567890abcdef"
+                    ],
+                    "wagonIds": [
+                        "b2c3d4e5-f6a7-8901-2345-678901cdefab"
+                    ]
+                }
+            ],
+            "workflows": [
+                {
+                    "id": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+                    "name": "Arrival Main Station",
+                    "description": "Plays announcement on station arrival",
+                    "actions": [
+                        {
+                            "id": "131d050b-a36c-4fb1-8f1b-370869537c5a",
+                            "name": "Gong",
+                            "number": 1,
+                            "type": 2,
+                            "delayAfterMs": 0,
+                            "parameters": {
+                                "FilePath": "C:\\Repo\\ahuelsmann\\MOBAflow\\Sound\\Resources\\Sounds\\273231__gollamar__announcement-04.wav"
+                            }
+                        },
+                        {
+                            "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+                            "name": "Arrival Announcement",
+                            "number": 2,
+                            "type": 0,
+                            "delayAfterMs": 0,
+                            "parameters": {
+                                "Rate": -1
+                            }
+                        }
+                    ],
+                    "executionMode": 1,
+                    "inPort": 0,
+                    "isUsingTimerToIgnoreFeedbacks": false,
+                    "intervalForTimerToIgnoreFeedbacks": 0
+                }
+            ],
+            "journeys": [
+                {
+                    "id": "c1d2e3f4-a5b6-7890-1234-567890abcdef",
+                    "name": "RE 78 (Porta-Express)",
+                    "description": "Regional Express from Bielefeld to Minden",
+                    "text": "Next stop: {StationName}. Exit on the {StationIsExitOnLeft}.",
+                    "stations": [
+                        {
+                            "id": "d1e2f3a4-b5c6-7890-1234-567890abcdef",
+                            "name": "Bielefeld Hauptbahnhof",
+                            "inPort": 1,
+                            "numberOfLapsToStop": 2,
+                            "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+                            "isExitOnLeft": true,
+                            "track": 1,
+                            "departure": "2025-12-29T08:01:00+01:00",
+                            "connections": []
+                        },
+                        {
+                            "id": "d2e3f4a5-b6c7-8901-2345-678901bcdef0",
+                            "name": "Herford",
+                            "inPort": 2,
+                            "numberOfLapsToStop": 2,
+                            "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+                            "isExitOnLeft": false,
+                            "track": 1,
+                            "arrival": "2025-12-29T08:15:00+01:00",
+                            "departure": "2025-12-29T08:17:00+01:00",
+                            "connections": []
+                        },
+                        {
+                            "id": "d3e4f5a6-b7c8-9012-3456-789012cdef01",
+                            "name": "Minden (Westf)",
+                            "inPort": 3,
+                            "numberOfLapsToStop": 2,
+                            "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+                            "isExitOnLeft": true,
+                            "track": 1,
+                            "arrival": "2025-12-29T08:45:00+01:00",
+                            "connections": []
+                        }
+                    ],
+                    "inPort": 1,
+                    "isUsingTimerToIgnoreFeedbacks": true,
+                    "intervalForTimerToIgnoreFeedbacks": 20,
+                    "behaviorOnLastStop": 1,
+                    "firstPos": 0
+                }
+            ],
+            "signalBoxPlan": {
+                "id": "f1d3dd73-dcd5-4faa-b180-e687659598ea",
+                "name": "Stellwerk",
+                "gridWidth": 20,
+                "gridHeight": 12,
+                "cellSize": 60,
+                "elements": [
+                    {
+                        "$type": "TrackCurve",
+                        "id": "f364d7d8-8fc3-4217-a84f-31e9805a88b2",
+                        "x": 2,
+                        "y": 3,
+                        "rotation": 270,
+                        "name": ""
+                    },
+                    {
+                        "$type": "TrackStraight",
+                        "id": "f52c9e75-8a52-4c3c-9bd4-f88cb8fb8903",
+                        "x": 3,
+                        "y": 3,
+                        "rotation": 0,
+                        "name": ""
+                    },
+                    {
+                        "$type": "TrackStraight",
+                        "id": "3bcaa969-8d75-447c-9bf8-a5540d274de4",
+                        "x": 4,
+                        "y": 3,
+                        "rotation": 0,
+                        "name": ""
+                    },
+                    {
+                        "$type": "TrackCurve",
+                        "id": "d2d86731-9122-4c16-8e08-00fdef17989c",
+                        "x": 5,
+                        "y": 3,
+                        "rotation": 0,
+                        "name": ""
+                    },
+                    {
+                        "$type": "Signal",
+                        "address": 1,
+                        "signalSystem": "Ks",
+                        "signalAspect": "Ks1Blink",
+                        "id": "1837507c-6f91-47cc-a825-0cedf92e4f89",
+                        "x": 3,
+                        "y": 2,
+                        "rotation": 0,
+                        "name": ""
+                    },
+                    {
+                        "$type": "Detector",
+                        "feedbackAddress": 1,
+                        "id": "89a8b660-1623-4edb-99b5-c0cf01afba72",
+                        "x": 2,
+                        "y": 4,
+                        "rotation": 90,
+                        "name": ""
+                    },
+                    {
+                        "$type": "TrackStraight",
+                        "id": "339647eb-4cc2-41d6-8517-e540f6c16e5c",
+                        "x": 5,
+                        "y": 4,
+                        "rotation": 90,
+                        "name": ""
+                    },
+                    {
+                        "$type": "TrackCurve",
+                        "id": "ad566a5c-60be-429a-bff4-720c93c9854a",
+                        "x": 5,
+                        "y": 5,
+                        "rotation": 90,
+                        "name": ""
+                    },
+                    {
+                        "$type": "TrackStraight",
+                        "id": "ae0dd7a5-5505-4051-8a81-35fc7409984a",
+                        "x": 4,
+                        "y": 5,
+                        "rotation": 0,
+                        "name": ""
+                    },
+                    {
+                        "$type": "TrackStraight",
+                        "id": "b9edfafb-611b-4e20-a98a-7c1ce739c00e",
+                        "x": 3,
+                        "y": 5,
+                        "rotation": 0,
+                        "name": ""
+                    },
+                    {
+                        "$type": "TrackCurve",
+                        "id": "ac4d1724-c7cd-4740-91d0-85bc9c14992c",
+                        "x": 2,
+                        "y": 5,
+                        "rotation": 180,
+                        "name": ""
+                    }
+                ],
+                "connections": [],
+                "routes": []
             }
-          ],
-          "executionMode": 1,
-          "inPort": 0,
-          "isUsingTimerToIgnoreFeedbacks": false,
-          "intervalForTimerToIgnoreFeedbacks": 0
         }
-      ],
-      "journeys": [
-        {
-          "id": "c1d2e3f4-a5b6-7890-1234-567890abcdef",
-          "name": "RE 78 (Porta-Express)",
-          "description": "Regional Express from Bielefeld to Minden",
-          "text": "Next stop: {StationName}. Exit on the {StationIsExitOnLeft}.",
-          "stations": [
-            {
-              "id": "d1e2f3a4-b5c6-7890-1234-567890abcdef",
-              "name": "Bielefeld Hauptbahnhof",
-              "inPort": 1,
-              "numberOfLapsToStop": 2,
-              "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
-              "isExitOnLeft": true,
-              "track": 1,
-              "departure": "2025-12-29T08:01:00+01:00",
-              "connections": []
-            },
-            {
-              "id": "d2e3f4a5-b6c7-8901-2345-678901bcdef0",
-              "name": "Herford",
-              "inPort": 2,
-              "numberOfLapsToStop": 2,
-              "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
-              "isExitOnLeft": false,
-              "track": 1,
-              "arrival": "2025-12-29T08:15:00+01:00",
-              "departure": "2025-12-29T08:17:00+01:00",
-              "connections": []
-            },
-            {
-              "id": "d3e4f5a6-b7c8-9012-3456-789012cdef01",
-              "name": "Minden (Westf)",
-              "inPort": 3,
-              "numberOfLapsToStop": 2,
-              "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
-              "isExitOnLeft": true,
-              "track": 1,
-              "arrival": "2025-12-29T08:45:00+01:00",
-              "connections": []
-            }
-          ],
-          "inPort": 1,
-          "isUsingTimerToIgnoreFeedbacks": true,
-          "intervalForTimerToIgnoreFeedbacks": 20,
-          "behaviorOnLastStop": 1,
-          "firstPos": 0
-        }
-      ],
-      "signalBoxPlan": {
-        "id": "f1d3dd73-dcd5-4faa-b180-e687659598ea",
-        "name": "Stellwerk",
-        "gridWidth": 20,
-        "gridHeight": 12,
-        "cellSize": 60,
-        "elements": [
-          {
-            "$type": "TrackCurve",
-            "id": "f364d7d8-8fc3-4217-a84f-31e9805a88b2",
-            "x": 2,
-            "y": 3,
-            "rotation": 270,
-            "name": ""
-          },
-          {
-            "$type": "TrackStraight",
-            "id": "f52c9e75-8a52-4c3c-9bd4-f88cb8fb8903",
-            "x": 3,
-            "y": 3,
-            "rotation": 0,
-            "name": ""
-          },
-          {
-            "$type": "TrackStraight",
-            "id": "3bcaa969-8d75-447c-9bf8-a5540d274de4",
-            "x": 4,
-            "y": 3,
-            "rotation": 0,
-            "name": ""
-          },
-          {
-            "$type": "TrackCurve",
-            "id": "d2d86731-9122-4c16-8e08-00fdef17989c",
-            "x": 5,
-            "y": 3,
-            "rotation": 0,
-            "name": ""
-          },
-          {
-            "$type": "Signal",
-            "address": 1,
-            "signalSystem": "Ks",
-            "signalAspect": "Ks1Blink",
-            "id": "1837507c-6f91-47cc-a825-0cedf92e4f89",
-            "x": 3,
-            "y": 2,
-            "rotation": 0,
-            "name": ""
-          },
-          {
-            "$type": "Detector",
-            "feedbackAddress": 1,
-            "id": "89a8b660-1623-4edb-99b5-c0cf01afba72",
-            "x": 2,
-            "y": 4,
-            "rotation": 90,
-            "name": ""
-          },
-          {
-            "$type": "TrackStraight",
-            "id": "339647eb-4cc2-41d6-8517-e540f6c16e5c",
-            "x": 5,
-            "y": 4,
-            "rotation": 90,
-            "name": ""
-          },
-          {
-            "$type": "TrackCurve",
-            "id": "ad566a5c-60be-429a-bff4-720c93c9854a",
-            "x": 5,
-            "y": 5,
-            "rotation": 90,
-            "name": ""
-          },
-          {
-            "$type": "TrackStraight",
-            "id": "ae0dd7a5-5505-4051-8a81-35fc7409984a",
-            "x": 4,
-            "y": 5,
-            "rotation": 0,
-            "name": ""
-          },
-          {
-            "$type": "TrackStraight",
-            "id": "b9edfafb-611b-4e20-a98a-7c1ce739c00e",
-            "x": 3,
-            "y": 5,
-            "rotation": 0,
-            "name": ""
-          },
-          {
-            "$type": "TrackCurve",
-            "id": "ac4d1724-c7cd-4740-91d0-85bc9c14992c",
-            "x": 2,
-            "y": 5,
-            "rotation": 180,
-            "name": ""
-          }
-        ],
-        "connections": [],
-        "routes": []
-      }
-    }
-  ]
+    ]
 }

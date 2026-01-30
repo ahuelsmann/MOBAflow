@@ -2,8 +2,6 @@
 
 namespace Moba.Domain;
 
-using Moba.TrackPlan.Graph;
-
 /// <summary>
 /// Project - Pure Data Object.
 /// Business logic (validation, persistence) belongs in Application Layer (Backend/Services).
@@ -34,21 +32,8 @@ public class Project
     public List<Journey> Journeys { get; set; }
 
     /// <summary>
-    /// Track layout for this project (MOBAtps - Track Planner System).
-    /// Uses the new TopologyGraph-based architecture from TrackPlan project.
-    /// </summary>
-    public TopologyGraph? TrackPlan { get; set; }
-
-    /// <summary>
     /// Signal box plan for this project (MOBAesb - Electronic Signal Box).
     /// Topological representation with signals, switches, and routes.
     /// </summary>
     public SignalBoxPlan? SignalBoxPlan { get; set; }
-
-    /// <summary>
-    /// Track catalogs for this project (Piko A, Roco, Mehano, etc.).
-    /// Aggregated catalog system containing all available track systems and components.
-    /// Used by TrackPlan editor to access templates for building topologies.
-    /// </summary>
-    public Catalogs? Catalogs { get; set; }
 }

@@ -14,5 +14,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Backend\Backend.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\TrackPlan.Renderer\TrackPlan.Renderer.csproj" />
   </ItemGroup>
 </Project>

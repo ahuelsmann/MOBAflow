@@ -2,9 +2,13 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
+
 using Domain;
+
 using Interface;
-using Moba.Sound;
+
+using Sound;
+
 using System.Collections.ObjectModel;
 
 /// <summary>
@@ -17,12 +21,12 @@ public partial class SolutionViewModel : ObservableObject, IViewModelWrapper<Sol
     #region Fields
     // Model
     public Solution Model { get; }
-    
+
     // Optional Services
     private readonly IUiDispatcher? _dispatcher;
     private readonly IIoService? _ioService;
     private readonly ISoundPlayer? _soundPlayer;
-    
+
     // Properties
     [ObservableProperty]
     private string _name = string.Empty;

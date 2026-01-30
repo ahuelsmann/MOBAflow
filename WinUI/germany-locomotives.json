@@ -3,188 +3,1100 @@
         {
             "Category": "Dampflokomotiven",
             "Series": [
-                { "Name": "BR 01", "Vmax": 130, "Type": "Dampflok", "Epoch": "II-III", "Description": "Schnellzug-Dampflok" },
-                { "Name": "BR 01.10", "Vmax": 150, "Type": "Dampflok", "Epoch": "III", "Description": "Stromlinie Schnellzuglok" },
-                { "Name": "BR 03", "Vmax": 130, "Type": "Dampflok", "Epoch": "II-III", "Description": "Schnellzuglok" },
-                { "Name": "BR 03.10", "Vmax": 140, "Type": "Dampflok", "Epoch": "III", "Description": "Stromlinie Schnellzuglok" },
-                { "Name": "BR 05", "Vmax": 175, "Type": "Dampflok", "Epoch": "II-III", "Description": "Stromlinien-Schnellzuglok" },
-                { "Name": "BR 10", "Vmax": 140, "Type": "Dampflok", "Epoch": "III", "Description": "Schnellzuglok DB" },
-                { "Name": "BR 18.3 (S 3/6)", "Vmax": 120, "Type": "Dampflok", "Epoch": "I-III", "Description": "Bayerische S 3/6" },
-                { "Name": "BR 18.4", "Vmax": 140, "Type": "Dampflok", "Epoch": "II-III", "Description": "Badische IV h" },
-                { "Name": "BR 23", "Vmax": 110, "Type": "Dampflok", "Epoch": "III", "Description": "Neubau-Personenzuglok" },
-                { "Name": "BR 24", "Vmax": 90, "Type": "Dampflok", "Epoch": "II-III", "Description": "Personenzuglok" },
-                { "Name": "BR 38", "Vmax": 100, "Type": "Dampflok", "Epoch": "I-III", "Description": "Preußische P 8" },
-                { "Name": "BR 39", "Vmax": 110, "Type": "Dampflok", "Epoch": "II-III", "Description": "Preußische P 10" },
-                { "Name": "BR 41", "Vmax": 90, "Type": "Dampflok", "Epoch": "II-IV", "Description": "Güterzug-/Personenzuglok" },
-                { "Name": "BR 42", "Vmax": 80, "Type": "Dampflok", "Epoch": "II-III", "Description": "Kriegslok" },
-                { "Name": "BR 44", "Vmax": 80, "Type": "Dampflok", "Epoch": "II-IV", "Description": "Schwere Güterzuglok" },
-                { "Name": "BR 45", "Vmax": 90, "Type": "Dampflok", "Epoch": "II-III", "Description": "Schwere Güterzuglok" },
-                { "Name": "BR 50", "Vmax": 80, "Type": "Dampflok", "Epoch": "II-IV", "Description": "Güterzuglok" },
-                { "Name": "BR 52", "Vmax": 80, "Type": "Dampflok", "Epoch": "II-IV", "Description": "Kriegslok" },
-                { "Name": "BR 55", "Vmax": 55, "Type": "Dampflok", "Epoch": "I-III", "Description": "Preußische G 8.1" },
-                { "Name": "BR 56", "Vmax": 70, "Type": "Dampflok", "Epoch": "II-III", "Description": "Preußische G 8.2" },
-                { "Name": "BR 57", "Vmax": 65, "Type": "Dampflok", "Epoch": "I-III", "Description": "Preußische G 10" },
-                { "Name": "BR 58", "Vmax": 65, "Type": "Dampflok", "Epoch": "II-III", "Description": "Preußische G 12" },
-                { "Name": "BR 64", "Vmax": 90, "Type": "Dampflok", "Epoch": "II-IV", "Description": "Einheits-Personenzuglok" },
-                { "Name": "BR 65", "Vmax": 85, "Type": "Dampflok", "Epoch": "III", "Description": "Neubau-Tenderlok" },
-                { "Name": "BR 74", "Vmax": 75, "Type": "Dampflok", "Epoch": "I-III", "Description": "Preußische T 11/T 12" },
-                { "Name": "BR 78", "Vmax": 100, "Type": "Dampflok", "Epoch": "II-IV", "Description": "Preußische T 18" },
-                { "Name": "BR 80", "Vmax": 45, "Type": "Dampflok", "Epoch": "II-III", "Description": "Tenderlok" },
-                { "Name": "BR 81", "Vmax": 45, "Type": "Dampflok", "Epoch": "III", "Description": "Tenderlok" },
-                { "Name": "BR 82", "Vmax": 60, "Type": "Dampflok", "Epoch": "III", "Description": "Neubau-Tenderlok" },
-                { "Name": "BR 85", "Vmax": 90, "Type": "Dampflok", "Epoch": "II-III", "Description": "Tenderlok Gebirge" },
-                { "Name": "BR 86", "Vmax": 80, "Type": "Dampflok", "Epoch": "II-IV", "Description": "Einheits-Tenderlok" },
-                { "Name": "BR 89", "Vmax": 45, "Type": "Dampflok", "Epoch": "I-III", "Description": "Preußische T 3" },
-                { "Name": "BR 91", "Vmax": 65, "Type": "Dampflok", "Epoch": "I-III", "Description": "Preußische T 9.3" },
-                { "Name": "BR 92", "Vmax": 55, "Type": "Dampflok", "Epoch": "I-III", "Description": "Tenderlok" },
-                { "Name": "BR 93", "Vmax": 65, "Type": "Dampflok", "Epoch": "II-III", "Description": "Preußische T 14.1" },
-                { "Name": "BR 94", "Vmax": 65, "Type": "Dampflok", "Epoch": "I-IV", "Description": "Preußische T 16.1" },
-                { "Name": "BR 95", "Vmax": 70, "Type": "Dampflok", "Epoch": "II-IV", "Description": "Bergbahn-Tenderlok" },
-                { "Name": "BR 96", "Vmax": 60, "Type": "Dampflok", "Epoch": "I-III", "Description": "Bayerische Gt 2×4/4" },
-                { "Name": "BR 98", "Vmax": 50, "Type": "Dampflok", "Epoch": "I-III", "Description": "Lokalbahnlok" }
+                {
+                    "Name": "BR 01",
+                    "Vmax": 130,
+                    "Type": "Dampflok",
+                    "Epoch": "II-III",
+                    "Description": "Schnellzug-Dampflok"
+                },
+                {
+                    "Name": "BR 01.10",
+                    "Vmax": 150,
+                    "Type": "Dampflok",
+                    "Epoch": "III",
+                    "Description": "Stromlinie Schnellzuglok"
+                },
+                {
+                    "Name": "BR 03",
+                    "Vmax": 130,
+                    "Type": "Dampflok",
+                    "Epoch": "II-III",
+                    "Description": "Schnellzuglok"
+                },
+                {
+                    "Name": "BR 03.10",
+                    "Vmax": 140,
+                    "Type": "Dampflok",
+                    "Epoch": "III",
+                    "Description": "Stromlinie Schnellzuglok"
+                },
+                {
+                    "Name": "BR 05",
+                    "Vmax": 175,
+                    "Type": "Dampflok",
+                    "Epoch": "II-III",
+                    "Description": "Stromlinien-Schnellzuglok"
+                },
+                {
+                    "Name": "BR 10",
+                    "Vmax": 140,
+                    "Type": "Dampflok",
+                    "Epoch": "III",
+                    "Description": "Schnellzuglok DB"
+                },
+                {
+                    "Name": "BR 18.3 (S 3/6)",
+                    "Vmax": 120,
+                    "Type": "Dampflok",
+                    "Epoch": "I-III",
+                    "Description": "Bayerische S 3/6"
+                },
+                {
+                    "Name": "BR 18.4",
+                    "Vmax": 140,
+                    "Type": "Dampflok",
+                    "Epoch": "II-III",
+                    "Description": "Badische IV h"
+                },
+                {
+                    "Name": "BR 23",
+                    "Vmax": 110,
+                    "Type": "Dampflok",
+                    "Epoch": "III",
+                    "Description": "Neubau-Personenzuglok"
+                },
+                {
+                    "Name": "BR 24",
+                    "Vmax": 90,
+                    "Type": "Dampflok",
+                    "Epoch": "II-III",
+                    "Description": "Personenzuglok"
+                },
+                {
+                    "Name": "BR 38",
+                    "Vmax": 100,
+                    "Type": "Dampflok",
+                    "Epoch": "I-III",
+                    "Description": "Preußische P 8"
+                },
+                {
+                    "Name": "BR 39",
+                    "Vmax": 110,
+                    "Type": "Dampflok",
+                    "Epoch": "II-III",
+                    "Description": "Preußische P 10"
+                },
+                {
+                    "Name": "BR 41",
+                    "Vmax": 90,
+                    "Type": "Dampflok",
+                    "Epoch": "II-IV",
+                    "Description": "Güterzug-/Personenzuglok"
+                },
+                {
+                    "Name": "BR 42",
+                    "Vmax": 80,
+                    "Type": "Dampflok",
+                    "Epoch": "II-III",
+                    "Description": "Kriegslok"
+                },
+                {
+                    "Name": "BR 44",
+                    "Vmax": 80,
+                    "Type": "Dampflok",
+                    "Epoch": "II-IV",
+                    "Description": "Schwere Güterzuglok"
+                },
+                {
+                    "Name": "BR 45",
+                    "Vmax": 90,
+                    "Type": "Dampflok",
+                    "Epoch": "II-III",
+                    "Description": "Schwere Güterzuglok"
+                },
+                {
+                    "Name": "BR 50",
+                    "Vmax": 80,
+                    "Type": "Dampflok",
+                    "Epoch": "II-IV",
+                    "Description": "Güterzuglok"
+                },
+                {
+                    "Name": "BR 52",
+                    "Vmax": 80,
+                    "Type": "Dampflok",
+                    "Epoch": "II-IV",
+                    "Description": "Kriegslok"
+                },
+                {
+                    "Name": "BR 55",
+                    "Vmax": 55,
+                    "Type": "Dampflok",
+                    "Epoch": "I-III",
+                    "Description": "Preußische G 8.1"
+                },
+                {
+                    "Name": "BR 56",
+                    "Vmax": 70,
+                    "Type": "Dampflok",
+                    "Epoch": "II-III",
+                    "Description": "Preußische G 8.2"
+                },
+                {
+                    "Name": "BR 57",
+                    "Vmax": 65,
+                    "Type": "Dampflok",
+                    "Epoch": "I-III",
+                    "Description": "Preußische G 10"
+                },
+                {
+                    "Name": "BR 58",
+                    "Vmax": 65,
+                    "Type": "Dampflok",
+                    "Epoch": "II-III",
+                    "Description": "Preußische G 12"
+                },
+                {
+                    "Name": "BR 64",
+                    "Vmax": 90,
+                    "Type": "Dampflok",
+                    "Epoch": "II-IV",
+                    "Description": "Einheits-Personenzuglok"
+                },
+                {
+                    "Name": "BR 65",
+                    "Vmax": 85,
+                    "Type": "Dampflok",
+                    "Epoch": "III",
+                    "Description": "Neubau-Tenderlok"
+                },
+                {
+                    "Name": "BR 74",
+                    "Vmax": 75,
+                    "Type": "Dampflok",
+                    "Epoch": "I-III",
+                    "Description": "Preußische T 11/T 12"
+                },
+                {
+                    "Name": "BR 78",
+                    "Vmax": 100,
+                    "Type": "Dampflok",
+                    "Epoch": "II-IV",
+                    "Description": "Preußische T 18"
+                },
+                {
+                    "Name": "BR 80",
+                    "Vmax": 45,
+                    "Type": "Dampflok",
+                    "Epoch": "II-III",
+                    "Description": "Tenderlok"
+                },
+                {
+                    "Name": "BR 81",
+                    "Vmax": 45,
+                    "Type": "Dampflok",
+                    "Epoch": "III",
+                    "Description": "Tenderlok"
+                },
+                {
+                    "Name": "BR 82",
+                    "Vmax": 60,
+                    "Type": "Dampflok",
+                    "Epoch": "III",
+                    "Description": "Neubau-Tenderlok"
+                },
+                {
+                    "Name": "BR 85",
+                    "Vmax": 90,
+                    "Type": "Dampflok",
+                    "Epoch": "II-III",
+                    "Description": "Tenderlok Gebirge"
+                },
+                {
+                    "Name": "BR 86",
+                    "Vmax": 80,
+                    "Type": "Dampflok",
+                    "Epoch": "II-IV",
+                    "Description": "Einheits-Tenderlok"
+                },
+                {
+                    "Name": "BR 89",
+                    "Vmax": 45,
+                    "Type": "Dampflok",
+                    "Epoch": "I-III",
+                    "Description": "Preußische T 3"
+                },
+                {
+                    "Name": "BR 91",
+                    "Vmax": 65,
+                    "Type": "Dampflok",
+                    "Epoch": "I-III",
+                    "Description": "Preußische T 9.3"
+                },
+                {
+                    "Name": "BR 92",
+                    "Vmax": 55,
+                    "Type": "Dampflok",
+                    "Epoch": "I-III",
+                    "Description": "Tenderlok"
+                },
+                {
+                    "Name": "BR 93",
+                    "Vmax": 65,
+                    "Type": "Dampflok",
+                    "Epoch": "II-III",
+                    "Description": "Preußische T 14.1"
+                },
+                {
+                    "Name": "BR 94",
+                    "Vmax": 65,
+                    "Type": "Dampflok",
+                    "Epoch": "I-IV",
+                    "Description": "Preußische T 16.1"
+                },
+                {
+                    "Name": "BR 95",
+                    "Vmax": 70,
+                    "Type": "Dampflok",
+                    "Epoch": "II-IV",
+                    "Description": "Bergbahn-Tenderlok"
+                },
+                {
+                    "Name": "BR 96",
+                    "Vmax": 60,
+                    "Type": "Dampflok",
+                    "Epoch": "I-III",
+                    "Description": "Bayerische Gt 2×4/4"
+                },
+                {
+                    "Name": "BR 98",
+                    "Vmax": 50,
+                    "Type": "Dampflok",
+                    "Epoch": "I-III",
+                    "Description": "Lokalbahnlok"
+                }
             ]
         },
         {
             "Category": "Elektrolokomotiven",
             "Series": [
-                { "Name": "E 03 / BR 103.0", "Vmax": 200, "Type": "Elektrolok", "Epoch": "III-IV", "Description": "Vorserien-Schnellzuglok" },
-                { "Name": "BR 103.1", "Vmax": 200, "Type": "Elektrolok", "Epoch": "IV-V", "Description": "Schnellzuglok TEE/IC" },
-                { "Name": "E 10 / BR 110", "Vmax": 150, "Type": "Elektrolok", "Epoch": "III-V", "Description": "Einheitslok" },
-                { "Name": "BR 110.3 (Bügelfalte)", "Vmax": 150, "Type": "Elektrolok", "Epoch": "IV-V", "Description": "Einheitslok Aerodynamik" },
-                { "Name": "E 40 / BR 140", "Vmax": 110, "Type": "Elektrolok", "Epoch": "III-VI", "Description": "Güterzuglok" },
-                { "Name": "E 41 / BR 141", "Vmax": 120, "Type": "Elektrolok", "Epoch": "III-V", "Description": "Nahverkehrslok" },
-                { "Name": "E 44 / BR 144", "Vmax": 90, "Type": "Elektrolok", "Epoch": "II-IV", "Description": "Universallok" },
-                { "Name": "E 50 / BR 150", "Vmax": 100, "Type": "Elektrolok", "Epoch": "III-V", "Description": "Schwere Güterzuglok" },
-                { "Name": "E 52 / BR 152 (alt)", "Vmax": 90, "Type": "Elektrolok", "Epoch": "I-III", "Description": "Bayerische EG 5" },
-                { "Name": "E 60 / BR 160", "Vmax": 60, "Type": "Elektrolok", "Epoch": "II-IV", "Description": "Rangierlok" },
-                { "Name": "E 69 / BR 169", "Vmax": 50, "Type": "Elektrolok", "Epoch": "I-IV", "Description": "Lokalbahn-Ellok" },
-                { "Name": "E 91 / BR 191", "Vmax": 65, "Type": "Elektrolok", "Epoch": "I-III", "Description": "Bayerische EG 4" },
-                { "Name": "E 93 / BR 193 (alt)", "Vmax": 90, "Type": "Elektrolok", "Epoch": "II-IV", "Description": "Krokodil" },
-                { "Name": "E 94 / BR 194", "Vmax": 90, "Type": "Elektrolok", "Epoch": "II-V", "Description": "Deutsches Krokodil" },
-                { "Name": "BR 101", "Vmax": 220, "Type": "Elektrolok", "Epoch": "V-VI", "Description": "IC/EC-Lok" },
-                { "Name": "BR 111", "Vmax": 160, "Type": "Elektrolok", "Epoch": "IV-VI", "Description": "S-Bahn/Nahverkehr" },
-                { "Name": "BR 112 (DB)", "Vmax": 160, "Type": "Elektrolok", "Epoch": "IV-V", "Description": "S-Bahn München" },
-                { "Name": "BR 112 (DR)", "Vmax": 160, "Type": "Elektrolok", "Epoch": "IV-V", "Description": "DR-Schnellzuglok" },
-                { "Name": "BR 114", "Vmax": 140, "Type": "Elektrolok", "Epoch": "V-VI", "Description": "ex DR 112 umgebaut" },
-                { "Name": "BR 115", "Vmax": 160, "Type": "Elektrolok", "Epoch": "IV-V", "Description": "Nahverkehrslok" },
-                { "Name": "BR 120", "Vmax": 200, "Type": "Elektrolok", "Epoch": "IV-VI", "Description": "Drehstromlok IC" },
-                { "Name": "BR 143", "Vmax": 120, "Type": "Elektrolok", "Epoch": "IV-VI", "Description": "DR-Universallok" },
-                { "Name": "BR 145", "Vmax": 140, "Type": "Elektrolok", "Epoch": "V-VI", "Description": "TRAXX-Güterlok" },
-                { "Name": "BR 146", "Vmax": 160, "Type": "Elektrolok", "Epoch": "V-VI", "Description": "TRAXX-Personenverkehr" },
-                { "Name": "BR 151", "Vmax": 120, "Type": "Elektrolok", "Epoch": "IV-VI", "Description": "Schwere Güterzuglok" },
-                { "Name": "BR 152", "Vmax": 140, "Type": "Elektrolok", "Epoch": "V-VI", "Description": "Schwere Güterzuglok" },
-                { "Name": "BR 155", "Vmax": 125, "Type": "Elektrolok", "Epoch": "IV-VI", "Description": "DR 250 Güterlok" },
-                { "Name": "BR 156", "Vmax": 125, "Type": "Elektrolok", "Epoch": "V", "Description": "Zweisystemlok" },
-                { "Name": "BR 180", "Vmax": 120, "Type": "Elektrolok", "Epoch": "V-VI", "Description": "Zweisystem CZ/D" },
-                { "Name": "BR 181", "Vmax": 160, "Type": "Elektrolok", "Epoch": "IV-V", "Description": "Zweisystem D/F" },
-                { "Name": "BR 182 (Taurus)", "Vmax": 230, "Type": "Elektrolok", "Epoch": "V-VI", "Description": "Siemens Taurus" },
-                { "Name": "BR 185", "Vmax": 140, "Type": "Elektrolok", "Epoch": "V-VI", "Description": "TRAXX F140 AC" },
-                { "Name": "BR 186", "Vmax": 160, "Type": "Elektrolok", "Epoch": "V-VI", "Description": "TRAXX F140 MS" },
-                { "Name": "BR 187", "Vmax": 140, "Type": "Elektrolok", "Epoch": "VI", "Description": "TRAXX AC3" },
-                { "Name": "BR 189", "Vmax": 140, "Type": "Elektrolok", "Epoch": "V-VI", "Description": "Eurosprinter ES64F4" },
-                { "Name": "BR 193 (Vectron)", "Vmax": 200, "Type": "Elektrolok", "Epoch": "VI", "Description": "Siemens Vectron" }
+                {
+                    "Name": "E 03 / BR 103.0",
+                    "Vmax": 200,
+                    "Type": "Elektrolok",
+                    "Epoch": "III-IV",
+                    "Description": "Vorserien-Schnellzuglok"
+                },
+                {
+                    "Name": "BR 103.1",
+                    "Vmax": 200,
+                    "Type": "Elektrolok",
+                    "Epoch": "IV-V",
+                    "Description": "Schnellzuglok TEE/IC"
+                },
+                {
+                    "Name": "E 10 / BR 110",
+                    "Vmax": 150,
+                    "Type": "Elektrolok",
+                    "Epoch": "III-V",
+                    "Description": "Einheitslok"
+                },
+                {
+                    "Name": "BR 110.3 (Bügelfalte)",
+                    "Vmax": 150,
+                    "Type": "Elektrolok",
+                    "Epoch": "IV-V",
+                    "Description": "Einheitslok Aerodynamik"
+                },
+                {
+                    "Name": "E 40 / BR 140",
+                    "Vmax": 110,
+                    "Type": "Elektrolok",
+                    "Epoch": "III-VI",
+                    "Description": "Güterzuglok"
+                },
+                {
+                    "Name": "E 41 / BR 141",
+                    "Vmax": 120,
+                    "Type": "Elektrolok",
+                    "Epoch": "III-V",
+                    "Description": "Nahverkehrslok"
+                },
+                {
+                    "Name": "E 44 / BR 144",
+                    "Vmax": 90,
+                    "Type": "Elektrolok",
+                    "Epoch": "II-IV",
+                    "Description": "Universallok"
+                },
+                {
+                    "Name": "E 50 / BR 150",
+                    "Vmax": 100,
+                    "Type": "Elektrolok",
+                    "Epoch": "III-V",
+                    "Description": "Schwere Güterzuglok"
+                },
+                {
+                    "Name": "E 52 / BR 152 (alt)",
+                    "Vmax": 90,
+                    "Type": "Elektrolok",
+                    "Epoch": "I-III",
+                    "Description": "Bayerische EG 5"
+                },
+                {
+                    "Name": "E 60 / BR 160",
+                    "Vmax": 60,
+                    "Type": "Elektrolok",
+                    "Epoch": "II-IV",
+                    "Description": "Rangierlok"
+                },
+                {
+                    "Name": "E 69 / BR 169",
+                    "Vmax": 50,
+                    "Type": "Elektrolok",
+                    "Epoch": "I-IV",
+                    "Description": "Lokalbahn-Ellok"
+                },
+                {
+                    "Name": "E 91 / BR 191",
+                    "Vmax": 65,
+                    "Type": "Elektrolok",
+                    "Epoch": "I-III",
+                    "Description": "Bayerische EG 4"
+                },
+                {
+                    "Name": "E 93 / BR 193 (alt)",
+                    "Vmax": 90,
+                    "Type": "Elektrolok",
+                    "Epoch": "II-IV",
+                    "Description": "Krokodil"
+                },
+                {
+                    "Name": "E 94 / BR 194",
+                    "Vmax": 90,
+                    "Type": "Elektrolok",
+                    "Epoch": "II-V",
+                    "Description": "Deutsches Krokodil"
+                },
+                {
+                    "Name": "BR 101",
+                    "Vmax": 220,
+                    "Type": "Elektrolok",
+                    "Epoch": "V-VI",
+                    "Description": "IC/EC-Lok"
+                },
+                {
+                    "Name": "BR 111",
+                    "Vmax": 160,
+                    "Type": "Elektrolok",
+                    "Epoch": "IV-VI",
+                    "Description": "S-Bahn/Nahverkehr"
+                },
+                {
+                    "Name": "BR 112 (DB)",
+                    "Vmax": 160,
+                    "Type": "Elektrolok",
+                    "Epoch": "IV-V",
+                    "Description": "S-Bahn München"
+                },
+                {
+                    "Name": "BR 112 (DR)",
+                    "Vmax": 160,
+                    "Type": "Elektrolok",
+                    "Epoch": "IV-V",
+                    "Description": "DR-Schnellzuglok"
+                },
+                {
+                    "Name": "BR 114",
+                    "Vmax": 140,
+                    "Type": "Elektrolok",
+                    "Epoch": "V-VI",
+                    "Description": "ex DR 112 umgebaut"
+                },
+                {
+                    "Name": "BR 115",
+                    "Vmax": 160,
+                    "Type": "Elektrolok",
+                    "Epoch": "IV-V",
+                    "Description": "Nahverkehrslok"
+                },
+                {
+                    "Name": "BR 120",
+                    "Vmax": 200,
+                    "Type": "Elektrolok",
+                    "Epoch": "IV-VI",
+                    "Description": "Drehstromlok IC"
+                },
+                {
+                    "Name": "BR 143",
+                    "Vmax": 120,
+                    "Type": "Elektrolok",
+                    "Epoch": "IV-VI",
+                    "Description": "DR-Universallok"
+                },
+                {
+                    "Name": "BR 145",
+                    "Vmax": 140,
+                    "Type": "Elektrolok",
+                    "Epoch": "V-VI",
+                    "Description": "TRAXX-Güterlok"
+                },
+                {
+                    "Name": "BR 146",
+                    "Vmax": 160,
+                    "Type": "Elektrolok",
+                    "Epoch": "V-VI",
+                    "Description": "TRAXX-Personenverkehr"
+                },
+                {
+                    "Name": "BR 151",
+                    "Vmax": 120,
+                    "Type": "Elektrolok",
+                    "Epoch": "IV-VI",
+                    "Description": "Schwere Güterzuglok"
+                },
+                {
+                    "Name": "BR 152",
+                    "Vmax": 140,
+                    "Type": "Elektrolok",
+                    "Epoch": "V-VI",
+                    "Description": "Schwere Güterzuglok"
+                },
+                {
+                    "Name": "BR 155",
+                    "Vmax": 125,
+                    "Type": "Elektrolok",
+                    "Epoch": "IV-VI",
+                    "Description": "DR 250 Güterlok"
+                },
+                {
+                    "Name": "BR 156",
+                    "Vmax": 125,
+                    "Type": "Elektrolok",
+                    "Epoch": "V",
+                    "Description": "Zweisystemlok"
+                },
+                {
+                    "Name": "BR 180",
+                    "Vmax": 120,
+                    "Type": "Elektrolok",
+                    "Epoch": "V-VI",
+                    "Description": "Zweisystem CZ/D"
+                },
+                {
+                    "Name": "BR 181",
+                    "Vmax": 160,
+                    "Type": "Elektrolok",
+                    "Epoch": "IV-V",
+                    "Description": "Zweisystem D/F"
+                },
+                {
+                    "Name": "BR 182 (Taurus)",
+                    "Vmax": 230,
+                    "Type": "Elektrolok",
+                    "Epoch": "V-VI",
+                    "Description": "Siemens Taurus"
+                },
+                {
+                    "Name": "BR 185",
+                    "Vmax": 140,
+                    "Type": "Elektrolok",
+                    "Epoch": "V-VI",
+                    "Description": "TRAXX F140 AC"
+                },
+                {
+                    "Name": "BR 186",
+                    "Vmax": 160,
+                    "Type": "Elektrolok",
+                    "Epoch": "V-VI",
+                    "Description": "TRAXX F140 MS"
+                },
+                {
+                    "Name": "BR 187",
+                    "Vmax": 140,
+                    "Type": "Elektrolok",
+                    "Epoch": "VI",
+                    "Description": "TRAXX AC3"
+                },
+                {
+                    "Name": "BR 189",
+                    "Vmax": 140,
+                    "Type": "Elektrolok",
+                    "Epoch": "V-VI",
+                    "Description": "Eurosprinter ES64F4"
+                },
+                {
+                    "Name": "BR 193 (Vectron)",
+                    "Vmax": 200,
+                    "Type": "Elektrolok",
+                    "Epoch": "VI",
+                    "Description": "Siemens Vectron"
+                }
             ]
         },
         {
             "Category": "Diesellokomotiven",
             "Series": [
-                { "Name": "V 20 / BR 270", "Vmax": 45, "Type": "Diesellok", "Epoch": "II-III", "Description": "Kleinlok" },
-                { "Name": "V 36 / BR 236", "Vmax": 55, "Type": "Diesellok", "Epoch": "II-IV", "Description": "Wehrmachtslok" },
-                { "Name": "V 60 / BR 260/261", "Vmax": 60, "Type": "Diesellok", "Epoch": "III-V", "Description": "Rangierlok" },
-                { "Name": "BR 261 (Voith Gravita)", "Vmax": 100, "Type": "Diesellok", "Epoch": "VI", "Description": "Rangierlok modern" },
-                { "Name": "V 80 / BR 280", "Vmax": 100, "Type": "Diesellok", "Epoch": "III", "Description": "Streckenlok" },
-                { "Name": "V 90 / BR 290/291", "Vmax": 80, "Type": "Diesellok", "Epoch": "IV-VI", "Description": "Rangierlok" },
-                { "Name": "BR 294", "Vmax": 80, "Type": "Diesellok", "Epoch": "V-VI", "Description": "Rangierlok Funk" },
-                { "Name": "V 100 / BR 211/212", "Vmax": 100, "Type": "Diesellok", "Epoch": "III-V", "Description": "Streckenlok" },
-                { "Name": "BR 213 (V 100.20)", "Vmax": 100, "Type": "Diesellok", "Epoch": "IV-V", "Description": "Streckenlok" },
-                { "Name": "V 160 / BR 216", "Vmax": 140, "Type": "Diesellok", "Epoch": "III-V", "Description": "Lollo" },
-                { "Name": "BR 217", "Vmax": 140, "Type": "Diesellok", "Epoch": "IV-V", "Description": "Gasturbine" },
-                { "Name": "BR 218", "Vmax": 140, "Type": "Diesellok", "Epoch": "IV-VI", "Description": "Universallok" },
-                { "Name": "V 200.0 / BR 220", "Vmax": 140, "Type": "Diesellok", "Epoch": "III-IV", "Description": "Schnellzuglok" },
-                { "Name": "V 200.1 / BR 221", "Vmax": 140, "Type": "Diesellok", "Epoch": "III-V", "Description": "Schnellzuglok verstärkt" },
-                { "Name": "BR 225", "Vmax": 140, "Type": "Diesellok", "Epoch": "V-VI", "Description": "ex V 163 umgebaut" },
-                { "Name": "BR 229", "Vmax": 140, "Type": "Diesellok", "Epoch": "V-VI", "Description": "DR 119 Umbau" },
-                { "Name": "BR 230 (DR V 300)", "Vmax": 140, "Type": "Diesellok", "Epoch": "IV", "Description": "DR Großdiesel" },
-                { "Name": "BR 231/232 (Ludmilla)", "Vmax": 120, "Type": "Diesellok", "Epoch": "IV-VI", "Description": "Sowjetische Großdiesel" },
-                { "Name": "BR 233", "Vmax": 120, "Type": "Diesellok", "Epoch": "V-VI", "Description": "Ludmilla Umbau" },
-                { "Name": "BR 234", "Vmax": 140, "Type": "Diesellok", "Epoch": "V-VI", "Description": "Ludmilla 140 km/h" },
-                { "Name": "BR 245", "Vmax": 160, "Type": "Diesellok", "Epoch": "VI", "Description": "TRAXX DE ME" },
-                { "Name": "BR 335", "Vmax": 45, "Type": "Diesellok", "Epoch": "V-VI", "Description": "Köf III" },
-                { "Name": "BR 363", "Vmax": 60, "Type": "Diesellok", "Epoch": "V-VI", "Description": "V 60 ex DR" },
-                { "Name": "BR 365", "Vmax": 60, "Type": "Diesellok", "Epoch": "V-VI", "Description": "V 60 Caterpillar" }
+                {
+                    "Name": "V 20 / BR 270",
+                    "Vmax": 45,
+                    "Type": "Diesellok",
+                    "Epoch": "II-III",
+                    "Description": "Kleinlok"
+                },
+                {
+                    "Name": "V 36 / BR 236",
+                    "Vmax": 55,
+                    "Type": "Diesellok",
+                    "Epoch": "II-IV",
+                    "Description": "Wehrmachtslok"
+                },
+                {
+                    "Name": "V 60 / BR 260/261",
+                    "Vmax": 60,
+                    "Type": "Diesellok",
+                    "Epoch": "III-V",
+                    "Description": "Rangierlok"
+                },
+                {
+                    "Name": "BR 261 (Voith Gravita)",
+                    "Vmax": 100,
+                    "Type": "Diesellok",
+                    "Epoch": "VI",
+                    "Description": "Rangierlok modern"
+                },
+                {
+                    "Name": "V 80 / BR 280",
+                    "Vmax": 100,
+                    "Type": "Diesellok",
+                    "Epoch": "III",
+                    "Description": "Streckenlok"
+                },
+                {
+                    "Name": "V 90 / BR 290/291",
+                    "Vmax": 80,
+                    "Type": "Diesellok",
+                    "Epoch": "IV-VI",
+                    "Description": "Rangierlok"
+                },
+                {
+                    "Name": "BR 294",
+                    "Vmax": 80,
+                    "Type": "Diesellok",
+                    "Epoch": "V-VI",
+                    "Description": "Rangierlok Funk"
+                },
+                {
+                    "Name": "V 100 / BR 211/212",
+                    "Vmax": 100,
+                    "Type": "Diesellok",
+                    "Epoch": "III-V",
+                    "Description": "Streckenlok"
+                },
+                {
+                    "Name": "BR 213 (V 100.20)",
+                    "Vmax": 100,
+                    "Type": "Diesellok",
+                    "Epoch": "IV-V",
+                    "Description": "Streckenlok"
+                },
+                {
+                    "Name": "V 160 / BR 216",
+                    "Vmax": 140,
+                    "Type": "Diesellok",
+                    "Epoch": "III-V",
+                    "Description": "Lollo"
+                },
+                {
+                    "Name": "BR 217",
+                    "Vmax": 140,
+                    "Type": "Diesellok",
+                    "Epoch": "IV-V",
+                    "Description": "Gasturbine"
+                },
+                {
+                    "Name": "BR 218",
+                    "Vmax": 140,
+                    "Type": "Diesellok",
+                    "Epoch": "IV-VI",
+                    "Description": "Universallok"
+                },
+                {
+                    "Name": "V 200.0 / BR 220",
+                    "Vmax": 140,
+                    "Type": "Diesellok",
+                    "Epoch": "III-IV",
+                    "Description": "Schnellzuglok"
+                },
+                {
+                    "Name": "V 200.1 / BR 221",
+                    "Vmax": 140,
+                    "Type": "Diesellok",
+                    "Epoch": "III-V",
+                    "Description": "Schnellzuglok verstärkt"
+                },
+                {
+                    "Name": "BR 225",
+                    "Vmax": 140,
+                    "Type": "Diesellok",
+                    "Epoch": "V-VI",
+                    "Description": "ex V 163 umgebaut"
+                },
+                {
+                    "Name": "BR 229",
+                    "Vmax": 140,
+                    "Type": "Diesellok",
+                    "Epoch": "V-VI",
+                    "Description": "DR 119 Umbau"
+                },
+                {
+                    "Name": "BR 230 (DR V 300)",
+                    "Vmax": 140,
+                    "Type": "Diesellok",
+                    "Epoch": "IV",
+                    "Description": "DR Großdiesel"
+                },
+                {
+                    "Name": "BR 231/232 (Ludmilla)",
+                    "Vmax": 120,
+                    "Type": "Diesellok",
+                    "Epoch": "IV-VI",
+                    "Description": "Sowjetische Großdiesel"
+                },
+                {
+                    "Name": "BR 233",
+                    "Vmax": 120,
+                    "Type": "Diesellok",
+                    "Epoch": "V-VI",
+                    "Description": "Ludmilla Umbau"
+                },
+                {
+                    "Name": "BR 234",
+                    "Vmax": 140,
+                    "Type": "Diesellok",
+                    "Epoch": "V-VI",
+                    "Description": "Ludmilla 140 km/h"
+                },
+                {
+                    "Name": "BR 245",
+                    "Vmax": 160,
+                    "Type": "Diesellok",
+                    "Epoch": "VI",
+                    "Description": "TRAXX DE ME"
+                },
+                {
+                    "Name": "BR 335",
+                    "Vmax": 45,
+                    "Type": "Diesellok",
+                    "Epoch": "V-VI",
+                    "Description": "Köf III"
+                },
+                {
+                    "Name": "BR 363",
+                    "Vmax": 60,
+                    "Type": "Diesellok",
+                    "Epoch": "V-VI",
+                    "Description": "V 60 ex DR"
+                },
+                {
+                    "Name": "BR 365",
+                    "Vmax": 60,
+                    "Type": "Diesellok",
+                    "Epoch": "V-VI",
+                    "Description": "V 60 Caterpillar"
+                }
             ]
         },
         {
             "Category": "ICE-Züge",
             "Series": [
-                { "Name": "ICE 1 (BR 401)", "Vmax": 280, "Type": "Triebzug", "Epoch": "V-VI", "Description": "InterCityExpress" },
-                { "Name": "ICE 2 (BR 402)", "Vmax": 280, "Type": "Triebzug", "Epoch": "V-VI", "Description": "InterCityExpress halbiert" },
-                { "Name": "ICE 3 (BR 403)", "Vmax": 330, "Type": "Triebzug", "Epoch": "V-VI", "Description": "Velaro D" },
-                { "Name": "ICE 3 (BR 406)", "Vmax": 320, "Type": "Triebzug", "Epoch": "V-VI", "Description": "Velaro MS (Frankreich)" },
-                { "Name": "ICE 3neo (BR 408)", "Vmax": 320, "Type": "Triebzug", "Epoch": "VI", "Description": "Velaro MS neueste Generation" },
-                { "Name": "ICE T (BR 411)", "Vmax": 230, "Type": "Triebzug", "Epoch": "V-VI", "Description": "Neigetechnik 7-teilig" },
-                { "Name": "ICE T (BR 415)", "Vmax": 230, "Type": "Triebzug", "Epoch": "V-VI", "Description": "Neigetechnik 5-teilig" },
-                { "Name": "ICE 4 (BR 412)", "Vmax": 250, "Type": "Triebzug", "Epoch": "VI", "Description": "12-teilig / 13-teilig" },
-                { "Name": "ICE 4 (BR 412.2)", "Vmax": 265, "Type": "Triebzug", "Epoch": "VI", "Description": "7-teilig kurz" }
+                {
+                    "Name": "ICE 1 (BR 401)",
+                    "Vmax": 280,
+                    "Type": "Triebzug",
+                    "Epoch": "V-VI",
+                    "Description": "InterCityExpress"
+                },
+                {
+                    "Name": "ICE 2 (BR 402)",
+                    "Vmax": 280,
+                    "Type": "Triebzug",
+                    "Epoch": "V-VI",
+                    "Description": "InterCityExpress halbiert"
+                },
+                {
+                    "Name": "ICE 3 (BR 403)",
+                    "Vmax": 330,
+                    "Type": "Triebzug",
+                    "Epoch": "V-VI",
+                    "Description": "Velaro D"
+                },
+                {
+                    "Name": "ICE 3 (BR 406)",
+                    "Vmax": 320,
+                    "Type": "Triebzug",
+                    "Epoch": "V-VI",
+                    "Description": "Velaro MS (Frankreich)"
+                },
+                {
+                    "Name": "ICE 3neo (BR 408)",
+                    "Vmax": 320,
+                    "Type": "Triebzug",
+                    "Epoch": "VI",
+                    "Description": "Velaro MS neueste Generation"
+                },
+                {
+                    "Name": "ICE T (BR 411)",
+                    "Vmax": 230,
+                    "Type": "Triebzug",
+                    "Epoch": "V-VI",
+                    "Description": "Neigetechnik 7-teilig"
+                },
+                {
+                    "Name": "ICE T (BR 415)",
+                    "Vmax": 230,
+                    "Type": "Triebzug",
+                    "Epoch": "V-VI",
+                    "Description": "Neigetechnik 5-teilig"
+                },
+                {
+                    "Name": "ICE 4 (BR 412)",
+                    "Vmax": 250,
+                    "Type": "Triebzug",
+                    "Epoch": "VI",
+                    "Description": "12-teilig / 13-teilig"
+                },
+                {
+                    "Name": "ICE 4 (BR 412.2)",
+                    "Vmax": 265,
+                    "Type": "Triebzug",
+                    "Epoch": "VI",
+                    "Description": "7-teilig kurz"
+                }
             ]
         },
         {
             "Category": "Elektrotriebwagen",
             "Series": [
-                { "Name": "ET 85", "Vmax": 85, "Type": "Triebwagen", "Epoch": "II-III", "Description": "Wittfeld-Akkutriebwagen" },
-                { "Name": "ET 91 (Gläserner Zug)", "Vmax": 110, "Type": "Triebwagen", "Epoch": "III-IV", "Description": "Aussichtstriebwagen" },
-                { "Name": "ET 403", "Vmax": 200, "Type": "Triebzug", "Epoch": "IV", "Description": "Lufthansa-Airport-Express" },
-                { "Name": "ET 420", "Vmax": 120, "Type": "Triebzug", "Epoch": "IV-V", "Description": "S-Bahn München" },
-                { "Name": "ET 423", "Vmax": 140, "Type": "Triebzug", "Epoch": "V-VI", "Description": "S-Bahn modern" },
-                { "Name": "ET 424", "Vmax": 140, "Type": "Triebzug", "Epoch": "V-VI", "Description": "S-Bahn Hannover" },
-                { "Name": "ET 425", "Vmax": 160, "Type": "Triebzug", "Epoch": "V-VI", "Description": "Nahverkehr" },
-                { "Name": "ET 426", "Vmax": 160, "Type": "Triebzug", "Epoch": "V-VI", "Description": "Nahverkehr kurz" },
-                { "Name": "ET 430", "Vmax": 140, "Type": "Triebzug", "Epoch": "VI", "Description": "S-Bahn Frankfurt/Stuttgart" },
-                { "Name": "BR 440 (Coradia Continental)", "Vmax": 160, "Type": "Triebzug", "Epoch": "VI", "Description": "Alstom Coradia" },
-                { "Name": "BR 442 (Talent 2)", "Vmax": 160, "Type": "Triebzug", "Epoch": "VI", "Description": "Bombardier Talent" },
-                { "Name": "BR 445 (Twindexx)", "Vmax": 160, "Type": "Triebzug", "Epoch": "VI", "Description": "Doppelstock-Triebzug" },
-                { "Name": "BR 460 (Desiro HC)", "Vmax": 200, "Type": "Triebzug", "Epoch": "VI", "Description": "RRX Rhein-Ruhr-Express" },
-                { "Name": "BR 462 (Desiro HC)", "Vmax": 160, "Type": "Triebzug", "Epoch": "VI", "Description": "S-Bahn Rhein-Main" },
-                { "Name": "BR 463 (Mireo)", "Vmax": 160, "Type": "Triebzug", "Epoch": "VI", "Description": "Siemens Mireo" },
-                { "Name": "BR 463 Plus (Mireo Plus)", "Vmax": 160, "Type": "Triebzug", "Epoch": "VI", "Description": "Mireo Batterie/Akku" },
-                { "Name": "BR 490 (S-Bahn Hamburg)", "Vmax": 100, "Type": "Triebzug", "Epoch": "VI", "Description": "Bombardier ET 490" }
+                {
+                    "Name": "ET 85",
+                    "Vmax": 85,
+                    "Type": "Triebwagen",
+                    "Epoch": "II-III",
+                    "Description": "Wittfeld-Akkutriebwagen"
+                },
+                {
+                    "Name": "ET 91 (Gläserner Zug)",
+                    "Vmax": 110,
+                    "Type": "Triebwagen",
+                    "Epoch": "III-IV",
+                    "Description": "Aussichtstriebwagen"
+                },
+                {
+                    "Name": "ET 403",
+                    "Vmax": 200,
+                    "Type": "Triebzug",
+                    "Epoch": "IV",
+                    "Description": "Lufthansa-Airport-Express"
+                },
+                {
+                    "Name": "ET 420",
+                    "Vmax": 120,
+                    "Type": "Triebzug",
+                    "Epoch": "IV-V",
+                    "Description": "S-Bahn München"
+                },
+                {
+                    "Name": "ET 423",
+                    "Vmax": 140,
+                    "Type": "Triebzug",
+                    "Epoch": "V-VI",
+                    "Description": "S-Bahn modern"
+                },
+                {
+                    "Name": "ET 424",
+                    "Vmax": 140,
+                    "Type": "Triebzug",
+                    "Epoch": "V-VI",
+                    "Description": "S-Bahn Hannover"
+                },
+                {
+                    "Name": "ET 425",
+                    "Vmax": 160,
+                    "Type": "Triebzug",
+                    "Epoch": "V-VI",
+                    "Description": "Nahverkehr"
+                },
+                {
+                    "Name": "ET 426",
+                    "Vmax": 160,
+                    "Type": "Triebzug",
+                    "Epoch": "V-VI",
+                    "Description": "Nahverkehr kurz"
+                },
+                {
+                    "Name": "ET 430",
+                    "Vmax": 140,
+                    "Type": "Triebzug",
+                    "Epoch": "VI",
+                    "Description": "S-Bahn Frankfurt/Stuttgart"
+                },
+                {
+                    "Name": "BR 440 (Coradia Continental)",
+                    "Vmax": 160,
+                    "Type": "Triebzug",
+                    "Epoch": "VI",
+                    "Description": "Alstom Coradia"
+                },
+                {
+                    "Name": "BR 442 (Talent 2)",
+                    "Vmax": 160,
+                    "Type": "Triebzug",
+                    "Epoch": "VI",
+                    "Description": "Bombardier Talent"
+                },
+                {
+                    "Name": "BR 445 (Twindexx)",
+                    "Vmax": 160,
+                    "Type": "Triebzug",
+                    "Epoch": "VI",
+                    "Description": "Doppelstock-Triebzug"
+                },
+                {
+                    "Name": "BR 460 (Desiro HC)",
+                    "Vmax": 200,
+                    "Type": "Triebzug",
+                    "Epoch": "VI",
+                    "Description": "RRX Rhein-Ruhr-Express"
+                },
+                {
+                    "Name": "BR 462 (Desiro HC)",
+                    "Vmax": 160,
+                    "Type": "Triebzug",
+                    "Epoch": "VI",
+                    "Description": "S-Bahn Rhein-Main"
+                },
+                {
+                    "Name": "BR 463 (Mireo)",
+                    "Vmax": 160,
+                    "Type": "Triebzug",
+                    "Epoch": "VI",
+                    "Description": "Siemens Mireo"
+                },
+                {
+                    "Name": "BR 463 Plus (Mireo Plus)",
+                    "Vmax": 160,
+                    "Type": "Triebzug",
+                    "Epoch": "VI",
+                    "Description": "Mireo Batterie/Akku"
+                },
+                {
+                    "Name": "BR 490 (S-Bahn Hamburg)",
+                    "Vmax": 100,
+                    "Type": "Triebzug",
+                    "Epoch": "VI",
+                    "Description": "Bombardier ET 490"
+                }
             ]
         },
         {
             "Category": "Dieseltriebwagen",
             "Series": [
-                { "Name": "VT 08 (SVT)", "Vmax": 140, "Type": "Triebwagen", "Epoch": "III-IV", "Description": "Schnelltriebwagen" },
-                { "Name": "VT 11.5 (BR 601)", "Vmax": 160, "Type": "Triebwagen", "Epoch": "III-IV", "Description": "TEE-Triebzug" },
-                { "Name": "VT 12.5 (BR 612 alt)", "Vmax": 140, "Type": "Triebwagen", "Epoch": "III-IV", "Description": "Triebwagen" },
-                { "Name": "VT 18.16 (BR 175)", "Vmax": 160, "Type": "Triebwagen", "Epoch": "IV-V", "Description": "DR Vindobona" },
-                { "Name": "VT 24 (BR 624)", "Vmax": 120, "Type": "Triebwagen", "Epoch": "III-IV", "Description": "Nahverkehr" },
-                { "Name": "VT 95 / VT 98 (Schienenbus)", "Vmax": 90, "Type": "Triebwagen", "Epoch": "III-IV", "Description": "Roter Brummer" },
-                { "Name": "VT 98 (BR 798)", "Vmax": 90, "Type": "Triebwagen", "Epoch": "III-V", "Description": "Schienenbus 2-achsig" },
-                { "Name": "BR 605 (ICE TD)", "Vmax": 200, "Type": "Triebzug", "Epoch": "V-VI", "Description": "ICE Diesel Neigetechnik" },
-                { "Name": "BR 610 (Pendolino)", "Vmax": 160, "Type": "Triebzug", "Epoch": "IV-V", "Description": "Neigetechnik" },
-                { "Name": "BR 611", "Vmax": 160, "Type": "Triebzug", "Epoch": "V-VI", "Description": "RegioSwinger 2-teilig" },
-                { "Name": "BR 612", "Vmax": 160, "Type": "Triebzug", "Epoch": "V-VI", "Description": "RegioSwinger Neigetechnik" },
-                { "Name": "BR 614", "Vmax": 140, "Type": "Triebzug", "Epoch": "IV-V", "Description": "Mitteleinstieg" },
-                { "Name": "BR 620/621/622 (LINT)", "Vmax": 140, "Type": "Triebzug", "Epoch": "VI", "Description": "LINT 81/54/41" },
-                { "Name": "BR 628", "Vmax": 120, "Type": "Triebzug", "Epoch": "IV-VI", "Description": "Nahverkehr 2-teilig" },
-                { "Name": "BR 629 (NE 81)", "Vmax": 120, "Type": "Triebwagen", "Epoch": "V-VI", "Description": "Privatbahn" },
-                { "Name": "BR 633 (LINT 41)", "Vmax": 120, "Type": "Triebzug", "Epoch": "V-VI", "Description": "Alstom LINT" },
-                { "Name": "BR 640 (LINT 27)", "Vmax": 120, "Type": "Triebzug", "Epoch": "V-VI", "Description": "1-teilig" },
-                { "Name": "BR 641", "Vmax": 120, "Type": "Triebzug", "Epoch": "V-VI", "Description": "Alstom RS1" },
-                { "Name": "BR 642 (Desiro)", "Vmax": 120, "Type": "Triebzug", "Epoch": "V-VI", "Description": "Siemens Desiro" },
-                { "Name": "BR 643 (Talent)", "Vmax": 120, "Type": "Triebzug", "Epoch": "V-VI", "Description": "Bombardier Talent" },
-                { "Name": "BR 644 (Talent)", "Vmax": 120, "Type": "Triebzug", "Epoch": "V-VI", "Description": "3-teilig" },
-                { "Name": "BR 648 (LINT 41)", "Vmax": 120, "Type": "Triebzug", "Epoch": "V-VI", "Description": "2-teilig" },
-                { "Name": "BR 650 (RegioShuttle)", "Vmax": 120, "Type": "Triebwagen", "Epoch": "V-VI", "Description": "Stadler RS1" }
+                {
+                    "Name": "VT 08 (SVT)",
+                    "Vmax": 140,
+                    "Type": "Triebwagen",
+                    "Epoch": "III-IV",
+                    "Description": "Schnelltriebwagen"
+                },
+                {
+                    "Name": "VT 11.5 (BR 601)",
+                    "Vmax": 160,
+                    "Type": "Triebwagen",
+                    "Epoch": "III-IV",
+                    "Description": "TEE-Triebzug"
+                },
+                {
+                    "Name": "VT 12.5 (BR 612 alt)",
+                    "Vmax": 140,
+                    "Type": "Triebwagen",
+                    "Epoch": "III-IV",
+                    "Description": "Triebwagen"
+                },
+                {
+                    "Name": "VT 18.16 (BR 175)",
+                    "Vmax": 160,
+                    "Type": "Triebwagen",
+                    "Epoch": "IV-V",
+                    "Description": "DR Vindobona"
+                },
+                {
+                    "Name": "VT 24 (BR 624)",
+                    "Vmax": 120,
+                    "Type": "Triebwagen",
+                    "Epoch": "III-IV",
+                    "Description": "Nahverkehr"
+                },
+                {
+                    "Name": "VT 95 / VT 98 (Schienenbus)",
+                    "Vmax": 90,
+                    "Type": "Triebwagen",
+                    "Epoch": "III-IV",
+                    "Description": "Roter Brummer"
+                },
+                {
+                    "Name": "VT 98 (BR 798)",
+                    "Vmax": 90,
+                    "Type": "Triebwagen",
+                    "Epoch": "III-V",
+                    "Description": "Schienenbus 2-achsig"
+                },
+                {
+                    "Name": "BR 605 (ICE TD)",
+                    "Vmax": 200,
+                    "Type": "Triebzug",
+                    "Epoch": "V-VI",
+                    "Description": "ICE Diesel Neigetechnik"
+                },
+                {
+                    "Name": "BR 610 (Pendolino)",
+                    "Vmax": 160,
+                    "Type": "Triebzug",
+                    "Epoch": "IV-V",
+                    "Description": "Neigetechnik"
+                },
+                {
+                    "Name": "BR 611",
+                    "Vmax": 160,
+                    "Type": "Triebzug",
+                    "Epoch": "V-VI",
+                    "Description": "RegioSwinger 2-teilig"
+                },
+                {
+                    "Name": "BR 612",
+                    "Vmax": 160,
+                    "Type": "Triebzug",
+                    "Epoch": "V-VI",
+                    "Description": "RegioSwinger Neigetechnik"
+                },
+                {
+                    "Name": "BR 614",
+                    "Vmax": 140,
+                    "Type": "Triebzug",
+                    "Epoch": "IV-V",
+                    "Description": "Mitteleinstieg"
+                },
+                {
+                    "Name": "BR 620/621/622 (LINT)",
+                    "Vmax": 140,
+                    "Type": "Triebzug",
+                    "Epoch": "VI",
+                    "Description": "LINT 81/54/41"
+                },
+                {
+                    "Name": "BR 628",
+                    "Vmax": 120,
+                    "Type": "Triebzug",
+                    "Epoch": "IV-VI",
+                    "Description": "Nahverkehr 2-teilig"
+                },
+                {
+                    "Name": "BR 629 (NE 81)",
+                    "Vmax": 120,
+                    "Type": "Triebwagen",
+                    "Epoch": "V-VI",
+                    "Description": "Privatbahn"
+                },
+                {
+                    "Name": "BR 633 (LINT 41)",
+                    "Vmax": 120,
+                    "Type": "Triebzug",
+                    "Epoch": "V-VI",
+                    "Description": "Alstom LINT"
+                },
+                {
+                    "Name": "BR 640 (LINT 27)",
+                    "Vmax": 120,
+                    "Type": "Triebzug",
+                    "Epoch": "V-VI",
+                    "Description": "1-teilig"
+                },
+                {
+                    "Name": "BR 641",
+                    "Vmax": 120,
+                    "Type": "Triebzug",
+                    "Epoch": "V-VI",
+                    "Description": "Alstom RS1"
+                },
+                {
+                    "Name": "BR 642 (Desiro)",
+                    "Vmax": 120,
+                    "Type": "Triebzug",
+                    "Epoch": "V-VI",
+                    "Description": "Siemens Desiro"
+                },
+                {
+                    "Name": "BR 643 (Talent)",
+                    "Vmax": 120,
+                    "Type": "Triebzug",
+                    "Epoch": "V-VI",
+                    "Description": "Bombardier Talent"
+                },
+                {
+                    "Name": "BR 644 (Talent)",
+                    "Vmax": 120,
+                    "Type": "Triebzug",
+                    "Epoch": "V-VI",
+                    "Description": "3-teilig"
+                },
+                {
+                    "Name": "BR 648 (LINT 41)",
+                    "Vmax": 120,
+                    "Type": "Triebzug",
+                    "Epoch": "V-VI",
+                    "Description": "2-teilig"
+                },
+                {
+                    "Name": "BR 650 (RegioShuttle)",
+                    "Vmax": 120,
+                    "Type": "Triebwagen",
+                    "Epoch": "V-VI",
+                    "Description": "Stadler RS1"
+                }
             ]
         },
         {
             "Category": "Historische Triebwagen",
             "Series": [
-                { "Name": "SVT 137 (Fliegender Hamburger)", "Vmax": 160, "Type": "Triebwagen", "Epoch": "II", "Description": "Schnelltriebwagen 1933" },
-                { "Name": "SVT 137 (Bauart Köln)", "Vmax": 160, "Type": "Triebwagen", "Epoch": "II-III", "Description": "Schnelltriebwagen" },
-                { "Name": "VT 04 (Fliegender Kölner)", "Vmax": 160, "Type": "Triebwagen", "Epoch": "II-III", "Description": "Schnelltriebwagen" },
-                { "Name": "ET 11 (Gummikuh)", "Vmax": 100, "Type": "Triebwagen", "Epoch": "II-III", "Description": "Elektrotriebwagen" }
+                {
+                    "Name": "SVT 137 (Fliegender Hamburger)",
+                    "Vmax": 160,
+                    "Type": "Triebwagen",
+                    "Epoch": "II",
+                    "Description": "Schnelltriebwagen 1933"
+                },
+                {
+                    "Name": "SVT 137 (Bauart Köln)",
+                    "Vmax": 160,
+                    "Type": "Triebwagen",
+                    "Epoch": "II-III",
+                    "Description": "Schnelltriebwagen"
+                },
+                {
+                    "Name": "VT 04 (Fliegender Kölner)",
+                    "Vmax": 160,
+                    "Type": "Triebwagen",
+                    "Epoch": "II-III",
+                    "Description": "Schnelltriebwagen"
+                },
+                {
+                    "Name": "ET 11 (Gummikuh)",
+                    "Vmax": 100,
+                    "Type": "Triebwagen",
+                    "Epoch": "II-III",
+                    "Description": "Elektrotriebwagen"
+                }
             ]
         }
     ]

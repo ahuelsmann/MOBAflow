@@ -2,7 +2,6 @@
 namespace Test.Domain;
 
 using Moba.Domain;
-using Moba.TrackPlan.Graph;
 
 [TestFixture]
 public class ProjectTests
@@ -29,7 +28,6 @@ public class ProjectTests
         Assert.That(project.Workflows, Is.Empty);
         Assert.That(project.Journeys, Is.Not.Null);
         Assert.That(project.Journeys, Is.Empty);
-        Assert.That(project.TrackPlan, Is.Null);
         Assert.That(project.SignalBoxPlan, Is.Null);
     }
 
@@ -44,7 +42,6 @@ public class ProjectTests
         var trains = new List<Train> { new() };
         var workflows = new List<Workflow> { new() };
         var journeys = new List<Journey> { new() };
-        var trackPlan = new TopologyGraph();
         var signalBoxPlan = new SignalBoxPlan();
 
         var project = new Project
@@ -58,7 +55,6 @@ public class ProjectTests
             Trains = trains,
             Workflows = workflows,
             Journeys = journeys,
-            TrackPlan = trackPlan,
             SignalBoxPlan = signalBoxPlan
         };
 
@@ -71,7 +67,6 @@ public class ProjectTests
         Assert.That(project.Trains, Is.SameAs(trains));
         Assert.That(project.Workflows, Is.SameAs(workflows));
         Assert.That(project.Journeys, Is.SameAs(journeys));
-        Assert.That(project.TrackPlan, Is.SameAs(trackPlan));
         Assert.That(project.SignalBoxPlan, Is.SameAs(signalBoxPlan));
     }
 

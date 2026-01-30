@@ -15,7 +15,6 @@
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
         <UserSecretsId>mobaflow-winui-secrets-2026</UserSecretsId>
-
         <!-- Disable MSIX packaging during development to avoid Windows SDK BuildTools issues -->
         <WindowsPackageType>None</WindowsPackageType>
         <GenerateMsixPackageOnBuild>false</GenerateMsixPackageOnBuild>
@@ -25,7 +24,6 @@
         <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
         <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
         <GenerateDocumentationFile>false</GenerateDocumentationFile>
-
         <!-- Disable MSIX/PRI generation during Debug builds to work around Windows SDK BuildTools issues -->
         <EnableMsixTooling>false</EnableMsixTooling>
         <AppxPackage>false</AppxPackage>
@@ -51,7 +49,6 @@
         <ProjectReference Include="..\Common\Common.csproj" />
         <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
         <ProjectReference Include="..\TrackLibrary.Base\TrackLibrary.Base.csproj" />
-        <ProjectReference Include="..\TrackPlan.Editor\TrackPlan.Editor.csproj" />
         <ProjectReference Include="..\TrackPlan.Renderer\TrackPlan.Renderer.csproj" />
         <ProjectReference Include="..\TrackLibrary.PikoA\TrackLibrary.PikoA.csproj" />
     </ItemGroup>
@@ -67,6 +64,5 @@
         <Content Include="example-solution.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="germany-stations.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="germany-locomotives.json" CopyToOutputDirectory="PreserveNewest" />
-        <Content Include="myMOBA2025b.xml" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 </Project>

@@ -2,7 +2,8 @@
 namespace Moba.ReactApp.Controllers;
 
 using Microsoft.AspNetCore.Mvc;
-using Moba.SharedUI.ViewModel;
+
+using SharedUI.ViewModel;
 
 /// <summary>
 /// REST API controller for track statistics (lap counter).

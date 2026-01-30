@@ -2,10 +2,13 @@
 namespace Moba.SharedUI.ViewModel.Action;
 
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
 using Domain.Enum;
+
 using Interface;
-using Moba.Sound;
+
+using Sound;
 
 /// <summary>
 /// ViewModel for Audio playback actions.
@@ -20,7 +23,7 @@ public partial class AudioViewModel : WorkflowActionViewModel
     private readonly ISoundPlayer? _soundPlayer;
     #endregion
 
-    public AudioViewModel(WorkflowAction action, IIoService ioService, ISoundPlayer? soundPlayer = null) : base(action, ActionType.Audio) 
+    public AudioViewModel(WorkflowAction action, IIoService ioService, ISoundPlayer? soundPlayer = null) : base(action, ActionType.Audio)
     {
         _ioService = ioService;
         _soundPlayer = soundPlayer;

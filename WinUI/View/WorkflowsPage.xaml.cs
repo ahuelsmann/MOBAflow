@@ -68,7 +68,7 @@ public sealed partial class WorkflowsPage
         if (ViewModel.SelectedWorkflow == null) return;
 
         // Log to file - check WinUI/bin/Debug/logs/mobaflow-YYYYMMDD.txt
-        System.Diagnostics.Trace.WriteLine($"[DRAG] DragItemsCompleted - Items were reordered!");
+        Trace.WriteLine($"[DRAG] DragItemsCompleted - Items were reordered!");
         Debug.WriteLine($"🔄 DragItemsCompleted - Items were reordered!");
 
         // Update action numbers and save after drag & drop completes

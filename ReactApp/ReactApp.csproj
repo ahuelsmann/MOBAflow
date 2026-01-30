@@ -11,12 +11,10 @@
         <!-- Blazor Support for Validation/Comparison -->
         <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
     </PropertyGroup>
-
     <PropertyGroup Condition="'$(Configuration)'=='Debug'">
         <RazorCompileOnBuild>false</RazorCompileOnBuild>
         <RazorCompileOnPublish>false</RazorCompileOnPublish>
     </PropertyGroup>
-
     <ItemGroup>
         <!-- Project References -->
         <ProjectReference Include="..\Backend\Backend.csproj" />
@@ -24,19 +22,16 @@
         <ProjectReference Include="..\Common\Common.csproj" />
         <ProjectReference Include="..\Sound\Sound.csproj" />
     </ItemGroup>
-
     <ItemGroup>
         <!-- NuGet Packages (versions from Directory.Packages.props) -->
         <PackageReference Include="CommunityToolkit.Mvvm" />
         <PackageReference Include="Microsoft.AspNetCore.SpaProxy" />
         <PackageReference Include="Swashbuckle.AspNetCore" />
     </ItemGroup>
-
     <ItemGroup>
         <Folder Include="Controllers\" />
         <Folder Include="Components\" />
     </ItemGroup>
-
     <!-- Publish React SPA -->
     <Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish">
         <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />

@@ -225,13 +225,13 @@ public sealed partial class SpeedometerControl : UserControl
     {
         if (SpeedArc is null) return;
 
-        Windows.UI.Color color;
+        Color color;
 
         if (normalizedValue < 0.5)
         {
             // Green to Yellow (0-50%)
             var t = normalizedValue * 2;
-            color = Windows.UI.Color.FromArgb(255,
+            color = Color.FromArgb(255,
                 (byte)(76 + (t * 179)),   // 76 to 255 (green to yellow R)
                 (byte)(175 - (t * 75)),   // 175 to 100 (green to yellow G)
                 80);                     // Blue stays low
@@ -240,7 +240,7 @@ public sealed partial class SpeedometerControl : UserControl
         {
             // Yellow to Red (50-100%)
             var t = (normalizedValue - 0.5) * 2;
-            color = Windows.UI.Color.FromArgb(255,
+            color = Color.FromArgb(255,
                 255,                     // Red stays max
                 (byte)(100 - (t * 100)),  // 100 to 0 (yellow to red G)
                 (byte)(80 - (t * 80)));   // Blue goes to 0
