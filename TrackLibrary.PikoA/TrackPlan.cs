@@ -3,6 +3,12 @@ namespace Moba.TrackLibrary.PikoA;
 using Base;
 
 /// <summary>
+/// Verbindung zwischen zwei Port-Paaren in einem TrackPlan.
+/// Wird vom Renderer verwendet, um Entry-Ports und Verkettungen zu bestimmen.
+/// </summary>
+public record PortConnection(Guid SourceSegment, string SourcePort, Guid TargetSegment, string TargetPort);
+
+/// <summary>
 /// Ergebnis eines Track Plan Builders mit Segmenten und Startkonfiguration.
 /// Enthält alle Gleissegmente und den initialen Renderwinkel.
 /// </summary>
@@ -16,6 +22,12 @@ public class TrackPlanResult
     /// 0° = rechts, 90° = oben, 180° = links, 270° = unten
     /// </summary>
     public required double StartAngleDegrees { get; init; }
+
+    /// <summary>
+    /// Alle Port-Verbindungen zwischen Segmenten.
+    /// Wird vom Renderer verwendet, um die logische Verkettung zu verstehen.
+    /// </summary>
+    public required List<PortConnection> Connections { get; init; }
 }
 
 /// <summary>
@@ -84,7 +96,8 @@ public class TrackPlanBuilder
     /// Prozess:
     /// 1. Instantiiert alle Track-Objekte mit eindeutiger GUID
     /// 2. Setzt alle Port-Verbindungen basierend auf Connection-Liste
-    /// 3. Rückgabe mit Start-Winkel
+    /// 3. Konvertiert interne Connections zu PortConnection-Records mit GUIDs
+    /// 4. Rückgabe mit Start-Winkel
     /// </summary>
     /// <returns>Immutable TrackPlanResult mit allen Segmenten</returns>
     public TrackPlanResult Create()
@@ -97,6 +110,8 @@ public class TrackPlanBuilder
             instance.No = Guid.NewGuid();
             instances[node] = instance;
         }
+
+        var portConnections = new List<PortConnection>();
 
         foreach (var conn in _connections)
         {
@@ -111,12 +126,21 @@ public class TrackPlanBuilder
                 sourceProp.SetValue(sourceInstance, targetInstance.No);
                 targetProp.SetValue(targetInstance, sourceInstance.No);
             }
+
+            // Exportiere Verbindung mit GUIDs für Renderer
+            portConnections.Add(new PortConnection(
+                sourceInstance.No,
+                conn.SourcePort,
+                targetInstance.No,
+                conn.TargetPort
+            ));
         }
 
         return new TrackPlanResult
         {
             Segments = instances.Values.ToList(),
-            StartAngleDegrees = _startAngleDegrees
+            StartAngleDegrees = _startAngleDegrees,
+            Connections = portConnections
         };
     }
 
