@@ -5,7 +5,43 @@ applyTo: '**'
 
 # MOBAflow TODOs
 
-> Letzte Aktualisierung: 2025-01-30 (Session 3 abgeschlossen - Connection-basiertes Rendering + Fehlerfix)
+> Letzte Aktualisierung: 2025-01-31 (Session 4 abgeschlossen - Port-Visualisierung mit Strichen + Farbcodierung)
+
+---
+
+## 🎯 SESSION 4 ABGESCHLOSSEN ✅
+
+### Port-Visualisierung Refaktorierung
+
+**Striche statt Kreise (TrackPlan.Renderer)**
+- ✅ `DrawPortStroke()` Hilfsmethode implementiert
+  - Ersetzt Kreis-Visualisierung durch senkrechte Striche (20px)
+  - Striche stehen im rechten Winkel zur Fahrtrichtung
+  - Labels positioniert 25px neben dem Strich
+  
+**Farbcodierung für alle Port-Typen**
+- ✅ `GetPortColor()` Hilfsfunktion hinzugefügt
+  - Port A = schwarz (physisch)
+  - Port B = rot (physisch)
+  - Port C = grün (WR only)
+  - Port D = blau (für zukünftige Typen)
+- ✅ Unabhängig von Entry-Richtung: Ports behalten ihre physischen Farben
+
+**Alle 9 Render-Methoden aktualisiert**
+- ✅ RenderWR() - 3 Ports mit physischen Farben
+- ✅ RenderR9() - Port-Labels basierend auf entryPort
+- ✅ RenderR1(), RenderR2(), RenderR3(), RenderR4() - Kurvengleise mit Strich-Visualisierung
+- ✅ RenderG239(), RenderG231(), RenderG62() - Gerade-Gleise mit Strich-Visualisierung
+
+**Tests & Build**
+- ✅ Komplexer Test-Fall: WR mit 3 Branches (G239, G62, R9s)
+- ✅ Build erfolgreich mit allen 9 Gleistypen
+- ✅ Striche zentriert auf Port-Positionen, keine Versetzung
+
+**Offene Fragestellung**
+- ⏳ Port-Strich-Positionierung bei Verbindungen prüfen
+  - Aktuell: Striche zentriert auf Port-Punkt (können überlappen wenn verbunden)
+  - Benutzer prüft noch optimale Lösung für kante-an-kante Positionierung
 
 ---
 
@@ -44,44 +80,27 @@ applyTo: '**'
 
 ## 📋 BACKLOG (NÄCHSTE SESSIONS)
 
-### 1. Zusätzliche Gleistypen (👤 BENUTZER: Domain-Klassen)
+### 1. Port-Strich-Positionierung (NÄCHSTER STEP)
+- [ ] Lösung für überlappungsfreie Strich-Positionierung bei Verbindungen
+  - Optionen: Versetzung, separate Verbindungslinie, andere Strategie
+  - User formuliert noch konkrete Anforderung
+
+### 2. Zusätzliche Gleistypen (👤 BENUTZER: Domain-Klassen)
 
 **Reserviert für Domain-Layer Implementierung:**
 - [ ] `R10` (Kurvengleis 10°) Domain-Klasse
-  - Erbt von `Curved`
-  - `ArcInDegree = 10`
-  - `RadiusInMm = 1360`
-  - Ports: A (Eingang), B (Ausgang)
-  
 - [ ] `R12` (Kurvengleis 12°) Domain-Klasse
-  - Erbt von `Curved`
-  - `ArcInDegree = 12`
-  - `RadiusInMm = 1130`
-  
 - [ ] `R15` (Kurvengleis 15°) Domain-Klasse
-  - Erbt von `Curved`
-  - `ArcInDegree = 15`
-  - `RadiusInMm = 908`
-  - (Gleich wie R9, aber für Übersicht separat)
-
 - [ ] `WL` (Linksweiche) Domain-Klasse
-  - Erbt von `SwitchLeft`
-  - `LengthInMm = 239`
-  - `RadiusInMm = 908`
-  - `ArcInDegree = 15`
-  - Ports: A (Eingang), B (Gerade), C (Kurve links statt rechts)
+- [ ] Renderer-Methoden für alle neuen Typen
 
-**Nach Domain-Implementierung:**
-- [ ] Renderer-Methoden hinzufügen (`RenderR10()`, `RenderWL()`, etc.)
-- [ ] Segment-Registry für dynamische Renderer (Reflection Pattern)
-
-### 2. Persistenz (JSON Serialisierung)
+### 3. Persistenz (JSON Serialisierung)
 - [ ] TrackPlanResult zu JSON serialisieren
 - [ ] JSON zu TrackPlanResult deserialisieren
 - [ ] Versionierung für TrackPlan-Format
 - [ ] File-Dialog zum Speichern/Laden
 
-### 3. UI Integration (NACH Tests abgeschlossen)
+### 4. UI Integration (NACH Tests abgeschlossen)
 - [ ] **WinUI**: Interactive TrackPlan Editor
 - [ ] **MAUI**: Mobile TrackPlan Viewer
 - [ ] **Blazor**: Web-basierter TrackPlan Planner
@@ -89,13 +108,13 @@ applyTo: '**'
 - [ ] Live-Preview während Bearbeitung
 - [ ] Export: PDF, PNG, SVG
 
-### 4. Visualisierung Erweiterungen
+### 5. Visualisierung Erweiterungen
 - [ ] 3D-Rendering (Three.js / Babylon.js)
 - [ ] Höhenangaben für Gleise
 - [ ] Schattierungen / Texturen
 - [ ] Animation: Lok-Bewegung entlang Pfad
 
-### 5. Performance & Qualität
+### 6. Performance & Qualität
 - [ ] Unit-Tests für Edge-Cases (ungültige Verbindungen, etc.)
 - [ ] Performance-Test für große TrackPläne (1000+ Gleise)
 - [ ] SVG-Optimierung (Path-Zusammenfassung, etc.)
@@ -105,10 +124,11 @@ applyTo: '**'
 ## 📚 Dokumentation
 
 **Verfügbare Dokumentation:**
-- ✅ XML-Comments in TrackLibrary.PikoA/TrackPlan.cs (erweitert)
+- ✅ XML-Comments in TrackLibrary.PikoA/TrackPlan.cs
 - ✅ XML-Comments in TrackPlan.Renderer/TrackPlanSvgRenderer.cs (komplett neugeschrieben)
 - ✅ Connection-basiertes Rendering dokumentiert
 - ✅ Entry-Port-Logik erklärt
+- ✅ Port-Strich-Visualisierung dokumentiert
 - ✅ Test-Beispiele in Test/TrackPlanRenderer/RendererTests.cs
 
 **Architektur-Übersicht:**
@@ -117,7 +137,7 @@ TrackPlanBuilder (Fluent API)
     ↓
 TrackPlanResult (Segments + Connections)
     ↓
-TrackPlanSvgRenderer (Connection-basiert)
+TrackPlanSvgRenderer (Connection-basiert, Striche-Visualisierung)
     ↓
 SVG-Output
 ```
@@ -126,21 +146,20 @@ SVG-Output
 
 ## 🚀 Nächste Prioritäten
 
-1. **Domain-Klassen implementieren** (R10, R12, R15, WL)
-2. **Renderer-Methoden für neue Gleistypen** (nach Domain fertig)
-3. **Persistenz-Schicht** (JSON Serialisierung)
-4. **UI Integration** (WinUI, MAUI, Blazor - nur nach Tests!)
+1. **Port-Strich-Positionierung klären** - User definiert optimale Lösung
+2. **Domain-Klassen implementieren** (R10, R12, R15, WL)
+3. **Renderer erweitern** für neue Gleistypen
+4. **Persistenz-Schicht** (JSON Serialisierung)
+5. **UI Integration** (WinUI, MAUI, Blazor - nur nach Tests!)
 
 ---
 
 ## 📌 Wichtige Hinweise
 
-- **Domain ist Benutzer-Aufgabe**: Neue Gleistypen gehören ins Domain Layer
-- **Tests ERST**: UI-Integration kommt erst nach abgeschlossenen Tests
-- **Renderer ist erweiterbar**: Segment-Registry Pattern für dynamische Renderer verwenden
-- **Connection-basiertes Design**: Keine sequenzielle Verarbeitung mehr!
-
----
+- **Striche sind zentriert**: Auf Port-Positionen, können bei Verbindungen überlappen
+- **Physische Port-Farben**: Unabhängig von Entry-Richtung konsistent
+- **9 Gleistypen**: WR, R9, R1-R4, G62, G231, G239 vollständig unterstützt
+- **Tests funktionieren**: Komplexer Test-Fall validiert mehrzeilige Rendering
 
 
 

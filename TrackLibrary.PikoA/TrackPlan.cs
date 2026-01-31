@@ -16,7 +16,7 @@ public class TrackPlanResult
 {
     /// <summary>Alle Gleissegmente des Track Plans (WR, R9, etc.)</summary>
     public required List<Segment> Segments { get; init; }
-    
+
     /// <summary>
     /// Startwinkel für das Rendering in Grad
     /// 0° = rechts, 90° = oben, 180° = links, 270° = unten

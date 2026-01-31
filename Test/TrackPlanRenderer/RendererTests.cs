@@ -15,11 +15,10 @@ public class RendererTests
         var plan = new TrackPlanBuilder()
             .Start(0)
             .Add<WR>().Connections(
-                wr => wr.FromA
-                    .ToB<R9>(),
-                wr => wr.FromC
-                    .ToA<R9>().FromB
-                    .ToA<R9>()).Create();
+                wr => wr.FromA.ToB<R9>().FromA.ToA<G62>(),
+                wr => wr.FromB.ToA<G239>().FromB.ToA<G62>(),
+                wr => wr.FromC.ToA<R9>().FromB.ToA<R9>().FromB.ToA<G62>())
+            .Create();
 
         var renderer = new TrackPlanSvgRenderer();
         var svg = renderer.Render(plan);

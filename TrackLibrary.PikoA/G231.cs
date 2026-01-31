@@ -4,5 +4,8 @@ using Base;
 
 public class G231 : Straight
 {
-    public uint LengthInMm { get; set; } = 231;
+    public G231()
+    {
+        LengthInMm = 231;
+    }
 }
