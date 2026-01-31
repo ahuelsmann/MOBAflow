@@ -171,7 +171,7 @@ public static class Z21MessageParser
 
             locoInfo = new LocoInfo
             {
-                Address = (int)address,
+                Address = address,
                 Speed = speed,
                 IsForward = forward,
                 SpeedSteps = speedSteps switch { 0 => 14, 2 => 28, 3 => 128, _ => 128 },

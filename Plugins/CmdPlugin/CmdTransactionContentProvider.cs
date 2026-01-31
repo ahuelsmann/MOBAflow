@@ -1,14 +1,14 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
+namespace Moba.Plugin.Cmd;
+
 using Microsoft.UI;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
-
 using Windows.UI;
-
-namespace Moba.Plugin.Cmd;
 
 /// <summary>
 /// MOBAcmd Transaction Page - Command-style navigation interface.
@@ -428,7 +428,7 @@ public sealed class CmdTransactionContentProvider
 /// <summary>
 /// Converter to show "No history" text when command history is empty.
 /// </summary>
-public sealed partial class CountToVisibilityConverter : Microsoft.UI.Xaml.Data.IValueConverter
+public sealed partial class CountToVisibilityConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {

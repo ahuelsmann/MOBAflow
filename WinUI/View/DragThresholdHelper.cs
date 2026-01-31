@@ -2,6 +2,8 @@
 
 namespace Moba.WinUI.View;
 
+using Windows.Foundation;
+
 /// <summary>
 /// Helper for implementing standard drag-and-drop with distance threshold.
 /// Based on Microsoft AutomaticDragHelper pattern from WinUI source code.
@@ -18,12 +20,12 @@ public sealed class DragThresholdHelper
     public const double DragThresholdPixels = 8.0;
 
     private bool _isWaitingForThreshold;
-    private Windows.Foundation.Point _startPosition;
+    private Point _startPosition;
 
     /// <summary>
     /// Call on PointerPressed to start tracking potential drag.
     /// </summary>
-    public void BeginTracking(Windows.Foundation.Point position)
+    public void BeginTracking(Point position)
     {
         _isWaitingForThreshold = true;
         _startPosition = position;
@@ -33,7 +35,7 @@ public sealed class DragThresholdHelper
     /// Call on PointerMoved to check if threshold is crossed.
     /// Returns true if drag should start.
     /// </summary>
-    public bool ShouldStartDrag(Windows.Foundation.Point currentPosition)
+    public bool ShouldStartDrag(Point currentPosition)
     {
         if (!_isWaitingForThreshold)
             return false;

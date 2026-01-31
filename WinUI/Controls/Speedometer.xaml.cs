@@ -3,11 +3,10 @@ namespace Moba.WinUI.Controls;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
-
 using System.Globalization;
-
 using Windows.UI;
 
 /// <summary>
@@ -208,7 +207,7 @@ public sealed partial class SpeedometerControl : UserControl
 
         try
         {
-            SpeedArc.Data = (Geometry)Microsoft.UI.Xaml.Markup.XamlBindingHelper.ConvertValue(
+            SpeedArc.Data = (Geometry)XamlBindingHelper.ConvertValue(
                 typeof(Geometry), pathData);
         }
         catch

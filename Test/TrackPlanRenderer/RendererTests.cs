@@ -1,8 +1,10 @@
 namespace Moba.Test.TrackPlanRenderer;
 
-using Moba.TrackPlan.Renderer;
+using System.Diagnostics;
 
 using TrackLibrary.PikoA;
+
+using TrackPlan.Renderer;
 
 [TestFixture]
 public class RendererTests
@@ -87,7 +89,7 @@ public class RendererTests
 
         if (OperatingSystem.IsWindows())
         {
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            Process.Start(new ProcessStartInfo
             {
                 FileName = outputPath,
                 UseShellExecute = true

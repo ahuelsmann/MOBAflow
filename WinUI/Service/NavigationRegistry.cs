@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-using System.Collections.Concurrent;
-
 namespace Moba.WinUI.Service;
+
+using System.Collections.Concurrent;
 
 /// <summary>
 /// Categories for grouping navigation items with separators.
@@ -82,7 +82,7 @@ public sealed class NavigationRegistry
     /// </summary>
     public void Register(string tag, string title, string? iconGlyph, Type pageType, string source)
     {
-        Register(tag, title, iconGlyph, pageType, source, NavigationCategory.Core, 100, null, null, null, false);
+        Register(tag, title, iconGlyph, pageType, source, NavigationCategory.Core);
     }
 }
 

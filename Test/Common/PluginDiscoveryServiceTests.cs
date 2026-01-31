@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-using Moba.Common.Plugins;
-
 namespace Moba.Test.Common;
+
+using Moba.Common.Plugins;
 
 /// <summary>
 /// Unit tests for <see cref="PluginDiscoveryService"/>.

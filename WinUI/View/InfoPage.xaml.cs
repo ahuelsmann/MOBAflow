@@ -3,9 +3,6 @@ namespace Moba.WinUI.View;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
-
-using System;
-using System.Collections.Generic;
 using System.Reflection;
 
 public sealed partial class InfoPage : Page

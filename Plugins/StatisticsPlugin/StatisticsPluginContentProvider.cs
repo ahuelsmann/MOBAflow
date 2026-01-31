@@ -1,17 +1,14 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
+namespace Moba.Plugin.Statistics;
+
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-
-using Moba.SharedUI.ViewModel;
-
+using SharedUI.ViewModel;
 using System.ComponentModel;
-
 using Windows.UI;
-
-namespace Moba.Plugin.Statistics;
 
 /// <summary>
 /// Statistics Plugin Dashboard - Fluent Design System Implementation.

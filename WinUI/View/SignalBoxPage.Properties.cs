@@ -1,13 +1,11 @@
 namespace Moba.WinUI.View;
 
+using Domain;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-
 using SharedUI.ViewModel;
-
-using System.Linq;
 
 /// <summary>
 /// Partial class containing properties panel logic and event handlers.
@@ -83,15 +81,15 @@ public sealed partial class SignalBoxPage
         var accentBrush = (Brush)Application.Current.Resources["AccentFillColorDefaultBrush"];
         var normalBrush = (Brush)Application.Current.Resources["SubtleFillColorSecondaryBrush"];
 
-        AspectHp0Button.Background = sig.SignalAspect == Domain.SignalAspect.Hp0 ? accentBrush : normalBrush;
-        AspectKs1Button.Background = sig.SignalAspect == Domain.SignalAspect.Ks1 ? accentBrush : normalBrush;
-        AspectKs2Button.Background = sig.SignalAspect == Domain.SignalAspect.Ks2 ? accentBrush : normalBrush;
-        AspectKs1BlinkButton.Background = sig.SignalAspect == Domain.SignalAspect.Ks1Blink ? accentBrush : normalBrush;
-        AspectKennlichtButton.Background = sig.SignalAspect == Domain.SignalAspect.Kennlicht ? accentBrush : normalBrush;
-        AspectDunkelButton.Background = sig.SignalAspect == Domain.SignalAspect.Dunkel ? accentBrush : normalBrush;
-        AspectRa12Button.Background = sig.SignalAspect == Domain.SignalAspect.Ra12 ? accentBrush : normalBrush;
-        AspectZs1Button.Background = sig.SignalAspect == Domain.SignalAspect.Zs1 ? accentBrush : normalBrush;
-        AspectZs7Button.Background = sig.SignalAspect == Domain.SignalAspect.Zs7 ? accentBrush : normalBrush;
+        AspectHp0Button.Background = sig.SignalAspect == SignalAspect.Hp0 ? accentBrush : normalBrush;
+        AspectKs1Button.Background = sig.SignalAspect == SignalAspect.Ks1 ? accentBrush : normalBrush;
+        AspectKs2Button.Background = sig.SignalAspect == SignalAspect.Ks2 ? accentBrush : normalBrush;
+        AspectKs1BlinkButton.Background = sig.SignalAspect == SignalAspect.Ks1Blink ? accentBrush : normalBrush;
+        AspectKennlichtButton.Background = sig.SignalAspect == SignalAspect.Kennlicht ? accentBrush : normalBrush;
+        AspectDunkelButton.Background = sig.SignalAspect == SignalAspect.Dunkel ? accentBrush : normalBrush;
+        AspectRa12Button.Background = sig.SignalAspect == SignalAspect.Ra12 ? accentBrush : normalBrush;
+        AspectZs1Button.Background = sig.SignalAspect == SignalAspect.Zs1 ? accentBrush : normalBrush;
+        AspectZs7Button.Background = sig.SignalAspect == SignalAspect.Zs7 ? accentBrush : normalBrush;
 
         // Signal type is now fixed (SbSignal), ComboBox can be simplified
         SignalTypeComboBox.SelectedIndex = 0;
@@ -110,9 +108,9 @@ public sealed partial class SignalBoxPage
         var accentStyle = (Style)Application.Current.Resources["AccentButtonStyle"];
         var defaultStyle = (Style)Application.Current.Resources["DefaultButtonStyle"];
 
-        SwitchStraightButton.Style = sw.SwitchPosition == Domain.SwitchPosition.Straight ? accentStyle : defaultStyle;
-        SwitchLeftButton.Style = sw.SwitchPosition == Domain.SwitchPosition.DivergingLeft ? accentStyle : defaultStyle;
-        SwitchRightButton.Style = sw.SwitchPosition == Domain.SwitchPosition.DivergingRight ? accentStyle : defaultStyle;
+        SwitchStraightButton.Style = sw.SwitchPosition == SwitchPosition.Straight ? accentStyle : defaultStyle;
+        SwitchLeftButton.Style = sw.SwitchPosition == SwitchPosition.DivergingLeft ? accentStyle : defaultStyle;
+        SwitchRightButton.Style = sw.SwitchPosition == SwitchPosition.DivergingRight ? accentStyle : defaultStyle;
     }
 
     private static string GetElementTypeName(SbElementViewModel element) => element switch
@@ -152,7 +150,7 @@ public sealed partial class SignalBoxPage
     {
         if (SelectedElement is not SbSignalViewModel sig || sender is not Border { Tag: string aspectStr }) return;
 
-        if (Enum.TryParse<Domain.SignalAspect>(aspectStr, out var aspect))
+        if (Enum.TryParse<SignalAspect>(aspectStr, out var aspect))
         {
             _blinkingLeds.Clear();
             sig.SignalAspect = aspect;
@@ -172,10 +170,10 @@ public sealed partial class SignalBoxPage
 
         sw.SwitchPosition = positionStr switch
         {
-            "Straight" => Domain.SwitchPosition.Straight,
-            "DivergingLeft" => Domain.SwitchPosition.DivergingLeft,
-            "DivergingRight" => Domain.SwitchPosition.DivergingRight,
-            _ => Domain.SwitchPosition.Straight
+            "Straight" => SwitchPosition.Straight,
+            "DivergingLeft" => SwitchPosition.DivergingLeft,
+            "DivergingRight" => SwitchPosition.DivergingRight,
+            _ => SwitchPosition.Straight
         };
 
         RefreshElementVisual(sw);

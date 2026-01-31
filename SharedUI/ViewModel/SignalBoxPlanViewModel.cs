@@ -293,7 +293,7 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
 /// <summary>
 /// Abstract base ViewModel for all signal box elements.
 /// </summary>
-public abstract partial class SbElementViewModel : ObservableObject
+public abstract class SbElementViewModel : ObservableObject
 {
     /// <summary>
     /// Gets the underlying domain model.
@@ -348,7 +348,7 @@ public abstract partial class SbElementViewModel : ObservableObject
 /// <summary>
 /// ViewModel for straight track elements.
 /// </summary>
-public sealed partial class SbTrackStraightViewModel : SbElementViewModel
+public sealed class SbTrackStraightViewModel : SbElementViewModel
 {
     private readonly SbTrackStraight _model;
     public SbTrackStraightViewModel(SbTrackStraight model) => _model = model;
@@ -358,7 +358,7 @@ public sealed partial class SbTrackStraightViewModel : SbElementViewModel
 /// <summary>
 /// ViewModel for curved track elements.
 /// </summary>
-public sealed partial class SbTrackCurveViewModel : SbElementViewModel
+public sealed class SbTrackCurveViewModel : SbElementViewModel
 {
     private readonly SbTrackCurve _model;
     public SbTrackCurveViewModel(SbTrackCurve model) => _model = model;
@@ -368,7 +368,7 @@ public sealed partial class SbTrackCurveViewModel : SbElementViewModel
 /// <summary>
 /// ViewModel for switch elements.
 /// </summary>
-public sealed partial class SbSwitchViewModel : SbElementViewModel
+public sealed class SbSwitchViewModel : SbElementViewModel
 {
     private readonly SbSwitch _model;
     public SbSwitchViewModel(SbSwitch model) => _model = model;
@@ -392,7 +392,7 @@ public sealed partial class SbSwitchViewModel : SbElementViewModel
 /// <summary>
 /// ViewModel for signal elements.
 /// </summary>
-public sealed partial class SbSignalViewModel : SbElementViewModel
+public sealed class SbSignalViewModel : SbElementViewModel
 {
     private readonly SbSignal _model;
     public SbSignalViewModel(SbSignal model) => _model = model;
@@ -423,7 +423,7 @@ public sealed partial class SbSignalViewModel : SbElementViewModel
 /// <summary>
 /// ViewModel for detector elements.
 /// </summary>
-public sealed partial class SbDetectorViewModel : SbElementViewModel
+public sealed class SbDetectorViewModel : SbElementViewModel
 {
     private readonly SbDetector _model;
     public SbDetectorViewModel(SbDetector model) => _model = model;
@@ -440,7 +440,7 @@ public sealed partial class SbDetectorViewModel : SbElementViewModel
 /// <summary>
 /// ViewModel wrapper for SignalBoxRoute.
 /// </summary>
-public partial class SignalBoxRouteViewModel : ObservableObject, IViewModelWrapper<SignalBoxRoute>
+public class SignalBoxRouteViewModel : ObservableObject, IViewModelWrapper<SignalBoxRoute>
 {
     private readonly SignalBoxRoute _model;
 

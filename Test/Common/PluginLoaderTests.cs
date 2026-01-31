@@ -1,12 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-using Microsoft.Extensions.DependencyInjection;
-
-using Moba.Common.Plugins;
-
-using Moq;
-
 namespace Moba.Test.Common;
+
+using Microsoft.Extensions.DependencyInjection;
+using Moba.Common.Plugins;
+using Moq;
 
 /// <summary>
 /// Unit tests for PluginLoader behavior without NavigationRegistry dependency.

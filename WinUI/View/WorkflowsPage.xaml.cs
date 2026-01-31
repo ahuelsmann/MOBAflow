@@ -4,11 +4,8 @@ namespace Moba.WinUI.View;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-
 using SharedUI.ViewModel;
-
 using System.Diagnostics;
-
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 
@@ -68,8 +65,8 @@ public sealed partial class WorkflowsPage
         if (ViewModel.SelectedWorkflow == null) return;
 
         // Log to file - check WinUI/bin/Debug/logs/mobaflow-YYYYMMDD.txt
-        Trace.WriteLine($"[DRAG] DragItemsCompleted - Items were reordered!");
-        Debug.WriteLine($"🔄 DragItemsCompleted - Items were reordered!");
+        Trace.WriteLine("[DRAG] DragItemsCompleted - Items were reordered!");
+        Debug.WriteLine("🔄 DragItemsCompleted - Items were reordered!");
 
         // Update action numbers and save after drag & drop completes
         ViewModel.SelectedWorkflow.UpdateActionNumbers();

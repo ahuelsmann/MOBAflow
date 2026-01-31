@@ -2,7 +2,6 @@
 namespace Moba.WinUI.Service;
 
 using Domain;
-
 using SharedUI.Interface;
 
 /// <summary>

@@ -2,6 +2,8 @@
 
 namespace Moba.WinUI.Service;
 
+using Common.Configuration;
+
 /// <summary>
 /// Defines the available application skins (color themes).
 /// Named by their dominant accent color to avoid trademark issues.
@@ -71,7 +73,7 @@ public interface ISkinProvider
     /// Initializes the skin provider with saved settings.
     /// Should be called once at application startup.
     /// </summary>
-    void Initialize(Common.Configuration.AppSettings settings);
+    void Initialize(AppSettings settings);
 
     /// <summary>
     /// Sets the application skin and updates all UI resources.

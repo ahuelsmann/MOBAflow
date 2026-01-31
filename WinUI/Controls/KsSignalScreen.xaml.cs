@@ -4,7 +4,7 @@ using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-
+using Microsoft.UI.Xaml.Shapes;
 using Windows.UI;
 
 /// <summary>
@@ -115,7 +115,7 @@ public sealed partial class KsSignalScreen : UserControl
         }
     }
 
-    private void StartBlinking(Microsoft.UI.Xaml.Shapes.Ellipse led, SolidColorBrush onColor)
+    private void StartBlinking(Ellipse led, SolidColorBrush onColor)
     {
         _blinkTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _blinkTimer.Tick += (s, e) =>

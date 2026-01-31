@@ -5,8 +5,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Navigation;
 
-using System.Collections.Generic;
-
 public sealed partial class HelpPage : Page
 {
     private readonly Dictionary<TreeViewNode, string> _sections = [];

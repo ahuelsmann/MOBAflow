@@ -437,13 +437,13 @@ public partial class MainWindowViewModel
                 _logger.LogInformation("🚂 Assigning to locomotive: {Name}", SelectedLocomotive.Name);
                 
                 // Move photo from temp to locomotives folder with new GUID
-                Debug.WriteLine($"🔄 Calling MovePhotoToCategory...");
+                Debug.WriteLine("🔄 Calling MovePhotoToCategory...");
                 var newPhotoPath = MovePhotoToCategory(photoPath, "locomotives", SelectedLocomotive.Model.Id);
                 Debug.WriteLine($"🔙 MovePhotoToCategory returned: {newPhotoPath ?? "NULL"}");
                 
                 if (newPhotoPath != null)
                 {
-                    Debug.WriteLine($"✅ Photo path valid, setting on ViewModel...");
+                    Debug.WriteLine("✅ Photo path valid, setting on ViewModel...");
                     // ✅ Set via ViewModel property to trigger INotifyPropertyChanged!
                     SelectedLocomotive.PhotoPath = newPhotoPath;
                     Debug.WriteLine($"✅ Photo assigned to locomotive: {SelectedLocomotive.Name} → {newPhotoPath}");
@@ -451,7 +451,7 @@ public partial class MainWindowViewModel
                 }
                 else
                 {
-                    Debug.WriteLine($"❌ Failed to move photo for locomotive (newPhotoPath is NULL)");
+                    Debug.WriteLine("❌ Failed to move photo for locomotive (newPhotoPath is NULL)");
                     _logger.LogError("❌ Failed to move photo for locomotive");
                 }
             }
@@ -505,7 +505,7 @@ public partial class MainWindowViewModel
     {
         try
         {
-            Debug.WriteLine($"📂 MovePhotoToCategory START");
+            Debug.WriteLine("📂 MovePhotoToCategory START");
             Debug.WriteLine($"   tempPhotoPath: {tempPhotoPath}");
             Debug.WriteLine($"   category: {category}");
             Debug.WriteLine($"   entityId: {entityId}");
@@ -525,13 +525,13 @@ public partial class MainWindowViewModel
                 return null;
             }
             
-            Debug.WriteLine($"✅ Temp photo exists!");
+            Debug.WriteLine("✅ Temp photo exists!");
 
             // Create category directory (e.g., "C:\...\MOBAflow\photos\locomotives")
             var categoryDir = Path.Combine(baseDir, "photos", category);
             Debug.WriteLine($"   categoryDir: {categoryDir}");
             Directory.CreateDirectory(categoryDir);
-            Debug.WriteLine($"✅ Category directory created/verified");
+            Debug.WriteLine("✅ Category directory created/verified");
 
             // New filename with entity GUID
             var extension = Path.GetExtension(tempPath);
@@ -540,9 +540,9 @@ public partial class MainWindowViewModel
             Debug.WriteLine($"   newPath: {newPath}");
 
             // Move file
-            Debug.WriteLine($"🔄 Moving file...");
+            Debug.WriteLine("🔄 Moving file...");
             File.Move(tempPath, newPath, overwrite: true);
-            Debug.WriteLine($"✅ File moved successfully!");
+            Debug.WriteLine("✅ File moved successfully!");
 
             // Return relative path (e.g., "locomotives/guid.jpg")
             var relativePath = Path.Combine(category, newFileName).Replace("\\", "/");

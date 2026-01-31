@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
+namespace Moba.Test.Common;
+
 using Microsoft.Extensions.DependencyInjection;
 using Moba.Common.Plugins;
-
-namespace Moba.Test.Common;
 
 /// <summary>
 /// Unit tests for <see cref="PluginBase"/> default implementations.

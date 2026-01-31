@@ -2,20 +2,16 @@
 namespace Moba.WinUI.View;
 
 using Common.Configuration;
-
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-
+using Microsoft.UI.Xaml.Input;
 using Service;
-
 using SharedUI.Interface;
-
-using System;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
-
+using System.Reflection;
+using Windows.System;
 using MainWindowViewModel = SharedUI.ViewModel.MainWindowViewModel;
 
 public sealed partial class MainWindow
@@ -38,7 +34,7 @@ public sealed partial class MainWindow
 
     private static string GetAppVersion()
     {
-        var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+        var assembly = Assembly.GetExecutingAssembly();
         var version = assembly.GetName().Version;
         return version is not null ? $"v{version.Major}.{version.Minor}.{version.Build}" : "";
     }
@@ -262,10 +258,10 @@ public sealed partial class MainWindow
         ApplyTheme(ViewModel.IsDarkMode);
     }
 
-    private void TransactionCodeTextBox_KeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    private void TransactionCodeTextBox_KeyDown(object sender, KeyRoutedEventArgs e)
     {
         _ = sender; // Suppress unused parameter warning
-        if (e.Key == Windows.System.VirtualKey.Enter)
+        if (e.Key == VirtualKey.Enter)
         {
             ViewModel.ExecuteTransactionCodeCommand.Execute(null);
             e.Handled = true;

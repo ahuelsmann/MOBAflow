@@ -4,23 +4,18 @@ namespace Moba.SharedUI.ViewModel;
 using Backend.Interface;
 using Backend.Manager;
 using Backend.Service;
-
 using Common.Configuration;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using Domain;
 using Domain.Enum;
-
 using Interface;
-
 using Microsoft.Extensions.Logging;
-
 using Service;
-
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
+
 // For NullIoService
 
 /// <summary>
@@ -236,7 +231,7 @@ public partial class MainWindowViewModel : ObservableObject
     /// Generic handler for ViewModel PropertyChanged events.
     /// Triggers auto-save for any model property change.
     /// </summary>
-    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         // Ignore certain properties that don't affect the model
         var ignoredProperties = new[] { "IsSelected", "IsExpanded", "IsHighlighted" };

@@ -2,7 +2,6 @@
 namespace Moba.ReactApp.Controllers;
 
 using Microsoft.AspNetCore.Mvc;
-
 using SharedUI.ViewModel;
 
 /// <summary>

@@ -3,8 +3,8 @@ namespace Moba.MAUI;
 
 using SharedUI.Interface;
 using SharedUI.ViewModel;
-
 using System.Diagnostics;
+using View;
 
 public partial class App
 {
@@ -142,7 +142,7 @@ public partial class App
         Debug.WriteLine("✅ App.CreateWindow: Settings loaded, creating SplashPage...");
 
         // ✅ Show SplashPage first, then navigate to MainPage
-        var splashPage = new View.SplashPage();
+        var splashPage = new SplashPage();
         var window = new Window(splashPage);
 
         // ✅ Subscribe to lifecycle events for cleanup

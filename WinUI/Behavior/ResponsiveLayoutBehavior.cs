@@ -4,6 +4,7 @@
 namespace Moba.WinUI.Behavior;
 
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.Xaml.Interactivity;
 
 /// <summary>
@@ -160,7 +161,7 @@ public sealed class ResponsiveLayoutBehavior : Behavior<FrameworkElement>
                 _ => WideStateName
             };
 
-            VisualStateManager.GoToState(AssociatedObject as Microsoft.UI.Xaml.Controls.Control, stateName, true);
+            VisualStateManager.GoToState(AssociatedObject as Control, stateName, true);
 
             ModeChanged?.Invoke(this, new ResponsiveModeChangedEventArgs(oldMode, newMode));
         }

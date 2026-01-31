@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
+namespace Moba.WinUI.View;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-
-namespace Moba.WinUI.View;
 
 /// <summary>
 /// Host page for plugin content.
@@ -12,11 +12,6 @@ namespace Moba.WinUI.View;
 /// </summary>
 public sealed partial class PluginHostPage : Page
 {
-    public PluginHostPage()
-    {
-        // Empty - content will be set dynamically
-    }
-
     public void SetPluginContent(UIElement content)
     {
         Content = content;

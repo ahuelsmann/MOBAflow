@@ -2,13 +2,9 @@
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
-
 using Domain;
-
 using Microsoft.Extensions.Logging;
-
 using SharedUI.Interface;
-
 using System.Text.Json;
 
 /// <summary>

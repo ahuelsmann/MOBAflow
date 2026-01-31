@@ -1,11 +1,12 @@
 namespace Moba.WinUI.View;
 
+using Controls;
+using Domain;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
-
 using SharedUI.ViewModel;
-
 using Windows.UI;
 
 /// <summary>
@@ -48,7 +49,7 @@ public sealed partial class SignalBoxPage
         var canvas = new Canvas { Width = 60, Height = 60 };
         canvas.Children.Add(new Path
         {
-            Data = (Geometry)Microsoft.UI.Xaml.Markup.XamlBindingHelper.ConvertValue(typeof(Geometry),
+            Data = (Geometry)XamlBindingHelper.ConvertValue(typeof(Geometry),
                 "M 0,30 Q 30,30 30,60"),
             Stroke = TrackBrush,
             StrokeThickness = TrackThickness
@@ -88,8 +89,8 @@ public sealed partial class SignalBoxPage
     {
         // Switch: Left (0,30) -> Right (60,30) + branch
         var canvas = new Canvas { Width = 60, Height = 60 };
-        var isStraight = element.SwitchPosition == Domain.SwitchPosition.Straight;
-        var isDiverging = element.SwitchPosition != Domain.SwitchPosition.Straight;
+        var isStraight = element.SwitchPosition == SwitchPosition.Straight;
+        var isDiverging = element.SwitchPosition != SwitchPosition.Straight;
 
         // Main track through
         canvas.Children.Add(new Line
@@ -108,7 +109,7 @@ public sealed partial class SignalBoxPage
             X1 = 30,
             Y1 = 30,
             X2 = 60,
-            Y2 = element.SwitchPosition == Domain.SwitchPosition.DivergingLeft ? 0 : 60,
+            Y2 = element.SwitchPosition == SwitchPosition.DivergingLeft ? 0 : 60,
             Stroke = isDiverging ? TrackActiveBrush : TrackBrush,
             StrokeThickness = TrackThickness
         });
@@ -123,7 +124,7 @@ public sealed partial class SignalBoxPage
     {
         var canvas = new Canvas { Width = 60, Height = 60 };
 
-        var signalScreen = new Controls.KsSignalScreen
+        var signalScreen = new KsSignalScreen
         {
             Width = 50,
             Height = 50,

@@ -1,10 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-using Microsoft.Extensions.DependencyInjection;
-
-using Moba.Common.Plugins;
-
 namespace Moba.Plugin.Statistics;
+
+using Common.Plugins;
+using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Statistics Plugin providing comprehensive project statistics and system status.

@@ -5,12 +5,11 @@ namespace Moba.WinUI;
 using Backend.Extensions;
 using Backend.Interface;
 using Backend.Service;
-
 using Common.Configuration;
 using Common.Serilog;
-
+using Controllers;
 using Domain;
-
+using Hubs;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -19,24 +18,18 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
-
-using Moba.SharedUI.Service;
-
+using Microsoft.UI.Xaml.Controls;
 using Serilog;
 using Serilog.Events;
-
 using Service;
-
 using SharedUI.Interface;
+using SharedUI.Service;
 using SharedUI.Shell;
 using SharedUI.ViewModel;
-
 using Sound;
-
-using System.IO;
-
+using System.Diagnostics;
+using Utilities;
 using View;
-
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 /// <summary>
@@ -57,27 +50,27 @@ public partial class App
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine("[App] Constructor START");
+            Debug.WriteLine("[App] Constructor START");
 
             Services = ConfigureServices();
-            System.Diagnostics.Debug.WriteLine("[App] Services configured");
+            Debug.WriteLine("[App] Services configured");
 
             _logger = Services.GetRequiredService<ILogger<App>>();
-            System.Diagnostics.Debug.WriteLine("[App] Logger resolved");
+            Debug.WriteLine("[App] Logger resolved");
 
             InitializeComponent();
-            System.Diagnostics.Debug.WriteLine("[App] InitializeComponent completed");
+            Debug.WriteLine("[App] InitializeComponent completed");
 
             // Register global UnhandledException handler for better diagnostics
             UnhandledException += OnUnhandledException;
-            System.Diagnostics.Debug.WriteLine("[App] UnhandledException handler registered");
+            Debug.WriteLine("[App] UnhandledException handler registered");
 
-            System.Diagnostics.Debug.WriteLine("[App] Constructor COMPLETE");
+            Debug.WriteLine("[App] Constructor COMPLETE");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[App] FATAL ERROR: {ex.GetType().Name}: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"[App] StackTrace: {ex.StackTrace}");
+            Debug.WriteLine($"[App] FATAL ERROR: {ex.GetType().Name}: {ex.Message}");
+            Debug.WriteLine($"[App] StackTrace: {ex.StackTrace}");
             _logger?.LogCritical(ex, "FATAL ERROR during App initialization");
             throw;
         }
@@ -89,8 +82,8 @@ public partial class App
         var message = $"UNHANDLED EXCEPTION: {e.Exception.GetType().Name}: {e.Exception.Message}";
         var stackTrace = e.Exception.StackTrace ?? "(no stack trace)";
 
-        System.Diagnostics.Debug.WriteLine(message);
-        System.Diagnostics.Debug.WriteLine(stackTrace);
+        Debug.WriteLine(message);
+        Debug.WriteLine(stackTrace);
 
         _logger?.LogCritical(e.Exception, "Unhandled exception in WinUI application");
 
@@ -122,8 +115,8 @@ public partial class App
         var devJsonPath = Path.Combine(basePath, "appsettings.Development.json");
         var devJsonExists = File.Exists(devJsonPath);
 
-        System.Diagnostics.Debug.WriteLine($"[CONFIG] BaseDirectory: {basePath}");
-        System.Diagnostics.Debug.WriteLine($"[CONFIG] appsettings.Development.json exists: {devJsonExists}");
+        Debug.WriteLine($"[CONFIG] BaseDirectory: {basePath}");
+        Debug.WriteLine($"[CONFIG] appsettings.Development.json exists: {devJsonExists}");
 
         var configBuilder = new ConfigurationBuilder()
             .SetBasePath(basePath)
@@ -136,7 +129,7 @@ public partial class App
         // Add User Secrets in Development (for developers without Azure App Config)
 #if DEBUG
         configBuilder.AddUserSecrets<App>(optional: true);
-        System.Diagnostics.Debug.WriteLine("[CONFIG] User Secrets loaded (if configured)");
+        Debug.WriteLine("[CONFIG] User Secrets loaded (if configured)");
 #endif
 
         // Add Azure App Configuration (if connection string is set)
@@ -146,25 +139,25 @@ public partial class App
             try
             {
                 configBuilder.AddAzureAppConfiguration(azureAppConfigConnection);
-                System.Diagnostics.Debug.WriteLine("[CONFIG] Azure App Configuration loaded");
+                Debug.WriteLine("[CONFIG] Azure App Configuration loaded");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[CONFIG] Azure App Configuration failed: {ex.Message}");
+                Debug.WriteLine($"[CONFIG] Azure App Configuration failed: {ex.Message}");
             }
         }
         else
         {
-            System.Diagnostics.Debug.WriteLine("[CONFIG] Azure App Configuration skipped (no connection string)");
+            Debug.WriteLine("[CONFIG] Azure App Configuration skipped (no connection string)");
         }
 
         var configuration = configBuilder.Build();
 
         // Debug: Print loaded FeatureToggle values
-        System.Diagnostics.Debug.WriteLine($"[CONFIG] IsTrainControlPageAvailable: {configuration["FeatureToggles:IsTrainControlPageAvailable"]}");
-        System.Diagnostics.Debug.WriteLine($"[CONFIG] IsTrackPlanEditorPageAvailable: {configuration["FeatureToggles:IsTrackPlanEditorPageAvailable"]}");
-        System.Diagnostics.Debug.WriteLine($"[CONFIG] IsJourneyMapPageAvailable: {configuration["FeatureToggles:IsJourneyMapPageAvailable"]}");
-        System.Diagnostics.Debug.WriteLine($"[CONFIG] IsMonitorPageAvailable: {configuration["FeatureToggles:IsMonitorPageAvailable"]}");
+        Debug.WriteLine($"[CONFIG] IsTrainControlPageAvailable: {configuration["FeatureToggles:IsTrainControlPageAvailable"]}");
+        Debug.WriteLine($"[CONFIG] IsTrackPlanEditorPageAvailable: {configuration["FeatureToggles:IsTrackPlanEditorPageAvailable"]}");
+        Debug.WriteLine($"[CONFIG] IsJourneyMapPageAvailable: {configuration["FeatureToggles:IsJourneyMapPageAvailable"]}");
+        Debug.WriteLine($"[CONFIG] IsMonitorPageAvailable: {configuration["FeatureToggles:IsMonitorPageAvailable"]}");
 
         // Register IConfiguration
         services.AddSingleton<IConfiguration>(configuration);
@@ -426,23 +419,23 @@ public partial class App
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine("[OnLaunched] START");
+            Debug.WriteLine("[OnLaunched] START");
 
             // Initialize SkinProvider with saved settings before creating MainWindow
             var skinProvider = Services.GetRequiredService<ISkinProvider>();
-            System.Diagnostics.Debug.WriteLine("[OnLaunched] SkinProvider resolved");
+            Debug.WriteLine("[OnLaunched] SkinProvider resolved");
 
             var appSettings = Services.GetRequiredService<AppSettings>();
-            System.Diagnostics.Debug.WriteLine("[OnLaunched] AppSettings resolved");
+            Debug.WriteLine("[OnLaunched] AppSettings resolved");
 
             skinProvider.Initialize(appSettings);
-            System.Diagnostics.Debug.WriteLine("[OnLaunched] SkinProvider initialized");
+            Debug.WriteLine("[OnLaunched] SkinProvider initialized");
 
             _window = Services.GetRequiredService<MainWindow>();
-            System.Diagnostics.Debug.WriteLine("[OnLaunched] MainWindow created");
+            Debug.WriteLine("[OnLaunched] MainWindow created");
 
             _window.Activate();
-            System.Diagnostics.Debug.WriteLine("[OnLaunched] MainWindow activated");
+            Debug.WriteLine("[OnLaunched] MainWindow activated");
 
             // Optionally start WebApp (REST/API) alongside WinUI
             _ = StartWebAppIfEnabledAsync();
@@ -450,12 +443,12 @@ public partial class App
             // Auto-load last solution if enabled
             _ = AutoLoadLastSolutionAsync(((MainWindow)_window).ViewModel);
 
-            System.Diagnostics.Debug.WriteLine("[OnLaunched] COMPLETE");
+            Debug.WriteLine("[OnLaunched] COMPLETE");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[OnLaunched] FATAL ERROR: {ex.GetType().Name}: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"[OnLaunched] StackTrace: {ex.StackTrace}");
+            Debug.WriteLine($"[OnLaunched] FATAL ERROR: {ex.GetType().Name}: {ex.Message}");
+            Debug.WriteLine($"[OnLaunched] StackTrace: {ex.StackTrace}");
             _logger?.LogCritical(ex, "OnLaunched failed");
             throw;
         }
@@ -529,7 +522,7 @@ public partial class App
             var restPort = settings.RestApi.Port;
 
             // Check if port is available BEFORE attempting to start
-            if (!Utilities.PortChecker.IsPortAvailable(restPort))
+            if (!PortChecker.IsPortAvailable(restPort))
             {
                 var errorMessage = $"Cannot start REST API: Port {restPort} is already in use by another application.\n\n" +
                                    $"Please either:\n" +
@@ -565,7 +558,7 @@ public partial class App
                     app.UseEndpoints(endpoints =>
                     {
                         endpoints.MapControllers();
-                        endpoints.MapHub<Hubs.PhotoHub>("/photos-hub");
+                        endpoints.MapHub<PhotoHub>("/photos-hub");
                     });
                 });
             });
@@ -578,7 +571,7 @@ public partial class App
                 // Explicitly add controllers from this assembly (WinUI)
                 // Required because WinUI apps don't auto-discover controllers like ASP.NET Core web apps
                 services.AddControllers()
-                    .AddApplicationPart(typeof(Controllers.PhotoUploadController).Assembly);
+                    .AddApplicationPart(typeof(PhotoUploadController).Assembly);
 
                 // Register SignalR for real-time photo notifications
                 services.AddSignalR();
@@ -731,7 +724,7 @@ public partial class App
             var uiDispatcher = Services.GetRequiredService<IUiDispatcher>();
             await uiDispatcher.InvokeOnUiAsync(async () =>
             {
-                var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
+                var dialog = new ContentDialog
                 {
                     Title = $"Warning: Port {port} Already In Use",
                     Content = message,

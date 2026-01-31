@@ -2,20 +2,15 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Action;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using Domain;
 using Domain.Enum;
-
 using Interface;
-
 using Service;
-
 using Sound;
-
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 
 public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Workflow>
@@ -267,13 +262,13 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
     /// Propagates changes upward as PropertyChanged("Actions") to trigger auto-save.
     /// Ignores internal properties (Number) that don't require saving.
     /// </summary>
-    private void OnActionPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void OnActionPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         // Ignore internal properties that are managed by UpdateActionNumbers()
         // Only user-edited properties (Name, Message, VoiceName, etc.) should trigger save
         if (e.PropertyName == nameof(WorkflowActionViewModel.Number))
         {
-            Debug.WriteLine($"[SKIP] Action.Number changed - internal property, no save needed");
+            Debug.WriteLine("[SKIP] Action.Number changed - internal property, no save needed");
             return;
         }
 

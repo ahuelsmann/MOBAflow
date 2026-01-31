@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Moba.Common.Plugins;
+
+using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Base interface for all MOBAflow plugins.

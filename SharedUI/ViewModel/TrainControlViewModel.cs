@@ -2,14 +2,11 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Interface;
-
+using Backend.Model;
 using Common.Configuration;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using Interface;
-
 using Microsoft.Extensions.Logging;
 
 /// <summary>
@@ -116,7 +113,7 @@ public partial class TrainControlViewModel : ObservableObject
             if (Preset1.DccAddress != value)
             {
                 Preset1.DccAddress = value;
-                OnPropertyChanged(nameof(Preset1Address));
+                OnPropertyChanged();
                 if (SelectedPresetIndex == 0)
                 {
                     LocoAddress = value;
@@ -137,7 +134,7 @@ public partial class TrainControlViewModel : ObservableObject
             if (Preset2.DccAddress != value)
             {
                 Preset2.DccAddress = value;
-                OnPropertyChanged(nameof(Preset2Address));
+                OnPropertyChanged();
                 if (SelectedPresetIndex == 1)
                 {
                     LocoAddress = value;
@@ -158,7 +155,7 @@ public partial class TrainControlViewModel : ObservableObject
             if (Preset3.DccAddress != value)
             {
                 Preset3.DccAddress = value;
-                OnPropertyChanged(nameof(Preset3Address));
+                OnPropertyChanged();
                 if (SelectedPresetIndex == 2)
                 {
                     LocoAddress = value;
@@ -209,7 +206,7 @@ public partial class TrainControlViewModel : ObservableObject
     /// Returns 0 if no valid locomotive series is selected.
     /// </summary>
     public int SpeedKmh => HasValidLocoSeries
-        ? (int)Math.Round((double)Speed / 126.0 * SelectedVmax)
+        ? (int)Math.Round(Speed / 126.0 * SelectedVmax)
         : 0;
 
     /// <summary>
@@ -502,7 +499,7 @@ public partial class TrainControlViewModel : ObservableObject
         });
     }
 
-    private void OnLocoInfoReceived(Backend.Model.LocoInfo info)
+    private void OnLocoInfoReceived(LocoInfo info)
     {
         // Only update if this is our current loco
         if (info.Address != LocoAddress) return;
@@ -608,7 +605,7 @@ public partial class TrainControlViewModel : ObservableObject
         try
         {
             IsRamping = true;
-            StatusMessage = $"Ramping down for direction change...";
+            StatusMessage = "Ramping down for direction change...";
             _logger?.LogDebug("Direction change: ramping from {Speed} to 0", Speed);
 
             // Ramp down to 0 (in old direction - but IsForward already changed!)
@@ -624,7 +621,7 @@ public partial class TrainControlViewModel : ObservableObject
             if (token.IsCancellationRequested) return;
 
             // Ramp back up to target speed in new direction
-            StatusMessage = $"Ramping up in new direction...";
+            StatusMessage = "Ramping up in new direction...";
             _logger?.LogDebug("Direction change: ramping from 0 to {Speed}", targetSpeed);
             await RampSpeedAsync(0, targetSpeed, newDirection, token);
 

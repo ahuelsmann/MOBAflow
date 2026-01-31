@@ -2,14 +2,11 @@
 namespace Moba.WinUI.Service;
 
 using Domain;
-
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.Storage.Pickers;
-
 using SharedUI.Interface;
-
 using System.Text.Json;
 
 public class IoService : IIoService

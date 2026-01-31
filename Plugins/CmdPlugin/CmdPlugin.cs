@@ -1,10 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-using Microsoft.Extensions.DependencyInjection;
-
-using Moba.Common.Plugins;
-
 namespace Moba.Plugin.Cmd;
+
+using Common.Plugins;
+using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Command Plugin demonstrating MOBAcmd system - a command-based navigation interface.

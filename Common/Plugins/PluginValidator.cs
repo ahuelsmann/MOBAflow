@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-using Microsoft.Extensions.Logging;
-
 namespace Moba.Common.Plugins;
+
+using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Validates plugins to ensure they meet contract requirements and don't cause conflicts.

@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Test.Domain;
 
-using Moba.Domain;
-
 [TestFixture]
 public class StationTests
 {

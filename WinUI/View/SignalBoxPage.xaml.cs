@@ -1,24 +1,16 @@
 namespace Moba.WinUI.View;
 
 using Common.Configuration;
-
 using Domain;
-
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
-
 using Service;
-
 using SharedUI.Interface;
 using SharedUI.ViewModel;
-
-using System;
-using System.Collections.Generic;
-
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.UI;

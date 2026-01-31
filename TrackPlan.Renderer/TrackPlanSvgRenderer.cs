@@ -1,7 +1,7 @@
 namespace Moba.TrackPlan.Renderer;
 
+using System.Globalization;
 using System.Text;
-
 using TrackLibrary.Base;
 using TrackLibrary.PikoA;
 
@@ -102,19 +102,19 @@ public class TrackPlanSvgRenderer
         // Port A (Eingang) - schwarzer Punkt
         double portAX = x;
         double portAY = y;
-        _svg.AppendLine($"  <circle cx=\"{portAX.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" cy=\"{portAY.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" r=\"10\" fill=\"black\" />");
-        _svg.AppendLine($"  <text x=\"{portAX.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" y=\"{(portAY - 30).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" font-size=\"16\" font-weight=\"bold\" fill=\"black\" text-anchor=\"middle\" dominant-baseline=\"middle\">A</text>");
+        _svg.AppendLine($"  <circle cx=\"{portAX.ToString("F2", CultureInfo.InvariantCulture)}\" cy=\"{portAY.ToString("F2", CultureInfo.InvariantCulture)}\" r=\"10\" fill=\"black\" />");
+        _svg.AppendLine($"  <text x=\"{portAX.ToString("F2", CultureInfo.InvariantCulture)}\" y=\"{(portAY - 30).ToString("F2", CultureInfo.InvariantCulture)}\" font-size=\"16\" font-weight=\"bold\" fill=\"black\" text-anchor=\"middle\" dominant-baseline=\"middle\">A</text>");
 
         // Port B (Gerade) - roter Punkt am Ende der Geraden
         double portBX = x + straightLength * Math.Cos(angle * Math.PI / 180);
         double portBY = y + straightLength * Math.Sin(angle * Math.PI / 180);
 
         // Gerade zeichnen (Port A -> Port B)
-        _svg.AppendLine($"  <path d=\"M {portAX.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)},{portAY.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)} L {portBX.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)},{portBY.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" " +
+        _svg.AppendLine($"  <path d=\"M {portAX.ToString("F2", CultureInfo.InvariantCulture)},{portAY.ToString("F2", CultureInfo.InvariantCulture)} L {portBX.ToString("F2", CultureInfo.InvariantCulture)},{portBY.ToString("F2", CultureInfo.InvariantCulture)}\" " +
                        $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
 
-        _svg.AppendLine($"  <circle cx=\"{portBX.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" cy=\"{portBY.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" r=\"10\" fill=\"red\" />");
-        _svg.AppendLine($"  <text x=\"{portBX.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" y=\"{(portBY - 30).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" font-size=\"16\" font-weight=\"bold\" fill=\"red\" text-anchor=\"middle\" dominant-baseline=\"middle\">B</text>");
+        _svg.AppendLine($"  <circle cx=\"{portBX.ToString("F2", CultureInfo.InvariantCulture)}\" cy=\"{portBY.ToString("F2", CultureInfo.InvariantCulture)}\" r=\"10\" fill=\"red\" />");
+        _svg.AppendLine($"  <text x=\"{portBX.ToString("F2", CultureInfo.InvariantCulture)}\" y=\"{(portBY - 30).ToString("F2", CultureInfo.InvariantCulture)}\" font-size=\"16\" font-weight=\"bold\" fill=\"red\" text-anchor=\"middle\" dominant-baseline=\"middle\">B</text>");
 
         // Port C (Kurve) - grüner Punkt am Ende der R9-Kurve
         double centerAngle = angle + 90; // 90° nach links vom aktuellen Winkel
@@ -129,11 +129,11 @@ public class TrackPlanSvgRenderer
         int largeArc = arcDegree > 180 ? 1 : 0;
         int sweep = 1;
 
-        _svg.AppendLine($"  <path d=\"M {portAX.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)},{portAY.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)} A {radius},{radius} 0 {largeArc},{sweep} {portCX.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)},{portCY.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" " +
+        _svg.AppendLine($"  <path d=\"M {portAX.ToString("F2", CultureInfo.InvariantCulture)},{portAY.ToString("F2", CultureInfo.InvariantCulture)} A {radius},{radius} 0 {largeArc},{sweep} {portCX.ToString("F2", CultureInfo.InvariantCulture)},{portCY.ToString("F2", CultureInfo.InvariantCulture)}\" " +
                        $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
 
-        _svg.AppendLine($"  <circle cx=\"{portCX.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" cy=\"{portCY.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" r=\"10\" fill=\"green\" />");
-        _svg.AppendLine($"  <text x=\"{portCX.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" y=\"{(portCY - 30).ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" font-size=\"16\" font-weight=\"bold\" fill=\"green\" text-anchor=\"middle\" dominant-baseline=\"middle\">C</text>");
+        _svg.AppendLine($"  <circle cx=\"{portCX.ToString("F2", CultureInfo.InvariantCulture)}\" cy=\"{portCY.ToString("F2", CultureInfo.InvariantCulture)}\" r=\"10\" fill=\"green\" />");
+        _svg.AppendLine($"  <text x=\"{portCX.ToString("F2", CultureInfo.InvariantCulture)}\" y=\"{(portCY - 30).ToString("F2", CultureInfo.InvariantCulture)}\" font-size=\"16\" font-weight=\"bold\" fill=\"green\" text-anchor=\"middle\" dominant-baseline=\"middle\">C</text>");
 
         // Bounding box aktualisieren
         UpdateBounds(portAX, portAY);
@@ -191,22 +191,22 @@ public class TrackPlanSvgRenderer
         int sweep = curveDirection == 1 ? 1 : 0;
 
         // SVG Path: M = MoveTo, A = Arc
-        _svg.AppendLine($"  <path d=\"M {startX.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)},{startY.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)} A {radius},{radius} 0 {largeArc},{sweep} {endX.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)},{endY.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" " +
+        _svg.AppendLine($"  <path d=\"M {startX.ToString("F2", CultureInfo.InvariantCulture)},{startY.ToString("F2", CultureInfo.InvariantCulture)} A {radius},{radius} 0 {largeArc},{sweep} {endX.ToString("F2", CultureInfo.InvariantCulture)},{endY.ToString("F2", CultureInfo.InvariantCulture)}\" " +
                        $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
 
         // Port A am Start
-        _svg.AppendLine($"  <circle cx=\"{startX.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" cy=\"{startY.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" r=\"10\" fill=\"black\" />");
+        _svg.AppendLine($"  <circle cx=\"{startX.ToString("F2", CultureInfo.InvariantCulture)}\" cy=\"{startY.ToString("F2", CultureInfo.InvariantCulture)}\" r=\"10\" fill=\"black\" />");
 
         // Label für Port A - ÜBER dem schwarzen Punkt
         double labelAY = startY - 30; // 30px über dem Port-Mittelpunkt
-        _svg.AppendLine($"  <text x=\"{startX.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" y=\"{labelAY.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" font-size=\"16\" font-weight=\"bold\" fill=\"black\" text-anchor=\"middle\" dominant-baseline=\"middle\">A</text>");
+        _svg.AppendLine($"  <text x=\"{startX.ToString("F2", CultureInfo.InvariantCulture)}\" y=\"{labelAY.ToString("F2", CultureInfo.InvariantCulture)}\" font-size=\"16\" font-weight=\"bold\" fill=\"black\" text-anchor=\"middle\" dominant-baseline=\"middle\">A</text>");
 
         // Port B am Ende - roter Punkt
-        _svg.AppendLine($"  <circle cx=\"{endX.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" cy=\"{endY.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" r=\"10\" fill=\"red\" />");
+        _svg.AppendLine($"  <circle cx=\"{endX.ToString("F2", CultureInfo.InvariantCulture)}\" cy=\"{endY.ToString("F2", CultureInfo.InvariantCulture)}\" r=\"10\" fill=\"red\" />");
 
         // Label für Port B - ÜBER dem roten Punkt
         double labelBY = endY - 30; // 30px über dem Port-Mittelpunkt
-        _svg.AppendLine($"  <text x=\"{endX.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" y=\"{labelBY.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" font-size=\"16\" font-weight=\"bold\" fill=\"red\" text-anchor=\"middle\" dominant-baseline=\"middle\">B</text>");
+        _svg.AppendLine($"  <text x=\"{endX.ToString("F2", CultureInfo.InvariantCulture)}\" y=\"{labelBY.ToString("F2", CultureInfo.InvariantCulture)}\" font-size=\"16\" font-weight=\"bold\" fill=\"red\" text-anchor=\"middle\" dominant-baseline=\"middle\">B</text>");
 
         // Bounding box aktualisieren
         UpdateBounds(startX, startY);

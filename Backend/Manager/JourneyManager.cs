@@ -4,11 +4,9 @@ namespace Moba.Backend.Manager;
 
 using Domain;
 using Domain.Enum;
-
 using Interface;
-
 using Microsoft.Extensions.Logging;
-
+using Microsoft.Extensions.Logging.Abstractions;
 using Service;
 
 /// <summary>
@@ -70,7 +68,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
     {
         _project = project;
         _workflowService = workflowService;
-        _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<JourneyManager>.Instance;
+        _logger = logger ?? NullLogger<JourneyManager>.Instance;
 
         // Initialize SessionState for all journeys
         foreach (var journey in project.Journeys)

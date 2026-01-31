@@ -2,11 +2,8 @@
 namespace Moba.MAUI.Service;
 
 using Android.OS;
-
 using Common.Configuration;
-
 using Microsoft.Extensions.Logging;
-
 using System.Net;
 using System.Net.Sockets;
 using System.Text;

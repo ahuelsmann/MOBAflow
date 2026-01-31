@@ -1,11 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
+namespace Moba.Plugin.Statistics;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
-using Moba.SharedUI.ViewModel;
-
-namespace Moba.Plugin.Statistics;
+using SharedUI.ViewModel;
 
 /// <summary>
 /// ViewModel for the Statistics Plugin Dashboard.

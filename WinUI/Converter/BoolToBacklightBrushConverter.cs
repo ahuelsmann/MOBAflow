@@ -3,6 +3,7 @@ namespace Moba.WinUI.Converter;
 
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
+using Windows.UI;
 
 /// <summary>
 /// Converts a boolean to a backlight brush for function buttons.
@@ -29,13 +30,11 @@ public partial class BoolToBacklightBrushConverter : IValueConverter
             // ON: Lighten the color toward white for a "glow" effect
             // Mix with white at 50% to create a brighter, more vibrant look
             var lightenedColor = LightenColor(color, 0.4);
-            return new SolidColorBrush(Windows.UI.Color.FromArgb(220, lightenedColor.R, lightenedColor.G, lightenedColor.B));
+            return new SolidColorBrush(Color.FromArgb(220, lightenedColor.R, lightenedColor.G, lightenedColor.B));
         }
-        else
-        {
-            // OFF: very subtle tint (almost transparent)
-            return new SolidColorBrush(Windows.UI.Color.FromArgb(40, color.R, color.G, color.B));
-        }
+
+        // OFF: very subtle tint (almost transparent)
+        return new SolidColorBrush(Color.FromArgb(40, color.R, color.G, color.B));
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, string language)
@@ -48,7 +47,7 @@ public partial class BoolToBacklightBrushConverter : IValueConverter
     /// </summary>
     /// <param name="color">The base color</param>
     /// <param name="amount">How much to lighten (0.0 = no change, 1.0 = pure white)</param>
-    private static Windows.UI.Color LightenColor(Windows.UI.Color color, double amount)
+    private static Color LightenColor(Color color, double amount)
     {
         amount = Math.Clamp(amount, 0, 1);
 
@@ -56,10 +55,10 @@ public partial class BoolToBacklightBrushConverter : IValueConverter
         byte g = (byte)(color.G + ((255 - color.G) * amount));
         byte b = (byte)(color.B + ((255 - color.B) * amount));
 
-        return Windows.UI.Color.FromArgb(255, r, g, b);
+        return Color.FromArgb(255, r, g, b);
     }
 
-    private static Windows.UI.Color ParseHexColor(string hex)
+    private static Color ParseHexColor(string hex)
     {
         hex = hex.TrimStart('#');
 
@@ -79,6 +78,6 @@ public partial class BoolToBacklightBrushConverter : IValueConverter
             b = System.Convert.ToByte(hex.Substring(6, 2), 16);
         }
 
-        return Windows.UI.Color.FromArgb(255, r, g, b);
+        return Color.FromArgb(255, r, g, b);
     }
 }

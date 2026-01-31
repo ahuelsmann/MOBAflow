@@ -1,6 +1,6 @@
-using Moba.Domain.Enum;
-
 namespace Moba.Test.Unit;
+
+using Domain.Enum;
 
 [TestFixture]
 public class JourneyDefaultsTests

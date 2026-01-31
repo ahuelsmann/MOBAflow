@@ -2,21 +2,17 @@
 namespace Moba.WinUI.View;
 
 using Common.Configuration;
-
 using Controls;
-
 using Domain;
-
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-
 using Service;
-
 using SharedUI.Interface;
 using SharedUI.ViewModel;
-
+using System.ComponentModel;
 using Windows.UI;
+using Windows.UI.ViewManagement;
 
 /// <summary>
 /// TrainControlPage - Theme-aware train control interface.
@@ -190,7 +186,7 @@ public sealed partial class TrainControlPage
         }
     }
 
-    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(ViewModel.SpeedKmh) or nameof(ViewModel.SelectedVmax) or nameof(ViewModel.HasValidLocoSeries))
         {
@@ -284,7 +280,7 @@ public sealed partial class TrainControlPage
     /// </summary>
     private static Color GetSystemAccentColor()
     {
-        var uiSettings = new Windows.UI.ViewManagement.UISettings();
-        return uiSettings.GetColorValue(Windows.UI.ViewManagement.UIColorType.Accent);
+        var uiSettings = new UISettings();
+        return uiSettings.GetColorValue(UIColorType.Accent);
     }
 }

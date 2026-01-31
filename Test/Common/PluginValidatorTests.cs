@@ -1,8 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-using Moba.Common.Plugins;
-
 namespace Moba.Test.Common;
+
+using Microsoft.Extensions.DependencyInjection;
+using Moba.Common.Plugins;
 
 /// <summary>
 /// Unit tests for <see cref="PluginValidator"/>.
@@ -24,7 +25,7 @@ public class PluginValidatorTests
         public void AddPage(PluginPageDescriptor page) => _pages.Add(page);
         public void ClearPages() => _pages.Clear();
         
-        public void ConfigureServices(Microsoft.Extensions.DependencyInjection.IServiceCollection services) { }
+        public void ConfigureServices(IServiceCollection services) { }
         public Task OnInitializedAsync() => Task.CompletedTask;
         public Task OnUnloadingAsync() => Task.CompletedTask;
     }

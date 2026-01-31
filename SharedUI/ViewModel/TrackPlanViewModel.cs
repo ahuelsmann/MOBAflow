@@ -1,12 +1,10 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
-
 using Interface;
-
 using TrackPlan.Renderer;
 
-public partial class TrackPlanViewModel : ObservableObject, IViewModelWrapper<TrackPlan>
+public class TrackPlanViewModel : ObservableObject, IViewModelWrapper<TrackPlan>
 {
     private readonly TrackPlan _model;
 

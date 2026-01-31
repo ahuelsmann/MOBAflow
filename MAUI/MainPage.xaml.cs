@@ -2,9 +2,9 @@
 namespace Moba.MAUI;
 
 using Common.Configuration;
-
 using SharedUI.Interface;
 using SharedUI.ViewModel;
+using System.ComponentModel;
 
 // ReSharper disable once PartialTypeWithSinglePart
 public partial class MainPage
@@ -52,7 +52,7 @@ public partial class MainPage
         }
     }
 
-    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(MauiViewModel.IsConnected))
         {
@@ -133,7 +133,7 @@ public partial class MainPage
     {
         try
         {
-            HapticFeedback.Perform(HapticFeedbackType.Click);
+            HapticFeedback.Perform();
         }
         catch
         {

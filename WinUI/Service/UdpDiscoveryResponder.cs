@@ -1,12 +1,11 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-using Microsoft.Extensions.Logging;
+namespace Moba.WinUI.Service;
 
+using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-
-namespace Moba.WinUI.Service;
 
 /// <summary>
 /// UDP Discovery Responder for MOBAflow REST-API.

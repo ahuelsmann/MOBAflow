@@ -4,7 +4,6 @@
 namespace Moba.WinUI.Service;
 
 using Microsoft.Extensions.DependencyInjection;
-
 using SharedUI.Shell;
 
 /// <summary>

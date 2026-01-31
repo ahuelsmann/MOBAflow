@@ -2,21 +2,16 @@
 namespace Moba.MAUI;
 
 using Backend.Extensions;
-
 using Common.Configuration;
-
 using CommunityToolkit.Maui;
-
 using Microsoft.Extensions.Logging;
-
 using Service;
-
 using SharedUI.Interface;
 using SharedUI.ViewModel;
-
 using Sound;
-
+using System.Net;
 using UraniumUI;
+using Xamarin.Android.Net;
 
 public static class MauiProgram
 {
@@ -56,11 +51,11 @@ public static class MauiProgram
         {
 #if ANDROID
             // Use platform-specific message handler for Android
-            var handler = new Xamarin.Android.Net.AndroidMessageHandler
+            var handler = new AndroidMessageHandler
             {
                 // Allow HTTP (cleartext) connections to local network
                 AllowAutoRedirect = true,
-                AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate,
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 ServerCertificateCustomValidationCallback = (_, _, _, _) => true // Trust all certificates for local dev
             };
             var httpClient = new HttpClient(handler);

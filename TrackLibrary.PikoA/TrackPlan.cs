@@ -1,6 +1,6 @@
 namespace Moba.TrackLibrary.PikoA;
 
-using Moba.TrackLibrary.Base;
+using Base;
 
 /// <summary>
 /// Ergebnis eines Track Plan Builders mit Segmenten und Startkonfiguration.
@@ -35,7 +35,7 @@ public class TrackPlanBuilder
 {
     private readonly List<TrackNode> _tracks = new();
     private readonly List<Connection> _connections = new();
-    private double _startAngleDegrees = 0;
+    private double _startAngleDegrees;
 
     /// <summary>
     /// Setzt den Startwinkel für das Rendering des Track Plans.

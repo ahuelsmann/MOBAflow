@@ -2,7 +2,6 @@
 namespace Test.Backend;
 
 using Moba.Test.Mocks;
-
 using System.Net;
 
 /// <summary>
@@ -43,7 +42,7 @@ public class UdpClientWrapperTests
     [Test]
     public async Task ConnectAsync_WithCustomPort_Connects()
     {
-        await _wrapper.ConnectAsync(IPAddress.Parse("192.168.0.111"), 21105);
+        await _wrapper.ConnectAsync(IPAddress.Parse("192.168.0.111"));
 
         Assert.That(_wrapper.IsConnected, Is.True);
     }

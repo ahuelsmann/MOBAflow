@@ -1,13 +1,11 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
+namespace Moba.Plugin.Cmd;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
-using Moba.SharedUI.ViewModel;
-
+using SharedUI.ViewModel;
 using System.Collections.ObjectModel;
-
-namespace Moba.Plugin.Cmd;
 
 /// <summary>
 /// ViewModel for the MOBAcmd Transaction Page.

@@ -1,11 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
+namespace Moba.WinUI.Service;
+
+using Common.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-
-using Moba.Common.Plugins;
-
-namespace Moba.WinUI.Service;
 
 /// <summary>
 /// Loads and manages plugins from the Plugins directory.

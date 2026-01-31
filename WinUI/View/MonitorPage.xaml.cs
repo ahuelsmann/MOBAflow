@@ -2,10 +2,9 @@
 namespace Moba.WinUI.View;
 
 using Microsoft.UI.Dispatching;
-
 using SharedUI.ViewModel;
-
 using System.Collections.Specialized;
+using System.Runtime.InteropServices;
 
 // ReSharper disable once PartialTypeWithSinglePart
 public sealed partial class MonitorPage
@@ -47,7 +46,7 @@ public sealed partial class MonitorPage
                     {
                         TrafficListView.ScrollIntoView(firstItem);
                     }
-                    catch (System.Runtime.InteropServices.COMException)
+                    catch (COMException)
                     {
                         // Ignore scroll failures during rapid updates
                     }
@@ -79,7 +78,7 @@ public sealed partial class MonitorPage
                     {
                         ActivityLogListView.ScrollIntoView(firstItem);
                     }
-                    catch (System.Runtime.InteropServices.COMException)
+                    catch (COMException)
                     {
                         // Ignore scroll failures during rapid updates
                     }

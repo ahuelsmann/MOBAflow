@@ -1,12 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-
 using Service;
-
 using SharedUI.ViewModel;
-
 using Windows.ApplicationModel.DataTransfer;
 
 /// <summary>
@@ -24,14 +22,14 @@ public sealed partial class SettingsPage
         InitializeComponent();
     }
 
-    private void CopyIpToClipboard_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private void CopyIpToClipboard_Click(object sender, RoutedEventArgs e)
     {
         var dataPackage = new DataPackage();
         dataPackage.SetText(ViewModel.LocalIpAddress);
         Clipboard.SetContent(dataPackage);
     }
 
-    private void AzureSpeechSetupButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private void AzureSpeechSetupButton_Click(object sender, RoutedEventArgs e)
     {
         var parent = Parent;
         while (parent != null)
@@ -41,7 +39,7 @@ public sealed partial class SettingsPage
                 frame.Navigate(typeof(HelpPage), "Azure Speech Setup");
                 return;
             }
-            parent = (parent as Microsoft.UI.Xaml.FrameworkElement)?.Parent;
+            parent = (parent as FrameworkElement)?.Parent;
         }
     }
 }

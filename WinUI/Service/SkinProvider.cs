@@ -3,7 +3,6 @@
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
-
 using Microsoft.UI.Xaml;
 
 /// <summary>
@@ -15,10 +14,6 @@ public class SkinProvider : ISkinProvider
 {
     private AppSkin _currentSkin = AppSkin.Blue;
     private bool _isDarkMode;
-
-    public SkinProvider()
-    {
-    }
 
     /// <summary>
     /// Initializes the skin provider with saved settings.

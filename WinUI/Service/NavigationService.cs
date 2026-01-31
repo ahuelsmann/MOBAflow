@@ -4,12 +4,9 @@ namespace Moba.WinUI.Service;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-
 using SharedUI.Shell;
-
 using System.Diagnostics;
 using System.Reflection;
-
 using View;
 
 /// <summary>
