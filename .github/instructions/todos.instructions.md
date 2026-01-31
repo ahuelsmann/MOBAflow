@@ -45,6 +45,17 @@ applyTo: '**'
 
 ---
 
+## 📚 Piko A Gleissystem - Offizielle Dokumentation
+
+**Quelle:** `docs/99556__A-Gleis_Prospekt_2019.pdf` (Offizieller Piko A Prospekt 2019)
+
+**Vollständige Gleistypen in Piko A:**
+- WR (Weiche rechts)
+- R1, R2, R3, R4, R9 (Kurvengleise mit verschiedenen Krümmungen)
+- G62, G231, G239 (Gerade Gleise)
+
+---
+
 ## 🎯 SESSION 3 ABGESCHLOSSEN ✅
 
 ### Implementierung & Fehlerfix
@@ -87,12 +98,11 @@ applyTo: '**'
 
 ### 2. Zusätzliche Gleistypen (👤 BENUTZER: Domain-Klassen)
 
-**Reserviert für Domain-Layer Implementierung:**
-- [ ] `R10` (Kurvengleis 10°) Domain-Klasse
-- [ ] `R12` (Kurvengleis 12°) Domain-Klasse
-- [ ] `R15` (Kurvengleis 15°) Domain-Klasse
-- [ ] `WL` (Linksweiche) Domain-Klasse
-- [ ] Renderer-Methoden für alle neuen Typen
+**Hinweis:** Die folgenden Typen wurden als möglich angenommen, müssen aber gegen offizielle Piko A Dokumentation validiert werden:
+- [ ] Weitere Kurvengleise (falls in Piko A dokumentiert)
+- [ ] Weitere Weichen-Typen (falls in Piko A dokumentiert)
+
+**Aktuell implementiert (9 Gleistypen):** WR, R1-R4, R9, G62, G231, G239
 
 ### 3. Persistenz (JSON Serialisierung)
 - [ ] TrackPlanResult zu JSON serialisieren
@@ -130,6 +140,7 @@ applyTo: '**'
 - ✅ Entry-Port-Logik erklärt
 - ✅ Port-Strich-Visualisierung dokumentiert
 - ✅ Test-Beispiele in Test/TrackPlanRenderer/RendererTests.cs
+- ✅ Offizielle Piko A Dokumentation: `docs/99556__A-Gleis_Prospekt_2019.pdf`
 
 **Architektur-Übersicht:**
 ```
@@ -147,8 +158,8 @@ SVG-Output
 ## 🚀 Nächste Prioritäten
 
 1. **Port-Strich-Positionierung klären** - User definiert optimale Lösung
-2. **Domain-Klassen implementieren** (R10, R12, R15, WL)
-3. **Renderer erweitern** für neue Gleistypen
+2. **Domain-Klassen erweitern** (nur wenn in Piko A dokumentiert)
+3. **Renderer erweitern** für ggf. neue Gleistypen
 4. **Persistenz-Schicht** (JSON Serialisierung)
 5. **UI Integration** (WinUI, MAUI, Blazor - nur nach Tests!)
 
@@ -160,6 +171,7 @@ SVG-Output
 - **Physische Port-Farben**: Unabhängig von Entry-Richtung konsistent
 - **9 Gleistypen**: WR, R9, R1-R4, G62, G231, G239 vollständig unterstützt
 - **Tests funktionieren**: Komplexer Test-Fall validiert mehrzeilige Rendering
+- **Piko A Dokumentation**: `99556__A-Gleis_Prospekt_2019.pdf` ist offizielle Quelle für Gleistypen
 
 
 
