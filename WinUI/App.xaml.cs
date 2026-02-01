@@ -28,6 +28,7 @@ using SharedUI.Shell;
 using SharedUI.ViewModel;
 using Sound;
 using System.Diagnostics;
+using TrackPlan.Renderer;
 using Utilities;
 using View;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
@@ -299,6 +300,10 @@ public partial class App
             sp.GetRequiredService<ISettingsService>(),
             sp.GetService<ILogger<TrainControlViewModel>>()
         ));
+
+        // TrackPlan (model and ViewModel)
+        services.AddSingleton<TrackPlan>();
+        services.AddSingleton<TrackPlanViewModel>();
 
         // Pages (Transient = new instance per navigation)
         // Registration: tag, title, iconGlyph, pageType, source, category, order, featureToggleKey, badgeLabelKey, pathIconData, isBold
