@@ -4,11 +4,6 @@
 
 ## 🚫 VERBOTEN
 
-1. **Terminal für Dateioperationen** - NIEMALS `run_command_in_terminal` für:
-   - Erstellen von Dateien (→ `create_file` verwenden)
-   - Ändern von Dateien (→ `replace_string_in_file` verwenden)
-   - XAML/C#/JSON Dateien schreiben
-
 2. **Sofort coden** - NIEMALS ohne vorherige Analyse beginnen
 
 3. **Hardcodierte Farben** - IMMER `ThemeResource` in XAML
@@ -27,9 +22,22 @@
 
 1. **ANALYSE** - Anforderung verstehen, betroffene Dateien identifizieren
 2. **PATTERNS** - Bestehende Patterns im Code suchen (`code_search`, `find_symbol`)
-3. **PLAN** - Bei >2 Dateien das `plan()` Tool verwenden
+3. **BESTPRACTICES** - Immer nach den best practices implementieren.
+3. **PLAN** - Bei allen Aufgaben das `plan()` Tool verwenden
 4. **IMPLEMENTIEREN** - Backend → ViewModel → View, nach jeder Datei `run_build`
 5. **VALIDIEREN** - Build prüfen, Fehler beheben
+
+## ✅ PFLICHT: Programmierprinzipien: 
+	- SOLID; Single Responsibility Principle (SRP)
+	- DRY
+	- KISS (Keep It Simple, Stupid)
+	- Meaningful Names
+	- Kleine, fokussierte Methoden
+	- Konsistente Formatierung
+	- Separation of Concerns
+	- Klare Namespaces und Projektstruktur
+	- Sinnvolle Enums, Records, Interfaces
+	- Pattern-basierte APIs
 
 ## ✅ PFLICHT: Patterns
 

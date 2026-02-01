@@ -1,4 +1,3 @@
-// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Controls;
 
 using Microsoft.UI.Xaml;
@@ -51,6 +50,22 @@ public sealed partial class SpeedometerControl : UserControl
         DependencyProperty.Register(nameof(AccentColor), typeof(Color?), typeof(SpeedometerControl),
             new PropertyMetadata(null, OnAccentColorChanged));
 
+    /// <summary>
+    /// DCC speed steps configuration (14, 28, or 128).
+    /// Controls how many speed step markers are displayed.
+    /// </summary>
+    public static readonly DependencyProperty SpeedStepsProperty =
+        DependencyProperty.Register(nameof(SpeedSteps), typeof(int), typeof(SpeedometerControl),
+            new PropertyMetadata(128, OnSpeedStepsChanged));
+
+    /// <summary>
+    /// Maximum speed in km/h (Vmax) for displaying km/h markers.
+    /// This is separate from MaxValue which represents DCC speed steps.
+    /// </summary>
+    public static readonly DependencyProperty VmaxKmhProperty =
+        DependencyProperty.Register(nameof(VmaxKmh), typeof(int), typeof(SpeedometerControl),
+            new PropertyMetadata(200, OnVmaxKmhChanged));
+
     public SpeedometerControl()
     {
         InitializeComponent();
@@ -63,6 +78,8 @@ public sealed partial class SpeedometerControl : UserControl
         UpdateSpeedArc();
         UpdateDisplayText();
         ApplyAccentColor();
+        RenderKmhMarkers();
+        RenderSpeedStepMarkers();
     }
 
     public int MinValue
@@ -98,12 +115,37 @@ public sealed partial class SpeedometerControl : UserControl
         set => SetValue(AccentColorProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets the number of DCC speed steps (14, 28, or 128).
+    /// </summary>
+    public int SpeedSteps
+    {
+        get => (int)GetValue(SpeedStepsProperty);
+        set => SetValue(SpeedStepsProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the maximum speed in km/h (Vmax).
+    /// Used for displaying km/h markers on the outer ring.
+    /// </summary>
+    public int VmaxKmh
+    {
+        get => (int)GetValue(VmaxKmhProperty);
+        set => SetValue(VmaxKmhProperty, value);
+    }
+
     private static void OnValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is SpeedometerControl control)
         {
             control.UpdateNeedle();
             control.UpdateSpeedArc();
+            
+            // Update km/h markers when MaxValue changes (Vmax)
+            if (e.Property == MaxValueProperty)
+            {
+                control.RenderKmhMarkers();
+            }
         }
     }
 
@@ -120,6 +162,22 @@ public sealed partial class SpeedometerControl : UserControl
         if (d is SpeedometerControl control)
         {
             control.ApplyAccentColor();
+        }
+    }
+
+    private static void OnSpeedStepsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is SpeedometerControl control)
+        {
+            control.RenderSpeedStepMarkers();
+        }
+    }
+
+    private static void OnVmaxKmhChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is SpeedometerControl control)
+        {
+            control.RenderKmhMarkers();
         }
     }
 
@@ -252,5 +310,177 @@ public sealed partial class SpeedometerControl : UserControl
     {
         if (SpeedText is null) return;
         SpeedText.Text = DisplayValue.ToString();
+    }
+
+    /// <summary>
+    /// Renders DCC speed step markers dynamically based on SpeedSteps configuration.
+    /// Markers are positioned on inner ring for clear separation from km/h markers.
+    /// </summary>
+    private void RenderSpeedStepMarkers()
+    {
+        if (SpeedStepMarkersCanvas is null)
+            return;
+
+        // Clear existing markers
+        SpeedStepMarkersCanvas.Children.Clear();
+
+        // Arc parameters (inner ring)
+        const double centerX = 130;
+        const double centerY = 130;
+        const double innerRadius = 96;   // Further inside (was 106)
+        const double markerLength = 5;   // Shorter tick marks
+        const double labelRadius = innerRadius + 12; // Position for step numbers
+
+        // Determine actual max step value
+        var maxStep = SpeedSteps switch
+        {
+            14 => 13,
+            28 => 27,
+            128 => 126,
+            _ => 126
+        };
+
+        // Strategic positions to display
+        var stepsToDisplay = SpeedSteps switch
+        {
+            14 => new[] { 0, 3, 7, 10, 13 },
+            28 => new[] { 0, 7, 14, 21, 27 },
+            128 => new[] { 0, 32, 63, 95, 126 },
+            _ => new[] { 0, 32, 63, 95, 126 }
+        };
+
+        // Use accent color for speed step markers (different from km/h)
+        var accentBrush = AccentColor.HasValue
+            ? new SolidColorBrush(AccentColor.Value)
+            : (Brush)Application.Current.Resources["AccentFillColorTertiaryBrush"];
+
+        foreach (var step in stepsToDisplay)
+        {
+            // Calculate normalized position
+            var normalized = maxStep > 0 ? (double)step / maxStep : 0;
+
+            // Angle calculation
+            var angleDeg = 180 - (normalized * 180);
+            var angleRad = angleDeg * Math.PI / 180;
+
+            // Inner point (start of tick mark)
+            var innerX = centerX + (innerRadius * Math.Cos(angleRad));
+            var innerY = centerY - (innerRadius * Math.Sin(angleRad));
+
+            // Outer point (end of tick mark)
+            var outerX = centerX + ((innerRadius + markerLength) * Math.Cos(angleRad));
+            var outerY = centerY - ((innerRadius + markerLength) * Math.Sin(angleRad));
+
+            // Create tick mark line
+            var line = new Line
+            {
+                X1 = innerX,
+                Y1 = innerY,
+                X2 = outerX,
+                Y2 = outerY,
+                Stroke = accentBrush,
+                StrokeThickness = 1.2,
+                Opacity = 0.7  // Slightly transparent to differentiate
+            };
+
+            SpeedStepMarkersCanvas.Children.Add(line);
+
+            // Label position
+            var labelX = centerX + (labelRadius * Math.Cos(angleRad));
+            var labelY = centerY - (labelRadius * Math.Sin(angleRad));
+
+            // Create step number label
+            var label = new TextBlock
+            {
+                Text = step.ToString(),
+                FontSize = 8,  // Smaller font
+                Foreground = accentBrush,
+                Opacity = 0.8,
+                TextAlignment = TextAlignment.Center
+            };
+
+            // Center the label
+            Canvas.SetLeft(label, labelX - 8);
+            Canvas.SetTop(label, labelY - 5);
+
+            SpeedStepMarkersCanvas.Children.Add(label);
+        }
+    }
+
+    /// <summary>
+    /// Renders km/h markers dynamically based on VmaxKmh.
+    /// Displays 5 markers at 0%, 25%, 50%, 75%, 100% of Vmax.
+    /// Positioned on outer ring for clear separation from speed step markers.
+    /// </summary>
+    private void RenderKmhMarkers()
+    {
+        if (KmhMarkersCanvas is null)
+            return;
+
+        // Clear existing markers
+        KmhMarkersCanvas.Children.Clear();
+
+        // Arc parameters
+        const double centerX = 130;
+        const double centerY = 130;
+        const double outerRadius = 114;   // Outside the stroke (100 + strokeThickness)
+        const double markerLength = 8;    // Longer tick marks than speed steps
+        const double labelRadius = outerRadius + 16; // Position for km/h numbers
+
+        // Calculate km/h values to display (0%, 25%, 50%, 75%, 100% of Vmax)
+        var percentages = new[] { 0, 0.25, 0.5, 0.75, 1.0 };
+        var primaryBrush = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"];
+        var maxBrush = new SolidColorBrush(Color.FromArgb(255, 232, 17, 35)); // Red for MAX
+
+        foreach (var percentage in percentages)
+        {
+            var kmh = (int)Math.Round(VmaxKmh * percentage);
+            var isMax = percentage >= 0.99; // Is this the MAX marker?
+
+            // Angle goes from 180 deg (left, 0%) to 0 deg (right, 100%)
+            var angleDeg = 180 - (percentage * 180);
+            var angleRad = angleDeg * Math.PI / 180;
+
+            // Inner point (start of tick mark)
+            var innerX = centerX + (outerRadius * Math.Cos(angleRad));
+            var innerY = centerY - (outerRadius * Math.Sin(angleRad));
+
+            // Outer point (end of tick mark)
+            var outerX = centerX + ((outerRadius + markerLength) * Math.Cos(angleRad));
+            var outerY = centerY - ((outerRadius + markerLength) * Math.Sin(angleRad));
+
+            // Create tick mark line
+            var line = new Line
+            {
+                X1 = innerX,
+                Y1 = innerY,
+                X2 = outerX,
+                Y2 = outerY,
+                Stroke = isMax ? maxBrush : primaryBrush,
+                StrokeThickness = isMax ? 2.5 : 2
+            };
+
+            KmhMarkersCanvas.Children.Add(line);
+
+            // Label position (further out)
+            var labelX = centerX + (labelRadius * Math.Cos(angleRad));
+            var labelY = centerY - (labelRadius * Math.Sin(angleRad));
+
+            // Create km/h number label
+            var label = new TextBlock
+            {
+                Text = kmh.ToString(),
+                FontSize = isMax ? 11 : 12,
+                FontWeight = isMax ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal,
+                Foreground = isMax ? maxBrush : primaryBrush,
+                TextAlignment = TextAlignment.Center
+            };
+
+            // Adjust label position to center it
+            Canvas.SetLeft(label, labelX - 12);
+            Canvas.SetTop(label, labelY - 7);
+
+            KmhMarkersCanvas.Children.Add(label);
+        }
     }
 }

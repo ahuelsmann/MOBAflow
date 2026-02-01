@@ -60,7 +60,21 @@ public sealed partial class TrainControlPage
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+
+        // Initialize SpeedSteps ComboBox selection
+        SpeedStepsSelectedIndex = ViewModel.SpeedSteps switch
+        {
+            DccSpeedSteps.Steps14 => 0,
+            DccSpeedSteps.Steps28 => 1,
+            DccSpeedSteps.Steps128 => 2,
+            _ => 2
+        };
     }
+
+    /// <summary>
+    /// Selected index for SpeedSteps ComboBox (for x:Bind).
+    /// </summary>
+    public int SpeedStepsSelectedIndex { get; set; } = 2; // Default: 128 Steps
 
     private void OnSkinProviderChanged(object? sender, SkinChangedEventArgs e)
     {
@@ -191,6 +205,7 @@ public sealed partial class TrainControlPage
         if (e.PropertyName is nameof(ViewModel.SpeedKmh) or nameof(ViewModel.SelectedVmax) or nameof(ViewModel.HasValidLocoSeries))
         {
             UpdateVmaxDisplay();
+            UpdateSpeedometerScale();  // This will update both MaxValue and VmaxKmh
         }
     }
 
@@ -198,6 +213,26 @@ public sealed partial class TrainControlPage
     {
         VmaxDisplay.Visibility = ViewModel.HasValidLocoSeries ? Visibility.Visible : Visibility.Collapsed;
         VmaxText.Text = ViewModel.SelectedVmax.ToString();
+    }
+
+    private void UpdateSpeedometerScale()
+    {
+        if (_speedometer is null)
+            return;
+
+        // Update speedometer scale based on:
+        // 1. MaxSpeedStep: Controls DCC speed step range (13/27/126)
+        // 2. SelectedVmax: Controls km/h display range (e.g., 200 km/h)
+        
+        // Set the DCC speed step range (for needle positioning)
+        _speedometer.MaxValue = ViewModel.MaxSpeedStep;
+        
+        // Set Vmax for km/h markers display
+        _speedometer.VmaxKmh = ViewModel.SelectedVmax > 0 
+            ? ViewModel.SelectedVmax 
+            : 200; // Default fallback
+        
+        // Note: DisplayValue shows km/h calculated as (Speed/MaxSpeedStep) * Vmax
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -213,6 +248,12 @@ public sealed partial class TrainControlPage
 
         // Apply current skin colors
         ApplySkinColors();
+
+        // Initialize speedometer scale based on current Vmax
+        UpdateSpeedometerScale();
+
+        // Initialize speedometer speed step markers
+        UpdateSpeedStepMarkers();
 
         _allLocomotives = await _locomotiveService.GetAllSeriesAsync().ConfigureAwait(false);
     }
@@ -243,6 +284,7 @@ public sealed partial class TrainControlPage
         var selected = _allLocomotives.FirstOrDefault(s => s.Name == (string)args.SelectedItem);
         if (selected != null)
         {
+            ViewModel.SelectedLocoSeries = selected.Name;
             ViewModel.SelectedVmax = selected.Vmax;
         }
     }
@@ -252,6 +294,7 @@ public sealed partial class TrainControlPage
         var selected = _allLocomotives.FirstOrDefault(s => s.Name == args.QueryText);
         if (selected != null)
         {
+            ViewModel.SelectedLocoSeries = selected.Name;
             ViewModel.SelectedVmax = selected.Vmax;
         }
     }
@@ -282,5 +325,45 @@ public sealed partial class TrainControlPage
     {
         var uiSettings = new UISettings();
         return uiSettings.GetColorValue(UIColorType.Accent);
+    }
+
+    private void SpeedStepsComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is not ComboBox comboBox || comboBox.SelectedItem is not ComboBoxItem item)
+            return;
+
+        var newSpeedSteps = item.Tag switch
+        {
+            "14" => DccSpeedSteps.Steps14,
+            "28" => DccSpeedSteps.Steps28,
+            "128" => DccSpeedSteps.Steps128,
+            _ => DccSpeedSteps.Steps128
+        };
+
+        ViewModel.SpeedSteps = newSpeedSteps;
+
+        // Update speedometer scale (MaxValue), VmaxKmh, and markers
+        UpdateSpeedometerScale();
+        UpdateSpeedStepMarkers();
+
+        // Save settings
+        _ = SaveSpeedStepsSettingAsync();
+    }
+
+    private void UpdateSpeedStepMarkers()
+    {
+        if (_speedometer is null)
+            return;
+
+        // Update speedometer SpeedSteps property to trigger marker re-rendering
+        _speedometer.SpeedSteps = (int)ViewModel.SpeedSteps;
+    }
+
+    private async Task SaveSpeedStepsSettingAsync()
+    {
+        if (_settingsService != null)
+        {
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+        }
     }
 }

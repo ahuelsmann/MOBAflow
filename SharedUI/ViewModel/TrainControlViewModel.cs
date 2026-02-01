@@ -32,6 +32,28 @@ public partial class TrainControlViewModel : ObservableObject
 
     private bool _isLoadingPreset;
 
+    // === DCC Speed Steps Configuration ===
+    
+    /// <summary>
+    /// DCC speed step configuration (14, 28, or 128 steps).
+    /// This determines how many discrete speed levels are available.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(MaxSpeedStep))]
+    private DccSpeedSteps speedSteps = DccSpeedSteps.Steps128;
+
+    /// <summary>
+    /// Maximum speed step value based on SpeedSteps configuration.
+    /// Returns: 13 for 14 steps, 27 for 28 steps, 126 for 128 steps.
+    /// </summary>
+    public int MaxSpeedStep => SpeedSteps switch
+    {
+        DccSpeedSteps.Steps14 => 13,
+        DccSpeedSteps.Steps28 => 27,
+        DccSpeedSteps.Steps128 => 126,
+        _ => 126
+    };
+
     /// <summary>
     /// DCC locomotive address (1-9999).
     /// </summary>
@@ -204,9 +226,11 @@ public partial class TrainControlViewModel : ObservableObject
     /// <summary>
     /// Calculated speed in km/h based on current speed step and selected Vmax.
     /// Returns 0 if no valid locomotive series is selected.
+    /// Calculation: (CurrentStep / MaxStep) * Vmax
+    /// Example: Step 63 of 126 at Vmax 200 km/h = (63/126) * 200 = 100 km/h
     /// </summary>
     public int SpeedKmh => HasValidLocoSeries
-        ? (int)Math.Round(Speed / 126.0 * SelectedVmax)
+        ? (int)Math.Round(Speed / (double)MaxSpeedStep * SelectedVmax)
         : 0;
 
     /// <summary>
@@ -369,6 +393,7 @@ public partial class TrainControlViewModel : ObservableObject
         SelectedPresetIndex = trainControl.SelectedPresetIndex;
         RampStepSize = trainControl.SpeedRampStepSize;
         RampIntervalMs = trainControl.SpeedRampIntervalMs;
+        SpeedSteps = trainControl.SpeedSteps;
 
         // Apply current preset
         ApplyCurrentPreset();
@@ -389,6 +414,7 @@ public partial class TrainControlViewModel : ObservableObject
         settings.TrainControl.SelectedPresetIndex = SelectedPresetIndex;
         settings.TrainControl.SpeedRampStepSize = (int)RampStepSize;
         settings.TrainControl.SpeedRampIntervalMs = (int)RampIntervalMs;
+        settings.TrainControl.SpeedSteps = SpeedSteps;
 
         await _settingsService.SaveSettingsAsync(settings);
         _logger?.LogDebug("Locomotive presets saved to settings");

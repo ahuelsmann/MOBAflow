@@ -55,34 +55,3 @@ public class LocomotivePreset
             FunctionStates &= ~(1u << functionNumber);
     }
 }
-
-/// <summary>
-/// Train Control settings including locomotive presets.
-/// </summary>
-public class TrainControlSettings
-{
-    /// <summary>
-    /// Currently selected preset index (0, 1, or 2).
-    /// </summary>
-    public int SelectedPresetIndex { get; set; }
-
-    /// <summary>
-    /// Three locomotive presets for quick switching.
-    /// </summary>
-    public List<LocomotivePreset> Presets { get; set; } =
-    [
-        new LocomotivePreset { Name = "Lok 1", DccAddress = 3 },
-        new LocomotivePreset { Name = "Lok 2", DccAddress = 4 },
-        new LocomotivePreset { Name = "Lok 3", DccAddress = 5 }
-    ];
-
-    /// <summary>
-    /// Speed ramp step size (1-20) for smooth acceleration/deceleration.
-    /// </summary>
-    public int SpeedRampStepSize { get; set; } = 5;
-
-    /// <summary>
-    /// Speed ramp interval in milliseconds (50-500).
-    /// </summary>
-    public int SpeedRampIntervalMs { get; set; } = 100;
-}

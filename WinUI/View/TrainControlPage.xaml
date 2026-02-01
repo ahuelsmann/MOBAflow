@@ -334,6 +334,24 @@
                                 OnContent="Forward" />
                         </StackPanel>
 
+                        <!--  DCC Speed Steps  -->
+                        <StackPanel Spacing="6">
+                            <TextBlock
+                                FontSize="11"
+                                FontWeight="SemiBold"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                Text="DCC SPEED STEPS" />
+                            <ComboBox
+                                x:Name="SpeedStepsComboBox"
+                                HorizontalAlignment="Stretch"
+                                SelectedIndex="{x:Bind SpeedStepsSelectedIndex, Mode=TwoWay}"
+                                SelectionChanged="SpeedStepsComboBox_SelectionChanged">
+                                <ComboBoxItem Content="14 Steps" Tag="14" />
+                                <ComboBoxItem Content="28 Steps" Tag="28" />
+                                <ComboBoxItem Content="128 Steps" Tag="128" />
+                            </ComboBox>
+                        </StackPanel>
+
                         <!--  Separator  -->
                         <Border
                             Height="1"
@@ -444,7 +462,6 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         DisplayValue="{x:Bind ViewModel.SpeedKmh, Mode=OneWay}"
-                        MaxValue="126"
                         MinValue="0"
                         Value="{x:Bind ViewModel.Speed, Mode=OneWay}" />
 
