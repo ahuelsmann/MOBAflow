@@ -5,7 +5,19 @@ applyTo: '**'
 
 # MOBAflow TODOs
 
-> Letzte Aktualisierung: 2025-01-31 (Session 5 abgeschlossen - Train Control: Dynamische Tacho-Skalierung mit DCC Speed Steps)
+> Letzte Aktualisierung: 2026-02-01 (Session 6 abgeschlossen - Train Control: Tacho-Indicator Linienband)
+
+---
+
+## 🎯 SESSION 6 ABGESCHLOSSEN ✅
+
+### Train Control: Tacho-Indicator Linienband
+
+**SpeedometerControl (WinUI.Controls)**
+- ✅ Speed-Indicator als dichtes Linienband umgesetzt
+- ✅ Linien folgen dem Halbkreis (radiale Lines)
+- ✅ Rendering dynamisch basierend auf aktueller Geschwindigkeit
+- ✅ Farbverlauf weiterverwendet (gruen -> gelb -> rot)
 
 ---
 
@@ -26,21 +38,21 @@ applyTo: '**'
 
 **SpeedometerControl: Doppel-Ring-Anzeige (WinUI.Controls)**
 - ✅ Hardcodierte Markierungen entfernt
-- ✅ **Äußerer Ring (km/h):** `RenderKmhMarkers()` - dynamisch basierend auf `VmaxKmh`
+- ✅ **Aeusserer Ring (km/h):** `RenderKmhMarkers()` - dynamisch basierend auf `VmaxKmh`
   - 5 Marker: 0%, 25%, 50%, 75%, 100% von Vmax
-  - Primäre Farbe, MAX-Marker in Rot
+  - Primaere Farbe, MAX-Marker in Rot
 - ✅ **Innerer Ring (Steps):** `RenderSpeedStepMarkers()` - dynamisch basierend auf `SpeedSteps`
   - 14 Steps: 0, 3, 7, 10, 13
   - 28 Steps: 0, 7, 14, 21, 27
   - 128 Steps: 0, 32, 63, 95, 126
   - Accent-Farbe, kleinere Schrift, leicht transparent
-- ✅ `VmaxKmh` DependencyProperty für km/h-Anzeige
+- ✅ `VmaxKmh` DependencyProperty fuer km/h-Anzeige
 - ✅ `MaxValue` ist jetzt `MaxSpeedStep` (nicht Vmax!)
 
 **TrainControlPage UI (WinUI.View)**
-- ✅ ComboBox für Speed Steps Auswahl (14/28/128)
+- ✅ ComboBox fuer Speed Steps Auswahl (14/28/128)
 - ✅ `UpdateSpeedometerScale()` setzt `MaxValue` und `VmaxKmh`
-- ✅ Automatische Updates bei Vmax- oder SpeedSteps-Änderung
+- ✅ Automatische Updates bei Vmax- oder SpeedSteps-Aenderung
 - ✅ Settings-Persistence
 
 **Korrekte Skalierung implementiert:**
@@ -54,7 +66,7 @@ Formel: km/h = (CurrentStep / MaxStep) × Vmax
 
 **Beispiel (BR 103, Vmax 200 km/h, 128 Steps):**
 ```
-Äußerer Ring (km/h):    0 — 50 — 100 — 150 — 200
+Aeusserer Ring (km/h):    0 — 50 — 100 — 150 — 200
 Innerer Ring (Steps):   0 — 32 —  63 —  95 — 126
                         ↕    ↕     ↕     ↕     ↕
 Schaltstufe 63 → 100 km/h ✓
@@ -73,13 +85,13 @@ Schaltstufe 126 → 200 km/h ✓
   - Striche stehen im rechten Winkel zur Fahrtrichtung
   - Labels positioniert 25px neben dem Strich
   
-**Farbcodierung für alle Port-Typen**
-- ✅ `GetPortColor()` Hilfsfunktion hinzugefügt
+**Farbcodierung fuer alle Port-Typen**
+- ✅ `GetPortColor()` Hilfsfunktion hinzugefuegt
   - Port A = schwarz (physisch)
   - Port B = rot (physisch)
-  - Port C = grün (WR only)
-  - Port D = blau (für zukünftige Typen)
-- ✅ Unabhängig von Entry-Richtung: Ports behalten ihre physischen Farben
+  - Port C = gruen (WR only)
+  - Port D = blau (fuer zukuenftige Typen)
+- ✅ Unabhaengig von Entry-Richtung: Ports behalten ihre physischen Farben
 
 **Alle 9 Render-Methoden aktualisiert**
 - ✅ RenderWR() - 3 Ports mit physischen Farben
@@ -93,9 +105,9 @@ Schaltstufe 126 → 200 km/h ✓
 - ✅ Striche zentriert auf Port-Positionen, keine Versetzung
 
 **Offene Fragestellung**
-- ⏳ Port-Strich-Positionierung bei Verbindungen prüfen
-  - Aktuell: Striche zentriert auf Port-Punkt (können überlappen wenn verbunden)
-  - Benutzer prüft noch optimale Lösung für kante-an-kante Positionierung
+- ⏳ Port-Strich-Positionierung bei Verbindungen pruefen
+  - Aktuell: Striche zentriert auf Port-Punkt (koennen ueberlappen wenn verbunden)
+  - Benutzer prueft noch optimale Loesung fuer kante-an-kante Positionierung
 
 ---
 
@@ -103,9 +115,9 @@ Schaltstufe 126 → 200 km/h ✓
 
 **Quelle:** `docs/99556__A-Gleis_Prospekt_2019.pdf` (Offizieller Piko A Prospekt 2019)
 
-**Vollständige Gleistypen in Piko A:**
+**Vollstaendige Gleistypen in Piko A:**
 - WR (Weiche rechts)
-- R1, R2, R3, R4, R9 (Kurvengleise mit verschiedenen Krümmungen)
+- R1, R2, R3, R4, R9 (Kurvengleise mit verschiedenen Kruemmungen)
 - G62, G231, G239 (Gerade Gleise)
 
 ---
@@ -115,15 +127,15 @@ Schaltstufe 126 → 200 km/h ✓
 ### Implementierung & Fehlerfix
 
 **TrackPlanResult erweitert (TrackLibrary.PikoA)**
-- ✅ `PortConnection` Record hinzugefügt für Port-Verbindungen
+- ✅ `PortConnection` Record hinzugefuegt fuer Port-Verbindungen
 - ✅ `Connections` Liste in TrackPlanResult exportiert
 - ✅ `Create()` exportiert jetzt alle Verbindungen mit GUIDs
 
 **TrackPlanSvgRenderer refaktoriert (TrackPlan.Renderer)**
 - ✅ Komplett neues Design: Connection-basiertes Rendering statt sequenziell
-- ✅ `RenderSegmentRecursive()` für Depth-First Traversal
+- ✅ `RenderSegmentRecursive()` fuer Depth-First Traversal
 - ✅ `FindFirstSegment()` - findet Segment ohne eingehende Verbindung
-- ✅ `ExtractPortChar()` - Hilfsmethode für Port-Namen
+- ✅ `ExtractPortChar()` - Hilfsmethode fuer Port-Namen
 - ✅ `CalculateWRPortPosition()` - berechnet Positions-Offsets pro Port
 - ✅ Entry-Port-Bestimmung basierend auf `TargetPort` der Verbindung
 - ✅ Mehrere Branches pro Port werden korrekt gerendert
@@ -132,7 +144,7 @@ Schaltstufe 126 → 200 km/h ✓
 **Bugfixes**
 - ✅ FromA.ToB<R9>() - R9 wird jetzt mit korrektem Port verbunden
 - ✅ FromC.ToA<R9>() - Zweite R9 wird jetzt an Port C gerendert
-- ✅ Port C Label (grün) jetzt sichtbar bei WR
+- ✅ Port C Label (gruen) jetzt sichtbar bei WR
 - ✅ Entry-Port-Logik korrigiert: `incomingConnection.TargetPort` statt falsche Annahmen
 
 **Tests (Test.TrackPlanRenderer.RendererTests)**
@@ -143,14 +155,14 @@ Schaltstufe 126 → 200 km/h ✓
 
 ---
 
-## 📋 BACKLOG (NÄCHSTE SESSIONS)
+## 📋 BACKLOG (NAECHSTE SESSIONS)
 
 ### 1. Train Control - 4-Bereiche Layout (UPCOMING)
 - [ ] Mittlere Spalte in 4 Bereiche aufteilen
-  - [ ] Bereich 1: Speedometer (25% Höhe)
+  - [ ] Bereich 1: Speedometer (25% Hoehe)
   - [ ] Bereich 2: Letzter Haltepunkt (Journey Info)
   - [ ] Bereich 3: Aktueller Haltepunkt (Journey Info)
-  - [ ] Bereich 4: Nächster Haltepunkt (Journey Info)
+  - [ ] Bereich 4: Naechster Haltepunkt (Journey Info)
 - [ ] `JourneyStationControl` erstellen
   - [ ] Vertikale Darstellung
   - [ ] Station Name, Ankunft/Abfahrt, Gleis
@@ -159,13 +171,13 @@ Schaltstufe 126 → 200 km/h ✓
 - [ ] Responsive Layout-Tests
 
 ### 2. Port-Strich-Positionierung (TrackPlan)
-- [ ] Lösung für überlappungsfreie Strich-Positionierung bei Verbindungen
+- [ ] Loesung fuer ueberlappungsfreie Strich-Positionierung bei Verbindungen
   - Optionen: Versetzung, separate Verbindungslinie, andere Strategie
   - User formuliert noch konkrete Anforderung
 
-### 3. Zusätzliche Gleistypen (👤 BENUTZER: Domain-Klassen)
+### 3. Zusaetzliche Gleistypen (Benutzer: Domain-Klassen)
 
-**Hinweis:** Die folgenden Typen wurden als möglich angenommen, müssen aber gegen offizielle Piko A Dokumentation validiert werden:
+**Hinweis:** Die folgenden Typen wurden als moeglich angenommen, muessen aber gegen offizielle Piko A Dokumentation validiert werden:
 - [ ] Weitere Kurvengleise (falls in Piko A dokumentiert)
 - [ ] Weitere Weichen-Typen (falls in Piko A dokumentiert)
 
@@ -174,7 +186,7 @@ Schaltstufe 126 → 200 km/h ✓
 ### 4. Persistenz (JSON Serialisierung)
 - [ ] TrackPlanResult zu JSON serialisieren
 - [ ] JSON zu TrackPlanResult deserialisieren
-- [ ] Versionierung für TrackPlan-Format
+- [ ] Versionierung fuer TrackPlan-Format
 - [ ] File-Dialog zum Speichern/Laden
 
 ### 5. UI Integration (NACH Tests abgeschlossen)
@@ -182,18 +194,18 @@ Schaltstufe 126 → 200 km/h ✓
 - [ ] **MAUI**: Mobile TrackPlan Viewer
 - [ ] **Blazor**: Web-basierter TrackPlan Planner
 - [ ] Drag-and-Drop Gleis-Platzierung
-- [ ] Live-Preview während Bearbeitung
+- [ ] Live-Preview waehrend Bearbeitung
 - [ ] Export: PDF, PNG, SVG
 
 ### 6. Visualisierung Erweiterungen
 - [ ] 3D-Rendering (Three.js / Babylon.js)
-- [ ] Höhenangaben für Gleise
+- [ ] Hoehenangaben fuer Gleise
 - [ ] Schattierungen / Texturen
 - [ ] Animation: Lok-Bewegung entlang Pfad
 
-### 7. Performance & Qualität
-- [ ] Unit-Tests für Edge-Cases (ungültige Verbindungen, etc.)
-- [ ] Performance-Test für große TrackPläne (1000+ Gleise)
+### 7. Performance & Qualitaet
+- [ ] Unit-Tests fuer Edge-Cases (ungueltige Verbindungen, etc.)
+- [ ] Performance-Test fuer grosse TrackPlaene (1000+ Gleise)
 - [ ] SVG-Optimierung (Path-Zusammenfassung, etc.)
 
 ---
@@ -205,18 +217,18 @@ Schaltstufe 126 → 200 km/h ✓
 - ✅ XML-Comments in SharedUI/ViewModel/TrainControlViewModel
 - ✅ XML-Comments in WinUI/Controls/SpeedometerControl
 - ✅ Doppel-Ring-Rendering dokumentiert (km/h + Steps)
-- ✅ Dynamische Skalierung erklärt
+- ✅ Dynamische Skalierung erklaert
 
 **TrackPlan:**
 - ✅ XML-Comments in TrackLibrary.PikoA/TrackPlan.cs
 - ✅ XML-Comments in TrackPlan.Renderer/TrackPlanSvgRenderer.cs (komplett neugeschrieben)
 - ✅ Connection-basiertes Rendering dokumentiert
-- ✅ Entry-Port-Logik erklärt
+- ✅ Entry-Port-Logik erklaert
 - ✅ Port-Strich-Visualisierung dokumentiert
 - ✅ Test-Beispiele in Test/TrackPlanRenderer/RendererTests.cs
 - ✅ Offizielle Piko A Dokumentation: `docs/99556__A-Gleis_Prospekt_2019.pdf`
 
-**Architektur-Übersicht (TrackPlan):**
+**Architektur-Uebersicht (TrackPlan):**
 ```
 TrackPlanBuilder (Fluent API)
     ↓
@@ -227,25 +239,25 @@ TrackPlanSvgRenderer (Connection-basiert, Striche-Visualisierung)
 SVG-Output
 ```
 
-**Architektur-Übersicht (Train Control):**
+**Architektur-Uebersicht (Train Control):**
 ```
 TrainControlViewModel (SpeedSteps, MaxSpeedStep, SpeedKmh)
     ↓
 SpeedometerControl (MaxValue=MaxSpeedStep, VmaxKmh)
     ↓
 Doppel-Ring Rendering:
-  - Äußerer Ring: km/h (0 - Vmax)
+  - Aeusserer Ring: km/h (0 - Vmax)
   - Innerer Ring: Steps (0 - MaxSpeedStep)
 ```
 
 ---
 
-## 🚀 Nächste Prioritäten
+## 🚀 Naechste Prioritaeten
 
 1. **4-Bereiche Layout** - Train Control mit Journey-Info erweitern
-2. **Port-Strich-Positionierung klären** - User definiert optimale Lösung
+2. **Port-Strich-Positionierung klaeren** - User definiert optimale Loesung
 3. **Domain-Klassen erweitern** (nur wenn in Piko A dokumentiert)
-4. **Renderer erweitern** für ggf. neue Gleistypen
+4. **Renderer erweitern** fuer ggf. neue Gleistypen
 5. **Persistenz-Schicht** (JSON Serialisierung)
 6. **UI Integration** (WinUI, MAUI, Blazor - nur nach Tests!)
 
@@ -254,17 +266,17 @@ Doppel-Ring Rendering:
 ## 📌 Wichtige Hinweise
 
 **Train Control:**
-- **Doppel-Ring-Anzeige**: Äußerer Ring km/h, innerer Ring DCC Steps
-- **Dynamische Skalierung**: MaxSpeedStep ändert sich mit SpeedSteps (13/27/126)
+- **Doppel-Ring-Anzeige**: Aeusserer Ring km/h, innerer Ring DCC Steps
+- **Dynamische Skalierung**: MaxSpeedStep aendert sich mit SpeedSteps (13/27/126)
 - **Korrekte Berechnung**: km/h = (Step / MaxSpeedStep) × Vmax
 - **Persistence**: Settings werden automatisch gespeichert
 
 **TrackPlan:**
-- **Striche sind zentriert**: Auf Port-Positionen, können bei Verbindungen überlappen
-- **Physische Port-Farben**: Unabhängig von Entry-Richtung konsistent
-- **9 Gleistypen**: WR, R9, R1-R4, G62, G231, G239 vollständig unterstützt
+- **Striche sind zentriert**: Auf Port-Positionen, koennen bei Verbindungen ueberlappen
+- **Physische Port-Farben**: Unabhaengig von Entry-Richtung konsistent
+- **9 Gleistypen**: WR, R9, R1-R4, G62, G231, G239 vollstaendig unterstuetzt
 - **Tests funktionieren**: Komplexer Test-Fall validiert mehrzeilige Rendering
-- **Piko A Dokumentation**: `99556__A-Gleis_Prospekt_2019.pdf` ist offizielle Quelle für Gleistypen
+- **Piko A Dokumentation**: `99556__A-Gleis_Prospekt_2019.pdf` ist offizielle Quelle fuer Gleistypen
 
 
 

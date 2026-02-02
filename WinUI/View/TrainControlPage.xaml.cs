@@ -202,7 +202,7 @@ public sealed partial class TrainControlPage
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(ViewModel.SpeedKmh) or nameof(ViewModel.SelectedVmax) or nameof(ViewModel.HasValidLocoSeries))
+        if (e.PropertyName is nameof(ViewModel.SpeedKmh) or nameof(ViewModel.SelectedVmax) or nameof(ViewModel.SelectedLocoSeries))
         {
             UpdateVmaxDisplay();
             UpdateSpeedometerScale();  // This will update both MaxValue and VmaxKmh
@@ -211,7 +211,8 @@ public sealed partial class TrainControlPage
 
     private void UpdateVmaxDisplay()
     {
-        VmaxDisplay.Visibility = ViewModel.HasValidLocoSeries ? Visibility.Visible : Visibility.Collapsed;
+        // Show Vmax display if a loco series is selected
+        VmaxDisplay.Visibility = !string.IsNullOrEmpty(ViewModel.SelectedLocoSeries) ? Visibility.Visible : Visibility.Collapsed;
         VmaxText.Text = ViewModel.SelectedVmax.ToString();
     }
 

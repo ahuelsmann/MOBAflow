@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using System.Globalization;
+using Windows.Foundation;
 using Windows.UI;
 
 /// <summary>
@@ -221,7 +222,6 @@ public sealed partial class SpeedometerControl : UserControl
     {
         if (SpeedArc is null) return;
 
-        // Calculate the arc path based on current speed
         var range = (double)(MaxValue - MinValue);
         if (range <= 0) return;
 
@@ -230,51 +230,45 @@ public sealed partial class SpeedometerControl : UserControl
         if (normalizedValue <= 0.001)
         {
             SpeedArc.Data = null;
+            SpeedArc.Visibility = Visibility.Collapsed;
             return;
         }
 
-        // Arc parameters - match XAML canvas coordinates (center 130,130, radius 100)
+        SpeedArc.Visibility = Visibility.Visible;
+
         const double centerX = 130;
         const double centerY = 130;
-        const double radius = 100;
-        const double startAngle = 180; // Left side (0 speed)
+        const double outerRadius = 100;
+        const double innerRadius = 92;
+        const double lineSpacingDeg = 2;
+        const double lineThickness = 2;
+        const double startAngle = 180;
 
-        var sweepAngle = normalizedValue * 180; // Up to 180 deg for full speed
+        var sweepAngle = normalizedValue * 180;
         var endAngle = startAngle - sweepAngle;
 
-        // Calculate start and end points
-        var startRad = startAngle * Math.PI / 180;
-        var endRad = endAngle * Math.PI / 180;
-
-        var startX = centerX + (radius * Math.Cos(startRad));
-        var startY = centerY - (radius * Math.Sin(startRad));
-        var endX = centerX + (radius * Math.Cos(endRad));
-        var endY = centerY - (radius * Math.Sin(endRad));
-
-        // Large arc flag (1 if > 180 deg, but we never exceed 180 deg)
-        var largeArc = sweepAngle > 180 ? 1 : 0;
-
-        // Sweep flag: 1 = clockwise (arc curves outward from center)
-        const int sweepFlag = 1;
-
-        // Create path data
-        var pathData = string.Format(
-            CultureInfo.InvariantCulture,
-            "M {0:F1},{1:F1} A {2},{2} 0 {3} {4} {5:F1},{6:F1}",
-            startX, startY, radius, largeArc, sweepFlag, endX, endY);
-
-        try
+        var geometryGroup = new GeometryGroup();
+        for (var angleDeg = startAngle; angleDeg >= endAngle; angleDeg -= lineSpacingDeg)
         {
-            SpeedArc.Data = (Geometry)XamlBindingHelper.ConvertValue(
-                typeof(Geometry), pathData);
-        }
-        catch
-        {
-            // Fallback if path parsing fails
-            SpeedArc.Data = null;
+            var angleRad = angleDeg * Math.PI / 180;
+            var cos = Math.Cos(angleRad);
+            var sin = Math.Sin(angleRad);
+
+            var startX = centerX + (innerRadius * cos);
+            var startY = centerY - (innerRadius * sin);
+            var endX = centerX + (outerRadius * cos);
+            var endY = centerY - (outerRadius * sin);
+
+            geometryGroup.Children.Add(new LineGeometry
+            {
+                StartPoint = new Point(startX, startY),
+                EndPoint = new Point(endX, endY)
+            });
         }
 
-        // Update arc color based on speed (green to yellow to red)
+        SpeedArc.StrokeThickness = lineThickness;
+        SpeedArc.Data = geometryGroup;
+
         UpdateArcColor(normalizedValue);
     }
 
@@ -313,8 +307,27 @@ public sealed partial class SpeedometerControl : UserControl
     }
 
     /// <summary>
+    /// Calculates the optimal km/h step for marker display.
+    /// Goal: Display 8-10 markers on the gauge (never overloaded).
+    /// </summary>
+    private int CalculateOptimalKmhStep(int vmax)
+    {
+        // Adaptive step sizing based on max speed
+        return vmax switch
+        {
+            <= 50 => 5,      // 0, 5, 10, 15... 50 (10 markers)
+            <= 100 => 10,    // 0, 10, 20, 30... 100 (10 markers)
+            <= 200 => 20,    // 0, 20, 40, 60... 200 (10 markers)
+            <= 300 => 30,    // 0, 30, 60, 90... 300 (10 markers)
+            _ => 50          // 0, 50, 100, 150... 330+ (7 markers)
+        };
+    }
+
+    /// <summary>
     /// Renders DCC speed step markers dynamically based on SpeedSteps configuration.
-    /// Markers are positioned on inner ring for clear separation from km/h markers.
+    /// Markers are displayed as radial strokes starting from the inner edge of the arc.
+    /// Uses AccentColor from current skin palette for visual consistency.
+    /// Strokes: 8px long (starting at inner edge 92, extending to 100).
     /// </summary>
     private void RenderSpeedStepMarkers()
     {
@@ -324,32 +337,22 @@ public sealed partial class SpeedometerControl : UserControl
         // Clear existing markers
         SpeedStepMarkersCanvas.Children.Clear();
 
-        // Arc parameters (inner ring)
+        // Arc parameters
         const double centerX = 130;
         const double centerY = 130;
-        const double innerRadius = 96;   // Further inside (was 106)
-        const double markerLength = 5;   // Shorter tick marks
-        const double labelRadius = innerRadius + 12; // Position for step numbers
+        const double arcInnerRadius = 92;    // Inner edge of arc (100 - 8)
+        const double markerLength = 8;       // 8px long strokes
 
-        // Determine actual max step value
-        var maxStep = SpeedSteps switch
+        // Determine actual max step value and strategic positions
+        var (maxStep, stepsToDisplay) = SpeedSteps switch
         {
-            14 => 13,
-            28 => 27,
-            128 => 126,
-            _ => 126
+            14 => (13, new[] { 0, 3, 7, 10, 13 }),
+            28 => (27, new[] { 0, 7, 14, 21, 27 }),
+            128 => (126, new[] { 0, 32, 63, 95, 126 }),
+            _ => (126, new[] { 0, 32, 63, 95, 126 })
         };
 
-        // Strategic positions to display
-        var stepsToDisplay = SpeedSteps switch
-        {
-            14 => new[] { 0, 3, 7, 10, 13 },
-            28 => new[] { 0, 7, 14, 21, 27 },
-            128 => new[] { 0, 32, 63, 95, 126 },
-            _ => new[] { 0, 32, 63, 95, 126 }
-        };
-
-        // Use accent color for speed step markers (different from km/h)
+        // Use AccentColor from accent brush (matching speedometer needle)
         var accentBrush = AccentColor.HasValue
             ? new SolidColorBrush(AccentColor.Value)
             : (Brush)Application.Current.Resources["AccentFillColorTertiaryBrush"];
@@ -359,43 +362,45 @@ public sealed partial class SpeedometerControl : UserControl
             // Calculate normalized position
             var normalized = maxStep > 0 ? (double)step / maxStep : 0;
 
-            // Angle calculation
+            // Angle calculation: 180° (left, 0) to 0° (right, max)
             var angleDeg = 180 - (normalized * 180);
             var angleRad = angleDeg * Math.PI / 180;
 
-            // Inner point (start of tick mark)
-            var innerX = centerX + (innerRadius * Math.Cos(angleRad));
-            var innerY = centerY - (innerRadius * Math.Sin(angleRad));
+            // Radial direction (from center outward)
+            var radialX = Math.Cos(angleRad);
+            var radialY = -Math.Sin(angleRad);
 
-            // Outer point (end of tick mark)
-            var outerX = centerX + ((innerRadius + markerLength) * Math.Cos(angleRad));
-            var outerY = centerY - ((innerRadius + markerLength) * Math.Sin(angleRad));
+            // Start point at inner edge of arc (92), end point 8px outward (100)
+            var startX = centerX + (arcInnerRadius * radialX);
+            var startY = centerY + (arcInnerRadius * radialY);
 
-            // Create tick mark line
+            var endX = centerX + ((arcInnerRadius + markerLength) * radialX);
+            var endY = centerY + ((arcInnerRadius + markerLength) * radialY);
+
+            // Create radial stroke - single sharp line with accent color
             var line = new Line
             {
-                X1 = innerX,
-                Y1 = innerY,
-                X2 = outerX,
-                Y2 = outerY,
+                X1 = startX,
+                Y1 = startY,
+                X2 = endX,
+                Y2 = endY,
                 Stroke = accentBrush,
-                StrokeThickness = 1.2,
-                Opacity = 0.7  // Slightly transparent to differentiate
+                StrokeThickness = 2.5
             };
-
             SpeedStepMarkersCanvas.Children.Add(line);
 
-            // Label position
-            var labelX = centerX + (labelRadius * Math.Cos(angleRad));
-            var labelY = centerY - (labelRadius * Math.Sin(angleRad));
+            // Label position (offset radially inward for speed steps)
+            const double labelDistance = 75;
+            var labelX = centerX + (labelDistance * radialX);
+            var labelY = centerY + (labelDistance * radialY);
 
             // Create step number label
             var label = new TextBlock
             {
                 Text = step.ToString(),
-                FontSize = 8,  // Smaller font
+                FontSize = 9,
                 Foreground = accentBrush,
-                Opacity = 0.8,
+                Opacity = 0.85,
                 TextAlignment = TextAlignment.Center
             };
 
@@ -408,9 +413,10 @@ public sealed partial class SpeedometerControl : UserControl
     }
 
     /// <summary>
-    /// Renders km/h markers dynamically based on VmaxKmh.
-    /// Displays 5 markers at 0%, 25%, 50%, 75%, 100% of Vmax.
-    /// Positioned on outer ring for clear separation from speed step markers.
+    /// Renders km/h markers dynamically based on VmaxKmh with adaptive step sizing.
+    /// Markers are displayed as radial strokes starting from the outer edge of the arc.
+    /// Uses AccentLight color from current skin palette for visual consistency.
+    /// Strokes: 6px long (starting at outer edge 108, extending to 100).
     /// </summary>
     private void RenderKmhMarkers()
     {
@@ -423,62 +429,80 @@ public sealed partial class SpeedometerControl : UserControl
         // Arc parameters
         const double centerX = 130;
         const double centerY = 130;
-        const double outerRadius = 114;   // Outside the stroke (100 + strokeThickness)
-        const double markerLength = 8;    // Longer tick marks than speed steps
-        const double labelRadius = outerRadius + 16; // Position for km/h numbers
+        const double arcOuterRadius = 108;   // Outer edge of arc (100 + 8)
+        const double markerLength = 8;       // 8px long strokes
 
-        // Calculate km/h values to display (0%, 25%, 50%, 75%, 100% of Vmax)
-        var percentages = new[] { 0, 0.25, 0.5, 0.75, 1.0 };
-        var primaryBrush = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"];
-        var maxBrush = new SolidColorBrush(Color.FromArgb(255, 232, 17, 35)); // Red for MAX
+        // Calculate adaptive step size (goal: 8-10 markers)
+        var kmhStep = CalculateOptimalKmhStep(VmaxKmh);
 
-        foreach (var percentage in percentages)
+        // Generate km/h values: 0, step, 2*step, ... up to Vmax
+        var kmhValues = new List<int>();
+        for (int kmh = 0; kmh <= VmaxKmh; kmh += kmhStep)
         {
-            var kmh = (int)Math.Round(VmaxKmh * percentage);
-            var isMax = percentage >= 0.99; // Is this the MAX marker?
+            kmhValues.Add(kmh);
+        }
+        // Ensure we include Vmax if it's not a multiple of step
+        if (kmhValues.Count == 0 || kmhValues[^1] != VmaxKmh)
+        {
+            kmhValues.Add(VmaxKmh);
+        }
 
-            // Angle goes from 180 deg (left, 0%) to 0 deg (right, 100%)
+        // Use AccentLight from current skin for markers (bright, visible color)
+        var markerBrush = new SolidColorBrush(Color.FromArgb(200, 255, 255, 255)); // Bright white with transparency
+        var maxBrush = new SolidColorBrush(Color.FromArgb(255, 232, 17, 35)); // Red for MAX (constant)
+
+        foreach (var kmh in kmhValues)
+        {
+            var isMax = kmh == VmaxKmh;
+            
+            // Normalize position: 0 km/h = left (180°), Vmax = right (0°)
+            var percentage = VmaxKmh > 0 ? (double)kmh / VmaxKmh : 0;
+
+            // Angle goes from 180 deg (left, 0 km/h) to 0 deg (right, Vmax)
             var angleDeg = 180 - (percentage * 180);
             var angleRad = angleDeg * Math.PI / 180;
 
-            // Inner point (start of tick mark)
-            var innerX = centerX + (outerRadius * Math.Cos(angleRad));
-            var innerY = centerY - (outerRadius * Math.Sin(angleRad));
+            // Radial direction (from center outward)
+            var radialX = Math.Cos(angleRad);
+            var radialY = -Math.Sin(angleRad);
 
-            // Outer point (end of tick mark)
-            var outerX = centerX + ((outerRadius + markerLength) * Math.Cos(angleRad));
-            var outerY = centerY - ((outerRadius + markerLength) * Math.Sin(angleRad));
+            // Start point at outer edge of arc (108), end point 8px inward (100)
+            var startX = centerX + (arcOuterRadius * radialX);
+            var startY = centerY + (arcOuterRadius * radialY);
 
-            // Create tick mark line
+            var endX = centerX + ((arcOuterRadius - markerLength) * radialX);
+            var endY = centerY + ((arcOuterRadius - markerLength) * radialY);
+
+            // Create radial stroke - single sharp line with luminous color
             var line = new Line
             {
-                X1 = innerX,
-                Y1 = innerY,
-                X2 = outerX,
-                Y2 = outerY,
-                Stroke = isMax ? maxBrush : primaryBrush,
-                StrokeThickness = isMax ? 2.5 : 2
+                X1 = startX,
+                Y1 = startY,
+                X2 = endX,
+                Y2 = endY,
+                Stroke = isMax ? maxBrush : markerBrush,
+                StrokeThickness = isMax ? 3.0 : 2.5
             };
-
             KmhMarkersCanvas.Children.Add(line);
 
-            // Label position (further out)
-            var labelX = centerX + (labelRadius * Math.Cos(angleRad));
-            var labelY = centerY - (labelRadius * Math.Sin(angleRad));
+            // Label position (offset radially outward, beyond the stroke)
+            const double labelDistance = 125;
+            var labelX = centerX + (labelDistance * radialX);
+            var labelY = centerY + (labelDistance * radialY);
 
             // Create km/h number label
             var label = new TextBlock
             {
                 Text = kmh.ToString(),
-                FontSize = isMax ? 11 : 12,
+                FontSize = isMax ? 11 : 10,
                 FontWeight = isMax ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal,
-                Foreground = isMax ? maxBrush : primaryBrush,
+                Foreground = isMax ? maxBrush : markerBrush,
                 TextAlignment = TextAlignment.Center
             };
 
-            // Adjust label position to center it
-            Canvas.SetLeft(label, labelX - 12);
-            Canvas.SetTop(label, labelY - 7);
+            // Center the label
+            Canvas.SetLeft(label, labelX - 10);
+            Canvas.SetTop(label, labelY - 8);
 
             KmhMarkersCanvas.Children.Add(label);
         }

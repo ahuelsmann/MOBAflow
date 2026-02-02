@@ -3,22 +3,30 @@ namespace Moba.Common.Configuration;
 
 /// <summary>
 /// DCC speed step configuration (14, 28, or 128 steps).
+/// 
+/// DCC Specification:
+/// - 14 Steps: Values 0-13 (0 = stop/emergency stop)
+/// - 28 Steps: Values 0-27 (0 = stop/emergency stop)
+/// - 128 Steps: Values 0-127 (0 = stop, 1 = emergency stop, 2-127 valid speed steps)
+///   Actual highest speed step: 126 (127 reserved)
 /// </summary>
 public enum DccSpeedSteps
 {
     /// <summary>
     /// 14 speed steps (legacy DCC).
+    /// Highest actual speed step: 13
     /// </summary>
     Steps14 = 14,
 
     /// <summary>
     /// 28 speed steps (standard DCC).
+    /// Highest actual speed step: 27
     /// </summary>
     Steps28 = 28,
 
     /// <summary>
     /// 128 speed steps (extended DCC).
-    /// Actual values: 0-126 (127 = emergency stop).
+    /// Highest actual speed step: 126 (127 = emergency stop reserved).
     /// </summary>
     Steps128 = 128
 }
@@ -48,6 +56,18 @@ public class TrainControlSettings
     /// Speed ramp interval in milliseconds (50-500).
     /// </summary>
     public int SpeedRampIntervalMs { get; set; } = 100;
+
+    /// <summary>
+    /// Selected locomotive series name (e.g., "BR 103", "ICE 3").
+    /// Empty string = no series selected, uses default Vmax.
+    /// </summary>
+    public string SelectedLocoSeries { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Maximum speed (Vmax) of the selected locomotive in km/h.
+    /// Default: 200 km/h. Used for SpeedKmh calculation.
+    /// </summary>
+    public int SelectedVmax { get; set; } = 200;
 
     /// <summary>
     /// Locomotive presets for quick switching.

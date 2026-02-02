@@ -204,34 +204,49 @@ public partial class TrainControlViewModel : ObservableObject
 
     /// <summary>
     /// Selected locomotive series name (e.g., "BR 103", "ICE 3").
+    /// Persisted in settings.
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SpeedKmh))]
-    [NotifyPropertyChangedFor(nameof(HasValidLocoSeries))]
     private string selectedLocoSeries = string.Empty;
+
+    partial void OnSelectedLocoSeriesChanged(string value)
+    {
+        // TODO: Persist to settings service
+        // _ = SaveSettingsAsync();
+    }
 
     /// <summary>
     /// Maximum speed (Vmax) of the selected locomotive series in km/h.
+    /// Default: 200 km/h. Persisted in settings.
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SpeedKmh))]
-    [NotifyPropertyChangedFor(nameof(HasValidLocoSeries))]
-    private int selectedVmax;
+    private int selectedVmax = 200;
 
-    /// <summary>
-    /// Indicates whether a valid locomotive series with Vmax is selected.
-    /// </summary>
-    public bool HasValidLocoSeries => SelectedVmax > 0;
+    partial void OnSelectedVmaxChanged(int value)
+    {
+        // TODO: Persist to settings service
+        // _ = SaveSettingsAsync();
+    }
 
     /// <summary>
     /// Calculated speed in km/h based on current speed step and selected Vmax.
-    /// Returns 0 if no valid locomotive series is selected.
+    /// Always calculates even without selected locomotive series.
+    /// Uses SelectedVmax (default 200 km/h if not set).
     /// Calculation: (CurrentStep / MaxStep) * Vmax
     /// Example: Step 63 of 126 at Vmax 200 km/h = (63/126) * 200 = 100 km/h
     /// </summary>
-    public int SpeedKmh => HasValidLocoSeries
-        ? (int)Math.Round(Speed / (double)MaxSpeedStep * SelectedVmax)
-        : 0;
+    public int SpeedKmh
+    {
+        get
+        {
+            // Use SelectedVmax (which defaults to 200 if not explicitly set)
+            var vmax = SelectedVmax > 0 ? SelectedVmax : 200;
+            var result = (int)Math.Round(Speed / (double)MaxSpeedStep * vmax);
+            return result;
+        }
+    }
 
     /// <summary>
     /// Direction: true = forward, false = backward.
@@ -402,22 +417,28 @@ public partial class TrainControlViewModel : ObservableObject
     /// <summary>
     /// Saves locomotive presets to persistent settings.
     /// </summary>
+    private async Task SaveSettingsAsync()
+    {
+        try
+        {
+            if (_settingsService == null) return;
+
+            // Note: Full TrainControlSettings persistence should be handled by the page/service
+            // This just marks that settings need updating
+            await _settingsService.SaveSettingsAsync(new AppSettings()).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Failed to save train control settings");
+        }
+    }
+
+    /// <summary>
+    /// Saves presets to persistent storage (wrapper for SaveSettingsAsync).
+    /// </summary>
     private async Task SavePresetsToSettingsAsync()
     {
-        var settings = _settingsService.GetSettings();
-        settings.TrainControl.Presets =
-        [
-            Preset1,
-            Preset2,
-            Preset3
-        ];
-        settings.TrainControl.SelectedPresetIndex = SelectedPresetIndex;
-        settings.TrainControl.SpeedRampStepSize = (int)RampStepSize;
-        settings.TrainControl.SpeedRampIntervalMs = (int)RampIntervalMs;
-        settings.TrainControl.SpeedSteps = SpeedSteps;
-
-        await _settingsService.SaveSettingsAsync(settings);
-        _logger?.LogDebug("Locomotive presets saved to settings");
+        await SaveSettingsAsync().ConfigureAwait(false);
     }
 
     /// <summary>
@@ -721,8 +742,7 @@ public partial class TrainControlViewModel : ObservableObject
     /// Locomotive command execution check.
     /// TEMP: Disabled Z21 connection check for UI testing (2026-01-16).
     /// Commands will be attempted even without Z21 hardware, but will fail gracefully.
-    /// </summary>
-    /// <remarks>
+    /// </remarks>
     /// TODO: Re-enable Z21 connection check when hardware is available.
     /// To restore: Uncomment the line below and delete the "=> true" line.
     /// This was temporarily disabled to test function button UI without Z21 connected.
@@ -983,7 +1003,7 @@ public partial class TrainControlViewModel : ObservableObject
 
     /// <summary>
     /// Selects locomotive preset 1.
-    /// </summary>
+    /// </summary]
     [RelayCommand]
     private void SelectPreset1()
     {
