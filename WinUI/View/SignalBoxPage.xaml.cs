@@ -230,14 +230,16 @@ public sealed partial class SignalBoxPage : Page
     private async void OnSkinSystemClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.System);
     private async void OnSkinBlueClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Blue);
     private async void OnSkinGreenClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Green);
-    private async void OnSkinVioletClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Violet);
     private async void OnSkinOrangeClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Orange);
-    private async void OnSkinDarkOrangeClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.DarkOrange);
     private async void OnSkinRedClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Red);
 
     private async Task SetSkinAsync(AppSkin skin)
     {
         _skinProvider.SetSkin(skin);
+        
+        // Save selected skin to settings
+        _settings.Application.SelectedSkin = skin.ToString();
+        
         if (_settingsService != null)
         {
             await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
@@ -269,16 +271,9 @@ public sealed partial class SignalBoxPage : Page
             (AppSkin.Green, true) => (Color.FromArgb(255, 10, 40, 20), Color.FromArgb(100, 16, 124, 16)),
             (AppSkin.Green, false) => (Color.FromArgb(255, 220, 245, 220), Color.FromArgb(120, 16, 124, 16)),
 
-            // Violet skin (always dark-ish)
-            (AppSkin.Violet, _) => (Color.FromArgb(255, 25, 25, 30), Color.FromArgb(80, 106, 90, 205)),
-
-            // Orange skin
-            (AppSkin.Orange, true) => (Color.FromArgb(255, 25, 15, 5), Color.FromArgb(100, 255, 140, 0)),
-            (AppSkin.Orange, false) => (Color.FromArgb(255, 255, 245, 230), Color.FromArgb(120, 255, 140, 0)),
-
-            // Dark Orange skin
-            (AppSkin.DarkOrange, true) => (Color.FromArgb(255, 20, 12, 5), Color.FromArgb(100, 255, 102, 0)),
-            (AppSkin.DarkOrange, false) => (Color.FromArgb(255, 255, 240, 225), Color.FromArgb(120, 255, 102, 0)),
+            // Orange skin (formerly DarkOrange - now single Orange skin)
+            (AppSkin.Orange, true) => (Color.FromArgb(255, 20, 12, 5), Color.FromArgb(100, 255, 102, 0)),
+            (AppSkin.Orange, false) => (Color.FromArgb(255, 255, 240, 225), Color.FromArgb(120, 255, 102, 0)),
 
             // Red skin
             (AppSkin.Red, true) => (Color.FromArgb(255, 30, 10, 10), Color.FromArgb(100, 204, 0, 0)),

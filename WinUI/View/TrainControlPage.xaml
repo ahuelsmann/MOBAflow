@@ -81,6 +81,11 @@
                                         <TextBlock VerticalAlignment="Center" Text="System" />
                                     </StackPanel>
                                 </Button>
+                                <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                                <TextBlock
+                                    FontSize="10"
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    Text="COLOR SKINS" />
                                 <Button HorizontalAlignment="Stretch" Click="OnSkinBlueClicked">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Border
@@ -101,39 +106,14 @@
                                         <TextBlock VerticalAlignment="Center" Text="Green" />
                                     </StackPanel>
                                 </Button>
-                                <Button HorizontalAlignment="Stretch" Click="OnSkinVioletClicked">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <Border
-                                            Width="20"
-                                            Height="20"
-                                            Background="#6A5ACD"
-                                            CornerRadius="4" />
-                                        <TextBlock VerticalAlignment="Center" Text="Violet" />
-                                    </StackPanel>
-                                </Button>
-                                <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-                                <TextBlock
-                                    FontSize="10"
-                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                    Text="COLOR SKINS" />
                                 <Button HorizontalAlignment="Stretch" Click="OnSkinOrangeClicked">
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <Border
-                                            Width="20"
-                                            Height="20"
-                                            Background="#FF8C00"
-                                            CornerRadius="4" />
-                                        <TextBlock VerticalAlignment="Center" Text="Orange" />
-                                    </StackPanel>
-                                </Button>
-                                <Button HorizontalAlignment="Stretch" Click="OnSkinDarkOrangeClicked">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Border
                                             Width="20"
                                             Height="20"
                                             Background="#FF6600"
                                             CornerRadius="4" />
-                                        <TextBlock VerticalAlignment="Center" Text="Dark Orange" />
+                                        <TextBlock VerticalAlignment="Center" Text="Orange" />
                                     </StackPanel>
                                 </Button>
                                 <Button HorizontalAlignment="Stretch" Click="OnSkinRedClicked">

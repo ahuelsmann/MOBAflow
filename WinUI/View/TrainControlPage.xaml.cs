@@ -301,17 +301,19 @@ public sealed partial class TrainControlPage
     }
 
     // Skin selection handlers for Flyout buttons
-    private async void OnSkinGreenClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Green);
-    private async void OnSkinBlueClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Blue);
-    private async void OnSkinVioletClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Violet);
-    private async void OnSkinOrangeClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Orange);
-    private async void OnSkinDarkOrangeClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.DarkOrange);
-    private async void OnSkinRedClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Red);
     private async void OnSkinSystemClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.System);
+    private async void OnSkinBlueClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Blue);
+    private async void OnSkinGreenClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Green);
+    private async void OnSkinOrangeClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Orange);
+    private async void OnSkinRedClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Red);
 
     private async Task SetSkinAsync(AppSkin skin)
     {
         _skinProvider.SetSkin(skin);
+        
+        // Save selected skin to settings
+        _settings.Application.SelectedSkin = skin.ToString();
+        
         if (_settingsService != null)
         {
             await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);

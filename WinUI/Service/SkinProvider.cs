@@ -43,9 +43,9 @@ public class SkinProvider : ISkinProvider
             "Original" => nameof(AppSkin.System),
             "Modern" => nameof(AppSkin.Blue),
             "Classic" => nameof(AppSkin.Green),
-            "Dark" => nameof(AppSkin.Violet),
             "EsuCabControl" => nameof(AppSkin.Orange),
-            "RocoZ21" => nameof(AppSkin.DarkOrange),
+            "RocoZ21" => nameof(AppSkin.Orange),  // DarkOrange is now Orange
+            "DarkOrange" => nameof(AppSkin.Orange),  // Direct mapping for DarkOrange
             "MaerklinCS" => nameof(AppSkin.Red),
             _ => legacyName
         };
@@ -96,9 +96,7 @@ public class SkinProvider : ISkinProvider
         {
             AppSkin.Blue => SkinResourceBuilder.BuildBlueSkin(),
             AppSkin.Green => SkinResourceBuilder.BuildGreenSkin(),
-            AppSkin.Violet => SkinResourceBuilder.BuildVioletSkin(),
             AppSkin.Orange => SkinResourceBuilder.BuildOrangeSkin(),
-            AppSkin.DarkOrange => SkinResourceBuilder.BuildDarkOrangeSkin(),
             AppSkin.Red => SkinResourceBuilder.BuildRedSkin(),
             AppSkin.System => SkinResourceBuilder.BuildSystemSkin(),
             _ => SkinResourceBuilder.BuildBlueSkin()
@@ -119,7 +117,7 @@ public class SkinProvider : ISkinProvider
         {
             AppSkin.Green => new Uri("ms-appx:///WinUI/Resources/Skins/SkinGreen.xaml"),
             AppSkin.Blue => new Uri("ms-appx:///WinUI/Resources/Skins/SkinBlue.xaml"),
-            AppSkin.Violet => new Uri("ms-appx:///WinUI/Resources/Skins/SkinViolet.xaml"),
+            AppSkin.Orange => new Uri("ms-appx:///WinUI/Resources/Skins/SkinOrange.xaml"),
             _ => new Uri("ms-appx:///WinUI/Resources/Skins/SkinBlue.xaml")
         };
     }

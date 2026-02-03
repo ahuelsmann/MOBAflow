@@ -25,11 +25,8 @@ public static class SkinColors
             (AppSkin.Blue, true) => BlueDark,
             (AppSkin.Green, false) => GreenLight,
             (AppSkin.Green, true) => GreenDark,
-            (AppSkin.Violet, _) => VioletMode,  // Violet skin is always dark
             (AppSkin.Orange, false) => OrangeLight,
             (AppSkin.Orange, true) => OrangeDark,
-            (AppSkin.DarkOrange, false) => DarkOrangeLight,
-            (AppSkin.DarkOrange, true) => DarkOrangeDark,
             (AppSkin.Red, false) => RedLight,
             (AppSkin.Red, true) => RedDark,
             (AppSkin.System, false) => SystemLight,
@@ -108,63 +105,10 @@ public static class SkinColors
         IsDarkTheme = true
     };
 
-    // VIOLET SKIN (always dark, regardless of mode)
-    public static SkinPalette VioletMode { get; } = new()
-    {
-        Name = "Violet",
-        Accent = Color.FromArgb(255, 155, 95, 255),
-        AccentDark = Color.FromArgb(255, 122, 71, 212),
-        AccentLight = Color.FromArgb(255, 185, 141, 255),
-        HeaderBackground = Color.FromArgb(255, 45, 45, 48),
-        HeaderForeground = Color.FromArgb(255, 255, 255, 255),
-        PanelBackground = Color.FromArgb(255, 37, 37, 38),
-        PanelBorder = Color.FromArgb(255, 60, 60, 60),
-        ButtonActive = Color.FromArgb(255, 155, 95, 255),
-        ButtonInactive = Color.FromArgb(255, 80, 80, 80),
-        TextPrimary = Color.FromArgb(255, 255, 255, 255),
-        TextSecondary = Color.FromArgb(255, 176, 176, 176),
-        IsDarkTheme = true
-    };
-
     // ORANGE SKIN
     public static SkinPalette OrangeLight { get; } = new()
     {
         Name = "Orange Light",
-        Accent = Color.FromArgb(255, 255, 140, 0),
-        AccentDark = Color.FromArgb(255, 204, 112, 0),
-        AccentLight = Color.FromArgb(255, 255, 179, 71),
-        HeaderBackground = Color.FromArgb(255, 255, 140, 0),
-        HeaderForeground = Color.FromArgb(255, 0, 0, 0),
-        PanelBackground = Color.FromArgb(255, 250, 250, 250),
-        PanelBorder = Color.FromArgb(255, 220, 220, 220),
-        ButtonActive = Color.FromArgb(255, 255, 140, 0),
-        ButtonInactive = Color.FromArgb(255, 200, 200, 200),
-        TextPrimary = Color.FromArgb(255, 0, 0, 0),
-        TextSecondary = Color.FromArgb(255, 96, 96, 96),
-        IsDarkTheme = false
-    };
-
-    public static SkinPalette OrangeDark { get; } = new()
-    {
-        Name = "Orange Dark",
-        Accent = Color.FromArgb(255, 255, 140, 0),
-        AccentDark = Color.FromArgb(255, 204, 112, 0),
-        AccentLight = Color.FromArgb(255, 255, 179, 71),
-        HeaderBackground = Color.FromArgb(255, 35, 35, 35),
-        HeaderForeground = Color.FromArgb(255, 255, 140, 0),
-        PanelBackground = Color.FromArgb(255, 26, 26, 26),
-        PanelBorder = Color.FromArgb(255, 60, 60, 60),
-        ButtonActive = Color.FromArgb(255, 255, 140, 0),
-        ButtonInactive = Color.FromArgb(255, 70, 70, 70),
-        TextPrimary = Color.FromArgb(255, 255, 255, 255),
-        TextSecondary = Color.FromArgb(255, 176, 176, 176),
-        IsDarkTheme = true
-    };
-
-    // DARK ORANGE SKIN
-    public static SkinPalette DarkOrangeLight { get; } = new()
-    {
-        Name = "DarkOrange Light",
         Accent = Color.FromArgb(255, 255, 102, 0),
         AccentDark = Color.FromArgb(255, 204, 82, 0),
         AccentLight = Color.FromArgb(255, 255, 153, 51),
@@ -179,9 +123,9 @@ public static class SkinColors
         IsDarkTheme = false
     };
 
-    public static SkinPalette DarkOrangeDark { get; } = new()
+    public static SkinPalette OrangeDark { get; } = new()
     {
-        Name = "DarkOrange Dark",
+        Name = "Orange Dark",
         Accent = Color.FromArgb(255, 255, 102, 0),
         AccentDark = Color.FromArgb(255, 204, 82, 0),
         AccentLight = Color.FromArgb(255, 255, 153, 51),

@@ -29,22 +29,10 @@ public enum AppSkin
     Green,
 
     /// <summary>
-    /// Violet: Night-friendly dark theme with violet accents.
-    /// Reduces eye strain in dark environments.
-    /// </summary>
-    Violet,
-
-    /// <summary>
-    /// Orange: Vibrant orange/amber accents.
-    /// High contrast, good visibility.
+    /// Orange: Dark background with deep orange accents.
+    /// Minimalist, modern look with high contrast.
     /// </summary>
     Orange,
-
-    /// <summary>
-    /// DarkOrange: Dark background with deep orange accents.
-    /// Minimalist, modern look.
-    /// </summary>
-    DarkOrange,
 
     /// <summary>
     /// Red: Classic red accents.

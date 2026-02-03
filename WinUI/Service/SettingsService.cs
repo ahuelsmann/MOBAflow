@@ -50,6 +50,12 @@ public class SettingsService : ISettingsService
                     _settings.Application.LastSolutionPath = loadedSettings.Application.LastSolutionPath;
                     _settings.Application.AutoLoadLastSolution = loadedSettings.Application.AutoLoadLastSolution;
                     _settings.Application.AutoStartWebApp = loadedSettings.Application.AutoStartWebApp;
+                    
+                    // ✅ FIX: Load SelectedSkin and IsDarkMode
+                    _settings.Application.SelectedSkin = loadedSettings.Application.SelectedSkin;
+                    _settings.Application.IsDarkMode = loadedSettings.Application.IsDarkMode;
+                    _settings.Application.UseSystemTheme = loadedSettings.Application.UseSystemTheme;
+                    
                     _settings.Z21.CurrentIpAddress = loadedSettings.Z21.CurrentIpAddress;
                     _settings.Z21.DefaultPort = loadedSettings.Z21.DefaultPort;
                     _settings.Counter.CountOfFeedbackPoints = loadedSettings.Counter.CountOfFeedbackPoints;
@@ -107,6 +113,12 @@ public class SettingsService : ISettingsService
                     _settings.Application.LastSolutionPath = loadedSettings.Application.LastSolutionPath;
                     _settings.Application.AutoLoadLastSolution = loadedSettings.Application.AutoLoadLastSolution;
                     _settings.Application.AutoStartWebApp = loadedSettings.Application.AutoStartWebApp;
+                    
+                    // ✅ FIX: Load SelectedSkin and IsDarkMode
+                    _settings.Application.SelectedSkin = loadedSettings.Application.SelectedSkin;
+                    _settings.Application.IsDarkMode = loadedSettings.Application.IsDarkMode;
+                    _settings.Application.UseSystemTheme = loadedSettings.Application.UseSystemTheme;
+                    
                     _settings.Z21.CurrentIpAddress = loadedSettings.Z21.CurrentIpAddress;
                     _settings.Z21.DefaultPort = loadedSettings.Z21.DefaultPort;
                     _settings.Counter.CountOfFeedbackPoints = loadedSettings.Counter.CountOfFeedbackPoints;

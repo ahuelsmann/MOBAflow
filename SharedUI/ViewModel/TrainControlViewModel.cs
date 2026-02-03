@@ -234,8 +234,10 @@ public partial class TrainControlViewModel : ObservableObject
     /// Calculated speed in km/h based on current speed step and selected Vmax.
     /// Always calculates even without selected locomotive series.
     /// Uses SelectedVmax (default 200 km/h if not set).
-    /// Calculation: (CurrentStep / MaxStep) * Vmax
-    /// Example: Step 63 of 126 at Vmax 200 km/h = (63/126) * 200 = 100 km/h
+    /// Calculation: (Speed / MaxSpeedStep) * Vmax
+    /// Example (128 Steps, Vmax 200 km/h):
+    /// - Step 126 (max): (126/126) * 200 = 200 km/h ✓
+    /// - Step 63 (50%): (63/126) * 200 = 100 km/h ✓
     /// </summary>
     public int SpeedKmh
     {
@@ -243,7 +245,14 @@ public partial class TrainControlViewModel : ObservableObject
         {
             // Use SelectedVmax (which defaults to 200 if not explicitly set)
             var vmax = SelectedVmax > 0 ? SelectedVmax : 200;
-            var result = (int)Math.Round(Speed / (double)MaxSpeedStep * vmax);
+            
+            // Avoid division by zero
+            if (MaxSpeedStep == 0)
+                return 0;
+            
+            // Calculate: (Speed / MaxSpeedStep) * Vmax
+            var result = (int)Math.Round((double)Speed / MaxSpeedStep * vmax);
+            
             return result;
         }
     }
