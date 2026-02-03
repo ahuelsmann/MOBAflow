@@ -1468,53 +1468,5 @@
                 </ScrollViewer>
             </Border>
         </Grid>
-
-        <!--  VisualStateManager for Responsive Layout  -->
-        <VisualStateManager.VisualStateGroups>
-            <VisualStateGroup x:Name="WindowStates">
-                <!--  Wide State: All three columns visible (>1200px)  -->
-                <VisualState x:Name="WideState">
-                    <VisualState.StateTriggers>
-                        <AdaptiveTrigger MinWindowWidth="1200" />
-                    </VisualState.StateTriggers>
-                    <VisualState.Setters>
-                        <Setter Target="ToolboxColumn.Width" Value="240" />
-                        <Setter Target="PropertiesColumn.Width" Value="300" />
-                        <Setter Target="ToolboxPanel.Visibility" Value="Visible" />
-                        <Setter Target="PropertiesPanel.Visibility" Value="Visible" />
-                        <Setter Target="ToolboxToggleButton.Visibility" Value="Collapsed" />
-                        <Setter Target="PropertiesToggleButton.Visibility" Value="Collapsed" />
-                    </VisualState.Setters>
-                </VisualState>
-                <!--  Medium State: Toggle panels (800-1200px)  -->
-                <VisualState x:Name="MediumState">
-                    <VisualState.StateTriggers>
-                        <AdaptiveTrigger MinWindowWidth="800" />
-                    </VisualState.StateTriggers>
-                    <VisualState.Setters>
-                        <Setter Target="ToolboxColumn.Width" Value="200" />
-                        <Setter Target="PropertiesColumn.Width" Value="250" />
-                        <Setter Target="ToolboxPanel.Visibility" Value="Visible" />
-                        <Setter Target="PropertiesPanel.Visibility" Value="Visible" />
-                        <Setter Target="ToolboxToggleButton.Visibility" Value="Visible" />
-                        <Setter Target="PropertiesToggleButton.Visibility" Value="Visible" />
-                    </VisualState.Setters>
-                </VisualState>
-                <!--  Compact State: Only canvas with flyouts (<800px)  -->
-                <VisualState x:Name="CompactState">
-                    <VisualState.StateTriggers>
-                        <AdaptiveTrigger MinWindowWidth="0" />
-                    </VisualState.StateTriggers>
-                    <VisualState.Setters>
-                        <Setter Target="ToolboxColumn.Width" Value="0" />
-                        <Setter Target="PropertiesColumn.Width" Value="0" />
-                        <Setter Target="ToolboxPanel.Visibility" Value="Collapsed" />
-                        <Setter Target="PropertiesPanel.Visibility" Value="Collapsed" />
-                        <Setter Target="ToolboxToggleButton.Visibility" Value="Visible" />
-                        <Setter Target="PropertiesToggleButton.Visibility" Value="Visible" />
-                    </VisualState.Setters>
-                </VisualState>
-            </VisualStateGroup>
-        </VisualStateManager.VisualStateGroups>
     </Grid>
 </Page>

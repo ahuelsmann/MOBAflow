@@ -1,0 +1,275 @@
+<UserControl
+    x:Class="Moba.WinUI.Controls.TimetableStopsControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Border
+        Padding="16"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        BorderThickness="1"
+        CornerRadius="8">
+        <Grid RowSpacing="12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!--  Header  -->
+            <StackPanel Grid.Row="0" Spacing="2">
+                <TextBlock
+                    FontSize="16"
+                    FontWeight="SemiBold"
+                    Text="Timetable / Stops" />
+                <TextBlock
+                    FontSize="11"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Journey station overview" />
+            </StackPanel>
+
+            <!--  Previous Station (grayed out)  -->
+            <Border
+                Grid.Row="1"
+                Padding="12"
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="6"
+                Opacity="0.6">
+                <Grid ColumnSpacing="8" RowSpacing="4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!--  Icon  -->
+                    <FontIcon
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        FontSize="16"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Glyph="&#xE7C0;" />
+
+                    <!--  Station Name  -->
+                    <TextBlock
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        FontSize="13"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{x:Bind PreviousStationNameValue, Mode=OneWay}"
+                        TextTrimming="CharacterEllipsis" />
+
+                    <!--  Track  -->
+                    <TextBlock
+                        Grid.Row="0"
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        FontSize="11"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        Text="{x:Bind PreviousStationTrackValue, Mode=OneWay}" />
+
+                    <!--  Times  -->
+                    <StackPanel
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        Grid.ColumnSpan="2"
+                        Orientation="Horizontal"
+                        Spacing="12">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock
+                                FontSize="10"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                Text="Arr:" />
+                            <TextBlock
+                                FontSize="10"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="{x:Bind PreviousStationArrivalValue, Mode=OneWay}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock
+                                FontSize="10"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                Text="Dep:" />
+                            <TextBlock
+                                FontSize="10"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="{x:Bind PreviousStationDepartureValue, Mode=OneWay}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!--  Current Station (highlighted)  -->
+            <Border
+                Grid.Row="2"
+                Padding="14"
+                Background="{ThemeResource AccentFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource AccentControlElevationBorderBrush}"
+                BorderThickness="2"
+                CornerRadius="6">
+                <Grid ColumnSpacing="8" RowSpacing="4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!--  Icon  -->
+                    <FontIcon
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        FontSize="18"
+                        Foreground="White"
+                        Glyph="&#xE81D;" />
+
+                    <!--  Station Name  -->
+                    <TextBlock
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        FontSize="15"
+                        FontWeight="Bold"
+                        Foreground="White"
+                        Text="{x:Bind CurrentStationNameValue, Mode=OneWay}"
+                        TextTrimming="CharacterEllipsis" />
+
+                    <!--  Track  -->
+                    <Border
+                        Grid.Row="0"
+                        Grid.Column="2"
+                        Padding="6,2"
+                        VerticalAlignment="Center"
+                        Background="{ThemeResource SystemFillColorCriticalBackgroundBrush}"
+                        CornerRadius="4">
+                        <TextBlock
+                            FontSize="11"
+                            FontWeight="SemiBold"
+                            Foreground="White"
+                            Text="{x:Bind CurrentStationTrackValue, Mode=OneWay}" />
+                    </Border>
+
+                    <!--  Times  -->
+                    <StackPanel
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        Grid.ColumnSpan="2"
+                        Orientation="Horizontal"
+                        Spacing="12">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock
+                                FontSize="11"
+                                Foreground="White"
+                                Opacity="0.8"
+                                Text="Arr:" />
+                            <TextBlock
+                                FontSize="11"
+                                FontWeight="SemiBold"
+                                Foreground="White"
+                                Text="{x:Bind CurrentStationArrivalValue, Mode=OneWay}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock
+                                FontSize="11"
+                                Foreground="White"
+                                Opacity="0.8"
+                                Text="Dep:" />
+                            <TextBlock
+                                FontSize="11"
+                                FontWeight="SemiBold"
+                                Foreground="White"
+                                Text="{x:Bind CurrentStationDepartureValue, Mode=OneWay}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!--  Next Station  -->
+            <Border
+                Grid.Row="3"
+                Padding="12"
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="6">
+                <Grid ColumnSpacing="8" RowSpacing="4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!--  Icon  -->
+                    <FontIcon
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        FontSize="16"
+                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                        Glyph="&#xE72A;" />
+
+                    <!--  Station Name  -->
+                    <TextBlock
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        FontSize="13"
+                        FontWeight="SemiBold"
+                        Text="{x:Bind NextStationNameValue, Mode=OneWay}"
+                        TextTrimming="CharacterEllipsis" />
+
+                    <!--  Track  -->
+                    <TextBlock
+                        Grid.Row="0"
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        FontSize="11"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{x:Bind NextStationTrackValue, Mode=OneWay}" />
+
+                    <!--  Times  -->
+                    <StackPanel
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        Grid.ColumnSpan="2"
+                        Orientation="Horizontal"
+                        Spacing="12">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock
+                                FontSize="10"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                Text="Arr:" />
+                            <TextBlock
+                                FontSize="10"
+                                Text="{x:Bind NextStationArrivalValue, Mode=OneWay}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock
+                                FontSize="10"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                Text="Dep:" />
+                            <TextBlock
+                                FontSize="10"
+                                Text="{x:Bind NextStationDepartureValue, Mode=OneWay}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

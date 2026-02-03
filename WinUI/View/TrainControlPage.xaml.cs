@@ -292,11 +292,33 @@ public sealed partial class TrainControlPage
 
     private void LocoSeriesBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
     {
-        var selected = _allLocomotives.FirstOrDefault(s => s.Name == args.QueryText);
+        LocomotiveSeries? selected = null;
+
+        // Priority 1: User chose a suggestion (clicked or pressed Enter on highlighted item)
+        if (args.ChosenSuggestion != null)
+        {
+            selected = _allLocomotives.FirstOrDefault(s => s.Name == (string)args.ChosenSuggestion);
+        }
+        // Priority 2: Exact match with query text
+        else if (!string.IsNullOrWhiteSpace(args.QueryText))
+        {
+            selected = _allLocomotives.FirstOrDefault(s => s.Name.Equals(args.QueryText, StringComparison.OrdinalIgnoreCase));
+        }
+        // Priority 3: Partial match (first item that contains the query)
+        if (selected == null && !string.IsNullOrWhiteSpace(args.QueryText))
+        {
+            var query = args.QueryText.ToLowerInvariant();
+            selected = _allLocomotives.FirstOrDefault(s => s.Name.ToLowerInvariant().Contains(query));
+        }
+
+        // Apply selection if found
         if (selected != null)
         {
             ViewModel.SelectedLocoSeries = selected.Name;
             ViewModel.SelectedVmax = selected.Vmax;
+            
+            // Update AutoSuggestBox text to show full series name
+            sender.Text = selected.Name;
         }
     }
 

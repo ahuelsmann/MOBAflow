@@ -298,6 +298,7 @@ public partial class App
             sp.GetRequiredService<IZ21>(),
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<ISettingsService>(),
+            sp.GetRequiredService<MainWindowViewModel>(),
             sp.GetService<ILogger<TrainControlViewModel>>()
         ));
 

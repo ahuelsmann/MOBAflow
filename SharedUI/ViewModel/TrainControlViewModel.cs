@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Interface;
 using Microsoft.Extensions.Logging;
+using System.ComponentModel;
 
 /// <summary>
 /// ViewModel for TrainControlPage - provides locomotive drive control interface.
@@ -373,15 +374,154 @@ public partial class TrainControlViewModel : ObservableObject
 
     private CancellationTokenSource? _rampCancellationTokenSource;
 
+    // === Journey & Station Information (for Timetable Display) ===
+
+    private readonly MainWindowViewModel? _mainWindowViewModel;
+
+    /// <summary>
+    /// Current journey being executed (if any).
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PreviousStationName))]
+    [NotifyPropertyChangedFor(nameof(PreviousStationArrival))]
+    [NotifyPropertyChangedFor(nameof(PreviousStationDeparture))]
+    [NotifyPropertyChangedFor(nameof(PreviousStationTrack))]
+    [NotifyPropertyChangedFor(nameof(CurrentStationName))]
+    [NotifyPropertyChangedFor(nameof(CurrentStationArrival))]
+    [NotifyPropertyChangedFor(nameof(CurrentStationDeparture))]
+    [NotifyPropertyChangedFor(nameof(CurrentStationTrack))]
+    [NotifyPropertyChangedFor(nameof(NextStationName))]
+    [NotifyPropertyChangedFor(nameof(NextStationArrival))]
+    [NotifyPropertyChangedFor(nameof(NextStationDeparture))]
+    [NotifyPropertyChangedFor(nameof(NextStationTrack))]
+    private Domain.Journey? currentJourney;
+
+    /// <summary>
+    /// Current station index in the journey (0-based).
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PreviousStationName))]
+    [NotifyPropertyChangedFor(nameof(PreviousStationArrival))]
+    [NotifyPropertyChangedFor(nameof(PreviousStationDeparture))]
+    [NotifyPropertyChangedFor(nameof(PreviousStationTrack))]
+    [NotifyPropertyChangedFor(nameof(CurrentStationName))]
+    [NotifyPropertyChangedFor(nameof(CurrentStationArrival))]
+    [NotifyPropertyChangedFor(nameof(CurrentStationDeparture))]
+    [NotifyPropertyChangedFor(nameof(CurrentStationTrack))]
+    [NotifyPropertyChangedFor(nameof(NextStationName))]
+    [NotifyPropertyChangedFor(nameof(NextStationArrival))]
+    [NotifyPropertyChangedFor(nameof(NextStationDeparture))]
+    [NotifyPropertyChangedFor(nameof(NextStationTrack))]
+    private int currentStationIndex;
+
+    // === Computed Properties for TimetableStopsControl ===
+
+    /// <summary>
+    /// Previous station name (or "—" if none).
+    /// </summary>
+    public string PreviousStationName => GetPreviousStation()?.Name ?? "—";
+
+    /// <summary>
+    /// Previous station arrival time (formatted).
+    /// </summary>
+    public string PreviousStationArrival => GetPreviousStation()?.Arrival?.ToString("HH:mm") ?? "—";
+
+    /// <summary>
+    /// Previous station departure time (formatted).
+    /// </summary>
+    public string PreviousStationDeparture => GetPreviousStation()?.Departure?.ToString("HH:mm") ?? "—";
+
+    /// <summary>
+    /// Previous station track/platform number.
+    /// </summary>
+    public string PreviousStationTrack => GetPreviousStation()?.Track?.ToString() ?? "—";
+
+    /// <summary>
+    /// Current station name (or "—" if none).
+    /// </summary>
+    public string CurrentStationName => GetCurrentStation()?.Name ?? "—";
+
+    /// <summary>
+    /// Current station arrival time (formatted).
+    /// </summary>
+    public string CurrentStationArrival => GetCurrentStation()?.Arrival?.ToString("HH:mm") ?? "—";
+
+    /// <summary>
+    /// Current station departure time (formatted).
+    /// </summary>
+    public string CurrentStationDeparture => GetCurrentStation()?.Departure?.ToString("HH:mm") ?? "—";
+
+    /// <summary>
+    /// Current station track/platform number.
+    /// </summary>
+    public string CurrentStationTrack => GetCurrentStation()?.Track?.ToString() ?? "—";
+
+    /// <summary>
+    /// Next station name (or "—" if none).
+    /// </summary>
+    public string NextStationName => GetNextStation()?.Name ?? "—";
+
+    /// <summary>
+    /// Next station arrival time (formatted).
+    /// </summary>
+    public string NextStationArrival => GetNextStation()?.Arrival?.ToString("HH:mm") ?? "—";
+
+    /// <summary>
+    /// Next station departure time (formatted).
+    /// </summary>
+    public string NextStationDeparture => GetNextStation()?.Departure?.ToString("HH:mm") ?? "—";
+
+    /// <summary>
+    /// Next station track/platform number.
+    /// </summary>
+    public string NextStationTrack => GetNextStation()?.Track?.ToString() ?? "—";
+
+    private Domain.Station? GetPreviousStation()
+    {
+        if (CurrentJourney == null || CurrentJourney.Stations.Count == 0)
+            return null;
+
+        var prevIndex = CurrentStationIndex - 1;
+        if (prevIndex < 0 || prevIndex >= CurrentJourney.Stations.Count)
+            return null;
+
+        return CurrentJourney.Stations[prevIndex];
+    }
+
+    private Domain.Station? GetCurrentStation()
+    {
+        if (CurrentJourney == null || CurrentJourney.Stations.Count == 0)
+            return null;
+
+        if (CurrentStationIndex < 0 || CurrentStationIndex >= CurrentJourney.Stations.Count)
+            return null;
+
+        return CurrentJourney.Stations[CurrentStationIndex];
+    }
+
+    private Domain.Station? GetNextStation()
+    {
+        if (CurrentJourney == null || CurrentJourney.Stations.Count == 0)
+            return null;
+
+        var nextIndex = CurrentStationIndex + 1;
+        if (nextIndex < 0 || nextIndex >= CurrentJourney.Stations.Count)
+            return null;
+
+        return CurrentJourney.Stations[nextIndex];
+    }
+
     public TrainControlViewModel(
         IZ21 z21,
         IUiDispatcher uiDispatcher,
         ISettingsService settingsService,
+        MainWindowViewModel? mainWindowViewModel = null,
         ILogger<TrainControlViewModel>? logger = null)
     {
         _z21 = z21;
         _uiDispatcher = uiDispatcher;
         _settingsService = settingsService;
+        _mainWindowViewModel = mainWindowViewModel;
         _logger = logger;
 
         // Load presets from settings
@@ -392,6 +532,60 @@ public partial class TrainControlViewModel : ObservableObject
 
         // Subscribe to loco info updates
         _z21.OnLocoInfoChanged += OnLocoInfoReceived;
+
+        // Subscribe to MainWindowViewModel.SelectedJourney changes
+        if (_mainWindowViewModel != null)
+        {
+            _mainWindowViewModel.PropertyChanged += OnMainWindowViewModelPropertyChanged;
+            
+            // Initialize with current journey if available
+            UpdateJourneyFromMainViewModel();
+        }
+    }
+
+    /// <summary>
+    /// Called when MainWindowViewModel properties change.
+    /// Updates CurrentJourney when SelectedJourney changes.
+    /// </summary>
+    private void OnMainWindowViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainWindowViewModel.SelectedJourney))
+        {
+            UpdateJourneyFromMainViewModel();
+        }
+    }
+
+    /// <summary>
+    /// Updates CurrentJourney and CurrentStationIndex from MainWindowViewModel.SelectedJourney.
+    /// </summary>
+    private void UpdateJourneyFromMainViewModel()
+    {
+        if (_mainWindowViewModel?.SelectedJourney == null)
+        {
+            CurrentJourney = null;
+            CurrentStationIndex = 0;
+            return;
+        }
+
+        var journeyVm = _mainWindowViewModel.SelectedJourney;
+        CurrentJourney = journeyVm.Model;
+        CurrentStationIndex = journeyVm.CurrentPos;
+
+        // Subscribe to journey CurrentPos changes
+        journeyVm.PropertyChanged -= OnJourneyViewModelPropertyChanged;
+        journeyVm.PropertyChanged += OnJourneyViewModelPropertyChanged;
+    }
+
+    /// <summary>
+    /// Called when JourneyViewModel properties change.
+    /// Updates CurrentStationIndex when CurrentPos changes.
+    /// </summary>
+    private void OnJourneyViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(JourneyViewModel.CurrentPos) && sender is JourneyViewModel journeyVm)
+        {
+            CurrentStationIndex = journeyVm.CurrentPos;
+        }
     }
 
     /// <summary>

@@ -5,7 +5,75 @@ applyTo: '**'
 
 # MOBAflow TODOs
 
-> Letzte Aktualisierung: 2026-02-01 (Session 6 abgeschlossen - Train Control: Tacho-Indicator Linienband)
+> Letzte Aktualisierung: 2026-02-01 (Session 7 abgeschlossen - UI Refactoring & Journey Integration)
+
+---
+
+## 🎯 SESSION 7 ABGESCHLOSSEN ✅
+
+### UI Refactoring & Journey Integration & Accessibility
+
+**VisualStateManager entfernt (WinUI.View)**
+- ✅ TrainControlPage.xaml - VisualStateManager entfernt (~50 Zeilen)
+- ✅ SignalBoxPage.xaml - VisualStateManager entfernt (~46 Zeilen)
+- ✅ TrackPlanPage.xaml - VisualStateManager-Kommentar entfernt
+- ✅ WorkflowsPage.xaml - VisualStateManager entfernt (~53 Zeilen)
+- **Ergebnis:** Alle Pages verwenden feste Layouts ohne adaptive Breakpoints
+
+**TrainControlPage Header-Redesign (WinUI.View)**
+- ✅ Baureihen-Eingabe (AutoSuggestBox) in Header verschoben
+  - Vorher: Oben rechts im Speedometer-Bereich
+  - Nachher: Grid.Column="1" (zwischen Title und Skin-Button)
+- ✅ Vmax-Display integriert (kollabiert wenn keine Baureihe ausgewählt)
+- ✅ Layout: `Train Control | [Baureihe] [Vmax] | [Skin] | [EMERGENCY STOP]`
+
+**Journey Integration (SharedUI.ViewModel & WinUI.View)**
+- ✅ TrainControlViewModel erweitert um MainWindowViewModel
+  - Constructor Parameter hinzugefügt (optional für Rückwärtskompatibilität)
+  - PropertyChanged Subscription auf `SelectedJourney`
+  - `UpdateJourneyFromMainViewModel()` aktualisiert `CurrentJourney` und `CurrentStationIndex`
+  - Subscription auf `JourneyViewModel.CurrentPos` für dynamische Updates
+- ✅ DI-Konfiguration aktualisiert (WinUI/App.xaml.cs)
+  - TrainControlViewModel erhält MainWindowViewModel per Constructor Injection
+- ✅ TimetableStopsControl reagiert auf Journey-Auswahl
+  - Datenfluss: JourneyMap → MainWindowViewModel.SelectedJourney → TrainControlViewModel.CurrentJourney → TimetableStopsControl
+  - Automatische Updates bei Journey-Wechsel oder CurrentPos-Änderung
+  - 12 computed properties für Previous/Current/Next Station (Name, Arrival, Departure, Track)
+
+**Accessibility-Verbesserungen (WinUI.View.TrainControlPage)**
+- ✅ AutomationProperties für Screen Reader Support
+  - Title: `HeadingLevel="Level1"`
+  - AutoSuggestBox: `Name="Locomotive Series Selection"`, `HelpText="Enter locomotive series..."`
+  - VmaxDisplay: `LiveSetting="Polite"` (dynamische Updates)
+  - Buttons: `Name` Properties für alle interaktiven Elemente
+  - Emergency Stop: `Name` + `HelpText="Immediately stops the locomotive"`
+  - Alle Skin-Flyout Buttons benannt
+- ✅ Grid.ColumnDefinitions mit MinWidth für Responsive Behavior
+  - Title: MinWidth="150px"
+  - Baureihe: MinWidth="250px"
+  - Skin: MinWidth="80px"
+  - Emergency: MinWidth="180px"
+  - **Effekt:** Header-Elemente kollabieren nicht bei schmalen Fenstern
+- ✅ Keyboard Shortcuts (AccessKey)
+  - Alt+K: Skin selection
+  - Alt+S: Emergency Stop
+  - Tooltips aktualisiert mit Shortcuts
+
+**Architektur-Verbesserung:**
+```
+MainWindowViewModel.SelectedJourney (zentrale Quelle)
+    ↓
+JourneyMapViewModel.SelectedJourney (Proxy)
+    ↓
+TrainControlViewModel.CurrentJourney (Subscribe)
+    ↓
+TimetableStopsControl (Data Binding)
+```
+
+**Build Status:**
+- ✅ Alle Änderungen kompilieren fehlerfrei
+- ✅ Keine Breaking Changes in bestehenden ViewModels
+- ✅ Rückwärtskompatibilität gewahrt (MainWindowViewModel optional)
 
 ---
 
@@ -158,17 +226,21 @@ Schaltstufe 126 → 200 km/h ✓
 ## 📋 BACKLOG (NAECHSTE SESSIONS)
 
 ### 1. Train Control - 4-Bereiche Layout (UPCOMING)
-- [ ] Mittlere Spalte in 4 Bereiche aufteilen
-  - [ ] Bereich 1: Speedometer (25% Hoehe)
-  - [ ] Bereich 2: Letzter Haltepunkt (Journey Info)
-  - [ ] Bereich 3: Aktueller Haltepunkt (Journey Info)
-  - [ ] Bereich 4: Naechster Haltepunkt (Journey Info)
-- [ ] `JourneyStationControl` erstellen
-  - [ ] Vertikale Darstellung
+- [ ] TrainControlPage in 4 Bereiche aufteilen (im Uhrzeigersinn, beginnend unten links)
+  - [ ] Bereich 1 (unten links): Speedometer (aktuell bereits vorhanden)
+  - [ ] Bereich 2 (oben links): Noch frei (reserviert fuer zukuenftige Features)
+  - [ ] Bereich 3 (oben rechts): Journey Info - `TimetableStopsControl`
+  - [ ] Bereich 4 (unten rechts): Noch frei (reserviert fuer zukuenftige Features)
+- [ ] `TimetableStopsControl` erstellen (WinUI.Controls)
+  - [ ] Label/Titel: "Timetable/Stops"
+  - [ ] Vertikale Darstellung der Haltepunkte:
+    - Letzter Haltepunkt
+    - Aktueller Haltepunkt (hervorgehoben)
+    - Naechster Haltepunkt
   - [ ] Station Name, Ankunft/Abfahrt, Gleis
   - [ ] Kompaktes Design
 - [ ] Integration in TrainControlPage
-- [ ] Responsive Layout-Tests
+- [ ] Responsive Layout-Tests (4-Quadranten-Layout)
 
 ### 2. Port-Strich-Positionierung (TrackPlan)
 - [ ] Loesung fuer ueberlappungsfreie Strich-Positionierung bei Verbindungen

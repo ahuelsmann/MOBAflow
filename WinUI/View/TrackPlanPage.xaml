@@ -78,7 +78,7 @@
                     Value="0.8" />
             </AppBarButton>
         </CommandBar>
-        <!--  Main Content with VisualStateManager for responsive layout  -->
+        <!--  Main Content Grid  -->
         <Grid x:Name="MainGrid" Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="180" />

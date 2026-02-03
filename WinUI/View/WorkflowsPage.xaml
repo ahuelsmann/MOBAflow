@@ -247,59 +247,5 @@
                     ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
             </Grid>
         </Grid>
-        <!--  VisualStateManager for responsive layout  -->
-        <VisualStateManager.VisualStateGroups>
-            <VisualStateGroup x:Name="AdaptiveStates">
-
-                <!--  WIDE STATE: All 5 columns visible (1200px+)  -->
-                <VisualState x:Name="WideState">
-                    <VisualState.StateTriggers>
-                        <AdaptiveTrigger MinWindowWidth="1200" />
-                    </VisualState.StateTriggers>
-                    <VisualState.Setters>
-                        <Setter Target="MainGrid.ColumnDefinitions" Value="300,Auto,*,Auto,350" />
-                        <Setter Target="WorkflowsPanel.Visibility" Value="Visible" />
-                        <Setter Target="ActionsPanel.Visibility" Value="Visible" />
-                        <Setter Target="PropertiesPanel.Visibility" Value="Visible" />
-                        <Setter Target="Column1Divider.Visibility" Value="Visible" />
-                        <Setter Target="Column3Divider.Visibility" Value="Visible" />
-                    </VisualState.Setters>
-                </VisualState>
-
-                <!--  MEDIUM STATE: List + Actions/Editor, Properties hidden (641-1199px)  -->
-                <VisualState x:Name="MediumState">
-                    <VisualState.StateTriggers>
-                        <AdaptiveTrigger MinWindowWidth="641" />
-                    </VisualState.StateTriggers>
-                    <VisualState.Setters>
-                        <Setter Target="MainGrid.ColumnDefinitions" Value="250,Auto,*" />
-                        <Setter Target="WorkflowsPanel.Visibility" Value="Visible" />
-                        <Setter Target="ActionsPanel.Visibility" Value="Visible" />
-                        <Setter Target="PropertiesPanel.Visibility" Value="Collapsed" />
-                        <Setter Target="Column1Divider.Visibility" Value="Visible" />
-                        <Setter Target="Column3Divider.Visibility" Value="Collapsed" />
-                    </VisualState.Setters>
-                </VisualState>
-
-                <!--  COMPACT STATE: Stacked full-width with collapsible sections (0-640px)  -->
-                <VisualState x:Name="CompactState">
-                    <VisualState.StateTriggers>
-                        <AdaptiveTrigger MinWindowWidth="0" />
-                    </VisualState.StateTriggers>
-                    <VisualState.Setters>
-                        <Setter Target="MainGrid.ColumnDefinitions" Value="*" />
-                        <Setter Target="MainGrid.RowDefinitions" Value="Auto,Auto,Auto" />
-                        <Setter Target="WorkflowsPanel.Visibility" Value="Visible" />
-                        <Setter Target="ActionsPanel.Visibility" Value="Visible" />
-                        <Setter Target="PropertiesPanel.Visibility" Value="Visible" />
-                        <Setter Target="Column1Divider.Visibility" Value="Collapsed" />
-                        <Setter Target="Column3Divider.Visibility" Value="Collapsed" />
-                        <!--  Move panels to rows instead of columns  -->
-                        <Setter Target="Grid.Column" Value="0" />
-                    </VisualState.Setters>
-                </VisualState>
-
-            </VisualStateGroup>
-        </VisualStateManager.VisualStateGroups>
     </Grid>
 </Page>
