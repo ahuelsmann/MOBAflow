@@ -83,9 +83,10 @@ public class Z21Settings
 
     /// <summary>
     /// System state polling interval in seconds (how often to request current, voltage, temperature updates).
-    /// Default: 5 seconds. Set to 0 to disable polling (rely only on Z21 broadcast events).
+    /// Default: 0 = disabled (recommended - uses Z21 broadcast events only for efficiency).
+    /// Set to 1-30 if you want redundant polling in addition to broadcasts.
     /// </summary>
-    public int SystemStatePollingIntervalSeconds { get; set; } = 5;
+    public int SystemStatePollingIntervalSeconds { get; set; } = 0;
 
     /// <summary>
     /// List of recently used IP addresses.

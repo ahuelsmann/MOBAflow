@@ -29,11 +29,13 @@ public sealed partial class TrainControlPage
 
     // UI element references for theme application
     private SpeedometerControl? _speedometer;
+    private AmperemeterControl? _amperemeter;
     private TextBlock? _titleText;
     private Border? _headerBorder;
     private Grid? _headerGrid;
     private Border? _settingsPanel;
     private Border? _speedometerPanel;
+    private Border? _amperemeterPanel;
     private Border? _functionsPanel;
 
     public TrainControlViewModel ViewModel { get; }
@@ -157,6 +159,20 @@ public sealed partial class TrainControlPage
             }
         }
 
+        // Amperemeter needle - use system accent color for System skin
+        if (_amperemeter != null)
+        {
+            if (isSystemSkin)
+            {
+                // Use Windows system accent color
+                _amperemeter.AccentColor = GetSystemAccentColor();
+            }
+            else
+            {
+                _amperemeter.AccentColor = palette.Accent;
+            }
+        }
+
         // Panel backgrounds and borders - only apply if not transparent (Alpha > 0)
         var hasCustomPanelColors = palette.PanelBackground.A > 0;
 
@@ -178,6 +194,12 @@ public sealed partial class TrainControlPage
         {
             _speedometerPanel.Background = defaultCardBackground;
             _speedometerPanel.BorderBrush = defaultCardBorder;
+        }
+
+        if (_amperemeterPanel != null)
+        {
+            _amperemeterPanel.Background = defaultCardBackground;
+            _amperemeterPanel.BorderBrush = defaultCardBorder;
         }
 
         if (_functionsPanel != null)
@@ -240,11 +262,13 @@ public sealed partial class TrainControlPage
     {
         // Find and store references to themed elements
         _speedometer = FindName("Speedometer") as SpeedometerControl;
+        _amperemeter = FindName("Amperemeter") as AmperemeterControl;
         _titleText = FindName("TitleText") as TextBlock;
         _headerBorder = FindName("HeaderBorder") as Border;
         _headerGrid = FindName("HeaderGrid") as Grid;
         _settingsPanel = FindName("SettingsPanel") as Border;
         _speedometerPanel = FindName("SpeedometerPanel") as Border;
+        _amperemeterPanel = FindName("AmperemeterPanel") as Border;
         _functionsPanel = FindName("FunctionsPanel") as Border;
 
         // Apply current skin colors
@@ -255,7 +279,7 @@ public sealed partial class TrainControlPage
 
         // Initialize speedometer speed step markers
         UpdateSpeedStepMarkers();
-
+        
         _allLocomotives = await _locomotiveService.GetAllSeriesAsync().ConfigureAwait(false);
 
         // Initialize AutoSuggestBox with saved locomotive series

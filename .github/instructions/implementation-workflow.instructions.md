@@ -36,26 +36,24 @@ Microsoft-Dokumentation ZUERST via `azure_documentation` Tool konsultieren.
 | Hardcodierte Farben | ThemeResource verwenden |
 | Vergessen zu builden | Nach jeder Datei `run_build` |
 | Instructions ignorieren | Immer relevante Instructions prüfen |
-| Terminal für Datei-Ops | `create_file`, `replace_string_in_file` |
+| Terminal für Datei-Ops | `create_file`, `edit_file` |
+| **Edit ohne vollen Kontext** | **Bei kritischem Code: VOLLEN Kontext lesen (100+ Zeilen)** |
+| **Backend/Z21.cs blind editieren** | **Siehe z21-backend.instructions.md - Paket-Parsing ist kritisch!** |
 
 ---
 
-## 📋 Schnell-Checkliste
+## 🔧 Spezielle Regeln für kritische Dateien
 
-Vor jeder Implementierung:
+### **Backend/Z21.cs:**
+- ✅ **IMMER** `OnUdpReceived` komplett lesen vor Edit
+- ✅ Jeder Paket-Typ = eigener `if`-Block mit `return`
+- ✅ Nach Edit: **Sofort Connection testen** (nicht nur Build!)
+- ✅ Siehe: `.github/instructions/z21-backend.instructions.md`
 
-- [ ] Anforderung verstanden?
-- [ ] Relevante Instructions gelesen?
-- [ ] Fluent Design beachtet?
-- [ ] Plan erstellt (wenn komplex)?
-- [ ] Betroffene Dateien identifiziert?
-
-Nach der Implementierung:
-
-- [ ] Build erfolgreich?
-- [ ] Keine Compiler-Warnings?
-- [ ] Code folgt Projekt-Patterns?
-- [ ] Plan abgeschlossen (finish_plan)?
+### **ViewModels mit berechneten Properties:**
+- ✅ **Alle Abhängigkeiten** mit `[NotifyPropertyChangedFor]` deklarieren
+- ✅ Beispiel: `SpeedKmh` hängt von `Speed`, `MaxSpeedStep`, `SelectedVmax` ab
+- ✅ JEDE Abhängigkeit braucht Notification!
 
 ---
 

@@ -93,6 +93,7 @@ Details in `.github/instructions/`:
 **Architektur & Frameworks:**
 - `architecture.instructions.md` - Layer-Architektur (falls existiert)
 - `backend.instructions.md` - Backend Layer Details (falls existiert)
+- `z21-backend.instructions.md` - **Z21 Connection & Traffic Rules (CRITICAL!)**
 
 **UI Frameworks:**
 - `winui.instructions.md` - WinUI 3 Spezifika (falls existiert)

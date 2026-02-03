@@ -1,0 +1,78 @@
+<UserControl
+    x:Class="Moba.WinUI.Controls.AmperemeterControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Viewbox Stretch="Uniform">
+            <Canvas Width="260" Height="200">
+                <!--  Background Arc (0-3000 mA range)  -->
+                <Path
+                    Data="M 30,130 A 100,100 0 0 1 230,130"
+                    Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
+                    StrokeThickness="16" />
+
+                <!--  Current Arc (colored based on load)  -->
+                <Path
+                    x:Name="CurrentArc"
+                    Stroke="{ThemeResource AccentFillColorDefaultBrush}"
+                    StrokeEndLineCap="Round"
+                    StrokeStartLineCap="Round"
+                    StrokeThickness="16" />
+
+                <!--  Dynamic mA Markers (outer ring)  -->
+                <Canvas x:Name="MilliampereMarkersCanvas" />
+
+                <!--  Needle  -->
+                <Path
+                    x:Name="Needle"
+                    Canvas.Left="130"
+                    Canvas.Top="130"
+                    Data="M -4,0 L 0,-90 L 4,0 Z"
+                    Fill="{ThemeResource AccentFillColorDefaultBrush}"
+                    RenderTransformOrigin="0,0">
+                    <Path.RenderTransform>
+                        <RotateTransform x:Name="NeedleRotation" Angle="-90" />
+                    </Path.RenderTransform>
+                </Path>
+
+                <!--  Center Circle  -->
+                <Ellipse
+                    x:Name="CenterCircle"
+                    Canvas.Left="115"
+                    Canvas.Top="115"
+                    Width="30"
+                    Height="30"
+                    Fill="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    Stroke="{ThemeResource AccentFillColorDefaultBrush}"
+                    StrokeThickness="3" />
+
+                <!--  Digital Display  -->
+                <Border
+                    Canvas.Left="80"
+                    Canvas.Top="150"
+                    Width="100"
+                    Height="45"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                    CornerRadius="6" />
+                <TextBlock
+                    x:Name="CurrentText"
+                    Canvas.Left="80"
+                    Canvas.Top="152"
+                    Width="100"
+                    FontSize="26"
+                    FontWeight="Bold"
+                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                    Text="0"
+                    TextAlignment="Center" />
+                <TextBlock
+                    Canvas.Left="80"
+                    Canvas.Top="178"
+                    Width="100"
+                    FontSize="11"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="mA"
+                    TextAlignment="Center" />
+            </Canvas>
+        </Viewbox>
+    </Grid>
+</UserControl>

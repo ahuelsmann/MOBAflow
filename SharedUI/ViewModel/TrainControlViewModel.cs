@@ -41,6 +41,7 @@ public partial class TrainControlViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(MaxSpeedStep))]
+    [NotifyPropertyChangedFor(nameof(SpeedKmh))]
     private DccSpeedSteps speedSteps = DccSpeedSteps.Steps128;
 
     /// <summary>
@@ -192,14 +193,8 @@ public partial class TrainControlViewModel : ObservableObject
     /// Current speed (0-126 for 128 speed steps).
     /// </summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ApproximateKmh))]
     [NotifyPropertyChangedFor(nameof(SpeedKmh))]
     private int speed;
-
-    /// <summary>
-    /// Approximate km/h based on speed step (assuming 200 km/h max for typical model trains).
-    /// </summary>
-    public int ApproximateKmh => (int)Math.Round(Speed * 1.6); // ~200 km/h at max speed (126)
 
     // === Locomotive Series (Baureihe) for Vmax calculation ===
 
@@ -249,10 +244,22 @@ public partial class TrainControlViewModel : ObservableObject
             
             // Avoid division by zero
             if (MaxSpeedStep == 0)
+            {
+                _logger?.LogWarning("MaxSpeedStep is 0! Returning 0 km/h. SpeedSteps={SpeedSteps}", SpeedSteps);
                 return 0;
+            }
             
             // Calculate: (Speed / MaxSpeedStep) * Vmax
             var result = (int)Math.Round((double)Speed / MaxSpeedStep * vmax);
+            
+            // VALIDATION: Check for unrealistic values (debugging aid)
+            if (result > 500)
+            {
+                _logger?.LogWarning(
+                    "SpeedKmh calculation resulted in unrealistic value: {Result} km/h. " +
+                    "Speed={Speed}, MaxSpeedStep={MaxSpeedStep}, SelectedVmax={Vmax}, SpeedSteps={SpeedSteps}",
+                    result, Speed, MaxSpeedStep, vmax, SpeedSteps);
+            }
             
             return result;
         }
@@ -340,6 +347,50 @@ public partial class TrainControlViewModel : ObservableObject
     /// Indicates if Z21 is connected.
     /// </summary>
     public bool IsConnected => _z21.IsConnected;
+
+    // === Amperemeter / Current Monitoring ===
+
+    /// <summary>
+    /// Main track current consumption in milliamperes (mA).
+    /// Updated via Z21 SystemState broadcasts.
+    /// </summary>
+    [ObservableProperty]
+    private int mainTrackCurrent;
+
+    /// <summary>
+    /// Programming track current consumption in milliamperes (mA).
+    /// Updated via Z21 SystemState broadcasts.
+    /// </summary>
+    [ObservableProperty]
+    private int progTrackCurrent;
+
+    /// <summary>
+    /// Z21 supply voltage in millivolts (mV).
+    /// Typically ~16000 mV (16V) for normal operation.
+    /// </summary>
+    [ObservableProperty]
+    private int supplyVoltage;
+
+    /// <summary>
+    /// Z21 internal temperature in degrees Celsius.
+    /// </summary>
+    [ObservableProperty]
+    private int temperature;
+
+    /// <summary>
+    /// Filtered (smoothed) main track current in milliamperes (mA).
+    /// This value is less noisy than MainTrackCurrent and better for trend analysis.
+    /// Updated via Z21 SystemState broadcasts.
+    /// </summary>
+    [ObservableProperty]
+    private int filteredMainCurrent;
+
+    /// <summary>
+    /// Peak (maximum) main track current since connection or last reset, in milliamperes (mA).
+    /// Useful for identifying maximum load during operation.
+    /// </summary>
+    [ObservableProperty]
+    private int peakMainCurrent;
 
     // === Speed Ramp Configuration ===
 
@@ -532,6 +583,9 @@ public partial class TrainControlViewModel : ObservableObject
 
         // Subscribe to loco info updates
         _z21.OnLocoInfoChanged += OnLocoInfoReceived;
+        
+        // Subscribe to system state updates (for amperemeter)
+        _z21.OnSystemStateChanged += OnSystemStateChanged;
 
         // Subscribe to MainWindowViewModel.SelectedJourney changes
         if (_mainWindowViewModel != null)
@@ -671,6 +725,7 @@ public partial class TrainControlViewModel : ObservableObject
 
     /// <summary>
     /// Applies the current preset to the ViewModel state.
+    /// Speed and direction are always reset to safe defaults (0, forward).
     /// </summary>
     private void ApplyCurrentPreset()
     {
@@ -679,8 +734,17 @@ public partial class TrainControlViewModel : ObservableObject
         {
             var preset = CurrentPreset;
             LocoAddress = preset.DccAddress;
-            Speed = preset.Speed;
-            IsForward = preset.IsForward;
+            
+            // Always start at speed 0 (safety feature - no unexpected movement)
+            Speed = 0;
+            
+            // Always start in forward direction
+            IsForward = true;
+
+            _logger?.LogInformation(
+                "Applied preset: {Name} - DCC={DccAddress}, Speed={Speed} (always 0), SpeedKmh={SpeedKmh}, " +
+                "MaxSpeedStep={MaxSpeedStep}, SpeedSteps={SpeedSteps}, SelectedVmax={Vmax}",
+                preset.Name, preset.DccAddress, Speed, SpeedKmh, MaxSpeedStep, SpeedSteps, SelectedVmax);
 
             // Apply function states from bitmask
             for (int i = 0; i <= 20; i++)
@@ -699,6 +763,7 @@ public partial class TrainControlViewModel : ObservableObject
 
     /// <summary>
     /// Saves current state to the selected preset.
+    /// Speed and direction are NOT saved (always reset to safe defaults on load).
     /// </summary>
     private void SaveCurrentStateToPreset()
     {
@@ -706,8 +771,9 @@ public partial class TrainControlViewModel : ObservableObject
 
         var preset = CurrentPreset;
         preset.DccAddress = LocoAddress;
-        preset.Speed = Speed;
-        preset.IsForward = IsForward;
+        
+        // Speed and IsForward are NOT saved - always reset to 0/forward on load
+        // This is a safety feature to prevent unexpected locomotive movement
 
         // Save function states to bitmask
         for (int i = 0; i <= 20; i++)
@@ -1266,5 +1332,45 @@ public partial class TrainControlViewModel : ObservableObject
             SaveCurrentStateToPreset();
             SelectedPresetIndex = 2;
         }
+    }
+
+    /// <summary>
+    /// Resets the peak current tracking back to zero.
+    /// Useful after analyzing maximum load or starting a new session.
+    /// </summary>
+    [RelayCommand]
+    private void ResetPeakCurrent()
+    {
+        PeakMainCurrent = 0;
+        _logger?.LogInformation("Peak current reset to 0 mA");
+    }
+
+    // === Event Handlers ===
+
+    /// <summary>
+    /// Called when Z21 system state changes (main track current, temperature, voltage).
+    /// Updates amperemeter display values on UI thread.
+    /// </summary>
+    private void OnSystemStateChanged(Backend.SystemState systemState)
+    {
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            MainTrackCurrent = systemState.MainCurrent;
+            ProgTrackCurrent = systemState.ProgCurrent;
+            FilteredMainCurrent = systemState.FilteredMainCurrent;
+            SupplyVoltage = systemState.SupplyVoltage;
+            Temperature = systemState.Temperature;
+            
+            // Track peak current
+            if (systemState.MainCurrent > PeakMainCurrent)
+            {
+                PeakMainCurrent = systemState.MainCurrent;
+            }
+            
+            _logger?.LogDebug(
+                "SystemState updated: MainCurrent={MainCurrent}mA (Filtered={FilteredCurrent}mA, Peak={PeakCurrent}mA), " +
+                "ProgCurrent={ProgCurrent}mA, SupplyVoltage={SupplyVoltage}mV, Temperature={Temperature}°C",
+                MainTrackCurrent, FilteredMainCurrent, PeakMainCurrent, ProgTrackCurrent, SupplyVoltage, Temperature);
+        });
     }
 }

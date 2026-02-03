@@ -3,13 +3,21 @@
 namespace Moba.Backend;
 
 using CommunityToolkit.Mvvm.Messaging;
+
 using Domain.Message;
+
 using Interface;
+
 using Microsoft.Extensions.Logging;
+
 using Model;
+
 using Network;
+
 using Protocol;
+
 using Service;
+
 using System.Diagnostics;
 using System.Net;
 
@@ -22,6 +30,7 @@ public class Z21 : IZ21
     public event VersionInfoChanged? OnVersionInfoChanged;
     public event Action? OnConnectionLost;
     public event Action<bool>? OnConnectedChanged;
+    public event RailComDataChanged? OnRailComDataChanged;
 
     private readonly IUdpClientWrapper _udp;
     private readonly ILogger<Z21>? _logger;
@@ -29,16 +38,16 @@ public class Z21 : IZ21
     private CancellationTokenSource? _cancellationTokenSource;
     private Timer? _keepaliveTimer;
     private Timer? _systemStatePollingTimer;
-    private int _systemStatePollingIntervalSeconds = 5;
+    private int _systemStatePollingIntervalSeconds = 0; // Default: 0 = disabled, use Z21 broadcasts only
     private int _keepAliveFailures;
     private const int MAX_KEEPALIVE_FAILURES = 3;
-    
+
     // Lock hierarchy (acquire from top to bottom to prevent deadlock):
     // 1. _connectionLock (protects Connect/Disconnect state)
     // 2. _sendLock (protects individual UDP send operations)
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private readonly SemaphoreSlim _connectionLock = new(1, 1);
-    
+
     private bool _disposed;
     private bool _isConnected;
 
@@ -86,22 +95,22 @@ public class Z21 : IZ21
         try
         {
             _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            
+
             // Reset connection state
             _isConnected = false;
-            
+
             await _udp.ConnectAsync(address, port, _cancellationTokenSource.Token).ConfigureAwait(false);
-            
+
             // Small delay between commands to prevent Z21 overload
             await SendHandshakeAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
             await Task.Delay(50, _cancellationTokenSource.Token).ConfigureAwait(false);
-            
+
             await SetBroadcastFlagsAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
             await Task.Delay(50, _cancellationTokenSource.Token).ConfigureAwait(false);
-            
+
             // Request initial status - this should trigger a response
             await GetStatusAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
-            
+
             // Request version information (serial number, hardware type, firmware version)
             await Task.Delay(50, _cancellationTokenSource.Token).ConfigureAwait(false);
             await RequestVersionInfoAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
@@ -109,11 +118,12 @@ public class Z21 : IZ21
             // Start keepalive timer immediately (will also serve as connection check)
             StartKeepaliveTimer();
 
-            // Start system state polling timer for frequent updates (current, voltage, temperature)
-            StartSystemStatePollingTimer();
+            // SystemState polling is started AUTOMATICALLY when Z21 first responds
+            // This prevents overloading the Z21 before connection is established
+            // See: SetConnectedIfNotAlready()
 
             _logger?.LogInformation("🔄 Z21 connection initiated to {Address}:{Port}. Waiting for response...", address, port);
-            
+
             // Note: IsConnected will be set to true when Z21 responds (in OnUdpReceived)
             // This is handled by the _connectionTcs logic in the message handlers
         }
@@ -136,7 +146,7 @@ public class Z21 : IZ21
             // Step 1: Stop timers FIRST to prevent new callbacks from starting
             StopKeepaliveTimer();
             StopSystemStatePollingTimer();
-            
+
             // Step 2: Small delay to allow any in-flight timer callbacks to complete
             // This prevents race condition where timer callback starts just before timer.Dispose()
             await Task.Delay(100).ConfigureAwait(false);
@@ -158,7 +168,7 @@ public class Z21 : IZ21
                     _logger?.LogWarning("Failed to send LAN_LOGOFF: {Message}", ex.Message);
                 }
             }
-            
+
             // Step 4: Cancel token source (this will cancel any pending async operations)
             if (_cancellationTokenSource != null)
             {
@@ -167,17 +177,17 @@ public class Z21 : IZ21
                 _cancellationTokenSource.Dispose();
                 _cancellationTokenSource = null;
             }
-            
+
             // Step 5: Reset connection state and failure counter
             var wasConnected = _isConnected;
             _isConnected = false;
             _keepAliveFailures = 0;
-            
+
             if (wasConnected)
             {
                 OnConnectedChanged?.Invoke(false);
             }
-            
+
             // Step 6: Stop UDP (this sets _client = null)
             await _udp.StopAsync().ConfigureAwait(false);
             _logger?.LogInformation("Z21 disconnected successfully");
@@ -198,16 +208,16 @@ public class Z21 : IZ21
     {
         // Ensure any existing timer is stopped first
         StopKeepaliveTimer();
-        
+
         _keepaliveTimer = new Timer(
             state => { _ = state; _ = SendKeepaliveAsync(); },
             null,
             TimeSpan.FromSeconds(30),  // First keepalive after 30 seconds
             TimeSpan.FromSeconds(30)); // Subsequent keepalives every 30 seconds
-        
+
         _logger?.LogDebug("Keepalive timer started (30s interval)");
     }
-    
+
     /// <summary>
     /// Stops the keepalive timer.
     /// </summary>
@@ -220,20 +230,36 @@ public class Z21 : IZ21
             _logger?.LogDebug("Keepalive timer stopped");
         }
     }
-    
+
     /// <summary>
     /// Sets IsConnected to true if not already connected and fires OnConnectedChanged event.
     /// Called when Z21 sends any valid response (SystemState, XBusStatus, SerialNumber, etc.)
+    /// Starts SystemState polling timer on first successful connection (if enabled).
     /// </summary>
     private void SetConnectedIfNotAlready()
     {
         if (_isConnected) return;
-        
+
         _isConnected = true;
         _logger?.LogInformation("✅ Z21 is responding - connection confirmed");
+        
+        // Start SystemState polling timer ONLY if interval > 0
+        // Note: Z21 also sends SystemState automatically via broadcast (flag 0x0100)
+        // Polling is optional for additional redundancy or faster updates
+        if (_systemStatePollingIntervalSeconds > 0)
+        {
+            StartSystemStatePollingTimer();
+            _logger?.LogDebug("SystemState polling enabled ({Interval}s). Note: Z21 also broadcasts SystemState automatically.", 
+                _systemStatePollingIntervalSeconds);
+        }
+        else
+        {
+            _logger?.LogDebug("SystemState polling disabled. Using Z21 broadcast-only (flag 0x0100).");
+        }
+        
         OnConnectedChanged?.Invoke(true);
     }
-    
+
     /// <summary>
     /// Sends a keepalive message (LAN_X_GET_STATUS) to the Z21.
     /// This prevents the Z21 from timing out inactive connections.
@@ -245,24 +271,24 @@ public class Z21 : IZ21
         {
             return;
         }
-        
+
         // Check if UDP is still connected before attempting send
         if (!_udp.IsConnected)
         {
             _logger?.LogTrace("Keep-Alive skipped: UDP not connected");
             return;
         }
-        
+
         try
         {
             // Create timeout token (5 seconds)
             using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
-                _cancellationTokenSource.Token, 
+                _cancellationTokenSource.Token,
                 timeoutCts.Token);
 
             await GetStatusAsync(linkedCts.Token).ConfigureAwait(false);
-            
+
             // Success - reset failure counter
             if (_keepAliveFailures > 0)
             {
@@ -283,14 +309,14 @@ public class Z21 : IZ21
         catch (Exception ex)
         {
             _keepAliveFailures++;
-            _logger?.LogWarning("Keep-Alive failed ({Failures}/{Max}): {Message}", 
+            _logger?.LogWarning("Keep-Alive failed ({Failures}/{Max}): {Message}",
                 _keepAliveFailures, MAX_KEEPALIVE_FAILURES, ex.Message);
 
             if (_keepAliveFailures >= MAX_KEEPALIVE_FAILURES)
             {
-                _logger?.LogError("Z21 connection lost after {Max} failed Keep-Alives. Disconnecting...", 
+                _logger?.LogError("Z21 connection lost after {Max} failed Keep-Alives. Disconnecting...",
                     MAX_KEEPALIVE_FAILURES);
-                
+
                 // Trigger disconnect on background thread to avoid deadlock
                 _ = Task.Run(async () => await HandleConnectionLostAsync().ConfigureAwait(false));
             }
@@ -378,7 +404,7 @@ public class Z21 : IZ21
         {
             return;
         }
-        
+
         // Check if UDP is still connected before attempting send
         if (!_udp.IsConnected)
         {
@@ -390,7 +416,7 @@ public class Z21 : IZ21
         {
             using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
-                _cancellationTokenSource.Token, 
+                _cancellationTokenSource.Token,
                 timeoutCts.Token);
 
             await SendAsync(Z21Command.BuildHandshake(), linkedCts.Token).ConfigureAwait(false);
@@ -517,17 +543,17 @@ public class Z21 : IZ21
     public async Task RecoverConnectionAsync(IPAddress address, int port = Z21Protocol.DefaultPort, CancellationToken cancellationToken = default)
     {
         _logger?.LogWarning("🔄 Attempting Z21 recovery with byte sequence...");
-        
+
         try
         {
             // Step 0: Check if UDP client is connected, if not establish connection
             if (!_udp.IsConnected)
             {
                 _logger?.LogInformation("UDP client not connected - establishing connection to {Address}:{Port}", address, port);
-                
+
                 // Re-create cancellation token source
                 _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                
+
                 // Connect UDP (blind send capability)
                 await _udp.ConnectAsync(address, port, _cancellationTokenSource.Token).ConfigureAwait(false);
                 _logger?.LogInformation("UDP connection established for recovery");
@@ -541,46 +567,46 @@ public class Z21 : IZ21
                     _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                 }
             }
-            
+
             // Step 1: Emergency Stop - This often "wakes up" a stuck Z21
             await SendAsync(Z21Command.BuildEmergencyStop(), cancellationToken).ConfigureAwait(false);
             _logger?.LogDebug("Recovery: Emergency Stop sent (wake-up kick)");
             await Task.Delay(100, cancellationToken).ConfigureAwait(false);
-            
+
             // Step 2: LOGOFF - Clear any hanging client session
             await SendAsync(Z21Command.BuildLogoff(), cancellationToken).ConfigureAwait(false);
             _logger?.LogDebug("Recovery: LOGOFF sent (clear session)");
             await Task.Delay(150, cancellationToken).ConfigureAwait(false);
-            
+
             // Step 3: GET_SERIAL_NUMBER - Simple command that Z21 should always respond to
             await SendAsync(Z21Command.BuildGetSerialNumber(), cancellationToken).ConfigureAwait(false);
             _logger?.LogDebug("Recovery: GET_SERIAL_NUMBER sent (test response)");
             await Task.Delay(100, cancellationToken).ConfigureAwait(false);
-            
+
             // Step 4: Handshake - Re-establish connection
             await SendHandshakeAsync(cancellationToken).ConfigureAwait(false);
             _logger?.LogDebug("Recovery: Handshake sent (re-establish)");
             await Task.Delay(100, cancellationToken).ConfigureAwait(false);
-            
+
             // Step 5: Re-subscribe to broadcasts
             await SetBroadcastFlagsAsync(cancellationToken).ConfigureAwait(false);
             _logger?.LogDebug("Recovery: Broadcast flags set (re-subscribe)");
             await Task.Delay(100, cancellationToken).ConfigureAwait(false);
-            
+
             // Step 6: Request status - Verify connection is alive
             await GetStatusAsync(cancellationToken).ConfigureAwait(false);
             _logger?.LogDebug("Recovery: Status requested (verify)");
-            
+
             // Step 7: Restart keepalive timer if it was stopped
             if (_keepaliveTimer == null)
             {
                 StartKeepaliveTimer();
                 _logger?.LogDebug("Recovery: Keepalive timer restarted");
             }
-            
+
             // Reset keepalive failure counter on successful recovery
             _keepAliveFailures = 0;
-            
+
             _logger?.LogInformation("✅ Z21 recovery sequence completed - connection should be alive now");
         }
         catch (Exception ex)
@@ -597,13 +623,13 @@ public class Z21 : IZ21
     {
         // Initialize VersionInfo if not already done
         VersionInfo ??= new Z21VersionInfo();
-        
+
         // Request serial number
         await SendAsync(Z21Command.BuildGetSerialNumber(), cancellationToken).ConfigureAwait(false);
         _logger?.LogDebug("Serial number request sent");
-        
+
         await Task.Delay(50, cancellationToken).ConfigureAwait(false);
-        
+
         // Request hardware info (type + firmware version)
         await SendAsync(Z21Command.BuildGetHwInfo(), cancellationToken).ConfigureAwait(false);
         _logger?.LogDebug("Hardware info request sent");
@@ -638,7 +664,7 @@ public class Z21 : IZ21
             {
                 // Z21 is responding - mark as connected
                 SetConnectedIfNotAlready();
-                
+
                 OnXBusStatusChanged?.Invoke(xStatus);
                 _logger?.LogDebug("XBus Status: EmergencyStop={EmergencyStop}, TrackOff={TrackOff}, ShortCircuit={ShortCircuit}, Programming={Programming}", xStatus.EmergencyStop, xStatus.TrackOff, xStatus.ShortCircuit, xStatus.Programming);
             }
@@ -648,7 +674,7 @@ public class Z21 : IZ21
             {
                 // Z21 is responding - mark as connected
                 SetConnectedIfNotAlready();
-                
+
                 OnLocoInfoChanged?.Invoke(locoInfo);
                 _logger?.LogInformation("🚂 Loco Info: {LocoInfo}", locoInfo);
             }
@@ -656,27 +682,9 @@ public class Z21 : IZ21
             return;
         }
 
-        if (Z21MessageParser.IsRBusFeedback(content))
-        {
-            // Parse feedback to get InPort
-            var feedback = new FeedbackResult(content);
-            
-            // ✅ Publish via Messenger (Feedback Event deprecated in favor of Messenger)
-            WeakReferenceMessenger.Default.Send(
-                new FeedbackReceivedMessage((uint)feedback.InPort, content)
-            );
-            
-            // Keep legacy event for backward compatibility (optional, can be removed later)
-            Received?.Invoke(feedback);
-            
-            _logger?.LogDebug("RBus Feedback received: InPort={InPort}", feedback.InPort);
-            return;
-        }
-
+        // Parse SystemState (0x84) - separate from RBusFeedback!
         if (Z21MessageParser.IsSystemState(content))
         {
-            _logger?.LogInformation("📊 System State packet received, subscribers={Count}", OnSystemStateChanged?.GetInvocationList().Length ?? 0);
-
             if (Z21MessageParser.TryParseSystemState(content, out var mainCurrent, out var progCurrent, out var filteredMainCurrent, out var temperature, out var supplyVoltage, out var vccVoltage, out var centralState, out var centralStateEx))
             {
                 // Z21 is responding - mark as connected
@@ -694,14 +702,29 @@ public class Z21 : IZ21
                     CentralStateEx = centralStateEx
                 };
 
-                _logger?.LogInformation("📊 Invoking OnSystemStateChanged: MainCurrent={MainCurrent}mA, Temp={Temp}C", mainCurrent, temperature);
+                _logger?.LogInformation("📊 SystemState received: MainCurrent={MainCurrent}mA, Temp={Temp}°C, Voltage={Voltage}mV", 
+                    mainCurrent, temperature, supplyVoltage);
                 OnSystemStateChanged?.Invoke(CurrentSystemState);
-                _logger?.LogDebug("System state event invoked");
             }
             else
             {
-                _logger?.LogWarning("Failed to parse system state packet");
+                _logger?.LogWarning("Failed to parse SystemState packet");
             }
+            return;
+        }
+
+        // Parse RBusFeedback (0x80) - occupancy detection
+        if (Z21MessageParser.IsRBusFeedback(content))
+        {
+            // Parse feedback to get InPort
+            var feedback = new FeedbackResult(content);
+
+            // Publish via Messenger
+            WeakReferenceMessenger.Default.Send(
+                new FeedbackReceivedMessage((uint)feedback.InPort, content)
+            );
+
+            _logger?.LogDebug("📍 R-Bus Feedback: InPort={InPort}", feedback.InPort);
             return;
         }
 
@@ -816,74 +839,115 @@ public class Z21 : IZ21
     {
         if (address < 1 || address > 9999)
             throw new ArgumentOutOfRangeException(nameof(address), "DCC address must be 1-9999");
-        if (speed < 0 || speed > 126)
-            throw new ArgumentOutOfRangeException(nameof(speed), "Speed must be 0-126");
+        if (speed < 0 ||
+            speed > 126)
+            throw new ArgumentOutOfRangeException(nameof(speed), "Speed must be between 0 and 126 (0 = stop)");
+        //if (function < 0 || function > 28)
+        //    throw new ArgumentOutOfRangeException(nameof(function), "Function number must be between 0 and 28");
 
-        // Speed encoding for 128 steps: add 1 to speed (0=stop, 1=e-stop in protocol, 2-127=speed 1-126)
-        var protocolSpeed = speed > 0 ? speed + 1 : 0;
+        // Compute reversed speed value (128-step range)
+        var rv = (byte)(speed == 0 ? 0 : 255 - speed);
 
-        await SendCommandAsync(Z21Command.BuildSetLocoDrive(address, protocolSpeed, forward), cancellationToken).ConfigureAwait(false);
-        _logger?.LogInformation("🚂 Loco {Address}: Speed={Speed}, Direction={Direction}", 
-            address, speed, forward ? "Forward" : "Backward");
+        // Extract 14-bit address
+        var adrLsb = (byte)(address & 0x7F);
+        var adrMsb = (byte)((address >> 7) & 0x3F);
+
+        // Compute XOR checksum
+        byte[] packet = { 0xE4, 0x13, adrMsb, adrLsb, rv, 0 };
+        var xor = packet.Aggregate((byte)0, (current, b) => (byte)(current ^ b));
+        packet[packet.Length - 1] = xor;
+
+        _logger?.LogInformation("SetLocoDrive: Addr={Address}, Speed={Speed}, RV={RV}, Packet={Packet}", 
+            address, speed, rv, Z21Protocol.ToHex(packet));
+
+        await SendAsync(packet, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Sets a locomotive function on or off.
+    /// Sets a locomotive function on/off.
     /// LAN_X_SET_LOCO_FUNCTION: 0xE4 0xF8 Adr_MSB Adr_LSB TTNNNNNN XOR
     /// </summary>
-    /// <param name="address">DCC locomotive address (1-9999)</param>
-    /// <param name="functionIndex">Function index (0=F0/light, 1=F1/sound, etc.)</param>
-    /// <param name="on">True = function on, False = function off</param>
-    /// <param name="cancellationToken">Cancellation token</param>
     public async Task SetLocoFunctionAsync(int address, int functionIndex, bool on, CancellationToken cancellationToken = default)
     {
         if (address < 1 || address > 9999)
-            throw new ArgumentOutOfRangeException(nameof(address), "DCC address must be 1-9999");
-        if (functionIndex < 0 || functionIndex > 31)
-            throw new ArgumentOutOfRangeException(nameof(functionIndex), "Function index must be 0-31");
+            throw new ArgumentOutOfRangeException(nameof(address));
+        if (functionIndex < 0 || functionIndex > 28)
+            throw new ArgumentOutOfRangeException(nameof(functionIndex));
 
-        await SendCommandAsync(Z21Command.BuildSetLocoFunction(address, functionIndex, on), cancellationToken).ConfigureAwait(false);
-        _logger?.LogInformation("🚂 Loco {Address}: F{Function}={State}", 
-            address, functionIndex, on ? "ON" : "OFF");
+        var command = Z21Command.BuildSetLocoFunction(address, functionIndex, on);
+        await SendAsync(command, cancellationToken).ConfigureAwait(false);
+        _logger?.LogDebug("SetLocoFunction: Address={Address}, F{Function}={State}", address, functionIndex, on ? "ON" : "OFF");
     }
 
     /// <summary>
-    /// Requests locomotive information and subscribes to updates.
-    /// LAN_X_GET_LOCO_INFO: 0xE3 0xF0 Adr_MSB Adr_LSB XOR
-    /// Max 16 addresses can be subscribed per client (FIFO).
+    /// Requests locomotive information and subscribes to updates for this address.
     /// </summary>
-    /// <param name="address">DCC locomotive address (1-9999)</param>
-    /// <param name="cancellationToken">Cancellation token</param>
     public async Task GetLocoInfoAsync(int address, CancellationToken cancellationToken = default)
     {
         if (address < 1 || address > 9999)
-            throw new ArgumentOutOfRangeException(nameof(address), "DCC address must be 1-9999");
+            throw new ArgumentOutOfRangeException(nameof(address));
 
-        await SendCommandAsync(Z21Command.BuildGetLocoInfo(address), cancellationToken).ConfigureAwait(false);
-        _logger?.LogDebug("🚂 Requested loco info for address {Address}", address);
+        var command = Z21Command.BuildGetLocoInfo(address);
+        await SendAsync(command, cancellationToken).ConfigureAwait(false);
+        _logger?.LogDebug("GetLocoInfo: Address={Address}", address);
     }
     #endregion
 
-    #region IDisposable
-    public void Dispose()
+    #region Log & Debugging
+    /// <summary>
+    /// Forces the Z21 to send a status update immediately.
+    /// This is useful for debugging to check the current state of the Z21.
+    /// LAN_X_GET_STATUS (X-Header: 0x21, DB0: 0x24)
+    /// </summary>
+    public async Task DebugForceStatusUpdateAsync(CancellationToken cancellationToken = default)
     {
-        Dispose(true);
-        GC.SuppressFinalize(this);
+        await SendCommandAsync(Z21Command.BuildGetStatus(), cancellationToken).ConfigureAwait(false);
     }
 
-    protected virtual void Dispose(bool disposing)
+    /// <summary>
+    /// Sends a custom debug command to the Z21.
+    /// This can be used to test raw command sequences without modifying the firmware.
+    /// </summary>
+    /// <param name="command">The byte sequence containing the command for the Z21.</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    public async Task DebugSendCommandAsync(byte[] command, CancellationToken cancellationToken = default)
+    {
+        await SendAsync(command, cancellationToken).ConfigureAwait(false);
+    }
+    #endregion
+
+    #region RailCom Support (Prepared for Future Enhancement)
+    /// <summary>
+    /// Requests RailCom data for a specific locomotive.
+    /// NOT YET IMPLEMENTED - infrastructure prepared but inactive.
+    /// 
+    /// Future implementation will:
+    /// - Send LAN_RAILCOM_GETDATA command (0x89)
+    /// - Parse decoder-reported current consumption
+    /// - Parse decoder temperature
+    /// - Track RailCom quality metrics
+    /// </summary>
+    public Task GetRailComDataAsync(int address, CancellationToken cancellationToken = default)
+    {
+        _logger?.LogWarning("GetRailComDataAsync not yet implemented. RailCom support prepared but inactive.");
+        return Task.CompletedTask;
+    }
+    #endregion
+
+    #region Dispose
+    public void Dispose()
     {
         if (_disposed) return;
-        if (disposing)
-        {
-            StopKeepaliveTimer();
-            StopSystemStatePollingTimer();
-            _sendLock.Dispose();
-            _connectionLock.Dispose();
-            try { _udp.Dispose(); } catch { /* ignore */ }
-            _cancellationTokenSource?.Cancel();
-            _cancellationTokenSource?.Dispose();
-        }
+        
+        StopKeepaliveTimer();
+        StopSystemStatePollingTimer();
+        
+        _cancellationTokenSource?.Cancel();
+        _cancellationTokenSource?.Dispose();
+        
+        _sendLock.Dispose();
+        _connectionLock.Dispose();
+        
         _disposed = true;
     }
     #endregion

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Backend.Interface;
 
@@ -11,6 +11,7 @@ public delegate void Feedback(FeedbackResult feedbackContent);
 public delegate void SystemStateChanged(SystemState systemState);
 public delegate void XBusStatusChanged(XBusStatus status);
 public delegate void VersionInfoChanged(Z21VersionInfo versionInfo);
+public delegate void RailComDataChanged(RailComData railComData);
 
 public interface IZ21 : IDisposable
 {
@@ -20,6 +21,13 @@ public interface IZ21 : IDisposable
     event XBusStatusChanged? OnXBusStatusChanged;
     event VersionInfoChanged? OnVersionInfoChanged;
     event Action? OnConnectionLost;
+    
+    /// <summary>
+    /// Raised when RailCom data is received from a decoder.
+    /// Requires Z21 FW 1.29+ and RailCom-capable decoders.
+    /// Subscribe to BroadcastFlags 0x00040000 to receive automatic updates.
+    /// </summary>
+    event RailComDataChanged? OnRailComDataChanged;
     
     /// <summary>
     /// Raised when the connection state changes (true = connected and responding, false = disconnected).
@@ -123,4 +131,28 @@ public interface IZ21 : IDisposable
             /// Contains: address, speed, direction, function states.
             /// </summary>
             event Action<LocoInfo>? OnLocoInfoChanged;
+
+            // ==================== RailCom (Section 8) - Future Enhancement ====================
+
+            /// <summary>
+            /// Requests RailCom data for a specific locomotive.
+            /// LAN_RAILCOM_GETDATA: 07-00-89-00 + Type (0x01) + LocoAddr (16-bit little-endian)
+            /// 
+            /// RailCom allows bidirectional DCC communication:
+            /// - Decoder-reported current consumption
+            /// - Decoder temperature monitoring
+            /// - Position detection
+            /// - CV readback on main track
+            /// 
+            /// Requirements:
+            /// - Z21 firmware 1.29 or higher
+            /// - RailCom-capable decoder in locomotive
+            /// - RailCom enabled in Z21 settings
+            /// 
+            /// Note: Currently prepared but not yet fully implemented.
+            /// </summary>
+            /// <param name="address">DCC locomotive address (1-9999)</param>
+            /// <param name="cancellationToken">Cancellation token</param>
+            /// <returns>Task that completes when request is sent</returns>
+            Task GetRailComDataAsync(int address, CancellationToken cancellationToken = default);
         }
