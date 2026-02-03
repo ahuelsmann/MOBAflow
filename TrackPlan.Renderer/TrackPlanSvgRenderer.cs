@@ -27,6 +27,7 @@ public class TrackPlanSvgRenderer
     private double _minY = double.MaxValue;
     private double _maxX = double.MinValue;
     private double _maxY = double.MinValue;
+    private int _segmentIndex = 0; // Counter für wechselndes Farbschema
 
     /// <summary>
     /// Rendert einen TrackPlan in SVG-Format.
@@ -112,42 +113,45 @@ public class TrackPlanSvgRenderer
         double nextY = y;
         double nextAngle = angle;
 
+        // Segment-Index für Farbschema incrementieren
+        var currentSegmentIndex = _segmentIndex++;
+
         // Rendera dieses Segment
         if (segment is WR wr)
         {
-            RenderWR(wr, ref nextX, ref nextY, ref nextAngle);
+            RenderWR(wr, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
         else if (segment is R9 r9)
         {
-            RenderR9(r9, entryPort, ref nextX, ref nextY, ref nextAngle);
+            RenderR9(r9, entryPort, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
         else if (segment is R1 r1)
         {
-            RenderR1(r1, entryPort, ref nextX, ref nextY, ref nextAngle);
+            RenderR1(r1, entryPort, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
         else if (segment is R2 r2)
         {
-            RenderR2(r2, entryPort, ref nextX, ref nextY, ref nextAngle);
+            RenderR2(r2, entryPort, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
         else if (segment is R3 r3)
         {
-            RenderR3(r3, entryPort, ref nextX, ref nextY, ref nextAngle);
+            RenderR3(r3, entryPort, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
         else if (segment is R4 r4)
         {
-            RenderR4(r4, entryPort, ref nextX, ref nextY, ref nextAngle);
+            RenderR4(r4, entryPort, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
         else if (segment is G239 g239)
         {
-            RenderG239(g239, entryPort, ref nextX, ref nextY, ref nextAngle);
+            RenderG239(g239, entryPort, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
         else if (segment is G231 g231)
         {
-            RenderG231(g231, entryPort, ref nextX, ref nextY, ref nextAngle);
+            RenderG231(g231, entryPort, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
         else if (segment is G62 g62)
         {
-            RenderG62(g62, entryPort, ref nextX, ref nextY, ref nextAngle);
+            RenderG62(g62, entryPort, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
         else
         {
@@ -249,7 +253,7 @@ public class TrackPlanSvgRenderer
     /// 
     /// Aktualisiert Position für Weiterzeichnen zum Port-B-Ende.
     /// </summary>
-    private void RenderWR(WR wr, ref double x, ref double y, ref double angle)
+    private void RenderWR(WR wr, ref double x, ref double y, ref double angle, int segmentIndex)
     {
         var straightLength = wr.LengthInMm;
         var radius = wr.RadiusInMm;
@@ -258,7 +262,7 @@ public class TrackPlanSvgRenderer
         // Port A (Eingang) - physischer Port A (schwarz)
         double portAX = x;
         double portAY = y;
-        DrawPortStroke(portAX, portAY, angle, GetPortColor('A'), 'A');
+        DrawPortStroke(portAX, portAY, angle, GetPortColor('A', segmentIndex), 'A', true);
         UpdateBounds(portAX, portAY);
 
         // Port B (Gerade) - physischer Port B (rot) am Ende der Geraden
@@ -269,7 +273,7 @@ public class TrackPlanSvgRenderer
         _svg.AppendLine($"  <path d=\"M {portAX.ToString("F2", CultureInfo.InvariantCulture)},{portAY.ToString("F2", CultureInfo.InvariantCulture)} L {portBX.ToString("F2", CultureInfo.InvariantCulture)},{portBY.ToString("F2", CultureInfo.InvariantCulture)}\" " +
                        $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
 
-        DrawPortStroke(portBX, portBY, angle, GetPortColor('B'), 'B');
+        DrawPortStroke(portBX, portBY, angle, GetPortColor('B', segmentIndex), 'B', false);
         UpdateBounds(portBX, portBY);
 
         // Port C (Kurve) - physischer Port C (grün) am Ende der Kurve
@@ -288,7 +292,7 @@ public class TrackPlanSvgRenderer
         _svg.AppendLine($"  <path d=\"M {portAX.ToString("F2", CultureInfo.InvariantCulture)},{portAY.ToString("F2", CultureInfo.InvariantCulture)} A {radius},{radius} 0 {largeArc},{sweep} {portCX.ToString("F2", CultureInfo.InvariantCulture)},{portCY.ToString("F2", CultureInfo.InvariantCulture)}\" " +
                        $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
 
-        DrawPortStroke(portCX, portCY, endAngle, GetPortColor('C'), 'C');
+        DrawPortStroke(portCX, portCY, endAngle, GetPortColor('C', segmentIndex), 'C', false);
         UpdateBounds(portCX, portCY);
 
         // Position für nächstes Gleis aktualisieren
@@ -308,7 +312,7 @@ public class TrackPlanSvgRenderer
     /// - Entry A: Kurve nach links (curveDirection = 1)
     /// - Entry B: Kurve nach rechts (curveDirection = -1)
     /// </summary>
-    private void RenderR9(R9 r9, char entryPort, ref double x, ref double y, ref double angle)
+    private void RenderR9(R9 r9, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
     {
         var radius = r9.RadiusInMm;
         var arcDegree = r9.ArcInDegree;
@@ -343,11 +347,11 @@ public class TrackPlanSvgRenderer
 
         // Start-Port - physischer Port A oder B abhängig vom Entry
         char startPort = entryPort == 'A' ? 'A' : 'B';
-        DrawPortStroke(startX, startY, angle, GetPortColor(startPort), startPort);
+        DrawPortStroke(startX, startY, angle, GetPortColor(startPort, segmentIndex), startPort, true);
 
-        // End-Port - physischer Port B oder A abhängig vom Entry
+        // End-Port - physische Port B oder A abhängig vom Entry
         char endPort = entryPort == 'A' ? 'B' : 'A';
-        DrawPortStroke(endX, endY, endAngle, GetPortColor(endPort), endPort);
+        DrawPortStroke(endX, endY, endAngle, GetPortColor(endPort, segmentIndex), endPort, false);
 
         // Bounding box aktualisieren
         UpdateBounds(startX, startY);
@@ -369,7 +373,7 @@ public class TrackPlanSvgRenderer
     /// 
     /// Kurvenrichtung wird automatisch basierend auf Entry-Port angepasst.
     /// </summary>
-    private void RenderR1(R1 r1, char entryPort, ref double x, ref double y, ref double angle)
+    private void RenderR1(R1 r1, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
     {
         var radius = r1.RadiusInMm;
         var arcDegree = r1.ArcInDegree;
@@ -394,10 +398,10 @@ public class TrackPlanSvgRenderer
                        $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
 
         char startPort = entryPort == 'A' ? 'A' : 'B';
-        DrawPortStroke(startX, startY, angle, GetPortColor(startPort), startPort);
+        DrawPortStroke(startX, startY, angle, GetPortColor(startPort, segmentIndex), startPort, true);
 
         char endPort = entryPort == 'A' ? 'B' : 'A';
-        DrawPortStroke(endX, endY, endAngle, GetPortColor(endPort), endPort);
+        DrawPortStroke(endX, endY, endAngle, GetPortColor(endPort, segmentIndex), endPort, false);
 
         UpdateBounds(startX, startY);
         UpdateBounds(endX, endY);
@@ -417,7 +421,7 @@ public class TrackPlanSvgRenderer
     /// 
     /// Kurvenrichtung wird automatisch basierend auf Entry-Port angepasst.
     /// </summary>
-    private void RenderR2(R2 r2, char entryPort, ref double x, ref double y, ref double angle)
+    private void RenderR2(R2 r2, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
     {
         var radius = r2.RadiusInMm;
         var arcDegree = r2.ArcInDegree;
@@ -438,14 +442,14 @@ public class TrackPlanSvgRenderer
         int largeArc = arcDegree > 180 ? 1 : 0;
         int sweep = curveDirection == 1 ? 1 : 0;
 
-        _svg.AppendLine($"  <path d=\"M {startX.ToString("F2", CultureInfo.InvariantCulture)},{startY.ToString("F2", CultureInfo.InvariantCulture)} A {radius},{radius} 0 {largeArc},{sweep} {endX.ToString("F2",CultureInfo.InvariantCulture)},{endY.ToString("F2", CultureInfo.InvariantCulture)}\" " +
+        _svg.AppendLine($"  <path d=\"M {startX.ToString("F2", CultureInfo.InvariantCulture)},{startY.ToString("F2", CultureInfo.InvariantCulture)} A {radius},{radius} 0 {largeArc},{sweep} {endX.ToString("F2", CultureInfo.InvariantCulture)},{endY.ToString("F2", CultureInfo.InvariantCulture)}\" " +
                        $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
 
         char startPort = entryPort == 'A' ? 'A' : 'B';
-        DrawPortStroke(startX, startY, angle, GetPortColor(startPort), startPort);
+        DrawPortStroke(startX, startY, angle, GetPortColor(startPort, segmentIndex), startPort, true);
 
         char endPort = entryPort == 'A' ? 'B' : 'A';
-        DrawPortStroke(endX, endY, endAngle, GetPortColor(endPort), endPort);
+        DrawPortStroke(endX, endY, endAngle, GetPortColor(endPort, segmentIndex), endPort, false);
 
         UpdateBounds(startX, startY);
         UpdateBounds(endX, endY);
@@ -465,7 +469,7 @@ public class TrackPlanSvgRenderer
     /// 
     /// Kurvenrichtung wird automatisch basierend auf Entry-Port angepasst.
     /// </summary>
-    private void RenderR3(R3 r3, char entryPort, ref double x, ref double y, ref double angle)
+    private void RenderR3(R3 r3, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
     {
         var radius = r3.RadiusInMm;
         var arcDegree = r3.ArcInDegree;
@@ -490,10 +494,10 @@ public class TrackPlanSvgRenderer
                        $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
 
         char startPort = entryPort == 'A' ? 'A' : 'B';
-        DrawPortStroke(startX, startY, angle, GetPortColor(startPort), startPort);
+        DrawPortStroke(startX, startY, angle, GetPortColor(startPort, segmentIndex), startPort, true);
 
         char endPort = entryPort == 'A' ? 'B' : 'A';
-        DrawPortStroke(endX, endY, endAngle, GetPortColor(endPort), endPort);
+        DrawPortStroke(endX, endY, endAngle, GetPortColor(endPort, segmentIndex), endPort, false);
 
         UpdateBounds(startX, startY);
         UpdateBounds(endX, endY);
@@ -513,7 +517,7 @@ public class TrackPlanSvgRenderer
     /// 
     /// Kurvenrichtung wird automatisch basierend auf Entry-Port angepasst.
     /// </summary>
-    private void RenderR4(R4 r4, char entryPort, ref double x, ref double y, ref double angle)
+    private void RenderR4(R4 r4, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
     {
         var radius = r4.RadiusInMm;
         var arcDegree = r4.ArcInDegree;
@@ -538,10 +542,10 @@ public class TrackPlanSvgRenderer
                        $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
 
         char startPort = entryPort == 'A' ? 'A' : 'B';
-        DrawPortStroke(startX, startY, angle, GetPortColor(startPort), startPort);
+        DrawPortStroke(startX, startY, angle, GetPortColor(startPort, segmentIndex), startPort, true);
 
         char endPort = entryPort == 'A' ? 'B' : 'A';
-        DrawPortStroke(endX, endY, endAngle, GetPortColor(endPort), endPort);
+        DrawPortStroke(endX, endY, endAngle, GetPortColor(endPort, segmentIndex), endPort, false);
 
         UpdateBounds(startX, startY);
         UpdateBounds(endX, endY);
@@ -561,7 +565,7 @@ public class TrackPlanSvgRenderer
     /// 
     /// Aktualisiert Position für Weiterzeichnen zum Port B.
     /// </summary>
-    private void RenderG239(G239 g239, char entryPort, ref double x, ref double y, ref double angle)
+    private void RenderG239(G239 g239, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
     {
         // Bei Entry-Port B: Gleis "umgekehrt"
         if (entryPort == 'B')
@@ -581,11 +585,11 @@ public class TrackPlanSvgRenderer
         _svg.AppendLine($"  <path d=\"M {portAX.ToString("F2", CultureInfo.InvariantCulture)},{portAY.ToString("F2", CultureInfo.InvariantCulture)} L {portBX.ToString("F2", CultureInfo.InvariantCulture)},{portBY.ToString("F2", CultureInfo.InvariantCulture)}\" " +
                        $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
 
-        // Port A - physische Farbe schwarz
-        DrawPortStroke(portAX, portAY, angle, GetPortColor('A'), 'A');
+        // Port A - physische Farbe
+        DrawPortStroke(portAX, portAY, angle, GetPortColor('A', segmentIndex), 'A', true);
 
-        // Port B - physische Farbe rot
-        DrawPortStroke(portBX, portBY, angle, GetPortColor('B'), 'B');
+        // Port B - physische Farbe
+        DrawPortStroke(portBX, portBY, angle, GetPortColor('B', segmentIndex), 'B', false);
 
         // Bounding box aktualisieren
         UpdateBounds(portAX, portAY);
@@ -606,7 +610,7 @@ public class TrackPlanSvgRenderer
     /// 
     /// Aktualisiert Position für Weiterzeichnen zum Port B.
     /// </summary>
-    private void RenderG231(G231 g231, char entryPort, ref double x, ref double y, ref double angle)
+    private void RenderG231(G231 g231, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
     {
         // Bei Entry-Port B: Gleis "umgekehrt"
         if (entryPort == 'B')
@@ -626,11 +630,11 @@ public class TrackPlanSvgRenderer
         _svg.AppendLine($"  <path d=\"M {portAX.ToString("F2", CultureInfo.InvariantCulture)},{portAY.ToString("F2", CultureInfo.InvariantCulture)} L {portBX.ToString("F2", CultureInfo.InvariantCulture)},{portBY.ToString("F2", CultureInfo.InvariantCulture)}\" " +
                        $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
 
-        // Port A - physische Farbe schwarz
-        DrawPortStroke(portAX, portAY, angle, GetPortColor('A'), 'A');
+        // Port A - physische Farbe
+        DrawPortStroke(portAX, portAY, angle, GetPortColor('A', segmentIndex), 'A', true);
 
-        // Port B - physische Farbe rot
-        DrawPortStroke(portBX, portBY, angle, GetPortColor('B'), 'B');
+        // Port B - physische Farbe
+        DrawPortStroke(portBX, portBY, angle, GetPortColor('B', segmentIndex), 'B', false);
 
         // Bounding box aktualisieren
         UpdateBounds(portAX, portAY);
@@ -651,7 +655,7 @@ public class TrackPlanSvgRenderer
     /// 
     /// Aktualisiert Position für Weiterzeichnen zum Port B.
     /// </summary>
-    private void RenderG62(G62 g62, char entryPort, ref double x, ref double y, ref double angle)
+    private void RenderG62(G62 g62, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
     {
         // Bei Entry-Port B: Gleis "umgekehrt"
         if (entryPort == 'B')
@@ -671,11 +675,11 @@ public class TrackPlanSvgRenderer
         _svg.AppendLine($"  <path d=\"M {portAX.ToString("F2", CultureInfo.InvariantCulture)},{portAY.ToString("F2", CultureInfo.InvariantCulture)} L {portBX.ToString("F2", CultureInfo.InvariantCulture)},{portBY.ToString("F2", CultureInfo.InvariantCulture)}\" " +
                        $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
 
-        // Port A - physische Farbe schwarz
-        DrawPortStroke(portAX, portAY, angle, GetPortColor('A'), 'A');
+        // Port A - physische Farbe
+        DrawPortStroke(portAX, portAY, angle, GetPortColor('A', segmentIndex), 'A', true);
 
-        // Port B - physische Farbe rot
-        DrawPortStroke(portBX, portBY, angle, GetPortColor('B'), 'B');
+        // Port B - physische Farbe
+        DrawPortStroke(portBX, portBY, angle, GetPortColor('B', segmentIndex), 'B', false);
 
         // Bounding box aktualisieren
         UpdateBounds(portAX, portAY);
@@ -728,44 +732,114 @@ public class TrackPlanSvgRenderer
     }
 
     /// <summary>
-    /// Zeichnet einen Port-Strich (senkrecht zum Endpunkt).
+    /// Zeichnet einen Port-Strich (senkrecht zum Endpunkt) mit überlappungsfreier Positionierung.
     /// Der Strich ist 20px lang und steht im rechten Winkel zur angegebenen Richtung.
+    /// 
+    /// Positionierung bei Verbindungen (z.B. A-R9-B + B-R9-A):
+    /// - Exit-Port (isEntry=false): Strich -2px VOR dem Verbindungspunkt (in Fahrtrichtung zurück)
+    /// - Entry-Port (isEntry=true): Strich +2px NACH dem Verbindungspunkt (in Fahrtrichtung vorwärts)
+    /// 
+    /// Dadurch überlappen Striche bei Verbindungen nicht (1-2px Abstand).
     /// </summary>
-    private void DrawPortStroke(double x, double y, double angle, string color, char portLabel)
+    /// <param name="x">Port X-Koordinate (Verbindungspunkt)</param>
+    /// <param name="y">Port Y-Koordinate (Verbindungspunkt)</param>
+    /// <param name="angle">Fahrtrichtung (in Grad)</param>
+    /// <param name="color">Strich-Farbe</param>
+    /// <param name="portLabel">Port-Label (A/B/C/D)</param>
+    /// <param name="isEntry">True wenn Entry-Port (+2px vorwärts), False wenn Exit-Port (-2px zurück)</param>
+    private void DrawPortStroke(double x, double y, double angle, string color, char portLabel, bool isEntry)
     {
         const double strokeLength = 20;
+        const double gap = 1; // 1px Abstand vom Verbindungspunkt (kante-an-kante)
+        const double labelOffsetParallel = 8; // 8px Abstand entlang Fahrtrichtung
+        const double labelOffsetPerpendicular = 12; // 12px Abstand senkrecht (ober/unterhalb Gleis)
         
         // Senkrecht zum Winkel = Winkel + 90°
         double perpAngle = angle + 90;
         
-        // Start und End des Strichs (zentriert auf dem Port-Punkt)
-        double x1 = x - (strokeLength / 2) * Math.Cos(perpAngle * Math.PI / 180);
-        double y1 = y - (strokeLength / 2) * Math.Sin(perpAngle * Math.PI / 180);
-        double x2 = x + (strokeLength / 2) * Math.Cos(perpAngle * Math.PI / 180);
-        double y2 = y + (strokeLength / 2) * Math.Sin(perpAngle * Math.PI / 180);
+        // Strich-Positionierung: ±1px vom Verbindungspunkt
+        // Exit: -1px zurück (in Fahrtrichtung), Entry: +1px vorwärts (in Fahrtrichtung)
+        double offset = isEntry ? gap : -gap;
+        
+        // Versetzung entlang der Fahrtrichtung
+        double baseOffsetX = offset * Math.Cos(angle * Math.PI / 180);
+        double baseOffsetY = offset * Math.Sin(angle * Math.PI / 180);
+        
+        // Start und End des Strichs (senkrecht zur Fahrtrichtung)
+        double x1 = x + baseOffsetX - (strokeLength / 2) * Math.Cos(perpAngle * Math.PI / 180);
+        double y1 = y + baseOffsetY - (strokeLength / 2) * Math.Sin(perpAngle * Math.PI / 180);
+        double x2 = x + baseOffsetX + (strokeLength / 2) * Math.Cos(perpAngle * Math.PI / 180);
+        double y2 = y + baseOffsetY + (strokeLength / 2) * Math.Sin(perpAngle * Math.PI / 180);
 
         // Strich zeichnen
         _svg.AppendLine($"  <line x1=\"{x1.ToString("F2", CultureInfo.InvariantCulture)}\" y1=\"{y1.ToString("F2", CultureInfo.InvariantCulture)}\" " +
                        $"x2=\"{x2.ToString("F2", CultureInfo.InvariantCulture)}\" y2=\"{y2.ToString("F2", CultureInfo.InvariantCulture)}\" " +
-                       $"stroke=\"{color}\" stroke-width=\"3\" />");
+                       $"stroke=\"{color}\" stroke-width=\"2\" />");
 
-        // Label neben dem Strich
-        double labelX = x + 25 * Math.Cos(perpAngle * Math.PI / 180);
-        double labelY = y + 25 * Math.Sin(perpAngle * Math.PI / 180);
+        // Label-Positionierung: SOWOHL entlang (±8px) ALS AUCH senkrecht (12px) versetzt
+        // Exit: -8px zurück, Entry: +8px vorwärts (entlang Fahrtrichtung)
+        double labelParallel = isEntry ? labelOffsetParallel : -labelOffsetParallel;
+        double labelBaseX = x + labelParallel * Math.Cos(angle * Math.PI / 180);
+        double labelBaseY = y + labelParallel * Math.Sin(angle * Math.PI / 180);
+        
+        // ZUSÄTZLICH: 12px senkrecht versetzt (ober/unterhalb des Gleises)
+        double labelX = labelBaseX + labelOffsetPerpendicular * Math.Cos(perpAngle * Math.PI / 180);
+        double labelY = labelBaseY + labelOffsetPerpendicular * Math.Sin(perpAngle * Math.PI / 180);
+        
         _svg.AppendLine($"  <text x=\"{labelX.ToString("F2", CultureInfo.InvariantCulture)}\" y=\"{labelY.ToString("F2", CultureInfo.InvariantCulture)}\" " +
                        $"font-size=\"14\" font-weight=\"bold\" fill=\"{color}\" text-anchor=\"middle\" dominant-baseline=\"middle\">{portLabel}</text>");
     }
 
     /// <summary>
-    /// Gibt die Standardfarbe für einen Port basierend auf seinem Namen zurück.
-    /// A=schwarz, B=rot, C=grün, D=blau
+    /// Gibt die Farbe für einen Port basierend auf seinem Namen und Gleis-Index zurück.
+    /// Wechselndes Farbschema pro Gleis für bessere Unterscheidbarkeit:
+    /// - Gerade Indices (0, 2, 4...): A=schwarz, B=rot, C=grün, D=blau
+    /// - Ungerade Indices (1, 3, 5...): A=grau, B=magenta, C=gelb, D=cyan
     /// </summary>
-    private string GetPortColor(char port) => port switch
+    /// <param name="port">Port-Character (A/B/C/D)</param>
+    /// <param name="segmentIndex">Index des Gleissegments (für Farbwechsel)</param>
+    /// <returns>Hex-Farbcode</returns>
+    private string GetPortColor(char port, int segmentIndex)
     {
-        'A' => "black",
-        'B' => "red",
-        'C' => "green",
-        'D' => "blue",
-        _ => "gray"
-    };
+        var scheme = segmentIndex % 2; // 0 oder 1
+        
+        if (scheme == 0)
+        {
+            // Schema 1: Klassische Farben
+            return port switch
+            {
+                'A' => "#000000", // Schwarz
+                'B' => "#FF0000", // Rot
+                'C' => "#00FF00", // Grün
+                'D' => "#0000FF", // Blau
+                _ => "#808080"    // Grau (Fallback)
+            };
+        }
+        else
+        {
+            // Schema 2: Alternative Farben
+            return port switch
+            {
+                'A' => "#808080", // Grau
+                'B' => "#FF00FF", // Magenta
+                'C' => "#FFFF00", // Gelb
+                'D' => "#00FFFF", // Cyan (Türkis)
+                _ => "#808080"    // Grau (Fallback)
+            };
+        }
+    }
+
+    /// <summary>
+    /// Zeichnet einen Verbindungspunkt (kleiner gefüllter Kreis) an der exakten Position wo zwei Gleise verbunden sind.
+    /// Wird verwendet um Verbindungen zwischen Gleisen visuell hervorzuheben.
+    /// </summary>
+    /// <param name="x">X-Koordinate des Verbindungspunkts</param>
+    /// <param name="y">Y-Koordinate des Verbindungspunkts</param>
+    /// <param name="color">Farbe des Verbindungspunkts (default: orange)</param>
+    private void DrawConnectionPoint(double x, double y, string color = "#FF6600")
+    {
+        const double radius = 5;
+        _svg.AppendLine($"  <circle cx=\"{x.ToString("F2", CultureInfo.InvariantCulture)}\" cy=\"{y.ToString("F2", CultureInfo.InvariantCulture)}\" " +
+                       $"r=\"{radius}\" fill=\"{color}\" stroke=\"#333\" stroke-width=\"1\" />");
+    }
 }
