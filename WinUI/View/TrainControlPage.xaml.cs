@@ -257,6 +257,13 @@ public sealed partial class TrainControlPage
         UpdateSpeedStepMarkers();
 
         _allLocomotives = await _locomotiveService.GetAllSeriesAsync().ConfigureAwait(false);
+
+        // Initialize AutoSuggestBox with saved locomotive series
+        if (!string.IsNullOrEmpty(ViewModel.SelectedLocoSeries))
+        {
+            LocoSeriesBox.Text = ViewModel.SelectedLocoSeries;
+            UpdateVmaxDisplay(); // Show Vmax display if a series is loaded from settings
+        }
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)

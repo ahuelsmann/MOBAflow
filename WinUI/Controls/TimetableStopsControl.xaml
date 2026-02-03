@@ -254,18 +254,14 @@
                                 FontSize="10"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 Text="Arr:" />
-                            <TextBlock
-                                FontSize="10"
-                                Text="{x:Bind NextStationArrivalValue, Mode=OneWay}" />
+                            <TextBlock FontSize="10" Text="{x:Bind NextStationArrivalValue, Mode=OneWay}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="4">
                             <TextBlock
                                 FontSize="10"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 Text="Dep:" />
-                            <TextBlock
-                                FontSize="10"
-                                Text="{x:Bind NextStationDepartureValue, Mode=OneWay}" />
+                            <TextBlock FontSize="10" Text="{x:Bind NextStationDepartureValue, Mode=OneWay}" />
                         </StackPanel>
                     </StackPanel>
                 </Grid>

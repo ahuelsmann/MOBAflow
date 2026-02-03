@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:Moba.WinUI.Controls"
     xmlns:converter="using:Moba.WinUI.Converter"
-   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     DataContext="{x:Bind ViewModel}"
@@ -34,10 +34,14 @@
                 Padding="32,20,32,20"
                 ColumnSpacing="24">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" MinWidth="150" />         <!-- Title -->
-                    <ColumnDefinition Width="*" MinWidth="250" />            <!-- Baureihe + Vmax -->
-                    <ColumnDefinition Width="Auto" MinWidth="80" />          <!-- Skin -->
-                    <ColumnDefinition Width="Auto" MinWidth="180" />         <!-- Emergency Stop -->
+                    <ColumnDefinition Width="Auto" MinWidth="150" />         
+                    <!--  Title  -->
+                    <ColumnDefinition Width="*" MinWidth="250" />            
+                    <!--  Baureihe + Vmax  -->
+                    <ColumnDefinition Width="Auto" MinWidth="80" />          
+                    <!--  Skin  -->
+                    <ColumnDefinition Width="Auto" MinWidth="180" />         
+                    <!--  Emergency Stop  -->
                 </Grid.ColumnDefinitions>
 
                 <StackPanel
@@ -46,10 +50,10 @@
                     Spacing="4">
                     <TextBlock
                         x:Name="TitleText"
+                        AutomationProperties.HeadingLevel="Level1"
                         FontSize="32"
                         FontWeight="SemiBold"
-                        Text="Train Control"
-                        AutomationProperties.HeadingLevel="Level1" />
+                        Text="Train Control" />
                 </StackPanel>
 
                 <!--  Locomotive Series Selection (Baureihe)  -->
@@ -63,12 +67,12 @@
                         x:Name="LocoSeriesBox"
                         Width="220"
                         VerticalAlignment="Center"
+                        AutomationProperties.HelpText="Enter locomotive series to set maximum speed"
+                        AutomationProperties.Name="Locomotive Series Selection"
                         PlaceholderText="Baureihe (z.B. BR 103)"
                         QuerySubmitted="LocoSeriesBox_QuerySubmitted"
                         SuggestionChosen="LocoSeriesBox_SuggestionChosen"
-                        TextChanged="LocoSeriesBox_TextChanged"
-                        AutomationProperties.Name="Locomotive Series Selection"
-                        AutomationProperties.HelpText="Enter locomotive series to set maximum speed">
+                        TextChanged="LocoSeriesBox_TextChanged">
                         <AutoSuggestBox.QueryIcon>
                             <FontIcon FontSize="12" Glyph="&#xE7C0;" />
                         </AutoSuggestBox.QueryIcon>
@@ -76,10 +80,10 @@
                     <StackPanel
                         x:Name="VmaxDisplay"
                         VerticalAlignment="Center"
+                        AutomationProperties.LiveSetting="Polite"
                         Orientation="Horizontal"
                         Spacing="4"
-                        Visibility="Collapsed"
-                        AutomationProperties.LiveSetting="Polite">
+                        Visibility="Collapsed">
                         <TextBlock
                             VerticalAlignment="Center"
                             FontSize="12"
@@ -88,11 +92,11 @@
                         <TextBlock
                             x:Name="VmaxText"
                             VerticalAlignment="Center"
+                            AutomationProperties.Name="Maximum Speed in kilometers per hour"
                             FontSize="12"
                             FontWeight="SemiBold"
                             Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                            Text="0"
-                            AutomationProperties.Name="Maximum Speed in kilometers per hour" />
+                            Text="0" />
                     </StackPanel>
                 </StackPanel>
 
@@ -101,9 +105,9 @@
                     x:Name="SkinSelectorButton"
                     Grid.Column="2"
                     VerticalAlignment="Center"
-                    ToolTipService.ToolTip="Select Skin (Alt+K)"
+                    AccessKey="K"
                     AutomationProperties.Name="Select Color Skin"
-                    AccessKey="K">
+                    ToolTipService.ToolTip="Select Skin (Alt+K)">
                     <Button.Content>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon FontSize="16" Glyph="&#xE790;" />
@@ -118,10 +122,10 @@
                                     FontWeight="SemiBold"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Text="SELECT SKIN" />
-                                <Button 
-                                    HorizontalAlignment="Stretch" 
-                                    Click="OnSkinSystemClicked"
-                                    AutomationProperties.Name="System Accent Color">
+                                <Button
+                                    HorizontalAlignment="Stretch"
+                                    AutomationProperties.Name="System Accent Color"
+                                    Click="OnSkinSystemClicked">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Border
                                             Width="20"
@@ -136,10 +140,10 @@
                                     FontSize="10"
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                     Text="COLOR SKINS" />
-                                <Button 
-                                    HorizontalAlignment="Stretch" 
-                                    Click="OnSkinBlueClicked"
-                                    AutomationProperties.Name="Blue Color Skin">
+                                <Button
+                                    HorizontalAlignment="Stretch"
+                                    AutomationProperties.Name="Blue Color Skin"
+                                    Click="OnSkinBlueClicked">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Border
                                             Width="20"
@@ -149,10 +153,10 @@
                                         <TextBlock VerticalAlignment="Center" Text="Blue" />
                                     </StackPanel>
                                 </Button>
-                                <Button 
-                                    HorizontalAlignment="Stretch" 
-                                    Click="OnSkinGreenClicked"
-                                    AutomationProperties.Name="Green Color Skin">
+                                <Button
+                                    HorizontalAlignment="Stretch"
+                                    AutomationProperties.Name="Green Color Skin"
+                                    Click="OnSkinGreenClicked">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Border
                                             Width="20"
@@ -162,10 +166,10 @@
                                         <TextBlock VerticalAlignment="Center" Text="Green" />
                                     </StackPanel>
                                 </Button>
-                                <Button 
-                                    HorizontalAlignment="Stretch" 
-                                    Click="OnSkinOrangeClicked"
-                                    AutomationProperties.Name="Orange Color Skin">
+                                <Button
+                                    HorizontalAlignment="Stretch"
+                                    AutomationProperties.Name="Orange Color Skin"
+                                    Click="OnSkinOrangeClicked">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Border
                                             Width="20"
@@ -175,10 +179,10 @@
                                         <TextBlock VerticalAlignment="Center" Text="Orange" />
                                     </StackPanel>
                                 </Button>
-                                <Button 
-                                    HorizontalAlignment="Stretch" 
-                                    Click="OnSkinRedClicked"
-                                    AutomationProperties.Name="Red Color Skin">
+                                <Button
+                                    HorizontalAlignment="Stretch"
+                                    AutomationProperties.Name="Red Color Skin"
+                                    Click="OnSkinRedClicked">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Border
                                             Width="20"
@@ -197,11 +201,11 @@
                     Grid.Column="3"
                     Padding="16,8"
                     VerticalAlignment="Center"
-                    Command="{x:Bind ViewModel.EmergencyStopCommand}"
-                    Style="{StaticResource DangerButtonStyle}"
-                    AutomationProperties.Name="Emergency Stop"
+                    AccessKey="S"
                     AutomationProperties.HelpText="Immediately stops the locomotive"
-                    AccessKey="S">
+                    AutomationProperties.Name="Emergency Stop"
+                    Command="{x:Bind ViewModel.EmergencyStopCommand}"
+                    Style="{StaticResource DangerButtonStyle}">
                     <StackPanel Orientation="Horizontal" Spacing="12">
                         <FontIcon
                             FontSize="18"
@@ -592,18 +596,18 @@
                     x:Name="TimetableStops"
                     Grid.Row="0"
                     Grid.Column="1"
-                    PreviousStationNameValue="{x:Bind ViewModel.PreviousStationName, Mode=OneWay}"
-                    PreviousStationArrivalValue="{x:Bind ViewModel.PreviousStationArrival, Mode=OneWay}"
-                    PreviousStationDepartureValue="{x:Bind ViewModel.PreviousStationDeparture, Mode=OneWay}"
-                    PreviousStationTrackValue="{x:Bind ViewModel.PreviousStationTrack, Mode=OneWay}"
-                    CurrentStationNameValue="{x:Bind ViewModel.CurrentStationName, Mode=OneWay}"
                     CurrentStationArrivalValue="{x:Bind ViewModel.CurrentStationArrival, Mode=OneWay}"
                     CurrentStationDepartureValue="{x:Bind ViewModel.CurrentStationDeparture, Mode=OneWay}"
+                    CurrentStationNameValue="{x:Bind ViewModel.CurrentStationName, Mode=OneWay}"
                     CurrentStationTrackValue="{x:Bind ViewModel.CurrentStationTrack, Mode=OneWay}"
-                    NextStationNameValue="{x:Bind ViewModel.NextStationName, Mode=OneWay}"
                     NextStationArrivalValue="{x:Bind ViewModel.NextStationArrival, Mode=OneWay}"
                     NextStationDepartureValue="{x:Bind ViewModel.NextStationDeparture, Mode=OneWay}"
-                    NextStationTrackValue="{x:Bind ViewModel.NextStationTrack, Mode=OneWay}" />
+                    NextStationNameValue="{x:Bind ViewModel.NextStationName, Mode=OneWay}"
+                    NextStationTrackValue="{x:Bind ViewModel.NextStationTrack, Mode=OneWay}"
+                    PreviousStationArrivalValue="{x:Bind ViewModel.PreviousStationArrival, Mode=OneWay}"
+                    PreviousStationDepartureValue="{x:Bind ViewModel.PreviousStationDeparture, Mode=OneWay}"
+                    PreviousStationNameValue="{x:Bind ViewModel.PreviousStationName, Mode=OneWay}"
+                    PreviousStationTrackValue="{x:Bind ViewModel.PreviousStationTrack, Mode=OneWay}" />
 
                 <!--  Bereich 4 (Bottom-Right): Placeholder  -->
                 <Border

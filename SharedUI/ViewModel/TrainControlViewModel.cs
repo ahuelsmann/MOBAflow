@@ -213,8 +213,8 @@ public partial class TrainControlViewModel : ObservableObject
 
     partial void OnSelectedLocoSeriesChanged(string value)
     {
-        // TODO: Persist to settings service
-        // _ = SaveSettingsAsync();
+        // Persist to settings
+        _ = SaveLocoSeriesSettingsAsync();
     }
 
     /// <summary>
@@ -227,8 +227,8 @@ public partial class TrainControlViewModel : ObservableObject
 
     partial void OnSelectedVmaxChanged(int value)
     {
-        // TODO: Persist to settings service
-        // _ = SaveSettingsAsync();
+        // Persist to settings
+        _ = SaveLocoSeriesSettingsAsync();
     }
 
     /// <summary>
@@ -613,8 +613,33 @@ public partial class TrainControlViewModel : ObservableObject
         RampIntervalMs = trainControl.SpeedRampIntervalMs;
         SpeedSteps = trainControl.SpeedSteps;
 
+        // Load locomotive series selection
+        SelectedLocoSeries = trainControl.SelectedLocoSeries;
+        SelectedVmax = trainControl.SelectedVmax;
+
         // Apply current preset
         ApplyCurrentPreset();
+    }
+
+    /// <summary>
+    /// Saves locomotive series selection to persistent settings.
+    /// </summary>
+    private async Task SaveLocoSeriesSettingsAsync()
+    {
+        try
+        {
+            if (_settingsService == null) return;
+
+            var settings = _settingsService.GetSettings();
+            settings.TrainControl.SelectedLocoSeries = SelectedLocoSeries;
+            settings.TrainControl.SelectedVmax = SelectedVmax;
+
+            await _settingsService.SaveSettingsAsync(settings).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Failed to save locomotive series settings");
+        }
     }
 
     /// <summary>

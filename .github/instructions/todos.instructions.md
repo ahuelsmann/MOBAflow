@@ -5,7 +5,7 @@ applyTo: '**'
 
 # MOBAflow TODOs
 
-> Letzte Aktualisierung: 2026-02-01 (Session 7 abgeschlossen - UI Refactoring & Journey Integration)
+> Letzte Aktualisierung: 2026-02-01 (Session 7 abgeschlossen - UI Refactoring, Journey Integration & Accessibility)
 
 ---
 
@@ -26,6 +26,10 @@ applyTo: '**'
   - Nachher: Grid.Column="1" (zwischen Title und Skin-Button)
 - ✅ Vmax-Display integriert (kollabiert wenn keine Baureihe ausgewählt)
 - ✅ Layout: `Train Control | [Baureihe] [Vmax] | [Skin] | [EMERGENCY STOP]`
+- ✅ Enter-Taste-Unterstützung für Baureihen-Auswahl verbessert
+  - 3-Stufen-Priorität: ChosenSuggestion → Exact Match → Partial Match
+  - AutoSuggestBox.Text wird auf vollständigen Namen aktualisiert
+  - Funktioniert mit Tastatur-Navigation (Pfeiltasten + Enter)
 
 **Journey Integration (SharedUI.ViewModel & WinUI.View)**
 - ✅ TrainControlViewModel erweitert um MainWindowViewModel
@@ -74,6 +78,7 @@ TimetableStopsControl (Data Binding)
 - ✅ Alle Änderungen kompilieren fehlerfrei
 - ✅ Keine Breaking Changes in bestehenden ViewModels
 - ✅ Rückwärtskompatibilität gewahrt (MainWindowViewModel optional)
+- ✅ Enter-Taste-Logik vollständig getestet
 
 ---
 
