@@ -11,7 +11,6 @@ public delegate void Feedback(FeedbackResult feedbackContent);
 public delegate void SystemStateChanged(SystemState systemState);
 public delegate void XBusStatusChanged(XBusStatus status);
 public delegate void VersionInfoChanged(Z21VersionInfo versionInfo);
-public delegate void RailComDataChanged(RailComData railComData);
 
 public interface IZ21 : IDisposable
 {
@@ -21,13 +20,6 @@ public interface IZ21 : IDisposable
     event XBusStatusChanged? OnXBusStatusChanged;
     event VersionInfoChanged? OnVersionInfoChanged;
     event Action? OnConnectionLost;
-    
-    /// <summary>
-    /// Raised when RailCom data is received from a decoder.
-    /// Requires Z21 FW 1.29+ and RailCom-capable decoders.
-    /// Subscribe to BroadcastFlags 0x00040000 to receive automatic updates.
-    /// </summary>
-    event RailComDataChanged? OnRailComDataChanged;
     
     /// <summary>
     /// Raised when the connection state changes (true = connected and responding, false = disconnected).

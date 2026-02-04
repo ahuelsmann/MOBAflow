@@ -30,7 +30,6 @@ public class Z21 : IZ21
     public event VersionInfoChanged? OnVersionInfoChanged;
     public event Action? OnConnectionLost;
     public event Action<bool>? OnConnectedChanged;
-    public event RailComDataChanged? OnRailComDataChanged;
 
     private readonly IUdpClientWrapper _udp;
     private readonly ILogger<Z21>? _logger;
@@ -38,9 +37,9 @@ public class Z21 : IZ21
     private CancellationTokenSource? _cancellationTokenSource;
     private Timer? _keepaliveTimer;
     private Timer? _systemStatePollingTimer;
-    private int _systemStatePollingIntervalSeconds = 0; // Default: 0 = disabled, use Z21 broadcasts only
+    private int _systemStatePollingIntervalSeconds;
     private int _keepAliveFailures;
-    private const int MAX_KEEPALIVE_FAILURES = 3;
+    private const int MaxKeepaliveFailures = 3;
 
     // Lock hierarchy (acquire from top to bottom to prevent deadlock):
     // 1. _connectionLock (protects Connect/Disconnect state)
@@ -263,7 +262,7 @@ public class Z21 : IZ21
     /// <summary>
     /// Sends a keepalive message (LAN_X_GET_STATUS) to the Z21.
     /// This prevents the Z21 from timing out inactive connections.
-    /// Tracks failures and triggers disconnect after MAX_KEEPALIVE_FAILURES consecutive failures.
+    /// Tracks failures and triggers disconnect after MaxKeepaliveFailures consecutive failures.
     /// </summary>
     private async Task SendKeepaliveAsync()
     {
@@ -310,12 +309,12 @@ public class Z21 : IZ21
         {
             _keepAliveFailures++;
             _logger?.LogWarning("Keep-Alive failed ({Failures}/{Max}): {Message}",
-                _keepAliveFailures, MAX_KEEPALIVE_FAILURES, ex.Message);
+                _keepAliveFailures, MaxKeepaliveFailures, ex.Message);
 
-            if (_keepAliveFailures >= MAX_KEEPALIVE_FAILURES)
+            if (_keepAliveFailures >= MaxKeepaliveFailures)
             {
                 _logger?.LogError("Z21 connection lost after {Max} failed Keep-Alives. Disconnecting...",
-                    MAX_KEEPALIVE_FAILURES);
+                    MaxKeepaliveFailures);
 
                 // Trigger disconnect on background thread to avoid deadlock
                 _ = Task.Run(async () => await HandleConnectionLostAsync().ConfigureAwait(false));

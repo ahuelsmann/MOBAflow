@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -10,25 +10,25 @@ using CommunityToolkit.Mvvm.ComponentModel;
 public partial class InPortStatistic : ObservableObject
 {
     [ObservableProperty]
-    private int inPort;
+    private int _inPort;
 
     [ObservableProperty]
-    private string name = string.Empty;
+    private string _name = string.Empty;
 
     [ObservableProperty]
-    private int count;
+    private int _count;
 
     [ObservableProperty]
-    private int targetLapCount = 10;
+    private int _targetLapCount = 10;
 
     [ObservableProperty]
-    private TimeSpan? lastLapTime;
+    private TimeSpan? _lastLapTime;
 
     [ObservableProperty]
-    private DateTime? lastFeedbackTime;
+    private DateTime? _lastFeedbackTime;
 
     [ObservableProperty]
-    private bool hasReceivedFirstLap;
+    private bool _hasReceivedFirstLap;
 
     /// <summary>
     /// Progress as percentage (0.0 to 1.0) for ProgressBar binding.

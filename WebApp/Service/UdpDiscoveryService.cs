@@ -13,10 +13,10 @@ using System.Text;
 /// </summary>
 public class UdpDiscoveryService : BackgroundService
 {
-    private const int DISCOVERY_PORT = 21106; // Different from Z21 (21105) to avoid conflicts
-    private const string DISCOVERY_REQUEST = "MOBAFLOW_DISCOVER";
-    private const string DISCOVERY_RESPONSE_PREFIX = "MOBAFLOW_REST_API";
-    private const string MULTICAST_ADDRESS = "239.255.42.99"; // Local network multicast
+    private const int DiscoveryPort = 21106; // Different from Z21 (21105) to avoid conflicts
+    private const string DiscoveryRequest = "MOBAFLOW_DISCOVER";
+    private const string DiscoveryResponsePrefix = "MOBAFLOW_REST_API";
+    private const string MulticastAddress = "239.255.42.99"; // Local network multicast
 
     private readonly ILogger<UdpDiscoveryService> _logger;
     private readonly IConfiguration _configuration;
@@ -30,7 +30,7 @@ public class UdpDiscoveryService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("UDP Discovery Service starting on Multicast {MulticastAddress}:{Port}", MULTICAST_ADDRESS, DISCOVERY_PORT);
+        _logger.LogInformation("UDP Discovery Service starting on Multicast {MulticastAddress}:{Port}", MulticastAddress, DiscoveryPort);
 
         try
         {
@@ -39,15 +39,15 @@ public class UdpDiscoveryService : BackgroundService
                 ExclusiveAddressUse = false
             };
 
-            var localEndPoint = new IPEndPoint(IPAddress.Any, DISCOVERY_PORT);
+            var localEndPoint = new IPEndPoint(IPAddress.Any, DiscoveryPort);
             _udpListener.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             _udpListener.Client.Bind(localEndPoint);
 
             // Join multicast group
-            var multicastAddress = IPAddress.Parse(MULTICAST_ADDRESS);
+            var multicastAddress = IPAddress.Parse(MulticastAddress);
             _udpListener.JoinMulticastGroup(multicastAddress);
 
-            _logger.LogInformation("✅ Joined Multicast group {MulticastAddress} on port {Port}", MULTICAST_ADDRESS, DISCOVERY_PORT);
+            _logger.LogInformation("✅ Joined Multicast group {MulticastAddress} on port {Port}", MulticastAddress, DiscoveryPort);
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -56,7 +56,7 @@ public class UdpDiscoveryService : BackgroundService
                     var result = await _udpListener.ReceiveAsync(stoppingToken);
                     var message = Encoding.UTF8.GetString(result.Buffer);
 
-                    if (message.Trim() == DISCOVERY_REQUEST)
+                    if (message.Trim() == DiscoveryRequest)
                     {
                         _logger.LogInformation("Received discovery request from {RemoteEndPoint}", result.RemoteEndPoint);
 
@@ -74,7 +74,7 @@ public class UdpDiscoveryService : BackgroundService
                         }
 
                         // Response format: "MOBAFLOW_REST_API|192.168.0.100|5000"
-                        var response = $"{DISCOVERY_RESPONSE_PREFIX}|{localIp}|{restPort}";
+                        var response = $"{DiscoveryResponsePrefix}|{localIp}|{restPort}";
                         var responseBytes = Encoding.UTF8.GetBytes(response);
 
                         // Send response back to client

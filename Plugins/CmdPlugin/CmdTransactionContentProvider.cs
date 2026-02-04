@@ -23,10 +23,6 @@ public sealed class CmdTransactionContentProvider
 {
     // MOBAcmd Corporate Colors (inspired by command-line interfaces)
     private static readonly Color CmdBlue = Color.FromArgb(255, 0, 102, 179);       // #0066B3 - Corporate Blue
-    private static readonly Color CmdGold = Color.FromArgb(255, 255, 193, 7);       // #FFC107 - Accent Gold
-    private static readonly Color CmdDarkBlue = Color.FromArgb(255, 0, 51, 102);    // #003366 - Dark Blue
-    private static readonly Color CmdLightGray = Color.FromArgb(255, 240, 240, 240); // #F0F0F0 - Light Gray
-    private static readonly Color CmdGreen = Color.FromArgb(255, 40, 167, 69);      // #28A745 - Success Green
 
     private readonly CmdPluginViewModel _viewModel;
 
@@ -404,15 +400,6 @@ public sealed class CmdTransactionContentProvider
         panel.Children.Add(shortcutGrid);
         card.Child = panel;
         return card;
-    }
-
-    private void CommandHistoryListView_ItemClick(object sender, ItemClickEventArgs e)
-    {
-        _ = sender;
-        if (e.ClickedItem is CommandHistoryItem item)
-        {
-            _viewModel.SelectHistoryItemCommand.Execute(item);
-        }
     }
 
     private void CmdMenuTreeView_ItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args)

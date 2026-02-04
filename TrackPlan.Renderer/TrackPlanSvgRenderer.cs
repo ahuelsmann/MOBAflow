@@ -27,7 +27,7 @@ public class TrackPlanSvgRenderer
     private double _minY = double.MaxValue;
     private double _maxX = double.MinValue;
     private double _maxY = double.MinValue;
-    private int _segmentIndex = 0; // Counter für wechselndes Farbschema
+    private int _segmentIndex; // Counter für wechselndes Farbschema
 
     /// <summary>
     /// Rendert einen TrackPlan in SVG-Format.

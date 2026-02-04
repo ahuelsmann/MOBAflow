@@ -52,8 +52,7 @@ public partial class TrainControlViewModel : ObservableObject
     {
         DccSpeedSteps.Steps14 => 13,
         DccSpeedSteps.Steps28 => 27,
-        DccSpeedSteps.Steps128 => 126,
-        _ => 126
+        DccSpeedSteps.Steps128 or _ => 126
     };
 
     /// <summary>

@@ -14,10 +14,10 @@ using System.Text;
 /// </summary>
 public sealed partial class UdpDiscoveryResponder : IDisposable
 {
-    private const int DISCOVERY_PORT = 21106;
-    private const string DISCOVERY_REQUEST = "MOBAFLOW_DISCOVER";
-    private const string DISCOVERY_RESPONSE_PREFIX = "MOBAFLOW_REST_API";
-    private const string MULTICAST_ADDRESS = "239.255.42.99";
+    private const int DiscoveryPort = 21106;
+    private const string DiscoveryRequest = "MOBAFLOW_DISCOVER";
+    private const string DiscoveryResponsePrefix = "MOBAFLOW_REST_API";
+    private const string MulticastAddress = "239.255.42.99";
 
     private readonly ILogger<UdpDiscoveryResponder> _logger;
     private readonly int _restApiPort;
@@ -46,7 +46,7 @@ public sealed partial class UdpDiscoveryResponder : IDisposable
         _cts = new CancellationTokenSource();
         _listenerTask = Task.Run(() => ListenAsync(_cts.Token));
         _logger.LogInformation("🔍 UDP Discovery responder started on Multicast {MulticastAddress}:{Port}",
-            MULTICAST_ADDRESS, DISCOVERY_PORT);
+            MulticastAddress, DiscoveryPort);
     }
 
     /// <summary>
@@ -68,16 +68,16 @@ public sealed partial class UdpDiscoveryResponder : IDisposable
                 ExclusiveAddressUse = false
             };
 
-            var localEndPoint = new IPEndPoint(IPAddress.Any, DISCOVERY_PORT);
+            var localEndPoint = new IPEndPoint(IPAddress.Any, DiscoveryPort);
             _udpListener.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             _udpListener.Client.Bind(localEndPoint);
 
             // Join multicast group to receive discovery requests
-            var multicastAddress = IPAddress.Parse(MULTICAST_ADDRESS);
+            var multicastAddress = IPAddress.Parse(MulticastAddress);
             _udpListener.JoinMulticastGroup(multicastAddress);
 
             _logger.LogInformation("✅ Joined Multicast group {MulticastAddress} - listening for MAUI discovery requests",
-                MULTICAST_ADDRESS);
+                MulticastAddress);
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -86,12 +86,12 @@ public sealed partial class UdpDiscoveryResponder : IDisposable
                     var result = await _udpListener.ReceiveAsync(cancellationToken);
                     var message = Encoding.UTF8.GetString(result.Buffer);
 
-                    if (message.Trim() == DISCOVERY_REQUEST)
+                    if (message.Trim() == DiscoveryRequest)
                     {
                         _logger.LogInformation("📱 Discovery request received from {RemoteEndPoint}", result.RemoteEndPoint);
 
                         var localIp = GetLocalIPAddress();
-                        var response = $"{DISCOVERY_RESPONSE_PREFIX}|{localIp}|{_restApiPort}";
+                        var response = $"{DiscoveryResponsePrefix}|{localIp}|{_restApiPort}";
                         var responseBytes = Encoding.UTF8.GetBytes(response);
 
                         await _udpListener.SendAsync(responseBytes, result.RemoteEndPoint, cancellationToken);
@@ -116,7 +116,7 @@ public sealed partial class UdpDiscoveryResponder : IDisposable
         catch (SocketException ex)
         {
             _logger.LogWarning("UDP Discovery responder could not bind to port {Port}: {Message}",
-                DISCOVERY_PORT, ex.Message);
+                DiscoveryPort, ex.Message);
         }
         catch (Exception ex)
         {

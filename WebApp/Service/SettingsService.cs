@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WebApp.Service;
 
 using Common.Configuration;
@@ -64,7 +64,7 @@ public class SettingsService : ISettingsService
     public string? LastSolutionPath
     {
         get => _settings.Application.LastSolutionPath;
-        set => _settings.Application.LastSolutionPath = value;
+        set => _settings.Application.LastSolutionPath = value ?? string.Empty;
     }
 
     /// <summary>

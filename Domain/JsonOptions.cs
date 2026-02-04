@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
 using System.Text.Json;
@@ -10,12 +10,12 @@ using System.Text.Json.Serialization;
 /// </summary>
 public static class JsonOptions
 {
-    private static readonly JsonSerializerOptions _default;
-    private static readonly JsonSerializerOptions _compact;
+    public static readonly JsonSerializerOptions Default;
+    public static readonly JsonSerializerOptions Compact;
 
     static JsonOptions()
     {
-        _default = new()
+        Default = new()
         {
             WriteIndented = true,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -23,7 +23,7 @@ public static class JsonOptions
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        _compact = new()
+        Compact = new()
         {
             WriteIndented = false,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
@@ -33,17 +33,6 @@ public static class JsonOptions
     }
 
     /// <summary>
-    /// Default JSON serializer options with all custom converters configured.
-    /// </summary>
-    public static JsonSerializerOptions Default => _default;
-
-    /// <summary>
-    /// Compact JSON serializer options (no indentation).
-    /// Useful for API responses and data transmission.
-    /// </summary>
-    public static JsonSerializerOptions Compact => _compact;
-
-    /// <summary>
     /// Initializes JSON converters for custom types.
     /// Must be called at application startup before serializing polymorphic types.
     /// </summary>
@@ -51,8 +40,8 @@ public static class JsonOptions
     {
         foreach (var converter in converters)
         {
-            _default.Converters.Add(converter);
-            _compact.Converters.Add(converter);
+            Default.Converters.Add(converter);
+            Compact.Converters.Add(converter);
         }
     }
 }

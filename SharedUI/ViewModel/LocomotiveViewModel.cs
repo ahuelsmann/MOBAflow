@@ -3,8 +3,10 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
 using Domain.Enum;
+
 using Interface;
 
 /// <summary>
@@ -15,8 +17,8 @@ public partial class LocomotiveViewModel : ObservableObject, IViewModelWrapper<L
     #region Fields
     // Model
     [ObservableProperty]
-    private Locomotive model;
-    private int photoVersion;
+    private Locomotive _model;
+    private int _photoVersion;
     #endregion
 
     public LocomotiveViewModel(Locomotive model)
@@ -26,8 +28,9 @@ public partial class LocomotiveViewModel : ObservableObject, IViewModelWrapper<L
 
     partial void OnModelChanged(Locomotive value)
     {
+        _ = value;
         // Reset photo version and notify UI when model changes
-        photoVersion = 0;
+        _photoVersion = 0;
         OnPropertyChanged(nameof(PhotoPath));
         OnPropertyChanged(nameof(PhotoPathWithVersion));
         OnPropertyChanged(nameof(HasPhoto));
@@ -113,14 +116,14 @@ public partial class LocomotiveViewModel : ObservableObject, IViewModelWrapper<L
             // Always update photoVersion even if path hasn't changed (e.g., file overwrite)
             if (SetProperty(Model.PhotoPath, value, Model, (m, v) => m.PhotoPath = v))
             {
-                photoVersion++;
+                _photoVersion++;
                 OnPropertyChanged(nameof(PhotoPathWithVersion));
                 OnPropertyChanged(nameof(HasPhoto));
             }
             else if (value != null)
             {
                 // Path didn't change but we still want to refresh the image (cache busting)
-                photoVersion++;
+                _photoVersion++;
                 OnPropertyChanged(nameof(PhotoPathWithVersion));
             }
         }
@@ -129,25 +132,25 @@ public partial class LocomotiveViewModel : ObservableObject, IViewModelWrapper<L
     /// <summary>
     /// Cache-busting photo path for UI bindings.
     /// </summary>
-    public string? PhotoPathWithVersion => string.IsNullOrWhiteSpace(Model.PhotoPath) ? null : $"{Model.PhotoPath}?v={photoVersion}";
+    public string? PhotoPathWithVersion => string.IsNullOrWhiteSpace(Model.PhotoPath) ? null : $"{Model.PhotoPath}?v={_photoVersion}";
 
     /// <summary>
     /// Returns true if a photo is assigned to this locomotive.
     /// </summary>
     public bool HasPhoto => !string.IsNullOrWhiteSpace(Model.PhotoPath);
 
-        [ObservableProperty]
-        private IAsyncRelayCommand? browsePhotoCommand;
+    [ObservableProperty]
+    private IAsyncRelayCommand? _browsePhotoCommand;
 
-        [ObservableProperty]
-        private IRelayCommand? deletePhotoCommand;
+    [ObservableProperty]
+    private IRelayCommand? _deletePhotoCommand;
 
-        [ObservableProperty]
-        private IRelayCommand? showInExplorerCommand;
+    [ObservableProperty]
+    private IRelayCommand? _showInExplorerCommand;
 
-        /// <summary>
-        /// Command to open/preview the photo. Set by the hosting page.
-        /// </summary>
-        [ObservableProperty]
-        private IRelayCommand? openPhotoCommand;
-    }
+    /// <summary>
+    /// Command to open/preview the photo. Set by the hosting page.
+    /// </summary>
+    [ObservableProperty]
+    private IRelayCommand? _openPhotoCommand;
+}

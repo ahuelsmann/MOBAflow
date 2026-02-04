@@ -1,31 +1,63 @@
 {
     "$schema": "https://aka.ms/vs/mcp/schema",
     "servers": {
-        "azure-devops": {
-            "type": "stdio",
+        "azure": {
+            "args": [ "-y", "@azure/mcp@latest", "server", "start" ],
             "command": "npx",
+            "type": "stdio"
+        },
+        "azure-devops": {
             "args": [ "-y", "@azure-devops/mcp@latest" ],
+            "command": "npx",
             "env": {
                 "AZURE_DEVOPS_ORG_URL": "https://dev.azure.com/ahuelsmann"
-            }
+            },
+            "type": "stdio"
+        },
+        "documents": {
+            "args": [ "-y", "@modelcontextprotocol/server-documents@latest" ],
+            "command": "npx",
+            "type": "stdio"
         },
         "github": {
             "type": "http",
             "url": "https://api.githubcopilot.com/mcp/"
         },
+        "markitdown": {
+            "args": [ "-y", "@phdcoder/markitdown-mcp@latest" ],
+            "command": "npx",
+            "type": "stdio"
+        },
         "microsoft-learn": {
             "type": "http",
-            "url": "https://learn.microsoft.com/api/mcp"
+            "url": "https://learn.microsoft.com/mcp/"
         },
-        "azure": {
-            "type": "stdio",
+        "nuget": {
+            "args": [ "-y", "@modelcontextprotocol/server-nuget@latest" ],
             "command": "npx",
-            "args": [ "-y", "@azure/mcp@latest", "server", "start" ]
+            "type": "stdio"
         },
-        "markitdown": {
-            "type": "stdio",
+        "openapi": {
+            "args": [ "-y", "@modelcontextprotocol/server-openapi@latest" ],
             "command": "npx",
-            "args": [ "-y", "@phdcoder/markitdown-mcp@latest" ]
+            "env": {
+                "OPENAPI_SPEC_URLS": "https://localhost:5001/swagger/v1/swagger.json"
+            },
+            "type": "stdio"
+        },
+        "filesystem": {
+            "args": [ "-y", "@modelcontextprotocol/server-filesystem@latest" ],
+            "command": "npx",
+            "env": {
+                "MCP_FILESYSTEM_ROOT": ".",
+                "MCP_FILESYSTEM_ENABLE_DELETE": "false"
+            },
+            "type": "stdio"
+        },
+        "ripgrep": {
+            "args": [ "-y", "@modelcontextprotocol/server-ripgrep@latest" ],
+            "command": "npx",
+            "type": "stdio"
         }
     }
 }

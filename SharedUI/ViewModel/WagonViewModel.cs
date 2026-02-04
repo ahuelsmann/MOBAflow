@@ -15,7 +15,7 @@ public partial class WagonViewModel : ObservableObject, IViewModelWrapper<Wagon>
     #region Fields
     // Model (ObservableProperty - mutable reference)
     [ObservableProperty]
-    private Wagon model;
+    private Wagon _model;
     #endregion
 
     public WagonViewModel(Wagon model)
@@ -25,8 +25,9 @@ public partial class WagonViewModel : ObservableObject, IViewModelWrapper<Wagon>
 
     partial void OnModelChanged(Wagon value)
     {
+        _ = value;
         // Reset photo version and notify UI when model changes
-        photoVersion = 0;
+        _photoVersion = 0;
         OnPropertyChanged(nameof(PhotoPath));
         OnPropertyChanged(nameof(PhotoPathWithVersion));
         OnPropertyChanged(nameof(HasPhoto));
@@ -98,7 +99,7 @@ public partial class WagonViewModel : ObservableObject, IViewModelWrapper<Wagon>
         set => SetProperty(Model.DeliveryDate, value, Model, (m, v) => m.DeliveryDate = v);
     }
 
-    private int photoVersion;
+    private int _photoVersion;
 
     public string? PhotoPath
     {
@@ -108,14 +109,14 @@ public partial class WagonViewModel : ObservableObject, IViewModelWrapper<Wagon>
             // Always update photoVersion even if path hasn't changed (e.g., file overwrite)
             if (SetProperty(Model.PhotoPath, value, Model, (m, v) => m.PhotoPath = v))
             {
-                photoVersion++;
+                _photoVersion++;
                 OnPropertyChanged(nameof(PhotoPathWithVersion));
                 OnPropertyChanged(nameof(HasPhoto));
             }
             else if (value != null)
             {
                 // Path didn't change but we still want to refresh the image (cache busting)
-                photoVersion++;
+                _photoVersion++;
                 OnPropertyChanged(nameof(PhotoPathWithVersion));
             }
         }
@@ -124,7 +125,7 @@ public partial class WagonViewModel : ObservableObject, IViewModelWrapper<Wagon>
     /// <summary>
     /// Cache-busting photo path for UI bindings.
     /// </summary>
-    public string? PhotoPathWithVersion => string.IsNullOrWhiteSpace(Model.PhotoPath) ? null : $"{Model.PhotoPath}?v={photoVersion}";
+    public string? PhotoPathWithVersion => string.IsNullOrWhiteSpace(Model.PhotoPath) ? null : $"{Model.PhotoPath}?v={_photoVersion}";
 
     /// <summary>
     /// Returns true if a photo is assigned to this wagon.
@@ -132,17 +133,17 @@ public partial class WagonViewModel : ObservableObject, IViewModelWrapper<Wagon>
     public bool HasPhoto => !string.IsNullOrWhiteSpace(Model.PhotoPath);
 
         [ObservableProperty]
-        private IAsyncRelayCommand? browsePhotoCommand;
+        private IAsyncRelayCommand? _browsePhotoCommand;
 
         [ObservableProperty]
-        private IRelayCommand? deletePhotoCommand;
+        private IRelayCommand? _deletePhotoCommand;
 
         [ObservableProperty]
-        private IRelayCommand? showInExplorerCommand;
+        private IRelayCommand? _showInExplorerCommand;
 
         /// <summary>
         /// Command to open/preview the photo. Set by the hosting page.
         /// </summary>
         [ObservableProperty]
-        private IRelayCommand? openPhotoCommand;
+        private IRelayCommand? _openPhotoCommand;
     }

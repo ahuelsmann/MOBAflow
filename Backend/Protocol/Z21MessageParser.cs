@@ -117,56 +117,56 @@ public static class Z21MessageParser
             
             if (data.Length >= 9)
             {
-                byte f0_4 = data[9];
-                if ((f0_4 & 0x10) != 0) functions |= 0x01; // F0 (light)
-                if ((f0_4 & 0x01) != 0) functions |= 0x02; // F1
-                if ((f0_4 & 0x02) != 0) functions |= 0x04; // F2
-                if ((f0_4 & 0x04) != 0) functions |= 0x08; // F3
-                if ((f0_4 & 0x08) != 0) functions |= 0x10; // F4
+                byte f04 = data[9];
+                if ((f04 & 0x10) != 0) functions |= 0x01; // F0 (light)
+                if ((f04 & 0x01) != 0) functions |= 0x02; // F1
+                if ((f04 & 0x02) != 0) functions |= 0x04; // F2
+                if ((f04 & 0x04) != 0) functions |= 0x08; // F3
+                if ((f04 & 0x08) != 0) functions |= 0x10; // F4
             }
 
             if (data.Length >= 10)
             {
-                byte f5_8 = data[10];
-                if ((f5_8 & 0x01) != 0) functions |= 0x20; // F5
-                if ((f5_8 & 0x02) != 0) functions |= 0x40; // F6
-                if ((f5_8 & 0x04) != 0) functions |= 0x80; // F7
-                if ((f5_8 & 0x08) != 0) functions |= 0x100; // F8
+                byte f58 = data[10];
+                if ((f58 & 0x01) != 0) functions |= 0x20; // F5
+                if ((f58 & 0x02) != 0) functions |= 0x40; // F6
+                if ((f58 & 0x04) != 0) functions |= 0x80; // F7
+                if ((f58 & 0x08) != 0) functions |= 0x100; // F8
             }
 
             if (data.Length >= 11)
             {
-                byte f9_12 = data[11];
-                if ((f9_12 & 0x01) != 0) functions |= 0x200; // F9
-                if ((f9_12 & 0x02) != 0) functions |= 0x400; // F10
-                if ((f9_12 & 0x04) != 0) functions |= 0x800; // F11
-                if ((f9_12 & 0x08) != 0) functions |= 0x1000; // F12
+                byte f912 = data[11];
+                if ((f912 & 0x01) != 0) functions |= 0x200; // F9
+                if ((f912 & 0x02) != 0) functions |= 0x400; // F10
+                if ((f912 & 0x04) != 0) functions |= 0x800; // F11
+                if ((f912 & 0x08) != 0) functions |= 0x1000; // F12
             }
 
             if (data.Length >= 12)
             {
-                byte f13_20 = data[12];
-                if ((f13_20 & 0x01) != 0) functions |= 0x2000; // F13
-                if ((f13_20 & 0x02) != 0) functions |= 0x4000; // F14
-                if ((f13_20 & 0x04) != 0) functions |= 0x8000; // F15
-                if ((f13_20 & 0x08) != 0) functions |= 0x10000; // F16
-                if ((f13_20 & 0x10) != 0) functions |= 0x20000; // F17
-                if ((f13_20 & 0x20) != 0) functions |= 0x40000; // F18
-                if ((f13_20 & 0x40) != 0) functions |= 0x80000; // F19
-                if ((f13_20 & 0x80) != 0) functions |= 0x100000; // F20
+                byte f1320 = data[12];
+                if ((f1320 & 0x01) != 0) functions |= 0x2000; // F13
+                if ((f1320 & 0x02) != 0) functions |= 0x4000; // F14
+                if ((f1320 & 0x04) != 0) functions |= 0x8000; // F15
+                if ((f1320 & 0x08) != 0) functions |= 0x10000; // F16
+                if ((f1320 & 0x10) != 0) functions |= 0x20000; // F17
+                if ((f1320 & 0x20) != 0) functions |= 0x40000; // F18
+                if ((f1320 & 0x40) != 0) functions |= 0x80000; // F19
+                if ((f1320 & 0x80) != 0) functions |= 0x100000; // F20
             }
 
             if (data.Length >= 13)
             {
-                byte f21_28 = data[13];
-                if ((f21_28 & 0x01) != 0) functions |= 0x200000; // F21
-                if ((f21_28 & 0x02) != 0) functions |= 0x400000; // F22
-                if ((f21_28 & 0x04) != 0) functions |= 0x800000; // F23
-                if ((f21_28 & 0x08) != 0) functions |= 0x1000000; // F24
-                if ((f21_28 & 0x10) != 0) functions |= 0x2000000; // F25
-                if ((f21_28 & 0x20) != 0) functions |= 0x4000000; // F26
-                if ((f21_28 & 0x40) != 0) functions |= 0x8000000; // F27
-                if ((f21_28 & 0x80) != 0) functions |= 0x10000000; // F28
+                byte f2128 = data[13];
+                if ((f2128 & 0x01) != 0) functions |= 0x200000; // F21
+                if ((f2128 & 0x02) != 0) functions |= 0x400000; // F22
+                if ((f2128 & 0x04) != 0) functions |= 0x800000; // F23
+                if ((f2128 & 0x08) != 0) functions |= 0x1000000; // F24
+                if ((f2128 & 0x10) != 0) functions |= 0x2000000; // F25
+                if ((f2128 & 0x20) != 0) functions |= 0x4000000; // F26
+                if ((f2128 & 0x40) != 0) functions |= 0x8000000; // F27
+                if ((f2128 & 0x80) != 0) functions |= 0x10000000; // F28
             }
 
             locoInfo = new LocoInfo
@@ -174,7 +174,12 @@ public static class Z21MessageParser
                 Address = address,
                 Speed = speed,
                 IsForward = forward,
-                SpeedSteps = speedSteps switch { 0 => 14, 2 => 28, 3 => 128, _ => 128 },
+                SpeedSteps = speedSteps switch
+                {
+                    0 => 14,
+                    2 => 28,
+                    _ => 128  // Default to 128 for unknown values
+                },
                 Functions = functions
             };
 

@@ -786,7 +786,7 @@ public partial class MainWindowViewModel
     /// Command to select a speech engine from the UI.
     /// </summary>
     public IRelayCommand<string> SelectSpeechEngineCommand =>
-        field ??= new RelayCommand<string>(engine => SelectedSpeechEngine = engine);
+        field ??= new RelayCommand<string>(engine => SelectedSpeechEngine = engine ?? string.Empty);
 
     [RelayCommand]
     private async Task TestSpeechAsync()

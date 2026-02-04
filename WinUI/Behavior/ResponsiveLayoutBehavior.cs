@@ -157,8 +157,7 @@ public sealed class ResponsiveLayoutBehavior : Behavior<FrameworkElement>
             {
                 ResponsiveMode.Compact => CompactStateName,
                 ResponsiveMode.Medium => MediumStateName,
-                ResponsiveMode.Wide => WideStateName,
-                _ => WideStateName
+                ResponsiveMode.Wide or _ => WideStateName
             };
 
             VisualStateManager.GoToState(AssociatedObject as Control, stateName, true);

@@ -201,14 +201,15 @@ public class SettingsService : ISettingsService
     /// Gets or sets the path to the last loaded solution file.
     /// Stored in AppSettings.Application.LastSolutionPath.
     /// </summary>
-    public string LastSolutionPath
+    public string? LastSolutionPath
     {
         get => _settings.Application.LastSolutionPath;
         set
         {
-            if (_settings.Application.LastSolutionPath != value)
+            var nonNullValue = value ?? string.Empty;
+            if (_settings.Application.LastSolutionPath != nonNullValue)
             {
-                _settings.Application.LastSolutionPath = value;
+                _settings.Application.LastSolutionPath = nonNullValue;
                 _ = SaveSettingsAsync(_settings);
             }
         }

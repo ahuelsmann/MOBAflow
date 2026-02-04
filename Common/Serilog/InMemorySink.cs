@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Common.Serilog;
 
 using global::Serilog.Core;
@@ -11,7 +11,7 @@ using System.Collections.Concurrent;
 /// </summary>
 public class InMemorySink : ILogEventSink
 {
-    private static readonly ConcurrentQueue<LogEntry> _logEntries = new();
+    private static readonly ConcurrentQueue<LogEntry> LogEntries = new();
     private const int MaxLogEntries = 500;
 
     /// <summary>
@@ -22,12 +22,12 @@ public class InMemorySink : ILogEventSink
     /// <summary>
     /// Gets all log entries (newest first).
     /// </summary>
-    public static IEnumerable<LogEntry> GetLogEntries() => _logEntries.Reverse();
+    public static IEnumerable<LogEntry> GetLogEntries() => LogEntries.Reverse();
 
     /// <summary>
     /// Clears all log entries.
     /// </summary>
-    public static void ClearLogs() => _logEntries.Clear();
+    public static void ClearLogs() => LogEntries.Clear();
 
     public void Emit(LogEvent logEvent)
     {
@@ -55,12 +55,12 @@ public class InMemorySink : ILogEventSink
             Message = logEvent.RenderMessage()
         };
 
-        _logEntries.Enqueue(entry);
+        LogEntries.Enqueue(entry);
 
         // Keep only last N entries
-        while (_logEntries.Count > MaxLogEntries)
+        while (LogEntries.Count > MaxLogEntries)
         {
-            _logEntries.TryDequeue(out _);
+            LogEntries.TryDequeue(out _);
         }
 
         LogAdded?.Invoke(entry);

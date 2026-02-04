@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
 using System.Diagnostics;
@@ -9,9 +9,9 @@ using System.Diagnostics;
 /// </summary>
 public static class FirewallHelper
 {
-    private const string RULE_NAME_UDP = "MOBAflow WebApp UDP Discovery";
-    private const string RULE_NAME_HTTP_PREFIX = "MOBAflow WebApp REST-API";
-    private const int UDP_PORT = 21106;
+    private const string RuleNameUdp = "MOBAflow WebApp UDP Discovery";
+    private const string RuleNameHttpPrefix = "MOBAflow WebApp REST-API";
+    private const int UdpPort = 21106;
 
     /// <summary>
     /// Ensures Windows Firewall rules exist for WebApp UDP Discovery and REST-API.
@@ -24,18 +24,18 @@ public static class FirewallHelper
         {
             Debug.WriteLine("🔥 Checking Windows Firewall rules for WebApp...");
 
-            var httpRuleName = $"{RULE_NAME_HTTP_PREFIX} (Port {httpPort})";
+            var httpRuleName = $"{RuleNameHttpPrefix} (Port {httpPort})";
 
             // Check and create UDP Discovery rule (Port 21106 Inbound)
             // Delete and recreate to ensure correct profile=any is applied
-            if (FirewallRuleExists(RULE_NAME_UDP))
+            if (FirewallRuleExists(RuleNameUdp))
             {
-                Debug.WriteLine($"   Updating UDP Discovery firewall rule (Port {UDP_PORT})...");
-                DeleteFirewallRule(RULE_NAME_UDP);
+                Debug.WriteLine($"   Updating UDP Discovery firewall rule (Port {UdpPort})...");
+                DeleteFirewallRule(RuleNameUdp);
             }
             else
             {
-                Debug.WriteLine($"   Creating UDP Discovery firewall rule (Port {UDP_PORT})...");
+                Debug.WriteLine($"   Creating UDP Discovery firewall rule (Port {UdpPort})...");
             }
             CreateUdpFirewallRule();
 
@@ -131,11 +131,11 @@ public static class FirewallHelper
         // Use profile=any to allow connections on all network types (private, domain, AND public)
         // Many home Wi-Fi networks are classified as Public by default
         var command = $"advfirewall firewall add rule " +
-                     $"name=\"{RULE_NAME_UDP}\" " +
+                     $"name=\"{RuleNameUdp}\" " +
                      $"dir=in " +
                      $"action=allow " +
                      $"protocol=UDP " +
-                     $"localport={UDP_PORT} " +
+                     $"localport={UdpPort} " +
                      $"profile=any " +
                      $"description=\"Allows MAUI clients to discover MOBAflow WebApp REST-API server via UDP broadcast\"";
 
@@ -200,8 +200,8 @@ public static class FirewallHelper
         {
             Debug.WriteLine("🔥 Removing WebApp firewall rules...");
 
-            ExecuteNetshCommand($"advfirewall firewall delete rule name=\"{RULE_NAME_UDP}\"");
-            ExecuteNetshCommand($"advfirewall firewall delete rule name=\"{RULE_NAME_HTTP_PREFIX} (Port 5000)\"");
+            ExecuteNetshCommand($"advfirewall firewall delete rule name=\"{RuleNameUdp}\"");
+            ExecuteNetshCommand($"advfirewall firewall delete rule name=\"{RuleNameHttpPrefix} (Port 5000)\"");
 
             Debug.WriteLine("✅ Firewall rules removed");
         }

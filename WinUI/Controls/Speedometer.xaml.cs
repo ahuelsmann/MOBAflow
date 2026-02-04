@@ -348,8 +348,7 @@ public sealed partial class SpeedometerControl : UserControl
         {
             14 => (13, new[] { 0, 3, 7, 10, 13 }),
             28 => (27, new[] { 0, 7, 14, 21, 27 }),
-            128 => (126, new[] { 0, 32, 63, 95, 126 }),
-            _ => (126, new[] { 0, 32, 63, 95, 126 })
+            128 or _ => (126, new[] { 0, 32, 63, 95, 126 })
         };
 
         // Use AccentColor from accent brush (matching speedometer needle)
@@ -413,7 +412,7 @@ public sealed partial class SpeedometerControl : UserControl
     }
 
     /// <summary>
-    /// Renders km/h markers dynamically based on VmaxKmh with adaptive step sizing.
+    /// Renders km/h markers dynamically based on VmaxKmh with adaptive step-sizing.
     /// Markers are displayed as radial strokes starting from the outer edge of the arc.
     /// Uses AccentLight color from current skin palette for visual consistency.
     /// Strokes: 6px long (starting at outer edge 108, extending to 100).

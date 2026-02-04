@@ -40,7 +40,7 @@ public class SettingsService : ISettingsService
     public string? LastSolutionPath
     {
         get => _settings.Application.LastSolutionPath;
-        set => _settings.Application.LastSolutionPath = value;
+        set => _settings.Application.LastSolutionPath = value ?? string.Empty;
     }
 
     public bool AutoLoadLastSolution

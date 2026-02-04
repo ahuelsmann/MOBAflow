@@ -3,47 +3,85 @@
 > Diese Datei wird IMMER geladen - hier stehen die wichtigsten Regeln.
 
 ## 🚫 VERBOTEN
+1. **Sofort coden** - NIEMALS ohne vorherige Analyse beginnen
 
-2. **Sofort coden** - NIEMALS ohne vorherige Analyse beginnen
+2. **Hardcodierte Farben** - IMMER `ThemeResource` in XAML
 
-3. **Hardcodierte Farben** - IMMER `ThemeResource` in XAML
+3. **Session-Details in dieser Datei** - NIEMALS "Completed This Session", Changelogs oder temporäre Notizen hier erfassen. Diese Datei enthält nur permanente Regeln.
 
-4. **Session-Details in dieser Datei** - NIEMALS "Completed This Session", Changelogs oder temporäre Notizen hier erfassen. Diese Datei enthält nur permanente Regeln.
-
-5. **Separate README.md Dateien** - NIEMALS separate README.md in Unterordnern erstellen!
+4. **Separate README.md Dateien** - NIEMALS separate README.md in Unterordnern erstellen!
    - ✅ Nur EINE zentrale `README.md` im Root
    - ✅ Neue Inhalte als Kapitel in die zentrale README.md aufnehmen
    - ❌ KEINE `scripts/README.md`, `docs/README.md`, etc.
    - **Beispiel:** Für Script-Dokumentation → Kapitel in `README.md` (z.B. "## 🔧 Setup Scripts")
 
-## ✅ PFLICHT: 5-Schritte-Workflow
+5. ❌ **NIE Dateinamen, Klassen oder APIs raten** — IMMER Tools verwenden:
+   - `ripgrep`
+   - `filesystem`
+   - `openapi`
+   - `documents`
+   - `markitdown`
 
-**Bei JEDER Implementierung:**
+---
 
-1. **ANALYSE** - Anforderung verstehen, betroffene Dateien identifizieren
-2. **PATTERNS** - Bestehende Patterns im Code suchen (`code_search`, `find_symbol`)
-3. **BESTPRACTICES** - Immer nach den best practices implementieren.
-3. **PLAN** - Bei allen Aufgaben das `plan()` Tool verwenden
-4. **IMPLEMENTIEREN** - Backend → ViewModel → View, nach jeder Datei `run_build`
-5. **VALIDIEREN** - Build prüfen, Fehler beheben
+## ✅ Pflicht: 6‑Schritte‑Workflow
+Bei JEDER Implementierung:
 
-## ✅ PFLICHT: Programmierprinzipien: 
-	- SOLID; Single Responsibility Principle (SRP)
-	- DRY
-	- KISS (Keep It Simple, Stupid)
-	- Meaningful Names
-	- Kleine, fokussierte Methoden
-	- Konsistente Formatierung
-	- Separation of Concerns
-	- Klare Namespaces und Projektstruktur
-	- Sinnvolle Enums, Records, Interfaces
-	- Pattern-basierte APIs
+1. **ANALYSE**  
+   - Anforderungen verstehen  
+   - Betroffene Dateien identifizieren (→ `ripgrep`)  
+   - Muster/Duplikate finden  
+
+2. **RECHERCHE**  
+   - Bestehende Implementierungen (→ `ripgrep.search`)  
+   - Dokumentation (→ `markitdown` oder `documents`)  
+   - API (→ `openapi`)  
+   - WinUI / .NET Docs (→ `microsoft-learn`)  
+
+3. **PLAN**  
+   - Immer das `plan()` Tool verwenden  
+   - Plan muss enthalten:  
+     - Betroffene Dateien  
+     - Neue Klassen / Methoden  
+     - Risiken  
+     - Tests  
+
+4. **IMPLEMENTIERUNG**  
+   - Backend → ViewModel → View  
+   - Nach jeder Datei: Build ausführen (VS Build Pipeline)
+   - XAML: ThemeResource, keine Farben  
+   - MVVM Toolkit: `[ObservableProperty]`, `[RelayCommand]`  
+
+5. **VALIDIERUNG**  
+   - Build  
+   - Tests  
+   - Linting / ReSharper  
+
+6. **DOKUMENTATION**  
+   - README.md aktualisieren  
+   - Wiki falls Nutzer-Themen
+
+---
+
+## ✅ PFLICHT: Programmierprinzipien beachten: 
+- SOLID; Single Responsibility Principle (SRP)
+- DRY
+- KISS (Keep It Simple, Stupid)
+- Meaningful Names
+- Kleine, fokussierte Methoden
+- Konsistente Formatierung
+- Separation of Concerns
+- Klare Namespaces und Projektstruktur
+- Sinnvolle Enums, Records, Interfaces
+- Pattern-basierte APIs
+
+---
 
 ## ✅ PFLICHT: Patterns
 
 ### MVVM (CommunityToolkit.Mvvm)
-- `[ObservableProperty]` für bindbare Properties
-- `[RelayCommand]` für Commands
+- `[ObservableProperty]` für bindbare Properties  
+- `[RelayCommand]` für Commands  
 - Domain Models mit ViewModel wrappen
 
 ### DI (Constructor Injection)
@@ -52,9 +90,11 @@
 - Registration: `services.AddTransient<View.MyPage>()`
 
 ### WinUI 3
-- DispatcherQueue für UI-Updates vom Background-Thread
-- DataTemplates in `EntityTemplates.xaml`, keine separaten UserControls
-- ThemeResource für alle Farben
+- DispatcherQueue für UI-Updates vom Background-Thread  
+- DataTemplates in `EntityTemplates.xaml`, keine separaten UserControls  
+- ThemeResource für alle Farben  
+
+---
 
 ## 📁 Projekt-Struktur
 
@@ -65,41 +105,72 @@
 | `SharedUI/` | ViewModels |
 | `WinUI/` | Windows Desktop App |
 
+---
+
+## ⚙️ MCP-Tools verwenden
+
+Wenn Aufgaben Dateizugriff, Suche oder Dokumentanalyse betreffen:
+
+1. **Ripgrep** für Code-Suche  
+   - Immer zuerst `ripgrep.search()` benutzen.  
+   - Ziel: Existierende Patterns finden → Konsistenz sicherstellen.
+
+2. **Filesystem** für Dateizugriff  
+   - Nie raten → `filesystem.read_file()` verwenden.  
+   - Schreiben nur, wenn explizit vom User gefordert.
+
+3. **MarkItDown** oder **Documents**  
+   - PDFs, DOCX, PPTX, HTML → zuerst konvertieren, dann analysieren.
+
+4. **OpenAPI**  
+   - Für REST-APIs:  
+     → API-Schema lesen, DTOs prüfen, Testaufrufe durchführen.
+
+5. **Azure / Azure DevOps / GitHub**  
+   - Nur bei Pipelines, PRs, Issues, Repo-bezogenen Aufgaben.
+
+---
+
 ## 📖 Benutzer-Dokumentation
 
 **Wiki-Pfad:** `docs/wiki/`
 
 Bei Fragen zu Features oder Setup:
-- `docs/wiki/INDEX.md` - Haupt-Index für alle Plattformen
-- `docs/wiki/MOBAFLOW-USER-GUIDE.md` - WinUI Benutzerhandbuch
-- `docs/wiki/AZURE-SPEECH-SETUP.md` - Azure Speech Service einrichten
-- `docs/wiki/PLUGIN-DEVELOPMENT.md` - Plugin-Entwicklung
+- `docs/wiki/INDEX.md` – Haupt-Index  
+- `docs/wiki/MOBAFLOW-USER-GUIDE.md` – WinUI Benutzerhandbuch  
+- `docs/wiki/AZURE-SPEECH-SETUP.md` – Azure Speech Service einrichten  
+- `docs/wiki/PLUGIN-DEVELOPMENT.md` – Plugin-Entwicklung  
 
-**Regel:** Verweise Benutzer ohne Entwickler-Hintergrund auf das Wiki (nicht auf README.md oder Code).
+**Regel:**  
+Nutzer ohne Entwickler-Hintergrund → IMMER ins Wiki verweisen.
+
+---
 
 ## ⚠️ Bei Unsicherheit
+Microsoft-Dokumentation über das MCP‑Tool `microsoft-learn` abrufen.
 
-Microsoft-Dokumentation via `azure_documentation` Tool konsultieren BEVOR Code geschrieben wird.
+---
 
 ## 📚 Weitere Instructions
 
 Details in `.github/instructions/`:
 
-**Workflow & Patterns:**
-- `todos.instructions.md` - **Offene Aufgaben & Quality Roadmap**
-- `implementation-workflow.instructions.md` - Detaillierter 5-Schritte-Workflow (falls existiert)
-- `di-pattern-consistency.instructions.md` - Dependency Injection Patterns (falls existiert)
+### Workflow & Patterns
+- `todos.instructions.md` – Offene Aufgaben / Roadmap  
+- `naming-conventions.instructions.md` – C# Naming Standards (Protocol Constants)  
+- `implementation-workflow.instructions.md` – Erweiterter Workflow  
+- `di-pattern-consistency.instructions.md` – DI-Regeln  
 
-**Architektur & Frameworks:**
-- `architecture.instructions.md` - Layer-Architektur (falls existiert)
-- `backend.instructions.md` - Backend Layer Details (falls existiert)
-- `z21-backend.instructions.md` - **Z21 Connection & Traffic Rules (CRITICAL!)**
+### Architektur & Frameworks
+- `architecture.instructions.md` – Layer-Architektur  
+- `backend.instructions.md` – Backend Details  
+- `z21-backend.instructions.md` – Z21 Connection & Traffic Rules (CRITICAL)
 
-**UI Frameworks:**
-- `winui.instructions.md` - WinUI 3 Spezifika (falls existiert)
+### UI Frameworks
+- `winui.instructions.md` – WinUI 3 Spezifika
 
-**Code Quality:**
-- `test.instructions.md` - Testing Best Practices (falls existiert)
-- `terminal.instructions.md` - PowerShell-Regeln (falls existiert)
+### Code Quality
+- `test.instructions.md` – Testing Best Practices  
+- `terminal.instructions.md` – PowerShell-Regeln  
 
-**Hinweis:** Nicht alle aufgelisteten Dateien existieren. Nutzen Sie diese Liste als Referenz für mögliche Patterns. Erstellen Sie neue Instructions-Dateien nach Bedarf für neue Domains.
+**Hinweis:** Nicht alle Dateien existieren; Liste dient als Referenz.

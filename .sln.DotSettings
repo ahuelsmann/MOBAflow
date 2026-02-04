@@ -526,28 +526,66 @@
 		- Do NOT suppress new warnings without thorough investigation
 		- Fix warnings in NEW code immediately
 		- Only suppress VERIFIED false positives with documentation
-		- Update this file when suppressions change
-		- Review suppressions quarterly for regressions
 	-->
-    
-	<!-- Expression Always False (Nullable Analysis - Plugin System) -->
-	<s:Boolean x:Key="/Default/CodeInspection/Inspections/ConditionIsAlwaysTrueOrFalse/@EntryIndexedValue">False</s:Boolean>
 
-	<!-- Partial Class With Single Part (Source Generator Pattern) -->
-	<s:Boolean x:Key="/Default/CodeInspection/Inspections/PartialTypeWithSinglePart/@EntryIndexedValue">False</s:Boolean>
-
-	<!-- Non-Nullable Field Uninitialized (Delayed Init Pattern) -->
-	<s:Boolean x:Key="/Default/CodeInspection/Inspections/NotNullMemberIsNotInitialized/@EntryIndexedValue">False</s:Boolean>
-
-	<!-- Nullable Value Type Can Be Null (Already Checked) -->
-	<s:Boolean x:Key="/Default/CodeInspection/Inspections/PossibleInvalidOperationException/@EntryIndexedValue">False</s:Boolean>
-
-	<!-- Readonly Field Never Assigned (Work In Progress) -->
-	<s:Boolean x:Key="/Default/CodeInspection/Inspections/UnassignedField_002ELocal/@EntryIndexedValue">False</s:Boolean>
-
-	<!-- Value Assigned Not Used -->
-	<s:Boolean x:Key="/Default/CodeInspection/Inspections/RedundantAssignment/@EntryIndexedValue">False</s:Boolean>
-
-	<!-- Qualifier Is Redundant -->
-	<s:Boolean x:Key="/Default/CodeInspection/Inspections/RedundantQualifier/@EntryIndexedValue">False</s:Boolean>
+	<!-- ============================================ -->
+	<!-- Naming Conventions: Protocol Constants -->
+	<!-- ============================================ -->
+	<!-- 
+		Category: InconsistentNaming (Constant fields not private)
+		Count: ~70 occurrences
+		Files: Backend/Protocol/Z21Protocol.cs, Backend/Protocol/Z21MessageParser.cs
+		
+		Issue: ReSharper suggests PascalCase for protocol constants
+		Examples:
+		- LAN_GET_SERIAL_NUMBER → LanGetSerialNumber
+		- X_GET_VERSION → XGetVersion
+		- DCC → Dcc
+		
+		Why UPPER_SNAKE_CASE is INTENTIONAL:
+		
+		1. Protocol Documentation Alignment
+		   - Z21 LAN Protocol Specification uses UPPER_SNAKE_CASE
+		   - Constants match official documentation exactly
+		   - Makes cross-referencing protocol spec easier
+		
+		2. Industry Standard for Protocol Constants
+		   - HTTP status codes: HTTP_OK, HTTP_NOT_FOUND
+		   - Socket constants: TCP_NODELAY, SO_REUSEADDR
+		   - DCC protocol: DCC, MM, RCN213
+		
+		3. Visual Distinction
+		   - UPPER_SNAKE_CASE clearly marks protocol-level constants
+		   - Immediately recognizable as external protocol values
+		   - Separates domain logic from protocol definitions
+		
+		4. Maintainability
+		   - Protocol spec updates can be applied directly
+		   - No translation needed between spec and code
+		   - Reduces risk of mapping errors
+		
+		Examples:
+		```csharp
+		// Protocol constants (from Z21 spec)
+		public const byte LAN_GET_SERIAL_NUMBER = 0x10;
+		public const byte X_GET_VERSION = 0x21;
+		public const byte DCC = 0x00;
+		
+		// Domain logic (follows PascalCase)
+		public class Z21ConnectionManager
+		{
+		    public async Task ConnectAsync() { ... }
+		}
+		```
+		
+		Decision: Keep UPPER_SNAKE_CASE for:
+		- All Z21Protocol.Header.* constants
+		- All protocol-related enums (DCC, MM, hardware types)
+		- Message parsing constants
+		
+		Status: INTENTIONAL DESIGN - Protocol documentation alignment
+	-->
+	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=DCC/@EntryIndexedValue">DCC</s:String>
+	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=MM/@EntryIndexedValue">MM</s:String>
+	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=RCN/@EntryIndexedValue">RCN</s:String>
 </wpf:ResourceDictionary>
