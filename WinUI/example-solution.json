@@ -194,7 +194,7 @@
             }
           ],
           "inPort": 1,
-          "isUsingTimerToIgnoreFeedbacks": true,
+          "isUsingTimerToIgnoreFeedbacks": false,
           "intervalForTimerToIgnoreFeedbacks": 20,
           "behaviorOnLastStop": 1,
           "firstPos": 0
