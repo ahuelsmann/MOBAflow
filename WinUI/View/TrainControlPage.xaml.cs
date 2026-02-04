@@ -280,7 +280,7 @@ public sealed partial class TrainControlPage
         // Initialize speedometer speed step markers
         UpdateSpeedStepMarkers();
         
-        _allLocomotives = await _locomotiveService.GetAllSeriesAsync().ConfigureAwait(false);
+        _allLocomotives = await _locomotiveService.GetAllSeriesAsync();
 
         // Initialize AutoSuggestBox with saved locomotive series
         if (!string.IsNullOrEmpty(ViewModel.SelectedLocoSeries))

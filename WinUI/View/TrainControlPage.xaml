@@ -567,129 +567,19 @@
                 </Border>
 
                 <!--  Bereich 2 (Top-Left): Locomotive Info Card  -->
-                <Border
+                <controls:LocomotiveInfoCardControl
                     x:Name="LocomotiveInfoCard"
                     Grid.Row="0"
                     Grid.Column="0"
-                    Padding="16"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1"
-                    CornerRadius="8">
-                    
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <!--  Header  -->
-                        <StackPanel Grid.Row="0" Margin="0,0,0,12" Spacing="4">
-                            <TextBlock
-                                FontSize="11"
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="CURRENT LOCOMOTIVE" />
-                        </StackPanel>
-
-                        <!--  Locomotive Details  -->
-                        <StackPanel
-                            Grid.Row="1"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Spacing="12">
-                            
-                            <!--  Icon + Name  -->
-                            <StackPanel HorizontalAlignment="Center" Spacing="8">
-                                <FontIcon
-                                    FontSize="32"
-                                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                    Glyph="&#xE7C2;" />
-                                <TextBlock
-                                    FontSize="18"
-                                    FontWeight="SemiBold"
-                                    Text="{x:Bind ViewModel.CurrentPreset.Name, Mode=OneWay}"
-                                    TextAlignment="Center" />
-                            </StackPanel>
-
-                            <!--  DCC Address and Vmax  -->
-                            <StackPanel HorizontalAlignment="Center" Spacing="6">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <TextBlock
-                                        FontSize="12"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Text="DCC:" />
-                                    <TextBlock
-                                        FontSize="12"
-                                        FontWeight="SemiBold"
-                                        Text="{x:Bind ViewModel.LocoAddress, Mode=OneWay}" />
-                                </StackPanel>
-                                
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <TextBlock
-                                        FontSize="12"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Text="Vmax:" />
-                                    <TextBlock
-                                        FontSize="12"
-                                        FontWeight="SemiBold"
-                                        Text="{x:Bind ViewModel.SelectedVmax, Mode=OneWay}" />
-                                    <TextBlock
-                                        FontSize="11"
-                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                        Text="km/h" />
-                                </StackPanel>
-                            </StackPanel>
-                        </StackPanel>
-
-                        <!--  Preset Quick Switch  -->
-                        <StackPanel
-                            Grid.Row="2"
-                            Margin="0,12,0,0"
-                            Orientation="Horizontal"
-                            Spacing="8">
-                            
-                            <Button
-                                HorizontalAlignment="Stretch"
-                                Command="{x:Bind ViewModel.SelectPreset1Command}"
-                                Style="{StaticResource AccentButtonStyle}">
-                                <StackPanel Spacing="2">
-                                    <TextBlock FontSize="9" Text="PRESET 1" />
-                                    <TextBlock
-                                        FontSize="11"
-                                        FontWeight="SemiBold"
-                                        Text="{x:Bind ViewModel.Preset1.Name, Mode=OneWay}" />
-                                </StackPanel>
-                            </Button>
-
-                            <Button
-                                HorizontalAlignment="Stretch"
-                                Command="{x:Bind ViewModel.SelectPreset2Command}"
-                                Style="{StaticResource AccentButtonStyle}">
-                                <StackPanel Spacing="2">
-                                    <TextBlock FontSize="9" Text="PRESET 2" />
-                                    <TextBlock
-                                        FontSize="11"
-                                        FontWeight="SemiBold"
-                                        Text="{x:Bind ViewModel.Preset2.Name, Mode=OneWay}" />
-                                </StackPanel>
-                            </Button>
-
-                            <Button
-                                HorizontalAlignment="Stretch"
-                                Command="{x:Bind ViewModel.SelectPreset3Command}"
-                                Style="{StaticResource AccentButtonStyle}">
-                                <StackPanel Spacing="2">
-                                    <TextBlock FontSize="9" Text="PRESET 3" />
-                                    <TextBlock
-                                        FontSize="11"
-                                        FontWeight="SemiBold"
-                                        Text="{x:Bind ViewModel.Preset3.Name, Mode=OneWay}" />
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
-                    </Grid>
-                </Border>
+                    CurrentPresetName="{x:Bind ViewModel.CurrentPreset.Name, Mode=OneWay}"
+                    LocoAddress="{x:Bind ViewModel.LocoAddress, Mode=OneWay}"
+                    Preset1Command="{x:Bind ViewModel.SelectPreset1Command}"
+                    Preset1Name="{x:Bind ViewModel.Preset1.Name, Mode=OneWay}"
+                    Preset2Command="{x:Bind ViewModel.SelectPreset2Command}"
+                    Preset2Name="{x:Bind ViewModel.Preset2.Name, Mode=OneWay}"
+                    Preset3Command="{x:Bind ViewModel.SelectPreset3Command}"
+                    Preset3Name="{x:Bind ViewModel.Preset3.Name, Mode=OneWay}"
+                    SelectedVmax="{x:Bind ViewModel.SelectedVmax, Mode=OneWay}" />
 
                 <!--  Bereich 3 (Top-Right): Journey Info / Timetable Stops  -->
                 <controls:TimetableStopsControl
@@ -698,14 +588,20 @@
                     Grid.Column="1"
                     CurrentStationArrivalValue="{x:Bind ViewModel.CurrentStationArrival, Mode=OneWay}"
                     CurrentStationDepartureValue="{x:Bind ViewModel.CurrentStationDeparture, Mode=OneWay}"
+                    CurrentStationHasValue="{x:Bind ViewModel.CurrentStationHasValue, Mode=OneWay}"
+                    CurrentStationIsExitOnLeft="{x:Bind ViewModel.CurrentStationIsExitOnLeft, Mode=OneWay}"
                     CurrentStationNameValue="{x:Bind ViewModel.CurrentStationName, Mode=OneWay}"
                     CurrentStationTrackValue="{x:Bind ViewModel.CurrentStationTrack, Mode=OneWay}"
                     NextStationArrivalValue="{x:Bind ViewModel.NextStationArrival, Mode=OneWay}"
                     NextStationDepartureValue="{x:Bind ViewModel.NextStationDeparture, Mode=OneWay}"
+                    NextStationHasValue="{x:Bind ViewModel.NextStationHasValue, Mode=OneWay}"
+                    NextStationIsExitOnLeft="{x:Bind ViewModel.NextStationIsExitOnLeft, Mode=OneWay}"
                     NextStationNameValue="{x:Bind ViewModel.NextStationName, Mode=OneWay}"
                     NextStationTrackValue="{x:Bind ViewModel.NextStationTrack, Mode=OneWay}"
                     PreviousStationArrivalValue="{x:Bind ViewModel.PreviousStationArrival, Mode=OneWay}"
                     PreviousStationDepartureValue="{x:Bind ViewModel.PreviousStationDeparture, Mode=OneWay}"
+                    PreviousStationHasValue="{x:Bind ViewModel.PreviousStationHasValue, Mode=OneWay}"
+                    PreviousStationIsExitOnLeft="{x:Bind ViewModel.PreviousStationIsExitOnLeft, Mode=OneWay}"
                     PreviousStationNameValue="{x:Bind ViewModel.PreviousStationName, Mode=OneWay}"
                     PreviousStationTrackValue="{x:Bind ViewModel.PreviousStationTrack, Mode=OneWay}" />
 
@@ -727,38 +623,49 @@
                         </Grid.RowDefinitions>
 
                         <!--  Header with Peak Badge  -->
-                        <Grid Grid.Row="0" Margin="0,0,0,8">
+                        <Grid Grid.Row="0" Margin="0,0,0,8" ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
                             <TextBlock
+                                Grid.Column="0"
                                 FontSize="11"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 Text="AMPEREMETER" />
-                            
-                            <!--  Peak Current Badge  -->
-                            <StackPanel
-                                HorizontalAlignment="Right"
-                                Orientation="Horizontal"
-                                Spacing="4">
-                                <TextBlock
-                                    FontSize="10"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="MAX:" />
-                                <TextBlock
-                                    FontSize="10"
-                                    FontWeight="SemiBold"
-                                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                    Text="{x:Bind ViewModel.PeakMainCurrent, Mode=OneWay}" />
-                                <Button
-                                    Padding="4,2"
-                                    Background="Transparent"
-                                    Command="{x:Bind ViewModel.ResetPeakCurrentCommand}"
-                                    Content="×"
-                                    FontSize="14"
-                                    ToolTipService.ToolTip="Reset peak current">
-                                    <Button.Resources>
-                                        <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="Transparent" />
-                                    </Button.Resources>
-                                </Button>
-                            </StackPanel>
+
+                            <Border
+                                Grid.Column="1"
+                                Padding="8,4"
+                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1"
+                                CornerRadius="10">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock
+                                        FontSize="10"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="MAX" />
+                                    <TextBlock
+                                        FontSize="10"
+                                        FontWeight="SemiBold"
+                                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                        Text="{x:Bind ViewModel.PeakMainCurrent, Mode=OneWay}" />
+                                    <Button
+                                        Padding="4"
+                                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                        BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                        BorderThickness="1"
+                                        Command="{x:Bind ViewModel.ResetPeakCurrentCommand}"
+                                        CornerRadius="6"
+                                        ToolTipService.ToolTip="Reset peak current">
+                                        <FontIcon
+                                            FontSize="12"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Glyph="&#xE711;" />
+                                    </Button>
+                                </StackPanel>
+                            </Border>
                         </Grid>
 
                         <!--  Amperemeter  -->
@@ -782,7 +689,7 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    
+
                                     <!--  Supply Voltage  -->
                                     <StackPanel Grid.Column="0" Spacing="2">
                                         <TextBlock
@@ -800,7 +707,7 @@
                                                 Text="V" />
                                         </StackPanel>
                                     </StackPanel>
-                                    
+
                                     <!--  Temperature  -->
                                     <StackPanel Grid.Column="1" Spacing="2">
                                         <TextBlock

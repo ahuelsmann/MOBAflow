@@ -437,14 +437,20 @@ public partial class TrainControlViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(PreviousStationArrival))]
     [NotifyPropertyChangedFor(nameof(PreviousStationDeparture))]
     [NotifyPropertyChangedFor(nameof(PreviousStationTrack))]
+    [NotifyPropertyChangedFor(nameof(PreviousStationHasValue))]
+    [NotifyPropertyChangedFor(nameof(PreviousStationIsExitOnLeft))]
     [NotifyPropertyChangedFor(nameof(CurrentStationName))]
     [NotifyPropertyChangedFor(nameof(CurrentStationArrival))]
     [NotifyPropertyChangedFor(nameof(CurrentStationDeparture))]
     [NotifyPropertyChangedFor(nameof(CurrentStationTrack))]
+    [NotifyPropertyChangedFor(nameof(CurrentStationHasValue))]
+    [NotifyPropertyChangedFor(nameof(CurrentStationIsExitOnLeft))]
     [NotifyPropertyChangedFor(nameof(NextStationName))]
     [NotifyPropertyChangedFor(nameof(NextStationArrival))]
     [NotifyPropertyChangedFor(nameof(NextStationDeparture))]
     [NotifyPropertyChangedFor(nameof(NextStationTrack))]
+    [NotifyPropertyChangedFor(nameof(NextStationHasValue))]
+    [NotifyPropertyChangedFor(nameof(NextStationIsExitOnLeft))]
     private Domain.Journey? currentJourney;
 
     /// <summary>
@@ -455,78 +461,116 @@ public partial class TrainControlViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(PreviousStationArrival))]
     [NotifyPropertyChangedFor(nameof(PreviousStationDeparture))]
     [NotifyPropertyChangedFor(nameof(PreviousStationTrack))]
+    [NotifyPropertyChangedFor(nameof(PreviousStationHasValue))]
+    [NotifyPropertyChangedFor(nameof(PreviousStationIsExitOnLeft))]
     [NotifyPropertyChangedFor(nameof(CurrentStationName))]
     [NotifyPropertyChangedFor(nameof(CurrentStationArrival))]
     [NotifyPropertyChangedFor(nameof(CurrentStationDeparture))]
     [NotifyPropertyChangedFor(nameof(CurrentStationTrack))]
+    [NotifyPropertyChangedFor(nameof(CurrentStationHasValue))]
+    [NotifyPropertyChangedFor(nameof(CurrentStationIsExitOnLeft))]
     [NotifyPropertyChangedFor(nameof(NextStationName))]
     [NotifyPropertyChangedFor(nameof(NextStationArrival))]
     [NotifyPropertyChangedFor(nameof(NextStationDeparture))]
     [NotifyPropertyChangedFor(nameof(NextStationTrack))]
+    [NotifyPropertyChangedFor(nameof(NextStationHasValue))]
+    [NotifyPropertyChangedFor(nameof(NextStationIsExitOnLeft))]
     private int currentStationIndex;
 
     // === Computed Properties for TimetableStopsControl ===
 
-    /// <summary>
-    /// Previous station name (or "—" if none).
-    /// </summary>
-    public string PreviousStationName => GetPreviousStation()?.Name ?? "—";
+    private const string StationPlaceholder = "\u2014";
 
     /// <summary>
-    /// Previous station arrival time (formatted).
+    /// Provides TimetableStopsControl with the previous station name, using a placeholder when none.
     /// </summary>
-    public string PreviousStationArrival => GetPreviousStation()?.Arrival?.ToString("HH:mm") ?? "—";
+    public string PreviousStationName => GetPreviousStation()?.Name ?? StationPlaceholder;
 
     /// <summary>
-    /// Previous station departure time (formatted).
+    /// Used by TimetableStopsControl to display the previous station arrival time.
     /// </summary>
-    public string PreviousStationDeparture => GetPreviousStation()?.Departure?.ToString("HH:mm") ?? "—";
+    public string PreviousStationArrival => GetPreviousStation()?.Arrival?.ToString("HH:mm") ?? StationPlaceholder;
 
     /// <summary>
-    /// Previous station track/platform number.
+    /// Used by TimetableStopsControl to display the previous station departure time.
     /// </summary>
-    public string PreviousStationTrack => GetPreviousStation()?.Track?.ToString() ?? "—";
+    public string PreviousStationDeparture => GetPreviousStation()?.Departure?.ToString("HH:mm") ?? StationPlaceholder;
 
     /// <summary>
-    /// Current station name (or "—" if none).
+    /// Used by TimetableStopsControl to display the previous station track value.
     /// </summary>
-    public string CurrentStationName => GetCurrentStation()?.Name ?? "—";
+    public string PreviousStationTrack => GetPreviousStation()?.Track?.ToString() ?? StationPlaceholder;
 
     /// <summary>
-    /// Current station arrival time (formatted).
+    /// Used by TimetableStopsControl to hide exit direction icons when there is no previous station.
     /// </summary>
-    public string CurrentStationArrival => GetCurrentStation()?.Arrival?.ToString("HH:mm") ?? "—";
+    public bool PreviousStationHasValue => GetPreviousStation() != null;
 
     /// <summary>
-    /// Current station departure time (formatted).
+    /// Used by TimetableStopsControl to choose the previous station exit direction icon.
     /// </summary>
-    public string CurrentStationDeparture => GetCurrentStation()?.Departure?.ToString("HH:mm") ?? "—";
+    public bool PreviousStationIsExitOnLeft => GetPreviousStation()?.IsExitOnLeft ?? false;
 
     /// <summary>
-    /// Current station track/platform number.
+    /// Provides TimetableStopsControl with the current station name, using a placeholder when none.
     /// </summary>
-    public string CurrentStationTrack => GetCurrentStation()?.Track?.ToString() ?? "—";
+    public string CurrentStationName => GetCurrentStation()?.Name ?? StationPlaceholder;
 
     /// <summary>
-    /// Next station name (or "—" if none).
+    /// Used by TimetableStopsControl to display the current station arrival time.
     /// </summary>
-    public string NextStationName => GetNextStation()?.Name ?? "—";
+    public string CurrentStationArrival => GetCurrentStation()?.Arrival?.ToString("HH:mm") ?? StationPlaceholder;
 
     /// <summary>
-    /// Next station arrival time (formatted).
+    /// Used by TimetableStopsControl to display the current station departure time.
     /// </summary>
-    public string NextStationArrival => GetNextStation()?.Arrival?.ToString("HH:mm") ?? "—";
+    public string CurrentStationDeparture => GetCurrentStation()?.Departure?.ToString("HH:mm") ?? StationPlaceholder;
 
     /// <summary>
-    /// Next station departure time (formatted).
+    /// Used by TimetableStopsControl to display the current station track value.
     /// </summary>
-    public string NextStationDeparture => GetNextStation()?.Departure?.ToString("HH:mm") ?? "—";
+    public string CurrentStationTrack => GetCurrentStation()?.Track?.ToString() ?? StationPlaceholder;
 
     /// <summary>
-    /// Next station track/platform number.
+    /// Used by TimetableStopsControl to hide exit direction icons when there is no current station.
     /// </summary>
-    public string NextStationTrack => GetNextStation()?.Track?.ToString() ?? "—";
+    public bool CurrentStationHasValue => GetCurrentStation() != null;
 
+    /// <summary>
+    /// Used by TimetableStopsControl to choose the current station exit direction icon.
+    /// </summary>
+    public bool CurrentStationIsExitOnLeft => GetCurrentStation()?.IsExitOnLeft ?? false;
+
+    /// <summary>
+    /// Provides TimetableStopsControl with the next station name, using a placeholder when none.
+    /// </summary>
+    public string NextStationName => GetNextStation()?.Name ?? StationPlaceholder;
+
+    /// <summary>
+    /// Used by TimetableStopsControl to display the next station arrival time.
+    /// </summary>
+    public string NextStationArrival => GetNextStation()?.Arrival?.ToString("HH:mm") ?? StationPlaceholder;
+
+    /// <summary>
+    /// Used by TimetableStopsControl to display the next station departure time.
+    /// </summary>
+    public string NextStationDeparture => GetNextStation()?.Departure?.ToString("HH:mm") ?? StationPlaceholder;
+
+    /// <summary>
+    /// Used by TimetableStopsControl to display the next station track value.
+    /// </summary>
+    public string NextStationTrack => GetNextStation()?.Track?.ToString() ?? StationPlaceholder;
+
+    /// <summary>
+    /// Used by TimetableStopsControl to hide exit direction icons when there is no next station.
+    /// </summary>
+    public bool NextStationHasValue => GetNextStation() != null;
+
+    /// <summary>
+    /// Used by TimetableStopsControl to choose the next station exit direction icon.
+    /// </summary>
+    public bool NextStationIsExitOnLeft => GetNextStation()?.IsExitOnLeft ?? false;
+    
     private Domain.Station? GetPreviousStation()
     {
         if (CurrentJourney == null || CurrentJourney.Stations.Count == 0)

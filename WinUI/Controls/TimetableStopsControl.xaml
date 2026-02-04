@@ -1,7 +1,12 @@
 <UserControl
     x:Class="Moba.WinUI.Controls.TimetableStopsControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converter="using:Moba.WinUI.Converter">
+
+    <UserControl.Resources>
+        <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    </UserControl.Resources>
 
     <Border
         Padding="16"
@@ -58,15 +63,35 @@
                         Glyph="&#xE7C0;" />
 
                     <!--  Station Name  -->
-                    <TextBlock
+                    <StackPanel
                         Grid.Row="0"
                         Grid.Column="1"
                         VerticalAlignment="Center"
-                        FontSize="13"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="{x:Bind PreviousStationNameValue, Mode=OneWay}"
-                        TextTrimming="CharacterEllipsis" />
+                        Orientation="Horizontal"
+                        Spacing="6">
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{x:Bind PreviousStationNameValue, Mode=OneWay}"
+                            TextTrimming="CharacterEllipsis" />
+                        <StackPanel
+                            Orientation="Horizontal"
+                            Spacing="2"
+                            Visibility="{x:Bind PreviousStationHasValue, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <FontIcon
+                                FontSize="12"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Glyph="&#xE72B;"
+                                Visibility="{x:Bind PreviousStationIsExitOnLeft, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                            <FontIcon
+                                FontSize="12"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Glyph="&#xE72A;"
+                                Visibility="{x:Bind PreviousStationIsExitOnLeft, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" />
+                        </StackPanel>
+                    </StackPanel>
 
                     <!--  Track  -->
                     <TextBlock
@@ -132,19 +157,39 @@
                         Grid.Row="0"
                         Grid.Column="0"
                         FontSize="18"
-                        Foreground="White"
+                        Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                         Glyph="&#xE81D;" />
 
                     <!--  Station Name  -->
-                    <TextBlock
+                    <StackPanel
                         Grid.Row="0"
                         Grid.Column="1"
                         VerticalAlignment="Center"
-                        FontSize="15"
-                        FontWeight="Bold"
-                        Foreground="White"
-                        Text="{x:Bind CurrentStationNameValue, Mode=OneWay}"
-                        TextTrimming="CharacterEllipsis" />
+                        Orientation="Horizontal"
+                        Spacing="6">
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="15"
+                            FontWeight="Bold"
+                            Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                            Text="{x:Bind CurrentStationNameValue, Mode=OneWay}"
+                            TextTrimming="CharacterEllipsis" />
+                        <StackPanel
+                            Orientation="Horizontal"
+                            Spacing="2"
+                            Visibility="{x:Bind CurrentStationHasValue, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <FontIcon
+                                FontSize="12"
+                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                Glyph="&#xE72B;"
+                                Visibility="{x:Bind CurrentStationIsExitOnLeft, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                            <FontIcon
+                                FontSize="12"
+                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                Glyph="&#xE72A;"
+                                Visibility="{x:Bind CurrentStationIsExitOnLeft, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" />
+                        </StackPanel>
+                    </StackPanel>
 
                     <!--  Track  -->
                     <Border
@@ -157,7 +202,7 @@
                         <TextBlock
                             FontSize="11"
                             FontWeight="SemiBold"
-                            Foreground="White"
+                            Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                             Text="{x:Bind CurrentStationTrackValue, Mode=OneWay}" />
                     </Border>
 
@@ -171,25 +216,25 @@
                         <StackPanel Orientation="Horizontal" Spacing="4">
                             <TextBlock
                                 FontSize="11"
-                                Foreground="White"
+                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                                 Opacity="0.8"
                                 Text="Arr:" />
                             <TextBlock
                                 FontSize="11"
                                 FontWeight="SemiBold"
-                                Foreground="White"
+                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                                 Text="{x:Bind CurrentStationArrivalValue, Mode=OneWay}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="4">
                             <TextBlock
                                 FontSize="11"
-                                Foreground="White"
+                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                                 Opacity="0.8"
                                 Text="Dep:" />
                             <TextBlock
                                 FontSize="11"
                                 FontWeight="SemiBold"
-                                Foreground="White"
+                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                                 Text="{x:Bind CurrentStationDepartureValue, Mode=OneWay}" />
                         </StackPanel>
                     </StackPanel>
@@ -224,14 +269,34 @@
                         Glyph="&#xE72A;" />
 
                     <!--  Station Name  -->
-                    <TextBlock
+                    <StackPanel
                         Grid.Row="0"
                         Grid.Column="1"
                         VerticalAlignment="Center"
-                        FontSize="13"
-                        FontWeight="SemiBold"
-                        Text="{x:Bind NextStationNameValue, Mode=OneWay}"
-                        TextTrimming="CharacterEllipsis" />
+                        Orientation="Horizontal"
+                        Spacing="6">
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            Text="{x:Bind NextStationNameValue, Mode=OneWay}"
+                            TextTrimming="CharacterEllipsis" />
+                        <StackPanel
+                            Orientation="Horizontal"
+                            Spacing="2"
+                            Visibility="{x:Bind NextStationHasValue, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <FontIcon
+                                FontSize="12"
+                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                Glyph="&#xE72B;"
+                                Visibility="{x:Bind NextStationIsExitOnLeft, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                            <FontIcon
+                                FontSize="12"
+                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                Glyph="&#xE72A;"
+                                Visibility="{x:Bind NextStationIsExitOnLeft, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" />
+                        </StackPanel>
+                    </StackPanel>
 
                     <!--  Track  -->
                     <TextBlock
