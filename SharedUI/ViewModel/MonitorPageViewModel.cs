@@ -8,17 +8,24 @@ using CommunityToolkit.Mvvm.Input;
 using Interface;
 using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
+using System.Threading;
 
 /// <summary>
 /// ViewModel for MonitorPage - displays Z21 traffic and application logs.
 /// Left panel: Z21 UDP traffic (sent/received packets)
 /// Right panel: Application logs (from Serilog InMemorySink)
 /// </summary>
-public partial class MonitorPageViewModel : ObservableObject
+public partial class MonitorPageViewModel : ObservableObject, IDisposable
 {
     private readonly MainWindowViewModel _mainWindowViewModel;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly ILogger<MonitorPageViewModel> _logger;
+    private readonly Queue<string> _pendingLogEntries = new();
+    private readonly object _logBatchLock = new();
+    private CancellationTokenSource? _batchUpdateCts;
+    private const int BatchUpdateDelayMs = 50;
+    private bool _isDisposed;
 
     /// <summary>
     /// Application log entries formatted as strings for UI display.
@@ -90,17 +97,54 @@ public partial class MonitorPageViewModel : ObservableObject
 
     private void OnLogAdded(LogEntry entry)
     {
-        // Ensure UI updates happen on UI thread
-        _uiDispatcher.InvokeOnUi(() =>
+        lock (_logBatchLock)
         {
-            ActivityLogs.Insert(0, FormatLogEntry(entry)); // Add to top (newest first)
+            _pendingLogEntries.Enqueue(FormatLogEntry(entry));
+            
+            // Cancel existing batch update timer
+            _batchUpdateCts?.Cancel();
+            _batchUpdateCts = new CancellationTokenSource();
+            
+            // Schedule batch update after delay
+            _ = ScheduleBatchUpdateAsync(_batchUpdateCts.Token);
+        }
+    }
 
-            // Keep only last 200 logs in UI
-            while (ActivityLogs.Count > 200)
+    private async Task ScheduleBatchUpdateAsync(CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(BatchUpdateDelayMs, ct);
+
+            List<string> entriesToAdd;
+            lock (_logBatchLock)
             {
-                ActivityLogs.RemoveAt(ActivityLogs.Count - 1);
+                if (_pendingLogEntries.Count == 0)
+                    return;
+
+                entriesToAdd = new List<string>(_pendingLogEntries);
+                _pendingLogEntries.Clear();
             }
-        });
+
+            await _uiDispatcher.InvokeOnUiAsync(() =>
+            {
+                foreach (var entry in entriesToAdd)
+                {
+                    ActivityLogs.Insert(0, entry);
+                }
+
+                while (ActivityLogs.Count > 200)
+                {
+                    ActivityLogs.RemoveAt(ActivityLogs.Count - 1);
+                }
+
+                return Task.CompletedTask;
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected when batch is rescheduled
+        }
     }
 
     private static string FormatLogEntry(LogEntry entry)
@@ -121,5 +165,16 @@ public partial class MonitorPageViewModel : ObservableObject
     {
         _mainWindowViewModel.ClearTrafficMonitorCommand.Execute(null);
         _logger.LogInformation("Traffic cleared");
+    }
+
+    public void Dispose()
+    {
+        if (_isDisposed)
+            return;
+
+        _isDisposed = true;
+        InMemorySink.LogAdded -= OnLogAdded;
+        _batchUpdateCts?.Cancel();
+        _batchUpdateCts?.Dispose();
     }
 }

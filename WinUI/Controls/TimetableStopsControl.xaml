@@ -45,7 +45,6 @@
                 Opacity="0.6">
                 <Grid ColumnSpacing="8" RowSpacing="4">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
@@ -54,18 +53,10 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <!--  Icon  -->
-                    <FontIcon
-                        Grid.Row="0"
-                        Grid.Column="0"
-                        FontSize="16"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Glyph="&#xE7C0;" />
-
                     <!--  Station Name  -->
                     <StackPanel
                         Grid.Row="0"
-                        Grid.Column="1"
+                        Grid.Column="0"
                         VerticalAlignment="Center"
                         Orientation="Horizontal"
                         Spacing="6">
@@ -80,23 +71,39 @@
                             Orientation="Horizontal"
                             Spacing="2"
                             Visibility="{x:Bind PreviousStationHasValue, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <FontIcon
-                                FontSize="12"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Glyph="&#xE72B;"
-                                Visibility="{x:Bind PreviousStationIsExitOnLeft, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
-                            <FontIcon
-                                FontSize="12"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Glyph="&#xE72A;"
-                                Visibility="{x:Bind PreviousStationIsExitOnLeft, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" />
+                            <StackPanel
+                                Orientation="Horizontal"
+                                Spacing="2"
+                                Visibility="{x:Bind PreviousStationIsExitOnLeft, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <FontIcon
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Glyph="&#xE8BA;" />
+                                <FontIcon
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Glyph="&#xE72B;" />
+                            </StackPanel>
+                            <StackPanel
+                                Orientation="Horizontal"
+                                Spacing="2"
+                                Visibility="{x:Bind PreviousStationIsExitOnLeft, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
+                                <FontIcon
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Glyph="&#xE8BA;" />
+                                <FontIcon
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Glyph="&#xE72A;" />
+                            </StackPanel>
                         </StackPanel>
                     </StackPanel>
 
                     <!--  Track  -->
                     <TextBlock
                         Grid.Row="0"
-                        Grid.Column="2"
+                        Grid.Column="1"
                         VerticalAlignment="Center"
                         FontSize="11"
                         Foreground="{ThemeResource TextFillColorTertiaryBrush}"
@@ -105,7 +112,7 @@
                     <!--  Times  -->
                     <StackPanel
                         Grid.Row="1"
-                        Grid.Column="1"
+                        Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Orientation="Horizontal"
                         Spacing="12">
@@ -143,7 +150,6 @@
                 CornerRadius="6">
                 <Grid ColumnSpacing="8" RowSpacing="4">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
@@ -152,18 +158,10 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <!--  Icon  -->
-                    <FontIcon
-                        Grid.Row="0"
-                        Grid.Column="0"
-                        FontSize="18"
-                        Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                        Glyph="&#xE81D;" />
-
                     <!--  Station Name  -->
                     <StackPanel
                         Grid.Row="0"
-                        Grid.Column="1"
+                        Grid.Column="0"
                         VerticalAlignment="Center"
                         Orientation="Horizontal"
                         Spacing="6">
@@ -178,38 +176,56 @@
                             Orientation="Horizontal"
                             Spacing="2"
                             Visibility="{x:Bind CurrentStationHasValue, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <FontIcon
-                                FontSize="12"
-                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                                Glyph="&#xE72B;"
-                                Visibility="{x:Bind CurrentStationIsExitOnLeft, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
-                            <FontIcon
-                                FontSize="12"
-                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                                Glyph="&#xE72A;"
-                                Visibility="{x:Bind CurrentStationIsExitOnLeft, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" />
+                            <StackPanel
+                                Orientation="Horizontal"
+                                Spacing="2"
+                                Visibility="{x:Bind CurrentStationIsExitOnLeft, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <FontIcon
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                    Glyph="&#xE8BA;" />
+                                <FontIcon
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                    Glyph="&#xE72B;" />
+                            </StackPanel>
+                            <StackPanel
+                                Orientation="Horizontal"
+                                Spacing="2"
+                                Visibility="{x:Bind CurrentStationIsExitOnLeft, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
+                                <FontIcon
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                    Glyph="&#xE8BA;" />
+                                <FontIcon
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                    Glyph="&#xE72A;" />
+                            </StackPanel>
                         </StackPanel>
                     </StackPanel>
 
                     <!--  Track  -->
                     <Border
                         Grid.Row="0"
-                        Grid.Column="2"
-                        Padding="6,2"
+                        Grid.Column="1"
+                        Padding="8,2"
                         VerticalAlignment="Center"
-                        Background="{ThemeResource SystemFillColorCriticalBackgroundBrush}"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
                         CornerRadius="4">
                         <TextBlock
-                            FontSize="11"
+                            FontSize="12"
                             FontWeight="SemiBold"
-                            Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                             Text="{x:Bind CurrentStationTrackValue, Mode=OneWay}" />
                     </Border>
 
                     <!--  Times  -->
                     <StackPanel
                         Grid.Row="1"
-                        Grid.Column="1"
+                        Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Orientation="Horizontal"
                         Spacing="12">
@@ -251,7 +267,6 @@
                 CornerRadius="6">
                 <Grid ColumnSpacing="8" RowSpacing="4">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
@@ -260,18 +275,10 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <!--  Icon  -->
-                    <FontIcon
-                        Grid.Row="0"
-                        Grid.Column="0"
-                        FontSize="16"
-                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                        Glyph="&#xE72A;" />
-
                     <!--  Station Name  -->
                     <StackPanel
                         Grid.Row="0"
-                        Grid.Column="1"
+                        Grid.Column="0"
                         VerticalAlignment="Center"
                         Orientation="Horizontal"
                         Spacing="6">
@@ -285,23 +292,39 @@
                             Orientation="Horizontal"
                             Spacing="2"
                             Visibility="{x:Bind NextStationHasValue, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <FontIcon
-                                FontSize="12"
-                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                                Glyph="&#xE72B;"
-                                Visibility="{x:Bind NextStationIsExitOnLeft, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
-                            <FontIcon
-                                FontSize="12"
-                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                                Glyph="&#xE72A;"
-                                Visibility="{x:Bind NextStationIsExitOnLeft, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" />
+                            <StackPanel
+                                Orientation="Horizontal"
+                                Spacing="2"
+                                Visibility="{x:Bind NextStationIsExitOnLeft, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <FontIcon
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                    Glyph="&#xE8BA;" />
+                                <FontIcon
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                    Glyph="&#xE72B;" />
+                            </StackPanel>
+                            <StackPanel
+                                Orientation="Horizontal"
+                                Spacing="2"
+                                Visibility="{x:Bind NextStationIsExitOnLeft, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
+                                <FontIcon
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                    Glyph="&#xE8BA;" />
+                                <FontIcon
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                    Glyph="&#xE72A;" />
+                            </StackPanel>
                         </StackPanel>
                     </StackPanel>
 
                     <!--  Track  -->
                     <TextBlock
                         Grid.Row="0"
-                        Grid.Column="2"
+                        Grid.Column="1"
                         VerticalAlignment="Center"
                         FontSize="11"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -310,7 +333,7 @@
                     <!--  Times  -->
                     <StackPanel
                         Grid.Row="1"
-                        Grid.Column="1"
+                        Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Orientation="Horizontal"
                         Spacing="12">

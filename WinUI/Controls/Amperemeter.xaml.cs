@@ -52,12 +52,6 @@ public sealed partial class AmperemeterControl : UserControl
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        // Set default orange color for amperemeter (distinct from speedometer's blue)
-        if (AccentColor is null)
-        {
-            AccentColor = Color.FromArgb(255, 255, 140, 0); // DarkOrange #FF8C00
-        }
-        
         UpdateNeedle();
         UpdateCurrentArc();
         UpdateDisplayText();
@@ -266,7 +260,7 @@ public sealed partial class AmperemeterControl : UserControl
             <= 500 => 50,      // 0, 50, 100, 150... 500 (10 markers)
             <= 1000 => 100,    // 0, 100, 200, 300... 1000 (10 markers)
             <= 2000 => 200,    // 0, 200, 400, 600... 2000 (10 markers)
-            <= 3000 => 300,    // 0, 300, 600, 900... 3000 (10 markers)
+            <= 3000 => 250,    // 0, 250, 500, 750... 3000 (12 markers)
             <= 5000 => 500,    // 0, 500, 1000, 1500... 5000 (10 markers)
             _ => 1000          // 0, 1000, 2000, 3000... (flexible)
         };

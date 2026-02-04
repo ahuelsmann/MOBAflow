@@ -27,7 +27,7 @@
                     Canvas.Left="130"
                     Canvas.Top="130"
                     Data="M -4,0 L 0,-90 L 4,0 Z"
-                    Fill="{ThemeResource AccentFillColorDefaultBrush}"
+                    Fill="{ThemeResource SystemFillColorCriticalSolidBrush}"
                     RenderTransformOrigin="0,0">
                     <Path.RenderTransform>
                         <RotateTransform x:Name="NeedleRotation" Angle="-90" />
@@ -40,7 +40,7 @@
                     Width="30"
                     Height="30"
                     Fill="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    Stroke="{ThemeResource AccentFillColorDefaultBrush}"
+                    Stroke="{ThemeResource SystemFillColorCriticalSolidBrush}"
                     StrokeThickness="3" />
                 <Border
                     Canvas.Left="80"

@@ -877,3 +877,132 @@ cd C:\Repos\ahuelsmann\MOBAflow
 **Output:** Connection String → Copy it!
 
 **2. Install on all systems:**
+```powershell
+# On Developer System 1, 2, 3, ...
+.\scripts\install-appconfig-connection.ps1 -ConnectionString "YOUR-CONNECTION-STRING"
+```
+
+**3. Restart IDE:**
+```powershell
+# Close and reopen Visual Studio / VS Code
+```
+
+**4. Verify:**
+```csharp
+// Speech settings are automatically loaded from Azure App Configuration
+// No appsettings.json or user-secrets needed!
+```
+
+---
+
+### Script Details
+
+#### setup-azure-appconfig.ps1
+
+**Purpose:** Creates Azure App Configuration resource and stores Speech API key.
+
+**Parameters:**
+- `-SpeechKey` (required): Your Azure Speech API Key
+- `-SpeechRegion` (required): Azure region (e.g., `germanywestcentral`)
+- `-ResourceGroupName` (optional): Default `MOBAflow-RG`
+- `-ConfigStoreName` (optional): Default `mobaflow-config`
+- `-Location` (optional): Default `germanywestcentral`
+
+**What it does:**
+1. Creates Resource Group (if not exists)
+2. Creates App Configuration store
+3. Stores Speech:Key and Speech:Region as key-values
+4. Returns Connection String
+
+**Example:**
+```powershell
+.\scripts\setup-azure-appconfig.ps1 `
+    -SpeechKey "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6" `
+    -SpeechRegion "germanywestcentral" `
+    -ResourceGroupName "MyTeam-RG" `
+    -ConfigStoreName "myteam-mobaflow-config"
+```
+
+**Requirements:**
+- Azure CLI installed (`az --version`)
+- Logged in to Azure (`az login`)
+- Subscription selected (`az account set`)
+
+---
+
+#### install-appconfig-connection.ps1
+
+**Purpose:** Sets environment variable on local system.
+
+**Parameters:**
+- `-ConnectionString` (required): From `setup-azure-appconfig.ps1` output
+
+**What it does:**
+1. Sets `AZURE_APPCONFIG_CONNECTION` user environment variable
+2. Validates format
+3. Instructions to restart IDE
+
+**Example:**
+```powershell
+.\scripts\install-appconfig-connection.ps1 `
+    -ConnectionString "Endpoint=https://mobaflow-config.azconfig.io;Id=xxx;Secret=xxx"
+```
+
+**Requirements:**
+- Run as normal user (not Admin)
+- Restart IDE after running
+
+---
+
+### Configuration Priority (with Scripts)
+
+When Azure App Configuration is set up:
+
+1. ✅ **Azure App Configuration** (if `AZURE_APPCONFIG_CONNECTION` env var exists)
+2. ⏭️ User Secrets (skipped)
+3. ⏭️ Settings UI (skipped)
+4. ⏭️ Fallback (skipped)
+
+**Benefits:**
+- ✅ Centralized configuration for entire team
+- ✅ No `appsettings.json` commits
+- ✅ No user-secrets management
+- ✅ Easy key rotation (update once in Azure)
+- ✅ Same config on CI/CD pipelines
+
+---
+
+### Troubleshooting
+
+**Script fails with "Azure CLI not found":**
+
+```powershell
+# Install Azure CLI
+winget install Microsoft.AzureCLI
+```
+
+**Script fails with "No subscription selected":**
+
+```powershell
+az login
+az account list --output table
+az account set --subscription "YOUR-SUBSCRIPTION-NAME"
+```
+
+**Environment variable not working:**
+```powershell
+# Verify it's set (PowerShell)
+[System.Environment]::GetEnvironmentVariable('AZURE_APPCONFIG_CONNECTION', 'User')
+
+# Must restart IDE after install-appconfig-connection.ps1!
+```
+
+**Speech still not working:**
+1. Check logs: `WinUI/bin/Debug/logs/mobaflow-YYYYMMDD.log`
+2. Verify Azure App Config contains keys:
+   ```powershell
+   az appconfig kv list --name mobaflow-config
+   ```
+3. Verify connection string format (must start with `Endpoint=https://`)
+
+---

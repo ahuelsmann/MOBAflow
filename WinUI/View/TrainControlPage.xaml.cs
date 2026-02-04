@@ -145,36 +145,18 @@ public sealed partial class TrainControlPage
             }
         }
 
-        // Speedometer needle - use system accent color for System skin
-        if (_speedometer != null)
-        {
-            if (isSystemSkin)
-            {
-                // Use Windows system accent color
-                _speedometer.AccentColor = GetSystemAccentColor();
-            }
-            else
-            {
-                _speedometer.AccentColor = palette.Accent;
-            }
-        }
-
-        // Amperemeter needle - use system accent color for System skin
-        if (_amperemeter != null)
-        {
-            if (isSystemSkin)
-            {
-                // Use Windows system accent color
-                _amperemeter.AccentColor = GetSystemAccentColor();
-            }
-            else
-            {
-                _amperemeter.AccentColor = palette.Accent;
-            }
-        }
-
         // Panel backgrounds and borders - only apply if not transparent (Alpha > 0)
         var hasCustomPanelColors = palette.PanelBackground.A > 0;
+
+        if (_speedometer != null)
+        {
+            _speedometer.AccentColor = null;
+        }
+
+        if (_amperemeter != null)
+        {
+            _amperemeter.AccentColor = null;
+        }
 
         // Get default WinUI card brushes for Original theme
         var defaultCardBackground = hasCustomPanelColors

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
 using Microsoft.UI.Dispatching;
@@ -6,16 +6,25 @@ using SharedUI.Interface;
 
 public class UiDispatcher : IUiDispatcher
 {
-    private readonly DispatcherQueue? _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
+    private readonly DispatcherQueue? _dispatcherQueue;
+
+    public UiDispatcher()
+    {
+        _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
+    }
 
     public void InvokeOnUi(Action action)
     {
         if (_dispatcherQueue?.HasThreadAccess == true)
+        {
             action();
-        else if (_dispatcherQueue is not null)
-            _dispatcherQueue.TryEnqueue(() => action());
-        else
-            action();
+            return;
+        }
+
+        if (_dispatcherQueue is not null && _dispatcherQueue.TryEnqueue(() => action()))
+            return;
+
+        action();
     }
 
     public async Task InvokeOnUiAsync(Func<Task> asyncAction)
@@ -23,28 +32,23 @@ public class UiDispatcher : IUiDispatcher
         if (_dispatcherQueue?.HasThreadAccess == true)
         {
             await asyncAction();
+            return;
         }
-        else if (_dispatcherQueue is not null)
-        {
-            var tcs = new TaskCompletionSource();
-            _dispatcherQueue.TryEnqueue(async void () =>
-            {
-                try
-                {
-                    await asyncAction();
-                    tcs.SetResult();
-                }
-                catch (Exception ex)
-                {
-                    tcs.SetException(ex);
-                }
-            });
-            await tcs.Task;
-        }
-        else
+
+        if (_dispatcherQueue is null)
         {
             await asyncAction();
+            return;
         }
+
+        var tcs = new TaskCompletionSource();
+        if (!_dispatcherQueue.TryEnqueue(() => _ = InvokeAsyncInternal(asyncAction, tcs)))
+        {
+            await asyncAction();
+            return;
+        }
+
+        await tcs.Task;
     }
 
     public async Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc)
@@ -54,24 +58,43 @@ public class UiDispatcher : IUiDispatcher
             return await asyncFunc();
         }
 
-        if (_dispatcherQueue is not null)
+        if (_dispatcherQueue is null)
         {
-            var tcs = new TaskCompletionSource<T>();
-            _dispatcherQueue.TryEnqueue(async void () =>
-            {
-                try
-                {
-                    var result = await asyncFunc();
-                    tcs.SetResult(result);
-                }
-                catch (Exception ex)
-                {
-                    tcs.SetException(ex);
-                }
-            });
-            return await tcs.Task;
+            return await asyncFunc();
         }
 
-        return await asyncFunc();
+        var tcs = new TaskCompletionSource<T>();
+        if (!_dispatcherQueue.TryEnqueue(() => _ = InvokeAsyncInternal(asyncFunc, tcs)))
+        {
+            return await asyncFunc();
+        }
+
+        return await tcs.Task;
+    }
+
+    private static async Task InvokeAsyncInternal(Func<Task> asyncAction, TaskCompletionSource tcs)
+    {
+        try
+        {
+            await asyncAction();
+            tcs.SetResult();
+        }
+        catch (Exception ex)
+        {
+            tcs.SetException(ex);
+        }
+    }
+
+    private static async Task InvokeAsyncInternal<T>(Func<Task<T>> asyncFunc, TaskCompletionSource<T> tcs)
+    {
+        try
+        {
+            var result = await asyncFunc();
+            tcs.SetResult(result);
+        }
+        catch (Exception ex)
+        {
+            tcs.SetException(ex);
+        }
     }
 }

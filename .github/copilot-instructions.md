@@ -158,7 +158,6 @@ Details in `.github/instructions/`:
 ### Workflow & Patterns
 - `todos.instructions.md` – Offene Aufgaben / Roadmap  
 - `naming-conventions.instructions.md` – C# Naming Standards (Protocol Constants)  
-- `implementation-workflow.instructions.md` – Erweiterter Workflow  
 - `di-pattern-consistency.instructions.md` – DI-Regeln  
 
 ### Architektur & Frameworks
@@ -170,7 +169,4 @@ Details in `.github/instructions/`:
 - `winui.instructions.md` – WinUI 3 Spezifika
 
 ### Code Quality
-- `test.instructions.md` – Testing Best Practices  
-- `terminal.instructions.md` – PowerShell-Regeln  
-
-**Hinweis:** Nicht alle Dateien existieren; Liste dient als Referenz.
+- `test.instructions.md` – Testing Best Practices

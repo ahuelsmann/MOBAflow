@@ -86,7 +86,7 @@ public class Z21Settings
     /// Default: 0 = disabled (recommended - uses Z21 broadcast events only for efficiency).
     /// Set to 1-30 if you want redundant polling in addition to broadcasts.
     /// </summary>
-    public int SystemStatePollingIntervalSeconds { get; set; } = 0;
+    public int SystemStatePollingIntervalSeconds { get; set; }
 
     /// <summary>
     /// List of recently used IP addresses.
@@ -180,7 +180,7 @@ public class ApplicationSettings
     /// When true, IsDarkMode is ignored and OS theme is used instead.
     /// Default: false (manual theme control).
     /// </summary>
-    public bool UseSystemTheme { get; set; } = false;
+    public bool UseSystemTheme { get; set; }
 
     /// <summary>
     /// Selected skin/theme for theme-enabled pages (TrainControlPage2, SignalBoxPage2).

@@ -566,26 +566,12 @@
                     </Grid>
                 </Border>
 
-                <!--  Bereich 2 (Top-Left): Locomotive Info Card  -->
-                <controls:LocomotiveInfoCardControl
-                    x:Name="LocomotiveInfoCard"
-                    Grid.Row="0"
-                    Grid.Column="0"
-                    CurrentPresetName="{x:Bind ViewModel.CurrentPreset.Name, Mode=OneWay}"
-                    LocoAddress="{x:Bind ViewModel.LocoAddress, Mode=OneWay}"
-                    Preset1Command="{x:Bind ViewModel.SelectPreset1Command}"
-                    Preset1Name="{x:Bind ViewModel.Preset1.Name, Mode=OneWay}"
-                    Preset2Command="{x:Bind ViewModel.SelectPreset2Command}"
-                    Preset2Name="{x:Bind ViewModel.Preset2.Name, Mode=OneWay}"
-                    Preset3Command="{x:Bind ViewModel.SelectPreset3Command}"
-                    Preset3Name="{x:Bind ViewModel.Preset3.Name, Mode=OneWay}"
-                    SelectedVmax="{x:Bind ViewModel.SelectedVmax, Mode=OneWay}" />
-
-                <!--  Bereich 3 (Top-Right): Journey Info / Timetable Stops  -->
+                <!--  Bereich 2 (Top-Row): Journey Info / Timetable Stops  -->
                 <controls:TimetableStopsControl
                     x:Name="TimetableStops"
                     Grid.Row="0"
-                    Grid.Column="1"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
                     CurrentStationArrivalValue="{x:Bind ViewModel.CurrentStationArrival, Mode=OneWay}"
                     CurrentStationDepartureValue="{x:Bind ViewModel.CurrentStationDeparture, Mode=OneWay}"
                     CurrentStationHasValue="{x:Bind ViewModel.CurrentStationHasValue, Mode=OneWay}"
@@ -605,7 +591,7 @@
                     PreviousStationNameValue="{x:Bind ViewModel.PreviousStationName, Mode=OneWay}"
                     PreviousStationTrackValue="{x:Bind ViewModel.PreviousStationTrack, Mode=OneWay}" />
 
-                <!--  Bereich 4 (Bottom-Right): Amperemeter (Main Track Current)  -->
+                <!--  Bereich 3 (Bottom-Right): Amperemeter (Main Track Current)  -->
                 <Border
                     x:Name="AmperemeterPanel"
                     Grid.Row="1"
@@ -628,11 +614,6 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock
-                                Grid.Column="0"
-                                FontSize="11"
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="AMPEREMETER" />
 
                             <Border
                                 Grid.Column="1"
@@ -641,18 +622,24 @@
                                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                 BorderThickness="1"
                                 CornerRadius="10">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                <StackPanel
+                                    VerticalAlignment="Center"
+                                    Orientation="Horizontal"
+                                    Spacing="6">
                                     <TextBlock
+                                        VerticalAlignment="Center"
                                         FontSize="10"
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                         Text="MAX" />
                                     <TextBlock
+                                        VerticalAlignment="Center"
                                         FontSize="10"
                                         FontWeight="SemiBold"
                                         Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
                                         Text="{x:Bind ViewModel.PeakMainCurrent, Mode=OneWay}" />
                                     <Button
                                         Padding="4"
+                                        VerticalAlignment="Center"
                                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                                         BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
                                         BorderThickness="1"
@@ -709,20 +696,29 @@
                                     </StackPanel>
 
                                     <!--  Temperature  -->
-                                    <StackPanel Grid.Column="1" Spacing="2">
+                                    <StackPanel
+                                        Grid.Column="1"
+                                        HorizontalAlignment="Right"
+                                        Spacing="2">
                                         <TextBlock
                                             FontSize="9"
                                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                            Text="TEMP" />
-                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            Text="TEMP"
+                                            TextAlignment="Right" />
+                                        <StackPanel
+                                            HorizontalAlignment="Right"
+                                            Orientation="Horizontal"
+                                            Spacing="4">
                                             <TextBlock
                                                 FontSize="12"
                                                 FontWeight="SemiBold"
-                                                Text="{x:Bind ViewModel.Temperature, Mode=OneWay}" />
+                                                Text="{x:Bind ViewModel.Temperature, Mode=OneWay}"
+                                                TextAlignment="Right" />
                                             <TextBlock
                                                 FontSize="10"
                                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                Text="°C" />
+                                                Text="°C"
+                                                TextAlignment="Right" />
                                         </StackPanel>
                                     </StackPanel>
                                 </Grid>
