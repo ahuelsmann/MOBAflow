@@ -1,0 +1,6 @@
+{
+    "$schema": "https://raw.githubusercontent.com/adamralph/minver/main/schema.json",
+    "minimum": "0.1.0",
+    "prerelease": "preview",
+    "buildMetadata": "build"
+}

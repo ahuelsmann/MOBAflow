@@ -32,17 +32,17 @@ public sealed partial class SignalBoxPage
         ElementIdText.Text = SelectedElement.Id.ToString()[..8];
 
         // Address (only for SbSwitch and SbSignal)
-        if (SelectedElement is SbSwitchViewModel sw)
+        if (SelectedElement is SbSwitch sw)
         {
             ElementAddressBox.Value = sw.Address;
             ElementAddressBox.Visibility = Visibility.Visible;
         }
-        else if (SelectedElement is SbSignalViewModel sig)
+        else if (SelectedElement is SbSignal sig)
         {
             ElementAddressBox.Value = sig.Address;
             ElementAddressBox.Visibility = Visibility.Visible;
         }
-        else if (SelectedElement is SbDetectorViewModel det)
+        else if (SelectedElement is SbDetector det)
         {
             ElementAddressBox.Value = det.FeedbackAddress;
             ElementAddressBox.Visibility = Visibility.Visible;
@@ -53,22 +53,22 @@ public sealed partial class SignalBoxPage
         }
 
         // Signal panel visibility
-        SignalAspectPanel.Visibility = SelectedElement is SbSignalViewModel ? Visibility.Visible : Visibility.Collapsed;
+        SignalAspectPanel.Visibility = SelectedElement is SbSignal ? Visibility.Visible : Visibility.Collapsed;
 
         // Update SignalPreview with current aspect
-        if (SelectedElement is SbSignalViewModel signalVm)
+        if (SelectedElement is SbSignal signal)
         {
-            SignalPreview.Aspect = signalVm.SignalAspect.ToString();
+            SignalPreview.Aspect = signal.SignalAspect.ToString();
         }
 
         // Switch panel visibility
-        SwitchPositionPanel.Visibility = SelectedElement is SbSwitchViewModel ? Visibility.Visible : Visibility.Collapsed;
+        SwitchPositionPanel.Visibility = SelectedElement is SbSwitch ? Visibility.Visible : Visibility.Collapsed;
 
         // Update aspect buttons
         UpdateAspectButtons();
 
         // Update switch buttons
-        if (SelectedElement is SbSwitchViewModel)
+        if (SelectedElement is SbSwitch)
         {
             UpdateSwitchButtons();
         }
@@ -76,7 +76,7 @@ public sealed partial class SignalBoxPage
 
     private void UpdateAspectButtons()
     {
-        if (SelectedElement is not SbSignalViewModel sig) return;
+        if (SelectedElement is not SbSignal sig) return;
 
         var accentBrush = (Brush)Application.Current.Resources["AccentFillColorDefaultBrush"];
         var normalBrush = (Brush)Application.Current.Resources["SubtleFillColorSecondaryBrush"];
@@ -97,7 +97,7 @@ public sealed partial class SignalBoxPage
 
     private void UpdateSwitchButtons()
     {
-        if (SelectedElement is not SbSwitchViewModel sw) return;
+        if (SelectedElement is not SbSwitch sw) return;
 
         // All switches support all three positions now
         ThirdSwitchColumn.Width = new GridLength(1, GridUnitType.Star);
@@ -113,22 +113,22 @@ public sealed partial class SignalBoxPage
         SwitchRightButton.Style = sw.SwitchPosition == SwitchPosition.DivergingRight ? accentStyle : defaultStyle;
     }
 
-    private static string GetElementTypeName(SbElementViewModel element) => element switch
+    private static string GetElementTypeName(SbElement element) => element switch
     {
-        SbTrackStraightViewModel => "Gerades Gleis",
-        SbTrackCurveViewModel => "Kurve 90 Grad",
-        SbSwitchViewModel => "Weiche",
-        SbSignalViewModel => "Signal",
-        SbDetectorViewModel => "Rückmelder",
+        SbTrackStraight => "Gerades Gleis",
+        SbTrackCurve => "Kurve 90 Grad",
+        SbSwitch => "Weiche",
+        SbSignal => "Signal",
+        SbDetector => "Rückmelder",
         _ => "Unbekannt"
     };
 
     private void UpdateStatistics()
     {
         if (_planViewModel == null) return;
-        TrackCountText.Text = _planViewModel.Elements.Count(e => e is SbTrackStraightViewModel or SbTrackCurveViewModel).ToString();
-        SwitchCountText.Text = _planViewModel.Elements.OfType<SbSwitchViewModel>().Count().ToString();
-        SignalCountText.Text = _planViewModel.Elements.OfType<SbSignalViewModel>().Count().ToString();
+        TrackCountText.Text = _planViewModel.Elements.Count(e => e is SbTrackStraight or SbTrackCurve).ToString();
+        SwitchCountText.Text = _planViewModel.Elements.OfType<SbSwitch>().Count().ToString();
+        SignalCountText.Text = _planViewModel.Elements.OfType<SbSignal>().Count().ToString();
     }
 
     #endregion
@@ -148,7 +148,7 @@ public sealed partial class SignalBoxPage
 
     private void OnAspectClicked(object sender, PointerRoutedEventArgs e)
     {
-        if (SelectedElement is not SbSignalViewModel sig || sender is not Border { Tag: string aspectStr }) return;
+        if (SelectedElement is not SbSignal sig || sender is not Border { Tag: string aspectStr }) return;
 
         if (Enum.TryParse<SignalAspect>(aspectStr, out var aspect))
         {
@@ -166,7 +166,7 @@ public sealed partial class SignalBoxPage
 
     private void OnSwitchPositionClicked(object sender, RoutedEventArgs e)
     {
-        if (SelectedElement is not SbSwitchViewModel sw || sender is not Button { Tag: string positionStr }) return;
+        if (SelectedElement is not SbSwitch sw || sender is not Button { Tag: string positionStr }) return;
 
         sw.SwitchPosition = positionStr switch
         {
@@ -184,11 +184,11 @@ public sealed partial class SignalBoxPage
     {
         if (SelectedElement == null || double.IsNaN(args.NewValue)) return;
 
-        if (SelectedElement is SbSwitchViewModel sw)
+        if (SelectedElement is SbSwitch sw)
             sw.Address = (int)args.NewValue;
-        else if (SelectedElement is SbSignalViewModel sig)
+        else if (SelectedElement is SbSignal sig)
             sig.Address = (int)args.NewValue;
-        else if (SelectedElement is SbDetectorViewModel det)
+        else if (SelectedElement is SbDetector det)
             det.FeedbackAddress = (int)args.NewValue;
     }
 

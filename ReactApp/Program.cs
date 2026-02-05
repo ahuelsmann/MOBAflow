@@ -5,6 +5,7 @@ using Moba.Backend.Extensions;
 using Moba.Common.Configuration;
 using Moba.ReactApp.Service;
 using Moba.SharedUI.Interface;
+using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
 using Moba.Sound;
 
@@ -46,6 +47,7 @@ if (string.IsNullOrEmpty(appSettings.Z21.CurrentIpAddress))
 }
 builder.Services.AddSingleton(appSettings);
 builder.Services.AddSingleton<ISettingsService, SettingsService>();
+builder.Services.AddSingleton<IIoService, NullIoService>();
 
 // Blazor-specific services
 builder.Services.AddSingleton<IUiDispatcher, BlazorUiDispatcher>();

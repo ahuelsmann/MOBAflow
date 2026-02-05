@@ -139,16 +139,10 @@ public sealed class NavigationItemFactory
         Brush backgroundColor;
         Brush foregroundColor;
 
-        if (isSkinBadge)
+        if (isSkinBadge || isPreviewBadge)
         {
-            backgroundColor = new SolidColorBrush(Color.FromArgb(255, 92, 45, 145)); // #5C2D91
-            foregroundColor = new SolidColorBrush(Colors.White);
-        }
-        else if (isPreviewBadge)
-        {
-            backgroundColor = new SolidColorBrush(Color.FromArgb(255, 92, 45, 145)); // #5C2D91
-            //backgroundColor = (Brush)Application.Current.Resources["SystemAccentColorBrush"];
-            foregroundColor = new SolidColorBrush(Colors.White);
+            backgroundColor = (Brush)Application.Current.Resources["AccentFillColorDefaultBrush"];
+            foregroundColor = (Brush)Application.Current.Resources["TextFillColorInverseBrush"];
         }
         else
         {

@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <!-- Version Information (zentral für alle Projekte) -->
+    <!-- Version Information (central for all projects) -->
     <!--(Product Version)-->
     <Version>0.1.0</Version>
     <AssemblyVersion>0.1.0.0</AssemblyVersion>

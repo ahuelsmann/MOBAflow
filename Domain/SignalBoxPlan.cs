@@ -83,6 +83,9 @@ public abstract record SbElement
 
     /// <summary>Display name (e.g., "W1" for Weiche 1, "N1" for Signal N1).</summary>
     public string Name { get; set; } = string.Empty;
+
+    /// <summary>Current state of the element (free, occupied, route set).</summary>
+    public SignalBoxElementState State { get; set; } = SignalBoxElementState.Free;
 }
 
 /// <summary>
@@ -265,4 +268,29 @@ public enum SwitchPosition
 
     /// <summary>Diverging right position (for three-way switches)</summary>
     DivergingRight
+}
+
+/// <summary>
+/// Element state for a signal box item.
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum SignalBoxElementState
+{
+    /// <summary>Free section (default).</summary>
+    Free,
+
+    /// <summary>Occupied section.</summary>
+    Occupied,
+
+    /// <summary>Route set.</summary>
+    RouteSet,
+
+    /// <summary>Route clearing.</summary>
+    RouteClearing,
+
+    /// <summary>Blocked section.</summary>
+    Blocked,
+
+    /// <summary>Fault condition.</summary>
+    Fault
 }

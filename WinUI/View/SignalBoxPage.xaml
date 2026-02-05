@@ -117,8 +117,7 @@
                                     Text="FARBSCHEMA WÄHLEN" />
                                 <Button
                                     HorizontalAlignment="Stretch"
-                                    Click="OnSkinSystemClicked"
-                                    Tag="System">
+                                    Command="{x:Bind SkinViewModel.SelectSystemCommand}">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Border
                                             Width="20"
@@ -135,52 +134,48 @@
                                     Text="COLOR SKINS" />
                                 <Button
                                     HorizontalAlignment="Stretch"
-                                    Click="OnSkinBlueClicked"
-                                    Tag="Blue">
+                                    Command="{x:Bind SkinViewModel.SelectBlueCommand}">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Border
                                             Width="20"
                                             Height="20"
-                                            Background="#0078D4"
+                                            Background="{ThemeResource SkinBlueBrush}"
                                             CornerRadius="4" />
                                         <TextBlock VerticalAlignment="Center" Text="Blau" />
                                     </StackPanel>
                                 </Button>
                                 <Button
                                     HorizontalAlignment="Stretch"
-                                    Click="OnSkinGreenClicked"
-                                    Tag="Green">
+                                    Command="{x:Bind SkinViewModel.SelectGreenCommand}">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Border
                                             Width="20"
                                             Height="20"
-                                            Background="#2ECC71"
+                                            Background="{ThemeResource SkinGreenBrush}"
                                             CornerRadius="4" />
                                         <TextBlock VerticalAlignment="Center" Text="Grün" />
                                     </StackPanel>
                                 </Button>
                                 <Button
                                     HorizontalAlignment="Stretch"
-                                    Click="OnSkinOrangeClicked"
-                                    Tag="Orange">
+                                    Command="{x:Bind SkinViewModel.SelectOrangeCommand}">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Border
                                             Width="20"
                                             Height="20"
-                                            Background="#FF6600"
+                                            Background="{ThemeResource SkinOrangeBrush}"
                                             CornerRadius="4" />
                                         <TextBlock VerticalAlignment="Center" Text="Orange" />
                                     </StackPanel>
                                 </Button>
                                 <Button
                                     HorizontalAlignment="Stretch"
-                                    Click="OnSkinRedClicked"
-                                    Tag="Red">
+                                    Command="{x:Bind SkinViewModel.SelectRedCommand}">
                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                         <Border
                                             Width="20"
                                             Height="20"
-                                            Background="#CC0000"
+                                            Background="{ThemeResource SkinRedBrush}"
                                             CornerRadius="4" />
                                         <TextBlock VerticalAlignment="Center" Text="Red" />
                                     </StackPanel>

@@ -1,0 +1,26 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--  Signal Box Track Colors  -->
+    <SolidColorBrush x:Key="SignalBoxTrackColor" Color="#C8C8C8" />
+    <!--  Gray: RGB(200, 200, 200) for normal tracks  -->
+
+    <SolidColorBrush x:Key="SignalBoxTrackActiveColor" Color="#00C800" />
+    <!--  Green: RGB(0, 200, 0) for active/occupied tracks  -->
+
+    <SolidColorBrush x:Key="SignalBoxBufferStopColor" Color="#C83C3C" />
+    <!--  Red: RGB(200, 60, 60) for buffer stops  -->
+
+    <!--  Signal Box Element Colors  -->
+    <SolidColorBrush x:Key="SignalBoxSwitchStraightColor" Color="#4169E1" />
+    <!--  Royal Blue for straight switch position  -->
+
+    <SolidColorBrush x:Key="SignalBoxSwitchDiversingColor" Color="#FF8C00" />
+    <!--  Dark Orange for diverging switch position  -->
+
+    <SolidColorBrush x:Key="SignalBoxDetectorColor" Color="#9370DB" />
+    <!--  Medium Purple for detectors  -->
+
+    <SolidColorBrush x:Key="SignalBoxSelectionHighlightColor" Color="#FFFF00" />
+    <!--  Yellow for selected element highlight  -->
+
+</ResourceDictionary>

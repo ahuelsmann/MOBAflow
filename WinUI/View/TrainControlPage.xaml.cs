@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Media;
 using Service;
 using SharedUI.Interface;
 using SharedUI.ViewModel;
+using ViewModel;
 using System.ComponentModel;
 using Windows.UI;
 using Windows.UI.ViewManagement;
@@ -26,6 +27,11 @@ public sealed partial class TrainControlPage
     private readonly AppSettings _settings;
     private readonly ISettingsService? _settingsService;
     private List<LocomotiveSeries> _allLocomotives = [];
+
+    /// <summary>
+    /// Skin selection ViewModel for this page.
+    /// </summary>
+    public SkinSelectorViewModel SkinViewModel { get; }
 
     // UI element references for theme application
     private SpeedometerControl? _speedometer;
@@ -45,13 +51,21 @@ public sealed partial class TrainControlPage
         ILocomotiveService locomotiveService,
         ISkinProvider skinProvider,
         AppSettings settings,
+        SkinSelectorViewModel skinViewModel,
         ISettingsService? settingsService = null)
     {
+        ArgumentNullException.ThrowIfNull(viewModel);
+        ArgumentNullException.ThrowIfNull(locomotiveService);
+        ArgumentNullException.ThrowIfNull(skinProvider);
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(skinViewModel);
+
         ViewModel = viewModel;
         _locomotiveService = locomotiveService;
         _skinProvider = skinProvider;
         _settings = settings;
         _settingsService = settingsService;
+        SkinViewModel = skinViewModel;
 
         InitializeComponent();
 
@@ -274,8 +288,6 @@ public sealed partial class TrainControlPage
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
-        _skinProvider.SkinChanged -= OnSkinProviderChanged;
-        _skinProvider.DarkModeChanged -= OnDarkModeChanged;
     }
 
     private void LocoSeriesBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
@@ -332,26 +344,6 @@ public sealed partial class TrainControlPage
             
             // Update AutoSuggestBox text to show full series name
             sender.Text = selected.Name;
-        }
-    }
-
-    // Skin selection handlers for Flyout buttons
-    private async void OnSkinSystemClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.System);
-    private async void OnSkinBlueClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Blue);
-    private async void OnSkinGreenClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Green);
-    private async void OnSkinOrangeClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Orange);
-    private async void OnSkinRedClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Red);
-
-    private async Task SetSkinAsync(AppSkin skin)
-    {
-        _skinProvider.SetSkin(skin);
-        
-        // Save selected skin to settings
-        _settings.Application.SelectedSkin = skin.ToString();
-        
-        if (_settingsService != null)
-        {
-            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
         }
     }
 

@@ -11,13 +11,14 @@ using Microsoft.UI.Xaml.Shapes;
 using Service;
 using SharedUI.Interface;
 using SharedUI.ViewModel;
+using ViewModel;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.UI;
 
 /// <summary>
 /// Modernes elektronisches Stellwerk (ESTW) - Gleisbildstellwerk.
-/// Ermöglicht die grafische Planung von Gleisanlagen mit Signalen und Weichen.
+/// Ermoeglicht die grafische Planung von Gleisanlagen mit Signalen und Weichen.
 /// Uses SignalBoxPlanViewModel for MVVM-compliant data management.
 /// Supports skin switching via ISkinProvider.
 /// </summary>
@@ -30,13 +31,16 @@ public sealed partial class SignalBoxPage : Page
     private readonly Dictionary<Guid, FrameworkElement> _elementVisuals = [];
     private readonly List<Line> _gridLines = [];
     private readonly ISkinProvider _skinProvider;
-    private readonly AppSettings _settings;
-    private readonly ISettingsService? _settingsService;
 
     /// <summary>
     /// MainWindowViewModel for accessing the active project.
     /// </summary>
     public MainWindowViewModel ViewModel { get; }
+
+    /// <summary>
+    /// Skin selection ViewModel for this page.
+    /// </summary>
+    public SkinSelectorViewModel SkinViewModel { get; }
 
     /// <summary>
     /// SignalBoxPlan ViewModel - the source of truth for element data.
@@ -57,13 +61,15 @@ public sealed partial class SignalBoxPage : Page
     public SignalBoxPage(
         MainWindowViewModel viewModel,
         ISkinProvider skinProvider,
-        AppSettings settings,
-        ISettingsService? settingsService = null)
+        SkinSelectorViewModel skinViewModel)
     {
+        ArgumentNullException.ThrowIfNull(viewModel);
+        ArgumentNullException.ThrowIfNull(skinProvider);
+        ArgumentNullException.ThrowIfNull(skinViewModel);
+
         ViewModel = viewModel;
         _skinProvider = skinProvider;
-        _settings = settings;
-        _settingsService = settingsService;
+        SkinViewModel = skinViewModel;
 
         InitializeComponent();
 
@@ -127,7 +133,7 @@ public sealed partial class SignalBoxPage : Page
     /// <summary>
     /// Shortcut to access the currently selected element from the ViewModel.
     /// </summary>
-    private SbElementViewModel? SelectedElement => _planViewModel?.SelectedElement;
+    private SbElement? SelectedElement => _planViewModel?.SelectedElement;
 
     private void InitializeCanvas()
     {
@@ -163,8 +169,6 @@ public sealed partial class SignalBoxPage : Page
         AspectZs1Signal.Aspect = "Zs1";
         AspectZs7Signal.Aspect = "Zs7";
     }
-
-    #region Grid Drawing
 
     private void DrawGrid()
     {
@@ -222,30 +226,6 @@ public sealed partial class SignalBoxPage : Page
         }
     }
 
-    #endregion
-
-    #region Skin System
-
-    // Skin selection handlers - same pattern as TrainControlPage
-    private async void OnSkinSystemClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.System);
-    private async void OnSkinBlueClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Blue);
-    private async void OnSkinGreenClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Green);
-    private async void OnSkinOrangeClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Orange);
-    private async void OnSkinRedClicked(object sender, RoutedEventArgs e) => await SetSkinAsync(AppSkin.Red);
-
-    private async Task SetSkinAsync(AppSkin skin)
-    {
-        _skinProvider.SetSkin(skin);
-        
-        // Save selected skin to settings
-        _settings.Application.SelectedSkin = skin.ToString();
-        
-        if (_settingsService != null)
-        {
-            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
-        }
-    }
-
     /// <summary>
     /// Applies skin colors to canvas and grid based on current ISkinProvider settings.
     /// Properly handles both skin selection AND dark/light mode.
@@ -259,36 +239,18 @@ public sealed partial class SignalBoxPage : Page
         // Set page RequestedTheme based on palette (controls Light/Dark for standard WinUI controls)
         RequestedTheme = palette.IsDarkTheme ? ElementTheme.Dark : ElementTheme.Light;
 
-        // Canvas background - use skin-aware colors for signal box
-        // Signal boxes typically work better with darker backgrounds for contrast
-        var (canvasBg, gridColor) = (_skinProvider.CurrentSkin, isDark) switch
+        // Canvas background - use skin palette colors for signal box
+        var gridBrush = new SolidColorBrush(palette.Accent)
         {
-            // Blue skin
-            (AppSkin.Blue, true) => (Color.FromArgb(255, 10, 30, 50), Color.FromArgb(100, 0, 120, 212)),
-            (AppSkin.Blue, false) => (Color.FromArgb(255, 220, 235, 250), Color.FromArgb(120, 0, 120, 212)),
-
-            // Green skin
-            (AppSkin.Green, true) => (Color.FromArgb(255, 10, 40, 20), Color.FromArgb(100, 16, 124, 16)),
-            (AppSkin.Green, false) => (Color.FromArgb(255, 220, 245, 220), Color.FromArgb(120, 16, 124, 16)),
-
-            // Orange skin (formerly DarkOrange - now single Orange skin)
-            (AppSkin.Orange, true) => (Color.FromArgb(255, 20, 12, 5), Color.FromArgb(100, 255, 102, 0)),
-            (AppSkin.Orange, false) => (Color.FromArgb(255, 255, 240, 225), Color.FromArgb(120, 255, 102, 0)),
-
-            // Red skin
-            (AppSkin.Red, true) => (Color.FromArgb(255, 30, 10, 10), Color.FromArgb(100, 204, 0, 0)),
-            (AppSkin.Red, false) => (Color.FromArgb(255, 255, 235, 235), Color.FromArgb(120, 204, 0, 0)),
-
-            // System skin - use theme resources
-            _ => ((Color?)null, (Color?)null)
+            Opacity = isDark ? 0.35 : 0.25
         };
 
-        if (canvasBg.HasValue)
+        if (!isSystemSkin)
         {
-            TrackCanvas.Background = new SolidColorBrush(canvasBg.Value);
+            TrackCanvas.Background = palette.PanelBackgroundBrush;
             foreach (var line in _gridLines)
             {
-                line.Stroke = new SolidColorBrush(gridColor!.Value);
+                line.Stroke = gridBrush;
             }
         }
         else
@@ -365,10 +327,6 @@ public sealed partial class SignalBoxPage : Page
         }
     }
 
-    #endregion
-
-    #region Toolbox Drag & Drop
-
     private void OnToolPointerEntered(object sender, PointerRoutedEventArgs e)
     {
         if (sender is Border border)
@@ -398,10 +356,6 @@ public sealed partial class SignalBoxPage : Page
             e.Cancel = true;
         }
     }
-
-    #endregion
-
-    #region Canvas Interaction
 
     private void OnCanvasDragOver(object sender, DragEventArgs e)
     {
@@ -501,10 +455,6 @@ public sealed partial class SignalBoxPage : Page
         }
     }
 
-    #endregion
-
-    #region Element Management
-
     /// <summary>
     /// Creates an element based on the type tag from drag-drop.
     /// </summary>
@@ -512,7 +462,7 @@ public sealed partial class SignalBoxPage : Page
     {
         if (_planViewModel == null) return;
 
-        SbElementViewModel? elementVm = typeTag switch
+        SbElement? element = typeTag switch
         {
             "TrackStraight" => _planViewModel.AddTrackStraight(gridX, gridY),
             "TrackCurve" => _planViewModel.AddTrackCurve(gridX, gridY),
@@ -522,21 +472,21 @@ public sealed partial class SignalBoxPage : Page
             _ => null
         };
 
-        if (elementVm == null) return;
+        if (element == null) return;
 
-        CreateElementVisual(elementVm);
-        SelectElement(elementVm);
+        CreateElementVisual(element);
+        SelectElement(element);
         UpdateStatistics();
     }
 
-    private void MoveElement(SbElementViewModel element, int newGridX, int newGridY)
+    private void MoveElement(SbElement element, int newGridX, int newGridY)
     {
         element.X = newGridX;
         element.Y = newGridY;
         RefreshElementVisual(element);
     }
 
-    private void CreateElementVisual(SbElementViewModel element)
+    private void CreateElementVisual(SbElement element)
     {
         var visual = BuildElementVisual(element);
         Canvas.SetLeft(visual, element.X * GridCellSize);
@@ -545,14 +495,14 @@ public sealed partial class SignalBoxPage : Page
         _elementVisuals[element.Id] = visual;
     }
 
-    private FrameworkElement BuildElementVisual(SbElementViewModel element)
+    private FrameworkElement BuildElementVisual(SbElement element)
     {
         var container = new Canvas
         {
             Width = GridCellSize,
             Height = GridCellSize,
             Tag = element.Id,
-            CanDrag = SelectedElement?.Id == element.Id, // Nur selektierte Elemente können gedraggt werden
+            CanDrag = SelectedElement?.Id == element.Id, // Nur selektierte Elemente koennen gedraggt werden
             Background = new SolidColorBrush(Colors.Transparent),
             RenderTransform = new RotateTransform
             {
@@ -562,16 +512,23 @@ public sealed partial class SignalBoxPage : Page
             }
         };
 
-        // Highlight-Rahmen für selektiertes Element
+        // Highlight-Rahmen fuer selektiertes Element
         if (SelectedElement?.Id == element.Id)
         {
+            var accentStroke = (SolidColorBrush)Application.Current.Resources["AccentFillColorDefaultBrush"];
+            var accentFillSource = (SolidColorBrush)Application.Current.Resources["AccentFillColorSecondaryBrush"];
+            var accentFill = new SolidColorBrush(accentFillSource.Color)
+            {
+                Opacity = 0.2
+            };
+
             var highlight = new Rectangle
             {
                 Width = GridCellSize - 2,
                 Height = GridCellSize - 2,
-                Stroke = new SolidColorBrush(Colors.DodgerBlue),
+                Stroke = accentStroke,
                 StrokeThickness = 2,
-                Fill = new SolidColorBrush(Color.FromArgb(30, 30, 144, 255)),
+                Fill = accentFill,
                 RadiusX = 4,
                 RadiusY = 4
             };
@@ -583,11 +540,11 @@ public sealed partial class SignalBoxPage : Page
         // Element-spezifische Grafik erstellen (type-based dispatch)
         var graphic = element switch
         {
-            SbTrackStraightViewModel => CreateStraightTrackGraphic(),
-            SbTrackCurveViewModel => CreateCurve90Graphic(),
-            SbSwitchViewModel sw => CreateSwitchGraphic(sw),
-            SbSignalViewModel sig => CreateSignalGraphic(sig),
-            SbDetectorViewModel => CreateFeedbackGraphic(),
+            SbTrackStraight => CreateStraightTrackGraphic(),
+            SbTrackCurve => CreateCurve90Graphic(),
+            SbSwitch sw => CreateSwitchGraphic(sw),
+            SbSignal sig => CreateSignalGraphic(sig),
+            SbDetector => CreateFeedbackGraphic(),
             _ => CreatePlaceholderGraphic()
         };
 
@@ -608,11 +565,11 @@ public sealed partial class SignalBoxPage : Page
         container.DoubleTapped += (s, e) =>
         {
             e.Handled = true;
-            if (element is SbSwitchViewModel sw)
+            if (element is SbSwitch sw)
             {
                 ToggleSwitchPosition(sw);
             }
-            else if (element is SbSignalViewModel sig)
+            else if (element is SbSignal sig)
             {
                 ToggleSignalAspect(sig);
             }
@@ -628,7 +585,7 @@ public sealed partial class SignalBoxPage : Page
         return container;
     }
 
-    private void ToggleSwitchPosition(SbSwitchViewModel element)
+    private void ToggleSwitchPosition(SbSwitch element)
     {
         element.SwitchPosition = element.SwitchPosition switch
         {
@@ -640,7 +597,7 @@ public sealed partial class SignalBoxPage : Page
         UpdatePropertiesPanel();
     }
 
-    private void ToggleSignalAspect(SbSignalViewModel element)
+    private void ToggleSignalAspect(SbSignal element)
     {
         element.SignalAspect = element.SignalAspect switch
         {
@@ -653,7 +610,7 @@ public sealed partial class SignalBoxPage : Page
         UpdatePropertiesPanel();
     }
 
-    private void RefreshElementVisual(SbElementViewModel element)
+    private void RefreshElementVisual(SbElement element)
     {
         if (_elementVisuals.TryGetValue(element.Id, out var oldVisual))
         {
@@ -663,7 +620,7 @@ public sealed partial class SignalBoxPage : Page
         CreateElementVisual(element);
     }
 
-    private void SelectElement(SbElementViewModel? element)
+    private void SelectElement(SbElement? element)
     {
         if (SelectedElement?.Id == element?.Id) return;
 
@@ -706,8 +663,6 @@ public sealed partial class SignalBoxPage : Page
         _planViewModel.RemoveElement(elementToDelete);
         UpdateStatistics();
     }
-
-    #endregion
 
     /// <summary>
     /// Loads the signal box plan from the domain model and recreates all visuals.

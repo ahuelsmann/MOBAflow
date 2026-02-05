@@ -8,11 +8,17 @@
             <ResourceDictionary.MergedDictionaries>
                 <!--  WinUI 3 Controls Resources - required for theme resources and control styles  -->
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+                <ResourceDictionary Source="/Resources/SignalBoxColors.xaml" />
                 <ResourceDictionary Source="/Resources/EntityTemplates.xaml" />
                 <ResourceDictionary Source="/Resources/ControlStyles.xaml" />
                 <ResourceDictionary Source="/Resources/TrackGraphics.xaml" />
                 <ResourceDictionary Source="/Resources/SignalGraphics.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            <!--  Skin Swatches (used by skin selector flyouts)  -->
+            <SolidColorBrush x:Key="SkinBlueBrush" Color="#0078D4" />
+            <SolidColorBrush x:Key="SkinGreenBrush" Color="#2ECC71" />
+            <SolidColorBrush x:Key="SkinOrangeBrush" Color="#FF6600" />
+            <SolidColorBrush x:Key="SkinRedBrush" Color="#CC0000" />
             <!--  Global Converters  -->
             <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
             <converter:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />

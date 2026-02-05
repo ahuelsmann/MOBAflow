@@ -64,4 +64,9 @@
         <Content Include="germany-stations.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="germany-locomotives.json" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
+    <ItemGroup>
+      <None Update="Resources\SignalBoxColors.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </None>
+    </ItemGroup>
 </Project>

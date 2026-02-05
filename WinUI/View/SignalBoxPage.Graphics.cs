@@ -2,6 +2,7 @@ namespace Moba.WinUI.View;
 
 using Controls;
 using Domain;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
@@ -20,9 +21,11 @@ public sealed partial class SignalBoxPage
     // Left:  (0, 30)   Right: (60, 30)
     // Top:   (30, 0)   Bottom: (30, 60)
 
-    private static readonly SolidColorBrush TrackBrush = new(Color.FromArgb(255, 200, 200, 200));
-    private static readonly SolidColorBrush TrackActiveBrush = new(Color.FromArgb(255, 0, 200, 0));
-    private static readonly SolidColorBrush BufferStopBrush = new(Color.FromArgb(255, 200, 60, 60));
+    // NOTE: Colors are now obtained from resources instead of hardcoded
+    // See: ThemeResources in App.xaml or theme-specific ResourceDictionaries
+    private static SolidColorBrush GetTrackBrush() => (SolidColorBrush)Application.Current.Resources["SignalBoxTrackColor"];
+    private static SolidColorBrush GetTrackActiveBrush() => (SolidColorBrush)Application.Current.Resources["SignalBoxTrackActiveColor"];
+    private static SolidColorBrush GetBufferStopBrush() => (SolidColorBrush)Application.Current.Resources["SignalBoxBufferStopColor"];
     private const double TrackThickness = 4;
 
     private static Canvas CreateStraightTrackGraphic()
@@ -35,7 +38,7 @@ public sealed partial class SignalBoxPage
             Y1 = 30,
             X2 = 60,
             Y2 = 30,
-            Stroke = TrackBrush,
+            Stroke = GetTrackBrush(),
             StrokeThickness = TrackThickness
         });
         return canvas;
@@ -51,7 +54,7 @@ public sealed partial class SignalBoxPage
         {
             Data = (Geometry)XamlBindingHelper.ConvertValue(typeof(Geometry),
                 "M 0,30 Q 30,30 30,60"),
-            Stroke = TrackBrush,
+            Stroke = GetTrackBrush(),
             StrokeThickness = TrackThickness
         });
         return canvas;
@@ -68,7 +71,7 @@ public sealed partial class SignalBoxPage
             Y1 = 30,
             X2 = 45,
             Y2 = 30,
-            Stroke = TrackBrush,
+            Stroke = GetTrackBrush(),
             StrokeThickness = TrackThickness
         });
 
@@ -78,14 +81,14 @@ public sealed partial class SignalBoxPage
             Y1 = 18,
             X2 = 45,
             Y2 = 42,
-            Stroke = BufferStopBrush,
+            Stroke = GetBufferStopBrush(),
             StrokeThickness = 5
         });
 
         return canvas;
     }
 
-    private static Canvas CreateSwitchGraphic(SbSwitchViewModel element)
+    private static Canvas CreateSwitchGraphic(SbSwitch element)
     {
         // Switch: Left (0,30) -> Right (60,30) + branch
         var canvas = new Canvas { Width = 60, Height = 60 };
@@ -99,7 +102,7 @@ public sealed partial class SignalBoxPage
             Y1 = 30,
             X2 = 60,
             Y2 = 30,
-            Stroke = isStraight ? TrackActiveBrush : TrackBrush,
+            Stroke = isStraight ? GetTrackActiveBrush() : GetTrackBrush(),
             StrokeThickness = TrackThickness
         });
 
@@ -110,7 +113,7 @@ public sealed partial class SignalBoxPage
             Y1 = 30,
             X2 = 60,
             Y2 = element.SwitchPosition == SwitchPosition.DivergingLeft ? 0 : 60,
-            Stroke = isDiverging ? TrackActiveBrush : TrackBrush,
+            Stroke = isDiverging ? GetTrackActiveBrush() : GetTrackBrush(),
             StrokeThickness = TrackThickness
         });
 
@@ -120,7 +123,7 @@ public sealed partial class SignalBoxPage
     /// <summary>
     /// Creates signal graphic based on signal type and aspect.
     /// </summary>
-    private Canvas CreateSignalGraphic(SbSignalViewModel element)
+    private Canvas CreateSignalGraphic(SbSignal element)
     {
         var canvas = new Canvas { Width = 60, Height = 60 };
 
@@ -148,7 +151,7 @@ public sealed partial class SignalBoxPage
             Y1 = 30,
             X2 = 60,
             Y2 = 30,
-            Stroke = TrackBrush,
+            Stroke = GetTrackBrush(),
             StrokeThickness = TrackThickness
         });
 
@@ -159,7 +162,7 @@ public sealed partial class SignalBoxPage
             Y1 = 0,
             X2 = 30,
             Y2 = 60,
-            Stroke = TrackBrush,
+            Stroke = GetTrackBrush(),
             StrokeThickness = TrackThickness
         });
 
@@ -177,7 +180,7 @@ public sealed partial class SignalBoxPage
             Y1 = 40,
             X2 = 60,
             Y2 = 40,
-            Stroke = TrackBrush,
+            Stroke = GetTrackBrush(),
             StrokeThickness = TrackThickness
         });
 
@@ -186,8 +189,8 @@ public sealed partial class SignalBoxPage
         {
             Width = 50,
             Height = 12,
-            Fill = new SolidColorBrush(Color.FromArgb(255, 150, 150, 150)),
-            Stroke = new SolidColorBrush(Color.FromArgb(255, 100, 100, 100)),
+            Fill = (Brush)Application.Current.Resources["CardBackgroundFillColorDefaultBrush"],
+            Stroke = (Brush)Application.Current.Resources["CardStrokeColorDefaultBrush"],
             StrokeThickness = 1
         });
         Canvas.SetLeft(canvas.Children[^1], 5);
@@ -207,17 +210,20 @@ public sealed partial class SignalBoxPage
             Y1 = 30,
             X2 = 60,
             Y2 = 30,
-            Stroke = TrackBrush,
+            Stroke = GetTrackBrush(),
             StrokeThickness = TrackThickness
         });
 
         // Feedback marker (small circle)
+        var markerFill = (SolidColorBrush)Application.Current.Resources["AccentFillColorSecondaryBrush"];
+        var markerStroke = (SolidColorBrush)Application.Current.Resources["AccentFillColorDefaultBrush"];
+
         var marker = new Ellipse
         {
             Width = 10,
             Height = 10,
-            Fill = new SolidColorBrush(Color.FromArgb(255, 255, 200, 0)),
-            Stroke = new SolidColorBrush(Color.FromArgb(255, 200, 150, 0)),
+            Fill = markerFill,
+            Stroke = markerStroke,
             StrokeThickness = 1
         };
         Canvas.SetLeft(marker, 25);
@@ -230,13 +236,17 @@ public sealed partial class SignalBoxPage
     private static Canvas CreatePlaceholderGraphic()
     {
         var canvas = new Canvas { Width = 60, Height = 60 };
+        var fillBrush = (Brush)Application.Current.Resources["SubtleFillColorSecondaryBrush"];
+        var strokeBrush = (Brush)Application.Current.Resources["DividerStrokeColorDefaultBrush"];
+
         canvas.Children.Add(new Rectangle
         {
             Width = 56,
             Height = 56,
-            Fill = new SolidColorBrush(Color.FromArgb(30, 100, 100, 100)),
-            Stroke = new SolidColorBrush(Color.FromArgb(60, 150, 150, 150)),
-            StrokeThickness = 1
+            Fill = fillBrush,
+            Stroke = strokeBrush,
+            StrokeThickness = 1,
+            Opacity = 0.6
         });
         Canvas.SetLeft(canvas.Children[^1], 2);
         Canvas.SetTop(canvas.Children[^1], 2);

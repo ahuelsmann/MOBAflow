@@ -67,9 +67,9 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
     }
 
     /// <summary>
-    /// Observable collection of element ViewModels (typed hierarchy).
+    /// Observable collection of elements.
     /// </summary>
-    public ObservableCollection<SbElementViewModel> Elements { get; } = [];
+    public ObservableCollection<SbElement> Elements { get; } = [];
 
     /// <summary>
     /// Observable collection of route ViewModels.
@@ -93,7 +93,7 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
     {
         Elements.Clear();
         foreach (var element in _model.Elements)
-            Elements.Add(SbElementViewModel.Create(element));
+            Elements.Add(element);
 
         Routes.Clear();
         foreach (var route in _model.Routes)
@@ -108,7 +108,7 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSelection))]
-    private SbElementViewModel? _selectedElement;
+    private SbElement? _selectedElement;
 
     /// <summary>
     /// Whether an element is currently selected.
@@ -118,66 +118,61 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
     /// <summary>
     /// Adds a straight track element.
     /// </summary>
-    public SbTrackStraightViewModel AddTrackStraight(int x, int y, int rotation = 0)
+    public SbTrackStraight AddTrackStraight(int x, int y, int rotation = 0)
     {
         var element = new SbTrackStraight { X = x, Y = y, Rotation = rotation };
         _model.Elements.Add(element);
-        var vm = new SbTrackStraightViewModel(element);
-        Elements.Add(vm);
+        Elements.Add(element);
         OnPropertyChanged(nameof(ElementCount));
-        return vm;
+        return element;
     }
 
     /// <summary>
     /// Adds a curved track element.
     /// </summary>
-    public SbTrackCurveViewModel AddTrackCurve(int x, int y, int rotation = 0)
+    public SbTrackCurve AddTrackCurve(int x, int y, int rotation = 0)
     {
         var element = new SbTrackCurve { X = x, Y = y, Rotation = rotation };
         _model.Elements.Add(element);
-        var vm = new SbTrackCurveViewModel(element);
-        Elements.Add(vm);
+        Elements.Add(element);
         OnPropertyChanged(nameof(ElementCount));
-        return vm;
+        return element;
     }
 
     /// <summary>
     /// Adds a switch element with auto-assigned address.
     /// </summary>
-    public SbSwitchViewModel AddSwitch(int x, int y, int rotation = 0)
+    public SbSwitch AddSwitch(int x, int y, int rotation = 0)
     {
         var element = new SbSwitch { X = x, Y = y, Rotation = rotation, Address = GetNextSwitchAddress() };
         _model.Elements.Add(element);
-        var vm = new SbSwitchViewModel(element);
-        Elements.Add(vm);
+        Elements.Add(element);
         OnPropertyChanged(nameof(ElementCount));
-        return vm;
+        return element;
     }
 
     /// <summary>
     /// Adds a signal element with auto-assigned address.
     /// </summary>
-    public SbSignalViewModel AddSignal(int x, int y, int rotation = 0, SignalSystemType system = SignalSystemType.Ks)
+    public SbSignal AddSignal(int x, int y, int rotation = 0, SignalSystemType system = SignalSystemType.Ks)
     {
         var element = new SbSignal { X = x, Y = y, Rotation = rotation, Address = GetNextSignalAddress(), SignalSystem = system };
         _model.Elements.Add(element);
-        var vm = new SbSignalViewModel(element);
-        Elements.Add(vm);
+        Elements.Add(element);
         OnPropertyChanged(nameof(ElementCount));
-        return vm;
+        return element;
     }
 
     /// <summary>
     /// Adds a detector element with auto-assigned feedback address.
     /// </summary>
-    public SbDetectorViewModel AddDetector(int x, int y, int rotation = 0)
+    public SbDetector AddDetector(int x, int y, int rotation = 0)
     {
         var element = new SbDetector { X = x, Y = y, Rotation = rotation, FeedbackAddress = GetNextFeedbackAddress() };
         _model.Elements.Add(element);
-        var vm = new SbDetectorViewModel(element);
-        Elements.Add(vm);
+        Elements.Add(element);
         OnPropertyChanged(nameof(ElementCount));
-        return vm;
+        return element;
     }
 
     /// <summary>
@@ -185,7 +180,7 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
     /// </summary>
     public int GetNextSwitchAddress()
     {
-        var switches = Elements.OfType<SbSwitchViewModel>().ToList();
+        var switches = Elements.OfType<SbSwitch>().ToList();
         return switches.Count > 0 ? switches.Max(e => e.Address) + 1 : 1;
     }
 
@@ -194,7 +189,7 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
     /// </summary>
     public int GetNextSignalAddress()
     {
-        var signals = Elements.OfType<SbSignalViewModel>().ToList();
+        var signals = Elements.OfType<SbSignal>().ToList();
         return signals.Count > 0 ? signals.Max(e => e.Address) + 1 : 1;
     }
 
@@ -203,26 +198,26 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
     /// </summary>
     public int GetNextFeedbackAddress()
     {
-        var detectors = Elements.OfType<SbDetectorViewModel>().ToList();
+        var detectors = Elements.OfType<SbDetector>().ToList();
         return detectors.Count > 0 ? detectors.Max(e => e.FeedbackAddress) + 1 : 1;
     }
 
     /// <summary>
     /// Finds an element at the specified grid position.
     /// </summary>
-    public SbElementViewModel? HitTest(int gridX, int gridY)
+    public SbElement? HitTest(int gridX, int gridY)
         => Elements.FirstOrDefault(e => e.X == gridX && e.Y == gridY);
 
     /// <summary>
     /// Finds an element by its ID.
     /// </summary>
-    public SbElementViewModel? FindById(Guid id)
+    public SbElement? FindById(Guid id)
         => Elements.FirstOrDefault(e => e.Id == id);
 
     /// <summary>
     /// Selects an element.
     /// </summary>
-    public void Select(SbElementViewModel? element)
+    public void Select(SbElement? element)
     {
         SelectedElement = element;
     }
@@ -238,13 +233,13 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
     /// <summary>
     /// Removes an element from the plan.
     /// </summary>
-    public void RemoveElement(SbElementViewModel elementVm)
+    public void RemoveElement(SbElement element)
     {
-        if (SelectedElement?.Id == elementVm.Id)
+        if (SelectedElement?.Id == element.Id)
             SelectedElement = null;
 
-        _model.Elements.Remove(elementVm.Model);
-        Elements.Remove(elementVm);
+        _model.Elements.Remove(element);
+        Elements.Remove(element);
         OnPropertyChanged(nameof(ElementCount));
     }
 
@@ -283,157 +278,6 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
         _model.Routes.Remove(routeVm.Model);
         Routes.Remove(routeVm);
         OnPropertyChanged(nameof(RouteCount));
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ELEMENT VIEWMODELS - Typed Hierarchy
-// ═══════════════════════════════════════════════════════════════════════════
-
-/// <summary>
-/// Abstract base ViewModel for all signal box elements.
-/// </summary>
-public abstract class SbElementViewModel : ObservableObject
-{
-    /// <summary>
-    /// Gets the underlying domain model.
-    /// </summary>
-    public abstract SbElement Model { get; }
-
-    /// <summary>Unique identifier.</summary>
-    public Guid Id => Model.Id;
-
-    /// <summary>Grid position X (column).</summary>
-    public int X
-    {
-        get => Model.X;
-        set => SetProperty(Model.X, value, Model, (m, v) => m.X = v);
-    }
-
-    /// <summary>Grid position Y (row).</summary>
-    public int Y
-    {
-        get => Model.Y;
-        set => SetProperty(Model.Y, value, Model, (m, v) => m.Y = v);
-    }
-
-    /// <summary>Rotation in degrees.</summary>
-    public int Rotation
-    {
-        get => Model.Rotation;
-        set => SetProperty(Model.Rotation, value, Model, (m, v) => m.Rotation = v);
-    }
-
-    /// <summary>Display name.</summary>
-    public string Name
-    {
-        get => Model.Name;
-        set => SetProperty(Model.Name, value, Model, (m, v) => m.Name = v);
-    }
-
-    /// <summary>
-    /// Factory method to create the appropriate ViewModel for a domain element.
-    /// </summary>
-    public static SbElementViewModel Create(SbElement element) => element switch
-    {
-        SbTrackStraight track => new SbTrackStraightViewModel(track),
-        SbTrackCurve curve => new SbTrackCurveViewModel(curve),
-        SbSwitch sw => new SbSwitchViewModel(sw),
-        SbSignal sig => new SbSignalViewModel(sig),
-        SbDetector det => new SbDetectorViewModel(det),
-        _ => throw new ArgumentException($"Unknown element type: {element.GetType().Name}", nameof(element))
-    };
-}
-
-/// <summary>
-/// ViewModel for straight track elements.
-/// </summary>
-public sealed class SbTrackStraightViewModel : SbElementViewModel
-{
-    private readonly SbTrackStraight _model;
-    public SbTrackStraightViewModel(SbTrackStraight model) => _model = model;
-    public override SbElement Model => _model;
-}
-
-/// <summary>
-/// ViewModel for curved track elements.
-/// </summary>
-public sealed class SbTrackCurveViewModel : SbElementViewModel
-{
-    private readonly SbTrackCurve _model;
-    public SbTrackCurveViewModel(SbTrackCurve model) => _model = model;
-    public override SbElement Model => _model;
-}
-
-/// <summary>
-/// ViewModel for switch elements.
-/// </summary>
-public sealed class SbSwitchViewModel : SbElementViewModel
-{
-    private readonly SbSwitch _model;
-    public SbSwitchViewModel(SbSwitch model) => _model = model;
-    public override SbElement Model => _model;
-
-    /// <summary>DCC address for Z21 control.</summary>
-    public int Address
-    {
-        get => _model.Address;
-        set => SetProperty(_model.Address, value, _model, (m, v) => m.Address = v);
-    }
-
-    /// <summary>Current switch position.</summary>
-    public SwitchPosition SwitchPosition
-    {
-        get => _model.SwitchPosition;
-        set => SetProperty(_model.SwitchPosition, value, _model, (m, v) => m.SwitchPosition = v);
-    }
-}
-
-/// <summary>
-/// ViewModel for signal elements.
-/// </summary>
-public sealed class SbSignalViewModel : SbElementViewModel
-{
-    private readonly SbSignal _model;
-    public SbSignalViewModel(SbSignal model) => _model = model;
-    public override SbElement Model => _model;
-
-    /// <summary>DCC address for Z21 control.</summary>
-    public int Address
-    {
-        get => _model.Address;
-        set => SetProperty(_model.Address, value, _model, (m, v) => m.Address = v);
-    }
-
-    /// <summary>Signal system type.</summary>
-    public SignalSystemType SignalSystem
-    {
-        get => _model.SignalSystem;
-        set => SetProperty(_model.SignalSystem, value, _model, (m, v) => m.SignalSystem = v);
-    }
-
-    /// <summary>Current signal aspect.</summary>
-    public SignalAspect SignalAspect
-    {
-        get => _model.SignalAspect;
-        set => SetProperty(_model.SignalAspect, value, _model, (m, v) => m.SignalAspect = v);
-    }
-}
-
-/// <summary>
-/// ViewModel for detector elements.
-/// </summary>
-public sealed class SbDetectorViewModel : SbElementViewModel
-{
-    private readonly SbDetector _model;
-    public SbDetectorViewModel(SbDetector model) => _model = model;
-    public override SbElement Model => _model;
-
-    /// <summary>Feedback address for occupancy detection.</summary>
-    public int FeedbackAddress
-    {
-        get => _model.FeedbackAddress;
-        set => SetProperty(_model.FeedbackAddress, value, _model, (m, v) => m.FeedbackAddress = v);
     }
 }
 

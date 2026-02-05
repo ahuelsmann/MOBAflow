@@ -4,35 +4,7 @@
 
 > ⚖️ **Legal Notice:** MOBAflow is an independent open-source project. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for details on third-party software, formats, and trademarks (AnyRail, Piko, Roco).
 
-## 📊 Current Status (2025-01-24)
-
-**Build:** ✅ SUCCESS (0 errors)  
-**Track Plan Editor:** ✅ FUNCTIONAL  
-- ✅ Drag & Drop with ghost track preview
-- ✅ Snap-to-connect with visual indicators (Phase 6 ✅)
-- ✅ Advanced Snap Detection with proximity radius (Phase 6 ✅)
-- ✅ Grid alignment and zoom controls
-- ✅ Validation framework integrated
-- ✅ R9-Oval compositions for complex layouts (Phase 7 ✅)
-- ✅ Switch Position State tracking (Phase 7 ✅)
-- ✅ Animation Effects infrastructure (Phase 8 ✅)
-- ✅ WCAG theme validation (Phase 8 ✅)
-- 🚧 Sections & Isolators (planned - stubs ready)
-
-**Recent Additions (Phases 6-8):**
-- ✅ SnapToConnectService - Multi-port detection with 5mm proximity radius
-- ✅ ISnapPreviewProvider - Performance caching with LRU (100 entries)
-- ✅ R9OvalGeometry - Advanced track compositions (ovals, figure-8)
-- ✅ SwitchPositionState - Switch routing state management (Straight/Diverging)
-- ✅ CompositionEffectsFactory - WinUI 3 animation effects
-- ✅ ThemeAnimationValidator - WCAG AA/AAA compliance checking
-- ✅ Animation Services - Ghost tracks, snap highlights, selection effects
-
-**Recent Fixes:**
-- Fixed NullReferenceException in keyboard state detection
-- Implemented Validate, ZoomFit, ZoomReset button handlers
-- Resolved API mismatches between UI and TopologyGraph
-- Added null-safety checks for CoreWindow operations
+## 📊 Current Status (2026-02-05)
 
 ## ✨ Features
 
@@ -43,6 +15,18 @@
 - 🎨 **MOBAtps Track Plan System** - Visual track layout editor with drag & drop
 - 🛤️ **Track Libraries** - Extensible track system support (Piko A-Gleis, more coming)
 - 📱 **Multi-Platform** - WinUI (Windows), MAUI (Android), Blazor (Web)
+
+## ⚠️ Hardware & Safety
+
+MOBAflow controls model train layouts via UDP communication with the **Roco Z21 Digital Command Station**. 
+
+**IMPORTANT:** Please read [`HARDWARE-DISCLAIMER.md`](HARDWARE-DISCLAIMER.md) for:
+- ✅ Safety requirements and prerequisites
+- ✅ Network configuration
+- ✅ Liability & disclaimer information
+- ✅ Emergency procedures
+
+**Current Status:** ℹ️ *Setup automation scripts are not yet available. Manual installation required.*
 
 ## 🛤️ Track Plan System (MOBAtps)
 
@@ -89,13 +73,14 @@ MOBAflow supports **importing track layouts from AnyRail** (user-exported XML fi
 
 ## 📋 Quick Links
 
-- 📖 **Documentation:** [`docs/wiki/INDEX.md`](docs/wiki/INDEX.md)
+- 📖 **Documentation & Wiki:** [`docs/wiki/INDEX.md`](docs/wiki/INDEX.md) - Complete user guides, setup, troubleshooting
 - 🏗️ **Architecture:** [`ARCHITECTURE.md`](ARCHITECTURE.md)
 - 📚 **API Documentation:** [`docs/DOXYGEN.md`](docs/DOXYGEN.md) - Generate with Doxygen
 - 🧪 **Test Coverage:** [`docs/TEST-COVERAGE.md`](docs/TEST-COVERAGE.md) - Unit test status
 - 📝 **Documentation Status:** [`docs/DOCUMENTATION-STATUS.md`](docs/DOCUMENTATION-STATUS.md) - XML doc coverage
 - 🎯 **Quality Roadmap:** [`docs/QUALITY-ROADMAP.md`](docs/QUALITY-ROADMAP.md) - 6-week improvement plan
 - 📝 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)
+- ⚠️ **Hardware & Safety:** [`HARDWARE-DISCLAIMER.md`](HARDWARE-DISCLAIMER.md) - **Read before using Z21!**
 - 📜 **Code of Conduct:** [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
 - 🤝 **Contributing:** [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - 🔒 **Security Policy:** [`SECURITY.md`](SECURITY.md)
@@ -104,44 +89,50 @@ MOBAflow supports **importing track layouts from AnyRail** (user-exported XML fi
 
 ## 🚀 Getting Started
 
-### Prerequisites
-- **.NET 10 SDK** (or later)
-- **Visual Studio 2026** (recommended)
-- **Roco Z21 Digital Command Station**
+### Installation
 
-### Clone & Build
+**For detailed installation instructions, setup guides, and troubleshooting, see:** [`docs/wiki/INDEX.md`](docs/wiki/INDEX.md)
 
+**Note:** ℹ️ *Automated setup scripts are planned for future releases. Currently, manual installation is required.*
 
+### Quick Build from Source
+
+**Prerequisites:**
+- .NET 10 SDK (or .NET 9)
+- Visual Studio 2026 (recommended) or VS Code
+- Roco Z21 (for Z21 connectivity)
+
+**Clone & Build:**
 ```bash
-git clone https://dev.azure.com/ahuelsmann/MOBAflow/_git/MOBAflow
+git clone https://github.com/ahuelsmann/MOBAflow.git
 cd MOBAflow
 dotnet restore
 dotnet build
 ```
 
-### Run Applications
+**Run Applications:**
 
-**WinUI (Windows Desktop):**
+WinUI (Windows Desktop):
 ```bash
 dotnet run --project WinUI
 ```
 
-**WebApp (Blazor Dashboard):**
+WebApp (Blazor/Web):
 ```bash
 dotnet run --project WebApp
 ```
 
-**MAUI (Android):**
+MAUI (Android):
 ```bash
 dotnet build MAUI -f net10.0-android
 ```
 
-### Run Tests
+**Run Tests:**
 ```bash
 dotnet test
 ```
 
-## 🔧 Azure Speech Configuration
+## 🔧 Configuration
 
 MOBAflow uses **Azure Cognitive Services Speech** for text-to-speech announcements. You need to configure your own Azure Speech API key.
 
