@@ -1,43 +1,20 @@
 {
     "Logging": {
         "LogLevel": {
-            "Default": "Information",
+            "Default": "Debug",
             "Microsoft": "Warning",
             "Moba": "Debug"
         }
     },
-    "Z21": {
-        "CurrentIpAddress": "192.168.0.111",
-        "DefaultPort": "21105",
-        "AutoConnectRetryIntervalSeconds": 5,
-        "RecentIpAddresses": []
-    },
-    "RestApi": {
-        "CurrentIpAddress": "",
-        "Port": 5001,
-        "RecentIpAddresses": []
-    },
     "Speech": {
-        "Key": "",
+        "Key": "YOUR_AZURE_SPEECH_KEY_HERE",
         "Region": "germanywestcentral",
         "Rate": -1,
         "Volume": 90,
         "SpeakerEngineName": "Azure Cognitive Services",
-        "VoiceName": "de-DE-KatjaNeural",
-        "TestMessage": "Dies ist ein Test der Sprachsynthese. Nächster Halt: Hauptbahnhof."
-    },
-    "CityLibrary": {
-        "FilePath": "germany-stations.json",
-        "AutoReload": true
-    },
-    "Application": {
-        "ResetWindowLayoutOnStart": false,
-        "AutoLoadLastSolution": true,
-        "AutoStartWebApp": true,
-        "LastSolutionPath": null
+        "VoiceName": "de-DE-KatjaNeural"
     },
     "Counter": {
-        "CountOfFeedbackPoints": 1,
         "TargetLapCount": 10,
         "UseTimerFilter": true,
         "TimerIntervalSeconds": 10.0

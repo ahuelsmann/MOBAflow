@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Backend.Service;
 
@@ -38,6 +38,11 @@ public class AnnouncementService
 {
     private readonly ISpeakerEngine? _speakerEngine;
     private readonly ILogger<AnnouncementService>? _logger;
+
+    /// <summary>
+    /// Gets whether a speaker engine is available for speech synthesis.
+    /// </summary>
+    public bool IsSpeakerEngineAvailable => _speakerEngine != null;
 
     /// <summary>
     /// Initializes announcement service with optional speaker engine.

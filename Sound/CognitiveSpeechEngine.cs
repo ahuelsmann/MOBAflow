@@ -24,20 +24,20 @@ using System.Diagnostics;
 // https://learn.microsoft.com/de-de/azure/ai-services/speech-service/get-started-text-to-speech?tabs=windows%2Cterminal&pivots=programming-language-csharp
 public class CognitiveSpeechEngine : ISpeakerEngine
 {
-    private readonly SpeechOptions _options;
+    private readonly IOptionsMonitor<SpeechOptions> _optionsMonitor;
     private readonly ILogger<CognitiveSpeechEngine> _logger;
 
     // Primary constructor for DI
-    public CognitiveSpeechEngine(IOptions<SpeechOptions> options, ILogger<CognitiveSpeechEngine> logger)
+    public CognitiveSpeechEngine(IOptionsMonitor<SpeechOptions> optionsMonitor, ILogger<CognitiveSpeechEngine> logger)
     {
-        _options = options.Value;
+        _optionsMonitor = optionsMonitor;
         _logger = logger;
     }
 
     // Parameterless constructor for JSON deserialization
     public CognitiveSpeechEngine()
     {
-        _options = new SpeechOptions();
+        _optionsMonitor = null!;
         _logger = NullLogger<CognitiveSpeechEngine>.Instance;
     }
 
@@ -50,9 +50,15 @@ public class CognitiveSpeechEngine : ISpeakerEngine
             throw new ArgumentNullException(nameof(message));
         }
 
+        // ✅ FIX: Get current options (updated when appsettings.json changes)
+        var options = _optionsMonitor?.CurrentValue ?? new SpeechOptions();
+
         // Get credentials from options (with fallback to environment variables)
-        string? speechKey = _options.Key ?? Environment.GetEnvironmentVariable("SPEECH_KEY");
-        string? speechRegion = _options.Region ?? Environment.GetEnvironmentVariable("SPEECH_REGION");
+        string? speechKey = options.Key ?? Environment.GetEnvironmentVariable("SPEECH_KEY");
+        string? speechRegion = options.Region ?? Environment.GetEnvironmentVariable("SPEECH_REGION");
+
+        _logger.LogDebug("🔊 [AZURE SPEECH] Key configured: {KeyConfigured}, Key length: {KeyLength}, Region: {Region}", 
+            !string.IsNullOrEmpty(speechKey), speechKey?.Length ?? 0, speechRegion);
 
         if (string.IsNullOrEmpty(speechKey) || string.IsNullOrEmpty(speechRegion))
         {
@@ -86,22 +92,22 @@ public class CognitiveSpeechEngine : ISpeakerEngine
             // Use voiceName from parameter, fallback to options, then to default
             var effectiveVoiceName = !string.IsNullOrEmpty(voiceName) 
                 ? voiceName 
-                : (!string.IsNullOrEmpty(_options.VoiceName) ? _options.VoiceName : "ElkeNeural");
+                : (!string.IsNullOrEmpty(options.VoiceName) ? options.VoiceName : "ElkeNeural");
 
             // Get speech rate from options (convert to percentage format for SSML)
-            var ratePercent = _options.Rate switch
+            var ratePercent = options.Rate switch
             {
-                < 0 => $"{_options.Rate * 10}%",  // -1 becomes "-10%"
-                > 0 => $"+{_options.Rate * 10}%", // +1 becomes "+10%"
+                < 0 => $"{options.Rate * 10}%",  // -1 becomes "-10%"
+                > 0 => $"+{options.Rate * 10}%", // +1 becomes "+10%"
                 _ => "0%"
             };
 
             // Get volume from options (convert to percentage format for SSML)
-            var volumePercent = $"{_options.Volume}%";
+            var volumePercent = $"{options.Volume}%";
 
             // https://learn.microsoft.com/de-de/azure/ai-services/speech-service/language-support?tabs=tts#prebuilt-neural-voices
             string ssml = $@"<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='de-DE'>
-                                <voice name='de-DE-{effectiveVoiceName}'>
+                                <voice name='{effectiveVoiceName}'>
                                     <prosody rate='{ratePercent}' volume='{volumePercent}'>{message}</prosody>
                                 </voice>
                               </speak>";

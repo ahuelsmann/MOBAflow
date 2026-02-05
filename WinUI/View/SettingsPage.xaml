@@ -326,6 +326,19 @@
                         </ComboBox.Description>
                     </ComboBox>
 
+                    <!--  Test Message TextBox  -->
+                    <TextBox
+                        MaxWidth="600"
+                        HorizontalAlignment="Left"
+                        Header="Test Message"
+                        PlaceholderText="Enter text to test speech synthesis"
+                        Text="{x:Bind ViewModel.SpeechTestMessage, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        TextWrapping="Wrap">
+                        <TextBox.Description>
+                            <TextBlock Text="Custom text that will be spoken when you click 'Test Speech'" TextWrapping="Wrap" />
+                        </TextBox.Description>
+                    </TextBox>
+
                     <!--  Test Button  -->
                     <Button
                         Command="{x:Bind ViewModel.TestSpeechCommand}"

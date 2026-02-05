@@ -128,6 +128,12 @@ public class SpeechSettings
     /// Default voice name.
     /// </summary>
     public string VoiceName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Test message for speech synthesis (used in Settings test button).
+    /// Default: German test message.
+    /// </summary>
+    public string TestMessage { get; set; } = "Dies ist ein Test der Sprachsynthese. Nächster Halt: Hauptbahnhof.";
 }
 
 /// <summary>

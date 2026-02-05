@@ -214,6 +214,24 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
+    /// Custom test message for speech synthesis test.
+    /// User can modify this text in Settings UI.
+    /// </summary>
+    public string SpeechTestMessage
+    {
+        get => _settings.Speech.TestMessage;
+        set
+        {
+            if (_settings.Speech.TestMessage != value)
+            {
+                _settings.Speech.TestMessage = value;
+                OnPropertyChanged();
+                _ = _settingsService?.SaveSettingsAsync(_settings);
+            }
+        }
+    }
+
+    /// <summary>
     /// List of available speech engines for selection.
     /// </summary>
     public ObservableCollection<string> AvailableSpeechEngines { get; } =
@@ -796,6 +814,10 @@ public partial class MainWindowViewModel
         try
         {
             Debug.WriteLine("🔊 [TEST SPEECH] Button clicked");
+            Debug.WriteLine($"🔊 [TEST SPEECH] Speech Key configured: {!string.IsNullOrWhiteSpace(_settings.Speech.Key)}");
+            Debug.WriteLine($"🔊 [TEST SPEECH] Speech Key length: {_settings.Speech.Key?.Length ?? 0}");
+            Debug.WriteLine($"🔊 [TEST SPEECH] Speech Region: {_settings.Speech.Region}");
+            Debug.WriteLine($"🔊 [TEST SPEECH] Selected Engine: {_settings.Speech.SpeakerEngineName}");
             
             // ✅ FIX: Reset error state on UI thread
             _uiDispatcher.InvokeOnUi(() =>
@@ -804,14 +826,27 @@ public partial class MainWindowViewModel
                 ErrorMessage = string.Empty;
             });
 
-            // Test message for speech synthesis
-            var testMessage = "This is a test of speech synthesis. Next stop: Central Station.";
+            // Use custom test message from settings (user can modify in UI)
+            var testMessage = SpeechTestMessage;
 
             Debug.WriteLine($"🔊 [TEST SPEECH] AnnouncementService available: {_announcementService != null}");
 
             // Use the announcement service if available
             if (_announcementService != null)
             {
+                // ✅ FIX: Check if speaker engine is properly configured
+                if (!_announcementService.IsSpeakerEngineAvailable)
+                {
+                    Debug.WriteLine("🔊 [TEST SPEECH] ❌ Speaker engine not available");
+                    
+                    _uiDispatcher.InvokeOnUi(() =>
+                    {
+                        ErrorMessage = "Speech engine not configured. Please configure Azure Speech Service in Settings or select Windows SAPI engine.";
+                        ShowErrorMessage = true;
+                    });
+                    return;
+                }
+
                 Debug.WriteLine("🔊 [TEST SPEECH] Calling GenerateAndSpeakAnnouncementAsync...");
                 
                 var testJourney = new Journey { Text = testMessage };

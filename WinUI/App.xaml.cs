@@ -206,8 +206,8 @@ public partial class App
                 {
                     // Only create Azure engine if credentials are configured
                     Debug.WriteLine("[SPEECH ENGINE FACTORY] ✅ Creating CognitiveSpeechEngine (credentials found)");
-                    var options = sp.GetRequiredService<IOptions<SpeechOptions>>();
-                    return new CognitiveSpeechEngine(options, sp.GetService<ILogger<CognitiveSpeechEngine>>()!);
+                    var optionsMonitor = sp.GetRequiredService<IOptionsMonitor<SpeechOptions>>();
+                    return new CognitiveSpeechEngine(optionsMonitor, sp.GetService<ILogger<CognitiveSpeechEngine>>()!);
                 }
                 else
                 {
