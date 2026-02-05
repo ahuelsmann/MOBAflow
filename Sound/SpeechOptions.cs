@@ -39,6 +39,12 @@ public class SpeechOptions
     public string? VoiceName { get; set; }
 
     /// <summary>
+    /// Selected speaker engine name (e.g., "Azure Cognitive Services", "System Speech (Windows SAPI)").
+    /// Determines which TTS engine to use.
+    /// </summary>
+    public string? SpeakerEngineName { get; set; }
+
+    /// <summary>
     /// Gets whether the speech service is configured with valid credentials.
     /// </summary>
     public bool IsConfigured => !string.IsNullOrEmpty(Key) && !string.IsNullOrEmpty(Region);

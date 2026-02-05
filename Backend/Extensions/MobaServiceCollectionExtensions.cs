@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Extensions;
 
 using Domain;
@@ -55,12 +55,12 @@ public static class MobaServiceCollectionExtensions
             SoundPlayer = sp.GetService<ISoundPlayer>()       // Optional - from platform
         });
 
-        // ✅ AnnouncementService (optional - only if ISpeakerEngine is available)
+        // ✅ AnnouncementService (uses SpeakerEngineFactory for dynamic engine switching)
         services.AddSingleton<AnnouncementService>(sp =>
         {
-            var speakerEngine = sp.GetService<ISpeakerEngine>();
+            var speakerEngineFactory = sp.GetService<SpeakerEngineFactory>();
             var logger = sp.GetService<ILogger<AnnouncementService>>();
-            return new AnnouncementService(speakerEngine, logger);
+            return new AnnouncementService(speakerEngineFactory, logger);
         });
 
         // ✅ ActionExecutor (uses AnnouncementService if available)

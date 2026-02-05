@@ -181,44 +181,15 @@ public partial class App
         var navigationRegistry = new NavigationRegistry();
         services.AddSingleton(navigationRegistry);
 
-        // Register ISpeakerEngine with lazy initialization
-        // Only creates the CONFIGURED engine, not both
-        // Decision is made at registration time based on AppSettings
+        // Register Speech Engine Factory for dynamic engine switching
+        services.AddSingleton<SpeakerEngineFactory>();
+
+        // Register ISpeakerEngine that uses factory (for ActionExecutionContext)
+        // This provides a default engine, but AnnouncementService will create fresh engines
         services.AddSingleton<ISpeakerEngine>(sp =>
         {
-            var settings = sp.GetRequiredService<AppSettings>();
-
-            // 🔍 DEBUG: Log to console (visible in Output window)
-            Debug.WriteLine($"[SPEECH ENGINE FACTORY] Selected Engine: {settings.Speech.SpeakerEngineName}");
-            Debug.WriteLine($"[SPEECH ENGINE FACTORY] Azure Key: {(string.IsNullOrWhiteSpace(settings.Speech.Key) ? "EMPTY" : "SET")}");
-            Debug.WriteLine($"[SPEECH ENGINE FACTORY] Azure Region: {settings.Speech.Region}");
-
-            // Check if Azure Cognitive Services is configured
-            var selectedEngine = settings.Speech.SpeakerEngineName;
-            if (!string.IsNullOrEmpty(selectedEngine) &&
-                selectedEngine.Contains("Azure", StringComparison.OrdinalIgnoreCase))
-            {
-                // ✅ FIX: Validate Azure credentials before creating CognitiveSpeechEngine
-                var speechKey = settings.Speech.Key ?? Environment.GetEnvironmentVariable("SPEECH_KEY");
-                var speechRegion = settings.Speech.Region ?? Environment.GetEnvironmentVariable("SPEECH_REGION");
-
-                if (!string.IsNullOrWhiteSpace(speechKey) && !string.IsNullOrWhiteSpace(speechRegion))
-                {
-                    // Only create Azure engine if credentials are configured
-                    Debug.WriteLine("[SPEECH ENGINE FACTORY] ✅ Creating CognitiveSpeechEngine (credentials found)");
-                    var optionsMonitor = sp.GetRequiredService<IOptionsMonitor<SpeechOptions>>();
-                    return new CognitiveSpeechEngine(optionsMonitor, sp.GetService<ILogger<CognitiveSpeechEngine>>()!);
-                }
-                else
-                {
-                    // Fallback to Windows SAPI if Azure is selected but credentials are missing
-                    Debug.WriteLine("[SPEECH ENGINE FACTORY] ⚠️ Azure selected but credentials missing. Falling back to Windows SAPI.");
-                }
-            }
-
-            // Default: Windows SAPI (always available, no Azure SDK needed)
-            Debug.WriteLine("[SPEECH ENGINE FACTORY] ✅ Creating SystemSpeechEngine (Windows SAPI)");
-            return new SystemSpeechEngine(sp.GetService<ILogger<SystemSpeechEngine>>()!);
+            var factory = sp.GetRequiredService<SpeakerEngineFactory>();
+            return factory.CreateEngineFromOptions();
         });
 
         // Backend Services (Interfaces are in Backend.Interface and Backend.Network)
