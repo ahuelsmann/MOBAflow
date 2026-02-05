@@ -16,10 +16,9 @@ public sealed partial class MonitorPage
         ViewModel = viewModel;
         InitializeComponent();
 
-        // Subscribe to TrafficPackets changes to auto-scroll to top
+        // Subscribe to collection changes
+        // Safe: ViewModel is Transient (same lifetime as Page)
         ViewModel.TrafficPackets.CollectionChanged += OnTrafficPacketsChanged;
-
-        // Subscribe to ActivityLogs changes to auto-scroll to top
         ViewModel.ActivityLogs.CollectionChanged += OnActivityLogsChanged;
     }
 

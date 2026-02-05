@@ -22,6 +22,19 @@
                     Text="Settings" />
             </Grid>
 
+            <!--  Error/Success Messages  -->
+            <InfoBar
+                Title="Error"
+                IsOpen="{x:Bind ViewModel.ShowErrorMessage, Mode=OneWay}"
+                Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                Severity="Error" />
+
+            <InfoBar
+                Title="Success"
+                IsOpen="{x:Bind ViewModel.ShowSuccessMessage, Mode=OneWay}"
+                Message="Speech test successful"
+                Severity="Success" />
+
             <!--  Z21 Connection Section  -->
             <Expander
                 HorizontalAlignment="Stretch"

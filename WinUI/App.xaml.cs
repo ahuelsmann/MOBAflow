@@ -187,19 +187,37 @@ public partial class App
         services.AddSingleton<ISpeakerEngine>(sp =>
         {
             var settings = sp.GetRequiredService<AppSettings>();
-            sp.GetService<ILogger>();
+
+            // 🔍 DEBUG: Log to console (visible in Output window)
+            Debug.WriteLine($"[SPEECH ENGINE FACTORY] Selected Engine: {settings.Speech.SpeakerEngineName}");
+            Debug.WriteLine($"[SPEECH ENGINE FACTORY] Azure Key: {(string.IsNullOrWhiteSpace(settings.Speech.Key) ? "EMPTY" : "SET")}");
+            Debug.WriteLine($"[SPEECH ENGINE FACTORY] Azure Region: {settings.Speech.Region}");
 
             // Check if Azure Cognitive Services is configured
             var selectedEngine = settings.Speech.SpeakerEngineName;
             if (!string.IsNullOrEmpty(selectedEngine) &&
                 selectedEngine.Contains("Azure", StringComparison.OrdinalIgnoreCase))
             {
-                // Only create Azure engine if explicitly configured
-                var options = sp.GetRequiredService<IOptions<SpeechOptions>>();
-                return new CognitiveSpeechEngine(options, sp.GetService<ILogger<CognitiveSpeechEngine>>()!);
+                // ✅ FIX: Validate Azure credentials before creating CognitiveSpeechEngine
+                var speechKey = settings.Speech.Key ?? Environment.GetEnvironmentVariable("SPEECH_KEY");
+                var speechRegion = settings.Speech.Region ?? Environment.GetEnvironmentVariable("SPEECH_REGION");
+
+                if (!string.IsNullOrWhiteSpace(speechKey) && !string.IsNullOrWhiteSpace(speechRegion))
+                {
+                    // Only create Azure engine if credentials are configured
+                    Debug.WriteLine("[SPEECH ENGINE FACTORY] ✅ Creating CognitiveSpeechEngine (credentials found)");
+                    var options = sp.GetRequiredService<IOptions<SpeechOptions>>();
+                    return new CognitiveSpeechEngine(options, sp.GetService<ILogger<CognitiveSpeechEngine>>()!);
+                }
+                else
+                {
+                    // Fallback to Windows SAPI if Azure is selected but credentials are missing
+                    Debug.WriteLine("[SPEECH ENGINE FACTORY] ⚠️ Azure selected but credentials missing. Falling back to Windows SAPI.");
+                }
             }
 
             // Default: Windows SAPI (always available, no Azure SDK needed)
+            Debug.WriteLine("[SPEECH ENGINE FACTORY] ✅ Creating SystemSpeechEngine (Windows SAPI)");
             return new SystemSpeechEngine(sp.GetService<ILogger<SystemSpeechEngine>>()!);
         });
 
@@ -298,7 +316,11 @@ public partial class App
         ));
         // Old TrackPlanEditorViewModel removed - now using TrackPlanEditorViewModel2 from TrackPlan.Editor
         services.AddSingleton<JourneyMapViewModel>();
-        services.AddSingleton<MonitorPageViewModel>();
+        
+        // MonitorPageViewModel: Transient so Dispose() is called when page is navigated away
+        // InMemorySink retains logs globally, so they reload on return
+        services.AddTransient<MonitorPageViewModel>();
+        
         services.AddSingleton<SkinSelectorViewModel>();
         services.AddSingleton(sp => new TrainControlViewModel(
             sp.GetRequiredService<IZ21>(),

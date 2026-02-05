@@ -8,14 +8,27 @@ using System.Text.Json;
 /// </summary>
 public class Solution
 {
+    /// <summary>
+    /// Current schema version for Solution JSON format.
+    /// Increment this when breaking changes are made to the schema.
+    /// </summary>
+    public const int CurrentSchemaVersion = 1;
+
     public Solution()
     {
         Name = "New Solution";
         Projects = [];
+        SchemaVersion = CurrentSchemaVersion;
     }
 
     public string Name { get; set; }
     public List<Project> Projects { get; set; }
+    
+    /// <summary>
+    /// Schema version of this solution file.
+    /// Used to detect incompatible file formats.
+    /// </summary>
+    public int SchemaVersion { get; set; }
 
     /// <summary>
     /// Update the current solution instance from another solution instance.
@@ -26,6 +39,7 @@ public class Solution
         ArgumentNullException.ThrowIfNull(other);
 
         Name = other.Name;
+        SchemaVersion = other.SchemaVersion;
 
         // Replace projects while keeping the same List instance
         Projects.Clear();

@@ -213,7 +213,8 @@
             "x": 2,
             "y": 3,
             "rotation": 270,
-            "name": ""
+            "name": "",
+            "state": "Free"
           },
           {
             "$type": "TrackStraight",
@@ -221,7 +222,8 @@
             "x": 3,
             "y": 3,
             "rotation": 0,
-            "name": ""
+            "name": "",
+            "state": "Free"
           },
           {
             "$type": "TrackStraight",
@@ -229,7 +231,8 @@
             "x": 4,
             "y": 3,
             "rotation": 0,
-            "name": ""
+            "name": "",
+            "state": "Free"
           },
           {
             "$type": "TrackCurve",
@@ -237,7 +240,8 @@
             "x": 5,
             "y": 3,
             "rotation": 0,
-            "name": ""
+            "name": "",
+            "state": "Free"
           },
           {
             "$type": "Signal",
@@ -248,7 +252,8 @@
             "x": 3,
             "y": 2,
             "rotation": 0,
-            "name": ""
+            "name": "",
+            "state": "Free"
           },
           {
             "$type": "Detector",
@@ -257,7 +262,8 @@
             "x": 2,
             "y": 4,
             "rotation": 90,
-            "name": ""
+            "name": "",
+            "state": "Free"
           },
           {
             "$type": "TrackStraight",
@@ -265,7 +271,8 @@
             "x": 5,
             "y": 4,
             "rotation": 90,
-            "name": ""
+            "name": "",
+            "state": "Free"
           },
           {
             "$type": "TrackCurve",
@@ -273,7 +280,8 @@
             "x": 5,
             "y": 5,
             "rotation": 90,
-            "name": ""
+            "name": "",
+            "state": "Free"
           },
           {
             "$type": "TrackStraight",
@@ -281,7 +289,8 @@
             "x": 4,
             "y": 5,
             "rotation": 0,
-            "name": ""
+            "name": "",
+            "state": "Free"
           },
           {
             "$type": "TrackStraight",
@@ -289,7 +298,8 @@
             "x": 3,
             "y": 5,
             "rotation": 0,
-            "name": ""
+            "name": "",
+            "state": "Free"
           },
           {
             "$type": "TrackCurve",
@@ -297,12 +307,14 @@
             "x": 2,
             "y": 5,
             "rotation": 180,
-            "name": ""
+            "name": "",
+            "state": "Free"
           }
         ],
         "connections": [],
         "routes": []
       }
     }
-  ]
+  ],
+  "schemaVersion": 1
 }

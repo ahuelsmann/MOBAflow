@@ -230,6 +230,50 @@ WinUI / MAUI / Blazor (Platform-specific)
 - **Networking:** Direct UDP to Z21 (no external dependencies)
 - **Testing:** NUnit
 
+### Solution File Format & Validation
+
+MOBAflow solution files (`.json`) use **System.Text.Json** with schema validation to ensure data integrity.
+
+#### Schema Version
+
+Solution files include a `schemaVersion` property to detect incompatible formats:
+
+```json
+{
+  "name": "My Model Railroad",
+  "schemaVersion": 1,
+  "projects": [...]
+}
+```
+
+**Current Schema Version:** `1`
+
+#### Validation
+
+When loading a solution file, MOBAflow validates:
+
+✅ **JSON Structure** - Valid JSON syntax  
+✅ **Required Properties** - `name` and `projects` must be present  
+✅ **Schema Version** - Detects incompatible file versions  
+✅ **Project Integrity** - All projects have valid structure  
+
+**Invalid files are rejected with clear error messages:**
+
+```
+❌ Invalid solution file: Missing required property: 'projects'
+❌ Invalid solution file: Incompatible schema version. Expected 1, found 999.
+❌ Failed to parse JSON: Unexpected character at position 42.
+```
+
+#### Migration
+
+When the schema version changes in future releases:
+- Old files (v1) will be auto-migrated or rejected with upgrade instructions
+- `Solution.CurrentSchemaVersion` constant tracks the latest version
+- Breaking changes increment the version number
+
+See `Common/Validation/JsonValidationService.cs` for implementation details.
+
 ### Logging Infrastructure
 
 MOBAflow uses **Serilog** for centralized, structured logging:

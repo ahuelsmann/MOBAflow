@@ -78,31 +78,37 @@ public partial class MainWindowViewModel
     /// <summary>
     /// Initializes the Statistics collection from the CountOfFeedbackPoints setting.
     /// Call this when a project is loaded or when the setting changes.
+    /// IMPORTANT: ObservableCollection changes must happen on UI thread.
     /// </summary>
     public void InitializeStatisticsFromFeedbackPoints()
     {
-        Statistics.Clear();
+        // ✅ CRITICAL FIX: Always use InvokeOnUi to ensure we're on UI thread
+        // This prevents COMException when WinUI tries to update collection view bindings
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            Statistics.Clear();
 
-        // Create statistics based on CountOfFeedbackPoints setting
-        int count = _settings.Counter.CountOfFeedbackPoints;
-        if (count > 0)
-        {
-            for (int i = 1; i <= count; i++)
+            // Create statistics based on CountOfFeedbackPoints setting
+            int count = _settings.Counter.CountOfFeedbackPoints;
+            if (count > 0)
             {
-                Statistics.Add(new InPortStatistic
+                for (int i = 1; i <= count; i++)
                 {
-                    InPort = i,
-                    Name = $"Feedback Point {i}",
-                    Count = 0,
-                    TargetLapCount = GlobalTargetLapCount
-                });
+                    Statistics.Add(new InPortStatistic
+                    {
+                        InPort = i,
+                        Name = $"Feedback Point {i}",
+                        Count = 0,
+                        TargetLapCount = GlobalTargetLapCount
+                    });
+                }
+                _logger.LogInformation("Initialized {Count} track statistics from settings (InPorts 1-{MaxInPort})", Statistics.Count, count);
             }
-            _logger.LogInformation("Initialized {Count} track statistics from settings (InPorts 1-{MaxInPort})", Statistics.Count, count);
-        }
-        else
-        {
-            _logger.LogInformation("CountOfFeedbackPoints is 0 - no track statistics initialized. Set CountOfFeedbackPoints in settings to enable");
-        }
+            else
+            {
+                _logger.LogInformation("CountOfFeedbackPoints is 0 - no track statistics initialized. Set CountOfFeedbackPoints in settings to enable");
+            }
+        });
     }
 
     partial void OnGlobalTargetLapCountChanged(int value)
@@ -153,14 +159,16 @@ public partial class MainWindowViewModel
     /// Called when SelectedProject changes.
     /// Re-initializes track statistics based on the new project's FeedbackPoints.
     /// Subscribes to PropertyChanged for auto-save (Project + all Workflows).
+    /// Auto-selects first journey if available.
     /// </summary>
     partial void OnSelectedProjectChanged(ProjectViewModel? value)
     {
         _ = value; // Suppress unused parameter warning
 
-        // ✅ Defer collection update to avoid COMException during WinUI binding callback
-        // This ensures the Statistics collection is modified AFTER the property change callback completes
-        _uiDispatcher.InvokeOnUi(() =>
+        // ✅ CRITICAL: Use EnqueueOnUi (not InvokeOnUi) to force async execution
+        // This breaks out of the PropertyChanged notification chain and prevents COMException
+        // when modifying the Statistics ObservableCollection during WinUI binding updates
+        _uiDispatcher.EnqueueOnUi(() =>
         {
             InitializeStatisticsFromFeedbackPoints();
         });
@@ -177,6 +185,17 @@ public partial class MainWindowViewModel
                 workflow.PropertyChanged -= OnViewModelPropertyChanged;
                 workflow.PropertyChanged += OnViewModelPropertyChanged;
             }
+            
+            // ✅ Auto-select first journey when project is selected
+            if (value.Journeys.Count > 0)
+            {
+                SelectedJourney = value.Journeys.FirstOrDefault();
+            }
+        }
+        else
+        {
+            // Clear journey selection when no project is selected
+            SelectedJourney = null;
         }
     }
 

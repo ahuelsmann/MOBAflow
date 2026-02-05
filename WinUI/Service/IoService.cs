@@ -1,12 +1,17 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
+using Common.Validation;
+
 using Domain;
+
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.Storage.Pickers;
+
 using SharedUI.Interface;
+
 using System.Text.Json;
 
 public class IoService : IIoService
@@ -54,12 +59,38 @@ public class IoService : IIoService
         if (result == null) return (null, null, null);
 
         var json = await File.ReadAllTextAsync(result.Path);
-        var sol = JsonSerializer.Deserialize<Solution>(json, JsonOptions.Default) ?? new Solution();
 
-        // Save last solution path to settings
-        _settingsService.LastSolutionPath = result.Path;
+        // ✅ Early validation: Detect non-JSON file formats
+        var formatError = ValidateFileFormat(json, result.Path);
+        if (formatError != null)
+        {
+            return (null, null, formatError);
+        }
 
-        return (sol, result.Path, null);
+        // ✅ Validate JSON before deserialization
+        var validationResult = JsonValidationService.Validate(json, Solution.CurrentSchemaVersion);
+        if (!validationResult.IsValid)
+        {
+            return (null, null, $"Invalid solution file: {validationResult.ErrorMessage}");
+        }
+
+        try
+        {
+            var sol = JsonSerializer.Deserialize<Solution>(json, JsonOptions.Default) ?? new Solution();
+
+            // Save last solution path to settings
+            _settingsService.LastSolutionPath = result.Path;
+
+            return (sol, result.Path, null);
+        }
+        catch (JsonException ex)
+        {
+            return (null, null, $"Failed to parse JSON: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return (null, null, $"Failed to load solution: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -74,12 +105,24 @@ public class IoService : IIoService
                 return (null, null, $"File not found: {filePath}");
 
             var json = await File.ReadAllTextAsync(filePath);
+
+            // ✅ Validate JSON before deserialization
+            var validationResult = JsonValidationService.Validate(json, Solution.CurrentSchemaVersion);
+            if (!validationResult.IsValid)
+            {
+                return (null, null, $"Invalid solution file: {validationResult.ErrorMessage}");
+            }
+
             var sol = JsonSerializer.Deserialize<Solution>(json, JsonOptions.Default) ?? new Solution();
 
             // Save last solution path to settings
             _settingsService.LastSolutionPath = filePath;
 
             return (sol, filePath, null);
+        }
+        catch (JsonException ex)
+        {
+            return (null, null, $"Failed to parse JSON: {ex.Message}");
         }
         catch (Exception ex)
         {
@@ -110,7 +153,7 @@ public class IoService : IIoService
         try
         {
             var json = JsonSerializer.Serialize(solution, JsonOptions.Default);
-            
+
             // ✅ Atomic write: Write to temp file first, then rename to avoid data corruption
             var tempPath = path! + ".tmp";
             await File.WriteAllTextAsync(tempPath, json);
@@ -353,5 +396,25 @@ public class IoService : IIoService
 
         return absolutePath;
     }
-}
 
+    /// <summary>
+    /// Validates that the file content is valid JSON format.
+    /// </summary>
+    /// <returns>Error message if invalid, null if valid.</returns>
+    private static string? ValidateFileFormat(string content, string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return $"File is empty: {filePath}";
+        }
+
+        // Basic check: JSON files should start with '{' or '['
+        var trimmed = content.TrimStart();
+        if (!trimmed.StartsWith("{") && !trimmed.StartsWith("["))
+        {
+            return $"File does not appear to be valid JSON: {filePath}";
+        }
+
+        return null;
+    }
+}

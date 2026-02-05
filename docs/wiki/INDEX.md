@@ -124,6 +124,7 @@ Here you'll find all information about three platforms:
 - **Z21 Protocol:** `Z21-BACKEND.md`
 - **UI Framework:** `WinUI.md`
 - **Testing:** `TEST.md`
+- **JSON Validation:** [`../JSON-VALIDATION.md`](../JSON-VALIDATION.md) - Solution file format & validation
 
 ---
 

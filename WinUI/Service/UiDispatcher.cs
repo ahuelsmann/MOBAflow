@@ -27,6 +27,24 @@ public class UiDispatcher : IUiDispatcher
         action();
     }
 
+    /// <summary>
+    /// CRITICAL: ALWAYS enqueues, even if already on UI thread.
+    /// This breaks out of the current execution context (e.g., PropertyChanged chains).
+    /// Prevents COMException when modifying collections during WinUI binding updates.
+    /// </summary>
+    public void EnqueueOnUi(Action action)
+    {
+        if (_dispatcherQueue is not null)
+        {
+            _dispatcherQueue.TryEnqueue(() => action());
+        }
+        else
+        {
+            // Fallback for platforms without dispatcher (e.g., tests)
+            action();
+        }
+    }
+
     public async Task InvokeOnUiAsync(Func<Task> asyncAction)
     {
         if (_dispatcherQueue?.HasThreadAccess == true)

@@ -662,152 +662,160 @@
                     Text="Locomotive Properties" />
 
                 <!--  Basic Information  -->
-                <Border
+                <StackPanel
                     Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                    CornerRadius="8">
-                    <StackPanel Spacing="8">
-                        <TextBlock FontWeight="SemiBold" Text="Basic Information" />
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="4"
+                    Spacing="12">
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{ThemeResource CaptionTextBlockStyle}"
+                        Text="BASIC INFORMATION" />
 
-                        <TextBox
-                            Header="Name"
-                            PlaceholderText="Enter locomotive name"
-                            Text="{Binding Name, Mode=TwoWay}" />
+                    <TextBox
+                        Header="Name"
+                        PlaceholderText="Enter locomotive name"
+                        Text="{Binding Name, Mode=TwoWay}" />
 
-                        <NumberBox
-                            Header="Digital Address (optional)"
-                            Maximum="10239"
-                            Minimum="1"
-                            PlaceholderText="DCC address"
-                            SpinButtonPlacementMode="Inline"
-                            Value="{Binding DigitalAddress, Mode=TwoWay, Converter={StaticResource NullableUIntConverter}}" />
-                    </StackPanel>
-                </Border>
+                    <NumberBox
+                        Header="Digital Address (optional)"
+                        Maximum="10239"
+                        Minimum="1"
+                        PlaceholderText="DCC address"
+                        SpinButtonPlacementMode="Inline"
+                        Value="{Binding DigitalAddress, Mode=TwoWay, Converter={StaticResource NullableUIntConverter}}" />
+                </StackPanel>
 
                 <!--  Purchase Information  -->
-                <Border
+                <StackPanel
                     Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                    CornerRadius="8">
-                    <StackPanel Spacing="8">
-                        <TextBlock FontWeight="SemiBold" Text="Purchase Information" />
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="4"
+                    Spacing="12">
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{ThemeResource CaptionTextBlockStyle}"
+                        Text="PURCHASE INFORMATION" />
 
-                        <TextBox
-                            Header="Manufacturer"
-                            PlaceholderText="e.g., Piko, Roco, Fleischmann"
-                            Text="{Binding Manufacturer, Mode=TwoWay}" />
+                    <TextBox
+                        Header="Manufacturer"
+                        PlaceholderText="e.g., Piko, Roco, Fleischmann"
+                        Text="{Binding Manufacturer, Mode=TwoWay}" />
 
-                        <TextBox
-                            Header="Article Number"
-                            PlaceholderText="Product SKU/article code"
-                            Text="{Binding ArticleNumber, Mode=TwoWay}" />
+                    <TextBox
+                        Header="Article Number"
+                        PlaceholderText="Product SKU/article code"
+                        Text="{Binding ArticleNumber, Mode=TwoWay}" />
 
-                        <CalendarDatePicker
-                            Date="{Binding InvoiceDate, Mode=TwoWay, Converter={StaticResource DateTimeOffsetConverter}}"
-                            Header="Invoice Date (optional)"
-                            PlaceholderText="Select date" />
+                    <CalendarDatePicker
+                        Date="{Binding InvoiceDate, Mode=TwoWay, Converter={StaticResource DateTimeOffsetConverter}}"
+                        Header="Invoice Date (optional)"
+                        PlaceholderText="Select date" />
 
-                        <CalendarDatePicker
-                            Date="{Binding DeliveryDate, Mode=TwoWay, Converter={StaticResource DateTimeOffsetConverter}}"
-                            Header="Delivery Date (optional)"
-                            PlaceholderText="Select date" />
-                    </StackPanel>
-                </Border>
+                    <CalendarDatePicker
+                        Date="{Binding DeliveryDate, Mode=TwoWay, Converter={StaticResource DateTimeOffsetConverter}}"
+                        Header="Delivery Date (optional)"
+                        PlaceholderText="Select date" />
+                </StackPanel>
 
                 <!--  Technical Details  -->
-                <Border
+                <StackPanel
                     Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                    CornerRadius="8">
-                    <StackPanel Spacing="8">
-                        <TextBlock FontWeight="SemiBold" Text="Technical Details" />
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="4"
+                    Spacing="12">
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{ThemeResource CaptionTextBlockStyle}"
+                        Text="TECHNICAL DETAILS" />
 
-                        <TextBox
-                            Header="Series"
-                            PlaceholderText="e.g., BR 64, ICE 3"
-                            Text="{Binding Series, Mode=TwoWay}" />
+                    <TextBox
+                        Header="Series"
+                        PlaceholderText="e.g., BR 64, ICE 3"
+                        Text="{Binding Series, Mode=TwoWay}" />
 
-                        <CheckBox Content="Pushing locomotive (Wendezug)" IsChecked="{Binding IsPushing, Mode=TwoWay}" />
-                    </StackPanel>
-                </Border>
+                    <CheckBox Content="Pushing locomotive (Wendezug)" IsChecked="{Binding IsPushing, Mode=TwoWay}" />
+                </StackPanel>
 
                 <!--  Photo  -->
-                <Border
+                <StackPanel
                     Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                    CornerRadius="8">
-                    <StackPanel Spacing="8">
-                        <TextBlock FontWeight="SemiBold" Text="Photo" />
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="4"
+                    Spacing="12">
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{ThemeResource CaptionTextBlockStyle}"
+                        Text="PHOTO" />
 
-                        <Button
-                            Padding="0"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Command="{Binding OpenPhotoCommand}"
-                            Visibility="{Binding HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <Image
-                                Height="140"
-                                Source="{Binding PhotoPathWithVersion, Mode=OneWay, Converter={StaticResource PhotoPathToImageConverter}}"
-                                Stretch="Uniform" />
-                        </Button>
+                    <Button
+                        Padding="0"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Command="{Binding OpenPhotoCommand}"
+                        Visibility="{Binding HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Image
+                            Height="140"
+                            Source="{Binding PhotoPathWithVersion, Mode=OneWay, Converter={StaticResource PhotoPathToImageConverter}}"
+                            Stretch="Uniform" />
+                    </Button>
 
-                        <HyperlinkButton
-                            Padding="0"
-                            Command="{Binding ShowInExplorerCommand}"
-                            Content="{Binding PhotoPath, Mode=OneWay}"
-                            FontSize="12"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            IsEnabled="{Binding HasPhoto, Mode=OneWay}"
-                            ToolTipService.ToolTip="Click to show file in Explorer"
-                            Visibility="{Binding HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    <HyperlinkButton
+                        Padding="0"
+                        Command="{Binding ShowInExplorerCommand}"
+                        Content="{Binding PhotoPath, Mode=OneWay}"
+                        FontSize="12"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        IsEnabled="{Binding HasPhoto, Mode=OneWay}"
+                        ToolTipService.ToolTip="Click to show file in Explorer"
+                        Visibility="{Binding HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-                        <Button
-                            Command="{Binding BrowsePhotoCommand}"
-                            Content="Browse Photo"
-                            Style="{StaticResource AccentButtonStyle}"
-                            ToolTipService.ToolTip="Select a photo from disk for this locomotive" />
+                    <Button
+                        Command="{Binding BrowsePhotoCommand}"
+                        Content="Browse Photo"
+                        Style="{StaticResource AccentButtonStyle}"
+                        ToolTipService.ToolTip="Select a photo from disk for this locomotive" />
 
-                        <Button
-                            Command="{Binding DeletePhotoCommand}"
-                            Content="Delete Photo"
-                            IsEnabled="{Binding HasPhoto, Mode=OneWay}"
-                            ToolTipService.ToolTip="Remove the photo from this locomotive">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Grid Background="Transparent">
-                                        <ContentPresenter
-                                            x:Name="ContentPresenter"
-                                            HorizontalContentAlignment="Center"
-                                            VerticalContentAlignment="Center"
-                                            Content="{TemplateBinding Content}"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                        <VisualStateManager.VisualStateGroups>
-                                            <VisualStateGroup x:Name="CommonStates">
-                                                <VisualState x:Name="Normal" />
-                                                <VisualState x:Name="PointerOver">
-                                                    <VisualState.Setters>
-                                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource SystemErrorTextColor}" />
-                                                    </VisualState.Setters>
-                                                </VisualState>
-                                                <VisualState x:Name="Pressed">
-                                                    <VisualState.Setters>
-                                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource SystemErrorTextColor}" />
-                                                        <Setter Target="ContentPresenter.Opacity" Value="0.7" />
-                                                    </VisualState.Setters>
-                                                </VisualState>
-                                                <VisualState x:Name="Disabled">
-                                                    <VisualState.Setters>
-                                                        <Setter Target="ContentPresenter.Opacity" Value="0.4" />
-                                                    </VisualState.Setters>
-                                                </VisualState>
-                                            </VisualStateGroup>
-                                        </VisualStateManager.VisualStateGroups>
-                                    </Grid>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
-                    </StackPanel>
-                </Border>
+                    <Button
+                        Command="{Binding DeletePhotoCommand}"
+                        Content="Delete Photo"
+                        IsEnabled="{Binding HasPhoto, Mode=OneWay}"
+                        ToolTipService.ToolTip="Remove the photo from this locomotive">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Grid Background="Transparent">
+                                    <ContentPresenter
+                                        x:Name="ContentPresenter"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center"
+                                        Content="{TemplateBinding Content}"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    <VisualStateManager.VisualStateGroups>
+                                        <VisualStateGroup x:Name="CommonStates">
+                                            <VisualState x:Name="Normal" />
+                                            <VisualState x:Name="PointerOver">
+                                                <VisualState.Setters>
+                                                    <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource SystemErrorTextColor}" />
+                                                </VisualState.Setters>
+                                            </VisualState>
+                                            <VisualState x:Name="Pressed">
+                                                <VisualState.Setters>
+                                                    <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource SystemErrorTextColor}" />
+                                                    <Setter Target="ContentPresenter.Opacity" Value="0.7" />
+                                                </VisualState.Setters>
+                                            </VisualState>
+                                            <VisualState x:Name="Disabled">
+                                                <VisualState.Setters>
+                                                    <Setter Target="ContentPresenter.Opacity" Value="0.4" />
+                                                </VisualState.Setters>
+                                            </VisualState>
+                                        </VisualStateGroup>
+                                    </VisualStateManager.VisualStateGroups>
+                                </Grid>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>
@@ -824,150 +832,158 @@
                     Text="Wagon Properties" />
 
                 <!--  Basic Information  -->
-                <Border
+                <StackPanel
                     Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                    CornerRadius="8">
-                    <StackPanel Spacing="8">
-                        <TextBlock FontWeight="SemiBold" Text="Basic Information" />
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="4"
+                    Spacing="12">
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{ThemeResource CaptionTextBlockStyle}"
+                        Text="BASIC INFORMATION" />
 
-                        <TextBox
-                            Header="Name"
-                            PlaceholderText="Enter wagon name"
-                            Text="{Binding Name, Mode=TwoWay}" />
+                    <TextBox
+                        Header="Name"
+                        PlaceholderText="Enter wagon name"
+                        Text="{Binding Name, Mode=TwoWay}" />
 
-                        <NumberBox
-                            Header="Digital Address (optional)"
-                            Maximum="10239"
-                            Minimum="1"
-                            PlaceholderText="DCC address (if wagon has decoder)"
-                            SpinButtonPlacementMode="Inline"
-                            Value="{Binding DigitalAddress, Mode=TwoWay, Converter={StaticResource NullableUIntConverter}}" />
-                    </StackPanel>
-                </Border>
+                    <NumberBox
+                        Header="Digital Address (optional)"
+                        Maximum="10239"
+                        Minimum="1"
+                        PlaceholderText="DCC address (if wagon has decoder)"
+                        SpinButtonPlacementMode="Inline"
+                        Value="{Binding DigitalAddress, Mode=TwoWay, Converter={StaticResource NullableUIntConverter}}" />
+                </StackPanel>
 
                 <!--  Purchase Information  -->
-                <Border
+                <StackPanel
                     Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                    CornerRadius="8">
-                    <StackPanel Spacing="8">
-                        <TextBlock FontWeight="SemiBold" Text="Purchase Information" />
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="4"
+                    Spacing="12">
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{ThemeResource CaptionTextBlockStyle}"
+                        Text="PURCHASE INFORMATION" />
 
-                        <TextBox
-                            Header="Manufacturer"
-                            PlaceholderText="e.g., Piko, Roco, Fleischmann"
-                            Text="{Binding Manufacturer, Mode=TwoWay}" />
+                    <TextBox
+                        Header="Manufacturer"
+                        PlaceholderText="e.g., Piko, Roco, Fleischmann"
+                        Text="{Binding Manufacturer, Mode=TwoWay}" />
 
-                        <TextBox
-                            Header="Article Number"
-                            PlaceholderText="Product SKU/article code"
-                            Text="{Binding ArticleNumber, Mode=TwoWay}" />
+                    <TextBox
+                        Header="Article Number"
+                        PlaceholderText="Product SKU/article code"
+                        Text="{Binding ArticleNumber, Mode=TwoWay}" />
 
-                        <CalendarDatePicker
-                            Date="{Binding InvoiceDate, Mode=TwoWay, Converter={StaticResource DateTimeOffsetConverter}}"
-                            Header="Invoice Date (optional)"
-                            PlaceholderText="Select date" />
+                    <CalendarDatePicker
+                        Date="{Binding InvoiceDate, Mode=TwoWay, Converter={StaticResource DateTimeOffsetConverter}}"
+                        Header="Invoice Date (optional)"
+                        PlaceholderText="Select date" />
 
-                        <CalendarDatePicker
-                            Date="{Binding DeliveryDate, Mode=TwoWay, Converter={StaticResource DateTimeOffsetConverter}}"
-                            Header="Delivery Date (optional)"
-                            PlaceholderText="Select date" />
-                    </StackPanel>
-                </Border>
+                    <CalendarDatePicker
+                        Date="{Binding DeliveryDate, Mode=TwoWay, Converter={StaticResource DateTimeOffsetConverter}}"
+                        Header="Delivery Date (optional)"
+                        PlaceholderText="Select date" />
+                </StackPanel>
 
                 <!--  Technical Details  -->
-                <Border
+                <StackPanel
                     Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                    CornerRadius="8">
-                    <StackPanel Spacing="8">
-                        <TextBlock FontWeight="SemiBold" Text="Technical Details" />
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="4"
+                    Spacing="12">
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{ThemeResource CaptionTextBlockStyle}"
+                        Text="TECHNICAL DETAILS" />
 
-                        <TextBox
-                            Header="Series"
-                            PlaceholderText="e.g., Eurofima, Avmz"
-                            Text="{Binding Series, Mode=TwoWay}" />
-                    </StackPanel>
-                </Border>
+                    <TextBox
+                        Header="Series"
+                        PlaceholderText="e.g., Eurofima, Avmz"
+                        Text="{Binding Series, Mode=TwoWay}" />
+                </StackPanel>
 
                 <!--  Photo  -->
-                <Border
+                <StackPanel
                     Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                    CornerRadius="8">
-                    <StackPanel Spacing="8">
-                        <TextBlock FontWeight="SemiBold" Text="Photo" />
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="4"
+                    Spacing="12">
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{ThemeResource CaptionTextBlockStyle}"
+                        Text="PHOTO" />
 
-                        <Button
-                            Padding="0"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Command="{Binding OpenPhotoCommand}"
-                            Visibility="{Binding HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <Image
-                                Height="140"
-                                Source="{Binding PhotoPathWithVersion, Mode=OneWay, Converter={StaticResource PhotoPathToImageConverter}}"
-                                Stretch="Uniform" />
-                        </Button>
+                    <Button
+                        Padding="0"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Command="{Binding OpenPhotoCommand}"
+                        Visibility="{Binding HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Image
+                            Height="140"
+                            Source="{Binding PhotoPathWithVersion, Mode=OneWay, Converter={StaticResource PhotoPathToImageConverter}}"
+                            Stretch="Uniform" />
+                    </Button>
 
-                        <HyperlinkButton
-                            Padding="0"
-                            Command="{Binding ShowInExplorerCommand}"
-                            Content="{Binding PhotoPath, Mode=OneWay}"
-                            FontSize="12"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            IsEnabled="{Binding HasPhoto, Mode=OneWay}"
-                            ToolTipService.ToolTip="Click to show file in Explorer"
-                            Visibility="{Binding HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    <HyperlinkButton
+                        Padding="0"
+                        Command="{Binding ShowInExplorerCommand}"
+                        Content="{Binding PhotoPath, Mode=OneWay}"
+                        FontSize="12"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        IsEnabled="{Binding HasPhoto, Mode=OneWay}"
+                        ToolTipService.ToolTip="Click to show file in Explorer"
+                        Visibility="{Binding HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-                        <Button
-                            Command="{Binding BrowsePhotoCommand}"
-                            Content="Browse Photo"
-                            Style="{StaticResource AccentButtonStyle}"
-                            ToolTipService.ToolTip="Select a photo from disk for this wagon" />
+                    <Button
+                        Command="{Binding BrowsePhotoCommand}"
+                        Content="Browse Photo"
+                        Style="{StaticResource AccentButtonStyle}"
+                        ToolTipService.ToolTip="Select a photo from disk for this wagon" />
 
-                        <Button
-                            Command="{Binding DeletePhotoCommand}"
-                            Content="Delete Photo"
-                            IsEnabled="{Binding HasPhoto, Mode=OneWay}"
-                            ToolTipService.ToolTip="Remove the photo from this wagon">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Grid Background="Transparent">
-                                        <ContentPresenter
-                                            x:Name="ContentPresenter"
-                                            HorizontalContentAlignment="Center"
-                                            VerticalContentAlignment="Center"
-                                            Content="{TemplateBinding Content}"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                        <VisualStateManager.VisualStateGroups>
-                                            <VisualStateGroup x:Name="CommonStates">
-                                                <VisualState x:Name="Normal" />
-                                                <VisualState x:Name="PointerOver">
-                                                    <VisualState.Setters>
-                                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource SystemErrorTextColor}" />
-                                                    </VisualState.Setters>
-                                                </VisualState>
-                                                <VisualState x:Name="Pressed">
-                                                    <VisualState.Setters>
-                                                        <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource SystemErrorTextColor}" />
-                                                        <Setter Target="ContentPresenter.Opacity" Value="0.7" />
-                                                    </VisualState.Setters>
-                                                </VisualState>
-                                                <VisualState x:Name="Disabled">
-                                                    <VisualState.Setters>
-                                                        <Setter Target="ContentPresenter.Opacity" Value="0.4" />
-                                                    </VisualState.Setters>
-                                                </VisualState>
-                                            </VisualStateGroup>
-                                        </VisualStateManager.VisualStateGroups>
-                                    </Grid>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
-                    </StackPanel>
-                </Border>
+                    <Button
+                        Command="{Binding DeletePhotoCommand}"
+                        Content="Delete Photo"
+                        IsEnabled="{Binding HasPhoto, Mode=OneWay}"
+                        ToolTipService.ToolTip="Remove the photo from this wagon">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Grid Background="Transparent">
+                                    <ContentPresenter
+                                        x:Name="ContentPresenter"
+                                        HorizontalContentAlignment="Center"
+                                        VerticalContentAlignment="Center"
+                                        Content="{TemplateBinding Content}"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    <VisualStateManager.VisualStateGroups>
+                                        <VisualStateGroup x:Name="CommonStates">
+                                            <VisualState x:Name="Normal" />
+                                            <VisualState x:Name="PointerOver">
+                                                <VisualState.Setters>
+                                                    <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource SystemErrorTextColor}" />
+                                                </VisualState.Setters>
+                                            </VisualState>
+                                            <VisualState x:Name="Pressed">
+                                                <VisualState.Setters>
+                                                    <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource SystemErrorTextColor}" />
+                                                    <Setter Target="ContentPresenter.Opacity" Value="0.7" />
+                                                </VisualState.Setters>
+                                            </VisualState>
+                                            <VisualState x:Name="Disabled">
+                                                <VisualState.Setters>
+                                                    <Setter Target="ContentPresenter.Opacity" Value="0.4" />
+                                                </VisualState.Setters>
+                                            </VisualState>
+                                        </VisualStateGroup>
+                                    </VisualStateManager.VisualStateGroups>
+                                </Grid>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
     </DataTemplate>

@@ -11,6 +11,78 @@ applyTo: 'WinUI/**/*.cs,MAUI/**/*.cs,SharedUI/**/*.cs'
 2. **Transient Pages** - New instance per navigation
 3. **Singleton ViewModels** - Shared across application
 4. **Custom Factories Only When Necessary** - Document why they exist
+5. **Loaded/Unloaded Event Handlers** - For event subscriptions in Pages with Singleton ViewModels
+
+---
+
+## Page Lifecycle Event Pattern (CRITICAL for Singleton ViewModels)
+
+### ⚠️ Problem: Singleton ViewModel + Transient Page
+
+When a **Singleton ViewModel** is used by a **Transient Page**, the ViewModel outlives the Page:
+
+```
+User navigates away from MonitorPage
+  → Page disposed, DispatcherQueue = null
+  → ViewModel still alive, raises CollectionChanged
+  → Page event handler called with null DispatcherQueue 💥 NullReferenceException
+```
+
+### ✅ Solution: Loaded/Unloaded Pattern
+
+**ALWAYS** use `Loaded`/`Unloaded` events when subscribing to Singleton ViewModel events:
+
+```csharp
+// ✅ CORRECT - WinUI/View/MonitorPage.xaml.cs
+public sealed partial class MonitorPage : Page
+{
+    public MonitorPageViewModel ViewModel { get; }  // Singleton VM
+
+    public MonitorPage(MonitorPageViewModel viewModel)
+    {
+        ViewModel = viewModel;
+        InitializeComponent();
+
+        // Subscribe to page lifecycle
+        Loaded += OnPageLoaded;
+        Unloaded += OnPageUnloaded;
+    }
+
+    private void OnPageLoaded(object sender, RoutedEventArgs e)
+    {
+        // Subscribe when page enters visual tree
+        ViewModel.ActivityLogs.CollectionChanged += OnActivityLogsChanged;
+    }
+
+    private void OnPageUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Unsubscribe when page leaves visual tree
+        ViewModel.ActivityLogs.CollectionChanged -= OnActivityLogsChanged;
+    }
+
+    private void OnActivityLogsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        // Safe: DispatcherQueue is valid because page is loaded
+        DispatcherQueue.TryEnqueue(() => { /* ... */ });
+    }
+}
+```
+
+### ❌ Anti-Pattern: Subscribing in Constructor
+
+```csharp
+// ❌ WRONG - Memory leak + NullReferenceException risk
+public MonitorPage(MonitorPageViewModel viewModel)
+{
+    ViewModel = viewModel;
+    InitializeComponent();
+    
+    // BAD: Page is disposed after navigation, but event handler stays subscribed
+    ViewModel.ActivityLogs.CollectionChanged += OnActivityLogsChanged;
+}
+```
+
+**Problem:** When user navigates away, `DispatcherQueue` becomes `null`, but event handler is still subscribed.
 
 ---
 
@@ -33,6 +105,35 @@ public sealed partial class MyPage : Page
 // Registration in WinUI/App.xaml.cs
 services.AddTransient<MyPage>();
 navigationRegistry.Register("mytag", "My Page", "\uE123", typeof(MyPage), "Shell", ...);
+```
+
+### Pages with Singleton ViewModel Event Subscriptions
+```csharp
+// ✅ CORRECT - WinUI/View/MonitorPage.xaml.cs
+public sealed partial class MonitorPage : Page
+{
+    public MonitorPageViewModel ViewModel { get; }  // Singleton
+    
+    public MonitorPage(MonitorPageViewModel viewModel)
+    {
+        ViewModel = viewModel;
+        InitializeComponent();
+        
+        // Subscribe to page lifecycle
+        Loaded += OnPageLoaded;
+        Unloaded += OnPageUnloaded;
+    }
+    
+    private void OnPageLoaded(object sender, RoutedEventArgs e)
+    {
+        ViewModel.TrafficPackets.CollectionChanged += OnTrafficPacketsChanged;
+    }
+    
+    private void OnPageUnloaded(object sender, RoutedEventArgs e)
+    {
+        ViewModel.TrafficPackets.CollectionChanged -= OnTrafficPacketsChanged;
+    }
+}
 ```
 
 ### Special Pages with Custom Dependencies
@@ -115,13 +216,31 @@ var journeyVM = new JourneyViewModel(journey, _project, ...);
 
 ## When to Create ViewModel vs Reuse MainWindowViewModel
 
-| Scenario | Decision | Example |
-|----------|----------|---------|
-| Simple page (readonly list) | ✅ Reuse MainWindowViewModel | OverviewPage, HelpPage |
-| Domain model wrapper (1:1) | ✅ Create XxxViewModel | JourneyViewModel, TrainViewModel |
-| Complex editor/multi-state | ✅ Create specialized VM | TrackPlanViewModel, JourneyMapViewModel |
-| Page-specific UI state | ✅ Create specialized VM | TrainControlViewModel (color themes) |
-| Optional platform service | ✅ Add to MainWindowViewModel | PhotoHubClient (WinUI only), ISettingsService |
+| Scenario | Decision | Scope | Example |
+|----------|----------|-------|---------|
+| Simple page (readonly list) | ✅ Reuse MainWindowViewModel | Singleton | OverviewPage, HelpPage |
+| Domain model wrapper (1:1) | ✅ Create XxxViewModel | Singleton | TrackPlanViewModel |
+| Complex editor/multi-state | ✅ Create specialized VM | Singleton | TrainControlViewModel (user presets) |
+| Page-specific UI state | ✅ Create specialized VM | **Transient** | MonitorPageViewModel (logs from global sink) |
+| Thin wrapper around MainWindowVM | ✅ Create wrapper VM | Singleton | JourneyMapViewModel |
+| Optional platform service | ✅ Add to MainWindowViewModel | Singleton | PhotoHubClient (WinUI only) |
+
+---
+
+## ViewModel Lifecycle Decision Tree
+
+```
+New ViewModel needed?
+├─ Used by multiple pages? → YES → Singleton
+├─ Has user state to preserve? → YES → Singleton
+│  └─ Example: TrainControlViewModel (3 presets)
+├─ Wraps Singleton Domain Model? → YES → Singleton
+│  └─ Example: TrackPlanViewModel wraps TrackPlan
+├─ Loads data from global service? → YES → Transient
+│  └─ Example: MonitorPageViewModel (InMemorySink)
+└─ Page-specific ephemeral state? → YES → Transient
+   └─ Default: Singleton (safer)
+```
 
 ---
 

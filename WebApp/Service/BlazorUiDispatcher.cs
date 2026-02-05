@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WebApp.Service;
 
 using SharedUI.Interface;
@@ -19,17 +19,23 @@ public class BlazorUiDispatcher : IUiDispatcher
         action();
     }
 
+    public void EnqueueOnUi(Action action)
+    {
+        // In Blazor, synchronous execution is acceptable since we're already on the correct thread
+        action();
+    }
+
     public async Task InvokeOnUiAsync(Func<Task> asyncAction)
     {
         // Execute directly - Blazor components handle their own UI updates
         // via PropertyChanged subscription and InvokeAsync(StateHasChanged)
-        await asyncAction();
+        await asyncAction().ConfigureAwait(false);
     }
 
     public async Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc)
     {
         // Execute directly - Blazor components handle their own UI updates
         // via PropertyChanged subscription and InvokeAsync(StateHasChanged)
-        return await asyncFunc();
+        return await asyncFunc().ConfigureAwait(false);
     }
 }
