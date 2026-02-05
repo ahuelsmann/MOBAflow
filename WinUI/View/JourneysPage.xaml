@@ -1,4 +1,4 @@
-﻿<Page
+<Page
     x:Class="Moba.WinUI.View.JourneysPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -21,10 +21,11 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="200" MinWidth="150" />
             <ColumnDefinition Width="Auto" />
+            <!--  Properties Panel: Resizable via GridSplitter  -->
             <ColumnDefinition
-                Width="350"
-                MinWidth="300"
-                MaxWidth="450" />
+                Width="*"
+                MinWidth="350"
+                MaxWidth="800" />
         </Grid.ColumnDefinitions>
 
         <!--  Column 0: Journeys  -->

@@ -2,6 +2,7 @@
 namespace Moba.WinUI.View;
 
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml;
 using SharedUI.ViewModel;
 using System.Collections.Specialized;
 using System.Runtime.InteropServices;
@@ -16,10 +17,24 @@ public sealed partial class MonitorPage
         ViewModel = viewModel;
         InitializeComponent();
 
-        // Subscribe to collection changes
-        // Safe: ViewModel is Transient (same lifetime as Page)
+        // ✅ FIX: Use Loaded/Unloaded pattern to prevent memory leaks and NullReferenceException
+        // Subscribe to page lifecycle events
+        Loaded += OnPageLoaded;
+        Unloaded += OnPageUnloaded;
+    }
+
+    private void OnPageLoaded(object sender, RoutedEventArgs e)
+    {
+        // Subscribe when page enters visual tree (DispatcherQueue is valid)
         ViewModel.TrafficPackets.CollectionChanged += OnTrafficPacketsChanged;
         ViewModel.ActivityLogs.CollectionChanged += OnActivityLogsChanged;
+    }
+
+    private void OnPageUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Unsubscribe when page leaves visual tree (prevents NullReferenceException)
+        ViewModel.TrafficPackets.CollectionChanged -= OnTrafficPacketsChanged;
+        ViewModel.ActivityLogs.CollectionChanged -= OnActivityLogsChanged;
     }
 
     private void OnTrafficPacketsChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -33,7 +48,7 @@ public sealed partial class MonitorPage
         if (e.Action == NotifyCollectionChangedAction.Add && e.NewStartingIndex == 0)
         {
             // Defer ScrollIntoView to next UI cycle to avoid COMException during collection update
-            DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
+            DispatcherQueue?.TryEnqueue(DispatcherQueuePriority.Low, () =>
             {
                 // Guard against uninitialized ListView during page construction
                 if (TrafficListView?.Items is null) return;
@@ -65,7 +80,7 @@ public sealed partial class MonitorPage
         if (e.Action == NotifyCollectionChangedAction.Add && e.NewStartingIndex == 0)
         {
             // Defer ScrollIntoView to next UI cycle to avoid COMException during collection update
-            DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
+            DispatcherQueue?.TryEnqueue(DispatcherQueuePriority.Low, () =>
             {
                 // Guard against uninitialized ListView during page construction
                 if (ActivityLogListView?.Items is null) return;

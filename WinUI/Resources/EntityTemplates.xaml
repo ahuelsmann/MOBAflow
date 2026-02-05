@@ -10,7 +10,7 @@
     <!--  ============================================  -->
     <DataTemplate x:Key="JourneyTemplate">
         <ScrollViewer>
-            <StackPanel Padding="16" Spacing="16">
+            <StackPanel Padding="12" Spacing="12">
                 <!--  Header  -->
                 <TextBlock
                     Margin="0,0,0,8"
@@ -122,10 +122,10 @@
 
                 <!--  Text-to-Speech Template  -->
                 <TextBox
-                    Height="240"
+                    Height="120"
                     AcceptsReturn="True"
                     Header="Text-to-Speech Template"
-                    PlaceholderText="e.g., '{TrainName} is arriving at {StationName}'"
+                    PlaceholderText="e.g., 'Nächster Halt: {StationName}'"
                     Text="{Binding Text, Mode=TwoWay}"
                     TextWrapping="Wrap" />
             </StackPanel>

@@ -78,37 +78,35 @@ public partial class MainWindowViewModel
     /// <summary>
     /// Initializes the Statistics collection from the CountOfFeedbackPoints setting.
     /// Call this when a project is loaded or when the setting changes.
-    /// IMPORTANT: ObservableCollection changes must happen on UI thread.
+    /// IMPORTANT: Must be called from UI thread (caller responsible for dispatching).
     /// </summary>
     public void InitializeStatisticsFromFeedbackPoints()
     {
-        // ✅ CRITICAL FIX: Always use InvokeOnUi to ensure we're on UI thread
-        // This prevents COMException when WinUI tries to update collection view bindings
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            Statistics.Clear();
+        // ✅ CRITICAL FIX: Do NOT use InvokeOnUi here!
+        // This method is already called via EnqueueOnUi from OnSelectedProjectChanged,
+        // so we're guaranteed to be on the UI thread. A second InvokeOnUi causes reentrancy.
+        Statistics.Clear();
 
-            // Create statistics based on CountOfFeedbackPoints setting
-            int count = _settings.Counter.CountOfFeedbackPoints;
-            if (count > 0)
+        // Create statistics based on CountOfFeedbackPoints setting
+        int count = _settings.Counter.CountOfFeedbackPoints;
+        if (count > 0)
+        {
+            for (int i = 1; i <= count; i++)
             {
-                for (int i = 1; i <= count; i++)
+                Statistics.Add(new InPortStatistic
                 {
-                    Statistics.Add(new InPortStatistic
-                    {
-                        InPort = i,
-                        Name = $"Feedback Point {i}",
-                        Count = 0,
-                        TargetLapCount = GlobalTargetLapCount
-                    });
-                }
-                _logger.LogInformation("Initialized {Count} track statistics from settings (InPorts 1-{MaxInPort})", Statistics.Count, count);
+                    InPort = i,
+                    Name = $"Feedback Point {i}",
+                    Count = 0,
+                    TargetLapCount = GlobalTargetLapCount
+                });
             }
-            else
-            {
-                _logger.LogInformation("CountOfFeedbackPoints is 0 - no track statistics initialized. Set CountOfFeedbackPoints in settings to enable");
-            }
-        });
+            _logger.LogInformation("Initialized {Count} track statistics from settings (InPorts 1-{MaxInPort})", Statistics.Count, count);
+        }
+        else
+        {
+            _logger.LogInformation("CountOfFeedbackPoints is 0 - no track statistics initialized. Set CountOfFeedbackPoints in settings to enable");
+        }
     }
 
     partial void OnGlobalTargetLapCountChanged(int value)
