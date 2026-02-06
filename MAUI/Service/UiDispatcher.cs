@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
 using SharedUI.Interface;
@@ -6,6 +6,19 @@ using SharedUI.Interface;
 public class UiDispatcher : IUiDispatcher
 {
     public void InvokeOnUi(Action action)
+    {
+#if ANDROID || IOS || MACCATALYST
+        MainThread.BeginInvokeOnMainThread(action);
+#else
+        action();
+#endif
+    }
+
+    /// <summary>
+    /// ALWAYS enqueues action to UI thread, even if already on UI thread.
+    /// Use this to break out of PropertyChanged notification chains.
+    /// </summary>
+    public void EnqueueOnUi(Action action)
     {
 #if ANDROID || IOS || MACCATALYST
         MainThread.BeginInvokeOnMainThread(action);

@@ -121,9 +121,7 @@ public sealed partial class SignalBoxPage : Page
         project.SignalBoxPlan ??= new SignalBoxPlan
         {
             Name = "Stellwerk",
-            GridWidth = GridColumns,
-            GridHeight = GridRows,
-            CellSize = GridCellSize
+            Grid = new(GridColumns, GridRows, GridCellSize)
         };
 
         _planViewModel ??= new SignalBoxPlanViewModel(project.SignalBoxPlan);

@@ -51,11 +51,26 @@ public partial class HealthCheckService : IDisposable
 
     /// <summary>
     /// Starts periodic health checks based on configuration.
+    /// 
+    /// NOTE: Initial health check is executed asynchronously without await.
+    /// This is intentional - we don't want to block service initialization.
+    /// If the check fails, it's logged but doesn't prevent app startup.
     /// </summary>
     public void StartPeriodicChecks()
     {
         // Perform initial check immediately (even if periodic checks are disabled)
-        _ = PerformHealthCheckAsync();
+        // Note: This is a fire-and-forget call - we don't await because:
+        // 1. We don't want to block service initialization
+        // 2. If the check fails, we've already logged it in PerformHealthCheckAsync
+        // 3. Periodic checks (if enabled) will retry soon anyway
+        _ = PerformHealthCheckAsync()
+            .ContinueWith(task => 
+            {
+                if (task.IsFaulted)
+                {
+                    _logger.LogError(task.Exception, "Initial health check failed");
+                }
+            });
 
         var enabled = _configuration.GetValue("HealthCheck:Enabled", true);
         if (!enabled)

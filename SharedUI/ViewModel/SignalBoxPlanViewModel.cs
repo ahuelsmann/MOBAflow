@@ -44,8 +44,8 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
     /// </summary>
     public int GridWidth
     {
-        get => _model.GridWidth;
-        set => SetProperty(_model.GridWidth, value, _model, (m, v) => m.GridWidth = v);
+        get => _model.Grid.Width;
+        set => _model.Grid = _model.Grid with { Width = value };
     }
 
     /// <summary>
@@ -53,8 +53,8 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
     /// </summary>
     public int GridHeight
     {
-        get => _model.GridHeight;
-        set => SetProperty(_model.GridHeight, value, _model, (m, v) => m.GridHeight = v);
+        get => _model.Grid.Height;
+        set => _model.Grid = _model.Grid with { Height = value };
     }
 
     /// <summary>
@@ -62,8 +62,8 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
     /// </summary>
     public int CellSize
     {
-        get => _model.CellSize;
-        set => SetProperty(_model.CellSize, value, _model, (m, v) => m.CellSize = v);
+        get => _model.Grid.CellSize;
+        set => _model.Grid = _model.Grid with { CellSize = value };
     }
 
     /// <summary>

@@ -23,6 +23,7 @@ using Moba.WinUI.ViewModel;
 using Serilog;
 using Serilog.Events;
 using Service;
+using SharedUI.Extensions;
 using SharedUI.Interface;
 using SharedUI.Service;
 using SharedUI.Shell;
@@ -180,6 +181,9 @@ public partial class App
         // Navigation infrastructure
         var navigationRegistry = new NavigationRegistry();
         services.AddSingleton(navigationRegistry);
+
+        // UI Thread Dispatcher (platform-specific)
+        services.AddUiDispatcher();
 
         // Register Speech Engine Factory for dynamic engine switching
         services.AddSingleton<SpeakerEngineFactory>();

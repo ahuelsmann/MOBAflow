@@ -12,6 +12,7 @@ using SharedUI.Interface;
 using SharedUI.ViewModel;
 using ViewModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using Windows.UI;
 using Windows.UI.ViewManagement;
 
@@ -254,7 +255,7 @@ public sealed partial class TrainControlPage
         // Note: DisplayValue shows km/h calculated as (Speed/MaxSpeedStep) * Vmax
     }
 
-    private async void OnLoaded(object sender, RoutedEventArgs e)
+    private void OnLoaded(object sender, RoutedEventArgs e)
     {
         // Find and store references to themed elements
         _speedometer = FindName("Speedometer") as SpeedometerControl;
@@ -276,13 +277,31 @@ public sealed partial class TrainControlPage
         // Initialize speedometer speed step markers
         UpdateSpeedStepMarkers();
         
-        _allLocomotives = await _locomotiveService.GetAllSeriesAsync();
+        // Load locomotes asynchronously (fire-and-forget with error handling)
+        _ = LoadLocomotivesAsync();
 
         // Initialize AutoSuggestBox with saved locomotive series
         if (!string.IsNullOrEmpty(ViewModel.SelectedLocoSeries))
         {
             LocoSeriesBox.Text = ViewModel.SelectedLocoSeries;
             UpdateVmaxDisplay(); // Show Vmax display if a series is loaded from settings
+        }
+    }
+
+    /// <summary>
+    /// Loads all locomotive series asynchronously.
+    /// Fire-and-forget pattern with error logging.
+    /// </summary>
+    private async Task LoadLocomotivesAsync()
+    {
+        try
+        {
+            _allLocomotives = await _locomotiveService.GetAllSeriesAsync();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to load locomotives: {ex.Message}");
+            // Fail silently - app continues with empty list
         }
     }
 
@@ -376,8 +395,23 @@ public sealed partial class TrainControlPage
         UpdateSpeedometerScale();
         UpdateSpeedStepMarkers();
 
-        // Save settings
-        _ = SaveSpeedStepsSettingAsync();
+        // Save settings asynchronously (fire-and-forget with error handling)
+        _ = SaveSpeedStepsSettingAsync()
+            .ContinueWith(task => 
+            {
+                if (task.IsFaulted)
+                {
+                    Debug.WriteLine($"Failed to save speed steps setting: {task.Exception?.InnerException?.Message}");
+                }
+            });
+    }
+
+    private async Task SaveSpeedStepsSettingAsync()
+    {
+        if (_settingsService != null)
+        {
+            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
+        }
     }
 
     private void UpdateSpeedStepMarkers()
@@ -387,13 +421,5 @@ public sealed partial class TrainControlPage
 
         // Update speedometer SpeedSteps property to trigger marker re-rendering
         _speedometer.SpeedSteps = (int)ViewModel.SpeedSteps;
-    }
-
-    private async Task SaveSpeedStepsSettingAsync()
-    {
-        if (_settingsService != null)
-        {
-            await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false);
-        }
     }
 }

@@ -22,19 +22,9 @@ public class SignalBoxPlan
     public string Name { get; set; } = "Stellwerk";
 
     /// <summary>
-    /// Grid width in cells.
+    /// Grid configuration (width, height, cell size).
     /// </summary>
-    public int GridWidth { get; set; } = 20;
-
-    /// <summary>
-    /// Grid height in cells.
-    /// </summary>
-    public int GridHeight { get; set; } = 12;
-
-    /// <summary>
-    /// Cell size in pixels (for rendering).
-    /// </summary>
-    public int CellSize { get; set; } = 60;
+    public GridConfig Grid { get; set; } = new(20, 12, 60);
 
     /// <summary>
     /// All elements in the signal box plan (typed hierarchy).
@@ -55,6 +45,38 @@ public class SignalBoxPlan
 // ═══════════════════════════════════════════════════════════════════════════
 // SIGNAL BOX ELEMENTS - Typed Element Hierarchy
 // ═══════════════════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Connection point direction (cardinal and diagonal directions).
+/// Maps to 8 compass directions for topological connections.
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum ConnectionPointDirection
+{
+    /// <summary>North (0°, top)</summary>
+    North = 0,
+
+    /// <summary>East (90°, right)</summary>
+    East = 1,
+
+    /// <summary>South (180°, bottom)</summary>
+    South = 2,
+
+    /// <summary>West (270°, left)</summary>
+    West = 3,
+
+    /// <summary>NorthEast (45°, top-right)</summary>
+    NorthEast = 4,
+
+    /// <summary>SouthEast (135°, bottom-right)</summary>
+    SouthEast = 5,
+
+    /// <summary>SouthWest (225°, bottom-left)</summary>
+    SouthWest = 6,
+
+    /// <summary>NorthWest (315°, top-left)</summary>
+    NorthWest = 7
+}
 
 /// <summary>
 /// Abstract base class for all signal box plan elements.
@@ -148,9 +170,9 @@ public class SignalBoxConnection
     public Guid FromElementId { get; set; }
 
     /// <summary>
-    /// Source connection point (0=North, 1=East, 2=South, 3=West, 4=NE, 5=SE, 6=SW, 7=NW).
+    /// Source connection point (directional).
     /// </summary>
-    public int FromPoint { get; set; }
+    public ConnectionPointDirection FromDirection { get; set; } = ConnectionPointDirection.North;
 
     /// <summary>
     /// Target element ID.
@@ -158,9 +180,9 @@ public class SignalBoxConnection
     public Guid ToElementId { get; set; }
 
     /// <summary>
-    /// Target connection point.
+    /// Target connection point (directional).
     /// </summary>
-    public int ToPoint { get; set; }
+    public ConnectionPointDirection ToDirection { get; set; } = ConnectionPointDirection.North;
 }
 
 /// <summary>
@@ -194,7 +216,7 @@ public class SignalBoxRoute
     /// Switch positions required for this route.
     /// Key: Switch element ID, Value: Position (Straight/Diverging).
     /// </summary>
-    public Dictionary<Guid, string> SwitchPositions { get; set; } = [];
+    public Dictionary<Guid, SwitchPosition> SwitchPositions { get; set; } = [];
 }
 
 /// <summary>
@@ -293,4 +315,66 @@ public enum SignalBoxElementState
 
     /// <summary>Fault condition.</summary>
     Fault
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VALUE OBJECTS - Grid and Position
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Grid configuration value object.
+/// Encapsulates grid dimensions and cell size for the signal box plan.
+/// Validates that all values are positive and non-zero.
+/// </summary>
+public record GridConfig(int Width, int Height, int CellSize)
+{
+    /// <summary>Width of the grid in cells.</summary>
+    public int Width { get; init; } = ValidatePositive(Width, nameof(Width));
+
+    /// <summary>Height of the grid in cells.</summary>
+    public int Height { get; init; } = ValidatePositive(Height, nameof(Height));
+
+    /// <summary>Cell size in pixels (for rendering).</summary>
+    public int CellSize { get; init; } = ValidatePositive(CellSize, nameof(CellSize));
+
+    /// <summary>
+    /// Validates that a value is positive (non-zero and greater than zero).
+    /// </summary>
+    /// <param name="value">The value to validate.</param>
+    /// <param name="paramName">The parameter name for error reporting.</param>
+    /// <returns>The validated value.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if value is zero or negative.</exception>
+    private static int ValidatePositive(int value, string paramName)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value, paramName);
+        return value;
+    }
+}
+
+/// <summary>
+/// Grid position value object.
+/// Encapsulates X/Y coordinates on the signal box plan grid.
+/// Validates that coordinates are non-negative.
+/// Cell [0,0] is at top-left.
+/// </summary>
+public record GridPosition(int X, int Y)
+{
+    /// <summary>Column position (horizontal).</summary>
+    public int X { get; init; } = ValidateNonNegative(X, nameof(X));
+
+    /// <summary>Row position (vertical).</summary>
+    public int Y { get; init; } = ValidateNonNegative(Y, nameof(Y));
+
+    /// <summary>
+    /// Validates that a value is non-negative (zero or greater).
+    /// </summary>
+    /// <param name="value">The value to validate.</param>
+    /// <param name="paramName">The parameter name for error reporting.</param>
+    /// <returns>The validated value.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if value is negative.</exception>
+    private static int ValidateNonNegative(int value, string paramName)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(value, paramName);
+        return value;
+    }
 }

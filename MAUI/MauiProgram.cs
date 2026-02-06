@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI;
 
 using Backend.Extensions;
@@ -6,6 +6,7 @@ using Common.Configuration;
 using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
 using Service;
+using SharedUI.Extensions;
 using SharedUI.Interface;
 using SharedUI.ViewModel;
 using Sound;
@@ -31,7 +32,7 @@ public static class MauiProgram
             });
 
         // Platform services (MUST be registered before ViewModels that depend on them)
-        builder.Services.AddSingleton<IUiDispatcher, UiDispatcher>();
+        builder.Services.AddUiDispatcher();
         builder.Services.AddSingleton<IBackgroundService, BackgroundService>();
 
         // Configuration (AppSettings + ISettingsService)
