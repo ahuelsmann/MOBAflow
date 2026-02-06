@@ -15,6 +15,7 @@
 - 🎨 **MOBAtps Track Plan System** - Visual track layout editor with drag & drop
 - 🛤️ **Track Libraries** - Extensible track system support (Piko A-Gleis, more coming)
 - 📱 **Multi-Platform** - WinUI (Windows), MAUI (Android), Blazor (Web)
+- 🟢 **Startup Status Indicator** - WinUI status bar shows deferred initialization progress with logs
 
 ## ⚠️ Hardware & Safety
 
@@ -1038,6 +1039,4 @@ az account set --subscription "YOUR-SUBSCRIPTION-NAME"
    ```powershell
    az appconfig kv list --name mobaflow-config
    ```
-3. Verify connection string format (must start with `Endpoint=https://`)
-
----
+3. Verify connection string format (must start with `Endpoint=https://`)---

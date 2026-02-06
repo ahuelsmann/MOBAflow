@@ -11,7 +11,7 @@ public static class Z21MessageParser
         => data is { Length: >= 4 } && data[2] == Z21Protocol.Header.LAN_X_HEADER && data[3] == 0x00;
 
     public static bool IsRBusFeedback(byte[] data)
-        => data is { Length: >= 4 } && data[2] == Z21Protocol.Header.LAN_RBUS_DATACHANGED && data[3] == 0x00;
+        => data is { Length: >= 4 } && data[2] == Z21Protocol.Header.LAN_RMBUS_DATACHANGED && data[3] == 0x00;
 
     public static bool IsSystemState(byte[] data)
         => data is { Length: >= 4 } && data[2] == Z21Protocol.Header.LAN_SYSTEMSTATE && data[3] == 0x00;

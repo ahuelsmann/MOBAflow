@@ -2,16 +2,25 @@
 namespace Moba.MAUI;
 
 using Backend.Extensions;
+
 using Common.Configuration;
+
 using CommunityToolkit.Maui;
+
 using Microsoft.Extensions.Logging;
+
 using Service;
+
 using SharedUI.Extensions;
 using SharedUI.Interface;
 using SharedUI.ViewModel;
+
 using Sound;
+
 using System.Net;
+
 using UraniumUI;
+
 using Xamarin.Android.Net;
 
 public static class MauiProgram
@@ -39,31 +48,36 @@ public static class MauiProgram
         builder.Services.AddSingleton<AppSettings>();
         builder.Services.AddSingleton<ISettingsService, SettingsService>();
 
-        // ✅ Audio Services (NullObject - MAUI doesn't support audio yet)
-        // TODO: Replace with platform-specific implementations when MAUI audio is needed
+        // Audio Services (NullObject - MAUI doesn't support audio yet)
         builder.Services.AddSingleton<ISoundPlayer, NullSoundPlayer>();
         builder.Services.AddSingleton<ISpeakerEngine, NullSpeakerEngine>();
 
-        // ✅ REST-API Discovery + Photo Upload Services
-        builder.Services.AddSingleton<RestApiDiscoveryService>();
+        // PERFORMANCE: REST-API Discovery - Lazy-loaded (deferred until first use)
+        // This service does network discovery which should not block startup
+        builder.Services.AddSingleton<RestApiDiscoveryService>(sp =>
+            new Lazy<RestApiDiscoveryService>(() =>
+            {
+                // Actual initialization happens on first access
+                return new RestApiDiscoveryService(
+                    sp.GetRequiredService<ILogger<RestApiDiscoveryService>>(),
+                    sp.GetRequiredService<AppSettings>()
+                );
+            }).Value);
 
-        // ✅ Configure HttpClient with proper timeout and Android-specific handler
+        // Configure HttpClient with proper timeout and Android-specific handler
         builder.Services.AddSingleton<HttpClient>(_ =>
         {
 #if ANDROID
-            // Use platform-specific message handler for Android
             var handler = new AndroidMessageHandler
             {
-                // Allow HTTP (cleartext) connections to local network
                 AllowAutoRedirect = true,
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                ServerCertificateCustomValidationCallback = (_, _, _, _) => true // Trust all certificates for local dev
+                ServerCertificateCustomValidationCallback = (_, _, _, _) => true
             };
             var httpClient = new HttpClient(handler);
 #else
             var httpClient = new HttpClient();
 #endif
-            // Set reasonable timeouts for photo uploads (large files)
             httpClient.Timeout = TimeSpan.FromMinutes(5);
             return httpClient;
         });
@@ -74,11 +88,11 @@ public static class MauiProgram
         builder.Services.AddSingleton<IPhotoCaptureService, PhotoCaptureService>();
 
         // ViewModels
-        builder.Services.AddSingleton<MauiViewModel>();  // ✅ Mobile-optimized ViewModel
+        builder.Services.AddSingleton<MauiViewModel>();
 
         // Backend services - Register in dependency order
-        // ✅ Use shared extension method for platform-consistent registration
-        // Backend expects ISoundPlayer/ISpeakerEngine from above (NullObject for now)
+        // PERFORMANCE: Backend services (IZ21, WorkflowService, etc.) are configured
+        // to defer connection/initialization until explicitly needed
         builder.Services.AddMobaBackendServices();
 
         // Views

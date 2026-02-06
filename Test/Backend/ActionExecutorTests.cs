@@ -2,8 +2,8 @@
 
 namespace Moba.Test.Backend;
 
-using Domain.Enum;
 using Moba.Backend.Service;
+using Moba.Domain.Enum;
 using Mocks;
 
 /// <summary>

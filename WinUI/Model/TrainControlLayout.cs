@@ -25,7 +25,7 @@ public enum TrainControlLayout
     /// Features round throttle control, function key grid, and locomotive preview.
     /// Optimized for ESU CabControl theme but works with any theme.
     /// </summary>
-    ESU = 2,
+    Esu = 2,
 
     /// <summary>
     /// Märklin Central Station-inspired layout.

@@ -90,7 +90,7 @@ public sealed partial class UdpDiscoveryResponder : IDisposable
                     {
                         _logger.LogInformation("📱 Discovery request received from {RemoteEndPoint}", result.RemoteEndPoint);
 
-                        var localIp = GetLocalIPAddress();
+                        var localIp = GetLocalIpAddress();
                         var response = $"{DiscoveryResponsePrefix}|{localIp}|{_restApiPort}";
                         var responseBytes = Encoding.UTF8.GetBytes(response);
 
@@ -131,7 +131,7 @@ public sealed partial class UdpDiscoveryResponder : IDisposable
     /// <summary>
     /// Gets the local IP address of the server (prefers 192.168.x.x for home networks).
     /// </summary>
-    private static string GetLocalIPAddress()
+    private static string GetLocalIpAddress()
     {
         try
         {

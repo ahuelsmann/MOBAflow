@@ -48,6 +48,9 @@ public partial class App
     /// <summary>
     /// Initializes the singleton application object. This is the first line of authored code
     /// executed, and as such is the logical equivalent of main() or WinMain().
+    /// 
+    /// PERFORMANCE NOTE: Kept minimal - heavy initialization deferred to PostStartupInitializationService
+    /// after main window is visible.
     /// </summary>
     public App()
     {
@@ -107,13 +110,19 @@ public partial class App
 
     /// <summary>
     /// Configures the services for the application.
+    /// 
+    /// PERFORMANCE OPTIMIZATION: Removed heavy operations from startup:
+    /// - HealthCheckService: Deferred to PostStartupInitializationService
+    /// - WebApp: Deferred to PostStartupInitializationService
+    /// - Configuration validation: Deferred to background
+    /// 
+    /// Kept: Essential services for MainWindow and navigation
     /// </summary>
     private static IServiceProvider ConfigureServices()
     {
         var services = new ServiceCollection();
 
-        // Load appsettings.json configuration
-        // In DEBUG mode, also load appsettings.Development.json to enable all feature toggles
+        // Load appsettings.json configuration (fast, file-based)
         var basePath = AppContext.BaseDirectory;
         var devJsonPath = Path.Combine(basePath, "appsettings.Development.json");
         var devJsonExists = File.Exists(devJsonPath);
@@ -156,11 +165,8 @@ public partial class App
 
         var configuration = configBuilder.Build();
 
-        // Debug: Print loaded FeatureToggle values
         Debug.WriteLine($"[CONFIG] IsTrainControlPageAvailable: {configuration["FeatureToggles:IsTrainControlPageAvailable"]}");
         Debug.WriteLine($"[CONFIG] IsTrackPlanEditorPageAvailable: {configuration["FeatureToggles:IsTrackPlanEditorPageAvailable"]}");
-        Debug.WriteLine($"[CONFIG] IsJourneyMapPageAvailable: {configuration["FeatureToggles:IsJourneyMapPageAvailable"]}");
-        Debug.WriteLine($"[CONFIG] IsMonitorPageAvailable: {configuration["FeatureToggles:IsMonitorPageAvailable"]}");
 
         // Register IConfiguration
         services.AddSingleton<IConfiguration>(configuration);
@@ -198,7 +204,6 @@ public partial class App
 
         // Backend Services (Interfaces are in Backend.Interface and Backend.Network)
         // Use shared extension method for platform-consistent registration
-        // Backend now registers: ActionExecutionContext, AnnouncementService, ActionExecutor
         services.AddMobaBackendServices();
 
         services.AddSingleton<IIoService, IoService>();
@@ -206,7 +211,6 @@ public partial class App
         services.AddSingleton<PhotoHubClient>();  // Real-time photo notifications from MAUI
 
         // ICityService with NullObject fallback
-        // Always register a service (real or no-op)
         services.AddSingleton<ICityService>(sp =>
         {
             try
@@ -222,7 +226,6 @@ public partial class App
         });
 
         // ILocomotiveService with NullObject fallback
-        // Always register a service (real or no-op)
         services.AddSingleton<ILocomotiveService>(sp =>
         {
             try
@@ -238,7 +241,6 @@ public partial class App
         });
 
         // ISettingsService with NullObject fallback
-        // Always register a service (real or no-op)
         services.AddSingleton<ISettingsService>(sp =>
         {
             try
@@ -257,45 +259,31 @@ public partial class App
         services.AddSingleton<INavigationService>(sp => sp.GetRequiredService<NavigationService>());
         services.AddSingleton<IPageFactory, PageFactory>();
         services.AddSingleton<IShellService, ShellService>();
-        // SnapToConnectService removed - depends on old TrackPlan.Domain architecture
 
         // Sound Services (required by HealthCheckService)
+        // HealthCheckService initialization deferred to PostStartupInitializationService
         services.AddSingleton<ISoundPlayer, WindowsSoundPlayer>();
-        services.AddSingleton<SpeechHealthCheck>();
         services.AddSingleton<HealthCheckService>();
+        // NOTE: SpeechHealthCheck and HealthCheckService are initialized during post-startup
 
         // ViewModels
-        // Note: Wrapper ViewModels (SolutionViewModel, ProjectViewModel, JourneyViewModel, etc.)
-        // are created with 'new' at runtime because they wrap Domain models.
-        // Only "standalone" ViewModel that don't wrap models are registered here.
-
-        // Signal Box ViewModels (factory-created on demand for each element)
-        // These are not registered as singletons because they wrap individual domain elements
-        // Instead, they are created dynamically in SignalBoxPage.cs as elements are added
-
-        // Domain.Solution is registered in AddMobaBackendServices()
-
         services.AddSingleton(sp => new MainWindowViewModel(
             sp.GetRequiredService<IZ21>(),
             sp.GetRequiredService<WorkflowService>(),
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<Solution>(),
-            sp.GetRequiredService<ActionExecutionContext>(),  // Inject context with all audio services
-            sp.GetRequiredService<ILogger<MainWindowViewModel>>(),  // Inject ILogger
+            sp.GetRequiredService<ActionExecutionContext>(),
+            sp.GetRequiredService<ILogger<MainWindowViewModel>>(),
             sp.GetRequiredService<IIoService>(),
-            sp.GetRequiredService<ICityService>(),      // Now guaranteed (NullObject if unavailable)
-            sp.GetRequiredService<ISettingsService>(),  // Now guaranteed (NullObject if unavailable)
-            sp.GetRequiredService<AnnouncementService>(),  // For TestSpeech command
-            sp.GetRequiredService<PhotoHubClient>()  // Real-time photo notifications
+            sp.GetRequiredService<ICityService>(),
+            sp.GetRequiredService<ISettingsService>(),
+            sp.GetRequiredService<AnnouncementService>(),
+            sp.GetRequiredService<PhotoHubClient>()
         ));
-        // Old TrackPlanEditorViewModel removed - now using TrackPlanEditorViewModel2 from TrackPlan.Editor
+
         services.AddSingleton<JourneyMapViewModel>();
-        
-        // MonitorPageViewModel: Transient so Dispose() is called when page is navigated away
-        // InMemorySink retains logs globally, so they reload on return
         services.AddTransient<MonitorPageViewModel>();
-        
         services.AddSingleton<SkinSelectorViewModel>();
         services.AddSingleton(sp => new TrainControlViewModel(
             sp.GetRequiredService<IZ21>(),
@@ -310,26 +298,23 @@ public partial class App
         services.AddSingleton<TrackPlanViewModel>();
 
         // Pages (Transient = new instance per navigation)
-        // Registration: tag, title, iconGlyph, pageType, source, category, order, featureToggleKey, badgeLabelKey, pathIconData, isBold
         NavigationRegistration.RegisterPages(services, navigationRegistry);
 
         // Skin Provider
         services.AddSingleton<ISkinProvider, SkinProvider>();
-        // NOTE: SkinSelectorControl wird dynamisch in SettingsPage erstellt
-
 
         // MainWindow (Singleton = one instance for app lifetime)
         services.AddSingleton<MainWindow>();
 
-        // Load plugins after core registrations so they can override/add
+        // DEFERRED: Plugin Loading (moved to PostStartupInitializationService)
+        // Plugins now loaded asynchronously after MainWindow is visible
         var pluginDirectory = Path.Combine(AppContext.BaseDirectory, "Plugins");
         var pluginLoader = new PluginLoader(pluginDirectory, navigationRegistry);
+        services.AddSingleton(pluginLoader);  // Register for deferred loading
 
-        // Note: We use synchronous Load here because ConfigureServices is synchronous
-        // Plugin initialization will happen later in OnLaunched after DI is fully set up
-
-        var loadTask = Task.Run(() => pluginLoader.LoadPluginsAsync(services, logger: null));
-        loadTask.Wait(); // Block until plugins are loaded
+        // DEFERRED: PostStartupInitializationService (runs after MainWindow.Loaded)
+        services.AddSingleton<PostStartupInitializationService>();
+        services.AddSingleton<SpeechHealthCheck>();  // Lazy init in deferred service
 
         return services.BuildServiceProvider();
     }
@@ -381,10 +366,11 @@ public partial class App
             _window.Activate();
             Debug.WriteLine("[OnLaunched] MainWindow activated");
 
-            // Optionally start WebApp (REST/API) alongside WinUI
-            _ = StartWebAppIfEnabledAsync();
+            // DEFERRED INITIALIZATION (async, doesn't block UI):
+            // After MainWindow is visible, start deferred services
+            _ = InitializePostStartupServicesAsync();
 
-            // Auto-load last solution if enabled
+            // Auto-load last solution if enabled (async, non-blocking)
             _ = AutoLoadLastSolutionAsync(((MainWindow)_window).ViewModel);
 
             Debug.WriteLine("[OnLaunched] COMPLETE");
@@ -395,6 +381,25 @@ public partial class App
             Debug.WriteLine($"[OnLaunched] StackTrace: {ex.StackTrace}");
             _logger?.LogCritical(ex, "OnLaunched failed");
             throw;
+        }
+    }
+
+    /// <summary>
+    /// Initializes deferred services after MainWindow is visible.
+    /// This runs asynchronously and doesn't block the UI thread.
+    /// </summary>
+    private async Task InitializePostStartupServicesAsync()
+    {
+        try
+        {
+            var postStartupService = Services.GetRequiredService<PostStartupInitializationService>();
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30)); // 30s timeout
+            await postStartupService.InitializeAsync(cts.Token);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Post-startup initialization failed");
+            // Continue - app should remain functional
         }
     }
 

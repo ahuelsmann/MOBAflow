@@ -3,7 +3,7 @@ namespace Moba.Test.Unit;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Sound;
+using Moba.Sound;
 
 public class CognitiveSpeechEngineTest
 {
@@ -36,7 +36,7 @@ public class CognitiveSpeechEngineTest
     public Task OutputSpeech()
     {
         Assert.DoesNotThrowAsync(async () => 
-            await _speakerEngine.AnnouncementAsync("Nächster Halt Bielefeld Hauptbahnhof. Ausstieg in Fahrtrichtung rechts.", "ElkeNeural"));
+            await _speakerEngine.AnnouncementAsync("Naechster Halt Bielefeld Hauptbahnhof. Ausstieg in Fahrtrichtung rechts.", "ElkeNeural"));
         return Task.CompletedTask;
     }
 

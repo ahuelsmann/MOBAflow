@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Test.SharedUI;
+namespace Moba.Test.SharedUI;
 
 using Moba.Domain.Enum;
 using Moba.SharedUI.ViewModel;

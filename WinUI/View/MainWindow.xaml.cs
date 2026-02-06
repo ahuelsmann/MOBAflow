@@ -20,7 +20,7 @@ public sealed partial class MainWindow
     public MainWindowViewModel ViewModel { get; }
 
     private readonly NavigationService _navigationService;
-    private readonly HealthCheckService _healthCheckService;
+    private HealthCheckService? _healthCheckService;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly NavigationRegistry _navigationRegistry;
     private readonly NavigationItemFactory _navigationItemFactory;
@@ -42,7 +42,6 @@ public sealed partial class MainWindow
     public MainWindow(
         MainWindowViewModel viewModel,
         NavigationService navigationService,
-        HealthCheckService healthCheckService,
         IUiDispatcher uiDispatcher,
         IIoService ioService,
         NavigationRegistry navigationRegistry,
@@ -55,7 +54,6 @@ public sealed partial class MainWindow
 
             ViewModel = viewModel;
             _navigationService = navigationService;
-            _healthCheckService = healthCheckService;
             _uiDispatcher = uiDispatcher;
             _navigationRegistry = navigationRegistry;
             _navigationItemFactory = new NavigationItemFactory(appSettings);
@@ -118,13 +116,6 @@ public sealed partial class MainWindow
             // Apply initial theme
             ApplyTheme(ViewModel.IsDarkMode);
 
-            // Subscribe to health check events and start monitoring
-            _healthCheckService.HealthStatusChanged += OnHealthStatusChanged;
-            _healthCheckService.StartPeriodicChecks();
-
-            // Initial health status
-            ViewModel.UpdateHealthStatus(_healthCheckService.SpeechServiceStatus);
-
             Debug.WriteLine("[MainWindow] Constructor COMPLETE");
         }
         catch (Exception ex)
@@ -133,6 +124,25 @@ public sealed partial class MainWindow
             Debug.WriteLine($"[MainWindow] StackTrace: {ex.StackTrace}");
             throw;
         }
+    }
+
+    /// <summary>
+    /// Initializes health checks after the window is visible.
+    /// </summary>
+    public void InitializeHealthChecks(HealthCheckService healthCheckService)
+    {
+        ArgumentNullException.ThrowIfNull(healthCheckService);
+
+        if (_healthCheckService != null)
+        {
+            return;
+        }
+
+        _healthCheckService = healthCheckService;
+        _healthCheckService.HealthStatusChanged += OnHealthStatusChanged;
+        _healthCheckService.StartPeriodicChecks();
+
+        _uiDispatcher.InvokeOnUi(() => ViewModel.UpdateHealthStatus(_healthCheckService.SpeechServiceStatus));
     }
 
     /// <summary>
@@ -197,7 +207,11 @@ public sealed partial class MainWindow
 
     private async void MainWindow_Closed(object sender, WindowEventArgs args)
     {
-        _healthCheckService.StopPeriodicChecks();
+        if (_healthCheckService != null)
+        {
+            _healthCheckService.HealthStatusChanged -= OnHealthStatusChanged;
+            _healthCheckService.StopPeriodicChecks();
+        }
 
         // Auto-save solution before closing to prevent data loss
         await ViewModel.SaveSolutionInternalAsync();

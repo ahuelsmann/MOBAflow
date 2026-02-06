@@ -5,7 +5,7 @@ namespace Moba.Test.Backend;
 using Moba.Backend.Protocol;
 using Mocks;
 using System.Net;
-using TestData;
+using Moba.Test.TestData;
 
 [TestFixture]
 public class Z21WrapperTests
@@ -42,7 +42,7 @@ public class Z21WrapperTests
         using var signal = new ManualResetEventSlim(false);
         z21.Received += f => { captured = f; signal.Set(); };
 
-        fake.RaiseReceived(Z21Packets.RBusFeedback_InPort5);
+        fake.RaiseReceived(Z21Packets.RBusFeedbackInPort5);
 
         Assert.That(signal.Wait(TimeSpan.FromSeconds(1)), Is.True, "Received event not raised");
         Assert.That(captured, Is.Not.Null);
@@ -59,7 +59,7 @@ public class Z21WrapperTests
         using var signal = new ManualResetEventSlim(false);
         z21.OnXBusStatusChanged += s => { status = s; signal.Set(); };
 
-        fake.RaiseReceived(Z21Packets.XBus_StatusChanged_AllFlags);
+        fake.RaiseReceived(Z21Packets.XBusStatusChangedAllFlags);
 
         Assert.That(signal.Wait(TimeSpan.FromSeconds(1)), Is.True, "XBusStatusChanged not raised");
         Assert.That(status, Is.Not.Null);

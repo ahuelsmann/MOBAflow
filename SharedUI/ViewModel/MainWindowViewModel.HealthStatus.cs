@@ -1,5 +1,7 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
+
+using CommunityToolkit.Mvvm.ComponentModel;
 
 /// <summary>
 /// MainWindowViewModel - Health Status UI Logic (partial class).
@@ -38,5 +40,34 @@ public partial class MainWindowViewModel
             SpeechHealthIcon = "\uE946"; // Sync
             SpeechHealthColor = "SystemFillColorCautionBrush";
         }
+    }
+
+    /// <summary>
+    /// Indicates whether post-startup initialization is running.
+    /// </summary>
+    [ObservableProperty]
+    private bool isPostStartupInitializationRunning;
+
+    /// <summary>
+    /// Status text for post-startup initialization.
+    /// </summary>
+    [ObservableProperty]
+    private string postStartupStatusText = string.Empty;
+
+    /// <summary>
+    /// Updates the post-startup initialization status displayed in the status bar.
+    /// </summary>
+    public void UpdatePostStartupInitializationStatus(bool isRunning, string statusText)
+    {
+        if (string.IsNullOrWhiteSpace(statusText))
+        {
+            statusText = isRunning ? "Initializing services..." : string.Empty;
+        }
+
+        _uiDispatcher.EnqueueOnUi(() =>
+        {
+            IsPostStartupInitializationRunning = isRunning;
+            PostStartupStatusText = statusText;
+        });
     }
 }

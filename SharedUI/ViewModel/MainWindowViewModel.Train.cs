@@ -31,19 +31,19 @@ public partial class MainWindowViewModel
 
     /// <summary>
     /// Search text for filtering locomotives.
-    /// </summary]
+    /// </summary>
     [ObservableProperty]
     private string locomotiveSearchText = string.Empty;
 
     /// <summary>
     /// Search text for filtering passenger wagons.
-    /// </summary]
+    /// </summary>
     [ObservableProperty]
     private string passengerWagonSearchText = string.Empty;
 
     /// <summary>
     /// Search text for filtering goods wagons.
-    /// </summary]
+    /// </summary>
     [ObservableProperty]
     private string goodsWagonSearchText = string.Empty;
 

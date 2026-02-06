@@ -16,7 +16,7 @@ public class RendererTests
     {
         var plan = new TrackPlanBuilder()
             .Start(0)
-            .Add<WR>().Connections(
+            .Add<Wr>().Connections(
                 wr => wr.FromA.ToB<R9>().FromA.ToA<G62>(),
                 wr => wr.FromB.ToA<G239>().FromB.ToA<G62>(),
                 wr => wr.FromC.ToA<R9>().FromB.ToA<R9>().FromB.ToA<G62>())

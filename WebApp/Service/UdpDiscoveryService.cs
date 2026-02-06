@@ -61,7 +61,7 @@ public class UdpDiscoveryService : BackgroundService
                         _logger.LogInformation("Received discovery request from {RemoteEndPoint}", result.RemoteEndPoint);
 
                         // Get local IP and REST API port
-                        var localIp = GetLocalIPAddress();
+                        var localIp = GetLocalIpAddress();
 
                         // ✅ Parse port from Kestrel URL (e.g., "http://localhost:5001")
                         // Default to 5001 if not configured
@@ -109,7 +109,7 @@ public class UdpDiscoveryService : BackgroundService
     /// <summary>
     /// Gets the local IP address of the server (prefers 192.168.x.x range for local networks).
     /// </summary>
-    private static string GetLocalIPAddress()
+    private static string GetLocalIpAddress()
     {
         var host = Dns.GetHostEntry(Dns.GetHostName());
 

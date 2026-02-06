@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Test.SharedUI;
+namespace Moba.Test.SharedUI;
 
 using Moba.Common.Configuration;
 using Moba.SharedUI.Interface;
@@ -120,3 +120,4 @@ public class SettingsServiceInterfaceTests
         public bool AutoLoadLastSolution { get; set; }
     }
 }
+

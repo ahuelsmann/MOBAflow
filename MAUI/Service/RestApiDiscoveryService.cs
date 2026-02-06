@@ -15,11 +15,11 @@ using System.Text;
 /// </summary>
 public class RestApiDiscoveryService
 {
-    private const int DISCOVERY_PORT = 21106;
-    private const string DISCOVERY_REQUEST = "MOBAFLOW_DISCOVER";
-    private const string DISCOVERY_RESPONSE_PREFIX = "MOBAFLOW_REST_API";
-    private const string MULTICAST_ADDRESS = "239.255.42.99";
-    private const int DISCOVERY_TIMEOUT_MS = 3000;
+    private const int DiscoveryPort = 21106;
+    private const string DiscoveryRequest = "MOBAFLOW_DISCOVER";
+    private const string DiscoveryResponsePrefix = "MOBAFLOW_REST_API";
+    private const string MulticastAddress = "239.255.42.99";
+    private const int DiscoveryTimeoutMs = 3000;
 
     private readonly ILogger<RestApiDiscoveryService> _logger;
     private readonly AppSettings _appSettings;
@@ -69,19 +69,19 @@ public class RestApiDiscoveryService
             udpClient.EnableBroadcast = true;
 
             // Set timeout for receive
-            udpClient.Client.ReceiveTimeout = DISCOVERY_TIMEOUT_MS;
+            udpClient.Client.ReceiveTimeout = DiscoveryTimeoutMs;
 
             // Send discovery request to multicast group
-            var requestBytes = Encoding.UTF8.GetBytes(DISCOVERY_REQUEST);
-            var multicastEndpoint = new IPEndPoint(IPAddress.Parse(MULTICAST_ADDRESS), DISCOVERY_PORT);
+            var requestBytes = Encoding.UTF8.GetBytes(DiscoveryRequest);
+            var multicastEndpoint = new IPEndPoint(IPAddress.Parse(MulticastAddress), DiscoveryPort);
 
             _logger.LogDebug("📤 Sending discovery request to {MulticastAddress}:{Port}",
-                MULTICAST_ADDRESS, DISCOVERY_PORT);
+                MulticastAddress, DiscoveryPort);
 
             await udpClient.SendAsync(requestBytes, requestBytes.Length, multicastEndpoint);
 
             // Wait for response with timeout
-            using var cts = new CancellationTokenSource(DISCOVERY_TIMEOUT_MS);
+            using var cts = new CancellationTokenSource(DiscoveryTimeoutMs);
 
             try
             {
@@ -91,7 +91,7 @@ public class RestApiDiscoveryService
                 _logger.LogDebug("📥 Received response: {Response}", response);
 
                 // Parse response: "MOBAFLOW_REST_API|192.168.0.100|5001"
-                if (response.StartsWith(DISCOVERY_RESPONSE_PREFIX))
+                if (response.StartsWith(DiscoveryResponsePrefix))
                 {
                     var parts = response.Split('|');
                     if (parts.Length >= 3 && int.TryParse(parts[2], out var port))

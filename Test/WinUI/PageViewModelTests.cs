@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Test.WinUI;
 
@@ -11,7 +11,7 @@ using Moq;
 /// Tests basic page initialization and properties.
 /// </summary>
 [TestFixture]
-public class WinUIPageViewModelTests
+public class WinUiPageViewModelTests
 {
     private Mock<ILogger<MainWindowViewModel>> _mockLogger = null!;
 

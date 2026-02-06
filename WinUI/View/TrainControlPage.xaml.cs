@@ -2,17 +2,25 @@
 namespace Moba.WinUI.View;
 
 using Common.Configuration;
+
 using Controls;
+
 using Domain;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+
 using Service;
+
 using SharedUI.Interface;
 using SharedUI.ViewModel;
-using ViewModel;
+
 using System.ComponentModel;
 using System.Diagnostics;
+
+using ViewModel;
+
 using Windows.UI;
 using Windows.UI.ViewManagement;
 
@@ -243,15 +251,15 @@ public sealed partial class TrainControlPage
         // Update speedometer scale based on:
         // 1. MaxSpeedStep: Controls DCC speed step range (13/27/126)
         // 2. SelectedVmax: Controls km/h display range (e.g., 200 km/h)
-        
+
         // Set the DCC speed step range (for needle positioning)
         _speedometer.MaxValue = ViewModel.MaxSpeedStep;
-        
+
         // Set Vmax for km/h markers display
-        _speedometer.VmaxKmh = ViewModel.SelectedVmax > 0 
-            ? ViewModel.SelectedVmax 
+        _speedometer.VmaxKmh = ViewModel.SelectedVmax > 0
+            ? ViewModel.SelectedVmax
             : 200; // Default fallback
-        
+
         // Note: DisplayValue shows km/h calculated as (Speed/MaxSpeedStep) * Vmax
     }
 
@@ -276,7 +284,7 @@ public sealed partial class TrainControlPage
 
         // Initialize speedometer speed step markers
         UpdateSpeedStepMarkers();
-        
+
         // Load locomotes asynchronously (fire-and-forget with error handling)
         _ = LoadLocomotivesAsync();
 
@@ -360,7 +368,7 @@ public sealed partial class TrainControlPage
         {
             ViewModel.SelectedLocoSeries = selected.Name;
             ViewModel.SelectedVmax = selected.Vmax;
-            
+
             // Update AutoSuggestBox text to show full series name
             sender.Text = selected.Name;
         }
@@ -397,7 +405,7 @@ public sealed partial class TrainControlPage
 
         // Save settings asynchronously (fire-and-forget with error handling)
         _ = SaveSpeedStepsSettingAsync()
-            .ContinueWith(task => 
+            .ContinueWith(task =>
             {
                 if (task.IsFaulted)
                 {

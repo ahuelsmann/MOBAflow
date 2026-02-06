@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 #if ANDROID
 
 
@@ -21,9 +21,9 @@ using global::Android.OS;
 [Service(ForegroundServiceType = ForegroundService.TypeDataSync)]
 public class Z21BackgroundService : Service
 {
-    private const int NOTIFICATION_ID = 1001;
-    private const string CHANNEL_ID = "mobasmart_z21_channel";
-    private const string CHANNEL_NAME = "Z21 Connection";
+    private const int NotificationId = 1001;
+    private const string ChannelId = "mobasmart_z21_channel";
+    private const string ChannelName = "Z21 Connection";
 
     public override IBinder? OnBind(Intent? intent) => null;
 
@@ -41,7 +41,7 @@ public class Z21BackgroundService : Service
 
         CreateNotificationChannel();
         var notification = BuildNotification(title, message);
-        StartForeground(NOTIFICATION_ID, notification);
+        StartForeground(NotificationId, notification);
 
         return StartCommandResult.Sticky;
     }
@@ -50,7 +50,7 @@ public class Z21BackgroundService : Service
     {
         if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
         {
-            var channel = new NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationImportance.Low)
+            var channel = new NotificationChannel(ChannelId, ChannelName, NotificationImportance.Low)
             {
                 Description = "Keeps Z21 connection active in background"
             };
@@ -79,7 +79,7 @@ public class Z21BackgroundService : Service
             stopIntent,
             PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
 
-        var builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+        var builder = new NotificationCompat.Builder(this, ChannelId)
             .SetContentTitle(title)
             ?.SetContentText(message)
             ?.SetSmallIcon(Resource.Drawable.IcMenuInfoDetails)

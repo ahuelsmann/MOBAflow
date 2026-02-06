@@ -2,13 +2,18 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Model;
+
 using Common.Serilog;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Interface;
+
 using Microsoft.Extensions.Logging;
-using System.Collections.ObjectModel;
+
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Threading;
 
 /// <summary>
@@ -100,11 +105,11 @@ public partial class MonitorPageViewModel : ObservableObject, IDisposable
         lock (_logBatchLock)
         {
             _pendingLogEntries.Enqueue(FormatLogEntry(entry));
-            
+
             // Cancel existing batch update timer
             _batchUpdateCts?.Cancel();
             _batchUpdateCts = new CancellationTokenSource();
-            
+
             // Schedule batch update after delay
             _ = ScheduleBatchUpdateAsync(_batchUpdateCts.Token);
         }

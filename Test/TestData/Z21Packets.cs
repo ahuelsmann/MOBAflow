@@ -1,9 +1,9 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.TestData;
 
 public static class Z21Packets
 {
-    public static readonly byte[] RBusFeedback_InPort5 =
+    public static readonly byte[] RBusFeedbackInPort5 =
     [
         0x0F, 0x00, 0x80, 0x00, // Length + Header (LAN_RMBUS_DATACHANGED)
         0x00,                   // Group number (module 0)
@@ -12,6 +12,6 @@ public static class Z21Packets
         0x00, 0x00, 0x00, 0x00, // Padding/XOR (ignored by parser in tests)
         0x00
     ];
-    public static readonly byte[] XBus_StatusChanged_AllFlags = [0x07,0x00,0x40,0x00, 0x62, 0x00, 0x07];
-    public static readonly byte[] SystemState_MinPayload = [0x14,0x00,0x84,0x00, 0x10,0x00, 0x20,0x00, 0x30,0x00, 0x40,0x00, 0x50,0x00, 0xAA, 0xBB];
+    public static readonly byte[] XBusStatusChangedAllFlags = [0x07,0x00,0x40,0x00, 0x62, 0x00, 0x07];
+    public static readonly byte[] SystemStateMinPayload = [0x14,0x00,0x84,0x00, 0x10,0x00, 0x20,0x00, 0x30,0x00, 0x40,0x00, 0x50,0x00, 0xAA, 0xBB];
 }

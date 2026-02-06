@@ -203,9 +203,11 @@
       "signalBoxPlan": {
         "id": "f1d3dd73-dcd5-4faa-b180-e687659598ea",
         "name": "Stellwerk",
-        "gridWidth": 20,
-        "gridHeight": 12,
-        "cellSize": 60,
+        "grid": {
+          "width": 20,
+          "height": 12,
+          "cellSize": 60
+        },
         "elements": [
           {
             "$type": "TrackCurve",

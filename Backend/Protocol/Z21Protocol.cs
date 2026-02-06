@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Backend.Protocol;
 
@@ -146,8 +146,6 @@ public static class Z21Protocol
         /// Compatible with Roco feedback modules: 10787, 10808, 10819
         /// </summary>
         public const byte LAN_RMBUS_DATACHANGED = 0x80;
-
-        /// <summary>Alias for LAN_RMBUS_DATACHANGED (backward compatibility)</summary>
         public const byte LAN_RBUS_DATACHANGED = LAN_RMBUS_DATACHANGED;
 
         /// <summary>
@@ -355,15 +353,13 @@ public static class Z21Protocol
         /// </summary>
         public const byte X_BC_STATUS = 0x61;
 
-        /// <summary>Alias for X_BC_STATUS (backward compatibility)</summary>
-        public const byte X_STATUS = X_BC_STATUS;
-
         /// <summary>
         /// LAN_X_STATUS_CHANGED: Central state response.
         /// Packet: 0x62 0x22 Status XOR
         /// Status bits: see CentralState bitmasks
         /// </summary>
         public const byte X_STATUS_CHANGED = 0x62;
+        public const byte X_STATUS = X_BC_STATUS;
 
         /// <summary>
         /// LAN_X_GET_FIRMWARE_VERSION: Request firmware version.
@@ -654,7 +650,7 @@ public static class Z21Protocol
         public const byte ShortCircuitInternal = 0x08;
 
         /// <summary>0x20: Turnout addressing according to RCN-213 (since FW 1.42)</summary>
-        public const byte RCN213 = 0x20;
+        public const byte Rcn213 = 0x20;
     }
 
     /// <summary>
@@ -665,10 +661,10 @@ public static class Z21Protocol
     public static class Capabilities
     {
         /// <summary>0x01: Supports DCC</summary>
-        public const byte DCC = 0x01;
+        public const byte Dcc = 0x01;
 
         /// <summary>0x02: Supports Motorola (MM)</summary>
-        public const byte MM = 0x02;
+        public const byte Mm = 0x02;
 
         /// <summary>0x08: RailCom is enabled</summary>
         public const byte RailCom = 0x08;
@@ -692,37 +688,37 @@ public static class Z21Protocol
     public static class HardwareType
     {
         /// <summary>0x00000200: "schwarze Z21" (Hardware variant from 2012)</summary>
-        public const uint Z21_OLD = 0x0000_0200;
+        public const uint Z21Old = 0x0000_0200;
 
         /// <summary>0x00000201: "schwarze Z21" (Hardware variant from 2013)</summary>
-        public const uint Z21_NEW = 0x0000_0201;
+        public const uint Z21New = 0x0000_0201;
 
         /// <summary>0x00000202: SmartRail (from 2012)</summary>
-        public const uint SMARTRAIL = 0x0000_0202;
+        public const uint Smartrail = 0x0000_0202;
 
         /// <summary>0x00000203: "weiße z21" Starterset variant (from 2013)</summary>
-        public const uint z21_SMALL = 0x0000_0203;
+        public const uint Z21Small = 0x0000_0203;
 
         /// <summary>0x00000204: "z21 start" Starterset variant (from 2016)</summary>
-        public const uint z21_START = 0x0000_0204;
+        public const uint Z21Start = 0x0000_0204;
 
         /// <summary>0x00000205: 10806 "Z21 Single Booster" (zLink)</summary>
-        public const uint SINGLE_BOOSTER = 0x0000_0205;
+        public const uint SingleBooster = 0x0000_0205;
 
         /// <summary>0x00000206: 10807 "Z21 Dual Booster" (zLink)</summary>
-        public const uint DUAL_BOOSTER = 0x0000_0206;
+        public const uint DualBooster = 0x0000_0206;
 
         /// <summary>0x00000211: 10870 "Z21 XL Series" (from 2020)</summary>
-        public const uint Z21_XL = 0x0000_0211;
+        public const uint Z21Xl = 0x0000_0211;
 
         /// <summary>0x00000212: 10869 "Z21 XL Booster" (from 2021, zLink)</summary>
-        public const uint XL_BOOSTER = 0x0000_0212;
+        public const uint XlBooster = 0x0000_0212;
 
         /// <summary>0x00000301: 10836 "Z21 SwitchDecoder" (zLink)</summary>
-        public const uint Z21_SWITCH_DECODER = 0x0000_0301;
+        public const uint Z21SwitchDecoder = 0x0000_0301;
 
         /// <summary>0x00000302: 10837 "Z21 SignalDecoder" (zLink)</summary>
-        public const uint Z21_SIGNAL_DECODER = 0x0000_0302;
+        public const uint Z21SignalDecoder = 0x0000_0302;
     }
 
     /// <summary>
@@ -747,10 +743,10 @@ public static class Z21Protocol
     public static class LocoMode
     {
         /// <summary>DCC format</summary>
-        public const byte DCC = 0x00;
+        public const byte Dcc = 0x00;
 
         /// <summary>Motorola format</summary>
-        public const byte MM = 0x01;
+        public const byte Mm = 0x01;
     }
 
     /// <summary>

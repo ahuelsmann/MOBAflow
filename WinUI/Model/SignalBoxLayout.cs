@@ -25,7 +25,7 @@ public enum SignalBoxLayout
     /// Optimized for ESU electronic signal box operations.
     /// Works with any theme but recommended for ESU CabControl theme.
     /// </summary>
-    ESU = 2,
+    Esu = 2,
 
     /// <summary>
     /// Roco Z21-inspired layout.
