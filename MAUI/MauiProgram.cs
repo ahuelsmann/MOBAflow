@@ -31,7 +31,7 @@ public static class MauiProgram
         builder
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit() // ← Enable CommunityToolkit.Maui
-            .UseMauiCommunityToolkitMediaElement() // ← Enable MediaElement
+            .UseMauiCommunityToolkitMediaElement(isAndroidForegroundServiceEnabled: true) // ← Enable MediaElement with foreground service
             .UseUraniumUI() // ← Enable UraniumUI Material Design
             .UseUraniumUIMaterial() // ← Enable Material Components
             .ConfigureFonts(fonts =>

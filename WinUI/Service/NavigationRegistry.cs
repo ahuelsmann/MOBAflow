@@ -15,7 +15,8 @@ public enum NavigationCategory
     Solution = 3,
     TrackManagement = 4,
     Monitoring = 5,
-    Help = 6
+    Plugins = 6,
+    Help = 7
 }
 
 /// <summary>
@@ -112,3 +113,4 @@ public sealed record PageRegistration(
     string? BadgeLabelKey,
     string? PathIconData,
     bool IsBold);
+

@@ -219,7 +219,7 @@ public sealed class PluginLoader
     /// For each page descriptor returned by <see cref="IPlugin.GetPages"/>:
     /// <list type="bullet">
     /// <item><description>Registers the page type with the DI container as Transient</description></item>
-    /// <item><description>Registers the page with the navigation registry for menu display</description></item>
+    /// <item><description>Registers the page with the navigation registry for menu display in the Plugins category</description></item>
     /// </list>
     /// If a page's PageType is null or registration fails, that page is skipped.
     /// </remarks>
@@ -236,7 +236,13 @@ public sealed class PluginLoader
             try
             {
                 services.AddTransient(page.PageType);
-                _registry.Register(page.Tag, page.Title, page.IconGlyph, page.PageType, plugin.Name);
+                _registry.Register(
+                    page.Tag,
+                    page.Title,
+                    page.IconGlyph,
+                    page.PageType,
+                    plugin.Name,
+                    category: NavigationCategory.Plugins);  // Plugins appear between Monitoring and Help
                 logger?.LogInformation("Registered plugin page {Tag} ({Title}) from {Plugin}",
                     page.Tag, page.Title, plugin.Name);
             }

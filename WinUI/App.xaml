@@ -14,6 +14,18 @@
                 <ResourceDictionary Source="/Resources/TrackGraphics.xaml" />
                 <ResourceDictionary Source="/Resources/SignalGraphics.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="SurfaceSecondaryBrush" Color="#FFF3F3F3" />
+                    <SolidColorBrush x:Key="SurfaceBackgroundFillColorDefaultBrush" Color="#FFFFFFFF" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="SurfaceSecondaryBrush" Color="#FF1F1F1F" />
+                    <SolidColorBrush x:Key="SurfaceBackgroundFillColorDefaultBrush" Color="#FF202020" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+
             <!--  Skin Swatches (used by skin selector flyouts)  -->
             <SolidColorBrush x:Key="SkinBlueBrush" Color="#0078D4" />
             <SolidColorBrush x:Key="SkinGreenBrush" Color="#2ECC71" />

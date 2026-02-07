@@ -69,10 +69,15 @@ public static class NavigationRegistration
             NavigationCategory.TrackManagement, 20, null, null,
             "M7,2 A2,2 0 1,1 11,2 A2,2 0 1,1 7,2 M3,10 A2,2 0 1,1 7,10 A2,2 0 1,1 3,10 M11,10 A2,2 0 1,1 15,10 A2,2 0 1,1 11,10");
 
-        // Monitoring: Monitor
+        // Monitoring: Monitor, Docking (Demo)
         services.AddTransient<MonitorPage>();
         navigationRegistry.Register("monitor", "Monitor", "\uE7F4", typeof(MonitorPage), "Shell",
             NavigationCategory.Monitoring, 10, "IsMonitorPageAvailable", "MonitorPageLabel");
+
+        services.AddTransient<DockingPageViewModel>();
+        services.AddTransient<DockingPage>();
+        navigationRegistry.Register("docking", "Docking", "\uE70B", typeof(DockingPage), "Shell",
+            NavigationCategory.Monitoring, 20);
 
         // Help: Help, Info, Settings
         services.AddTransient<HelpPage>();

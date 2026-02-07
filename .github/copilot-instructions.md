@@ -22,6 +22,10 @@
    - `documents`
    - `markitdown`
 
+6. ❌ **WinUI-Projektdatei-Pattern verboten**
+   - Keine `<ItemGroup><Page Remove="View\DockingPage.xaml" /></ItemGroup>`
+   - Keine `<Compile Update="View\DockingPage.xaml.cs"><DependentUpon>DockingPage.xaml</DependentUpon></Compile>`
+
 ---
 
 ## ✅ Pflicht: 6‑Schritte‑Workflow

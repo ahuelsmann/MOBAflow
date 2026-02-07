@@ -306,13 +306,21 @@ public partial class App
         // MainWindow (Singleton = one instance for app lifetime)
         services.AddSingleton<MainWindow>();
 
-        // DEFERRED: Plugin Loading (moved to PostStartupInitializationService)
-        // Plugins now loaded asynchronously after MainWindow is visible
+        // Plugin Loading (synchronous discovery and registration)
+        // Discovery happens during DI setup; initialization happens in PostStartupInitializationService
         var pluginDirectory = Path.Combine(AppContext.BaseDirectory, "Plugins");
         var pluginLoader = new PluginLoader(pluginDirectory, navigationRegistry);
-        services.AddSingleton(pluginLoader);  // Register for deferred loading
+        
+        // Load and register plugins NOW (synchronous - during DI setup)
+        // This allows plugins to register their services and pages before the container is built
+        // Note: LoadPluginsAsync is safe to call synchronously here because it contains no awaits
+        // Pass null for logger since we don't have ILogger<PluginLoader> yet
+        pluginLoader.LoadPluginsAsync(services, null).Wait();
+        
+        services.AddSingleton(pluginLoader);  // Register for deferred initialization
 
         // DEFERRED: PostStartupInitializationService (runs after MainWindow.Loaded)
+        // This calls pluginLoader.InitializePluginsAsync() to complete plugin initialization
         services.AddSingleton<PostStartupInitializationService>();
         services.AddSingleton<SpeechHealthCheck>();  // Lazy init in deferred service
 

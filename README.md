@@ -4,7 +4,20 @@
 
 > ⚖️ **Legal Notice:** MOBAflow is an independent open-source project. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for details on third-party software, formats, and trademarks (AnyRail, Piko, Roco).
 
-## 📊 Current Status (2026-02-05)
+## 📊 Current Status (2026-02-11)
+
+**🎉 .NET 10 Migration Complete!** All projects successfully migrated to .NET 10 on 2026-02-11.
+
+**Platform Status:**
+- ✅ **Framework:** .NET 10 (all 15 projects)
+- ✅ **C# Version:** 14.0 (latest)
+- ✅ **SDK:** 10.0.100
+- ✅ **Build:** Passing
+- ✅ **Tests:** 262/263 passing (99.6%)
+- ✅ **WindowsAppSDK:** 1.8.260101001
+- ✅ **MAUI:** 10.0.31
+
+See [NET10-MIGRATION-ANALYSIS.md](docs/NET10-MIGRATION-ANALYSIS.md) for migration details.
 
 ## ✨ Features
 
@@ -12,6 +25,7 @@
 - 🎯 **Journey Management** - Define train routes with multiple stations
 - 🔊 **Text-to-Speech** - Azure Cognitive Services & Windows Speech
 - ⚡ **Workflow Automation** - Event-driven action sequences
+- 🧩 **Docking Manager Demo (WinUI)** - Host-side Docking page showcasing LayoutDocumentEx
 - 🎨 **MOBAtps Track Plan System** - Visual track layout editor with drag & drop
 - 🛤️ **Track Libraries** - Extensible track system support (Piko A-Gleis, more coming)
 - 📱 **Multi-Platform** - WinUI (Windows), MAUI (Android), Blazor (Web)
@@ -99,7 +113,7 @@ MOBAflow supports **importing track layouts from AnyRail** (user-exported XML fi
 ### Quick Build from Source
 
 **Prerequisites:**
-- .NET 10 SDK (or .NET 9)
+- .NET 10 SDK (**required** - .NET 9 no longer supported as of 2026-02-11)
 - Visual Studio 2026 (recommended) or VS Code
 - Roco Z21 (for Z21 connectivity)
 
@@ -1039,4 +1053,4 @@ az account set --subscription "YOUR-SUBSCRIPTION-NAME"
    ```powershell
    az appconfig kv list --name mobaflow-config
    ```
-3. Verify connection string format (must start with `Endpoint=https://`)---
+3. Verify connection string format (must start with `Endpoint=https://`)

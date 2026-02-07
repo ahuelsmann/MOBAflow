@@ -1,0 +1,115 @@
+<UserControl
+    x:Class="Moba.WinUI.Controls.DockPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid
+        x:Name="RootGrid"
+        Background="{ThemeResource SurfaceSecondaryBrush}"
+        BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+        BorderThickness="0,0,0,1">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!--  Header with Icon, Title, and Actions  -->
+        <Grid
+            x:Name="HeaderGrid"
+            Grid.Row="0"
+            Height="40"
+            Padding="12,0"
+            Background="{ThemeResource SurfaceSecondaryBrush}"
+            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+            BorderThickness="0,0,0,1">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!--  Icon  -->
+            <FontIcon
+                x:Name="PanelIcon"
+                Grid.Column="0"
+                Margin="0,0,8,0"
+                FontFamily="{StaticResource SymbolThemeFontFamily}"
+                FontSize="16"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Glyph="&#xE71E;" />
+
+            <!--  Title  -->
+            <TextBlock
+                Grid.Column="1"
+                VerticalAlignment="Center"
+                FontSize="14"
+                FontWeight="SemiBold"
+                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                Text="{Binding PanelTitle, RelativeSource={RelativeSource TemplatedParent}}" />
+
+            <!--  Pin Button  -->
+            <Button
+                x:Name="PinButton"
+                Grid.Column="2"
+                Width="32"
+                Height="32"
+                Padding="0"
+                Background="Transparent"
+                BorderBrush="Transparent"
+                CornerRadius="4"
+                ToolTipService.ToolTip="Pin Panel">
+                <FontIcon
+                    FontFamily="{StaticResource SymbolThemeFontFamily}"
+                    FontSize="14"
+                    Glyph="&#xE718;" />
+            </Button>
+
+            <!--  Maximize Button  -->
+            <Button
+                x:Name="MaximizeButton"
+                Grid.Column="3"
+                Width="32"
+                Height="32"
+                Padding="0"
+                Background="Transparent"
+                BorderBrush="Transparent"
+                CornerRadius="4"
+                ToolTipService.ToolTip="Maximize Panel">
+                <FontIcon
+                    FontFamily="{StaticResource SymbolThemeFontFamily}"
+                    FontSize="14"
+                    Glyph="&#xE922;" />
+            </Button>
+
+            <!--  Close Button  -->
+            <Button
+                x:Name="CloseButton"
+                Grid.Column="4"
+                Width="32"
+                Height="32"
+                Padding="0"
+                Background="Transparent"
+                BorderBrush="Transparent"
+                CornerRadius="4"
+                ToolTipService.ToolTip="Close Panel">
+                <FontIcon
+                    FontFamily="{StaticResource SymbolThemeFontFamily}"
+                    FontSize="14"
+                    Glyph="&#xE711;" />
+            </Button>
+        </Grid>
+
+        <!--  Content  -->
+        <ContentPresenter
+            x:Name="ContentPresenter"
+            Grid.Row="1"
+            Margin="0" />
+    </Grid>
+</UserControl>

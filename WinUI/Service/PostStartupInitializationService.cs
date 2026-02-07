@@ -15,17 +15,20 @@ public class PostStartupInitializationService
 {
     private static readonly TimeSpan MinimumIndicatorDuration = TimeSpan.FromSeconds(1.5);
     private readonly HealthCheckService _healthCheckService;
+    private readonly PluginLoader _pluginLoader;
     private readonly MainWindow _mainWindow;
     private readonly AppSettings _appSettings;
     private readonly ILogger<PostStartupInitializationService> _logger;
 
     public PostStartupInitializationService(
         HealthCheckService healthCheckService,
+        PluginLoader pluginLoader,
         MainWindow mainWindow,
         AppSettings appSettings,
         ILogger<PostStartupInitializationService> logger)
     {
         _healthCheckService = healthCheckService;
+        _pluginLoader = pluginLoader;
         _mainWindow = mainWindow;
         _appSettings = appSettings;
         _logger = logger;
@@ -50,9 +53,8 @@ public class PostStartupInitializationService
             // Run tasks in parallel to minimize wall-clock time
             await Task.WhenAll(
                 InitializeSpeechHealthCheckAsync(cancellationToken),
-                InitializeWebAppAsync(cancellationToken)
-                // Note: Plugin loading happens synchronously in ConfigureServices
-                // as plugins may need to register ViewModels during startup
+                InitializeWebAppAsync(cancellationToken),
+                InitializePluginsAsync(cancellationToken)
             );
 
             timer.Stop();
@@ -85,6 +87,31 @@ public class PostStartupInitializationService
         if (remaining > TimeSpan.Zero)
         {
             await Task.Delay(remaining);
+        }
+    }
+
+    /// <summary>
+    /// Initializes all loaded plugins by calling their OnInitializedAsync method.
+    /// Plugins are discovered and configured in App.ConfigureServices(),
+    /// this method completes the initialization phase after MainWindow is visible.
+    /// </summary>
+    private async Task InitializePluginsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            _logger.LogInformation("[PostStartup] Initializing plugins");
+            _mainWindow.ViewModel.UpdatePostStartupInitializationStatus(true, "Initializing plugins...");
+            await _pluginLoader.InitializePluginsAsync(_logger);
+            _logger.LogInformation("[PostStartup] Plugins initialized");
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("[PostStartup] Plugin initialization cancelled");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[PostStartup] Failed to initialize plugins");
         }
     }
 

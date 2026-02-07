@@ -63,6 +63,12 @@
           },
           "invoiceDate": "2023-11-10T00:00:00",
           "deliveryDate": "2023-11-18T00:00:00"
+        },
+        {
+          "id": "bb15c10a-5b78-451f-8f2f-2d4e3efa74af",
+          "name": "Locomotive 3",
+          "pos": 1,
+          "isPushing": false
         }
       ],
       "passengerWagons": [

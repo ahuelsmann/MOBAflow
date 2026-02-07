@@ -1,0 +1,104 @@
+<UserControl
+    x:Class="Moba.WinUI.Controls.LayoutDocumentEx"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    x:Name="Root"
+    mc:Ignorable="d">
+
+    <Grid Background="{ThemeResource SurfaceBackgroundFillColorDefaultBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Tab Bar with Fluent Design & Grouping Support -->
+        <Grid
+            x:Name="TabBarGrid"
+            Grid.Row="0"
+            MinHeight="40"
+            Background="{ThemeResource SurfaceSecondaryBrush}"
+            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+            BorderThickness="0,0,0,1">
+            
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Scrollable Tab Bar with GroupBox Support -->
+            <ScrollViewer
+                x:Name="TabScroll"
+                Grid.Column="0"
+                HorizontalScrollMode="Auto"
+                VerticalScrollMode="Disabled">
+                
+                <!-- Tab Items in Groups (if EnableTabGrouping=true) or Flat (if false) -->
+                <ItemsControl
+                    x:Name="TabItems"
+                    Background="Transparent"
+                    IsTabStop="False">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- New Tab & More Options Buttons -->
+            <StackPanel
+                Grid.Column="1"
+                Orientation="Horizontal"
+                VerticalAlignment="Center"
+                Margin="4,0">
+                
+                <!-- New Tab Button -->
+                <Button
+                    x:Name="NewTabButton"
+                    Width="40"
+                    Height="40"
+                    Padding="0"
+                    Margin="0,0,4,0"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    CornerRadius="4"
+                    ToolTipService.ToolTip="New Tab">
+                    <FontIcon
+                        FontFamily="{StaticResource SymbolThemeFontFamily}"
+                        FontSize="16"
+                        Glyph="&#xE710;" />
+                </Button>
+
+                <!-- Tab Options Menu -->
+                <Button
+                    x:Name="TabOptionsButton"
+                    Width="40"
+                    Height="40"
+                    Padding="0"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    CornerRadius="4"
+                    ToolTipService.ToolTip="Tab Options">
+                    <FontIcon
+                        FontFamily="{StaticResource SymbolThemeFontFamily}"
+                        FontSize="16"
+                        Glyph="&#xE712;" />
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Content Area with Template Support -->
+        <Grid
+            x:Name="ContentGrid"
+            Grid.Row="1"
+            Background="{ThemeResource SurfaceBackgroundFillColorDefaultBrush}">
+            
+            <!-- Dynamischer Content-Presenter mit Custom Template-Support -->
+            <ContentPresenter
+                x:Name="DocumentPresenter"
+                ContentTemplate="{Binding ContentTemplate, ElementName=Root}" />
+        </Grid>
+    </Grid>
+</UserControl>
