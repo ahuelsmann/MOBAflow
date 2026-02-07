@@ -17,7 +17,7 @@ using Service;
 public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
 {
     private readonly SemaphoreSlim _processingLock = new(1, 1);
-    private readonly WorkflowService _workflowService;
+    private readonly IWorkflowService _workflowService;
     private readonly Dictionary<Guid, JourneySessionState> _states = [];
     private readonly Project _project;
     private readonly ILogger<JourneyManager> _logger;
@@ -61,7 +61,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
     public JourneyManager(
         IZ21 z21,
         Project project,
-        WorkflowService workflowService,
+        IWorkflowService workflowService,
         ActionExecutionContext? executionContext = null,
         ILogger<JourneyManager>? logger = null)
     : base(z21, project.Journeys, executionContext)

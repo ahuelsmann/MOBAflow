@@ -25,7 +25,7 @@ See [NET10-MIGRATION-ANALYSIS.md](docs/NET10-MIGRATION-ANALYSIS.md) for migratio
 - 🎯 **Journey Management** - Define train routes with multiple stations
 - 🔊 **Text-to-Speech** - Azure Cognitive Services & Windows Speech
 - ⚡ **Workflow Automation** - Event-driven action sequences
-- 🧩 **Docking Manager Demo (WinUI)** - Host-side Docking page showcasing LayoutDocumentEx
+- 🧩 **Docking Manager Demo (WinUI)** - Host-side Docking page with drag-dock panels, overlay drop targets, and LayoutDocumentEx
 - 🎨 **MOBAtps Track Plan System** - Visual track layout editor with drag & drop
 - 🛤️ **Track Libraries** - Extensible track system support (Piko A-Gleis, more coming)
 - 📱 **Multi-Platform** - WinUI (Windows), MAUI (Android), Blazor (Web)

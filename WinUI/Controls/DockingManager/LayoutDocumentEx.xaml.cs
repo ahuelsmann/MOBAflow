@@ -4,10 +4,12 @@ namespace Moba.WinUI.Controls;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Moba.WinUI.Behavior;
 using System;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Linq;
+using Windows.ApplicationModel.DataTransfer;
 
 /// <summary>
 /// Erweiterte LayoutDocument mit Tab-Gruppen, Binding-Support und Window-Management.
@@ -86,7 +88,15 @@ public sealed partial class LayoutDocumentEx : UserControl
     public event EventHandler? NewTabRequested;
     public event EventHandler<DocumentTabMovedEventArgs>? TabMovedToFloatingWindow;
 
+    /// <summary>
+    /// Wird ausgelöst, wenn ein Tab aus dem TabView herausgezogen wird.
+    /// Der DockingManager kann diesen Tab dann an einer Dock-Position andocken.
+    /// </summary>
+    public event EventHandler<DocumentTabDraggedOutEventArgs>? TabDraggedOutside;
+
     #endregion
+
+    private const string DocumentTabDataKey = "DocumentTab";
 
     private Dictionary<DocumentTab, FloatingTabWindow> _floatingWindows = new();
 
@@ -269,6 +279,134 @@ public sealed partial class LayoutDocumentEx : UserControl
     public IEnumerable<FloatingTabWindow> GetFloatingWindows() => _floatingWindows.Values;
 
     #endregion
+
+    #region TabView Event Handlers
+
+    private void OnAddTabButtonClick(TabView sender, object args)
+    {
+        NewTabRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnTabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args)
+    {
+        if (args.Item is DocumentTab document)
+        {
+            RemoveDocument(document);
+        }
+    }
+
+    private void OnTabDragStarting(TabView sender, TabViewTabDragStartingEventArgs args)
+    {
+        if (args.Item is DocumentTab tab)
+        {
+            args.Data.Properties[DocumentTabDataKey] = tab;
+            args.Data.RequestedOperation = DataPackageOperation.Move;
+        }
+    }
+
+    private void OnTabDroppedOutside(TabView sender, TabViewTabDroppedOutsideEventArgs args)
+    {
+        if (args.Item is not DocumentTab tab)
+        {
+            return;
+        }
+
+        TabDraggedOutside?.Invoke(this, new DocumentTabDraggedOutEventArgs(tab));
+    }
+
+    #endregion
+
+    #region Tab Context Menu (Qt-ADS 4.1: "Pin to...", Close Others, Close All)
+
+    private DocumentTab? _contextMenuTab;
+
+    private void OnTabRightTapped(object sender, Microsoft.UI.Xaml.Input.RightTappedRoutedEventArgs e)
+    {
+        if (sender is TabViewItem tabViewItem && tabViewItem.Content is DocumentTab tab)
+        {
+            _contextMenuTab = tab;
+        }
+    }
+
+    /// <summary>
+    /// Wird ausgelöst, wenn ein Tab über das Kontextmenü an eine Dock-Position gepinnt wird.
+    /// </summary>
+    public event EventHandler<DocumentTabPinToSideEventArgs>? TabPinnedToSide;
+
+    private void OnPinToLeft(object sender, RoutedEventArgs e)
+    {
+        if (_contextMenuTab is not null)
+        {
+            PinTabToSide(_contextMenuTab, DockPosition.Left);
+        }
+    }
+
+    private void OnPinToRight(object sender, RoutedEventArgs e)
+    {
+        if (_contextMenuTab is not null)
+        {
+            PinTabToSide(_contextMenuTab, DockPosition.Right);
+        }
+    }
+
+    private void OnPinToBottom(object sender, RoutedEventArgs e)
+    {
+        if (_contextMenuTab is not null)
+        {
+            PinTabToSide(_contextMenuTab, DockPosition.Bottom);
+        }
+    }
+
+    private void PinTabToSide(DocumentTab tab, DockPosition side)
+    {
+        Documents?.Remove(tab);
+        if (ActiveDocument == tab && Documents?.Count > 0)
+        {
+            ActiveDocument = Documents[^1];
+        }
+
+        TabPinnedToSide?.Invoke(this, new DocumentTabPinToSideEventArgs(tab, side));
+    }
+
+    private void OnContextClose(object sender, RoutedEventArgs e)
+    {
+        if (_contextMenuTab is not null)
+        {
+            RemoveDocument(_contextMenuTab);
+        }
+    }
+
+    private void OnContextCloseOthers(object sender, RoutedEventArgs e)
+    {
+        if (_contextMenuTab is null || Documents is null)
+        {
+            return;
+        }
+
+        var toClose = Documents.Where(d => d != _contextMenuTab).ToList();
+        foreach (var doc in toClose)
+        {
+            Documents.Remove(doc);
+        }
+
+        ActiveDocument = _contextMenuTab;
+    }
+
+    private void OnContextCloseAll(object sender, RoutedEventArgs e)
+    {
+        Documents?.Clear();
+        ActiveDocument = null;
+    }
+
+    private void OnContextPinTab(object sender, RoutedEventArgs e)
+    {
+        if (_contextMenuTab is not null)
+        {
+            _contextMenuTab.IsPinned = !_contextMenuTab.IsPinned;
+        }
+    }
+
+    #endregion
 }
 
 /// <summary>
@@ -334,4 +472,21 @@ public class DocumentTabMovedEventArgs : EventArgs
     }
     public DocumentTab Document { get; }
     public FloatingTabWindow Window { get; }
+}
+
+/// <summary>
+/// EventArgs für einen Tab, der aus dem TabView herausgezogen wurde.
+/// </summary>
+public sealed class DocumentTabDraggedOutEventArgs(DocumentTab document) : EventArgs
+{
+    public DocumentTab Document { get; } = document;
+}
+
+/// <summary>
+/// EventArgs für einen Tab, der über das Kontextmenü an eine Dock-Seite gepinnt wird (Qt-ADS: "Pin To...").
+/// </summary>
+public sealed class DocumentTabPinToSideEventArgs(DocumentTab document, DockPosition side) : EventArgs
+{
+    public DocumentTab Document { get; } = document;
+    public DockPosition Side { get; } = side;
 }

@@ -121,7 +121,7 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
     public SbTrackStraight AddTrackStraight(int x, int y, int rotation = 0)
     {
         var element = new SbTrackStraight { X = x, Y = y, Rotation = rotation };
-        _model.Elements.Add(element);
+        _model.AddElement(element);
         Elements.Add(element);
         OnPropertyChanged(nameof(ElementCount));
         return element;
@@ -133,7 +133,7 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
     public SbTrackCurve AddTrackCurve(int x, int y, int rotation = 0)
     {
         var element = new SbTrackCurve { X = x, Y = y, Rotation = rotation };
-        _model.Elements.Add(element);
+        _model.AddElement(element);
         Elements.Add(element);
         OnPropertyChanged(nameof(ElementCount));
         return element;
@@ -145,7 +145,7 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
     public SbSwitch AddSwitch(int x, int y, int rotation = 0)
     {
         var element = new SbSwitch { X = x, Y = y, Rotation = rotation, Address = GetNextSwitchAddress() };
-        _model.Elements.Add(element);
+        _model.AddElement(element);
         Elements.Add(element);
         OnPropertyChanged(nameof(ElementCount));
         return element;
@@ -157,7 +157,7 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
     public SbSignal AddSignal(int x, int y, int rotation = 0, SignalSystemType system = SignalSystemType.Ks)
     {
         var element = new SbSignal { X = x, Y = y, Rotation = rotation, Address = GetNextSignalAddress(), SignalSystem = system };
-        _model.Elements.Add(element);
+        _model.AddElement(element);
         Elements.Add(element);
         OnPropertyChanged(nameof(ElementCount));
         return element;
@@ -169,7 +169,7 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
     public SbDetector AddDetector(int x, int y, int rotation = 0)
     {
         var element = new SbDetector { X = x, Y = y, Rotation = rotation, FeedbackAddress = GetNextFeedbackAddress() };
-        _model.Elements.Add(element);
+        _model.AddElement(element);
         Elements.Add(element);
         OnPropertyChanged(nameof(ElementCount));
         return element;
@@ -231,16 +231,22 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
     }
 
     /// <summary>
-    /// Removes an element from the plan.
+    /// Removes an element from the plan with cascading cleanup of connections and routes.
     /// </summary>
     public void RemoveElement(SbElement element)
     {
         if (SelectedElement?.Id == element.Id)
             SelectedElement = null;
 
-        _model.Elements.Remove(element);
+        _model.RemoveElement(element.Id);
         Elements.Remove(element);
         OnPropertyChanged(nameof(ElementCount));
+
+        // Refresh routes since cascading removal may have removed some
+        Routes.Clear();
+        foreach (var route in _model.Routes)
+            Routes.Add(new SignalBoxRouteViewModel(route));
+        OnPropertyChanged(nameof(RouteCount));
     }
 
     /// <summary>
@@ -263,7 +269,7 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
             StartSignalId = startSignalId,
             EndSignalId = endSignalId
         };
-        _model.Routes.Add(route);
+        _model.AddRoute(route);
         var vm = new SignalBoxRouteViewModel(route);
         Routes.Add(vm);
         OnPropertyChanged(nameof(RouteCount));
@@ -275,7 +281,7 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
     /// </summary>
     public void RemoveRoute(SignalBoxRouteViewModel routeVm)
     {
-        _model.Routes.Remove(routeVm.Model);
+        _model.RemoveRoute(routeVm.Id);
         Routes.Remove(routeVm);
         OnPropertyChanged(nameof(RouteCount));
     }

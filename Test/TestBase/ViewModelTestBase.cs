@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 // ✅ IUiDispatcher
 
@@ -20,9 +20,9 @@ public abstract class ViewModelTestBase
     protected Mock<IZ21> Z21Mock { get; private set; } = null!;
 
     /// <summary>
-    /// Mock for WorkflowService (used to create JourneyManager)
+    /// Mock for IWorkflowService interface (workflow execution)
     /// </summary>
-    protected Mock<WorkflowService> WorkflowServiceMock { get; private set; } = null!;
+    protected Mock<IWorkflowService> WorkflowServiceMock { get; private set; } = null!;
 
     /// <summary>
     /// Mock for IIoService interface (file operations)
@@ -42,7 +42,7 @@ public abstract class ViewModelTestBase
     public virtual void BaseSetUp()
     {
         Z21Mock = new Mock<IZ21>();
-        WorkflowServiceMock = new Mock<WorkflowService>();
+        WorkflowServiceMock = new Mock<IWorkflowService>();
         IoServiceMock = new Mock<IIoService>();
         UiDispatcherMock = new Mock<IUiDispatcher>();
 

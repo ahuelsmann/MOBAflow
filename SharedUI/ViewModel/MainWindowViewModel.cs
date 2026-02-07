@@ -29,7 +29,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IIoService _ioService;
     private readonly IZ21 _z21;
     private readonly IUiDispatcher _uiDispatcher;
-    private readonly WorkflowService _workflowService;
+    private readonly IWorkflowService _workflowService;
     private readonly ILogger<MainWindowViewModel> _logger;
 
     // Configuration
@@ -51,7 +51,7 @@ public partial class MainWindowViewModel : ObservableObject
     #region Constructor
     public MainWindowViewModel(
         IZ21 z21,
-        WorkflowService workflowService,
+        IWorkflowService workflowService,
         IUiDispatcher uiDispatcher,
         AppSettings settings,
         Solution solution,

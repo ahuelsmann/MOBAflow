@@ -269,7 +269,7 @@ public partial class App
         // ViewModels
         services.AddSingleton(sp => new MainWindowViewModel(
             sp.GetRequiredService<IZ21>(),
-            sp.GetRequiredService<WorkflowService>(),
+            sp.GetRequiredService<IWorkflowService>(),
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<AppSettings>(),
             sp.GetRequiredService<Solution>(),

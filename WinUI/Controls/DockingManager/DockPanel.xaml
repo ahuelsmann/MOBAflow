@@ -4,11 +4,12 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    x:Name="Root"
     mc:Ignorable="d">
 
     <Grid
         x:Name="RootGrid"
-        Background="{ThemeResource SurfaceSecondaryBrush}"
+        Background="{ThemeResource LayerFillColorDefaultBrush}"
         BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
         BorderThickness="0,0,0,1">
 
@@ -23,9 +24,11 @@
             Grid.Row="0"
             Height="40"
             Padding="12,0"
-            Background="{ThemeResource SurfaceSecondaryBrush}"
+            Background="{ThemeResource LayerFillColorDefaultBrush}"
             BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-            BorderThickness="0,0,0,1">
+            BorderThickness="0,0,0,1"
+            CanDrag="True"
+            DragStarting="OnDragStarting">
 
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -52,7 +55,7 @@
                 FontSize="14"
                 FontWeight="SemiBold"
                 Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                Text="{Binding PanelTitle, RelativeSource={RelativeSource TemplatedParent}}" />
+                Text="{Binding PanelTitle, ElementName=Root}" />
 
             <!--  Pin Button  -->
             <Button
@@ -64,14 +67,14 @@
                 Background="Transparent"
                 BorderBrush="Transparent"
                 CornerRadius="4"
-                ToolTipService.ToolTip="Pin Panel">
+                ToolTipService.ToolTip="Auto Hide">
                 <FontIcon
                     FontFamily="{StaticResource SymbolThemeFontFamily}"
                     FontSize="14"
                     Glyph="&#xE718;" />
             </Button>
 
-            <!--  Maximize Button  -->
+            <!--  Undock Button (back to Document Tab)  -->
             <Button
                 x:Name="MaximizeButton"
                 Grid.Column="3"
@@ -81,11 +84,11 @@
                 Background="Transparent"
                 BorderBrush="Transparent"
                 CornerRadius="4"
-                ToolTipService.ToolTip="Maximize Panel">
+                ToolTipService.ToolTip="Undock to Tab">
                 <FontIcon
                     FontFamily="{StaticResource SymbolThemeFontFamily}"
                     FontSize="14"
-                    Glyph="&#xE922;" />
+                    Glyph="&#xE8A7;" />
             </Button>
 
             <!--  Close Button  -->
@@ -110,6 +113,7 @@
         <ContentPresenter
             x:Name="ContentPresenter"
             Grid.Row="1"
-            Margin="0" />
+            Margin="0"
+            Content="{Binding PanelContent, ElementName=Root}" />
     </Grid>
 </UserControl>

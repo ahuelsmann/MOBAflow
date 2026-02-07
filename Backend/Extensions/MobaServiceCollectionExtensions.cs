@@ -71,7 +71,7 @@ public static class MobaServiceCollectionExtensions
         });
 
         // Workflow & Actions
-        services.AddSingleton<WorkflowService>();
+        services.AddSingleton<IWorkflowService, WorkflowService>();
 
         // Domain
         services.AddSingleton<Solution>();

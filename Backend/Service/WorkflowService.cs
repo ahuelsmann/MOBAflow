@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Service;
 
 using Domain;
@@ -21,7 +21,7 @@ public class ActionExecutionErrorEventArgs : EventArgs
 /// Orchestrates the execution of workflows and their actions.
 /// Platform-independent: No UI thread dispatching.
 /// </summary>
-public class WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowService>? logger = null)
+public class WorkflowService(IActionExecutor actionExecutor, ILogger<WorkflowService>? logger = null) : IWorkflowService
 {
     /// <summary>
     /// Raised when an action execution fails.

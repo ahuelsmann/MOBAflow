@@ -7,118 +7,90 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Page.Resources />
-
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <!--  Toolbar (VS 2026: Main Menu Bar)  -->
         <CommandBar
             Grid.Row="0"
-            Background="{ThemeResource SurfaceSecondaryBrush}"
-            DefaultLabelPosition="Right">
+            Background="{ThemeResource LayerFillColorDefaultBrush}"
+            DefaultLabelPosition="Right"
+            IsOpen="False">
 
             <AppBarButton
                 Command="{Binding AddNewDocumentCommand}"
-                Icon="Add"
-                Label="New Document" />
+                Label="New File">
+                <AppBarButton.Icon>
+                    <FontIcon Glyph="&#xE710;" />
+                </AppBarButton.Icon>
+            </AppBarButton>
 
             <AppBarButton
                 Command="{Binding MarkAsModifiedCommand}"
-                Icon="Edit"
-                Label="Toggle Modified" />
+                Label="Toggle Modified">
+                <AppBarButton.Icon>
+                    <FontIcon Glyph="&#xE70F;" />
+                </AppBarButton.Icon>
+            </AppBarButton>
 
             <AppBarButton
                 Command="{Binding PinCurrentDocumentCommand}"
-                Icon="Pin"
-                Label="Toggle Pin" />
+                Label="Pin">
+                <AppBarButton.Icon>
+                    <FontIcon Glyph="&#xE718;" />
+                </AppBarButton.Icon>
+            </AppBarButton>
 
             <AppBarSeparator />
 
             <AppBarButton
                 Command="{Binding CloseCurrentDocumentCommand}"
-                Icon="Cancel"
-                Label="Close" />
+                Label="Close">
+                <AppBarButton.Icon>
+                    <FontIcon Glyph="&#xE711;" />
+                </AppBarButton.Icon>
+            </AppBarButton>
 
             <AppBarButton
                 Command="{Binding CloseAllModifiedDocumentsCommand}"
-                Icon="Delete"
-                Label="Close Modified" />
+                Label="Close Modified">
+                <AppBarButton.Icon>
+                    <FontIcon Glyph="&#xE74D;" />
+                </AppBarButton.Icon>
+            </AppBarButton>
         </CommandBar>
 
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+        <!--  DockingManager: Full VS 2026-style layout  -->
+        <controls:DockingManager
+            x:Name="DockManager"
+            Grid.Row="1"
+            BottomPanelHeight="180"
+            IsBottomPanelVisible="True"
+            IsLeftPanelVisible="True"
+            IsRightPanelVisible="True"
+            IsTopPanelVisible="False"
+            LeftPanelWidth="240"
+            RightPanelWidth="260"
+            TabDockedToSide="OnTabDockedToSide">
 
-            <Grid
-                Grid.Column="0"
-                Width="250"
-                Background="{ThemeResource SurfaceSecondaryBrush}"
-                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-                BorderThickness="0,0,1,0">
-
-                <StackPanel Padding="12">
-                    <TextBlock
-                        Margin="0,0,0,12"
-                        FontSize="14"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                        Text="Tab Groups" />
-
-                    <TextBlock
-                        Margin="0,0,0,8"
-                        FontSize="12"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="Tabs are automatically grouped by:"
-                        TextWrapping="Wrap" />
-
-                    <TextBlock
-                        Margin="0,4"
-                        FontSize="11"
-                        Text="● Modified - Unsaved changes" />
-
-                    <TextBlock
-                        Margin="0,4"
-                        FontSize="11"
-                        Text="Pinned - Important files" />
-
-                    <TextBlock
-                        Margin="0,4"
-                        FontSize="11"
-                        Text="Open - Regular tabs" />
-
-                    <TextBlock
-                        Margin="0,16,0,4"
-                        FontSize="12"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                        Text="Total Documents:" />
-
-                    <TextBlock
-                        FontSize="16"
-                        FontWeight="Bold"
-                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                        Text="{Binding OpenDocuments.Count}" />
-                </StackPanel>
-            </Grid>
-
-            <Grid Grid.Column="1">
+            <!--  Center: Document Tabs  -->
+            <controls:DockingManager.DocumentAreaContent>
                 <controls:LayoutDocumentEx
                     x:Name="DocumentArea"
                     ActiveDocument="{Binding ActiveDocument, Mode=TwoWay}"
                     AllowFloatingTabs="False"
                     Documents="{Binding OpenDocuments}"
-                    EnableTabGrouping="True">
+                    EnableTabGrouping="True"
+                    TabDraggedOutside="OnTabDraggedOutside">
 
                     <controls:LayoutDocumentEx.TabTemplate>
                         <DataTemplate x:DataType="controls:DocumentTab">
-                            <Grid Padding="8,0" ColumnSpacing="4">
+                            <Grid Padding="4,0" ColumnSpacing="6">
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
@@ -128,24 +100,32 @@
                                     Grid.Column="0"
                                     FontFamily="{StaticResource SymbolThemeFontFamily}"
                                     FontSize="14"
-                                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Glyph="{Binding IconGlyph}" />
 
                                 <TextBlock
                                     Grid.Column="1"
-                                    MaxWidth="150"
+                                    MaxWidth="160"
                                     VerticalAlignment="Center"
-                                    FontSize="13"
+                                    FontSize="12"
                                     Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                                     Text="{Binding Title}"
                                     TextTrimming="CharacterEllipsis" />
 
-                                <TextBlock
+                                <FontIcon
                                     Grid.Column="2"
+                                    FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                    FontSize="9"
+                                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                    Glyph="&#xE718;"
+                                    Visibility="{Binding IsPinned, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                <TextBlock
+                                    Grid.Column="3"
                                     VerticalAlignment="Center"
-                                    FontSize="8"
+                                    FontSize="9"
                                     Foreground="{ThemeResource SystemFillColorCautionBrush}"
-                                    Text="●"
+                                    Text="*"
                                     Visibility="{Binding IsModified, Converter={StaticResource BoolToVisibilityConverter}}" />
                             </Grid>
                         </DataTemplate>
@@ -154,7 +134,7 @@
                     <controls:LayoutDocumentEx.ContentTemplate>
                         <DataTemplate x:DataType="controls:DocumentTab">
                             <ScrollViewer
-                                Background="{ThemeResource SurfaceBackgroundFillColorDefaultBrush}"
+                                Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
                                 HorizontalScrollMode="Disabled"
                                 VerticalScrollMode="Auto">
                                 <ContentPresenter Margin="0" Content="{Binding Content}" />
@@ -162,90 +142,62 @@
                         </DataTemplate>
                     </controls:LayoutDocumentEx.ContentTemplate>
                 </controls:LayoutDocumentEx>
-            </Grid>
+            </controls:DockingManager.DocumentAreaContent>
 
-            <Grid
-                Grid.Column="2"
-                Width="250"
-                Background="{ThemeResource SurfaceSecondaryBrush}"
-                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-                BorderThickness="1,0,0,0">
+            <!--  Status Bar  -->
+            <controls:DockingManager.StatusBarContent>
+                <Grid
+                    Height="24"
+                    Padding="8,0"
+                    Background="{ThemeResource AccentFillColorDefaultBrush}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-                <ScrollViewer Padding="12">
-                    <StackPanel Spacing="12">
+                    <TextBlock
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        FontSize="11"
+                        Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                        Text="Ready" />
+
+                    <StackPanel
+                        Grid.Column="2"
+                        Orientation="Horizontal"
+                        Spacing="16">
                         <TextBlock
-                            FontSize="14"
-                            FontWeight="SemiBold"
-                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                            Text="Active Document" />
-
-                        <StackPanel Spacing="4">
-                            <TextBlock
-                                FontSize="11"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="Title:" />
-                            <TextBlock
-                                FontSize="12"
-                                FontWeight="SemiBold"
-                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                                Text="{Binding ActiveDocument.Title}"
-                                TextWrapping="Wrap" />
-                        </StackPanel>
-
-                        <StackPanel Spacing="4">
-                            <TextBlock
-                                FontSize="11"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="Status:" />
-                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorPrimaryBrush}">
-                                <Run x:Uid="Modified">Modified:</Run>
-                                <Run Text="{Binding ActiveDocument.IsModified}" />
-                            </TextBlock>
-                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorPrimaryBrush}">
-                                <Run>Pinned:</Run>
-                                <Run Text="{Binding ActiveDocument.IsPinned}" />
-                            </TextBlock>
-                        </StackPanel>
-
-                        <StackPanel Spacing="4">
-                            <TextBlock
-                                FontSize="11"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="Icon:" />
-                            <TextBlock
-                                FontSize="12"
-                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                                Text="{Binding ActiveDocument.IconGlyph}" />
-                        </StackPanel>
-
+                            VerticalAlignment="Center"
+                            FontSize="11"
+                            Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                            Text="Ln 42" />
                         <TextBlock
-                            Margin="0,12,0,0"
-                            FontSize="12"
-                            FontWeight="SemiBold"
-                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                            Text="Quick Actions" />
-
-                        <Button
-                            Width="200"
-                            HorizontalAlignment="Left"
-                            Command="{Binding MarkAsModifiedCommand}"
-                            Content="Mark Modified" />
-
-                        <Button
-                            Width="200"
-                            HorizontalAlignment="Left"
-                            Command="{Binding PinCurrentDocumentCommand}"
-                            Content="Pin/Unpin" />
-
-                        <Button
-                            Width="200"
-                            HorizontalAlignment="Left"
-                            Command="{Binding CloseCurrentDocumentCommand}"
-                            Content="Close" />
+                            VerticalAlignment="Center"
+                            FontSize="11"
+                            Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                            Text="Col 18" />
                     </StackPanel>
-                </ScrollViewer>
-            </Grid>
-        </Grid>
+
+                    <TextBlock
+                        Grid.Column="3"
+                        Margin="16,0,0,0"
+                        VerticalAlignment="Center"
+                        FontSize="11"
+                        Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                        Text="UTF-8" />
+
+                    <TextBlock
+                        Grid.Column="4"
+                        Margin="16,0,0,0"
+                        VerticalAlignment="Center"
+                        FontSize="11"
+                        Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                        Text="CRLF" />
+                </Grid>
+            </controls:DockingManager.StatusBarContent>
+        </controls:DockingManager>
     </Grid>
 </Page>
-

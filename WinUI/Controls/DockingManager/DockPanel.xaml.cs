@@ -4,14 +4,34 @@ namespace Moba.WinUI.Controls;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using System;
+using Windows.ApplicationModel.DataTransfer;
 
 /// <summary>
 /// Ein dockbares Panel mit Header, Fluent-Design-Icon und Aktionsbuttons.
 /// Wird in DockingManager-Bereichen verwendet.
+/// Cherry-Picked: Close/Undock (Qt-ADS), Pin to AutoHide (Qt-ADS 4.x).
 /// </summary>
 public sealed partial class DockPanel : UserControl
 {
+    private const string DockPanelDataKey = "DockPanel";
+
+    /// <summary>
+    /// Wird ausgelöst, wenn der Close-Button geklickt wird.
+    /// </summary>
+    public event EventHandler? CloseRequested;
+
+    /// <summary>
+    /// Wird ausgelöst, wenn der Pin-Button geklickt wird (Qt-ADS: "Auto Hide" toggle).
+    /// </summary>
+    public event EventHandler? PinToggleRequested;
+
+    /// <summary>
+    /// Wird ausgelöst, wenn der Undock-Button geklickt wird (zurück als Tab in Document Area).
+    /// </summary>
+    public event EventHandler? UndockRequested;
+
     #region Dependency Properties
 
     public static readonly DependencyProperty PanelTitleProperty =
@@ -53,7 +73,10 @@ public sealed partial class DockPanel : UserControl
 
     public DockPanel()
     {
-        
+        InitializeComponent();
+        CloseButton.Click += (_, _) => CloseRequested?.Invoke(this, EventArgs.Empty);
+        PinButton.Click += (_, _) => PinToggleRequested?.Invoke(this, EventArgs.Empty);
+        MaximizeButton.Click += (_, _) => UndockRequested?.Invoke(this, EventArgs.Empty);
     }
 
     #region Properties
@@ -89,4 +112,10 @@ public sealed partial class DockPanel : UserControl
     }
 
     #endregion
+
+    private void OnDragStarting(UIElement sender, DragStartingEventArgs args)
+    {
+        args.Data.Properties[DockPanelDataKey] = this;
+        args.Data.RequestedOperation = DataPackageOperation.Move;
+    }
 }

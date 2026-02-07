@@ -64,4 +64,4 @@
         <Content Include="germany-stations.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="germany-locomotives.json" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
-</Project>
+    </Project>

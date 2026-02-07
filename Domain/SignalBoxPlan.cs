@@ -5,8 +5,9 @@ namespace Moba.Domain;
 using System.Text.Json.Serialization;
 
 /// <summary>
-/// SignalBoxPlan (Gleisbild) - Topological representation of a railway interlocking.
-/// Stores elements and their connections for signal box visualization.
+/// SignalBoxPlan (Gleisbild) - Aggregate Root for railway interlocking topology.
+/// Provides validated mutation methods (AddElement, RemoveElement, etc.) that enforce
+/// invariants such as cell uniqueness, referential integrity, and cascading deletes.
 /// Symbol-based approach following DB (Deutsche Bahn) standards.
 /// </summary>
 public class SignalBoxPlan
@@ -28,18 +29,186 @@ public class SignalBoxPlan
 
     /// <summary>
     /// All elements in the signal box plan (typed hierarchy).
+    /// Prefer AddElement/RemoveElement for validated mutations.
     /// </summary>
     public List<SbElement> Elements { get; set; } = [];
 
     /// <summary>
     /// Connections between elements (topology).
+    /// Prefer AddConnection/RemoveConnection for validated mutations.
     /// </summary>
     public List<SignalBoxConnection> Connections { get; set; } = [];
 
     /// <summary>
     /// Routes (Fahrstrassen) defined for this plan.
+    /// Prefer AddRoute/RemoveRoute for validated mutations.
     /// </summary>
     public List<SignalBoxRoute> Routes { get; set; } = [];
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Aggregate Methods - Validated mutations with invariant protection
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Adds an element to the plan. Validates that the grid cell is not already occupied.
+    /// </summary>
+    /// <param name="element">The element to add</param>
+    /// <exception cref="ArgumentNullException">Thrown when element is null</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the target cell is already occupied</exception>
+    public void AddElement(SbElement element)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+
+        if (Elements.Any(e => e.X == element.X && e.Y == element.Y))
+        {
+            throw new InvalidOperationException(
+                $"Cell [{element.X},{element.Y}] is already occupied. One element per cell maximum.");
+        }
+
+        Elements.Add(element);
+    }
+
+    /// <summary>
+    /// Removes an element and cascades deletion to all connections and routes referencing it.
+    /// </summary>
+    /// <param name="elementId">The ID of the element to remove</param>
+    /// <returns>True if the element was found and removed, false otherwise</returns>
+    public bool RemoveElement(Guid elementId)
+    {
+        var element = Elements.FirstOrDefault(e => e.Id == elementId);
+        if (element is null)
+            return false;
+
+        Elements.Remove(element);
+
+        // Cascade: remove all connections referencing this element
+        Connections.RemoveAll(c => c.FromElementId == elementId || c.ToElementId == elementId);
+
+        // Cascade: remove routes that reference this element
+        Routes.RemoveAll(r =>
+            r.StartSignalId == elementId ||
+            r.EndSignalId == elementId ||
+            r.ElementIds.Contains(elementId) ||
+            r.SwitchPositions.ContainsKey(elementId));
+
+        return true;
+    }
+
+    /// <summary>
+    /// Finds an element by its ID.
+    /// </summary>
+    /// <param name="elementId">The element ID to search for</param>
+    /// <returns>The element if found, null otherwise</returns>
+    public SbElement? FindElement(Guid elementId)
+    {
+        return Elements.FirstOrDefault(e => e.Id == elementId);
+    }
+
+    /// <summary>
+    /// Adds a connection between two elements. Validates that both referenced elements exist.
+    /// </summary>
+    /// <param name="connection">The connection to add</param>
+    /// <exception cref="ArgumentNullException">Thrown when connection is null</exception>
+    /// <exception cref="InvalidOperationException">Thrown when a referenced element does not exist</exception>
+    public void AddConnection(SignalBoxConnection connection)
+    {
+        ArgumentNullException.ThrowIfNull(connection);
+
+        if (Elements.All(e => e.Id != connection.FromElementId))
+        {
+            throw new InvalidOperationException(
+                $"Source element {connection.FromElementId} does not exist in the plan.");
+        }
+
+        if (Elements.All(e => e.Id != connection.ToElementId))
+        {
+            throw new InvalidOperationException(
+                $"Target element {connection.ToElementId} does not exist in the plan.");
+        }
+
+        Connections.Add(connection);
+    }
+
+    /// <summary>
+    /// Removes a connection between two elements.
+    /// </summary>
+    /// <param name="fromElementId">Source element ID</param>
+    /// <param name="toElementId">Target element ID</param>
+    /// <returns>True if a connection was found and removed, false otherwise</returns>
+    public bool RemoveConnection(Guid fromElementId, Guid toElementId)
+    {
+        var connection = Connections.FirstOrDefault(c =>
+            c.FromElementId == fromElementId && c.ToElementId == toElementId);
+
+        return connection is not null && Connections.Remove(connection);
+    }
+
+    /// <summary>
+    /// Adds a route to the plan. Validates that start/end signals exist and are SbSignal elements,
+    /// and that all referenced elements and switches exist.
+    /// </summary>
+    /// <param name="route">The route to add</param>
+    /// <exception cref="ArgumentNullException">Thrown when route is null</exception>
+    /// <exception cref="InvalidOperationException">Thrown when referenced elements are missing or invalid</exception>
+    public void AddRoute(SignalBoxRoute route)
+    {
+        ArgumentNullException.ThrowIfNull(route);
+
+        if (FindElement(route.StartSignalId) is not SbSignal)
+        {
+            throw new InvalidOperationException(
+                $"Start signal {route.StartSignalId} does not exist or is not a signal element.");
+        }
+
+        if (FindElement(route.EndSignalId) is not SbSignal)
+        {
+            throw new InvalidOperationException(
+                $"End signal {route.EndSignalId} does not exist or is not a signal element.");
+        }
+
+        var missingElementIds = route.ElementIds
+            .Where(id => Elements.All(e => e.Id != id))
+            .ToList();
+
+        if (missingElementIds.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"Route references non-existent elements: {string.Join(", ", missingElementIds)}");
+        }
+
+        var missingSwitchIds = route.SwitchPositions.Keys
+            .Where(id => Elements.All(e => e.Id != id) || FindElement(id) is not SbSwitch)
+            .ToList();
+
+        if (missingSwitchIds.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"Route references non-existent or non-switch elements for switch positions: {string.Join(", ", missingSwitchIds)}");
+        }
+
+        Routes.Add(route);
+    }
+
+    /// <summary>
+    /// Removes a route by its ID.
+    /// </summary>
+    /// <param name="routeId">The ID of the route to remove</param>
+    /// <returns>True if the route was found and removed, false otherwise</returns>
+    public bool RemoveRoute(Guid routeId)
+    {
+        var route = Routes.FirstOrDefault(r => r.Id == routeId);
+        return route is not null && Routes.Remove(route);
+    }
+
+    /// <summary>
+    /// Removes all elements, connections, and routes from the plan.
+    /// </summary>
+    public void Clear()
+    {
+        Elements.Clear();
+        Connections.Clear();
+        Routes.Clear();
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

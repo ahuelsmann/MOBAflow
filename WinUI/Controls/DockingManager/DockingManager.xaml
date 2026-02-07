@@ -2,121 +2,408 @@
     x:Class="Moba.WinUI.Controls.DockingManager"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:behavior="using:Moba.WinUI.Behavior"
+    xmlns:controls="using:Moba.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    x:Name="Root"
     mc:Ignorable="d">
 
     <Grid x:Name="RootGrid" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
+            <!--  0: Top Auto-Hide Bar  -->
+            <RowDefinition Height="*" />
+            <!--  1: Main Content  -->
+            <RowDefinition Height="Auto" />
+            <!--  2: Bottom Auto-Hide Bar  -->
+            <RowDefinition Height="Auto" />
+            <!--  3: Status Bar  -->
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="Auto" />
-        </Grid.ColumnDefinitions>
 
-        <!--  Left Dock Panel  -->
-        <Grid
-            x:Name="LeftDockArea"
+        <!--  Top Auto-Hide Bar  -->
+        <StackPanel
+            x:Name="TopAutoHideBar"
             Grid.Row="0"
-            Grid.Column="0"
-            Background="{ThemeResource SurfaceSecondaryBrush}">
-            <ContentPresenter x:Name="LeftPanelPresenter" />
-        </Grid>
+            Height="28"
+            Background="{ThemeResource LayerFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+            BorderThickness="0,0,0,1"
+            Orientation="Horizontal"
+            Visibility="Collapsed" />
 
-        <!--  Splitter between Left and Center  -->
+        <!--  Main Content Area: Left | Splitter | Center | Splitter | Right  -->
         <Grid
-            x:Name="LeftSplitter"
-            Grid.Row="0"
-            Grid.Column="0"
-            Width="4"
-            Background="Transparent">
-            <Grid Background="{ThemeResource DividerStrokeColorDefaultBrush}" Opacity="0.1" />
-        </Grid>
+            x:Name="MainContentGrid"
+            Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <!--  0: Left Auto-Hide Bar  -->
+                <ColumnDefinition Width="Auto" />
+                <!--  1: Left Dock Area  -->
+                <ColumnDefinition Width="Auto" />
+                <!--  2: Left Splitter  -->
+                <ColumnDefinition Width="*" />
+                <!--  3: Center Area  -->
+                <ColumnDefinition Width="Auto" />
+                <!--  4: Right Splitter  -->
+                <ColumnDefinition Width="Auto" />
+                <!--  5: Right Dock Area  -->
+                <ColumnDefinition Width="Auto" />
+                <!--  6: Right Auto-Hide Bar  -->
+            </Grid.ColumnDefinitions>
 
-        <!--  Center Area with Top/Document/Bottom  -->
-        <Grid
-            x:Name="CenterArea"
-            Grid.Row="0"
-            Grid.Column="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+            <!--  Left Auto-Hide Bar  -->
+            <StackPanel
+                x:Name="LeftAutoHideBar"
+                Grid.Column="0"
+                Width="28"
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                BorderThickness="0,0,1,0"
+                Orientation="Vertical"
+                Visibility="Collapsed" />
 
-            <!--  Top Dock Panel  -->
+            <!--  Left Dock Area (DockPanelGroup)  -->
             <Grid
-                x:Name="TopDockArea"
-                Grid.Row="0"
-                Background="{ThemeResource SurfaceSecondaryBrush}">
-                <ContentPresenter x:Name="TopPanelPresenter" />
+                x:Name="LeftDockArea"
+                Grid.Column="1"
+                Width="{x:Bind LeftPanelWidth, Mode=OneWay}"
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                Visibility="{x:Bind IsLeftPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
+                AllowDrop="True"
+                behavior:DockingDropBehavior.DockPosition="Left"
+                DragOver="OnDockAreaDragOver"
+                DragLeave="OnDockAreaDragLeave"
+                Drop="OnDockAreaDrop">
+                <controls:DockPanelGroup x:Name="LeftPanelGroup" />
             </Grid>
 
-            <!--  Splitter between Top and Center  -->
+            <!--  Left Splitter (own column, between Left and Center)  -->
             <Grid
-                x:Name="TopSplitter"
-                Grid.Row="0"
-                Height="4"
-                Background="Transparent">
-                <Grid Background="{ThemeResource DividerStrokeColorDefaultBrush}" Opacity="0.1" />
+                x:Name="LeftSplitter"
+                Grid.Column="2"
+                Width="5"
+                Background="Transparent"
+                Visibility="{x:Bind IsLeftPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
+                PointerEntered="OnSplitterPointerEntered"
+                PointerExited="OnSplitterPointerExited"
+                PointerPressed="OnSplitterPointerPressed"
+                PointerMoved="OnSplitterPointerMoved"
+                PointerReleased="OnSplitterPointerReleased"
+                Tag="Left">
+                <Grid
+                    Width="1"
+                    HorizontalAlignment="Center"
+                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
             </Grid>
 
-            <!--  Document Area  -->
+            <!--  Center Area: Top | TopSplitter | Document | BottomSplitter | Bottom  -->
             <Grid
-                x:Name="DocumentArea"
-                Grid.Row="1"
-                Background="{ThemeResource SurfaceBackgroundFillColorDefaultBrush}">
-                <ContentPresenter x:Name="DocumentPresenter" />
+                x:Name="CenterArea"
+                Grid.Column="3">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <!--  0: Top Dock Area  -->
+                    <RowDefinition Height="Auto" />
+                    <!--  1: Top Splitter  -->
+                    <RowDefinition Height="*" />
+                    <!--  2: Document Area  -->
+                    <RowDefinition Height="Auto" />
+                    <!--  3: Bottom Splitter  -->
+                    <RowDefinition Height="Auto" />
+                    <!--  4: Bottom Dock Area  -->
+                </Grid.RowDefinitions>
+
+                <!--  Top Dock Area  -->
+                <Grid
+                    x:Name="TopDockArea"
+                    Grid.Row="0"
+                    Height="{x:Bind TopPanelHeight, Mode=OneWay}"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    Visibility="{x:Bind IsTopPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
+                    AllowDrop="True"
+                    behavior:DockingDropBehavior.DockPosition="Top"
+                    DragOver="OnDockAreaDragOver"
+                    DragLeave="OnDockAreaDragLeave"
+                    Drop="OnDockAreaDrop">
+                    <controls:DockPanelGroup x:Name="TopPanelGroup" />
+                </Grid>
+
+                <!--  Top Splitter (own row)  -->
+                <Grid
+                    x:Name="TopSplitter"
+                    Grid.Row="1"
+                    Height="5"
+                    Background="Transparent"
+                    Visibility="{x:Bind IsTopPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
+                    PointerEntered="OnSplitterPointerEntered"
+                    PointerExited="OnSplitterPointerExited"
+                    PointerPressed="OnSplitterPointerPressed"
+                    PointerMoved="OnSplitterPointerMoved"
+                    PointerReleased="OnSplitterPointerReleased"
+                    Tag="Top">
+                    <Grid
+                        Height="1"
+                        VerticalAlignment="Center"
+                        Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                </Grid>
+
+                <!--  Document Area  -->
+                <Grid
+                    x:Name="DocumentArea"
+                    Grid.Row="2"
+                    Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+                    AllowDrop="True"
+                    behavior:DockingDropBehavior.DockPosition="Center"
+                    DragOver="OnDockAreaDragOver"
+                    DragLeave="OnDockAreaDragLeave"
+                    Drop="OnDockAreaDrop">
+                    <ContentPresenter x:Name="DocumentPresenter" Content="{x:Bind DocumentAreaContent, Mode=OneWay}" />
+                </Grid>
+
+                <!--  Bottom Splitter (own row)  -->
+                <Grid
+                    x:Name="BottomSplitter"
+                    Grid.Row="3"
+                    Height="5"
+                    Background="Transparent"
+                    Visibility="{x:Bind IsBottomPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
+                    PointerEntered="OnSplitterPointerEntered"
+                    PointerExited="OnSplitterPointerExited"
+                    PointerPressed="OnSplitterPointerPressed"
+                    PointerMoved="OnSplitterPointerMoved"
+                    PointerReleased="OnSplitterPointerReleased"
+                    Tag="Bottom">
+                    <Grid
+                        Height="1"
+                        VerticalAlignment="Center"
+                        Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                </Grid>
+
+                <!--  Bottom Dock Area  -->
+                <Grid
+                    x:Name="BottomDockArea"
+                    Grid.Row="4"
+                    Height="{x:Bind BottomPanelHeight, Mode=OneWay}"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    Visibility="{x:Bind IsBottomPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
+                    AllowDrop="True"
+                    behavior:DockingDropBehavior.DockPosition="Bottom"
+                    DragOver="OnDockAreaDragOver"
+                    DragLeave="OnDockAreaDragLeave"
+                    Drop="OnDockAreaDrop">
+                    <controls:DockPanelGroup x:Name="BottomPanelGroup" />
+                </Grid>
             </Grid>
 
-            <!--  Splitter between Center and Bottom  -->
+            <!--  Right Splitter (own column)  -->
             <Grid
-                x:Name="BottomSplitter"
-                Grid.Row="1"
-                Height="4"
-                VerticalAlignment="Bottom"
-                Background="Transparent">
-                <Grid Background="{ThemeResource DividerStrokeColorDefaultBrush}" Opacity="0.1" />
+                x:Name="RightSplitter"
+                Grid.Column="4"
+                Width="5"
+                Background="Transparent"
+                Visibility="{x:Bind IsRightPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
+                PointerEntered="OnSplitterPointerEntered"
+                PointerExited="OnSplitterPointerExited"
+                PointerPressed="OnSplitterPointerPressed"
+                PointerMoved="OnSplitterPointerMoved"
+                PointerReleased="OnSplitterPointerReleased"
+                Tag="Right">
+                <Grid
+                    Width="1"
+                    HorizontalAlignment="Center"
+                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
             </Grid>
 
-            <!--  Bottom Dock Panel  -->
+            <!--  Right Dock Area  -->
             <Grid
-                x:Name="BottomDockArea"
-                Grid.Row="2"
-                Background="{ThemeResource SurfaceSecondaryBrush}">
-                <ContentPresenter x:Name="BottomPanelPresenter" />
+                x:Name="RightDockArea"
+                Grid.Column="5"
+                Width="{x:Bind RightPanelWidth, Mode=OneWay}"
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                Visibility="{x:Bind IsRightPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
+                AllowDrop="True"
+                behavior:DockingDropBehavior.DockPosition="Right"
+                DragOver="OnDockAreaDragOver"
+                DragLeave="OnDockAreaDragLeave"
+                Drop="OnDockAreaDrop">
+                <controls:DockPanelGroup x:Name="RightPanelGroup" />
             </Grid>
+
+            <!--  Right Auto-Hide Bar  -->
+            <StackPanel
+                x:Name="RightAutoHideBar"
+                Grid.Column="6"
+                Width="28"
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                BorderThickness="1,0,0,0"
+                Orientation="Vertical"
+                Visibility="Collapsed" />
         </Grid>
 
-        <!--  Splitter between Center and Right  -->
-        <Grid
-            x:Name="RightSplitter"
-            Grid.Row="0"
-            Grid.Column="2"
-            Width="4"
-            Background="Transparent">
-            <Grid Background="{ThemeResource DividerStrokeColorDefaultBrush}" Opacity="0.1" />
-        </Grid>
-
-        <!--  Right Dock Panel  -->
-        <Grid
-            x:Name="RightDockArea"
-            Grid.Row="0"
-            Grid.Column="2"
-            Background="{ThemeResource SurfaceSecondaryBrush}">
-            <ContentPresenter x:Name="RightPanelPresenter" />
-        </Grid>
+        <!--  Bottom Auto-Hide Bar  -->
+        <StackPanel
+            x:Name="BottomAutoHideBar"
+            Grid.Row="2"
+            Height="28"
+            Background="{ThemeResource LayerFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+            BorderThickness="0,1,0,0"
+            Orientation="Horizontal"
+            Visibility="Collapsed" />
 
         <!--  Status Bar  -->
         <Grid
             x:Name="StatusBarArea"
-            Grid.Row="1"
-            Grid.ColumnSpan="3"
-            Background="{ThemeResource SurfaceSecondaryBrush}">
-            <ContentPresenter x:Name="StatusBarPresenter" />
+            Grid.Row="3"
+            Background="{ThemeResource LayerFillColorDefaultBrush}">
+            <ContentPresenter x:Name="StatusBarPresenter" Content="{x:Bind StatusBarContent, Mode=OneWay}" />
         </Grid>
+
+        <!--  Docking Overlay (spans main content)  -->
+        <Grid
+            x:Name="OverlayLayer"
+            Grid.Row="0"
+            Grid.RowSpan="3"
+            Visibility="Collapsed"
+            Background="Transparent"
+            IsHitTestVisible="False">
+            <Canvas x:Name="OverlayCanvas">
+                <Border
+                    x:Name="PreviewBox"
+                    Visibility="Collapsed"
+                    Background="{ThemeResource AccentFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                    BorderThickness="2"
+                    Opacity="0.25"
+                    CornerRadius="4" />
+            </Canvas>
+
+            <Grid
+                x:Name="OverlayTargets"
+                Width="160"
+                Height="160"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!--  Top  -->
+                <Border
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Width="36"
+                    Height="36"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6">
+                    <FontIcon
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontFamily="{StaticResource SymbolThemeFontFamily}"
+                        FontSize="14"
+                        Glyph="&#xE74A;" />
+                </Border>
+
+                <!--  Left  -->
+                <Border
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Width="36"
+                    Height="36"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6">
+                    <FontIcon
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontFamily="{StaticResource SymbolThemeFontFamily}"
+                        FontSize="14"
+                        Glyph="&#xE74B;" />
+                </Border>
+
+                <!--  Center  -->
+                <Border
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Width="36"
+                    Height="36"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                    BorderThickness="2"
+                    CornerRadius="6">
+                    <FontIcon
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontFamily="{StaticResource SymbolThemeFontFamily}"
+                        FontSize="14"
+                        Glyph="&#xE737;" />
+                </Border>
+
+                <!--  Right  -->
+                <Border
+                    Grid.Row="1"
+                    Grid.Column="2"
+                    Width="36"
+                    Height="36"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6">
+                    <FontIcon
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontFamily="{StaticResource SymbolThemeFontFamily}"
+                        FontSize="14"
+                        Glyph="&#xE74D;" />
+                </Border>
+
+                <!--  Bottom  -->
+                <Border
+                    Grid.Row="2"
+                    Grid.Column="1"
+                    Width="36"
+                    Height="36"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6">
+                    <FontIcon
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontFamily="{StaticResource SymbolThemeFontFamily}"
+                        FontSize="14"
+                        Glyph="&#xE74B;"
+                        RenderTransformOrigin="0.5,0.5">
+                        <FontIcon.RenderTransform>
+                            <RotateTransform Angle="180" />
+                        </FontIcon.RenderTransform>
+                    </FontIcon>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!--  Focus Highlight Border  -->
+        <Border
+            x:Name="FocusHighlightBorder"
+            Grid.Row="0"
+            Grid.RowSpan="3"
+            BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+            BorderThickness="0"
+            CornerRadius="0"
+            IsHitTestVisible="False"
+            Visibility="Collapsed" />
     </Grid>
 </UserControl>
