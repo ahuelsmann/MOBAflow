@@ -265,6 +265,11 @@ public sealed partial class TrainControlPage
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+       // Subscribe to skin and ViewModel events when page enters visual tree
+       _skinProvider.SkinChanged += OnSkinProviderChanged;
+       _skinProvider.DarkModeChanged += OnDarkModeChanged;
+       ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+
         // Find and store references to themed elements
         _speedometer = FindName("Speedometer") as SpeedometerControl;
         _amperemeter = FindName("Amperemeter") as AmperemeterControl;
