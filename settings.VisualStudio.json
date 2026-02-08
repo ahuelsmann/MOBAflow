@@ -1,0 +1,11 @@
+/* Visual Studio Settings File */
+{
+  "environment.terminal.profiles+defaultItemIndex": 0,
+  "environment.terminal.profiles": [
+    {
+      "displayName": "MOBAflow",
+      "location": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      "arguments": "-NoLogo -NoExit -Command \"$repo=Split-Path (Get-Location)-Leaf;$b=git rev-parse --abbrev-ref HEAD 2>$null;$s=(git status -s 2>$null)-join' ';$changed=(git status -s 2>$null|Measure-Object).Count;$gv=git --version 2>$null;$dotnet=dotnet --version 2>$null;$node=node --version 2>$null;$py=python --version 2>$null;$os=(Get-CimInstance Win32_OperatingSystem).Caption;$arch=$env:PROCESSOR_ARCHITECTURE;$user=$env:USERNAME;$hostname=$env:COMPUTERNAME;$time=Get-Date;function L($l,$v,$c){Write-Host '│ '-ForegroundColor Blue -NoNewline;Write-Host ($l+$v).PadRight(44)-ForegroundColor $c -NoNewline;Write-Host ' │'-ForegroundColor Blue};Write-Host '┌──────────────────────────────────────────────┐'-ForegroundColor Blue;L 'PowerShell ' $PSVersionTable.PSVersion Blue;L 'Repo: ' $repo White;L 'User: ' ($user+'   Host: '+$hostname) White;L 'OS: ' $os White;L 'Arch: ' $arch White;L 'Time: ' $time White;if($dotnet){L '.NET SDK: ' $dotnet Gray};if($node){L 'Node.js: ' $node Gray};if($py){L 'Python: ' $py Gray};if($gv){L 'Git Version: ' $gv DarkMagenta};if($b){L 'Git Branch: ' ($b+' ('+$changed+' changes)') DarkMagenta};Write-Host '└──────────────────────────────────────────────┘'-ForegroundColor Blue;if($s){Write-Host ('Git Status: '+$s)-ForegroundColor DarkMagenta};Write-Host 'System ready.'-ForegroundColor Blue\""
+    }
+  ]
+}

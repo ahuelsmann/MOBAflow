@@ -942,7 +942,7 @@ public partial class TrainControlViewModel : ObservableObject
         CurrentPreset.Speed = value;
         _ = SavePresetsToSettingsAsync();
 
-        if (_z21.IsConnected && LocoAddress >= 1)
+        if (CanExecuteLocoCommand() && LocoAddress >= 1)
         {
             _ = SendDriveCommandAsync();
         }
