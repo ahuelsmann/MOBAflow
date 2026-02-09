@@ -2,9 +2,12 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Microsoft.Extensions.Logging;
+
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 
@@ -22,51 +25,51 @@ public partial class MainWindowViewModel
     /// Dynamically populated from FeedbackPoints or defaults to InPorts 1-3.
     /// </summary>
     [ObservableProperty]
-    private ObservableCollection<InPortStatistic> statistics = [];
+    private ObservableCollection<InPortStatistic> _statistics = [];
 
     /// <summary>
     /// Global target lap count for all tracks.
     /// When changed, updates all existing statistics.
     /// </summary>
     [ObservableProperty]
-    private int globalTargetLapCount = 10;
+    private int _globalTargetLapCount = 10;
 
     /// <summary>
     /// Enables timer-based filtering to prevent multiple counts from long trains (e.g., 16 axles).
     /// </summary>
     [ObservableProperty]
-    private bool useTimerFilter;
+    private bool _useTimerFilter;
 
     /// <summary>
     /// Timer filter interval in seconds (prevents duplicate counts within this timeframe).
     /// Synchronized with AppSettings.Counter.TimerIntervalSeconds.
     /// </summary>
     [ObservableProperty]
-    private double timerIntervalSeconds;
+    private double _timerIntervalSeconds;
 
     /// <summary>
     /// Main current in mA (from Z21 SystemState).
     /// </summary>
     [ObservableProperty]
-    private int mainCurrent;
+    private int _mainCurrent;
 
     /// <summary>
     /// Temperature in Celsius (from Z21 SystemState).
     /// </summary>
     [ObservableProperty]
-    private int temperature;
+    private int _temperature;
 
     /// <summary>
     /// Supply voltage in mV (from Z21 SystemState).
     /// </summary>
     [ObservableProperty]
-    private int supplyVoltage;
+    private int _supplyVoltage;
 
     /// <summary>
     /// VCC voltage in mV (from Z21 SystemState).
     /// </summary>
     [ObservableProperty]
-    private int vccVoltage;
+    private int _vccVoltage;
 
     // Last feedback time tracking for timer filter
     private readonly Dictionary<int, DateTime> _lastFeedbackTime = [];
@@ -82,9 +85,9 @@ public partial class MainWindowViewModel
     /// </summary>
     public void InitializeStatisticsFromFeedbackPoints()
     {
-        // ✅ CRITICAL FIX: Do NOT use InvokeOnUi here!
+        // CRITICAL FIX: Do not use InvokeOnUi here.
         // This method is already called via EnqueueOnUi from OnSelectedProjectChanged,
-        // so we're guaranteed to be on the UI thread. A second InvokeOnUi causes reentrancy.
+        // so we are guaranteed to be on the UI thread. A second InvokeOnUi causes reentrancy.
         Statistics.Clear();
 
         // Create statistics based on CountOfFeedbackPoints setting
@@ -101,7 +104,6 @@ public partial class MainWindowViewModel
                     TargetLapCount = GlobalTargetLapCount
                 });
             }
-            _logger.LogInformation("Initialized {Count} track statistics from settings (InPorts 1-{MaxInPort})", Statistics.Count, count);
         }
         else
         {
@@ -138,18 +140,17 @@ public partial class MainWindowViewModel
         // Save to AppSettings (RAM)
         _settings.Counter.TimerIntervalSeconds = value;
 
-        // ✅ DEBUG: Log to verify this method is called
-        Debug.WriteLine($"🔥 OnTimerIntervalSecondsChanged called! Value={value}, SettingsService={(_settingsService != null ? "EXISTS" : "NULL")}");
+        Debug.WriteLine($"OnTimerIntervalSecondsChanged called. Value={value}, SettingsService={(_settingsService != null ? "EXISTS" : "NULL")}");
 
         // Persist to appsettings.json (Disk) - fire and forget
         if (_settingsService != null)
         {
-            Debug.WriteLine($"🔥 Calling SaveSettingsAsync with TimerIntervalSeconds={value}");
+            Debug.WriteLine($"Calling SaveSettingsAsync with TimerIntervalSeconds={value}");
             _settingsService.SaveSettingsAsync(_settings);
         }
         else
         {
-            Debug.WriteLine("❌ SettingsService is NULL - cannot save!");
+            Debug.WriteLine("SettingsService is NULL - cannot save.");
         }
     }
 
@@ -163,9 +164,9 @@ public partial class MainWindowViewModel
     {
         _ = value; // Suppress unused parameter warning
 
-        // ✅ CRITICAL: Use EnqueueOnUi (not InvokeOnUi) to force async execution
+        // CRITICAL: Use EnqueueOnUi (not InvokeOnUi) to force async execution.
         // This breaks out of the PropertyChanged notification chain and prevents COMException
-        // when modifying the Statistics ObservableCollection during WinUI binding updates
+        // when modifying the Statistics ObservableCollection during WinUI binding updates.
         _uiDispatcher.EnqueueOnUi(() =>
         {
             InitializeStatisticsFromFeedbackPoints();
@@ -175,7 +176,7 @@ public partial class MainWindowViewModel
         if (value != null)
         {
             value.PropertyChanged += OnViewModelPropertyChanged;
-            
+
             // Subscribe to PropertyChanged events for all workflows (including newly loaded ones)
             foreach (var workflow in value.Workflows)
             {
@@ -183,8 +184,8 @@ public partial class MainWindowViewModel
                 workflow.PropertyChanged -= OnViewModelPropertyChanged;
                 workflow.PropertyChanged += OnViewModelPropertyChanged;
             }
-            
-            // ✅ Auto-select first journey when project is selected
+
+            // Auto-select first journey when project is selected
             if (value.Journeys.Count > 0)
             {
                 SelectedJourney = value.Journeys.FirstOrDefault();

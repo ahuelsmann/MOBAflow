@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
     <!-- Project Identity -->
     <PropertyGroup>
         <RootNamespace>Moba.WinUI</RootNamespace>
@@ -18,6 +18,7 @@
         <!-- Disable MSIX packaging during development to avoid Windows SDK BuildTools issues -->
         <WindowsPackageType>None</WindowsPackageType>
         <GenerateMsixPackageOnBuild>false</GenerateMsixPackageOnBuild>
+        <DisableXamlGeneratedBreakOnUnhandledException>true</DisableXamlGeneratedBreakOnUnhandledException>
     </PropertyGroup>
     <!-- Debug: Performance Optimizations -->
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -64,4 +65,4 @@
         <Content Include="germany-stations.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="germany-locomotives.json" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
-    </Project>
+</Project>

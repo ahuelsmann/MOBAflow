@@ -26,6 +26,11 @@ public class AppSettings
     public FeatureToggleSettings FeatureToggles { get; set; } = new();
 
     /// <summary>
+    /// Layout settings for UI panels and splitters (persisted per user).
+    /// </summary>
+    public LayoutSettings Layout { get; set; } = new();
+
+    /// <summary>
     /// Gets Azure Speech Service subscription key (convenience property).
     /// </summary>
     public string AzureSpeechKey => string.IsNullOrEmpty(Speech.Key) ? string.Empty : Speech.Key;
@@ -353,4 +358,180 @@ public class FeatureToggleSettings
     /// </summary>
     public bool IsTrainControlPageAvailable { get; set; } = true;
     public string TrainControlPageLabel { get; set; } = "Preview";
+}
+
+/// <summary>
+/// Layout settings for UI panels and splitters (persisted per user).
+/// </summary>
+public class LayoutSettings
+{
+    /// <summary>
+    /// Panel position and width settings for the left side panel.
+    /// </summary>
+    public SidePanelLayoutSettings LeftPanel { get; set; } = new();
+
+    /// <summary>
+    /// Panel position and width settings for the right side panel.
+    /// </summary>
+    public SidePanelLayoutSettings RightPanel { get; set; } = new();
+
+    /// <summary>
+    /// Panel position and size settings for the bottom status/controls panel.
+    /// </summary>
+    public BottomPanelLayoutSettings BottomPanel { get; set; } = new();
+
+    /// <summary>
+    /// Tab visibility settings for application views.
+    /// </summary>
+    public TabVisibilitySettings TabVisibility { get; set; } = new();
+
+    /// <summary>
+    /// JourneysPage-specific layout settings (column widths, panel visibility).
+    /// </summary>
+    public JourneysPageLayoutSettings JourneysPage { get; set; } = new();
+}
+
+/// <summary>
+/// Panel position and width settings for the side panels (left/right).
+/// </summary>
+public class SidePanelLayoutSettings
+{
+    /// <summary>
+    /// Is the panel currently open/visible?
+    /// </summary>
+    public bool IsOpen { get; set; } = true;
+
+    /// <summary>
+    /// Width of the panel in pixels.
+    /// </summary>
+    public double Width { get; set; } = 300;
+
+    /// <summary>
+    /// Persistent layout states for structurally docked panels (e.g., Train Control, Signal Box).
+    /// </summary>
+    public Dictionary<string, PanelLayoutState> PanelLayoutStates { get; set; } = new();
+}
+
+/// <summary>
+/// Persistent layout state for a structurally docked panel.
+/// </summary>
+public class PanelLayoutState
+{
+    /// <summary>
+    /// Is the panel in the collapsed state?
+    /// </summary>
+    public bool IsCollapsed { get; set; } = false;
+
+    /// <summary>
+    /// Additional custom state data as needed by the panel.
+    /// </summary>
+    public Dictionary<string, object> CustomState { get; set; } = new();
+}
+
+/// <summary>
+/// Panel position and size settings for the bottom status/controls panel.
+/// </summary>
+public class BottomPanelLayoutSettings
+{
+    /// <summary>
+    /// Is the panel currently open/visible?
+    /// </summary>
+    public bool IsOpen { get; set; } = true;
+
+    /// <summary>
+    /// Height of the panel in pixels.
+    /// </summary>
+    public double Height { get; set; } = 150;
+}
+
+/// <summary>
+/// Tab visibility settings for application views.
+/// </summary>
+public class TabVisibilitySettings
+{
+    /// <summary>
+    /// Is the Dashboard tab visible?
+    /// </summary>
+    public bool IsDashboardTabVisible { get; set; } = true;
+
+    /// <summary>
+    /// Is the Solutions tab visible?
+    /// </summary>
+    public bool IsSolutionsTabVisible { get; set; } = true;
+
+    /// <summary>
+    /// Is the Settings tab visible?
+    /// </summary>
+    public bool IsSettingsTabVisible { get; set; } = true;
+
+    /// <summary>
+    /// Is the Journeys tab visible?
+    /// </summary>
+    public bool IsJourneysTabVisible { get; set; } = true;
+
+    /// <summary>
+    /// Is the Workflows tab visible?
+    /// </summary>
+    public bool IsWorkflowsTabVisible { get; set; } = true;
+
+    /// <summary>
+    /// Is the Feedback Points tab visible?
+    /// </summary>
+    public bool IsFeedbackPointsTabVisible { get; set; } = true;
+
+    /// <summary>
+    /// Is the Track Plan Editor tab visible?
+    /// </summary>
+    public bool IsTrackPlanEditorTabVisible { get; set; } = true;
+
+    /// <summary>
+    /// Is the Signal Box tab visible?
+    /// </summary>
+    public bool IsSignalBoxTabVisible { get; set; } = true;
+
+    /// <summary>
+    /// Is the Journey Map tab visible?
+    /// </summary>
+    public bool IsJourneyMapTabVisible { get; set; } = true;
+
+    /// <summary>
+    /// Is the Monitor tab visible?
+    /// </summary>
+    public bool IsMonitorTabVisible { get; set; } = true;
+
+    /// <summary>
+    /// Is the Trains tab visible?
+    /// </summary>
+    public bool IsTrainsTabVisible { get; set; } = true;
+
+    /// <summary>
+    /// Is the Train Control tab visible?
+    /// </summary>
+    public bool IsTrainControlTabVisible { get; set; } = true;
+}
+
+/// <summary>
+/// JourneysPage-specific layout settings (column widths, panel visibility).
+/// </summary>
+public class JourneysPageLayoutSettings
+{
+    /// <summary>
+    /// Width of Journeys column (Column 0) in pixels.
+    /// </summary>
+    public double JourneysColumnWidth { get; set; } = 250;
+
+    /// <summary>
+    /// Width of Stations column (Column 2) in pixels.
+    /// </summary>
+    public double StationsColumnWidth { get; set; } = 250;
+
+    /// <summary>
+    /// Is City Library panel expanded?
+    /// </summary>
+    public bool IsCityLibraryExpanded { get; set; } = true;
+
+    /// <summary>
+    /// Is Workflow Library panel expanded?
+    /// </summary>
+    public bool IsWorkflowLibraryExpanded { get; set; } = true;
 }

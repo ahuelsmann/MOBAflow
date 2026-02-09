@@ -2,16 +2,20 @@
 namespace Moba.WinUI.View;
 
 using Common.Configuration;
+using Common.Navigation;
+
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
+
 using Service;
+
 using SharedUI.Interface;
+
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Reflection;
-using Windows.System;
+
 using MainWindowViewModel = SharedUI.ViewModel.MainWindowViewModel;
 
 public sealed partial class MainWindow
@@ -22,7 +26,7 @@ public sealed partial class MainWindow
     private readonly NavigationService _navigationService;
     private HealthCheckService? _healthCheckService;
     private readonly IUiDispatcher _uiDispatcher;
-    private readonly NavigationRegistry _navigationRegistry;
+    private readonly List<PageMetadata> _pages;
     private readonly NavigationItemFactory _navigationItemFactory;
     private readonly ISkinProvider _skinProvider;
 
@@ -44,7 +48,7 @@ public sealed partial class MainWindow
         NavigationService navigationService,
         IUiDispatcher uiDispatcher,
         IIoService ioService,
-        NavigationRegistry navigationRegistry,
+        List<PageMetadata> pages,
         AppSettings appSettings,
         ISkinProvider skinProvider)
     {
@@ -55,7 +59,7 @@ public sealed partial class MainWindow
             ViewModel = viewModel;
             _navigationService = navigationService;
             _uiDispatcher = uiDispatcher;
-            _navigationRegistry = navigationRegistry;
+            _pages = pages;
             _navigationItemFactory = new NavigationItemFactory(appSettings);
             _skinProvider = skinProvider;
 
@@ -146,7 +150,7 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Builds navigation items dynamically from NavigationRegistry.
+    /// Builds navigation items dynamically from discovered pages.
     /// Groups pages by Category with separators between groups.
     /// </summary>
     private void BuildNavigationFromRegistry()
@@ -156,7 +160,7 @@ public sealed partial class MainWindow
 
         NavigationCategory? lastCategory = null;
 
-        foreach (var page in _navigationRegistry.Pages)
+        foreach (var page in _pages)
         {
             // Add separator between categories
             if (lastCategory.HasValue && page.Category != lastCategory.Value)
@@ -171,7 +175,7 @@ public sealed partial class MainWindow
             lastCategory = page.Category;
         }
 
-        Debug.WriteLine($"[NAV] Built {MainNavigation.MenuItems.Count} navigation items from registry");
+        Debug.WriteLine($"[NAV] Built {MainNavigation.MenuItems.Count} navigation items from discovered pages");
     }
 
     /// <summary>
@@ -181,9 +185,6 @@ public sealed partial class MainWindow
     {
         await _navigationService.InitializeAsync(ContentFrame);
         await _navigationService.NavigateToOverviewAsync();
-
-        // Set initial focus to Transaction Code TextBox for quick keyboard navigation
-        TransactionCodeTextBox.Focus(FocusState.Programmatic);
     }
 
     #region Event Handlers
@@ -270,16 +271,6 @@ public sealed partial class MainWindow
         _ = sender;
         _ = e;
         ApplyTheme(ViewModel.IsDarkMode);
-    }
-
-    private void TransactionCodeTextBox_KeyDown(object sender, KeyRoutedEventArgs e)
-    {
-        _ = sender; // Suppress unused parameter warning
-        if (e.Key == VirtualKey.Enter)
-        {
-            ViewModel.ExecuteTransactionCodeCommand.Execute(null);
-            e.Handled = true;
-        }
     }
     #endregion
 }

@@ -42,9 +42,6 @@
             ItemInvoked="NavigationView_ItemInvoked"
             OpenPaneLength="240"
             PaneDisplayMode="Auto">
-            <!--  MenuItems are dynamically generated from NavigationRegistry in code-behind  -->
-            <NavigationView.MenuItems />
-
             <!--  Content area with Toolbar and Pages  -->
             <Grid>
                 <Grid.RowDefinitions>
@@ -52,7 +49,7 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <!--  Theme Toggle, Transaction Code, and CommandBar on same row  -->
+                <!--  Theme Toggle and CommandBar on same row  -->
                 <Grid Grid.Row="0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -71,48 +68,6 @@
                         OffContent="Light"
                         OnContent="Dark"
                         Toggled="ThemeToggleSwitch_Toggled" />
-
-                    <!--  Navigation command line  -->
-                    <Border
-                        Grid.Column="1"
-                        Padding="8,4"
-                        HorizontalAlignment="Center"
-                        Background="#0066B3"
-                        CornerRadius="4">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon
-                                VerticalAlignment="Center"
-                                FontSize="14"
-                                Foreground="White"
-                                Glyph="&#xE756;" />
-                            <TextBox
-                                x:Name="TransactionCodeTextBox"
-                                Width="120"
-                                VerticalAlignment="Center"
-                                FontFamily="Consolas"
-                                FontSize="13"
-                                KeyDown="TransactionCodeTextBox_KeyDown"
-                                PlaceholderText="page code"
-                                Text="{x:Bind ViewModel.TransactionCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                            <Button
-                                Padding="8,4"
-                                Background="#FFC107"
-                                Command="{x:Bind ViewModel.ExecuteTransactionCodeCommand}"
-                                CornerRadius="4"
-                                ToolTipService.ToolTip="Execute Transaction Code (Enter)">
-                                <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <FontIcon
-                                        FontSize="12"
-                                        Foreground="#003366"
-                                        Glyph="&#xE768;" />
-                                    <TextBlock
-                                        FontWeight="SemiBold"
-                                        Foreground="#003366"
-                                        Text="Execute" />
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
-                    </Border>
 
                     <!--  Compact CommandBar (right side)  -->
                     <CommandBar

@@ -5,11 +5,17 @@ namespace Moba.WinUI;
 using Backend.Extensions;
 using Backend.Interface;
 using Backend.Service;
+
 using Common.Configuration;
+using Common.Events;
 using Common.Serilog;
+
 using Controllers;
+
 using Domain;
+
 using Hubs;
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -19,21 +25,29 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+
 using Moba.WinUI.ViewModel;
+
 using Serilog;
 using Serilog.Events;
+
 using Service;
+
 using SharedUI.Extensions;
 using SharedUI.Interface;
 using SharedUI.Service;
 using SharedUI.Shell;
 using SharedUI.ViewModel;
+
 using Sound;
+
 using System.Diagnostics;
+
 using TrackPlan.Renderer;
+
 using Utilities;
+
 using View;
-using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 /// <summary>
 /// Provides application-specific behavior to supplement the default Application class.
@@ -184,9 +198,14 @@ public partial class App
         // Logging (required by HealthCheckService and SpeechHealthCheck)
         services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(Log.Logger, dispose: true));
 
-        // Navigation infrastructure
-        var navigationRegistry = new NavigationRegistry();
-        services.AddSingleton(navigationRegistry);
+        // Event Bus - Central event system for Backend → ViewModel communication
+        // Z21 publishes events, ViewModels subscribe
+        services.AddEventBus();
+
+        // Navigation infrastructure - discover and register pages
+        // Pages (Auto-discovery + Custom DI)
+        var corePages = NavigationRegistration.RegisterPages(services);
+        services.AddSingleton<List<PageMetadata>>(corePages);
 
         // UI Thread Dispatcher (platform-specific)
         services.AddUiDispatcher();
@@ -297,27 +316,11 @@ public partial class App
         services.AddSingleton<TrackPlan>();
         services.AddSingleton<TrackPlanViewModel>();
 
-        // Pages (Transient = new instance per navigation)
-        NavigationRegistration.RegisterPages(services, navigationRegistry);
-
         // Skin Provider
         services.AddSingleton<ISkinProvider, SkinProvider>();
 
         // MainWindow (Singleton = one instance for app lifetime)
         services.AddSingleton<MainWindow>();
-
-        // Plugin Loading (synchronous discovery and registration)
-        // Discovery happens during DI setup; initialization happens in PostStartupInitializationService
-        var pluginDirectory = Path.Combine(AppContext.BaseDirectory, "Plugins");
-        var pluginLoader = new PluginLoader(pluginDirectory, navigationRegistry);
-        
-        // Load and register plugins NOW (synchronous - during DI setup)
-        // This allows plugins to register their services and pages before the container is built
-        // Note: LoadPluginsAsync is safe to call synchronously here because it contains no awaits
-        // Pass null for logger since we don't have ILogger<PluginLoader> yet
-        pluginLoader.LoadPluginsAsync(services, null).Wait();
-        
-        services.AddSingleton(pluginLoader);  // Register for deferred initialization
 
         // DEFERRED: PostStartupInitializationService (runs after MainWindow.Loaded)
         // This calls pluginLoader.InitializePluginsAsync() to complete plugin initialization
@@ -533,7 +536,7 @@ public partial class App
                 // Register SignalR for real-time photo notifications
                 services.AddSignalR();
 
-                // CORS: Allow requests from any origin (required for MAUI mobile clients)
+                // CORS: Allow requests from any origin (requires for MAUI mobile clients)
                 services.AddCors(options =>
                 {
                     options.AddDefaultPolicy(policy =>
@@ -698,3 +701,4 @@ public partial class App
         }
     }
 }
+

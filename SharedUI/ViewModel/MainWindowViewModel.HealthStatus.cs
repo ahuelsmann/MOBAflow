@@ -46,13 +46,13 @@ public partial class MainWindowViewModel
     /// Indicates whether post-startup initialization is running.
     /// </summary>
     [ObservableProperty]
-    private bool isPostStartupInitializationRunning;
+    private bool _isPostStartupInitializationRunning;
 
     /// <summary>
     /// Status text for post-startup initialization.
     /// </summary>
     [ObservableProperty]
-    private string postStartupStatusText = string.Empty;
+    private string _postStartupStatusText = string.Empty;
 
     /// <summary>
     /// Updates the post-startup initialization status displayed in the status bar.

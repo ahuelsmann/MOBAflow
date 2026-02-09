@@ -9,9 +9,9 @@ using Interface;
 /// Base ViewModel for signal box elements.
 /// Provides two-way binding between domain model and UI.
 /// </summary>
-public partial class SbElementViewModel : ObservableObject, IViewModelWrapper<SbElement>
+public class SbElementViewModel : ObservableObject, IViewModelWrapper<SbElement>
 {
-    protected readonly SbElement _model;
+    private readonly SbElement _model;
 
     public SbElementViewModel(SbElement model)
     {
@@ -78,41 +78,41 @@ public partial class SbElementViewModel : ObservableObject, IViewModelWrapper<Sb
 /// <summary>
 /// ViewModel for straight track elements.
 /// </summary>
-public partial class SbTrackStraightViewModel : SbElementViewModel
+public class SbTrackStraightViewModel : SbElementViewModel
 {
     public SbTrackStraightViewModel(SbTrackStraight model) : base(model) { }
 
     /// <summary>
     /// Gets the typed model.
     /// </summary>
-    public new SbTrackStraight Model => (SbTrackStraight)_model;
+    public new SbTrackStraight Model => (SbTrackStraight)base.Model;
 }
 
 /// <summary>
 /// ViewModel for curved track elements.
 /// </summary>
-public partial class SbTrackCurveViewModel : SbElementViewModel
+public class SbTrackCurveViewModel : SbElementViewModel
 {
     public SbTrackCurveViewModel(SbTrackCurve model) : base(model) { }
 
     /// <summary>
     /// Gets the typed model.
     /// </summary>
-    public new SbTrackCurve Model => (SbTrackCurve)_model;
+    public new SbTrackCurve Model => (SbTrackCurve)base.Model;
 }
 
 /// <summary>
 /// ViewModel for switch elements.
 /// Manages DCC address and position state.
 /// </summary>
-public partial class SbSwitchViewModel : SbElementViewModel
+public class SbSwitchViewModel : SbElementViewModel
 {
     public SbSwitchViewModel(SbSwitch model) : base(model) { }
 
     /// <summary>
     /// Gets the typed model.
     /// </summary>
-    public new SbSwitch Model => (SbSwitch)_model;
+    public new SbSwitch Model => (SbSwitch)base.Model;
 
     /// <summary>
     /// Gets or sets the DCC address (0 = not configured).
@@ -137,14 +137,14 @@ public partial class SbSwitchViewModel : SbElementViewModel
 /// ViewModel for signal elements.
 /// Manages DCC address, system type, and current aspect.
 /// </summary>
-public partial class SbSignalViewModel : SbElementViewModel
+public class SbSignalViewModel : SbElementViewModel
 {
     public SbSignalViewModel(SbSignal model) : base(model) { }
 
     /// <summary>
     /// Gets the typed model.
     /// </summary>
-    public new SbSignal Model => (SbSignal)_model;
+    public new SbSignal Model => (SbSignal)base.Model;
 
     /// <summary>
     /// Gets or sets the DCC address (0 = not configured).
@@ -178,14 +178,14 @@ public partial class SbSignalViewModel : SbElementViewModel
 /// ViewModel for detector elements.
 /// Manages feedback address for occupancy detection.
 /// </summary>
-public partial class SbDetectorViewModel : SbElementViewModel
+public class SbDetectorViewModel : SbElementViewModel
 {
     public SbDetectorViewModel(SbDetector model) : base(model) { }
 
     /// <summary>
     /// Gets the typed model.
     /// </summary>
-    public new SbDetector Model => (SbDetector)_model;
+    public new SbDetector Model => (SbDetector)base.Model;
 
     /// <summary>
     /// Gets or sets the feedback address (0 = not configured).

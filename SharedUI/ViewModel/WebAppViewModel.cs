@@ -72,7 +72,7 @@ public partial class WebAppViewModel : ObservableObject
     #region Z21 Connection
 
     [ObservableProperty]
-    private string z21IpAddress = "192.168.0.111";
+    private string _z21IpAddress = "192.168.0.111";
 
     /// <summary>
     /// Available IP addresses for Z21 connection (from recent connections).
@@ -89,34 +89,34 @@ public partial class WebAppViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private bool isConnected;
+    private bool _isConnected;
 
     [ObservableProperty]
-    private bool isTrackPowerOn;
+    private bool _isTrackPowerOn;
 
     [ObservableProperty]
-    private int mainCurrent;
+    private int _mainCurrent;
 
     [ObservableProperty]
-    private int temperature;
+    private int _temperature;
 
     [ObservableProperty]
-    private int supplyVoltage;
+    private int _supplyVoltage;
 
     [ObservableProperty]
-    private int vccVoltage;
+    private int _vccVoltage;
 
     [ObservableProperty]
-    private string statusText = "Disconnected";
+    private string _statusText = "Disconnected";
 
     [ObservableProperty]
-    private string serialNumber = "-";
+    private string _serialNumber = "-";
 
     [ObservableProperty]
-    private string firmwareVersion = "-";
+    private string _firmwareVersion = "-";
 
     [ObservableProperty]
-    private string hardwareType = "-";
+    private string _hardwareType = "-";
 
     partial void OnZ21IpAddressChanged(string value)
     {
@@ -178,19 +178,19 @@ public partial class WebAppViewModel : ObservableObject
     #region Feedback Statistics
 
     [ObservableProperty]
-    private ObservableCollection<InPortStatistic> statistics = [];
+    private ObservableCollection<InPortStatistic> _statistics = [];
 
     [ObservableProperty]
-    private int countOfFeedbackPoints = 3;
+    private int _countOfFeedbackPoints = 3;
 
     [ObservableProperty]
-    private int globalTargetLapCount = 10;
+    private int _globalTargetLapCount = 10;
 
     [ObservableProperty]
-    private bool useTimerFilter;
+    private bool _useTimerFilter;
 
     [ObservableProperty]
-    private double timerIntervalSeconds = 2.0;
+    private double _timerIntervalSeconds = 2.0;
 
     // Last feedback time tracking for timer filter
     private readonly Dictionary<int, DateTime> _lastFeedbackTime = [];

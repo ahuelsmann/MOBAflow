@@ -67,10 +67,12 @@
                 Background="Transparent"
                 BorderBrush="Transparent"
                 CornerRadius="4"
-                ToolTipService.ToolTip="Auto Hide">
+                ToolTipService.ToolTip="{x:Bind IsPinned, Mode=OneWay, Converter={StaticResource PinTooltipConverter}}">
                 <FontIcon
+                    x:Name="PinIcon"
                     FontFamily="{StaticResource SymbolThemeFontFamily}"
                     FontSize="14"
+                    Foreground="{x:Bind IsPinned, Mode=OneWay, Converter={StaticResource PinForegroundConverter}}"
                     Glyph="&#xE718;" />
             </Button>
 

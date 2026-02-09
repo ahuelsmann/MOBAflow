@@ -3,11 +3,16 @@ namespace Moba.SharedUI.ViewModel;
 
 using Backend.Interface;
 using Backend.Model;
+
 using Common.Configuration;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Interface;
+
 using Microsoft.Extensions.Logging;
+
 using System.ComponentModel;
 
 /// <summary>
@@ -34,7 +39,7 @@ public partial class TrainControlViewModel : ObservableObject
     private bool _isLoadingPreset;
 
     // === DCC Speed Steps Configuration ===
-    
+
     /// <summary>
     /// DCC speed step configuration (14, 28, or 128 steps).
     /// This determines how many discrete speed levels are available.
@@ -42,7 +47,7 @@ public partial class TrainControlViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(MaxSpeedStep))]
     [NotifyPropertyChangedFor(nameof(SpeedKmh))]
-    private DccSpeedSteps speedSteps = DccSpeedSteps.Steps128;
+    private DccSpeedSteps _speedSteps = DccSpeedSteps.Steps128;
 
     /// <summary>
     /// Maximum speed step value based on SpeedSteps configuration.
@@ -52,7 +57,7 @@ public partial class TrainControlViewModel : ObservableObject
     {
         DccSpeedSteps.Steps14 => 13,
         DccSpeedSteps.Steps28 => 27,
-        DccSpeedSteps.Steps128 or _ => 126
+        _ => 126
     };
 
     /// <summary>
@@ -69,11 +74,6 @@ public partial class TrainControlViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(ToggleF6Command))]
     [NotifyCanExecuteChangedFor(nameof(ToggleF7Command))]
     [NotifyCanExecuteChangedFor(nameof(ToggleF8Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF9Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF10Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF11Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF12Command))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleF13Command))]
     [NotifyCanExecuteChangedFor(nameof(ToggleF14Command))]
     [NotifyCanExecuteChangedFor(nameof(ToggleF15Command))]
     [NotifyCanExecuteChangedFor(nameof(ToggleF16Command))]
@@ -82,7 +82,7 @@ public partial class TrainControlViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(ToggleF19Command))]
     [NotifyCanExecuteChangedFor(nameof(ToggleF20Command))]
     [NotifyCanExecuteChangedFor(nameof(EmergencyStopCommand))]
-    private int locoAddress = 3;
+    private int _locoAddress = 3;
 
     // === Locomotive Presets ===
 
@@ -90,25 +90,25 @@ public partial class TrainControlViewModel : ObservableObject
     /// Currently selected preset index (0, 1, or 2).
     /// </summary>
     [ObservableProperty]
-    private int selectedPresetIndex;
+    private int _selectedPresetIndex;
 
     /// <summary>
     /// First locomotive preset.
     /// </summary>
     [ObservableProperty]
-    private LocomotivePreset preset1 = new() { Name = "Lok 1", DccAddress = 3 };
+    private LocomotivePreset _preset1 = new() { Name = "Lok 1", DccAddress = 3 };
 
     /// <summary>
     /// Second locomotive preset.
     /// </summary>
     [ObservableProperty]
-    private LocomotivePreset preset2 = new() { Name = "Lok 2", DccAddress = 4 };
+    private LocomotivePreset _preset2 = new() { Name = "Lok 2", DccAddress = 4 };
 
     /// <summary>
     /// Third locomotive preset.
     /// </summary>
     [ObservableProperty]
-    private LocomotivePreset preset3 = new() { Name = "Lok 3", DccAddress = 5 };
+    private LocomotivePreset _preset3 = new() { Name = "Lok 3", DccAddress = 5 };
 
     /// <summary>
     /// Gets the currently selected preset.
@@ -193,7 +193,7 @@ public partial class TrainControlViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SpeedKmh))]
-    private int speed;
+    private int _speed;
 
     // === Locomotive Series (Baureihe) for Vmax calculation ===
 
@@ -203,11 +203,11 @@ public partial class TrainControlViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SpeedKmh))]
-    private string selectedLocoSeries = string.Empty;
+    private string _selectedLocoSeries = string.Empty;
 
     partial void OnSelectedLocoSeriesChanged(string value)
     {
-        // Persist to settings
+        _ = value;
         _ = SaveLocoSeriesSettingsAsync();
     }
 
@@ -217,11 +217,11 @@ public partial class TrainControlViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SpeedKmh))]
-    private int selectedVmax = 200;
+    private int _selectedVmax = 200;
 
     partial void OnSelectedVmaxChanged(int value)
     {
-        // Persist to settings
+        _ = value;
         _ = SaveLocoSeriesSettingsAsync();
     }
 
@@ -231,8 +231,8 @@ public partial class TrainControlViewModel : ObservableObject
     /// Uses SelectedVmax (default 200 km/h if not set).
     /// Calculation: (Speed / MaxSpeedStep) * Vmax
     /// Example (128 Steps, Vmax 200 km/h):
-    /// - Step 126 (max): (126/126) * 200 = 200 km/h ✓
-    /// - Step 63 (50%): (63/126) * 200 = 100 km/h ✓
+    /// - Step 126 (max): (126/126) * 200 = 200 km/h
+    /// - Step 63 (50%): (63/126) * 200 = 100 km/h
     /// </summary>
     public int SpeedKmh
     {
@@ -240,17 +240,17 @@ public partial class TrainControlViewModel : ObservableObject
         {
             // Use SelectedVmax (which defaults to 200 if not explicitly set)
             var vmax = SelectedVmax > 0 ? SelectedVmax : 200;
-            
+
             // Avoid division by zero
             if (MaxSpeedStep == 0)
             {
                 _logger?.LogWarning("MaxSpeedStep is 0! Returning 0 km/h. SpeedSteps={SpeedSteps}", SpeedSteps);
                 return 0;
             }
-            
+
             // Calculate: (Speed / MaxSpeedStep) * Vmax
             var result = (int)Math.Round((double)Speed / MaxSpeedStep * vmax);
-            
+
             // VALIDATION: Check for unrealistic values (debugging aid)
             if (result > 500)
             {
@@ -259,7 +259,7 @@ public partial class TrainControlViewModel : ObservableObject
                     "Speed={Speed}, MaxSpeedStep={MaxSpeedStep}, SelectedVmax={Vmax}, SpeedSteps={SpeedSteps}",
                     result, Speed, MaxSpeedStep, vmax, SpeedSteps);
             }
-            
+
             return result;
         }
     }
@@ -268,79 +268,79 @@ public partial class TrainControlViewModel : ObservableObject
     /// Direction: true = forward, false = backward.
     /// </summary>
     [ObservableProperty]
-    private bool isForward = true;
+    private bool _isForward = true;
 
     /// <summary>
     /// Function states F0-F20. Array index corresponds to function number.
     /// </summary>
     [ObservableProperty]
-    private bool isF0On;
+    private bool _isF0On;
 
     [ObservableProperty]
-    private bool isF1On;
+    private bool _isF1On;
 
     [ObservableProperty]
-    private bool isF2On;
+    private bool _isF2On;
 
     [ObservableProperty]
-    private bool isF3On;
+    private bool _isF3On;
 
     [ObservableProperty]
-    private bool isF4On;
+    private bool _isF4On;
 
     [ObservableProperty]
-    private bool isF5On;
+    private bool _isF5On;
 
     [ObservableProperty]
-    private bool isF6On;
+    private bool _isF6On;
 
     [ObservableProperty]
-    private bool isF7On;
+    private bool _isF7On;
 
     [ObservableProperty]
-    private bool isF8On;
+    private bool _isF8On;
 
     [ObservableProperty]
-    private bool isF9On;
+    private bool _isF9On;
 
     [ObservableProperty]
-    private bool isF10On;
+    private bool _isF10On;
 
     [ObservableProperty]
-    private bool isF11On;
+    private bool _isF11On;
 
     [ObservableProperty]
-    private bool isF12On;
+    private bool _isF12On;
 
     [ObservableProperty]
-    private bool isF13On;
+    private bool _isF13On;
 
     [ObservableProperty]
-    private bool isF14On;
+    private bool _isF14On;
 
     [ObservableProperty]
-    private bool isF15On;
+    private bool _isF15On;
 
     [ObservableProperty]
-    private bool isF16On;
+    private bool _isF16On;
 
     [ObservableProperty]
-    private bool isF17On;
+    private bool _isF17On;
 
     [ObservableProperty]
-    private bool isF18On;
+    private bool _isF18On;
 
     [ObservableProperty]
-    private bool isF19On;
+    private bool _isF19On;
 
     [ObservableProperty]
-    private bool isF20On;
+    private bool _isF20On;
 
     /// <summary>
     /// Status message for UI feedback.
     /// </summary>
     [ObservableProperty]
-    private string statusMessage = "Ready";
+    private string _statusMessage = "Ready";
 
     /// <summary>
     /// Indicates if Z21 is connected.
@@ -354,27 +354,27 @@ public partial class TrainControlViewModel : ObservableObject
     /// Updated via Z21 SystemState broadcasts.
     /// </summary>
     [ObservableProperty]
-    private int mainTrackCurrent;
+    private int _mainTrackCurrent;
 
     /// <summary>
     /// Programming track current consumption in milliamperes (mA).
     /// Updated via Z21 SystemState broadcasts.
     /// </summary>
     [ObservableProperty]
-    private int progTrackCurrent;
+    private int _progTrackCurrent;
 
     /// <summary>
     /// Z21 supply voltage in millivolts (mV).
     /// Typically ~16000 mV (16V) for normal operation.
     /// </summary>
     [ObservableProperty]
-    private int supplyVoltage;
+    private int _supplyVoltage;
 
     /// <summary>
     /// Z21 internal temperature in degrees Celsius.
     /// </summary>
     [ObservableProperty]
-    private int temperature;
+    private int _temperature;
 
     /// <summary>
     /// Filtered (smoothed) main track current in milliamperes (mA).
@@ -382,14 +382,14 @@ public partial class TrainControlViewModel : ObservableObject
     /// Updated via Z21 SystemState broadcasts.
     /// </summary>
     [ObservableProperty]
-    private int filteredMainCurrent;
+    private int _filteredMainCurrent;
 
     /// <summary>
     /// Peak (maximum) main track current since connection or last reset, in milliamperes (mA).
     /// Useful for identifying maximum load during operation.
     /// </summary>
     [ObservableProperty]
-    private int peakMainCurrent;
+    private int _peakMainCurrent;
 
     // === Speed Ramp Configuration ===
 
@@ -398,7 +398,7 @@ public partial class TrainControlViewModel : ObservableObject
     /// When enabled, speed changes happen gradually instead of instantly.
     /// </summary>
     [ObservableProperty]
-    private bool isRampEnabled = true;
+    private bool _isRampEnabled = true;
 
     /// <summary>
     /// Speed step increment per ramp interval (1-20).
@@ -406,7 +406,7 @@ public partial class TrainControlViewModel : ObservableObject
     /// Default: 5 (moderate acceleration).
     /// </summary>
     [ObservableProperty]
-    private double rampStepSize = 5;
+    private double _rampStepSize = 5;
 
     /// <summary>
     /// Delay between speed steps in milliseconds (50-500).
@@ -414,13 +414,13 @@ public partial class TrainControlViewModel : ObservableObject
     /// Default: 100ms.
     /// </summary>
     [ObservableProperty]
-    private double rampIntervalMs = 100;
+    private double _rampIntervalMs = 100;
 
     /// <summary>
     /// Indicates if a ramp operation is currently in progress.
     /// </summary>
     [ObservableProperty]
-    private bool isRamping;
+    private bool _isRamping;
 
     private CancellationTokenSource? _rampCancellationTokenSource;
 
@@ -450,7 +450,7 @@ public partial class TrainControlViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(NextStationTrack))]
     [NotifyPropertyChangedFor(nameof(NextStationHasValue))]
     [NotifyPropertyChangedFor(nameof(NextStationIsExitOnLeft))]
-    private Domain.Journey? currentJourney;
+    private Domain.Journey? _currentJourney;
 
     /// <summary>
     /// Current station index in the journey (0-based).
@@ -474,7 +474,7 @@ public partial class TrainControlViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(NextStationTrack))]
     [NotifyPropertyChangedFor(nameof(NextStationHasValue))]
     [NotifyPropertyChangedFor(nameof(NextStationIsExitOnLeft))]
-    private int currentStationIndex;
+    private int _currentStationIndex;
 
     // === Computed Properties for TimetableStopsControl ===
 
@@ -569,7 +569,7 @@ public partial class TrainControlViewModel : ObservableObject
     /// Used by TimetableStopsControl to choose the next station exit direction icon.
     /// </summary>
     public bool NextStationIsExitOnLeft => GetNextStation()?.IsExitOnLeft ?? false;
-    
+
     private Domain.Station? GetPreviousStation()
     {
         if (CurrentJourney == null || CurrentJourney.Stations.Count == 0)
@@ -626,7 +626,7 @@ public partial class TrainControlViewModel : ObservableObject
 
         // Subscribe to loco info updates
         _z21.OnLocoInfoChanged += OnLocoInfoReceived;
-        
+
         // Subscribe to system state updates (for amperemeter)
         _z21.OnSystemStateChanged += OnSystemStateChanged;
 
@@ -634,7 +634,7 @@ public partial class TrainControlViewModel : ObservableObject
         if (_mainWindowViewModel != null)
         {
             _mainWindowViewModel.PropertyChanged += OnMainWindowViewModelPropertyChanged;
-            
+
             // Initialize with current journey if available
             UpdateJourneyFromMainViewModel();
         }
@@ -725,8 +725,6 @@ public partial class TrainControlViewModel : ObservableObject
     {
         try
         {
-            if (_settingsService == null) return;
-
             var settings = _settingsService.GetSettings();
             settings.TrainControl.SelectedLocoSeries = SelectedLocoSeries;
             settings.TrainControl.SelectedVmax = SelectedVmax;
@@ -746,8 +744,6 @@ public partial class TrainControlViewModel : ObservableObject
     {
         try
         {
-            if (_settingsService == null) return;
-
             // Note: Full TrainControlSettings persistence should be handled by the page/service
             // This just marks that settings need updating
             await _settingsService.SaveSettingsAsync(new AppSettings()).ConfigureAwait(false);
@@ -777,10 +773,10 @@ public partial class TrainControlViewModel : ObservableObject
         {
             var preset = CurrentPreset;
             LocoAddress = preset.DccAddress;
-            
+
             // Always start at speed 0 (safety feature - no unexpected movement)
             Speed = 0;
-            
+
             // Always start in forward direction
             IsForward = true;
 
@@ -814,7 +810,7 @@ public partial class TrainControlViewModel : ObservableObject
 
         var preset = CurrentPreset;
         preset.DccAddress = LocoAddress;
-        
+
         // Speed and IsForward are NOT saved - always reset to 0/forward on load
         // This is a safety feature to prevent unexpected locomotive movement
 
@@ -833,21 +829,6 @@ public partial class TrainControlViewModel : ObservableObject
     /// </summary>
     partial void OnSelectedPresetIndexChanged(int value)
     {
-        // Save current preset before switching - if not loading
-        if (!_isLoadingPreset)
-        {
-            // Get the OLD preset and save state to it
-            var oldPreset = value switch
-            {
-                0 => Preset2, // was 1, now 0
-                1 => SelectedPresetIndex == 0 ? Preset1 : Preset3,
-                2 => Preset2, // was 1, now 2
-                _ => Preset1
-            };
-            // Actually, we should save to the PREVIOUS preset, but we don't have it here
-            // So we save after applying the new preset
-        }
-
         ApplyCurrentPreset();
     }
 
@@ -1076,16 +1057,13 @@ public partial class TrainControlViewModel : ObservableObject
     private bool _skipSpeedChangeHandler;
 
     /// <summary>
-    /// Locomotive command execution check.
-    /// TEMP: Disabled Z21 connection check for UI testing (2026-01-16).
-    /// Commands will be attempted even without Z21 hardware, but will fail gracefully.
-    /// </remarks>
-    /// TODO: Re-enable Z21 connection check when hardware is available.
-    /// To restore: Uncomment the line below and delete the "=> true" line.
-    /// This was temporarily disabled to test function button UI without Z21 connected.
+    /// Locomotive command execution check used for UI testing without hardware.
+    /// </summary>
+    /// <remarks>
+    /// TODO: Re-enable the Z21 connection check when hardware is available.
     /// </remarks>
     private bool CanExecuteLocoCommand() => true;
-    
+
     // private bool CanExecuteLocoCommand() => _z21.IsConnected && LocoAddress >= 1 && LocoAddress <= 9999;
 
     /// <summary>
@@ -1340,7 +1318,7 @@ public partial class TrainControlViewModel : ObservableObject
 
     /// <summary>
     /// Selects locomotive preset 1.
-    /// </summary]
+    /// </summary>
     [RelayCommand]
     private void SelectPreset1()
     {
@@ -1403,13 +1381,13 @@ public partial class TrainControlViewModel : ObservableObject
             FilteredMainCurrent = systemState.FilteredMainCurrent;
             SupplyVoltage = systemState.SupplyVoltage;
             Temperature = systemState.Temperature;
-            
+
             // Track peak current
             if (systemState.MainCurrent > PeakMainCurrent)
             {
                 PeakMainCurrent = systemState.MainCurrent;
             }
-            
+
             _logger?.LogDebug(
                 "SystemState updated: MainCurrent={MainCurrent}mA (Filtered={FilteredCurrent}mA, Peak={PeakCurrent}mA), " +
                 "ProgCurrent={ProgCurrent}mA, SupplyVoltage={SupplyVoltage}mV, Temperature={Temperature}°C",

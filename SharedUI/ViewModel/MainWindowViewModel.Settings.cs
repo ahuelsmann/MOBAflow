@@ -399,7 +399,7 @@ public partial class MainWindowViewModel
                 _ = _settingsService?.SaveSettingsAsync(_settings);
 
                 // Immediately update Track Statistics on Overview page
-                InitializeStatisticsFromFeedbackPoints();
+                _uiDispatcher.EnqueueOnUi(InitializeStatisticsFromFeedbackPoints);
             }
         }
     }
@@ -813,13 +813,13 @@ public partial class MainWindowViewModel
     {
         try
         {
-            Debug.WriteLine("🔊 [TEST SPEECH] Button clicked");
-            Debug.WriteLine($"🔊 [TEST SPEECH] Speech Key configured: {!string.IsNullOrWhiteSpace(_settings.Speech.Key)}");
-            Debug.WriteLine($"🔊 [TEST SPEECH] Speech Key length: {_settings.Speech.Key?.Length ?? 0}");
-            Debug.WriteLine($"🔊 [TEST SPEECH] Speech Region: {_settings.Speech.Region}");
-            Debug.WriteLine($"🔊 [TEST SPEECH] Selected Engine: {_settings.Speech.SpeakerEngineName}");
-            
-            // ✅ FIX: Reset error state on UI thread
+            Debug.WriteLine("[TEST SPEECH] Button clicked");
+            Debug.WriteLine($"[TEST SPEECH] Speech key configured: {!string.IsNullOrWhiteSpace(_settings.Speech.Key)}");
+            Debug.WriteLine($"[TEST SPEECH] Speech key length: {_settings.Speech.Key.Length}");
+            Debug.WriteLine($"[TEST SPEECH] Speech region: {_settings.Speech.Region}");
+            Debug.WriteLine($"[TEST SPEECH] Selected engine: {_settings.Speech.SpeakerEngineName}");
+
+            // FIX: Reset error state on UI thread
             _uiDispatcher.InvokeOnUi(() =>
             {
                 ShowErrorMessage = false;
@@ -829,16 +829,16 @@ public partial class MainWindowViewModel
             // Use custom test message from settings (user can modify in UI)
             var testMessage = SpeechTestMessage;
 
-            Debug.WriteLine($"🔊 [TEST SPEECH] AnnouncementService available: {_announcementService != null}");
+            Debug.WriteLine($"[TEST SPEECH] AnnouncementService available: {_announcementService != null}");
 
             // Use the announcement service if available
             if (_announcementService != null)
             {
-                // ✅ FIX: Check if speaker engine is properly configured
+                // FIX: Check if speaker engine is properly configured
                 if (!_announcementService.IsSpeakerEngineAvailable)
                 {
-                    Debug.WriteLine("🔊 [TEST SPEECH] ❌ Speaker engine not available");
-                    
+                    Debug.WriteLine("[TEST SPEECH] Speaker engine not available");
+
                     _uiDispatcher.InvokeOnUi(() =>
                     {
                         ErrorMessage = "Speech engine not configured. Please configure Azure Speech Service in Settings or select Windows SAPI engine.";
@@ -847,49 +847,26 @@ public partial class MainWindowViewModel
                     return;
                 }
 
-                Debug.WriteLine("🔊 [TEST SPEECH] Calling GenerateAndSpeakAnnouncementAsync...");
-                
+                Debug.WriteLine("[TEST SPEECH] Calling GenerateAndSpeakAnnouncementAsync...");
+
                 var testJourney = new Journey { Text = testMessage };
                 var testStation = new Station { Name = "Test", IsExitOnLeft = false };
                 await _announcementService.GenerateAndSpeakAnnouncementAsync(testJourney, testStation, 1).ConfigureAwait(false);
-                
-                Debug.WriteLine("🔊 [TEST SPEECH] ✅ GenerateAndSpeakAnnouncementAsync completed");
-                
-                // ✅ SUCCESS: Show success message on UI thread
+
+                Debug.WriteLine("[TEST SPEECH] GenerateAndSpeakAnnouncementAsync completed");
+
+                // SUCCESS: Show success message on UI thread
                 _uiDispatcher.InvokeOnUi(() =>
                 {
                     ShowSuccessMessage = true;
-                });
-                await Task.Delay(3000).ConfigureAwait(false);
-                _uiDispatcher.InvokeOnUi(() =>
-                {
-                    ShowSuccessMessage = false;
-                });
-            }
-            else
-            {
-                Debug.WriteLine("🔊 [TEST SPEECH] ❌ AnnouncementService is NULL");
-                
-                // ✅ FIX: Show error on UI thread
-                _uiDispatcher.InvokeOnUi(() =>
-                {
-                    ErrorMessage = "Speech service not available";
-                    ShowErrorMessage = true;
+                    ShowErrorMessage = false;
                 });
             }
         }
         catch (Exception ex)
         {
-            // ✅ FIX: Show error on UI thread
-            Debug.WriteLine($"🔊 [TEST SPEECH] ❌ Exception: {ex.Message}");
-            Debug.WriteLine($"🔊 [TEST SPEECH] ❌ Stack Trace: {ex.StackTrace}");
-            
-            _logger.LogError(ex, "❌ Speech test failed");
-            _uiDispatcher.InvokeOnUi(() =>
-            {
-                ErrorMessage = $"Speech test failed: {ex.Message}";
-                ShowErrorMessage = true;
-            });
+            ErrorMessage = ex.Message;
+            ShowErrorMessage = true;
         }
     }
     #endregion

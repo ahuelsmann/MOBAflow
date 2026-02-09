@@ -105,13 +105,6 @@ Here you'll find all information about three platforms:
 
 ## 🎓 For Developers & Contributors
 
-### Plugin Development
-
-- [`PLUGIN-DEVELOPMENT.md`](wiki/PLUGIN-DEVELOPMENT.md) - Develop custom plugins
-  - C# Plugin API
-  - Registration & Deployment
-  - Examples & Templates
-
 ### Contributing to MOBAflow
 
 - **How to contribute:** See [`CONTRIBUTING.md`](../CONTRIBUTING.md) (in repository root)

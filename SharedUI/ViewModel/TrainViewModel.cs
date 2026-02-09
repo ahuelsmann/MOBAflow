@@ -143,10 +143,10 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
     }
 
     [RelayCommand]
-    private void DeleteLocomotive(LocomotiveViewModel locomotiveVM)
+    private void DeleteLocomotive(LocomotiveViewModel locomotiveVm)
     {
         // Remove ID from Train
-        _model.LocomotiveIds.Remove(locomotiveVM.Model.Id);
+        _model.LocomotiveIds.Remove(locomotiveVm.Model.Id);
         
         // Note: We don't remove from Project.Locomotives (might be used elsewhere)
         
@@ -170,10 +170,10 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
     }
 
     [RelayCommand]
-    private void DeleteWagon(WagonViewModel wagonVM)
+    private void DeleteWagon(WagonViewModel wagonVm)
     {
         // Remove ID from Train
-        _model.WagonIds.Remove(wagonVM.Model.Id);
+        _model.WagonIds.Remove(wagonVm.Model.Id);
         
         // Note: We don't remove from Project wagons (might be used elsewhere)
         
@@ -217,9 +217,9 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
         
         // Update Model.LocomotiveIds to match ViewModel order
         Model.LocomotiveIds.Clear();
-        foreach (var locomotiveVM in currentLocomotives)
+        foreach (var locomotiveVm in currentLocomotives)
         {
-            Model.LocomotiveIds.Add(locomotiveVM.Model.Id);
+            Model.LocomotiveIds.Add(locomotiveVm.Model.Id);
         }
 
         // Renumber based on new order
@@ -241,9 +241,9 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
         
         // Update Model.WagonIds to match ViewModel order
         Model.WagonIds.Clear();
-        foreach (var wagonVM in currentWagons)
+        foreach (var wagonVm in currentWagons)
         {
-            Model.WagonIds.Add(wagonVM.Model.Id);
+            Model.WagonIds.Add(wagonVm.Model.Id);
         }
 
         // Renumber based on new order

@@ -1,10 +1,18 @@
 namespace Moba.WinUI.View;
 
+using Common.Navigation;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using System.Reflection;
 
+[NavigationItem(
+    Tag = "info",
+    Title = "Info",
+    Icon = "\uE946",
+    Category = NavigationCategory.Help,
+    Order = 20)]
 public sealed partial class InfoPage : Page
 {
     private readonly Dictionary<TreeViewNode, string> _sections = [];

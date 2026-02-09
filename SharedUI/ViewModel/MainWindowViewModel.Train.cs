@@ -3,8 +3,11 @@ namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
+
 using Microsoft.Extensions.Logging;
+
 using System.Diagnostics;
 
 /// <summary>
@@ -14,45 +17,45 @@ public partial class MainWindowViewModel
 {
     #region Train Selection Properties
     [ObservableProperty]
-    private LocomotiveViewModel? selectedLocomotive;
+    private LocomotiveViewModel? _selectedLocomotive;
 
     [ObservableProperty]
-    private PassengerWagonViewModel? selectedPassengerWagon;
+    private PassengerWagonViewModel? _selectedPassengerWagon;
 
     [ObservableProperty]
-    private GoodsWagonViewModel? selectedGoodsWagon;
+    private GoodsWagonViewModel? _selectedGoodsWagon;
 
     /// <summary>
     /// The currently selected object for TrainsPage properties panel.
     /// Displays: SelectedLocomotive, SelectedPassengerWagon, SelectedGoodsWagon, or SelectedTrain
     /// </summary>
     [ObservableProperty]
-    private object? trainsPageSelectedObject;
+    private object? _trainsPageSelectedObject;
 
     /// <summary>
     /// Search text for filtering locomotives.
     /// </summary>
     [ObservableProperty]
-    private string locomotiveSearchText = string.Empty;
+    private string _locomotiveSearchText = string.Empty;
 
     /// <summary>
     /// Search text for filtering passenger wagons.
     /// </summary>
     [ObservableProperty]
-    private string passengerWagonSearchText = string.Empty;
+    private string _passengerWagonSearchText = string.Empty;
 
     /// <summary>
     /// Search text for filtering goods wagons.
     /// </summary>
     [ObservableProperty]
-    private string goodsWagonSearchText = string.Empty;
+    private string _goodsWagonSearchText = string.Empty;
 
     partial void OnSelectedLocomotiveChanged(LocomotiveViewModel? value)
     {
         TrainsPageSelectedObject = value;
         AttachLocomotivePhotoCommand(value);
         DeleteLocomotiveCommand.NotifyCanExecuteChanged();
-        
+
         // Subscribe to PropertyChanged for auto-save
         if (value != null)
         {
@@ -65,7 +68,7 @@ public partial class MainWindowViewModel
         TrainsPageSelectedObject = value;
         AttachWagonPhotoCommand(value);
         DeletePassengerWagonCommand.NotifyCanExecuteChanged();
-        
+
         // Subscribe to PropertyChanged for auto-save
         if (value != null)
         {
@@ -78,7 +81,7 @@ public partial class MainWindowViewModel
         TrainsPageSelectedObject = value;
         AttachWagonPhotoCommand(value);
         DeleteGoodsWagonCommand.NotifyCanExecuteChanged();
-        
+
         // Subscribe to PropertyChanged for auto-save
         if (value != null)
         {
@@ -207,7 +210,9 @@ public partial class MainWindowViewModel
     private void DeleteLocomotive()
     {
         if (SelectedLocomotive?.Model == null || SelectedProject?.Model == null)
+        {
             return;
+        }
 
         var locomotiveName = SelectedLocomotive.Name;
         SelectedProject.Model.Locomotives.Remove(SelectedLocomotive.Model);
@@ -411,90 +416,85 @@ public partial class MainWindowViewModel
     {
         try
         {
-            Debug.WriteLine($"📸 AssignLatestPhoto START: {photoPath}");
+            Debug.WriteLine($"[PHOTO] AssignLatestPhoto start: {photoPath}");
             Debug.WriteLine($"   SelectedProject: {(SelectedProject != null ? "YES" : "NO")}");
             Debug.WriteLine($"   SelectedLocomotive: {(SelectedLocomotive != null ? "YES" : "NO")}");
             Debug.WriteLine($"   SelectedPassengerWagon: {(SelectedPassengerWagon != null ? "YES" : "NO")}");
             Debug.WriteLine($"   SelectedGoodsWagon: {(SelectedGoodsWagon != null ? "YES" : "NO")}");
-            
-            _logger.LogInformation("📸 AssignLatestPhoto START: {PhotoPath}", photoPath);
-            _logger.LogInformation("   SelectedProject: {HasProject}", SelectedProject != null ? "YES" : "NO");
-            _logger.LogInformation("   SelectedLocomotive: {HasLoco}", SelectedLocomotive != null ? "YES" : "NO");
-            _logger.LogInformation("   SelectedPassengerWagon: {HasPW}", SelectedPassengerWagon != null ? "YES" : "NO");
-            _logger.LogInformation("   SelectedGoodsWagon: {HasGW}", SelectedGoodsWagon != null ? "YES" : "NO");
+
+            _logger.LogInformation("[PHOTO] AssignLatestPhoto start: {PhotoPath}", photoPath);
+            _logger.LogInformation("SelectedProject: {HasProject}", SelectedProject != null ? "YES" : "NO");
+            _logger.LogInformation("SelectedLocomotive: {HasLoco}", SelectedLocomotive != null ? "YES" : "NO");
+            _logger.LogInformation("SelectedPassengerWagon: {HasPW}", SelectedPassengerWagon != null ? "YES" : "NO");
+            _logger.LogInformation("SelectedGoodsWagon: {HasGW}", SelectedGoodsWagon != null ? "YES" : "NO");
 
             if (SelectedProject?.Model == null)
             {
-                Debug.WriteLine("❌ No project selected - cannot assign photo");
-                _logger.LogWarning("❌ No project selected - cannot assign photo");
+                Debug.WriteLine("No project selected - cannot assign photo");
+                _logger.LogWarning("No project selected - cannot assign photo");
                 return;
             }
 
-            // ✅ Assign to currently selected item
             if (SelectedLocomotive != null)
             {
-                Debug.WriteLine($"🚂 Assigning to locomotive: {SelectedLocomotive.Name}");
-                _logger.LogInformation("🚂 Assigning to locomotive: {Name}", SelectedLocomotive.Name);
-                
-                // Move photo from temp to locomotives folder with new GUID
-                Debug.WriteLine("🔄 Calling MovePhotoToCategory...");
+                Debug.WriteLine($"Assigning to locomotive: {SelectedLocomotive.Name}");
+                _logger.LogInformation("Assigning to locomotive: {Name}", SelectedLocomotive.Name);
+
+                Debug.WriteLine("Calling MovePhotoToCategory...");
                 var newPhotoPath = MovePhotoToCategory(photoPath, "locomotives", SelectedLocomotive.Model.Id);
-                Debug.WriteLine($"🔙 MovePhotoToCategory returned: {newPhotoPath ?? "NULL"}");
-                
+                Debug.WriteLine($"MovePhotoToCategory returned: {newPhotoPath ?? "NULL"}");
+
                 if (newPhotoPath != null)
                 {
-                    Debug.WriteLine("✅ Photo path valid, setting on ViewModel...");
-                    // ✅ Set via ViewModel property to trigger INotifyPropertyChanged!
+                    Debug.WriteLine("Photo path valid, setting on ViewModel");
                     SelectedLocomotive.PhotoPath = newPhotoPath;
-                    Debug.WriteLine($"✅ Photo assigned to locomotive: {SelectedLocomotive.Name} → {newPhotoPath}");
-                    _logger.LogInformation("✅ Photo assigned to locomotive: {Name} → {Path}", SelectedLocomotive.Name, newPhotoPath);
+                    Debug.WriteLine($"Photo assigned to locomotive: {SelectedLocomotive.Name} -> {newPhotoPath}");
+                    _logger.LogInformation("Photo assigned to locomotive: {Name} -> {Path}", SelectedLocomotive.Name, newPhotoPath);
                 }
                 else
                 {
-                    Debug.WriteLine("❌ Failed to move photo for locomotive (newPhotoPath is NULL)");
-                    _logger.LogError("❌ Failed to move photo for locomotive");
+                    Debug.WriteLine("Failed to move photo for locomotive (newPhotoPath is NULL)");
+                    _logger.LogError("Failed to move photo for locomotive");
                 }
             }
             else if (SelectedPassengerWagon != null)
             {
-                _logger.LogInformation("🚃 Assigning to passenger wagon: {Name}", SelectedPassengerWagon.Name);
-                
+                _logger.LogInformation("Assigning to passenger wagon: {Name}", SelectedPassengerWagon.Name);
+
                 var newPhotoPath = MovePhotoToCategory(photoPath, "wagons", SelectedPassengerWagon.Model.Id);
                 if (newPhotoPath != null)
                 {
-                    // ✅ Set via ViewModel property to trigger INotifyPropertyChanged!
                     SelectedPassengerWagon.PhotoPath = newPhotoPath;
-                    _logger.LogInformation("✅ Photo assigned to passenger wagon: {Name} → {Path}", SelectedPassengerWagon.Name, newPhotoPath);
+                    _logger.LogInformation("Photo assigned to passenger wagon: {Name} -> {Path}", SelectedPassengerWagon.Name, newPhotoPath);
                 }
                 else
                 {
-                    _logger.LogError("❌ Failed to move photo for passenger wagon");
+                    _logger.LogError("Failed to move photo for passenger wagon");
                 }
             }
             else if (SelectedGoodsWagon != null)
             {
-                _logger.LogInformation("🚃 Assigning to goods wagon: {Name}", SelectedGoodsWagon.Name);
-                
+                _logger.LogInformation("Assigning to goods wagon: {Name}", SelectedGoodsWagon.Name);
+
                 var newPhotoPath = MovePhotoToCategory(photoPath, "wagons", SelectedGoodsWagon.Model.Id);
                 if (newPhotoPath != null)
                 {
-                    // ✅ Set via ViewModel property to trigger INotifyPropertyChanged!
                     SelectedGoodsWagon.PhotoPath = newPhotoPath;
-                    _logger.LogInformation("✅ Photo assigned to goods wagon: {Name} → {Path}", SelectedGoodsWagon.Name, newPhotoPath);
+                    _logger.LogInformation("Photo assigned to goods wagon: {Name} -> {Path}", SelectedGoodsWagon.Name, newPhotoPath);
                 }
                 else
                 {
-                    _logger.LogError("❌ Failed to move photo for goods wagon");
+                    _logger.LogError("Failed to move photo for goods wagon");
                 }
             }
             else
             {
-                _logger.LogWarning("⚠️ No item selected - cannot assign photo");
+                _logger.LogWarning("No item selected - cannot assign photo");
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Failed to assign photo: {PhotoPath}", photoPath);
+            _logger.LogError(ex, "Failed to assign photo: {PhotoPath}", photoPath);
         }
     }
 
@@ -505,59 +505,57 @@ public partial class MainWindowViewModel
     {
         try
         {
-            Debug.WriteLine("📂 MovePhotoToCategory START");
+            Debug.WriteLine("MovePhotoToCategory start");
             Debug.WriteLine($"   tempPhotoPath: {tempPhotoPath}");
             Debug.WriteLine($"   category: {category}");
             Debug.WriteLine($"   entityId: {entityId}");
-            
-            // Get photo storage directory (base directory WITHOUT "photos" subfolder!)
+
+            // Get photo storage directory (base directory without "photos" subfolder)
             var baseDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MOBAflow");
             Debug.WriteLine($"   baseDir: {baseDir}");
-            
+
             // tempPhotoPath is relative (e.g., "photos/temp/xyz.jpg")
             var tempPath = Path.Combine(baseDir, tempPhotoPath);
             Debug.WriteLine($"   tempPath: {tempPath}");
 
             if (!File.Exists(tempPath))
             {
-                Debug.WriteLine($"❌ Temp photo NOT FOUND: {tempPath}");
+                Debug.WriteLine($"Temp photo not found: {tempPath}");
                 _logger.LogWarning("Temp photo not found: {Path}", tempPath);
                 return null;
             }
-            
-            Debug.WriteLine("✅ Temp photo exists!");
 
-            // Create category directory (e.g., "C:\...\MOBAflow\photos\locomotives")
+            Debug.WriteLine("Temp photo exists");
+
+            // Create category directory (e.g., "C:\\...\\MOBAflow\\photos\\locomotives")
             var categoryDir = Path.Combine(baseDir, "photos", category);
             Debug.WriteLine($"   categoryDir: {categoryDir}");
             Directory.CreateDirectory(categoryDir);
-            Debug.WriteLine("✅ Category directory created/verified");
+            Debug.WriteLine("Category directory created or verified");
 
-            // New filename with entity GUID
             var extension = Path.GetExtension(tempPath);
             var newFileName = $"{entityId}{extension}";
             var newPath = Path.Combine(categoryDir, newFileName);
             Debug.WriteLine($"   newPath: {newPath}");
 
-            // Move file
-            Debug.WriteLine("🔄 Moving file...");
+            Debug.WriteLine("Moving file");
             File.Move(tempPath, newPath, overwrite: true);
-            Debug.WriteLine("✅ File moved successfully!");
+            Debug.WriteLine("File moved successfully");
 
-            // Return relative path (e.g., "locomotives/guid.jpg")
             var relativePath = Path.Combine(category, newFileName).Replace("\\", "/");
-            Debug.WriteLine($"📂 Photo moved: {tempPhotoPath} → {relativePath}");
-            _logger.LogInformation("📂 Photo moved: {OldPath} → {NewPath}", tempPhotoPath, relativePath);
+            Debug.WriteLine($"Photo moved: {tempPhotoPath} -> {relativePath}");
+            _logger.LogInformation("Photo moved: {OldPath} -> {NewPath}", tempPhotoPath, relativePath);
 
             return relativePath;
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"❌ MovePhotoToCategory EXCEPTION: {ex.Message}");
-            Debug.WriteLine($"   StackTrace: {ex.StackTrace}");
+            Debug.WriteLine($"MovePhotoToCategory exception: {ex.Message}");
+            Debug.WriteLine($"StackTrace: {ex.StackTrace}");
             _logger.LogError(ex, "Failed to move photo: {Path}", tempPhotoPath);
             return null;
         }
     }
     #endregion
 }
+

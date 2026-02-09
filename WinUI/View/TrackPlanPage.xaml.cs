@@ -2,9 +2,19 @@
 
 namespace Moba.WinUI.View;
 
+using Common.Navigation;
+
 using Microsoft.UI.Xaml.Controls;
 using SharedUI.ViewModel;
 
+[NavigationItem(
+    Tag = "trackplaneditor",
+    Title = "MOBAtps",
+    Category = NavigationCategory.TrackManagement,
+    Order = 10,
+    FeatureToggleKey = "IsTrackPlanEditorPageAvailable",
+    BadgeLabelKey = "TrackPlanEditorPageLabel",
+    PathIconData = "M2,3 L4,3 L14,13 L12,13 Z M12,3 L14,3 L4,13 L2,13 Z")]
 public sealed partial class TrackPlanPage : Page
 {
     public TrackPlanViewModel ViewModel { get; }

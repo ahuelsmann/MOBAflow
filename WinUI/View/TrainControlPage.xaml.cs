@@ -2,6 +2,7 @@
 namespace Moba.WinUI.View;
 
 using Common.Configuration;
+using Common.Navigation;
 
 using Controls;
 
@@ -11,7 +12,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 
-using Service;
+using Moba.WinUI.Service;
 
 using SharedUI.Interface;
 using SharedUI.ViewModel;
@@ -29,6 +30,15 @@ using Windows.UI.ViewManagement;
 /// Supports multiple manufacturer-inspired color themes with system accent as default.
 /// Dynamically applies theme colors to all UI elements.
 /// </summary>
+[NavigationItem(
+    Tag = "traincontrol",
+    Title = "Train Control",
+    Icon = "\uEC49",
+    Category = NavigationCategory.TrainControl,
+    Order = 10,
+    FeatureToggleKey = "IsTrainControlPageAvailable",
+    BadgeLabelKey = "TrainControlPageLabel",
+    IsBold = true)]
 public sealed partial class TrainControlPage
 {
     private readonly ILocomotiveService _locomotiveService;
@@ -265,10 +275,10 @@ public sealed partial class TrainControlPage
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-       // Subscribe to skin and ViewModel events when page enters visual tree
-       _skinProvider.SkinChanged += OnSkinProviderChanged;
-       _skinProvider.DarkModeChanged += OnDarkModeChanged;
-       ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        // Subscribe to skin and ViewModel events when page enters visual tree
+        _skinProvider.SkinChanged += OnSkinProviderChanged;
+        _skinProvider.DarkModeChanged += OnDarkModeChanged;
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
 
         // Find and store references to themed elements
         _speedometer = FindName("Speedometer") as SpeedometerControl;

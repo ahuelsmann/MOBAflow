@@ -6,7 +6,7 @@ namespace Moba.MAUI.View;
 /// Splash page shown during app startup.
 /// Displays logo and "MOBAsmart" text, then navigates to main page.
 /// </summary>
-public partial class SplashPage : ContentPage
+public partial class SplashPage
 {
     public SplashPage()
     {

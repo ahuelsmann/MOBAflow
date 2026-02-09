@@ -12,7 +12,7 @@ using Microsoft.UI.Xaml.Media;
 using Windows.UI;
 
 /// <summary>
-/// Factory for creating NavigationViewItems from PageRegistration.
+/// Factory for creating NavigationViewItems from PageMetadata.
 /// Handles icon creation, badge rendering, and Feature Toggle visibility binding.
 /// </summary>
 public sealed class NavigationItemFactory
@@ -25,28 +25,28 @@ public sealed class NavigationItemFactory
     }
 
     /// <summary>
-    /// Creates a NavigationViewItem from a PageRegistration.
+    /// Creates a NavigationViewItem from a PageMetadata.
     /// </summary>
-    public NavigationViewItem CreateItem(PageRegistration registration)
+    public NavigationViewItem CreateItem(PageMetadata page)
     {
         var item = new NavigationViewItem
         {
-            Tag = registration.Tag,
-            Icon = CreateIcon(registration),
-            Content = CreateContent(registration)
+            Tag = page.Tag,
+            Icon = CreateIcon(page),
+            Content = CreateContent(page)
         };
 
         // Apply visibility based on Feature Toggle
-        if (!string.IsNullOrEmpty(registration.FeatureToggleKey))
+        if (!string.IsNullOrEmpty(page.FeatureToggleKey))
         {
-            var isVisible = GetFeatureToggleValue(registration.FeatureToggleKey);
+            var isVisible = GetFeatureToggleValue(page.FeatureToggleKey);
             item.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
         }
 
         // Add tooltip for PathIcon pages
-        if (!string.IsNullOrEmpty(registration.PathIconData))
+        if (!string.IsNullOrEmpty(page.PathIconData))
         {
-            ToolTipService.SetToolTip(item, registration.Title);
+            ToolTipService.SetToolTip(item, page.Title);
         }
 
         return item;
@@ -60,22 +60,22 @@ public sealed class NavigationItemFactory
     /// <summary>
     /// Creates the icon (FontIcon or PathIcon).
     /// </summary>
-    private IconElement CreateIcon(PageRegistration registration)
+    private IconElement CreateIcon(PageMetadata page)
     {
         // Use PathIcon if PathIconData is specified
-        if (!string.IsNullOrEmpty(registration.PathIconData))
+        if (!string.IsNullOrEmpty(page.PathIconData))
         {
             return new PathIcon
             {
                 Data = (Geometry)XamlBindingHelper.ConvertValue(
-                    typeof(Geometry), registration.PathIconData)
+                    typeof(Geometry), page.PathIconData)
             };
         }
 
         // Use FontIcon with Glyph
-        if (!string.IsNullOrEmpty(registration.IconGlyph))
+        if (!string.IsNullOrEmpty(page.Icon))
         {
-            return new FontIcon { Glyph = registration.IconGlyph };
+            return new FontIcon { Glyph = page.Icon };
         }
 
         // Fallback icon
@@ -85,15 +85,15 @@ public sealed class NavigationItemFactory
     /// <summary>
     /// Creates the content (title with optional badge).
     /// </summary>
-    private object CreateContent(PageRegistration registration)
+    private object CreateContent(PageMetadata page)
     {
-        var badgeLabel = GetBadgeLabel(registration);
+        var badgeLabel = GetBadgeLabel(page);
         var hasBadge = !string.IsNullOrEmpty(badgeLabel);
 
         // Simple title without badge
-        if (!hasBadge && !registration.IsBold)
+        if (!hasBadge && !page.IsBold)
         {
-            return registration.Title;
+            return page.Title;
         }
 
         // Title with formatting or badge
@@ -106,11 +106,11 @@ public sealed class NavigationItemFactory
         // Title TextBlock
         var titleBlock = new TextBlock
         {
-            Text = registration.Title,
+            Text = page.Title,
             VerticalAlignment = VerticalAlignment.Center
         };
 
-        if (registration.IsBold)
+        if (page.IsBold)
         {
             titleBlock.FontWeight = FontWeights.SemiBold;
         }
@@ -120,7 +120,7 @@ public sealed class NavigationItemFactory
         // Badge (Preview, SKIN, etc.)
         if (hasBadge)
         {
-            var badge = CreateBadge(badgeLabel, registration);
+            var badge = CreateBadge(badgeLabel, page);
             panel.Children.Add(badge);
         }
 
@@ -130,7 +130,7 @@ public sealed class NavigationItemFactory
     /// <summary>
     /// Creates a badge Border element.
     /// </summary>
-    private Border CreateBadge(string label, PageRegistration registration)
+    private Border CreateBadge(string label, PageMetadata registration)
     {
         // SKIN badge = purple (#5C2D91)
         var isSkinBadge = label.Equals("SKIN", StringComparison.OrdinalIgnoreCase);
@@ -178,7 +178,7 @@ public sealed class NavigationItemFactory
     /// <summary>
     /// Gets the badge label from settings or returns hardcoded "SKIN" for theme-enabled pages.
     /// </summary>
-    private string GetBadgeLabel(PageRegistration registration)
+    private string GetBadgeLabel(PageMetadata registration)
     {
         // Hardcoded SKIN badge for theme-enabled pages
         if (registration.Tag is "traincontrol2" or "signalbox2")

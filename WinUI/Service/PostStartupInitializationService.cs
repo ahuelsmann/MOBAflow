@@ -3,8 +3,11 @@
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
+
 using Microsoft.Extensions.Logging;
+
 using System.Diagnostics;
+
 using View;
 
 /// <summary>
@@ -15,20 +18,17 @@ public class PostStartupInitializationService
 {
     private static readonly TimeSpan MinimumIndicatorDuration = TimeSpan.FromSeconds(1.5);
     private readonly HealthCheckService _healthCheckService;
-    private readonly PluginLoader _pluginLoader;
     private readonly MainWindow _mainWindow;
     private readonly AppSettings _appSettings;
     private readonly ILogger<PostStartupInitializationService> _logger;
 
     public PostStartupInitializationService(
         HealthCheckService healthCheckService,
-        PluginLoader pluginLoader,
         MainWindow mainWindow,
         AppSettings appSettings,
         ILogger<PostStartupInitializationService> logger)
     {
         _healthCheckService = healthCheckService;
-        _pluginLoader = pluginLoader;
         _mainWindow = mainWindow;
         _appSettings = appSettings;
         _logger = logger;
@@ -102,7 +102,6 @@ public class PostStartupInitializationService
             cancellationToken.ThrowIfCancellationRequested();
             _logger.LogInformation("[PostStartup] Initializing plugins");
             _mainWindow.ViewModel.UpdatePostStartupInitializationStatus(true, "Initializing plugins...");
-            await _pluginLoader.InitializePluginsAsync(_logger);
             _logger.LogInformation("[PostStartup] Plugins initialized");
         }
         catch (OperationCanceledException)

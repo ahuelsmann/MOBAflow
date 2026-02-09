@@ -78,7 +78,7 @@
 
             <!--  Center: Document Tabs  -->
             <controls:DockingManager.DocumentAreaContent>
-                <controls:LayoutDocumentEx
+                <controls:LayoutDocument
                     x:Name="DocumentArea"
                     ActiveDocument="{Binding ActiveDocument, Mode=TwoWay}"
                     AllowFloatingTabs="False"
@@ -86,7 +86,7 @@
                     EnableTabGrouping="True"
                     TabDraggedOutside="OnTabDraggedOutside">
 
-                    <controls:LayoutDocumentEx.TabTemplate>
+                    <controls:LayoutDocument.TabTemplate>
                         <DataTemplate x:DataType="controls:DocumentTab">
                             <Grid Padding="4,0" ColumnSpacing="6">
                                 <Grid.ColumnDefinitions>
@@ -129,9 +129,9 @@
                                     Visibility="{Binding IsModified, Converter={StaticResource BoolToVisibilityConverter}}" />
                             </Grid>
                         </DataTemplate>
-                    </controls:LayoutDocumentEx.TabTemplate>
+                    </controls:LayoutDocument.TabTemplate>
 
-                    <controls:LayoutDocumentEx.ContentTemplate>
+                    <controls:LayoutDocument.ContentTemplate>
                         <DataTemplate x:DataType="controls:DocumentTab">
                             <ScrollViewer
                                 Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
@@ -140,8 +140,8 @@
                                 <ContentPresenter Margin="0" Content="{Binding Content}" />
                             </ScrollViewer>
                         </DataTemplate>
-                    </controls:LayoutDocumentEx.ContentTemplate>
-                </controls:LayoutDocumentEx>
+                    </controls:LayoutDocument.ContentTemplate>
+                </controls:LayoutDocument>
             </controls:DockingManager.DocumentAreaContent>
 
             <!--  Status Bar  -->

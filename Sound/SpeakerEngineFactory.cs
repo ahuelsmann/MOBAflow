@@ -72,7 +72,7 @@ public class SpeakerEngineFactory
     {
         // ✅ FIX: Use AppSettings.Speech.SpeakerEngineName instead of SpeechOptions
         // This allows runtime engine switching via UI
-        var engineName = _appSettings.Speech.SpeakerEngineName ?? string.Empty;
+        var engineName = _appSettings.Speech.SpeakerEngineName;
         _systemLogger.LogDebug("🔊 [FACTORY] AppSettings.Speech.SpeakerEngineName = '{EngineName}'", engineName);
         return CreateEngine(engineName);
     }

@@ -6,7 +6,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using SharedUI.Shell;
 using System.Diagnostics;
-using System.Reflection;
+using System.Linq;
 using View;
 
 /// <summary>
@@ -20,15 +20,15 @@ public class NavigationService : INavigationService
 {
     #region Fields
     private readonly IServiceProvider _serviceProvider;
-    private readonly NavigationRegistry _navigationRegistry;
+    private readonly List<PageMetadata> _pages;
     private readonly Stack<string> _navigationHistory = new();
     private Frame? _contentFrame;
     #endregion
 
-    public NavigationService(IServiceProvider serviceProvider, NavigationRegistry navigationRegistry)
+    public NavigationService(IServiceProvider serviceProvider, List<PageMetadata> pages)
     {
         _serviceProvider = serviceProvider;
-        _navigationRegistry = navigationRegistry;
+        _pages = pages;
     }
 
     /// <inheritdoc />
@@ -62,7 +62,8 @@ public class NavigationService : INavigationService
 
         try
         {
-            if (!_navigationRegistry.TryGetPage(tag, out var registration))
+            var page = _pages.FirstOrDefault(p => p.Tag == tag);
+            if (page == null)
             {
                 throw new ArgumentException($"Unknown navigation tag: {tag}", nameof(tag));
             }
@@ -73,44 +74,25 @@ public class NavigationService : INavigationService
                 _navigationHistory.Push(previousTag);
             }
 
-            // Check if this is a plugin (Source != "Shell") 
-            if (registration.Source != "Shell")
-            {
-                // Plugin: Use ContentProvider pattern
-                var contentProvider = _serviceProvider.GetRequiredService(registration.PageType);
-
-                // Call CreateContent() method via reflection
-                var createContentMethod = registration.PageType.GetMethod("CreateContent", BindingFlags.Public | BindingFlags.Instance) ?? throw new InvalidOperationException(
-                        $"Plugin type {registration.PageType.Name} must have a public CreateContent() method that returns UIElement.");
-                var content = createContentMethod.Invoke(contentProvider, null) as UIElement ?? throw new InvalidOperationException(
-                        $"Plugin {registration.PageType.Name}.CreateContent() returned null or non-UIElement.");
-
-                // Wrap in PluginHostPage (which is a known type in WinUI project)
-                var hostPage = new PluginHostPage();
-                hostPage.SetPluginContent(content);
-                _contentFrame.Content = hostPage;
-            }
-            else
-            {
-                // Core page: Direct instantiation (type is known to XamlTypeInfo)
-                var page = _serviceProvider.GetRequiredService(registration.PageType);
-                _contentFrame.Content = page;
-            }
+            // For now, all pages are core pages (Plugins will use attributes later)
+            // Resolve Page from DI and navigate
+            var pageInstance = _serviceProvider.GetRequiredService(page.PageType);
+            _contentFrame.Content = pageInstance;
 
             CurrentPageTag = tag;
-            Navigated?.Invoke(this, new NavigationEventArgs
+            Navigated?.Invoke(this, new Moba.SharedUI.Shell.NavigationEventArgs
             {
                 PageTag = tag,
                 PreviousPageTag = previousTag
             });
-
-            await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[ERROR] Navigation to '{tag}' failed: {ex.Message}");
+            Debug.WriteLine($"Navigation failed: {ex.Message}");
             throw;
         }
+
+        await Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -136,10 +118,11 @@ public class NavigationService : INavigationService
         try
         {
             // Navigate without adding to history
-            if (_navigationRegistry.TryGetPage(previousTag, out var registration))
+            var page = _pages.FirstOrDefault(p => p.Tag == previousTag);
+            if (page != null)
             {
-                var page = _serviceProvider.GetRequiredService(registration.PageType);
-                _contentFrame!.Content = page;
+                var pageInstance = _serviceProvider.GetRequiredService(page.PageType);
+                _contentFrame!.Content = pageInstance;
 
                 var oldTag = CurrentPageTag;
                 CurrentPageTag = previousTag;

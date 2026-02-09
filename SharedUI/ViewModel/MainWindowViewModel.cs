@@ -4,14 +4,21 @@ namespace Moba.SharedUI.ViewModel;
 using Backend.Interface;
 using Backend.Manager;
 using Backend.Service;
+
 using Common.Configuration;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
 using Domain.Enum;
+
 using Interface;
+
 using Microsoft.Extensions.Logging;
+
 using Service;
+
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -57,11 +64,11 @@ public partial class MainWindowViewModel : ObservableObject
         Solution solution,
         ActionExecutionContext executionContext,
         ILogger<MainWindowViewModel> logger,
-        IIoService? ioService = null,  // ✅ Optional for WebApp/MAUI
+        IIoService? ioService = null,  // Optional for WebApp/MAUI
         ICityService? cityLibraryService = null,
         ISettingsService? settingsService = null,
         AnnouncementService? announcementService = null,
-        object? photoHubClient = null)  // ✅ Optional PhotoHubClient (only in WinUI, type is object to avoid assembly reference)
+        object? photoHubClient = null)  // Optional PhotoHubClient (only in WinUI, type is object to avoid assembly reference)
     {
         _ioService = ioService ?? new NullIoService();  // Use null object pattern
         _z21 = z21;
@@ -73,19 +80,16 @@ public partial class MainWindowViewModel : ObservableObject
         _settingsService = settingsService;
         _announcementService = announcementService;
         _executionContext = executionContext;
+        _ = photoHubClient;
 
-        // Subscribe to Solution changes
         Solution = solution;
 
-        // ✅ Initialize Counter settings from AppSettings.Counter
         GlobalTargetLapCount = settings.Counter.TargetLapCount;
         UseTimerFilter = settings.Counter.UseTimerFilter;
         TimerIntervalSeconds = settings.Counter.TimerIntervalSeconds;
 
-        // ✅ Initialize Theme settings from AppSettings.Application
         IsDarkMode = settings.Application.IsDarkMode;
 
-        // ✅ Subscribe to Z21 events immediately (like CounterViewModel does)
         // This ensures we receive status updates regardless of how connection was established
         _z21.Received += OnFeedbackReceived;  // For counter statistics
         _z21.OnSystemStateChanged += OnZ21SystemStateChanged;
@@ -94,17 +98,13 @@ public partial class MainWindowViewModel : ObservableObject
         _z21.OnConnectionLost += HandleConnectionLost;
         _z21.OnConnectedChanged += OnZ21ConnectedChanged;
 
-        // ✅ Subscribe to Traffic Monitor immediately (before connection)
         InitializeTrafficMonitor();
 
-        // ✅ Initialize Track Statistics with defaults (will be updated when project loads)
         InitializeStatisticsFromFeedbackPoints();
 
-        // ✅ Auto-connect to Z21 at startup (fire-and-forget, non-blocking)
         // Connection status will be updated via OnConnectedChanged event when Z21 responds
         _ = TryAutoConnectToZ21Async();
 
-        // Load City Library at startup (fire-and-forget)
         if (_cityLibraryService != null)
         {
             _ = Task.Run(async () =>
@@ -112,11 +112,11 @@ public partial class MainWindowViewModel : ObservableObject
                 try
                 {
                     await LoadCityLibraryAsync().ConfigureAwait(false);
-                    Debug.WriteLine($"✅ City Library loaded: {CityLibrary.Count} cities");
+                    Debug.WriteLine($"[OK] City Library loaded: {CityLibrary.Count} cities");
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"❌ Failed to load City Library: {ex.Message}");
+                    Debug.WriteLine($"[ERROR] Failed to load City Library: {ex.Message}");
                 }
             });
         }
@@ -125,13 +125,13 @@ public partial class MainWindowViewModel : ObservableObject
 
     #region Properties
     [ObservableProperty]
-    private Solution solution;
+    private Solution _solution;
 
     [ObservableProperty]
-    private string? currentSolutionPath;
+    private string? _currentSolutionPath;
 
     [ObservableProperty]
-    private bool isDarkMode = true;  // Dark theme is default for WinUI
+    private bool _isDarkMode = true;  // Dark theme is default for WinUI
 
     /// <summary>
     /// Called when IsDarkMode changes. Persists to AppSettings.
@@ -151,35 +151,35 @@ public partial class MainWindowViewModel : ObservableObject
     /// Indicates whether a solution with projects is currently loaded.
     /// </summary>
     [ObservableProperty]
-    private bool hasSolution;
+    private bool _hasSolution;
 
     /// <summary>
     /// Health status message for Speech Service (Azure).
     /// Updated by HealthCheckService via event.
     /// </summary>
     [ObservableProperty]
-    private string speechHealthStatus = "Initializing...";
+    private string _speechHealthStatus = "Initializing...";
 
     /// <summary>
     /// Icon glyph for Speech Service health status.
     /// </summary>
     [ObservableProperty]
-    private string speechHealthIcon = "\uE946"; // Sync
+    private string _speechHealthIcon = "\uE946"; // Sync
 
     /// <summary>
     /// Color for Speech Service health status icon.
     /// </summary>
     [ObservableProperty]
-    private string speechHealthColor = "SystemFillColorCautionBrush";
+    private string _speechHealthColor = "SystemFillColorCautionBrush";
 
     [ObservableProperty]
-    private SolutionViewModel? solutionViewModel;
+    private SolutionViewModel? _solutionViewModel;
 
     [ObservableProperty]
-    private ProjectViewModel? selectedProject;
+    private ProjectViewModel? _selectedProject;
 
     [ObservableProperty]
-    private JourneyViewModel? selectedJourney;
+    private JourneyViewModel? _selectedJourney;
 
     /// <summary>
     /// Called when SelectedJourney changes. Subscribes to PropertyChanged for auto-save.
@@ -194,7 +194,7 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private StationViewModel? selectedStation;
+    private StationViewModel? _selectedStation;
 
     /// <summary>
     /// Called when SelectedStation changes. Subscribes to PropertyChanged for auto-save.
@@ -208,13 +208,13 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    private WorkflowViewModel? selectedWorkflow;
+    private WorkflowViewModel? _selectedWorkflow;
 
     [ObservableProperty]
-    private object? selectedAction;
+    private object? _selectedAction;
 
     [ObservableProperty]
-    private TrainViewModel? selectedTrain;
+    private TrainViewModel? _selectedTrain;
 
     /// <summary>
     /// Called when SelectedTrain changes. Subscribes to PropertyChanged for auto-save.
@@ -246,92 +246,85 @@ public partial class MainWindowViewModel : ObservableObject
     /// The currently selected object to display in the properties panel.
     /// </summary>
     [ObservableProperty]
-    private object? currentSelectedObject;
+    private object? _currentSelectedObject;
 
     /// <summary>
     /// Error message to display in UI (Settings page).
     /// </summary>
     [ObservableProperty]
-    private string errorMessage = string.Empty;
+    private string _errorMessage = string.Empty;
 
     /// <summary>
     /// Controls visibility of error message in UI.
     /// </summary>
     [ObservableProperty]
-    private bool showErrorMessage;
+    private bool _showErrorMessage;
 
     /// <summary>
     /// Controls visibility of success message in UI.
     /// </summary>
     [ObservableProperty]
-    private bool showSuccessMessage;
+    private bool _showSuccessMessage;
 
     /// <summary>
     /// Selected theme index for UI theme picker (0=Light, 1=Dark, 2=System).
     /// </summary>
     [ObservableProperty]
-    private int selectedThemeIndex = 1; // Default: Dark
+    private int _selectedThemeIndex = 1; // Default: Dark
 
     /// <summary>
     /// The currently selected object for SolutionPage properties panel.
     /// Displays: SelectedProject
     /// </summary>
     [ObservableProperty]
-    private object? solutionPageSelectedObject;
+    private object? _solutionPageSelectedObject;
 
     /// <summary>
     /// The currently selected object for JourneysPage properties panel.
     /// Displays: SelectedJourney, SelectedStation
     /// </summary>
     [ObservableProperty]
-    private object? journeysPageSelectedObject;
+    private object? _journeysPageSelectedObject;
 
     /// <summary>
     /// The currently selected object for WorkflowsPage properties panel.
     /// Displays: SelectedWorkflow, SelectedAction
     /// </summary>
     [ObservableProperty]
-    private object? workflowsPageSelectedObject;
+    private object? _workflowsPageSelectedObject;
 
     [ObservableProperty]
-    private bool isConnected;
+    private bool _isConnected;
 
     [ObservableProperty]
-    private bool isTrackPowerOn;
+    private bool _isTrackPowerOn;
 
     [ObservableProperty]
-    private string statusText = "Disconnected";
+    private string _statusText = "Disconnected";
 
     [ObservableProperty]
-    private string serialNumber = "-";
+    private string _serialNumber = "-";
 
     [ObservableProperty]
-    private string firmwareVersion = "-";
+    private string _firmwareVersion = "-";
 
     [ObservableProperty]
-    private string hardwareType = "-";
+    private string _hardwareType = "-";
 
     [ObservableProperty]
-    private string simulateInPort = "1";
-
-    /// <summary>
-    /// Transaction code for quick navigation (SAP-style command palette).
-    /// Supports codes like TC (Train Control), JR (Journeys), WF (Workflows), etc.
-    /// </summary>
-    [ObservableProperty]
-    private string transactionCode = string.Empty;
+    private string _simulateInPort = "1";
 
     /// <summary>
     /// Available cities with stations (loaded from master data).
     /// </summary>
     [ObservableProperty]
-    private ObservableCollection<City> availableCities = [];
+    private ObservableCollection<City> _availableCities = [];
 
     /// <summary>
     /// Currently selected city for adding stations to journeys.
     /// </summary>
     [ObservableProperty]
-    private City? selectedCity;
+    private City? _selectedCity;
 
     public event EventHandler? ExitApplicationRequested;
 
@@ -349,53 +342,8 @@ public partial class MainWindowViewModel : ObservableObject
     {
         NavigationRequested?.Invoke(this, tag);
     }
-
-    /// <summary>
-    /// Transaction code to navigation tag mappings (SAP-style shortcuts).
-    /// </summary>
-    private static readonly Dictionary<string, string> TransactionMappings = new(StringComparer.OrdinalIgnoreCase)
-    {
-        { "TC", "traincontrol" },
-        { "TR", "trains" },
-        { "JR", "journeys" },
-        { "WF", "workflows" },
-        { "TP", "trackplaneditor" },
-        { "JM", "journeymap" },
-        { "SB", "signalbox" },
-        { "OV", "overview" },
-        { "SOL", "solution" },
-        { "SET", "settings" },
-        { "MON", "monitor" },
-        { "HELP", "help" },
-        { "INFO", "info" },
-        { "ERP", "erp" },
-        { "STAT", "statistics" },
-    };
-
-    /// <summary>
-    /// Executes navigation based on the current transaction code.
-    /// Clears the transaction code after successful navigation.
-    /// </summary>
-    [RelayCommand]
-    private void ExecuteTransactionCode()
-    {
-        if (string.IsNullOrWhiteSpace(TransactionCode))
-            return;
-
-        var cleanCode = TransactionCode.Trim();
-
-        // Support /N prefix (SAP convention)
-        if (cleanCode.StartsWith("/N", StringComparison.OrdinalIgnoreCase))
-            cleanCode = cleanCode[2..];
-
-        if (TransactionMappings.TryGetValue(cleanCode, out var tag))
-        {
-            RequestNavigation(tag);
-            TransactionCode = string.Empty;
-        }
-    }
-
     #endregion
+
 
     #region Project Management
     [RelayCommand]
@@ -406,11 +354,11 @@ public partial class MainWindowViewModel : ObservableObject
         Solution.Projects.Add(project);
 
         // Create ViewModel and add to SolutionViewModel
-        var projectVM = new ProjectViewModel(project);
-        SolutionViewModel!.Projects.Add(projectVM);
+        var projectVm = new ProjectViewModel(project);
+        SolutionViewModel!.Projects.Add(projectVm);
 
         // Select the newly created project
-        SelectedProject = projectVM;
+        SelectedProject = projectVm;
 
         // Update HasSolution flag
         HasSolution = true;
@@ -433,7 +381,7 @@ public partial class MainWindowViewModel : ObservableObject
         // Remove from SolutionViewModel's Projects collection
         SolutionViewModel!.Projects.Remove(deletedProject);
 
-        // ✅ Clear all detail selections AFTER removing project
+        // Clear all detail selections after removing project
         // This prevents showing stale data from the deleted project
         ClearAllSelections();
 
@@ -485,15 +433,15 @@ public partial class MainWindowViewModel : ObservableObject
             }
         }
 
-        // ✅ CRITICAL: Always send LAN_LOGOFF to Z21 on app exit
-        // This prevents "zombie clients" on Z21 which can cause it to become unresponsive
-        // Note: Fire-and-forget is acceptable here since we're exiting anyway,
+        // CRITICAL: Always send LAN_LOGOFF to Z21 on app exit
+        // This prevents zombie clients on Z21 which can cause it to become unresponsive
+        // Note: Fire-and-forget is acceptable here since we are exiting anyway,
         // but we give it a brief moment to complete
         try
         {
             var disconnectTask = _z21.DisconnectAsync();
             // Wait briefly (100ms) to allow LAN_LOGOFF to be sent
-            // Don't block indefinitely as app needs to exit
+            // Do not block indefinitely as app needs to exit
             disconnectTask.Wait(TimeSpan.FromMilliseconds(100));
         }
         catch (TaskCanceledException) { /* Expected during shutdown */ }
@@ -522,10 +470,10 @@ public partial class MainWindowViewModel : ObservableObject
 
     #region City Library
     [ObservableProperty]
-    private ObservableCollection<City> cityLibrary = [];
+    private ObservableCollection<City> _cityLibrary = [];
 
     [ObservableProperty]
-    private string citySearchText = string.Empty;
+    private string _citySearchText = string.Empty;
 
     partial void OnCitySearchTextChanged(string value)
     {
@@ -561,13 +509,13 @@ public partial class MainWindowViewModel : ObservableObject
         SelectedJourney.RefreshStations();
 
         // Select the new station
-        var stationVM = SelectedJourney.Stations.LastOrDefault();
-        if (stationVM != null)
+        var stationVm = SelectedJourney.Stations.LastOrDefault();
+        if (stationVm != null)
         {
-            SelectedStation = stationVM;
+            SelectedStation = stationVm;
         }
 
-        Debug.WriteLine($"✅ Added station from city: {city.Name} → {cityStation.Name}");
+        Debug.WriteLine($"[OK] Added station from city: {city.Name} -> {cityStation.Name}");
     }
 
     private bool CanAddStationFromCity() => SelectedJourney != null;
@@ -583,13 +531,13 @@ public partial class MainWindowViewModel : ObservableObject
         var cities = await _cityLibraryService.LoadCitiesAsync().ConfigureAwait(false);
         CityLibrary = new ObservableCollection<City>(cities);
 
-        Debug.WriteLine($"✅ City Library loaded: {CityLibrary.Count} cities");
+        Debug.WriteLine($"[OK] City Library loaded: {CityLibrary.Count} cities");
     }
     #endregion
 
     #region Wagon Libraries
     [ObservableProperty]
-    private ObservableCollection<GoodsWagon> goodsWagonLibrary =
+    private ObservableCollection<GoodsWagon> _goodsWagonLibrary =
     [
         new GoodsWagon { Name = "Goods Wagon 1", Cargo = CargoType.Container },
         new GoodsWagon { Name = "Goods Wagon 2", Cargo = CargoType.Coal },
@@ -597,7 +545,7 @@ public partial class MainWindowViewModel : ObservableObject
     ];
 
     [ObservableProperty]
-    private ObservableCollection<PassengerWagon> passengerWagonLibrary =
+    private ObservableCollection<PassengerWagon> _passengerWagonLibrary =
     [
         new PassengerWagon { Name = "Passenger Wagon 1st Class", WagonClass = PassengerClass.First },
         new PassengerWagon { Name = "Passenger Wagon 2nd Class", WagonClass = PassengerClass.Second }
@@ -612,28 +560,28 @@ public partial class MainWindowViewModel : ObservableObject
 
         SelectedStation.WorkflowId = workflow.Model.Id;
 
-        Debug.WriteLine($"✅ Assigned workflow '{workflow.Name}' to station '{SelectedStation.Name}'");
+        Debug.WriteLine($"[OK] Assigned workflow '{workflow.Name}' to station '{SelectedStation.Name}'");
     }
 
     private bool CanAssignWorkflowToStation() => SelectedStation != null;
 
     [RelayCommand(CanExecute = nameof(CanAddLocomotiveToTrain))]
-    private void AddLocomotiveToTrain(LocomotiveViewModel? locomotiveVM)
+    private void AddLocomotiveToTrain(LocomotiveViewModel? locomotiveVm)
     {
-        if (SelectedTrain == null || locomotiveVM == null || SelectedProject == null) return;
+        if (SelectedTrain == null || locomotiveVm == null || SelectedProject == null) return;
 
         // Create a copy to avoid modifying the library object
         var locomotiveCopy = new Locomotive
         {
-            Name = locomotiveVM.Model.Name,
-            DigitalAddress = locomotiveVM.Model.DigitalAddress,
-            Manufacturer = locomotiveVM.Model.Manufacturer,
-            ArticleNumber = locomotiveVM.Model.ArticleNumber,
-            Series = locomotiveVM.Model.Series,
-            ColorPrimary = locomotiveVM.Model.ColorPrimary,
-            ColorSecondary = locomotiveVM.Model.ColorSecondary,
-            IsPushing = locomotiveVM.Model.IsPushing,
-            Details = locomotiveVM.Model.Details
+            Name = locomotiveVm.Model.Name,
+            DigitalAddress = locomotiveVm.Model.DigitalAddress,
+            Manufacturer = locomotiveVm.Model.Manufacturer,
+            ArticleNumber = locomotiveVm.Model.ArticleNumber,
+            Series = locomotiveVm.Model.Series,
+            ColorPrimary = locomotiveVm.Model.ColorPrimary,
+            ColorSecondary = locomotiveVm.Model.ColorSecondary,
+            IsPushing = locomotiveVm.Model.IsPushing,
+            Details = locomotiveVm.Model.Details
         };
 
         // Add to Project master list
@@ -645,7 +593,7 @@ public partial class MainWindowViewModel : ObservableObject
         // Refresh Train collections
         SelectedTrain.RefreshCollections();
 
-        Debug.WriteLine($"✅ Added locomotive '{locomotiveCopy.Name}' to train '{SelectedTrain.Name}'");
+        Debug.WriteLine($"[OK] Added locomotive '{locomotiveCopy.Name}' to train '{SelectedTrain.Name}'");
     }
 
     private bool CanAddLocomotiveToTrain() => SelectedTrain != null && SelectedProject != null;

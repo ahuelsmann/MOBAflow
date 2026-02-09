@@ -24,7 +24,7 @@ using System.Diagnostics;
 // https://learn.microsoft.com/de-de/azure/ai-services/speech-service/get-started-text-to-speech?tabs=windows%2Cterminal&pivots=programming-language-csharp
 public class CognitiveSpeechEngine : ISpeakerEngine
 {
-    private readonly IOptionsMonitor<SpeechOptions> _optionsMonitor;
+    private readonly IOptionsMonitor<SpeechOptions>? _optionsMonitor;
     private readonly ILogger<CognitiveSpeechEngine> _logger;
 
     // Primary constructor for DI

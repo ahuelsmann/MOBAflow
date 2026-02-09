@@ -179,12 +179,12 @@ public partial class MainWindowViewModel
     {
         if (SelectedWorkflow == null || SelectedAction == null) return;
 
-        var actionVM = SelectedAction as WorkflowActionViewModel;
-        if (actionVM == null) return;
+        var actionVm = SelectedAction as WorkflowActionViewModel;
+        if (actionVm == null) return;
 
         // Find and remove action from Domain model by ID
         var action = SelectedWorkflow.Model.Actions
-            .FirstOrDefault(a => a.Id == actionVM.Id);
+            .FirstOrDefault(a => a.Id == actionVm.Id);
         
         if (action != null)
         {
@@ -192,7 +192,7 @@ public partial class MainWindowViewModel
         }
 
         // Remove from ViewModel's ObservableCollection
-        SelectedWorkflow.Actions.Remove(actionVM);
+        SelectedWorkflow.Actions.Remove(actionVm);
         SelectedAction = null;
         
         // Trigger auto-save after deleting action

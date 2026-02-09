@@ -1,11 +1,13 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
 using Domain;
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using SharedUI.ViewModel;
+using System;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 
@@ -16,12 +18,59 @@ using Windows.System;
 // ReSharper disable once PartialTypeWithSinglePart
 public sealed partial class JourneysPage
 {
+    private readonly Common.Configuration.AppSettings _settings;
+    private readonly SharedUI.Interface.ISettingsService? _settingsService;
+
     public MainWindowViewModel ViewModel { get; }
 
-    public JourneysPage(MainWindowViewModel viewModel)
+    public JourneysPage(MainWindowViewModel viewModel, Common.Configuration.AppSettings settings, SharedUI.Interface.ISettingsService? settingsService = null)
     {
         ViewModel = viewModel;
+        _settings = settings;
+        _settingsService = settingsService;
         InitializeComponent();
+        Loaded += OnPageLoaded;
+        Unloaded += OnPageUnloaded;
+    }
+
+    private void OnPageLoaded(object sender, RoutedEventArgs e)
+    {
+        RestoreLayout();
+    }
+
+    private async void OnPageUnloaded(object sender, RoutedEventArgs e)
+    {
+        SaveLayout();
+        if (_settingsService != null)
+            await _settingsService.SaveSettingsAsync(_settings);
+    }
+
+    private void RestoreLayout()
+    {
+        var layout = _settings.Layout.JourneysPage;
+
+        // Restore column widths
+        var rootGrid = (Grid)Content;
+        rootGrid.ColumnDefinitions[0].Width = new GridLength(layout.JourneysColumnWidth);
+        rootGrid.ColumnDefinitions[2].Width = new GridLength(layout.StationsColumnWidth);
+
+        // Restore CollapsibleColumn states
+        ViewModel.IsCityLibraryVisible = layout.IsCityLibraryExpanded;
+        ViewModel.IsWorkflowLibraryVisible = layout.IsWorkflowLibraryExpanded;
+    }
+
+    private void SaveLayout()
+    {
+        var layout = _settings.Layout.JourneysPage;
+        var rootGrid = (Grid)Content;
+
+        // Save column widths
+        layout.JourneysColumnWidth = rootGrid.ColumnDefinitions[0].ActualWidth;
+        layout.StationsColumnWidth = rootGrid.ColumnDefinitions[2].ActualWidth;
+
+        // Save CollapsibleColumn states
+        layout.IsCityLibraryExpanded = ViewModel.IsCityLibraryVisible;
+        layout.IsWorkflowLibraryExpanded = ViewModel.IsWorkflowLibraryVisible;
     }
 
     #region Drag & Drop Event Handlers
@@ -90,6 +139,76 @@ public sealed partial class JourneysPage
             ViewModel.DeleteStationCommand.Execute(null);
             e.Handled = true;
         }
+    }
+    #endregion
+
+    #region Column Splitter (Manual Resize)
+    private bool _isSplitterDragging;
+    private string? _activeSplitterTag;
+    private Windows.Foundation.Point _splitterDragStart;
+    private double _splitterStartSize;
+
+    private void OnSplitterPointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement splitter) return;
+
+        ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.SizeWestEast);
+    }
+
+    private void OnSplitterPointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_isSplitterDragging)
+            ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.Arrow);
+    }
+
+    private void OnSplitterPointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement splitter) return;
+
+        _isSplitterDragging = true;
+        _activeSplitterTag = splitter.Tag as string;
+        _splitterDragStart = e.GetCurrentPoint(this).Position;
+
+        var columnIndex = Grid.GetColumn(splitter) - 1;
+        var column = ((Grid)splitter.Parent).ColumnDefinitions[columnIndex];
+        _splitterStartSize = column.ActualWidth;
+
+        splitter.CapturePointer(e.Pointer);
+        e.Handled = true;
+    }
+
+    private void OnSplitterPointerMoved(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_isSplitterDragging) return;
+
+        var current = e.GetCurrentPoint(this).Position;
+        var delta = current.X - _splitterDragStart.X;
+
+        if (sender is not FrameworkElement splitter) return;
+        var columnIndex = Grid.GetColumn(splitter) - 1;
+        var parentGrid = (Grid)splitter.Parent;
+        var column = parentGrid.ColumnDefinitions[columnIndex];
+
+        const double minSize = 150;
+        const double maxSize = 600;
+        var newWidth = Math.Clamp(_splitterStartSize + delta, minSize, maxSize);
+        column.Width = new GridLength(newWidth);
+
+        e.Handled = true;
+    }
+
+    private void OnSplitterPointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_isSplitterDragging) return;
+
+        _isSplitterDragging = false;
+        _activeSplitterTag = null;
+
+        if (sender is FrameworkElement splitter)
+            splitter.ReleasePointerCapture(e.Pointer);
+
+        ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.Arrow);
+        e.Handled = true;
     }
     #endregion
 }

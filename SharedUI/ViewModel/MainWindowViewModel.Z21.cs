@@ -46,7 +46,7 @@ public partial class MainWindowViewModel
 
     #region Z21 Traffic Monitor
     [ObservableProperty]
-    private ObservableCollection<Z21TrafficPacket> trafficPackets = [];
+    private ObservableCollection<Z21TrafficPacket> _trafficPackets = [];
 
     private void InitializeTrafficMonitor()
     {
@@ -431,24 +431,24 @@ public partial class MainWindowViewModel
         {
             // Find the JourneyViewModel in the ENTIRE solution, not just selected project
             // This ensures updates occur even if the journey isn't in the selected project
-            var journeyVM = SolutionViewModel?.Projects
+            var journeyVm = SolutionViewModel?.Projects
                 .SelectMany(p => p.Journeys)
                 .FirstOrDefault(j => j.Id == e.JourneyId);
 
-            if (journeyVM != null)
+            if (journeyVm != null)
             {
                 // Manually notify property changes since the ViewModel's SessionState 
                 // is a dummy one and doesn't receive updates from JourneyManager
-                journeyVM.UpdateFromSessionState(e.SessionState);
+                journeyVm.UpdateFromSessionState(e.SessionState);
 
                 // Update IsCurrentStation for all stations in this journey
                 // This highlights the current station in the UI
-                foreach (var stationVM in journeyVM.Stations)
+                foreach (var stationVm in journeyVm.Stations)
                 {
-                    stationVM.IsCurrentStation = stationVM.Model.Id == e.Station.Id;
+                    stationVm.IsCurrentStation = stationVm.Model.Id == e.Station.Id;
                 }
 
-                Debug.WriteLine($"📊 JourneyViewModel '{journeyVM.Name}' updated: Counter={e.SessionState.Counter}, Pos={e.SessionState.CurrentPos}, Station={e.SessionState.CurrentStationName}");
+                Debug.WriteLine($"📊 JourneyViewModel '{journeyVm.Name}' updated: Counter={e.SessionState.Counter}, Pos={e.SessionState.CurrentPos}, Station={e.SessionState.CurrentStationName}");
             }
             else
             {
@@ -467,16 +467,16 @@ public partial class MainWindowViewModel
         {
             // Find the JourneyViewModel in the ENTIRE solution, not just selected project
             // This ensures counters update even if the journey isn't in the selected project
-            var journeyVM = SolutionViewModel?.Projects
+            var journeyVm = SolutionViewModel?.Projects
                 .SelectMany(p => p.Journeys)
                 .FirstOrDefault(j => j.Id == e.JourneyId);
 
-            if (journeyVM != null)
+            if (journeyVm != null)
             {
                 // Update counter in UI
-                journeyVM.UpdateFromSessionState(e.SessionState);
+                journeyVm.UpdateFromSessionState(e.SessionState);
 
-                Debug.WriteLine($"🔔 JourneyViewModel '{journeyVM.Name}' feedback: Counter={e.SessionState.Counter}");
+                Debug.WriteLine($"🔔 JourneyViewModel '{journeyVm.Name}' feedback: Counter={e.SessionState.Counter}");
             }
             else
             {

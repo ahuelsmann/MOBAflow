@@ -1,11 +1,21 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
+
+using Common.Navigation;
 
 using SharedUI.ViewModel;
 
 /// <summary>
 /// Solution page displaying projects list with properties panel.
 /// </summary>
+[NavigationItem(
+    Tag = "solution",
+    Title = "Solution",
+    Icon = "\uE8B7",
+    Category = NavigationCategory.Solution,
+    Order = 10,
+    FeatureToggleKey = "IsSolutionPageAvailable",
+    BadgeLabelKey = "SolutionPageLabel")]
 public sealed partial class SolutionPage
 {
     public MainWindowViewModel ViewModel { get; }

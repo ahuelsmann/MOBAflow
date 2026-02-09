@@ -19,28 +19,26 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
     // Model
     private readonly Workflow _model;
 
-    // Optional Services - Reserved for future use
-    private readonly IIoService? _ioService;
+    // Services
+    private readonly IIoService _ioService;
     private readonly ISoundPlayer? _soundPlayer;
     #endregion
 
     public WorkflowViewModel(Workflow model, IIoService? ioService = null, ISoundPlayer? soundPlayer = null)
     {
         _model = model;
-        _ioService = ioService;
+        _ioService = ioService ?? new NullIoService();
         _soundPlayer = soundPlayer;
 
-        // Sort actions by Number before creating ViewModels to preserve correct order
         Actions = new ObservableCollection<object>(
             model.Actions
                 .OrderBy(a => a.Number)
                 .Select(CreateViewModelForAction)
         );
 
-        // Subscribe to PropertyChanged events from all actions
-        foreach (var actionVM in Actions.OfType<WorkflowActionViewModel>())
+        foreach (var actionVm in Actions.OfType<WorkflowActionViewModel>())
         {
-            actionVM.PropertyChanged += OnActionPropertyChanged;
+            actionVm.PropertyChanged += OnActionPropertyChanged;
         }
     }
 
@@ -138,24 +136,24 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
 
         _model.Actions.Add(newAction);
 
-        var actionVM = CreateViewModelForAction(newAction);
+        var actionVm = CreateViewModelForAction(newAction);
 
         // Subscribe to PropertyChanged events from new action
-        if (actionVM is WorkflowActionViewModel workflowActionVM)
+        if (actionVm is WorkflowActionViewModel workflowActionVm)
         {
-            workflowActionVM.PropertyChanged += OnActionPropertyChanged;
+            workflowActionVm.PropertyChanged += OnActionPropertyChanged;
         }
 
-        Actions.Add(actionVM);
+        Actions.Add(actionVm);
 
         // Trigger PropertyChanged for Actions collection to notify auto-save
         OnPropertyChanged(nameof(Actions));
     }
 
     [RelayCommand]
-    private void DeleteAction(object actionVM)
+    private void DeleteAction(object actionVm)
     {
-        WorkflowAction? actionModel = actionVM switch
+        WorkflowAction? actionModel = actionVm switch
         {
             AnnouncementViewModel avm => avm.ToWorkflowAction(),
             AudioViewModel audvm => audvm.ToWorkflowAction(),
@@ -166,13 +164,13 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
         if (actionModel != null)
         {
             // Unsubscribe from PropertyChanged events before removing
-            if (actionVM is WorkflowActionViewModel workflowActionVM)
+            if (actionVm is WorkflowActionViewModel workflowActionVm)
             {
-                workflowActionVM.PropertyChanged -= OnActionPropertyChanged;
+                workflowActionVm.PropertyChanged -= OnActionPropertyChanged;
             }
 
             _model.Actions.Remove(actionModel);
-            Actions.Remove(actionVM);
+            Actions.Remove(actionVm);
             UpdateActionNumbers();
 
             // Trigger PropertyChanged for Actions collection to notify auto-save
@@ -190,17 +188,17 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
         // Update Number property on ViewModels (won't trigger save - Number is ignored)
         for (int i = 0; i < Actions.Count; i++)
         {
-            if (Actions[i] is WorkflowActionViewModel actionVM)
+            if (Actions[i] is WorkflowActionViewModel actionVm)
             {
-                actionVM.Number = (uint)(i + 1);
+                actionVm.Number = (uint)(i + 1);
             }
         }
 
         // Synchronize order back to Model.Actions list
         _model.Actions.Clear();
-        foreach (var actionVM in Actions.OfType<WorkflowActionViewModel>())
+        foreach (var actionVm in Actions.OfType<WorkflowActionViewModel>())
         {
-            _model.Actions.Add(actionVM.ToWorkflowAction());
+            _model.Actions.Add(actionVm.ToWorkflowAction());
         }
 
         // Trigger PropertyChanged ONCE to save with correct order
@@ -209,40 +207,36 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
 
     public Task StartAsync(Journey journey, Station station)
     {
-        Debug.WriteLine($"▶ Starte Workflow '{_model.Name}' für Station '{station.Name}'");
+        Debug.WriteLine($"[START] Workflow '{_model.Name}' for station '{station.Name}'");
 
         if (Actions.Count == 0)
         {
-            Debug.WriteLine($"⚠ Workflow '{_model.Name}' enthält keine Actions");
+            Debug.WriteLine($"[WARN] Workflow '{_model.Name}' has no actions");
             return Task.CompletedTask;
         }
 
-        foreach (var actionVM in Actions)
+        foreach (var actionVm in Actions)
         {
-            switch (actionVM)
+            switch (actionVm)
             {
                 case AnnouncementViewModel announcement:
-                    Debug.WriteLine($"🎬 Führe Action aus: Announcement - {announcement.Name}");
-                    // Note: ExecuteAsync removed - execution now handled by WorkflowService
+                    Debug.WriteLine($"[ACTION] Announcement - {announcement.Name}");
                     break;
 
                 case AudioViewModel audio:
-                    Debug.WriteLine($"🎬 Führe Action aus: Audio - {audio.Name}");
-                    // Note: ExecuteAsync removed - execution now handled by WorkflowService
+                    Debug.WriteLine($"[ACTION] Audio - {audio.Name}");
                     break;
 
                 case CommandViewModel command:
-                    Debug.WriteLine($"🎬 Führe Action aus: Command - {command.Name}");
-                    // Note: ExecuteAsync removed - execution now handled by WorkflowService
+                    Debug.WriteLine($"[ACTION] Command - {command.Name}");
                     break;
 
                 default:
-                    Debug.WriteLine($"⚠ Unbekannter Action-ViewModel-Typ: {actionVM.GetType().Name}");
+                    Debug.WriteLine($"[WARN] Unknown action view model type: {actionVm.GetType().Name}");
                     break;
             }
         }
 
-        Debug.WriteLine($"✅ Workflow '{_model.Name}' abgeschlossen");
         return Task.CompletedTask;
     }
 
@@ -251,9 +245,9 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
         return action.Type switch
         {
             ActionType.Announcement => new AnnouncementViewModel(action),
-            ActionType.Audio => new AudioViewModel(action, _ioService ?? new NullIoService(), _soundPlayer),
+            ActionType.Audio => new AudioViewModel(action, _ioService, _soundPlayer),
             ActionType.Command => new CommandViewModel(action),
-            _ => throw new NotSupportedException($"Action-Typ {action.Type} wird nicht unterstützt")
+            _ => throw new NotSupportedException($"Action type {action.Type} is not supported")
         };
     }
 
@@ -272,8 +266,7 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
             return;
         }
 
-        Debug.WriteLine($"🔔 Action property '{e.PropertyName}' changed, propagating as PropertyChanged(Actions)");
-        // Propagate as PropertyChanged to maintain consistency with other ViewModels
+        Debug.WriteLine($"[INFO] Action property '{e.PropertyName}' changed, propagating as PropertyChanged(Actions)");
         OnPropertyChanged(nameof(Actions));
     }
 }

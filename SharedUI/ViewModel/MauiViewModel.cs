@@ -93,10 +93,10 @@ public partial class MauiViewModel : ObservableObject
     #region REST-API Connection
 
     [ObservableProperty]
-    private string restApiIpAddress = string.Empty;
+    private string _restApiIpAddress = string.Empty;
 
     [ObservableProperty]
-    private int restApiPort = 5001;
+    private int _restApiPort = 5001;
 
     partial void OnRestApiIpAddressChanged(string value)
     {
@@ -109,25 +109,25 @@ public partial class MauiViewModel : ObservableObject
     #region Z21 Connection
 
     [ObservableProperty]
-    private string z21IpAddress = "192.168.0.111";
+    private string _z21IpAddress = "192.168.0.111";
 
     [ObservableProperty]
-    private bool isConnected;
+    private bool _isConnected;
 
     [ObservableProperty]
-    private bool isTrackPowerOn;
+    private bool _isTrackPowerOn;
 
     [ObservableProperty]
-    private int mainCurrent;
+    private int _mainCurrent;
 
     [ObservableProperty]
-    private int temperature;
+    private int _temperature;
 
     [ObservableProperty]
-    private int supplyVoltage;
+    private int _supplyVoltage;
 
     [ObservableProperty]
-    private int vccVoltage;
+    private int _vccVoltage;
 
     partial void OnZ21IpAddressChanged(string value)
     {
@@ -171,19 +171,19 @@ public partial class MauiViewModel : ObservableObject
     #region Feedback Statistics
 
     [ObservableProperty]
-    private ObservableCollection<InPortStatistic> statistics = [];
+    private ObservableCollection<InPortStatistic> _statistics = [];
 
     [ObservableProperty]
-    private int countOfFeedbackPoints = 3;
+    private int _countOfFeedbackPoints = 3;
 
     [ObservableProperty]
-    private int globalTargetLapCount = 10;
+    private int _globalTargetLapCount = 10;
 
     [ObservableProperty]
-    private bool useTimerFilter;
+    private bool _useTimerFilter;
 
     [ObservableProperty]
-    private double timerIntervalSeconds = 2.0;
+    private double _timerIntervalSeconds = 2.0;
 
     // Last feedback time tracking for timer filter
     private readonly Dictionary<int, DateTime> _lastFeedbackTime = [];
@@ -380,13 +380,13 @@ public partial class MauiViewModel : ObservableObject
     #region Photo Upload
 
     [ObservableProperty]
-    private bool isPhotoUploading;
+    private bool _isPhotoUploading;
 
     [ObservableProperty]
-    private string? photoUploadStatus;
+    private string? _photoUploadStatus;
 
     [ObservableProperty]
-    private bool photoUploadSuccess;
+    private bool _photoUploadSuccess;
 
     [RelayCommand]
     private async Task CaptureAndUploadPhotoAsync()

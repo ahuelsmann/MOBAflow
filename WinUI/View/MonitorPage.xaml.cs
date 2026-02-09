@@ -1,13 +1,27 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
+using Common.Navigation;
+
+
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
+
+
 using SharedUI.ViewModel;
+
 using System.Collections.Specialized;
 using System.Runtime.InteropServices;
 
 // ReSharper disable once PartialTypeWithSinglePart
+[NavigationItem(
+    Tag = "monitor",
+    Title = "Monitor",
+    Icon = "\uE7F4",
+    Category = NavigationCategory.Monitoring,
+    Order = 10,
+    FeatureToggleKey = "IsMonitorPageAvailable",
+    BadgeLabelKey = "MonitorPageLabel")]
 public sealed partial class MonitorPage
 {
     public MonitorPageViewModel ViewModel { get; }

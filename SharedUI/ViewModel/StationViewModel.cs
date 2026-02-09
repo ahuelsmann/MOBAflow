@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -126,7 +126,7 @@ public partial class StationViewModel : ObservableObject, IViewModelWrapper<Stat
     /// Used for visual highlighting in UI.
     /// </summary>
     [ObservableProperty]
-    private bool isCurrentStation;
+    private bool _isCurrentStation;
 
     /// <summary>
     /// Gets the background color for this station based on its current state.

@@ -60,7 +60,7 @@ public sealed partial class DockPanel : UserControl
             nameof(IsPinned),
             typeof(bool),
             typeof(DockPanel),
-            new PropertyMetadata(true));
+            new PropertyMetadata(true, OnIsPinnedChanged));
 
     public static readonly DependencyProperty IsMaximizedProperty =
         DependencyProperty.Register(
@@ -77,6 +77,7 @@ public sealed partial class DockPanel : UserControl
         CloseButton.Click += (_, _) => CloseRequested?.Invoke(this, EventArgs.Empty);
         PinButton.Click += (_, _) => PinToggleRequested?.Invoke(this, EventArgs.Empty);
         MaximizeButton.Click += (_, _) => UndockRequested?.Invoke(this, EventArgs.Empty);
+        Loaded += (_, _) => UpdatePinButtonStyle(IsPinned);
     }
 
     #region Properties
@@ -117,5 +118,28 @@ public sealed partial class DockPanel : UserControl
     {
         args.Data.Properties[DockPanelDataKey] = this;
         args.Data.RequestedOperation = DataPackageOperation.Move;
+    }
+
+    private static void OnIsPinnedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is DockPanel panel && e.NewValue is bool isPinned)
+        {
+            panel.UpdatePinButtonStyle(isPinned);
+        }
+    }
+
+    private void UpdatePinButtonStyle(bool isPinned)
+    {
+        if (PinIcon != null)
+        {
+            PinIcon.Foreground = isPinned
+                ? Application.Current.Resources["TextFillColorSecondaryBrush"] as Microsoft.UI.Xaml.Media.Brush
+                : Application.Current.Resources["SystemAccentColor"] as Microsoft.UI.Xaml.Media.Brush;
+        }
+
+        if (PinButton != null)
+        {
+            Microsoft.UI.Xaml.Controls.ToolTipService.SetToolTip(PinButton, isPinned ? "Auto Hide" : "Pin");
+        }
     }
 }

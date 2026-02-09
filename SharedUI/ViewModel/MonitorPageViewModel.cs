@@ -36,21 +36,21 @@ public partial class MonitorPageViewModel : ObservableObject, IDisposable
     /// Application log entries formatted as strings for UI display.
     /// </summary>
     [ObservableProperty]
-    private ObservableCollection<string> activityLogs = [];
+    private ObservableCollection<string> _activityLogs = [];
 
     /// <summary>
     /// Indicates whether auto-scroll is paused for Traffic Monitor.
     /// True = User can scroll manually, False = Auto-scroll to newest packet.
     /// </summary>
     [ObservableProperty]
-    private bool isTrafficScrollPaused;
+    private bool _isTrafficScrollPaused;
 
     /// <summary>
     /// Indicates whether auto-scroll is paused for Application Log.
     /// True = User can scroll manually, False = Auto-scroll to newest log.
     /// </summary>
     [ObservableProperty]
-    private bool isActivityLogScrollPaused;
+    private bool _isActivityLogScrollPaused;
 
     /// <summary>
     /// Z21 UDP traffic packets from MainWindowViewModel.

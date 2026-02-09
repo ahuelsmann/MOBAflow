@@ -45,6 +45,8 @@
             <converter:DateTimeToTimeSpanConverter x:Key="DateTimeToTimeSpanConverter" />
             <converter:DateTimeOffsetConverter x:Key="DateTimeOffsetConverter" />
             <converter:PhotoPathToImageConverter x:Key="PhotoPathToImageConverter" />
+            <converter:PinTooltipConverter x:Key="PinTooltipConverter" />
+            <converter:PinForegroundConverter x:Key="PinForegroundConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

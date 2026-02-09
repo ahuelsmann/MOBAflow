@@ -33,9 +33,7 @@
             Visibility="Collapsed" />
 
         <!--  Main Content Area: Left | Splitter | Center | Splitter | Right  -->
-        <Grid
-            x:Name="MainContentGrid"
-            Grid.Row="1">
+        <Grid x:Name="MainContentGrid" Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <!--  0: Left Auto-Hide Bar  -->
@@ -69,13 +67,13 @@
                 x:Name="LeftDockArea"
                 Grid.Column="1"
                 Width="{x:Bind LeftPanelWidth, Mode=OneWay}"
-                Background="{ThemeResource LayerFillColorDefaultBrush}"
-                Visibility="{x:Bind IsLeftPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
-                AllowDrop="True"
                 behavior:DockingDropBehavior.DockPosition="Left"
-                DragOver="OnDockAreaDragOver"
+                AllowDrop="True"
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
                 DragLeave="OnDockAreaDragLeave"
-                Drop="OnDockAreaDrop">
+                DragOver="OnDockAreaDragOver"
+                Drop="OnDockAreaDrop"
+                Visibility="{x:Bind IsLeftPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                 <controls:DockPanelGroup x:Name="LeftPanelGroup" />
             </Grid>
 
@@ -85,13 +83,13 @@
                 Grid.Column="2"
                 Width="5"
                 Background="Transparent"
-                Visibility="{x:Bind IsLeftPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
                 PointerEntered="OnSplitterPointerEntered"
                 PointerExited="OnSplitterPointerExited"
-                PointerPressed="OnSplitterPointerPressed"
                 PointerMoved="OnSplitterPointerMoved"
+                PointerPressed="OnSplitterPointerPressed"
                 PointerReleased="OnSplitterPointerReleased"
-                Tag="Left">
+                Tag="Left"
+                Visibility="{x:Bind IsLeftPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Grid
                     Width="1"
                     HorizontalAlignment="Center"
@@ -99,9 +97,7 @@
             </Grid>
 
             <!--  Center Area: Top | TopSplitter | Document | BottomSplitter | Bottom  -->
-            <Grid
-                x:Name="CenterArea"
-                Grid.Column="3">
+            <Grid x:Name="CenterArea" Grid.Column="3">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <!--  0: Top Dock Area  -->
@@ -120,13 +116,13 @@
                     x:Name="TopDockArea"
                     Grid.Row="0"
                     Height="{x:Bind TopPanelHeight, Mode=OneWay}"
-                    Background="{ThemeResource LayerFillColorDefaultBrush}"
-                    Visibility="{x:Bind IsTopPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
-                    AllowDrop="True"
                     behavior:DockingDropBehavior.DockPosition="Top"
-                    DragOver="OnDockAreaDragOver"
+                    AllowDrop="True"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
                     DragLeave="OnDockAreaDragLeave"
-                    Drop="OnDockAreaDrop">
+                    DragOver="OnDockAreaDragOver"
+                    Drop="OnDockAreaDrop"
+                    Visibility="{x:Bind IsTopPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <controls:DockPanelGroup x:Name="TopPanelGroup" />
                 </Grid>
 
@@ -136,13 +132,13 @@
                     Grid.Row="1"
                     Height="5"
                     Background="Transparent"
-                    Visibility="{x:Bind IsTopPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
                     PointerEntered="OnSplitterPointerEntered"
                     PointerExited="OnSplitterPointerExited"
-                    PointerPressed="OnSplitterPointerPressed"
                     PointerMoved="OnSplitterPointerMoved"
+                    PointerPressed="OnSplitterPointerPressed"
                     PointerReleased="OnSplitterPointerReleased"
-                    Tag="Top">
+                    Tag="Top"
+                    Visibility="{x:Bind IsTopPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <Grid
                         Height="1"
                         VerticalAlignment="Center"
@@ -153,11 +149,11 @@
                 <Grid
                     x:Name="DocumentArea"
                     Grid.Row="2"
-                    Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
-                    AllowDrop="True"
                     behavior:DockingDropBehavior.DockPosition="Center"
-                    DragOver="OnDockAreaDragOver"
+                    AllowDrop="True"
+                    Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
                     DragLeave="OnDockAreaDragLeave"
+                    DragOver="OnDockAreaDragOver"
                     Drop="OnDockAreaDrop">
                     <ContentPresenter x:Name="DocumentPresenter" Content="{x:Bind DocumentAreaContent, Mode=OneWay}" />
                 </Grid>
@@ -168,13 +164,13 @@
                     Grid.Row="3"
                     Height="5"
                     Background="Transparent"
-                    Visibility="{x:Bind IsBottomPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
                     PointerEntered="OnSplitterPointerEntered"
                     PointerExited="OnSplitterPointerExited"
-                    PointerPressed="OnSplitterPointerPressed"
                     PointerMoved="OnSplitterPointerMoved"
+                    PointerPressed="OnSplitterPointerPressed"
                     PointerReleased="OnSplitterPointerReleased"
-                    Tag="Bottom">
+                    Tag="Bottom"
+                    Visibility="{x:Bind IsBottomPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <Grid
                         Height="1"
                         VerticalAlignment="Center"
@@ -186,13 +182,13 @@
                     x:Name="BottomDockArea"
                     Grid.Row="4"
                     Height="{x:Bind BottomPanelHeight, Mode=OneWay}"
-                    Background="{ThemeResource LayerFillColorDefaultBrush}"
-                    Visibility="{x:Bind IsBottomPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
-                    AllowDrop="True"
                     behavior:DockingDropBehavior.DockPosition="Bottom"
-                    DragOver="OnDockAreaDragOver"
+                    AllowDrop="True"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
                     DragLeave="OnDockAreaDragLeave"
-                    Drop="OnDockAreaDrop">
+                    DragOver="OnDockAreaDragOver"
+                    Drop="OnDockAreaDrop"
+                    Visibility="{x:Bind IsBottomPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <controls:DockPanelGroup x:Name="BottomPanelGroup" />
                 </Grid>
             </Grid>
@@ -203,13 +199,13 @@
                 Grid.Column="4"
                 Width="5"
                 Background="Transparent"
-                Visibility="{x:Bind IsRightPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
                 PointerEntered="OnSplitterPointerEntered"
                 PointerExited="OnSplitterPointerExited"
-                PointerPressed="OnSplitterPointerPressed"
                 PointerMoved="OnSplitterPointerMoved"
+                PointerPressed="OnSplitterPointerPressed"
                 PointerReleased="OnSplitterPointerReleased"
-                Tag="Right">
+                Tag="Right"
+                Visibility="{x:Bind IsRightPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Grid
                     Width="1"
                     HorizontalAlignment="Center"
@@ -221,13 +217,13 @@
                 x:Name="RightDockArea"
                 Grid.Column="5"
                 Width="{x:Bind RightPanelWidth, Mode=OneWay}"
-                Background="{ThemeResource LayerFillColorDefaultBrush}"
-                Visibility="{x:Bind IsRightPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
-                AllowDrop="True"
                 behavior:DockingDropBehavior.DockPosition="Right"
-                DragOver="OnDockAreaDragOver"
+                AllowDrop="True"
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
                 DragLeave="OnDockAreaDragLeave"
-                Drop="OnDockAreaDrop">
+                DragOver="OnDockAreaDragOver"
+                Drop="OnDockAreaDrop"
+                Visibility="{x:Bind IsRightPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                 <controls:DockPanelGroup x:Name="RightPanelGroup" />
             </Grid>
 
@@ -267,18 +263,18 @@
             x:Name="OverlayLayer"
             Grid.Row="0"
             Grid.RowSpan="3"
-            Visibility="Collapsed"
             Background="Transparent"
-            IsHitTestVisible="False">
+            IsHitTestVisible="False"
+            Visibility="Collapsed">
             <Canvas x:Name="OverlayCanvas">
                 <Border
                     x:Name="PreviewBox"
-                    Visibility="Collapsed"
                     Background="{ThemeResource AccentFillColorDefaultBrush}"
                     BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
                     BorderThickness="2"
+                    CornerRadius="4"
                     Opacity="0.25"
-                    CornerRadius="4" />
+                    Visibility="Collapsed" />
             </Canvas>
 
             <Grid

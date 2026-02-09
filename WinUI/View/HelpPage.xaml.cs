@@ -1,10 +1,18 @@
 namespace Moba.WinUI.View;
 
+using Common.Navigation;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Navigation;
 
+[NavigationItem(
+    Tag = "help",
+    Title = "Help",
+    Icon = "\uE897",
+    Category = NavigationCategory.Help,
+    Order = 10)]
 public sealed partial class HelpPage : Page
 {
     private readonly Dictionary<TreeViewNode, string> _sections = [];
@@ -501,6 +509,7 @@ public sealed partial class HelpPage : Page
             para.Inlines.Add(new LineBreak());
         }
 
+        ContentRichTextBlock.Blocks.Clear();
         ContentRichTextBlock.Blocks.Add(para);
     }
 }

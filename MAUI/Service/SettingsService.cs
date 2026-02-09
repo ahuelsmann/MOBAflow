@@ -187,9 +187,10 @@ public class SettingsService : ISettingsService
         get => _settings.Application.LastSolutionPath;
         set
         {
-            if (_settings.Application.LastSolutionPath != value)
+            var newValue = value ?? string.Empty;
+            if (_settings.Application.LastSolutionPath != newValue)
             {
-                _settings.Application.LastSolutionPath = value;
+                _settings.Application.LastSolutionPath = newValue;
                 _ = SaveSettingsAsync(_settings);
             }
         }

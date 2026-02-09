@@ -194,9 +194,9 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
         _state.Reset((int)_journey.FirstPos);
 
         // Reset IsCurrentStation for all stations
-        foreach (var stationVM in Stations)
+        foreach (var stationVm in Stations)
         {
-            stationVM.IsCurrentStation = false;
+            stationVm.IsCurrentStation = false;
         }
 
         // Notify UI about property changes
@@ -263,10 +263,10 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
     }
 
     [RelayCommand]
-    private void DeleteStation(StationViewModel stationVM)
+    private void DeleteStation(StationViewModel stationVm)
     {
         // Find and remove Station by Id
-        var station = _journey.Stations.FirstOrDefault(s => s.Id == stationVM.Model.Id);
+        var station = _journey.Stations.FirstOrDefault(s => s.Id == stationVm.Model.Id);
         if (station != null)
         {
             _journey.Stations.Remove(station);
@@ -332,9 +332,9 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
 
         // Rebuild Stations list to match ViewModel order
         var reorderedStations = new List<Station>();
-        foreach (var stationVM in currentStations)
+        foreach (var stationVm in currentStations)
         {
-            var station = _journey.Stations.FirstOrDefault(s => s.Id == stationVM.Model.Id);
+            var station = _journey.Stations.FirstOrDefault(s => s.Id == stationVm.Model.Id);
             if (station != null)
             {
                 reorderedStations.Add(station);

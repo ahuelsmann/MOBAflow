@@ -2,10 +2,14 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Backend.Service;
+
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
 using Domain.Enum;
+
 using Helper;
+
 using Microsoft.Extensions.Logging;
 
 /// <summary>
@@ -26,8 +30,8 @@ public partial class MainWindowViewModel
         {
             // Fallback: Create simple ViewModel without SessionState
             return new JourneyViewModel(
-                journey, 
-                SelectedProject?.Model ?? new Project(), 
+                journey,
+                SelectedProject?.Model ?? new Project(),
                 _uiDispatcher);
         }
 
@@ -49,6 +53,24 @@ public partial class MainWindowViewModel
     #endregion
 
     #region Journey Search/Filter
+
+    /// <summary>
+    /// Controls whether the City Library panel is visible on JourneysPage.
+    /// </summary>
+    public bool IsCityLibraryVisible
+    {
+        get;
+        set => SetProperty(ref field, value);
+    } = true;
+
+    /// <summary>
+    /// Controls whether the Workflow Library panel is visible on JourneysPage.
+    /// </summary>
+    public bool IsWorkflowLibraryVisible
+    {
+        get;
+        set => SetProperty(ref field, value);
+    } = true;
 
     public string JourneySearchText
     {
@@ -108,7 +130,7 @@ public partial class MainWindowViewModel
             SelectedProject.Model.Journeys,
             SelectedProject.Journeys,
             () => SelectedJourney = null);
-        
+
         OnPropertyChanged(nameof(FilteredJourneys));
     }
 
@@ -123,24 +145,24 @@ public partial class MainWindowViewModel
 
         // Note: This creates a placeholder station.
         // In practice, stations should be added from City Library via drag & drop.
-        var newStation = new Station 
-        { 
+        var newStation = new Station
+        {
             Name = "New Station",
             NumberOfLapsToStop = 2,
             IsExitOnLeft = false
         };
-        
+
         // Add Station directly to Journey
         SelectedJourney.Model.Stations.Add(newStation);
-        
+
         // Refresh Journey's Stations collection
         SelectedJourney.RefreshStations();
-        
+
         // Select the new station
-        var stationVM = SelectedJourney.Stations.LastOrDefault();
-        if (stationVM != null)
+        var stationVm = SelectedJourney.Stations.LastOrDefault();
+        if (stationVm != null)
         {
-            SelectedStation = stationVM;
+            SelectedStation = stationVm;
         }
     }
 
@@ -152,15 +174,15 @@ public partial class MainWindowViewModel
         // Find and remove Station by Id
         var station = SelectedJourney.Model.Stations
             .FirstOrDefault(s => s.Id == SelectedStation.Model.Id);
-        
+
         if (station != null)
         {
             SelectedJourney.Model.Stations.Remove(station);
         }
-        
+
         // Refresh Journey's Stations collection
         SelectedJourney.RefreshStations();
-        
+
         SelectedStation = null;
     }
 
@@ -217,7 +239,7 @@ public partial class MainWindowViewModel
 
             // Add Station directly to Journey
             SelectedJourney.Model.Stations.Add(newStation);
-            
+
             // Refresh Journey's Stations collection
             SelectedJourney.RefreshStations();
         }
@@ -240,7 +262,7 @@ public partial class MainWindowViewModel
             StatusText = $"❌ Action '{e.Action.Name}' failed: {e.ErrorMessage}";
 
             // Log to application log (visible in MonitorPage)
-            _logger.LogError(e.Exception, "Action '{ActionName}' execution failed: {ErrorMessage}", 
+            _logger.LogError(e.Exception, "Action '{ActionName}' execution failed: {ErrorMessage}",
                 e.Action.Name, e.ErrorMessage);
         });
     }

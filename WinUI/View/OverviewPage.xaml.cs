@@ -1,12 +1,21 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
+using Common.Navigation;
 using SharedUI.ViewModel;
 
 /// <summary>
 /// Overview page showing the Lap Counter Dashboard with Z21 connection and track statistics.
 /// Uses MainWindowViewModel (unified cross-platform ViewModel).
 /// </summary>
+[NavigationItem(
+    Tag = "overview",
+    Title = "Overview",
+    Icon = "\uE80F",
+    Category = NavigationCategory.Core,
+    Order = 10,
+    FeatureToggleKey = "IsOverviewPageAvailable",
+    BadgeLabelKey = "OverviewPageLabel")]
 public sealed partial class OverviewPage
 {
     public MainWindowViewModel ViewModel { get; }

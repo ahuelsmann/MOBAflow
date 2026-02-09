@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
+using Common.Navigation;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -13,6 +15,14 @@ using Windows.System;
 /// Workflows page displaying workflows and actions with properties panel.
 /// Supports drag & drop of workflows to stations.
 /// </summary>
+[NavigationItem(
+    Tag = "workflows",
+    Title = "Workflows",
+    Icon = "\uE945",
+    Category = NavigationCategory.Solution,
+    Order = 20,
+    FeatureToggleKey = "IsWorkflowsPageAvailable",
+    BadgeLabelKey = "WorkflowsPageLabel")]
 public sealed partial class WorkflowsPage
 {
     public MainWindowViewModel ViewModel { get; }

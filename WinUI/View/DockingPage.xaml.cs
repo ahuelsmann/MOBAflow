@@ -2,6 +2,7 @@
 
 namespace Moba.WinUI.View;
 
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Moba.WinUI.Behavior;
 using Moba.WinUI.Controls;
@@ -10,7 +11,8 @@ using Moba.WinUI.ViewModel;
 public sealed partial class DockingPage : Page
 {
     private readonly DockingPageViewModel _viewModel;
-    private readonly PropertyGrid PropertiesGrid = new() { IsCategorized = true };
+    private readonly PropertyGrid _propertiesGrid = new() { IsCategorized = true };
+    private bool _isInitialized;
 
     public DockingPage(DockingPageViewModel viewModel)
     {
@@ -18,11 +20,28 @@ public sealed partial class DockingPage : Page
         _viewModel = viewModel;
         DataContext = viewModel;
 
+        Loaded += OnPageLoaded;
+        Unloaded += OnPageUnloaded;
+    }
+
+    private void OnPageLoaded(object sender, RoutedEventArgs e)
+    {
+        if (_isInitialized)
+        {
+            return;
+        }
+
         DockManager.PanelUndocked += OnPanelUndocked;
         DockManager.PanelClosed += OnPanelClosed;
-        DocumentArea.TabPinnedToSide += OnTabPinnedToSide;
 
         InitializeDockPanels();
+        _isInitialized = true;
+    }
+
+    private void OnPageUnloaded(object sender, RoutedEventArgs e)
+    {
+        DockManager.PanelUndocked -= OnPanelUndocked;
+        DockManager.PanelClosed -= OnPanelClosed;
     }
 
     private void InitializeDockPanels()
@@ -41,7 +60,7 @@ public sealed partial class DockingPage : Page
         {
             PanelIconGlyph = "\uE946",
             PanelTitle = "Properties",
-            PanelContent = PropertiesGrid
+            PanelContent = _propertiesGrid
         };
         DockManager.DockPanel(propertiesPanel, DockPosition.Right);
 
@@ -105,11 +124,11 @@ public sealed partial class DockingPage : Page
 
     private void PopulatePropertyGrid()
     {
-        PropertiesGrid.AvailableObjects?.Add("WinUI  Projekteigenschaften");
-        PropertiesGrid.AvailableObjects?.Add("DockingPage.xaml  Page");
-        PropertiesGrid.SelectedObjectName = "WinUI  Projekteigenschaften";
+        _propertiesGrid.AvailableObjects?.Add("WinUI Projekteigenschaften");
+        _propertiesGrid.AvailableObjects?.Add("DockingPage.xaml Page");
+        _propertiesGrid.SelectedObjectName = "WinUI Projekteigenschaften";
 
-        PropertiesGrid.SetProperties(
+        _propertiesGrid.SetProperties(
         [
             PropertyGridItem.CreateProperty("Dateiname", "WinUI.csproj", "Allgemein", "Name der Projektdatei."),
             PropertyGridItem.CreateProperty("Projektordner", @"C:\Repo\ahuelsmann\MOBAflow\WinUI", "Allgemein", "Pfad zum Projektordner."),
@@ -145,17 +164,5 @@ public sealed partial class DockingPage : Page
 
     private void OnPanelClosed(object? sender, DockPanelClosedEventArgs e)
     {
-    }
-
-    private void OnTabPinnedToSide(object? sender, DocumentTabPinToSideEventArgs e)
-    {
-        var panel = new Controls.DockPanel
-        {
-            PanelTitle = e.Document.Title,
-            PanelIconGlyph = e.Document.IconGlyph,
-            PanelContent = e.Document.Content
-        };
-
-        DockManager.DockPanel(panel, e.Side);
     }
 }

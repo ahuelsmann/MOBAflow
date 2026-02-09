@@ -117,7 +117,7 @@ public class TrackPlanSvgRenderer
         var currentSegmentIndex = _segmentIndex++;
 
         // Rendera dieses Segment
-        if (segment is Wr wr)
+        if (segment is WR wr)
         {
             RenderWr(wr, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
@@ -178,7 +178,7 @@ public class TrackPlanSvgRenderer
                 double branchY = nextY;
                 double branchAngle = nextAngle;
 
-                if (segment is Wr wrSegment)
+                if (segment is WR wrSegment)
                 {
                     CalculateWrPortPosition(wrSegment, outgoingPort, x, y, angle, out branchX, out branchY, out branchAngle);
                 }
@@ -206,7 +206,7 @@ public class TrackPlanSvgRenderer
     /// <summary>
     /// Berechnet die Ausgangsposition für einen bestimmten Port der WR.
     /// </summary>
-    private void CalculateWrPortPosition(Wr wr, char outgoingPort, double x, double y, double angle, out double outX, out double outY, out double outAngle)
+    private void CalculateWrPortPosition(WR wr, char outgoingPort, double x, double y, double angle, out double outX, out double outY, out double outAngle)
     {
         var straightLength = wr.LengthInMm;
         var radius = wr.RadiusInMm;
@@ -253,7 +253,7 @@ public class TrackPlanSvgRenderer
     /// 
     /// Aktualisiert Position für Weiterzeichnen zum Port-B-Ende.
     /// </summary>
-    private void RenderWr(Wr wr, ref double x, ref double y, ref double angle, int segmentIndex)
+    private void RenderWr(WR wr, ref double x, ref double y, ref double angle, int segmentIndex)
     {
         var straightLength = wr.LengthInMm;
         var radius = wr.RadiusInMm;
@@ -753,18 +753,18 @@ public class TrackPlanSvgRenderer
         const double gap = 1; // 1px Abstand vom Verbindungspunkt (kante-an-kante)
         const double labelOffsetParallel = 8; // 8px Abstand entlang Fahrtrichtung
         const double labelOffsetPerpendicular = 12; // 12px Abstand senkrecht (ober/unterhalb Gleis)
-        
+
         // Senkrecht zum Winkel = Winkel + 90°
         double perpAngle = angle + 90;
-        
+
         // Strich-Positionierung: ±1px vom Verbindungspunkt
         // Exit: -1px zurück (in Fahrtrichtung), Entry: +1px vorwärts (in Fahrtrichtung)
         double offset = isEntry ? gap : -gap;
-        
+
         // Versetzung entlang der Fahrtrichtung
         double baseOffsetX = offset * Math.Cos(angle * Math.PI / 180);
         double baseOffsetY = offset * Math.Sin(angle * Math.PI / 180);
-        
+
         // Start und End des Strichs (senkrecht zur Fahrtrichtung)
         double x1 = x + baseOffsetX - (strokeLength / 2) * Math.Cos(perpAngle * Math.PI / 180);
         double y1 = y + baseOffsetY - (strokeLength / 2) * Math.Sin(perpAngle * Math.PI / 180);
@@ -781,11 +781,11 @@ public class TrackPlanSvgRenderer
         double labelParallel = isEntry ? labelOffsetParallel : -labelOffsetParallel;
         double labelBaseX = x + labelParallel * Math.Cos(angle * Math.PI / 180);
         double labelBaseY = y + labelParallel * Math.Sin(angle * Math.PI / 180);
-        
+
         // ZUSÄTZLICH: 12px senkrecht versetzt (ober/unterhalb des Gleises)
         double labelX = labelBaseX + labelOffsetPerpendicular * Math.Cos(perpAngle * Math.PI / 180);
         double labelY = labelBaseY + labelOffsetPerpendicular * Math.Sin(perpAngle * Math.PI / 180);
-        
+
         _svg.AppendLine($"  <text x=\"{labelX.ToString("F2", CultureInfo.InvariantCulture)}\" y=\"{labelY.ToString("F2", CultureInfo.InvariantCulture)}\" " +
                        $"font-size=\"14\" font-weight=\"bold\" fill=\"{color}\" text-anchor=\"middle\" dominant-baseline=\"middle\">{portLabel}</text>");
     }
@@ -802,7 +802,7 @@ public class TrackPlanSvgRenderer
     private string GetPortColor(char port, int segmentIndex)
     {
         var scheme = segmentIndex % 2; // 0 oder 1
-        
+
         if (scheme == 0)
         {
             // Schema 1: Klassische Farben

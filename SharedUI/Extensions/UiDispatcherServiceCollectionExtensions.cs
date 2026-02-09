@@ -18,7 +18,7 @@ public static class UiDispatcherServiceCollectionExtensions
     /// - MAUI: Uses MainThread API for cross-platform UI thread dispatch
     /// - Blazor: Uses BlazorUiDispatcher for server-side rendering
     ///
-    /// ⚠️ IMPORTANT: This method MUST be called BEFORE any services that depend on IUiDispatcher.
+    /// IMPORTANT: This method MUST be called BEFORE any services that depend on IUiDispatcher.
     /// </summary>
     /// <param name="services">The service collection to register with.</param>
     /// <returns>The service collection for method chaining.</returns>
@@ -35,7 +35,7 @@ public static class UiDispatcherServiceCollectionExtensions
         // 1. DispatcherQueue (WinUI) / MainThread (MAUI) are static, not per-request
         // 2. No state to manage, safe to share across entire app lifetime
         // 3. Improves performance by avoiding repeated instantiation
-        services.AddSingleton<IUiDispatcher>(GetPlatformDispatcher());
+        services.AddSingleton(GetPlatformDispatcher());
 
         return services;
     }

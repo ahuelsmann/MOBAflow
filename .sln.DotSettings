@@ -585,6 +585,8 @@
 		
 		Status: INTENTIONAL DESIGN - Protocol documentation alignment
 	-->
+	<!-- Protocol constants use UPPER_SNAKE_CASE (intentional). Suppress naming inspection for Z21 protocol constants. -->
+	<s:Boolean x:Key="/Default/CodeInspection/Inspections/InconsistentNaming/@EntryIndexedValue">False</s:Boolean>
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=DCC/@EntryIndexedValue">DCC</s:String>
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=MM/@EntryIndexedValue">MM</s:String>
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=RCN/@EntryIndexedValue">RCN</s:String>
