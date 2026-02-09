@@ -7,115 +7,115 @@
     x:Name="Root"
     mc:Ignorable="d">
 
-    <Grid
-        x:Name="RootGrid"
-        Background="{ThemeResource LayerFillColorDefaultBrush}"
-        BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-        BorderThickness="0,0,0,1">
-
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-
-        <!--  Header with Icon, Title, and Actions  -->
-        <Grid
-            x:Name="HeaderGrid"
-            Grid.Row="0"
-            Height="40"
-            Padding="12,0"
-            Background="{ThemeResource LayerFillColorDefaultBrush}"
-            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-            BorderThickness="0,0,0,1"
-            CanDrag="True"
-            DragStarting="OnDragStarting">
-
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-
-            <!--  Icon  -->
-            <FontIcon
-                x:Name="PanelIcon"
-                Grid.Column="0"
-                Margin="0,0,8,0"
-                FontFamily="{StaticResource SymbolThemeFontFamily}"
-                FontSize="16"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Glyph="&#xE71E;" />
-
-            <!--  Title  -->
-            <TextBlock
-                Grid.Column="1"
+    <Grid x:Name="RootGrid">
+        <!--  Collapsed tab  -->
+        <Border
+            x:Name="CollapsedTab"
+            Width="32"
+            HorizontalAlignment="Left"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            PointerPressed="OnCollapsedTabPressed"
+            ToolTipService.ToolTip="{Binding PanelTitle, ElementName=Root}"
+            Visibility="Collapsed">
+            <StackPanel
+                x:Name="CollapsedStack"
+                HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                FontSize="14"
-                FontWeight="SemiBold"
-                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                Text="{Binding PanelTitle, ElementName=Root}" />
-
-            <!--  Pin Button  -->
-            <Button
-                x:Name="PinButton"
-                Grid.Column="2"
-                Width="32"
-                Height="32"
-                Padding="0"
-                Background="Transparent"
-                BorderBrush="Transparent"
-                CornerRadius="4"
-                ToolTipService.ToolTip="{x:Bind IsPinned, Mode=OneWay, Converter={StaticResource PinTooltipConverter}}">
+                Spacing="8">
                 <FontIcon
-                    x:Name="PinIcon"
+                    x:Name="CollapsedIcon"
+                    FontSize="14"
+                    Foreground="{ThemeResource SystemAccentColor}"
+                    Glyph="{Binding PanelIconGlyph, ElementName=Root}" />
+            </StackPanel>
+        </Border>
+
+        <!--  Expanded panel  -->
+        <Grid
+            x:Name="ExpandedPanel"
+            Padding="12"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!--  Header with Icon, Title, and Actions  -->
+            <Grid
+                Grid.Row="0"
+                Margin="0,0,0,8"
+                CanDrag="True"
+                DragStarting="OnDragStarting">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!--  Icon  -->
+                <FontIcon
+                    x:Name="PanelIcon"
+                    Grid.Column="0"
+                    Margin="0,0,8,0"
                     FontFamily="{StaticResource SymbolThemeFontFamily}"
                     FontSize="14"
-                    Foreground="{x:Bind IsPinned, Mode=OneWay, Converter={StaticResource PinForegroundConverter}}"
-                    Glyph="&#xE718;" />
-            </Button>
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Glyph="&#xE71E;" />
 
-            <!--  Undock Button (back to Document Tab)  -->
-            <Button
-                x:Name="MaximizeButton"
-                Grid.Column="3"
-                Width="32"
-                Height="32"
-                Padding="0"
-                Background="Transparent"
-                BorderBrush="Transparent"
-                CornerRadius="4"
-                ToolTipService.ToolTip="Undock to Tab">
-                <FontIcon
-                    FontFamily="{StaticResource SymbolThemeFontFamily}"
+                <!--  Title  -->
+                <TextBlock
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
                     FontSize="14"
-                    Glyph="&#xE8A7;" />
-            </Button>
+                    FontWeight="SemiBold"
+                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                    Text="{Binding PanelTitle, ElementName=Root}" />
 
-            <!--  Close Button  -->
-            <Button
-                x:Name="CloseButton"
-                Grid.Column="4"
-                Width="32"
-                Height="32"
-                Padding="0"
-                Background="Transparent"
-                BorderBrush="Transparent"
-                CornerRadius="4"
-                ToolTipService.ToolTip="Close Panel">
-                <FontIcon
-                    FontFamily="{StaticResource SymbolThemeFontFamily}"
-                    FontSize="14"
-                    Glyph="&#xE711;" />
-            </Button>
+                <!--  Pin Button  -->
+                <Button
+                    x:Name="PinButton"
+                    Grid.Column="2"
+                    Padding="4"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Click="OnPinButtonClick"
+                    ToolTipService.ToolTip="Collapse panel">
+                    <FontIcon
+                        x:Name="PinIcon"
+                        FontSize="12"
+                        Foreground="{ThemeResource SystemAccentColor}"
+                        Glyph="&#xE718;" />
+                </Button>
+            </Grid>
+
+            <!--  Content  -->
+            <ContentPresenter
+                x:Name="ContentPresenter"
+                Grid.Row="1"
+                Content="{Binding PanelContent, ElementName=Root}" />
         </Grid>
 
-        <!--  Content  -->
-        <ContentPresenter
-            x:Name="ContentPresenter"
-            Grid.Row="1"
-            Margin="0"
-            Content="{Binding PanelContent, ElementName=Root}" />
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="ExpansionStates">
+                <VisualState x:Name="Expanded">
+                    <VisualState.Setters>
+                        <Setter Target="ExpandedPanel.Visibility" Value="Visible" />
+                        <Setter Target="CollapsedTab.Visibility" Value="Collapsed" />
+                    </VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="Collapsed">
+                    <VisualState.Setters>
+                        <Setter Target="ExpandedPanel.Visibility" Value="Collapsed" />
+                        <Setter Target="CollapsedTab.Visibility" Value="Visible" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
     </Grid>
 </UserControl>

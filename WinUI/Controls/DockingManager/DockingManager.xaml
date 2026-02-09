@@ -74,7 +74,7 @@
                 DragOver="OnDockAreaDragOver"
                 Drop="OnDockAreaDrop"
                 Visibility="{x:Bind IsLeftPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                <controls:DockPanelGroup x:Name="LeftPanelGroup" />
+                <controls:DockPanelGroup x:Name="LeftPanelGroup" ItemsSource="{x:Bind LeftPanels, Mode=OneWay}" />
             </Grid>
 
             <!--  Left Splitter (own column, between Left and Center)  -->
@@ -123,7 +123,7 @@
                     DragOver="OnDockAreaDragOver"
                     Drop="OnDockAreaDrop"
                     Visibility="{x:Bind IsTopPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <controls:DockPanelGroup x:Name="TopPanelGroup" />
+                    <controls:DockPanelGroup x:Name="TopPanelGroup" ItemsSource="{x:Bind TopPanels, Mode=OneWay}" />
                 </Grid>
 
                 <!--  Top Splitter (own row)  -->
@@ -189,7 +189,7 @@
                     DragOver="OnDockAreaDragOver"
                     Drop="OnDockAreaDrop"
                     Visibility="{x:Bind IsBottomPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <controls:DockPanelGroup x:Name="BottomPanelGroup" />
+                    <controls:DockPanelGroup x:Name="BottomPanelGroup" ItemsSource="{x:Bind BottomPanels, Mode=OneWay}" />
                 </Grid>
             </Grid>
 
@@ -224,7 +224,7 @@
                 DragOver="OnDockAreaDragOver"
                 Drop="OnDockAreaDrop"
                 Visibility="{x:Bind IsRightPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                <controls:DockPanelGroup x:Name="RightPanelGroup" />
+                <controls:DockPanelGroup x:Name="RightPanelGroup" ItemsSource="{x:Bind RightPanels, Mode=OneWay}" />
             </Grid>
 
             <!--  Right Auto-Hide Bar  -->
@@ -363,7 +363,7 @@
                         VerticalAlignment="Center"
                         FontFamily="{StaticResource SymbolThemeFontFamily}"
                         FontSize="14"
-                        Glyph="&#xE74D;" />
+                        Glyph="&#xE72A;" />
                 </Border>
 
                 <!--  Bottom  -->

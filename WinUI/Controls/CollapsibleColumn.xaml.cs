@@ -39,6 +39,13 @@ public sealed partial class CollapsibleColumn : UserControl
         DependencyProperty.Register(nameof(PanelContent), typeof(object), typeof(CollapsibleColumn),
             new PropertyMetadata(null, OnPanelContentChanged));
 
+    /// <summary>
+    /// Optional header actions shown next to the header text.
+    /// </summary>
+    public static readonly DependencyProperty HeaderActionsProperty =
+        DependencyProperty.Register(nameof(HeaderActions), typeof(UIElement), typeof(CollapsibleColumn),
+            new PropertyMetadata(null, OnHeaderActionsChanged));
+
     public CollapsibleColumn()
     {
         InitializeComponent();
@@ -73,10 +80,20 @@ public sealed partial class CollapsibleColumn : UserControl
         set => SetValue(PanelContentProperty, value);
     }
 
+    /// <summary>
+    /// Optional header actions shown next to the header text.
+    /// </summary>
+    public UIElement? HeaderActions
+    {
+        get => (UIElement?)GetValue(HeaderActionsProperty);
+        set => SetValue(HeaderActionsProperty, value);
+    }
+
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         ApplyGlyph();
         ApplyExpansionState();
+        ApplyHeaderActions();
     }
 
     private static void OnHeaderChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -102,6 +119,12 @@ public sealed partial class CollapsibleColumn : UserControl
             control.ContentArea.Content = e.NewValue;
     }
 
+    private static void OnHeaderActionsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is CollapsibleColumn control)
+            control.ApplyHeaderActions();
+    }
+
     private void ApplyGlyph()
     {
         if (CollapsedIcon is not null)
@@ -113,6 +136,17 @@ public sealed partial class CollapsibleColumn : UserControl
     private void ApplyExpansionState()
     {
         VisualStateManager.GoToState(this, IsExpanded ? "Expanded" : "Collapsed", true);
+    }
+
+    private void ApplyHeaderActions()
+    {
+        if (HeaderActionsPresenter is null)
+        {
+            return;
+        }
+
+        HeaderActionsPresenter.Content = HeaderActions;
+        HeaderActionsPresenter.Visibility = HeaderActions is null ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private void OnCollapsedTabPressed(object sender, PointerRoutedEventArgs e)

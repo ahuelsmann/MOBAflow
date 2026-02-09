@@ -3,6 +3,7 @@
 namespace Moba.WinUI.Controls;
 
 using Microsoft.UI.Xaml;
+
 using System;
 
 /// <summary>
@@ -15,7 +16,6 @@ public class DocumentTab : IEquatable<DocumentTab>
     public string IconGlyph { get; set; } = "\uE71E";
     public UIElement? Content { get; set; }
     public bool IsModified { get; set; }
-    public bool IsPinned { get; set; }
     public object? Tag { get; set; }
 
     public override bool Equals(object? obj) => Equals(obj as DocumentTab);

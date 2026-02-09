@@ -31,26 +31,17 @@
                         RightTapped="OnTabRightTapped">
                         <TabViewItem.ContextFlyout>
                             <MenuFlyout>
-                                <MenuFlyoutItem
-                                    x:Name="PinToLeftItem"
-                                    Click="OnPinToLeft"
-                                    Text="Pin to Left">
+                                <MenuFlyoutItem x:Name="PinToLeftItem" Text="Pin to Left">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE74B;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem
-                                    x:Name="PinToRightItem"
-                                    Click="OnPinToRight"
-                                    Text="Pin to Right">
+                                <MenuFlyoutItem x:Name="PinToRightItem" Text="Pin to Right">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE74D;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem
-                                    x:Name="PinToBottomItem"
-                                    Click="OnPinToBottom"
-                                    Text="Pin to Bottom">
+                                <MenuFlyoutItem x:Name="PinToBottomItem" Text="Pin to Bottom">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE74A;" />
                                     </MenuFlyoutItem.Icon>
@@ -63,12 +54,6 @@
                                 </MenuFlyoutItem>
                                 <MenuFlyoutItem Click="OnContextCloseOthers" Text="Close Others" />
                                 <MenuFlyoutItem Click="OnContextCloseAll" Text="Close All" />
-                                <MenuFlyoutSeparator />
-                                <MenuFlyoutItem Click="OnContextPinTab" Text="Pin Tab">
-                                    <MenuFlyoutItem.Icon>
-                                        <FontIcon Glyph="&#xE718;" />
-                                    </MenuFlyoutItem.Icon>
-                                </MenuFlyoutItem>
                             </MenuFlyout>
                         </TabViewItem.ContextFlyout>
                     </TabViewItem>

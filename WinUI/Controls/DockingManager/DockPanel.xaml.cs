@@ -5,7 +5,9 @@ namespace Moba.WinUI.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+
 using System;
+
 using Windows.ApplicationModel.DataTransfer;
 
 /// <summary>
@@ -23,14 +25,14 @@ public sealed partial class DockPanel : UserControl
     public event EventHandler? CloseRequested;
 
     /// <summary>
-    /// Wird ausgelöst, wenn der Pin-Button geklickt wird (Qt-ADS: "Auto Hide" toggle).
-    /// </summary>
-    public event EventHandler? PinToggleRequested;
-
-    /// <summary>
     /// Wird ausgelöst, wenn der Undock-Button geklickt wird (zurück als Tab in Document Area).
     /// </summary>
     public event EventHandler? UndockRequested;
+
+    /// <summary>
+    /// Wird ausgelöst, wenn der Expand/Collapse-Status geändert wird.
+    /// </summary>
+    public event EventHandler? IsExpandedChanged;
 
     #region Dependency Properties
 
@@ -46,7 +48,7 @@ public sealed partial class DockPanel : UserControl
             nameof(PanelIconGlyph),
             typeof(string),
             typeof(DockPanel),
-            new PropertyMetadata("\uE71E"));
+            new PropertyMetadata("\uE71E", OnPanelIconGlyphChanged));
 
     public static readonly DependencyProperty PanelContentProperty =
         DependencyProperty.Register(
@@ -55,29 +57,19 @@ public sealed partial class DockPanel : UserControl
             typeof(DockPanel),
             new PropertyMetadata(null));
 
-    public static readonly DependencyProperty IsPinnedProperty =
+    public static readonly DependencyProperty IsExpandedProperty =
         DependencyProperty.Register(
-            nameof(IsPinned),
+            nameof(IsExpanded),
             typeof(bool),
             typeof(DockPanel),
-            new PropertyMetadata(true, OnIsPinnedChanged));
-
-    public static readonly DependencyProperty IsMaximizedProperty =
-        DependencyProperty.Register(
-            nameof(IsMaximized),
-            typeof(bool),
-            typeof(DockPanel),
-            new PropertyMetadata(false));
+            new PropertyMetadata(true, OnIsExpandedChanged));
 
     #endregion
 
     public DockPanel()
     {
         InitializeComponent();
-        CloseButton.Click += (_, _) => CloseRequested?.Invoke(this, EventArgs.Empty);
-        PinButton.Click += (_, _) => PinToggleRequested?.Invoke(this, EventArgs.Empty);
-        MaximizeButton.Click += (_, _) => UndockRequested?.Invoke(this, EventArgs.Empty);
-        Loaded += (_, _) => UpdatePinButtonStyle(IsPinned);
+        Loaded += OnLoaded;
     }
 
     #region Properties
@@ -100,19 +92,19 @@ public sealed partial class DockPanel : UserControl
         set => SetValue(PanelContentProperty, value);
     }
 
-    public bool IsPinned
+    public bool IsExpanded
     {
-        get => (bool)GetValue(IsPinnedProperty);
-        set => SetValue(IsPinnedProperty, value);
-    }
-
-    public bool IsMaximized
-    {
-        get => (bool)GetValue(IsMaximizedProperty);
-        set => SetValue(IsMaximizedProperty, value);
+        get => (bool)GetValue(IsExpandedProperty);
+        set => SetValue(IsExpandedProperty, value);
     }
 
     #endregion
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        ApplyGlyph();
+        ApplyExpansionState();
+    }
 
     private void OnDragStarting(UIElement sender, DragStartingEventArgs args)
     {
@@ -120,26 +112,48 @@ public sealed partial class DockPanel : UserControl
         args.Data.RequestedOperation = DataPackageOperation.Move;
     }
 
-    private static void OnIsPinnedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    private static void OnPanelIconGlyphChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is DockPanel panel && e.NewValue is bool isPinned)
+        if (d is DockPanel panel)
         {
-            panel.UpdatePinButtonStyle(isPinned);
+            panel.ApplyGlyph();
         }
     }
 
-    private void UpdatePinButtonStyle(bool isPinned)
+    private static void OnIsExpandedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (PinIcon != null)
+        if (d is DockPanel panel)
         {
-            PinIcon.Foreground = isPinned
-                ? Application.Current.Resources["TextFillColorSecondaryBrush"] as Microsoft.UI.Xaml.Media.Brush
-                : Application.Current.Resources["SystemAccentColor"] as Microsoft.UI.Xaml.Media.Brush;
+            panel.ApplyExpansionState();
+            panel.IsExpandedChanged?.Invoke(panel, EventArgs.Empty);
+        }
+    }
+
+    private void ApplyGlyph()
+    {
+        if (CollapsedIcon is not null)
+        {
+            CollapsedIcon.Glyph = PanelIconGlyph;
         }
 
-        if (PinButton != null)
+        if (PanelIcon is not null)
         {
-            Microsoft.UI.Xaml.Controls.ToolTipService.SetToolTip(PinButton, isPinned ? "Auto Hide" : "Pin");
+            PanelIcon.Glyph = PanelIconGlyph;
         }
+    }
+
+    private void ApplyExpansionState()
+    {
+        VisualStateManager.GoToState(this, IsExpanded ? "Expanded" : "Collapsed", true);
+    }
+
+    private void OnCollapsedTabPressed(object sender, PointerRoutedEventArgs e)
+    {
+        IsExpanded = true;
+    }
+
+    private void OnPinButtonClick(object sender, RoutedEventArgs e)
+    {
+        IsExpanded = !IsExpanded;
     }
 }

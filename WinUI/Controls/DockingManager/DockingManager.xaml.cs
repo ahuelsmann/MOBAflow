@@ -2,14 +2,19 @@
 
 namespace Moba.WinUI.Controls;
 
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Input;
+
 using Moba.WinUI.Behavior;
-using Windows.ApplicationModel.DataTransfer;
+
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+
+using Windows.ApplicationModel.DataTransfer;
 
 /// <summary>
 /// DockingManager Control mit Visual Studio-style Layout nach Fluent Design System.
@@ -24,6 +29,7 @@ public sealed partial class DockingManager : UserControl
 {
     private const string DockPanelDataKey = "DockPanel";
     private const string DocumentTabDataKey = "DocumentTab";
+    private const double CollapsedTabWidth = 32;
     private bool _isOverlayVisible;
 
     // Splitter dragging state
@@ -31,6 +37,9 @@ public sealed partial class DockingManager : UserControl
     private string? _activeSplitterTag;
     private Windows.Foundation.Point _splitterDragStart;
     private double _splitterStartSize;
+
+    private double _leftExpandedWidth;
+    private double _rightExpandedWidth;
 
     /// <summary>
     /// Raised when a DocumentTab is docked to a side via drag &amp; drop.
@@ -129,12 +138,49 @@ public sealed partial class DockingManager : UserControl
             typeof(DockingManager),
             new PropertyMetadata(true));
 
+    public static readonly DependencyProperty LeftPanelsProperty =
+        DependencyProperty.Register(
+            nameof(LeftPanels),
+            typeof(ObservableCollection<DockPanel>),
+            typeof(DockingManager),
+            new PropertyMetadata(null));
+
+    public static readonly DependencyProperty RightPanelsProperty =
+        DependencyProperty.Register(
+            nameof(RightPanels),
+            typeof(ObservableCollection<DockPanel>),
+            typeof(DockingManager),
+            new PropertyMetadata(null));
+
+    public static readonly DependencyProperty TopPanelsProperty =
+        DependencyProperty.Register(
+            nameof(TopPanels),
+            typeof(ObservableCollection<DockPanel>),
+            typeof(DockingManager),
+            new PropertyMetadata(null));
+
+    public static readonly DependencyProperty BottomPanelsProperty =
+        DependencyProperty.Register(
+            nameof(BottomPanels),
+            typeof(ObservableCollection<DockPanel>),
+            typeof(DockingManager),
+            new PropertyMetadata(null));
+
     #endregion
 
     public DockingManager()
     {
         InitializeComponent();
         WireGroupEvents();
+        Loaded += OnLoaded;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        _leftExpandedWidth = LeftPanelWidth;
+        _rightExpandedWidth = RightPanelWidth;
+        UpdateSideWidth(DockPosition.Left, LeftPanelGroup);
+        UpdateSideWidth(DockPosition.Right, RightPanelGroup);
     }
 
     #region Properties
@@ -199,6 +245,30 @@ public sealed partial class DockingManager : UserControl
         set => SetValue(IsBottomPanelVisibleProperty, value);
     }
 
+    public ObservableCollection<DockPanel>? LeftPanels
+    {
+        get => (ObservableCollection<DockPanel>?)GetValue(LeftPanelsProperty);
+        set => SetValue(LeftPanelsProperty, value);
+    }
+
+    public ObservableCollection<DockPanel>? RightPanels
+    {
+        get => (ObservableCollection<DockPanel>?)GetValue(RightPanelsProperty);
+        set => SetValue(RightPanelsProperty, value);
+    }
+
+    public ObservableCollection<DockPanel>? TopPanels
+    {
+        get => (ObservableCollection<DockPanel>?)GetValue(TopPanelsProperty);
+        set => SetValue(TopPanelsProperty, value);
+    }
+
+    public ObservableCollection<DockPanel>? BottomPanels
+    {
+        get => (ObservableCollection<DockPanel>?)GetValue(BottomPanelsProperty);
+        set => SetValue(BottomPanelsProperty, value);
+    }
+
     #endregion
 
     #region Panel Group API
@@ -217,6 +287,18 @@ public sealed partial class DockingManager : UserControl
             return;
         }
 
+        var collection = GetPanelCollection(position);
+        if (collection is not null)
+        {
+            if (!collection.Contains(panel))
+            {
+                collection.Add(panel);
+            }
+
+            SetPanelVisibility(position, collection.Count > 0);
+            return;
+        }
+
         var group = GetPanelGroup(position);
         group.AddPanel(panel);
         SetPanelVisibility(position, true);
@@ -228,10 +310,10 @@ public sealed partial class DockingManager : UserControl
     /// </summary>
     public void RemovePanelFromAllGroups(DockPanel panel)
     {
-        RemoveFromGroupAndAutoHide(LeftPanelGroup, panel, DockPosition.Left);
-        RemoveFromGroupAndAutoHide(RightPanelGroup, panel, DockPosition.Right);
-        RemoveFromGroupAndAutoHide(TopPanelGroup, panel, DockPosition.Top);
-        RemoveFromGroupAndAutoHide(BottomPanelGroup, panel, DockPosition.Bottom);
+        RemoveFromGroupOrCollection(LeftPanels, LeftPanelGroup, panel, DockPosition.Left);
+        RemoveFromGroupOrCollection(RightPanels, RightPanelGroup, panel, DockPosition.Right);
+        RemoveFromGroupOrCollection(TopPanels, TopPanelGroup, panel, DockPosition.Top);
+        RemoveFromGroupOrCollection(BottomPanels, BottomPanelGroup, panel, DockPosition.Bottom);
     }
 
     /// <summary>
@@ -255,6 +337,31 @@ public sealed partial class DockingManager : UserControl
         _ => BottomPanelGroup
     };
 
+    private ObservableCollection<DockPanel>? GetPanelCollection(DockPosition position) => position switch
+    {
+        DockPosition.Left => LeftPanels,
+        DockPosition.Right => RightPanels,
+        DockPosition.Top => TopPanels,
+        DockPosition.Bottom => BottomPanels,
+        _ => null
+    };
+
+    private void RemoveFromGroupOrCollection(
+        ObservableCollection<DockPanel>? collection,
+        DockPanelGroup group,
+        DockPanel panel,
+        DockPosition side)
+    {
+        if (collection is not null)
+        {
+            collection.Remove(panel);
+            SetPanelVisibility(side, collection.Count > 0);
+            return;
+        }
+
+        RemoveFromGroupAndAutoHide(group, panel, side);
+    }
+
     private void RemoveFromGroupAndAutoHide(DockPanelGroup group, DockPanel panel, DockPosition side)
     {
         if (group.RemovePanel(panel) && group.IsEmpty)
@@ -273,26 +380,73 @@ public sealed partial class DockingManager : UserControl
 
     private void WireSingleGroup(DockPanelGroup group, DockPosition side)
     {
-        group.PanelClosed += (_, panel) =>
-        {
-            if (group.IsEmpty)
-            {
-                SetPanelVisibility(side, false);
-            }
-
-            PanelClosed?.Invoke(this, new DockPanelClosedEventArgs(panel));
-        };
-
-        group.PanelPinRequested += (_, panel) =>
-        {
-            PinToAutoHide(panel, side);
-        };
+        group.PanelExpansionChanged += (_, _) => UpdateSideWidth(side, group);
 
         group.PanelUndockRequested += (_, panel) =>
         {
             RemovePanelFromAllGroups(panel);
             PanelUndocked?.Invoke(this, new DockPanelUndockedEventArgs(panel));
         };
+    }
+
+    private void UpdateSideWidth(DockPosition side, DockPanelGroup group)
+    {
+        if (group.Panels.Count == 0)
+        {
+            return;
+        }
+
+        var anyExpanded = group.Panels.Any(panel => panel.IsExpanded);
+
+        switch (side)
+        {
+            case DockPosition.Left:
+                UpdateLeftWidth(anyExpanded);
+                break;
+            case DockPosition.Right:
+                UpdateRightWidth(anyExpanded);
+                break;
+        }
+    }
+
+    private void UpdateLeftWidth(bool anyExpanded)
+    {
+        if (anyExpanded)
+        {
+            if (LeftPanelWidth <= CollapsedTabWidth)
+            {
+                LeftPanelWidth = Math.Max(_leftExpandedWidth, CollapsedTabWidth);
+            }
+        }
+        else
+        {
+            if (LeftPanelWidth > CollapsedTabWidth)
+            {
+                _leftExpandedWidth = LeftPanelWidth;
+            }
+
+            LeftPanelWidth = CollapsedTabWidth;
+        }
+    }
+
+    private void UpdateRightWidth(bool anyExpanded)
+    {
+        if (anyExpanded)
+        {
+            if (RightPanelWidth <= CollapsedTabWidth)
+            {
+                RightPanelWidth = Math.Max(_rightExpandedWidth, CollapsedTabWidth);
+            }
+        }
+        else
+        {
+            if (RightPanelWidth > CollapsedTabWidth)
+            {
+                _rightExpandedWidth = RightPanelWidth;
+            }
+
+            RightPanelWidth = CollapsedTabWidth;
+        }
     }
 
     #endregion
@@ -540,9 +694,29 @@ public sealed partial class DockingManager : UserControl
         }
 
         _isSplitterDragging = false;
+        UpdateExpandedWidthFromSplitter(_activeSplitterTag);
         _activeSplitterTag = null;
         ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.Arrow);
         e.Handled = true;
+    }
+
+    private void UpdateExpandedWidthFromSplitter(string? splitterTag)
+    {
+        switch (splitterTag)
+        {
+            case "Left":
+                if (LeftPanelWidth > CollapsedTabWidth)
+                {
+                    _leftExpandedWidth = LeftPanelWidth;
+                }
+                break;
+            case "Right":
+                if (RightPanelWidth > CollapsedTabWidth)
+                {
+                    _rightExpandedWidth = RightPanelWidth;
+                }
+                break;
+        }
     }
 
     #endregion
@@ -566,35 +740,6 @@ public sealed partial class DockingManager : UserControl
 
         var tabButton = CreateAutoHideTabButton(entry);
         sidebar.Children.Add(tabButton);
-    }
-
-    /// <summary>
-    /// Restores a panel from auto-hide back to its dock position.
-    /// </summary>
-    public void UnpinFromAutoHide(AutoHideEntry entry)
-    {
-        ArgumentNullException.ThrowIfNull(entry);
-
-        _autoHideEntries[entry.Side].Remove(entry);
-
-        var sidebar = GetAutoHideSidebar(entry.Side);
-        sidebar.Children.Clear();
-        foreach (var remaining in _autoHideEntries[entry.Side])
-        {
-            sidebar.Children.Add(CreateAutoHideTabButton(remaining));
-        }
-
-        if (_autoHideEntries[entry.Side].Count == 0)
-        {
-            sidebar.Visibility = Visibility.Collapsed;
-        }
-
-        if (_activeAutoHideEntry == entry)
-        {
-            _activeAutoHideEntry = null;
-        }
-
-        DockPanel(entry.Panel, entry.Side);
     }
 
     private StackPanel GetAutoHideSidebar(DockPosition side) => side switch

@@ -26,7 +26,7 @@ See [NET10-MIGRATION-ANALYSIS.md](docs/NET10-MIGRATION-ANALYSIS.md) for migratio
 - 🧭 **Journeys Page Layout** - Toggle City and Workflow libraries to free space for properties
 - 🔊 **Text-to-Speech** - Azure Cognitive Services & Windows Speech
 - ⚡ **Workflow Automation** - Event-driven action sequences
-- 🧩 **Docking Manager Demo (WinUI)** - Host-side Docking page with drag-dock panels, overlay drop targets, and LayoutDocumentEx
+- 🧩 **Docking Manager Demo (WinUI)** - Host-side Docking page with drag-dock panels, overlay drop targets, LayoutDocumentEx, and collapsible tabs that shrink to icon width
 - 🎨 **MOBAtps Track Plan System** - Visual track layout editor with drag & drop
 - 🛤️ **Track Libraries** - Extensible track system support (Piko A-Gleis, more coming)
 - 📱 **Multi-Platform** - WinUI (Windows), MAUI (Android), Blazor (Web)

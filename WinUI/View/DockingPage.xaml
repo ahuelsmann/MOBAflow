@@ -20,25 +20,19 @@
             DefaultLabelPosition="Right"
             IsOpen="False">
 
-            <AppBarButton
-                Command="{Binding AddNewDocumentCommand}"
-                Label="New File">
+            <AppBarButton Command="{Binding AddNewDocumentCommand}" Label="New File">
                 <AppBarButton.Icon>
                     <FontIcon Glyph="&#xE710;" />
                 </AppBarButton.Icon>
             </AppBarButton>
 
-            <AppBarButton
-                Command="{Binding MarkAsModifiedCommand}"
-                Label="Toggle Modified">
+            <AppBarButton Command="{Binding MarkAsModifiedCommand}" Label="Toggle Modified">
                 <AppBarButton.Icon>
                     <FontIcon Glyph="&#xE70F;" />
                 </AppBarButton.Icon>
             </AppBarButton>
 
-            <AppBarButton
-                Command="{Binding PinCurrentDocumentCommand}"
-                Label="Pin">
+            <AppBarButton Command="{Binding PinCurrentDocumentCommand}" Label="Pin">
                 <AppBarButton.Icon>
                     <FontIcon Glyph="&#xE718;" />
                 </AppBarButton.Icon>
@@ -46,17 +40,13 @@
 
             <AppBarSeparator />
 
-            <AppBarButton
-                Command="{Binding CloseCurrentDocumentCommand}"
-                Label="Close">
+            <AppBarButton Command="{Binding CloseCurrentDocumentCommand}" Label="Close">
                 <AppBarButton.Icon>
                     <FontIcon Glyph="&#xE711;" />
                 </AppBarButton.Icon>
             </AppBarButton>
 
-            <AppBarButton
-                Command="{Binding CloseAllModifiedDocumentsCommand}"
-                Label="Close Modified">
+            <AppBarButton Command="{Binding CloseAllModifiedDocumentsCommand}" Label="Close Modified">
                 <AppBarButton.Icon>
                     <FontIcon Glyph="&#xE74D;" />
                 </AppBarButton.Icon>
@@ -68,13 +58,17 @@
             x:Name="DockManager"
             Grid.Row="1"
             BottomPanelHeight="180"
+            BottomPanels="{Binding BottomPanels}"
             IsBottomPanelVisible="True"
             IsLeftPanelVisible="True"
             IsRightPanelVisible="True"
             IsTopPanelVisible="False"
             LeftPanelWidth="240"
+            LeftPanels="{Binding LeftPanels}"
             RightPanelWidth="260"
-            TabDockedToSide="OnTabDockedToSide">
+            RightPanels="{Binding RightPanels}"
+            TabDockedToSide="OnTabDockedToSide"
+            TopPanels="{Binding TopPanels}">
 
             <!--  Center: Document Tabs  -->
             <controls:DockingManager.DocumentAreaContent>

@@ -4,8 +4,12 @@ namespace Moba.WinUI.Controls;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.Linq;
 
 /// <summary>
 /// Groups multiple DockPanels into a TabView for a single dock position.
@@ -21,19 +25,21 @@ public sealed class DockPanelGroup : UserControl
     private readonly TextBlock _emptyState;
 
     /// <summary>
-    /// Raised when a panel is closed via tab close button.
-    /// </summary>
-    public event EventHandler<DockPanel>? PanelClosed;
-
-    /// <summary>
-    /// Raised when a panel requests to be pinned to auto-hide.
-    /// </summary>
-    public event EventHandler<DockPanel>? PanelPinRequested;
-
-    /// <summary>
     /// Raised when a panel requests undocking back to document area.
     /// </summary>
     public event EventHandler<DockPanel>? PanelUndockRequested;
+
+    /// <summary>
+    /// Raised when any panel expansion state changes.
+    /// </summary>
+    public event EventHandler? PanelExpansionChanged;
+
+    public static readonly DependencyProperty ItemsSourceProperty =
+        DependencyProperty.Register(
+            nameof(ItemsSource),
+            typeof(ObservableCollection<DockPanel>),
+            typeof(DockPanelGroup),
+            new PropertyMetadata(null, OnItemsSourceChanged));
 
     public DockPanelGroup()
     {
@@ -50,8 +56,6 @@ public sealed class DockPanelGroup : UserControl
             TabWidthMode = TabViewWidthMode.SizeToContent,
             CloseButtonOverlayMode = TabViewCloseButtonOverlayMode.OnPointerOver
         };
-        _panelTabView.TabCloseRequested += OnTabCloseRequested;
-        _panelTabView.SelectionChanged += OnTabSelectionChanged;
 
         _emptyState = new TextBlock
         {
@@ -68,6 +72,15 @@ public sealed class DockPanelGroup : UserControl
         rootGrid.Children.Add(_emptyState);
 
         Content = rootGrid;
+    }
+
+    /// <summary>
+    /// Panels provided via binding for this group.
+    /// </summary>
+    public ObservableCollection<DockPanel>? ItemsSource
+    {
+        get => (ObservableCollection<DockPanel>?)GetValue(ItemsSourceProperty);
+        set => SetValue(ItemsSourceProperty, value);
     }
 
     /// <summary>
@@ -142,6 +155,98 @@ public sealed class DockPanelGroup : UserControl
         }
     }
 
+    private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is DockPanelGroup group)
+        {
+            group.UpdateItemsSource(
+                e.OldValue as ObservableCollection<DockPanel>,
+                e.NewValue as ObservableCollection<DockPanel>);
+        }
+    }
+
+    private void UpdateItemsSource(ObservableCollection<DockPanel>? oldValue, ObservableCollection<DockPanel>? newValue)
+    {
+        if (oldValue is not null)
+        {
+            oldValue.CollectionChanged -= OnItemsSourceCollectionChanged;
+        }
+
+        if (newValue is not null)
+        {
+            newValue.CollectionChanged += OnItemsSourceCollectionChanged;
+        }
+
+        ResetPanels(newValue);
+    }
+
+    private void OnItemsSourceCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        switch (e.Action)
+        {
+            case NotifyCollectionChangedAction.Add:
+                if (e.NewItems is not null)
+                {
+                    foreach (var item in e.NewItems.OfType<DockPanel>())
+                    {
+                        AddPanel(item);
+                    }
+                }
+                break;
+            case NotifyCollectionChangedAction.Remove:
+                if (e.OldItems is not null)
+                {
+                    foreach (var item in e.OldItems.OfType<DockPanel>())
+                    {
+                        RemovePanel(item);
+                    }
+                }
+                break;
+            case NotifyCollectionChangedAction.Replace:
+                if (e.OldItems is not null)
+                {
+                    foreach (var item in e.OldItems.OfType<DockPanel>())
+                    {
+                        RemovePanel(item);
+                    }
+                }
+                if (e.NewItems is not null)
+                {
+                    foreach (var item in e.NewItems.OfType<DockPanel>())
+                    {
+                        AddPanel(item);
+                    }
+                }
+                break;
+            case NotifyCollectionChangedAction.Reset:
+                ResetPanels(ItemsSource);
+                break;
+        }
+    }
+
+    private void ResetPanels(ObservableCollection<DockPanel>? panels)
+    {
+        foreach (var panel in _panels.ToList())
+        {
+            UnwirePanelEvents(panel);
+        }
+
+        _panels.Clear();
+        _panelTabView.TabItems.Clear();
+        _singlePanelPresenter.Content = null;
+
+        if (panels is not null)
+        {
+            foreach (var panel in panels)
+            {
+                WirePanelEvents(panel);
+                _panels.Add(panel);
+            }
+        }
+
+        UpdateView();
+    }
+
     private void UpdateView()
     {
         _emptyState.Visibility = Visibility.Collapsed;
@@ -168,6 +273,8 @@ public sealed class DockPanelGroup : UserControl
                 RebuildTabs();
                 break;
         }
+
+        RaisePanelExpansionChanged();
     }
 
     private void RebuildTabs()
@@ -218,48 +325,16 @@ public sealed class DockPanelGroup : UserControl
         };
     }
 
-    private void OnTabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args)
-    {
-        if (args.Tab?.Tag is DockPanel panel)
-        {
-            RemovePanel(panel);
-            PanelClosed?.Invoke(this, panel);
-        }
-    }
-
-    private void OnTabSelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-    }
-
     private void WirePanelEvents(DockPanel panel)
     {
-        panel.CloseRequested += OnPanelCloseRequested;
-        panel.PinToggleRequested += OnPanelPinToggleRequested;
         panel.UndockRequested += OnPanelUndockRequested;
+        panel.IsExpandedChanged += OnPanelIsExpandedChanged;
     }
 
     private void UnwirePanelEvents(DockPanel panel)
     {
-        panel.CloseRequested -= OnPanelCloseRequested;
-        panel.PinToggleRequested -= OnPanelPinToggleRequested;
         panel.UndockRequested -= OnPanelUndockRequested;
-    }
-
-    private void OnPanelCloseRequested(object? sender, EventArgs e)
-    {
-        if (sender is DockPanel panel)
-        {
-            RemovePanel(panel);
-            PanelClosed?.Invoke(this, panel);
-        }
-    }
-
-    private void OnPanelPinToggleRequested(object? sender, EventArgs e)
-    {
-        if (sender is DockPanel panel)
-        {
-            PanelPinRequested?.Invoke(this, panel);
-        }
+        panel.IsExpandedChanged -= OnPanelIsExpandedChanged;
     }
 
     private void OnPanelUndockRequested(object? sender, EventArgs e)
@@ -268,5 +343,15 @@ public sealed class DockPanelGroup : UserControl
         {
             PanelUndockRequested?.Invoke(this, panel);
         }
+    }
+
+    private void OnPanelIsExpandedChanged(object? sender, EventArgs e)
+    {
+        RaisePanelExpansionChanged();
+    }
+
+    private void RaisePanelExpansionChanged()
+    {
+        PanelExpansionChanged?.Invoke(this, EventArgs.Empty);
     }
 }

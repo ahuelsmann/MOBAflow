@@ -48,16 +48,38 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
+
+                <!--  Icon  -->
                 <FontIcon
                     x:Name="ExpandedIcon"
-                    Grid.Column="1"
-                    HorizontalAlignment="Center"
+                    Grid.Column="0"
+                    Margin="0,0,8,0"
                     FontSize="14"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Glyph="&#xE8F1;" />
-                <Button
+
+                <!--  Header text  -->
+                <TextBlock
+                    x:Name="HeaderTextBlock"
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    FontSize="14"
+                    FontWeight="SemiBold"
+                    Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+
+                <!--  Header actions  -->
+                <ContentPresenter
+                    x:Name="HeaderActionsPresenter"
                     Grid.Column="2"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Visibility="Collapsed" />
+
+                <!--  Pin Button  -->
+                <Button
+                    Grid.Column="3"
                     Padding="4"
                     Background="Transparent"
                     BorderThickness="0"

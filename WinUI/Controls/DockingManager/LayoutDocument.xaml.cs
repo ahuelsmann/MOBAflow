@@ -31,378 +31,277 @@ public sealed partial class LayoutDocument : UserControl
             typeof(ObservableCollection<DocumentTab>),
             typeof(LayoutDocument), new PropertyMetadata(null));
 
-/// <summary>
-/// Aktuell aktives Dokument
-/// </summary>
-public static readonly DependencyProperty ActiveDocumentProperty =
-    DependencyProperty.Register(
-        nameof(ActiveDocument),
-        typeof(DocumentTab),
-        typeof(LayoutDocument), new PropertyMetadata(null));
+    /// <summary>
+    /// Aktuell aktives Dokument
+    /// </summary>
+    public static readonly DependencyProperty ActiveDocumentProperty =
+        DependencyProperty.Register(
+            nameof(ActiveDocument),
+            typeof(DocumentTab),
+            typeof(LayoutDocument), new PropertyMetadata(null));
 
-/// <summary>
-/// Template für Tab-Renderung (ItemTemplate-Support)
-/// </summary>
-public static readonly DependencyProperty TabTemplateProperty =
-    DependencyProperty.Register(
-        nameof(TabTemplate),
-        typeof(DataTemplate),
-        typeof(LayoutDocument), new PropertyMetadata(null));
+    /// <summary>
+    /// Template für Tab-Renderung (ItemTemplate-Support)
+    /// </summary>
+    public static readonly DependencyProperty TabTemplateProperty =
+        DependencyProperty.Register(
+            nameof(TabTemplate),
+            typeof(DataTemplate),
+            typeof(LayoutDocument), new PropertyMetadata(null));
 
-/// <summary>
-/// Template für Content-Renderung
-/// </summary>
-public static readonly DependencyProperty ContentTemplateProperty =
-    DependencyProperty.Register(
-        nameof(ContentTemplate),
-        typeof(DataTemplate),
-        typeof(LayoutDocument), new PropertyMetadata(null));
+    /// <summary>
+    /// Template für Content-Renderung
+    /// </summary>
+    public static readonly DependencyProperty ContentTemplateProperty =
+        DependencyProperty.Register(
+            nameof(ContentTemplate),
+            typeof(DataTemplate),
+            typeof(LayoutDocument), new PropertyMetadata(null));
 
-/// <summary>
-/// Enable Tab-Grouping (Modified, Pinned, Regular)
-/// </summary>
-public static readonly DependencyProperty EnableTabGroupingProperty =
-    DependencyProperty.Register(
-        nameof(EnableTabGrouping),
-        typeof(bool),
-        typeof(LayoutDocument), new PropertyMetadata(false));
+    /// <summary>
+    /// Enable Tab-Grouping (Modified, Pinned, Regular)
+    /// </summary>
+    public static readonly DependencyProperty EnableTabGroupingProperty =
+        DependencyProperty.Register(
+            nameof(EnableTabGrouping),
+            typeof(bool),
+            typeof(LayoutDocument), new PropertyMetadata(false));
 
-/// <summary>
-/// Ermöglicht Floating-Windows für Tabs
-/// </summary>
-public static readonly DependencyProperty AllowFloatingTabsProperty =
-    DependencyProperty.Register(
-        nameof(AllowFloatingTabs),
-        typeof(bool),
-        typeof(LayoutDocument), new PropertyMetadata(false));
+    /// <summary>
+    /// Ermöglicht Floating-Windows für Tabs
+    /// </summary>
+    public static readonly DependencyProperty AllowFloatingTabsProperty =
+        DependencyProperty.Register(
+            nameof(AllowFloatingTabs),
+            typeof(bool),
+            typeof(LayoutDocument), new PropertyMetadata(false));
 
     #endregion
 
-#region Events
+    #region Events
 
-public event EventHandler<DocumentTabChangedEventArgs>? DocumentSelected;
-public event EventHandler<DocumentTabClosingEventArgs>? DocumentClosing;
-public event EventHandler? NewTabRequested;
-public event EventHandler<DocumentTabMovedEventArgs>? TabMovedToFloatingWindow;
+    public event EventHandler<DocumentTabChangedEventArgs>? DocumentSelected;
+    public event EventHandler<DocumentTabClosingEventArgs>? DocumentClosing;
+    public event EventHandler? NewTabRequested;
+    public event EventHandler<DocumentTabMovedEventArgs>? TabMovedToFloatingWindow;
 
-/// <summary>
-/// Wird ausgelöst, wenn ein Tab aus dem TabView herausgezogen wird.
-/// Der DockingManager kann diesen Tab dann an einer Dock-Position andocken.
-/// </summary>
-public event EventHandler<DocumentTabDraggedOutEventArgs>? TabDraggedOutside;
+    /// <summary>
+    /// Wird ausgelöst, wenn ein Tab aus dem TabView herausgezogen wird.
+    /// Der DockingManager kann diesen Tab dann an einer Dock-Position andocken.
+    /// </summary>
+    public event EventHandler<DocumentTabDraggedOutEventArgs>? TabDraggedOutside;
 
-#endregion
+    #endregion
 
-private const string DocumentTabDataKey = "DocumentTab";
+    private const string DocumentTabDataKey = "DocumentTab";
 
-private Dictionary<DocumentTab, FloatingTabWindow> _floatingWindows = new();
+    private Dictionary<DocumentTab, FloatingTabWindow> _floatingWindows = new();
 
-public LayoutDocument()
-{
-    InitializeComponent();
-    Documents = new ObservableCollection<DocumentTab>();
-}
+    public LayoutDocument()
+    {
+        InitializeComponent();
+        Documents = new ObservableCollection<DocumentTab>();
+    }
 
-#region Properties
+    #region Properties
 
     /// <summary>
     /// Alle verfügbaren Dokumente
     /// </summary>
     public ObservableCollection<DocumentTab>? Documents
-{
-    get => (ObservableCollection<DocumentTab>?)GetValue(DocumentsProperty);
-    set => SetValue(DocumentsProperty, value);
-}
-
-/// <summary>
-/// Aktuell aktives Dokument
-/// </summary>
-public DocumentTab? ActiveDocument
-{
-    get => (DocumentTab?)GetValue(ActiveDocumentProperty);
-    set => SetValue(ActiveDocumentProperty, value);
-}
-
-/// <summary>
-/// Custom Template für Tab-Renderung
-/// </summary>
-public DataTemplate? TabTemplate
-{
-    get => (DataTemplate?)GetValue(TabTemplateProperty);
-    set => SetValue(TabTemplateProperty, value);
-}
-
-/// <summary>
-/// Custom Template für Content-Renderung
-/// </summary>
-public DataTemplate? ContentTemplate
-{
-    get => (DataTemplate?)GetValue(ContentTemplateProperty);
-    set => SetValue(ContentTemplateProperty, value);
-}
-
-/// <summary>
-/// Tab-Grouping aktivieren (Modified, Pinned, Regular)
-/// </summary>
-public bool EnableTabGrouping
-{
-    get => (bool)GetValue(EnableTabGroupingProperty);
-    set => SetValue(EnableTabGroupingProperty, value);
-}
-
-/// <summary>
-/// Floating-Windows für Tabs ermöglichen
-/// </summary>
-public bool AllowFloatingTabs
-{
-    get => (bool)GetValue(AllowFloatingTabsProperty);
-    set => SetValue(AllowFloatingTabsProperty, value);
-}
-
-#endregion
-
-#region Tab Management
-
-/// <summary>
-/// Fügt ein neues Dokument hinzu
-/// </summary>
-public void AddDocument(DocumentTab document)
-{
-    ArgumentNullException.ThrowIfNull(document);
-    Documents?.Add(document);
-    ActiveDocument = document;
-}
-
-/// <summary>
-/// Entfernt ein Dokument
-/// </summary>
-public void RemoveDocument(DocumentTab document)
-{
-    ArgumentNullException.ThrowIfNull(document);
-
-    var closingArgs = new DocumentTabClosingEventArgs(document);
-    DocumentClosing?.Invoke(this, closingArgs);
-
-    if (!closingArgs.Cancel)
     {
-        Documents?.Remove(document);
-        if (ActiveDocument == document && Documents?.Count > 0)
+        get => (ObservableCollection<DocumentTab>?)GetValue(DocumentsProperty);
+        set => SetValue(DocumentsProperty, value);
+    }
+
+    /// <summary>
+    /// Aktuell aktives Dokument
+    /// </summary>
+    public DocumentTab? ActiveDocument
+    {
+        get => (DocumentTab?)GetValue(ActiveDocumentProperty);
+        set => SetValue(ActiveDocumentProperty, value);
+    }
+
+    /// <summary>
+    /// Custom Template für Tab-Renderung
+    /// </summary>
+    public DataTemplate? TabTemplate
+    {
+        get => (DataTemplate?)GetValue(TabTemplateProperty);
+        set => SetValue(TabTemplateProperty, value);
+    }
+
+    /// <summary>
+    /// Custom Template für Content-Renderung
+    /// </summary>
+    public DataTemplate? ContentTemplate
+    {
+        get => (DataTemplate?)GetValue(ContentTemplateProperty);
+        set => SetValue(ContentTemplateProperty, value);
+    }
+
+    /// <summary>
+    /// Tab-Grouping aktivieren (Modified, Pinned, Regular)
+    /// </summary>
+    public bool EnableTabGrouping
+    {
+        get => (bool)GetValue(EnableTabGroupingProperty);
+        set => SetValue(EnableTabGroupingProperty, value);
+    }
+
+    /// <summary>
+    /// Floating-Windows für Tabs ermöglichen
+    /// </summary>
+    public bool AllowFloatingTabs
+    {
+        get => (bool)GetValue(AllowFloatingTabsProperty);
+        set => SetValue(AllowFloatingTabsProperty, value);
+    }
+
+    #endregion
+
+    #region Tab Management
+
+    /// <summary>
+    /// Fügt ein neues Dokument hinzu
+    /// </summary>
+    public void AddDocument(DocumentTab document)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        Documents?.Add(document);
+        ActiveDocument = document;
+    }
+
+    /// <summary>
+    /// Entfernt ein Dokument
+    /// </summary>
+    public void RemoveDocument(DocumentTab document)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+
+        var closingArgs = new DocumentTabClosingEventArgs(document);
+        DocumentClosing?.Invoke(this, closingArgs);
+
+        if (!closingArgs.Cancel)
         {
-            ActiveDocument = Documents[Documents.Count - 1];
+            Documents?.Remove(document);
+            if (ActiveDocument == document && Documents?.Count > 0)
+            {
+                ActiveDocument = Documents[Documents.Count - 1];
+            }
         }
     }
-}
 
-/// <summary>
-/// Markiert ein Dokument als "Modified"
-/// </summary>
-public void MarkAsModified(DocumentTab document, bool isModified)
-{
-    ArgumentNullException.ThrowIfNull(document);
-    document.IsModified = isModified;
-}
-
-/// <summary>
-/// Pinnt ein Dokument
-/// </summary>
-public void PinDocument(DocumentTab document, bool isPinned)
-{
-    ArgumentNullException.ThrowIfNull(document);
-    document.IsPinned = isPinned;
-}
-
-#endregion
-
-#region Tab Grouping
-
-/// <summary>
-/// Gibt gruppierte Tabs zurück (Modified, Pinned, Regular)
-/// </summary>
-public IEnumerable<TabGroup> GetGroupedTabs()
-{
-    if (Documents == null || Documents.Count == 0)
-        yield break;
-
-    var modifiedTabs = Documents.Where(d => d.IsModified).ToList();
-    var pinnedTabs = Documents.Where(d => d.IsPinned && !d.IsModified).ToList();
-    var regularTabs = Documents.Where(d => !d.IsModified && !d.IsPinned).ToList();
-
-    if (modifiedTabs.Any())
-        yield return new TabGroup { Name = "Modified", Tabs = modifiedTabs };
-
-    if (pinnedTabs.Any())
-        yield return new TabGroup { Name = "Pinned", Tabs = pinnedTabs };
-
-    if (regularTabs.Any())
-        yield return new TabGroup { Name = "Open", Tabs = regularTabs };
-}
-
-#endregion
-
-#region Floating Windows
-
-/// <summary>
-/// Öffnet einen Tab in einem separaten Floating Window
-/// </summary>
-public async void MoveTabToFloatingWindow(DocumentTab document)
-{
-    ArgumentNullException.ThrowIfNull(document);
-
-    if (!AllowFloatingTabs)
-        return;
-
-    RemoveDocument(document);
-
-    var window = new FloatingTabWindow(document);
-    _floatingWindows[document] = window;
-
-    TabMovedToFloatingWindow?.Invoke(this, new DocumentTabMovedEventArgs(document, window));
-
-    // Cleanup wenn Window geschlossen wird
-    window.Closed += (s, e) =>
+    /// <summary>
+    /// Markiert ein Dokument als "Modified"
+    /// </summary>
+    public void MarkAsModified(DocumentTab document, bool isModified)
     {
-        if (_floatingWindows.Remove(document))
+        ArgumentNullException.ThrowIfNull(document);
+        document.IsModified = isModified;
+    }
+    #endregion
+
+    #region Tab Grouping
+
+    /// <summary>
+    /// Gibt gruppierte Tabs zurück (Modified, Pinned, Regular)
+    /// </summary>
+    public IEnumerable<TabGroup> GetGroupedTabs()
+    {
+        if (Documents == null || Documents.Count == 0)
+            yield break;
+
+        var modifiedTabs = Documents.Where(d => d.IsModified).ToList();
+        var regularTabs = Documents.Where(d => !d.IsModified).ToList();
+
+        if (modifiedTabs.Any())
+            yield return new TabGroup { Name = "Modified", Tabs = modifiedTabs };
+
+        if (regularTabs.Any())
+            yield return new TabGroup { Name = "Open", Tabs = regularTabs };
+    }
+
+    #endregion
+
+    #region TabView Event Handlers
+
+    private void OnAddTabButtonClick(TabView sender, object args)
+    {
+        NewTabRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnTabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args)
+    {
+        if (args.Item is DocumentTab document)
         {
-            AddDocument(document);
+            RemoveDocument(document);
         }
-    };
-
-    window.Activate();
-}
-
-/// <summary>
-/// Gibt alle Floating Windows zurück
-/// </summary>
-public IEnumerable<FloatingTabWindow> GetFloatingWindows() => _floatingWindows.Values;
-
-#endregion
-
-#region TabView Event Handlers
-
-private void OnAddTabButtonClick(TabView sender, object args)
-{
-    NewTabRequested?.Invoke(this, EventArgs.Empty);
-}
-
-private void OnTabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args)
-{
-    if (args.Item is DocumentTab document)
-    {
-        RemoveDocument(document);
-    }
-}
-
-private void OnTabDragStarting(TabView sender, TabViewTabDragStartingEventArgs args)
-{
-    if (args.Item is DocumentTab tab)
-    {
-        args.Data.Properties[DocumentTabDataKey] = tab;
-        args.Data.RequestedOperation = DataPackageOperation.Move;
-    }
-}
-
-private void OnTabDroppedOutside(TabView sender, TabViewTabDroppedOutsideEventArgs args)
-{
-    if (args.Item is not DocumentTab tab)
-    {
-        return;
     }
 
-    TabDraggedOutside?.Invoke(this, new DocumentTabDraggedOutEventArgs(tab));
-}
-
-#endregion
-
-#region Tab Context Menu (Qt-ADS 4.1: "Pin to...", Close Others, Close All)
-
-private DocumentTab? _contextMenuTab;
-
-private void OnTabRightTapped(object sender, Microsoft.UI.Xaml.Input.RightTappedRoutedEventArgs e)
-{
-    if (sender is TabViewItem tabViewItem && tabViewItem.Content is DocumentTab tab)
+    private void OnTabDragStarting(TabView sender, TabViewTabDragStartingEventArgs args)
     {
-        _contextMenuTab = tab;
-    }
-}
-
-/// <summary>
-/// Wird ausgelöst, wenn ein Tab über das Kontextmenü an eine Dock-Position gepinnt wird.
-/// </summary>
-public event EventHandler<DocumentTabPinToSideEventArgs>? TabPinnedToSide;
-
-private void OnPinToLeft(object sender, RoutedEventArgs e)
-{
-    if (_contextMenuTab is not null)
-    {
-        PinTabToSide(_contextMenuTab, DockPosition.Left);
-    }
-}
-
-private void OnPinToRight(object sender, RoutedEventArgs e)
-{
-    if (_contextMenuTab is not null)
-    {
-        PinTabToSide(_contextMenuTab, DockPosition.Right);
-    }
-}
-
-private void OnPinToBottom(object sender, RoutedEventArgs e)
-{
-    if (_contextMenuTab is not null)
-    {
-        PinTabToSide(_contextMenuTab, DockPosition.Bottom);
-    }
-}
-
-private void PinTabToSide(DocumentTab tab, DockPosition side)
-{
-    Documents?.Remove(tab);
-    if (ActiveDocument == tab && Documents?.Count > 0)
-    {
-        ActiveDocument = Documents[^1];
+        if (args.Item is DocumentTab tab)
+        {
+            args.Data.Properties[DocumentTabDataKey] = tab;
+            args.Data.RequestedOperation = DataPackageOperation.Move;
+        }
     }
 
-    TabPinnedToSide?.Invoke(this, new DocumentTabPinToSideEventArgs(tab, side));
-}
-
-private void OnContextClose(object sender, RoutedEventArgs e)
-{
-    if (_contextMenuTab is not null)
+    private void OnTabDroppedOutside(TabView sender, TabViewTabDroppedOutsideEventArgs args)
     {
-        RemoveDocument(_contextMenuTab);
-    }
-}
+        if (args.Item is not DocumentTab tab)
+        {
+            return;
+        }
 
-private void OnContextCloseOthers(object sender, RoutedEventArgs e)
-{
-    if (_contextMenuTab is null || Documents is null)
-    {
-        return;
+        TabDraggedOutside?.Invoke(this, new DocumentTabDraggedOutEventArgs(tab));
     }
 
-    var toClose = Documents.Where(d => d != _contextMenuTab).ToList();
-    foreach (var doc in toClose)
+    #endregion
+
+    #region Tab Context Menu (Qt-ADS 4.1: "Pin to...", Close Others, Close All)
+
+    private DocumentTab? _contextMenuTab;
+
+    private void OnTabRightTapped(object sender, Microsoft.UI.Xaml.Input.RightTappedRoutedEventArgs e)
     {
-        Documents.Remove(doc);
+        if (sender is TabViewItem tabViewItem && tabViewItem.Content is DocumentTab tab)
+        {
+            _contextMenuTab = tab;
+        }
     }
 
-    ActiveDocument = _contextMenuTab;
-}
-
-private void OnContextCloseAll(object sender, RoutedEventArgs e)
-{
-    Documents?.Clear();
-    ActiveDocument = null;
-}
-
-private void OnContextPinTab(object sender, RoutedEventArgs e)
-{
-    if (_contextMenuTab is not null)
+    private void OnContextClose(object sender, RoutedEventArgs e)
     {
-        _contextMenuTab.IsPinned = !_contextMenuTab.IsPinned;
+        if (_contextMenuTab is not null)
+        {
+            RemoveDocument(_contextMenuTab);
+        }
     }
-}
 
+    private void OnContextCloseOthers(object sender, RoutedEventArgs e)
+    {
+        if (_contextMenuTab is null || Documents is null)
+        {
+            return;
+        }
+
+        var toClose = Documents.Where(d => d != _contextMenuTab).ToList();
+        foreach (var doc in toClose)
+        {
+            Documents.Remove(doc);
+        }
+
+        ActiveDocument = _contextMenuTab;
+    }
+
+    private void OnContextCloseAll(object sender, RoutedEventArgs e)
+    {
+        Documents?.Clear();
+        ActiveDocument = null;
+    }
     #endregion
 }
 
@@ -487,8 +386,3 @@ public sealed class DocumentTabPinToSideEventArgs(DocumentTab document, DockPosi
     public DocumentTab Document { get; } = document;
     public DockPosition Side { get; } = side;
 }
-
-
-
-
-

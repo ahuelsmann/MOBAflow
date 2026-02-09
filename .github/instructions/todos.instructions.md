@@ -5,7 +5,16 @@ applyTo: '**'
 
 # MOBAflow TODOs & Roadmap
 
-> Last Updated: 2026-02-13 (End of Session 5)
+> Last Updated: 2026-02-13 (End of Session 6)
+
+---
+
+## ✅ SESSION 6 COMPLETED (2026-02-13)
+
+### Investigation
+1. **DockPanelGroup RebuildTabs Exception** ✅
+   - Confirmed `TabViewItem` creation can reparent an existing `UIElement` (`DockPanel` or header element)
+   - Add fix in `WinUI/Controls/DockingManager/DockPanelGroup.xaml.cs` to avoid reusing visual elements
 
 ---
 
@@ -202,9 +211,11 @@ IEventBus (Singleton)
 - ✅ Prepared DI integration
 
 ### Remaining (Session 5+)
+- ⏳ Fix `DockPanelGroup.RebuildTabs` to prevent reparenting `UIElement` instances
 - ⏳ Refactor Z21.cs to use EventBus
 - ⏳ Refactor MainWindowViewModel to reduce God Object
 - ⏳ Extract MainWindowViewModel responsibilities into domain services
+- ⏳ Review DockingManager collapsed tab sizing behavior after recent changes
 
 ---
 
@@ -263,4 +274,4 @@ IEventBus (Singleton)
 
 ---
 
-**Status:** ✅ **Ready for Session 5 - Z21 Refactoring**
+**Status:** ✅ **Ready for Session 6+ (DockingManager fix + Z21 refactoring)**
