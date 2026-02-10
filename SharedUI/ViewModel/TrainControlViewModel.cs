@@ -1,10 +1,12 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using Backend;
 using Backend.Interface;
 using Backend.Model;
 
 using Common.Configuration;
+using Common.Events;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -607,6 +609,7 @@ public partial class TrainControlViewModel : ObservableObject
 
     public TrainControlViewModel(
         IZ21 z21,
+        IEventBus eventBus,
         IUiDispatcher uiDispatcher,
         ISettingsService settingsService,
         MainWindowViewModel? mainWindowViewModel = null,
@@ -621,13 +624,15 @@ public partial class TrainControlViewModel : ObservableObject
         // Load presets from settings
         LoadPresetsFromSettings();
 
-        // Subscribe to connection changes
+        // Subscribe to Z21 events via EventBus (with automatic WeakReference cleanup)
+        eventBus.Subscribe<Z21ConnectionEstablishedEvent>(_ => OnZ21ConnectionChanged(true));
+        eventBus.Subscribe<Z21ConnectionLostEvent>(_ => OnZ21ConnectionChanged(false));
+        eventBus.Subscribe<LocomotiveInfoChangedEvent>(evt => OnLocoInfoReceived(CreateLocoInfo(evt)));
+        eventBus.Subscribe<SystemStateChangedEvent>(evt => OnSystemStateChanged(CreateSystemState(evt)));
+
+        // Keep legacy direct subscriptions for backward compatibility (optional)
         _z21.OnConnectedChanged += OnZ21ConnectionChanged;
-
-        // Subscribe to loco info updates
         _z21.OnLocoInfoChanged += OnLocoInfoReceived;
-
-        // Subscribe to system state updates (for amperemeter)
         _z21.OnSystemStateChanged += OnSystemStateChanged;
 
         // Subscribe to MainWindowViewModel.SelectedJourney changes
@@ -744,9 +749,22 @@ public partial class TrainControlViewModel : ObservableObject
     {
         try
         {
-            // Note: Full TrainControlSettings persistence should be handled by the page/service
-            // This just marks that settings need updating
-            await _settingsService.SaveSettingsAsync(new AppSettings()).ConfigureAwait(false);
+            // Get current settings from service
+            var settings = _settingsService.GetSettings();
+            
+            // Update TrainControl presets with current values
+            settings.TrainControl.Presets = [Preset1, Preset2, Preset3];
+            settings.TrainControl.SelectedPresetIndex = SelectedPresetIndex;
+            settings.TrainControl.SpeedRampStepSize = (int)RampStepSize;
+            settings.TrainControl.SpeedRampIntervalMs = (int)RampIntervalMs;
+            settings.TrainControl.SpeedSteps = SpeedSteps;
+            
+            // Save updated settings
+            await _settingsService.SaveSettingsAsync(settings).ConfigureAwait(false);
+            
+            _logger?.LogInformation(
+                "Saved train control settings: Preset1={P1Addr}, Preset2={P2Addr}, Preset3={P3Addr}",
+                Preset1.DccAddress, Preset2.DccAddress, Preset3.DccAddress);
         }
         catch (Exception ex)
         {
@@ -1393,5 +1411,58 @@ public partial class TrainControlViewModel : ObservableObject
                 "ProgCurrent={ProgCurrent}mA, SupplyVoltage={SupplyVoltage}mV, Temperature={Temperature}°C",
                 MainTrackCurrent, FilteredMainCurrent, PeakMainCurrent, ProgTrackCurrent, SupplyVoltage, Temperature);
         });
+    }
+
+    private static LocoInfo CreateLocoInfo(LocomotiveInfoChangedEvent evt)
+    {
+        return new LocoInfo
+        {
+            Address = evt.Address,
+            Speed = evt.Speed,
+            IsForward = evt.IsForward,
+            Functions = BuildFunctions(evt)
+        };
+    }
+
+    private static uint BuildFunctions(LocomotiveInfoChangedEvent evt)
+    {
+        uint functions = 0;
+        if (evt.IsF0On) functions |= 1u << 0;
+        if (evt.IsF1On) functions |= 1u << 1;
+        if (evt.IsF2On) functions |= 1u << 2;
+        if (evt.IsF3On) functions |= 1u << 3;
+        if (evt.IsF4On) functions |= 1u << 4;
+        if (evt.IsF5On) functions |= 1u << 5;
+        if (evt.IsF6On) functions |= 1u << 6;
+        if (evt.IsF7On) functions |= 1u << 7;
+        if (evt.IsF8On) functions |= 1u << 8;
+        if (evt.IsF9On) functions |= 1u << 9;
+        if (evt.IsF10On) functions |= 1u << 10;
+        if (evt.IsF11On) functions |= 1u << 11;
+        if (evt.IsF12On) functions |= 1u << 12;
+        if (evt.IsF13On) functions |= 1u << 13;
+        if (evt.IsF14On) functions |= 1u << 14;
+        if (evt.IsF15On) functions |= 1u << 15;
+        if (evt.IsF16On) functions |= 1u << 16;
+        if (evt.IsF17On) functions |= 1u << 17;
+        if (evt.IsF18On) functions |= 1u << 18;
+        if (evt.IsF19On) functions |= 1u << 19;
+        if (evt.IsF20On) functions |= 1u << 20;
+        return functions;
+    }
+
+    private static SystemState CreateSystemState(SystemStateChangedEvent evt)
+    {
+        return new SystemState
+        {
+            MainCurrent = evt.MainCurrent,
+            ProgCurrent = evt.ProgCurrent,
+            FilteredMainCurrent = evt.FilteredMainCurrent,
+            Temperature = evt.Temperature,
+            SupplyVoltage = evt.SupplyVoltage,
+            VccVoltage = evt.VccVoltage,
+            CentralState = unchecked((byte)evt.CentralState),
+            CentralStateEx = unchecked((byte)evt.CentralStateEx)
+        };
     }
 }

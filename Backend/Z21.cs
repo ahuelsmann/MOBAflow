@@ -2,6 +2,8 @@
 
 namespace Moba.Backend;
 
+using Common.Events;
+
 using CommunityToolkit.Mvvm.Messaging;
 
 using Domain.Message;
@@ -32,6 +34,7 @@ public class Z21 : IZ21
     public event Action<bool>? OnConnectedChanged;
 
     private readonly IUdpClientWrapper _udp;
+    private readonly IEventBus _eventBus;
     private readonly ILogger<Z21>? _logger;
     private readonly Z21Monitor? _trafficMonitor;
     private CancellationTokenSource? _cancellationTokenSource;
@@ -57,9 +60,11 @@ public class Z21 : IZ21
     /// </summary>
     public Z21VersionInfo? VersionInfo { get; private set; }
 
-    public Z21(IUdpClientWrapper udp, ILogger<Z21>? logger = null, Z21Monitor? trafficMonitor = null)
+    public Z21(IUdpClientWrapper udp, IEventBus eventBus, ILogger<Z21>? logger = null, Z21Monitor? trafficMonitor = null)
     {
+        ArgumentNullException.ThrowIfNull(eventBus);
         _udp = udp;
+        _eventBus = eventBus;
         _logger = logger;
         _trafficMonitor = trafficMonitor;
         _udp.Received += OnUdpReceived;
@@ -241,21 +246,21 @@ public class Z21 : IZ21
 
         _isConnected = true;
         _logger?.LogInformation("✅ Z21 is responding - connection confirmed");
-        
+
         // Start SystemState polling timer ONLY if interval > 0
         // Note: Z21 also sends SystemState automatically via broadcast (flag 0x0100)
         // Polling is optional for additional redundancy or faster updates
         if (_systemStatePollingIntervalSeconds > 0)
         {
             StartSystemStatePollingTimer();
-            _logger?.LogDebug("SystemState polling enabled ({Interval}s). Note: Z21 also broadcasts SystemState automatically.", 
+            _logger?.LogDebug("SystemState polling enabled ({Interval}s). Note: Z21 also broadcasts SystemState automatically.",
                 _systemStatePollingIntervalSeconds);
         }
         else
         {
             _logger?.LogDebug("SystemState polling disabled. Using Z21 broadcast-only (flag 0x0100).");
         }
-        
+
         OnConnectedChanged?.Invoke(true);
     }
 
@@ -665,6 +670,11 @@ public class Z21 : IZ21
                 SetConnectedIfNotAlready();
 
                 OnXBusStatusChanged?.Invoke(xStatus);
+                _eventBus.Publish(new XBusStatusChangedEvent(
+                    xStatus.EmergencyStop,
+                    xStatus.TrackOff,
+                    xStatus.ShortCircuit,
+                    xStatus.Programming));
                 _logger?.LogDebug("XBus Status: EmergencyStop={EmergencyStop}, TrackOff={TrackOff}, ShortCircuit={ShortCircuit}, Programming={Programming}", xStatus.EmergencyStop, xStatus.TrackOff, xStatus.ShortCircuit, xStatus.Programming);
             }
 
@@ -675,6 +685,31 @@ public class Z21 : IZ21
                 SetConnectedIfNotAlready();
 
                 OnLocoInfoChanged?.Invoke(locoInfo);
+                _eventBus.Publish(new LocomotiveInfoChangedEvent(
+                    locoInfo.Address,
+                    locoInfo.Speed,
+                    locoInfo.IsForward,
+                    locoInfo.IsF0On,
+                    locoInfo.GetFunction(1),
+                    locoInfo.GetFunction(2),
+                    locoInfo.GetFunction(3),
+                    locoInfo.GetFunction(4),
+                    locoInfo.GetFunction(5),
+                    locoInfo.GetFunction(6),
+                    locoInfo.GetFunction(7),
+                    locoInfo.GetFunction(8),
+                    locoInfo.GetFunction(9),
+                    locoInfo.GetFunction(10),
+                    locoInfo.GetFunction(11),
+                    locoInfo.GetFunction(12),
+                    locoInfo.GetFunction(13),
+                    locoInfo.GetFunction(14),
+                    locoInfo.GetFunction(15),
+                    locoInfo.GetFunction(16),
+                    locoInfo.GetFunction(17),
+                    locoInfo.GetFunction(18),
+                    locoInfo.GetFunction(19),
+                    locoInfo.GetFunction(20)));
                 _logger?.LogInformation("🚂 Loco Info: {LocoInfo}", locoInfo);
             }
 
@@ -688,7 +723,7 @@ public class Z21 : IZ21
             {
                 // Z21 is responding - mark as connected
                 SetConnectedIfNotAlready();
-                
+
                 CurrentSystemState = new SystemState
                 {
                     MainCurrent = mainCurrent,
@@ -701,9 +736,18 @@ public class Z21 : IZ21
                     CentralStateEx = centralStateEx
                 };
 
-                _logger?.LogInformation("📊 SystemState received: MainCurrent={MainCurrent}mA, Temp={Temp}°C, Voltage={Voltage}mV", 
+                _logger?.LogInformation("📊 SystemState received: MainCurrent={MainCurrent}mA, Temp={Temp}°C, Voltage={Voltage}mV",
                     mainCurrent, temperature, supplyVoltage);
                 OnSystemStateChanged?.Invoke(CurrentSystemState);
+                _eventBus.Publish(new SystemStateChangedEvent(
+                    CurrentSystemState.MainCurrent,
+                    CurrentSystemState.ProgCurrent,
+                    CurrentSystemState.FilteredMainCurrent,
+                    CurrentSystemState.Temperature,
+                    CurrentSystemState.SupplyVoltage,
+                    CurrentSystemState.VccVoltage,
+                    CurrentSystemState.CentralState,
+                    CurrentSystemState.CentralStateEx));
             }
             else
             {
@@ -734,11 +778,15 @@ public class Z21 : IZ21
             {
                 // Z21 is responding - mark as connected
                 SetConnectedIfNotAlready();
-                
+
                 VersionInfo ??= new Z21VersionInfo();
                 VersionInfo.SerialNumber = serialNumber;
                 _logger?.LogInformation("📌 Z21 Serial Number: {SerialNumber}", serialNumber);
                 OnVersionInfoChanged?.Invoke(VersionInfo);
+                _eventBus.Publish(new VersionInfoChangedEvent(
+                    VersionInfo.SerialNumber,
+                    (int)VersionInfo.HardwareTypeCode,
+                    (int)VersionInfo.FirmwareVersionCode));
             }
             return;
         }
@@ -753,6 +801,10 @@ public class Z21 : IZ21
                 VersionInfo.FirmwareVersionCode = fwVersion;
                 _logger?.LogInformation("📌 Z21 Hardware: {HwType}, Firmware: {FwVersion}", VersionInfo.HardwareType, VersionInfo.FirmwareVersion);
                 OnVersionInfoChanged?.Invoke(VersionInfo);
+                _eventBus.Publish(new VersionInfoChangedEvent(
+                    VersionInfo.SerialNumber,
+                    (int)VersionInfo.HardwareTypeCode,
+                    (int)VersionInfo.FirmwareVersionCode));
             }
             return;
         }
@@ -856,7 +908,7 @@ public class Z21 : IZ21
         var xor = packet.Aggregate((byte)0, (current, b) => (byte)(current ^ b));
         packet[packet.Length - 1] = xor;
 
-        _logger?.LogInformation("SetLocoDrive: Addr={Address}, Speed={Speed}, RV={RV}, Packet={Packet}", 
+        _logger?.LogInformation("SetLocoDrive: Addr={Address}, Speed={Speed}, RV={RV}, Packet={Packet}",
             address, speed, rv, Z21Protocol.ToHex(packet));
 
         await SendAsync(packet, cancellationToken).ConfigureAwait(false);
@@ -889,6 +941,99 @@ public class Z21 : IZ21
         var command = Z21Command.BuildGetLocoInfo(address);
         await SendAsync(command, cancellationToken).ConfigureAwait(false);
         _logger?.LogDebug("GetLocoInfo: Address={Address}", address);
+    }
+    #endregion
+
+    #region Switching Commands
+    /// <summary>
+    /// Sets a turnout or 2-output signal decoder position.
+    /// </summary>
+    public async Task SetTurnoutAsync(int decoderAddress, int output, bool activate, bool queue = false, CancellationToken cancellationToken = default)
+    {
+        if (decoderAddress is < 1 or > 2044)
+        {
+            throw new ArgumentOutOfRangeException(nameof(decoderAddress), "Accessory decoder address must be between 1 and 2044");
+        }
+
+        if (output is < 0 or > 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(output), "Output must be 0 or 1");
+        }
+
+        var command = Z21Command.BuildSetTurnout(decoderAddress, output, activate, queue);
+        await SendAsync(command, cancellationToken).ConfigureAwait(false);
+        _logger?.LogInformation("SetTurnout: Address={Address}, Output={Output}, Activate={Activate}, Queue={Queue}", decoderAddress, output, activate, queue);
+    }
+
+    /// <summary>
+    /// Sets an extended accessory decoder value (multiplex signal decoder).
+    /// </summary>
+    public async Task SetExtAccessoryAsync(int extAccessoryAddress, int commandValue, CancellationToken cancellationToken = default)
+    {
+        System.Diagnostics.Debug.WriteLine($"[Z21.SetExtAccessory] START: Address={extAccessoryAddress}, Value={commandValue}");
+        
+        if (extAccessoryAddress is < 0 or > 255)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Z21.SetExtAccessory] ERROR: Invalid address {extAccessoryAddress}");
+            throw new ArgumentOutOfRangeException(nameof(extAccessoryAddress), "Extended accessory address must be between 0 and 255");
+        }
+
+        if (commandValue is < 0 or > 255)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Z21.SetExtAccessory] ERROR: Invalid command value {commandValue}");
+            throw new ArgumentOutOfRangeException(nameof(commandValue), "Command value must be between 0 and 255");
+        }
+
+        var command = Z21Command.BuildSetExtAccessory(extAccessoryAddress, commandValue);
+        System.Diagnostics.Debug.WriteLine($"[Z21.SetExtAccessory] Command built: {string.Join(" ", command.Select(b => b.ToString("X2")))}");
+        
+        await SendAsync(command, cancellationToken).ConfigureAwait(false);
+        
+        System.Diagnostics.Debug.WriteLine($"[Z21.SetExtAccessory] Command sent successfully");
+        _logger?.LogInformation("SetExtAccessory: Address={Address}, Value={Value}", extAccessoryAddress, commandValue);
+    }
+
+    /// <summary>
+    /// Requests turnout or signal decoder status information.
+    /// </summary>
+    public async Task GetTurnoutInfoAsync(int decoderAddress, CancellationToken cancellationToken = default)
+    {
+        if (decoderAddress is < 1 or > 2044)
+        {
+            throw new ArgumentOutOfRangeException(nameof(decoderAddress), "Accessory decoder address must be between 1 and 2044");
+        }
+
+        var command = Z21Command.BuildGetTurnoutInfo(decoderAddress);
+        await SendAsync(command, cancellationToken).ConfigureAwait(false);
+        _logger?.LogDebug("GetTurnoutInfo: Address={Address}", decoderAddress);
+    }
+
+    /// <summary>
+    /// Sets a signal aspect using either standard or multiplexed accessory commands.
+    /// </summary>
+    public async Task SetSignalAspectAsync(Domain.SbSignal signal, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(signal);
+
+        if (signal.IsMultiplexed)
+        {
+            var baseAddress = signal.BaseAddress > 0 ? signal.BaseAddress : signal.Address;
+            if (baseAddress is < 1 or > 255)
+            {
+                throw new ArgumentOutOfRangeException(nameof(signal.BaseAddress), "Base address must be between 1 and 255 for multiplexed signals");
+            }
+
+            await SetExtAccessoryAsync(baseAddress, signal.ExtendedAccessoryValue, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        if (signal.Address is < 1 or > 2044)
+        {
+            throw new ArgumentOutOfRangeException(nameof(signal.Address), "Signal address must be between 1 and 2044");
+        }
+
+        var activate = signal.SignalAspect != Domain.SignalAspect.Hp0;
+        await SetTurnoutAsync(signal.Address, 0, activate, false, cancellationToken).ConfigureAwait(false);
     }
     #endregion
 
@@ -937,16 +1082,16 @@ public class Z21 : IZ21
     public void Dispose()
     {
         if (_disposed) return;
-        
+
         StopKeepaliveTimer();
         StopSystemStatePollingTimer();
-        
+
         _cancellationTokenSource?.Cancel();
         _cancellationTokenSource?.Dispose();
-        
+
         _sendLock.Dispose();
         _connectionLock.Dispose();
-        
+
         _disposed = true;
     }
     #endregion

@@ -288,6 +288,7 @@ public partial class App
         // ViewModels
         services.AddSingleton(sp => new MainWindowViewModel(
             sp.GetRequiredService<IZ21>(),
+            sp.GetRequiredService<IEventBus>(),
             sp.GetRequiredService<IWorkflowService>(),
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<AppSettings>(),
@@ -306,6 +307,7 @@ public partial class App
         services.AddSingleton<SkinSelectorViewModel>();
         services.AddSingleton(sp => new TrainControlViewModel(
             sp.GetRequiredService<IZ21>(),
+            sp.GetRequiredService<IEventBus>(),
             sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<MainWindowViewModel>(),

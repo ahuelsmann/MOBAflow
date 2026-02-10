@@ -3,6 +3,7 @@
 namespace Moba.Test.Backend;
 
 using Mocks;
+using Moba.Common.Events;
 using System.Net;
 
 [TestFixture]
@@ -12,7 +13,8 @@ public class Z21UnitTests
     public void SimulateFeedback_RaisesReceivedEvent()
     {
         var fakeUdp = new FakeUdpClientWrapper();
-        using var z21 = new Z21(fakeUdp);
+        var eventBus = new EventBus();
+        using var z21 = new Z21(fakeUdp, eventBus);
 
         FeedbackResult? captured = null;
         var signaled = new TaskCompletionSource<bool>();
@@ -35,7 +37,8 @@ public class Z21UnitTests
     public async Task ConnectAsync_StartsKeepaliveTimer()
     {
         var fakeUdp = new FakeUdpClientWrapper();
-        using var z21 = new Z21(fakeUdp);
+        var eventBus = new EventBus();
+        using var z21 = new Z21(fakeUdp, eventBus);
 
         var address = IPAddress.Parse("192.168.0.111");
         await z21.ConnectAsync(address);
@@ -59,7 +62,8 @@ public class Z21UnitTests
     public async Task DisconnectAsync_StopsKeepaliveTimer()
     {
         var fakeUdp = new FakeUdpClientWrapper();
-        using var z21 = new Z21(fakeUdp);
+        var eventBus = new EventBus();
+        using var z21 = new Z21(fakeUdp, eventBus);
 
         var address = IPAddress.Parse("192.168.0.111");
         await z21.ConnectAsync(address);
@@ -83,7 +87,8 @@ public class Z21UnitTests
     public async Task KeepaliveTimer_SendsPeriodicStatusRequests()
     {
         var fakeUdp = new FakeUdpClientWrapper();
-        using var z21 = new Z21(fakeUdp);
+        var eventBus = new EventBus();
+        using var z21 = new Z21(fakeUdp, eventBus);
 
         var address = IPAddress.Parse("192.168.0.111");
         await z21.ConnectAsync(address);
@@ -106,7 +111,8 @@ public class Z21UnitTests
     public void Dispose_StopsKeepaliveTimer()
     {
         var fakeUdp = new FakeUdpClientWrapper();
-        var z21 = new Z21(fakeUdp);
+        var eventBus = new EventBus();
+        var z21 = new Z21(fakeUdp, eventBus);
 
         var address = IPAddress.Parse("192.168.0.111");
         z21.ConnectAsync(address).Wait();

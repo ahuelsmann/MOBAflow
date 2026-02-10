@@ -304,6 +304,7 @@ public sealed record SbSwitch : SbElement
 
 /// <summary>
 /// Signal element with DCC address, system type and current aspect.
+/// Supports both traditional aspects and extended multiplex-decoders (up to 256 states).
 /// </summary>
 public sealed record SbSignal : SbElement
 {
@@ -314,8 +315,60 @@ public sealed record SbSignal : SbElement
     /// <summary>Signal system type (Ks, Hv, Hl, Form, Sv).</summary>
     public SignalSystemType SignalSystem { get; set; } = SignalSystemType.Ks;
 
-    /// <summary>Current signal aspect.</summary>
+    /// <summary>Current signal aspect (traditional aspect-based display).</summary>
     public SignalAspect SignalAspect { get; set; } = SignalAspect.Hp0;
+
+    // ==================== MULTIPLEX CONFIGURATION ====================
+
+    /// <summary>
+    /// Indicates whether this signal uses a multiplex decoder (e.g., 5229 with extended accessory support).
+    /// When true, signals are controlled via LAN_X_SET_EXT_ACCESSORY with automatic address calculation.
+    /// When false, traditional DCC turnout/aspect commands are used.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool IsMultiplexed { get; set; } = false;
+
+    /// <summary>
+    /// Viessmann article number of the multiplexer decoder (e.g., "5229", "52292").
+    /// Used to look up the address mapping and aspect configuration.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public string? MultiplexerArticleNumber { get; set; }
+
+    /// <summary>
+    /// Viessmann article number of the main signal (e.g., "4046" for Ks-Mehrabschnittssignal).
+    /// Used for documentation and to validate the decoder configuration.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public string? MainSignalArticleNumber { get; set; }
+
+    /// <summary>
+    /// Viessmann article number of the distant signal (e.g., "4040" for Ks-Vorsignal).
+    /// For 5229: synchronized with main signal.
+    /// For 52292: not applicable (null).
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public string? DistantSignalArticleNumber { get; set; }
+
+    /// <summary>
+    /// Base DCC address for the multiplex decoder.
+    /// All other addresses are calculated relative to this: baseAddress + offset (0, 1, 2, 3).
+    /// Example: BaseAddress = 201
+    ///   201 → Hp0 (offset 0)
+    ///   202 → Ks1 (offset 1)
+    ///   203 → Ks2 (offset 2)
+    ///   204 → Ks1Blink (offset 3)
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public int BaseAddress { get; set; }
+
+    /// <summary>
+    /// The raw command value (0-255) to send to the extended accessory decoder when IsMultiplexed is true.
+    /// Each value represents a specific multiplex signal combination.
+    /// This is automatically calculated based on SignalAspect and the multiplexer definition.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public int ExtendedAccessoryValue { get; set; } = 0;
 }
 
 /// <summary>

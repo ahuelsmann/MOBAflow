@@ -3,6 +3,7 @@
 namespace Moba.Test.Integration;
 
 using Moba.Backend.Service;
+using Moba.Common.Events;
 using Moba.Domain.Enum;
 
 using Mocks;
@@ -16,6 +17,7 @@ public class WorkflowExecutionEndToEndTests
 {
     private FakeUdpClientWrapper _fakeUdp = null!;
     private Z21 _z21 = null!;
+    private IEventBus _eventBus = null!;
     private ActionExecutor _actionExecutor = null!;
     private WorkflowService _workflowService = null!;
     private ActionExecutionContext _executionContext = null!;
@@ -24,7 +26,8 @@ public class WorkflowExecutionEndToEndTests
     public void SetUp()
     {
         _fakeUdp = new FakeUdpClientWrapper();
-        _z21 = new Z21(_fakeUdp);
+        _eventBus = new EventBus();
+        _z21 = new Z21(_fakeUdp, _eventBus);
         _actionExecutor = new ActionExecutor();
         _workflowService = new WorkflowService(_actionExecutor);
 

@@ -26,11 +26,31 @@
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
 
+            <!--  TextBlock Styles (Fluent Design 2 Typography)  -->
+            <Style x:Key="TitleTextBlockStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="28" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+            </Style>
+
+            <Style x:Key="SubtitleTextBlockStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="20" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+            </Style>
+
+            <Style x:Key="CaptionTextBlockStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="FontWeight" Value="Normal" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            </Style>
+
             <!--  Skin Swatches (used by skin selector flyouts)  -->
             <SolidColorBrush x:Key="SkinBlueBrush" Color="#0078D4" />
             <SolidColorBrush x:Key="SkinGreenBrush" Color="#2ECC71" />
             <SolidColorBrush x:Key="SkinOrangeBrush" Color="#FF6600" />
             <SolidColorBrush x:Key="SkinRedBrush" Color="#CC0000" />
+            
             <!--  Global Converters  -->
             <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
             <converter:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />

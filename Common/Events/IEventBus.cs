@@ -43,10 +43,12 @@ public interface IEventBus
 /// <summary>
 /// Default implementation of IEventBus using dictionary-based subscriptions.
 /// Thread-safe for Publish and Subscribe operations.
+/// Uses WeakReferences to prevent memory leaks - dead ViewModel references are automatically cleaned.
 /// </summary>
 public sealed class EventBus : IEventBus
 {
-    private readonly Dictionary<Type, List<(Guid Id, Delegate Handler)>> _subscriptions = [];
+    // Tuple: (subscription ID, WeakReference to target object, handler delegate)
+    private readonly Dictionary<Type, List<(Guid Id, WeakReference<object>? TargetRef, Delegate Handler)>> _subscriptions = [];
     private readonly object _lock = new();
 
     public void Publish<TEvent>(TEvent @event) where TEvent : class, IEvent
@@ -59,7 +61,10 @@ public sealed class EventBus : IEventBus
             if (!_subscriptions.TryGetValue(eventType, out var handlers))
                 return;
 
-            foreach (var (_, handler) in handlers)
+            // Remove dead references (targets that have been garbage collected)
+            handlers.RemoveAll(h => h.TargetRef != null && !h.TargetRef.TryGetTarget(out _));
+
+            foreach (var (_, _, handler) in handlers)
             {
                 try
                 {
@@ -81,6 +86,11 @@ public sealed class EventBus : IEventBus
         var subscriptionId = Guid.NewGuid();
         var eventType = typeof(TEvent);
 
+        // Capture the target object (ViewModel) via WeakReference
+        // If handler is a static method or lambda without closure, target is null
+        var target = handler.Target;
+        var targetRef = target != null ? new WeakReference<object>(target) : null;
+
         lock (_lock)
         {
             if (!_subscriptions.TryGetValue(eventType, out var handlers))
@@ -89,7 +99,7 @@ public sealed class EventBus : IEventBus
                 _subscriptions[eventType] = handlers;
             }
 
-            handlers.Add((subscriptionId, handler));
+            handlers.Add((subscriptionId, targetRef, handler));
         }
 
         return subscriptionId;
@@ -111,7 +121,12 @@ public sealed class EventBus : IEventBus
         lock (_lock)
         {
             var eventType = typeof(TEvent);
-            return _subscriptions.TryGetValue(eventType, out var handlers) ? handlers.Count : 0;
+            if (!_subscriptions.TryGetValue(eventType, out var handlers))
+                return 0;
+
+            // Count only live references
+            var liveCount = handlers.Count(h => h.TargetRef == null || h.TargetRef.TryGetTarget(out _));
+            return liveCount;
         }
     }
 }

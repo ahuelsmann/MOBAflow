@@ -6,6 +6,7 @@ using Moba.Backend.Protocol;
 using Mocks;
 using System.Net;
 using Moba.Test.TestData;
+using Moba.Common.Events;
 
 [TestFixture]
 public class Z21WrapperTests
@@ -14,7 +15,8 @@ public class Z21WrapperTests
     public async Task ConnectAsync_UsesWrapper_AndSendsHandshakeAndBroadcast()
     {
         var fake = new FakeUdpClientWrapper();
-        var z21 = new Z21(fake);
+        var eventBus = new EventBus();
+        var z21 = new Z21(fake, eventBus);
 
         await z21.ConnectAsync(IPAddress.Loopback);
         
@@ -35,7 +37,8 @@ public class Z21WrapperTests
     public void Received_RaisesFeedback_ForRBusPacket()
     {
         var fake = new FakeUdpClientWrapper();
-        var z21 = new Z21(fake);
+        var eventBus = new EventBus();
+        var z21 = new Z21(fake, eventBus);
 
         FeedbackResult? captured = null;
         // ReSharper disable once AccessToDisposedClosure
@@ -53,7 +56,8 @@ public class Z21WrapperTests
     public void XBusStatusChanged_IsRaised_WhenStatusPacketArrives()
     {
         var fake = new FakeUdpClientWrapper();
-        var z21 = new Z21(fake);
+        var eventBus = new EventBus();
+        var z21 = new Z21(fake, eventBus);
         XBusStatus? status = null;
         // ReSharper disable once AccessToDisposedClosure
         using var signal = new ManualResetEventSlim(false);

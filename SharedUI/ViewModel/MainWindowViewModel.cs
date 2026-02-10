@@ -1,11 +1,15 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using Backend;
 using Backend.Interface;
 using Backend.Manager;
+using Backend.Model;
+using Backend.Protocol;
 using Backend.Service;
 
 using Common.Configuration;
+using Common.Events;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -35,6 +39,7 @@ public partial class MainWindowViewModel : ObservableObject
     // Core Services (required)
     private readonly IIoService _ioService;
     private readonly IZ21 _z21;
+    private readonly IEventBus _eventBus;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly IWorkflowService _workflowService;
     private readonly ILogger<MainWindowViewModel> _logger;
@@ -58,6 +63,7 @@ public partial class MainWindowViewModel : ObservableObject
     #region Constructor
     public MainWindowViewModel(
         IZ21 z21,
+        IEventBus eventBus,
         IWorkflowService workflowService,
         IUiDispatcher uiDispatcher,
         AppSettings settings,
@@ -72,6 +78,7 @@ public partial class MainWindowViewModel : ObservableObject
     {
         _ioService = ioService ?? new NullIoService();  // Use null object pattern
         _z21 = z21;
+        _eventBus = eventBus;
         _workflowService = workflowService;
         _uiDispatcher = uiDispatcher;
         _settings = settings;
@@ -90,19 +97,22 @@ public partial class MainWindowViewModel : ObservableObject
 
         IsDarkMode = settings.Application.IsDarkMode;
 
-        // This ensures we receive status updates regardless of how connection was established
+        // Subscribe to Z21 events via EventBus (with automatic WeakReference cleanup)
+        _eventBus.Subscribe<Z21ConnectionEstablishedEvent>(_ => OnZ21ConnectedChanged(true));
+        _eventBus.Subscribe<Z21ConnectionLostEvent>(_ => OnZ21ConnectedChanged(false));
+        _eventBus.Subscribe<SystemStateChangedEvent>(evt => OnZ21SystemStateChanged(CreateSystemState(evt)));
+        _eventBus.Subscribe<XBusStatusChangedEvent>(evt => OnZ21XBusStatusChanged(CreateXBusStatus(evt)));
+        _eventBus.Subscribe<VersionInfoChangedEvent>(evt => OnZ21VersionInfoChanged(CreateVersionInfo(evt)));
+
+        // Keep legacy direct subscriptions for backward compatibility (optional)
         _z21.Received += OnFeedbackReceived;  // For counter statistics
-        _z21.OnSystemStateChanged += OnZ21SystemStateChanged;
-        _z21.OnXBusStatusChanged += OnZ21XBusStatusChanged;
-        _z21.OnVersionInfoChanged += OnZ21VersionInfoChanged;
         _z21.OnConnectionLost += HandleConnectionLost;
-        _z21.OnConnectedChanged += OnZ21ConnectedChanged;
 
         InitializeTrafficMonitor();
 
         InitializeStatisticsFromFeedbackPoints();
 
-        // Connection status will be updated via OnConnectedChanged event when Z21 responds
+        // Connection status will be updated via EventBus when Z21 responds
         _ = TryAutoConnectToZ21Async();
 
         if (_cityLibraryService != null)
@@ -453,7 +463,6 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         // Unsubscribe from all Z21 events
-        _z21.OnSystemStateChanged -= OnZ21SystemStateChanged;
         _z21.OnVersionInfoChanged -= OnZ21VersionInfoChanged;
         _z21.OnConnectionLost -= HandleConnectionLost;
         _z21.OnConnectedChanged -= OnZ21ConnectedChanged;
@@ -598,4 +607,32 @@ public partial class MainWindowViewModel : ObservableObject
 
     private bool CanAddLocomotiveToTrain() => SelectedTrain != null && SelectedProject != null;
     #endregion
+
+    private static SystemState CreateSystemState(SystemStateChangedEvent evt)
+    {
+        return new SystemState
+        {
+            MainCurrent = evt.MainCurrent,
+            ProgCurrent = evt.ProgCurrent,
+            FilteredMainCurrent = evt.FilteredMainCurrent,
+            Temperature = evt.Temperature,
+            SupplyVoltage = evt.SupplyVoltage,
+            VccVoltage = evt.VccVoltage,
+            CentralState = unchecked((byte)evt.CentralState),
+            CentralStateEx = unchecked((byte)evt.CentralStateEx)
+        };
+    }
+
+    private static XBusStatus CreateXBusStatus(XBusStatusChangedEvent evt)
+        => new(evt.EmergencyStop, evt.TrackOff, evt.ShortCircuit, evt.Programming);
+
+    private static Z21VersionInfo CreateVersionInfo(VersionInfoChangedEvent evt)
+    {
+        return new Z21VersionInfo
+        {
+            SerialNumber = evt.SerialNumber,
+            HardwareTypeCode = unchecked((uint)evt.HardwareTypeCode),
+            FirmwareVersionCode = unchecked((uint)evt.FirmwareVersionCode)
+        };
+    }
 }

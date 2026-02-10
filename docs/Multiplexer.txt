@@ -1,0 +1,192 @@
+Multiplexer:
+Bedienungsanleitung
+DCC
+DC
+2. Einleitung
+Der Viessmann Multiplexer für Lichtsignale mit Multiplex-Technologie, Art. 5229 steuert ein 2- oder mehrbegriffiges Tages-
+licht-Signal mit dem dazu gehörenden Vorsignal. Das Signal muss mit der Viessmann Multiplextechnik ausgestattet sein.
+Der Multiplexer kann folgende Viessmann Signale steuern: Ks-Signale, Art. 4040 – 4046 und Lichtsignale, Art. 4720 – 4730.
+Signalbilder und Adressen finden Sie ab Seite 14.
+Der Multiplexer erkennt automatisch den Typ des angeschlossenen Signals. Er konfiguriert sich entsprechend auto-
+matisch. In Verbindung mit dem Commander Art. 5300/5320 (Anschluss am LSB) kann sich das Modul auch auf alle
+weiteren Parameter (z. B. Digitaladressen) automatisch konfigurieren, so dass keine manuellen Einstellungen nötig sind.
+Bei Verwendung anderer Digitalzentralen, bzw. im analogen Betrieb, werden Optionen über DIP-Schalter (Abb. 4) und
+gegebenenfalls Digitaladressen manuell eingerichtet. Bei diesem Vorgang werden gleichzeitig die Eigenschaften des zu
+steuernden Signals konfiguriert:
+•	Sofortiges oder weiches Überblenden der Signalbilder
+•	Gekoppeltes Signal
+•	Bahnhofs- oder Blocksignal-Logik
+•	Bremsgenerator ja/nein
+Die einmal eingestellte Konfiguration und das aktuelle Signalbild werden intern gespeichert und bei jedem Spielbeginn
+wieder zurückgeholt.
+2.1 Vorsignal
+Das Steuermodul gibt am Anschluss Vr immer das Signalbild für ein separat stehendes Vorsignal aus.
+Verfügt das Signal am Anschluss Hp über ein Vorsignal am eigenen Mast, dann gehört dieses Vorsignal am Mast zum
+folgenden Hauptsignal. Es erhält die erforderlichen Informationen über den Signalbus und zeigt das entsprechende
+Signalbild an. Der Vorsignalbegriff wird über den Signalbus oder die 3. und 4. Digitaladresse übertragen.
+DE
+In den Stellungen „Halt“ oder „Rangierverbot aufgehoben“ wird das Vorsignal am eigenen Mast automatisch dunkel
+geschaltet. Diese „Dunkeltastung“ entspricht dem Vorbild, denn wer nicht weiterfahren darf, braucht die Stellung des
+nächsten Signals nicht zu kennen.
+3. Anschluss
+Stecken Sie den Signalstecker in die entsprechende Buchse des Multiplexers. Achten Sie auf die korrekte Polarität. Die
+Markierung am Stecker muss mit der Markierung am Multiplexer übereinstimmen.
+Bei verpolt eingesteckten Steckern wird nichts beschädigt. Das Signal wird falsch oder nicht erkannt, somit auch falsch oder nicht
+angesteuert, erkennbar am wiederholten Aufblitzen der LEDs.
+Zum Anschluss des Multiplexers an die Steuerung Ihrer Modellbahn (Stellpulte, Digitalzentrale) beachten Sie bitte die
+Hinweise und Zeichnungen. Schließen Sie den Multiplexer gemäß den folgenden Abb. 1 – 3 an.
+3.2 Digitaler Anschluss (am Gleis)
+Beim Digitalbetrieb verbinden Sie die Klemmen „rt“ und „bn“ mit dem Gleisausgang einer Digitalzentrale oder eines
+Boosters (Abb. 2).
+Parallel zu einer Digitalzentrale können Sie ein externes Tastenstellpult an den Multiplexer anschließen und so das Signal
+auch von Hand steuern. Allerdings wird in diesem Fall die Stellinformation nicht an die Digitalzentrale weitergegeben.
+4.1 Optionen
+Die möglichen Signaloptionen stellen Sie über die DIP-Schalter („Mäuseklavier“, Abb.4) des Multiplexers ein (siehe Tabelle
+Seite 8). Die Stellung des DIP-Schalters wird beim Einschalten des Moduls oder nach einem kurzen Druck auf die Taste
+„Adresse“ eingelesen. Der Multiplexer übernimmt die Einstellungen und liest das angeschlossene Signal neu ein. Dieses
+blinkt während des Erkennungsvorganges kurz auf. Ist der Multiplexer über den LSB mit einem Commander verbunden,
+können die Optionen auch über diesen eingestellt werden.
+4.2 Streckengeschwindigkeit einstellen
+Die ab dem Hauptsignal zulässige Streckengeschwindigkeit – Anzeige über das Zusatzsignal Zs3 der Viessmann
+Ks-Signale – stellen Sie über die DIP-Schalter ein:
+Damit das vorhergehende Signal bzw. dessen Modul, Art. 5224 oder 5229 über den Signalbus erfährt, ob es eine
+Langsamfahrt bzw. eine niedrigere Geschwindigkeit anzeigen soll, muss die jeweils ab diesem Hauptsignal gültige
+Streckengeschwindigkeit im Modul eingetragen werden.
+Die höchste anzuzeigende Geschwindigkeit beträgt 15 (= 150 km/h). Die höchste zulässige Geschwindigkeit auf Standardstrecken (Indusi/PZB90) beträgt 160 km/h und muss nicht per Signal angezeigt werden. Höhere Geschwindigkeiten
+dürfen nur auf Strecken mit der Zugsicherung LZB gefahren werden. Diese benötigt aber keine Signalisierung.
+Zur Einstellung:
+Addieren Sie die Einzelgeschwindigkeiten des DIP-Schalters bis zur gewünschten Geschwindigkeit. Beginnen Sie mit
+dem größten Wert.
+Beispiel: Streckengeschwindigkeit 130 km/h
+DIP-Schalter 5 auf „Ein“ = 80 km/h
+DIP-Schalter 6 auf „Ein“ = 40 km/h
+DIP-Schalter 8 auf „Ein“ = 10 km/h
+4.3 Digitale Ansteuerung
+Das Modul benötigt zur Ansteuerung im Märklin-Motorola- und im NMRA-DCC-Betrieb bis zu vier direkt aufeinander
+folgende Digital-Weichenadressen. Bei einem mehrbegriffigen Signal, das mehr als eine Adresse benötigt, ist die erste
+Adresse immer eine ungerade Adresse.
+Bis zu fünf externe Kontakte oder Taster können angeschlossen werden, über die das Signalmodul vom Zug aus geschaltet
+werden kann. Vier für die Stellungen „rot“, „grün“, „grün/gelb“ und „rangieren“. Der fünfte Anschluss („Bremsen“) ist für den
+Bremskontakt, der beim Anschluss eines Bremsgenerators die Umschaltung der Stromversorgung von Fahren (Zentrale/
+Booster) auf Bremsen (Bremsgenerator) auslöst. Ohne Bremsgenerator wird die Fahrstromunterbrechung sofort wirksam,
+wenn das Signal auf „Halt“ gestellt wird. Die Ein-/Ausschaltung bzw. die Umschaltung des Fahrstroms übernimmt das
+ansteckbare Viessmann Zugbeeinflussungsrelais, Art. 5228 (s. a. Anleitung zu Modul Art. 5228).
+4.5 Digitaladresse (NMRA-DCC)
+Zum Eingeben einer Adresse für das DCC-Format drücken Sie die Taste „Adresse“ solange, bis die rote Kontroll-LED
+langsam blinkt. Drücken Sie die Taste kurz erneut, um in den DCC-Modus zu wechseln. Die LED blinkt nun schnell.
+Geben Sie jetzt mit Ihrem Digitalsystem einen DCC-Stellbefehl mit der Adresse, die Sie für das Signal vorgesehen haben.
+Das Modul unterstützt bis zu 2048 DCC-Adressen. Es speichert den ersten eintreffenden gültigen Weichenstellbefehl als
+seinen eigenen ab. Als Zeichen dafür erlischt die Kontroll-LED und das Signal führt den Befehl aus.
+Bei der Konfiguration auf ein mehrbegriffiges Signal übernimmt es eine ungerade Digital-Adresse als erste und die darauf
+folgende gerade als zweite. Deshalb würde bei einem mehrbegriffigen Signal ein Stellbefehl für die Adresse 001 oder für
+die Adresse 002 das Modul in beiden Fällen auf die Adressen 001 und 002 programmieren. Die Kombination der Adressen
+002 und 003 ist nicht möglich, da dies zu Überschneidungen mit dem Adressbereich anderer Decoder führen könnte.
+4.6 Beenden der Adresseinstellung
+Mit dem Empfang eines gültigen Digitalbefehls beendet das Steuermodul die Adresseingabe automatisch. Um den
+Adresseinstellungsmodus ohne Änderungen zu verlassen, drücken Sie die Taste „Adresse“ ein drittes Mal.
+4.7 Werkseinstellung
+Setzen Sie das Modul auf Werkseinstellungen zurück, indem Sie bei gedrückter Taste „Adresse“, die Betriebsspannung
+einschalten.
+In der Werkseinstellung ist das Modul auf die Motorola-Adresse 1 und Optionen gemäß der DIP-Schalter konfiguriert.
+5. Signalbus
+Bei modernen Signalsystemen sind die Einzelsignale voneinander abhängig bzw. das Signalbild eines Signals wird vom
+folgenden Signal mit beeinflusst. Um diese Abhängigkeiten im Modell ohne übergeordnete Intelligenz vorbildgerecht
+nachbilden zu können, werden die Signale untereinander über den Viessmann-Signalbus verbunden. Der Signalbus
+ist eine Datenübertragung über zwei zusätzliche Kabel und arbeitet entgegen der Fahrtrichtung der Züge. Er wird z. B.
+von den Modulen, Art. 5224 und 5229 unterstützt. Entsprechend können Signale und Module auf der Strecke gemischt
+aufgestellt werden.
+Wichtig: Der Signalbus ist nicht an ein Digitalsystem gebunden. Er funktioniert sogar bei konventionellem Betrieb ohne
+Einschränkungen!
+5.1 Übertragung der Signalstellung
+Der Signalbus überträgt die Stellung des Signals (die Streckengeschwindigkeit) an das vorhergehende, empfangende
+Signal. Aus dem eigenen Stellbefehl und der erhaltenen Information erzeugt dieses Signal seine eigene Stellung für
+Haupt- und Vorsignal. Es passt daraufhin ggf. das Signalbild von Haupt- und Vorsignal an. Das empfangende Signal
+überträgt dann seinerseits die entsprechenden Informationen an das wiederum davor liegende Signal.
+Der Signalbus arbeitet sogar zwischen den verschiedenen Signalgenerationen und -typen, so dass ein Übergang ohne
+zusätzliche Schaltungen oder eine übergeordnete Instanz möglich ist!
+5.2 Übertragung der Besetztmeldung
+Zusätzlich zur Information über die Signalstellung überträgt der Signalbus auch den Besetztzustand aller an das Signalmodul angeschlossenen Streckenabschnitte bzw. Taster. Mit diesen Informationen wird der Betrieb von Signalen mit
+Blockstreckenautomatik möglich!
+5.3 Verzweigungen des Signalbusses
+Der Viessmann-Signalbus darf sich verzweigen. Damit folgt die Datenübertragung immer dem eingestellten Fahrweg.
+Eine zyklische Übertragung sorgt dafür, dass die Informationen kurzfristig in Richtung des neuen Fahrweges aktualisiert
+werden. Dadurch zeigt z. B. ein Einfahrsignal immer das richtige Bild am Vorsignal, wenn der Signalbus parallel zur
+Stellung der Weichen durch ein Relais (z. B. Viessmann Elektronisches Relais 2 x 2 UM, Art. 5552) mit umgeschaltet wird.
+Auch am Ausfahrsignal kann der Signalbus auf gleiche Weise über Relais dem Fahrweg zugeordnet werden. Der
+Unterschied besteht darin, dass sich hier der Fahrweg nicht aufspaltet, sondern wieder zusammengeführt wird. Deshalb
+werden die Relais hier in umgekehrter Richtung betrieben (siehe Abb. 6).
+6. Signal-Logik
+Es gibt nicht nur verschiedene Signaltypen, sondern gleiche Typen können – je nach Standort – auch verschiedene
+Aufgaben übernehmen. Dadurch unterscheidet sich ihr Verhalten im Betrieb. Es gibt 2 Logiken: Die Bahnhofssignal-Logik
+und die Blockstrecken-Logik. Auf beide Logiken kann der Viessmann Multiplexer eingestellt werden.
+6.1 Die Bahnhofssignal-Logik
+Im Grundzustand steht das Bahnhofssignal auf „Halt“. Es reagiert auf die Taster-Eingänge „Hp0“ und „Hp1“, bei mehrbegriffi-
+gen Signalen zusätzlich auf „Hp2“ und „Sh1“. Diese Eingänge sind immer aktiv. Der Eingang „Hp0“, der das Signal auf „Halt“
+stellt, hat Vorrang vor allen anderen, so dass das Signal unbedingt auf „Halt“ stehen bleibt, wenn dieser Eingang betätigt wird.
+Der Eingang „Bremsen“ ist nur dann aktiv, wenn Sie ein digitales Bremsmodul einsetzen, z. B. Viessmann Art. 5232, und
+Sie das Signal entsprechend konfiguriert haben (siehe Abschnitte 6.3 und 6.4).
+Bei „Halt“ steuert das Signalmodul ein angestecktes Zugbeeinflussungsrelais, Art. 5228 (s. Anleitung 5228) so an, dass
+der Fahrstrom im angeschlossenen Signalabschnitt ausgeschaltet wird. Bei „Fahrt“ – und gegebenenfalls auch bei
+„Langsamfahrt“ und „Rangierverbot aufgehoben“ – schaltet es den Fahrstrom ca. 1,5 Sekunden später (Reaktionszeit
+des Lokführers) wieder ein.
+Setzen Sie bei einem Signal mit Bahnhofssignal-Logik Mehrbereichssignale oder Signale ein, die das Vorsignal für das
+folgende Signal am Mast tragen, müssen Sie die Steuermodule mit dem Viessmann-Signalbus miteinander verbinden,
+damit die Mehrbereichssignale bzw. die Vorsignale das korrekte Signalbild anzeigen.
+6.2 Blockstrecken-Logik
+Für den Einsatz der Blockstrecken-Logik muss Ihre Anlage unbedingt mit einer Gleisbesetztmeldung ausgerüstet sein, die
+eine kontinuierliche Besetzt-/Frei-Information liefert. Bei Märklin-Gleisen z. B. mittels Kontaktstrecken durch eine isolierte
+Außenschiene oder bei Zweileiter-Systemen mit Gleisabschnitten, die von Stromfühlern überwacht sind. Hierzu eignet
+sich besonders der Viessmann-Gleisbesetztmelder, 8-fach, Art. 5206.
+Jeder Blockabschnitt (Abb. 6) besteht aus zwei Teilen, dem Fahr- und dem Halteabschnitt. Der Fahrabschnitt wird an den
+Eingang „Sh1“ und der Halteabschnitt an den Eingang „Bremsen“ angeschlossen. Die Signalmodule müssen über den
+Signalbus miteinander verbunden werden, denn die Besetztinformationen beeinflussen hauptsächlich das vorhergehende
+Signal! Bei einer Blockstrecken-Logik darf sich der Signalbus ebenfalls verzweigen.
+Im Grundzustand steht das Blocksignal auf „Fahrt“. Meldet der Signalbus einen oder beide folgenden Abschnitte „besetzt“,
+dann stellt sich das Signal automatisch auf „Halt“. Meldet der Signalbus wieder eine freie Strecke, geht das Signal auf
+„Fahrt“ zurück. Diese automatische Umschaltung auf „Fahrt“ geschieht auch dann, wenn z. B. durch Umschalten einer
+Weiche der Signalbus auf einen anderen Fahrweg umgeleitet wird und dann auf die Besetztmeldungen eines anderen
+Steuermoduls reagiert, dessen zugehöriger Streckenabschnitt frei ist.
+Verliert ein Steuermodul die Signalbus-Verbindung zum folgenden Signal und erhält deshalb über den Signalbus keine
+neuen Informationen mehr, schaltet es das Signal nach einer kurzen Wartezeit automatisch auf „Halt“.
+Erhält das Steuermodul die Verbindung zum folgenden Signal zurück und damit neue Informationen über den Signalbus,
+stellt es das Signal automatisch gemäß der neuen Informationen, d. h. Signalbild und Besetztmeldungen, um. Auch das
+geschieht erst nach einer kurzen Wartezeit.
+6.3 Einsatz des Digital-Bremsmoduls, Art. 5232 im Märklin-Motorola Betrieb
+Das Viessmann Digital-Bremsmodul Art. 5232 können Sie unabhängig von der eingestellten Signallogik einsetzen. Es
+sorgt dafür, dass ein Zug vor einem auf „Halt“ stehenden Signal nicht abrupt stehenbleibt, sondern vorbildgerecht langsam
+bis zum Stillstand abbremst. Dazu muss die Verdrahtung der Anlage unbedingt so ausgeführt sein, wie es die Anleitung
+des Bremsmoduls vorschreibt. Das bedeutet eine Unterteilung des Abschnittes vor dem Signal mindestens in einen
+Fahr- und einen Halte- oder Bremsabschnitt. Beide zusammen müssen so lang sein wie der längste zu erwartende Zug
+einschließlich des Anhalteweges.
+Das Bremsmodul und eine evtl. erforderliche Gleisbesetztmeldung können gleichzeitig an die Gleisabschnitte vor dem
+Signal angeschlossen werden. Dadurch kann das Bremsmodul auch bei einem Blocksignal eingesetzt werden.
+6.4 Einsatz eines Bremsgenerators im DCC-Betrieb
+Einen Bremsgenerator können Sie unabhängig von der eingestellten Signal-Logik einsetzen. Der Bremsgenerator sorgt
+dafür, dass ein Zug vor einem auf „Halt“ stehenden Signal nicht abrupt stehenbleibt, sondern vorbildgerecht langsam bis
+zum Stillstand abbremst. Dazu muss die Verdrahtung der Anlage unbedingt so ausgeführt sein, wie es die Anleitung des
+Bremsgenerators vorschreibt. Normalerweise wird der Abschnitt vor dem Signal in einen Fahr- und einen Halte- oder
+Bremsabschnitt unterteilt. Beide zusammen müssen so lang sein wie der längste zu erwartende Zug einschließlich
+des Anhalteweges. Für die Einleitung des Bremsvorganges ist außerdem ein Kontakt oder eine Gleisbesetztmeldung
+vorzusehen.
+Der Multiplexer, Art. 5229 ist für den Einsatz eines Bremsgenerators vorbereitet. Haben Sie ihn für den Einsatz eines
+Bremsgenerators konfiguriert, dann steuert das Modul das Zugbeeinflussungsrelais bei „Halt“ nicht sofort an, sondern
+wartet, bis der Zug den Kontakt „Bremsen“ erreicht hat und schaltet das Relais dann erst um. Das Relais schaltet den
+Fahrstrom im angeschlossenen Signalabschnitt nicht aus, sondern von der Digitalzentrale oder dem Booster auf den
+Bremsgenerator um.
+6.5 Digital-Bremsmodul, Art. 5232 oder Bremsgenerator im Multiprotokoll-Betrieb
+Weder das Viessmann-Digital-Bremsmodul, Art. 5232 noch die DCC-Bremsgeneratoren sind in der Regel für den Einsatz
+in Multiprotokoll-Systemen geeignet. Möchten Sie deren komfortable und vorbildgerechte Bremsfunktion nutzen, sollten
+Sie nur ein Datenformat verwenden. Das bedeutet normalerweise keine erneute Umrüstung Ihrer Lokomotiven, da fast alle
+Lokdecoder mehrere Datenformate verstehen. Sie müssen lediglich alle Decoder auf das gleiche Datenformat, entweder
+Märklin-Motorola oder NMRA-DCC, einstellen.
+Hinweis: Das Kennlicht der Ks-Signale leuchtet immer dann, wenn das Signal nicht „grün“ zeigt, da es dann einen ver-
+kürzten Abstand zum Vorsignal anzeigt. Verkürzte Abstände zwischen Vor- und Hauptsignalen stellen den Regelfall auf
+der Modellbahn dar.
+8. Technische Daten
+Datenformat: analog (AC, DC),
+digital (DCC, MM)
+Betriebsspannung: 10 – 16 V AC~
+14 – 24 V DC =
+13 – 24 V Digitalsystem
+Stromaufnahme: 85 mA
+Signalanschlüsse: 2 x 4-polige Multiplex-Stecker

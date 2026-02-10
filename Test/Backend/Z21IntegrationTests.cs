@@ -1,8 +1,9 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Test.Backend;
 
 using Mocks;
+using Moba.Common.Events;
 
 [TestFixture]
 public class Z21IntegrationTests
@@ -11,7 +12,8 @@ public class Z21IntegrationTests
     public async Task Z21_Receives_SimulatedFeedback_FromSimulator()
     {
         var fakeUdp = new FakeUdpClientWrapper();
-        using var z21 = new Z21(fakeUdp);
+        var eventBus = new EventBus();
+        using var z21 = new Z21(fakeUdp, eventBus);
 
         var received = new TaskCompletionSource<FeedbackResult>(TaskCreationOptions.RunContinuationsAsynchronously);
 

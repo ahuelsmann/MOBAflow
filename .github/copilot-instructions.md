@@ -163,14 +163,4 @@ Details in `.github/instructions/`:
 - `todos.instructions.md` – Offene Aufgaben / Roadmap  
 - `naming-conventions.instructions.md` – C# Naming Standards (Protocol Constants)  
 - `di-pattern-consistency.instructions.md` – DI-Regeln  
-
-### Architektur & Frameworks
-- `architecture.instructions.md` – Layer-Architektur  
-- `backend.instructions.md` – Backend Details  
-- `z21-backend.instructions.md` – Z21 Connection & Traffic Rules (CRITICAL)
-
-### UI Frameworks
-- `winui.instructions.md` – WinUI 3 Spezifika
-
-### Code Quality
-- `test.instructions.md` – Testing Best Practices
+- **`plan-completion.instructions.md`** – **Plan-Validierung, Build-Checks, Incomplete-Work-Handling**

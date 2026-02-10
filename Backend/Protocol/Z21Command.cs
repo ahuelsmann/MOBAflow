@@ -177,4 +177,109 @@ public static class Z21Command
                 xor
             ];
         }
+
+        // ==================== Switching Commands (Accessory Decoders) ====================
+
+        /// <summary>
+        /// Builds LAN_X_SET_TURNOUT command for classic DCC turnout/signal decoders.
+        /// Format: 0x53 FAdr_MSB FAdr_LSB 10Q0A00P XOR
+        /// 
+        /// Supports 2-output decoders (e.g., switches, 2-output signals).
+        /// Each decoder address controls 2 outputs via P flag (0 or 1).
+        /// </summary>
+        /// <param name="decoderAddress">Accessory decoder address (1-2044)</param>
+        /// <param name="output">Output index: 0 = output 1 (P=0), 1 = output 2 (P=1)</param>
+        /// <param name="activate">True = activate, False = deactivate</param>
+        /// <param name="queue">True = queue command (FW 1.24+), False = immediate execution</param>
+        public static byte[] BuildSetTurnout(int decoderAddress, int output, bool activate, bool queue = false)
+        {
+            // Encode decoder address (1-2044 → 11-bit encoding)
+            // Bits 7-0 = Adr_LSB, Bits 10-8 = Adr_MSB[2:0]
+            byte adrLsb = (byte)(decoderAddress & 0xFF);
+            byte adrMsb = (byte)((decoderAddress >> 8) & 0x07);
+
+            // Build command byte: 10Q0A00P
+            // Bit 7-6: 10 (always)
+            // Bit 5:   Q = queue flag (1=queue, 0=immediate)
+            // Bit 4:   0 (reserved)
+            // Bit 3:   A = activate (1=activate, 0=deactivate)
+            // Bit 2-1: 00 (reserved)
+            // Bit 0:   P = output (0=output1, 1=output2)
+            byte cmdByte = (byte)(
+                0x80 |                              // 10XXXXXX
+                (queue ? 0x20 : 0x00) |            // Q flag
+                (activate ? 0x08 : 0x00) |         // A flag
+                (output & 0x01)                    // P flag
+            );
+
+            // Calculate XOR checksum
+            byte xor = (byte)(Z21Protocol.XHeader.X_SET_TURNOUT ^ adrMsb ^ adrLsb ^ cmdByte);
+
+            return
+            [
+                0x0A, 0x00,  // DataLen = 10 bytes
+                Z21Protocol.Header.LAN_X_HEADER, 0x00,
+                Z21Protocol.XHeader.X_SET_TURNOUT,  // 0x53
+                adrMsb, adrLsb,
+                cmdByte,
+                xor
+            ];
+        }
+
+        /// <summary>
+        /// Builds LAN_X_SET_EXT_ACCESSORY command for extended accessory decoders (e.g., multiplex decoders).
+        /// Format: 0x54 Adr_MSB Adr_LSB DDDDDDDD 0x00 XOR
+        /// 
+        /// Supports 256 different values per address (0-255).
+        /// Extended accessory decoders (RawAddress = 4) can hold multiple configuration profiles.
+        /// Example: Multiplex signal decoder 5229 with profiles for signal combinations.
+        /// </summary>
+        /// <param name="extAccessoryAddress">Extended accessory address (0-255)</param>
+        /// <param name="commandValue">Command value (0-255) for specific decoder state/aspect</param>
+        public static byte[] BuildSetExtAccessory(int extAccessoryAddress, int commandValue)
+        {
+            // Extended accessory addressing: RawAddress encodes the decoder address
+            // RawAddress 4 = first decoder (shown as "Address 1" in UI)
+            // For practical use: map addresses 1-255 directly
+            
+            byte adrMsb = (byte)((extAccessoryAddress >> 8) & 0xFF);
+            byte adrLsb = (byte)(extAccessoryAddress & 0xFF);
+            byte cmdByte = (byte)(commandValue & 0xFF);
+
+            // Calculate XOR checksum
+            byte xor = (byte)(Z21Protocol.XHeader.X_SET_EXT_ACCESSORY ^ adrMsb ^ adrLsb ^ cmdByte ^ 0x00);
+
+            return
+            [
+                0x0B, 0x00,  // DataLen = 11 bytes
+                Z21Protocol.Header.LAN_X_HEADER, 0x00,
+                Z21Protocol.XHeader.X_SET_EXT_ACCESSORY,  // 0x54
+                adrMsb, adrLsb,
+                cmdByte,
+                0x00,  // Reserved byte
+                xor
+            ];
+        }
+
+        /// <summary>
+        /// Builds LAN_X_GET_TURNOUT_INFO command to request turnout/signal status.
+        /// Format: 0x43 FAdr_MSB FAdr_LSB XOR
+        /// </summary>
+        /// <param name="decoderAddress">Accessory decoder address (1-2044)</param>
+        public static byte[] BuildGetTurnoutInfo(int decoderAddress)
+        {
+            byte adrLsb = (byte)(decoderAddress & 0xFF);
+            byte adrMsb = (byte)((decoderAddress >> 8) & 0x07);
+
+            byte xor = (byte)(Z21Protocol.XHeader.X_GET_TURNOUT_INFO ^ adrMsb ^ adrLsb);
+
+            return
+            [
+                0x09, 0x00,  // DataLen = 9 bytes
+                Z21Protocol.Header.LAN_X_HEADER, 0x00,
+                Z21Protocol.XHeader.X_GET_TURNOUT_INFO,  // 0x43
+                adrMsb, adrLsb,
+                xor
+            ];
+        }
     }

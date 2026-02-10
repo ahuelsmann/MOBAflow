@@ -147,4 +147,49 @@ public interface IZ21 : IDisposable
             /// <param name="cancellationToken">Cancellation token</param>
             /// <returns>Task that completes when request is sent</returns>
             Task GetRailComDataAsync(int address, CancellationToken cancellationToken = default);
+
+        // ==================== Switching Commands (Accessory Decoders / Signals) ====================
+
+        /// <summary>
+        /// Sets a classic DCC turnout or 2-output signal decoder position.
+        /// LAN_X_SET_TURNOUT: 0x53 FAdr_MSB FAdr_LSB 10Q0A00P XOR
+        /// 
+        /// Each decoder address controls 2 outputs (P=0 or P=1).
+        /// Common usage: turnouts, 2-output signal decoders.
+        /// </summary>
+        /// <param name="decoderAddress">Accessory decoder address (1-2044)</param>
+        /// <param name="output">Output index: 0 = output 1, 1 = output 2</param>
+        /// <param name="activate">True = activate/set, False = deactivate/reset</param>
+        /// <param name="queue">True = queue (FW 1.24+), False = immediate</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        Task SetTurnoutAsync(int decoderAddress, int output, bool activate, bool queue = false, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Sets an extended accessory decoder (e.g., multiplex signal decoder 5229).
+        /// LAN_X_SET_EXT_ACCESSORY: 0x54 Adr_MSB Adr_LSB DDDDDDDD 0x00 XOR
+        /// 
+        /// Supports 256 command values (0-255) per address for maximum flexibility.
+        /// Used for multiplex signal decoders with multiple signal aspect combinations.
+        /// Example: KS signal with H0 multiplex technology can encode different lamp combinations.
+        /// </summary>
+        /// <param name="extAccessoryAddress">Extended accessory decoder address (0-255)</param>
+        /// <param name="commandValue">Command value (0-255) selecting a specific signal aspect/configuration</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        Task SetExtAccessoryAsync(int extAccessoryAddress, int commandValue, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Requests the current status/position of a turnout or signal decoder.
+        /// LAN_X_GET_TURNOUT_INFO: 0x43 FAdr_MSB FAdr_LSB XOR
+        /// </summary>
+        /// <param name="decoderAddress">Accessory decoder address (1-2044)</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        Task GetTurnoutInfoAsync(int decoderAddress, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Sets a signal aspect for a multiplex signal decoder.
+        /// This is a high-level convenience method combining signal addressing with multiplex control.
+        /// </summary>
+        /// <param name="signal">The signal element containing address, aspect, and multiplex settings</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        Task SetSignalAspectAsync(Domain.SbSignal signal, CancellationToken cancellationToken = default);
         }

@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Extensions;
 
+using Common.Events;
 using Domain;
 using Interface;
 using Microsoft.Extensions.DependencyInjection;
@@ -42,9 +43,10 @@ public static class MobaServiceCollectionExtensions
         services.AddSingleton<IZ21, Z21>(sp =>
         {
             var udp = sp.GetRequiredService<IUdpClientWrapper>();
+            var eventBus = sp.GetRequiredService<IEventBus>();
             var logger = sp.GetService<ILogger<Z21>>();
             var trafficMonitor = sp.GetRequiredService<Z21Monitor>();
-            return new Z21(udp, logger, trafficMonitor);
+            return new Z21(udp, eventBus, logger, trafficMonitor);
         });
 
         // ✅ ActionExecutionContext (Backend owns this, platforms provide audio implementations)
@@ -73,9 +75,26 @@ public static class MobaServiceCollectionExtensions
         // Workflow & Actions
         services.AddSingleton<IWorkflowService, WorkflowService>();
 
+        // Train Class Parsing
+        services.AddSingleton<ITrainClassParser, TrainClassParser>();
+
         // Domain
         services.AddSingleton<Solution>();
 
         return services;
+    }
+
+    /// <summary>
+    /// Initializes the TrainClassLibrary with germany-locomotives.json.
+    /// Call this in App.xaml.cs after services are built, e.g.:
+    /// 
+    /// var app = new App();
+    /// var services = app.Services;
+    /// MobaServiceCollectionExtensions.InitializeTrainClassLibrary("WinUI/germany-locomotives.json");
+    /// </summary>
+    /// <param name="jsonPath">Path to germany-locomotives.json file</param>
+    public static void InitializeTrainClassLibrary(string jsonPath)
+    {
+        TrainClassLibrary.Initialize(jsonPath);
     }
 }

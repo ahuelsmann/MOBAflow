@@ -3,6 +3,7 @@
 namespace Moba.Test.Backend;
 
 using Moba.Backend.Service;
+using Moba.Common.Events;
 using Moba.Domain.Enum;
 using Mocks;
 
@@ -16,6 +17,7 @@ public class ActionExecutorTests
     private IActionExecutor _actionExecutor = null!;
     private FakeUdpClientWrapper _fakeUdp = null!;
     private Z21 _z21 = null!;
+    private IEventBus _eventBus = null!;
     private ActionExecutionContext _context = null!;
 
     [SetUp]
@@ -23,7 +25,8 @@ public class ActionExecutorTests
     {
         _actionExecutor = new ActionExecutor(); // No AnnouncementService for basic tests
         _fakeUdp = new FakeUdpClientWrapper();
-        _z21 = new Z21(_fakeUdp);
+        _eventBus = new EventBus();
+        _z21 = new Z21(_fakeUdp, _eventBus);
 
         _context = new ActionExecutionContext
         {

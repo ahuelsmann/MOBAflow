@@ -1,0 +1,150 @@
+<!-- Example XAML for Train Control Page with Train Class Input -->
+<!-- This shows how to integrate TrainClassViewModel into your UI -->
+
+<Grid x:Name="TrainClassSection" Padding="20">
+    <StackPanel Spacing="12">
+        <!-- Train Class Label -->
+        <TextBlock 
+            Text="Train Class (Baureih)" 
+            FontSize="16" 
+            FontWeight="Bold" />
+
+        <!-- Input with helper text -->
+        <StackPanel Spacing="8">
+            <!-- Input TextBox -->
+            <TextBox 
+                x:Name="TrainClassInput"
+                PlaceholderText="Enter class number (e.g., 110, BR110, or BR 110)"
+                Text="{x:Bind ViewModel.TrainClassInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                FontSize="14" />
+
+            <!-- Helper text -->
+            <TextBlock 
+                Text="Supports flexible formats: 110, br110, BR 110, Br 110" 
+                FontSize="12" 
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                IsTextSelectionEnabled="False" />
+        </StackPanel>
+
+        <!-- Resolve Button -->
+        <Button 
+            Command="{x:Bind ViewModel.ResolveInputCommand}"
+            Content="Resolve Train Class"
+            Style="{ThemeResource AccentButtonStyle}" />
+
+        <!-- Results (only show when resolved) -->
+        <ContentControl Visibility="{x:Bind ViewModel.IsResolved, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Border 
+                BorderBrush="{ThemeResource SystemAccentColor}" 
+                BorderThickness="1" 
+                Padding="16" 
+                CornerRadius="4"
+                Background="{ThemeResource LayerFillColorDefaultBrush}">
+                <StackPanel Spacing="12">
+                    <!-- Resolved Name -->
+                    <StackPanel Spacing="4">
+                        <TextBlock 
+                            Text="Resolved Class:" 
+                            FontWeight="SemiBold" />
+                        <TextBlock 
+                            Text="{x:Bind ViewModel.ResolvedDisplayText}"
+                            FontSize="16"
+                            Foreground="{ThemeResource SystemAccentColor}"
+                            FontWeight="Bold" />
+                    </StackPanel>
+
+                    <!-- Locomotive Type -->
+                    <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.LocomotiveType, Converter={StaticResource StringToVisibilityConverter}}">
+                        <TextBlock 
+                            Text="Type:" 
+                            FontWeight="SemiBold" />
+                        <TextBlock 
+                            Text="{x:Bind ViewModel.LocomotiveType}"
+                            FontSize="14" />
+                    </StackPanel>
+
+                    <!-- Max Speed -->
+                    <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.Vmax, Converter={StaticResource IntToVisibilityConverter}}">
+                        <TextBlock 
+                            Text="Max Speed:" 
+                            FontWeight="SemiBold" />
+                        <TextBlock 
+                            Text="{x:Bind ViewModel.Vmax}"
+                            FontSize="14" />
+                        <TextBlock 
+                            Text="km/h" 
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+
+                    <!-- Additional Info -->
+                    <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.ResolvedSeries.Description, Converter={StaticResource StringToVisibilityConverter}}">
+                        <TextBlock 
+                            Text="Description:" 
+                            FontWeight="SemiBold" />
+                        <TextBlock 
+                            Text="{x:Bind ViewModel.ResolvedSeries.Description}"
+                            FontSize="12"
+                            TextWrapping="Wrap"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+
+                    <!-- Epoch -->
+                    <StackPanel Spacing="4" Visibility="{x:Bind ViewModel.ResolvedSeries.Epoch, Converter={StaticResource StringToVisibilityConverter}}">
+                        <TextBlock 
+                            Text="Era:" 
+                            FontWeight="SemiBold" />
+                        <TextBlock 
+                            Text="{x:Bind ViewModel.ResolvedSeries.Epoch}"
+                            FontSize="12" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </ContentControl>
+
+        <!-- Available Classes (ComboBox with suggestions) -->
+        <StackPanel Spacing="8">
+            <TextBlock 
+                Text="Quick Selection:" 
+                FontSize="12"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            
+            <ComboBox 
+                x:Name="ClassSelector"
+                ItemsSource="{x:Bind ViewModel.AvailableClasses}"
+                PlaceholderText="Or select from available classes..."
+                DisplayMemberPath="Name"
+                SelectionChangedTrigger="CommittedSelection">
+                <ComboBox.SelectionChangedCommand>
+                    <local:SelectClassCommand />
+                </ComboBox.SelectionChangedCommand>
+            </ComboBox>
+        </StackPanel>
+    </StackPanel>
+</Grid>
+
+<!-- 
+    Code-Behind Example (TrainControlPage.xaml.cs):
+    ================================================
+    
+    public partial class TrainControlPage : Page
+    {
+        private TrainClassViewModel _trainClassViewModel;
+
+        public TrainControlPage()
+        {
+            this.InitializeComponent();
+        }
+
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+            
+            // Get parser from DI container
+            var parser = (App.Current as App)?.GetService<ITrainClassParser>();
+            _trainClassViewModel = new TrainClassViewModel(parser!);
+            
+            this.ViewModel = _trainClassViewModel;  // Set DataContext
+        }
+    }
+-->
