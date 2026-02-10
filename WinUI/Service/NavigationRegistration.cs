@@ -6,12 +6,12 @@ using Common.Navigation;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using Moba.WinUI.ViewModel;
-
 using SharedUI.Interface;
 using SharedUI.ViewModel;
 
 using View;
+
+using ViewModel;
 
 /// <summary>
 /// Centralizes page and navigation registrations for the WinUI app.
@@ -85,7 +85,7 @@ public static class NavigationRegistration
             sp.GetRequiredService<SkinSelectorViewModel>()));
         pages.Add(new PageMetadata(
             Tag: "signalbox",
-            Title: "MOBAesb",
+            Title: "Electronic Signal Box",
             Icon: null,
             PageType: typeof(SignalBoxPage),
             Category: NavigationCategory.TrackManagement,

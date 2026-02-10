@@ -9,7 +9,7 @@ using SharedUI.ViewModel;
 
 [NavigationItem(
     Tag = "trackplaneditor",
-    Title = "MOBAtps",
+    Title = "Track Plan",
     Category = NavigationCategory.TrackManagement,
     Order = 10,
     FeatureToggleKey = "IsTrackPlanEditorPageAvailable",

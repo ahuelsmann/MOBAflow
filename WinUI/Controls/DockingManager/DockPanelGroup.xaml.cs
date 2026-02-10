@@ -41,10 +41,27 @@ public sealed class DockPanelGroup : UserControl
             typeof(DockPanelGroup),
             new PropertyMetadata(null, OnItemsSourceChanged));
 
+    public static readonly DependencyProperty DockPositionProperty =
+        DependencyProperty.Register(
+            nameof(DockPosition),
+            typeof(DockPosition),
+            typeof(DockPanelGroup),
+            new PropertyMetadata(DockPosition.Left, OnDockPositionChanged));
+
     public DockPanelGroup()
     {
-        _singlePanelPresenter = new ContentPresenter();
-        _singlePanelView = new Grid { Visibility = Visibility.Collapsed };
+        _singlePanelPresenter = new ContentPresenter
+        {
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+
+        _singlePanelView = new Grid
+        {
+            Visibility = Visibility.Collapsed,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
         _singlePanelView.Children.Add(_singlePanelPresenter);
 
         _panelTabView = new TabView
@@ -53,8 +70,10 @@ public sealed class DockPanelGroup : UserControl
             IsAddTabButtonVisible = false,
             CanReorderTabs = true,
             CanDragTabs = true,
-            TabWidthMode = TabViewWidthMode.SizeToContent,
-            CloseButtonOverlayMode = TabViewCloseButtonOverlayMode.OnPointerOver
+            TabWidthMode = TabViewWidthMode.Equal,
+            CloseButtonOverlayMode = TabViewCloseButtonOverlayMode.OnPointerOver,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
         };
 
         _emptyState = new TextBlock
@@ -66,7 +85,11 @@ public sealed class DockPanelGroup : UserControl
             Visibility = Visibility.Collapsed
         };
 
-        var rootGrid = new Grid();
+        var rootGrid = new Grid
+        {
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
         rootGrid.Children.Add(_singlePanelView);
         rootGrid.Children.Add(_panelTabView);
         rootGrid.Children.Add(_emptyState);
@@ -81,6 +104,15 @@ public sealed class DockPanelGroup : UserControl
     {
         get => (ObservableCollection<DockPanel>?)GetValue(ItemsSourceProperty);
         set => SetValue(ItemsSourceProperty, value);
+    }
+
+    /// <summary>
+    /// The docking position of this panel group.
+    /// </summary>
+    public DockPosition DockPosition
+    {
+        get => (DockPosition)GetValue(DockPositionProperty);
+        set => SetValue(DockPositionProperty, value);
     }
 
     /// <summary>
@@ -116,6 +148,7 @@ public sealed class DockPanelGroup : UserControl
             return;
         }
 
+        panel.DockPosition = DockPosition;
         WirePanelEvents(panel);
         _panels.Add(panel);
         UpdateView();
@@ -239,6 +272,7 @@ public sealed class DockPanelGroup : UserControl
         {
             foreach (var panel in panels)
             {
+                panel.DockPosition = DockPosition;
                 WirePanelEvents(panel);
                 _panels.Add(panel);
             }
@@ -353,5 +387,16 @@ public sealed class DockPanelGroup : UserControl
     private void RaisePanelExpansionChanged()
     {
         PanelExpansionChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private static void OnDockPositionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is DockPanelGroup group && e.NewValue is DockPosition position)
+        {
+            foreach (var panel in group._panels)
+            {
+                panel.DockPosition = position;
+            }
+        }
     }
 }

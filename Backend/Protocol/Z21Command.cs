@@ -193,10 +193,9 @@ public static class Z21Command
         /// <param name="queue">True = queue command (FW 1.24+), False = immediate execution</param>
         public static byte[] BuildSetTurnout(int decoderAddress, int output, bool activate, bool queue = false)
         {
-            // Encode decoder address (1-2044 → 11-bit encoding)
-            // Bits 7-0 = Adr_LSB, Bits 10-8 = Adr_MSB[2:0]
-            byte adrLsb = (byte)(decoderAddress & 0xFF);
-            byte adrMsb = (byte)((decoderAddress >> 8) & 0x07);
+            var fAdr = decoderAddress << 2;
+            byte adrLsb = (byte)(fAdr & 0xFF);
+            byte adrMsb = (byte)((fAdr >> 8) & 0xFF);
 
             // Build command byte: 10Q0A00P
             // Bit 7-6: 10 (always)
@@ -268,8 +267,9 @@ public static class Z21Command
         /// <param name="decoderAddress">Accessory decoder address (1-2044)</param>
         public static byte[] BuildGetTurnoutInfo(int decoderAddress)
         {
-            byte adrLsb = (byte)(decoderAddress & 0xFF);
-            byte adrMsb = (byte)((decoderAddress >> 8) & 0x07);
+            var fAdr = decoderAddress << 2;
+            byte adrLsb = (byte)(fAdr & 0xFF);
+            byte adrMsb = (byte)((fAdr >> 8) & 0xFF);
 
             byte xor = (byte)(Z21Protocol.XHeader.X_GET_TURNOUT_INFO ^ adrMsb ^ adrLsb);
 

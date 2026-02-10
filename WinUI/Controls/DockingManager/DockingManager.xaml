@@ -74,7 +74,10 @@
                 DragOver="OnDockAreaDragOver"
                 Drop="OnDockAreaDrop"
                 Visibility="{x:Bind IsLeftPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                <controls:DockPanelGroup x:Name="LeftPanelGroup" ItemsSource="{x:Bind LeftPanels, Mode=OneWay}" />
+                <controls:DockPanelGroup
+                    x:Name="LeftPanelGroup"
+                    DockPosition="Left"
+                    ItemsSource="{x:Bind LeftPanels, Mode=OneWay}" />
             </Grid>
 
             <!--  Left Splitter (own column, between Left and Center)  -->
@@ -97,7 +100,11 @@
             </Grid>
 
             <!--  Center Area: Top | TopSplitter | Document | BottomSplitter | Bottom  -->
-            <Grid x:Name="CenterArea" Grid.Column="3">
+            <Grid
+                x:Name="CenterArea"
+                Grid.Column="3"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <!--  0: Top Dock Area  -->
@@ -122,8 +129,12 @@
                     DragLeave="OnDockAreaDragLeave"
                     DragOver="OnDockAreaDragOver"
                     Drop="OnDockAreaDrop"
+                    HorizontalAlignment="Stretch"
                     Visibility="{x:Bind IsTopPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <controls:DockPanelGroup x:Name="TopPanelGroup" ItemsSource="{x:Bind TopPanels, Mode=OneWay}" />
+                    <controls:DockPanelGroup
+                        x:Name="TopPanelGroup"
+                        DockPosition="Top"
+                        ItemsSource="{x:Bind TopPanels, Mode=OneWay}" />
                 </Grid>
 
                 <!--  Top Splitter (own row)  -->
@@ -188,8 +199,12 @@
                     DragLeave="OnDockAreaDragLeave"
                     DragOver="OnDockAreaDragOver"
                     Drop="OnDockAreaDrop"
+                    HorizontalAlignment="Stretch"
                     Visibility="{x:Bind IsBottomPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <controls:DockPanelGroup x:Name="BottomPanelGroup" ItemsSource="{x:Bind BottomPanels, Mode=OneWay}" />
+                    <controls:DockPanelGroup
+                        x:Name="BottomPanelGroup"
+                        DockPosition="Bottom"
+                        ItemsSource="{x:Bind BottomPanels, Mode=OneWay}" />
                 </Grid>
             </Grid>
 
@@ -224,7 +239,10 @@
                 DragOver="OnDockAreaDragOver"
                 Drop="OnDockAreaDrop"
                 Visibility="{x:Bind IsRightPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                <controls:DockPanelGroup x:Name="RightPanelGroup" ItemsSource="{x:Bind RightPanels, Mode=OneWay}" />
+                <controls:DockPanelGroup
+                    x:Name="RightPanelGroup"
+                    DockPosition="Right"
+                    ItemsSource="{x:Bind RightPanels, Mode=OneWay}" />
             </Grid>
 
             <!--  Right Auto-Hide Bar  -->

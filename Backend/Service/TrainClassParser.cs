@@ -2,8 +2,9 @@
 
 namespace Moba.Backend.Service;
 
-using Moba.Backend.Interface;
-using Moba.Domain;
+using Domain;
+
+using Interface;
 
 /// <summary>
 /// Implements ITrainClassParser to resolve locomotive class numbers.

@@ -11,6 +11,18 @@ using System;
 using Windows.ApplicationModel.DataTransfer;
 
 /// <summary>
+/// Specifies the docking position of a panel in the DockingManager.
+/// </summary>
+public enum DockPosition
+{
+    Left,
+    Right,
+    Top,
+    Bottom,
+    Center
+}
+
+/// <summary>
 /// Ein dockbares Panel mit Header, Fluent-Design-Icon und Aktionsbuttons.
 /// Wird in DockingManager-Bereichen verwendet.
 /// Cherry-Picked: Close/Undock (Qt-ADS), Pin to AutoHide (Qt-ADS 4.x).
@@ -64,6 +76,13 @@ public sealed partial class DockPanel : UserControl
             typeof(DockPanel),
             new PropertyMetadata(true, OnIsExpandedChanged));
 
+    public static readonly DependencyProperty DockPositionProperty =
+        DependencyProperty.Register(
+            nameof(DockPosition),
+            typeof(DockPosition),
+            typeof(DockPanel),
+            new PropertyMetadata(DockPosition.Left, OnDockPositionChanged));
+
     #endregion
 
     public DockPanel()
@@ -98,12 +117,19 @@ public sealed partial class DockPanel : UserControl
         set => SetValue(IsExpandedProperty, value);
     }
 
+    public DockPosition DockPosition
+    {
+        get => (DockPosition)GetValue(DockPositionProperty);
+        set => SetValue(DockPositionProperty, value);
+    }
+
     #endregion
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         ApplyGlyph();
         ApplyExpansionState();
+        ApplyDockPosition();
     }
 
     private void OnDragStarting(UIElement sender, DragStartingEventArgs args)
@@ -129,6 +155,14 @@ public sealed partial class DockPanel : UserControl
         }
     }
 
+    private static void OnDockPositionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is DockPanel panel)
+        {
+            panel.ApplyDockPosition();
+        }
+    }
+
     private void ApplyGlyph()
     {
         if (CollapsedIcon is not null)
@@ -145,6 +179,55 @@ public sealed partial class DockPanel : UserControl
     private void ApplyExpansionState()
     {
         VisualStateManager.GoToState(this, IsExpanded ? "Expanded" : "Collapsed", true);
+    }
+
+    private void ApplyDockPosition()
+    {
+        if (CollapsedTab is null || ExpandedPanel is null)
+        {
+            return;
+        }
+
+        var isHorizontal = DockPosition is DockPosition.Top or DockPosition.Bottom;
+        
+        if (isHorizontal)
+        {
+            // Top/Bottom: Full width, fixed height when collapsed
+            CollapsedTab.Width = double.NaN;
+            CollapsedTab.Height = 32;
+            CollapsedTab.HorizontalAlignment = HorizontalAlignment.Stretch;
+            CollapsedTab.VerticalAlignment = VerticalAlignment.Top;
+            
+            // ExpandedPanel should also stretch horizontally
+            ExpandedPanel.Width = double.NaN;
+            ExpandedPanel.Height = double.NaN;
+            ExpandedPanel.HorizontalAlignment = HorizontalAlignment.Stretch;
+            ExpandedPanel.VerticalAlignment = VerticalAlignment.Stretch;
+            
+            if (CollapsedStack is not null)
+            {
+                CollapsedStack.Orientation = Orientation.Horizontal;
+            }
+        }
+        else
+        {
+            // Left/Right: Fixed width when collapsed, full height
+            CollapsedTab.Width = 32;
+            CollapsedTab.Height = double.NaN;
+            CollapsedTab.HorizontalAlignment = HorizontalAlignment.Left;
+            CollapsedTab.VerticalAlignment = VerticalAlignment.Stretch;
+            
+            // ExpandedPanel should also stretch vertically
+            ExpandedPanel.Width = double.NaN;
+            ExpandedPanel.Height = double.NaN;
+            ExpandedPanel.HorizontalAlignment = HorizontalAlignment.Stretch;
+            ExpandedPanel.VerticalAlignment = VerticalAlignment.Stretch;
+            
+            if (CollapsedStack is not null)
+            {
+                CollapsedStack.Orientation = Orientation.Vertical;
+            }
+        }
     }
 
     private void OnCollapsedTabPressed(object sender, PointerRoutedEventArgs e)

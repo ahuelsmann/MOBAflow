@@ -2,7 +2,7 @@
 
 namespace Moba.Backend.Interface;
 
-using Moba.Domain;
+using Domain;
 
 /// <summary>
 /// Parses user input for locomotive class numbers and resolves them to full LocomotiveSeries.

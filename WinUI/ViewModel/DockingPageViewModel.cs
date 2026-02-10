@@ -5,7 +5,7 @@ namespace Moba.WinUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using Moba.WinUI.Controls;
+using Controls;
 
 using System.Collections.ObjectModel;
 

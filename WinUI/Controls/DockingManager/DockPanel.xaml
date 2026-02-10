@@ -5,14 +5,17 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     x:Name="Root"
+    HorizontalAlignment="Stretch"
+    VerticalAlignment="Stretch"
     mc:Ignorable="d">
 
-    <Grid x:Name="RootGrid">
+    <Grid
+        x:Name="RootGrid"
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch">
         <!--  Collapsed tab  -->
         <Border
             x:Name="CollapsedTab"
-            Width="32"
-            HorizontalAlignment="Left"
             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
             BorderThickness="1"

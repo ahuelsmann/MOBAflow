@@ -50,7 +50,7 @@
             <SolidColorBrush x:Key="SkinGreenBrush" Color="#2ECC71" />
             <SolidColorBrush x:Key="SkinOrangeBrush" Color="#FF6600" />
             <SolidColorBrush x:Key="SkinRedBrush" Color="#CC0000" />
-            
+
             <!--  Global Converters  -->
             <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
             <converter:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />

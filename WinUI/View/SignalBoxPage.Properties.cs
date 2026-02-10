@@ -1,13 +1,17 @@
 namespace Moba.WinUI.View;
 
-using System.Diagnostics;
-using Moba.Domain;
-using Moba.SharedUI.ViewModel;
-using Moba.Common.Multiplex;
+using Common.Multiplex;
+
+using Domain;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+
+using Moba.SharedUI.ViewModel;
+
+using System.Diagnostics;
 
 /// <summary>
 /// Partial class containing properties panel logic and event handlers.
@@ -99,8 +103,8 @@ public sealed partial class SignalBoxPage
         {
             // Temporarily detach handler to prevent event-loop during initialization
             MultiplexerComboBox.SelectionChanged -= OnMultiplexerSelected;
-            
-            foreach (var def in Moba.Common.Multiplex.MultiplexerHelper.GetAllDefinitions())
+
+            foreach (var def in MultiplexerHelper.GetAllDefinitions())
             {
                 var item = new ComboBoxItem
                 {
@@ -109,7 +113,7 @@ public sealed partial class SignalBoxPage
                 };
                 MultiplexerComboBox.Items.Add(item);
             }
-            
+
             // Re-attach handler after population
             MultiplexerComboBox.SelectionChanged += OnMultiplexerSelected;
         }
@@ -120,7 +124,7 @@ public sealed partial class SignalBoxPage
             var multiplexerItem = MultiplexerComboBox.Items
                 .OfType<ComboBoxItem>()
                 .FirstOrDefault(x => x.Tag?.ToString() == sig.MultiplexerArticleNumber);
-            
+
             if (multiplexerItem != null)
             {
                 MultiplexerComboBox.SelectedItem = multiplexerItem;
@@ -132,11 +136,11 @@ public sealed partial class SignalBoxPage
 
         // Update base address
         BaseAddressBox.Value = sig.BaseAddress > 0 ? sig.BaseAddress : 1;
-        
+
         // Update available signal aspects based on multiplexer
         UpdateAvailableSignalAspects(sig);
     }
-    
+
     /// <summary>
     /// Shows/hides signal aspect buttons based on what the selected multiplexer supports.
     /// </summary>
@@ -151,7 +155,7 @@ public sealed partial class SignalBoxPage
 
         try
         {
-            var supportedAspects = Common.Multiplex.MultiplexerHelper.GetSupportedAspects(
+            var supportedAspects = MultiplexerHelper.GetSupportedAspects(
                 sig.MultiplexerArticleNumber,
                 sig.MainSignalArticleNumber);
 
@@ -205,7 +209,7 @@ public sealed partial class SignalBoxPage
 
         try
         {
-            var def = Common.Multiplex.MultiplexerHelper.GetDefinition(sig.MultiplexerArticleNumber);
+            var def = MultiplexerHelper.GetDefinition(sig.MultiplexerArticleNumber);
 
             // Populate main signal ComboBox
             MainSignalComboBox.Items.Clear();
@@ -334,12 +338,12 @@ public sealed partial class SignalBoxPage
             // Update canvas element
             RefreshElementVisual(sig);
             UpdateAspectButtons();
-            
+
             // Automatically send signal command to Z21 if multiplex is configured
             _ = SetSignalAspectAutomaticallyAsync(sig);
         }
     }
-    
+
     /// <summary>
     /// Automatically sends signal command to Z21 after aspect selection.
     /// Same logic as OnSetSignalAspectClicked but called automatically.
@@ -349,7 +353,7 @@ public sealed partial class SignalBoxPage
         try
         {
             Debug.WriteLine($"[AUTO-SIGNAL] Attempting to set signal aspect: {sig.SignalAspect}");
-            
+
             // Validate configuration
             if (!sig.IsMultiplexed)
             {
@@ -394,7 +398,7 @@ public sealed partial class SignalBoxPage
                 sig.Address = sig.BaseAddress + turnoutCommand.AddressOffset;
                 sig.ExtendedAccessoryValue = turnoutCommand.Activate ? 1 : 0;
 
-                Debug.WriteLine($"[AUTO-SIGNAL] Calculated: DCC_Address={sig.Address}, Activate={turnoutCommand.Activate}");
+                Debug.WriteLine($"[AUTO-SIGNAL] Calculated: DCC_Address={sig.Address}, Output={turnoutCommand.Output}, Activate={turnoutCommand.Activate}");
             }
             catch (ArgumentException ex)
             {
@@ -420,15 +424,15 @@ public sealed partial class SignalBoxPage
             // Call the ViewModel method to send the signal command
             await mainVm.SetSignalAspectAsync(sig).ConfigureAwait(false);
 
-            Debug.WriteLine($"[AUTO-SIGNAL] SUCCESS: Signal set to {sig.SignalAspect}");
+            Debug.WriteLine("[AUTO-SIGNAL] SUCCESS: Signal set");
             DispatcherQueue.TryEnqueue(() =>
             {
-                var signalColor = sig.ExtendedAccessoryValue == 1 ? "grün (+)" : "rot (-)";
+                var signalColor = sig.ExtendedAccessoryValue == 1 ? "green (+)" : "red (-)";
                 SetSignalStatusText.Text =
-                    $"✅ Signal gestellt: {sig.SignalAspect}\n" +
+                    $"Signal set: {sig.SignalAspect}\n" +
                     $"Multiplexer: {sig.MultiplexerArticleNumber}\n" +
-                    $"Basis-Adresse: {sig.BaseAddress}\n" +
-                    $"DCC-Adresse: {sig.Address} ({signalColor})";
+                    $"Base Address: {sig.BaseAddress}\n" +
+                    $"DCC Address: {sig.Address} ({signalColor})";
             });
         }
         catch (Exception ex)
@@ -485,17 +489,17 @@ public sealed partial class SignalBoxPage
     private void OnMultiplexerSelected(object sender, SelectionChangedEventArgs e)
     {
         if (SelectedElement is not SbSignal sig) return;
-        
+
         var selectedItem = MultiplexerComboBox.SelectedItem as ComboBoxItem;
         if (selectedItem?.Tag is string articleNumber)
         {
             // Multiplexer selected → automatically enable multiplex mode
             sig.MultiplexerArticleNumber = articleNumber;
             sig.IsMultiplexed = true;
-            
+
             // Update signal article ComboBoxes with compatible signals
             UpdateSignalArticleComboBoxes(sig);
-            
+
             // Update available signal aspects based on multiplexer capabilities
             UpdateAvailableSignalAspects(sig);
         }
@@ -504,11 +508,11 @@ public sealed partial class SignalBoxPage
             // No multiplexer selected → disable multiplex mode
             sig.MultiplexerArticleNumber = string.Empty;
             sig.IsMultiplexed = false;
-            
+
             // Clear signal article ComboBoxes
             MainSignalComboBox.Items.Clear();
             DistantSignalComboBox.Items.Clear();
-            
+
             // Show all aspects when no multiplexer is selected
             SetAllAspectButtonsVisibility(Visibility.Visible);
         }

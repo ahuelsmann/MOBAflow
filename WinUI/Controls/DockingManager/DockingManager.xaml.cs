@@ -2,12 +2,12 @@
 
 namespace Moba.WinUI.Controls;
 
+using Behavior;
+
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-
-using Moba.WinUI.Behavior;
 
 using System;
 using System.Collections.Generic;
@@ -40,6 +40,8 @@ public sealed partial class DockingManager : UserControl
 
     private double _leftExpandedWidth;
     private double _rightExpandedWidth;
+    private double _topExpandedHeight;
+    private double _bottomExpandedHeight;
 
     /// <summary>
     /// Raised when a DocumentTab is docked to a side via drag &amp; drop.
@@ -179,8 +181,13 @@ public sealed partial class DockingManager : UserControl
     {
         _leftExpandedWidth = LeftPanelWidth;
         _rightExpandedWidth = RightPanelWidth;
+        _topExpandedHeight = TopPanelHeight;
+        _bottomExpandedHeight = BottomPanelHeight;
+        
         UpdateSideWidth(DockPosition.Left, LeftPanelGroup);
         UpdateSideWidth(DockPosition.Right, RightPanelGroup);
+        UpdateSideWidth(DockPosition.Top, TopPanelGroup);
+        UpdateSideWidth(DockPosition.Bottom, BottomPanelGroup);
     }
 
     #region Properties
@@ -406,6 +413,12 @@ public sealed partial class DockingManager : UserControl
             case DockPosition.Right:
                 UpdateRightWidth(anyExpanded);
                 break;
+            case DockPosition.Top:
+                UpdateTopHeight(anyExpanded);
+                break;
+            case DockPosition.Bottom:
+                UpdateBottomHeight(anyExpanded);
+                break;
         }
     }
 
@@ -446,6 +459,46 @@ public sealed partial class DockingManager : UserControl
             }
 
             RightPanelWidth = CollapsedTabWidth;
+        }
+    }
+
+    private void UpdateTopHeight(bool anyExpanded)
+    {
+        if (anyExpanded)
+        {
+            if (TopPanelHeight <= CollapsedTabWidth)
+            {
+                TopPanelHeight = Math.Max(_topExpandedHeight, 100.0);
+            }
+        }
+        else
+        {
+            if (TopPanelHeight > CollapsedTabWidth)
+            {
+                _topExpandedHeight = TopPanelHeight;
+            }
+
+            TopPanelHeight = CollapsedTabWidth;
+        }
+    }
+
+    private void UpdateBottomHeight(bool anyExpanded)
+    {
+        if (anyExpanded)
+        {
+            if (BottomPanelHeight <= CollapsedTabWidth)
+            {
+                BottomPanelHeight = Math.Max(_bottomExpandedHeight, 100.0);
+            }
+        }
+        else
+        {
+            if (BottomPanelHeight > CollapsedTabWidth)
+            {
+                _bottomExpandedHeight = BottomPanelHeight;
+            }
+
+            BottomPanelHeight = CollapsedTabWidth;
         }
     }
 
@@ -493,13 +546,16 @@ public sealed partial class DockingManager : UserControl
 
         var position = DockingDropBehavior.GetDockPosition(dependencyObject);
 
+        // Convert Behavior.DockPosition to Controls.DockPosition
+        var controlsPosition = (DockPosition)Enum.Parse(typeof(DockPosition), position.ToString());
+
         if (TryGetDraggedPanel(e, out var panel))
         {
-            DockPanel(panel, position);
+            DockPanel(panel, controlsPosition);
         }
         else if (TryGetDraggedDocumentTab(e, out var tab))
         {
-            DockDocumentTab(tab, position);
+            DockDocumentTab(tab, controlsPosition);
         }
 
         HideOverlay();
@@ -716,6 +772,18 @@ public sealed partial class DockingManager : UserControl
                     _rightExpandedWidth = RightPanelWidth;
                 }
                 break;
+            case "Top":
+                if (TopPanelHeight > CollapsedTabWidth)
+                {
+                    _topExpandedHeight = TopPanelHeight;
+                }
+                break;
+            case "Bottom":
+                if (BottomPanelHeight > CollapsedTabWidth)
+                {
+                    _bottomExpandedHeight = BottomPanelHeight;
+                }
+                break;
         }
     }
 
@@ -812,10 +880,40 @@ public sealed partial class DockingManager : UserControl
     {
         switch (side)
         {
-            case DockPosition.Left: IsLeftPanelVisible = visible; break;
-            case DockPosition.Right: IsRightPanelVisible = visible; break;
-            case DockPosition.Top: IsTopPanelVisible = visible; break;
-            case DockPosition.Bottom: IsBottomPanelVisible = visible; break;
+            case DockPosition.Left:
+                IsLeftPanelVisible = visible;
+                // Left/Right: Nur Visibility ändern, Width bleibt gleich
+                break;
+            case DockPosition.Right:
+                IsRightPanelVisible = visible;
+                // Left/Right: Nur Visibility ändern, Width bleibt gleich
+                break;
+            case DockPosition.Top:
+                IsTopPanelVisible = visible;
+                // Top/Bottom: Height wird beim Collapse reduziert
+                if (!visible)
+                {
+                    _topExpandedHeight = TopPanelHeight;
+                    TopPanelHeight = CollapsedTabWidth;
+                }
+                else
+                {
+                    TopPanelHeight = _topExpandedHeight > 0 ? _topExpandedHeight : 100.0;
+                }
+                break;
+            case DockPosition.Bottom:
+                IsBottomPanelVisible = visible;
+                // Top/Bottom: Height wird beim Collapse reduziert
+                if (!visible)
+                {
+                    _bottomExpandedHeight = BottomPanelHeight;
+                    BottomPanelHeight = CollapsedTabWidth;
+                }
+                else
+                {
+                    BottomPanelHeight = _bottomExpandedHeight > 0 ? _bottomExpandedHeight : 100.0;
+                }
+                break;
         }
     }
 

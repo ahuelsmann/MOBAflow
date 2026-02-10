@@ -2,7 +2,7 @@
 
 namespace Moba.Common.Multiplex;
 
-using Moba.Domain;
+using Domain;
 
 /// <summary>
 /// Helper class for managing Viessmann multiplex decoder configurations.
@@ -126,38 +126,38 @@ public static class MultiplexerHelper
             {
                 ["4040"] = new Dictionary<SignalAspect, MultiplexerTurnoutCommand>
                 {
-                    { SignalAspect.Ks2, new MultiplexerTurnoutCommand(0, false) },
-                    { SignalAspect.Ks1, new MultiplexerTurnoutCommand(0, true) },
-                    { SignalAspect.Ks1Blink, new MultiplexerTurnoutCommand(1, true) }
+                    { SignalAspect.Ks2, new MultiplexerTurnoutCommand(0, 0, false) },
+                    { SignalAspect.Ks1, new MultiplexerTurnoutCommand(0, 0, true) },
+                    { SignalAspect.Ks1Blink, new MultiplexerTurnoutCommand(1, 0, true) }
                 },
                 ["4042"] = new Dictionary<SignalAspect, MultiplexerTurnoutCommand>
                 {
-                    { SignalAspect.Hp0, new MultiplexerTurnoutCommand(0, false) },
-                    { SignalAspect.Ks1, new MultiplexerTurnoutCommand(0, true) },
-                    { SignalAspect.Ks1Blink, new MultiplexerTurnoutCommand(1, true) }
+                    { SignalAspect.Hp0, new MultiplexerTurnoutCommand(0, 0, false) },
+                    { SignalAspect.Ks1, new MultiplexerTurnoutCommand(0, 0, true) },
+                    { SignalAspect.Ks1Blink, new MultiplexerTurnoutCommand(1, 0, true) }
                 },
                 ["4043"] = new Dictionary<SignalAspect, MultiplexerTurnoutCommand>
                 {
-                    { SignalAspect.Hp0, new MultiplexerTurnoutCommand(0, false) },
-                    { SignalAspect.Ks1, new MultiplexerTurnoutCommand(0, true) },
-                    { SignalAspect.Ks1Blink, new MultiplexerTurnoutCommand(1, true) },
-                    { SignalAspect.Ra12, new MultiplexerTurnoutCommand(1, false) }
+                    { SignalAspect.Hp0, new MultiplexerTurnoutCommand(0, 0, false) },
+                    { SignalAspect.Ks1, new MultiplexerTurnoutCommand(0, 0, true) },
+                    { SignalAspect.Ks1Blink, new MultiplexerTurnoutCommand(1, 0, true) },
+                    { SignalAspect.Ra12, new MultiplexerTurnoutCommand(1, 0, false) }
                 },
                 ["4045"] = new Dictionary<SignalAspect, MultiplexerTurnoutCommand>
                 {
-                    { SignalAspect.Hp0, new MultiplexerTurnoutCommand(0, false) },
-                    { SignalAspect.Ks1, new MultiplexerTurnoutCommand(0, true) },
-                    { SignalAspect.Ks1Blink, new MultiplexerTurnoutCommand(1, true) },
-                    { SignalAspect.Ra12, new MultiplexerTurnoutCommand(1, false) },
-                    { SignalAspect.Ks2, new MultiplexerTurnoutCommand(2, false) }
+                    { SignalAspect.Hp0, new MultiplexerTurnoutCommand(0, 0, false) },
+                    { SignalAspect.Ks1, new MultiplexerTurnoutCommand(0, 0, true) },
+                    { SignalAspect.Ks1Blink, new MultiplexerTurnoutCommand(1, 0, true) },
+                    { SignalAspect.Ra12, new MultiplexerTurnoutCommand(1, 0, false) },
+                    { SignalAspect.Ks2, new MultiplexerTurnoutCommand(2, 0, false) }
                 },
                 ["4046"] = new Dictionary<SignalAspect, MultiplexerTurnoutCommand>
                 {
-                    { SignalAspect.Hp0, new MultiplexerTurnoutCommand(0, false) },
-                    { SignalAspect.Ks1, new MultiplexerTurnoutCommand(0, true) },
-                    { SignalAspect.Ks1Blink, new MultiplexerTurnoutCommand(1, true) },
-                    { SignalAspect.Ra12, new MultiplexerTurnoutCommand(1, false) },
-                    { SignalAspect.Ks2, new MultiplexerTurnoutCommand(2, false) }
+                    { SignalAspect.Hp0, new MultiplexerTurnoutCommand(0, 0, false) },
+                    { SignalAspect.Ks1, new MultiplexerTurnoutCommand(0, 0, true) },
+                    { SignalAspect.Ks1Blink, new MultiplexerTurnoutCommand(1, 0, true) },
+                    { SignalAspect.Ra12, new MultiplexerTurnoutCommand(1, 0, false) },
+                    { SignalAspect.Ks2, new MultiplexerTurnoutCommand(2, 0, false) }
                 }
             }
         };

@@ -26,8 +26,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-using Moba.WinUI.ViewModel;
-
 using Serilog;
 using Serilog.Events;
 
@@ -48,6 +46,8 @@ using TrackPlan.Renderer;
 using Utilities;
 
 using View;
+
+using ViewModel;
 
 /// <summary>
 /// Provides application-specific behavior to supplement the default Application class.

@@ -6,7 +6,7 @@ using Common.Navigation;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-using Moba.WinUI.Service;
+using Service;
 
 using SharedUI.ViewModel;
 

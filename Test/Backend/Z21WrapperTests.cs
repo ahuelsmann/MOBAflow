@@ -3,10 +3,13 @@
 namespace Moba.Test.Backend;
 
 using Moba.Backend.Protocol;
-using Mocks;
-using System.Net;
-using Moba.Test.TestData;
 using Moba.Common.Events;
+
+using Mocks;
+
+using System.Net;
+
+using TestData;
 
 [TestFixture]
 public class Z21WrapperTests
@@ -19,7 +22,7 @@ public class Z21WrapperTests
         var z21 = new Z21(fake, eventBus);
 
         await z21.ConnectAsync(IPAddress.Loopback);
-        
+
         // Wait a bit for async operations to complete
         await Task.Delay(200);
 

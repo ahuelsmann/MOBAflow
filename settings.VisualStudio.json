@@ -8,7 +8,10 @@
       "arguments": "-NoLogo -NoExit -Command \"$e=[char]27+'[';$w=45;$pad={param($t,$w) $t.PadRight($w)};$repo=Split-Path (Get-Location)-Leaf;$b=git rev-parse --abbrev-ref HEAD 2>$null;$st=git status -s 2>$null;$changed=($st|Measure-Object).Count;$gv=git --version 2>$null;$dotnet=dotnet --version 2>$null;$node=node --version 2>$null;$os=(Get-CimInstance Win32_OperatingSystem).Caption;$arch=$env:PROCESSOR_ARCHITECTURE;$user=$env:USERNAME;$hostn=$env:COMPUTERNAME;$time=Get-Date;Write-Host \\\"${e}34m┌──────────────────────────────────────────────┐${e}0m\\\";Write-Host \\\"${e}34m│ ${e}34m$(& $pad \\\"PowerShell $($PSVersionTable.PSVersion)\\\" $w)${e}34m│${e}0m\\\";Write-Host \\\"${e}34m│ ${e}37m$(& $pad \\\"Repo: $repo\\\" $w)${e}34m│${e}0m\\\";Write-Host \\\"${e}34m│ ${e}37m$(& $pad \\\"User: $user    Host: $hostn\\\" $w)${e}34m│${e}0m\\\";Write-Host \\\"${e}34m│ ${e}37m$(& $pad \\\"OS: $os\\\" $w)${e}34m│${e}0m\\\";Write-Host \\\"${e}34m│ ${e}37m$(& $pad \\\"Arch: $arch\\\" $w)${e}34m│${e}0m\\\";Write-Host \\\"${e}34m│ ${e}37m$(& $pad \\\"Time: $time\\\" $w)${e}34m│${e}0m\\\";if($dotnet){Write-Host \\\"${e}34m│ ${e}35m$(& $pad \\\".NET SDK: $dotnet\\\" $w)${e}34m│${e}0m\\\"};if($node){Write-Host \\\"${e}34m│ ${e}35m$(& $pad \\\"Node.js: $node\\\" $w)${e}34m│${e}0m\\\"};if($gv){Write-Host \\\"${e}34m│ ${e}35m$(& $pad \\\"Git Version: $gv\\\" $w)${e}34m│${e}0m\\\"};if($b){Write-Host \\\"${e}34m│ ${e}35m$(& $pad \\\"Git Branch: $b ($changed changes)\\\" $w)${e}34m│${e}0m\\\"};Write-Host \\\"${e}34m└──────────────────────────────────────────────┘${e}0m\\\";if($st){Write-Host \\\"${e}35mGit Status:${e}0m\\\";$st -split '\\n'|ForEach-Object{$code=$_.Substring(0,2).Trim();$file=$_.Substring(2).Trim();switch($code){'M'{$c='33'}'A'{$c='32'}'D'{$c='31'}'R'{$c='36'}'??'{$c='90'}default{$c='37'}};Write-Host \\\"  • ${e}${c}m$code${e}0m $file\\\"}}\""
     }
   ],
-  "debugging.hotReload.enableHotReload": false,
-  "debugging.xamlHotReload.enableXamlHotReload": false,
-  "projectsAndSolutions.general.showOutputWindow": true
+  "debugging.hotReload.enableHotReload": true,
+  "debugging.xamlHotReload.enableXamlHotReload": true,
+  "projectsAndSolutions.general.showOutputWindow": true,
+  "debugging.hotReload.applyOnFileSave": true,
+  "debugging.xamlHotReload.applyOnSave": true,
+  "debugging.xamlHotReload.previewSelected": true
 }

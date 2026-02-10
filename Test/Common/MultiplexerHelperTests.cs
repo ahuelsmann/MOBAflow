@@ -55,18 +55,19 @@ public class MultiplexerHelperTests
     }
 
     [Test]
-    [TestCase("4046", SignalAspect.Hp0, 0, false)]
-    [TestCase("4046", SignalAspect.Ks1, 0, true)]
-    [TestCase("4046", SignalAspect.Ks1Blink, 1, true)]
-    [TestCase("4046", SignalAspect.Ra12, 1, false)]
-    [TestCase("4046", SignalAspect.Ks2, 2, false)]
-    [TestCase("4040", SignalAspect.Ks2, 0, false)]
-    [TestCase("4040", SignalAspect.Ks1, 0, true)]
-    [TestCase("4040", SignalAspect.Ks1Blink, 1, true)]
+    [TestCase("4046", SignalAspect.Hp0, 0, 0, false)]
+    [TestCase("4046", SignalAspect.Ks1, 0, 0, true)]
+    [TestCase("4046", SignalAspect.Ks1Blink, 1, 0, true)]
+    [TestCase("4046", SignalAspect.Ra12, 1, 0, false)]
+    [TestCase("4046", SignalAspect.Ks2, 2, 0, false)]
+    [TestCase("4040", SignalAspect.Ks2, 0, 0, false)]
+    [TestCase("4040", SignalAspect.Ks1, 0, 0, true)]
+    [TestCase("4040", SignalAspect.Ks1Blink, 1, 0, true)]
     public void TryGetTurnoutCommand_5229_ShouldReturnExpectedMapping(
         string signalArticleNumber,
         SignalAspect aspect,
         int expectedOffset,
+        int expectedOutput,
         bool expectedActivate)
     {
         // Act
@@ -75,6 +76,7 @@ public class MultiplexerHelperTests
         // Assert
         Assert.That(result, Is.True);
         Assert.That(command.AddressOffset, Is.EqualTo(expectedOffset));
+        Assert.That(command.Output, Is.EqualTo(expectedOutput));
         Assert.That(command.Activate, Is.EqualTo(expectedActivate));
     }
 

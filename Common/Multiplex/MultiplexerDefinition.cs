@@ -2,12 +2,12 @@
 
 namespace Moba.Common.Multiplex;
 
-using Moba.Domain;
+using Domain;
 
 /// <summary>
-/// Defines an address offset and turnout activation for a signal aspect.
+/// Defines an address offset, turnout output, and activation for a signal aspect.
 /// </summary>
-public readonly record struct MultiplexerTurnoutCommand(int AddressOffset, bool Activate);
+public readonly record struct MultiplexerTurnoutCommand(int AddressOffset, int Output, bool Activate);
 
 /// <summary>
 /// Defines a Viessmann multiplex decoder (e.g., 5229, 52292) with its signal mappings.
@@ -40,7 +40,8 @@ public class MultiplexerDefinition
     /// Maps signal article numbers to their supported signal aspect commands.
     /// </summary>
     public Dictionary<string, IReadOnlyDictionary<SignalAspect, MultiplexerTurnoutCommand>>
-        SignalAspectCommandsBySignalArticle { get; init; } = [];
+        SignalAspectCommandsBySignalArticle
+    { get; init; } = [];
 
     /// <summary>
     /// Associated main signal article number (e.g., "4046").

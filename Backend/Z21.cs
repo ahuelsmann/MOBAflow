@@ -970,26 +970,26 @@ public class Z21 : IZ21
     /// </summary>
     public async Task SetExtAccessoryAsync(int extAccessoryAddress, int commandValue, CancellationToken cancellationToken = default)
     {
-        System.Diagnostics.Debug.WriteLine($"[Z21.SetExtAccessory] START: Address={extAccessoryAddress}, Value={commandValue}");
-        
+        Debug.WriteLine($"[Z21.SetExtAccessory] START: Address={extAccessoryAddress}, Value={commandValue}");
+
         if (extAccessoryAddress is < 0 or > 255)
         {
-            System.Diagnostics.Debug.WriteLine($"[Z21.SetExtAccessory] ERROR: Invalid address {extAccessoryAddress}");
+            Debug.WriteLine($"[Z21.SetExtAccessory] ERROR: Invalid address {extAccessoryAddress}");
             throw new ArgumentOutOfRangeException(nameof(extAccessoryAddress), "Extended accessory address must be between 0 and 255");
         }
 
         if (commandValue is < 0 or > 255)
         {
-            System.Diagnostics.Debug.WriteLine($"[Z21.SetExtAccessory] ERROR: Invalid command value {commandValue}");
+            Debug.WriteLine($"[Z21.SetExtAccessory] ERROR: Invalid command value {commandValue}");
             throw new ArgumentOutOfRangeException(nameof(commandValue), "Command value must be between 0 and 255");
         }
 
         var command = Z21Command.BuildSetExtAccessory(extAccessoryAddress, commandValue);
-        System.Diagnostics.Debug.WriteLine($"[Z21.SetExtAccessory] Command built: {string.Join(" ", command.Select(b => b.ToString("X2")))}");
-        
+        Debug.WriteLine($"[Z21.SetExtAccessory] Command built: {string.Join(" ", command.Select(b => b.ToString("X2")))}");
+
         await SendAsync(command, cancellationToken).ConfigureAwait(false);
-        
-        System.Diagnostics.Debug.WriteLine($"[Z21.SetExtAccessory] Command sent successfully");
+
+        Debug.WriteLine($"[Z21.SetExtAccessory] Command sent successfully");
         _logger?.LogInformation("SetExtAccessory: Address={Address}, Value={Value}", extAccessoryAddress, commandValue);
     }
 

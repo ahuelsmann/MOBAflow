@@ -751,17 +751,17 @@ public partial class TrainControlViewModel : ObservableObject
         {
             // Get current settings from service
             var settings = _settingsService.GetSettings();
-            
+
             // Update TrainControl presets with current values
             settings.TrainControl.Presets = [Preset1, Preset2, Preset3];
             settings.TrainControl.SelectedPresetIndex = SelectedPresetIndex;
             settings.TrainControl.SpeedRampStepSize = (int)RampStepSize;
             settings.TrainControl.SpeedRampIntervalMs = (int)RampIntervalMs;
             settings.TrainControl.SpeedSteps = SpeedSteps;
-            
+
             // Save updated settings
             await _settingsService.SaveSettingsAsync(settings).ConfigureAwait(false);
-            
+
             _logger?.LogInformation(
                 "Saved train control settings: Preset1={P1Addr}, Preset2={P2Addr}, Preset3={P3Addr}",
                 Preset1.DccAddress, Preset2.DccAddress, Preset3.DccAddress);
@@ -1390,7 +1390,7 @@ public partial class TrainControlViewModel : ObservableObject
     /// Called when Z21 system state changes (main track current, temperature, voltage).
     /// Updates amperemeter display values on UI thread.
     /// </summary>
-    private void OnSystemStateChanged(Backend.SystemState systemState)
+    private void OnSystemStateChanged(SystemState systemState)
     {
         _uiDispatcher.InvokeOnUi(() =>
         {

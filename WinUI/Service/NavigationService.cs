@@ -2,12 +2,12 @@
 namespace Moba.WinUI.Service;
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+
 using SharedUI.Shell;
+
 using System.Diagnostics;
 using System.Linq;
-using View;
 
 /// <summary>
 /// Navigation service for MOBAflow WinUI application.
@@ -80,7 +80,7 @@ public class NavigationService : INavigationService
             _contentFrame.Content = pageInstance;
 
             CurrentPageTag = tag;
-            Navigated?.Invoke(this, new Moba.SharedUI.Shell.NavigationEventArgs
+            Navigated?.Invoke(this, new NavigationEventArgs
             {
                 PageTag = tag,
                 PreviousPageTag = previousTag

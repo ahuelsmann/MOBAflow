@@ -6,6 +6,7 @@ using Domain;
 using Microsoft.Extensions.Logging;
 using SharedUI.Interface;
 using System.Text.Json;
+using System.Diagnostics;
 
 /// <summary>
 /// Service for reading and writing application settings to appsettings.json.
@@ -22,14 +23,45 @@ public class SettingsService : ISettingsService
     {
         _settings = settings;
         _logger = logger;
-        _settingsFilePath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+        _settingsFilePath = ResolveSettingsFilePath();
 
         // Ensure FeatureToggles is initialized
         _settings.FeatureToggles ??= new FeatureToggleSettings();
 
-        // ✅ Load settings synchronously to avoid deadlock
-        // WinUI 3 Desktop apps cannot use async in DI constructors
+        // Load settings synchronously to avoid deadlock
         LoadSettingsSync();
+    }
+
+    private static string ResolveSettingsFilePath()
+    {
+#if DEBUG
+        if (Debugger.IsAttached)
+        {
+            var projectPath = FindProjectSettingsPath("appsettings.Development.json");
+            if (!string.IsNullOrWhiteSpace(projectPath))
+            {
+                return projectPath;
+            }
+        }
+#endif
+        return Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+    }
+
+    private static string? FindProjectSettingsPath(string fileName)
+    {
+        var current = new DirectoryInfo(AppContext.BaseDirectory);
+        while (current != null)
+        {
+            var candidate = Path.Combine(current.FullName, fileName);
+            if (File.Exists(candidate) && File.Exists(Path.Combine(current.FullName, "WinUI.csproj")))
+            {
+                return candidate;
+            }
+
+            current = current.Parent;
+        }
+
+        return null;
     }
 
     /// <summary>

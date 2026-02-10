@@ -2,7 +2,9 @@
 namespace Moba.SharedUI.ViewModel;
 
 using CommunityToolkit.Mvvm.Input;
-using Moba.Domain;
+
+using Domain;
+
 using Microsoft.Extensions.Logging;
 
 /// <summary>
@@ -69,26 +71,35 @@ public partial class MainWindowViewModel
             if (dccAddress is < 1 or > 2044)
             {
                 throw new ArgumentOutOfRangeException(nameof(signal.BaseAddress),
-                    $"Calculated DCC address {dccAddress} is outside the valid range (1-2044)." );
+                    $"Calculated DCC address {dccAddress} is outside the valid range (1-2044).");
             }
 
-            System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] DCC Address calculated: {dccAddress}, Activate={turnoutCommand.Activate}");
+            System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] DCC Address calculated: {dccAddress}, Output={turnoutCommand.Output}, Activate={turnoutCommand.Activate}");
 
-            // Send to Z21
-            System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] Calling Z21.SetTurnoutAsync(address={dccAddress}, activate={turnoutCommand.Activate})...");
-            await _z21.SetTurnoutAsync(dccAddress, 0, turnoutCommand.Activate, false, cancellationToken).ConfigureAwait(false);
-            System.Diagnostics.Debug.WriteLine("[MWVM.SetSignalAspect] Z21.SetTurnoutAsync completed successfully");
+            // Send activate pulse (A=1), then deactivate (A=0) to simulate button press
+            System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] Sending activate pulse to address={dccAddress}, output={turnoutCommand.Output}");
+            
+            // Step 1: Send activate command (A=1) with queue=false for immediate execution
+            await _z21.SetTurnoutAsync(dccAddress, turnoutCommand.Output, true, false, cancellationToken).ConfigureAwait(false);
+            
+            // Step 2: Short delay (100ms) to allow decoder to register the activate pulse
+            await Task.Delay(100, cancellationToken).ConfigureAwait(false);
+            
+            // Step 3: Send deactivate command (A=0) to complete the pulse
+            await _z21.SetTurnoutAsync(dccAddress, turnoutCommand.Output, false, false, cancellationToken).ConfigureAwait(false);
+            
+            System.Diagnostics.Debug.WriteLine("[MWVM.SetSignalAspect] Z21.SetTurnoutAsync pulse completed successfully");
 
             _logger?.LogInformation(
                 "Signal '{SignalName}' set: Multiplexer={Multiplexer}, BaseAddress={BaseAddress}, " +
-                "Aspect={Aspect} → DCC_Address={DccAddress}, Activate={Activate}",
+                "Aspect={Aspect} → DCC_Address={DccAddress}, Output={Output}, Pulse sent (A=1→A=0)",
                 signal.Name, signal.MultiplexerArticleNumber, signal.BaseAddress,
-                signal.SignalAspect, dccAddress, turnoutCommand.Activate);
+                signal.SignalAspect, dccAddress, turnoutCommand.Output);
 
             _uiDispatcher.InvokeOnUi(() =>
             {
-                var signalColor = turnoutCommand.Activate ? "grün (+)" : "rot (-)";
-                StatusText = $"✅ Signal '{signal.Name}' gestellt (Adresse {dccAddress}, {signalColor})";
+                var signalColor = turnoutCommand.Activate ? "green (+)" : "red (-)";
+                StatusText = $"Signal '{signal.Name}' set (Address {dccAddress}, {signalColor})";
             });
         }
         catch (Exception ex)
@@ -112,7 +123,7 @@ public partial class MainWindowViewModel
     private async Task SetSignalAspectCommand(SbSignal? signal)
     {
         if (signal == null) return;
-        
+
         try
         {
             await SetSignalAspectAsync(signal).ConfigureAwait(false);

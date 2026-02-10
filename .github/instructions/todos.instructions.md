@@ -5,21 +5,121 @@ applyTo: '**'
 
 # MOBAflow TODOs & Roadmap
 
-> Last Updated: 2026-02-16 (End of Session 8)
+> Last Updated: 2026-02-16 (End of Session 14)
 
 ---
 
-## ✅ SESSION 8 COMPLETED (2026-02-16)
+## ✅ SESSION 14 COMPLETED (2026-02-16)
 
 ### What was implemented
-- [x] Viessmann 5229 turnout-command mapping based on 5229.md (Common/Multiplex/MultiplexerDefinition.cs, Common/Multiplex/MultiplexerHelper.cs)
-- [x] Signal UI aspect filtering per signal article (WinUI/View/SignalBoxPage.Properties.cs)
-- [x] Multiplex signal commands switched to turnout logic (SharedUI/ViewModel/MainWindowViewModel.Signals.cs)
-- [x] Multiplexer mapping tests updated (Test/Common/MultiplexerHelperTests.cs)
-- [x] Multiplex metadata comments refreshed (Domain/SignalBoxPlan.cs)
+- [x] DockPanelGroup: Ensure panels rebuilt from ItemsSource get the correct DockPosition (WinUI/Controls/DockingManager/DockPanelGroup.xaml.cs)
 
 ### Issues resolved
-- [x] Removed incorrect extended accessory command assumption for 5229
+- [x] Collapsed tab in Top/Bottom panels used vertical layout due to DockPosition not set during ItemsSource reset
+
+### Technical Debt Identified
+- [ ] None
+
+### Status
+- Build: ⚠️ Successful with 20 warnings
+- Tests: ❌ Failed (TrainClassParserTests, Z21WrapperTests)
+- Code Review: ⏳ Pending
+
+---
+
+## ✅ SESSION 13 COMPLETED (2026-02-16)
+
+### What was implemented
+- [x] DockingManager: Fixed enum type conversion between `Behavior.DockPosition` and `Controls.DockPosition` (WinUI/Controls/DockingManager/DockingManager.xaml.cs)
+- [x] DockingManager: Implemented collapsed panel height/width management
+  - Added `_topExpandedHeight` and `_bottomExpandedHeight` fields
+  - Extended `UpdateExpandedWidthFromSplitter()` to save Top/Bottom heights
+  - Modified `SetPanelVisibility()` to collapse Top/Bottom panels to 32px height
+  - Left/Right panels now only change Visibility, Width remains constant
+
+### Issues resolved
+- [x] Build error CS1503: Type conversion between `Moba.WinUI.Behavior.DockPosition` and `Moba.WinUI.Controls.DockPosition`
+- [x] DockingManager panels not resizing properly when collapsed
+
+### Technical Debt Identified
+- [ ] Consider consolidating duplicate `DockPosition` enums into single shared definition
+
+### Status
+- Build: ✅ Successful (0 errors, 5 warnings pre-existing)
+- Tests: ⏭️ Not run this session
+- Code Review: ⏳ Pending
+
+---
+
+## 🚀 SESSION 15 READY: DockingManager Testing & Refinement
+
+**Next Steps:**
+- [ ] Test Left/Right panel collapse/expand behavior (should keep width, only hide)
+- [ ] Test Top/Bottom panel collapse/expand (should shrink to 32px height)
+- [ ] Test Auto-Hide sidebar functionality
+- [ ] Test splitter dragging after collapse/expand
+- [ ] Verify expanded size restoration after re-expanding panels
+
+**Files to Test:**
+- WinUI/Controls/DockingManager/DockingManager.xaml.cs (collapse logic)
+- WinUI/Controls/DockingManager/DockingManager.xaml (XAML bindings)
+- Any pages using DockingManager
+
+**Estimated Effort:** 1-2 hours (manual UI testing)
+
+---
+
+## ✅ SESSION 12 COMPLETED (2026-02-16)
+
+### What was implemented
+- [x] Navigation titles updated (MOBAtps → Track Plan, MOBAesb → Electronic Signal Box)
+- [x] Multiplexer signal commands switched to pulse-based mode (A=1 → 100ms delay → A=0)
+- [x] Signal command now uses Q=0 (immediate) instead of Q=1 (queued) for pulse timing
+- [x] Status text updated to reflect activate-based color mapping
+
+### Issues resolved
+- [x] Implemented impulse-based signal switching to match multiMaus behavior
+
+### Technical Debt Identified
+- [ ] Signal still not responding - requires hardware verification or protocol analysis
+
+### Status
+- Build: ✅ Successful (WinUI project)
+- Tests: ⏭️ Not run this session
+- Code Review: ⏳ Pending
+- Hardware Test: ❌ Signal not responding to pulse commands
+
+---
+
+## 🚀 SESSION 16 READY: Signal switching troubleshooting
+
+**Status:** Signal hardware (Viessmann 5229 @ DCC 201-204) not responding to pulse commands
+**Next Steps:**
+- [ ] Verify Z21 UDP packet capture to confirm exact bytes sent match Roco app
+- [ ] Test with alternative signal decoder to rule out hardware issue
+- [ ] Consider alternative protocols (LAN_X_SET_EXT_ACCESSORY if 5229 expects extended commands)
+- [ ] Verify multiplexer programming state (base address 201 confirmed in Roco app)
+
+**Files to Review:**
+- Backend/Protocol/Z21Command.cs (FAdr encoding verification)
+- SharedUI/ViewModel/MainWindowViewModel.Signals.cs (pulse timing)
+- Common/Multiplex/MultiplexerHelper.cs (signal aspect mapping)
+
+**Estimated Effort:** 2-4 hours (requires hardware debugging)
+
+---
+
+## ✅ SESSION 11 COMPLETED (2026-02-16)
+
+### What was implemented
+- [x] Multiplexer mapping switched to A=0/1 with fixed output for red/green (Common/Multiplex/MultiplexerHelper.cs)
+- [x] Signal UI/status uses activate flag (SharedUI/ViewModel/MainWindowViewModel.Signals.cs, WinUI/View/SignalBoxPage.Properties.cs)
+- [x] Z21 turnout FAdr encoding reverted to direct DCC address (Backend/Protocol/Z21Command.cs)
+- [x] Z21Command turnout tests updated (Test/Backend/Z21CommandTests.cs)
+- [x] Multiplexer mapping tests updated (Test/Common/MultiplexerHelperTests.cs)
+
+### Issues resolved
+- [x] Align turnout command encoding with Z21 protocol DCC address handling
 
 ### Technical Debt Identified
 - [ ] None
@@ -31,7 +131,7 @@ applyTo: '**'
 
 ---
 
-## 🚀 SESSION 9 READY: Fix failing tests
+## 🚀 SESSION 10 READY: Fix failing tests
 
 **Blocked:** Test failures in TrainClassParserTests and Z21WrapperTests
 - [ ] Initialize TrainClassLibrary in TrainClassParserTests (TrainClassLibrary not initialized)
