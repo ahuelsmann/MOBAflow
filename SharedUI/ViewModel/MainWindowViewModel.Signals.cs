@@ -7,13 +7,13 @@ using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Partial class for Signal/Multiplex decoder control via Z21.
-/// Handles setting signal aspects via extended accessory decoder protocol (LAN_X_SET_EXT_ACCESSORY).
+/// Handles setting signal aspects via turnout commands based on 5229.md mappings.
 /// </summary>
 public partial class MainWindowViewModel
 {
     /// <summary>
-    /// Sets a multiplex signal aspect via Z21 extended accessory command.
-    /// Automatically calculates the correct DCC address based on the multiplexer configuration and signal aspect.
+    /// Sets a multiplex signal aspect via Z21 turnout commands.
+    /// Automatically calculates the correct DCC address and polarity based on the multiplexer mapping.
     /// </summary>
     /// <param name="signal">The signal element with multiplex configuration (Multiplexer, MainSignal, BaseAddress)</param>
     /// <param name="cancellationToken">Cancellation token</param>
@@ -25,7 +25,7 @@ public partial class MainWindowViewModel
 
         if (!signal.IsMultiplexed)
         {
-            System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] ERROR: Signal not multiplexed");
+            System.Diagnostics.Debug.WriteLine("[MWVM.SetSignalAspect] ERROR: Signal not multiplexed");
             _logger?.LogWarning(
                 "Signal '{SignalName}' (ID: {SignalId}) is not marked as multiplexed. Configure IsMultiplexed=true.",
                 signal.Name, signal.Id.ToString()[..8]);
@@ -34,7 +34,7 @@ public partial class MainWindowViewModel
 
         if (string.IsNullOrEmpty(signal.MultiplexerArticleNumber))
         {
-            System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] ERROR: No multiplexer article number");
+            System.Diagnostics.Debug.WriteLine("[MWVM.SetSignalAspect] ERROR: No multiplexer article number");
             _logger?.LogWarning(
                 "Signal '{SignalName}': Multiplexer article number not configured.",
                 signal.Name);
@@ -52,32 +52,43 @@ public partial class MainWindowViewModel
 
         try
         {
-            // Get multiplexer definition
-            var definition = Common.Multiplex.MultiplexerHelper.GetDefinition(signal.MultiplexerArticleNumber);
-            System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] Multiplexer definition loaded: {definition.DisplayName}");
+            if (!Common.Multiplex.MultiplexerHelper.TryGetTurnoutCommand(
+                    signal.MultiplexerArticleNumber,
+                    signal.MainSignalArticleNumber,
+                    signal.SignalAspect,
+                    out var turnoutCommand))
+            {
+                System.Diagnostics.Debug.WriteLine("[MWVM.SetSignalAspect] ERROR: Aspect not supported by multiplexer mapping");
+                _logger?.LogWarning(
+                    "Signal '{SignalName}': Aspect {Aspect} not supported by multiplexer mapping.",
+                    signal.Name, signal.SignalAspect);
+                return;
+            }
 
-            // Calculate DCC address based on base address and signal aspect
-            int dccAddress = definition.GetAddressForAspect(signal.BaseAddress, signal.SignalAspect);
-            System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] DCC Address calculated: {dccAddress}");
+            var dccAddress = signal.BaseAddress + turnoutCommand.AddressOffset;
+            if (dccAddress is < 1 or > 2044)
+            {
+                throw new ArgumentOutOfRangeException(nameof(signal.BaseAddress),
+                    $"Calculated DCC address {dccAddress} is outside the valid range (1-2044)." );
+            }
 
-            // Get command value for this aspect
-            int commandValue = definition.GetCommandValue(signal.SignalAspect);
-            System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] Command value calculated: {commandValue}");
+            System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] DCC Address calculated: {dccAddress}, Activate={turnoutCommand.Activate}");
 
             // Send to Z21
-            System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] Calling Z21.SetExtAccessoryAsync(address={dccAddress}, value={commandValue})...");
-            await _z21.SetExtAccessoryAsync(dccAddress, commandValue, cancellationToken).ConfigureAwait(false);
-            System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] Z21.SetExtAccessoryAsync completed successfully");
+            System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] Calling Z21.SetTurnoutAsync(address={dccAddress}, activate={turnoutCommand.Activate})...");
+            await _z21.SetTurnoutAsync(dccAddress, 0, turnoutCommand.Activate, false, cancellationToken).ConfigureAwait(false);
+            System.Diagnostics.Debug.WriteLine("[MWVM.SetSignalAspect] Z21.SetTurnoutAsync completed successfully");
 
             _logger?.LogInformation(
                 "Signal '{SignalName}' set: Multiplexer={Multiplexer}, BaseAddress={BaseAddress}, " +
-                "Aspect={Aspect} → DCC_Address={DccAddress}, CommandValue={CommandValue}",
+                "Aspect={Aspect} → DCC_Address={DccAddress}, Activate={Activate}",
                 signal.Name, signal.MultiplexerArticleNumber, signal.BaseAddress,
-                signal.SignalAspect, dccAddress, commandValue);
+                signal.SignalAspect, dccAddress, turnoutCommand.Activate);
 
             _uiDispatcher.InvokeOnUi(() =>
             {
-                StatusText = $"✅ Signal '{signal.Name}' gestellt (Adresse {dccAddress}, Wert {commandValue})";
+                var signalColor = turnoutCommand.Activate ? "grün (+)" : "rot (-)";
+                StatusText = $"✅ Signal '{signal.Name}' gestellt (Adresse {dccAddress}, {signalColor})";
             });
         }
         catch (Exception ex)

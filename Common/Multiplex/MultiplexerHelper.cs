@@ -63,41 +63,38 @@ public static class MultiplexerHelper
     public static IEnumerable<string> GetSupportedArticles() => Definitions.Keys;
 
     /// <summary>
-    /// Calculates the DCC address for a specific signal aspect.
+    /// Gets a turnout command mapping for a specific signal aspect.
     /// </summary>
-    /// <param name="multiplexerArticle">Article number of the multiplexer</param>
-    /// <param name="baseAddress">The starting DCC address</param>
-    /// <param name="aspect">The desired signal aspect</param>
-    /// <returns>The DCC address to send to Z21</returns>
-    public static int GetAddressForAspect(
+    public static bool TryGetTurnoutCommand(
         string multiplexerArticle,
-        int baseAddress,
-        SignalAspect aspect)
+        string? signalArticleNumber,
+        SignalAspect aspect,
+        out MultiplexerTurnoutCommand command)
     {
         var definition = GetDefinition(multiplexerArticle);
-        return definition.GetAddressForAspect(baseAddress, aspect);
+        return definition.TryGetTurnoutCommand(signalArticleNumber, aspect, out command);
     }
 
     /// <summary>
-    /// Calculates the command value for a specific signal aspect.
+    /// Gets all supported aspects for a given multiplexer and signal article.
     /// </summary>
-    public static int GetCommandValue(
+    public static IReadOnlyCollection<SignalAspect> GetSupportedAspects(
         string multiplexerArticle,
-        SignalAspect aspect)
+        string? signalArticleNumber)
     {
         var definition = GetDefinition(multiplexerArticle);
-        return definition.GetCommandValue(aspect);
+        return definition.GetSupportedAspects(signalArticleNumber);
     }
 
     /// <summary>
-    /// Validates that the given multiplexer supports the given signal aspects.
+    /// Validates that the given multiplexer supports the given signal aspect.
     /// </summary>
-    public static bool SupportsAspect(string multiplexerArticle, SignalAspect aspect)
+    public static bool SupportsAspect(string multiplexerArticle, string? signalArticleNumber, SignalAspect aspect)
     {
         try
         {
             var definition = GetDefinition(multiplexerArticle);
-            return definition.AspectMapping.Values.Contains(aspect);
+            return definition.TryGetTurnoutCommand(signalArticleNumber, aspect, out _);
         }
         catch
         {
@@ -105,19 +102,15 @@ public static class MultiplexerHelper
         }
     }
 
-    // ============================================================================
+    // ===========================================================================
     // MULTIPLEXER DEFINITIONS - Viessmann 5229 & 52292
-    // ============================================================================
+    // ===========================================================================
 
     /// <summary>
     /// 5229 - Multiplexer für Lichtsignale mit Multiplex-Technologie
     /// Controls 1 main signal (e.g., 4046) + 1 distant signal (e.g., 4040, synchronized).
     /// 
-    /// Address mapping (example: baseAddress=201):
-    ///   201: Hp0 (Stop - Red)
-    ///   202: Ks1 (Go - Green)
-    ///   203: Ks2 (Caution - Yellow)
-    ///   204: Ks1Blink (Speed notice - Green blinking)
+    /// Address mapping per 5229.md (signal addresses section).
     /// </summary>
     private static MultiplexerDefinition Create5229Definition()
     {
@@ -129,12 +122,43 @@ public static class MultiplexerHelper
             AddressesPerSignal = 4,
             MainSignalArticleNumber = "4046",
             DistantSignalArticleNumber = "4040",
-            AspectMapping = new()
+            SignalAspectCommandsBySignalArticle = new Dictionary<string, IReadOnlyDictionary<SignalAspect, MultiplexerTurnoutCommand>>
             {
-                { 0, SignalAspect.Hp0 },      // Address: baseAddress + 0
-                { 1, SignalAspect.Ks1 },      // Address: baseAddress + 1
-                { 2, SignalAspect.Ks2 },      // Address: baseAddress + 2
-                { 3, SignalAspect.Ks1Blink }  // Address: baseAddress + 3
+                ["4040"] = new Dictionary<SignalAspect, MultiplexerTurnoutCommand>
+                {
+                    { SignalAspect.Ks2, new MultiplexerTurnoutCommand(0, false) },
+                    { SignalAspect.Ks1, new MultiplexerTurnoutCommand(0, true) },
+                    { SignalAspect.Ks1Blink, new MultiplexerTurnoutCommand(1, true) }
+                },
+                ["4042"] = new Dictionary<SignalAspect, MultiplexerTurnoutCommand>
+                {
+                    { SignalAspect.Hp0, new MultiplexerTurnoutCommand(0, false) },
+                    { SignalAspect.Ks1, new MultiplexerTurnoutCommand(0, true) },
+                    { SignalAspect.Ks1Blink, new MultiplexerTurnoutCommand(1, true) }
+                },
+                ["4043"] = new Dictionary<SignalAspect, MultiplexerTurnoutCommand>
+                {
+                    { SignalAspect.Hp0, new MultiplexerTurnoutCommand(0, false) },
+                    { SignalAspect.Ks1, new MultiplexerTurnoutCommand(0, true) },
+                    { SignalAspect.Ks1Blink, new MultiplexerTurnoutCommand(1, true) },
+                    { SignalAspect.Ra12, new MultiplexerTurnoutCommand(1, false) }
+                },
+                ["4045"] = new Dictionary<SignalAspect, MultiplexerTurnoutCommand>
+                {
+                    { SignalAspect.Hp0, new MultiplexerTurnoutCommand(0, false) },
+                    { SignalAspect.Ks1, new MultiplexerTurnoutCommand(0, true) },
+                    { SignalAspect.Ks1Blink, new MultiplexerTurnoutCommand(1, true) },
+                    { SignalAspect.Ra12, new MultiplexerTurnoutCommand(1, false) },
+                    { SignalAspect.Ks2, new MultiplexerTurnoutCommand(2, false) }
+                },
+                ["4046"] = new Dictionary<SignalAspect, MultiplexerTurnoutCommand>
+                {
+                    { SignalAspect.Hp0, new MultiplexerTurnoutCommand(0, false) },
+                    { SignalAspect.Ks1, new MultiplexerTurnoutCommand(0, true) },
+                    { SignalAspect.Ks1Blink, new MultiplexerTurnoutCommand(1, true) },
+                    { SignalAspect.Ra12, new MultiplexerTurnoutCommand(1, false) },
+                    { SignalAspect.Ks2, new MultiplexerTurnoutCommand(2, false) }
+                }
             }
         };
     }
@@ -142,19 +166,6 @@ public static class MultiplexerHelper
     /// <summary>
     /// 52292 - Doppel-Multiplexer für 2 Lichtsignale mit Multiplex-Technologie
     /// Controls 2 main signals (e.g., 2x 4046) independently.
-    /// 
-    /// Address mapping (example: signal1 baseAddress=201, signal2 baseAddress=205):
-    ///   Signal 1:
-    ///     201: Hp0
-    ///     202: Ks1
-    ///     203: Ks2
-    ///     204: Ks1Blink
-    ///   
-    ///   Signal 2:
-    ///     205: Hp0
-    ///     206: Ks1
-    ///     207: Ks2
-    ///     208: Ks1Blink
     /// </summary>
     private static MultiplexerDefinition Create52292Definition()
     {
@@ -165,14 +176,8 @@ public static class MultiplexerHelper
             MainSignalCount = 2,
             AddressesPerSignal = 4,
             MainSignalArticleNumber = "4046",
-            DistantSignalArticleNumber = null,  // No synchronized distant signals
-            AspectMapping = new()
-            {
-                { 0, SignalAspect.Hp0 },
-                { 1, SignalAspect.Ks1 },
-                { 2, SignalAspect.Ks2 },
-                { 3, SignalAspect.Ks1Blink }
-            }
+            DistantSignalArticleNumber = null,
+            SignalAspectCommandsBySignalArticle = Create5229Definition().SignalAspectCommandsBySignalArticle
         };
     }
 }

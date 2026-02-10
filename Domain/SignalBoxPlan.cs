@@ -321,8 +321,8 @@ public sealed record SbSignal : SbElement
     // ==================== MULTIPLEX CONFIGURATION ====================
 
     /// <summary>
-    /// Indicates whether this signal uses a multiplex decoder (e.g., 5229 with extended accessory support).
-    /// When true, signals are controlled via LAN_X_SET_EXT_ACCESSORY with automatic address calculation.
+    /// Indicates whether this signal uses a multiplex decoder (e.g., 5229).
+    /// When true, signals are controlled via turnout commands based on the 5229.md address tables.
     /// When false, traditional DCC turnout/aspect commands are used.
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
@@ -336,36 +336,34 @@ public sealed record SbSignal : SbElement
     public string? MultiplexerArticleNumber { get; set; }
 
     /// <summary>
-    /// Viessmann article number of the main signal (e.g., "4046" for Ks-Mehrabschnittssignal).
-    /// Used for documentation and to validate the decoder configuration.
+    /// Viessmann article number of the main signal (e.g., "4046").
+    /// Determines which aspect mapping table is applied.
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string? MainSignalArticleNumber { get; set; }
 
     /// <summary>
-    /// Viessmann article number of the distant signal (e.g., "4040" for Ks-Vorsignal).
-    /// For 5229: synchronized with main signal.
-    /// For 52292: not applicable (null).
+    /// Viessmann article number of the distant signal (e.g., "4040").
+    /// Stored for reference when a synchronized distant signal is configured.
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string? DistantSignalArticleNumber { get; set; }
 
     /// <summary>
     /// Base DCC address for the multiplex decoder.
-    /// All other addresses are calculated relative to this: baseAddress + offset (0, 1, 2, 3).
-    /// Example: BaseAddress = 201
-    ///   201 → Hp0 (offset 0)
-    ///   202 → Ks1 (offset 1)
-    ///   203 → Ks2 (offset 2)
-    ///   204 → Ks1Blink (offset 3)
+    /// Additional addresses are calculated relative to this base using the tables in 5229.md.
+    /// Example (4046):
+    ///   [B]   rot (-) / grün (+)
+    ///   [B+1] rot (-) / grün (+)
+    ///   [B+2] rot (-) / grün (+)
+    ///   [B+3] rot (-) / grün (+)
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public int BaseAddress { get; set; }
 
     /// <summary>
-    /// The raw command value (0-255) to send to the extended accessory decoder when IsMultiplexed is true.
-    /// Each value represents a specific multiplex signal combination.
-    /// This is automatically calculated based on SignalAspect and the multiplexer definition.
+    /// Last computed turnout activation (1 = grün (+), 0 = rot (-)).
+    /// This is derived from the multiplexer mapping for status display.
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public int ExtendedAccessoryValue { get; set; } = 0;

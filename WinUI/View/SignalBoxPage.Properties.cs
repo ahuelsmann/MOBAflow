@@ -151,8 +151,9 @@ public sealed partial class SignalBoxPage
 
         try
         {
-            var def = Common.Multiplex.MultiplexerHelper.GetDefinition(sig.MultiplexerArticleNumber);
-            var supportedAspects = def.AspectMapping.Values.ToHashSet();
+            var supportedAspects = Common.Multiplex.MultiplexerHelper.GetSupportedAspects(
+                sig.MultiplexerArticleNumber,
+                sig.MainSignalArticleNumber);
 
             // Show/hide aspect buttons based on multiplexer support
             AspectHp0Button.Visibility = supportedAspects.Contains(SignalAspect.Hp0) ? Visibility.Visible : Visibility.Collapsed;
@@ -164,6 +165,11 @@ public sealed partial class SignalBoxPage
             AspectRa12Button.Visibility = supportedAspects.Contains(SignalAspect.Ra12) ? Visibility.Visible : Visibility.Collapsed;
             AspectZs1Button.Visibility = supportedAspects.Contains(SignalAspect.Zs1) ? Visibility.Visible : Visibility.Collapsed;
             AspectZs7Button.Visibility = supportedAspects.Contains(SignalAspect.Zs7) ? Visibility.Visible : Visibility.Collapsed;
+
+            if (supportedAspects.Count == 0)
+            {
+                SetAllAspectButtonsVisibility(Visibility.Visible);
+            }
         }
         catch (ArgumentException)
         {
@@ -210,6 +216,7 @@ public sealed partial class SignalBoxPage
             };
             MainSignalComboBox.Items.Add(mainItem);
             MainSignalComboBox.SelectedItem = mainItem;
+            sig.MainSignalArticleNumber = def.MainSignalArticleNumber;
 
             // Populate distant signal ComboBox (if applicable)
             DistantSignalComboBox.Items.Clear();
@@ -221,7 +228,7 @@ public sealed partial class SignalBoxPage
                     Tag = def.DistantSignalArticleNumber
                 };
                 DistantSignalComboBox.Items.Add(distantItem);
-                
+
                 if (sig.DistantSignalArticleNumber == def.DistantSignalArticleNumber)
                 {
                     DistantSignalComboBox.SelectedItem = distantItem;
@@ -230,6 +237,8 @@ public sealed partial class SignalBoxPage
                 {
                     DistantSignalComboBox.SelectedIndex = 0;
                 }
+
+                sig.DistantSignalArticleNumber = def.DistantSignalArticleNumber;
             }
         }
         catch (Exception ex)
@@ -367,19 +376,25 @@ public sealed partial class SignalBoxPage
 
             Debug.WriteLine($"[AUTO-SIGNAL] Configuration valid: Multiplexer={sig.MultiplexerArticleNumber}, BaseAddress={sig.BaseAddress}");
 
-            // Calculate DCC address from base address and current aspect
+            // Calculate DCC address and activation from base address and current aspect
             try
             {
-                sig.Address = Common.Multiplex.MultiplexerHelper.GetAddressForAspect(
-                    sig.MultiplexerArticleNumber,
-                    sig.BaseAddress,
-                    sig.SignalAspect);
+                if (!Common.Multiplex.MultiplexerHelper.TryGetTurnoutCommand(
+                        sig.MultiplexerArticleNumber,
+                        sig.MainSignalArticleNumber,
+                        sig.SignalAspect,
+                        out var turnoutCommand))
+                {
+                    Debug.WriteLine("[AUTO-SIGNAL] ERROR: Aspect not supported by multiplexer mapping");
+                    SetSignalStatusText.Text = "⚠️ Signalaspekt nicht unterstützt.";
+                    SetSignalStatusText.Visibility = Visibility.Visible;
+                    return;
+                }
 
-                sig.ExtendedAccessoryValue = Common.Multiplex.MultiplexerHelper.GetCommandValue(
-                    sig.MultiplexerArticleNumber,
-                    sig.SignalAspect);
-                
-                Debug.WriteLine($"[AUTO-SIGNAL] Calculated: DCC_Address={sig.Address}, CommandValue={sig.ExtendedAccessoryValue}");
+                sig.Address = sig.BaseAddress + turnoutCommand.AddressOffset;
+                sig.ExtendedAccessoryValue = turnoutCommand.Activate ? 1 : 0;
+
+                Debug.WriteLine($"[AUTO-SIGNAL] Calculated: DCC_Address={sig.Address}, Activate={turnoutCommand.Activate}");
             }
             catch (ArgumentException ex)
             {
@@ -408,11 +423,12 @@ public sealed partial class SignalBoxPage
             Debug.WriteLine($"[AUTO-SIGNAL] SUCCESS: Signal set to {sig.SignalAspect}");
             DispatcherQueue.TryEnqueue(() =>
             {
-                SetSignalStatusText.Text = 
+                var signalColor = sig.ExtendedAccessoryValue == 1 ? "grün (+)" : "rot (-)";
+                SetSignalStatusText.Text =
                     $"✅ Signal gestellt: {sig.SignalAspect}\n" +
                     $"Multiplexer: {sig.MultiplexerArticleNumber}\n" +
                     $"Basis-Adresse: {sig.BaseAddress}\n" +
-                    $"DCC-Adresse: {sig.Address}, Wert: {sig.ExtendedAccessoryValue}";
+                    $"DCC-Adresse: {sig.Address} ({signalColor})";
             });
         }
         catch (Exception ex)

@@ -5,14 +5,13 @@ namespace Moba.Common.Multiplex;
 using Moba.Domain;
 
 /// <summary>
+/// Defines an address offset and turnout activation for a signal aspect.
+/// </summary>
+public readonly record struct MultiplexerTurnoutCommand(int AddressOffset, bool Activate);
+
+/// <summary>
 /// Defines a Viessmann multiplex decoder (e.g., 5229, 52292) with its signal mappings.
 /// Each multiplexer has a fixed set of DCC addresses that map to signal aspects.
-/// 
-/// Example: 5229 Multiplexer für Lichtsignale
-/// - BaseAddress 201 → Hp0 (Rot)
-/// - BaseAddress+1 202 → Ks1 (Grün)
-/// - BaseAddress+2 203 → Ks2 (Gelb)
-/// - BaseAddress+3 204 → Ks1Blink
 /// </summary>
 public class MultiplexerDefinition
 {
@@ -38,12 +37,10 @@ public class MultiplexerDefinition
     public int AddressesPerSignal { get; init; }
 
     /// <summary>
-    /// Maps address offset (0, 1, 2, 3...) to signal aspect.
-    /// Offset 0 = BaseAddress (Hp0)
-    /// Offset 1 = BaseAddress+1 (Ks1)
-    /// etc.
+    /// Maps signal article numbers to their supported signal aspect commands.
     /// </summary>
-    public Dictionary<int, SignalAspect> AspectMapping { get; init; } = [];
+    public Dictionary<string, IReadOnlyDictionary<SignalAspect, MultiplexerTurnoutCommand>>
+        SignalAspectCommandsBySignalArticle { get; init; } = [];
 
     /// <summary>
     /// Associated main signal article number (e.g., "4046").
@@ -57,43 +54,48 @@ public class MultiplexerDefinition
     public string? DistantSignalArticleNumber { get; init; }
 
     /// <summary>
-    /// Gets the DCC address for a specific signal aspect.
+    /// Gets the turnout command mapping for a signal article and aspect.
     /// </summary>
-    /// <param name="baseAddress">The starting DCC address (e.g., 201)</param>
-    /// <param name="aspect">The signal aspect (e.g., Ks1)</param>
-    /// <returns>The DCC address to send to Z21</returns>
-    /// <exception cref="ArgumentException">If aspect is not mapped for this multiplexer</exception>
-    public int GetAddressForAspect(int baseAddress, SignalAspect aspect)
+    /// <param name="signalArticleNumber">Viessmann signal article number (e.g., "4046").</param>
+    /// <param name="aspect">Signal aspect to map.</param>
+    /// <param name="command">Resolved turnout command mapping.</param>
+    /// <returns>True when a mapping exists for the requested signal aspect.</returns>
+    public bool TryGetTurnoutCommand(
+        string? signalArticleNumber,
+        SignalAspect aspect,
+        out MultiplexerTurnoutCommand command)
     {
-        var offset = AspectMapping.FirstOrDefault(
-            x => x.Value == aspect).Key;
+        var resolvedArticle = string.IsNullOrWhiteSpace(signalArticleNumber)
+            ? MainSignalArticleNumber
+            : signalArticleNumber;
 
-        if (AspectMapping.Values.All(a => a != aspect))
+        if (string.IsNullOrWhiteSpace(resolvedArticle) ||
+            !SignalAspectCommandsBySignalArticle.TryGetValue(resolvedArticle, out var mapping))
         {
-            throw new ArgumentException(
-                $"Signal aspect '{aspect}' not supported by multiplexer {ArticleNumber}",
-                nameof(aspect));
+            command = default;
+            return false;
         }
 
-        return baseAddress + offset;
+        return mapping.TryGetValue(aspect, out command);
     }
 
     /// <summary>
-    /// Gets the command value (0-255) to send to Z21 for a specific aspect.
-    /// For standard mappings, this is simply the offset in the AspectMapping.
+    /// Gets the supported signal aspects for a given signal article number.
     /// </summary>
-    public int GetCommandValue(SignalAspect aspect)
+    /// <param name="signalArticleNumber">Viessmann signal article number (e.g., "4046").</param>
+    /// <returns>Supported signal aspects for the signal article.</returns>
+    public IReadOnlyCollection<SignalAspect> GetSupportedAspects(string? signalArticleNumber)
     {
-        var offset = AspectMapping.FirstOrDefault(
-            x => x.Value == aspect).Key;
+        var resolvedArticle = string.IsNullOrWhiteSpace(signalArticleNumber)
+            ? MainSignalArticleNumber
+            : signalArticleNumber;
 
-        if (AspectMapping.Values.All(a => a != aspect))
+        if (string.IsNullOrWhiteSpace(resolvedArticle) ||
+            !SignalAspectCommandsBySignalArticle.TryGetValue(resolvedArticle, out var mapping))
         {
-            throw new ArgumentException(
-                $"Signal aspect '{aspect}' not supported by multiplexer {ArticleNumber}",
-                nameof(aspect));
+            return Array.Empty<SignalAspect>();
         }
 
-        return offset;
+        return mapping.Keys.ToArray();
     }
 }

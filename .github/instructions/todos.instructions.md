@@ -5,11 +5,47 @@ applyTo: '**'
 
 # MOBAflow TODOs & Roadmap
 
-> Last Updated: 2026-02-15 (End of Session 5)
+> Last Updated: 2026-02-16 (End of Session 8)
 
 ---
 
-## ✅ SESSION 5 COMPLETED (2026-02-15)
+## ✅ SESSION 8 COMPLETED (2026-02-16)
+
+### What was implemented
+- [x] Viessmann 5229 turnout-command mapping based on 5229.md (Common/Multiplex/MultiplexerDefinition.cs, Common/Multiplex/MultiplexerHelper.cs)
+- [x] Signal UI aspect filtering per signal article (WinUI/View/SignalBoxPage.Properties.cs)
+- [x] Multiplex signal commands switched to turnout logic (SharedUI/ViewModel/MainWindowViewModel.Signals.cs)
+- [x] Multiplexer mapping tests updated (Test/Common/MultiplexerHelperTests.cs)
+- [x] Multiplex metadata comments refreshed (Domain/SignalBoxPlan.cs)
+
+### Issues resolved
+- [x] Removed incorrect extended accessory command assumption for 5229
+
+### Technical Debt Identified
+- [ ] None
+
+### Status
+- Build: ⚠️ Successful with 14 warnings (pre-existing)
+- Tests: ❌ Failed (TrainClassParserTests and Z21WrapperTests)
+- Code Review: ⏳ Pending
+
+---
+
+## 🚀 SESSION 9 READY: Fix failing tests
+
+**Blocked:** Test failures in TrainClassParserTests and Z21WrapperTests
+- [ ] Initialize TrainClassLibrary in TrainClassParserTests (TrainClassLibrary not initialized)
+- [ ] Investigate Z21WrapperTests Received event timing (Received event not raised)
+
+**Files to Modify:**
+- Test/Backend/TrainClassParserTests.cs
+- Test/Backend/Z21WrapperTests.cs
+
+**Estimated Effort:** 1-2 hours
+
+---
+
+## ✅ SESSION 7 COMPLETED (2026-02-15)
 
 ### What was implemented
 - [x] Z21 EventBus publish mapping to primitives (`Backend/Z21.cs`)

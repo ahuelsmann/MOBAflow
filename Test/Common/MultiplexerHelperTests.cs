@@ -55,109 +55,44 @@ public class MultiplexerHelperTests
     }
 
     [Test]
-    public void GetAddressForAspect_5229_Hp0_ShouldReturn201()
-    {
-        // Act
-        int address = MultiplexerHelper.GetAddressForAspect("5229", 201, SignalAspect.Hp0);
-
-        // Assert
-        Assert.That(address, Is.EqualTo(201));
-    }
-
-    [Test]
-    public void GetAddressForAspect_5229_Ks1_ShouldReturn202()
-    {
-        // Act
-        int address = MultiplexerHelper.GetAddressForAspect("5229", 201, SignalAspect.Ks1);
-
-        // Assert
-        Assert.That(address, Is.EqualTo(202));
-    }
-
-    [Test]
-    public void GetAddressForAspect_5229_Ks2_ShouldReturn203()
-    {
-        // Act
-        int address = MultiplexerHelper.GetAddressForAspect("5229", 201, SignalAspect.Ks2);
-
-        // Assert
-        Assert.That(address, Is.EqualTo(203));
-    }
-
-    [Test]
-    public void GetAddressForAspect_5229_Ks1Blink_ShouldReturn204()
-    {
-        // Act
-        int address = MultiplexerHelper.GetAddressForAspect("5229", 201, SignalAspect.Ks1Blink);
-
-        // Assert
-        Assert.That(address, Is.EqualTo(204));
-    }
-
-    [Test]
-    [TestCase(100, SignalAspect.Hp0, 100)]
-    [TestCase(100, SignalAspect.Ks1, 101)]
-    [TestCase(100, SignalAspect.Ks2, 102)]
-    [TestCase(100, SignalAspect.Ks1Blink, 103)]
-    [TestCase(500, SignalAspect.Hp0, 500)]
-    [TestCase(500, SignalAspect.Ks1, 501)]
-    public void GetAddressForAspect_VariousBaseAddresses_ShouldCalculateCorrectly(
-        int baseAddress,
+    [TestCase("4046", SignalAspect.Hp0, 0, false)]
+    [TestCase("4046", SignalAspect.Ks1, 0, true)]
+    [TestCase("4046", SignalAspect.Ks1Blink, 1, true)]
+    [TestCase("4046", SignalAspect.Ra12, 1, false)]
+    [TestCase("4046", SignalAspect.Ks2, 2, false)]
+    [TestCase("4040", SignalAspect.Ks2, 0, false)]
+    [TestCase("4040", SignalAspect.Ks1, 0, true)]
+    [TestCase("4040", SignalAspect.Ks1Blink, 1, true)]
+    public void TryGetTurnoutCommand_5229_ShouldReturnExpectedMapping(
+        string signalArticleNumber,
         SignalAspect aspect,
-        int expectedAddress)
+        int expectedOffset,
+        bool expectedActivate)
     {
         // Act
-        int address = MultiplexerHelper.GetAddressForAspect("5229", baseAddress, aspect);
+        var result = MultiplexerHelper.TryGetTurnoutCommand("5229", signalArticleNumber, aspect, out var command);
 
         // Assert
-        Assert.That(address, Is.EqualTo(expectedAddress));
+        Assert.That(result, Is.True);
+        Assert.That(command.AddressOffset, Is.EqualTo(expectedOffset));
+        Assert.That(command.Activate, Is.EqualTo(expectedActivate));
     }
 
     [Test]
-    public void GetCommandValue_5229_Hp0_ShouldReturn0()
+    public void TryGetTurnoutCommand_UnsupportedAspect_ShouldReturnFalse()
     {
         // Act
-        int value = MultiplexerHelper.GetCommandValue("5229", SignalAspect.Hp0);
+        var result = MultiplexerHelper.TryGetTurnoutCommand("5229", "4046", SignalAspect.Zs1, out _);
 
         // Assert
-        Assert.That(value, Is.EqualTo(0));
-    }
-
-    [Test]
-    public void GetCommandValue_5229_Ks1_ShouldReturn1()
-    {
-        // Act
-        int value = MultiplexerHelper.GetCommandValue("5229", SignalAspect.Ks1);
-
-        // Assert
-        Assert.That(value, Is.EqualTo(1));
-    }
-
-    [Test]
-    public void GetCommandValue_5229_Ks2_ShouldReturn2()
-    {
-        // Act
-        int value = MultiplexerHelper.GetCommandValue("5229", SignalAspect.Ks2);
-
-        // Assert
-        Assert.That(value, Is.EqualTo(2));
-    }
-
-    [Test]
-    public void GetCommandValue_5229_Ks1Blink_ShouldReturn3()
-    {
-        // Act
-        int value = MultiplexerHelper.GetCommandValue("5229", SignalAspect.Ks1Blink);
-
-        // Assert
-        Assert.That(value, Is.EqualTo(3));
+        Assert.That(result, Is.False);
     }
 
     [Test]
     public void SupportsAspect_5229_Ks1_ShouldReturnTrue()
     {
         // Act
-        bool supports = MultiplexerHelper.SupportsAspect("5229", SignalAspect.Ks1);
+        bool supports = MultiplexerHelper.SupportsAspect("5229", "4046", SignalAspect.Ks1);
 
         // Assert
         Assert.That(supports, Is.True);
@@ -167,7 +102,7 @@ public class MultiplexerHelperTests
     public void SupportsAspect_5229_UnsupportedAspect_ShouldReturnFalse()
     {
         // Act
-        bool supports = MultiplexerHelper.SupportsAspect("5229", SignalAspect.Ra12);
+        bool supports = MultiplexerHelper.SupportsAspect("5229", "4046", SignalAspect.Zs1);
 
         // Assert
         Assert.That(supports, Is.False);
@@ -177,7 +112,7 @@ public class MultiplexerHelperTests
     public void SupportsAspect_InvalidMultiplexer_ShouldReturnFalse()
     {
         // Act
-        bool supports = MultiplexerHelper.SupportsAspect("9999", SignalAspect.Ks1);
+        bool supports = MultiplexerHelper.SupportsAspect("9999", "4046", SignalAspect.Ks1);
 
         // Assert
         Assert.That(supports, Is.False);
@@ -202,31 +137,5 @@ public class MultiplexerHelperTests
         // Assert
         Assert.That(articles, Contains.Item("5229"));
         Assert.That(articles, Contains.Item("52292"));
-    }
-
-    [Test]
-    public void MultiplexerDefinition_GetAddressForAspect_5229_ShouldWork()
-    {
-        // Arrange
-        var def = MultiplexerHelper.GetDefinition("5229");
-
-        // Act
-        int address = def.GetAddressForAspect(201, SignalAspect.Ks1);
-
-        // Assert
-        Assert.That(address, Is.EqualTo(202));
-    }
-
-    [Test]
-    public void MultiplexerDefinition_GetCommandValue_ShouldReturnAspectOffset()
-    {
-        // Arrange
-        var def = MultiplexerHelper.GetDefinition("5229");
-
-        // Act
-        int value = def.GetCommandValue(SignalAspect.Ks2);
-
-        // Assert
-        Assert.That(value, Is.EqualTo(2));
     }
 }

@@ -36,6 +36,7 @@
     <!-- Package References -->
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
+        <PackageReference Include="GitHub.Copilot.SDK" />
         <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
         <PackageReference Include="Microsoft.WindowsAppSDK" />
         <PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" />
