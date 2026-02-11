@@ -32,10 +32,10 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
@@ -54,7 +54,7 @@
             <Ellipse
                 x:Name="RedLight"
                 Grid.Row="1"
-                Grid.Column="1"
+                Grid.Column="2"
                 Width="18"
                 Height="18"
                 Fill="#FF0000" />
@@ -63,14 +63,14 @@
             <Ellipse
                 x:Name="GreenLight"
                 Grid.Row="2"
-                Grid.Column="0"
+                Grid.Column="1"
                 Width="18"
                 Height="18"
                 Fill="#00C800" />
             <Ellipse
                 x:Name="YellowLight"
                 Grid.Row="2"
-                Grid.Column="2"
+                Grid.Column="3"
                 Width="18"
                 Height="18"
                 Fill="#FFC800" />
@@ -79,21 +79,21 @@
             <Ellipse
                 x:Name="Zs7Left"
                 Grid.Row="3"
-                Grid.Column="0"
+                Grid.Column="1"
                 Width="12"
                 Height="12"
                 Fill="#FFC800" />
             <Ellipse
                 x:Name="Zs7Center"
                 Grid.Row="3"
-                Grid.Column="1"
+                Grid.Column="2"
                 Width="12"
                 Height="12"
                 Fill="#FFC800" />
             <Ellipse
                 x:Name="Zs7Right"
                 Grid.Row="3"
-                Grid.Column="2"
+                Grid.Column="3"
                 Width="12"
                 Height="12"
                 Fill="#FFC800" />
@@ -110,15 +110,6 @@
                 x:Name="Ra12Right"
                 Grid.Row="4"
                 Grid.Column="2"
-                Width="12"
-                Height="12"
-                Fill="White" />
-
-            <!--  Row 5: Zusatzlicht unten (Vorsignalwiederholer) - St 70 klein  -->
-            <Ellipse
-                x:Name="BottomWhiteLight"
-                Grid.Row="5"
-                Grid.Column="1"
                 Width="12"
                 Height="12"
                 Fill="White" />

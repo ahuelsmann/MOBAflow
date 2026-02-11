@@ -199,7 +199,7 @@
                                 Grid.Column="0"
                                 Margin="0,0,8,0"
                                 FontSize="16"
-                                Glyph="&#xE7C2;" />
+                                Glyph="&#xE7C0;" />
                             <TextBlock
                                 Grid.Column="1"
                                 VerticalAlignment="Center"
@@ -300,7 +300,7 @@
                                 Grid.Column="0"
                                 Margin="0,0,8,0"
                                 FontSize="16"
-                                Glyph="&#xE7B8;" />
+                                Glyph="&#xE7C0;" />
                             <TextBlock
                                 Grid.Column="1"
                                 VerticalAlignment="Center"

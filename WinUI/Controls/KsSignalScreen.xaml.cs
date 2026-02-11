@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
+
 using Windows.UI;
 
 /// <summary>
@@ -75,7 +76,6 @@ public sealed partial class KsSignalScreen : UserControl
         Zs7Right.Fill = OffColor;
         Ra12Left.Fill = OffColor;
         Ra12Right.Fill = OffColor;
-        BottomWhiteLight.Fill = OffColor;
 
         switch (Aspect)
         {
@@ -90,7 +90,6 @@ public sealed partial class KsSignalScreen : UserControl
                 break;
             case "Ks1Blink":
                 GreenLight.Fill = GreenOn;
-                BottomWhiteLight.Fill = WhiteOn;
                 StartBlinking(GreenLight, GreenOn);
                 break;
             case "Kennlicht":

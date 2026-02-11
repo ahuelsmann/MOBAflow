@@ -305,13 +305,6 @@ public class FeatureToggleSettings
     // Track Management (Testing - ENABLED by default)
 
     /// <summary>
-    /// Enable Feedback Points page (Track sensor configuration).
-    /// Experimental feature marked as Preview.
-    /// </summary>
-    public bool IsFeedbackPointsPageAvailable { get; set; } = true;
-    public string FeedbackPointsPageLabel { get; set; } = "Preview";
-
-    /// <summary>
     /// Enable Track Plan Editor page (Visual track layout designer).
     /// Experimental feature marked as Preview.
     /// </summary>
@@ -333,6 +326,13 @@ public class FeatureToggleSettings
     public string JourneyMapPageLabel { get; set; } = "Preview";
 
     // Monitoring (Testing - ENABLED by default)
+
+    /// <summary>
+    /// Enable Docking page (Layout management with collapsible panels).
+    /// Experimental feature marked as Preview.
+    /// </summary>
+    public bool IsDockingPageAvailable { get; set; } = true;
+    public string DockingPageLabel { get; set; } = "Preview";
 
     /// <summary>
     /// Enable Monitor page (Real-time system monitoring and diagnostics).

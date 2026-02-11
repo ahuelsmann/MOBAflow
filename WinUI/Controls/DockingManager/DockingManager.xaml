@@ -123,13 +123,13 @@
                     x:Name="TopDockArea"
                     Grid.Row="0"
                     Height="{x:Bind TopPanelHeight, Mode=OneWay}"
+                    HorizontalAlignment="Stretch"
                     behavior:DockingDropBehavior.DockPosition="Top"
                     AllowDrop="True"
                     Background="{ThemeResource LayerFillColorDefaultBrush}"
                     DragLeave="OnDockAreaDragLeave"
                     DragOver="OnDockAreaDragOver"
                     Drop="OnDockAreaDrop"
-                    HorizontalAlignment="Stretch"
                     Visibility="{x:Bind IsTopPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <controls:DockPanelGroup
                         x:Name="TopPanelGroup"
@@ -193,13 +193,13 @@
                     x:Name="BottomDockArea"
                     Grid.Row="4"
                     Height="{x:Bind BottomPanelHeight, Mode=OneWay}"
+                    HorizontalAlignment="Stretch"
                     behavior:DockingDropBehavior.DockPosition="Bottom"
                     AllowDrop="True"
                     Background="{ThemeResource LayerFillColorDefaultBrush}"
                     DragLeave="OnDockAreaDragLeave"
                     DragOver="OnDockAreaDragOver"
                     Drop="OnDockAreaDrop"
-                    HorizontalAlignment="Stretch"
                     Visibility="{x:Bind IsBottomPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <controls:DockPanelGroup
                         x:Name="BottomPanelGroup"

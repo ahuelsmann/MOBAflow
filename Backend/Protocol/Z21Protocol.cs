@@ -51,7 +51,7 @@ public static class Z21Protocol
     public static class Header
     {
         // ==================== System, Status, Versions (Section 2) ====================
-        
+
         /// <summary>
         /// LAN_GET_SERIAL_NUMBER: Request Z21 serial number.
         /// Request: 04-00-10-00
@@ -508,9 +508,14 @@ public static class Z21Protocol
 
         /// <summary>
         /// Basic flags for feedback-focused applications.
-        /// Combines: R-Bus feedback + System state updates
+        /// Combines: R-Bus feedback + System state updates + Driving/Switching broadcasts
+        /// 
+        /// Includes:
+        /// - Driving (0x01): LAN_X_TURNOUT_INFO (signal/turnout feedback), LAN_X_LOCO_INFO
+        /// - RBUS (0x02): R-Bus feedback sensors (track occupancy)
+        /// - SystemState (0x100): System state (current, temperature, track power)
         /// </summary>
-        public const uint Basic = Rbus | SystemState;
+        public const uint Basic = Driving | Rbus | SystemState;
 
         // ==================== Standard Flags ====================
 
@@ -551,11 +556,6 @@ public static class Z21Protocol
         /// 0x00000010: Fast clock model time messages.
         /// Broadcasts: LAN_FAST_CLOCK_DATA
         /// Available since Z21 FW 1.43.
-        /// </summary>
-        public const uint FastClock = 0x0000_0010;
-
-        // ==================== Extended Flags (since FW 1.20) ====================
-
         /// <summary>
         /// 0x00010000: LAN_X_LOCO_INFO for ALL locos (no subscription needed).
         /// HIGH TRAFFIC - only for full PC control software, not mobile controllers!

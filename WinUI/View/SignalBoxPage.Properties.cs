@@ -417,6 +417,14 @@ public sealed partial class SignalBoxPage
                 return;
             }
 
+            if (!mainVm.IsConnected)
+            {
+                Debug.WriteLine("[AUTO-SIGNAL] ERROR: Z21 not connected");
+                SetSignalStatusText.Text = mainVm.StatusText;
+                SetSignalStatusText.Visibility = Visibility.Visible;
+                return;
+            }
+
             Debug.WriteLine($"[AUTO-SIGNAL] Calling MainWindowViewModel.SetSignalAspectAsync...");
             SetSignalStatusText.Text = $"⏳ Signal wird gestellt...";
             SetSignalStatusText.Visibility = Visibility.Visible;
@@ -427,12 +435,12 @@ public sealed partial class SignalBoxPage
             Debug.WriteLine("[AUTO-SIGNAL] SUCCESS: Signal set");
             DispatcherQueue.TryEnqueue(() =>
             {
-                var signalColor = sig.ExtendedAccessoryValue == 1 ? "green (+)" : "red (-)";
+                var signalValue = sig.ExtendedAccessoryValue;
                 SetSignalStatusText.Text =
                     $"Signal set: {sig.SignalAspect}\n" +
                     $"Multiplexer: {sig.MultiplexerArticleNumber}\n" +
                     $"Base Address: {sig.BaseAddress}\n" +
-                    $"DCC Address: {sig.Address} ({signalColor})";
+                    $"DCC Address: {sig.Address} (Value {signalValue})";
             });
         }
         catch (Exception ex)

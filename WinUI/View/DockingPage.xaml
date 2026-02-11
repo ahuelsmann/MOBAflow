@@ -13,46 +13,6 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!--  Toolbar (VS 2026: Main Menu Bar)  -->
-        <CommandBar
-            Grid.Row="0"
-            Background="{ThemeResource LayerFillColorDefaultBrush}"
-            DefaultLabelPosition="Right"
-            IsOpen="False">
-
-            <AppBarButton Command="{Binding AddNewDocumentCommand}" Label="New File">
-                <AppBarButton.Icon>
-                    <FontIcon Glyph="&#xE710;" />
-                </AppBarButton.Icon>
-            </AppBarButton>
-
-            <AppBarButton Command="{Binding MarkAsModifiedCommand}" Label="Toggle Modified">
-                <AppBarButton.Icon>
-                    <FontIcon Glyph="&#xE70F;" />
-                </AppBarButton.Icon>
-            </AppBarButton>
-
-            <AppBarButton Command="{Binding PinCurrentDocumentCommand}" Label="Pin">
-                <AppBarButton.Icon>
-                    <FontIcon Glyph="&#xE718;" />
-                </AppBarButton.Icon>
-            </AppBarButton>
-
-            <AppBarSeparator />
-
-            <AppBarButton Command="{Binding CloseCurrentDocumentCommand}" Label="Close">
-                <AppBarButton.Icon>
-                    <FontIcon Glyph="&#xE711;" />
-                </AppBarButton.Icon>
-            </AppBarButton>
-
-            <AppBarButton Command="{Binding CloseAllModifiedDocumentsCommand}" Label="Close Modified">
-                <AppBarButton.Icon>
-                    <FontIcon Glyph="&#xE74D;" />
-                </AppBarButton.Icon>
-            </AppBarButton>
-        </CommandBar>
-
         <!--  DockingManager: Full VS 2026-style layout  -->
         <controls:DockingManager
             x:Name="DockManager"

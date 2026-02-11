@@ -105,8 +105,9 @@ public partial class MainWindowViewModel : ObservableObject
         _eventBus.Subscribe<VersionInfoChangedEvent>(evt => OnZ21VersionInfoChanged(CreateVersionInfo(evt)));
 
         // Keep legacy direct subscriptions for backward compatibility (optional)
-        _z21.Received += OnFeedbackReceived;  // For counter statistics
-        _z21.OnConnectionLost += HandleConnectionLost;
+        // CRITICAL: Wrap with UI thread marshalling to prevent WinUI SetValue COMException
+        _z21.Received += (packet) => _uiDispatcher.InvokeOnUi(() => OnFeedbackReceived(packet));  // For counter statistics
+        _z21.OnConnectionLost += () => _uiDispatcher.InvokeOnUi(() => HandleConnectionLost());
 
         InitializeTrafficMonitor();
 

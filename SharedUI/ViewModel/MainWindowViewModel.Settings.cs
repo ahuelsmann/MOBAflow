@@ -2,10 +2,15 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Common.Configuration;
+
 using CommunityToolkit.Mvvm.Input;
+
 using Domain;
+
 using Microsoft.Extensions.Logging;
+
 using Service;
+
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Net;
@@ -626,6 +631,12 @@ public partial class MainWindowViewModel
     public bool IsSettingsPageAvailable => _settings.FeatureToggles.IsSettingsPageAvailable;
 
     /// <summary>
+    /// Gets whether the Docking page is available.
+    /// Bound to NavigationView item visibility.
+    /// </summary>
+    public bool IsDockingPageAvailable => _settings.FeatureToggles.IsDockingPageAvailable;
+
+    /// <summary>
     /// Gets whether the Monitor page is available.
     /// Bound to NavigationView item visibility.
     /// </summary>
@@ -643,12 +654,6 @@ public partial class MainWindowViewModel
     /// </summary>
     public bool IsTrainControlPageAvailable => _settings.FeatureToggles.IsTrainControlPageAvailable;
 
-    /// <summary>
-    /// Gets whether the Feedback Points page is available.
-    /// Bound to NavigationView item visibility.
-    /// </summary>
-    public bool IsFeedbackPointsPageAvailable => _settings.FeatureToggles.IsFeedbackPointsPageAvailable;
-
     // Feature Toggle Labels (optional)
 
     public string OverviewPageLabel => _settings.FeatureToggles.OverviewPageLabel;
@@ -659,20 +664,20 @@ public partial class MainWindowViewModel
     public string SignalBoxPageLabel => _settings.FeatureToggles.SignalBoxPageLabel;
     public string JourneyMapPageLabel => _settings.FeatureToggles.JourneyMapPageLabel;
     public string SettingsPageLabel => _settings.FeatureToggles.SettingsPageLabel;
+    public string DockingPageLabel => _settings.FeatureToggles.DockingPageLabel;
     public string MonitorPageLabel => _settings.FeatureToggles.MonitorPageLabel;
     public string TrainsPageLabel => _settings.FeatureToggles.TrainsPageLabel;
     public string TrainControlPageLabel => _settings.FeatureToggles.TrainControlPageLabel;
-    public string FeedbackPointsPageLabel => _settings.FeatureToggles.FeedbackPointsPageLabel;
 
     // Settings Page CheckBox Content (with labels)
 
     public string TrackPlanEditorCheckBoxContent => FormatPageContent("Track Plan Editor Page", TrackPlanEditorPageLabel);
     public string SignalBoxCheckBoxContent => FormatPageContent("Signal Box Page", SignalBoxPageLabel);
     public string JourneyMapCheckBoxContent => FormatPageContent("Journey Map Page", JourneyMapPageLabel);
+    public string DockingCheckBoxContent => FormatPageContent("Docking Page", DockingPageLabel);
     public string MonitorCheckBoxContent => FormatPageContent("Monitor Page", MonitorPageLabel);
     public string TrainsCheckBoxContent => FormatPageContent("Trains Page", TrainsPageLabel);
     public string TrainControlCheckBoxContent => FormatPageContent("Train Control Page", TrainControlPageLabel);
-    public string FeedbackPointsCheckBoxContent => FormatPageContent("Feedback Points Page", FeedbackPointsPageLabel);
 
     private static string FormatPageContent(string pageName, string? label)
     {

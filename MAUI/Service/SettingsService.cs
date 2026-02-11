@@ -2,8 +2,11 @@
 namespace Moba.MAUI.Service;
 
 using Common.Configuration;
+
 using Microsoft.Extensions.Logging;
+
 using SharedUI.Interface;
+
 using System.Text.Json;
 
 /// <summary>
@@ -52,7 +55,7 @@ public class SettingsService : ISettingsService
             {
                 var json = await File.ReadAllTextAsync(_settingsFilePath).ConfigureAwait(false);
                 _logger.LogDebug("Settings file length: {Length} chars", json.Length);
-                
+
                 if (string.IsNullOrWhiteSpace(json))
                 {
                     _logger.LogWarning("Settings file is empty, using defaults");
@@ -92,6 +95,16 @@ public class SettingsService : ISettingsService
                     _settings.Counter.TargetLapCount = loadedSettings.Counter.TargetLapCount;
                     _settings.Counter.UseTimerFilter = loadedSettings.Counter.UseTimerFilter;
                     _settings.Counter.TimerIntervalSeconds = loadedSettings.Counter.TimerIntervalSeconds;
+                    _settings.TrainControl.SelectedPresetIndex = loadedSettings.TrainControl.SelectedPresetIndex;
+                    _settings.TrainControl.SpeedRampStepSize = loadedSettings.TrainControl.SpeedRampStepSize;
+                    _settings.TrainControl.SpeedRampIntervalMs = loadedSettings.TrainControl.SpeedRampIntervalMs;
+                    _settings.TrainControl.SpeedSteps = loadedSettings.TrainControl.SpeedSteps;
+                    _settings.TrainControl.SelectedLocoSeries = loadedSettings.TrainControl.SelectedLocoSeries;
+                    _settings.TrainControl.SelectedVmax = loadedSettings.TrainControl.SelectedVmax;
+                    if (loadedSettings.TrainControl.Presets.Count >= 3)
+                    {
+                        _settings.TrainControl.Presets = loadedSettings.TrainControl.Presets;
+                    }
                     _settings.RestApi.CurrentIpAddress = loadedRestApi.CurrentIpAddress;
                     _settings.RestApi.Port = loadedRestApi.Port;
                     _settings.RestApi.RecentIpAddresses = loadedRestApi.RecentIpAddresses;
@@ -112,7 +125,7 @@ public class SettingsService : ISettingsService
                     _settings.Counter.TargetLapCount,
                     _settings.Counter.TimerIntervalSeconds,
                     _settings.RestApi.CurrentIpAddress);
-                
+
                 // ✅ Create initial settings file with defaults
                 _logger.LogInformation("Creating initial settings file...");
                 await SaveSettingsAsync(_settings).ConfigureAwait(false);
@@ -197,7 +210,7 @@ public class SettingsService : ISettingsService
     }
 
     /// <summary>
-    /// Gets or sets whether the last solution should be automatically loaded on startup.
+    /// Gets or sets whether the last solution should be automatically loaded.
     /// </summary>
     public bool AutoLoadLastSolution
     {
@@ -207,6 +220,38 @@ public class SettingsService : ISettingsService
             if (_settings.Application.AutoLoadLastSolution != value)
             {
                 _settings.Application.AutoLoadLastSolution = value;
+                _ = SaveSettingsAsync(_settings);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets whether the app is in dark mode.
+    /// </summary>
+    public bool IsDarkMode
+    {
+        get => _settings.Application.IsDarkMode;
+        set
+        {
+            if (_settings.Application.IsDarkMode != value)
+            {
+                _settings.Application.IsDarkMode = value;
+                _ = SaveSettingsAsync(_settings);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets whether the app should use the system theme.
+    /// </summary>
+    public bool UseSystemTheme
+    {
+        get => _settings.Application.UseSystemTheme;
+        set
+        {
+            if (_settings.Application.UseSystemTheme != value)
+            {
+                _settings.Application.UseSystemTheme = value;
                 _ = SaveSettingsAsync(_settings);
             }
         }

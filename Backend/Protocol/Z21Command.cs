@@ -184,8 +184,20 @@ public static class Z21Command
         /// Builds LAN_X_SET_TURNOUT command for classic DCC turnout/signal decoders.
         /// Format: 0x53 FAdr_MSB FAdr_LSB 10Q0A00P XOR
         /// 
-        /// Supports 2-output decoders (e.g., switches, 2-output signals).
+        /// Supports all accessory decoders with 2 outputs per address.
         /// Each decoder address controls 2 outputs via P flag (0 or 1).
+        /// 
+        /// FAdr Encoding (Z21-Protokoll Spezifikation):
+        /// FAdr is calculated as: FAdr = DecoderAddress << 2
+        /// Z21 converts back internally: Dcc_Addr = FAdr >> 2
+        /// Example: Decoder Address 201 → FAdr = 804 (0x324).
+        /// 
+        /// For multiplex signal decoders (e.g., 5229):
+        /// - BaseAddress + AddressOffset (e.g., 50 + 0 = 50) is treated as a regular decoder address
+        /// - FAdr = 50 << 2 = 200
+        /// - Z21 decodes: Dcc_Addr = 200 >> 2 = 50, Port = 0 (no special multiplex handling on Z21 side)
+        /// 
+        /// See Z21-Protokoll.md Section 5.1 for details.
         /// </summary>
         /// <param name="decoderAddress">Accessory decoder address (1-2044)</param>
         /// <param name="output">Output index: 0 = output 1 (P=0), 1 = output 2 (P=1)</param>
@@ -193,6 +205,7 @@ public static class Z21Command
         /// <param name="queue">True = queue command (FW 1.24+), False = immediate execution</param>
         public static byte[] BuildSetTurnout(int decoderAddress, int output, bool activate, bool queue = false)
         {
+            // FAdr encoding per Z21 spec: FAdr = DecoderAddress << 2
             var fAdr = decoderAddress << 2;
             byte adrLsb = (byte)(fAdr & 0xFF);
             byte adrMsb = (byte)((fAdr >> 8) & 0xFF);
@@ -263,6 +276,8 @@ public static class Z21Command
         /// <summary>
         /// Builds LAN_X_GET_TURNOUT_INFO command to request turnout/signal status.
         /// Format: 0x43 FAdr_MSB FAdr_LSB XOR
+        /// 
+        /// FAdr Encoding: FAdr = DecoderAddress << 2 (Z21-Protokoll Spec).
         /// </summary>
         /// <param name="decoderAddress">Accessory decoder address (1-2044)</param>
         public static byte[] BuildGetTurnoutInfo(int decoderAddress)

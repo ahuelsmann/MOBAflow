@@ -99,6 +99,9 @@ public class SettingsService : ISettingsService
                     _settings.TrainControl.SelectedPresetIndex = loadedSettings.TrainControl.SelectedPresetIndex;
                     _settings.TrainControl.SpeedRampStepSize = loadedSettings.TrainControl.SpeedRampStepSize;
                     _settings.TrainControl.SpeedRampIntervalMs = loadedSettings.TrainControl.SpeedRampIntervalMs;
+                    _settings.TrainControl.SpeedSteps = loadedSettings.TrainControl.SpeedSteps;
+                    _settings.TrainControl.SelectedLocoSeries = loadedSettings.TrainControl.SelectedLocoSeries;
+                    _settings.TrainControl.SelectedVmax = loadedSettings.TrainControl.SelectedVmax;
                     if (loadedSettings.TrainControl.Presets.Count >= 3)
                     {
                         _settings.TrainControl.Presets = loadedSettings.TrainControl.Presets;
@@ -162,6 +165,9 @@ public class SettingsService : ISettingsService
                     _settings.TrainControl.SelectedPresetIndex = loadedSettings.TrainControl.SelectedPresetIndex;
                     _settings.TrainControl.SpeedRampStepSize = loadedSettings.TrainControl.SpeedRampStepSize;
                     _settings.TrainControl.SpeedRampIntervalMs = loadedSettings.TrainControl.SpeedRampIntervalMs;
+                    _settings.TrainControl.SpeedSteps = loadedSettings.TrainControl.SpeedSteps;
+                    _settings.TrainControl.SelectedLocoSeries = loadedSettings.TrainControl.SelectedLocoSeries;
+                    _settings.TrainControl.SelectedVmax = loadedSettings.TrainControl.SelectedVmax;
                     if (loadedSettings.TrainControl.Presets.Count >= 3)
                     {
                         _settings.TrainControl.Presets = loadedSettings.TrainControl.Presets;

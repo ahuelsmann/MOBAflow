@@ -98,7 +98,8 @@ public sealed partial class CollapsibleColumn : UserControl
 
     private static void OnHeaderChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        // Header property kept for future use (e.g., tooltip)
+        if (d is CollapsibleColumn control)
+            control.HeaderTextBlock.Text = (string)e.NewValue;
     }
 
     private static void OnGlyphChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

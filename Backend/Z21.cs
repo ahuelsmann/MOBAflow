@@ -762,6 +762,9 @@ public class Z21 : IZ21
             // Parse feedback to get InPort
             var feedback = new FeedbackResult(content);
 
+            // Invoke legacy Received event
+            Received?.Invoke(feedback);
+
             // Publish via Messenger
             WeakReferenceMessenger.Default.Send(
                 new FeedbackReceivedMessage((uint)feedback.InPort, content)
@@ -918,25 +921,34 @@ public class Z21 : IZ21
     /// Sets a locomotive function on/off.
     /// LAN_X_SET_LOCO_FUNCTION: 0xE4 0xF8 Adr_MSB Adr_LSB TTNNNNNN XOR
     /// </summary>
+    /// <param name="address">DCC locomotive address (1-9999)</param>
+    /// <param name="functionIndex">Function index (0=F0/light, 1=F1/sound, etc.)</param>
+    /// <param name="on">True = function on, False = function off</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     public async Task SetLocoFunctionAsync(int address, int functionIndex, bool on, CancellationToken cancellationToken = default)
     {
         if (address < 1 || address > 9999)
-            throw new ArgumentOutOfRangeException(nameof(address));
+            throw new ArgumentOutOfRangeException(nameof(address), "DCC address must be 1-9999");
         if (functionIndex < 0 || functionIndex > 28)
-            throw new ArgumentOutOfRangeException(nameof(functionIndex));
+            throw new ArgumentOutOfRangeException(nameof(functionIndex), "Function index must be between 0 and 28");
 
         var command = Z21Command.BuildSetLocoFunction(address, functionIndex, on);
         await SendAsync(command, cancellationToken).ConfigureAwait(false);
-        _logger?.LogDebug("SetLocoFunction: Address={Address}, F{Function}={State}", address, functionIndex, on ? "ON" : "OFF");
+        _logger?.LogDebug("SetLocoFunction: Address={Address}, Function={Function}, On={On}",
+            address, functionIndex, on);
     }
 
     /// <summary>
     /// Requests locomotive information and subscribes to updates for this address.
+    /// LAN_X_GET_LOCO_INFO: 0xE3 0xF0 Adr_MSB Adr_LSB XOR
+    /// Max 16 loco addresses can be subscribed per client (FIFO).
     /// </summary>
+    /// <param name="address">DCC locomotive address (1-9999)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     public async Task GetLocoInfoAsync(int address, CancellationToken cancellationToken = default)
     {
         if (address < 1 || address > 9999)
-            throw new ArgumentOutOfRangeException(nameof(address));
+            throw new ArgumentOutOfRangeException(nameof(address), "DCC address must be 1-9999");
 
         var command = Z21Command.BuildGetLocoInfo(address);
         await SendAsync(command, cancellationToken).ConfigureAwait(false);
@@ -1009,31 +1021,27 @@ public class Z21 : IZ21
     }
 
     /// <summary>
-    /// Sets a signal aspect using either standard or multiplexed accessory commands.
+    /// Sets a signal aspect using the standard turnout command.
+    /// Z21 treats all accessory decoders uniformly - no special multiplex handling needed.
     /// </summary>
     public async Task SetSignalAspectAsync(Domain.SbSignal signal, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(signal);
-
-        if (signal.IsMultiplexed)
-        {
-            var baseAddress = signal.BaseAddress > 0 ? signal.BaseAddress : signal.Address;
-            if (baseAddress is < 1 or > 255)
-            {
-                throw new ArgumentOutOfRangeException(nameof(signal.BaseAddress), "Base address must be between 1 and 255 for multiplexed signals");
-            }
-
-            await SetExtAccessoryAsync(baseAddress, signal.ExtendedAccessoryValue, cancellationToken).ConfigureAwait(false);
-            return;
-        }
 
         if (signal.Address is < 1 or > 2044)
         {
             throw new ArgumentOutOfRangeException(nameof(signal.Address), "Signal address must be between 1 and 2044");
         }
 
+        // Determine activation state from signal aspect
         var activate = signal.SignalAspect != Domain.SignalAspect.Hp0;
+
+        // Use standard turnout command for all signal types
+        // Output is always 0 for signal control (Z21 doesn't distinguish multiplex vs classic)
         await SetTurnoutAsync(signal.Address, 0, activate, false, cancellationToken).ConfigureAwait(false);
+
+        _logger?.LogInformation("SetSignalAspect: Address={Address}, Aspect={Aspect}, Activate={Activate}",
+            signal.Address, signal.SignalAspect, activate);
     }
     #endregion
 

@@ -62,22 +62,6 @@ public static class NavigationRegistration
             PathIconData: null,
             IsBold: true));
 
-        // SettingsPage: requires ISkinProvider injection
-        services.AddTransient<SettingsPage>(sp => new SettingsPage(
-            sp.GetRequiredService<MainWindowViewModel>(),
-            sp.GetRequiredService<ISkinProvider>()));
-        pages.Add(new PageMetadata(
-            Tag: "settings",
-            Title: "Settings",
-            Icon: "\uE115",
-            PageType: typeof(SettingsPage),
-            Category: NavigationCategory.Help,
-            Order: 30,
-            FeatureToggleKey: "IsSettingsPageAvailable",
-            BadgeLabelKey: "SettingsPageLabel",
-            PathIconData: null,
-            IsBold: false));
-
         // SignalBoxPage: requires custom viewmodel injection
         services.AddTransient<SignalBoxPage>(sp => new SignalBoxPage(
             sp.GetRequiredService<MainWindowViewModel>(),
@@ -85,7 +69,7 @@ public static class NavigationRegistration
             sp.GetRequiredService<SkinSelectorViewModel>()));
         pages.Add(new PageMetadata(
             Tag: "signalbox",
-            Title: "Electronic Signal Box",
+            Title: "Signal Box",
             Icon: null,
             PageType: typeof(SignalBoxPage),
             Category: NavigationCategory.TrackManagement,
@@ -101,13 +85,13 @@ public static class NavigationRegistration
         pages.Add(new PageMetadata(
             Tag: "docking",
             Title: "Docking",
-            Icon: "\uE70B",
+            Icon: null,
             PageType: typeof(DockingPage),
             Category: NavigationCategory.Monitoring,
             Order: 20,
-            FeatureToggleKey: null,
-            BadgeLabelKey: null,
-            PathIconData: null,
+            FeatureToggleKey: "IsDockingPageAvailable",
+            BadgeLabelKey: "DockingPageLabel",
+            PathIconData: "M2,3 L6,3 L6,7 L2,7 Z M8,3 L12,3 L12,7 L8,7 Z M2,9 L6,9 L6,13 L2,13 Z M8,9 L12,9 L12,13 L8,13 Z",
             IsBold: false));
 
         return pages;

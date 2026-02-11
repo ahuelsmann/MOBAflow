@@ -45,11 +45,7 @@
                         x:Name="TitleText"
                         FontSize="28"
                         FontWeight="SemiBold"
-                        Text="Elektronisches Stellwerk" />
-                    <TextBlock
-                        FontSize="12"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="ESTW - Gleisbildstellwerk" />
+                        Text="Signal Box" />
                 </StackPanel>
 
                 <!--  Grid Toggle  -->

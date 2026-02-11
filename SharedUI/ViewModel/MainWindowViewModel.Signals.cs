@@ -52,6 +52,13 @@ public partial class MainWindowViewModel
             return;
         }
 
+        if (!_z21.IsConnected)
+        {
+            System.Diagnostics.Debug.WriteLine("[MWVM.SetSignalAspect] ERROR: Z21 not connected");
+            _logger?.LogWarning("Signal '{SignalName}': Z21 not connected; skipping command send.", signal.Name);
+            return;
+        }
+
         try
         {
             if (!Common.Multiplex.MultiplexerHelper.TryGetTurnoutCommand(
@@ -76,30 +83,23 @@ public partial class MainWindowViewModel
 
             System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] DCC Address calculated: {dccAddress}, Output={turnoutCommand.Output}, Activate={turnoutCommand.Activate}");
 
-            // Send activate pulse (A=1), then deactivate (A=0) to simulate button press
-            System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] Sending activate pulse to address={dccAddress}, output={turnoutCommand.Output}");
-            
-            // Step 1: Send activate command (A=1) with queue=false for immediate execution
-            await _z21.SetTurnoutAsync(dccAddress, turnoutCommand.Output, true, false, cancellationToken).ConfigureAwait(false);
-            
-            // Step 2: Short delay (100ms) to allow decoder to register the activate pulse
-            await Task.Delay(100, cancellationToken).ConfigureAwait(false);
-            
-            // Step 3: Send deactivate command (A=0) to complete the pulse
-            await _z21.SetTurnoutAsync(dccAddress, turnoutCommand.Output, false, false, cancellationToken).ConfigureAwait(false);
-            
-            System.Diagnostics.Debug.WriteLine("[MWVM.SetSignalAspect] Z21.SetTurnoutAsync pulse completed successfully");
+            // For Viessmann multiplex decoders (e.g., 5229): use classic turnout command (0x53)
+            // Each signal aspect maps to a different DCC address via AddressOffset
+            System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] Sending turnout command to address={dccAddress}, output={turnoutCommand.Output}, activate={turnoutCommand.Activate}");
+
+            await _z21.SetTurnoutAsync(dccAddress, turnoutCommand.Output, turnoutCommand.Activate, false, cancellationToken).ConfigureAwait(false);
+
+            System.Diagnostics.Debug.WriteLine("[MWVM.SetSignalAspect] Z21.SetTurnoutAsync completed successfully");
 
             _logger?.LogInformation(
                 "Signal '{SignalName}' set: Multiplexer={Multiplexer}, BaseAddress={BaseAddress}, " +
-                "Aspect={Aspect} → DCC_Address={DccAddress}, Output={Output}, Pulse sent (A=1→A=0)",
+                "Aspect={Aspect} → Turnout_Address={TurnoutAddress}, Output={Output}, Activate={Activate}",
                 signal.Name, signal.MultiplexerArticleNumber, signal.BaseAddress,
-                signal.SignalAspect, dccAddress, turnoutCommand.Output);
+                signal.SignalAspect, dccAddress, turnoutCommand.Output, turnoutCommand.Activate);
 
             _uiDispatcher.InvokeOnUi(() =>
             {
-                var signalColor = turnoutCommand.Activate ? "green (+)" : "red (-)";
-                StatusText = $"Signal '{signal.Name}' set (Address {dccAddress}, {signalColor})";
+                StatusText = $"Signal '{signal.Name}' set (Address {dccAddress}, Output {turnoutCommand.Output}, Activate {turnoutCommand.Activate})";
             });
         }
         catch (Exception ex)

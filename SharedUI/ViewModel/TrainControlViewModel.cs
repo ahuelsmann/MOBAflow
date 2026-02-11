@@ -631,9 +631,10 @@ public partial class TrainControlViewModel : ObservableObject
         eventBus.Subscribe<SystemStateChangedEvent>(evt => OnSystemStateChanged(CreateSystemState(evt)));
 
         // Keep legacy direct subscriptions for backward compatibility (optional)
-        _z21.OnConnectedChanged += OnZ21ConnectionChanged;
-        _z21.OnLocoInfoChanged += OnLocoInfoReceived;
-        _z21.OnSystemStateChanged += OnSystemStateChanged;
+        // CRITICAL: Wrap all handlers with UI thread marshalling to prevent WinUI SetValue COMException
+        _z21.OnConnectedChanged += (connected) => _uiDispatcher.InvokeOnUi(() => OnZ21ConnectionChanged(connected));
+        _z21.OnLocoInfoChanged += (locoInfo) => _uiDispatcher.InvokeOnUi(() => OnLocoInfoReceived(locoInfo));
+        _z21.OnSystemStateChanged += (systemState) => _uiDispatcher.InvokeOnUi(() => OnSystemStateChanged(systemState));
 
         // Subscribe to MainWindowViewModel.SelectedJourney changes
         if (_mainWindowViewModel != null)

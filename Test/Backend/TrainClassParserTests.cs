@@ -19,13 +19,20 @@ public class TrainClassParserTests
     public void SetUp()
     {
         // Initialize library with test JSON file
-        // Adjust path based on test execution context
-        var jsonPath = Path.Combine(AppContext.BaseDirectory, "..\\..\\..\\WinUI\\germany-locomotives.json");
-        jsonPath = Path.GetFullPath(jsonPath);
+        // Navigate from test binary directory (Test/bin/Debug/net10.0) to WinUI folder
+        var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        
+        // Remove 'Test/bin/Debug/net10.0/' parts to get solution root
+        var solutionRoot = Path.GetFullPath(Path.Combine(baseDir, "..\\..\\..\\.."));
+        var jsonPath = Path.Combine(solutionRoot, "WinUI", "germany-locomotives.json");
         
         if (File.Exists(jsonPath))
         {
             TrainClassLibrary.Initialize(jsonPath);
+        }
+        else
+        {
+            throw new FileNotFoundException($"germany-locomotives.json not found at: {jsonPath}");
         }
 
         _parser = new TrainClassParser();

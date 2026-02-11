@@ -111,7 +111,7 @@
                 <Expander.HeaderTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal" Spacing="12">
-                            <FontIcon FontSize="20" Glyph="&#xE80F;" />
+                            <FontIcon FontSize="20" Glyph="&#xEC06;" />
                             <TextBlock
                                 VerticalAlignment="Center"
                                 Style="{StaticResource SubtitleTextBlockStyle}"
@@ -164,7 +164,7 @@
                 <Expander.HeaderTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal" Spacing="12">
-                            <FontIcon FontSize="20" Glyph="&#xE82D;" />
+                            <FontIcon FontSize="20" Glyph="&#xE7C0;" />
                             <TextBlock
                                 VerticalAlignment="Center"
                                 Style="{StaticResource SubtitleTextBlockStyle}"
@@ -360,7 +360,7 @@
                 <Expander.HeaderTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal" Spacing="12">
-                            <FontIcon FontSize="20" Glyph="&#xE8BA;" />
+                            <FontIcon FontSize="20" Glyph="&#xE968;" />
                             <TextBlock
                                 VerticalAlignment="Center"
                                 Style="{StaticResource SubtitleTextBlockStyle}"
@@ -430,7 +430,7 @@
                 <Expander.HeaderTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal" Spacing="12">
-                            <FontIcon FontSize="20" Glyph="&#xF71C;" />
+                            <FontIcon FontSize="20" Glyph="&#xE794;" />
                             <TextBlock
                                 VerticalAlignment="Center"
                                 Style="{StaticResource SubtitleTextBlockStyle}"
@@ -460,7 +460,7 @@
                 <Expander.HeaderTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal" Spacing="12">
-                            <FontIcon FontSize="20" Glyph="&#xE701;" />
+                            <FontIcon FontSize="20" Glyph="&#xE945;" />
                             <TextBlock
                                 VerticalAlignment="Center"
                                 Style="{StaticResource SubtitleTextBlockStyle}"
@@ -534,7 +534,7 @@
                 <Expander.HeaderTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal" Spacing="12">
-                            <FontIcon FontSize="20" Glyph="&#xE7C8;" />
+                            <FontIcon FontSize="20" Glyph="&#xE73A;" />
                             <TextBlock
                                 VerticalAlignment="Center"
                                 Style="{StaticResource SubtitleTextBlockStyle}"

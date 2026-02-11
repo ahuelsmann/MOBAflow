@@ -115,7 +115,7 @@
                                 Grid.Column="0"
                                 Margin="0,0,8,0"
                                 FontSize="16"
-                                Glyph="&#xE81D;" />
+                                Glyph="&#xE7C1;" />
                             <TextBlock
                                 Grid.Column="1"
                                 VerticalAlignment="Center"
@@ -125,8 +125,6 @@
                 </ListView.ItemTemplate>
             </ListView>
         </Grid>
-
-
 
         <!--  Column 1: Splitter  -->
         <Grid
@@ -213,12 +211,11 @@
                                 CornerRadius="4"
                                 Opacity="0.3"
                                 Visibility="{x:Bind IsCurrentStation, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
-
                             <FontIcon
                                 Grid.Column="0"
                                 Margin="0,0,8,0"
                                 FontSize="16"
-                                Glyph="&#xE80F;" />
+                                Glyph="&#xE81D;" />
                             <TextBlock
                                 Grid.Column="1"
                                 VerticalAlignment="Center"
@@ -228,8 +225,6 @@
                 </ListView.ItemTemplate>
             </ListView>
         </Grid>
-
-
 
         <!--  Column 3: Splitter  -->
         <Grid
@@ -252,81 +247,77 @@
         <controls:CollapsibleColumn
             Grid.Column="4"
             Margin="4,8"
-            Glyph="&#xE80F;"
+            Glyph="&#xEC06;"
             Header="City Library"
             IsExpanded="{Binding IsCityLibraryVisible, Mode=TwoWay}">
             <controls:CollapsibleColumn.PanelContent>
-                <StackPanel Spacing="8">
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                        Style="{StaticResource CaptionTextBlockStyle}"
-                        Text="Drag or double-click to add" />
-                    <ListView
-                        CanDragItems="True"
-                        DoubleTapped="CityListView_DoubleTapped"
-                        DragItemsStarting="CityListView_DragItemsStarting"
-                        ItemsSource="{x:Bind ViewModel.CityLibrary, Mode=OneWay}"
-                        SelectedItem="{x:Bind ViewModel.SelectedCity, Mode=TwoWay}"
-                        SelectionMode="Single">
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="domain:City">
-                                <Grid Padding="6">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <FontIcon
-                                        Grid.Column="0"
-                                        Margin="0,0,8,0"
-                                        FontSize="16"
-                                        Glyph="&#xE80F;" />
-                                    <TextBlock
-                                        Grid.Column="1"
-                                        VerticalAlignment="Center"
-                                        Text="{x:Bind Name}" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" VerticalScrollMode="Auto">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="Drag or double-click to add" />
+                        <ListView
+                            CanDragItems="True"
+                            DoubleTapped="CityListView_DoubleTapped"
+                            DragItemsStarting="CityListView_DragItemsStarting"
+                            ItemsSource="{x:Bind ViewModel.CityLibrary, Mode=OneWay}"
+                            SelectedItem="{x:Bind ViewModel.SelectedCity, Mode=TwoWay}"
+                            SelectionMode="Single">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="domain:City">
+                                    <Grid Padding="6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock
+                                            Grid.Column="0"
+                                            VerticalAlignment="Center"
+                                            Text="{x:Bind Name}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
+                </ScrollViewer>
             </controls:CollapsibleColumn.PanelContent>
         </controls:CollapsibleColumn>
-
-
 
         <!--  Column 6: Workflow Library (CollapsibleColumn)  -->
         <controls:CollapsibleColumn
             Grid.Column="6"
             Margin="4,8"
-            Glyph="&#xE8F1;"
+            Glyph="&#xE945;"
             Header="Workflow Library"
             IsExpanded="{Binding IsWorkflowLibraryVisible, Mode=TwoWay}">
             <controls:CollapsibleColumn.PanelContent>
-                <StackPanel Spacing="8">
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                        Style="{StaticResource CaptionTextBlockStyle}"
-                        Text="Drag to station to assign" />
-                    <ListView
-                        CanDragItems="True"
-                        DragItemsStarting="WorkflowListView_DragItemsStarting"
-                        ItemsSource="{x:Bind ViewModel.SelectedProject.Workflows, Mode=OneWay}"
-                        SelectionMode="Single">
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="viewmodel:WorkflowViewModel">
-                                <Grid Padding="6">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock
-                                        Grid.Column="0"
-                                        VerticalAlignment="Center"
-                                        Text="{x:Bind Name, Mode=OneWay}" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" VerticalScrollMode="Auto">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="Drag to station to assign" />
+                        <ListView
+                            CanDragItems="True"
+                            DragItemsStarting="WorkflowListView_DragItemsStarting"
+                            ItemsSource="{x:Bind ViewModel.SelectedProject.Workflows, Mode=OneWay}"
+                            SelectionMode="Single">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="viewmodel:WorkflowViewModel">
+                                    <Grid Padding="6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock
+                                            Grid.Column="0"
+                                            VerticalAlignment="Center"
+                                            Text="{x:Bind Name, Mode=OneWay}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
+                </ScrollViewer>
             </controls:CollapsibleColumn.PanelContent>
         </controls:CollapsibleColumn>
 

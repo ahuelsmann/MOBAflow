@@ -56,6 +56,7 @@ MOBAflow includes a full-featured **Track Plan System** for designing model rail
 - ✅ Zoom & Pan navigation
 - ✅ Feedback point assignment
 - ✅ Validation constraints
+- ✅ Signal switching requires an active Z21 connection
 
 ### Track Libraries
 Track systems are modular - each manufacturer's track system is a separate library:
