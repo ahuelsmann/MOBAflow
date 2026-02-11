@@ -3,7 +3,6 @@
     <File Path=".editorconfig" />
     <File Path=".gitattributes" />
     <File Path=".gitignore" />
-    <File Path=".mcp.json" />
     <File Path=".sln.DotSettings" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Build.targets" />

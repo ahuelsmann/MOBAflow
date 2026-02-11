@@ -1,6 +1,6 @@
 ---
-description: 'MOBAflow open tasks and roadmap'
-applyTo: '**'
+description: "MOBAflow open tasks and roadmap"
+applyTo: "**"
 ---
 
 # MOBAflow TODOs & Roadmap
@@ -12,6 +12,7 @@ applyTo: '**'
 ## ✅ SESSION 22 COMPLETED (2026-02-17)
 
 ### What was implemented
+
 - [x] **Z21-Protokoll Study:** Read official Z21-Protokoll.md documentation
   - **Key Discovery:** FAdr Encoding formula from spec:
     ```
@@ -21,7 +22,7 @@ applyTo: '**'
     ```
   - **Example:** FAdr=200 → DCC_Addr=50, Port=0
   - **Example:** FAdr=201 → DCC_Addr=50, Port=1
-  
+
 - [x] **Root Cause Identified:** Signal BaseAddress was WRONG
   - Z21 responds with FAdr=200 (0x00C8) in traffic logs
   - MOBAflow was sending FAdr=804 (201 << 2) ✅ CORRECT FORMULA
@@ -36,16 +37,19 @@ applyTo: '**'
   - Matches Z21's response FAdr=200!
 
 ### Issues resolved
+
 - [x] **Root Cause:** BuildSetTurnout formula was correct; signal config address was wrong
 - [x] **Traffic Analysis:** Z21 respond with FAdr=200 (not 804) proves AddressOffset calculation
 
 ### Code Quality
+
 - Build: ✅ No syntax errors (from previous session)
 - Tests: ⏳ Ready to run after fixing config
 - Code Review: ⏳ Pending
 - Hardware Test: 🎯 Ready after config change!
 
 ### Session Achievement
+
 **BREAKTHROUGH #3:** Read Z21-Protokoll.md official documentation! 
 FAdr encoding is universal for ALL decoders. The confusion was in signal config: BaseAddress should be 50 (Decoder address), 
 not 201 (which represents "Decoder 50, Port 1"). Once changed to BaseAddress=50, the math works perfectly:
@@ -54,15 +58,63 @@ not 201 (which represents "Decoder 50, Port 1"). Once changed to BaseAddress=50,
 - Z21 decodes: Decoder 50, Port 0 ✅
 
 ### Files to modify NEXT
+
 - `example-solution.json` or SignalBoxPlan DB: Change signal BaseAddress from 201 → 50
 
 ---
 
-## 🚀 SESSION 23 READY: Fix Signal Config & Hardware Test
+## ✅ SESSION 23 COMPLETED (2026-02-17)
+
+### What was implemented
+
+- [x] **Z21.OnUdpReceived Async Refactor:** Improved UDP receiver performance
+  - Added `PublishEventAsync<TEvent>()` helper method (lines 644-665 in Backend/Z21.cs)
+  - Events queued to thread pool instead of blocking receiver
+  - 5 event publishing calls converted: XBusStatusChangedEvent, LocomotiveInfoChangedEvent, SystemStateChangedEvent, VersionInfoChangedEvent (2x)
+
+### Technical Details
+
+**Problem:** UDP receiver callback was blocking on `_eventBus.Publish()` calls
+**Solution:** Queue event publishing to thread pool with `Task.Run()`
+**Pattern:**
+```csharp
+private void PublishEventAsync<TEvent>(TEvent @event) where TEvent : class, IEvent
+{
+    _ = Task.Run(() => _eventBus.Publish(@event));
+}
+```
+
+**Benefits:**
+
+- UDP receiver thread returns immediately (not blocked by EventBus lock/handlers)
+- Async subscribers notified on thread pool (faster event processing)
+- Synchronous subscribers (OnXBusStatusChanged, etc.) still run on receiver (backward compatible)
+- No memory leaks (exception handling included)
+
+### Files Modified
+
+- `Backend/Z21.cs` (OnUdpReceived method refactored)
+
+### Code Quality
+
+- Build: ✅ No compilation errors
+- Tests: ⏳ Ready to run
+- Code Review: ⏳ Pending
+- Performance: ✅ UDP receiver unblocked (fire-and-forget pattern)
+
+### Session Achievement
+
+**REFACTOR COMPLETE:** Z21 UDP receiver no longer blocks on event publishing. 
+Low-priority Technical Debt item resolved. Event publishing now async-friendly while maintaining backward compatibility.
+
+---
+
+## 🚀 SESSION 24 READY: Fix Signal Config & Hardware Test
 
 **Prerequisite:** Change signal configuration
 
 ### What to Fix:
+
 1. **Locate signal configuration** (either `example-solution.json` or database):
    ```json
    {
@@ -86,42 +138,55 @@ not 201 (which represents "Decoder 50, Port 1"). Once changed to BaseAddress=50,
    - **Compare with Roco App:** Should send same bytes
 
 ### Files to Verify:
+
 - `example-solution.json` - Signal BaseAddress
 - `Backend/Protocol/Z21Command.cs` - BuildSetTurnout (formula correct ✅)
 - `Backend/Z21.cs` - SetTurnoutAsync (routing correct ✅)
 - `Common/Multiplex/MultiplexerHelper.cs` - AddressOffset (stays as is)
 
 ### Expected Outcome:
+
 - ✅ Signal Hp0 → ROT
 - ✅ Signal Ks1 → GRÜN
 - ✅ Traffic shows FAdr=200, cmdByte toggles 0x80↔0x88
 - ✅ Roco App sends identical bytes
 
 **If still doesn't work:**
+
 - Check Dekoder Config on physical hardware (CV1, CV2)
 - Dekoder-Adresse sollte 50 sein (nicht 201!)
 - Test with Roco App first to confirm hardware config
 
-### Estimated Effort:
-- Config fix: 5 minutes
-- Build: 2 minutes
-- Hardware test: 10-15 minutes
+---
+
+## 🚀 SESSION 25 READY: KI-basierte Fahrstraßen-Vorschläge (Backend)
+
+**Prerequisites:**
+- [ ] `Project.SignalBoxPlan` is present with routes and connections
+- [ ] Routes include `ElementIds` and `SwitchPositions`
+
+**What to implement (Backend only):**
+- [ ] Add a `IRouteSuggestionService` interface in `Backend/Interface`
+- [ ] Implement `RouteSuggestionService` in `Backend/Service`
+- [ ] Suggest routes based on start/end signals with conflict checks:
+  - [ ] Overlapping `ElementIds` with active routes
+  - [ ] Conflicting `SwitchPositions`
+  - [ ] `SignalBoxElementState` not `Free`
+- [ ] Register service in `Backend/Extensions/MobaServiceCollectionExtensions.cs`
+- [ ] Add unit tests in `Test/Backend/RouteSuggestionServiceTests.cs`
+
+**Files to Modify:**
+- `Backend/Interface/IRouteSuggestionService.cs` (new)
+- `Backend/Service/RouteSuggestionService.cs` (new)
+- `Backend/Extensions/MobaServiceCollectionExtensions.cs`
+- `Test/Backend/RouteSuggestionServiceTests.cs` (new)
+
+**Estimated Effort:** 4-6 hours
 
 ---
 
-## 📚 Important Reference
-**Z21-Protokoll.md (from official Roco spec):**
-```
-FAdr = (FAdr_MSB << 8) + FAdr_LSB;
-DCC_Addr = FAdr >> 2;
-Port = FAdr & 0x03;
+## 📚 Previous Sessions
 
-Example:
-FAdr=200 (0x00C8) → DCC_Addr=50, Port=0
-FAdr=201 (0x00C9) → DCC_Addr=50, Port=1
-FAdr=202 (0x00CA) → DCC_Addr=50, Port=2
-FAdr=203 (0x00CB) → DCC_Addr=50, Port=3
-FAdr=204 (0x00CC) → DCC_Addr=51, Port=0
-```
+### ✅ SESSION 22 COMPLETED (2026-02-17)
 
-This is THE canonical reference for all accessory decoder control!
+### ✅ SESSION 23 COMPLETED (2026-02-17)

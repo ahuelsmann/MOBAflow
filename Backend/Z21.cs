@@ -24,7 +24,6 @@ using System.Diagnostics;
 using System.Net;
 
 public class Z21 : IZ21
-
 {
     public event Feedback? Received;
     public event SystemStateChanged? OnSystemStateChanged;
@@ -641,6 +640,29 @@ public class Z21 : IZ21
     #endregion
 
     #region Message Receiving & Parsing
+    /// <summary>
+    /// Publishes an event asynchronously without blocking the UDP receiver.
+    /// Events are queued to a background task so the UDP callback returns immediately.
+    /// </summary>
+    /// <typeparam name="TEvent">The event type</typeparam>
+    /// <param name="event">The event instance to publish</param>
+    private void PublishEventAsync<TEvent>(TEvent @event) where TEvent : class, Common.Events.IEvent
+    {
+        // Fire-and-forget: publish on thread pool without awaiting
+        // This allows OnUdpReceived to return immediately
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                _eventBus.Publish(@event);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning(ex, "Error publishing event {EventType}", typeof(TEvent).Name);
+            }
+        });
+    }
+
     private void OnUdpReceived(object? sender, UdpReceivedEventArgs e)
     {
         var content = e.Buffer;
@@ -670,7 +692,7 @@ public class Z21 : IZ21
                 SetConnectedIfNotAlready();
 
                 OnXBusStatusChanged?.Invoke(xStatus);
-                _eventBus.Publish(new XBusStatusChangedEvent(
+                PublishEventAsync(new XBusStatusChangedEvent(
                     xStatus.EmergencyStop,
                     xStatus.TrackOff,
                     xStatus.ShortCircuit,
@@ -685,7 +707,7 @@ public class Z21 : IZ21
                 SetConnectedIfNotAlready();
 
                 OnLocoInfoChanged?.Invoke(locoInfo);
-                _eventBus.Publish(new LocomotiveInfoChangedEvent(
+                PublishEventAsync(new LocomotiveInfoChangedEvent(
                     locoInfo.Address,
                     locoInfo.Speed,
                     locoInfo.IsForward,
@@ -739,7 +761,7 @@ public class Z21 : IZ21
                 _logger?.LogInformation("📊 SystemState received: MainCurrent={MainCurrent}mA, Temp={Temp}°C, Voltage={Voltage}mV",
                     mainCurrent, temperature, supplyVoltage);
                 OnSystemStateChanged?.Invoke(CurrentSystemState);
-                _eventBus.Publish(new SystemStateChangedEvent(
+                PublishEventAsync(new SystemStateChangedEvent(
                     CurrentSystemState.MainCurrent,
                     CurrentSystemState.ProgCurrent,
                     CurrentSystemState.FilteredMainCurrent,
@@ -786,7 +808,7 @@ public class Z21 : IZ21
                 VersionInfo.SerialNumber = serialNumber;
                 _logger?.LogInformation("📌 Z21 Serial Number: {SerialNumber}", serialNumber);
                 OnVersionInfoChanged?.Invoke(VersionInfo);
-                _eventBus.Publish(new VersionInfoChangedEvent(
+                PublishEventAsync(new VersionInfoChangedEvent(
                     VersionInfo.SerialNumber,
                     (int)VersionInfo.HardwareTypeCode,
                     (int)VersionInfo.FirmwareVersionCode));
@@ -804,7 +826,7 @@ public class Z21 : IZ21
                 VersionInfo.FirmwareVersionCode = fwVersion;
                 _logger?.LogInformation("📌 Z21 Hardware: {HwType}, Firmware: {FwVersion}", VersionInfo.HardwareType, VersionInfo.FirmwareVersion);
                 OnVersionInfoChanged?.Invoke(VersionInfo);
-                _eventBus.Publish(new VersionInfoChangedEvent(
+                PublishEventAsync(new VersionInfoChangedEvent(
                     VersionInfo.SerialNumber,
                     (int)VersionInfo.HardwareTypeCode,
                     (int)VersionInfo.FirmwareVersionCode));

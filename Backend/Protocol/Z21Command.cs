@@ -57,244 +57,244 @@ public static class Z21Command
         ];
     }
 
-        public static byte[] BuildTrackPowerOn()
-            => [0x07, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_TRACK_POWER, Z21Protocol.TrackPowerDb0.ON, 0xA0];
+    public static byte[] BuildTrackPowerOn()
+        => [0x07, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_TRACK_POWER, Z21Protocol.TrackPowerDb0.ON, 0xA0];
 
-        public static byte[] BuildTrackPowerOff()
-            => [0x07, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_TRACK_POWER, Z21Protocol.TrackPowerDb0.OFF, 0xA1];
+    public static byte[] BuildTrackPowerOff()
+        => [0x07, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_TRACK_POWER, Z21Protocol.TrackPowerDb0.OFF, 0xA1];
 
-        public static byte[] BuildEmergencyStop()
-            => [0x06, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_SET_STOP, 0x80];
+    public static byte[] BuildEmergencyStop()
+        => [0x06, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_SET_STOP, 0x80];
 
-        public static byte[] BuildGetStatus()
-            => [0x07, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_TRACK_POWER, Z21Protocol.XHeader.X_GET_STATUS, 0x05];
+    public static byte[] BuildGetStatus()
+        => [0x07, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_TRACK_POWER, Z21Protocol.XHeader.X_GET_STATUS, 0x05];
 
-        // ==================== Locomotive Drive Commands (Section 4) ====================
+    // ==================== Locomotive Drive Commands (Section 4) ====================
 
-        /// <summary>
-        /// Encodes a DCC locomotive address for Z21 protocol.
-        /// For addresses >= 128, the MSB is OR'd with 0xC0.
-        /// </summary>
-        private static (byte msb, byte lsb) EncodeLocoAddress(int address)
+    /// <summary>
+    /// Encodes a DCC locomotive address for Z21 protocol.
+    /// For addresses >= 128, the MSB is OR'd with 0xC0.
+    /// </summary>
+    private static (byte msb, byte lsb) EncodeLocoAddress(int address)
+    {
+        if (address < 128)
         {
-            if (address < 128)
-            {
-                return (0x00, (byte)address);
-            }
-            // Long address: MSB = 0xC0 | high byte
-            return ((byte)(0xC0 | ((address >> 8) & 0x3F)), (byte)(address & 0xFF));
+            return (0x00, (byte)address);
         }
+        // Long address: MSB = 0xC0 | high byte
+        return ((byte)(0xC0 | ((address >> 8) & 0x3F)), (byte)(address & 0xFF));
+    }
 
-        /// <summary>
-        /// Builds LAN_X_SET_LOCO_DRIVE command for 128 speed steps.
-        /// Format: 0xE4 0x13 Adr_MSB Adr_LSB RVVVVVVV XOR
-        /// </summary>
-        /// <param name="address">DCC locomotive address (1-9999)</param>
-        /// <param name="speed">Speed value (0=stop, 1=emergency stop, 2-127=speed 1-126)</param>
-        /// <param name="forward">True = forward direction</param>
-        public static byte[] BuildSetLocoDrive(int address, int speed, bool forward)
-        {
-            var (adrMsb, adrLsb) = EncodeLocoAddress(address);
+    /// <summary>
+    /// Builds LAN_X_SET_LOCO_DRIVE command for 128 speed steps.
+    /// Format: 0xE4 0x13 Adr_MSB Adr_LSB RVVVVVVV XOR
+    /// </summary>
+    /// <param name="address">DCC locomotive address (1-9999)</param>
+    /// <param name="speed">Speed value (0=stop, 1=emergency stop, 2-127=speed 1-126)</param>
+    /// <param name="forward">True = forward direction</param>
+    public static byte[] BuildSetLocoDrive(int address, int speed, bool forward)
+    {
+        var (adrMsb, adrLsb) = EncodeLocoAddress(address);
 
-            // Speed byte: bit 7 = direction (1=forward), bits 0-6 = speed
-            // Speed encoding for 128 steps: 0=stop, 1=emergency stop, 2-127=speed 1-126
-            byte speedByte = (byte)((forward ? 0x80 : 0x00) | (speed & 0x7F));
+        // Speed byte: bit 7 = direction (1=forward), bits 0-6 = speed
+        // Speed encoding for 128 steps: 0=stop, 1=emergency stop, 2-127=speed 1-126
+        byte speedByte = (byte)((forward ? 0x80 : 0x00) | (speed & 0x7F));
 
-            // DB0 = 0x13 for 128 speed steps
-            byte db0 = 0x13;
+        // DB0 = 0x13 for 128 speed steps
+        byte db0 = 0x13;
 
-            // Calculate XOR checksum over X-BUS portion
-            byte xor = (byte)(Z21Protocol.XHeader.X_SET_LOCO_DRIVE ^ db0 ^ adrMsb ^ adrLsb ^ speedByte);
+        // Calculate XOR checksum over X-BUS portion
+        byte xor = (byte)(Z21Protocol.XHeader.X_SET_LOCO_DRIVE ^ db0 ^ adrMsb ^ adrLsb ^ speedByte);
 
-            return
-            [
-                0x0A, 0x00,  // DataLen = 10 bytes
+        return
+        [
+            0x0A, 0x00,  // DataLen = 10 bytes
                 Z21Protocol.Header.LAN_X_HEADER, 0x00,  // Header
                 Z21Protocol.XHeader.X_SET_LOCO_DRIVE,   // 0xE4
                 db0,                                     // 0x13 (128 speed steps)
                 adrMsb, adrLsb,                         // Address
                 speedByte,                               // Direction + Speed
                 xor                                      // XOR checksum
-            ];
-        }
+        ];
+    }
 
-        /// <summary>
-        /// Builds LAN_X_SET_LOCO_FUNCTION command.
-        /// Format: 0xE4 0xF8 Adr_MSB Adr_LSB TTNNNNNN XOR
-        /// </summary>
-        /// <param name="address">DCC locomotive address (1-9999)</param>
-        /// <param name="functionIndex">Function index (0=F0/light, 1=F1, etc.)</param>
-        /// <param name="on">True = on, False = off</param>
-        public static byte[] BuildSetLocoFunction(int address, int functionIndex, bool on)
-        {
-            var (adrMsb, adrLsb) = EncodeLocoAddress(address);
+    /// <summary>
+    /// Builds LAN_X_SET_LOCO_FUNCTION command.
+    /// Format: 0xE4 0xF8 Adr_MSB Adr_LSB TTNNNNNN XOR
+    /// </summary>
+    /// <param name="address">DCC locomotive address (1-9999)</param>
+    /// <param name="functionIndex">Function index (0=F0/light, 1=F1, etc.)</param>
+    /// <param name="on">True = on, False = off</param>
+    public static byte[] BuildSetLocoFunction(int address, int functionIndex, bool on)
+    {
+        var (adrMsb, adrLsb) = EncodeLocoAddress(address);
 
-            // Function byte: TT (bits 6-7) = 00=off, 01=on; NNNNNN (bits 0-5) = function index
-            // TT: 00 = off, 01 = on, 10 = toggle
-            byte funcByte = (byte)((on ? 0x40 : 0x00) | (functionIndex & 0x3F));
+        // Function byte: TT (bits 6-7) = 00=off, 01=on; NNNNNN (bits 0-5) = function index
+        // TT: 00 = off, 01 = on, 10 = toggle
+        byte funcByte = (byte)((on ? 0x40 : 0x00) | (functionIndex & 0x3F));
 
-            // DB0 = 0xF8 for function command
-            byte db0 = 0xF8;
+        // DB0 = 0xF8 for function command
+        byte db0 = 0xF8;
 
-            // Calculate XOR checksum
-            byte xor = (byte)(Z21Protocol.XHeader.X_SET_LOCO_FUNCTION ^ db0 ^ adrMsb ^ adrLsb ^ funcByte);
+        // Calculate XOR checksum
+        byte xor = (byte)(Z21Protocol.XHeader.X_SET_LOCO_FUNCTION ^ db0 ^ adrMsb ^ adrLsb ^ funcByte);
 
-            return
-            [
-                0x0A, 0x00,  // DataLen = 10 bytes
+        return
+        [
+            0x0A, 0x00,  // DataLen = 10 bytes
                 Z21Protocol.Header.LAN_X_HEADER, 0x00,
                 Z21Protocol.XHeader.X_SET_LOCO_FUNCTION,  // 0xE4
                 db0,                                       // 0xF8
                 adrMsb, adrLsb,
                 funcByte,
                 xor
-            ];
-        }
+        ];
+    }
 
-        /// <summary>
-        /// Builds LAN_X_GET_LOCO_INFO command.
-        /// Format: 0xE3 0xF0 Adr_MSB Adr_LSB XOR
-        /// Subscribes to loco updates (max 16 addresses per client, FIFO).
-        /// </summary>
-        /// <param name="address">DCC locomotive address (1-9999)</param>
-        public static byte[] BuildGetLocoInfo(int address)
-        {
-            var (adrMsb, adrLsb) = EncodeLocoAddress(address);
+    /// <summary>
+    /// Builds LAN_X_GET_LOCO_INFO command.
+    /// Format: 0xE3 0xF0 Adr_MSB Adr_LSB XOR
+    /// Subscribes to loco updates (max 16 addresses per client, FIFO).
+    /// </summary>
+    /// <param name="address">DCC locomotive address (1-9999)</param>
+    public static byte[] BuildGetLocoInfo(int address)
+    {
+        var (adrMsb, adrLsb) = EncodeLocoAddress(address);
 
-            // DB0 = 0xF0
-            byte db0 = 0xF0;
+        // DB0 = 0xF0
+        byte db0 = 0xF0;
 
-            // Calculate XOR checksum
-            byte xor = (byte)(Z21Protocol.XHeader.X_GET_LOCO_INFO ^ db0 ^ adrMsb ^ adrLsb);
+        // Calculate XOR checksum
+        byte xor = (byte)(Z21Protocol.XHeader.X_GET_LOCO_INFO ^ db0 ^ adrMsb ^ adrLsb);
 
-            return
-            [
-                0x09, 0x00,  // DataLen = 9 bytes
+        return
+        [
+            0x09, 0x00,  // DataLen = 9 bytes
                 Z21Protocol.Header.LAN_X_HEADER, 0x00,
                 Z21Protocol.XHeader.X_GET_LOCO_INFO,  // 0xE3
                 db0,                                   // 0xF0
                 adrMsb, adrLsb,
                 xor
-            ];
-        }
+        ];
+    }
 
-        // ==================== Switching Commands (Accessory Decoders) ====================
+    // ==================== Switching Commands (Accessory Decoders) ====================
 
-        /// <summary>
-        /// Builds LAN_X_SET_TURNOUT command for classic DCC turnout/signal decoders.
-        /// Format: 0x53 FAdr_MSB FAdr_LSB 10Q0A00P XOR
-        /// 
-        /// Supports all accessory decoders with 2 outputs per address.
-        /// Each decoder address controls 2 outputs via P flag (0 or 1).
-        /// 
-        /// FAdr Encoding (Z21-Protokoll Spezifikation):
-        /// FAdr is calculated as: FAdr = DecoderAddress << 2
-        /// Z21 converts back internally: Dcc_Addr = FAdr >> 2
-        /// Example: Decoder Address 201 → FAdr = 804 (0x324).
-        /// 
-        /// For multiplex signal decoders (e.g., 5229):
-        /// - BaseAddress + AddressOffset (e.g., 50 + 0 = 50) is treated as a regular decoder address
-        /// - FAdr = 50 << 2 = 200
-        /// - Z21 decodes: Dcc_Addr = 200 >> 2 = 50, Port = 0 (no special multiplex handling on Z21 side)
-        /// 
-        /// See Z21-Protokoll.md Section 5.1 for details.
-        /// </summary>
-        /// <param name="decoderAddress">Accessory decoder address (1-2044)</param>
-        /// <param name="output">Output index: 0 = output 1 (P=0), 1 = output 2 (P=1)</param>
-        /// <param name="activate">True = activate, False = deactivate</param>
-        /// <param name="queue">True = queue command (FW 1.24+), False = immediate execution</param>
-        public static byte[] BuildSetTurnout(int decoderAddress, int output, bool activate, bool queue = false)
-        {
-            // FAdr encoding per Z21 spec: FAdr = DecoderAddress << 2
-            var fAdr = decoderAddress << 2;
-            byte adrLsb = (byte)(fAdr & 0xFF);
-            byte adrMsb = (byte)((fAdr >> 8) & 0xFF);
+    /// <summary>
+    /// Builds LAN_X_SET_TURNOUT command for classic DCC turnout/signal decoders.
+    /// Format: 0x53 FAdr_MSB FAdr_LSB 10Q0A00P XOR
+    /// 
+    /// Supports all accessory decoders with 2 outputs per address.
+    /// Each decoder address controls 2 outputs via P flag (0 or 1).
+    /// 
+    /// FAdr Encoding (Z21-Protokoll Spezifikation):
+    /// FAdr is calculated as: FAdr = DecoderAddress << 2
+    /// Z21 converts back internally: Dcc_Addr = FAdr >> 2
+    /// Example: Decoder Address 201 → FAdr = 804 (0x324).
+    /// 
+    /// For multiplex signal decoders (e.g., 5229):
+    /// - BaseAddress + AddressOffset (e.g., 50 + 0 = 50) is treated as a regular decoder address
+    /// - FAdr = 50 << 2 = 200
+    /// - Z21 decodes: Dcc_Addr = 200 >> 2 = 50, Port = 0 (no special multiplex handling on Z21 side)
+    /// 
+    /// See Z21-Protokoll.md Section 5.1 for details.
+    /// </summary>
+    /// <param name="decoderAddress">Accessory decoder address (1-2044)</param>
+    /// <param name="output">Output index: 0 = output 1 (P=0), 1 = output 2 (P=1)</param>
+    /// <param name="activate">True = activate, False = deactivate</param>
+    /// <param name="queue">True = queue command (FW 1.24+), False = immediate execution</param>
+    public static byte[] BuildSetTurnout(int decoderAddress, int output, bool activate, bool queue = false)
+    {
+        // FAdr encoding per Z21 spec: FAdr = DecoderAddress << 2
+        var fAdr = decoderAddress << 2;
+        byte adrLsb = (byte)(fAdr & 0xFF);
+        byte adrMsb = (byte)((fAdr >> 8) & 0xFF);
 
-            // Build command byte: 10Q0A00P
-            // Bit 7-6: 10 (always)
-            // Bit 5:   Q = queue flag (1=queue, 0=immediate)
-            // Bit 4:   0 (reserved)
-            // Bit 3:   A = activate (1=activate, 0=deactivate)
-            // Bit 2-1: 00 (reserved)
-            // Bit 0:   P = output (0=output1, 1=output2)
-            byte cmdByte = (byte)(
-                0x80 |                              // 10XXXXXX
-                (queue ? 0x20 : 0x00) |            // Q flag
-                (activate ? 0x08 : 0x00) |         // A flag
-                (output & 0x01)                    // P flag
-            );
+        // Build command byte: 10Q0A00P
+        // Bit 7-6: 10 (always)
+        // Bit 5:   Q = queue flag (1=queue, 0=immediate)
+        // Bit 4:   0 (reserved)
+        // Bit 3:   A = activate (1=activate, 0=deactivate)
+        // Bit 2-1: 00 (reserved)
+        // Bit 0:   P = output (0=output1, 1=output2)
+        byte cmdByte = (byte)(
+            0x80 |                              // 10XXXXXX
+            (queue ? 0x20 : 0x00) |            // Q flag
+            (activate ? 0x08 : 0x00) |         // A flag
+            (output & 0x01)                    // P flag
+        );
 
-            // Calculate XOR checksum
-            byte xor = (byte)(Z21Protocol.XHeader.X_SET_TURNOUT ^ adrMsb ^ adrLsb ^ cmdByte);
+        // Calculate XOR checksum
+        byte xor = (byte)(Z21Protocol.XHeader.X_SET_TURNOUT ^ adrMsb ^ adrLsb ^ cmdByte);
 
-            return
-            [
-                0x0A, 0x00,  // DataLen = 10 bytes
+        return
+        [
+            0x0A, 0x00,  // DataLen = 10 bytes
                 Z21Protocol.Header.LAN_X_HEADER, 0x00,
                 Z21Protocol.XHeader.X_SET_TURNOUT,  // 0x53
                 adrMsb, adrLsb,
                 cmdByte,
                 xor
-            ];
-        }
+        ];
+    }
 
-        /// <summary>
-        /// Builds LAN_X_SET_EXT_ACCESSORY command for extended accessory decoders (e.g., multiplex decoders).
-        /// Format: 0x54 Adr_MSB Adr_LSB DDDDDDDD 0x00 XOR
-        /// 
-        /// Supports 256 different values per address (0-255).
-        /// Extended accessory decoders (RawAddress = 4) can hold multiple configuration profiles.
-        /// Example: Multiplex signal decoder 5229 with profiles for signal combinations.
-        /// </summary>
-        /// <param name="extAccessoryAddress">Extended accessory address (0-255)</param>
-        /// <param name="commandValue">Command value (0-255) for specific decoder state/aspect</param>
-        public static byte[] BuildSetExtAccessory(int extAccessoryAddress, int commandValue)
-        {
-            // Extended accessory addressing: RawAddress encodes the decoder address
-            // RawAddress 4 = first decoder (shown as "Address 1" in UI)
-            // For practical use: map addresses 1-255 directly
-            
-            byte adrMsb = (byte)((extAccessoryAddress >> 8) & 0xFF);
-            byte adrLsb = (byte)(extAccessoryAddress & 0xFF);
-            byte cmdByte = (byte)(commandValue & 0xFF);
+    /// <summary>
+    /// Builds LAN_X_SET_EXT_ACCESSORY command for extended accessory decoders (e.g., multiplex decoders).
+    /// Format: 0x54 Adr_MSB Adr_LSB DDDDDDDD 0x00 XOR
+    /// 
+    /// Supports 256 different values per address (0-255).
+    /// Extended accessory decoders (RawAddress = 4) can hold multiple configuration profiles.
+    /// Example: Multiplex signal decoder 5229 with profiles for signal combinations.
+    /// </summary>
+    /// <param name="extAccessoryAddress">Extended accessory address (0-255)</param>
+    /// <param name="commandValue">Command value (0-255) for specific decoder state/aspect</param>
+    public static byte[] BuildSetExtAccessory(int extAccessoryAddress, int commandValue)
+    {
+        // Extended accessory addressing: RawAddress encodes the decoder address
+        // RawAddress 4 = first decoder (shown as "Address 1" in UI)
+        // For practical use: map addresses 1-255 directly
 
-            // Calculate XOR checksum
-            byte xor = (byte)(Z21Protocol.XHeader.X_SET_EXT_ACCESSORY ^ adrMsb ^ adrLsb ^ cmdByte ^ 0x00);
+        byte adrMsb = (byte)((extAccessoryAddress >> 8) & 0xFF);
+        byte adrLsb = (byte)(extAccessoryAddress & 0xFF);
+        byte cmdByte = (byte)(commandValue & 0xFF);
 
-            return
-            [
-                0x0B, 0x00,  // DataLen = 11 bytes
+        // Calculate XOR checksum
+        byte xor = (byte)(Z21Protocol.XHeader.X_SET_EXT_ACCESSORY ^ adrMsb ^ adrLsb ^ cmdByte ^ 0x00);
+
+        return
+        [
+            0x0B, 0x00,  // DataLen = 11 bytes
                 Z21Protocol.Header.LAN_X_HEADER, 0x00,
                 Z21Protocol.XHeader.X_SET_EXT_ACCESSORY,  // 0x54
                 adrMsb, adrLsb,
                 cmdByte,
                 0x00,  // Reserved byte
                 xor
-            ];
-        }
+        ];
+    }
 
-        /// <summary>
-        /// Builds LAN_X_GET_TURNOUT_INFO command to request turnout/signal status.
-        /// Format: 0x43 FAdr_MSB FAdr_LSB XOR
-        /// 
-        /// FAdr Encoding: FAdr = DecoderAddress << 2 (Z21-Protokoll Spec).
-        /// </summary>
-        /// <param name="decoderAddress">Accessory decoder address (1-2044)</param>
-        public static byte[] BuildGetTurnoutInfo(int decoderAddress)
-        {
-            var fAdr = decoderAddress << 2;
-            byte adrLsb = (byte)(fAdr & 0xFF);
-            byte adrMsb = (byte)((fAdr >> 8) & 0xFF);
+    /// <summary>
+    /// Builds LAN_X_GET_TURNOUT_INFO command to request turnout/signal status.
+    /// Format: 0x43 FAdr_MSB FAdr_LSB XOR
+    /// 
+    /// FAdr Encoding: FAdr = DecoderAddress << 2 (Z21-Protokoll Spec).
+    /// </summary>
+    /// <param name="decoderAddress">Accessory decoder address (1-2044)</param>
+    public static byte[] BuildGetTurnoutInfo(int decoderAddress)
+    {
+        var fAdr = decoderAddress << 2;
+        byte adrLsb = (byte)(fAdr & 0xFF);
+        byte adrMsb = (byte)((fAdr >> 8) & 0xFF);
 
-            byte xor = (byte)(Z21Protocol.XHeader.X_GET_TURNOUT_INFO ^ adrMsb ^ adrLsb);
+        byte xor = (byte)(Z21Protocol.XHeader.X_GET_TURNOUT_INFO ^ adrMsb ^ adrLsb);
 
-            return
-            [
-                0x09, 0x00,  // DataLen = 9 bytes
+        return
+        [
+            0x09, 0x00,  // DataLen = 9 bytes
                 Z21Protocol.Header.LAN_X_HEADER, 0x00,
                 Z21Protocol.XHeader.X_GET_TURNOUT_INFO,  // 0x43
                 adrMsb, adrLsb,
                 xor
-            ];
-        }
+        ];
     }
+}
