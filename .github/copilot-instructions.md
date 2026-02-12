@@ -16,15 +16,18 @@
    - **Beispiel:** Für Script-Dokumentation → Kapitel in `README.md` (z.B. "## 🔧 Setup Scripts")
 
 5. ❌ **NIE Dateinamen, Klassen oder APIs raten** — IMMER Tools verwenden:
-   - `ripgrep`
-   - `filesystem`
-   - `openapi`
-   - `documents`
-   - `markitdown`
+   - `ripgrep` / `file_search`
+   - `filesystem` / `get_file`
+   - `openapi` / `get_web_pages`
+   - `documents` / `markitdown`
 
 6. ❌ **WinUI-Projektdatei-Pattern verboten**
    - Keine `<ItemGroup><Page Remove="View\DockingPage.xaml" /></ItemGroup>`
    - Keine `<Compile Update="View\DockingPage.xaml.cs"><DependentUpon>DockingPage.xaml</DependentUpon></Compile>`
+
+7. ❌ **Keine TODOs im Code** — IMMER in `todos.instructions.md` dokumentieren
+   - Exception: Temporäre Marker während aktiven Debug (mit Datum)
+   - Regel: Vor Commit entfernen oder zu todos.md verschieben
 
 ---
 
@@ -33,51 +36,57 @@ Bei JEDER Implementierung:
 
 1. **ANALYSE**  
    - Anforderungen verstehen  
-   - Betroffene Dateien identifizieren (→ `ripgrep`)  
-   - Muster/Duplikate finden  
+   - Betroffene Dateien identifizieren (→ `file_search`, `get_files_in_project`)  
+   - Muster/Duplikate finden (→ `code_search`)  
+   - Bestehende Tests identifizieren (→ `get_tests`)
 
 2. **RECHERCHE**  
-   - Bestehende Implementierungen (→ `ripgrep.search`)  
-   - Dokumentation (→ `markitdown` oder `documents`)  
-   - API (→ `openapi`)  
-   - WinUI / .NET Docs (→ `microsoft-learn`)  
+   - Bestehende Implementierungen (→ `find_symbol`, `code_search`)  
+   - Dokumentation (→ `.github/instructions/*.md`)  
+   - API (→ `openapi` if available)  
+   - .NET/WinUI Docs  
 
 3. **PLAN**  
-   - Immer das `plan()` Tool verwenden  
+   - IMMER `plan()` Tool verwenden  
    - Plan muss enthalten:  
      - Betroffene Dateien  
      - Neue Klassen / Methoden  
-     - Risiken  
-     - Tests  
+     - Änderungen an bestehenden Klassen  
+     - Risiken & Dependencies  
+     - Test-Strategie  
 
 4. **IMPLEMENTIERUNG**  
    - Backend → ViewModel → View  
-   - Nach jeder Datei: Build ausführen (VS Build Pipeline)
-   - XAML: ThemeResource, keine Farben  
+   - Nach jeder Datei: `get_errors()` für die Datei  
+   - XAML: `ThemeResource`, keine Farben  
    - MVVM Toolkit: `[ObservableProperty]`, `[RelayCommand]`  
+   - Async/Await: Nie `.Result` oder `.Wait()`  
 
 5. **VALIDIERUNG**  
-   - Build  
-   - Tests  
-   - Linting / ReSharper  
+   - `run_build()` am Ende  
+   - `run_tests()` für relevante Test-Projekte  
+   - Code-Qualität: `.editorconfig` Compliance  
+   - Keine new Warnings in ReSharper  
 
 6. **DOKUMENTATION**  
-   - README.md aktualisieren  
-   - Wiki falls Nutzer-Themen
+   - README.md aktualisieren (wenn User-Feature)  
+   - `todos.instructions.md` aktualisieren (Session-Status)  
+   - Inline-Comments: NUR für komplexe Logik  
+   - Public APIs: XML-Dokumentation (`/// <summary>`)
 
 ---
 
 ## ✅ PFLICHT: Programmierprinzipien beachten: 
-- SOLID; Single Responsibility Principle (SRP)
-- DRY
-- KISS (Keep It Simple, Stupid)
-- Meaningful Names
-- Kleine, fokussierte Methoden
-- Konsistente Formatierung
-- Separation of Concerns
-- Klare Namespaces und Projektstruktur
-- Sinnvolle Enums, Records, Interfaces
-- Pattern-basierte APIs
+- **SOLID**: Single Responsibility, Open/Closed, Liskov, Interface Segregation, Dependency Inversion
+- **DRY**: Don't Repeat Yourself (maximal 2x Copy-Paste → Extract Method/Class)
+- **KISS**: Keep It Simple, Stupid (< 20 Zeilen pro Methode wenn möglich)
+- **Meaningful Names**: Nicht "x", "temp", "data" — Intention klar machen
+- **Kleine, fokussierte Methoden**: Max 20-25 Zeilen
+- **Konsistente Formatierung**: `.editorconfig` befolgen (auto via VS)
+- **Separation of Concerns**: Domain, ViewModel, View streng trennen
+- **Klare Namespaces**: `Moba.<Layer>.<Feature>` Struktur
+- **Sinnvolle Enums, Records, Interfaces**: Nicht alles in Klassen packen
+- **Pattern-basierte APIs**: Fluent Builders, Observer Pattern wo sinnvoll
 
 ---
 
@@ -86,28 +95,40 @@ Bei JEDER Implementierung:
 ### MVVM (CommunityToolkit.Mvvm)
 - `[ObservableProperty]` für bindbare Properties  
 - `[RelayCommand]` für Commands  
-- Domain Models mit ViewModel wrappen
+- Domain Models separieren von ViewModels
+- **NIEMALS** Async/Await mit `.Result` oder `.Wait()`
 
 ### DI (Constructor Injection)
 - Pages: `public MyPage(MainWindowViewModel vm) => ViewModel = vm;`
-- Services: Constructor Injection, kein Service Locator
-- Registration: `services.AddTransient<View.MyPage>()`
+- Services: Constructor Injection, kein Service Locator  
+- Registration: `services.AddTransient<View.MyPage>()`  
+- Validation: `IProjectValidator` pattern
 
 ### WinUI 3
 - DispatcherQueue für UI-Updates vom Background-Thread  
 - DataTemplates in `EntityTemplates.xaml`, keine separaten UserControls  
-- ThemeResource für alle Farben  
+- ThemeResource für alle Farben/Brushes  
+- x:Bind (compile-time binding) für Performance  
+
+### JSON Validation
+- Schema in `WinUI/Build/Schemas/` definieren
+- Pre-commit Hook prüft automatisch
+- `ProjectValidator` für Completeness Checks
+- Siehe: `.github/instructions/di-pattern-consistency.instructions.md`
 
 ---
 
 ## 📁 Projekt-Struktur
 
-| Projekt | Zweck |
-|---------|-------|
-| `Domain/` | POCOs (Solution, Journey, Train, Workflow) |
-| `Backend/` | Services (IZ21, WorkflowService) |
-| `SharedUI/` | ViewModels |
-| `WinUI/` | Windows Desktop App |
+| Projekt | Zweck | Beispiel |
+|---------|-------|---------|
+| `Domain/` | POCOs (Solution, Journey, Train, Workflow) | `Project.cs`, `Locomotive.cs` |
+| `Backend/` | Services (IZ21, WorkflowService, ProjectValidator) | `WorkflowService.cs` |
+| `SharedUI/` | ViewModels (Multi-Platform) | `SignalBoxViewModel.cs` |
+| `WinUI/` | Windows Desktop App | `SignalBoxPage.xaml` |
+| `MAUI/` | Mobile App (Android) | `MauiProgram.cs` |
+| `Common/` | Shared Utilities (Validation, Events) | `JsonValidationService.cs` |
+| `Test/` | Unit Tests | `ProjectValidatorTests.cs` |
 
 ---
 
@@ -163,4 +184,27 @@ Details in `.github/instructions/`:
 - `todos.instructions.md` – Offene Aufgaben / Roadmap  
 - `naming-conventions.instructions.md` – C# Naming Standards (Protocol Constants)  
 - `di-pattern-consistency.instructions.md` – DI-Regeln  
-- **`plan-completion.instructions.md`** – **Plan-Validierung, Build-Checks, Incomplete-Work-Handling**
+- `plan-completion.instructions.md` – Plan-Validierung, Build-Checks  
+
+### Tools & Hooks
+- `.git/hooks/README.md` – Git Hooks Dokumentation
+- `WinUI/Build/ValidateJsonConfiguration.ps1` – JSON Validator
+- `WinUI/Build/Schemas/` – JSON Schema Definitionen
+
+---
+
+## 🔍 Qualitäts-Checklist für Copilot-Code
+
+Vor **Commit** IMMER überprüfen:
+- [ ] `.editorconfig` befolgt (Formatting)
+- [ ] Keine `TODO` Comments (→ todos.instructions.md)
+- [ ] Keine Magic Numbers (→ Named Constants)
+- [ ] Keine `.Result` / `.Wait()` (→ `await`)
+- [ ] Constructor Injection statt `new Service()`
+- [ ] `[ObservableProperty]` für MVVM Properties
+- [ ] XML-Docs für public APIs (`/// <summary>`)
+- [ ] Tests geschrieben (Enumerable.Range statt for-Loops)
+- [ ] `run_build()` erfolgreich
+- [ ] `run_tests()` alle bestanden
+- [ ] Keine neuen ReSharper Warnings
+- [ ] README/todos.md aktualisiert
