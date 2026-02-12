@@ -253,9 +253,9 @@
           },
           {
             "$type": "Signal",
-            "address": 201,
+            "address": 202,
             "signalSystem": "Ks",
-            "signalAspect": "Ks1",
+            "signalAspect": "Ks1Blink",
             "isMultiplexed": true,
             "multiplexerArticleNumber": "5229",
             "mainSignalArticleNumber": "4046",

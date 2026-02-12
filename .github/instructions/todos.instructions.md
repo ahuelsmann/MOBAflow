@@ -1,174 +1,252 @@
 # MOBAflow TODOs & Roadmap
 
-> Last Updated: 2026-02-20 (End of Session 29)
+> Last Updated: 2026-02-20 (End of Session 33)
 
 ---
 
-## ✅ SESSION 29 COMPLETED (2026-02-20)
+## ⏳ SESSION 33 IN PROGRESS: Signal Box Feature Breakthrough
 
-### What was implemented
+**Signal Control Implementation Progress:**
+- [x] Signal images rendering in UI
+- [x] Signal state properties linked to domain model
+- [x] Signal input/switching implemented on at least 2 controls
+- ⚠️ Signal image alignment/composition not fully matching (visual refinement needed)
+- ⚠️ Not all signal image properties produce visual effects yet (conditional rendering to investigate)
+- ⏳ Full integration with MOBAesb topology model pending
 
-- [x] **Z21 Turnout Addressing Correction:** FAdr for DCC accessory commands now uses `DccAddress - 1`
-  - **BuildSetTurnout:** FAdr uses decoderAddress - 1 per Z21 protocol
-  - **BuildGetTurnoutInfo:** FAdr uses decoderAddress - 1 per Z21 protocol
+**What Works:**
+- ✅ Signal aspect switching detected and responding on 2+ controls
+- ✅ Domain model `SignalBoxPlan` and signal state persistence
+- ✅ UI bindings for signal display and manipulation
 
-### Issues resolved
+**Known Issues:**
+- Signal images don't align perfectly when composed
+- Some property combinations don't visually update (e.g., certain aspect + speed signal combos)
+- Need to audit property-to-visual mapping for all signal types
 
-- [x] **Turnout FAdr Formula:** Replaced misleading `<< 2` calculation with `DccAddress - 1`
+**Next Steps:**
+- Debug visual composition/alignment issues in SignalBoxPage XAML
+- Add conditional rendering for multi-aspect signal combinations
+- Test all signal type configurations (main, distant, combined, shunting)
+- Implement full signal logic for routes and interlocking
 
-### Status
+**Files Involved:**
+- `SharedUI/ViewModel/SignalBoxViewModel.cs`
+- `WinUI/View/SignalBoxPage.xaml` / `.xaml.cs`
+- `Domain/SignalBoxPlan.cs`
+- `appsettings.json` (FeatureToggles: IsSignalBoxPageAvailable)
 
+---
+
+## ✅ SESSION 30 COMPLETED: JSON Configuration Validation Framework
+
+**What was implemented:**
+- [x] JSON syntax validation in build pipeline (`ValidateJsonConfiguration.targets`)
+- [x] PowerShell validation script with secrets warning (`ValidateJsonConfiguration.ps1`)
+- [x] JSON Schema for configuration structure (`appsettings.schema.json`)
+- [x] Pre-commit Git hook to prevent invalid config commits (`.git/hooks/pre-commit`)
+- [x] Fixed `appsettings.Development.json` missing comma bug
+
+**Issues resolved:**
+- [x] `System.IO.InvalidDataException` when parsing malformed JSON at runtime
+- [x] Build now fails early with clear error messages (Line number + position)
+- [x] Developers warned about missing Speech.Key or Z21 IP during development
+
+**Build Integration:**
+- Build runs `ValidateJsonConfiguration` target before compilation
+- Pre-commit hook prevents commits with syntax errors
+- Both DEBUG and RELEASE configurations validate
+
+**Status:**
 - Build: ✅ Successful
-- Tests: ⏳ Not run (needs manual run)
-- Code Review: ⏳ Pending
+- Validation: ✅ All files valid
+- Pre-commit: ✅ Installed and functional
 
 ---
 
-## ✅ SESSION 28 COMPLETED (2026-02-19)
+## ✅ SESSION 31 COMPLETED: Data File Validation & NuGet Recommendations
 
-### What was implemented
+**JSON Schema Validation Extended:**
+- [x] Created schema for `example-solution.json` (projects, locomotives, journeys)
+- [x] Created schema for `germany-locomotives.json` (locomotive categories & series)
+- [x] Created schema for `germany-stations.json` (station definitions)
+- [x] Extended `ValidateJsonConfiguration.ps1` with type-specific validation
+- [x] Updated `WinUI.csproj` to include all schemas in build output
 
-- [x] **Z21 Address Encoding Fixes:** Align turnout and extended accessory addressing with protocol spec
-  - **BuildSetTurnout:** Initial FAdr alignment noted as `decoderAddress << 2` (corrected in Session 29)
-  - **BuildSetExtAccessory:** Raw address used for 0-255 range, no 1-based offset
+**Type-Specific Validation:**
+- Configuration files: Secrets warnings (Speech.Key, Z21 IP)
+- Solutions: Project count validation
+- Locomotives: Category & epoch validation
+- Stations: Station count validation
 
-### Issues resolved
-
-- [x] **Turnout Addressing:** Removed incorrect 1-based offset in BuildSetTurnout
-- [x] **Extended Accessory Addressing:** Removed incorrect 1-based offset in BuildSetExtAccessory
-
-### Status
-
-- Build: ✅ Successful
-- Tests: ⏳ Not run (protocol tests available)
-- Code Review: ⏳ Pending
+**Validation Coverage:**
+| File | Schema | Type | Validation |
+|------|--------|------|-----------|
+| `appsettings*.json` | ✅ | Configuration | Secrets check |
+| `example-solution.json` | ✅ | Solution | Projects, Locomotives |
+| `germany-locomotives.json` | ✅ | Locomotives | Categories, Series |
+| `germany-stations.json` | ✅ | Stations | Cities, Track ranges |
 
 ---
 
-## ✅ SESSION 27 COMPLETED (2026-02-19)
+## ✅ SESSION 32 COMPLETED: JSON Schema Validation on Project Load + Completeness Checks
 
-### What was implemented
+**Runtime Validation Implemented:**
+- [x] Enhanced `example-solution.schema.json` with ALL 8 Project domain properties
+- [x] Created `ProjectValidator` service for completeness validation
+- [x] Integrated `IProjectValidator` into IoService.LoadAsync()
+- [x] ProjectValidator logs detailed info/warnings/errors for missing domain types
+- [x] Registered validator in DI container via `MobaServiceCollectionExtensions`
 
-- [x] **Z21 Protocol Bug Fixes:** Found and fixed TWO critical packet length bugs
-  - **BuildSetTurnout:** DataLen was 0x0A (10 bytes), FIXED to 0x09 (9 bytes)
-  - **BuildSetExtAccessory:** DataLen was 0x0B (11 bytes), FIXED to 0x0A (10 bytes)
+**Validation Flow:**
+1. User loads .json → IoService.LoadAsync()
+2. JSON syntax validation (existing)
+3. Schema validation (existing)
+4. **NEW**: ProjectValidator.ValidateCompleteness()
+   - Checks if Locomotives, Journeys, Stations are present
+   - Warns about missing SpeakerEngines, Voices if journey has them
+   - Logs details about Trains, Workflows, Wagons, SignalBoxPlan
+   - Per-project validation (supports multi-project solutions)
 
-- [x] **Port Configuration Bug:** Identified CRITICAL port mismatch
-  - **WRONG:** appsettings.json had `DefaultPort: 21105`
-  - **CORRECT:** Z21 actual port is `21106`
-  - Updated all test files to use correct port (21106)
+**Completeness Checks:**
+| Property | Required | Warning Trigger |
+|----------|----------|-----------------|
+| Locomotives | ❌ | If Journey defined but no Locomotives |
+| Journeys | ❌ | If Project defined but no Journeys |
+| Stations | ❌ | If Journeys defined but no Stations |
+| SpeakerEngines | ❌ | Info only (optional) |
+| Voices | ❌ | If SpeakerEngines exist but no Voices |
+| Trains | ❌ | Info only (optional) |
+| Workflows | ❌ | Info only (optional) |
+| PassengerWagons | ❌ | Info only (optional) |
+| GoodsWagons | ❌ | Info only (optional) |
+| SignalBoxPlan | ❌ | Info only (optional) |
 
-- [x] **Test Infrastructure:** Created comprehensive diagnostic test suite
-  - `Z21ProtocolAnalysisTests.cs` - Protocol packet structure validation
-  - `Z21LightingTestMatrix.cs` - 72-combination matrix test + quick test
-  - `Z21RocoComparisonTests.cs` - Wireshark-based packet comparison tool
-
-### Issues resolved
-
-- [x] **Packet Structure:** Z21Command.BuildSetTurnout sent 9 bytes but declared 10 - Z21 was rejecting packets!
-- [x] **Extended Accessory:** BuildSetExtAccessory had wrong length declaration (11 vs 10 bytes)
-- [x] **Port Configuration:** appsettings.json pointed to wrong Z21 port (21105 instead of 21106)
-- [x] **Lighting Not Working:** Root cause was **PORT MISMATCH**, not protocol!
-
-### Code Quality
-
-- Build: ✅ Successful (0 errors, 0 critical warnings)
-- Tests: ⏳ Ready to run with corrected port
-- Protocol: ✅ Now matches Z21-Protokoll.md specification exactly
-- Configuration: ✅ Port corrected
-
-### Session Achievement
-
-**BREAKTHROUGH #4:** Found the REAL problem! Not protocol encoding, but **PORT MISMATCH in config file**!
-- Z21 listens on 21106 (not 21105)
-- We were sending to the wrong port the entire time!
-- Also fixed DataLen bugs in packet builders (though this was secondary issue)
-
-### Files Modified
-
-- `Backend/Protocol/Z21Command.cs` - Fixed BuildSetTurnout (0x09) and BuildSetExtAccessory (0x0A)
-- `Test/Backend/Z21LightingTestMatrix.cs` - Updated port to 21106
-- `Test/Backend/Z21RocoComparisonTests.cs` - Updated port to 21106
-- `Test/Backend/Z21ProtocolAnalysisTests.cs` - Created new
-
-### CRITICAL NEXT STEP
-
-**Update WinUI/appsettings.json:**
+**example-solution.json Should Contain Examples:**
+All 8 domain types should be represented in example-solution.json to serve as a complete reference for developers:
 ```json
-"Z21": {
-    "CurrentIpAddress": "192.168.0.111",
-    "DefaultPort": "21106",  ← CHANGE FROM 21105!
-    ...
-}
-```
-
----
-
-## 🚀 SESSION 28 READY: Test Lighting Control with Corrected Port
-
-**Prerequisites:**
-- [x] Z21 port corrected to 21106
-- [x] Packet lengths fixed (9 and 10 bytes)
-- [ ] WinUI/appsettings.json port updated
-- [ ] Quick lighting test executed
-
-**What to do:**
-1. Update `WinUI/appsettings.json` to use port 21106
-2. Update `WinUI/appsettings.Development.json` if exists
-3. Run `QuickLightingTest_Roco99_Async` test
-4. Expected: **LIGHT SHOULD TURN ON AND STAY ON!** 💡
-
-**Files to Check:**
-- `WinUI/appsettings.json` - Port setting
-- `WinUI/appsettings.Development.json` - Port setting (if exists)
-- Any appsettings in other projects
-
-**Estimated Effort:** 15 minutes (update config + test)
-
-**Expected Result:** Lighting control finally works! 🎉
-
----
-
-## ✅ SESSION 23 COMPLETED (2026-02-17)
-
-### What was implemented
-
-- [x] **Z21.OnUdpReceived Async Refactor:** Improved UDP receiver performance
-  - Added `PublishEventAsync<TEvent>()` helper method (lines 644-665 in Backend/Z21.cs)
-  - Events queued to thread pool instead of blocking receiver
-  - 5 event publishing calls converted: XBusStatusChangedEvent, LocomotiveInfoChangedEvent, SystemStateChangedEvent, VersionInfoChangedEvent (2x)
-
-### Technical Details
-
-**Problem:** UDP receiver callback was blocking on `_eventBus.Publish()` calls
-**Solution:** Queue event publishing to thread pool with `Task.Run()`
-**Pattern:**
-```csharp
-private void PublishEventAsync<TEvent>(TEvent @event) where TEvent : class, IEvent
 {
-    _ = Task.Run(() => _eventBus.Publish(@event));
+  "name": "Example Solution",
+  "projects": [{
+    "name": "Example Project",
+    "speakerEngines": [...],     // Speech synthesis config
+    "voices": [...],               // Voice profiles
+    "locomotives": [...],          // Required: must have at least one
+    "trains": [...],               // Optional: train compositions
+    "passengerWagons": [...],      // Optional: passenger cars
+    "goodsWagons": [...],          // Optional: freight cars
+    "journeys": [...],             // Required: must have at least one
+    "workflows": [...],            // Optional: automation sequences
+    "signalBoxPlan": {...}         // Optional: signal box topology
+  }]
 }
 ```
 
-**Benefits:**
+**Files Modified:**
+- `Backend/Service/ProjectValidator.cs` (NEW)
+- `Backend/Extensions/MobaServiceCollectionExtensions.cs` (added validator registration)
+- `WinUI/Service/IoService.cs` (added validator call + logging)
+- `WinUI/Build/Schemas/example-solution.schema.json` (enhanced with all properties)
 
-- UDP receiver thread returns immediately (not blocked by EventBus lock/handlers)
-- Async subscribers notified on thread pool (faster event processing)
-- Synchronous subscribers (OnXBusStatusChanged, etc.) still run on receiver (backward compatible)
-- No memory leaks (exception handling included)
+**Build Status:** ✅ Successful
 
-### Files Modified
+---
 
-- `Backend/Z21.cs` (OnUdpReceived method refactored)
+## 📦 Recommended NuGet Packages for MOBAflow
 
-### Code Quality
+### **Already Installed & Recommended** ✅
 
-- Build: ✅ No compilation errors
-- Tests: ⏳ Ready to run
-- Code Review: ⏳ Pending
-- Performance: ✅ UDP receiver unblocked (fire-and-forget pattern)
+**Logging & Diagnostics:**
+- ✅ `Serilog.Extensions.Logging` – Currently used
+- ✅ `Serilog.Sinks.File` – Currently used
+- ✅ `Serilog.Sinks.Debug` – Currently used
+- ➕ **NEW**: `Serilog.Sinks.Async` (v2.1.0+) – Async logging without blocking UI
+- ➕ **NEW**: `Serilog.Enrichers.Environment` – Add OS/CPU info to logs
+- ➕ **NEW**: `Serilog.Enrichers.Process` – Add process ID/name to logs
 
-### Session Achievement
+**Dependency Injection:**
+- ✅ `Microsoft.Extensions.DependencyInjection` – Currently used
+- ✅ `Microsoft.Extensions.Configuration` – Currently used
+- ➕ **NEW**: `Microsoft.Extensions.Options.ConfigurationExtensions` – Strong config validation
 
-**REFACTOR COMPLETE:** Z21 UDP receiver no longer blocks on event publishing. 
-Low-priority Technical Debt item resolved. Event publishing now async-friendly while maintaining backward compatibility.
+**Real-time Communication:**
+- ✅ `Microsoft.AspNetCore.SignalR.Client` – Currently used
+- ✅ `Microsoft.WindowsAppSDK` – Currently used
+
+**Health Checking:**
+- ✅ Built-in (via HealthCheckService)
+- ➕ **NEW**: `AspNetCore.HealthChecks.Uris` (optional) – If implementing HTTP health checks
+
+### **HIGHLY RECOMMENDED** 🎯
+
+| Package | Version | Purpose | Impact |
+|---------|---------|---------|--------|
+| **Polly** | 8.2.0+ | Resilience policies (retry, circuit breaker, timeout) | Z21 connection reliability |
+| **Spectre.Console** | 0.50.0+ | Rich console output (for CLI tools, debugging) | Better diagnostics |
+| **FluentValidation** | 11.8.0+ | Configuration & DTO validation | Catch invalid configs early |
+| **MediatR** | 12.1.0+ | CQRS pattern (decouple commands/queries) | Cleaner architecture |
+
+### **OPTIONAL BUT VALUABLE** 💡
+
+| Package | Version | Purpose | Use Case |
+|---------|---------|---------|----------|
+| **Mapster** | 8.0.0+ | High-perf object mapping | ViewModel ↔ Domain conversions |
+| **Dapper** | 2.1.0+ | Lightweight ORM (if DB is added) | Solution/Journey persistence |
+| **MessagePack** | 2.5.0+ | Binary serialization (vs JSON) | High-freq Z21 data serialization |
+| **SharpZipLib** | 1.4.0+ | ZIP compression | Solution/Backup export |
+| **CsvHelper** | 30.0.0+ | CSV parsing | Export journeys/locomotives to CSV |
+| **SkiaSharp** | 2.88.0+ | Graphics rendering (alternative to WinUI canvas) | Track plan rendering |
+| **OpenTelemetry** | 1.7.0+ | Distributed tracing | Production monitoring |
+
+### **CI/CD & Build Tools** (DevDependencies)
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| **dotnet-format** | latest | Code style enforcement in CI/CD |
+| **dotnet-coverage** | latest | Code coverage reporting |
+| **SonarAnalyzer.CSharp** | 9.8.0+ | Static code analysis (SONAR) |
+
+---
+
+## 🔧 Recommended Installation Commands
+
+```powershell
+# Logging & Diagnostics (HIGH PRIORITY)
+dotnet add WinUI package Serilog.Sinks.Async
+dotnet add WinUI package Serilog.Enrichers.Environment
+dotnet add WinUI package Serilog.Enrichers.Process
+
+# Resilience (MEDIUM PRIORITY - for Z21 reliability)
+dotnet add Backend package Polly
+
+# Validation (MEDIUM PRIORITY)
+dotnet add Common package FluentValidation
+
+# Architecture Improvement (LOW PRIORITY - refactor over time)
+dotnet add SharedUI package MediatR
+
+# Build/CI Tools (DevDependencies)
+dotnet tool install -g dotnet-format
+dotnet tool install -g dotnet-coverage
+```
+
+---
+
+## 🎯 Implementation Roadmap (by session)
+
+**Session 33:** Polish Signal Box feature: visual alignment, conditional rendering, test all configurations
+**Session 34:** Add Polly resilience policies for Z21 connection
+**Session 35:** Add FluentValidation for AppSettings validation
+**Session 36:** Add MediatR for CQRS pattern in ViewModel commands
+**Session 37:** Add Mapster for high-performance object mapping
+
+---
+
+## ⚠️ Packages to AVOID
+
+| Package | Reason |
+|---------|--------|
+| **Newtonsoft.Json (Json.NET)** | System.Text.Json (built-in) is faster & lighter |
+| **Entity Framework Core** | Overkill for MOBAflow's data needs; use Dapper instead |
+| **Hangfire** | Not needed; use BackgroundService for deferred tasks |
+| **NLog** | Serilog is already integrated; don't mix loggers |

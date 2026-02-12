@@ -1,0 +1,179 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MOBAflow Solution Schema (Complete)",
+  "description": "Complete JSON Schema for MOBAflow projects - ensures all Domain model types are represented",
+  "type": "object",
+  "required": ["name", "projects"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "projects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          
+          "speakerEngines": {
+            "type": "array",
+            "description": "Speech synthesis engines (e.g., Azure Cognitive Services)",
+            "items": {
+              "type": "object",
+              "required": ["name", "type"],
+              "properties": {
+                "name": { "type": "string" },
+                "type": { "type": "string" },
+                "settings": { "type": "object" }
+              }
+            }
+          },
+          
+          "voices": {
+            "type": "array",
+            "description": "Voice profiles for speech synthesis",
+            "items": {
+              "type": "object",
+              "required": ["name"],
+              "properties": {
+                "name": { "type": "string" },
+                "prosodyRate": { "type": "number", "minimum": -1, "maximum": 1 }
+              }
+            }
+          },
+          
+          "locomotives": {
+            "type": "array",
+            "description": "Locomotives used in journeys",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["id", "name", "pos"],
+              "properties": {
+                "id": { "type": "string", "format": "uuid" },
+                "name": { "type": "string", "minLength": 1 },
+                "pos": { "type": "integer", "minimum": 1 },
+                "digitalAddress": { "type": ["integer", "null"], "minimum": 1, "maximum": 9999 },
+                "manufacturer": { "type": ["string", "null"] },
+                "articleNumber": { "type": ["string", "null"] },
+                "series": { "type": ["string", "null"] },
+                "colorPrimary": { "type": ["integer", "null"] },
+                "colorSecondary": { "type": ["integer", "null"] },
+                "isPushing": { "type": "boolean" }
+              }
+            }
+          },
+          
+          "passengerWagons": {
+            "type": "array",
+            "description": "Passenger wagons",
+            "items": {
+              "type": "object",
+              "required": ["id", "name"],
+              "properties": {
+                "id": { "type": "string", "format": "uuid" },
+                "name": { "type": "string" }
+              }
+            }
+          },
+          
+          "goodsWagons": {
+            "type": "array",
+            "description": "Goods/freight wagons",
+            "items": {
+              "type": "object",
+              "required": ["id", "name"],
+              "properties": {
+                "id": { "type": "string", "format": "uuid" },
+                "name": { "type": "string" }
+              }
+            }
+          },
+          
+          "trains": {
+            "type": "array",
+            "description": "Trains (combinations of locomotives and wagons)",
+            "items": {
+              "type": "object",
+              "required": ["id", "name"],
+              "properties": {
+                "id": { "type": "string", "format": "uuid" },
+                "name": { "type": "string" },
+                "description": { "type": ["string", "null"] },
+                "trainType": { "type": "integer" },
+                "serviceType": { "type": "integer" },
+                "isDoubleTraction": { "type": "boolean" },
+                "locomotiveIds": { "type": "array", "items": { "type": "string", "format": "uuid" } },
+                "wagonIds": { "type": "array", "items": { "type": "string", "format": "uuid" } }
+              }
+            }
+          },
+          
+          "workflows": {
+            "type": "array",
+            "description": "Workflows (automation sequences)",
+            "items": {
+              "type": "object",
+              "required": ["id", "name"],
+              "properties": {
+                "id": { "type": "string", "format": "uuid" },
+                "name": { "type": "string" },
+                "description": { "type": ["string", "null"] },
+                "actions": {
+                  "type": "array",
+                  "items": { "type": "object" }
+                }
+              }
+            }
+          },
+          
+          "journeys": {
+            "type": "array",
+            "description": "Journeys (routes with stations and stops)",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["id", "name"],
+              "properties": {
+                "id": { "type": "string", "format": "uuid" },
+                "name": { "type": "string", "minLength": 1 },
+                "description": { "type": ["string", "null"] },
+                "text": { "type": ["string", "null"] },
+                "inPort": { "type": ["integer", "null"] },
+                "isUsingTimerToIgnoreFeedbacks": { "type": "boolean" },
+                "intervalForTimerToIgnoreFeedbacks": { "type": ["number", "null"] },
+                "behaviorOnLastStop": { "type": "integer" },
+                "stations": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "object",
+                    "required": ["name", "number", "track"],
+                    "properties": {
+                      "name": { "type": "string" },
+                      "number": { "type": "integer", "minimum": 0 },
+                      "track": { "type": "integer", "minimum": 1, "maximum": 50 },
+                      "numberOfLapsToStop": { "type": "integer", "minimum": 0 },
+                      "arrival": { "type": ["string", "null"] },
+                      "departure": { "type": ["string", "null"] },
+                      "isExitOnLeft": { "type": "boolean" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          
+          "signalBoxPlan": {
+            "type": ["object", "null"],
+            "description": "Signal box plan (electronic signal box - MOBAesb)"
+          }
+        }
+      }
+    }
+  }
+}

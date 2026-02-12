@@ -81,6 +81,9 @@ public static class MobaServiceCollectionExtensions
         // Domain
         services.AddSingleton<Solution>();
 
+        // ✅ Validation Services
+        services.AddSingleton<IProjectValidator, ProjectValidator>();
+
         return services;
     }
 

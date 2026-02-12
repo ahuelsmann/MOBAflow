@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
     <!-- Project Identity -->
     <PropertyGroup>
         <RootNamespace>Moba.WinUI</RootNamespace>
@@ -66,4 +66,13 @@
         <Content Include="germany-stations.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="germany-locomotives.json" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
+
+    <!-- JSON Schema Files -->
+    <ItemGroup>
+        <Content Include="appsettings.schema.json" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="Build\Schemas\*.schema.json" CopyToOutputDirectory="PreserveNewest" Link="Build\Schemas\%(Filename)%(Extension)" />
+    </ItemGroup>
+
+    <!-- Import custom build targets for configuration validation -->
+    <Import Project="Build\ValidateJsonConfiguration.targets" />
 </Project>

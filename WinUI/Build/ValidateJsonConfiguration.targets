@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+  ValidateJsonConfiguration.targets - Validates all appsettings*.json files during build
+  Purpose: Catch JSON syntax errors (missing commas, quotes, etc.) at compile time, not runtime
+  Runs: Before every build (BeforeTargets="Build")
+-->
+<Project>
+  <Target Name="ValidateJsonConfiguration" BeforeTargets="Build">
+    <!-- Find all appsettings*.json files -->
+    <ItemGroup>
+      <JsonConfigurationFiles Include="$(MSBuildProjectDirectory)\appsettings*.json" />
+    </ItemGroup>
+
+    <!-- Validate each JSON file -->
+    <Message Text="Validating JSON configuration files..." Importance="high" />
+    
+    <Exec 
+      Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File $(MSBuildProjectDirectory)\Build\ValidateJsonConfiguration.ps1 -ProjectDirectory $(MSBuildProjectDirectory)"
+      ContinueOnError="false"
+    />
+  </Target>
+</Project>

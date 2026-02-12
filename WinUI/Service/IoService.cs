@@ -1,10 +1,12 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.Service;
 
+using Backend.Service;
 using Common.Validation;
 
 using Domain;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -19,10 +21,14 @@ public class IoService : IIoService
     private WindowId? _windowId;
     private XamlRoot? _xamlRoot;
     private readonly ISettingsService _settingsService;
+    private readonly IProjectValidator _projectValidator;
+    private readonly ILogger<IoService> _logger;
 
-    public IoService(ISettingsService settingsService)
+    public IoService(ISettingsService settingsService, IProjectValidator projectValidator, ILogger<IoService> logger)
     {
         _settingsService = settingsService;
+        _projectValidator = projectValidator;
+        _logger = logger;
     }
 
     /// <summary>
@@ -77,6 +83,28 @@ public class IoService : IIoService
         try
         {
             var sol = JsonSerializer.Deserialize<Solution>(json, JsonOptions.Default) ?? new Solution();
+
+            // ✅ Validate project completeness after loading
+            var completenessResult = _projectValidator.ValidateCompleteness(sol);
+            if (completenessResult.HasWarnings || completenessResult.HasErrors)
+            {
+                _logger.LogInformation("[Project Validation] {Summary}", completenessResult.GetSummary());
+                foreach (var msg in completenessResult.Messages)
+                {
+                    switch (msg.Level)
+                    {
+                        case Backend.Service.ValidationLevel.Error:
+                            _logger.LogError(msg.Text);
+                            break;
+                        case Backend.Service.ValidationLevel.Warning:
+                            _logger.LogWarning(msg.Text);
+                            break;
+                        default:
+                            _logger.LogInformation(msg.Text);
+                            break;
+                    }
+                }
+            }
 
             // Save last solution path to settings
             _settingsService.LastSolutionPath = result.Path;
