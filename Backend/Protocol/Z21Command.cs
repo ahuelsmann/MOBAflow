@@ -188,16 +188,16 @@ public static class Z21Command
     /// Each decoder address controls 2 outputs via P flag (0 or 1).
     /// 
     /// FAdr Encoding (Z21-Protokoll Spezifikation):
-    /// FAdr is calculated as: FAdr = DecoderAddress << 2
-    /// Z21 converts back internally: Dcc_Addr = FAdr >> 2
-    /// Example: Decoder Address 201 → FAdr = 804 (0x324).
+    /// FAdr is calculated as: FAdr = DccAddress - 1
+    /// Z21 converts back internally: Dcc_Addr = FAdr + 1
+    /// Example: Decoder Address 201 → FAdr = 200 (0x00C8).
     /// 
     /// For multiplex signal decoders (e.g., 5229):
     /// - BaseAddress + AddressOffset (e.g., 50 + 0 = 50) is treated as a regular decoder address
-    /// - FAdr = 50 << 2 = 200
-    /// - Z21 decodes: Dcc_Addr = 200 >> 2 = 50, Port = 0 (no special multiplex handling on Z21 side)
+    /// - FAdr = 50 - 1 = 49
+    /// - Z21 decodes: Dcc_Addr = 49 + 1 = 50, Port = 0 (no special multiplex handling on Z21 side)
     /// 
-    /// See Z21-Protokoll.md Section 5.1 for details.
+    /// See Z21-Protokoll.md Section 5.2 for details.
     /// </summary>
     /// <param name="decoderAddress">Accessory decoder address (1-2044)</param>
     /// <param name="output">Output index: 0 = output 1 (P=0), 1 = output 2 (P=1)</param>
@@ -205,8 +205,8 @@ public static class Z21Command
     /// <param name="queue">True = queue command (FW 1.24+), False = immediate execution</param>
     public static byte[] BuildSetTurnout(int decoderAddress, int output, bool activate, bool queue = false)
     {
-        // FAdr encoding per Z21 spec: FAdr = DecoderAddress << 2
-        var fAdr = decoderAddress << 2;
+        // FAdr encoding per Z21 protocol: FAdr = dcc address - 1
+        var fAdr = decoderAddress - 1;
         byte adrLsb = (byte)(fAdr & 0xFF);
         byte adrMsb = (byte)((fAdr >> 8) & 0xFF);
 
@@ -229,12 +229,12 @@ public static class Z21Command
 
         return
         [
-            0x0A, 0x00,  // DataLen = 10 bytes
-                Z21Protocol.Header.LAN_X_HEADER, 0x00,
-                Z21Protocol.XHeader.X_SET_TURNOUT,  // 0x53
-                adrMsb, adrLsb,
-                cmdByte,
-                xor
+            0x09, 0x00,  // DataLen = 9 bytes (per Z21-Protokoll Section 5.2)
+            Z21Protocol.Header.LAN_X_HEADER, 0x00,
+            Z21Protocol.XHeader.X_SET_TURNOUT,  // 0x53
+            adrMsb, adrLsb,
+            cmdByte,
+            xor
         ];
     }
 
@@ -250,12 +250,10 @@ public static class Z21Command
     /// <param name="commandValue">Command value (0-255) for specific decoder state/aspect</param>
     public static byte[] BuildSetExtAccessory(int extAccessoryAddress, int commandValue)
     {
-        // Extended accessory addressing: RawAddress encodes the decoder address
-        // RawAddress 4 = first decoder (shown as "Address 1" in UI)
-        // For practical use: map addresses 1-255 directly
-
-        byte adrMsb = (byte)((extAccessoryAddress >> 8) & 0xFF);
-        byte adrLsb = (byte)(extAccessoryAddress & 0xFF);
+        // Extended accessory addressing: use raw address (0-255)
+        var fAdr = extAccessoryAddress;
+        byte adrMsb = (byte)((fAdr >> 8) & 0xFF);
+        byte adrLsb = (byte)(fAdr & 0xFF);
         byte cmdByte = (byte)(commandValue & 0xFF);
 
         // Calculate XOR checksum
@@ -263,13 +261,13 @@ public static class Z21Command
 
         return
         [
-            0x0B, 0x00,  // DataLen = 11 bytes
-                Z21Protocol.Header.LAN_X_HEADER, 0x00,
-                Z21Protocol.XHeader.X_SET_EXT_ACCESSORY,  // 0x54
-                adrMsb, adrLsb,
-                cmdByte,
-                0x00,  // Reserved byte
-                xor
+            0x0A, 0x00,  // DataLen = 10 bytes
+            Z21Protocol.Header.LAN_X_HEADER, 0x00,
+            Z21Protocol.XHeader.X_SET_EXT_ACCESSORY,  // 0x54
+            adrMsb, adrLsb,
+            cmdByte,
+            0x00,  // Reserved byte
+            xor
         ];
     }
 
@@ -277,12 +275,12 @@ public static class Z21Command
     /// Builds LAN_X_GET_TURNOUT_INFO command to request turnout/signal status.
     /// Format: 0x43 FAdr_MSB FAdr_LSB XOR
     /// 
-    /// FAdr Encoding: FAdr = DecoderAddress << 2 (Z21-Protokoll Spec).
+    /// FAdr Encoding: FAdr = DccAddress - 1 (Z21-Protokoll Spec).
     /// </summary>
     /// <param name="decoderAddress">Accessory decoder address (1-2044)</param>
     public static byte[] BuildGetTurnoutInfo(int decoderAddress)
     {
-        var fAdr = decoderAddress << 2;
+        var fAdr = decoderAddress - 1;
         byte adrLsb = (byte)(fAdr & 0xFF);
         byte adrMsb = (byte)((fAdr >> 8) & 0xFF);
 
