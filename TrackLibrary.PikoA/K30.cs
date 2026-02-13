@@ -3,7 +3,7 @@ namespace Moba.TrackLibrary.PikoA;
 using Base;
 
 /// <summary>
-/// 55241 - Crossing K30, 30° angle, straight track = G119
+/// 55241 - Crossing K30, 30° angle, straight track = G119.
 /// </summary>
 public class K30 : Crossing
 {

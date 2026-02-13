@@ -8,6 +8,6 @@ using Base;
 public class W3 : SwitchThreeWay
 {
     public uint LengthInMm { get; set; } = 239;
-    public double ArcInDegree { get; set; } = 15;
+    public double ArcInDegree { get; set; } = 30;
     public double RadiusInMm { get; set; } = 907.97;
 }

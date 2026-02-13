@@ -4,7 +4,7 @@ using Base;
 
 /// <summary>
 /// 55227 - Left hand curved switch.
-/// Suitable for passing from radius R3 to R4, the main track’s radius of the turnou R3.
+/// Suitable for passing from radius R3 to R4, the main track’s radius of the turnout is R3.
 /// </summary>
 public class BWLR3 : SwitchCurvedLeft
 {
