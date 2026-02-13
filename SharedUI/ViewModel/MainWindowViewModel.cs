@@ -445,19 +445,14 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
         // CRITICAL: Always send LAN_LOGOFF to Z21 on app exit
-        // This prevents zombie clients on Z21 which can cause it to become unresponsive
-        // Note: Fire-and-forget is acceptable here since we are exiting anyway,
-        // but we give it a brief moment to complete
+        // This prevents zombie clients on Z21 which can cause it to become unresponsive.
+        // Async-first: trigger disconnect without synchronously blocking the UI thread.
         try
         {
-            var disconnectTask = _z21.DisconnectAsync();
-            // Wait briefly (100ms) to allow LAN_LOGOFF to be sent
-            // Do not block indefinitely as app needs to exit
-            disconnectTask.Wait(TimeSpan.FromMilliseconds(100));
+            _ = _z21.DisconnectAsync();
         }
         catch (TaskCanceledException) { /* Expected during shutdown */ }
         catch (OperationCanceledException) { /* Expected during shutdown */ }
-        catch (AggregateException) { /* Task.Wait throws AggregateException */ }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during Z21 disconnect");

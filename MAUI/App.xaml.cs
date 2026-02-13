@@ -131,13 +131,8 @@ public partial class App
         Debug.WriteLine("🚀 App.CreateWindow: Loading settings...");
         var settingsService = _services.GetRequiredService<ISettingsService>();
 
-        // ⚠️ BLOCKING: Wait for settings to load (on background thread to avoid UI freeze)
-        Task.Run(async () => await settingsService.LoadSettingsAsync()).Wait();
-
-        // ✅ Apply saved theme preference
-        var settings = settingsService.GetSettings();
-        ApplyTheme(settings.Application.IsDarkMode, settings.Application.UseSystemTheme);
-        Debug.WriteLine($"✅ App.CreateWindow: Theme applied (IsDarkMode={settings.Application.IsDarkMode}, UseSystemTheme={settings.Application.UseSystemTheme})");
+        // Async-first: load settings in the background without blocking the UI thread.
+        _ = LoadAndApplySettingsAsync(settingsService);
 
         Debug.WriteLine("✅ App.CreateWindow: Settings loaded, creating SplashPage...");
 
@@ -150,6 +145,22 @@ public partial class App
 
         Debug.WriteLine("✅ App.CreateWindow: Window created with SplashPage");
         return window;
+    }
+
+    private async Task LoadAndApplySettingsAsync(ISettingsService settingsService)
+    {
+        try
+        {
+            await settingsService.LoadSettingsAsync().ConfigureAwait(false);
+
+            var settings = settingsService.GetSettings();
+            ApplyTheme(settings.Application.IsDarkMode, settings.Application.UseSystemTheme);
+            Debug.WriteLine($"✅ App.CreateWindow: Theme applied (IsDarkMode={settings.Application.IsDarkMode}, UseSystemTheme={settings.Application.UseSystemTheme})");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"⚠️ App.CreateWindow: Failed to load settings: {ex.Message}");
+        }
     }
 
     /// <summary>

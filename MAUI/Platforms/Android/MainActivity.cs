@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.MAUI.Platforms.Android;
 
@@ -36,23 +36,8 @@ public class MainActivity : MauiAppCompatActivity
             var viewModel = IPlatformApplication.Current?.Services.GetService<MainWindowViewModel>();
             if (viewModel != null && viewModel.IsConnected)
             {
-                // Fire-and-forget but with short timeout to not block Android
-                var cleanupTask = Task.Run(async () =>
-                {
-                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-                    try
-                    {
-                        await viewModel.DisconnectCommand.ExecuteAsync(null);
-                        Debug.WriteLine("✅ MainActivity: Z21 cleanup complete");
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        Debug.WriteLine("⚠️ MainActivity: Cleanup timed out (2s)");
-                    }
-                });
-
-                // Wait briefly for cleanup (Android may kill process otherwise)
-                cleanupTask.Wait(TimeSpan.FromSeconds(2));
+                // Async-first: start cleanup without synchronously blocking the Android lifecycle thread
+                _ = CleanupAsync(viewModel);
             }
 
         }
@@ -62,6 +47,35 @@ public class MainActivity : MauiAppCompatActivity
         }
 
         base.OnDestroy();
+    }
+
+    private static async Task CleanupAsync(MainWindowViewModel viewModel)
+    {
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+
+        try
+        {
+            var disconnectTask = viewModel.DisconnectCommand.ExecuteAsync(null);
+            var completed = await Task.WhenAny(disconnectTask, Task.Delay(Timeout.Infinite, cts.Token)).ConfigureAwait(false);
+
+            if (completed == disconnectTask)
+            {
+                await disconnectTask.ConfigureAwait(false);
+                Debug.WriteLine("✅ MainActivity: Z21 cleanup complete");
+            }
+            else
+            {
+                Debug.WriteLine("⚠️ MainActivity: Cleanup timed out (2s)");
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Debug.WriteLine("⚠️ MainActivity: Cleanup canceled");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"⚠️ MainActivity: Cleanup error: {ex.Message}");
+        }
     }
 }
 
