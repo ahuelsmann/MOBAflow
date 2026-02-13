@@ -1,0 +1,27 @@
+---
+description: Kernregeln für Arbeit mit MOBAflow in Cursor
+alwaysApply: true
+---
+
+# MOBAflow – Cursor Kernregeln
+
+- **Sprache**
+  - Alle Erklärungen und Kommentare sind auf Deutsch zu verfassen.
+
+- **Git-Sicherheit**
+  - Keine Git-Befehle wie `commit`, `push`, `pull`, `merge`, `rebase` oder `cherry-pick` ausführen.
+  - Änderungen nur als normale Dateiedits vornehmen; der Benutzer steuert alle Git-Operationen selbst.
+
+- **Worktrees / Pfade**
+  - Nur im aktuell von Cursor geöffneten Worktree arbeiten.
+  - Keine Annahmen über andere Worktrees treffen und sie nicht verändern.
+
+- **Änderungsstil**
+  - Änderungen möglichst klein, nachvollziehbar und schrittweise halten.
+  - Wichtige Änderungen kurz zusammenfassen und begründen (Architektur, Testbarkeit, Wartbarkeit).
+  - Keine automatischen „Großaufräumaktionen“ ohne explizite Anweisung des Benutzers.
+
+- **Tests & Qualität**
+  - Nach relevanten Codeänderungen immer vorschlagen, passende Tests zu ergänzen oder zu aktualisieren.
+  - Existierende Projekt-Konventionen (z.B. MVVM, DI-Pattern, Domain/Backend/SharedUI-Trennung) respektieren.
+
