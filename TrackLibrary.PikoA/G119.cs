@@ -6,6 +6,6 @@ public class G119 : Straight
 {
     public G119()
     {
-        LengthInMm = 119;
+        LengthInMm = 119.54;
     }
 }

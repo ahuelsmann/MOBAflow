@@ -5,5 +5,5 @@ using Base;
 public class R4 : Curved
 {
     public double ArcInDegree { get; set; } = 30;
-    public int RadiusInMm { get; set; } = 546;
+    public double RadiusInMm { get; set; } = 545.63;
 }

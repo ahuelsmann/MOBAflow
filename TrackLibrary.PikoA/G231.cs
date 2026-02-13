@@ -6,6 +6,6 @@ public class G231 : Straight
 {
     public G231()
     {
-        LengthInMm = 231;
+        LengthInMm = 230.93;
     }
 }
