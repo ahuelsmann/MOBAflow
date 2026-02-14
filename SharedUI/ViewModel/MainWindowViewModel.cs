@@ -33,7 +33,7 @@ using System.Diagnostics;
 /// Core ViewModel for main window functionality.
 /// Partial classes handle: Selection, Solution, Journey, Workflow, Train, Z21, Settings.
 /// </summary>
-public partial class MainWindowViewModel : ObservableObject
+public sealed partial class MainWindowViewModel : ObservableObject
 {
     #region Fields
     // Core Services (required)
@@ -76,6 +76,15 @@ public partial class MainWindowViewModel : ObservableObject
         AnnouncementService? announcementService = null,
         object? photoHubClient = null)  // Optional PhotoHubClient (only in WinUI, type is object to avoid assembly reference)
     {
+        ArgumentNullException.ThrowIfNull(z21);
+        ArgumentNullException.ThrowIfNull(eventBus);
+        ArgumentNullException.ThrowIfNull(workflowService);
+        ArgumentNullException.ThrowIfNull(uiDispatcher);
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(solution);
+        ArgumentNullException.ThrowIfNull(executionContext);
+        ArgumentNullException.ThrowIfNull(logger);
+
         _ioService = ioService ?? new NullIoService();  // Use null object pattern
         _z21 = z21;
         _eventBus = eventBus;

@@ -10,7 +10,7 @@ using Interface;
 /// ViewModel wrapper for Station model with workflow assignment operations.
 /// Uses Project for resolving workflow GUID references.
 /// </summary>
-public partial class StationViewModel : ObservableObject, IViewModelWrapper<Station>
+public sealed partial class StationViewModel : ObservableObject, IViewModelWrapper<Station>
 {
     #region Fields
     // Model
@@ -22,6 +22,8 @@ public partial class StationViewModel : ObservableObject, IViewModelWrapper<Stat
 
     public StationViewModel(Station station, Project project)
     {
+        ArgumentNullException.ThrowIfNull(station);
+        ArgumentNullException.ThrowIfNull(project);
         _station = station;
         _project = project;
     }

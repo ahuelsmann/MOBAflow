@@ -14,7 +14,7 @@ using System.Net;
 /// <summary>
 /// Mobile-optimized ViewModel for MAUI - focused on Z21 monitoring and feedback statistics.
 /// </summary>
-public partial class MauiViewModel : ObservableObject
+public sealed partial class MauiViewModel : ObservableObject
 {
     private readonly IZ21 _z21;
     private readonly IUiDispatcher _uiDispatcher;
@@ -33,6 +33,13 @@ public partial class MauiViewModel : ObservableObject
         IPhotoUploadService photoUploadService,
         IPhotoCaptureService photoCaptureService)
     {
+        ArgumentNullException.ThrowIfNull(z21);
+        ArgumentNullException.ThrowIfNull(uiDispatcher);
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(settingsService);
+        ArgumentNullException.ThrowIfNull(restDiscoveryService);
+        ArgumentNullException.ThrowIfNull(photoUploadService);
+        ArgumentNullException.ThrowIfNull(photoCaptureService);
         _z21 = z21;
         _uiDispatcher = uiDispatcher;
         _settings = settings;

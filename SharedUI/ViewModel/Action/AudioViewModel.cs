@@ -13,7 +13,7 @@ using Sound;
 /// Volume is controlled via system-wide Windows volume settings.
 /// Audio files are played once when the action is triggered.
 /// </summary>
-public partial class AudioViewModel : WorkflowActionViewModel
+public sealed partial class AudioViewModel : WorkflowActionViewModel
 {
     #region Fields
     private readonly IIoService _ioService;
@@ -22,6 +22,7 @@ public partial class AudioViewModel : WorkflowActionViewModel
 
     public AudioViewModel(WorkflowAction action, IIoService ioService, ISoundPlayer? soundPlayer = null) : base(action, ActionType.Audio)
     {
+        ArgumentNullException.ThrowIfNull(ioService);
         _ioService = ioService;
         _soundPlayer = soundPlayer;
     }

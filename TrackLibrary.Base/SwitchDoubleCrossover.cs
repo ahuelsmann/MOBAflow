@@ -1,6 +1,9 @@
 namespace Moba.TrackLibrary.Base;
 
-public class SwitchDoubleCrossover : Segment
+/// <summary>
+/// Doppelkreuzungsweiche mit vier Ports (A, B, C, D).
+/// </summary>
+public abstract record SwitchDoubleCrossover : Segment
 {
     public Guid? PortA { get; set; }
     public Guid? PortB { get; set; }

@@ -18,6 +18,7 @@ public abstract class WorkflowActionViewModel : ObservableObject
 
     protected WorkflowActionViewModel(WorkflowAction action, ActionType type)
     {
+        ArgumentNullException.ThrowIfNull(action);
         _action = action;
         _action.Type = type;
         _action.Parameters ??= [];

@@ -12,7 +12,7 @@ using System.Collections.ObjectModel;
 /// ViewModel for train class input and selection.
 /// Provides input parsing for flexible train class entry (e.g., "110", "BR 110", "br110").
 /// </summary>
-public partial class TrainClassViewModel : ObservableObject
+public sealed partial class TrainClassViewModel : ObservableObject
 {
     private readonly ITrainClassParser _parser;
 
@@ -60,7 +60,8 @@ public partial class TrainClassViewModel : ObservableObject
 
     public TrainClassViewModel(ITrainClassParser parser)
     {
-        _parser = parser ?? throw new ArgumentNullException(nameof(parser));
+        ArgumentNullException.ThrowIfNull(parser);
+        _parser = parser;
 
         // Load available classes for auto-completion
         var allClasses = TrainClassLibrary.GetAllClasses();

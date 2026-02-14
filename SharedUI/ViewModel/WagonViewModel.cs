@@ -20,6 +20,7 @@ public partial class WagonViewModel : ObservableObject, IViewModelWrapper<Wagon>
 
     public WagonViewModel(Wagon model)
     {
+        ArgumentNullException.ThrowIfNull(model);
         Model = model;
     }
 

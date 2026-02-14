@@ -12,7 +12,7 @@ using Interface;
 /// <summary>
 /// ViewModel wrapper for Locomotive model with throttle control operations.
 /// </summary>
-public partial class LocomotiveViewModel : ObservableObject, IViewModelWrapper<Locomotive>
+public sealed partial class LocomotiveViewModel : ObservableObject, IViewModelWrapper<Locomotive>
 {
     #region Fields
     // Model
@@ -23,6 +23,7 @@ public partial class LocomotiveViewModel : ObservableObject, IViewModelWrapper<L
 
     public LocomotiveViewModel(Locomotive model)
     {
+        ArgumentNullException.ThrowIfNull(model);
         Model = model;
     }
 

@@ -8,7 +8,7 @@ using System.Collections.ObjectModel;
 /// ViewModel for JourneyMapPage - displays virtual route with station progress.
 /// Shows schematic station-to-station visualization with current position indicator.
 /// </summary>
-public class JourneyMapViewModel : ObservableObject
+public sealed class JourneyMapViewModel : ObservableObject
 {
     #region Fields
     // Context
@@ -17,6 +17,7 @@ public class JourneyMapViewModel : ObservableObject
 
     public JourneyMapViewModel(MainWindowViewModel mainViewModel)
     {
+        ArgumentNullException.ThrowIfNull(mainViewModel);
         _mainViewModel = mainViewModel;
 
         // Subscribe to journey and project changes

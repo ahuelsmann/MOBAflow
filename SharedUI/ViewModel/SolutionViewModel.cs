@@ -12,7 +12,7 @@ using System.Collections.ObjectModel;
 /// for TreeView binding. This is the root of the TreeView hierarchy.
 /// Must be manually refreshed when model changes (models don't fire events).
 /// </summary>
-public partial class SolutionViewModel : ObservableObject, IViewModelWrapper<Solution>
+public sealed partial class SolutionViewModel : ObservableObject, IViewModelWrapper<Solution>
 {
     #region Fields
     // Model
@@ -37,6 +37,7 @@ public partial class SolutionViewModel : ObservableObject, IViewModelWrapper<Sol
 
     public SolutionViewModel(Solution model, IUiDispatcher? dispatcher = null, IIoService? ioService = null, ISoundPlayer? soundPlayer = null)
     {
+        ArgumentNullException.ThrowIfNull(model);
         Model = model;
         _dispatcher = dispatcher;
         _ioService = ioService;

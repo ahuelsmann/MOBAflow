@@ -13,7 +13,7 @@ using System.Collections.ObjectModel;
 /// ViewModel für DockingManager mit Layout-State Management.
 /// Verwaltet Visibility, Größen und State aller Dock-Panels.
 /// </summary>
-public partial class DockingPanelViewModel : ObservableObject
+public sealed partial class DockingPanelViewModel : ObservableObject
 {
     #region Observable Properties
 

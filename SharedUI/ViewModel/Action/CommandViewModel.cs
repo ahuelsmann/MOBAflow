@@ -11,7 +11,7 @@ using System.Diagnostics;
 /// Wraps WorkflowAction with typed properties for Address, Speed, Direction.
 /// Provides decoding of raw Z21 DCC command bytes into human-readable format.
 /// </summary>
-public class CommandViewModel : WorkflowActionViewModel
+public sealed class CommandViewModel : WorkflowActionViewModel
 {
     #region Fields
     private Z21DccCommandDecoder.DccCommand? _decodedCommand;

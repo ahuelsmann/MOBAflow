@@ -317,6 +317,7 @@ public partial class App
         // TrackPlan (model and ViewModel)
         services.AddSingleton<TrackPlan>();
         services.AddSingleton<TrackPlanViewModel>();
+        services.AddSingleton<Moba.TrackLibrary.PikoA.EditableTrackPlan>();
 
         // Skin Provider
         services.AddSingleton<ISkinProvider, SkinProvider>();

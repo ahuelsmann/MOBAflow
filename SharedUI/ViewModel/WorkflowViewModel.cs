@@ -13,7 +13,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 
-public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Workflow>
+public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Workflow>
 {
     #region Fields
     // Model
@@ -26,6 +26,7 @@ public partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Wor
 
     public WorkflowViewModel(Workflow model, IIoService? ioService = null, ISoundPlayer? soundPlayer = null)
     {
+        ArgumentNullException.ThrowIfNull(model);
         _model = model;
         _ioService = ioService ?? new NullIoService();
         _soundPlayer = soundPlayer;

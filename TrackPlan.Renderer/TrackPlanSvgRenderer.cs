@@ -244,6 +244,14 @@ public class TrackPlanSvgRenderer
         }
     }
 
+    /// <summary>Zeichnet einen Pfad mit gemeinsamer Geometrie aus SegmentLocalPathBuilder.</summary>
+    private void DrawSegmentPath(Segment segment, char entryPort, double x, double y, double angle)
+    {
+        var path = SegmentLocalPathBuilder.GetPath(segment, entryPort);
+        var svgPath = PathToSvgConverter.ToSvgPath(path, x, y, angle);
+        _svg.AppendLine($"  <path d=\"{svgPath}\" stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
+    }
+
     /// <summary>
     /// Rendert ein WR-Gleis (Weichenfernmeldegleis).
     /// Struktur:
@@ -269,9 +277,7 @@ public class TrackPlanSvgRenderer
         double portBx = x + straightLength * Math.Cos(angle * Math.PI / 180);
         double portBy = y + straightLength * Math.Sin(angle * Math.PI / 180);
 
-        // Gerade zeichnen (Port A -> Port B)
-        _svg.AppendLine($"  <path d=\"M {portAx.ToString("F2", CultureInfo.InvariantCulture)},{portAy.ToString("F2", CultureInfo.InvariantCulture)} L {portBx.ToString("F2", CultureInfo.InvariantCulture)},{portBy.ToString("F2", CultureInfo.InvariantCulture)}\" " +
-                       $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
+        DrawSegmentPath(wr, 'A', x, y, angle);
 
         DrawPortStroke(portBx, portBy, angle, GetPortColor('B', segmentIndex), 'B', false);
         UpdateBounds(portBx, portBy);
@@ -284,13 +290,6 @@ public class TrackPlanSvgRenderer
         double endAngle = angle + arcDegree;
         double portCx = centerX + radius * Math.Cos((endAngle - 90) * Math.PI / 180);
         double portCy = centerY + radius * Math.Sin((endAngle - 90) * Math.PI / 180);
-
-        // Kurve zeichnen (Port A -> Port C)
-        int largeArc = arcDegree > 180 ? 1 : 0;
-        int sweep = 1;
-
-        _svg.AppendLine($"  <path d=\"M {portAx.ToString("F2", CultureInfo.InvariantCulture)},{portAy.ToString("F2", CultureInfo.InvariantCulture)} A {radius},{radius} 0 {largeArc},{sweep} {portCx.ToString("F2", CultureInfo.InvariantCulture)},{portCy.ToString("F2", CultureInfo.InvariantCulture)}\" " +
-                       $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
 
         DrawPortStroke(portCx, portCy, endAngle, GetPortColor('C', segmentIndex), 'C', false);
         UpdateBounds(portCx, portCy);
@@ -316,34 +315,18 @@ public class TrackPlanSvgRenderer
     {
         var radius = r9.RadiusInMm;
         var arcDegree = r9.ArcInDegree;
-
-        // Bei Port B-Eingang: Kurve in entgegengesetzte Richtung
         var curveDirection = entryPort == 'B' ? -1 : 1;
 
-        // Kreisbogen zeichnen
-        // Startpunkt
         double startX = x;
         double startY = y;
-
-        // Mittelpunkt des Kreises (90° nach links vom aktuellen Winkel)
         double centerAngle = angle + (90 * curveDirection);
         double centerX = x + radius * Math.Cos(centerAngle * Math.PI / 180);
         double centerY = y + radius * Math.Sin(centerAngle * Math.PI / 180);
-
-        // Endpunkt (nach Drehung um arcDegree)
         double endAngle = angle + (arcDegree * curveDirection);
         double endX = centerX + radius * Math.Cos((endAngle - (90 * curveDirection)) * Math.PI / 180);
         double endY = centerY + radius * Math.Sin((endAngle - (90 * curveDirection)) * Math.PI / 180);
 
-        // Large arc flag: 0 für kleine Bögen (< 180°)
-        int largeArc = arcDegree > 180 ? 1 : 0;
-
-        // Sweep flag: abhängig von Kurvenrichtung
-        int sweep = curveDirection == 1 ? 1 : 0;
-
-        // SVG Path: M = MoveTo, A = Arc
-        _svg.AppendLine($"  <path d=\"M {startX.ToString("F2", CultureInfo.InvariantCulture)},{startY.ToString("F2", CultureInfo.InvariantCulture)} A {radius},{radius} 0 {largeArc},{sweep} {endX.ToString("F2", CultureInfo.InvariantCulture)},{endY.ToString("F2", CultureInfo.InvariantCulture)}\" " +
-                       $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
+        DrawSegmentPath(r9, entryPort, x, y, angle);
 
         // Start-Port - physischer Port A oder B abhängig vom Entry
         char startPort = entryPort == 'A' ? 'A' : 'B';
@@ -377,25 +360,18 @@ public class TrackPlanSvgRenderer
     {
         var radius = r1.RadiusInMm;
         var arcDegree = r1.ArcInDegree;
-
         var curveDirection = entryPort == 'B' ? -1 : 1;
 
         double startX = x;
         double startY = y;
-
         double centerAngle = angle + (90 * curveDirection);
         double centerX = x + radius * Math.Cos(centerAngle * Math.PI / 180);
         double centerY = y + radius * Math.Sin(centerAngle * Math.PI / 180);
-
         double endAngle = angle + (arcDegree * curveDirection);
         double endX = centerX + radius * Math.Cos((endAngle - (90 * curveDirection)) * Math.PI / 180);
         double endY = centerY + radius * Math.Sin((endAngle - (90 * curveDirection)) * Math.PI / 180);
 
-        int largeArc = arcDegree > 180 ? 1 : 0;
-        int sweep = curveDirection == 1 ? 1 : 0;
-
-        _svg.AppendLine($"  <path d=\"M {startX.ToString("F2", CultureInfo.InvariantCulture)},{startY.ToString("F2", CultureInfo.InvariantCulture)} A {radius},{radius} 0 {largeArc},{sweep} {endX.ToString("F2", CultureInfo.InvariantCulture)},{endY.ToString("F2", CultureInfo.InvariantCulture)}\" " +
-                       $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
+        DrawSegmentPath(r1, entryPort, x, y, angle);
 
         char startPort = entryPort == 'A' ? 'A' : 'B';
         DrawPortStroke(startX, startY, angle, GetPortColor(startPort, segmentIndex), startPort, true);
@@ -425,25 +401,18 @@ public class TrackPlanSvgRenderer
     {
         var radius = r2.RadiusInMm;
         var arcDegree = r2.ArcInDegree;
-
         var curveDirection = entryPort == 'B' ? -1 : 1;
 
         double startX = x;
         double startY = y;
-
         double centerAngle = angle + (90 * curveDirection);
         double centerX = x + radius * Math.Cos(centerAngle * Math.PI / 180);
         double centerY = y + radius * Math.Sin(centerAngle * Math.PI / 180);
-
         double endAngle = angle + (arcDegree * curveDirection);
         double endX = centerX + radius * Math.Cos((endAngle - (90 * curveDirection)) * Math.PI / 180);
         double endY = centerY + radius * Math.Sin((endAngle - (90 * curveDirection)) * Math.PI / 180);
 
-        int largeArc = arcDegree > 180 ? 1 : 0;
-        int sweep = curveDirection == 1 ? 1 : 0;
-
-        _svg.AppendLine($"  <path d=\"M {startX.ToString("F2", CultureInfo.InvariantCulture)},{startY.ToString("F2", CultureInfo.InvariantCulture)} A {radius},{radius} 0 {largeArc},{sweep} {endX.ToString("F2", CultureInfo.InvariantCulture)},{endY.ToString("F2", CultureInfo.InvariantCulture)}\" " +
-                       $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
+        DrawSegmentPath(r2, entryPort, x, y, angle);
 
         char startPort = entryPort == 'A' ? 'A' : 'B';
         DrawPortStroke(startX, startY, angle, GetPortColor(startPort, segmentIndex), startPort, true);
@@ -473,25 +442,18 @@ public class TrackPlanSvgRenderer
     {
         var radius = r3.RadiusInMm;
         var arcDegree = r3.ArcInDegree;
-
         var curveDirection = entryPort == 'B' ? -1 : 1;
 
         double startX = x;
         double startY = y;
-
         double centerAngle = angle + (90 * curveDirection);
         double centerX = x + radius * Math.Cos(centerAngle * Math.PI / 180);
         double centerY = y + radius * Math.Sin(centerAngle * Math.PI / 180);
-
         double endAngle = angle + (arcDegree * curveDirection);
         double endX = centerX + radius * Math.Cos((endAngle - (90 * curveDirection)) * Math.PI / 180);
         double endY = centerY + radius * Math.Sin((endAngle - (90 * curveDirection)) * Math.PI / 180);
 
-        int largeArc = arcDegree > 180 ? 1 : 0;
-        int sweep = curveDirection == 1 ? 1 : 0;
-
-        _svg.AppendLine($"  <path d=\"M {startX.ToString("F2", CultureInfo.InvariantCulture)},{startY.ToString("F2", CultureInfo.InvariantCulture)} A {radius},{radius} 0 {largeArc},{sweep} {endX.ToString("F2", CultureInfo.InvariantCulture)},{endY.ToString("F2", CultureInfo.InvariantCulture)}\" " +
-                       $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
+        DrawSegmentPath(r3, entryPort, x, y, angle);
 
         char startPort = entryPort == 'A' ? 'A' : 'B';
         DrawPortStroke(startX, startY, angle, GetPortColor(startPort, segmentIndex), startPort, true);
@@ -521,25 +483,18 @@ public class TrackPlanSvgRenderer
     {
         var radius = r4.RadiusInMm;
         var arcDegree = r4.ArcInDegree;
-
         var curveDirection = entryPort == 'B' ? -1 : 1;
 
         double startX = x;
         double startY = y;
-
         double centerAngle = angle + (90 * curveDirection);
         double centerX = x + radius * Math.Cos(centerAngle * Math.PI / 180);
         double centerY = y + radius * Math.Sin(centerAngle * Math.PI / 180);
-
         double endAngle = angle + (arcDegree * curveDirection);
         double endX = centerX + radius * Math.Cos((endAngle - (90 * curveDirection)) * Math.PI / 180);
         double endY = centerY + radius * Math.Sin((endAngle - (90 * curveDirection)) * Math.PI / 180);
 
-        int largeArc = arcDegree > 180 ? 1 : 0;
-        int sweep = curveDirection == 1 ? 1 : 0;
-
-        _svg.AppendLine($"  <path d=\"M {startX.ToString("F2", CultureInfo.InvariantCulture)},{startY.ToString("F2", CultureInfo.InvariantCulture)} A {radius},{radius} 0 {largeArc},{sweep} {endX.ToString("F2", CultureInfo.InvariantCulture)},{endY.ToString("F2", CultureInfo.InvariantCulture)}\" " +
-                       $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
+        DrawSegmentPath(r4, entryPort, x, y, angle);
 
         char startPort = entryPort == 'A' ? 'A' : 'B';
         DrawPortStroke(startX, startY, angle, GetPortColor(startPort, segmentIndex), startPort, true);
@@ -567,23 +522,15 @@ public class TrackPlanSvgRenderer
     /// </summary>
     private void RenderG239(G239 g239, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
     {
-        // Bei Entry-Port B: Gleis "umgekehrt"
         if (entryPort == 'B')
-        {
             angle += 180;
-        }
 
-        // Port A (physischer Port A)
         double portAx = x;
         double portAy = y;
-
-        // Port B (physischer Port B am Ende der Geraden)
         double portBx = x + g239.LengthInMm * Math.Cos(angle * Math.PI / 180);
         double portBy = y + g239.LengthInMm * Math.Sin(angle * Math.PI / 180);
 
-        // Gerade zeichnen
-        _svg.AppendLine($"  <path d=\"M {portAx.ToString("F2", CultureInfo.InvariantCulture)},{portAy.ToString("F2", CultureInfo.InvariantCulture)} L {portBx.ToString("F2", CultureInfo.InvariantCulture)},{portBy.ToString("F2", CultureInfo.InvariantCulture)}\" " +
-                       $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
+        DrawSegmentPath(g239, entryPort, x, y, angle);
 
         // Port A - physische Farbe
         DrawPortStroke(portAx, portAy, angle, GetPortColor('A', segmentIndex), 'A', true);
@@ -612,23 +559,15 @@ public class TrackPlanSvgRenderer
     /// </summary>
     private void RenderG231(G231 g231, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
     {
-        // Bei Entry-Port B: Gleis "umgekehrt"
         if (entryPort == 'B')
-        {
             angle += 180;
-        }
 
-        // Port A (physischer Port A)
         double portAx = x;
         double portAy = y;
-
-        // Port B (physischer Port B am Ende der Geraden)
         double portBx = x + g231.LengthInMm * Math.Cos(angle * Math.PI / 180);
         double portBy = y + g231.LengthInMm * Math.Sin(angle * Math.PI / 180);
 
-        // Gerade zeichnen
-        _svg.AppendLine($"  <path d=\"M {portAx.ToString("F2", CultureInfo.InvariantCulture)},{portAy.ToString("F2", CultureInfo.InvariantCulture)} L {portBx.ToString("F2", CultureInfo.InvariantCulture)},{portBy.ToString("F2", CultureInfo.InvariantCulture)}\" " +
-                       $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
+        DrawSegmentPath(g231, entryPort, x, y, angle);
 
         // Port A - physische Farbe
         DrawPortStroke(portAx, portAy, angle, GetPortColor('A', segmentIndex), 'A', true);
@@ -657,23 +596,15 @@ public class TrackPlanSvgRenderer
     /// </summary>
     private void RenderG62(G62 g62, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
     {
-        // Bei Entry-Port B: Gleis "umgekehrt"
         if (entryPort == 'B')
-        {
             angle += 180;
-        }
 
-        // Port A (physischer Port A)
         double portAx = x;
         double portAy = y;
-
-        // Port B (physischer Port B am Ende der Geraden)
         double portBx = x + g62.LengthInMm * Math.Cos(angle * Math.PI / 180);
         double portBy = y + g62.LengthInMm * Math.Sin(angle * Math.PI / 180);
 
-        // Gerade zeichnen
-        _svg.AppendLine($"  <path d=\"M {portAx.ToString("F2", CultureInfo.InvariantCulture)},{portAy.ToString("F2", CultureInfo.InvariantCulture)} L {portBx.ToString("F2", CultureInfo.InvariantCulture)},{portBy.ToString("F2", CultureInfo.InvariantCulture)}\" " +
-                       $"stroke=\"#333\" stroke-width=\"4\" fill=\"none\" />");
+        DrawSegmentPath(g62, entryPort, x, y, angle);
 
         // Port A - physische Farbe
         DrawPortStroke(portAx, portAy, angle, GetPortColor('A', segmentIndex), 'A', true);

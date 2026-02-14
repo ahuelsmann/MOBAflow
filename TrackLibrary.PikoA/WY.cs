@@ -5,8 +5,8 @@ using Base;
 /// <summary>
 /// 55226 - Y switch, 30° angle, turnouts = R9.
 /// </summary>
-public class WY : SwitchTwoWay
+public sealed record WY : SwitchTwoWay
 {
-    public double ArcInDegree { get; set; } = 30;
-    public double RadiusInMm { get; set; } = 907.97;
+    public double ArcInDegree { get; init; } = 30;
+    public double RadiusInMm { get; init; } = 907.97;
 }

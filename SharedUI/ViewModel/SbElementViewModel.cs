@@ -78,7 +78,7 @@ public class SbElementViewModel : ObservableObject, IViewModelWrapper<SbElement>
 /// <summary>
 /// ViewModel for straight track elements.
 /// </summary>
-public class SbTrackStraightViewModel : SbElementViewModel
+public sealed class SbTrackStraightViewModel : SbElementViewModel
 {
     public SbTrackStraightViewModel(SbTrackStraight model) : base(model) { }
 
@@ -91,7 +91,7 @@ public class SbTrackStraightViewModel : SbElementViewModel
 /// <summary>
 /// ViewModel for curved track elements.
 /// </summary>
-public class SbTrackCurveViewModel : SbElementViewModel
+public sealed class SbTrackCurveViewModel : SbElementViewModel
 {
     public SbTrackCurveViewModel(SbTrackCurve model) : base(model) { }
 
@@ -105,7 +105,7 @@ public class SbTrackCurveViewModel : SbElementViewModel
 /// ViewModel for switch elements.
 /// Manages DCC address and position state.
 /// </summary>
-public class SbSwitchViewModel : SbElementViewModel
+public sealed class SbSwitchViewModel : SbElementViewModel
 {
     public SbSwitchViewModel(SbSwitch model) : base(model) { }
 
@@ -137,7 +137,7 @@ public class SbSwitchViewModel : SbElementViewModel
 /// ViewModel for signal elements.
 /// Manages DCC address, system type, and current aspect.
 /// </summary>
-public class SbSignalViewModel : SbElementViewModel
+public sealed class SbSignalViewModel : SbElementViewModel
 {
     public SbSignalViewModel(SbSignal model) : base(model) { }
 
@@ -178,7 +178,7 @@ public class SbSignalViewModel : SbElementViewModel
 /// ViewModel for detector elements.
 /// Manages feedback address for occupancy detection.
 /// </summary>
-public class SbDetectorViewModel : SbElementViewModel
+public sealed class SbDetectorViewModel : SbElementViewModel
 {
     public SbDetectorViewModel(SbDetector model) : base(model) { }
 

@@ -13,7 +13,7 @@ using System.Collections.ObjectModel;
 /// ViewModel for DockingPage demonstrating LayoutDocumentEx capabilities.
 /// (Host-seitig: ohne Plugin-Abhängigkeiten)
 /// </summary>
-public partial class DockingPageViewModel : ObservableObject
+public sealed partial class DockingPageViewModel : ObservableObject
 {
     [ObservableProperty]
     private ObservableCollection<DocumentTab> openDocuments = new();

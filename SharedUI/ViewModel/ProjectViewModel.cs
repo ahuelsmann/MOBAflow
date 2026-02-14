@@ -11,7 +11,7 @@ using System.Collections.ObjectModel;
 /// ViewModel wrapper for Project model that maintains a hierarchical collection structure
 /// for TreeView binding. Must be manually refreshed when model changes (models don't fire events).
 /// </summary>
-public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Project>
+public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Project>
 {
     #region Fields
     // Model
@@ -82,6 +82,7 @@ public partial class ProjectViewModel : ObservableObject, IViewModelWrapper<Proj
 
     public ProjectViewModel(Project model, IUiDispatcher? dispatcher = null, IIoService? ioService = null, ISoundPlayer? soundPlayer = null)
     {
+        ArgumentNullException.ThrowIfNull(model);
         Model = model;
         _dispatcher = dispatcher;
         _ioService = ioService;

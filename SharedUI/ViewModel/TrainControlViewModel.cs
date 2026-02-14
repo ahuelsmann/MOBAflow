@@ -31,7 +31,7 @@ using System.ComponentModel;
 /// 
 /// Cross-platform: Used by WinUI and MAUI.
 /// </summary>
-public partial class TrainControlViewModel : ObservableObject
+public sealed partial class TrainControlViewModel : ObservableObject
 {
     private readonly IZ21 _z21;
     private readonly IUiDispatcher _uiDispatcher;
@@ -615,6 +615,10 @@ public partial class TrainControlViewModel : ObservableObject
         MainWindowViewModel? mainWindowViewModel = null,
         ILogger<TrainControlViewModel>? logger = null)
     {
+        ArgumentNullException.ThrowIfNull(z21);
+        ArgumentNullException.ThrowIfNull(eventBus);
+        ArgumentNullException.ThrowIfNull(uiDispatcher);
+        ArgumentNullException.ThrowIfNull(settingsService);
         _z21 = z21;
         _uiDispatcher = uiDispatcher;
         _settingsService = settingsService;

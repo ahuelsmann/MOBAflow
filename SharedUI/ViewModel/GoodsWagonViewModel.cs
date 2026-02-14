@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
 using Domain;
@@ -8,7 +8,7 @@ using Domain.Enum;
 /// ViewModel wrapper for GoodsWagon model.
 /// Extends WagonViewModel with freight-specific properties.
 /// </summary>
-public class GoodsWagonViewModel : WagonViewModel
+public sealed class GoodsWagonViewModel : WagonViewModel
 {
     #region Fields
     // Model (specialized type)
@@ -17,6 +17,7 @@ public class GoodsWagonViewModel : WagonViewModel
 
     public GoodsWagonViewModel(GoodsWagon model) : base(model)
     {
+        ArgumentNullException.ThrowIfNull(model);
         GoodsWagonModel = model;
     }
 

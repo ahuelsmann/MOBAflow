@@ -21,7 +21,7 @@ using System.Threading;
 /// Left panel: Z21 UDP traffic (sent/received packets)
 /// Right panel: Application logs (from Serilog InMemorySink)
 /// </summary>
-public partial class MonitorPageViewModel : ObservableObject, IDisposable
+public sealed partial class MonitorPageViewModel : ObservableObject, IDisposable
 {
     private readonly MainWindowViewModel _mainWindowViewModel;
     private readonly IUiDispatcher _uiDispatcher;
@@ -71,6 +71,9 @@ public partial class MonitorPageViewModel : ObservableObject, IDisposable
 
     public MonitorPageViewModel(MainWindowViewModel mainWindowViewModel, IUiDispatcher uiDispatcher, ILogger<MonitorPageViewModel> logger)
     {
+        ArgumentNullException.ThrowIfNull(mainWindowViewModel);
+        ArgumentNullException.ThrowIfNull(uiDispatcher);
+        ArgumentNullException.ThrowIfNull(logger);
         _mainWindowViewModel = mainWindowViewModel;
         _uiDispatcher = uiDispatcher;
         _logger = logger;

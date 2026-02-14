@@ -1,6 +1,9 @@
 namespace Moba.TrackLibrary.Base;
 
-public class SwitchThreeWay : Segment
+/// <summary>
+/// Dreiwegeweiche mit vier Ports (A, B, C, D).
+/// </summary>
+public abstract record SwitchThreeWay : Segment
 {
     public Guid? PortA { get; set; }
     public Guid? PortB { get; set; }

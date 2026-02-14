@@ -16,7 +16,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 
-public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Journey>
+public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Journey>
 {
     #region Fields
     // Model
@@ -42,6 +42,9 @@ public partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Jour
         JourneyManager? journeyManager = null,
         IUiDispatcher? dispatcher = null)
     {
+        ArgumentNullException.ThrowIfNull(journey);
+        ArgumentNullException.ThrowIfNull(project);
+        ArgumentNullException.ThrowIfNull(state);
         _journey = journey;
         _project = project;
         _state = state;

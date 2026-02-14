@@ -104,10 +104,8 @@
                         Style="{StaticResource SubtitleTextBlockStyle}"
                         Text="Piko A-Gleis" />
                     <ScrollViewer Grid.Row="1" Padding="8,0">
-                        <StackPanel Spacing="4">
-                            <!--  Straights  -->
-                            <!--  Curves  -->
-                            <!--  Switches  -->
+                        <StackPanel x:Name="ToolboxStackPanel" Spacing="4">
+                            <!-- Toolbox wird in OnLoaded aus PikoACatalog gefüllt -->
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>

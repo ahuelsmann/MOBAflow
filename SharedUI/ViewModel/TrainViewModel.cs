@@ -12,7 +12,7 @@ using System.Collections.ObjectModel;
 /// ViewModel wrapper for Train model with CRUD operations for Locomotives and Wagons.
 /// Uses Project for resolving locomotive/wagon references via GUID lookups.
 /// </summary>
-public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
+public sealed partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
 {
     #region Fields
     // Model
@@ -24,6 +24,8 @@ public partial class TrainViewModel : ObservableObject, IViewModelWrapper<Train>
 
     public TrainViewModel(Train model, Project project)
     {
+        ArgumentNullException.ThrowIfNull(model);
+        ArgumentNullException.ThrowIfNull(project);
         _model = model;
         _project = project;
     }

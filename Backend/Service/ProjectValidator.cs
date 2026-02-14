@@ -24,6 +24,7 @@ public class ProjectValidator : IProjectValidator
 
     public ProjectValidator(ILogger<ProjectValidator> logger)
     {
+        ArgumentNullException.ThrowIfNull(logger);
         _logger = logger;
     }
 

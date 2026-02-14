@@ -1,6 +1,9 @@
 namespace Moba.TrackLibrary.Base;
 
-public class Crossing : Segment
+/// <summary>
+/// Kreuzung mit vier Ports (A, B, C, D).
+/// </summary>
+public abstract record Crossing : Segment
 {
     public Guid? PortA { get; set; }
     public Guid? PortB { get; set; }

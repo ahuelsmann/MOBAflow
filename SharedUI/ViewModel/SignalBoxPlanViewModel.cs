@@ -10,12 +10,13 @@ using System.Collections.ObjectModel;
 /// ViewModel wrapper for SignalBoxPlan domain model.
 /// Provides observable collections for elements, connections, and routes.
 /// </summary>
-public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrapper<SignalBoxPlan>
+public sealed partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrapper<SignalBoxPlan>
 {
     private readonly SignalBoxPlan _model;
 
     public SignalBoxPlanViewModel(SignalBoxPlan model)
     {
+        ArgumentNullException.ThrowIfNull(model);
         _model = model;
         Refresh();
     }
@@ -290,12 +291,13 @@ public partial class SignalBoxPlanViewModel : ObservableObject, IViewModelWrappe
 /// <summary>
 /// ViewModel wrapper for SignalBoxRoute.
 /// </summary>
-public class SignalBoxRouteViewModel : ObservableObject, IViewModelWrapper<SignalBoxRoute>
+public sealed class SignalBoxRouteViewModel : ObservableObject, IViewModelWrapper<SignalBoxRoute>
 {
     private readonly SignalBoxRoute _model;
 
     public SignalBoxRouteViewModel(SignalBoxRoute model)
     {
+        ArgumentNullException.ThrowIfNull(model);
         _model = model;
     }
 

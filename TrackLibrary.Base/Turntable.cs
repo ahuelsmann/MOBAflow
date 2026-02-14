@@ -1,5 +1,6 @@
 namespace Moba.TrackLibrary.Base;
 
-public class Turntable : Segment
-{
-}
+/// <summary>
+/// Drehscheibe-Segment.
+/// </summary>
+public record Turntable : Segment;

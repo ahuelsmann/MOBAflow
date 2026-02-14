@@ -61,6 +61,7 @@ public class Z21 : IZ21
 
     public Z21(IUdpClientWrapper udp, IEventBus eventBus, ILogger<Z21>? logger = null, Z21Monitor? trafficMonitor = null)
     {
+        ArgumentNullException.ThrowIfNull(udp);
         ArgumentNullException.ThrowIfNull(eventBus);
         _udp = udp;
         _eventBus = eventBus;

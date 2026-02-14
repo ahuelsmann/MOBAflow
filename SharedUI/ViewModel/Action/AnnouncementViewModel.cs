@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel.Action;
 
 using Domain;
@@ -9,7 +9,7 @@ using Domain.Enum;
 /// Wraps WorkflowAction with typed properties for Message, VoiceName, and Rate.
 /// Volume is controlled via system-wide Windows volume settings.
 /// </summary>
-public class AnnouncementViewModel : WorkflowActionViewModel
+public sealed class AnnouncementViewModel : WorkflowActionViewModel
 {
     #region Fields
     // (No additional fields - inherits from WorkflowActionViewModel)
