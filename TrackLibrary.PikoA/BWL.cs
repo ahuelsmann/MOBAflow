@@ -10,6 +10,6 @@ public sealed record BWL : SwitchCurvedLeft
 {
     public double ArcInDegreeR2 { get; init; } = 30;
     public double RadiusInMmR2 { get; init; } = 421.88;
-    public double ArcInDegreeR4 { get; init; } = 30;
-    public double RadiusInMmR4 { get; init; } = 545.63;
+    public double ArcInDegreeR3 { get; init; } = 30;
+    public double RadiusInMmR3 { get; init; } = 483.75;
 }

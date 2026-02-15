@@ -11,5 +11,5 @@ public sealed record BWLR3 : SwitchCurvedLeft
     public double ArcInDegreeR3 { get; init; } = 30;
     public double RadiusInMmR3 { get; init; } = 483.75;
     public double ArcInDegreeR5 { get; init; } = 30;
-    public double RadiusInMmR5 { get; init; } = 607.6;
+    public double RadiusInMmR5 { get; init; } = 607.51;
 }

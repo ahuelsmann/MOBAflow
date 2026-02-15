@@ -7,7 +7,7 @@ using Base;
 /// </summary>
 public sealed record WR : SwitchRight
 {
-    public uint LengthInMm { get; init; } = 239;
+    public double LengthInMm { get; init; } = 239.07;
     public double ArcInDegree { get; init; } = 15;
     public double RadiusInMm { get; init; } = 907.97;
 }

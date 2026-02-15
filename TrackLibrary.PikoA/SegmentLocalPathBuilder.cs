@@ -43,10 +43,10 @@ public static class SegmentLocalPathBuilder
             WL wl => GetWlPath(wl.LengthInMm, wl.ArcInDegree, wl.RadiusInMm),
             WY wy => GetWyPath(wy.ArcInDegree, wy.RadiusInMm),
             W3 w3 => GetW3Path(w3.LengthInMm, w3.ArcInDegree),
-            BWL bwl => GetBwlPath(bwl.ArcInDegreeR2, bwl.RadiusInMmR2),
-            BWR bwr => GetBwrPath(bwr.ArcInDegreeR2, bwr.RadiusInMmR2),
-            BWLR3 bwlr3 => GetBwlr3Path(),
-            BWRR3 bwrr3 => GetBwrr3Path(),
+            BWL bwl => GetBwlPath(bwl.ArcInDegreeR2, bwl.RadiusInMmR2, bwl.RadiusInMmR3),
+            BWR bwr => GetBwrPath(bwr.ArcInDegreeR2, bwr.RadiusInMmR2, bwr.RadiusInMmR3),
+            BWLR3 bwlr3 => GetBwlr3Path(bwlr3.RadiusInMmR3),
+            BWRR3 bwrr3 => GetBwrr3Path(bwrr3.RadiusInMmR3),
             DKW _ => GetDkwPath(),
             K15 k15 => GetCrossingPath(k15.ArcInDegree, k15.LengthInMm),
             K30 k30 => GetCrossingPath(k30.ArcInDegree, k30.LengthInMm),
@@ -173,54 +173,92 @@ public static class SegmentLocalPathBuilder
         ];
     }
 
-    private static IReadOnlyList<PathCommand> GetBwlPath(double arcDegree, double radius)
+    /// <summary>BWL: Bogenweiche links R2→R3. Stammgleis R2-Bogen, Abzweig R3-Bogen.</summary>
+    private static IReadOnlyList<PathCommand> GetBwlPath(double arcR2, double radiusR2, double radiusR3)
     {
-        var straightLen = 120.0;
         var curveDir = -1;
-        var centerAngleRad = (-90 * curveDir) * Math.PI / 180;
-        var centerX = curveDir * radius * 0.5;
-        var centerY = -radius * 0.3;
-        var endAngleRad = arcDegree * curveDir * Math.PI / 180;
-        var ex = centerX + radius * Math.Cos(endAngleRad);
-        var ey = centerY + radius * Math.Sin(endAngleRad);
+        var centerAngle = (90 * curveDir) * Math.PI / 180;
+        var centerX = radiusR2 * Math.Cos(centerAngle);
+        var centerY = radiusR2 * Math.Sin(centerAngle);
+        var endAngleRad = arcR2 * curveDir * Math.PI / 180;
+        var endLocalAngleRad = (90 * curveDir) * Math.PI / 180;
+        var sweep = endAngleRad - endLocalAngleRad;
+        var portBx = centerX + radiusR2 * Math.Cos(sweep);
+        var portBy = centerY + radiusR2 * Math.Sin(sweep);
+        var portCx = centerX + radiusR3 * Math.Cos(sweep);
+        var portCy = centerY + radiusR3 * Math.Sin(sweep);
         return
         [
-            new LineTo(straightLen, 0),
-            new MoveTo(straightLen * 0.5, 0),
-            new ArcTo(ex, ey, radius * 0.3, curveDir > 0)
+            new ArcTo(portBx, portBy, radiusR2, false),
+            new MoveTo(0, 0),
+            new ArcTo(portCx, portCy, radiusR3, false)
         ];
     }
 
-    private static IReadOnlyList<PathCommand> GetBwrPath(double arcDegree, double radius)
+    /// <summary>BWR: Bogenweiche rechts R2→R3. Stammgleis R2-Bogen, Abzweig R3-Bogen.</summary>
+    private static IReadOnlyList<PathCommand> GetBwrPath(double arcR2, double radiusR2, double radiusR3)
     {
-        var straightLen = 120.0;
         var curveDir = 1;
-        var centerAngleRad = (90 * curveDir) * Math.PI / 180;
-        var centerX = straightLen * 0.5 + curveDir * radius * 0.2;
-        var centerY = -radius * 0.2;
-        var endAngleRad = arcDegree * curveDir * Math.PI / 180;
-        var ex = centerX + radius * 0.3 * Math.Cos(endAngleRad);
-        var ey = centerY + radius * 0.3 * Math.Sin(endAngleRad);
+        var centerAngle = (90 * curveDir) * Math.PI / 180;
+        var centerX = radiusR2 * Math.Cos(centerAngle);
+        var centerY = radiusR2 * Math.Sin(centerAngle);
+        var endAngleRad = arcR2 * curveDir * Math.PI / 180;
+        var endLocalAngleRad = (90 * curveDir) * Math.PI / 180;
+        var sweep = endAngleRad - endLocalAngleRad;
+        var portBx = centerX + radiusR2 * Math.Cos(sweep);
+        var portBy = centerY + radiusR2 * Math.Sin(sweep);
+        var portCx = centerX + radiusR3 * Math.Cos(sweep);
+        var portCy = centerY + radiusR3 * Math.Sin(sweep);
         return
         [
-            new LineTo(straightLen, 0),
-            new MoveTo(straightLen * 0.5, 0),
-            new ArcTo(ex, ey, radius * 0.3, curveDir > 0)
+            new ArcTo(portBx, portBy, radiusR2, true),
+            new MoveTo(0, 0),
+            new ArcTo(portCx, portCy, radiusR3, true)
         ];
     }
 
-    private static IReadOnlyList<PathCommand> GetBwlr3Path()
+    /// <summary>BWLR3: Bogenweiche links R3→R4.</summary>
+    private static IReadOnlyList<PathCommand> GetBwlr3Path(double radiusR3)
     {
-        var len = 100.0;
-        var angle = 18 * Math.PI / 180;
-        return [new LineTo(len, 0), new MoveTo(len * 0.5, 0), new LineTo(len * 0.5 + len * 0.4 * Math.Cos(angle), len * 0.4 * Math.Sin(angle))];
+        var radiusR4 = radiusR3 + 61.88;
+        var curveDir = -1;
+        var centerAngle = (90 * curveDir) * Math.PI / 180;
+        var centerX = radiusR3 * Math.Cos(centerAngle);
+        var centerY = radiusR3 * Math.Sin(centerAngle);
+        const double arcDeg = 30;
+        var sweep = (arcDeg * curveDir * Math.PI / 180) - ((90 * curveDir) * Math.PI / 180);
+        var portBx = centerX + radiusR3 * Math.Cos(sweep);
+        var portBy = centerY + radiusR3 * Math.Sin(sweep);
+        var portCx = centerX + radiusR4 * Math.Cos(sweep);
+        var portCy = centerY + radiusR4 * Math.Sin(sweep);
+        return
+        [
+            new ArcTo(portBx, portBy, radiusR3, false),
+            new MoveTo(0, 0),
+            new ArcTo(portCx, portCy, radiusR4, false)
+        ];
     }
 
-    private static IReadOnlyList<PathCommand> GetBwrr3Path()
+    /// <summary>BWRR3: Bogenweiche rechts R3→R4.</summary>
+    private static IReadOnlyList<PathCommand> GetBwrr3Path(double radiusR3)
     {
-        var len = 100.0;
-        var angle = -18 * Math.PI / 180;
-        return [new LineTo(len, 0), new MoveTo(len * 0.5, 0), new LineTo(len * 0.5 + len * 0.4 * Math.Cos(angle), len * 0.4 * Math.Sin(angle))];
+        var radiusR4 = radiusR3 + 61.88;
+        var curveDir = 1;
+        var centerAngle = (90 * curveDir) * Math.PI / 180;
+        var centerX = radiusR3 * Math.Cos(centerAngle);
+        var centerY = radiusR3 * Math.Sin(centerAngle);
+        const double arcDeg = 30;
+        var sweep = (arcDeg * curveDir * Math.PI / 180) - ((90 * curveDir) * Math.PI / 180);
+        var portBx = centerX + radiusR3 * Math.Cos(sweep);
+        var portBy = centerY + radiusR3 * Math.Sin(sweep);
+        var portCx = centerX + radiusR4 * Math.Cos(sweep);
+        var portCy = centerY + radiusR4 * Math.Sin(sweep);
+        return
+        [
+            new ArcTo(portBx, portBy, radiusR3, true),
+            new MoveTo(0, 0),
+            new ArcTo(portCx, portCy, radiusR4, true)
+        ];
     }
 
     private static IReadOnlyList<PathCommand> GetDkwPath()

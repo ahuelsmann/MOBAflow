@@ -86,6 +86,18 @@ public sealed class EditableTrackPlan
         PlanChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>Löst ein Segment aus der Gruppe – entfernt alle Verbindungen zu diesem Segment, ohne das Segment zu löschen.</summary>
+    public void DisconnectSegmentFromGroup(Guid segmentNo)
+    {
+        var toRemove = _connections
+            .Where(c => c.SourceSegment == segmentNo || c.TargetSegment == segmentNo)
+            .ToList();
+        foreach (var c in toRemove)
+        {
+            RemoveConnection(c.SourceSegment, c.SourcePort, c.TargetSegment, c.TargetPort);
+        }
+    }
+
     /// <summary>Entfernt eine Verbindung.</summary>
     public void RemoveConnection(Guid sourceSegment, string sourcePort, Guid targetSegment, string targetPort)
     {

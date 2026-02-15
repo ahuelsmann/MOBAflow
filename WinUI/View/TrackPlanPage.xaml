@@ -22,6 +22,11 @@
                 Icon="Trim"
                 IsChecked="True"
                 Label="Snap" />
+            <AppBarButton
+                x:Name="DisconnectButton"
+                Icon="Remove"
+                Label="Trennen"
+                ToolTipService.ToolTip="Verbindungen des ausgewählten Gleises lösen (R)" />
             <AppBarToggleButton
                 x:Name="GridToggle"
                 Icon="ViewAll"
@@ -117,6 +122,8 @@
                         x:Name="CanvasScrollViewer"
                         HorizontalScrollBarVisibility="Auto"
                         HorizontalScrollMode="Enabled"
+                        MaxZoomFactor="3.0"
+                        MinZoomFactor="0.1"
                         VerticalScrollBarVisibility="Auto"
                         VerticalScrollMode="Enabled"
                         ZoomMode="Enabled">

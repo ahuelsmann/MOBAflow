@@ -18,14 +18,13 @@ public static class SegmentPlanPathBuilder
 
     /// <summary>
     /// Erstellt ein Path für ein PlacedSegment (Plan-Anzeige, Ghost oder Auswahl).
-    /// Position und Rotation werden per Canvas.SetLeft/SetTop und RenderTransform gesetzt.
-    /// Der Ursprung (Port A) liegt bei (0,0) der Geometrie, damit die Rotation korrekt ist.
+    /// Verwendet dieselbe Transformationslogik wie PathToSvgConverter: Position und Rotation werden
+    /// in die Geometrie eingerechnet, damit der Entry-Port stets korrekt am Verbindungspunkt liegt.
     /// </summary>
     public static Path CreatePath(PlacedSegment placed, bool isGhost, bool isSelected, char entryPort = 'A')
     {
         var pathCommands = SegmentLocalPathBuilder.GetPath(placed.Segment, entryPort);
-        var (minX, minY, _, _) = SegmentLocalPathBuilder.GetBounds(pathCommands);
-        var geometry = BuildPathGeometry(pathCommands, ScaleMmToPx, -minX, -minY);
+        var geometry = BuildPathGeometryInWorldCoords(pathCommands, placed.X, placed.Y, placed.RotationDegrees, ScaleMmToPx);
 
         var path = new Path
         {
@@ -35,27 +34,19 @@ public static class SegmentPlanPathBuilder
             StrokeLineJoin = PenLineJoin.Round,
             StrokeStartLineCap = PenLineCap.Round,
             StrokeEndLineCap = PenLineCap.Round,
-            Tag = placed.Segment.No,
-            RenderTransformOrigin = new Point(0, 0),
-            RenderTransform = new RotateTransform
-            {
-                Angle = placed.RotationDegrees,
-                CenterX = 0,
-                CenterY = 0
-            }
+            Tag = placed.Segment.No
         };
 
         if (isGhost)
         {
             path.Fill = null;
-            path.Stroke = new SolidColorBrush(Windows.UI.Color.FromArgb(180, 0, 120, 215));
+            var accent = (SolidColorBrush)Application.Current.Resources["AccentFillColorDefaultBrush"]!;
+            path.Stroke = new SolidColorBrush(Windows.UI.Color.FromArgb(180, accent.Color.R, accent.Color.G, accent.Color.B));
         }
         else
         {
             path.Fill = null;
-            path.Stroke = isSelected
-                ? new SolidColorBrush(Windows.UI.Color.FromArgb(255, 0, 120, 215))
-                : new SolidColorBrush(Windows.UI.Color.FromArgb(255, 51, 51, 51));
+            path.Stroke = isSelected ? ResolveTrackStrokeSelectedBrush() : ResolveTrackStrokeBrush();
         }
 
         return path;
@@ -65,75 +56,86 @@ public static class SegmentPlanPathBuilder
     public static double ScaleMmToPx { get; set; } = 1.0;
 
     /// <summary>
-    /// Baut eine PathGeometry direkt aus PathCommands ohne XAML-Parsing.
-    /// Transformiert mit Skalierung und optionalem Offset.
+    /// Baut PathGeometry in Weltkoordinaten (wie PathToSvgConverter) – Translation und Rotation
+    /// werden pro Punkt angewendet. Damit liegt der Entry-Port immer korrekt am Verbindungspunkt.
     /// </summary>
-    private static PathGeometry BuildPathGeometry(
+    private static PathGeometry BuildPathGeometryInWorldCoords(
         IReadOnlyList<SegmentLocalPathBuilder.PathCommand> commands,
-        double scale,
-        double offsetX,
-        double offsetY)
+        double originX,
+        double originY,
+        double angleDegrees,
+        double scale)
     {
+        var angleRad = angleDegrees * Math.PI / 180;
+        var cos = Math.Cos(angleRad);
+        var sin = Math.Sin(angleRad);
+        double Tx(double lx, double ly) => (originX + lx * cos - ly * sin) * scale;
+        double Ty(double lx, double ly) => (originY + lx * sin + ly * cos) * scale;
+
         var figures = new PathFigureCollection();
-        double currentX = 0, currentY = 0;
+        double x = 0, y = 0;
 
         foreach (var cmd in commands)
         {
             switch (cmd)
             {
                 case SegmentLocalPathBuilder.MoveTo move:
-                    currentX = move.X;
-                    currentY = move.Y;
+                    x = move.X;
+                    y = move.Y;
                     break;
 
                 case SegmentLocalPathBuilder.LineTo line:
                     {
-                        var figure = new PathFigure
+                        figures.Add(new PathFigure
                         {
-                            StartPoint = new Point(
-                                (currentX + offsetX) * scale,
-                                (currentY + offsetY) * scale),
-                            IsClosed = false
-                        };
-                        figure.Segments.Add(new LineSegment
-                        {
-                            Point = new Point(
-                                (line.X + offsetX) * scale,
-                                (line.Y + offsetY) * scale)
+                            StartPoint = new Point(Tx(x, y), Ty(x, y)),
+                            IsClosed = false,
+                            Segments = { new LineSegment { Point = new Point(Tx(line.X, line.Y), Ty(line.X, line.Y)) } }
                         });
-                        figures.Add(figure);
-                        currentX = line.X;
-                        currentY = line.Y;
+                        x = line.X;
+                        y = line.Y;
                         break;
                     }
 
                 case SegmentLocalPathBuilder.ArcTo arc:
                     {
-                        var figure = new PathFigure
+                        figures.Add(new PathFigure
                         {
-                            StartPoint = new Point(
-                                (currentX + offsetX) * scale,
-                                (currentY + offsetY) * scale),
-                            IsClosed = false
-                        };
-                        figure.Segments.Add(new ArcSegment
-                        {
-                            Point = new Point(
-                                (arc.EndX + offsetX) * scale,
-                                (arc.EndY + offsetY) * scale),
-                            Size = new Size(arc.Radius * scale, arc.Radius * scale),
-                            RotationAngle = 0,
-                            IsLargeArc = false,
-                            SweepDirection = arc.Clockwise ? SweepDirection.Clockwise : SweepDirection.Counterclockwise
+                            StartPoint = new Point(Tx(x, y), Ty(x, y)),
+                            IsClosed = false,
+                            Segments =
+                            {
+                                new ArcSegment
+                                {
+                                    Point = new Point(Tx(arc.EndX, arc.EndY), Ty(arc.EndX, arc.EndY)),
+                                    Size = new Size(arc.Radius * scale, arc.Radius * scale),
+                                    RotationAngle = 0,
+                                    IsLargeArc = false,
+                                    SweepDirection = arc.Clockwise ? SweepDirection.Clockwise : SweepDirection.Counterclockwise
+                                }
+                            }
                         });
-                        figures.Add(figure);
-                        currentX = arc.EndX;
-                        currentY = arc.EndY;
+                        x = arc.EndX;
+                        y = arc.EndY;
                         break;
                     }
             }
         }
 
         return new PathGeometry { Figures = figures };
+    }
+
+    private static Brush ResolveTrackStrokeBrush()
+    {
+        if (Application.Current.Resources.TryGetValue("TrackPlanStrokeBrush", out var obj) && obj is Brush brush)
+            return brush;
+        return new SolidColorBrush(Windows.UI.Color.FromArgb(255, 26, 26, 26));
+    }
+
+    private static Brush ResolveTrackStrokeSelectedBrush()
+    {
+        if (Application.Current.Resources.TryGetValue("TrackPlanStrokeSelectedBrush", out var obj) && obj is Brush brush)
+            return brush;
+        return new SolidColorBrush(Windows.UI.Color.FromArgb(255, 0, 120, 215));
     }
 }

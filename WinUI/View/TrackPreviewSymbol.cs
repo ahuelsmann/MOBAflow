@@ -40,7 +40,7 @@ public static class TrackPreviewSymbol
             Width = Width,
             Height = Height,
             Stretch = Stretch.None,
-            Stroke = (SolidColorBrush)Application.Current.Resources["TextFillColorPrimaryBrush"]!,
+            Stroke = ResolveTrackStrokeBrush(),
             StrokeThickness = StrokeThickness,
             StrokeLineJoin = PenLineJoin.Round,
             StrokeStartLineCap = PenLineCap.Round,
@@ -106,5 +106,12 @@ public static class TrackPreviewSymbol
         }
 
         return pg;
+    }
+
+    private static Brush ResolveTrackStrokeBrush()
+    {
+        if (Application.Current.Resources.TryGetValue("TrackPlanStrokeBrush", out var obj) && obj is Brush brush)
+            return brush;
+        return new SolidColorBrush(Windows.UI.Color.FromArgb(255, 26, 26, 26));
     }
 }

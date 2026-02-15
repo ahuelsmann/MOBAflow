@@ -7,6 +7,6 @@ using Base;
 /// </summary>
 public sealed record K15 : Crossing
 {
-    public uint LengthInMm { get; init; } = 239;
+    public double LengthInMm { get; init; } = 239.07;
     public double ArcInDegree { get; init; } = 15;
 }
