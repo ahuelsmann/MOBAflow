@@ -74,6 +74,13 @@ MOBAflow uses the following open-source components and third-party formats. We a
 - **Used in:** WinUI
 - **Purpose:** WinUI 3 Framework
 
+#### Microsoft.Graphics.Win2D (MIT License)
+- **License:** MIT
+- **Copyright:** © Microsoft Corporation
+- **Repository:** https://github.com/microsoft/Win2D
+- **Used in:** WinUI
+- **Purpose:** GPU-accelerated 2D rendering for Track Plan (CanvasControl, CanvasGeometry, PathToCanvasGeometryConverter)
+
 #### Microsoft.Maui.Controls (MIT License)
 - **License:** MIT
 - **Copyright:** © .NET Foundation
@@ -314,6 +321,6 @@ Thank you! 🙏
 
 ---
 
-**Last Updated:** 2025-12-24  
+**Last Updated:** 2026-02-15  
 **MOBAflow Version:** 3.9  
 **License:** MIT License (see [LICENSE](LICENSE))

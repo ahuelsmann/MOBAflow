@@ -1,7 +1,8 @@
 <Page
     x:Class="Moba.WinUI.View.TrackPlanPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -13,6 +14,16 @@
             Grid.Row="0"
             DefaultLabelPosition="Right"
             OverflowButtonVisibility="Auto">
+            <AppBarButton
+                x:Name="LoadTestPlanButton"
+                Icon="Document"
+                Label="Load Test Plan"
+                ToolTipService.ToolTip="Lädt das Test-TrackPlanResult (WR+R9+G62+G239) wie im SVG-Test" />
+            <AppBarButton
+                x:Name="OpenSvgInBrowserButton"
+                Icon="Globe"
+                Label="SVG im Browser"
+                ToolTipService.ToolTip="Exportiert dasselbe Test-Plan als SVG und öffnet im Browser (Vergleich)" />
             <AppBarButton Icon="Accept" Label="Validate" />
             <AppBarButton Icon="ZoomIn" Label="Fit" />
             <AppBarButton Icon="Zoom" Label="100%" />
@@ -127,12 +138,21 @@
                         VerticalScrollBarVisibility="Auto"
                         VerticalScrollMode="Enabled"
                         ZoomMode="Enabled">
-                        <Canvas
-                            x:Name="GraphCanvas"
-                            Width="3000"
-                            Height="2000"
-                            AllowDrop="True"
-                            Background="{ThemeResource SolidBackgroundFillColorBaseBrush}" />
+                        <Grid Width="3000" Height="2000">
+                            <canvas:CanvasControl
+                                x:Name="GraphCanvasControl"
+                                Width="3000"
+                                Height="2000"
+                                Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+                                CreateResources="GraphCanvasControl_CreateResources"
+                                Draw="GraphCanvasControl_Draw" />
+                            <Canvas
+                                x:Name="OverlayCanvas"
+                                Width="3000"
+                                Height="2000"
+                                AllowDrop="True"
+                                Background="Transparent" />
+                        </Grid>
                     </ScrollViewer>
                     <!--  Zoom Control Overlay (Bottom-Right)  -->
                     <StackPanel

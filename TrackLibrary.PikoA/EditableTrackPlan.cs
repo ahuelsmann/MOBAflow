@@ -115,6 +115,32 @@ public sealed class EditableTrackPlan
         PlanChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// Lädt einen TrackPlan aus Platzierungen und Verbindungen (z.B. von TrackPlanSvgRenderer.Render).
+    /// </summary>
+    public void LoadFromPlacements(IReadOnlyList<PlacedSegment> placements, IReadOnlyList<PortConnection> connections)
+    {
+        _segments.Clear();
+        _connections.Clear();
+
+        foreach (var placed in placements)
+            _segments.Add(placed);
+
+        foreach (var conn in connections)
+        {
+            _connections.Add(conn);
+            var src = _segments.FirstOrDefault(s => s.Segment.No == conn.SourceSegment)?.Segment;
+            var tgt = _segments.FirstOrDefault(s => s.Segment.No == conn.TargetSegment)?.Segment;
+            if (src != null && tgt != null)
+            {
+                SetPortValue(src, conn.SourcePort, tgt.No);
+                SetPortValue(tgt, conn.TargetPort, src.No);
+            }
+        }
+
+        PlanChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     /// <summary>Ermittelt alle Segment-IDs, die mit dem angegebenen verbunden sind (transitiv).</summary>
     public IReadOnlySet<Guid> GetConnectedGroup(Guid segmentNo)
     {

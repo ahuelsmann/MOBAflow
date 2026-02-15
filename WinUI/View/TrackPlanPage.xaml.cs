@@ -3,6 +3,10 @@
 namespace Moba.WinUI.View;
 
 using Common.Navigation;
+using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.Geometry;
+using Microsoft.Graphics.Canvas.UI;
+using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -10,6 +14,8 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using SharedUI.ViewModel;
+using System.Diagnostics;
+using TrackPlan.Renderer;
 using TrackLibrary.Base;
 using TrackLibrary.PikoA;
 using Windows.ApplicationModel.DataTransfer;
@@ -30,6 +36,8 @@ public sealed partial class TrackPlanPage : Page
     private const double ScaleMmToPx = 1.0;
     private const double SnapThresholdMm = 15.0;
     private const double PortHighlightRadiusMm = 25.0;
+    /// <summary>Margin in mm, damit der gesamte Plan sichtbar ist (auch bei negativen Koordinaten).</summary>
+    private const double ContentMarginMm = 50.0;
 
     public TrackPlanViewModel ViewModel { get; }
     private readonly EditableTrackPlan _plan;
@@ -42,7 +50,10 @@ public sealed partial class TrackPlanPage : Page
     private HashSet<Guid> _draggingGroup = [];
     private Point _dragStartCanvasPoint;
     private bool _dragHasMoved; // true wenn Pointer während Press tatsächlich bewegt wurde
-    private readonly Dictionary<Guid, UIElement> _segmentVisuals = new();
+    private bool _isCanvasDragging;
+    private bool _useCachedOffsetForNextRefresh;
+    private double _cachedDrawOffsetX;
+    private double _cachedDrawOffsetY;
     private readonly List<Ellipse> _portIndicators = [];
     private readonly List<Ellipse> _highlightedPorts = [];
     private bool _snapEnabled = true;
@@ -61,6 +72,46 @@ public sealed partial class TrackPlanPage : Page
         SnapToggle.Checked += (_, _) => { _snapEnabled = true; };
         SnapToggle.Unchecked += (_, _) => { _snapEnabled = false; };
         DisconnectButton.Click += (_, _) => DisconnectSelectedSegment();
+        LoadTestPlanButton.Click += (_, _) => LoadTestPlan();
+        OpenSvgInBrowserButton.Click += (_, _) => OpenSvgInBrowser();
+    }
+
+    private static TrackPlanResult CreateTestPlan() =>
+        new TrackPlanBuilder()
+            .Start(0)
+            .Add<WR>().Connections(
+                wr => wr.FromA.ToB<R9>().FromA.ToA<G62>(),
+                wr => wr.FromB.ToA<G239>().FromB.ToA<G62>(),
+                wr => wr.FromC.ToA<R9>().FromB.ToA<R9>().FromB.ToA<G62>())
+            .Create();
+
+    /// <summary>
+    /// Lädt das Test-TrackPlanResult (identisch zum SVG-Test) für visuellen Vergleich Win2D vs. SVG.
+    /// </summary>
+    private void LoadTestPlan()
+    {
+        var plan = CreateTestPlan();
+        var renderResult = new TrackPlanSvgRenderer().Render(plan);
+        _plan.LoadFromPlacements(renderResult.Placements, plan.Connections);
+        StatusText.Text = "Test Plan geladen. Klicke „SVG im Browser“ für direkten Vergleich.";
+    }
+
+    /// <summary>
+    /// Exportiert dasselbe Test-Plan als SVG und öffnet im Browser.
+    /// </summary>
+    private void OpenSvgInBrowser()
+    {
+        var plan = CreateTestPlan();
+        var renderResult = new TrackPlanSvgRenderer().Render(plan);
+        var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "trackplan-win2d-compare.html");
+        new SvgExporter().Export(renderResult.Svg, path);
+
+        if (OperatingSystem.IsWindows())
+        {
+            Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
+        }
+
+        StatusText.Text = $"SVG geöffnet: {path}";
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -70,7 +121,23 @@ public sealed partial class TrackPlanPage : Page
         SetupCanvas();
         SetupZoom();
         _plan.PlanChanged += OnPlanChanged;
+        this.KeyDown += Page_KeyDown;
         RefreshCanvas();
+    }
+
+    private void Page_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key != VirtualKey.Delete && e.Key != VirtualKey.Back)
+            return;
+
+        if (_selectedSegmentId == null)
+            return;
+
+        _plan.RemoveSegment(_selectedSegmentId.Value);
+        _selectedSegmentId = null;
+        UpdateSelectionInfo();
+        RefreshCanvas();
+        e.Handled = true;
     }
 
     private void OnPlanChanged(object? sender, EventArgs e) => RefreshCanvas();
@@ -150,7 +217,7 @@ public sealed partial class TrackPlanPage : Page
 
     private void StartDragFromToolbox(TrackCatalogEntry entry, Border sourceBorder, PointerPoint ptr, Pointer pointer)
     {
-        var canvasPoint = sourceBorder.TransformToVisual(GraphCanvas).TransformPoint(ptr.Position);
+        var canvasPoint = sourceBorder.TransformToVisual(OverlayCanvas).TransformPoint(ptr.Position);
         _draggedPlaced = new PlacedSegment(entry.CreateInstance(), canvasPoint.X / ScaleMmToPx, canvasPoint.Y / ScaleMmToPx, 0);
         _draggedSegmentId = null;
         CreateGhost(_draggedPlaced);
@@ -169,7 +236,7 @@ public sealed partial class TrackPlanPage : Page
             VerticalAlignment = VerticalAlignment.Top
         };
         Canvas.SetZIndex(_ghostLayer, 1000);
-        GraphCanvas.Children.Add(_ghostLayer);
+        OverlayCanvas.Children.Add(_ghostLayer);
 
         _rotationHandleLayer = new Canvas
         {
@@ -177,15 +244,15 @@ public sealed partial class TrackPlanPage : Page
             VerticalAlignment = VerticalAlignment.Top
         };
         Canvas.SetZIndex(_rotationHandleLayer, 1100);
-        GraphCanvas.Children.Add(_rotationHandleLayer);
+        OverlayCanvas.Children.Add(_rotationHandleLayer);
 
-        GraphCanvas.AllowDrop = true;
-        GraphCanvas.DragOver += Canvas_DragOver;
-        GraphCanvas.Drop += Canvas_Drop;
-        GraphCanvas.PointerMoved += Canvas_PointerMoved_UpdateCoords;
-        GraphCanvas.PointerPressed += Canvas_PointerPressed;
-        GraphCanvas.PointerReleased += Canvas_PointerReleased;
-        GraphCanvas.PointerExited += Canvas_PointerExited;
+        OverlayCanvas.AllowDrop = true;
+        OverlayCanvas.DragOver += Canvas_DragOver;
+        OverlayCanvas.Drop += Canvas_Drop;
+        OverlayCanvas.PointerMoved += Canvas_PointerMoved_UpdateCoords;
+        OverlayCanvas.PointerPressed += Canvas_PointerPressed;
+        OverlayCanvas.PointerReleased += Canvas_PointerReleased;
+        OverlayCanvas.PointerExited += Canvas_PointerExited;
     }
 
     private void Canvas_DragOver(object sender, DragEventArgs e)
@@ -197,9 +264,10 @@ public sealed partial class TrackPlanPage : Page
 
     private void Canvas_Drop(object sender, DragEventArgs e)
     {
-        var pos = e.GetPosition(GraphCanvas);
-        var xMm = pos.X / ScaleMmToPx;
-        var yMm = pos.Y / ScaleMmToPx;
+        var pos = e.GetPosition(OverlayCanvas);
+        var (offsetX, offsetY) = GetDrawOffset();
+        var xMm = pos.X / ScaleMmToPx - offsetX;
+        var yMm = pos.Y / ScaleMmToPx - offsetY;
 
         if (e.DataView.Contains(DragFormatTrackCatalog))
         {
@@ -216,13 +284,16 @@ public sealed partial class TrackPlanPage : Page
 
     private void Canvas_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        var ptr = e.GetCurrentPoint(GraphCanvas);
+        Focus(FocusState.Pointer);
+
+        var ptr = e.GetCurrentPoint(OverlayCanvas);
         if (!ptr.Properties.IsLeftButtonPressed)
             return;
 
         var pos = ptr.Position;
-        var xMm = pos.X / ScaleMmToPx;
-        var yMm = pos.Y / ScaleMmToPx;
+        var (offsetX, offsetY) = GetDrawOffset();
+        var xMm = pos.X / ScaleMmToPx - offsetX;
+        var yMm = pos.Y / ScaleMmToPx - offsetY;
 
         var hit = HitTestSegment(xMm, yMm);
         if (hit == null)
@@ -236,6 +307,7 @@ public sealed partial class TrackPlanPage : Page
             _selectedSegmentId = hit.Segment.No;
             UpdateSelectionInfo();
             RefreshCanvas();
+            _isCanvasDragging = true;
             _draggedSegmentId = hit.Segment.No;
             _draggedPlaced = hit;
             _draggingGroup = [.. _plan.GetConnectedGroup(hit.Segment.No)];
@@ -243,27 +315,30 @@ public sealed partial class TrackPlanPage : Page
             _dragHasMoved = false;
             CreateGhost(hit);
             UpdateGhostPosition(pos.X, pos.Y);
-            GraphCanvas.PointerMoved += Canvas_PointerMoved_CanvasDrag;
-            GraphCanvas.PointerReleased += Canvas_PointerReleased_CanvasDrag;
-            GraphCanvas.CapturePointer(e.Pointer);
+            OverlayCanvas.PointerMoved += Canvas_PointerMoved_CanvasDrag;
+            OverlayCanvas.PointerReleased += Canvas_PointerReleased_CanvasDrag;
+            OverlayCanvas.CapturePointer(e.Pointer);
         }
     }
 
     private void Canvas_PointerMoved_ToolboxDrag(object sender, PointerRoutedEventArgs e)
     {
         var ptr = e.GetCurrentPoint(MainGrid);
-        var canvasPoint = MainGrid.TransformToVisual(GraphCanvas).TransformPoint(ptr.Position);
-        UpdateGhostPosition(canvasPoint.X, canvasPoint.Y);
+        var canvasPoint = MainGrid.TransformToVisual(OverlayCanvas).TransformPoint(ptr.Position);
+        var (offsetX, offsetY) = GetDrawOffset();
+        var worldX = canvasPoint.X / ScaleMmToPx - offsetX;
+        var worldY = canvasPoint.Y / ScaleMmToPx - offsetY;
         if (_draggedPlaced != null)
         {
-            _draggedPlaced = _draggedPlaced.WithPosition(canvasPoint.X / ScaleMmToPx, canvasPoint.Y / ScaleMmToPx, _draggedPlaced.RotationDegrees);
+            _draggedPlaced = _draggedPlaced.WithPosition(worldX, worldY, _draggedPlaced.RotationDegrees);
+            UpdateGhostPosition(canvasPoint.X, canvasPoint.Y);
         }
-        UpdatePortHighlights(canvasPoint.X / ScaleMmToPx, canvasPoint.Y / ScaleMmToPx);
+        UpdatePortHighlights(worldX, worldY);
     }
 
     private void Canvas_PointerMoved_CanvasDrag(object sender, PointerRoutedEventArgs e)
     {
-        var ptr = e.GetCurrentPoint(GraphCanvas);
+        var ptr = e.GetCurrentPoint(OverlayCanvas);
         var dx = ptr.Position.X - _dragStartCanvasPoint.X;
         var dy = ptr.Position.Y - _dragStartCanvasPoint.Y;
         _dragStartCanvasPoint = ptr.Position;
@@ -281,7 +356,8 @@ public sealed partial class TrackPlanPage : Page
             UpdateGhostPosition(ptr.Position.X, ptr.Position.Y);
         }
 
-        UpdatePortHighlights(ptr.Position.X / ScaleMmToPx, ptr.Position.Y / ScaleMmToPx);
+        var (offsetX, offsetY) = GetDrawOffset();
+        UpdatePortHighlights(ptr.Position.X / ScaleMmToPx - offsetX, ptr.Position.Y / ScaleMmToPx - offsetY);
     }
 
     private void Canvas_PointerReleased_ToolboxDrag(object sender, PointerRoutedEventArgs e)
@@ -292,9 +368,10 @@ public sealed partial class TrackPlanPage : Page
 
         if (_draggedPlaced != null)
         {
-            var canvasPoint = MainGrid.TransformToVisual(GraphCanvas).TransformPoint(e.GetCurrentPoint(MainGrid).Position);
-            var xMm = canvasPoint.X / ScaleMmToPx;
-            var yMm = canvasPoint.Y / ScaleMmToPx;
+            var canvasPoint = MainGrid.TransformToVisual(OverlayCanvas).TransformPoint(e.GetCurrentPoint(MainGrid).Position);
+            var (offsetX, offsetY) = GetDrawOffset();
+            var xMm = canvasPoint.X / ScaleMmToPx - offsetX;
+            var yMm = canvasPoint.Y / ScaleMmToPx - offsetY;
             var placed = _draggedPlaced.WithPosition(xMm, yMm, _draggedPlaced.RotationDegrees);
             TrySnapAndPlace(placed, null);
         }
@@ -305,9 +382,11 @@ public sealed partial class TrackPlanPage : Page
 
     private void Canvas_PointerReleased_CanvasDrag(object sender, PointerRoutedEventArgs e)
     {
-        GraphCanvas.PointerMoved -= Canvas_PointerMoved_CanvasDrag;
-        GraphCanvas.PointerReleased -= Canvas_PointerReleased_CanvasDrag;
-        GraphCanvas.ReleasePointerCapture(e.Pointer);
+        OverlayCanvas.PointerMoved -= Canvas_PointerMoved_CanvasDrag;
+        OverlayCanvas.PointerReleased -= Canvas_PointerReleased_CanvasDrag;
+        OverlayCanvas.ReleasePointerCapture(e.Pointer);
+
+        _isCanvasDragging = false;
 
         if (_draggedSegmentId.HasValue && _dragHasMoved)
         {
@@ -318,12 +397,16 @@ public sealed partial class TrackPlanPage : Page
         _draggedPlaced = null;
         ClearGhost();
         ClearPortHighlights();
+        RefreshCanvas();
     }
 
     private void Canvas_PointerMoved_UpdateCoords(object sender, PointerRoutedEventArgs e)
     {
-        var pos = e.GetCurrentPoint(GraphCanvas).Position;
-        CoordinatesText.Text = $"X: {(pos.X / ScaleMmToPx):F0} mm  Y: {(pos.Y / ScaleMmToPx):F0} mm";
+        var pos = e.GetCurrentPoint(OverlayCanvas).Position;
+        var (offsetX, offsetY) = GetDrawOffset();
+        var worldX = pos.X / ScaleMmToPx - offsetX;
+        var worldY = pos.Y / ScaleMmToPx - offsetY;
+        CoordinatesText.Text = $"X: {worldX:F0} mm  Y: {worldY:F0} mm";
     }
 
     private void Canvas_PointerReleased(object sender, PointerRoutedEventArgs e)
@@ -344,7 +427,9 @@ public sealed partial class TrackPlanPage : Page
             if (snap != null)
             {
                 var (newPlaced, sourcePort, targetSegmentId, targetPort) = snap.Value;
+                _useCachedOffsetForNextRefresh = targetPort != "PortA" && !_plan.Connections.Any(c => c.TargetSegment == targetSegmentId);
                 _plan.AddSegment(newPlaced);
+                AdjustTargetSegmentForNewEntryPort(targetSegmentId, targetPort);
                 _plan.AddConnection(newPlaced.Segment.No, sourcePort, targetSegmentId, targetPort);
                 UpdateStats();
                 return;
@@ -369,12 +454,35 @@ public sealed partial class TrackPlanPage : Page
         var deltaX = newPlaced.X - placed.X;
         var deltaY = newPlaced.Y - placed.Y;
 
+        _useCachedOffsetForNextRefresh = targetPort != "PortA" && !_plan.Connections.Any(c => c.TargetSegment == targetSegmentId);
+
         // Ganze Gruppe um Snap-Delta verschieben, dann Rotation des gezogenen Segments setzen
         if (_draggingGroup.Count > 1)
             _plan.MoveGroup(_draggingGroup, deltaX, deltaY);
 
         _plan.UpdateSegmentPosition(movedSegmentId, newPlaced.X, newPlaced.Y, newPlaced.RotationDegrees);
+        AdjustTargetSegmentForNewEntryPort(targetSegmentId, targetPort);
         _plan.AddConnection(movedSegmentId, sourcePort, targetSegmentId, targetPort);
+    }
+
+    /// <summary>
+    /// Passt das Zielsegment an, wenn die erste Verbindung an Port B (oder C/D) erfolgt.
+    /// Ohne diese Anpassung würde die Kurve gespiegelt erscheinen, da (X,Y,R) Port A als Ursprung erwartet.
+    /// </summary>
+    private void AdjustTargetSegmentForNewEntryPort(Guid targetSegmentId, string targetPort)
+    {
+        if (targetPort == "PortA")
+            return;
+        var targetHadIncoming = _plan.Connections.Any(c => c.TargetSegment == targetSegmentId);
+        if (targetHadIncoming)
+            return;
+        var target = _plan.Segments.FirstOrDefault(s => s.Segment.No == targetSegmentId);
+        if (target == null)
+            return;
+        var (newX, newY, portAngle) = SegmentPortGeometry.GetPortWorldPosition(target, targetPort);
+        // Bei Entry B zeigt die Pfad-Tangente am Ursprung in die entgegengesetzte Richtung (+180°).
+        var newR = NormalizeAngle(portAngle - 180);
+        _plan.UpdateSegmentPosition(targetSegmentId, newX, newY, newR);
     }
 
     private (PlacedSegment Placed, string SourcePort, Guid TargetSegmentId, string TargetPort)? FindBestSnap(PlacedSegment placed, Guid? excludeSegmentId)
@@ -385,8 +493,8 @@ public sealed partial class TrackPlanPage : Page
 
         var myEntryPort = GetEntryPortForSegment(placed.Segment.No);
         var myPorts = SegmentPortGeometry.GetAllPortWorldPositions(placed, myEntryPort);
-        var myPortInfos = SegmentPortGeometry.GetPortsWithEntry(placed.Segment, myEntryPort)
-            .ToDictionary(p => p.PortName, p => p.LocalAngleDegrees);
+        var myPortsWithEntry = SegmentPortGeometry.GetPortsWithEntry(placed.Segment, myEntryPort)
+            .ToDictionary(p => p.PortName, p => (p.LocalX, p.LocalY, p.LocalAngleDegrees));
 
         foreach (var other in _plan.Segments)
         {
@@ -405,10 +513,18 @@ public sealed partial class TrackPlanPage : Page
                 if (dist < bestDist && dist < bestDistThreshold)
                 {
                     bestDist = dist;
-                    var myLocalAngle = myPortInfos.GetValueOrDefault(myPortName, 0);
-                    // Zielport zeigt "heraus" mit oAngle; unser Port muss "hinein" zeigen = oAngle + 180.
-                    var newRotation = NormalizeAngle(oAngle + 180 - myLocalAngle);
-                    var newPlaced = placed.WithPosition(placed.X + dx, placed.Y + dy, newRotation);
+                    if (!myPortsWithEntry.TryGetValue(myPortName, out var portInfo))
+                        continue;
+                    var (localX, localY, myLocalAngle) = portInfo;
+                    // Tangenten müssen übereinstimmen: our_rotation + myLocalAngle = oAngle.
+                    var newRotation = NormalizeAngle(oAngle - myLocalAngle);
+                    // Ursprung so setzen, dass unser Port (localX, localY) bei neuer Rotation genau (ox, oy) trifft.
+                    var r = newRotation * Math.PI / 180;
+                    var cos = Math.Cos(r);
+                    var sin = Math.Sin(r);
+                    var newOriginX = ox - (localX * cos - localY * sin);
+                    var newOriginY = oy - (localX * sin + localY * cos);
+                    var newPlaced = placed.WithPosition(newOriginX, newOriginY, newRotation);
                     best = (newPlaced, myPortName, other.Segment.No, otherPortName);
                 }
             }
@@ -424,13 +540,14 @@ public sealed partial class TrackPlanPage : Page
         return degrees;
     }
 
-    private void UpdatePortHighlights(double cursorXmm, double cursorYmm)
+    private void UpdatePortHighlights(double cursorWorldXmm, double cursorWorldYmm)
     {
         ClearPortHighlights();
 
         if (!_snapEnabled || _ghostShape == null || _draggedPlaced == null)
             return;
 
+        var (offsetX, offsetY) = GetDrawOffset();
         var draggedEntryPort = _draggedSegmentId.HasValue ? GetEntryPortForSegment(_draggedSegmentId.Value) : 'A';
         var draggedPorts = SegmentPortGeometry.GetAllPortWorldPositions(_draggedPlaced, draggedEntryPort)
             .Select(p => (p.X, p.Y)).ToList();
@@ -463,8 +580,8 @@ public sealed partial class TrackPlanPage : Page
             foreach (var (_, px, py, _) in ports)
             {
                 var highlight = portsToHighlight.Contains((px, py));
-                var el = CreatePortIndicator(px * ScaleMmToPx, py * ScaleMmToPx, highlight);
-                GraphCanvas.Children.Add(el);
+                var el = CreatePortIndicator((px + offsetX) * ScaleMmToPx, (py + offsetY) * ScaleMmToPx, highlight);
+                OverlayCanvas.Children.Add(el);
                 if (highlight)
                     _highlightedPorts.Add(el);
                 else
@@ -476,8 +593,8 @@ public sealed partial class TrackPlanPage : Page
         {
             if (portsToHighlight.Contains((px, py)))
             {
-                var el = CreatePortIndicator(px * ScaleMmToPx, py * ScaleMmToPx, true);
-                GraphCanvas.Children.Add(el);
+                var el = CreatePortIndicator((px + offsetX) * ScaleMmToPx, (py + offsetY) * ScaleMmToPx, true);
+                OverlayCanvas.Children.Add(el);
                 _highlightedPorts.Add(el);
             }
         }
@@ -486,10 +603,10 @@ public sealed partial class TrackPlanPage : Page
     private void ClearPortHighlights()
     {
         foreach (var el in _highlightedPorts)
-            GraphCanvas.Children.Remove(el);
+            OverlayCanvas.Children.Remove(el);
         _highlightedPorts.Clear();
         foreach (var el in _portIndicators)
-            GraphCanvas.Children.Remove(el);
+            OverlayCanvas.Children.Remove(el);
         _portIndicators.Clear();
     }
 
@@ -564,6 +681,87 @@ public sealed partial class TrackPlanPage : Page
             : 'A';
     }
 
+    /// <summary>
+    /// Berechnet die Bounding-Box aller Segmente in Weltkoordinaten (mm).
+    /// </summary>
+    private (double MinX, double MinY, double MaxX, double MaxY)? ComputeContentBoundsMm()
+    {
+        if (_plan.Segments.Count == 0)
+            return null;
+
+        var first = _plan.Segments[0];
+        var entryPort = GetEntryPortForSegment(first.Segment.No);
+        var path = SegmentLocalPathBuilder.GetPath(first.Segment, entryPort);
+        var (localMinX, localMinY, localMaxX, localMaxY) = SegmentLocalPathBuilder.GetBounds(path);
+
+        double minX = double.MaxValue, minY = double.MaxValue;
+        double maxX = double.MinValue, maxY = double.MinValue;
+
+        foreach (var placed in _plan.Segments)
+        {
+            entryPort = GetEntryPortForSegment(placed.Segment.No);
+            path = SegmentLocalPathBuilder.GetPath(placed.Segment, entryPort);
+            (localMinX, localMinY, localMaxX, localMaxY) = SegmentLocalPathBuilder.GetBounds(path);
+
+            var angleRad = placed.RotationDegrees * Math.PI / 180;
+            var cos = Math.Cos(angleRad);
+            var sin = Math.Sin(angleRad);
+
+            static double Tx(double ox, double oy, double lx, double ly, double cos, double sin) =>
+                ox + lx * cos - ly * sin;
+            static double Ty(double ox, double oy, double lx, double ly, double cos, double sin) =>
+                oy + lx * sin + ly * cos;
+
+            var corners = new[]
+            {
+                (Tx(placed.X, placed.Y, localMinX, localMinY, cos, sin), Ty(placed.X, placed.Y, localMinX, localMinY, cos, sin)),
+                (Tx(placed.X, placed.Y, localMaxX, localMinY, cos, sin), Ty(placed.X, placed.Y, localMaxX, localMinY, cos, sin)),
+                (Tx(placed.X, placed.Y, localMinX, localMaxY, cos, sin), Ty(placed.X, placed.Y, localMinX, localMaxY, cos, sin)),
+                (Tx(placed.X, placed.Y, localMaxX, localMaxY, cos, sin), Ty(placed.X, placed.Y, localMaxX, localMaxY, cos, sin))
+            };
+
+            foreach (var (x, y) in corners)
+            {
+                minX = Math.Min(minX, x);
+                minY = Math.Min(minY, y);
+                maxX = Math.Max(maxX, x);
+                maxY = Math.Max(maxY, y);
+            }
+        }
+
+        return (minX, minY, maxX, maxY);
+    }
+
+    /// <summary>Offset in mm, damit der gesamte Inhalt im sichtbaren Bereich liegt (analog SVG viewBox).</summary>
+    /// <remarks>
+    /// Während eines Canvas-Drags bleibt der Offset fix, damit die Verschiebung sichtbar bleibt.
+    /// PlanChanged ruft sonst bei jedem MoveGroup RefreshCanvas auf; ein neu berechneter Offset
+    /// würde die Bewegung aufheben (neuer Offset = alter Offset − Delta).
+    /// </remarks>
+    private (double OffsetX, double OffsetY) GetDrawOffset()
+    {
+        if (_isCanvasDragging)
+            return (_cachedDrawOffsetX, _cachedDrawOffsetY);
+        if (_useCachedOffsetForNextRefresh)
+        {
+            _useCachedOffsetForNextRefresh = false;
+            return (_cachedDrawOffsetX, _cachedDrawOffsetY);
+        }
+
+        var bounds = ComputeContentBoundsMm();
+        if (bounds == null)
+        {
+            _cachedDrawOffsetX = 0;
+            _cachedDrawOffsetY = 0;
+            return (0, 0);
+        }
+
+        var (minX, minY, _, _) = bounds.Value;
+        _cachedDrawOffsetX = ContentMarginMm - minX;
+        _cachedDrawOffsetY = ContentMarginMm - minY;
+        return (_cachedDrawOffsetX, _cachedDrawOffsetY);
+    }
+
     private void CreateGhost(PlacedSegment placed)
     {
         ClearGhost();
@@ -615,24 +813,54 @@ public sealed partial class TrackPlanPage : Page
 
     private void RefreshCanvas()
     {
-        foreach (var vis in _segmentVisuals.Values)
-            GraphCanvas.Children.Remove(vis);
-        _segmentVisuals.Clear();
+        var (offsetX, offsetY) = GetDrawOffset();
+        if (_ghostLayer != null)
+        {
+            Canvas.SetLeft(_ghostLayer, offsetX * ScaleMmToPx);
+            Canvas.SetTop(_ghostLayer, offsetY * ScaleMmToPx);
+        }
+        if (_rotationHandleLayer != null)
+        {
+            Canvas.SetLeft(_rotationHandleLayer, offsetX * ScaleMmToPx);
+            Canvas.SetTop(_rotationHandleLayer, offsetY * ScaleMmToPx);
+        }
+        GraphCanvasControl?.Invalidate();
+        UpdateStats();
+    }
+
+    private void GraphCanvasControl_CreateResources(CanvasControl sender, CanvasCreateResourcesEventArgs args)
+    {
+        // Keine asynchronen Ressourcen; Geometrie wird pro Draw erzeugt
+    }
+
+    private void GraphCanvasControl_Draw(CanvasControl sender, CanvasDrawEventArgs args)
+    {
+        var ds = args.DrawingSession;
+        var resourceCreator = ds;
+        var (offsetX, offsetY) = GetDrawOffset();
+
+        // Stroke-Style wie SegmentPlanPathBuilder: Round Join & Caps
+        using var strokeStyle = new CanvasStrokeStyle
+        {
+            LineJoin = CanvasLineJoin.Round,
+            StartCap = CanvasCapStyle.Round,
+            EndCap = CanvasCapStyle.Round
+        };
 
         foreach (var placed in _plan.Segments)
         {
             var isSelected = placed.Segment.No == _selectedSegmentId;
             var entryPort = GetEntryPortForSegment(placed.Segment.No);
-            var shape = SegmentPlanPathBuilder.CreatePath(placed, isGhost: false, isSelected, entryPort);
-            // Geometrie ist bereits in Weltkoordinaten (mm → px), Position (0,0)
-            Canvas.SetLeft(shape, 0);
-            Canvas.SetTop(shape, 0);
-            Canvas.SetZIndex(shape, 100);
-            GraphCanvas.Children.Add(shape);
-            _segmentVisuals[placed.Segment.No] = shape;
-        }
+            var pathCommands = SegmentLocalPathBuilder.GetPath(placed.Segment, entryPort);
+            var worldGeometry = PathToCanvasGeometryConverter.ToCanvasGeometryInWorldCoords(
+                resourceCreator, pathCommands, placed.X + offsetX, placed.Y + offsetY, placed.RotationDegrees, ScaleMmToPx);
 
-        UpdateStats();
+            var strokeWidth = (float)(isSelected ? 10 : 4);
+            var color = isSelected
+                ? Windows.UI.Color.FromArgb(255, 0, 120, 215)
+                : Windows.UI.Color.FromArgb(255, 26, 26, 26);
+            ds.DrawGeometry(worldGeometry, color, strokeWidth, strokeStyle);
+        }
     }
 
     private bool _zoomSyncing;
@@ -770,17 +998,18 @@ public sealed partial class TrackPlanPage : Page
         if (connCount > 0)
             return;
 
-        var pivotX = placed.X * ScaleMmToPx;
-        var pivotY = placed.Y * ScaleMmToPx;
-        var ptr = e.GetCurrentPoint(GraphCanvas);
-        var dx = ptr.Position.X - pivotX;
-        var dy = ptr.Position.Y - pivotY;
+        var (offsetX, offsetY) = GetDrawOffset();
+        var pivotDisplayX = (placed.X + offsetX) * ScaleMmToPx;
+        var pivotDisplayY = (placed.Y + offsetY) * ScaleMmToPx;
+        var ptr = e.GetCurrentPoint(OverlayCanvas);
+        var dx = ptr.Position.X - pivotDisplayX;
+        var dy = ptr.Position.Y - pivotDisplayY;
         _rotationDragStartAngleRad = Math.Atan2(dy, dx);
         _rotationDragStartSegmentDegrees = placed.RotationDegrees;
 
-        GraphCanvas.PointerMoved += RotationHandle_PointerMoved;
-        GraphCanvas.PointerReleased += RotationHandle_PointerReleased;
-        GraphCanvas.CapturePointer(e.Pointer);
+        OverlayCanvas.PointerMoved += RotationHandle_PointerMoved;
+        OverlayCanvas.PointerReleased += RotationHandle_PointerReleased;
+        OverlayCanvas.CapturePointer(e.Pointer);
         e.Handled = true;
     }
 
@@ -793,11 +1022,12 @@ public sealed partial class TrackPlanPage : Page
         if (placed == null)
             return;
 
-        var pivotX = placed.X * ScaleMmToPx;
-        var pivotY = placed.Y * ScaleMmToPx;
-        var ptr = e.GetCurrentPoint(GraphCanvas);
-        var dx = ptr.Position.X - pivotX;
-        var dy = ptr.Position.Y - pivotY;
+        var (offsetX, offsetY) = GetDrawOffset();
+        var pivotDisplayX = (placed.X + offsetX) * ScaleMmToPx;
+        var pivotDisplayY = (placed.Y + offsetY) * ScaleMmToPx;
+        var ptr = e.GetCurrentPoint(OverlayCanvas);
+        var dx = ptr.Position.X - pivotDisplayX;
+        var dy = ptr.Position.Y - pivotDisplayY;
         var currentAngleRad = Math.Atan2(dy, dx);
         var deltaRad = currentAngleRad - _rotationDragStartAngleRad;
         var deltaDeg = deltaRad * 180.0 / Math.PI;
@@ -808,9 +1038,9 @@ public sealed partial class TrackPlanPage : Page
 
     private void RotationHandle_PointerReleased(object sender, PointerRoutedEventArgs e)
     {
-        GraphCanvas.PointerMoved -= RotationHandle_PointerMoved;
-        GraphCanvas.PointerReleased -= RotationHandle_PointerReleased;
-        GraphCanvas.ReleasePointerCapture(e.Pointer);
+        OverlayCanvas.PointerMoved -= RotationHandle_PointerMoved;
+        OverlayCanvas.PointerReleased -= RotationHandle_PointerReleased;
+        OverlayCanvas.ReleasePointerCapture(e.Pointer);
         UpdateSelectionInfo();
     }
 

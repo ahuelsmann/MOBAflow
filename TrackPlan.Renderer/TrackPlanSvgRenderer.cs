@@ -7,6 +7,11 @@ using TrackLibrary.Base;
 using TrackLibrary.PikoA;
 
 /// <summary>
+/// Ergebnis von <see cref="TrackPlanSvgRenderer.Render"/>: SVG-String und Platzierungen für Win2D.
+/// </summary>
+public record RenderResult(string Svg, IReadOnlyList<PlacedSegment> Placements);
+
+/// <summary>
 /// SVG-Renderer für TrackPlan-Visualisierung.
 /// 
 /// Konvertiert ein TrackPlanResult mit Gleissegmenten in skalierbare SVG-Grafik.
@@ -23,6 +28,7 @@ using TrackLibrary.PikoA;
 public class TrackPlanSvgRenderer
 {
     private readonly StringBuilder _svg = new();
+    private readonly List<PlacedSegment> _placements = [];
     private double _minX = double.MaxValue;
     private double _minY = double.MaxValue;
     private double _maxX = double.MinValue;
@@ -30,40 +36,34 @@ public class TrackPlanSvgRenderer
     private int _segmentIndex; // Counter für wechselndes Farbschema
 
     /// <summary>
-    /// Rendert einen TrackPlan in SVG-Format.
+    /// Rendert einen TrackPlan in SVG-Format und liefert Platzierungen für Win2D.
     /// 
     /// Prozess:
     /// 1. Erstellt eine Rendering-Queue mit dem ersten Segment
     /// 2. Verarbeitet Segmente in logischer Verkettungsreihenfolge (Depth-First)
     /// 3. Für jedes Segment: findet eingehende Verbindung → bestimmt Entry-Port
-    /// 4. Ruft spezifischen Renderer auf (RenderWR, RenderR9, etc.)
-    /// 5. Fügt nachfolgende Segmente zur Queue hinzu
-    /// 6. Sammelt Bounds während Rendering
-    /// 7. Generiert finales SVG mit viewBox basierend auf Bounds
+    /// 4. Sammelt Platzierung (x, y, angle) für Win2D
+    /// 5. Ruft spezifischen Renderer auf (RenderWR, RenderR9, etc.)
+    /// 6. Generiert finales SVG mit viewBox basierend auf Bounds
     /// </summary>
     /// <param name="trackPlan">Das zu rendernde TrackPlanResult</param>
-    /// <returns>SVG-String (W3C-Standard)</returns>
-    public string Render(TrackPlanResult trackPlan)
+    /// <returns>SVG-String und Platzierungen (identisch zur SVG-Geometrie)</returns>
+    public RenderResult Render(TrackPlanResult trackPlan)
     {
         _svg.Clear();
+        _placements.Clear();
         _minX = double.MaxValue;
         _minY = double.MaxValue;
         _maxX = double.MinValue;
         _maxY = double.MinValue;
 
-        // Finde das erste Segment (keinen eingehenden Connection)
         var firstSegment = FindFirstSegment(trackPlan);
         if (firstSegment == null && trackPlan.Segments.Any())
-        {
             firstSegment = trackPlan.Segments.First();
-        }
 
         if (firstSegment == null)
-        {
-            return "<svg></svg>";
-        }
+            return new RenderResult("<svg></svg>", []);
 
-        // Rendering starten bei Ursprung mit konfiguriertem Winkel
         double currentX = 0;
         double currentY = 0;
         double currentAngle = trackPlan.StartAngleDegrees;
@@ -71,7 +71,7 @@ public class TrackPlanSvgRenderer
 
         RenderSegmentRecursive(firstSegment, null, currentX, currentY, currentAngle, trackPlan, renderedSegments);
 
-        return BuildSvg();
+        return new RenderResult(BuildSvg(), _placements.ToList());
     }
 
     /// <summary>
@@ -104,10 +104,13 @@ public class TrackPlanSvgRenderer
         // Bestimme Entry-Port basierend auf eingehender Verbindung
         char entryPort = 'A'; // Default
         if (incomingConnection != null)
-        {
-            // Die Target-Port der Verbindung ist unsere Entry-Port
             entryPort = ExtractPortChar(incomingConnection.TargetPort);
-        }
+
+        // Platzierung für Win2D (identisch zur SVG-Zeichenposition)
+        double placeAngle = angle;
+        if ((segment is G239 or G231 or G62) && entryPort == 'B')
+            placeAngle = angle + 180;
+        _placements.Add(new PlacedSegment(segment, x, y, placeAngle));
 
         double nextX = x;
         double nextY = y;
@@ -182,13 +185,12 @@ public class TrackPlanSvgRenderer
                 {
                     CalculateWrPortPosition(wrSegment, outgoingPort, x, y, angle, out branchX, out branchY, out branchAngle);
                 }
-                else if (segment is R9)
+                else if (segment is R9 or R1 or R2 or R3 or R4)
                 {
-                    // Für R9: Standard-Ausgang ist Port B
-                    branchX = nextX;
-                    branchY = nextY;
-                    branchAngle = nextAngle;
+                    CalculateCurvedPortPosition(segment, entryPort, outgoingPort, x, y, angle, nextX, nextY, nextAngle,
+                        out branchX, out branchY, out branchAngle);
                 }
+                // Geraden (G239, G231, G62) haben nur einen Ausgang → branchX/Y/Angle = nextX/Y/Angle
 
                 RenderSegmentRecursive(nextSegment, outgoing, branchX, branchY, branchAngle, trackPlan, renderedSegments);
             }
@@ -241,6 +243,42 @@ public class TrackPlanSvgRenderer
             outX = centerX + radius * Math.Cos((endAngle - 90) * Math.PI / 180);
             outY = centerY + radius * Math.Sin((endAngle - 90) * Math.PI / 180);
             outAngle = endAngle;
+        }
+    }
+
+    /// <summary>
+    /// Berechnet die Ausgangsposition für einen bestimmten Port eines Kurvensegments (R9, R1–R4).
+    /// Bei Kurven mit zwei Ports muss für jeden Ausgang die korrekte Position berechnet werden.
+    /// </summary>
+    private void CalculateCurvedPortPosition(Segment segment, char entryPort, char outgoingPort, double x, double y, double angle,
+        double nextX, double nextY, double nextAngle, out double outX, out double outY, out double outAngle)
+    {
+        var radius = segment switch { R9 r => r.RadiusInMm, R1 r => r.RadiusInMm, R2 r => r.RadiusInMm, R3 r => r.RadiusInMm, R4 r => r.RadiusInMm, _ => 0.0 };
+        var arcDegree = segment switch { R9 r => r.ArcInDegree, R1 r => r.ArcInDegree, R2 r => r.ArcInDegree, R3 r => r.ArcInDegree, R4 r => r.ArcInDegree, _ => 0.0 };
+
+        var curveDirection = entryPort == 'B' ? -1 : 1;
+        double startX = x;
+        double startY = y;
+        double centerAngle = angle + (90 * curveDirection);
+        double centerX = x + radius * Math.Cos(centerAngle * Math.PI / 180);
+        double centerY = y + radius * Math.Sin(centerAngle * Math.PI / 180);
+        double endAngle = angle + (arcDegree * curveDirection);
+        double endX = centerX + radius * Math.Cos((endAngle - (90 * curveDirection)) * Math.PI / 180);
+        double endY = centerY + radius * Math.Sin((endAngle - (90 * curveDirection)) * Math.PI / 180);
+
+        // entryPort A: physisch A = Start, B = Ende. entryPort B: physisch B = Start, A = Ende.
+        bool isStartPort = (entryPort == 'A' && outgoingPort == 'A') || (entryPort == 'B' && outgoingPort == 'B');
+        if (isStartPort)
+        {
+            outX = startX;
+            outY = startY;
+            outAngle = angle + 180; // nächste Segment blickt zurück
+        }
+        else
+        {
+            outX = endX;
+            outY = endY;
+            outAngle = nextAngle; // = endAngle (Hauptausgang)
         }
     }
 

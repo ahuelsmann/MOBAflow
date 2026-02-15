@@ -1,6 +1,28 @@
 # MOBAflow TODOs & Roadmap
 
-> Last Updated: 2026-02-20 (End of Session 34)
+> Last Updated: 2026-02-15
+
+---
+
+## ✅ SESSION 35 COMPLETED: Track Plan Win2D Phase 1
+
+**Win2D GPU-Rendering für Track Plan (Phase 1):**
+- [x] Microsoft.Graphics.Win2D 1.3.2 ins WinUI-Projekt integriert
+- [x] TargetFramework WinUI auf 22621 angehoben (NETSDK1130-Workaround für Win2D)
+- [x] PathToCanvasGeometryConverter – Pfad-Befehle → CanvasGeometry
+- [x] CanvasControl ersetzt XAML-Canvas für Segment-Zeichnung
+- [x] Draw-Handler zeichnet alle Gleissegmente via Win2D
+- [x] Overlay-Canvas für Ghost, Rotation-Handle, Port-Indikatoren beibehalten
+- [x] Zoom/Pan (ScrollViewer) unverändert funktionsfähig
+
+**Dateien:**
+- `WinUI/View/PathToCanvasGeometryConverter.cs` (NEU)
+- `WinUI/View/TrackPlanPage.xaml` / `.xaml.cs` (CanvasControl + Draw)
+- `Directory.Packages.props`, `WinUI/WinUI.csproj` (Win2D, TargetFramework)
+
+**Dokumentation:** `docs/TrackPlan-Win2D-DragDrop-Selection.md`
+
+**Nächste Phase (Phase 2):** Hit-Testing via StrokeContainsPoint, Ghost in Win2D zeichnen, optional Caching
 
 ---
 
@@ -245,7 +267,7 @@ All 8 domain types should be represented in example-solution.json to serve as a 
 | **MessagePack** | 2.5.0+ | Binary serialization (vs JSON) | High-freq Z21 data serialization |
 | **SharpZipLib** | 1.4.0+ | ZIP compression | Solution/Backup export |
 | **CsvHelper** | 30.0.0+ | CSV parsing | Export journeys/locomotives to CSV |
-| **SkiaSharp** | 2.88.0+ | Graphics rendering (alternative to WinUI canvas) | Track plan rendering |
+| **SkiaSharp** | 2.88.0+ | Graphics rendering (alternative) | ✅ **Win2D bereits integriert** – Track Plan nutzt Microsoft.Graphics.Win2D |
 | **OpenTelemetry** | 1.7.0+ | Distributed tracing | Production monitoring |
 
 ### **CI/CD & Build Tools** (DevDependencies)
@@ -286,6 +308,7 @@ dotnet tool install -g dotnet-coverage
 
 **Session 33:** Polish Signal Box feature: visual alignment, conditional rendering, test all configurations
 **Session 34:** Add Polly resilience policies for Z21 connection
+**Session 35:** ✅ Track Plan Win2D Phase 1 (completed)
 **Session 35:** Add FluentValidation for AppSettings validation
 **Session 36:** Add MediatR for CQRS pattern in ViewModel commands
 **Session 37:** Add Mapster for high-performance object mapping

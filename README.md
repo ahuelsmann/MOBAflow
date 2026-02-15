@@ -13,9 +13,10 @@
 - ✅ **C# Version:** 14.0 (latest)
 - ✅ **SDK:** 10.0.100
 - ✅ **Build:** Passing
-- ✅ **Tests:** 262/263 passing (99.6%)
+- ✅ **Tests:** 246 passing
 - ✅ **WindowsAppSDK:** 1.8.260101001
 - ✅ **MAUI:** 10.0.31
+- ✅ **WinUI Track Plan:** Win2D GPU-Rendering (Phase 1)
 
 See [NET10-MIGRATION-ANALYSIS.md](docs/NET10-MIGRATION-ANALYSIS.md) for migration details.
 
@@ -57,6 +58,7 @@ MOBAflow includes a full-featured **Track Plan System** for designing model rail
 - ✅ Feedback point assignment
 - ✅ Validation constraints
 - ✅ Signal switching requires an active Z21 connection
+- ✅ **Win2D GPU-Rendering** – Gleissegmente werden via Microsoft.Graphics.Win2D gezeichnet (Phase 1)
 
 ### Track Libraries
 Track systems are modular - each manufacturer's track system is a separate library:
@@ -243,6 +245,7 @@ WinUI / MAUI / Blazor (Platform-specific)
 
 - **Framework:** .NET 10
 - **UI Frameworks:** WinUI 3, .NET MAUI, Blazor Server
+- **Graphics:** Microsoft.Graphics.Win2D (Track Plan GPU-Rendering)
 - **MVVM:** CommunityToolkit.Mvvm
 - **Logging:** Serilog (File + In-Memory Sink for real-time UI)
 - **Speech:** Azure Cognitive Services, Windows Speech API
@@ -340,8 +343,9 @@ Reusable **WinUI 3 User Controls** for Windows Desktop application and plugins.
 
 #### Technology
 - **Framework:** .NET 10 + WinUI 3
-- **Platform:** Windows (10.0.17763.0+)
+- **Platform:** Windows (10.0.22621.0+)
 - **UI:** Windows App SDK XAML
+- **Graphics:** Win2D (Track Plan Canvas)
 
 #### Usage in WinUI App
 
