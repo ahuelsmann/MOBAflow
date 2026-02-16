@@ -4,8 +4,8 @@
 
 namespace Moba.Test.TestBase;
 
-using Moba.Backend.Service;
 using Moba.SharedUI.Interface;
+
 using Moq;
 
 /// <summary>

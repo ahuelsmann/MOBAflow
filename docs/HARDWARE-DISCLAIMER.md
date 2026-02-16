@@ -114,14 +114,6 @@ The following points **MUST** be checked by the user before use:
 - **GitHub Issues:** https://github.com/ahuelsmann/MOBAflow/issues
 - **Discussions:** https://github.com/ahuelsmann/MOBAflow/discussions
 
-### Z21 Hardware Support
-- **Roco Customer Service:** https://www.roco.cc/en/customer-service
-- **Z21 App & Firmware:** https://www.roco.cc/en/products/electronics/command-stations/z21
-
-### Network Problems
-- **Windows Network Troubleshooting:** Settings > Network & Internet
-- **Android Connection Issues:** Settings > WLAN > Network Settings
-
 ---
 
 ## 📜 Licensing Notice

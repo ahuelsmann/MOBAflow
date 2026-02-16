@@ -171,102 +171,6 @@ WebApp/
 
 ---
 
-## 🔌 Plugin System Architecture
-
-### Plugin Lifecycle
-
-```
-START
-  ↓
-[1] DISCOVERY
-  • Scan WinUI/bin/Debug/Plugins/*.dll
-  • Reflect for IPlugin implementations
-  ↓
-[2] VALIDATION
-  • Check Plugin.Name not empty
-  • Validate page tags (no duplicates)
-  • Check for reserved tags
-  ↓
-[3] CONFIGURATION
-  • Call Plugin.ConfigureServices(services)
-  • Register plugin ViewModels
-  • Register plugin Pages
-  ↓
-[4] INITIALIZATION (after app starts)
-  • Call Plugin.OnInitializedAsync()
-  • Load resources, setup state
-  ↓
-[5] RUNTIME
-  • Pages available in NavigationView
-  • ViewModels respond to user actions
-  ↓
-[6] UNLOADING (app shutdown)
-  • Call Plugin.OnUnloadingAsync()
-  • Cleanup, save state
-  ↓
-END
-```
-
-### Plugin Architecture
-
-```
-IPlugin (Interface in Common.Plugins)
-    ↓
-PluginBase (Abstract Base Class)
-    ↓
-MyPlugin : PluginBase
-    ├── GetPages()
-    ├── ConfigureServices()
-    ├── OnInitializedAsync()
-    └── OnUnloadingAsync()
-    
-    ↓ (Internally uses)
-    
-PluginDiscoveryService
-    ├── Scan directory
-    ├── Reflect assemblies
-    └── Instantiate plugins
-    
-PluginValidator
-    ├── Validate names
-    ├── Check page tags
-    └── Verify reserved tags
-    
-PluginLoader
-    ├── Coordinate discovery
-    ├── Register services
-    ├── Call lifecycle hooks
-    └── Manage plugins list
-    
-DI Container
-    └── Resolve plugin dependencies
-```
-
-### Plugin Service Registration
-
-```csharp
-public class MyPlugin : PluginBase
-{
-    public override void ConfigureServices(IServiceCollection services)
-    {
-        // Register plugin services
-        services.AddTransient<MyPluginViewModel>();
-        services.AddTransient<MyPluginPage>();
-        
-        // MainWindowViewModel automatically injected
-        // (already registered by host)
-    }
-}
-
-// DI Resolution:
-MyPluginPage -> constructor needs:
-    ├── MyPluginViewModel (from plugin registration)
-    │   └── MainWindowViewModel (from host registration)
-    └── MainWindowViewModel (from host registration)
-```
-
----
-
 ## 🔄 Data Flow
 
 ### Z21 Feedback Flow
@@ -375,13 +279,7 @@ If Z21 Connection Fails:
   • UI shows "Disconnected" status
   • Commands are disabled
   • No actions can execute
-  
-If Plugin Fails to Load:
-  • Warning logged
-  • Plugin skipped
-  • Other plugins load normally
-  • App continues
-  
+    
 If DLL is corrupted:
   • Error logged
   • Next DLL is attempted
@@ -498,22 +396,6 @@ Observable Property Update
 UI Re-renders
 ```
 
-### Plugin Integration
-
-```
-Plugin Page (Platform-Specific)
-  ↓
-Plugin ViewModel (Presentation Layer)
-  ↓
-Host Services + Plugin Services (Backend)
-  ↓
-Domain Models (Domain Layer)
-  ↓
-External Integrations
-  ↓
-Result back to Plugin
-```
-
 ---
 
 ## 📊 Technology Decisions
@@ -526,7 +408,6 @@ Result back to Plugin
 | **Logging** | Serilog | Structured, extensible, file + in-memory sinks |
 | **Z21 Protocol** | UDP (direct) | Low latency, no external dependencies |
 | **Testing** | NUnit | Simple, focused unit tests |
-| **Plugins** | AssemblyLoadContext, Reflection | Isolation, dynamic discovery, .NET standard |
 
 ---
 
@@ -543,6 +424,5 @@ The architecture supports:
 
 ---
 
-**Last Updated:** February 2025  
-**Version:** 3.15  
-**Architecture Review:** Monthly (with code reviews)
+**Last Updated:** February 2026
+**Version:** 3.16

@@ -3,7 +3,6 @@
 namespace Moba.Domain;
 
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 /// <summary>
 /// Loads German locomotive classes from germany-locomotives.json and provides lookup/parsing functionality.

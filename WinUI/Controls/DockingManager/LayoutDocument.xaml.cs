@@ -2,8 +2,6 @@
 
 namespace Moba.WinUI.Controls;
 
-using Behavior;
-
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 

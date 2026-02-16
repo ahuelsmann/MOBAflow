@@ -7,8 +7,6 @@ using CommunityToolkit.Mvvm.Input;
 
 using Domain;
 
-using Microsoft.Extensions.Logging;
-
 using Service;
 
 using System.Collections.ObjectModel;

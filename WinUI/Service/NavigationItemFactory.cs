@@ -3,13 +3,12 @@
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
-using Microsoft.UI;
+
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
-using Windows.UI;
 
 /// <summary>
 /// Factory for creating NavigationViewItems from PageMetadata.

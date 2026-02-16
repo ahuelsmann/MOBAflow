@@ -3,7 +3,7 @@
 namespace Moba.WinUI.View;
 
 using Common.Navigation;
-using Microsoft.Graphics.Canvas;
+
 using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.Graphics.Canvas.UI;
 using Microsoft.Graphics.Canvas.UI.Xaml;
@@ -13,11 +13,15 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
+
 using SharedUI.ViewModel;
+
 using System.Diagnostics;
-using TrackPlan.Renderer;
-using TrackLibrary.Base;
+
 using TrackLibrary.PikoA;
+
+using TrackPlan.Renderer;
+
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.System;
@@ -505,29 +509,29 @@ public sealed partial class TrackPlanPage : Page
             var otherPorts = SegmentPortGeometry.GetAllPortWorldPositions(other, otherEntryPort);
 
             foreach (var (myPortName, mx, my, _) in myPorts)
-            foreach (var (otherPortName, ox, oy, oAngle) in otherPorts)
-            {
-                var dx = ox - mx;
-                var dy = oy - my;
-                var dist = Math.Sqrt(dx * dx + dy * dy);
-                if (dist < bestDist && dist < bestDistThreshold)
+                foreach (var (otherPortName, ox, oy, oAngle) in otherPorts)
                 {
-                    bestDist = dist;
-                    if (!myPortsWithEntry.TryGetValue(myPortName, out var portInfo))
-                        continue;
-                    var (localX, localY, myLocalAngle) = portInfo;
-                    // Tangenten müssen übereinstimmen: our_rotation + myLocalAngle = oAngle.
-                    var newRotation = NormalizeAngle(oAngle - myLocalAngle);
-                    // Ursprung so setzen, dass unser Port (localX, localY) bei neuer Rotation genau (ox, oy) trifft.
-                    var r = newRotation * Math.PI / 180;
-                    var cos = Math.Cos(r);
-                    var sin = Math.Sin(r);
-                    var newOriginX = ox - (localX * cos - localY * sin);
-                    var newOriginY = oy - (localX * sin + localY * cos);
-                    var newPlaced = placed.WithPosition(newOriginX, newOriginY, newRotation);
-                    best = (newPlaced, myPortName, other.Segment.No, otherPortName);
+                    var dx = ox - mx;
+                    var dy = oy - my;
+                    var dist = Math.Sqrt(dx * dx + dy * dy);
+                    if (dist < bestDist && dist < bestDistThreshold)
+                    {
+                        bestDist = dist;
+                        if (!myPortsWithEntry.TryGetValue(myPortName, out var portInfo))
+                            continue;
+                        var (localX, localY, myLocalAngle) = portInfo;
+                        // Tangenten müssen übereinstimmen: our_rotation + myLocalAngle = oAngle.
+                        var newRotation = NormalizeAngle(oAngle - myLocalAngle);
+                        // Ursprung so setzen, dass unser Port (localX, localY) bei neuer Rotation genau (ox, oy) trifft.
+                        var r = newRotation * Math.PI / 180;
+                        var cos = Math.Cos(r);
+                        var sin = Math.Sin(r);
+                        var newOriginX = ox - (localX * cos - localY * sin);
+                        var newOriginY = oy - (localX * sin + localY * cos);
+                        var newPlaced = placed.WithPosition(newOriginX, newOriginY, newRotation);
+                        best = (newPlaced, myPortName, other.Segment.No, otherPortName);
+                    }
                 }
-            }
         }
 
         return best;

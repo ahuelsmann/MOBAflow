@@ -4,21 +4,15 @@
 
 > ⚖️ **Legal Notice:** MOBAflow is an independent open-source project. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for details on third-party software, formats, and trademarks (AnyRail, Piko, Roco).
 
-## 📊 Current Status (2026-02-15)
-
-**🎉 .NET 10 Migration Complete!** All projects successfully migrated to .NET 10 on 2026-02-11.
-
-**Platform Status:**
-- ✅ **Framework:** .NET 10 (all 15 projects)
-- ✅ **C# Version:** 14.0 (latest)
-- ✅ **SDK:** 10.0.100
-- ✅ **Build:** Passing
-- ✅ **Tests:** 246 passing
-- ✅ **WindowsAppSDK:** 1.8.260101001
-- ✅ **MAUI:** 10.0.31
-- ✅ **WinUI Track Plan:** Win2D GPU-Rendering (Phase 1)
-
-See [NET10-MIGRATION-ANALYSIS.md](docs/NET10-MIGRATION-ANALYSIS.md) for migration details.
+## 📊 Documentation Index
+[ARCHITECTURE.md](docs/ARCHITECTURE.md)
+[CHANGELOG.md](docs/CHANGELOG.md)
+[CLAUDE.md](docs/CLAUDE.md)
+[HARDWARE-DISCLAIMER.md](docs/HARDWARE-DISCLAIMER.md)
+[JSON-VALIDATION.md](docs/JSON-VALIDATION.md)
+[MINVER-SETUP.md](docs/MINVER-SETUP.md)
+[SECURITY.md](docs/SECURITY.md)
+[THIRD-PARTY-NOTICES.md](docs/THIRD-PARTY-NOTICES.md)
 
 ## ✨ Features
 
@@ -27,8 +21,8 @@ See [NET10-MIGRATION-ANALYSIS.md](docs/NET10-MIGRATION-ANALYSIS.md) for migratio
 - 🧭 **Journeys Page Layout** - Toggle City and Workflow libraries to free space for properties
 - 🔊 **Text-to-Speech** - Azure Cognitive Services & Windows Speech
 - ⚡ **Workflow Automation** - Event-driven action sequences
-- 🧩 **Docking Manager Demo (WinUI)** - Host-side Docking page with drag-dock panels, overlay drop targets, LayoutDocumentEx, and collapsible tabs that shrink to icon width
-- 🎨 **MOBAtps Track Plan System** - Visual track layout editor with drag & drop
+- 🎨 **Track Plan** - Visual track layout editor with drag & drop
+- 
 - 🛤️ **Track Libraries** - Extensible track system support (Piko A-Gleis, more coming)
 - 📱 **Multi-Platform** - WinUI (Windows), MAUI (Android), Blazor (Web)
 - 🟢 **Startup Status Indicator** - WinUI status bar shows deferred initialization progress with logs
@@ -45,9 +39,9 @@ MOBAflow controls model train layouts via UDP communication with the **Roco Z21 
 
 **Current Status:** ℹ️ *Setup automation scripts are not yet available. Manual installation required.*
 
-## 🛤️ Track Plan System (MOBAtps)
+## 🛤️ Track Plan
 
-MOBAflow includes a full-featured **Track Plan System** for designing model railroad layouts:
+MOBAflow includes a track plan system for designing model railroad layouts:
 
 ### Features
 - ✅ Drag & Drop track placement from toolbox
@@ -65,62 +59,16 @@ Track systems are modular - each manufacturer's track system is a separate libra
 
 | Library | Status | Templates |
 |---------|--------|-----------|
-| **TrackLibrary.PikoA** | ✅ Active | G231, G119, G62, G56, G31, R1-R9, BWL, BWR, K30 |
-| TrackLibrary.RocoLine | 🚧 Planned | Coming soon |
-| TrackLibrary.Tillig | 🚧 Planned | Coming soon |
-| TrackLibrary.Maerklin | 🚧 Planned | Coming soon |
-
-### Architecture
-```
-TrackPlan (Domain)
-  ↑
-TrackPlan.Renderer (Geometry/Layout)
-  ↑
-TrackPlan.Editor (ViewModels/Commands)
-  ↑
-TrackLibrary.PikoA (Track Templates)
-```
-
-## 🛤️ AnyRail Integration
-
-MOBAflow supports **importing track layouts from AnyRail** (user-exported XML files for personal use). This feature enables:
-- ✅ Import of user-created AnyRail track plans (XML format)
-- ✅ Automatic detection of track geometry and article codes
-- ✅ SVG path generation for visualization
-
-**Important:** AnyRail is proprietary software by Carsten Kühling & Paco Ahlqvist. MOBAflow is **independent** and **not affiliated** with AnyRail. The import feature is provided for **interoperability** purposes (fair use) and allows users to import their **own exported track plans**. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for legal details.
-
-## 📋 Quick Links
-
-- 📖 **Documentation & Wiki:** [`docs/wiki/INDEX.md`](docs/wiki/INDEX.md) - Complete user guides, setup, troubleshooting
-- 🏗️ **Architecture:** [`ARCHITECTURE.md`](ARCHITECTURE.md)
-- 📚 **API Documentation:** [`docs/DOXYGEN.md`](docs/DOXYGEN.md) - Generate with Doxygen
-- 🧪 **Test Coverage:** [`docs/TEST-COVERAGE.md`](docs/TEST-COVERAGE.md) - Unit test status
-- 📝 **Documentation Status:** [`docs/DOCUMENTATION-STATUS.md`](docs/DOCUMENTATION-STATUS.md) - XML doc coverage
-- 🎯 **Quality Roadmap:** [`docs/QUALITY-ROADMAP.md`](docs/QUALITY-ROADMAP.md) - 6-week improvement plan
-- 📝 **Changelog:** [`CHANGELOG.md`](CHANGELOG.md)
-- ⚠️ **Hardware & Safety:** [`HARDWARE-DISCLAIMER.md`](HARDWARE-DISCLAIMER.md) - **Read before using Z21!**
-- 📜 **Code of Conduct:** [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
-- 🤝 **Contributing:** [`CONTRIBUTING.md`](CONTRIBUTING.md)
-- 🔒 **Security Policy:** [`SECURITY.md`](SECURITY.md)
-- ⚖️ **Third-Party Notices:** [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md)
-- 🤖 **AI Instructions:** [`.github/copilot-instructions.md`](.github/copilot-instructions.md)
-
-**Plugin pages:** Use `NavigationItem` attributes on Page classes. Legacy `GetPages()` has been removed.
-
-## 🚀 Getting Started
-
-### Installation
-
-**For detailed installation instructions, setup guides, and troubleshooting, see:** [`docs/wiki/INDEX.md`](docs/wiki/INDEX.md)
-
-**Note:** ℹ️ *Automated setup scripts are planned for future releases. Currently, manual installation is required.*
+| **TrackLibrary.PikoA** | ✅ Active |
+| TrackLibrary.RocoLine | 🚧 Planned |
+| TrackLibrary.Tillig | 🚧 Planned |
+| TrackLibrary.Maerklin | 🚧 Planned |
 
 ### Quick Build from Source
 
 **Prerequisites:**
-- .NET 10 SDK (**required** - .NET 9 no longer supported as of 2026-02-11)
-- Visual Studio 2026 (recommended) or VS Code
+- .NET 10 SDK
+- Visual Studio 2026 (recommended)
 - Roco Z21 (for Z21 connectivity)
 
 **Clone & Build:**
@@ -365,7 +313,7 @@ Reusable **WinUI 3 User Controls** for Windows Desktop application and plugins.
 - **DependencyProperty** für Bindable Properties verwenden
 - **x:Bind** bevorzugen (compiled bindings)
 - **ThemeResource** für Farben/Styles nutzen
-- Konsistent mit WinUI 3 Design System
+- Konsistent mit Fluent Design System
 - Controls sollten mit ViewModels aus `SharedUI` funktionieren
 
 ### 📱 MAUI.Controls (Android Mobile)
@@ -615,33 +563,4 @@ When Azure App Configuration is set up:
 
 ### Troubleshooting
 
-**Script fails with "Azure CLI not found":**
-
-```powershell
-# Install Azure CLI
-winget install Microsoft.AzureCLI
-```
-
-**Script fails with "No subscription selected":**
-
-```powershell
-az login
-az account list --output table
-az account set --subscription "YOUR-SUBSCRIPTION-NAME"
-```
-
-**Environment variable not working:**
-```powershell
-# Verify it's set (PowerShell)
-[System.Environment]::GetEnvironmentVariable('AZURE_APPCONFIG_CONNECTION', 'User')
-
-# Must restart IDE after install-appconfig-connection.ps1!
-```
-
-**Speech still not working:**
-1. Check logs: `WinUI/bin/Debug/logs/mobaflow-YYYYMMDD.log`
-2. Verify Azure App Config contains keys:
-   ```powershell
-   az appconfig kv list --name mobaflow-config
-   ```
-3. Verify connection string format (must start with `Endpoint=https://`)
+---

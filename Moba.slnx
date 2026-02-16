@@ -11,12 +11,11 @@
     <File Path="NuGet.Config" />
     <File Path="README.md" />
   </Folder>
+  <Folder Name="/Solution Items/.github/">
+    <File Path=".github/copilot-instructions.md" />
+  </Folder>
   <Folder Name="/Solution Items/scripts/">
     <File Path="scripts/Enable-MAUIWifiDebug.ps1" />
-  </Folder>
-  <Folder Name="/Solution Items/docs/" />
-  <Folder Name="/Solution Items/docs/wiki/">
-    <File Path="docs/wiki/INDEX.md" />
   </Folder>
   <Folder Name="/TrackLibrary/" />
   <Folder Name="/TrackPlan/" />

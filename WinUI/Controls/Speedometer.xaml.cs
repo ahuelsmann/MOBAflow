@@ -2,10 +2,9 @@ namespace Moba.WinUI.Controls;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
-using System.Globalization;
+
 using Windows.Foundation;
 using Windows.UI;
 

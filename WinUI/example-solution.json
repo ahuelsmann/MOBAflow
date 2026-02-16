@@ -151,7 +151,28 @@
               }
             }
           ],
-          "executionMode": 1,
+          "executionMode": 0,
+          "inPort": 0,
+          "isUsingTimerToIgnoreFeedbacks": false,
+          "intervalForTimerToIgnoreFeedbacks": 0
+        },
+        {
+          "id": "098785e2-d67a-4f11-92f1-ce78fbc3a961",
+          "name": "New Workflow",
+          "description": "",
+          "actions": [
+            {
+              "id": "4f89caaf-2336-48c2-9c98-ee27b100cf59",
+              "name": "New Command",
+              "number": 1,
+              "type": 1,
+              "delayAfterMs": 0,
+              "parameters": {
+                "Bytes": "AA=="
+              }
+            }
+          ],
+          "executionMode": 0,
           "inPort": 0,
           "isUsingTimerToIgnoreFeedbacks": false,
           "intervalForTimerToIgnoreFeedbacks": 0
@@ -167,35 +188,37 @@
             {
               "id": "d1e2f3a4-b5c6-7890-1234-567890abcdef",
               "name": "Bielefeld Hauptbahnhof",
-              "inPort": 1,
+              "inPort": 0,
               "numberOfLapsToStop": 2,
               "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "isExitOnLeft": true,
               "track": 1,
-              "departure": "2025-12-29T10:01:00+03:00",
+              "arrival": "2026-02-16T10:00:00+03:00",
+              "departure": "2026-02-16T10:02:00+03:00",
               "connections": []
             },
             {
               "id": "d2e3f4a5-b6c7-8901-2345-678901bcdef0",
               "name": "Herford",
-              "inPort": 2,
+              "inPort": 0,
               "numberOfLapsToStop": 2,
               "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "isExitOnLeft": false,
               "track": 1,
-              "arrival": "2025-12-29T10:15:00+03:00",
-              "departure": "2025-12-29T10:17:00+03:00",
+              "arrival": "2026-02-16T10:10:00+03:00",
+              "departure": "2026-02-16T10:12:00+03:00",
               "connections": []
             },
             {
               "id": "d3e4f5a6-b7c8-9012-3456-789012cdef01",
               "name": "Minden (Westf)",
-              "inPort": 3,
+              "inPort": 0,
               "numberOfLapsToStop": 2,
               "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "isExitOnLeft": true,
               "track": 1,
-              "arrival": "2025-12-29T10:45:00+03:00",
+              "arrival": "2026-02-16T10:20:00+03:00",
+              "departure": "2026-02-16T10:22:00+03:00",
               "connections": []
             }
           ],

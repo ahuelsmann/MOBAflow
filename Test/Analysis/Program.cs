@@ -1,6 +1,4 @@
 // Test value calculator for Z21Command.BuildSetTurnout
-using System;
-
 int decoderAddress = 203;
 int output = 0;
 bool activate = false;

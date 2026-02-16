@@ -1,7 +1,4 @@
 namespace Moba.TrackLibrary.PikoA;
-
-using Base;
-
 /// <summary>
 /// Katalog aller Piko A-Gleistypen für Toolbox und Drag &amp; Drop.
 /// Gruppiert nach Kategorien für die TrackPlanPage.

@@ -1,14 +1,14 @@
 namespace Moba.WinUI.View;
 
 using Controls;
+
 using Domain;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
-using SharedUI.ViewModel;
-using Windows.UI;
 
 /// <summary>
 /// Partial class containing all element graphics creation methods.

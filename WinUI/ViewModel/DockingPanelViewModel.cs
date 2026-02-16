@@ -4,10 +4,10 @@ namespace Moba.WinUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+
 using Microsoft.UI.Xaml;
-using System;
+
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 /// <summary>
 /// ViewModel für DockingManager mit Layout-State Management.
