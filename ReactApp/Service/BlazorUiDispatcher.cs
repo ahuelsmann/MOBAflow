@@ -17,12 +17,6 @@ public class BlazorUiDispatcher : IUiDispatcher
         action();
     }
 
-    public void EnqueueOnUi(Action action)
-    {
-        // In Blazor, synchronous execution is acceptable since we're already on the correct thread
-        action();
-    }
-
     public async Task InvokeOnUiAsync(Func<Task> asyncAction)
     {
         await asyncAction().ConfigureAwait(false);

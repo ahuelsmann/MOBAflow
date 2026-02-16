@@ -289,13 +289,14 @@ public static class SegmentPortGeometry
         ];
     }
 
-    /// <summary>WY: Y-Weiche 30°. Port A Ursprung, Port B/C symmetrisch ±15°.</summary>
+    /// <summary>WY: Y-Weiche 30°. Port A Ursprung, Port B/C symmetrisch ±15°. Länge = Bogenlänge (Radius × halber Öffnungswinkel im Bogenmaß).</summary>
     private static IReadOnlyList<PortInfo> GetWyPorts(double arcDegree, double radius)
     {
         var halfArc = arcDegree / 2;
-        var len = radius * 0.15;
-        var radL = -halfArc * Math.PI / 180;
-        var radR = halfArc * Math.PI / 180;
+        var halfArcRad = halfArc * Math.PI / 180;
+        var len = radius * halfArcRad;
+        var radL = -halfArcRad;
+        var radR = halfArcRad;
         return
         [
             new PortInfo("PortA", 0, 0, 0),

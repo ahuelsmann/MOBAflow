@@ -5,7 +5,7 @@ applyTo: '**/*.cs'
 
 # MOBAflow Architecture
 
-> Full docs: [`ARCHITECTURE.md`](../../ARCHITECTURE.md)
+> Full docs: [`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md)
 
 ## Layer Overview
 
@@ -41,6 +41,11 @@ Z21 UDP → IZ21.FeedbackReceived → MainWindowViewModel → Journey.HandleFeed
 - `[ObservableProperty]`, `[RelayCommand]` attributes
 - `ArgumentNullException.ThrowIfNull()` for null checks
 - `.ConfigureAwait(false)` in library code
+
+## Configuration & Paths
+
+| Artifact | Location | Format |
+|----------|----------|--------|
 | Solution | User-selected | `.mobaflow` (JSON) |
 | Settings | `WinUI/appsettings.json` | JSON |
 | Logs | `bin/Debug/logs/mobaflow-*.log` | Rolling text |

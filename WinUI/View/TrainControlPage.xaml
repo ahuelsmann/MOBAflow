@@ -615,44 +615,82 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <Border
+                            <StackPanel
                                 Grid.Column="1"
-                                Padding="8,4"
-                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                BorderThickness="1"
-                                CornerRadius="10">
-                                <StackPanel
-                                    VerticalAlignment="Center"
-                                    Orientation="Horizontal"
-                                    Spacing="6">
-                                    <TextBlock
+                                VerticalAlignment="Center"
+                                Orientation="Horizontal"
+                                Spacing="12">
+                                <Border
+                                    Padding="8,4"
+                                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="10">
+                                    <StackPanel
                                         VerticalAlignment="Center"
-                                        FontSize="10"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Text="MAX" />
-                                    <TextBlock
-                                        VerticalAlignment="Center"
-                                        FontSize="10"
-                                        FontWeight="SemiBold"
-                                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                        Text="{x:Bind ViewModel.PeakMainCurrent, Mode=OneWay}" />
-                                    <Button
-                                        Padding="4"
-                                        VerticalAlignment="Center"
-                                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                        BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-                                        BorderThickness="1"
-                                        Command="{x:Bind ViewModel.ResetPeakCurrentCommand}"
-                                        CornerRadius="6"
-                                        ToolTipService.ToolTip="Reset peak current">
-                                        <FontIcon
-                                            FontSize="12"
+                                        Orientation="Horizontal"
+                                        Spacing="6">
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            FontSize="10"
                                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Glyph="&#xE711;" />
-                                    </Button>
-                                </StackPanel>
-                            </Border>
+                                            Text="MAX" />
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            FontSize="10"
+                                            FontWeight="SemiBold"
+                                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                            Text="{x:Bind ViewModel.PeakMainCurrent, Mode=OneWay}" />
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            FontSize="10"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="mA" />
+                                    </StackPanel>
+                                </Border>
+                                <Border
+                                    Padding="8,4"
+                                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="10">
+                                    <StackPanel
+                                        VerticalAlignment="Center"
+                                        Orientation="Horizontal"
+                                        Spacing="6">
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            FontSize="10"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="MAX" />
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            FontSize="10"
+                                            FontWeight="SemiBold"
+                                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                            Text="{x:Bind ViewModel.PeakTemperature, Mode=OneWay}" />
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            FontSize="10"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="°C" />
+                                    </StackPanel>
+                                </Border>
+                                <Button
+                                    Padding="4"
+                                    VerticalAlignment="Center"
+                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                    BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    Command="{x:Bind ViewModel.ResetPeakCurrentCommand}"
+                                    CornerRadius="6"
+                                    ToolTipService.ToolTip="Reset peak current and peak temperature">
+                                    <FontIcon
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Glyph="&#xE711;" />
+                                </Button>
+                            </StackPanel>
                         </Grid>
 
                         <!--  Amperemeter  -->

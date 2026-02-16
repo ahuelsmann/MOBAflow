@@ -701,8 +701,8 @@ Siehe [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md) für vollständige L
 ## 📖 Weitere Dokumentation
 
 - **User Guide (kompakt):** [`MOBASMART-USER-GUIDE.md`](MOBASMART-USER-GUIDE.md)
-- **Architecture:** [`ARCHITECTURE.md`](ARCHITECTURE.md)
-- **Contributing:** [`CONTRIBUTING.md`](../CONTRIBUTING.md)
+- **Architecture:** [`../ARCHITECTURE.md`](../ARCHITECTURE.md)
+- **Einstieg & Contributing:** [`../../README.md`](../../README.md)
 
 ---
 

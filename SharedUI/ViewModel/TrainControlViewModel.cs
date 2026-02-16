@@ -34,8 +34,8 @@ using System.ComponentModel;
 public sealed partial class TrainControlViewModel : ObservableObject
 {
     private readonly IZ21 _z21;
-    private readonly IUiDispatcher _uiDispatcher;
     private readonly ISettingsService _settingsService;
+    private readonly Backend.Interface.ITripLogService? _tripLogService;
     private readonly ILogger<TrainControlViewModel>? _logger;
 
     private bool _isLoadingPreset;
@@ -393,6 +393,13 @@ public sealed partial class TrainControlViewModel : ObservableObject
     [ObservableProperty]
     private int _peakMainCurrent;
 
+    /// <summary>
+    /// Peak (maximum) temperature in °C since connection or last reset.
+    /// Useful for monitoring maximum thermal load.
+    /// </summary>
+    [ObservableProperty]
+    private int _peakTemperature;
+
     // === Speed Ramp Configuration ===
 
     /// <summary>
@@ -610,35 +617,28 @@ public sealed partial class TrainControlViewModel : ObservableObject
     public TrainControlViewModel(
         IZ21 z21,
         IEventBus eventBus,
-        IUiDispatcher uiDispatcher,
         ISettingsService settingsService,
         MainWindowViewModel? mainWindowViewModel = null,
+        Backend.Interface.ITripLogService? tripLogService = null,
         ILogger<TrainControlViewModel>? logger = null)
     {
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(eventBus);
-        ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(settingsService);
         _z21 = z21;
-        _uiDispatcher = uiDispatcher;
         _settingsService = settingsService;
         _mainWindowViewModel = mainWindowViewModel;
+        _tripLogService = tripLogService;
         _logger = logger;
 
         // Load presets from settings
         LoadPresetsFromSettings();
 
-        // Subscribe to Z21 events via EventBus (with automatic WeakReference cleanup)
+        // Subscribe to Z21 events via EventBus (UiThreadEventBusDecorator führt Handler auf UI-Thread aus)
         eventBus.Subscribe<Z21ConnectionEstablishedEvent>(_ => OnZ21ConnectionChanged(true));
         eventBus.Subscribe<Z21ConnectionLostEvent>(_ => OnZ21ConnectionChanged(false));
         eventBus.Subscribe<LocomotiveInfoChangedEvent>(evt => OnLocoInfoReceived(CreateLocoInfo(evt)));
         eventBus.Subscribe<SystemStateChangedEvent>(evt => OnSystemStateChanged(CreateSystemState(evt)));
-
-        // Keep legacy direct subscriptions for backward compatibility (optional)
-        // CRITICAL: Wrap all handlers with UI thread marshalling to prevent WinUI SetValue COMException
-        _z21.OnConnectedChanged += (connected) => _uiDispatcher.InvokeOnUi(() => OnZ21ConnectionChanged(connected));
-        _z21.OnLocoInfoChanged += (locoInfo) => _uiDispatcher.InvokeOnUi(() => OnLocoInfoReceived(locoInfo));
-        _z21.OnSystemStateChanged += (systemState) => _uiDispatcher.InvokeOnUi(() => OnSystemStateChanged(systemState));
 
         // Subscribe to MainWindowViewModel.SelectedJourney changes
         if (_mainWindowViewModel != null)
@@ -857,34 +857,31 @@ public sealed partial class TrainControlViewModel : ObservableObject
 
     private void OnZ21ConnectionChanged(bool isConnected)
     {
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            OnPropertyChanged(nameof(IsConnected));
-            SetSpeedCommand.NotifyCanExecuteChanged();
-            ToggleF0Command.NotifyCanExecuteChanged();
-            ToggleF1Command.NotifyCanExecuteChanged();
-            ToggleF2Command.NotifyCanExecuteChanged();
-            ToggleF3Command.NotifyCanExecuteChanged();
-            ToggleF4Command.NotifyCanExecuteChanged();
-            ToggleF5Command.NotifyCanExecuteChanged();
-            ToggleF6Command.NotifyCanExecuteChanged();
-            ToggleF7Command.NotifyCanExecuteChanged();
-            ToggleF8Command.NotifyCanExecuteChanged();
-            ToggleF9Command.NotifyCanExecuteChanged();
-            ToggleF10Command.NotifyCanExecuteChanged();
-            ToggleF11Command.NotifyCanExecuteChanged();
-            ToggleF12Command.NotifyCanExecuteChanged();
-            ToggleF13Command.NotifyCanExecuteChanged();
-            ToggleF14Command.NotifyCanExecuteChanged();
-            ToggleF15Command.NotifyCanExecuteChanged();
-            ToggleF16Command.NotifyCanExecuteChanged();
-            ToggleF17Command.NotifyCanExecuteChanged();
-            ToggleF18Command.NotifyCanExecuteChanged();
-            ToggleF19Command.NotifyCanExecuteChanged();
-            ToggleF20Command.NotifyCanExecuteChanged();
-            EmergencyStopCommand.NotifyCanExecuteChanged();
-            StatusMessage = isConnected ? "Z21 Connected" : "Z21 Disconnected";
-        });
+        OnPropertyChanged(nameof(IsConnected));
+        SetSpeedCommand.NotifyCanExecuteChanged();
+        ToggleF0Command.NotifyCanExecuteChanged();
+        ToggleF1Command.NotifyCanExecuteChanged();
+        ToggleF2Command.NotifyCanExecuteChanged();
+        ToggleF3Command.NotifyCanExecuteChanged();
+        ToggleF4Command.NotifyCanExecuteChanged();
+        ToggleF5Command.NotifyCanExecuteChanged();
+        ToggleF6Command.NotifyCanExecuteChanged();
+        ToggleF7Command.NotifyCanExecuteChanged();
+        ToggleF8Command.NotifyCanExecuteChanged();
+        ToggleF9Command.NotifyCanExecuteChanged();
+        ToggleF10Command.NotifyCanExecuteChanged();
+        ToggleF11Command.NotifyCanExecuteChanged();
+        ToggleF12Command.NotifyCanExecuteChanged();
+        ToggleF13Command.NotifyCanExecuteChanged();
+        ToggleF14Command.NotifyCanExecuteChanged();
+        ToggleF15Command.NotifyCanExecuteChanged();
+        ToggleF16Command.NotifyCanExecuteChanged();
+        ToggleF17Command.NotifyCanExecuteChanged();
+        ToggleF18Command.NotifyCanExecuteChanged();
+        ToggleF19Command.NotifyCanExecuteChanged();
+        ToggleF20Command.NotifyCanExecuteChanged();
+        EmergencyStopCommand.NotifyCanExecuteChanged();
+        StatusMessage = isConnected ? "Z21 Connected" : "Z21 Disconnected";
     }
 
     private void OnLocoInfoReceived(LocoInfo info)
@@ -892,15 +889,12 @@ public sealed partial class TrainControlViewModel : ObservableObject
         // Only update if this is our current loco
         if (info.Address != LocoAddress) return;
 
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            // Update local state from Z21 response
-            Speed = info.Speed;
-            IsForward = info.IsForward;
-            IsF0On = info.IsF0On;
-            IsF1On = info.IsF1On;
+        // Update local state from Z21 response (EventBus handler runs on UI thread)
+        Speed = info.Speed;
+        IsForward = info.IsForward;
+        IsF0On = info.IsF0On;
+        IsF1On = info.IsF1On;
             StatusMessage = $"Loco {info.Address}: {info.Speed} km/h {(info.IsForward ? "â†’" : "â†")}";
-        });
     }
 
     /// <summary>
@@ -913,6 +907,13 @@ public sealed partial class TrainControlViewModel : ObservableObject
         {
             CurrentPreset.DccAddress = value;
             _ = SavePresetsToSettingsAsync();
+
+            // Fahrtenbuch: Adresswechsel protokollieren
+            _tripLogService?.RecordStateChange(
+                _mainWindowViewModel?.SelectedProject?.Model,
+                value,
+                Speed,
+                DateTime.UtcNow);
         }
 
         if (value >= 1 && value <= 9999 && _z21.IsConnected)
@@ -945,6 +946,13 @@ public sealed partial class TrainControlViewModel : ObservableObject
         // Save to current preset
         CurrentPreset.Speed = value;
         _ = SavePresetsToSettingsAsync();
+
+        // Fahrtenbuch: Geschwindigkeitsänderung protokollieren
+        _tripLogService?.RecordStateChange(
+            _mainWindowViewModel?.SelectedProject?.Model,
+            LocoAddress,
+            value,
+            DateTime.UtcNow);
 
         if (CanExecuteLocoCommand() && LocoAddress >= 1)
         {
@@ -1386,7 +1394,8 @@ public sealed partial class TrainControlViewModel : ObservableObject
     private void ResetPeakCurrent()
     {
         PeakMainCurrent = 0;
-        _logger?.LogInformation("Peak current reset to 0 mA");
+        PeakTemperature = 0;
+        _logger?.LogInformation("Peak current and peak temperature reset");
     }
 
     // === Event Handlers ===
@@ -1397,25 +1406,21 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// </summary>
     private void OnSystemStateChanged(SystemState systemState)
     {
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            MainTrackCurrent = systemState.MainCurrent;
-            ProgTrackCurrent = systemState.ProgCurrent;
-            FilteredMainCurrent = systemState.FilteredMainCurrent;
-            SupplyVoltage = systemState.SupplyVoltage;
-            Temperature = systemState.Temperature;
+        MainTrackCurrent = systemState.MainCurrent;
+        ProgTrackCurrent = systemState.ProgCurrent;
+        FilteredMainCurrent = systemState.FilteredMainCurrent;
+        SupplyVoltage = systemState.SupplyVoltage;
+        Temperature = systemState.Temperature;
 
-            // Track peak current
-            if (systemState.MainCurrent > PeakMainCurrent)
-            {
-                PeakMainCurrent = systemState.MainCurrent;
-            }
+        if (systemState.MainCurrent > PeakMainCurrent)
+            PeakMainCurrent = systemState.MainCurrent;
+        if (systemState.Temperature > PeakTemperature)
+            PeakTemperature = systemState.Temperature;
 
-            _logger?.LogDebug(
-                "SystemState updated: MainCurrent={MainCurrent}mA (Filtered={FilteredCurrent}mA, Peak={PeakCurrent}mA), " +
-                "ProgCurrent={ProgCurrent}mA, SupplyVoltage={SupplyVoltage}mV, Temperature={Temperature}°C",
-                MainTrackCurrent, FilteredMainCurrent, PeakMainCurrent, ProgTrackCurrent, SupplyVoltage, Temperature);
-        });
+        _logger?.LogDebug(
+            "SystemState updated: MainCurrent={MainCurrent}mA (Filtered={FilteredCurrent}mA, Peak={PeakCurrent}mA), " +
+            "ProgCurrent={ProgCurrent}mA, SupplyVoltage={SupplyVoltage}mV, Temperature={Temperature}°C",
+            MainTrackCurrent, FilteredMainCurrent, PeakMainCurrent, ProgTrackCurrent, SupplyVoltage, Temperature);
     }
 
     private static LocoInfo CreateLocoInfo(LocomotiveInfoChangedEvent evt)

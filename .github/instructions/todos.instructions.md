@@ -1,6 +1,62 @@
 # MOBAflow TODOs & Roadmap
 
-> Last Updated: 2026-02-15
+> Last Updated: 2026-02-16
+
+---
+
+## ✅ SESSION COMPLETED: EventBus & UI-Thread-Grenze (Dispatcher-Reduktion)
+
+**Ziel:** Saubere Architektur: Marshalling Hintergrund → UI an einer Stelle (EventBus-Decorator), ViewModels ohne Dispatcher für Event-Quellen.
+
+**Erledigt:**
+- [x] `UiThreadEventBusDecorator` – alle EventBus-Handler laufen auf UI-Thread (WinUI: `AddEventBusWithUiDispatch()`)
+- [x] Z21 publiziert: `Z21ConnectionEstablishedEvent`, `Z21ConnectionLostEvent`, `FeedbackReceivedEvent`
+- [x] TripLogService publiziert `TripLogEntryAddedEvent`; PostStartupInitializationService publiziert `PostStartupStatusEvent`
+- [x] MainWindowViewModel: nur noch EventBus-Subscriptions für Z21, TripLog, PostStartup; keine direkten Z21-/TripLog-Events mehr
+- [x] TrainControlViewModel: nur noch EventBus; `IUiDispatcher` entfernt
+- [x] `EnqueueOnUi` überall entfernt; Dispatcher-Service auf `InvokeOnUi` / `InvokeOnUiAsync` reduziert
+- [x] Architektur-Dokumentation: `docs/ARCHITECTURE.md` Abschnitt „Threading und UI-Thread-Grenze“ + Umsetzungsstand
+
+**Optional (verbleibende Dispatcher-Nutzung, bei Bedarf auf Events umstellbar):**
+- [ ] Asynchrones Solution-Laden: `ApplyLoadedSolution` nach Load – ggf. `SolutionLoadedEvent` + Subscriber
+- [ ] Health-Status: MainWindow.xaml.cs ruft ViewModel mit InvokeOnUi – ggf. HealthCheckService publiziert Event
+- [ ] Settings-/Journey-/Solution-Callbacks (Save, StationChanged etc.) – ggf. über EventBus
+- [ ] MonitorPageViewModel, WebAppViewModel, MauiViewModel – weitere InvokeOnUi-Stellen bei Gelegenheit prüfen
+
+**Referenz:** `docs/ARCHITECTURE.md` (Threading und UI-Thread-Grenze), `SharedUI/Service/UiThreadEventBusDecorator.cs`, `Common/Events/Z21Events.cs`
+
+---
+
+## 📋 OFFEN: TrackPlanPage MVVM-Refaktorierung
+
+**Ziel:** Logik aus dem Code-Behind der TrackPlanPage ins TrackPlanViewModel verlagern (gemäß Instructions: „in Views so wenig Code-Behind wie möglich“).
+
+- [ ] TrackPlanViewModel um EditableTrackPlan erweitern (Plan, Commands, Stats, Selection)
+- [ ] Commands ins ViewModel: LoadTestPlan, OpenSvgInBrowser, DisconnectSelectedSegment, DeleteSelectedSegment
+- [ ] Beobachtbare Properties: SegmentCount, ConnectionCount, OpenEndCount, SelectionInfo, SnapEnabled, StatusMessage
+- [ ] Snap-/Place-Logik (FindBestSnap, TrySnapAndPlace, AdjustTargetSegmentForNewEntryPort) ins ViewModel oder über ViewModel aufrufbar
+- [ ] TrackPlanPage: Nur Drag & Drop (Pointer-Events, Ghost, Canvas-Draw) und UI-Setup im Code-Behind belassen; Rest über ViewModel/Binding
+- [ ] DI anpassen: ViewModel erhält EditableTrackPlan; Page erhält Plan ggf. nur noch über ViewModel.Plan
+
+**Hinweis:** SharedUI hat bereits Referenz auf TrackLibrary.PikoA; TrackPlan.Renderer = Backend, TrackLibrary.PikoA = Domain.
+
+---
+
+## 📋 FUTURE: Train Control & Pages (aus Session Fahrtenbuch)
+
+**TrainControlPage – ComboBox für Lok-/Train-Auswahl:**
+- [ ] Neben den Presets eine ComboBox mit hinterlegten Locomotives und/oder konfigurierten Trains anbieten
+- [ ] Bei Auswahl: DCC-Adresse automatisch aus `Locomotive.DigitalAddress` setzen → bessere Zuordnung zum Fahrtenbuch
+
+**TrainsPage – Umgestaltung:**
+- [ ] Aktuell: Katalog-Verwaltung (Locomotives, Passenger Wagons, Goods Wagons in Spalten)
+- [ ] Ziel: View dient dazu, aus Loks und Wagen **Züge (Trains)** zu bilden
+- [ ] Fokus: Zugzusammenstellung (Lok + Wagen in Reihenfolge), nicht CRUD der Bestände
+
+**Neue Wagen-Pages (analog zu LocomotivesPage):**
+- [ ] PassengerWagonsPage – Personenwagen-Verwaltung (+ ggf. wagon-spezifische Infos)
+- [ ] GoodsWagonsPage – Güterwagen-Verwaltung
+- [ ] TrainsPage konzentriert sich dann auf Zugzusammenstellung; Wagenbestände kommen aus diesen Pages
 
 ---
 

@@ -81,22 +81,18 @@ public partial class MainWindowViewModel
     /// <summary>
     /// Initializes the Statistics collection from the CountOfFeedbackPoints setting.
     /// Call this when a project is loaded or when the setting changes.
-    /// IMPORTANT: Must be called from UI thread (caller responsible for dispatching).
+    /// Replaces the collection (new instance) instead of Clear+Add to avoid COMException:
+    /// no CollectionChanged during WinUI binding updates, only a single PropertyChanged.
     /// </summary>
     public void InitializeStatisticsFromFeedbackPoints()
     {
-        // CRITICAL FIX: Do not use InvokeOnUi here.
-        // This method is already called via EnqueueOnUi from OnSelectedProjectChanged,
-        // so we are guaranteed to be on the UI thread. A second InvokeOnUi causes reentrancy.
-        Statistics.Clear();
-
-        // Create statistics based on CountOfFeedbackPoints setting
         int count = _settings.Counter.CountOfFeedbackPoints;
+        var list = new List<InPortStatistic>();
         if (count > 0)
         {
             for (int i = 1; i <= count; i++)
             {
-                Statistics.Add(new InPortStatistic
+                list.Add(new InPortStatistic
                 {
                     InPort = i,
                     Name = $"Feedback Point {i}",
@@ -109,6 +105,8 @@ public partial class MainWindowViewModel
         {
             _logger.LogInformation("CountOfFeedbackPoints is 0 - no track statistics initialized. Set CountOfFeedbackPoints in settings to enable");
         }
+
+        Statistics = new ObservableCollection<InPortStatistic>(list);
     }
 
     partial void OnGlobalTargetLapCountChanged(int value)
@@ -164,13 +162,9 @@ public partial class MainWindowViewModel
     {
         _ = value; // Suppress unused parameter warning
 
-        // CRITICAL: Use EnqueueOnUi (not InvokeOnUi) to force async execution.
-        // This breaks out of the PropertyChanged notification chain and prevents COMException
-        // when modifying the Statistics ObservableCollection during WinUI binding updates.
-        _uiDispatcher.EnqueueOnUi(() =>
-        {
-            InitializeStatisticsFromFeedbackPoints();
-        });
+        // Statistics are replaced (new ObservableCollection), not mutated in place,
+        // so no Enqueue needed – only one PropertyChanged, no CollectionChanged during binding.
+        InitializeStatisticsFromFeedbackPoints();
 
         // Subscribe to PropertyChanged for auto-save
         if (value != null)
@@ -196,6 +190,8 @@ public partial class MainWindowViewModel
             // Clear journey selection when no project is selected
             SelectedJourney = null;
         }
+
+        RefreshTripLogEntriesForSelectedLocomotive();
     }
 
     #endregion
@@ -261,14 +257,6 @@ public partial class MainWindowViewModel
 
         _logger.LogInformation("InPort {InPort}: Lap {Count}/{Target} | Lap time: {LapTime}",
             inPort, stat.Count, stat.TargetLapCount, stat.LastLapTimeFormatted);
-    }
-
-    /// <summary>
-    /// Handles Z21 feedback events (subscription in MainWindowViewModel.cs constructor).
-    /// </summary>
-    private void OnFeedbackReceived(FeedbackResult feedback)
-    {
-        _uiDispatcher.InvokeOnUi(() => UpdateTrackStatistics((uint)feedback.InPort));
     }
 
     #endregion

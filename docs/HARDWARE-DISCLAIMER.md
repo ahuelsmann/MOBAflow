@@ -118,7 +118,7 @@ The following points **MUST** be checked by the user before use:
 
 ## 📜 Licensing Notice
 
-MOBAflow itself is published under the **MIT License** (see [`LICENSE`](LICENSE)).
+MOBAflow itself is published under the **MIT License** (see [`LICENSE`](../LICENSE)).
 
 Z21 hardware and software by Roco are subject to **Roco's own license terms**.
 

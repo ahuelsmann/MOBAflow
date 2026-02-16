@@ -190,6 +190,7 @@ public class Z21 : IZ21
             if (wasConnected)
             {
                 OnConnectedChanged?.Invoke(false);
+                PublishEventAsync(new Z21ConnectionLostEvent());
             }
 
             // Step 6: Stop UDP (this sets _client = null)
@@ -262,6 +263,7 @@ public class Z21 : IZ21
         }
 
         OnConnectedChanged?.Invoke(true);
+        PublishEventAsync(new Z21ConnectionEstablishedEvent());
     }
 
     /// <summary>
@@ -788,6 +790,8 @@ public class Z21 : IZ21
             // Invoke legacy Received event
             Received?.Invoke(feedback);
 
+            PublishEventAsync(new FeedbackReceivedEvent(feedback.InPort));
+
             // Publish via Messenger
             WeakReferenceMessenger.Default.Send(
                 new FeedbackReceivedMessage((uint)feedback.InPort, content)
@@ -893,6 +897,7 @@ public class Z21 : IZ21
         Debug.WriteLine($"🔔 SimulateFeedback: InPort={inPort}, Group={groupNumber}, Byte={byteIndex}, Bit={bitPosition}, Subscribers={Received?.GetInvocationList().Length ?? 0}");
 
         Received?.Invoke(new FeedbackResult(simulatedContent));
+        PublishEventAsync(new FeedbackReceivedEvent(inPort));
 
         Debug.WriteLine($"✅ SimulateFeedback: Event invoked for InPort={inPort}");
     }

@@ -51,6 +51,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly ICityService? _cityLibraryService;
     private readonly ISettingsService? _settingsService;
     private readonly AnnouncementService? _announcementService;
+    private readonly ITripLogService? _tripLogService;
 
     // Execution Context (contains all action execution dependencies)
     private readonly ActionExecutionContext _executionContext;
@@ -74,7 +75,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ICityService? cityLibraryService = null,
         ISettingsService? settingsService = null,
         AnnouncementService? announcementService = null,
-        object? photoHubClient = null)  // Optional PhotoHubClient (only in WinUI, type is object to avoid assembly reference)
+        object? photoHubClient = null,  // Optional PhotoHubClient (only in WinUI, type is object to avoid assembly reference)
+        ITripLogService? tripLogService = null)
     {
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(eventBus);
@@ -96,7 +98,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _settingsService = settingsService;
         _announcementService = announcementService;
         _executionContext = executionContext;
+        _tripLogService = tripLogService;
         _ = photoHubClient;
+
+        if (_tripLogService != null)
+            _eventBus.Subscribe<TripLogEntryAddedEvent>(_ => RefreshTripLogEntriesForSelectedLocomotive());
+
+        TripLogEntriesForSelectedLocomotive.CollectionChanged += (_, _) =>
+            OnPropertyChanged(nameof(ShowEmptyTripLogMessage));
 
         Solution = solution;
 
@@ -106,17 +115,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         IsDarkMode = settings.Application.IsDarkMode;
 
-        // Subscribe to Z21 events via EventBus (with automatic WeakReference cleanup)
+        // Subscribe to Z21 events via EventBus (UiThreadEventBusDecorator führt Handler auf UI-Thread aus)
         _eventBus.Subscribe<Z21ConnectionEstablishedEvent>(_ => OnZ21ConnectedChanged(true));
-        _eventBus.Subscribe<Z21ConnectionLostEvent>(_ => OnZ21ConnectedChanged(false));
+        _eventBus.Subscribe<Z21ConnectionLostEvent>(_ => HandleConnectionLost());
         _eventBus.Subscribe<SystemStateChangedEvent>(evt => OnZ21SystemStateChanged(CreateSystemState(evt)));
         _eventBus.Subscribe<XBusStatusChangedEvent>(evt => OnZ21XBusStatusChanged(CreateXBusStatus(evt)));
         _eventBus.Subscribe<VersionInfoChangedEvent>(evt => OnZ21VersionInfoChanged(CreateVersionInfo(evt)));
-
-        // Keep legacy direct subscriptions for backward compatibility (optional)
-        // CRITICAL: Wrap with UI thread marshalling to prevent WinUI SetValue COMException
-        _z21.Received += (packet) => _uiDispatcher.InvokeOnUi(() => OnFeedbackReceived(packet));  // For counter statistics
-        _z21.OnConnectionLost += () => _uiDispatcher.InvokeOnUi(() => HandleConnectionLost());
+        _eventBus.Subscribe<FeedbackReceivedEvent>(e => UpdateTrackStatistics((uint)e.InPort));
+        _eventBus.Subscribe<PostStartupStatusEvent>(e => UpdatePostStartupInitializationStatus(e.IsRunning, e.StatusText));
 
         InitializeTrafficMonitor();
 
@@ -466,11 +472,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             _logger.LogError(ex, "Error during Z21 disconnect");
         }
-
-        // Unsubscribe from all Z21 events
-        _z21.OnVersionInfoChanged -= OnZ21VersionInfoChanged;
-        _z21.OnConnectionLost -= HandleConnectionLost;
-        _z21.OnConnectedChanged -= OnZ21ConnectedChanged;
 
         ExitApplicationRequested?.Invoke(this, EventArgs.Empty);
     }

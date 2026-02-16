@@ -55,6 +55,7 @@ public partial class MainWindowViewModel
         TrainsPageSelectedObject = value;
         AttachLocomotivePhotoCommand(value);
         DeleteLocomotiveCommand.NotifyCanExecuteChanged();
+        RefreshTripLogEntriesForSelectedLocomotive();
 
         // Subscribe to PropertyChanged for auto-save
         if (value != null)
@@ -200,7 +201,9 @@ public partial class MainWindowViewModel
         };
 
         SelectedProject.Model.Locomotives.Add(locomotive);
-        SelectedLocomotive = new LocomotiveViewModel(locomotive);
+        var locoVm = new LocomotiveViewModel(locomotive);
+        SelectedProject.Locomotives.Add(locoVm);
+        SelectedLocomotive = locoVm;
         AttachLocomotivePhotoCommand(SelectedLocomotive);
 
         _logger.LogInformation("Added new locomotive: {Name}", locomotive.Name);
@@ -209,14 +212,29 @@ public partial class MainWindowViewModel
     [RelayCommand(CanExecute = nameof(CanDeleteLocomotive))]
     private void DeleteLocomotive()
     {
-        if (SelectedLocomotive?.Model == null || SelectedProject?.Model == null)
+        // Snapshot: Copy references before collection changes trigger PropertyChanged
+        var selectedLoco = SelectedLocomotive;
+        var selectedProject = SelectedProject;
+
+        if (selectedLoco?.Model == null || selectedProject?.Model == null)
         {
             return;
         }
 
-        var locomotiveName = SelectedLocomotive.Name;
-        SelectedProject.Model.Locomotives.Remove(SelectedLocomotive.Model);
-        SelectedLocomotive = null;
+        var locomotiveName = selectedLoco.Name;
+        var locoModel = selectedLoco.Model;
+
+        // Remove from ViewModel collection first (may trigger selection change)
+        selectedProject.Locomotives.Remove(selectedLoco);
+        
+        // Remove from Domain model
+        selectedProject.Model.Locomotives.Remove(locoModel);
+
+        // Clear selection only if it's still the same object
+        if (ReferenceEquals(SelectedLocomotive, selectedLoco))
+        {
+            SelectedLocomotive = null;
+        }
 
         _logger.LogInformation("Deleted locomotive: {Name}", locomotiveName);
     }
@@ -240,7 +258,9 @@ public partial class MainWindowViewModel
         };
 
         SelectedProject.Model.PassengerWagons.Add(wagon);
-        SelectedPassengerWagon = new PassengerWagonViewModel(wagon);
+        var wagonVm = new PassengerWagonViewModel(wagon);
+        SelectedProject.PassengerWagons.Add(wagonVm);
+        SelectedPassengerWagon = wagonVm;
         AttachWagonPhotoCommand(SelectedPassengerWagon);
 
         _logger.LogInformation("Added new passenger wagon: {Name}", wagon.Name);
@@ -253,6 +273,7 @@ public partial class MainWindowViewModel
             return;
 
         var wagonName = SelectedPassengerWagon.Name;
+        SelectedProject.PassengerWagons.Remove(SelectedPassengerWagon);
         SelectedProject.Model.PassengerWagons.Remove((PassengerWagon)SelectedPassengerWagon.Model);
         SelectedPassengerWagon = null;
 
@@ -278,7 +299,9 @@ public partial class MainWindowViewModel
         };
 
         SelectedProject.Model.GoodsWagons.Add(wagon);
-        SelectedGoodsWagon = new GoodsWagonViewModel(wagon);
+        var wagonVm = new GoodsWagonViewModel(wagon);
+        SelectedProject.GoodsWagons.Add(wagonVm);
+        SelectedGoodsWagon = wagonVm;
         AttachWagonPhotoCommand(SelectedGoodsWagon);
 
         _logger.LogInformation("Added new goods wagon: {Name}", wagon.Name);
@@ -291,6 +314,7 @@ public partial class MainWindowViewModel
             return;
 
         var wagonName = SelectedGoodsWagon.Name;
+        SelectedProject.GoodsWagons.Remove(SelectedGoodsWagon);
         SelectedProject.Model.GoodsWagons.Remove((GoodsWagon)SelectedGoodsWagon.Model);
         SelectedGoodsWagon = null;
 

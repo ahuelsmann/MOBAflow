@@ -87,6 +87,11 @@ public sealed record LocomotiveEmergencyStopEvent(
     int? SpecificAddress = null) : EventBase;
 
 /// <summary>
+/// Z21 R-Bus feedback received (LAN_RMBUS_DATACHANGED). InPort is 1-based.
+/// </summary>
+public sealed record FeedbackReceivedEvent(int InPort) : EventBase;
+
+/// <summary>
 /// Feedback Point Events - Fired when occupancy detection changes.
 /// </summary>
 
@@ -124,3 +129,13 @@ public sealed record HealthCheckFailedEvent(
 public sealed record HealthCheckRecoveredEvent(
     string ServiceName,
     TimeSpan DowntimeDuration) : EventBase;
+
+/// <summary>
+/// TripLog-Service: neuer Eintrag hinzugefügt (für UI-Aktualisierung).
+/// </summary>
+public sealed record TripLogEntryAddedEvent : EventBase;
+
+/// <summary>
+/// Post-Startup-Initialisierung: Status-Text für Statusleiste.
+/// </summary>
+public sealed record PostStartupStatusEvent(bool IsRunning, string StatusText) : EventBase;

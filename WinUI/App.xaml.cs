@@ -198,17 +198,16 @@ public partial class App
         // Logging (required by HealthCheckService and SpeechHealthCheck)
         services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(Log.Logger, dispose: true));
 
-        // Event Bus - Central event system for Backend → ViewModel communication
-        // Z21 publishes events, ViewModels subscribe
-        services.AddEventBus();
+        // UI Thread Dispatcher (platform-specific) – vor EventBus, da Decorator ihn benötigt
+        services.AddUiDispatcher();
+
+        // Event Bus mit UI-Thread-Marshalling: alle Handler laufen auf dem UI-Thread
+        services.AddEventBusWithUiDispatch();
 
         // Navigation infrastructure - discover and register pages
         // Pages (Auto-discovery + Custom DI)
         var corePages = NavigationRegistration.RegisterPages(services);
         services.AddSingleton<List<PageMetadata>>(corePages);
-
-        // UI Thread Dispatcher (platform-specific)
-        services.AddUiDispatcher();
 
         // Register Speech Engine Factory for dynamic engine switching
         services.AddSingleton<SpeakerEngineFactory>();
@@ -299,7 +298,8 @@ public partial class App
             sp.GetRequiredService<ICityService>(),
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<AnnouncementService>(),
-            sp.GetRequiredService<PhotoHubClient>()
+            sp.GetRequiredService<PhotoHubClient>(),
+            sp.GetService<ITripLogService>()
         ));
 
         services.AddSingleton<JourneyMapViewModel>();
@@ -308,9 +308,9 @@ public partial class App
         services.AddSingleton(sp => new TrainControlViewModel(
             sp.GetRequiredService<IZ21>(),
             sp.GetRequiredService<IEventBus>(),
-            sp.GetRequiredService<IUiDispatcher>(),
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<MainWindowViewModel>(),
+            sp.GetService<ITripLogService>(),
             sp.GetService<ILogger<TrainControlViewModel>>()
         ));
 

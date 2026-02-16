@@ -14,19 +14,6 @@ public class UiDispatcher : IUiDispatcher
 #endif
     }
 
-    /// <summary>
-    /// ALWAYS enqueues action to UI thread, even if already on UI thread.
-    /// Use this to break out of PropertyChanged notification chains.
-    /// </summary>
-    public void EnqueueOnUi(Action action)
-    {
-#if ANDROID || IOS || MACCATALYST
-        MainThread.BeginInvokeOnMainThread(action);
-#else
-        action();
-#endif
-    }
-
     public async Task InvokeOnUiAsync(Func<Task> asyncAction)
     {
 #if ANDROID || IOS || MACCATALYST

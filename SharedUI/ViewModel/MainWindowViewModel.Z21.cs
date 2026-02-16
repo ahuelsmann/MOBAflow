@@ -305,67 +305,52 @@ public partial class MainWindowViewModel
     /// </summary>
     private void OnZ21ConnectedChanged(bool connected)
     {
-        _uiDispatcher.InvokeOnUi(() =>
+        IsConnected = connected;
+
+        if (connected)
         {
-            IsConnected = connected;
+            StatusText = $"Connected to {_settings.Z21.CurrentIpAddress}";
+            Debug.WriteLine("✅ Z21 connection confirmed - Z21 is responding");
 
-            if (connected)
+            if (_journeyManager == null)
             {
-                StatusText = $"Connected to {_settings.Z21.CurrentIpAddress}";
-                Debug.WriteLine("✅ Z21 connection confirmed - Z21 is responding");
-
-                // Initialize JourneyManager if needed
-                if (_journeyManager == null)
-                {
-                    var firstProject = Solution.Projects.FirstOrDefault();
-                    if (firstProject != null)
-                    {
-                        InitializeJourneyManager(firstProject);
-                    }
-                }
+                var firstProject = Solution.Projects.FirstOrDefault();
+                if (firstProject != null)
+                    InitializeJourneyManager(firstProject);
             }
-            else
-            {
-                StatusText = "Z21 disconnected";
-                Debug.WriteLine("❌ Z21 disconnected");
-            }
+        }
+        else
+        {
+            StatusText = "Z21 disconnected";
+            Debug.WriteLine("❌ Z21 disconnected");
+        }
 
-            ConnectCommand.NotifyCanExecuteChanged();
-            DisconnectCommand.NotifyCanExecuteChanged();
-            SetTrackPowerCommand.NotifyCanExecuteChanged();
-        });
+        ConnectCommand.NotifyCanExecuteChanged();
+        DisconnectCommand.NotifyCanExecuteChanged();
+        SetTrackPowerCommand.NotifyCanExecuteChanged();
     }
     #endregion
 
     #region Z21 Event Handlers
     private void OnZ21SystemStateChanged(SystemState systemState)
     {
-        _uiDispatcher.InvokeOnUi(() => UpdateZ21SystemState(systemState));
+        UpdateZ21SystemState(systemState);
     }
 
     private void OnZ21XBusStatusChanged(XBusStatus xBusStatus)
     {
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            // XBusStatus.TrackOff is the OPPOSITE of IsTrackPowerOn
-            IsTrackPowerOn = !xBusStatus.TrackOff;
-
-            _logger.LogInformation("XBus status updated: Track Power {PowerState}, EmergencyStop={EmergencyStop}, ShortCircuit={ShortCircuit}",
-                IsTrackPowerOn ? "ON" : "OFF", xBusStatus.EmergencyStop, xBusStatus.ShortCircuit);
-        });
+        IsTrackPowerOn = !xBusStatus.TrackOff;
+        _logger.LogInformation("XBus status updated: Track Power {PowerState}, EmergencyStop={EmergencyStop}, ShortCircuit={ShortCircuit}",
+            IsTrackPowerOn ? "ON" : "OFF", xBusStatus.EmergencyStop, xBusStatus.ShortCircuit);
     }
 
     private void OnZ21VersionInfoChanged(Z21VersionInfo versionInfo)
     {
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            SerialNumber = versionInfo.SerialNumber.ToString();
-            FirmwareVersion = versionInfo.FirmwareVersion;
-            HardwareType = versionInfo.HardwareType;
-
-            _logger.LogInformation("Z21 Version Info: S/N={SerialNumber}, HW={HardwareType}, FW={FirmwareVersion}",
-                SerialNumber, HardwareType, FirmwareVersion);
-        });
+        SerialNumber = versionInfo.SerialNumber.ToString();
+        FirmwareVersion = versionInfo.FirmwareVersion;
+        HardwareType = versionInfo.HardwareType;
+        _logger.LogInformation("Z21 Version Info: S/N={SerialNumber}, HW={HardwareType}, FW={FirmwareVersion}",
+            SerialNumber, HardwareType, FirmwareVersion);
     }
 
     private void UpdateZ21SystemState(SystemState systemState)
@@ -409,16 +394,12 @@ public partial class MainWindowViewModel
 
     private void HandleConnectionLost()
     {
-        _uiDispatcher.InvokeOnUi(() =>
-        {
-            IsConnected = false;
-            IsTrackPowerOn = false;
-            StatusText = "Connection lost - reconnect required";
-
-            ConnectCommand.NotifyCanExecuteChanged();
-            DisconnectCommand.NotifyCanExecuteChanged();
-            SetTrackPowerCommand.NotifyCanExecuteChanged();
-        });
+        IsConnected = false;
+        IsTrackPowerOn = false;
+        StatusText = "Connection lost - reconnect required";
+        ConnectCommand.NotifyCanExecuteChanged();
+        DisconnectCommand.NotifyCanExecuteChanged();
+        SetTrackPowerCommand.NotifyCanExecuteChanged();
     }
 
     /// <summary>

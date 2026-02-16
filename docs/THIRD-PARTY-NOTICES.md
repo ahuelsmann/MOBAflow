@@ -10,7 +10,7 @@ MOBAflow uses the following open-source components and third-party formats. We a
 - **Website:** [Freesound.org](https://freesound.org/)
 - **License:** Various Creative Commons licenses (CC0, CC-BY 3.0, CC-BY 4.0)
 - **Usage:** Audio library for workflow sound effects (station bells, train whistles, signals)
-- **Attribution:** Individual sound attributions are listed in [`Sound/Resources/Sounds/ATTRIBUTION.md`](Sound/Resources/Sounds/ATTRIBUTION.md)
+- **Attribution:** Individual sound attributions are listed in [`Sound/Resources/Sounds/ATTRIBUTION.md`](../Sound/Resources/Sounds/ATTRIBUTION.md)
 - **Basis:** Creative Commons licenses allow use with proper attribution (where required)
 
 **License Types Used:**
@@ -21,7 +21,7 @@ MOBAflow uses the following open-source components and third-party formats. We a
 **Compliance:**
 - MOBAflow does **not** distribute sound files in the repository
 - Users download sounds directly from Freesound.org
-- Attribution is tracked in [`Sound/Resources/Sounds/ATTRIBUTION.md`](Sound/Resources/Sounds/ATTRIBUTION.md)
+- Attribution is tracked in [`Sound/Resources/Sounds/ATTRIBUTION.md`](../Sound/Resources/Sounds/ATTRIBUTION.md)
 - All sounds are used in accordance with their respective Creative Commons licenses
 
 ---
@@ -323,4 +323,4 @@ Thank you! 🙏
 
 **Last Updated:** 2026-02-15  
 **MOBAflow Version:** 3.9  
-**License:** MIT License (see [LICENSE](LICENSE))
+**License:** MIT License (see [LICENSE](../LICENSE))

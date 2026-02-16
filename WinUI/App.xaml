@@ -73,6 +73,9 @@
             <converter:PhotoPathToImageConverter x:Key="PhotoPathToImageConverter" />
             <converter:PinTooltipConverter x:Key="PinTooltipConverter" />
             <converter:PinForegroundConverter x:Key="PinForegroundConverter" />
+            <converter:DateTimeToShortTimeConverter x:Key="DateTimeToShortTimeConverter" />
+            <converter:TimeSpanToDurationConverter x:Key="TimeSpanToDurationConverter" />
+            <converter:BoolToTripLogIconConverter x:Key="BoolToTripLogIconConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

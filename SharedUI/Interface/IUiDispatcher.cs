@@ -2,32 +2,30 @@
 namespace Moba.SharedUI.Interface;
 
 /// <summary>
-/// Dispatcher for executing actions on the UI thread.
-/// Supports both synchronous and asynchronous operations with optional return values.
+/// Stellt Ausführung von Aktionen auf dem UI-Thread sicher (Thread-Marshalling).
+/// Wird von ViewModels genutzt, wenn z. B. Events oder Hintergrunddienste vom Nicht-UI-Thread
+/// kommen und Properties/Collections aktualisiert werden müssen.
 /// </summary>
+/// <remarks>
+/// Best Practice: Collection-Updates während PropertyChanged-Ketten (z. B. bei Projektwechsel)
+/// durch Ersetzen der Collection lösen (neue ObservableCollection zuweisen), nicht durch
+/// Clear/Add in place – vermeidet Reentranz und COMException in WinUI-Bindings.
+/// </remarks>
 public interface IUiDispatcher
 {
     /// <summary>
-    /// Executes a synchronous action on the UI thread.
-    /// ⚠️ WARNING: Runs SYNCHRONOUSLY if already on UI thread!
-    /// Use EnqueueOnUi() if you need guaranteed async execution to avoid re-entrancy issues.
+    /// Führt die Aktion auf dem UI-Thread aus. Ist der Aufruf bereits auf dem UI-Thread,
+    /// wird synchron ausgeführt; sonst wird auf den UI-Thread gewechselt.
     /// </summary>
     void InvokeOnUi(Action action);
 
     /// <summary>
-    /// ALWAYS enqueues action to UI thread dispatcher queue, even if already on UI thread.
-    /// Use this to break out of PropertyChanged notification chains and prevent COMException from WinUI collection views.
-    /// Critical for collection modifications during property change events.
-    /// </summary>
-    void EnqueueOnUi(Action action);
-
-    /// <summary>
-    /// Executes an asynchronous action on the UI thread.
+    /// Führt eine asynchrone Aktion auf dem UI-Thread aus und wartet auf deren Abschluss.
     /// </summary>
     Task InvokeOnUiAsync(Func<Task> asyncAction);
 
     /// <summary>
-    /// Executes an asynchronous function on the UI thread and returns a result.
+    /// Führt eine asynchrone Funktion auf dem UI-Thread aus und gibt das Ergebnis zurück.
     /// </summary>
     Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc);
 }

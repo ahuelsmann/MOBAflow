@@ -70,13 +70,6 @@ public static class UiDispatcherServiceCollectionExtensions
             action();
         }
 
-        public void EnqueueOnUi(Action action)
-        {
-            ArgumentNullException.ThrowIfNull(action);
-            // Fallback: execute immediately since there's no dispatcher
-            action();
-        }
-
         public Task InvokeOnUiAsync(Func<Task> asyncAction)
         {
             ArgumentNullException.ThrowIfNull(asyncAction);

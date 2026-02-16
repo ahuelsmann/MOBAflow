@@ -3,7 +3,12 @@ namespace Moba.WinUI.View;
 
 using Common.Navigation;
 
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+
 using SharedUI.ViewModel;
+
+using System.IO;
 
 /// <summary>
 /// Solution page displaying projects list with properties panel.
@@ -24,5 +29,45 @@ public sealed partial class SolutionPage
     {
         ViewModel = viewModel;
         InitializeComponent();
+    }
+
+    private async void DeleteProjectButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel.SelectedProject == null)
+            return;
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = "Projekt löschen",
+            Content = "Wollen Sie das Projekt wirklich löschen?",
+            PrimaryButtonText = "Ja",
+            SecondaryButtonText = "Nein",
+            DefaultButton = ContentDialogButton.Secondary
+        };
+
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+            return;
+
+        // Backup der aktuellen Solution-Datei erstellen (vor dem Löschen)
+        var solutionPath = ViewModel.CurrentSolutionPath;
+        if (!string.IsNullOrEmpty(solutionPath) && File.Exists(solutionPath))
+        {
+            try
+            {
+                var dir = Path.GetDirectoryName(solutionPath);
+                var fileName = Path.GetFileNameWithoutExtension(solutionPath);
+                var ext = Path.GetExtension(solutionPath);
+                var backupPath = Path.Combine(dir ?? string.Empty, $"{fileName}.backup{ext}");
+                File.Copy(solutionPath, backupPath, overwrite: true);
+            }
+            catch
+            {
+                // Backup fehlgeschlagen – Löschen trotzdem ausführen (Benutzer hat bestätigt)
+            }
+        }
+
+        if (ViewModel.DeleteProjectCommand.CanExecute(null))
+            ViewModel.DeleteProjectCommand.Execute(null);
     }
 }

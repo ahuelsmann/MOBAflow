@@ -18,6 +18,7 @@ public class Project
         Trains = [];
         Workflows = [];
         Journeys = [];
+        TripLogEntries = [];
     }
 
     public string Name { get; set; } = string.Empty;
@@ -36,4 +37,9 @@ public class Project
     /// Topological representation with signals, switches, and routes.
     /// </summary>
     public SignalBoxPlan? SignalBoxPlan { get; set; }
+
+    /// <summary>
+    /// Fahrtenbuch: protokollierte Fahrten und Haltezeiten von der TrainControlPage.
+    /// </summary>
+    public List<TripLogEntry> TripLogEntries { get; set; }
 }

@@ -3,6 +3,7 @@
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
+using Common.Events;
 
 using Microsoft.Extensions.Logging;
 
@@ -17,17 +18,20 @@ using View;
 public class PostStartupInitializationService
 {
     private static readonly TimeSpan MinimumIndicatorDuration = TimeSpan.FromSeconds(1.5);
+    private readonly IEventBus _eventBus;
     private readonly HealthCheckService _healthCheckService;
     private readonly MainWindow _mainWindow;
     private readonly AppSettings _appSettings;
     private readonly ILogger<PostStartupInitializationService> _logger;
 
     public PostStartupInitializationService(
+        IEventBus eventBus,
         HealthCheckService healthCheckService,
         MainWindow mainWindow,
         AppSettings appSettings,
         ILogger<PostStartupInitializationService> logger)
     {
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _healthCheckService = healthCheckService;
         _mainWindow = mainWindow;
         _appSettings = appSettings;
@@ -46,7 +50,7 @@ public class PostStartupInitializationService
 
         _logger.LogInformation("[PostStartup] Starting deferred initialization");
         _logger.LogInformation("[PostStartup] Status indicator visible");
-        _mainWindow.ViewModel.UpdatePostStartupInitializationStatus(true, "Initializing background services...");
+        _eventBus.Publish(new PostStartupStatusEvent(true, "Initializing background services..."));
 
         try
         {
@@ -76,7 +80,7 @@ public class PostStartupInitializationService
         {
             indicatorTimer.Stop();
             await EnsureMinimumIndicatorDurationAsync(indicatorTimer);
-            _mainWindow.ViewModel.UpdatePostStartupInitializationStatus(false, completionStatus);
+            _eventBus.Publish(new PostStartupStatusEvent(false, completionStatus));
             _logger.LogInformation("[PostStartup] Status indicator hidden");
         }
     }
@@ -101,7 +105,7 @@ public class PostStartupInitializationService
         {
             cancellationToken.ThrowIfCancellationRequested();
             _logger.LogInformation("[PostStartup] Initializing plugins");
-            _mainWindow.ViewModel.UpdatePostStartupInitializationStatus(true, "Initializing plugins...");
+            _eventBus.Publish(new PostStartupStatusEvent(true, "Initializing plugins..."));
             _logger.LogInformation("[PostStartup] Plugins initialized");
         }
         catch (OperationCanceledException)
@@ -124,7 +128,7 @@ public class PostStartupInitializationService
         {
             cancellationToken.ThrowIfCancellationRequested();
             _logger.LogInformation("[PostStartup] Starting HealthCheckService");
-            _mainWindow.ViewModel.UpdatePostStartupInitializationStatus(true, "Starting health checks...");
+            _eventBus.Publish(new PostStartupStatusEvent(true, "Starting health checks..."));
             _mainWindow.InitializeHealthChecks(_healthCheckService);
             _logger.LogInformation("[PostStartup] HealthCheckService started");
         }

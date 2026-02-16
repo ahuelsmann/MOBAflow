@@ -64,10 +64,7 @@ public partial class MainWindowViewModel
             statusText = isRunning ? "Initializing services..." : string.Empty;
         }
 
-        _uiDispatcher.EnqueueOnUi(() =>
-        {
-            IsPostStartupInitializationRunning = isRunning;
-            PostStartupStatusText = statusText;
-        });
+        IsPostStartupInitializationRunning = isRunning;
+        PostStartupStatusText = statusText;
     }
 }

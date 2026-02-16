@@ -401,8 +401,8 @@ public partial class MainWindowViewModel
                 OnPropertyChanged();
                 _ = _settingsService?.SaveSettingsAsync(_settings);
 
-                // Immediately update Track Statistics on Overview page
-                _uiDispatcher.EnqueueOnUi(InitializeStatisticsFromFeedbackPoints);
+                // Immediately update Track Statistics on Overview page (replaces collection, safe in property setter)
+                InitializeStatisticsFromFeedbackPoints();
             }
         }
     }

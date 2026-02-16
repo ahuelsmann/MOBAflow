@@ -84,6 +84,9 @@ public static class MobaServiceCollectionExtensions
         // ✅ Validation Services
         services.AddSingleton<IProjectValidator, ProjectValidator>();
 
+        // ✅ Fahrtenbuch (Trip Log)
+        services.AddSingleton<ITripLogService, TripLogService>();
+
         return services;
     }
 

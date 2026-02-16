@@ -42,12 +42,12 @@ public static class SegmentLocalPathBuilder
             WR wr => GetWrPath(wr.LengthInMm, wr.ArcInDegree, wr.RadiusInMm),
             WL wl => GetWlPath(wl.LengthInMm, wl.ArcInDegree, wl.RadiusInMm),
             WY wy => GetWyPath(wy.ArcInDegree, wy.RadiusInMm),
-            W3 w3 => GetW3Path(w3.LengthInMm, w3.ArcInDegree),
+            W3 w3 => GetW3Path(w3.LengthInMm, w3.ArcInDegree, w3.RadiusInMm),
             BWL bwl => GetBwlPath(bwl.ArcInDegreeR2, bwl.RadiusInMmR2, bwl.RadiusInMmR3),
             BWR bwr => GetBwrPath(bwr.ArcInDegreeR2, bwr.RadiusInMmR2, bwr.RadiusInMmR3),
             BWLR3 bwlr3 => GetBwlr3Path(bwlr3.RadiusInMmR3),
             BWRR3 bwrr3 => GetBwrr3Path(bwrr3.RadiusInMmR3),
-            DKW _ => GetDkwPath(),
+            DKW dkw => GetDkwPath(dkw.LengthInMm, dkw.ArcInDegree, dkw.RadiusInMm),
             K15 k15 => GetCrossingPath(k15.ArcInDegree, k15.LengthInMm),
             K30 k30 => GetCrossingPath(k30.ArcInDegree, k30.LengthInMm),
             _ => GetStraightPath(100, 1)
@@ -142,14 +142,15 @@ public static class SegmentLocalPathBuilder
         ];
     }
 
+    /// <summary>WY: Y-Weiche. Zwei Äste symmetrisch ±(arcDegree/2), Länge = Bogenlänge für einen Ast.</summary>
     private static IReadOnlyList<PathCommand> GetWyPath(double arcDegree, double radius)
     {
-        var len = radius * 0.15;
-        var a = -arcDegree / 2 * Math.PI / 180;
-        var b = arcDegree / 2 * Math.PI / 180;
+        var halfArcRad = (arcDegree / 2) * Math.PI / 180;
+        var len = radius * halfArcRad;
+        var a = -halfArcRad;
+        var b = halfArcRad;
         return
         [
-            new LineTo(len, 0),
             new MoveTo(0, 0),
             new LineTo(len * Math.Cos(a), len * Math.Sin(a)),
             new MoveTo(0, 0),
@@ -157,19 +158,26 @@ public static class SegmentLocalPathBuilder
         ];
     }
 
-    private static IReadOnlyList<PathCommand> GetW3Path(double length, double arcDegree)
+    /// <summary>W3: Dreiwegeweiche. Gerade bis Port B (length), zwei Bögen R9 je 15° zu Port C/D.</summary>
+    private static IReadOnlyList<PathCommand> GetW3Path(double length, double arcDegree, double radius)
     {
-        var len = length * 0.4;
-        var a = -arcDegree / 2 * Math.PI / 180;
-        var b = 0.0;
-        var c = arcDegree / 2 * Math.PI / 180;
+        var halfArc = arcDegree / 2;
+        var centerAngleR = 90 * Math.PI / 180;
+        var centerX = radius * Math.Cos(centerAngleR);
+        var centerY = radius * Math.Sin(centerAngleR);
+        var endAngleL = (halfArc - 90) * Math.PI / 180;
+        var endAngleR = (-halfArc - 90) * Math.PI / 180;
+        var portCx = centerX + radius * Math.Cos(endAngleL);
+        var portCy = centerY + radius * Math.Sin(endAngleL);
+        var portDx = centerX + radius * Math.Cos(endAngleR);
+        var portDy = centerY + radius * Math.Sin(endAngleR);
         return
         [
-            new LineTo(len * Math.Cos(a), len * Math.Sin(a)),
+            new LineTo(length, 0),
             new MoveTo(0, 0),
-            new LineTo(len, 0),
+            new ArcTo(portCx, portCy, radius, true),
             new MoveTo(0, 0),
-            new LineTo(len * Math.Cos(c), len * Math.Sin(c))
+            new ArcTo(portDx, portDy, radius, false)
         ];
     }
 
@@ -261,16 +269,25 @@ public static class SegmentLocalPathBuilder
         ];
     }
 
-    private static IReadOnlyList<PathCommand> GetDkwPath()
+    /// <summary>DKW: Doppelkreuzungsweiche. Gerade A–B, Bogen A–C (R9), Diagonale zu Port D.</summary>
+    private static IReadOnlyList<PathCommand> GetDkwPath(double length, double arcDegree, double radius)
     {
-        var len = 80.0;
+        var centerAngle = 90 * Math.PI / 180;
+        var centerX = radius * Math.Cos(centerAngle);
+        var centerY = radius * Math.Sin(centerAngle);
+        var endAngle = (arcDegree - 90) * Math.PI / 180;
+        var portCx = centerX + radius * Math.Cos(endAngle);
+        var portCy = centerY + radius * Math.Sin(endAngle);
+        var rad = arcDegree * Math.PI / 180;
+        var portDx = length * Math.Cos(rad);
+        var portDy = length * Math.Sin(rad);
         return
         [
-            new LineTo(len, 0),
+            new LineTo(length, 0),
             new MoveTo(0, 0),
-            new LineTo(len * 0.7, len * 0.5),
-            new MoveTo(len * 0.3, -len * 0.5),
-            new LineTo(len, len * 0.2)
+            new ArcTo(portCx, portCy, radius, true),
+            new MoveTo(0, 0),
+            new LineTo(portDx, portDy)
         ];
     }
 

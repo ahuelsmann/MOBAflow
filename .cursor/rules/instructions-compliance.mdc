@@ -1,0 +1,26 @@
+---
+description: 'Bindende Anwendung der MOBAflow Instructions (.github/copilot-instructions.md); Prüfung auf Widerspruchsfreiheit.'
+alwaysApply: true
+---
+
+# Instructions-Compliance (Copilot-Instructions)
+
+Die Regeln in **`.github/copilot-instructions.md`** sind verbindlich und werden bei jeder Bearbeitung beachtet.
+
+## Prüfung der Regeln (Stand: durchgeführt)
+
+- **Widersprüche:** Keine gefunden. Die zentrale Instructions-Datei, `.github/instructions/` (z. B. MVVM, DI, WinUI) und `.cursor/rules/mobaflow-core.mdc` ergänzen sich; keine sich widersprechenden Vorgaben.
+- **Workflow:** Maßgeblich ist der **6-Schritte-Workflow** in `.github/copilot-instructions.md` (ANALYSE → RECHERCHE → PLAN → IMPLEMENTIERUNG → VALIDIERUNG → DOKUMENTATION). Der Index in `.github/instructions/copilot-instructions.md` verweist auf einen „5-Schritte-Workflow“ in einer nicht vorhandenen Datei – die Root-Instructions (6 Schritte) gelten.
+- **Tool-Namen:** In den Instructions werden teils Copilot-spezifische Tools genannt (z. B. `ripgrep.search`, `plan()`, `get_errors()`). In Cursor gelten die gleichen **Prinzipien** (nicht raten, planen vor Implementierung, Fehler prüfen, Build/Test ausführen); es werden die in Cursor verfügbaren Tools verwendet (z. B. Grep, Read, TodoWrite, ReadLints, Shell für Build/Test).
+
+## Kurzüberblick: Zu beachtende Regeln
+
+- **Vor dem Coden:** Analyse, Recherche, Plan (z. B. Todo-Liste oder kurzer Plan); nie „sofort coden“.
+- **XAML:** Nur `ThemeResource` für Farben/Brushes, keine hardcodierten Farben.
+- **Code:** Keine TODOs im Code → in `todos.instructions.md` dokumentieren; keine `.Result`/`.Wait()` → `await`; Magic Numbers vermeiden.
+- **MVVM:** `[ObservableProperty]`, `[RelayCommand]`, Domain und ViewModel trennen; in Views so wenig Code-Behind wie möglich.
+- **DI:** Constructor Injection, kein Service Locator.
+- **Struktur:** Eine zentrale `README.md` im Root; keine zusätzlichen README in Unterordnern.
+- **Qualität:** `.editorconfig` einhalten, öffentliche APIs mit XML-Dokumentation, nach Änderungen Build/Tests und Linter prüfen.
+
+Details und Checkliste siehe `.github/copilot-instructions.md`.

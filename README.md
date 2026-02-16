@@ -2,7 +2,7 @@
 
 **MOBAflow** is an event-driven automation solution for model railroads. The system enables complex workflow sequences, train control with station announcements, and real-time feedback monitoring via direct UDP connection to the Roco Z21 Digital Command Station.
 
-> ⚖️ **Legal Notice:** MOBAflow is an independent open-source project. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for details on third-party software, formats, and trademarks (AnyRail, Piko, Roco).
+> ⚖️ **Legal Notice:** MOBAflow is an independent open-source project. See [THIRD-PARTY-NOTICES.md](docs/THIRD-PARTY-NOTICES.md) for details on third-party software, formats, and trademarks (AnyRail, Piko, Roco).
 
 ## 📊 Documentation Index
 [ARCHITECTURE.md](docs/ARCHITECTURE.md)
@@ -31,7 +31,7 @@
 
 MOBAflow controls model train layouts via UDP communication with the **Roco Z21 Digital Command Station**. 
 
-**IMPORTANT:** Please read [`HARDWARE-DISCLAIMER.md`](HARDWARE-DISCLAIMER.md) for:
+**IMPORTANT:** Please read [`HARDWARE-DISCLAIMER.md`](docs/HARDWARE-DISCLAIMER.md) for:
 - ✅ Safety requirements and prerequisites
 - ✅ Network configuration
 - ✅ Liability & disclaimer information

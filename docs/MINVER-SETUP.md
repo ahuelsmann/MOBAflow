@@ -336,7 +336,7 @@ git push origin v0.1.0
 [ ] 5. Test build: dotnet build -c Release
 [ ] 6. Verify version in compiled DLL
 [ ] 7. Configure GitHub Actions for Auto-Release (optional)
-[ ] 8. Update documentation (CONTRIBUTING.md)
+[ ] 8. Update documentation (README.md / docs)
 ```
 
 ---

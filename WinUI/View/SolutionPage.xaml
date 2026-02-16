@@ -1,4 +1,4 @@
-﻿<Page
+<Page
     x:Class="Moba.WinUI.View.SolutionPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -51,7 +51,7 @@
                     </Button>
                     <Button
                         Padding="4"
-                        Command="{x:Bind ViewModel.DeleteProjectCommand}"
+                        Click="DeleteProjectButton_Click"
                         ToolTipService.ToolTip="Remove the selected project">
                         <FontIcon FontSize="14" Glyph="&#xE74D;" />
                     </Button>

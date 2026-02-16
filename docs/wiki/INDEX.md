@@ -25,7 +25,7 @@ Here you'll find all information about three platforms:
 ### 🖥️ MOBAflow (Windows Desktop)
 
 **User Guide:**
-- [`wiki/MOBAFLOW-USER-GUIDE.md`](wiki/MOBAFLOW-USER-GUIDE.md) - Complete Guide
+- [`MOBAFLOW-USER-GUIDE.md`](MOBAFLOW-USER-GUIDE.md) - Complete Guide
 
 **Main Topics:**
 - 🚂 Journey Management (Train journeys with stations)
@@ -35,15 +35,15 @@ Here you'll find all information about three platforms:
 - 🗂️ Solution Management (Project management)
 
 **Setup Guides:**
-- [`wiki/AZURE-SPEECH-SETUP.md`](wiki/AZURE-SPEECH-SETUP.md) - Azure Speech Service setup (free!)
+- [`AZURE-SPEECH-SETUP.md`](AZURE-SPEECH-SETUP.md) - Azure Speech Service setup (free!)
 
 ---
 
 ### 📱 MOBAsmart (Android)
 
 **User Guide:**
-- [`wiki/MOBASMART-USER-GUIDE.md`](wiki/MOBASMART-USER-GUIDE.md) - Complete Guide
-- [`wiki/MOBASMART-WIKI.md`](wiki/MOBASMART-WIKI.md) - Extended Documentation
+- [`MOBASMART-USER-GUIDE.md`](MOBASMART-USER-GUIDE.md) - Complete Guide
+- [`MOBASMART-WIKI.md`](MOBASMART-WIKI.md) - Extended Documentation
 
 **Main Topics:**
 - 📊 Lap Counter (Lap counter with timer filter)
@@ -57,7 +57,7 @@ Here you'll find all information about three platforms:
 ### 🌐 MOBAdash (Web)
 
 **User Guide:**
-- [`wiki/MOBADASH-USER-GUIDE.md`](wiki/MOBADASH-USER-GUIDE.md) - Complete Guide
+- [`MOBADASH-USER-GUIDE.md`](MOBADASH-USER-GUIDE.md) - Complete Guide
 
 **Main Topics:**
 - 📊 Dashboard (Real-time Monitoring)
@@ -82,7 +82,7 @@ Here you'll find all information about three platforms:
 - ✅ ...manage complex model railroad layouts
 - ✅ ...prefer desktop applications
 
-**Link:** [`MOBAFLOW-USER-GUIDE.md`](wiki/MOBAFLOW-USER-GUIDE.md)
+**Link:** [`MOBAFLOW-USER-GUIDE.md`](MOBAFLOW-USER-GUIDE.md)
 
 #### 📱 **Choose MOBAsmart, if you...**
 - ✅ ...use an **Android device**
@@ -91,7 +91,7 @@ Here you'll find all information about three platforms:
 - ✅ ...prefer a **simple, mobile solution**
 - ✅ ...want to work **without a PC**
 
-**Link:** [`MOBASMART-USER-GUIDE.md`](wiki/MOBASMART-USER-GUIDE.md)
+**Link:** [`MOBASMART-USER-GUIDE.md`](MOBASMART-USER-GUIDE.md)
 
 #### 🌐 **Choose MOBAdash if you...**
 - ✅ ...want to access from any device (PC, tablet, phone)
@@ -99,7 +99,7 @@ Here you'll find all information about three platforms:
 - ✅ ...need real-time dashboard
 - ✅ ...want to monitor from anywhere in the network
 
-**Link:** [`MOBADASH-USER-GUIDE.md`](wiki/MOBADASH-USER-GUIDE.md)
+**Link:** [`MOBADASH-USER-GUIDE.md`](MOBADASH-USER-GUIDE.md)
 
 ---
 
@@ -107,17 +107,13 @@ Here you'll find all information about three platforms:
 
 ### Contributing to MOBAflow
 
-- **How to contribute:** See [`CONTRIBUTING.md`](../CONTRIBUTING.md) (in repository root)
-- **Code of Conduct:** See [`CODE_OF_CONDUCT.md`](../CODE_OF_CONDUCT.md)
-- **Architecture:** See [`../../Architecture.md`](../../ARCHITECTURE.md) (Overview & Layer Pattern)
+- **Einstieg & Übersicht:** Siehe [`README.md`](../../README.md) (einzige Markdown-Datei im Repository-Root)
+- **Architektur:** Siehe [`../ARCHITECTURE.md`](../ARCHITECTURE.md) (Überblick & Schichten)
 
-### Technical Documentation
+### Technische Dokumentation
 
-- **Backend Architecture:** `Backend.md`
-- **Z21 Protocol:** `Z21-BACKEND.md`
-- **UI Framework:** `WinUI.md`
-- **Testing:** `TEST.md`
-- **JSON Validation:** [`../JSON-VALIDATION.md`](../JSON-VALIDATION.md) - Solution file format & validation
+- **Architektur:** [`../ARCHITECTURE.md`](../ARCHITECTURE.md)
+- **JSON-Validierung:** [`../JSON-VALIDATION.md`](../JSON-VALIDATION.md) – Solution-Dateiformat & Validierung
 
 ---
 
@@ -135,13 +131,13 @@ Here you'll find all information about three platforms:
 **Problem with Z21 hardware?**
 - 🛠️ **Z21 Not Responding:** See [INSTALLATION.md](INSTALLATION.md) → Troubleshooting
 - 📞 **Roco Support:** https://www.roco.cc/en/customer-service
-- ⚠️ **Safety:** See [HARDWARE-DISCLAIMER.md](../../HARDWARE-DISCLAIMER.md)
+- ⚠️ **Safety:** See [HARDWARE-DISCLAIMER.md](../HARDWARE-DISCLAIMER.md)
 
 ### Legal & Safety
 
-- **Hardware Disclaimer:** [`HARDWARE-DISCLAIMER.md`](../../HARDWARE-DISCLAIMER.md)
+- **Hardware Disclaimer:** [`HARDWARE-DISCLAIMER.md`](../HARDWARE-DISCLAIMER.md)
 - **License:** [`LICENSE`](../../LICENSE) (MIT)
-- **Third-Party Notices:** [`THIRD-PARTY-NOTICES.md`](../../THIRD-PARTY-NOTICES.md)
+- **Third-Party Notices:** [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md)
 
 ---
 
@@ -154,7 +150,7 @@ Here you'll find all information about three platforms:
 - v0.3.0: Commercial plugin marketplace
 - v1.0.0: Feature-complete, production-ready
 
-See [`../../ROADMAP.md`](../../ROADMAP.md) for detailed planning.
+Siehe [`../CHANGELOG.md`](../CHANGELOG.md) für Änderungen.
 
 ---
 
@@ -162,22 +158,18 @@ See [`../../ROADMAP.md`](../../ROADMAP.md) for detailed planning.
 
 ```
 MOBAflow Repository
-├─ Root README.md (START HERE)
-├─ INSTALLATION.md (Setup)
-├─ HARDWARE-DISCLAIMER.md (⚠️ Important!)
+├─ README.md (START HERE – einzige MD-Datei im Root)
 ├─ LICENSE (MIT)
-├─ docs/wiki/ (This Wiki)
-│  ├─ INDEX.md (You are here)
-│  ├─ MOBAFLOW-USER-GUIDE.md
-│  ├─ MOBASMART-USER-GUIDE.md
-│  ├─ MOBADASH-USER-GUIDE.md
-│  ├─ AZURE-SPEECH-SETUP.md
-│  └─ PLUGIN-DEVELOPMENT.md
-├─ .github/ (Development)
-│  ├─ CONTRIBUTING.md
-│  ├─ CODE_OF_CONDUCT.md
-│  └─ workflows/ (CI/CD)
-└─ ARCHITECTURE.md (Technical)
+├─ docs/
+│  ├─ ARCHITECTURE.md, CHANGELOG.md, CLAUDE.md
+│  ├─ HARDWARE-DISCLAIMER.md, JSON-VALIDATION.md, MINVER-SETUP.md
+│  ├─ SECURITY.md, THIRD-PARTY-NOTICES.md
+│  └─ wiki/ (This Wiki)
+│     ├─ INDEX.md (You are here)
+│     ├─ INSTALLATION.md, AZURE-SPEECH-SETUP.md
+│     ├─ MOBAFLOW-USER-GUIDE.md, MOBASMART-USER-GUIDE.md, MOBADASH-USER-GUIDE.md
+│     └─ MOBASMART-WIKI.md, MOBATPS.md, QUICK-START-TRACK-STATISTICS.md
+└─ .github/ (Development, Instructions, Workflows)
 ```
 
 ---
@@ -186,14 +178,13 @@ MOBAflow Repository
 
 **New to MOBAflow?**
 1. Read `README.md` (repository root) ← Start here
-2. Check `INSTALLATION.md` ← Setup guide
+2. Check `docs/wiki/INSTALLATION.md` ← Setup guide
 3. Choose your platform (above) ← Pick one
 4. Read platform guide ← Learn features
 
 **Developer?**
-1. Read `ARCHITECTURE.md` ← Technical overview
-2. Check `PLUGIN-DEVELOPMENT.md` ← Build plugins
-3. See `CONTRIBUTING.md` ← Contribute code
+1. Read `docs/ARCHITECTURE.md` ← Technical overview
+2. See `README.md` ← Contributing & overview
 
 **Having Issues?**
 1. Check this Wiki first (search box) ← Already solved?

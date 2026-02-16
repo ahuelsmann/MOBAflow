@@ -299,10 +299,10 @@ dotnet run --project WinUI -c Release
 
 ## 📞 Further Help
 
-- 📖 **Wiki:** [docs/wiki/INDEX.md](../wiki/INDEX.md)
+- 📖 **Wiki:** [INDEX.md](INDEX.md)
 - 🐛 **Issues:** [GitHub Issues](https://github.com/ahuelsmann/MOBAflow/issues)
 - 💬 **Discussions:** [GitHub Discussions](https://github.com/ahuelsmann/MOBAflow/discussions)
-- ⚖️ **Liability:** [HARDWARE-DISCLAIMER.md](../../HARDWARE-DISCLAIMER.md)
+- ⚖️ **Liability:** [HARDWARE-DISCLAIMER.md](../HARDWARE-DISCLAIMER.md)
 
 ---
 
