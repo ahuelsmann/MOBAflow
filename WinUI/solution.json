@@ -193,8 +193,8 @@
               "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "isExitOnLeft": true,
               "track": 1,
-              "arrival": "2026-02-16T10:00:00+03:00",
-              "departure": "2026-02-16T10:02:00+03:00",
+              "arrival": "2026-02-16T08:00:00+01:00",
+              "departure": "2026-02-16T08:02:00+01:00",
               "connections": []
             },
             {
@@ -205,8 +205,8 @@
               "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "isExitOnLeft": false,
               "track": 1,
-              "arrival": "2026-02-16T10:10:00+03:00",
-              "departure": "2026-02-16T10:12:00+03:00",
+              "arrival": "2026-02-16T08:10:00+01:00",
+              "departure": "2026-02-16T08:12:00+01:00",
               "connections": []
             },
             {
@@ -217,8 +217,8 @@
               "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
               "isExitOnLeft": true,
               "track": 1,
-              "arrival": "2026-02-16T10:20:00+03:00",
-              "departure": "2026-02-16T10:22:00+03:00",
+              "arrival": "2026-02-16T08:20:00+01:00",
+              "departure": "2026-02-16T08:22:00+01:00",
               "connections": []
             }
           ],
@@ -350,7 +350,8 @@
         ],
         "connections": [],
         "routes": []
-      }
+      },
+      "tripLogEntries": []
     }
   ],
   "schemaVersion": 1

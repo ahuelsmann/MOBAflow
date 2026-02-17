@@ -592,15 +592,19 @@ public sealed partial class MainWindowViewModel : ObservableObject
             DigitalAddress = locomotiveVm.Model.DigitalAddress,
             Manufacturer = locomotiveVm.Model.Manufacturer,
             ArticleNumber = locomotiveVm.Model.ArticleNumber,
-            Series = locomotiveVm.Model.Series,
+            LocomotiveSeriesRef = locomotiveVm.Model.LocomotiveSeriesRef,
             ColorPrimary = locomotiveVm.Model.ColorPrimary,
             ColorSecondary = locomotiveVm.Model.ColorSecondary,
             IsPushing = locomotiveVm.Model.IsPushing,
             Details = locomotiveVm.Model.Details
         };
 
-        // Add to Project master list
+        // ✅ Add to BOTH lists to keep them in sync (single source of truth)
         SelectedProject.Model.Locomotives.Add(locomotiveCopy);
+        
+        // Create ViewModel wrapper and add to ViewModel collection
+        var locomotiveCopyVm = new LocomotiveViewModel(locomotiveCopy);
+        SelectedProject.Locomotives.Add(locomotiveCopyVm);
 
         // Add ID to Train
         SelectedTrain.Model.LocomotiveIds.Add(locomotiveCopy.Id);

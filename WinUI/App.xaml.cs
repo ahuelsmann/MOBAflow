@@ -228,14 +228,14 @@ public partial class App
         services.AddSingleton<IUiDispatcher, UiDispatcher>();
         services.AddSingleton<PhotoHubClient>();  // Real-time photo notifications from MAUI
 
-        // ICityService with NullObject fallback
+        // ICityService mit DataManager (Stammdaten aus gemeinsamer Datei)
         services.AddSingleton<ICityService>(sp =>
         {
             try
             {
-                var appSettings = sp.GetRequiredService<AppSettings>();
+                var dataManager = sp.GetRequiredService<Backend.Data.DataManager>();
                 var logger = sp.GetRequiredService<ILogger<CityService>>();
-                return new CityService(appSettings, logger);
+                return new CityService(dataManager, logger);
             }
             catch
             {
@@ -243,14 +243,14 @@ public partial class App
             }
         });
 
-        // ILocomotiveService with NullObject fallback
+        // ILocomotiveService mit DataManager (Stammdaten aus gemeinsamer Datei)
         services.AddSingleton<ILocomotiveService>(sp =>
         {
             try
             {
-                var appSettings = sp.GetRequiredService<AppSettings>();
+                var dataManager = sp.GetRequiredService<Backend.Data.DataManager>();
                 var logger = sp.GetRequiredService<ILogger<LocomotiveService>>();
-                return new LocomotiveService(appSettings, logger);
+                return new LocomotiveService(dataManager, logger);
             }
             catch
             {

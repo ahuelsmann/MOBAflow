@@ -30,7 +30,7 @@ public class ProjectValidator : IProjectValidator
 
     /// <summary>
     /// Validates project completeness by checking that all critical domain types have at least one example.
-    /// This is especially important for example-solution.json to ensure it's a good reference.
+    /// This is especially important for solution.json to ensure it's a good reference.
     /// </summary>
     public ProjectValidationResult ValidateCompleteness(Solution solution)
     {

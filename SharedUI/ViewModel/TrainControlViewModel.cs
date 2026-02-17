@@ -11,11 +11,14 @@ using Common.Events;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using Domain;
+
 using Interface;
 
 using Microsoft.Extensions.Logging;
 
 using System.ComponentModel;
+using System.Linq;
 
 /// <summary>
 /// ViewModel for TrainControlPage - provides locomotive drive control interface.
@@ -337,6 +340,63 @@ public sealed partial class TrainControlViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isF20On;
+
+    // === Function button symbols (F0–F20) – per-locomotive, from Domain.Locomotive.FunctionSymbols ===
+
+    /// <summary>
+    /// Standard-Symbole für F0–F20 (Segoe MDL2), wenn keine Lok im Projekt oder keine Anpassung gespeichert ist.
+    /// </summary>
+    private static readonly string[] DefaultFunctionGlyphs =
+    {
+        "\uE7B7", "\uE767", "\uE7C0", "\uE8BB", "\uE8BA", "\uE754", "\uEB50", "\uE753",
+        "\uE74A", "\uE71B", "\uE713", "\uE713", "\uE720", "\uE90F", "\uE7C1", "\uE90F",
+        "\uE9D9", "\uE945", "\uE823", "\uE734", "\uE734"
+    };
+
+    /// <summary>
+    /// Glyph für Funktionsschaltfläche F0 (z. B. Licht).
+    /// </summary>
+    public string Function0Glyph => GetFunctionGlyph(0);
+    /// <summary>Glyph für F1.</summary>
+    public string Function1Glyph => GetFunctionGlyph(1);
+    /// <summary>Glyph für F2.</summary>
+    public string Function2Glyph => GetFunctionGlyph(2);
+    /// <summary>Glyph für F3.</summary>
+    public string Function3Glyph => GetFunctionGlyph(3);
+    /// <summary>Glyph für F4.</summary>
+    public string Function4Glyph => GetFunctionGlyph(4);
+    /// <summary>Glyph für F5.</summary>
+    public string Function5Glyph => GetFunctionGlyph(5);
+    /// <summary>Glyph für F6.</summary>
+    public string Function6Glyph => GetFunctionGlyph(6);
+    /// <summary>Glyph für F7.</summary>
+    public string Function7Glyph => GetFunctionGlyph(7);
+    /// <summary>Glyph für F8.</summary>
+    public string Function8Glyph => GetFunctionGlyph(8);
+    /// <summary>Glyph für F9.</summary>
+    public string Function9Glyph => GetFunctionGlyph(9);
+    /// <summary>Glyph für F10.</summary>
+    public string Function10Glyph => GetFunctionGlyph(10);
+    /// <summary>Glyph für F11.</summary>
+    public string Function11Glyph => GetFunctionGlyph(11);
+    /// <summary>Glyph für F12.</summary>
+    public string Function12Glyph => GetFunctionGlyph(12);
+    /// <summary>Glyph für F13.</summary>
+    public string Function13Glyph => GetFunctionGlyph(13);
+    /// <summary>Glyph für F14.</summary>
+    public string Function14Glyph => GetFunctionGlyph(14);
+    /// <summary>Glyph für F15.</summary>
+    public string Function15Glyph => GetFunctionGlyph(15);
+    /// <summary>Glyph für F16.</summary>
+    public string Function16Glyph => GetFunctionGlyph(16);
+    /// <summary>Glyph für F17.</summary>
+    public string Function17Glyph => GetFunctionGlyph(17);
+    /// <summary>Glyph für F18.</summary>
+    public string Function18Glyph => GetFunctionGlyph(18);
+    /// <summary>Glyph für F19.</summary>
+    public string Function19Glyph => GetFunctionGlyph(19);
+    /// <summary>Glyph für F20.</summary>
+    public string Function20Glyph => GetFunctionGlyph(20);
 
     /// <summary>
     /// Status message for UI feedback.
@@ -816,11 +876,67 @@ public sealed partial class TrainControlViewModel : ObservableObject
 
             StatusMessage = $"Loaded: {preset.Name} (DCC {preset.DccAddress})";
             OnPropertyChanged(nameof(CurrentPreset));
+            NotifyAllFunctionGlyphsChanged();
         }
         finally
         {
             _isLoadingPreset = false;
         }
+    }
+
+    /// <summary>
+    /// Liefert die zum aktuellen Preset (LocoAddress) gehörende Lok aus dem ausgewählten Projekt, falls vorhanden.
+    /// </summary>
+    private Locomotive? GetCurrentLocomotive()
+    {
+        var project = _mainWindowViewModel?.SelectedProject?.Model;
+        if (project?.Locomotives == null) return null;
+        return project.Locomotives.FirstOrDefault(l => l.DigitalAddress.HasValue && l.DigitalAddress.Value == LocoAddress);
+    }
+
+    /// <summary>
+    /// Glyph für die Funktionsschaltfläche mit Index 0–20. Nutzt Domain.Locomotive.FunctionSymbols, sonst Standard-Symbol.
+    /// </summary>
+    private string GetFunctionGlyph(int functionIndex)
+    {
+        if (functionIndex < 0 || functionIndex > 20)
+            return DefaultFunctionGlyphs[0];
+        var loco = GetCurrentLocomotive();
+        if (loco?.FunctionSymbols != null && functionIndex < loco.FunctionSymbols.Count && !string.IsNullOrEmpty(loco.FunctionSymbols[functionIndex]))
+            return loco.FunctionSymbols[functionIndex];
+        return functionIndex < DefaultFunctionGlyphs.Length ? DefaultFunctionGlyphs[functionIndex] : DefaultFunctionGlyphs[0];
+    }
+
+    /// <summary>
+    /// Setzt das Symbol für die angegebene Funktion (0–20) für die aktuelle Lok (LocoAddress) und speichert die Solution.
+    /// Nur wirksam, wenn eine Lok mit dieser Digitaladresse im ausgewählten Projekt existiert.
+    /// </summary>
+    /// <param name="functionIndex">Funktionsindex 0–20 (F0–F20).</param>
+    /// <param name="glyph">Unicode-Glyph-String (z. B. "\uE7B7").</param>
+    /// <returns>True, wenn gespeichert; False, wenn keine passende Lok im Projekt.</returns>
+    public bool SetFunctionSymbol(int functionIndex, string glyph)
+    {
+        if (functionIndex < 0 || functionIndex > 20 || string.IsNullOrEmpty(glyph))
+            return false;
+        var loco = GetCurrentLocomotive();
+        if (loco == null)
+            return false;
+        loco.FunctionSymbols ??= new List<string>();
+        while (loco.FunctionSymbols.Count <= functionIndex)
+            loco.FunctionSymbols.Add(string.Empty);
+        loco.FunctionSymbols[functionIndex] = glyph;
+        NotifyAllFunctionGlyphsChanged();
+        _ = _mainWindowViewModel?.SaveSolutionInternalAsync();
+        return true;
+    }
+
+    /// <summary>
+    /// Löst PropertyChanged für alle FunctionXGlyph-Properties aus (z. B. nach Adress- oder Symboländerung).
+    /// </summary>
+    private void NotifyAllFunctionGlyphsChanged()
+    {
+        for (int i = 0; i <= 20; i++)
+            OnPropertyChanged($"Function{i}Glyph");
     }
 
     /// <summary>
@@ -920,6 +1036,8 @@ public sealed partial class TrainControlViewModel : ObservableObject
         {
             _ = RequestLocoInfoAsync();
         }
+
+        NotifyAllFunctionGlyphsChanged();
     }
 
     private async Task RequestLocoInfoAsync()

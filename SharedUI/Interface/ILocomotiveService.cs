@@ -5,7 +5,7 @@ using Domain;
 
 /// <summary>
 /// Service interface for loading locomotive master data from JSON.
-/// Locomotives are read-only reference data (e.g., germany-locomotives.json).
+/// Locomotives are read-only reference data (from data.json via DataManager).
 /// </summary>
 public interface ILocomotiveService
 {

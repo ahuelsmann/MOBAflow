@@ -399,6 +399,22 @@ public sealed partial class TrainControlPage
         return uiSettings.GetColorValue(UIColorType.Accent);
     }
 
+    private async void FunctionButton_RightTapped(object sender, Microsoft.UI.Xaml.Input.RightTappedRoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement fe || fe.Tag is not string tag || !int.TryParse(tag, out var functionIndex) || functionIndex < 0 || functionIndex > 20)
+            return;
+
+        var picker = new FunctionSymbolPickerDialog();
+        picker.XamlRoot = XamlRoot;
+        await picker.ShowAsync();
+
+        if (picker.SelectedGlyph != null)
+        {
+            if (!ViewModel.SetFunctionSymbol(functionIndex, picker.SelectedGlyph))
+                ViewModel.StatusMessage = $"Keine Lok mit Adresse {ViewModel.LocoAddress} im Projekt. Bitte zuerst eine Lok mit dieser Digitaladresse anlegen.";
+        }
+    }
+
     private void SpeedStepsComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (sender is not ComboBox comboBox || comboBox.SelectedItem is not ComboBoxItem item)

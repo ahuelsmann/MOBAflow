@@ -3,6 +3,7 @@
 namespace Moba.Test.Backend;
 
 using Moba.Backend.Data;
+using Moba.Domain;
 
 /// <summary>
 /// Unit tests for DataManager JSON deserialization.
@@ -56,7 +57,7 @@ public class DataManagerTests
         var nonExistentPath = Path.Combine(_tempDir, "non-existent.json");
 
         // Act
-        var result = await DataManager.LoadAsync(nonExistentPath);
+        var result = await DataManager.LoadFromFileAsync(nonExistentPath);
 
         // Assert
         Assert.That(result, Is.Null, "Should return null for non-existent file");
@@ -69,7 +70,7 @@ public class DataManagerTests
         await File.WriteAllTextAsync(_testFilePath, "");
 
         // Act
-        var result = await DataManager.LoadAsync(_testFilePath);
+        var result = await DataManager.LoadFromFileAsync(_testFilePath);
 
         // Assert
         Assert.That(result, Is.Null, "Should return null for empty file");
@@ -83,7 +84,7 @@ public class DataManagerTests
         await File.WriteAllTextAsync(_testFilePath, jsonContent);
 
         // Act
-        var result = await DataManager.LoadAsync(_testFilePath);
+        var result = await DataManager.LoadFromFileAsync(_testFilePath);
 
         // Assert
         Assert.That(result, Is.Not.Null, "Should return DataManager instance");
@@ -104,7 +105,7 @@ public class DataManagerTests
         await File.WriteAllTextAsync(_testFilePath, jsonContent);
 
         // Act
-        var result = await DataManager.LoadAsync(_testFilePath);
+        var result = await DataManager.LoadFromFileAsync(_testFilePath);
 
         // Assert
         Assert.That(result, Is.Not.Null);
@@ -120,7 +121,7 @@ public class DataManagerTests
         await File.WriteAllTextAsync(_testFilePath, "{ invalid json content }");
 
         // Act
-        var result = await DataManager.LoadAsync(_testFilePath);
+        var result = await DataManager.LoadFromFileAsync(_testFilePath);
 
         // Assert
         Assert.That(result, Is.Null, "Should return null for invalid JSON");
@@ -130,7 +131,7 @@ public class DataManagerTests
     public async Task LoadAsync_WithNullPath_ShouldReturnNull()
     {
         // Act
-        var result = await DataManager.LoadAsync(null!);
+        var result = await DataManager.LoadFromFileAsync(null!);
 
         // Assert
         Assert.That(result, Is.Null, "Should return null for null path");
@@ -140,7 +141,7 @@ public class DataManagerTests
     public async Task LoadAsync_WithEmptyPath_ShouldReturnNull()
     {
         // Act
-        var result = await DataManager.LoadAsync("");
+        var result = await DataManager.LoadFromFileAsync("");
 
         // Assert
         Assert.That(result, Is.Null, "Should return null for empty path");
@@ -163,7 +164,7 @@ public class DataManagerTests
         await File.WriteAllTextAsync(_testFilePath, jsonContent);
 
         // Act
-        var result = await DataManager.LoadAsync(_testFilePath);
+        var result = await DataManager.LoadFromFileAsync(_testFilePath);
 
         // Assert
         Assert.That(result!.Cities, Has.Count.EqualTo(5), "Should load all 5 cities");
@@ -182,9 +183,30 @@ public class DataManagerTests
         await File.WriteAllTextAsync(_testFilePath, "   \n  \t  \n  ");
 
         // Act
-        var result = await DataManager.LoadAsync(_testFilePath);
+        var result = await DataManager.LoadFromFileAsync(_testFilePath);
 
         // Assert
         Assert.That(result, Is.Null, "Should return null for whitespace-only file");
+    }
+
+    [Test]
+    public async Task SaveAsync_ThenLoadFromFileAsync_RoundtripsData()
+    {
+        // Arrange: Instanz mit Daten
+        var manager = new DataManager();
+        manager.Cities.Add(new City { Name = "Teststadt" });
+        manager.Locomotives.Add(new LocomotiveCategory { Category = "Test", Series = [] });
+
+        // Act: Speichern und erneut laden (statisch)
+        await manager.SaveAsync(_testFilePath);
+        var loaded = await DataManager.LoadFromFileAsync(_testFilePath);
+
+        // Assert
+        Assert.That(loaded, Is.Not.Null);
+        Assert.That(loaded!.Cities, Has.Count.EqualTo(1));
+        Assert.That(loaded.Cities[0].Name, Is.EqualTo("Teststadt"));
+        Assert.That(loaded.Locomotives, Has.Count.EqualTo(1));
+        Assert.That(loaded.Locomotives[0].Category, Is.EqualTo("Test"));
+        Assert.That(loaded.SchemaVersion, Is.EqualTo(DataManager.CurrentSchemaVersion));
     }
 }

@@ -195,9 +195,8 @@ git config core.hooksPath .git/hooks  # Activate hooks
 ## ✅ SESSION 31 COMPLETED: Data File Validation & NuGet Recommendations
 
 **JSON Schema Validation Extended:**
-- [x] Created schema for `example-solution.json` (projects, locomotives, journeys)
-- [x] Created schema for `germany-locomotives.json` (locomotive categories & series)
-- [x] Created schema for `germany-stations.json` (station definitions)
+- [x] Created schema for `solution.json` (projects, locomotives, journeys)
+- [x] Master data consolidated in `data.json` (Städte/Bahnhöfe + Lokomotiv-Bibliothek); separate germany-* files removed
 - [x] Extended `ValidateJsonConfiguration.ps1` with type-specific validation
 - [x] Updated `WinUI.csproj` to include all schemas in build output
 
@@ -211,16 +210,15 @@ git config core.hooksPath .git/hooks  # Activate hooks
 | File | Schema | Type | Validation |
 |------|--------|------|-----------|
 | `appsettings*.json` | ✅ | Configuration | Secrets check |
-| `example-solution.json` | ✅ | Solution | Projects, Locomotives |
-| `germany-locomotives.json` | ✅ | Locomotives | Categories, Series |
-| `germany-stations.json` | ✅ | Stations | Cities, Track ranges |
+| `solution.json` | ✅ | Solution | Projects, Locomotives |
+| `data.json` | ✅ | Master Data | Cities, Stations, Locomotives |
 
 ---
 
 ## ✅ SESSION 32 COMPLETED: JSON Schema Validation on Project Load + Completeness Checks
 
 **Runtime Validation Implemented:**
-- [x] Enhanced `example-solution.schema.json` with ALL 8 Project domain properties
+- [x] Enhanced `solution.schema.json` with ALL 8 Project domain properties
 - [x] Created `ProjectValidator` service for completeness validation
 - [x] Integrated `IProjectValidator` into IoService.LoadAsync()
 - [x] ProjectValidator logs detailed info/warnings/errors for missing domain types
@@ -250,8 +248,8 @@ git config core.hooksPath .git/hooks  # Activate hooks
 | GoodsWagons | ❌ | Info only (optional) |
 | SignalBoxPlan | ❌ | Info only (optional) |
 
-**example-solution.json Should Contain Examples:**
-All 8 domain types should be represented in example-solution.json to serve as a complete reference for developers:
+**solution.json Should Contain Examples:**
+All 8 domain types should be represented in solution.json to serve as a complete reference for developers:
 ```json
 {
   "name": "Example Solution",
@@ -274,7 +272,7 @@ All 8 domain types should be represented in example-solution.json to serve as a 
 - `Backend/Service/ProjectValidator.cs` (NEW)
 - `Backend/Extensions/MobaServiceCollectionExtensions.cs` (added validator registration)
 - `WinUI/Service/IoService.cs` (added validator call + logging)
-- `WinUI/Build/Schemas/example-solution.schema.json` (enhanced with all properties)
+- `WinUI/Build/Schemas/solution.schema.json` (enhanced with all properties)
 
 **Build Status:** ✅ Successful
 

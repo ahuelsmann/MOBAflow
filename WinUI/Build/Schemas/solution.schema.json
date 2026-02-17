@@ -60,7 +60,12 @@
                 "digitalAddress": { "type": ["integer", "null"], "minimum": 1, "maximum": 9999 },
                 "manufacturer": { "type": ["string", "null"] },
                 "articleNumber": { "type": ["string", "null"] },
-                "series": { "type": ["string", "null"] },
+                "functionSymbols": {
+                  "type": ["array", "null"],
+                  "description": "Unicode glyphs for Train Control function buttons F0–F20 (index 0–20)",
+                  "items": { "type": "string" },
+                  "maxItems": 21
+                },
                 "colorPrimary": { "type": ["integer", "null"] },
                 "colorSecondary": { "type": ["integer", "null"] },
                 "isPushing": { "type": "boolean" }
@@ -157,6 +162,7 @@
                       "name": { "type": "string" },
                       "number": { "type": "integer", "minimum": 0 },
                       "track": { "type": "integer", "minimum": 1, "maximum": 50 },
+                      "cityId": { "type": ["string", "null"], "format": "uuid", "description": "Id of the city this station belongs to" },
                       "numberOfLapsToStop": { "type": "integer", "minimum": 0 },
                       "arrival": { "type": ["string", "null"] },
                       "departure": { "type": ["string", "null"] },

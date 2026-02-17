@@ -2,6 +2,8 @@
 
 namespace Moba.WinUI.Service;
 
+using Backend.Data;
+using Backend.Extensions;
 using Common.Configuration;
 using Common.Events;
 
@@ -22,6 +24,7 @@ public class PostStartupInitializationService
     private readonly HealthCheckService _healthCheckService;
     private readonly MainWindow _mainWindow;
     private readonly AppSettings _appSettings;
+    private readonly DataManager _dataManager;
     private readonly ILogger<PostStartupInitializationService> _logger;
 
     public PostStartupInitializationService(
@@ -29,12 +32,14 @@ public class PostStartupInitializationService
         HealthCheckService healthCheckService,
         MainWindow mainWindow,
         AppSettings appSettings,
+        DataManager dataManager,
         ILogger<PostStartupInitializationService> logger)
     {
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _healthCheckService = healthCheckService;
         _mainWindow = mainWindow;
         _appSettings = appSettings;
+        _dataManager = dataManager ?? throw new ArgumentNullException(nameof(dataManager));
         _logger = logger;
     }
 
@@ -54,6 +59,9 @@ public class PostStartupInitializationService
 
         try
         {
+            // Stammdaten zuerst laden (DataManager), danach TrainClassLibrary aus derselben Datei
+            await InitializeMasterDataAsync(cancellationToken);
+
             // Run tasks in parallel to minimize wall-clock time
             await Task.WhenAll(
                 InitializeSpeechHealthCheckAsync(cancellationToken),
@@ -91,6 +99,38 @@ public class PostStartupInitializationService
         if (remaining > TimeSpan.Zero)
         {
             await Task.Delay(remaining);
+        }
+    }
+
+    /// <summary>
+    /// Lädt die zentrale Stammdaten-Datei (Cities + Locomotives) in den DataManager
+    /// und initialisiert die TrainClassLibrary aus derselben Datei.
+    /// </summary>
+    private async Task InitializeMasterDataAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            // Stammdaten-Pfad per Konvention (keine Abhängigkeit von Settings)
+            var fullPath = Path.Combine(AppContext.BaseDirectory, "data.json");
+
+            _logger.LogInformation("[PostStartup] Loading master data from {Path}", fullPath);
+            _eventBus.Publish(new PostStartupStatusEvent(true, "Loading master data..."));
+
+            await _dataManager.LoadAsync(fullPath).ConfigureAwait(false);
+
+            MobaServiceCollectionExtensions.InitializeTrainClassLibrary(fullPath);
+
+            _logger.LogInformation("[PostStartup] Master data loaded: {Cities} cities, {Locomotives} categories",
+                _dataManager.Cities.Count, _dataManager.Locomotives.Count);
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("[PostStartup] Master data load cancelled");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[PostStartup] Failed to load master data");
         }
     }
 

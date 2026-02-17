@@ -67,11 +67,10 @@ public sealed partial class LocomotiveViewModel : ObservableObject, IViewModelWr
         set => SetProperty(Model.ArticleNumber, value, Model, (m, v) => m.ArticleNumber = v);
     }
 
-    public string? Series
-    {
-        get => Model.Series;
-        set => SetProperty(Model.Series, value, Model, (m, v) => m.Series = v);
-    }
+    /// <summary>
+    /// Anzeigename der Baureihe (aus LocomotiveSeriesRef).
+    /// </summary>
+    public string? Series => Model.LocomotiveSeriesRef?.Name;
 
     public ColorScheme? ColorPrimary
     {

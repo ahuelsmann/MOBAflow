@@ -10,8 +10,6 @@ public class AppSettings
     public Z21Settings Z21 { get; set; } = new();
     public RestApiSettings RestApi { get; set; } = new();
     public SpeechSettings Speech { get; set; } = new();
-    public CityLibrarySettings CityLibrary { get; set; } = new();
-    public LocomotiveLibrarySettings LocomotiveLibrary { get; set; } = new();
     public ApplicationSettings Application { get; set; } = new();
     public CounterSettings Counter { get; set; } = new();
     public HealthCheckSettings HealthCheck { get; set; } = new();
@@ -139,40 +137,6 @@ public class SpeechSettings
     /// Default: German test message.
     /// </summary>
     public string TestMessage { get; set; } = "Dies ist ein Test der Sprachsynthese. Nächster Halt: Hauptbahnhof.";
-}
-
-/// <summary>
-/// City library (station master data) configuration.
-/// </summary>
-public class CityLibrarySettings
-{
-    /// <summary>
-    /// Path to city/station JSON file (e.g., "germany-stations.json").
-    /// Supports absolute or relative paths.
-    /// </summary>
-    public string FilePath { get; set; } = "germany-stations.json";
-
-    /// <summary>
-    /// Enable auto-reload when file changes.
-    /// </summary>
-    public bool AutoReload { get; set; } = true;
-}
-
-/// <summary>
-/// Locomotive library (master data) configuration.
-/// </summary>
-public class LocomotiveLibrarySettings
-{
-    /// <summary>
-    /// Path to locomotive library JSON file (e.g., "germany-locomotives.json").
-    /// Supports absolute or relative paths.
-    /// </summary>
-    public string FilePath { get; set; } = "germany-locomotives.json";
-
-    /// <summary>
-    /// Enable auto-reload when file changes.
-    /// </summary>
-    public bool AutoReload { get; set; } = true;
 }
 
 /// <summary>

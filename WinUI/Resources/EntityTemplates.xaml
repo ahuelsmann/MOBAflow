@@ -732,7 +732,7 @@
                     <TextBox
                         Header="Series"
                         PlaceholderText="e.g., BR 64, ICE 3"
-                        Text="{Binding Series, Mode=TwoWay}" />
+                        Text="{Binding Series, Mode=OneWay}" />
 
                     <CheckBox Content="Pushing locomotive (Wendezug)" IsChecked="{Binding IsPushing, Mode=TwoWay}" />
                 </StackPanel>

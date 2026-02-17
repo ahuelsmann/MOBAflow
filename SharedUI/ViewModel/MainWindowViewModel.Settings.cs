@@ -16,7 +16,7 @@ using System.Net.Sockets;
 
 /// <summary>
 /// MainWindowViewModel - Settings Management
-/// Handles application settings properties and persistence (Z21, CityLibrary, Speech, Application, HealthCheck).
+/// Handles application settings properties and persistence (Z21, Speech, Application, HealthCheck).
 /// Automatically saves settings immediately after each change.
 /// </summary>
 public partial class MainWindowViewModel
@@ -84,62 +84,6 @@ public partial class MainWindowViewModel
             if (_settings.Z21.SystemStatePollingIntervalSeconds != (int)value)
             {
                 _settings.Z21.SystemStatePollingIntervalSeconds = (int)value;
-                OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
-            }
-        }
-    }
-
-    public string CityLibraryPath
-    {
-        get => _settings.CityLibrary.FilePath;
-        set
-        {
-            if (_settings.CityLibrary.FilePath != value)
-            {
-                _settings.CityLibrary.FilePath = value;
-                OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
-            }
-        }
-    }
-
-    public bool CityLibraryAutoReload
-    {
-        get => _settings.CityLibrary.AutoReload;
-        set
-        {
-            if (_settings.CityLibrary.AutoReload != value)
-            {
-                _settings.CityLibrary.AutoReload = value;
-                OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
-            }
-        }
-    }
-
-    public string LocomotiveLibraryPath
-    {
-        get => _settings.LocomotiveLibrary.FilePath;
-        set
-        {
-            if (_settings.LocomotiveLibrary.FilePath != value)
-            {
-                _settings.LocomotiveLibrary.FilePath = value;
-                OnPropertyChanged();
-                _ = _settingsService?.SaveSettingsAsync(_settings);
-            }
-        }
-    }
-
-    public bool LocomotiveLibraryAutoReload
-    {
-        get => _settings.LocomotiveLibrary.AutoReload;
-        set
-        {
-            if (_settings.LocomotiveLibrary.AutoReload != value)
-            {
-                _settings.LocomotiveLibrary.AutoReload = value;
                 OnPropertyChanged();
                 _ = _settingsService?.SaveSettingsAsync(_settings);
             }
@@ -686,58 +630,6 @@ public partial class MainWindowViewModel
 
     #region Settings Commands
     [RelayCommand]
-    private async Task BrowseCityLibraryAsync()
-    {
-        // Skip if IoService not available (WebApp/MAUI)
-        if (_ioService is NullIoService)
-        {
-            ErrorMessage = "File browsing not supported on this platform";
-            ShowErrorMessage = true;
-            return;
-        }
-
-        try
-        {
-            var path = await _ioService.BrowseForJsonFileAsync().ConfigureAwait(false);
-            if (!string.IsNullOrEmpty(path))
-            {
-                CityLibraryPath = path;
-            }
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-            ShowErrorMessage = true;
-        }
-    }
-
-    [RelayCommand]
-    private async Task BrowseLocomotiveLibraryAsync()
-    {
-        // Skip if IoService not available (WebApp/MAUI)
-        if (_ioService is NullIoService)
-        {
-            ErrorMessage = "File browsing not supported on this platform";
-            ShowErrorMessage = true;
-            return;
-        }
-
-        try
-        {
-            var path = await _ioService.BrowseForJsonFileAsync().ConfigureAwait(false);
-            if (!string.IsNullOrEmpty(path))
-            {
-                LocomotiveLibraryPath = path;
-            }
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-            ShowErrorMessage = true;
-        }
-    }
-
-    [RelayCommand]
     private async Task ResetToDefaultsAsync()
     {
         if (_settingsService == null) return;
@@ -752,10 +644,6 @@ public partial class MainWindowViewModel
             OnPropertyChanged(nameof(Port));
             OnPropertyChanged(nameof(Z21AutoConnectRetryInterval));
             OnPropertyChanged(nameof(Z21SystemStatePollingInterval));
-            OnPropertyChanged(nameof(CityLibraryPath));
-            OnPropertyChanged(nameof(CityLibraryAutoReload));
-            OnPropertyChanged(nameof(LocomotiveLibraryPath));
-            OnPropertyChanged(nameof(LocomotiveLibraryAutoReload));
             OnPropertyChanged(nameof(SpeechKey));
             OnPropertyChanged(nameof(SpeechRegion));
             OnPropertyChanged(nameof(SpeechRate));

@@ -5,33 +5,96 @@ using Domain;
 using System.Text.Json;
 
 /// <summary>
-/// Manages master data loading for cities/stations and locomotive libraries.
-/// Supports separate JSON files for each data type.
+/// Zentrale Stammdaten-Klasse für Städte/Bahnhöfe und Lokomotiv-Bibliothek.
+/// Lädt und speichert analog zur Solution-Klasse aus einer gemeinsamen JSON-Datei (z. B. data.json).
 /// </summary>
 public class DataManager
 {
+    /// <summary>
+    /// Aktuelle Schema-Version für das Stammdaten-JSON-Format.
+    /// Erhöhen bei Breaking Changes am Schema.
+    /// </summary>
+    public const int CurrentSchemaVersion = 1;
+
     public DataManager()
     {
         Cities = [];
         Locomotives = [];
+        SchemaVersion = CurrentSchemaVersion;
     }
 
     /// <summary>
-    /// List of cities with their stations (loaded from germany-stations.json).
+    /// Schema-Version dieser Stammdaten-Datei (zur Erkennung inkompatibler Formate).
+    /// </summary>
+    public int SchemaVersion { get; set; }
+
+    /// <summary>
+    /// Liste der Städte mit ihren Bahnhöfen (aus der gemeinsamen Stammdaten-Datei).
     /// </summary>
     public List<City> Cities { get; set; }
 
     /// <summary>
-    /// List of locomotive categories with their series (loaded from germany-locomotives.json).
+    /// Liste der Lokomotiv-Kategorien mit ihren Baureihen (aus der gemeinsamen Stammdaten-Datei).
     /// </summary>
     public List<LocomotiveCategory> Locomotives { get; set; }
 
     /// <summary>
-    /// Load the data.
+    /// Aktualisiert diese Instanz aus einer anderen DataManager-Instanz.
+    /// Behält die gleiche Objektreferenz und ersetzt die Daten.
     /// </summary>
-    /// <param name="path">Expects the full path including file name.</param>
-    /// <returns>Returns an instance of the loaded data as DataManager, or null if loading fails.</returns>
-    public static async Task<DataManager?> LoadAsync(string path)
+    public void UpdateFrom(DataManager other)
+    {
+        ArgumentNullException.ThrowIfNull(other);
+        SchemaVersion = other.SchemaVersion;
+        Cities.Clear();
+        foreach (var c in other.Cities ?? [])
+            Cities.Add(c);
+        Locomotives.Clear();
+        foreach (var l in other.Locomotives ?? [])
+            Locomotives.Add(l);
+    }
+
+    /// <summary>
+    /// Lädt Stammdaten aus einer JSON-Datei und wendet sie auf diese Instanz an.
+    /// Analog zu Solution.LoadAsync. Bei fehlender Datei werden die Listen geleert (kein Wurf).
+    /// </summary>
+    public async Task LoadAsync(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+            throw new ArgumentException("filePath is required", nameof(filePath));
+
+        if (!File.Exists(filePath))
+        {
+            Cities.Clear();
+            Locomotives.Clear();
+            return;
+        }
+
+        var json = await File.ReadAllTextAsync(filePath).ConfigureAwait(false);
+        var loaded = JsonSerializer.Deserialize<DataManager>(json, JsonOptions.Default)
+            ?? throw new InvalidOperationException("Failed to deserialize master data file");
+        UpdateFrom(loaded);
+    }
+
+    /// <summary>
+    /// Speichert die aktuellen Stammdaten in eine JSON-Datei.
+    /// Analog zu Solution-Speicherung.
+    /// </summary>
+    public async Task SaveAsync(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+            throw new ArgumentException("filePath is required", nameof(filePath));
+
+        var json = JsonSerializer.Serialize(this, JsonOptions.Default);
+        await File.WriteAllTextAsync(filePath, json).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Lädt Stammdaten aus einer Datei (statisch, für Tests oder einmaliges Laden).
+    /// </summary>
+    /// <param name="path">Vollständiger Pfad inkl. Dateiname.</param>
+    /// <returns>Geladene Instanz oder null bei Fehler.</returns>
+    public static async Task<DataManager?> LoadFromFileAsync(string path)
     {
         try
         {
@@ -41,6 +104,11 @@ public class DataManager
                 if (!string.IsNullOrEmpty(json))
                 {
                     var temp = JsonSerializer.Deserialize<DataManager>(json, JsonOptions.Default);
+                    if (temp != null)
+                    {
+                        temp.Cities ??= [];
+                        temp.Locomotives ??= [];
+                    }
                     return temp;
                 }
             }
@@ -53,10 +121,10 @@ public class DataManager
     }
 
     /// <summary>
-    /// Load locomotive library from a separate JSON file.
+    /// Lädt nur die Lokomotiv-Bibliothek aus einer separaten JSON-Datei (Legacy; Standard ist data.json mit Cities + Locomotives).
     /// </summary>
-    /// <param name="path">Expects the full path including file name.</param>
-    /// <returns>Returns a list of locomotive categories, or empty list if loading fails.</returns>
+    /// <param name="path">Vollständiger Pfad inkl. Dateiname.</param>
+    /// <returns>Liste der Lokomotiv-Kategorien oder leere Liste bei Fehler.</returns>
     public static async Task<List<LocomotiveCategory>> LoadLocomotivesAsync(string path)
     {
         try

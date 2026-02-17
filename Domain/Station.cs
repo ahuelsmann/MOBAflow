@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
+using System.Text.Json.Serialization;
+
 /// <summary>
 /// Station - Pure Data Object (POCO).
 /// Represents a physical station with hardware address (InPort).
@@ -16,6 +18,17 @@ public class Station
 
     public Guid Id { get; set; }
     public string Name { get; set; }
+
+    /// <summary>
+    /// Id der Stadt, zu der diese Station gehört (für Persistenz).
+    /// </summary>
+    public Guid? CityId { get; set; }
+
+    /// <summary>
+    /// Referenz auf die City (zur Laufzeit aufgelöst; wird nicht serialisiert).
+    /// </summary>
+    [JsonIgnore]
+    public City? City { get; set; }
     public string? Description { get; set; }
 
     /// <summary>

@@ -1,11 +1,11 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.Interface;
 
 using Domain;
 
 /// <summary>
 /// Service interface for loading city master data from JSON.
-/// Cities are read-only reference data (e.g., germany-stations.json).
+/// Cities are read-only reference data (from data.json via DataManager).
 /// </summary>
 public interface ICityService
 {

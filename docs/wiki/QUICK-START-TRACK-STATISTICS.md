@@ -153,5 +153,5 @@ Once you're comfortable with Track Statistics, explore:
 ## 📖 Related Documentation
 
 - [Architecture Overview](../ARCHITECTURE.md)
-- [Solution File Format](../../WinUI/example-solution.json)
+- [Solution File Format](../../WinUI/solution.json)
 - [Z21 Connection Guide](../../README.md)

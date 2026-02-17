@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Extensions;
 
+using Backend.Data;
 using Common.Events;
 using Domain;
 using Interface;
@@ -80,6 +81,7 @@ public static class MobaServiceCollectionExtensions
 
         // Domain
         services.AddSingleton<Solution>();
+        services.AddSingleton<DataManager>();
 
         // ✅ Validation Services
         services.AddSingleton<IProjectValidator, ProjectValidator>();
@@ -91,14 +93,10 @@ public static class MobaServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Initializes the TrainClassLibrary with germany-locomotives.json.
-    /// Call this in App.xaml.cs after services are built, e.g.:
-    /// 
-    /// var app = new App();
-    /// var services = app.Services;
-    /// MobaServiceCollectionExtensions.InitializeTrainClassLibrary("WinUI/germany-locomotives.json");
+    /// Initializes the TrainClassLibrary from the master data file (data.json).
+    /// Call after DataManager has been loaded, e.g. from PostStartupInitializationService.
     /// </summary>
-    /// <param name="jsonPath">Path to germany-locomotives.json file</param>
+    /// <param name="jsonPath">Path to data.json (or legacy locomotives-only JSON)</param>
     public static void InitializeTrainClassLibrary(string jsonPath)
     {
         TrainClassLibrary.Initialize(jsonPath);

@@ -14,9 +14,8 @@ $hasWarnings = $false
 # Define all JSON files and their schemas
 $jsonFilesAndSchemas = @(
     @{ Pattern = 'appsettings*.json'; Schema = 'appsettings.schema.json'; Type = 'Configuration' },
-    @{ Pattern = 'example-solution.json'; Schema = 'Build\Schemas\example-solution.schema.json'; Type = 'Solution' },
-    @{ Pattern = 'germany-locomotives.json'; Schema = 'Build\Schemas\germany-locomotives.schema.json'; Type = 'Locomotives Library' },
-    @{ Pattern = 'germany-stations.json'; Schema = 'Build\Schemas\germany-stations.schema.json'; Type = 'Stations Library' }
+    @{ Pattern = 'solution.json'; Schema = 'Build\Schemas\solution.schema.json'; Type = 'Solution' },
+    @{ Pattern = 'data.json'; Schema = 'Build\Schemas\data.schema.json'; Type = 'Master Data' }
 )
 
 Write-Host "[JSON Validation] Starting validation of all JSON data files..." -ForegroundColor Cyan
@@ -76,6 +75,14 @@ foreach ($fileSpec in $jsonFilesAndSchemas) {
                     $stationCount = $json.Cities.Stations | Measure-Object | Select-Object -ExpandProperty Count
                     if ($stationCount -eq 0) {
                         Write-Host "[WARN] No stations defined" -ForegroundColor Yellow
+                        $hasWarnings = $true
+                    }
+                }
+                'Master Data' {
+                    $cities = if ($json.cities) { $json.cities } else { @() }
+                    $locs = if ($json.locomotives) { $json.locomotives } else { @() }
+                    if ($cities.Count -eq 0 -and $locs.Count -eq 0) {
+                        Write-Host "[WARN] Master data has no cities and no locomotive categories" -ForegroundColor Yellow
                         $hasWarnings = $true
                     }
                 }

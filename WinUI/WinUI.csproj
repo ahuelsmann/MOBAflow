@@ -64,9 +64,8 @@
     <ItemGroup>
         <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="appsettings.Development.json" CopyToOutputDirectory="PreserveNewest" />
-        <Content Include="example-solution.json" CopyToOutputDirectory="PreserveNewest" />
-        <Content Include="germany-stations.json" CopyToOutputDirectory="PreserveNewest" />
-        <Content Include="germany-locomotives.json" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="solution.json" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="data.json" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
     <!-- JSON Schema Files -->

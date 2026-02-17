@@ -8,10 +8,10 @@ public class SolutionTest
     [SetUp]
     public void Setup()
     {
-        _testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, @"TestFile\example-solution.json");
+        _testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, @"TestFile\solution.json");
 
         Assert.That(File.Exists(_testFile), Is.True,
-            $"Test file example-solution.json not found: {_testFile}");
+            $"Test file solution.json not found: {_testFile}");
     }
 
     [Test]

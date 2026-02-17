@@ -5,7 +5,7 @@ namespace Moba.Domain;
 using System.Text.Json;
 
 /// <summary>
-/// Loads German locomotive classes from germany-locomotives.json and provides lookup/parsing functionality.
+/// Loads German locomotive classes from the master data file (data.json) and provides lookup/parsing functionality.
 /// Supports flexible input matching: "110", "BR110", "E 10", "103.1", etc. all resolve to correct series.
 /// </summary>
 public static class TrainClassLibrary
@@ -14,10 +14,10 @@ public static class TrainClassLibrary
     private static bool _isInitialized;
 
     /// <summary>
-    /// Initialize the library by loading germany-locomotives.json.
-    /// Call this during app startup (e.g., in App.xaml.cs).
+    /// Initialize the library by loading from the master data file (data.json).
+    /// Call this during app startup after DataManager is loaded.
     /// </summary>
-    /// <param name="jsonPath">Path to germany-locomotives.json file</param>
+    /// <param name="jsonPath">Path to data.json</param>
     public static void Initialize(string jsonPath)
     {
         if (_isInitialized)
@@ -26,7 +26,7 @@ public static class TrainClassLibrary
         try
         {
             if (!File.Exists(jsonPath))
-                throw new FileNotFoundException($"germany-locomotives.json not found at: {jsonPath}");
+                throw new FileNotFoundException($"Master data file not found at: {jsonPath}");
 
             var json = File.ReadAllText(jsonPath);
             var root = JsonDocument.Parse(json);

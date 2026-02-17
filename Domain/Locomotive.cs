@@ -1,6 +1,7 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
+using System.Text.Json.Serialization;
 using Enum;
 
 /// <summary>
@@ -28,7 +29,19 @@ public class Locomotive
 
     public string? ArticleNumber { get; set; }
 
-    public string? Series { get; set; }
+    /// <summary>
+    /// Resolved reference to the locomotive series from the library (Vmax, Type, Epoch, etc.).
+    /// Set at runtime when the series name can be matched; not persisted.
+    /// </summary>
+    [JsonIgnore]
+    public LocomotiveSeries? LocomotiveSeriesRef { get; set; }
+
+    /// <summary>
+    /// Custom font symbol glyphs for function buttons F0–F20 on the Train Control page.
+    /// Unicode codepoint strings (e.g. "\uE7B7"). Index 0 = F0, 1 = F1, … 20 = F20.
+    /// Null or fewer than 21 entries: missing indices use default symbols.
+    /// </summary>
+    public List<string>? FunctionSymbols { get; set; }
 
     public ColorScheme? ColorPrimary { get; set; }
 
