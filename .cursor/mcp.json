@@ -1,0 +1,46 @@
+{
+  "mcpServers": {
+    "nuget": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-nuget@latest"]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem@latest"],
+      "env": {
+        "MCP_FILESYSTEM_ROOT": ".",
+        "MCP_FILESYSTEM_ENABLE_DELETE": "false"
+      }
+    },
+    "ripgrep": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-ripgrep@latest"]
+    },
+    "documents": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-documents@latest"]
+    },
+    "markitdown": {
+      "command": "npx",
+      "args": ["-y", "@phdcoder/markitdown-mcp@latest"]
+    },
+    "openapi": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-openapi@latest"],
+      "env": {
+        "OPENAPI_SPEC_URLS": "https://localhost:5001/swagger/v1/swagger.json"
+      }
+    },
+    "microsoft-learn": {
+      "type": "streamableHttp",
+      "url": "https://learn.microsoft.com/mcp/"
+    },
+    "azure-devops": {
+      "command": "npx",
+      "args": ["-y", "@azure-devops/mcp@latest"],
+      "env": {
+        "AZURE_DEVOPS_ORG_URL": "https://dev.azure.com/ahuelsmann"
+      }
+    }
+  }
+}

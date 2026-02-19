@@ -294,6 +294,89 @@ SetTheme(ElementTheme.Default);  // Follow system
 
 ---
 
+## Grid System (Spalten & Inhalte)
+
+> Häufige Probleme: Spalten zu breit/schmal, Inhalte passen nicht in die Zelle (überlaufen, abgeschnitten). Die folgenden Regeln sorgen für stabiles Layout.
+
+### Spaltenbreiten (ColumnDefinition)
+
+| Width | Verhalten | Wann verwenden |
+|-------|-----------|----------------|
+| **Auto** | Spalte = Größe des Inhalts (max. Kind). Kann bei langem Inhalt sehr breit werden. | Splitter, Icons, Buttons, feste UI-Elemente mit bekannter Größe. |
+| **Fix (z. B. 250)** | Immer 250 px. Fensterverkleinerung kann zu Überlauf führen. | Sidebars mit fester Breite; immer **MinWidth** setzen, wenn Spalte schrumpfen dürfen soll. |
+| **\*** (Stern) | Nimmt verbleibenden Platz. Mehrere `*` teilen sich gleichmäßig; `2*` = doppelt so viel wie `*`. | Hauptinhalt, Eigenschaften-Panel, alles, was mit dem Fenster mitskalieren soll. |
+
+**Empfehlungen:**
+
+```xaml
+<!-- ✅ Sidebar mit Mindest-/Maximalbreite, damit Inhalt immer lesbar bleibt -->
+<ColumnDefinition Width="250" MinWidth="200" MaxWidth="400" />
+
+<!-- ✅ Hauptbereich: nimmt Rest, aber nicht unter 300 px -->
+<ColumnDefinition Width="*" MinWidth="300" />
+
+<!-- ✅ Splitter/Divider: feste schmale Breite -->
+<ColumnDefinition Width="Auto" />
+<!-- und im Kind: Width="5" oder Width="1" -->
+
+<!-- ✅ Zwei gleich große Bereiche -->
+<ColumnDefinition Width="1*" MinWidth="200" />
+<ColumnDefinition Width="1*" MinWidth="200" />
+<!-- oder: Width="*" / Width="*" -->
+```
+
+### Zeilenhöhen (RowDefinition)
+
+Gleiche Logik wie Spalten: **Height="Auto"** = Höhe des Inhalts, **Height="*"** = verbleibende Höhe. Für scrollbaren Inhalt immer eine Zeile mit **Height="*"** und darin einen **ScrollViewer** verwenden, damit die Zeile nicht unendlich wächst.
+
+### Inhalte an Spalten anpassen (wichtig)
+
+Damit Inhalte **innerhalb** der Zelle bleiben und die Spalte nicht „aufblasen“:
+
+1. **ScrollViewer pro Spalte**, wenn der Inhalt länger/breiter als die Zelle werden kann:
+   - In einer Zeile mit **Height="*"** nur **einen** ScrollViewer verwenden (der füllt die Zelle und scrollt intern).
+   - `HorizontalScrollMode="Disabled"` (Standard), damit die Spaltenbreite respektiert wird; `VerticalScrollBarVisibility="Auto"` bei langen Listen/Texten.
+
+2. **Text in begrenzten Spalten:** immer **TextTrimming** und ggf. **TextWrapping**, damit Text nicht in die Nachbarspalte quillt:
+   - Einzeilig: `TextTrimming="CharacterEllipsis"` (oder `WordEllipsis`).
+   - Mehrzeilig: `TextWrapping="Wrap"` (Spalte braucht dann eine begrenzte Breite, z. B. durch `*` oder MaxWidth).
+
+3. **Keine festen Breiten in \*-Spalten:** Kinder in einer `Width="*"`-Spalte sollten **kein** festes `Width` haben (außer MaxWidth), damit sie die verfügbare Breite nutzen. Stattdessen `HorizontalAlignment="Stretch"` (Standard) und Inhalt mit TextTrimming/ScrollViewer begrenzen.
+
+```xaml
+<!-- ✅ Spalte mit *: Inhalt füllt Zelle, scrollt bei Überlauf -->
+<ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled">
+    <StackPanel>
+        <!-- Lange Listen/Formulare -->
+    </StackPanel>
+</ScrollViewer>
+
+<!-- ✅ TextBlock in enger Zelle: Ellipse bei Überlauf -->
+<TextBlock Text="{x:Bind Name}" TextTrimming="CharacterEllipsis" />
+
+<!-- ✅ ListView in *-Spalte: füllt Zelle, scrollt selbst -->
+<ListView ScrollViewer.HorizontalScrollMode="Disabled" ... />
+```
+
+### Typische Fehler (Anti-Patterns)
+
+| Problem | Ursache | Lösung |
+|--------|---------|--------|
+| Spalte wird zu breit | **Width="Auto"** + Kind mit langem Text/breitem Inhalt ohne Begrenzung | Auto nur für schmale Inhalte; bei Listen/Text: Spalte **\*** oder **fix + MaxWidth**, Inhalt mit ScrollViewer/TextTrimming. |
+| Spalte zu schmal / Inhalt abgeschnitten | Nur **Width="*"** ohne MinWidth | **MinWidth** für die Spalte setzen (z. B. 200 oder 300). |
+| Inhalt „quetscht“ Nachbarspalten | Kind mit fester **Width** oder **MinWidth** in \*-Spalte | Feste Breite entfernen; Stretch nutzen, Überlauf mit ScrollViewer/TextTrimming regeln. |
+| Leere Spalte / falsche Zuordnung | **Grid.Column** vergessen oder falsch (z. B. 5 übersprungen) | Jedes sichtbare Kind explizit **Grid.Column** zuweisen; Spalten-Indizes durchzählen (0, 1, 2, …). |
+| Vertikal alles gequetscht | Zeile mit **Height="*"** ohne ScrollViewer, Inhalt will unendlich hoch | In der \*-Zeile einen **ScrollViewer** als einziges Kind; restlichen Inhalt darin. |
+
+### Kurz-Checkliste für mehrspaltige Seiten
+
+- [ ] Jede **ColumnDefinition**: bewusst **Auto** / **fix** / **\*** gewählt; bei fix/\* **MinWidth** (und ggf. **MaxWidth**) gesetzt.
+- [ ] Pro Spalte mit variablem Inhalt: **ScrollViewer** oder **ListView** (scrollt selbst); kein unbegrenzt wachsendes StackPanel ohne ScrollViewer in einer \*-Zelle.
+- [ ] **TextBlock** in schmalen Zellen: **TextTrimming="CharacterEllipsis"** (oder Wrap).
+- [ ] Alle sichtbaren Elemente haben **Grid.Column** (bzw. **Grid.Row**) gesetzt; keine Lücken in der Nummerierung.
+
+---
+
 ## Layout Patterns
 
 ### Standard Page Layout

@@ -22,50 +22,12 @@
       ],
       "locomotives": [
         {
-          "id": "f1e2d3c4-b5a6-7890-1234-567890abcdef",
-          "name": "BR 146 - DB Regio",
-          "pos": 1,
-          "digitalAddress": 101,
-          "manufacturer": "Piko",
-          "articleNumber": "51582",
-          "colorPrimary": 4,
-          "colorSecondary": 6,
-          "isPushing": false,
-          "details": {
-            "axles": 4,
-            "epoch": 6,
-            "railroadCompany": "DB Regio",
-            "power": 1,
-            "digital": 2,
-            "description": "Electric locomotive for passenger services"
-          },
-          "invoiceDate": "2024-03-15T00:00:00",
-          "deliveryDate": "2024-03-20T00:00:00"
-        },
-        {
-          "id": "a1b2c3d4-e5f6-7890-1234-567890fedcba",
-          "name": "BR 64 - Steam Loco",
-          "pos": 2,
-          "digitalAddress": 64,
-          "manufacturer": "Piko",
-          "articleNumber": "50600",
-          "colorPrimary": 1,
-          "isPushing": false,
-          "details": {
-            "axles": 3,
-            "epoch": 3,
-            "railroadCompany": "DB",
-            "power": 0,
-            "digital": 2,
-            "description": "Steam locomotive for branch line services"
-          },
-          "invoiceDate": "2023-11-10T00:00:00",
-          "deliveryDate": "2023-11-18T00:00:00"
-        },
-        {
           "id": "bb15c10a-5b78-451f-8f2f-2d4e3efa74af",
-          "name": "Locomotive 3",
+          "name": "BR 110 Verkehrsrot",
           "pos": 1,
+          "digitalAddress": 7,
+          "manufacturer": "Roco",
+          "articleNumber": "62550",
           "isPushing": false
         }
       ],

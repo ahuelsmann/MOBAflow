@@ -56,6 +56,14 @@ protected override DataTemplate? SelectTemplateCore(object item, DependencyObjec
     };
 ```
 
+## Grid und Spaltenlayout
+
+Ausführlich: [fluent-design.instructions.md](./fluent-design.instructions.md) → Abschnitt **Grid System (Spalten & Inhalte)**.
+
+- **Spalten:** `Width="Auto"` nur für schmale Inhalte (Splitter, Buttons); für Inhalte `*` mit **MinWidth** (ggf. **MaxWidth**). Keine Lücken in **Grid.Column** (0, 1, 2, …).
+- **Inhalt in \*-Spalten:** Immer **ScrollViewer** oder **ListView** wenn Inhalt länger werden kann; **TextTrimming="CharacterEllipsis"** für Text in engen Zellen. Kein festes **Width** am Kind in \*-Spalten.
+- **Zeilen:** Scrollbaren Bereich in Zeile mit **Height="*"** legen; darin genau einen **ScrollViewer** mit dem restlichen Inhalt.
+
 ## Responsive Layout (VSM)
 
 ```xaml
@@ -115,3 +123,4 @@ partial void OnSelectedProjectChanged(ProjectViewModel? value)
 - Hardcoded colors → Use ThemeResource
 - Direct UI updates from background → Use DispatcherQueue
 - FileOpenPicker without InitializeWithWindow → Will fail
+- **Grid:** ColumnDefinition **Width="Auto"** mit langem/breitem Inhalt → Spalte explodiert; **Width="*"** ohne MinWidth → Spalte kann zu schmal werden; Inhalt in \*-Zelle ohne ScrollViewer/TextTrimming → Überlauf oder falsche Spaltenbreiten. Siehe Fluent Design „Grid System“.

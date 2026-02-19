@@ -1,63 +1,54 @@
 {
-    "$schema": "https://aka.ms/vs/mcp/schema",
-    "servers": {
-        "azure": {
-            "args": [ "-y", "@azure/mcp@latest", "server", "start" ],
-            "command": "npx",
-            "type": "stdio"
-        },
-        "azure-devops": {
-            "args": [ "-y", "@azure-devops/mcp@latest" ],
-            "command": "npx",
-            "env": {
-                "AZURE_DEVOPS_ORG_URL": "https://dev.azure.com/ahuelsmann"
-            },
-            "type": "stdio"
-        },
-        "documents": {
-            "args": [ "-y", "@modelcontextprotocol/server-documents@latest" ],
-            "command": "npx",
-            "type": "stdio"
-        },
-        "github": {
-            "type": "http",
-            "url": "https://api.githubcopilot.com/mcp/"
-        },
-        "markitdown": {
-            "args": [ "-y", "@phdcoder/markitdown-mcp@latest" ],
-            "command": "npx",
-            "type": "stdio"
-        },
-        "microsoft-learn": {
-            "type": "http",
-            "url": "https://learn.microsoft.com/mcp/"
-        },
-        "nuget": {
-            "args": [ "-y", "@modelcontextprotocol/server-nuget@latest" ],
-            "command": "npx",
-            "type": "stdio"
-        },
-        "openapi": {
-            "args": [ "-y", "@modelcontextprotocol/server-openapi@latest" ],
-            "command": "npx",
-            "env": {
-                "OPENAPI_SPEC_URLS": "https://localhost:5001/swagger/v1/swagger.json"
-            },
-            "type": "stdio"
-        },
-        "filesystem": {
-            "args": [ "-y", "@modelcontextprotocol/server-filesystem@latest" ],
-            "command": "npx",
-            "env": {
-                "MCP_FILESYSTEM_ROOT": ".",
-                "MCP_FILESYSTEM_ENABLE_DELETE": "false"
-            },
-            "type": "stdio"
-        },
-        "ripgrep": {
-            "args": [ "-y", "@modelcontextprotocol/server-ripgrep@latest" ],
-            "command": "npx",
-            "type": "stdio"
-        }
+  "$schema": "https://aka.ms/vs/mcp/schema",
+  "servers": {
+    "azure-devops": {
+      "command": "npx",
+      "args": ["-y", "@azure-devops/mcp@latest"],
+      "type": "stdio",
+      "env": {
+        "AZURE_DEVOPS_ORG_URL": "https://dev.azure.com/ahuelsmann"
+      }
+    },
+    "documents": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-documents@latest"],
+      "type": "stdio"
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem@latest"],
+      "type": "stdio",
+      "env": {
+        "MCP_FILESYSTEM_ROOT": ".",
+        "MCP_FILESYSTEM_ENABLE_DELETE": "false"
+      }
+    },
+    "markitdown": {
+      "command": "npx",
+      "args": ["-y", "@phdcoder/markitdown-mcp@latest"],
+      "type": "stdio"
+    },
+    "microsoft-learn": {
+      "type": "http",
+      "url": "https://learn.microsoft.com/mcp/"
+    },
+    "nuget": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-nuget@latest"],
+      "type": "stdio"
+    },
+    "openapi": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-openapi@latest"],
+      "type": "stdio",
+      "env": {
+        "OPENAPI_SPEC_URLS": "https://localhost:5001/swagger/v1/swagger.json"
+      }
+    },
+    "ripgrep": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-ripgrep@latest"],
+      "type": "stdio"
     }
+  }
 }

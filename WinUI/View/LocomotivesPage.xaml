@@ -13,7 +13,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="1*" MinWidth="200" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="2*" MinWidth="400" />
+            <ColumnDefinition Width="3.5*" MinWidth="300" />
         </Grid.ColumnDefinitions>
 
         <!--  Column 0: Locomotives  -->
@@ -116,103 +116,126 @@
             Width="1"
             Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
-        <!--  Column 2: Lokdaten + Fahrtenbuch  -->
-        <ScrollViewer Grid.Column="2" Padding="8">
-            <StackPanel Spacing="16" MaxWidth="600">
-                <!--  Lokdaten  -->
-                <StackPanel>
-                    <TextBlock
-                        Padding="8,0,0,8"
-                        FontWeight="SemiBold"
-                        Style="{StaticResource SubtitleTextBlockStyle}"
-                        Text="Lokdaten"
-                        Visibility="{x:Bind ViewModel.SelectedLocomotive, Mode=OneWay, Converter={StaticResource NullableConverter}}" />
+        <!--  Column 2: Properties + Fahrtenbuch (separate Spalten)  -->
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!--  Headerzeile: nur Fahrtenbuch (Properties kommt aus dem Entity-Template)  -->
+            <Grid
+                Grid.Row="0"
+                Padding="8"
+                ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock
+                    Grid.Column="1"
+                    FontWeight="SemiBold"
+                    Style="{StaticResource SubtitleTextBlockStyle}"
+                    Text="Fahrtenbuch"
+                    Visibility="{x:Bind ViewModel.SelectedLocomotive, Mode=OneWay, Converter={StaticResource NullableConverter}}" />
+            </Grid>
+
+            <!--  Inhalt: zwei unabhängige ScrollViewer-Spalten  -->
+            <Grid
+                Grid.Row="1"
+                ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!--  Properties-Spalte  -->
+                <ScrollViewer Grid.Column="0" Padding="8,0,0,0">
                     <ContentControl
+                        HorizontalContentAlignment="Stretch"
+                        VerticalContentAlignment="Stretch"
                         Content="{x:Bind ViewModel.SelectedLocomotive, Mode=OneWay}"
                         ContentTemplateSelector="{StaticResource EntityTemplateSelector}"
                         Visibility="{x:Bind ViewModel.SelectedLocomotive, Mode=OneWay, Converter={StaticResource NullableConverter}}" />
-                </StackPanel>
+                </ScrollViewer>
 
-                <!--  Fahrtenbuch  -->
-                <StackPanel>
-                    <TextBlock
-                        Padding="8,0,0,8"
-                        FontWeight="SemiBold"
-                        Style="{StaticResource SubtitleTextBlockStyle}"
-                        Text="Fahrtenbuch"
-                        Visibility="{x:Bind ViewModel.SelectedLocomotive, Mode=OneWay, Converter={StaticResource NullableConverter}}" />
-                    <TextBlock
-                        Padding="8,0,0,8"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="Wählen Sie eine Lokomotive mit Digitaladresse aus. Fahrten und Haltezeiten von der TrainControlPage werden hier protokolliert."
-                        TextWrapping="Wrap"
-                        Visibility="{x:Bind ViewModel.SelectedLocomotive, Mode=OneWay, Converter={StaticResource NullableConverter}}" />
-                    <ListView
-                        ItemsSource="{x:Bind ViewModel.TripLogEntriesForSelectedLocomotive, Mode=OneWay}"
-                        SelectionMode="None">
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="domain:TripLogEntry">
-                                <Grid Padding="8,6">
+                <!--  Fahrtenbuch-Spalte  -->
+                <ScrollViewer Grid.Column="1" Padding="0,0,8,0">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            Padding="0,0,0,8"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="Wählen Sie eine Lokomotive mit Digitaladresse aus. Fahrten und Haltezeiten von der TrainControlPage werden hier protokolliert."
+                            TextWrapping="Wrap"
+                            Visibility="{x:Bind ViewModel.SelectedLocomotive, Mode=OneWay, Converter={StaticResource NullableConverter}}" />
+                        <ListView
+                            ItemsSource="{x:Bind ViewModel.TripLogEntriesForSelectedLocomotive, Mode=OneWay}"
+                            SelectionMode="None">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="domain:TripLogEntry">
+                                    <Grid Padding="8,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <FontIcon
+                                            Grid.Column="0"
+                                            Margin="0,0,8,0"
+                                            FontSize="14"
+                                            Glyph="{x:Bind IsStopSegment, Mode=OneWay, Converter={StaticResource BoolToTripLogIconConverter}}" />
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock FontWeight="SemiBold">
+                                                <Run Text="{x:Bind StartTime, Mode=OneWay, Converter={StaticResource DateTimeToShortTimeConverter}}" />
+                                                <Run Text="–" />
+                                                <Run Text="{x:Bind EndTime, Mode=OneWay, Converter={StaticResource DateTimeToShortTimeConverter}}" />
+                                            </TextBlock>
+                                            <TextBlock
+                                                FontSize="12"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                                                <Run Text="{x:Bind Duration, Mode=OneWay, Converter={StaticResource TimeSpanToDurationConverter}}" />
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <TextBlock
+                                            Grid.Column="2"
+                                            Margin="8,0,0,0"
+                                            VerticalAlignment="Center"
+                                            FontWeight="SemiBold"
+                                            Text="{x:Bind Speed, Mode=OneWay}"
+                                            Visibility="{x:Bind IsStopSegment, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" />
+                                        <TextBlock
+                                            Grid.Column="2"
+                                            Margin="8,0,0,0"
+                                            VerticalAlignment="Center"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="Halt"
+                                            Visibility="{x:Bind IsStopSegment, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                            <ListView.Header>
+                                <Grid Padding="8,4" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <FontIcon
-                                        Grid.Column="0"
-                                        Margin="0,0,8,0"
-                                        FontSize="14"
-                                        Glyph="{x:Bind IsStopSegment, Mode=OneWay, Converter={StaticResource BoolToTripLogIconConverter}}" />
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                        <TextBlock FontWeight="SemiBold">
-                                            <Run Text="{x:Bind StartTime, Mode=OneWay, Converter={StaticResource DateTimeToShortTimeConverter}}" />
-                                            <Run Text="–" />
-                                            <Run Text="{x:Bind EndTime, Mode=OneWay, Converter={StaticResource DateTimeToShortTimeConverter}}" />
-                                        </TextBlock>
-                                        <TextBlock
-                                            FontSize="12"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}">
-                                            <Run Text="{x:Bind Duration, Mode=OneWay, Converter={StaticResource TimeSpanToDurationConverter}}" />
-                                        </TextBlock>
-                                    </StackPanel>
-                                    <TextBlock
-                                        Grid.Column="2"
-                                        Margin="8,0,0,0"
-                                        VerticalAlignment="Center"
-                                        FontWeight="SemiBold"
-                                        Text="{x:Bind Speed, Mode=OneWay}"
-                                        Visibility="{x:Bind IsStopSegment, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" />
-                                    <TextBlock
-                                        Grid.Column="2"
-                                        Margin="8,0,0,0"
-                                        VerticalAlignment="Center"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Text="Halt"
-                                        Visibility="{x:Bind IsStopSegment, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                    <TextBlock Grid.Column="0" FontWeight="SemiBold" Text="Zeit" />
+                                    <TextBlock Grid.Column="1" FontWeight="SemiBold" Text="Dauer" />
+                                    <TextBlock Grid.Column="2" FontWeight="SemiBold" Text="Speed" />
                                 </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                        <ListView.Header>
-                            <Grid Padding="8,4" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" FontWeight="SemiBold" Text="Zeit" />
-                                <TextBlock Grid.Column="1" FontWeight="SemiBold" Text="Dauer" />
-                                <TextBlock Grid.Column="2" FontWeight="SemiBold" Text="Speed" />
-                            </Grid>
-                        </ListView.Header>
-                    </ListView>
-                    <TextBlock
-                        Padding="8,16,0,0"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="Keine Fahrten für diese Lokomotive protokolliert."
-                        Visibility="{x:Bind ViewModel.ShowEmptyTripLogMessage, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
-                </StackPanel>
-            </StackPanel>
-        </ScrollViewer>
+                            </ListView.Header>
+                        </ListView>
+                        <TextBlock
+                            Padding="8,16,0,0"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="Keine Fahrten für diese Lokomotive protokolliert."
+                            Visibility="{x:Bind ViewModel.ShowEmptyTripLogMessage, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
     </Grid>
 </Page>

@@ -659,7 +659,7 @@
                 <TextBlock
                     Margin="0,0,0,8"
                     Style="{ThemeResource SubtitleTextBlockStyle}"
-                    Text="Locomotive Properties" />
+                    Text="Properties" />
 
                 <!--  Basic Information  -->
                 <StackPanel

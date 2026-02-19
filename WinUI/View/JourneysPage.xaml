@@ -249,7 +249,7 @@
             Margin="4,8"
             Glyph="&#xEC06;"
             Header="City Library"
-            IsExpanded="{Binding IsCityLibraryVisible, Mode=TwoWay}">
+            IsExpanded="{x:Bind ViewModel.IsCityLibraryVisible, Mode=TwoWay}">
             <controls:CollapsibleColumn.PanelContent>
                 <ScrollViewer VerticalScrollBarVisibility="Auto" VerticalScrollMode="Auto">
                     <StackPanel Spacing="8">
@@ -289,7 +289,7 @@
             Margin="4,8"
             Glyph="&#xE945;"
             Header="Workflow Library"
-            IsExpanded="{Binding IsWorkflowLibraryVisible, Mode=TwoWay}">
+            IsExpanded="{x:Bind ViewModel.IsWorkflowLibraryVisible, Mode=TwoWay}">
             <controls:CollapsibleColumn.PanelContent>
                 <ScrollViewer VerticalScrollBarVisibility="Auto" VerticalScrollMode="Auto">
                     <StackPanel Spacing="8">
