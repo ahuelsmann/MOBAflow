@@ -17,21 +17,17 @@
         <Grid RowSpacing="12">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <!--  Header  -->
-            <StackPanel Grid.Row="0" Spacing="2">
+            <StackPanel Grid.Row="0">
                 <TextBlock
                     FontSize="16"
                     FontWeight="SemiBold"
                     Text="Timetable / Stops" />
-                <TextBlock
-                    FontSize="11"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="Journey station overview" />
             </StackPanel>
 
             <!--  Previous Station (grayed out)  -->

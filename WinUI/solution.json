@@ -28,7 +28,6 @@
           "digitalAddress": 101,
           "manufacturer": "Piko",
           "articleNumber": "51582",
-          "series": "146",
           "colorPrimary": 4,
           "colorSecondary": 6,
           "isPushing": false,
@@ -50,7 +49,6 @@
           "digitalAddress": 64,
           "manufacturer": "Piko",
           "articleNumber": "50600",
-          "series": "BR 64",
           "colorPrimary": 1,
           "isPushing": false,
           "details": {
@@ -151,7 +149,7 @@
               }
             }
           ],
-          "executionMode": 0,
+          "executionMode": 1,
           "inPort": 0,
           "isUsingTimerToIgnoreFeedbacks": false,
           "intervalForTimerToIgnoreFeedbacks": 0
@@ -183,7 +181,7 @@
           "id": "c1d2e3f4-a5b6-7890-1234-567890abcdef",
           "name": "RE 78 (Porta-Express)",
           "description": "Regional Express from Bielefeld to Minden",
-          "text": "Next stop: {StationName}. Exit on the {StationIsExitOnLeft}.",
+          "text": "N\u00E4chster Halt: {StationName}. Ausstieg: {StationIsExitOnLeft}.",
           "stations": [
             {
               "id": "d1e2f3a4-b5c6-7890-1234-567890abcdef",
