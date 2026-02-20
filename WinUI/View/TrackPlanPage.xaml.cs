@@ -837,6 +837,22 @@ public sealed partial class TrackPlanPage : Page
         // Keine asynchronen Ressourcen; Geometrie wird pro Draw erzeugt
     }
 
+    /// <summary>Liest die Theme-abhängige Gleis-Strichfarbe für Win2D (Dark: hell, Light: dunkel).</summary>
+    private static Windows.UI.Color ResolveTrackPlanStrokeBrush()
+    {
+        if (Application.Current.Resources.TryGetValue("TrackPlanStrokeBrush", out var obj) && obj is SolidColorBrush brush)
+            return brush.Color;
+        return Windows.UI.Color.FromArgb(255, 26, 26, 26);
+    }
+
+    /// <summary>Liest die Theme-abhängige Auswahl-Strichfarbe für Win2D.</summary>
+    private static Windows.UI.Color ResolveTrackPlanStrokeSelectedBrush()
+    {
+        if (Application.Current.Resources.TryGetValue("TrackPlanStrokeSelectedBrush", out var obj) && obj is SolidColorBrush brush)
+            return brush.Color;
+        return Windows.UI.Color.FromArgb(255, 0, 120, 215);
+    }
+
     private void GraphCanvasControl_Draw(CanvasControl sender, CanvasDrawEventArgs args)
     {
         var ds = args.DrawingSession;
@@ -851,6 +867,10 @@ public sealed partial class TrackPlanPage : Page
             EndCap = CanvasCapStyle.Round
         };
 
+        // Theme-aware Gleisfarben (Fluent Design: aus Ressourcen für Dark/Light)
+        var strokeBrush = ResolveTrackPlanStrokeBrush();
+        var selectedBrush = ResolveTrackPlanStrokeSelectedBrush();
+
         foreach (var placed in _plan.Segments)
         {
             var isSelected = placed.Segment.No == _selectedSegmentId;
@@ -860,9 +880,7 @@ public sealed partial class TrackPlanPage : Page
                 resourceCreator, pathCommands, placed.X + offsetX, placed.Y + offsetY, placed.RotationDegrees, ScaleMmToPx);
 
             var strokeWidth = (float)(isSelected ? 10 : 4);
-            var color = isSelected
-                ? Windows.UI.Color.FromArgb(255, 0, 120, 215)
-                : Windows.UI.Color.FromArgb(255, 26, 26, 26);
+            var color = isSelected ? selectedBrush : strokeBrush;
             ds.DrawGeometry(worldGeometry, color, strokeWidth, strokeStyle);
         }
     }

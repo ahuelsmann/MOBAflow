@@ -20,6 +20,7 @@ public class DataManager
     {
         Cities = [];
         Locomotives = [];
+        ViessmannMultiplexSignals = [];
         SchemaVersion = CurrentSchemaVersion;
     }
 
@@ -39,6 +40,12 @@ public class DataManager
     public List<LocomotiveCategory> Locomotives { get; set; }
 
     /// <summary>
+    /// Viessmann Multiplex-Signale (Ks-Hauptsignal, Ks-Vorsignal) für die ComboBox-Auswahl im Stellwerk.
+    /// Quelle: https://viessmann-modell.com/sortiment/spur-h0/signale/
+    /// </summary>
+    public List<ViessmannMultiplexSignalEntry> ViessmannMultiplexSignals { get; set; }
+
+    /// <summary>
     /// Aktualisiert diese Instanz aus einer anderen DataManager-Instanz.
     /// Behält die gleiche Objektreferenz und ersetzt die Daten.
     /// </summary>
@@ -52,6 +59,9 @@ public class DataManager
         Locomotives.Clear();
         foreach (var l in other.Locomotives ?? [])
             Locomotives.Add(l);
+        ViessmannMultiplexSignals.Clear();
+        foreach (var s in other.ViessmannMultiplexSignals ?? [])
+            ViessmannMultiplexSignals.Add(s);
     }
 
     /// <summary>
@@ -67,6 +77,7 @@ public class DataManager
         {
             Cities.Clear();
             Locomotives.Clear();
+            ViessmannMultiplexSignals.Clear();
             return;
         }
 
@@ -108,6 +119,7 @@ public class DataManager
                     {
                         temp.Cities ??= [];
                         temp.Locomotives ??= [];
+                        temp.ViessmannMultiplexSignals ??= [];
                     }
                     return temp;
                 }
@@ -156,6 +168,21 @@ public class DataManager
             .OrderBy(s => s.Name)
             .ToList();
     }
+}
+
+/// <summary>
+/// Ein Eintrag für ein Viessmann Multiplex-Signal (Haupt- oder Vorsignal).
+/// </summary>
+public sealed class ViessmannMultiplexSignalEntry
+{
+    /// <summary>Viessmann Artikelnummer (z. B. "4040", "4046").</summary>
+    public string ArticleNumber { get; set; } = string.Empty;
+
+    /// <summary>Anzeigename für die ComboBox (z. B. "Ks-Vorsignal", "Ks-Mehrabschnittssignal").</summary>
+    public string DisplayName { get; set; } = string.Empty;
+
+    /// <summary>Rolle: "main" = Hauptsignal, "distant" = Vorsignal.</summary>
+    public string Role { get; set; } = "main";
 }
 
 /// <summary>

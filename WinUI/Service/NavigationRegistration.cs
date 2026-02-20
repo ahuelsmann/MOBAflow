@@ -66,7 +66,8 @@ public static class NavigationRegistration
         services.AddTransient<SignalBoxPage>(sp => new SignalBoxPage(
             sp.GetRequiredService<MainWindowViewModel>(),
             sp.GetRequiredService<ISkinProvider>(),
-            sp.GetRequiredService<SkinSelectorViewModel>()));
+            sp.GetRequiredService<SkinSelectorViewModel>(),
+            sp.GetRequiredService<ViessmannSignalService>()));
         pages.Add(new PageMetadata(
             Tag: "signalbox",
             Title: "Signal Box",

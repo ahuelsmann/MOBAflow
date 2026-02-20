@@ -102,6 +102,70 @@ public static class MultiplexerHelper
         }
     }
 
+    /// <summary>
+    /// Artikelnummer des Viessmann-Vorsignals (Ks-Vorsignal); alle anderen gelten als Hauptsignal.
+    /// </summary>
+    private const string DistantSignalArticle = "4040";
+
+    /// <summary>
+    /// Anzeigenamen für Viessmann Multiplex-Signale (Spur H0, siehe https://viessmann-modell.com/sortiment/spur-h0/signale/).
+    /// </summary>
+    private static readonly IReadOnlyDictionary<string, string> SignalArticleDisplayNames = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["4040"] = "Ks-Vorsignal",
+        ["4042"] = "Ks-Hauptsignal (4042)",
+        ["4043"] = "Ks-Ausfahrsignal",
+        ["4045"] = "Ks-Hauptsignal (4045)",
+        ["4046"] = "Ks-Mehrabschnittssignal"
+    };
+
+    /// <summary>
+    /// Liefert alle als Hauptsignal wählbaren Viessmann Multiplex-Signale für den angegebenen Multiplexer.
+    /// </summary>
+    /// <param name="multiplexerArticleNumber">Multiplexer-Artikelnummer (z. B. "5229", "52292").</param>
+    /// <returns>Auflistung (Artikelnummer, Anzeigename) für die Hauptsignal-ComboBox.</returns>
+    public static IReadOnlyList<(string ArticleNumber, string DisplayName)> GetMainSignalOptions(string multiplexerArticleNumber)
+    {
+        var definition = GetDefinition(multiplexerArticleNumber);
+        var result = new List<(string, string)>();
+        foreach (var article in definition.SignalAspectCommandsBySignalArticle.Keys)
+        {
+            if (string.Equals(article, DistantSignalArticle, StringComparison.Ordinal))
+                continue;
+            var displayName = SignalArticleDisplayNames.TryGetValue(article, out var name) ? name : $"Ks-Signal ({article})";
+            result.Add((article, $"{article} - {displayName}"));
+        }
+        // Sortierung: 4046 zuerst (typisches Standard-Hauptsignal), dann aufsteigend
+        result.Sort((a, b) =>
+        {
+            if (a.Item1 == "4046") return -1;
+            if (b.Item1 == "4046") return 1;
+            return string.CompareOrdinal(a.Item1, b.Item1);
+        });
+        return result;
+    }
+
+    /// <summary>
+    /// Liefert alle als Vorsignal wählbaren Viessmann Multiplex-Signale für den angegebenen Multiplexer.
+    /// </summary>
+    /// <param name="multiplexerArticleNumber">Multiplexer-Artikelnummer (z. B. "5229").</param>
+    /// <returns>Auflistung (Artikelnummer, Anzeigename) für die Vorsignal-ComboBox.</returns>
+    public static IReadOnlyList<(string ArticleNumber, string DisplayName)> GetDistantSignalOptions(string multiplexerArticleNumber)
+    {
+        var definition = GetDefinition(multiplexerArticleNumber);
+        var result = new List<(string, string)>();
+        if (definition.DistantSignalArticleNumber == null)
+            return result;
+        foreach (var article in definition.SignalAspectCommandsBySignalArticle.Keys)
+        {
+            if (!string.Equals(article, DistantSignalArticle, StringComparison.Ordinal))
+                continue;
+            var displayName = SignalArticleDisplayNames.TryGetValue(article, out var name) ? name : $"Ks-Vorsignal ({article})";
+            result.Add((article, $"{article} - {displayName}"));
+        }
+        return result;
+    }
+
     // ===========================================================================
     // MULTIPLEXER DEFINITIONS - Viessmann 5229 & 52292
     // ===========================================================================

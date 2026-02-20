@@ -17,6 +17,7 @@ using Interface;
 
 using Microsoft.Extensions.Logging;
 
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 
@@ -92,10 +93,39 @@ public sealed partial class TrainControlViewModel : ObservableObject
     // === Locomotive Presets ===
 
     /// <summary>
-    /// Currently selected preset index (0, 1, or 2).
+    /// Currently selected preset index (0, 1, or 2). -1 = Lok aus Projekt-Combobox gewählt.
     /// </summary>
     [ObservableProperty]
     private int _selectedPresetIndex;
+
+    private static readonly ObservableCollection<LocomotiveViewModel> EmptyProjectLocomotives = [];
+
+    /// <summary>
+    /// Lokomotiven des aktuellen Projekts für die ComboBox-Auswahl (Stellwerk).
+    /// Entweder Preset (Lok 1/2/3) oder eine Lok aus dieser Liste wird gesteuert.
+    /// </summary>
+    public ObservableCollection<LocomotiveViewModel>? ProjectLocomotives =>
+        _mainWindowViewModel?.SelectedProject?.Locomotives ?? EmptyProjectLocomotives;
+
+    /// <summary>
+    /// Aus der Projekt-Combobox gewählte Lok. Wenn gesetzt, wird diese gesteuert (SelectedPresetIndex = -1).
+    /// Beim Wechsel auf ein Preset wird dies auf null gesetzt.
+    /// </summary>
+    [ObservableProperty]
+    private LocomotiveViewModel? _selectedLocomotiveFromProject;
+
+    partial void OnSelectedLocomotiveFromProjectChanged(LocomotiveViewModel? value)
+    {
+        if (value != null)
+        {
+            SelectedPresetIndex = -1;
+            var addr = value.Model?.DigitalAddress;
+            LocoAddress = addr.HasValue ? (int)addr.Value : 0;
+            Speed = 0;
+            IsForward = true;
+            StatusMessage = $"Lok aus Projekt: {value.Name} (DCC {LocoAddress})";
+        }
+    }
 
     /// <summary>
     /// First locomotive preset.
@@ -720,6 +750,10 @@ public sealed partial class TrainControlViewModel : ObservableObject
         {
             UpdateJourneyFromMainViewModel();
         }
+        if (e.PropertyName == nameof(MainWindowViewModel.SelectedProject))
+        {
+            OnPropertyChanged(nameof(ProjectLocomotives));
+        }
     }
 
     /// <summary>
@@ -784,8 +818,11 @@ public sealed partial class TrainControlViewModel : ObservableObject
         SelectedLocoSeries = trainControl.SelectedLocoSeries;
         SelectedVmax = trainControl.SelectedVmax;
 
-        // Apply current preset
-        ApplyCurrentPreset();
+        // Apply current preset only when a preset (0–2) is selected; -1 = Combobox-Auswahl
+        if (SelectedPresetIndex >= 0 && SelectedPresetIndex <= 2)
+        {
+            ApplyCurrentPreset();
+        }
     }
 
     /// <summary>
@@ -965,10 +1002,12 @@ public sealed partial class TrainControlViewModel : ObservableObject
 
     /// <summary>
     /// Called when SelectedPresetIndex changes - save current and load new preset.
+    /// Index -1 = Combobox-Auswahl, dann kein Preset anwenden.
     /// </summary>
     partial void OnSelectedPresetIndexChanged(int value)
     {
-        ApplyCurrentPreset();
+        if (value >= 0 && value <= 2)
+            ApplyCurrentPreset();
     }
 
     private void OnZ21ConnectionChanged(bool isConnected)
@@ -1471,11 +1510,11 @@ public sealed partial class TrainControlViewModel : ObservableObject
     [RelayCommand]
     private void SelectPreset1()
     {
-        if (SelectedPresetIndex != 0)
-        {
+        if (SelectedPresetIndex >= 0 && SelectedPresetIndex <= 2)
             SaveCurrentStateToPreset();
+        SelectedLocomotiveFromProject = null;
+        if (SelectedPresetIndex != 0)
             SelectedPresetIndex = 0;
-        }
     }
 
     /// <summary>
@@ -1484,11 +1523,11 @@ public sealed partial class TrainControlViewModel : ObservableObject
     [RelayCommand]
     private void SelectPreset2()
     {
-        if (SelectedPresetIndex != 1)
-        {
+        if (SelectedPresetIndex >= 0 && SelectedPresetIndex <= 2)
             SaveCurrentStateToPreset();
+        SelectedLocomotiveFromProject = null;
+        if (SelectedPresetIndex != 1)
             SelectedPresetIndex = 1;
-        }
     }
 
     /// <summary>
@@ -1497,11 +1536,11 @@ public sealed partial class TrainControlViewModel : ObservableObject
     [RelayCommand]
     private void SelectPreset3()
     {
-        if (SelectedPresetIndex != 2)
-        {
+        if (SelectedPresetIndex >= 0 && SelectedPresetIndex <= 2)
             SaveCurrentStateToPreset();
+        SelectedLocomotiveFromProject = null;
+        if (SelectedPresetIndex != 2)
             SelectedPresetIndex = 2;
-        }
     }
 
     /// <summary>

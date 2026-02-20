@@ -258,6 +258,10 @@ public partial class App
             }
         });
 
+        // Viessmann Multiplex-Signale aus data.json (Stellwerk ComboBox-Optionen)
+        services.AddSingleton<ViessmannSignalService>(sp =>
+            new ViessmannSignalService(sp.GetRequiredService<Backend.Data.DataManager>()));
+
         // ISettingsService with NullObject fallback
         services.AddSingleton<ISettingsService>(sp =>
         {

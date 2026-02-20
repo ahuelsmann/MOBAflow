@@ -25,7 +25,7 @@
             BorderThickness="0,0,0,1">
             <Grid
                 x:Name="HeaderGrid"
-                Padding="32,16,32,16"
+                Padding="32,20,32,20"
                 ColumnSpacing="16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -43,7 +43,8 @@
                     Spacing="2">
                     <TextBlock
                         x:Name="TitleText"
-                        FontSize="28"
+                        AutomationProperties.HeadingLevel="Level1"
+                        FontSize="32"
                         FontWeight="SemiBold"
                         Text="Signal Box" />
                 </StackPanel>
@@ -340,7 +341,7 @@
                                                     Canvas.Top="6"
                                                     Width="4"
                                                     Height="16"
-                                                    Fill="#D32F2F"
+                                                    Fill="{StaticResource BufferStopFillBrush}"
                                                     RadiusX="1"
                                                     RadiusY="1" />
                                             </Canvas>
@@ -978,26 +979,6 @@
                                     </ComboBox>
                                 </StackPanel>
 
-                                <!--  Current Signal Preview  -->
-                                <Border
-                                    Padding="12"
-                                    HorizontalAlignment="Center"
-                                    Background="#1E1E1E"
-                                    CornerRadius="6">
-                                    <StackPanel Spacing="8">
-                                        <TextBlock
-                                            HorizontalAlignment="Center"
-                                            FontSize="10"
-                                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                            Text="AKTUELLES SIGNALBILD" />
-                                        <controls:KsSignalScreen
-                                            x:Name="SignalPreview"
-                                            Width="60"
-                                            Height="80"
-                                            HorizontalAlignment="Center" />
-                                    </StackPanel>
-                                </Border>
-
                                 <!--  Signal Aspect Selection  -->
                                 <StackPanel Spacing="8">
                                     <TextBlock
@@ -1324,7 +1305,10 @@
                                         FontWeight="SemiBold"
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                         Text="Hauptsignal (Viessmann-Nr.)" />
-                                    <ComboBox x:Name="MainSignalComboBox" PlaceholderText="Hauptsignal auswählen..." />
+                                    <ComboBox
+                                        x:Name="MainSignalComboBox"
+                                        PlaceholderText="Hauptsignal auswählen..."
+                                        SelectionChanged="OnMainSignalSelected" />
                                 </StackPanel>
 
                                 <!--  Distant Signal Article Number (Optional)  -->
@@ -1334,7 +1318,10 @@
                                         FontWeight="SemiBold"
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                         Text="Vorsignal (optional)" />
-                                    <ComboBox x:Name="DistantSignalComboBox" PlaceholderText="Vorsignal auswählen..." />
+                                    <ComboBox
+                                        x:Name="DistantSignalComboBox"
+                                        PlaceholderText="Vorsignal auswählen..."
+                                        SelectionChanged="OnDistantSignalSelected" />
                                 </StackPanel>
 
                                 <!--  Base DCC Address  -->

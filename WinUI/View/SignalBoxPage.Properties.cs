@@ -65,12 +65,6 @@ public sealed partial class SignalBoxPage
         // Signal panel visibility
         SignalAspectPanel.Visibility = SelectedElement is SbSignal ? Visibility.Visible : Visibility.Collapsed;
 
-        // Update SignalPreview with current aspect
-        if (SelectedElement is SbSignal signal)
-        {
-            SignalPreview.Aspect = signal.SignalAspect.ToString();
-        }
-
         // Multiplex configuration panel (only for signals)
         UpdateMultiplexConfigPanel();
 
@@ -211,43 +205,72 @@ public sealed partial class SignalBoxPage
         {
             var def = MultiplexerHelper.GetDefinition(sig.MultiplexerArticleNumber);
 
-            // Populate main signal ComboBox
+            // Hauptsignal: aus Stammdaten (data.json) oder MultiplexerHelper-Fallback
+            MainSignalComboBox.SelectionChanged -= OnMainSignalSelected;
             MainSignalComboBox.Items.Clear();
-            var mainItem = new ComboBoxItem
+            foreach (var (articleNumber, displayName) in _viessmannSignalService.GetMainSignalOptions(sig.MultiplexerArticleNumber))
             {
-                Content = $"{def.MainSignalArticleNumber} - Ks-Mehrabschnittssignal",
-                Tag = def.MainSignalArticleNumber
-            };
-            MainSignalComboBox.Items.Add(mainItem);
-            MainSignalComboBox.SelectedItem = mainItem;
-            sig.MainSignalArticleNumber = def.MainSignalArticleNumber;
+                var item = new ComboBoxItem { Content = displayName, Tag = articleNumber };
+                MainSignalComboBox.Items.Add(item);
+            }
+            MainSignalComboBox.SelectionChanged += OnMainSignalSelected;
 
-            // Populate distant signal ComboBox (if applicable)
+            var mainSelected = MainSignalComboBox.Items.OfType<ComboBoxItem>()
+                .FirstOrDefault(x => x.Tag?.ToString() == sig.MainSignalArticleNumber);
+            if (mainSelected != null)
+                MainSignalComboBox.SelectedItem = mainSelected;
+            else if (MainSignalComboBox.Items.Count > 0)
+            {
+                MainSignalComboBox.SelectedIndex = 0;
+                sig.MainSignalArticleNumber = (MainSignalComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? def.MainSignalArticleNumber;
+            }
+
+            // Vorsignal: aus Stammdaten (data.json) oder MultiplexerHelper-Fallback
+            DistantSignalComboBox.SelectionChanged -= OnDistantSignalSelected;
             DistantSignalComboBox.Items.Clear();
-            if (!string.IsNullOrEmpty(def.DistantSignalArticleNumber))
+            foreach (var (articleNumber, displayName) in _viessmannSignalService.GetDistantSignalOptions(sig.MultiplexerArticleNumber))
             {
-                var distantItem = new ComboBoxItem
-                {
-                    Content = $"{def.DistantSignalArticleNumber} - Ks-Vorsignal",
-                    Tag = def.DistantSignalArticleNumber
-                };
-                DistantSignalComboBox.Items.Add(distantItem);
+                var item = new ComboBoxItem { Content = displayName, Tag = articleNumber };
+                DistantSignalComboBox.Items.Add(item);
+            }
+            DistantSignalComboBox.SelectionChanged += OnDistantSignalSelected;
 
-                if (sig.DistantSignalArticleNumber == def.DistantSignalArticleNumber)
-                {
-                    DistantSignalComboBox.SelectedItem = distantItem;
-                }
-                else if (DistantSignalComboBox.Items.Count > 0)
+            if (DistantSignalComboBox.Items.Count > 0)
+            {
+                var distantSelected = DistantSignalComboBox.Items.OfType<ComboBoxItem>()
+                    .FirstOrDefault(x => x.Tag?.ToString() == sig.DistantSignalArticleNumber);
+                if (distantSelected != null)
+                    DistantSignalComboBox.SelectedItem = distantSelected;
+                else
                 {
                     DistantSignalComboBox.SelectedIndex = 0;
+                    sig.DistantSignalArticleNumber = (DistantSignalComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
                 }
-
-                sig.DistantSignalArticleNumber = def.DistantSignalArticleNumber;
             }
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Error updating signal article ComboBoxes: {ex.Message}");
+        }
+    }
+
+    private void OnMainSignalSelected(object sender, SelectionChangedEventArgs e)
+    {
+        if (SelectedElement is not SbSignal sig) return;
+        if (MainSignalComboBox.SelectedItem is ComboBoxItem { Tag: string articleNumber })
+        {
+            sig.MainSignalArticleNumber = articleNumber;
+            UpdateAvailableSignalAspects(sig);
+        }
+    }
+
+    private void OnDistantSignalSelected(object sender, SelectionChangedEventArgs e)
+    {
+        if (SelectedElement is not SbSignal sig) return;
+        if (DistantSignalComboBox.SelectedItem is ComboBoxItem { Tag: string articleNumber })
+        {
+            sig.DistantSignalArticleNumber = articleNumber;
+            UpdateAvailableSignalAspects(sig);
         }
     }
 
@@ -331,9 +354,6 @@ public sealed partial class SignalBoxPage
         {
             _blinkingLeds.Clear();
             sig.SignalAspect = aspect;
-
-            // Update preview signal
-            SignalPreview.Aspect = aspectStr;
 
             // Update canvas element
             RefreshElementVisual(sig);

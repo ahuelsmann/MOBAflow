@@ -10,6 +10,9 @@
     <SolidColorBrush x:Key="SignalBoxBufferStopColor" Color="#C83C3C" />
     <!--  Red: RGB(200, 60, 60) for buffer stops  -->
 
+    <SolidColorBrush x:Key="BufferStopFillBrush" Color="#D32F2F" />
+    <!--  Dark red for buffer stop rectangle (Prellbock) in toolbox/canvas  -->
+
     <!--  Signal Box Element Colors  -->
     <SolidColorBrush x:Key="SignalBoxSwitchStraightColor" Color="#4169E1" />
     <!--  Royal Blue for straight switch position  -->
@@ -22,5 +25,18 @@
 
     <SolidColorBrush x:Key="SignalBoxSelectionHighlightColor" Color="#FFFF00" />
     <!--  Yellow for selected element highlight  -->
+
+    <!--  Signal preview / dark UI surface (replaces hardcoded #1E1E1E)  -->
+    <SolidColorBrush x:Key="SignalPreviewBackgroundBrush" Color="#1E1E1E" />
+
+    <!--  TrackPlan section palette (replaces hardcoded hex in section color picker)  -->
+    <SolidColorBrush x:Key="TrackPlanSectionColor1" Color="#FF5733" />
+    <SolidColorBrush x:Key="TrackPlanSectionColor2" Color="#33FF57" />
+    <SolidColorBrush x:Key="TrackPlanSectionColor3" Color="#3357FF" />
+    <SolidColorBrush x:Key="TrackPlanSectionColor4" Color="#FFFF33" />
+    <SolidColorBrush x:Key="TrackPlanSectionColor5" Color="#FF33FF" />
+    <SolidColorBrush x:Key="TrackPlanSectionColor6" Color="#33FFFF" />
+    <SolidColorBrush x:Key="TrackPlanSectionColor7" Color="#FF9933" />
+    <SolidColorBrush x:Key="TrackPlanSectionColor8" Color="#9933FF" />
 
 </ResourceDictionary>

@@ -293,56 +293,56 @@
                                             Width="28"
                                             Height="28"
                                             Padding="0"
-                                            Background="#FF5733"
+                                            Background="{StaticResource TrackPlanSectionColor1}"
                                             CornerRadius="4"
                                             Tag="#FF5733" />
                                         <Button
                                             Width="28"
                                             Height="28"
                                             Padding="0"
-                                            Background="#33FF57"
+                                            Background="{StaticResource TrackPlanSectionColor2}"
                                             CornerRadius="4"
                                             Tag="#33FF57" />
                                         <Button
                                             Width="28"
                                             Height="28"
                                             Padding="0"
-                                            Background="#3357FF"
+                                            Background="{StaticResource TrackPlanSectionColor3}"
                                             CornerRadius="4"
                                             Tag="#3357FF" />
                                         <Button
                                             Width="28"
                                             Height="28"
                                             Padding="0"
-                                            Background="#FFFF33"
+                                            Background="{StaticResource TrackPlanSectionColor4}"
                                             CornerRadius="4"
                                             Tag="#FFFF33" />
                                         <Button
                                             Width="28"
                                             Height="28"
                                             Padding="0"
-                                            Background="#FF33FF"
+                                            Background="{StaticResource TrackPlanSectionColor5}"
                                             CornerRadius="4"
                                             Tag="#FF33FF" />
                                         <Button
                                             Width="28"
                                             Height="28"
                                             Padding="0"
-                                            Background="#33FFFF"
+                                            Background="{StaticResource TrackPlanSectionColor6}"
                                             CornerRadius="4"
                                             Tag="#33FFFF" />
                                         <Button
                                             Width="28"
                                             Height="28"
                                             Padding="0"
-                                            Background="#FF9933"
+                                            Background="{StaticResource TrackPlanSectionColor7}"
                                             CornerRadius="4"
                                             Tag="#FF9933" />
                                         <Button
                                             Width="28"
                                             Height="28"
                                             Padding="0"
-                                            Background="#9933FF"
+                                            Background="{StaticResource TrackPlanSectionColor8}"
                                             CornerRadius="4"
                                             Tag="#9933FF" />
                                     </StackPanel>

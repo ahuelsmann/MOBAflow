@@ -1,4 +1,4 @@
-﻿{
+{
     "schemaVersion":  1,
     "cities":  [
                    {
@@ -2758,5 +2758,12 @@
                                            }
                                        ]
                         }
-                    ]
+                    ],
+    "viessmannMultiplexSignals": [
+        { "articleNumber": "4040", "displayName": "Ks-Vorsignal", "role": "distant" },
+        { "articleNumber": "4042", "displayName": "Ks-Hauptsignal (4042)", "role": "main" },
+        { "articleNumber": "4043", "displayName": "Ks-Ausfahrsignal", "role": "main" },
+        { "articleNumber": "4045", "displayName": "Ks-Hauptsignal (4045)", "role": "main" },
+        { "articleNumber": "4046", "displayName": "Ks-Mehrabschnittssignal", "role": "main" }
+    ]
 }

@@ -2,7 +2,7 @@
 
     <!--  Track Graphics - Modern SVG-based symbols  -->
 
-    <!--  Track Straight (Horizontal)  -->
+    <!--  Track Straight (Horizontal) - TrackPlanStrokeBrush: Light=dunkel, Dark=hell  -->
     <DataTemplate x:Key="TrackStraightTemplate">
         <Canvas Width="60" Height="60">
             <!--  Rails  -->
@@ -11,7 +11,7 @@
                 Canvas.Top="20"
                 Width="50"
                 Height="3"
-                Fill="#606060"
+                Fill="{ThemeResource TrackPlanStrokeBrush}"
                 RadiusX="1"
                 RadiusY="1" />
             <Rectangle
@@ -19,7 +19,7 @@
                 Canvas.Top="37"
                 Width="50"
                 Height="3"
-                Fill="#606060"
+                Fill="{ThemeResource TrackPlanStrokeBrush}"
                 RadiusX="1"
                 RadiusY="1" />
 
@@ -29,35 +29,35 @@
                 Canvas.Top="18"
                 Width="2"
                 Height="24"
-                Fill="#8B4513"
+                Fill="{ThemeResource TextFillColorTertiaryBrush}"
                 Opacity="0.8" />
             <Rectangle
                 Canvas.Left="20"
                 Canvas.Top="18"
                 Width="2"
                 Height="24"
-                Fill="#8B4513"
+                Fill="{ThemeResource TextFillColorTertiaryBrush}"
                 Opacity="0.8" />
             <Rectangle
                 Canvas.Left="30"
                 Canvas.Top="18"
                 Width="2"
                 Height="24"
-                Fill="#8B4513"
+                Fill="{ThemeResource TextFillColorTertiaryBrush}"
                 Opacity="0.8" />
             <Rectangle
                 Canvas.Left="40"
                 Canvas.Top="18"
                 Width="2"
                 Height="24"
-                Fill="#8B4513"
+                Fill="{ThemeResource TextFillColorTertiaryBrush}"
                 Opacity="0.8" />
             <Rectangle
                 Canvas.Left="50"
                 Canvas.Top="18"
                 Width="2"
                 Height="24"
-                Fill="#8B4513"
+                Fill="{ThemeResource TextFillColorTertiaryBrush}"
                 Opacity="0.8" />
         </Canvas>
     </DataTemplate>
@@ -67,13 +67,13 @@
         <Canvas Width="60" Height="60">
             <Path
                 Data="M 5,55 Q 30,30 55,5"
-                Stroke="#606060"
+                Stroke="{ThemeResource TrackPlanStrokeBrush}"
                 StrokeEndLineCap="Round"
                 StrokeStartLineCap="Round"
                 StrokeThickness="3" />
             <Path
                 Data="M 10,55 Q 30,35 55,10"
-                Stroke="#606060"
+                Stroke="{ThemeResource TrackPlanStrokeBrush}"
                 StrokeEndLineCap="Round"
                 StrokeStartLineCap="Round"
                 StrokeThickness="3" />
@@ -85,13 +85,13 @@
         <Canvas Width="60" Height="60">
             <Path
                 Data="M 5,55 Q 5,5 55,5"
-                Stroke="#606060"
+                Stroke="{ThemeResource TrackPlanStrokeBrush}"
                 StrokeEndLineCap="Round"
                 StrokeStartLineCap="Round"
                 StrokeThickness="3" />
             <Path
                 Data="M 10,55 Q 10,10 55,10"
-                Stroke="#606060"
+                Stroke="{ThemeResource TrackPlanStrokeBrush}"
                 StrokeEndLineCap="Round"
                 StrokeStartLineCap="Round"
                 StrokeThickness="3" />
@@ -107,13 +107,13 @@
                 Canvas.Top="20"
                 Width="30"
                 Height="3"
-                Fill="#606060" />
+                Fill="{ThemeResource TrackPlanStrokeBrush}" />
             <Rectangle
                 Canvas.Left="5"
                 Canvas.Top="37"
                 Width="30"
                 Height="3"
-                Fill="#606060" />
+                Fill="{ThemeResource TrackPlanStrokeBrush}" />
 
             <!--  Buffer (Prellbock)  -->
             <Rectangle
@@ -140,11 +140,11 @@
             <!--  Main track  -->
             <Path
                 Data="M 5,30 L 55,30"
-                Stroke="#606060"
+                Stroke="{ThemeResource TrackPlanStrokeBrush}"
                 StrokeThickness="3" />
             <Path
                 Data="M 5,35 L 55,35"
-                Stroke="#606060"
+                Stroke="{ThemeResource TrackPlanStrokeBrush}"
                 StrokeThickness="3" />
 
             <!--  Diverging track  -->
@@ -168,11 +168,11 @@
             <!--  Main track  -->
             <Path
                 Data="M 5,30 L 55,30"
-                Stroke="#606060"
+                Stroke="{ThemeResource TrackPlanStrokeBrush}"
                 StrokeThickness="3" />
             <Path
                 Data="M 5,35 L 55,35"
-                Stroke="#606060"
+                Stroke="{ThemeResource TrackPlanStrokeBrush}"
                 StrokeThickness="3" />
 
             <!--  Diverging track  -->
@@ -196,11 +196,11 @@
             <!--  Main tracks  -->
             <Path
                 Data="M 5,20 L 55,20"
-                Stroke="#606060"
+                Stroke="{ThemeResource TrackPlanStrokeBrush}"
                 StrokeThickness="2" />
             <Path
                 Data="M 5,40 L 55,40"
-                Stroke="#606060"
+                Stroke="{ThemeResource TrackPlanStrokeBrush}"
                 StrokeThickness="2" />
 
             <!--  Cross connections  -->
@@ -223,13 +223,13 @@
             <!--  Horizontal track  -->
             <Path
                 Data="M 5,30 L 55,30"
-                Stroke="#606060"
+                Stroke="{ThemeResource TrackPlanStrokeBrush}"
                 StrokeThickness="3" />
 
             <!--  Vertical track  -->
             <Path
                 Data="M 30,5 L 30,55"
-                Stroke="#606060"
+                Stroke="{ThemeResource TrackPlanStrokeBrush}"
                 StrokeThickness="3" />
 
             <!--  Crossing indicator  -->
@@ -252,7 +252,7 @@
                 Canvas.Top="28"
                 Width="50"
                 Height="4"
-                Fill="#606060" />
+                Fill="{ThemeResource TrackPlanStrokeBrush}" />
 
             <!--  Platform edge  -->
             <Rectangle
@@ -260,10 +260,10 @@
                 Canvas.Top="10"
                 Width="50"
                 Height="15"
-                Fill="#BDBDBD"
+                Fill="{ThemeResource ControlFillColorSecondaryBrush}"
                 RadiusX="2"
                 RadiusY="2"
-                Stroke="#757575"
+                Stroke="{ThemeResource CardStrokeColorDefaultBrush}"
                 StrokeThickness="1" />
 
             <!--  Platform markers  -->
@@ -316,7 +316,7 @@
                 Canvas.Left="15"
                 Canvas.Top="42"
                 FontSize="8"
-                Foreground="#757575"
+                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                 Text="FM" />
         </Canvas>
     </DataTemplate>

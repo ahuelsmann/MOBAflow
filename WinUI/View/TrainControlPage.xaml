@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:Moba.WinUI.Controls"
     xmlns:converter="using:Moba.WinUI.Converter"
+    xmlns:vm="using:Moba.SharedUI.ViewModel"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -261,6 +262,32 @@
                                 FontSize="11"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 Text="Select preset and control" />
+                        </StackPanel>
+
+                        <!--  Lok aus Projekt (Alternative zu Presets)  -->
+                        <StackPanel Spacing="6">
+                            <TextBlock
+                                FontSize="11"
+                                FontWeight="SemiBold"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                Text="LOK AUS PROJEKT" />
+                            <ComboBox
+                                HorizontalAlignment="Stretch"
+                                ItemsSource="{x:Bind ViewModel.ProjectLocomotives, Mode=OneWay}"
+                                PlaceholderText="Lok aus Projekt wählen …"
+                                SelectedItem="{x:Bind ViewModel.SelectedLocomotiveFromProject, Mode=TwoWay}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:LocomotiveViewModel">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon FontSize="14" Glyph="&#xE7C0;" />
+                                            <TextBlock Text="{x:Bind Name, Mode=OneWay}" />
+                                            <TextBlock
+                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                Text="{x:Bind DigitalAddress, Mode=OneWay}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
                         </StackPanel>
 
                         <!--  Locomotive Presets - Compact table layout  -->

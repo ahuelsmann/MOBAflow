@@ -324,7 +324,7 @@
 
         <!--  Column 6: Properties Panel  -->
         <ScrollViewer Grid.Column="6" Padding="8">
-            <Grid MaxWidth="480">
+            <Grid>
                 <!--  Properties Content  -->
                 <ContentControl
                     HorizontalContentAlignment="Stretch"

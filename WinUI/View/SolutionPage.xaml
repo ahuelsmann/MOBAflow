@@ -21,7 +21,7 @@
         </Grid.ColumnDefinitions>
 
         <!--  Projects List  -->
-        <Grid Grid.Column="0" Padding="16">
+        <Grid Grid.Column="0" Padding="8">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -35,6 +35,7 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock
                     Grid.Column="0"
+                    Padding="8,0,0,0"
                     VerticalAlignment="Center"
                     FontWeight="SemiBold"
                     Style="{StaticResource SubtitleTextBlockStyle}"
@@ -69,14 +70,14 @@
                 </i:Interaction.Behaviors>
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="viewmodel:ProjectViewModel">
-                        <Grid Padding="8">
+                        <Grid Padding="6">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <FontIcon
                                 Grid.Column="0"
-                                Margin="0,0,12,0"
+                                Margin="0,0,8,0"
                                 FontSize="16"
                                 Glyph="&#xE8F1;" />
                             <TextBlock
@@ -96,7 +97,7 @@
             Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
         <!--  Properties Panel  -->
-        <Grid Grid.Column="2" Padding="16">
+        <Grid Grid.Column="2" Padding="8">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>

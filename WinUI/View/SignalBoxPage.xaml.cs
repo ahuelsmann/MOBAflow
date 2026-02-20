@@ -49,6 +49,8 @@ public sealed partial class SignalBoxPage : Page
     /// </summary>
     private SignalBoxPlanViewModel? _planViewModel;
 
+    private readonly ViessmannSignalService _viessmannSignalService;
+
     private readonly List<Ellipse> _blinkingLeds = [];
 
     private bool _isGridVisible = true;
@@ -63,15 +65,18 @@ public sealed partial class SignalBoxPage : Page
     public SignalBoxPage(
         MainWindowViewModel viewModel,
         ISkinProvider skinProvider,
-        SkinSelectorViewModel skinViewModel)
+        SkinSelectorViewModel skinViewModel,
+        ViessmannSignalService viessmannSignalService)
     {
         ArgumentNullException.ThrowIfNull(viewModel);
         ArgumentNullException.ThrowIfNull(skinProvider);
         ArgumentNullException.ThrowIfNull(skinViewModel);
+        ArgumentNullException.ThrowIfNull(viessmannSignalService);
 
         ViewModel = viewModel;
         _skinProvider = skinProvider;
         SkinViewModel = skinViewModel;
+        _viessmannSignalService = viessmannSignalService;
 
         InitializeComponent();
 
