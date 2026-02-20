@@ -649,7 +649,7 @@ public class Z21 : IZ21
     /// </summary>
     /// <typeparam name="TEvent">The event type</typeparam>
     /// <param name="event">The event instance to publish</param>
-    private void PublishEventAsync<TEvent>(TEvent @event) where TEvent : class, Common.Events.IEvent
+    private void PublishEventAsync<TEvent>(TEvent @event) where TEvent : class, IEvent
     {
         // Fire-and-forget: publish on thread pool without awaiting
         // This allows OnUdpReceived to return immediately

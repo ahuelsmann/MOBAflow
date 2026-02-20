@@ -251,7 +251,7 @@ public class TrackPlanSvgRenderer
     /// Bei Kurven mit zwei Ports muss für jeden Ausgang die korrekte Position berechnet werden.
     /// </summary>
     private void CalculateCurvedPortPosition(Segment segment, char entryPort, char outgoingPort, double x, double y, double angle,
-        double nextX, double nextY, double nextAngle, out double outX, out double outY, out double outAngle)
+        double _nextX, double _nextY, double nextAngle, out double outX, out double outY, out double outAngle)
     {
         var radius = segment switch { R9 r => r.RadiusInMm, R1 r => r.RadiusInMm, R2 r => r.RadiusInMm, R3 r => r.RadiusInMm, R4 r => r.RadiusInMm, _ => 0.0 };
         var arcDegree = segment switch { R9 r => r.ArcInDegree, R1 r => r.ArcInDegree, R2 r => r.ArcInDegree, R3 r => r.ArcInDegree, R4 r => r.ArcInDegree, _ => 0.0 };

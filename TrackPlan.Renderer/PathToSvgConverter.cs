@@ -82,8 +82,8 @@ public static class PathToSvgConverter
         double offsetX = 0,
         double offsetY = 0)
     {
-        double Tx(double x, double y) => (x + offsetX) * scale;
-        double Ty(double x, double y) => (y + offsetY) * scale;
+        double Tx(double x, double _) => (x + offsetX) * scale;
+        double Ty(double _, double y) => (y + offsetY) * scale;
 
         var sb = new StringBuilder();
         double x = 0, y = 0;

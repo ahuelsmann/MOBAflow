@@ -28,7 +28,7 @@ public partial class MainWindowViewModel
         if (!signal.IsMultiplexed)
         {
             System.Diagnostics.Debug.WriteLine("[MWVM.SetSignalAspect] ERROR: Signal not multiplexed");
-            _logger?.LogWarning(
+            _logger.LogWarning(
                 "Signal '{SignalName}' (ID: {SignalId}) is not marked as multiplexed. Configure IsMultiplexed=true.",
                 signal.Name, signal.Id.ToString()[..8]);
             return;
@@ -37,7 +37,7 @@ public partial class MainWindowViewModel
         if (string.IsNullOrEmpty(signal.MultiplexerArticleNumber))
         {
             System.Diagnostics.Debug.WriteLine("[MWVM.SetSignalAspect] ERROR: No multiplexer article number");
-            _logger?.LogWarning(
+            _logger.LogWarning(
                 "Signal '{SignalName}': Multiplexer article number not configured.",
                 signal.Name);
             return;
@@ -46,7 +46,7 @@ public partial class MainWindowViewModel
         if (signal.BaseAddress <= 0 || signal.BaseAddress > 2044)
         {
             System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] ERROR: Invalid base address {signal.BaseAddress}");
-            _logger?.LogWarning(
+            _logger.LogWarning(
                 "Signal '{SignalName}': Invalid base address {Address}. Must be 1-2044.",
                 signal.Name, signal.BaseAddress);
             return;
@@ -55,7 +55,7 @@ public partial class MainWindowViewModel
         if (!_z21.IsConnected)
         {
             System.Diagnostics.Debug.WriteLine("[MWVM.SetSignalAspect] ERROR: Z21 not connected");
-            _logger?.LogWarning("Signal '{SignalName}': Z21 not connected; skipping command send.", signal.Name);
+            _logger.LogWarning("Signal '{SignalName}': Z21 not connected; skipping command send.", signal.Name);
             return;
         }
 
@@ -68,7 +68,7 @@ public partial class MainWindowViewModel
                     out var turnoutCommand))
             {
                 System.Diagnostics.Debug.WriteLine("[MWVM.SetSignalAspect] ERROR: Aspect not supported by multiplexer mapping");
-                _logger?.LogWarning(
+                _logger.LogWarning(
                     "Signal '{SignalName}': Aspect {Aspect} not supported by multiplexer mapping.",
                     signal.Name, signal.SignalAspect);
                 return;
@@ -91,7 +91,7 @@ public partial class MainWindowViewModel
 
             System.Diagnostics.Debug.WriteLine("[MWVM.SetSignalAspect] Z21.SetTurnoutAsync completed successfully");
 
-            _logger?.LogInformation(
+            _logger.LogInformation(
                 "Signal '{SignalName}' set: Multiplexer={Multiplexer}, BaseAddress={BaseAddress}, " +
                 "Aspect={Aspect} → Turnout_Address={TurnoutAddress}, Output={Output}, Activate={Activate}",
                 signal.Name, signal.MultiplexerArticleNumber, signal.BaseAddress,
@@ -105,7 +105,7 @@ public partial class MainWindowViewModel
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] EXCEPTION: {ex.Message}");
-            _logger?.LogError(ex, "Failed to set signal aspect for '{SignalName}'", signal.Name);
+            _logger.LogError(ex, "Failed to set signal aspect for '{SignalName}'", signal.Name);
 
             _uiDispatcher.InvokeOnUi(() =>
             {
@@ -130,7 +130,7 @@ public partial class MainWindowViewModel
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Error in SetSignalAspectCommand");
+            _logger.LogError(ex, "Error in SetSignalAspectCommand");
         }
     }
 }

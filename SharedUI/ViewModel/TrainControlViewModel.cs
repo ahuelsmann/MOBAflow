@@ -39,7 +39,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
 {
     private readonly IZ21 _z21;
     private readonly ISettingsService _settingsService;
-    private readonly Backend.Interface.ITripLogService? _tripLogService;
+    private readonly ITripLogService? _tripLogService;
     private readonly ILogger<TrainControlViewModel>? _logger;
 
     private bool _isLoadingPreset;
@@ -104,7 +104,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// Lokomotiven des aktuellen Projekts für die ComboBox-Auswahl (Stellwerk).
     /// Entweder Preset (Lok 1/2/3) oder eine Lok aus dieser Liste wird gesteuert.
     /// </summary>
-    public ObservableCollection<LocomotiveViewModel>? ProjectLocomotives =>
+    public ObservableCollection<LocomotiveViewModel> ProjectLocomotives =>
         _mainWindowViewModel?.SelectedProject?.Locomotives ?? EmptyProjectLocomotives;
 
     /// <summary>
@@ -124,6 +124,11 @@ public sealed partial class TrainControlViewModel : ObservableObject
             Speed = 0;
             IsForward = true;
             StatusMessage = $"Lok aus Projekt: {value.Name} (DCC {LocoAddress})";
+        }
+
+        if (!_isLoadingPreset)
+        {
+            _ = SavePresetsToSettingsAsync();
         }
     }
 
@@ -549,7 +554,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(NextStationTrack))]
     [NotifyPropertyChangedFor(nameof(NextStationHasValue))]
     [NotifyPropertyChangedFor(nameof(NextStationIsExitOnLeft))]
-    private Domain.Journey? _currentJourney;
+    private Journey? _currentJourney;
 
     /// <summary>
     /// Current station index in the journey (0-based).
@@ -669,7 +674,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// </summary>
     public bool NextStationIsExitOnLeft => GetNextStation()?.IsExitOnLeft ?? false;
 
-    private Domain.Station? GetPreviousStation()
+    private Station? GetPreviousStation()
     {
         if (CurrentJourney == null || CurrentJourney.Stations.Count == 0)
             return null;
@@ -681,7 +686,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
         return CurrentJourney.Stations[prevIndex];
     }
 
-    private Domain.Station? GetCurrentStation()
+    private Station? GetCurrentStation()
     {
         if (CurrentJourney == null || CurrentJourney.Stations.Count == 0)
             return null;
@@ -692,7 +697,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
         return CurrentJourney.Stations[CurrentStationIndex];
     }
 
-    private Domain.Station? GetNextStation()
+    private Station? GetNextStation()
     {
         if (CurrentJourney == null || CurrentJourney.Stations.Count == 0)
             return null;
@@ -709,7 +714,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
         IEventBus eventBus,
         ISettingsService settingsService,
         MainWindowViewModel? mainWindowViewModel = null,
-        Backend.Interface.ITripLogService? tripLogService = null,
+        ITripLogService? tripLogService = null,
         ILogger<TrainControlViewModel>? logger = null)
     {
         ArgumentNullException.ThrowIfNull(z21);
@@ -753,6 +758,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
         if (e.PropertyName == nameof(MainWindowViewModel.SelectedProject))
         {
             OnPropertyChanged(nameof(ProjectLocomotives));
+            TryRestoreSelectedLocomotiveFromProject();
         }
     }
 
@@ -790,6 +796,32 @@ public sealed partial class TrainControlViewModel : ObservableObject
     }
 
     /// <summary>
+    /// Stellt die Combobox-Auswahl „Lok aus Projekt“ wieder her, wenn die gespeicherte Lok
+    /// in der aktuellen Projektliste vorkommt. Wird beim Laden der Einstellungen und beim
+    /// Wechsel des Projekts aufgerufen.
+    /// </summary>
+    private void TryRestoreSelectedLocomotiveFromProject()
+    {
+        var settings = _settingsService.GetSettings();
+        var savedId = settings.TrainControl.SelectedLocomotiveFromProjectId;
+        if (!savedId.HasValue || ProjectLocomotives.Count == 0)
+            return;
+        var match = ProjectLocomotives.FirstOrDefault(l => l.Model?.Id == savedId.Value);
+        if (match == null || SelectedLocomotiveFromProject != null)
+            return;
+        _isLoadingPreset = true;
+        try
+        {
+            SelectedPresetIndex = -1;
+            SelectedLocomotiveFromProject = match;
+        }
+        finally
+        {
+            _isLoadingPreset = false;
+        }
+    }
+
+    /// <summary>
     /// Loads locomotive presets from persistent settings.
     /// </summary>
     private void LoadPresetsFromSettings()
@@ -817,6 +849,9 @@ public sealed partial class TrainControlViewModel : ObservableObject
         // Load locomotive series selection
         SelectedLocoSeries = trainControl.SelectedLocoSeries;
         SelectedVmax = trainControl.SelectedVmax;
+
+        // Wiederherstellen der Combobox-Auswahl „Lok aus Projekt“, falls gespeichert und im Projekt vorhanden
+        TryRestoreSelectedLocomotiveFromProject();
 
         // Apply current preset only when a preset (0–2) is selected; -1 = Combobox-Auswahl
         if (SelectedPresetIndex >= 0 && SelectedPresetIndex <= 2)
@@ -860,6 +895,10 @@ public sealed partial class TrainControlViewModel : ObservableObject
             settings.TrainControl.SpeedRampStepSize = (int)RampStepSize;
             settings.TrainControl.SpeedRampIntervalMs = (int)RampIntervalMs;
             settings.TrainControl.SpeedSteps = SpeedSteps;
+            settings.TrainControl.SelectedLocomotiveFromProjectId =
+                (SelectedPresetIndex == -1 && SelectedLocomotiveFromProject?.Model != null)
+                    ? SelectedLocomotiveFromProject.Model.Id
+                    : null;
 
             // Save updated settings
             await _settingsService.SaveSettingsAsync(settings).ConfigureAwait(false);

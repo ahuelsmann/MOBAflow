@@ -1,10 +1,9 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Test.Helpers;
 
 /// <summary>
 /// Helper to generate valid Z21 RBus feedback packets for unit testing.
-//
 /// Z21 RBus Feedback Packet Format (6 bytes):
 /// [Length(1)] [CRC(1)] [0xF0] [0xA1] [InPort] [Value]
 /// Example: InPort 5 with bit 0 active → 04 00 F0 A1 05 03

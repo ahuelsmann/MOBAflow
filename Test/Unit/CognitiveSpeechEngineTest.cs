@@ -7,7 +7,7 @@ using Moba.Sound;
 
 public class CognitiveSpeechEngineTest
 {
-    private ISpeakerEngine _speakerEngine;
+    private ISpeakerEngine _speakerEngine = null!;
 
     [SetUp]
     public void Setup()

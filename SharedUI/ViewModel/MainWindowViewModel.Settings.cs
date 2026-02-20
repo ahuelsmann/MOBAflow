@@ -7,8 +7,6 @@ using CommunityToolkit.Mvvm.Input;
 
 using Domain;
 
-using Service;
-
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Net;

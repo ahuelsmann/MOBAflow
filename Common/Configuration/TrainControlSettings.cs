@@ -70,6 +70,12 @@ public class TrainControlSettings
     public int SelectedVmax { get; set; } = 200;
 
     /// <summary>
+    /// Id der zuletzt in der Combobox „Lok aus Projekt“ gewählten Lokomotive.
+    /// Wird beim Laden wiederhergestellt, wenn die Lok noch im aktuellen Projekt ist.
+    /// </summary>
+    public Guid? SelectedLocomotiveFromProjectId { get; set; }
+
+    /// <summary>
     /// Locomotive presets for quick switching.
     /// </summary>
     public List<LocomotivePreset> Presets { get; set; } = [];

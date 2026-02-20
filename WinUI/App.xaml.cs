@@ -41,6 +41,7 @@ using Sound;
 
 using System.Diagnostics;
 
+using TrackLibrary.PikoA;
 using TrackPlan.Renderer;
 
 using Utilities;
@@ -105,7 +106,7 @@ public partial class App
         Debug.WriteLine(message);
         Debug.WriteLine(stackTrace);
 
-        _logger?.LogCritical(e.Exception, "Unhandled exception in WinUI application");
+        _logger.LogCritical(e.Exception, "Unhandled exception in WinUI application");
 
         // Mark as handled to prevent immediate termination (allows logging)
         // The debugger will still break due to App.g.i.cs handler
@@ -207,7 +208,7 @@ public partial class App
         // Navigation infrastructure - discover and register pages
         // Pages (Auto-discovery + Custom DI)
         var corePages = NavigationRegistration.RegisterPages(services);
-        services.AddSingleton<List<PageMetadata>>(corePages);
+        services.AddSingleton(corePages);
 
         // Register Speech Engine Factory for dynamic engine switching
         services.AddSingleton<SpeakerEngineFactory>();
@@ -321,7 +322,7 @@ public partial class App
         // TrackPlan (model and ViewModel)
         services.AddSingleton<TrackPlan>();
         services.AddSingleton<TrackPlanViewModel>();
-        services.AddSingleton<Moba.TrackLibrary.PikoA.EditableTrackPlan>();
+        services.AddSingleton<TrackLibrary.PikoA.EditableTrackPlan>();
 
         // Skin Provider
         services.AddSingleton<ISkinProvider, SkinProvider>();
@@ -397,7 +398,7 @@ public partial class App
         {
             Debug.WriteLine($"[OnLaunched] FATAL ERROR: {ex.GetType().Name}: {ex.Message}");
             Debug.WriteLine($"[OnLaunched] StackTrace: {ex.StackTrace}");
-            _logger?.LogCritical(ex, "OnLaunched failed");
+            _logger.LogCritical(ex, "OnLaunched failed");
             throw;
         }
     }
@@ -416,7 +417,7 @@ public partial class App
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Post-startup initialization failed");
+            _logger.LogError(ex, "Post-startup initialization failed");
             // Continue - app should remain functional
         }
     }

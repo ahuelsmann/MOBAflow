@@ -34,13 +34,16 @@ public class ProjectValidator : IProjectValidator
     /// </summary>
     public ProjectValidationResult ValidateCompleteness(Solution solution)
     {
+        ArgumentNullException.ThrowIfNull(solution);
         var result = new ProjectValidationResult();
 
-        if (solution?.Projects.Count == 0)
+        if (solution.Projects.Count == 0)
         {
             result.AddError("No projects loaded in solution");
             return result;
         }
+
+        _logger.LogDebug("Validating solution with {ProjectCount} project(s)", solution.Projects.Count);
 
         // Validate each project in the solution
         foreach (var projectIndex in Enumerable.Range(0, solution.Projects.Count))

@@ -134,7 +134,7 @@ public class MultiplexerHelperTests
     public void GetSupportedArticles_ShouldInclude5229And52292()
     {
         // Act
-        var articles = MultiplexerHelper.GetSupportedArticles();
+        var articles = MultiplexerHelper.GetSupportedArticles().ToList();
 
         // Assert
         Assert.That(articles, Contains.Item("5229"));

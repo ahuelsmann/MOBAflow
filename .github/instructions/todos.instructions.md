@@ -1,6 +1,6 @@
 # MOBAflow TODOs & Roadmap
 
-> Last Updated: 2026-02-16
+> Last Updated: 2026-02-20
 
 ---
 
@@ -42,11 +42,15 @@
 
 ---
 
-## 📋 FUTURE: Train Control & Pages (aus Session Fahrtenbuch)
+## ✅ ERLEDIGT: TrainControlPage – ComboBox für Lok-/Train-Auswahl
 
-**TrainControlPage – ComboBox für Lok-/Train-Auswahl:**
-- [ ] Neben den Presets eine ComboBox mit hinterlegten Locomotives und/oder konfigurierten Trains anbieten
-- [ ] Bei Auswahl: DCC-Adresse automatisch aus `Locomotive.DigitalAddress` setzen → bessere Zuordnung zum Fahrtenbuch
+**Umsetzung:** Neben den Presets gibt es eine ComboBox mit den Projekt-Lokomotiven (`ProjectLocomotives` / `SelectedLocomotiveFromProject`). Bei Auswahl wird die DCC-Adresse automatisch aus `Locomotive.DigitalAddress` übernommen (`OnSelectedLocomotiveFromProjectChanged` → `LocoAddress`). Bessere Zuordnung zum Fahrtenbuch.
+
+**Referenz:** `WinUI/View/TrainControlPage.xaml` (ComboBox „Lok aus Projekt“), `SharedUI/ViewModel/TrainControlViewModel.cs` (ProjectLocomotives, SelectedLocomotiveFromProject).
+
+---
+
+## 📋 FUTURE: Train Control & Pages (aus Session Fahrtenbuch)
 
 **TrainsPage – Umgestaltung:**
 - [ ] Aktuell: Katalog-Verwaltung (Locomotives, Passenger Wagons, Goods Wagons in Spalten)

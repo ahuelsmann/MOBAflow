@@ -57,6 +57,16 @@
             <SolidColorBrush x:Key="SkinOrangeBrush" Color="#FF6600" />
             <SolidColorBrush x:Key="SkinRedBrush" Color="#CC0000" />
 
+            <!--  TrackPlan Section Colors (used by section editor in TrackPlanPage)  -->
+            <SolidColorBrush x:Key="TrackPlanSectionColor1" Color="#FF5733" />
+            <SolidColorBrush x:Key="TrackPlanSectionColor2" Color="#33FF57" />
+            <SolidColorBrush x:Key="TrackPlanSectionColor3" Color="#3357FF" />
+            <SolidColorBrush x:Key="TrackPlanSectionColor4" Color="#FFFF33" />
+            <SolidColorBrush x:Key="TrackPlanSectionColor5" Color="#FF33FF" />
+            <SolidColorBrush x:Key="TrackPlanSectionColor6" Color="#33FFFF" />
+            <SolidColorBrush x:Key="TrackPlanSectionColor7" Color="#FF9933" />
+            <SolidColorBrush x:Key="TrackPlanSectionColor8" Color="#9933FF" />
+
             <!--  Global Converters  -->
             <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
             <converter:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />

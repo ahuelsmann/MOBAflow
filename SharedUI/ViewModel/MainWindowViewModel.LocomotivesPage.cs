@@ -2,7 +2,6 @@
 namespace Moba.SharedUI.ViewModel;
 
 using System.Collections.ObjectModel;
-using Backend.Interface;
 using Domain;
 
 /// <summary>

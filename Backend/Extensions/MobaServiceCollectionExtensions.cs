@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Extensions;
 
-using Backend.Data;
+using Moba.Backend.Data;
 using Common.Events;
 using Domain;
 using Interface;

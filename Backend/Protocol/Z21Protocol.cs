@@ -556,6 +556,7 @@ public static class Z21Protocol
         /// 0x00000010: Fast clock model time messages.
         /// Broadcasts: LAN_FAST_CLOCK_DATA
         /// Available since Z21 FW 1.43.
+        /// </summary>
         /// <summary>
         /// 0x00010000: LAN_X_LOCO_INFO for ALL locos (no subscription needed).
         /// HIGH TRAFFIC - only for full PC control software, not mobile controllers!

@@ -29,7 +29,7 @@
           "manufacturer": "Roco",
           "articleNumber": "62550",
           "functionSymbols": [
-            "",
+            "\uEA3B",
             "",
             "",
             "",
@@ -1456,6 +1456,24 @@
           "id": "2f1fc39b-2aa0-4128-8e1a-298a7a9f8134",
           "locoAddress": 7,
           "startTime": "2026-02-19T17:50:53.1675033Z",
+          "endTime": "2026-02-20T17:50:21.4339516Z",
+          "speed": 0,
+          "isStopSegment": true,
+          "duration": "23:59:28.2664483"
+        },
+        {
+          "id": "2a60d448-dbe8-4043-9835-809621d3c437",
+          "locoAddress": 7,
+          "startTime": "2026-02-20T17:50:21.4339516Z",
+          "endTime": "2026-02-20T18:00:52.7987706Z",
+          "speed": 0,
+          "isStopSegment": true,
+          "duration": "00:10:31.3648190"
+        },
+        {
+          "id": "60fef72a-411e-4082-a93f-f5598724d771",
+          "locoAddress": 7,
+          "startTime": "2026-02-20T18:00:52.7987706Z",
           "speed": 0,
           "isStopSegment": true
         }

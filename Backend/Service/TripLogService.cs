@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Service;
 
-using Backend.Interface;
+using Interface;
 using Common.Events;
 using Domain;
 
@@ -31,11 +31,6 @@ public sealed class TripLogService : ITripLogService
         if (project == null || locoAddress < 1) return;
 
         var entries = project.TripLogEntries;
-        if (entries == null)
-        {
-            project.TripLogEntries = [];
-            entries = project.TripLogEntries;
-        }
 
         lock (entries)
         {

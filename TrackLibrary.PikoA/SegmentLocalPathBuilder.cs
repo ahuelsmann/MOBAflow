@@ -206,12 +206,12 @@ public static class SegmentLocalPathBuilder
     /// <summary>BWR: Bogenweiche rechts R2→R3. Stammgleis R2-Bogen, Abzweig R3-Bogen.</summary>
     private static IReadOnlyList<PathCommand> GetBwrPath(double arcR2, double radiusR2, double radiusR3)
     {
-        var curveDir = 1;
-        var centerAngle = (90 * curveDir) * Math.PI / 180;
+        const int curveDir = 1;
+        var centerAngle = 90 * Math.PI / 180;
         var centerX = radiusR2 * Math.Cos(centerAngle);
         var centerY = radiusR2 * Math.Sin(centerAngle);
         var endAngleRad = arcR2 * curveDir * Math.PI / 180;
-        var endLocalAngleRad = (90 * curveDir) * Math.PI / 180;
+        var endLocalAngleRad = 90 * Math.PI / 180;
         var sweep = endAngleRad - endLocalAngleRad;
         var portBx = centerX + radiusR2 * Math.Cos(sweep);
         var portBy = centerY + radiusR2 * Math.Sin(sweep);
@@ -229,12 +229,12 @@ public static class SegmentLocalPathBuilder
     private static IReadOnlyList<PathCommand> GetBwlr3Path(double radiusR3)
     {
         var radiusR4 = radiusR3 + 61.88;
-        var curveDir = -1;
-        var centerAngle = (90 * curveDir) * Math.PI / 180;
+        const int curveDir = -1;
+        var centerAngle = -90 * Math.PI / 180;
         var centerX = radiusR3 * Math.Cos(centerAngle);
         var centerY = radiusR3 * Math.Sin(centerAngle);
         const double arcDeg = 30;
-        var sweep = (arcDeg * curveDir * Math.PI / 180) - ((90 * curveDir) * Math.PI / 180);
+        var sweep = (arcDeg * curveDir * Math.PI / 180) - (-90 * Math.PI / 180);
         var portBx = centerX + radiusR3 * Math.Cos(sweep);
         var portBy = centerY + radiusR3 * Math.Sin(sweep);
         var portCx = centerX + radiusR4 * Math.Cos(sweep);
@@ -251,12 +251,12 @@ public static class SegmentLocalPathBuilder
     private static IReadOnlyList<PathCommand> GetBwrr3Path(double radiusR3)
     {
         var radiusR4 = radiusR3 + 61.88;
-        var curveDir = 1;
-        var centerAngle = (90 * curveDir) * Math.PI / 180;
+        const int curveDir = 1;
+        var centerAngle = 90 * Math.PI / 180;
         var centerX = radiusR3 * Math.Cos(centerAngle);
         var centerY = radiusR3 * Math.Sin(centerAngle);
         const double arcDeg = 30;
-        var sweep = (arcDeg * curveDir * Math.PI / 180) - ((90 * curveDir) * Math.PI / 180);
+        var sweep = (arcDeg * curveDir * Math.PI / 180) - (90 * Math.PI / 180);
         var portBx = centerX + radiusR3 * Math.Cos(sweep);
         var portBy = centerY + radiusR3 * Math.Sin(sweep);
         var portCx = centerX + radiusR4 * Math.Cos(sweep);

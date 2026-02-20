@@ -10,7 +10,7 @@ using Moba.Sound;
 /// </summary>
 public class SystemSpeechEngineTest
 {
-    private ISpeakerEngine _speakerEngine;
+    private ISpeakerEngine _speakerEngine = null!;
 
     [SetUp]
     public void Setup()

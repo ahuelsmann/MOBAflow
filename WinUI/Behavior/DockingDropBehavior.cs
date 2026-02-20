@@ -79,7 +79,7 @@ public static class DockingDropBehavior
     {
         if (sender is FrameworkElement element)
         {
-            var position = GetDockPosition(element);
+            _ = GetDockPosition(element);
             // Tab/Panel wird an neue Position verschoben (wird von DockingManager gehandhabt)
         }
     }
@@ -122,7 +122,7 @@ public static class DockingDropBehavior
         return DockPosition.Center;
     }
 
-    private static void HighlightDropZone(FrameworkElement element, DockPosition position)
+    private static void HighlightDropZone(FrameworkElement element, DockPosition _position)
     {
         // Appliziere visuelles Feedback basierend auf Drop-Position
         // könnte mit VisualState oder OpacityMask implementiert werden

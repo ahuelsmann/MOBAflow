@@ -11,7 +11,7 @@ byte adrLsb = (byte)(fAdr & 0xFF);
 // Calculate command byte: 10Q0A00P
 byte cmdByte = (byte)(
     0x80 |                              // 10XXXXXX
-    (false ? 0x20 : 0x00) |            // Q flag (queue)
+    0x00 |                              // Q flag (queue) – always 0 in this test
     (activate ? 0x08 : 0x00) |         // A flag
     (output & 0x01)                    // P flag
 );

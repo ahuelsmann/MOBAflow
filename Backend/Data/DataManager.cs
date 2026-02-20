@@ -2,6 +2,7 @@
 namespace Moba.Backend.Data;
 
 using Domain;
+
 using System.Text.Json;
 
 /// <summary>
@@ -54,13 +55,13 @@ public class DataManager
         ArgumentNullException.ThrowIfNull(other);
         SchemaVersion = other.SchemaVersion;
         Cities.Clear();
-        foreach (var c in other.Cities ?? [])
+        foreach (var c in other.Cities)
             Cities.Add(c);
         Locomotives.Clear();
-        foreach (var l in other.Locomotives ?? [])
+        foreach (var l in other.Locomotives)
             Locomotives.Add(l);
         ViessmannMultiplexSignals.Clear();
-        foreach (var s in other.ViessmannMultiplexSignals ?? [])
+        foreach (var s in other.ViessmannMultiplexSignals)
             ViessmannMultiplexSignals.Add(s);
     }
 
@@ -107,27 +108,14 @@ public class DataManager
     /// <returns>Geladene Instanz oder null bei Fehler.</returns>
     public static async Task<DataManager?> LoadFromFileAsync(string path)
     {
-        try
+        if (!string.IsNullOrEmpty(path) && File.Exists(path))
         {
-            if (!string.IsNullOrEmpty(path) && File.Exists(path))
+            string json = await File.ReadAllTextAsync(path).ConfigureAwait(false);
+            if (!string.IsNullOrEmpty(json))
             {
-                string json = await File.ReadAllTextAsync(path).ConfigureAwait(false);
-                if (!string.IsNullOrEmpty(json))
-                {
-                    var temp = JsonSerializer.Deserialize<DataManager>(json, JsonOptions.Default);
-                    if (temp != null)
-                    {
-                        temp.Cities ??= [];
-                        temp.Locomotives ??= [];
-                        temp.ViessmannMultiplexSignals ??= [];
-                    }
-                    return temp;
-                }
+                var temp = JsonSerializer.Deserialize<DataManager>(json, JsonOptions.Default);
+                return temp;
             }
-        }
-        catch
-        {
-            // Return null for any deserialization errors
         }
         return null;
     }
@@ -139,21 +127,14 @@ public class DataManager
     /// <returns>Liste der Lokomotiv-Kategorien oder leere Liste bei Fehler.</returns>
     public static async Task<List<LocomotiveCategory>> LoadLocomotivesAsync(string path)
     {
-        try
+        if (!string.IsNullOrEmpty(path) && File.Exists(path))
         {
-            if (!string.IsNullOrEmpty(path) && File.Exists(path))
+            string json = await File.ReadAllTextAsync(path).ConfigureAwait(false);
+            if (!string.IsNullOrEmpty(json))
             {
-                string json = await File.ReadAllTextAsync(path).ConfigureAwait(false);
-                if (!string.IsNullOrEmpty(json))
-                {
-                    var data = JsonSerializer.Deserialize<LocomotiveLibraryData>(json, JsonOptions.Default);
-                    return data?.Locomotives ?? [];
-                }
+                var data = JsonSerializer.Deserialize<LocomotiveLibraryData>(json, JsonOptions.Default);
+                return data?.Locomotives ?? [];
             }
-        }
-        catch
-        {
-            // Return empty list for any deserialization errors
         }
         return [];
     }

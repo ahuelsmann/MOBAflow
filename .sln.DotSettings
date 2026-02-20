@@ -590,4 +590,25 @@
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=DCC/@EntryIndexedValue">DCC</s:String>
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=MM/@EntryIndexedValue">MM</s:String>
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=RCN/@EntryIndexedValue">RCN</s:String>
+	<!-- TrackLibrary.PikoA: Gleis-Segmenttypen (Piko-Artikel) – Abkürzungen beibehalten -->
+	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=BWL/@EntryIndexedValue">BWL</s:String>
+	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=BWLR3/@EntryIndexedValue">BWLR3</s:String>
+	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=BWR/@EntryIndexedValue">BWR</s:String>
+	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=BWRR3/@EntryIndexedValue">BWRR3</s:String>
+	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=DKW/@EntryIndexedValue">DKW</s:String>
+	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=WL/@EntryIndexedValue">WL</s:String>
+	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=WR/@EntryIndexedValue">WR</s:String>
+	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/Abbreviations/=WY/@EntryIndexedValue">WY</s:String>
+
+	<!-- ============================================ -->
+	<!-- Method/Declaration Never Used (Reserved/API) -->
+	<!-- ============================================ -->
+	<!-- 
+		Category: UnusedDeclaration / Method never used
+		Files: WinUI (StartWebAppIfEnabledAsync, DrawConnectionPoint, CreateBufferStopGraphic, etc.)
+		
+		Reason: Methods reserved for future use, optional features, or debug/tooling.
+		Status: INTENTIONAL – nicht unterdrücken ohne Prüfung
+	-->
+	<s:Boolean x:Key="/Default/CodeInspection/Inspections/UnusedDeclaration_002ELocal/@EntryIndexedValue">False</s:Boolean>
 </wpf:ResourceDictionary>

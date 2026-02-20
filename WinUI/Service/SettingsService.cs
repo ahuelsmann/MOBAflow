@@ -102,6 +102,7 @@ public class SettingsService : ISettingsService
                     _settings.TrainControl.SpeedSteps = loadedSettings.TrainControl.SpeedSteps;
                     _settings.TrainControl.SelectedLocoSeries = loadedSettings.TrainControl.SelectedLocoSeries;
                     _settings.TrainControl.SelectedVmax = loadedSettings.TrainControl.SelectedVmax;
+                    _settings.TrainControl.SelectedLocomotiveFromProjectId = loadedSettings.TrainControl.SelectedLocomotiveFromProjectId;
                     if (loadedSettings.TrainControl.Presets.Count >= 3)
                     {
                         _settings.TrainControl.Presets = loadedSettings.TrainControl.Presets;
@@ -168,6 +169,7 @@ public class SettingsService : ISettingsService
                     _settings.TrainControl.SpeedSteps = loadedSettings.TrainControl.SpeedSteps;
                     _settings.TrainControl.SelectedLocoSeries = loadedSettings.TrainControl.SelectedLocoSeries;
                     _settings.TrainControl.SelectedVmax = loadedSettings.TrainControl.SelectedVmax;
+                    _settings.TrainControl.SelectedLocomotiveFromProjectId = loadedSettings.TrainControl.SelectedLocomotiveFromProjectId;
                     if (loadedSettings.TrainControl.Presets.Count >= 3)
                     {
                         _settings.TrainControl.Presets = loadedSettings.TrainControl.Presets;
