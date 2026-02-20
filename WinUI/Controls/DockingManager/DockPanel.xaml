@@ -9,10 +9,7 @@
     VerticalAlignment="Stretch"
     mc:Ignorable="d">
 
-    <Grid
-        x:Name="RootGrid"
-        HorizontalAlignment="Stretch"
-        VerticalAlignment="Stretch">
+    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <!--  Collapsed tab  -->
         <Border
             x:Name="CollapsedTab"
@@ -82,7 +79,6 @@
 
                 <!--  Pin Button  -->
                 <Button
-                    x:Name="PinButton"
                     Grid.Column="2"
                     Padding="4"
                     Background="Transparent"
@@ -90,7 +86,6 @@
                     Click="OnPinButtonClick"
                     ToolTipService.ToolTip="Collapse panel">
                     <FontIcon
-                        x:Name="PinIcon"
                         FontSize="12"
                         Foreground="{ThemeResource SystemAccentColor}"
                         Glyph="&#xE718;" />
@@ -98,10 +93,7 @@
             </Grid>
 
             <!--  Content  -->
-            <ContentPresenter
-                x:Name="ContentPresenter"
-                Grid.Row="1"
-                Content="{Binding PanelContent, ElementName=Root}" />
+            <ContentPresenter Grid.Row="1" Content="{Binding PanelContent, ElementName=Root}" />
         </Grid>
 
         <VisualStateManager.VisualStateGroups>

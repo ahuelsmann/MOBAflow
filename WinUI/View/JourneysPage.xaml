@@ -51,7 +51,6 @@
                     Grid.Column="0"
                     Padding="8,0,0,0"
                     VerticalAlignment="Center"
-                    FontWeight="SemiBold"
                     Style="{StaticResource SubtitleTextBlockStyle}"
                     Text="Journeys" />
                 <StackPanel
@@ -160,7 +159,6 @@
                     Grid.Column="0"
                     Padding="8,0,0,0"
                     VerticalAlignment="Center"
-                    FontWeight="SemiBold"
                     Style="{StaticResource SubtitleTextBlockStyle}"
                     Text="Stations" />
                 <StackPanel

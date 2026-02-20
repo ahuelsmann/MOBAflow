@@ -25,7 +25,6 @@ public sealed partial class SignalBoxPage
     // See: ThemeResources in App.xaml or theme-specific ResourceDictionaries
     private static SolidColorBrush GetTrackBrush() => (SolidColorBrush)Application.Current.Resources["SignalBoxTrackColor"];
     private static SolidColorBrush GetTrackActiveBrush() => (SolidColorBrush)Application.Current.Resources["SignalBoxTrackActiveColor"];
-    private static SolidColorBrush GetBufferStopBrush() => (SolidColorBrush)Application.Current.Resources["SignalBoxBufferStopColor"];
     private const double TrackThickness = 4;
 
     private static Canvas CreateStraightTrackGraphic()
@@ -57,34 +56,6 @@ public sealed partial class SignalBoxPage
             Stroke = GetTrackBrush(),
             StrokeThickness = TrackThickness
         });
-        return canvas;
-    }
-
-    private static Canvas CreateBufferStopGraphic()
-    {
-        // Buffer stop: Left (0,30) -> Center, then stop
-        var canvas = new Canvas { Width = 60, Height = 60 };
-
-        canvas.Children.Add(new Line
-        {
-            X1 = 0,
-            Y1 = 30,
-            X2 = 45,
-            Y2 = 30,
-            Stroke = GetTrackBrush(),
-            StrokeThickness = TrackThickness
-        });
-
-        canvas.Children.Add(new Line
-        {
-            X1 = 45,
-            Y1 = 18,
-            X2 = 45,
-            Y2 = 42,
-            Stroke = GetBufferStopBrush(),
-            StrokeThickness = 5
-        });
-
         return canvas;
     }
 
@@ -136,65 +107,6 @@ public sealed partial class SignalBoxPage
         Canvas.SetLeft(signalScreen, 5);
         Canvas.SetTop(signalScreen, 5);
         canvas.Children.Add(signalScreen);
-
-        return canvas;
-    }
-    private static Canvas CreateCrossingGraphic()
-    {
-        // Crossing: Horizontal + Vertical
-        var canvas = new Canvas { Width = 60, Height = 60 };
-
-        // Horizontal: (0,30) -> (60,30)
-        canvas.Children.Add(new Line
-        {
-            X1 = 0,
-            Y1 = 30,
-            X2 = 60,
-            Y2 = 30,
-            Stroke = GetTrackBrush(),
-            StrokeThickness = TrackThickness
-        });
-
-        // Vertical: (30,0) -> (30,60)
-        canvas.Children.Add(new Line
-        {
-            X1 = 30,
-            Y1 = 0,
-            X2 = 30,
-            Y2 = 60,
-            Stroke = GetTrackBrush(),
-            StrokeThickness = TrackThickness
-        });
-
-        return canvas;
-    }
-
-    private static Canvas CreatePlatformGraphic()
-    {
-        var canvas = new Canvas { Width = 60, Height = 60 };
-
-        // Track
-        canvas.Children.Add(new Line
-        {
-            X1 = 0,
-            Y1 = 40,
-            X2 = 60,
-            Y2 = 40,
-            Stroke = GetTrackBrush(),
-            StrokeThickness = TrackThickness
-        });
-
-        // Platform (simple rectangle)
-        canvas.Children.Add(new Rectangle
-        {
-            Width = 50,
-            Height = 12,
-            Fill = (Brush)Application.Current.Resources["CardBackgroundFillColorDefaultBrush"],
-            Stroke = (Brush)Application.Current.Resources["CardStrokeColorDefaultBrush"],
-            StrokeThickness = 1
-        });
-        Canvas.SetLeft(canvas.Children[^1], 5);
-        Canvas.SetTop(canvas.Children[^1], 15);
 
         return canvas;
     }

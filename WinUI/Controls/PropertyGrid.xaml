@@ -17,7 +17,6 @@
 
         <!--  Object Selector ComboBox (VS: Object dropdown at top)  -->
         <ComboBox
-            x:Name="ObjectSelector"
             Grid.Row="0"
             Margin="4"
             HorizontalAlignment="Stretch"
@@ -33,7 +32,6 @@
             Orientation="Horizontal"
             Spacing="2">
             <ToggleButton
-                x:Name="CategorizedButton"
                 Width="28"
                 Height="28"
                 Padding="0"
@@ -48,7 +46,6 @@
                     Glyph="&#xE8FD;" />
             </ToggleButton>
             <ToggleButton
-                x:Name="AlphabeticalButton"
                 Width="28"
                 Height="28"
                 Padding="0"
@@ -83,7 +80,6 @@
 
         <!--  Property Grid (Name/Value rows)  -->
         <ListView
-            x:Name="PropertyListView"
             Grid.Row="2"
             Margin="0"
             Background="Transparent"

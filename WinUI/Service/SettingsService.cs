@@ -2,9 +2,13 @@
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
+
 using Domain;
+
 using Microsoft.Extensions.Logging;
+
 using SharedUI.Interface;
+
 using System.Text.Json;
 using System.Diagnostics;
 
@@ -24,9 +28,6 @@ public class SettingsService : ISettingsService
         _settings = settings;
         _logger = logger;
         _settingsFilePath = ResolveSettingsFilePath();
-
-        // Ensure FeatureToggles is initialized
-        _settings.FeatureToggles ??= new FeatureToggleSettings();
 
         // Load settings synchronously to avoid deadlock
         LoadSettingsSync();
@@ -82,12 +83,12 @@ public class SettingsService : ISettingsService
                     _settings.Application.LastSolutionPath = loadedSettings.Application.LastSolutionPath;
                     _settings.Application.AutoLoadLastSolution = loadedSettings.Application.AutoLoadLastSolution;
                     _settings.Application.AutoStartWebApp = loadedSettings.Application.AutoStartWebApp;
-                    
+
                     // ✅ FIX: Load SelectedSkin and IsDarkMode
                     _settings.Application.SelectedSkin = loadedSettings.Application.SelectedSkin;
                     _settings.Application.IsDarkMode = loadedSettings.Application.IsDarkMode;
                     _settings.Application.UseSystemTheme = loadedSettings.Application.UseSystemTheme;
-                    
+
                     _settings.Z21.CurrentIpAddress = loadedSettings.Z21.CurrentIpAddress;
                     _settings.Z21.DefaultPort = loadedSettings.Z21.DefaultPort;
                     _settings.Counter.CountOfFeedbackPoints = loadedSettings.Counter.CountOfFeedbackPoints;
@@ -149,12 +150,12 @@ public class SettingsService : ISettingsService
                     _settings.Application.LastSolutionPath = loadedSettings.Application.LastSolutionPath;
                     _settings.Application.AutoLoadLastSolution = loadedSettings.Application.AutoLoadLastSolution;
                     _settings.Application.AutoStartWebApp = loadedSettings.Application.AutoStartWebApp;
-                    
+
                     // ✅ FIX: Load SelectedSkin and IsDarkMode
                     _settings.Application.SelectedSkin = loadedSettings.Application.SelectedSkin;
                     _settings.Application.IsDarkMode = loadedSettings.Application.IsDarkMode;
                     _settings.Application.UseSystemTheme = loadedSettings.Application.UseSystemTheme;
-                    
+
                     _settings.Z21.CurrentIpAddress = loadedSettings.Z21.CurrentIpAddress;
                     _settings.Z21.DefaultPort = loadedSettings.Z21.DefaultPort;
                     _settings.Counter.CountOfFeedbackPoints = loadedSettings.Counter.CountOfFeedbackPoints;

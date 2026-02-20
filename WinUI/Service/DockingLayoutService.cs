@@ -114,9 +114,6 @@ public class DockingLayoutService
     /// </summary>
     public void ApplyLayoutState(DockingLayoutState state, DockingPanelViewModel viewModel)
     {
-        if (state == null)
-            return;
-
         viewModel.IsLeftPanelVisible = state.IsLeftPanelVisible;
         viewModel.IsRightPanelVisible = state.IsRightPanelVisible;
         viewModel.IsTopPanelVisible = state.IsTopPanelVisible;

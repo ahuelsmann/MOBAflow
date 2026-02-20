@@ -9,8 +9,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 
-using Moba.SharedUI.ViewModel;
-
 using System.Diagnostics;
 
 /// <summary>
@@ -403,7 +401,7 @@ public sealed partial class SignalBoxPage
             // Calculate DCC address and activation from base address and current aspect
             try
             {
-                if (!Common.Multiplex.MultiplexerHelper.TryGetTurnoutCommand(
+                if (!MultiplexerHelper.TryGetTurnoutCommand(
                         sig.MultiplexerArticleNumber,
                         sig.MainSignalArticleNumber,
                         sig.SignalAspect,
@@ -429,7 +427,7 @@ public sealed partial class SignalBoxPage
             }
 
             // Get MainWindowViewModel from the page's DataContext
-            if (ViewModel is not MainWindowViewModel mainVm)
+            if (ViewModel is not { } mainVm)
             {
                 Debug.WriteLine("[AUTO-SIGNAL] ERROR: ViewModel is null or wrong type");
                 SetSignalStatusText.Text = "❌ ViewModel nicht verfügbar.";

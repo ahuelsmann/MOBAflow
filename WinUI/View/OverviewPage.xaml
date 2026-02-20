@@ -234,7 +234,6 @@
                             <CheckBox Content="Use Timer Filter" IsChecked="{x:Bind ViewModel.UseTimerFilter, Mode=TwoWay}" />
                             <TextBlock
                                 Margin="32,0,0,0"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 Style="{StaticResource CaptionTextBlockStyle}"
                                 Text="Prevents multiple counts from the same train pass"
                                 TextWrapping="Wrap" />
@@ -262,10 +261,7 @@
             <StackPanel Spacing="16">
                 <StackPanel Orientation="Horizontal" Spacing="12">
                     <FontIcon FontSize="20" Glyph="&#xE9D9;" />
-                    <TextBlock
-                        FontWeight="SemiBold"
-                        Style="{StaticResource SubtitleTextBlockStyle}"
-                        Text="Track Statistics" />
+                    <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Track Statistics" />
                 </StackPanel>
 
                 <ItemsRepeater ItemsSource="{x:Bind ViewModel.Statistics, Mode=OneWay}">

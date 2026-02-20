@@ -17,8 +17,8 @@ public static class SegmentLocalPathBuilder
     /// <summary>Linie zum angegebenen Punkt.</summary>
     public sealed record LineTo(double X, double Y) : PathCommand;
 
-    /// <summary>Kreisbogen zum Endpunkt (Radius in mm, Clockwise = Sweep-Richtung).</summary>
-    public sealed record ArcTo(double EndX, double EndY, double Radius, bool Clockwise) : PathCommand;
+    /// <summary>Kreisbogen zum Endpunkt (Radius in mm, Clockwise = Sweep-Richtung, LargeArc = Bogen &gt; 180°).</summary>
+    public sealed record ArcTo(double EndX, double EndY, double Radius, bool Clockwise, bool LargeArc = false) : PathCommand;
 
     /// <summary>
     /// Liefert die Pfad-Befehle für ein Segment in lokalen Koordinaten.
@@ -50,7 +50,7 @@ public static class SegmentLocalPathBuilder
             DKW dkw => GetDkwPath(dkw.LengthInMm, dkw.ArcInDegree, dkw.RadiusInMm),
             K15 k15 => GetCrossingPath(k15.ArcInDegree, k15.LengthInMm),
             K30 k30 => GetCrossingPath(k30.ArcInDegree, k30.LengthInMm),
-            _ => GetStraightPath(100, 1)
+            _ => GetStraightPath(100)
         };
     }
 
@@ -142,42 +142,57 @@ public static class SegmentLocalPathBuilder
         ];
     }
 
-    /// <summary>WY: Y-Weiche. Zwei Äste symmetrisch ±(arcDegree/2), Länge = Bogenlänge für einen Ast.</summary>
+    /// <summary>WY: Y-Weiche wie W3 ohne Gerade – zwei R9-Bögen je 15° (Port B links wie WL, Port C rechts wie WR).</summary>
     private static IReadOnlyList<PathCommand> GetWyPath(double arcDegree, double radius)
     {
-        var halfArcRad = (arcDegree / 2) * Math.PI / 180;
-        var len = radius * halfArcRad;
-        var a = -halfArcRad;
-        var b = halfArcRad;
+        var halfArc = arcDegree / 2;
+        // Port B: linker Ast wie WL
+        var centerL = -90 * Math.PI / 180;
+        var centerLx = radius * Math.Cos(centerL);
+        var centerLy = radius * Math.Sin(centerL);
+        var endAngleL = (-halfArc + 90) * Math.PI / 180;
+        var portBx = centerLx + radius * Math.Cos(endAngleL);
+        var portBy = centerLy + radius * Math.Sin(endAngleL);
+        // Port C: rechter Ast wie WR
+        var centerR = 90 * Math.PI / 180;
+        var centerRx = radius * Math.Cos(centerR);
+        var centerRy = radius * Math.Sin(centerR);
+        var endAngleR = (halfArc - 90) * Math.PI / 180;
+        var portCx = centerRx + radius * Math.Cos(endAngleR);
+        var portCy = centerRy + radius * Math.Sin(endAngleR);
         return
         [
+            new ArcTo(portBx, portBy, radius, false),
             new MoveTo(0, 0),
-            new LineTo(len * Math.Cos(a), len * Math.Sin(a)),
-            new MoveTo(0, 0),
-            new LineTo(len * Math.Cos(b), len * Math.Sin(b))
+            new ArcTo(portCx, portCy, radius, true)
         ];
     }
 
-    /// <summary>W3: Dreiwegeweiche. Gerade bis Port B (length), zwei Bögen R9 je 15° zu Port C/D.</summary>
+    /// <summary>W3 (Piko 55225): Gerade G239 bis Port B, zwei Abzweige R9 je 15° – Port C wie WL (links), Port D wie WR (rechts).</summary>
     private static IReadOnlyList<PathCommand> GetW3Path(double length, double arcDegree, double radius)
     {
         var halfArc = arcDegree / 2;
-        var centerAngleR = 90 * Math.PI / 180;
-        var centerX = radius * Math.Cos(centerAngleR);
-        var centerY = radius * Math.Sin(centerAngleR);
-        var endAngleL = (halfArc - 90) * Math.PI / 180;
-        var endAngleR = (-halfArc - 90) * Math.PI / 180;
-        var portCx = centerX + radius * Math.Cos(endAngleL);
-        var portCy = centerY + radius * Math.Sin(endAngleL);
-        var portDx = centerX + radius * Math.Cos(endAngleR);
-        var portDy = centerY + radius * Math.Sin(endAngleR);
+        // Port C: linker Ast wie WL – Mittelpunkt (0, -radius), Bogen 15° gegen Uhrzeigersinn
+        var centerL = -90 * Math.PI / 180;
+        var centerLx = radius * Math.Cos(centerL);
+        var centerLy = radius * Math.Sin(centerL);
+        var endAngleL = (-halfArc + 90) * Math.PI / 180;
+        var portCx = centerLx + radius * Math.Cos(endAngleL);
+        var portCy = centerLy + radius * Math.Sin(endAngleL);
+        // Port D: rechter Ast wie WR – Mittelpunkt (0, radius), Bogen 15° im Uhrzeigersinn
+        var centerR = 90 * Math.PI / 180;
+        var centerRx = radius * Math.Cos(centerR);
+        var centerRy = radius * Math.Sin(centerR);
+        var endAngleR = (halfArc - 90) * Math.PI / 180;
+        var portDx = centerRx + radius * Math.Cos(endAngleR);
+        var portDy = centerRy + radius * Math.Sin(endAngleR);
         return
         [
             new LineTo(length, 0),
             new MoveTo(0, 0),
-            new ArcTo(portCx, portCy, radius, true),
+            new ArcTo(portCx, portCy, radius, false),
             new MoveTo(0, 0),
-            new ArcTo(portDx, portDy, radius, false)
+            new ArcTo(portDx, portDy, radius, true)
         ];
     }
 
@@ -269,25 +284,30 @@ public static class SegmentLocalPathBuilder
         ];
     }
 
-    /// <summary>DKW: Doppelkreuzungsweiche. Gerade A–B, Bogen A–C (R9), Diagonale zu Port D.</summary>
+    /// <summary>DKW (Piko 55224) – AnyRail-Referenz: Zwei parallele Hauptgleise (oben A–B, unten C–D), in der Mitte X aus zwei Diagonalen (15°).</summary>
     private static IReadOnlyList<PathCommand> GetDkwPath(double length, double arcDegree, double radius)
     {
-        var centerAngle = 90 * Math.PI / 180;
-        var centerX = radius * Math.Cos(centerAngle);
-        var centerY = radius * Math.Sin(centerAngle);
-        var endAngle = (arcDegree - 90) * Math.PI / 180;
-        var portCx = centerX + radius * Math.Cos(endAngle);
-        var portCy = centerY + radius * Math.Sin(endAngle);
+        var half = length / 2;
         var rad = arcDegree * Math.PI / 180;
-        var portDx = length * Math.Cos(rad);
-        var portDy = length * Math.Sin(rad);
+        var cos = Math.Cos(rad);
+        var sin = Math.Sin(rad);
+        // Abstand der parallelen Gleise (Höhe der Raute)
+        var trackOffset = half * sin;
+        var crossHalf = half * cos;
+        // Oberes Gleis: (0, trackOffset) bis (length, trackOffset)
+        // Unteres Gleis: (0, -trackOffset) bis (length, -trackOffset)
+        // X: Diagonale 1 von (half - crossHalf, trackOffset) nach (half + crossHalf, -trackOffset)
+        //    Diagonale 2 von (half - crossHalf, -trackOffset) nach (half + crossHalf, trackOffset)
         return
         [
-            new LineTo(length, 0),
-            new MoveTo(0, 0),
-            new ArcTo(portCx, portCy, radius, true),
-            new MoveTo(0, 0),
-            new LineTo(portDx, portDy)
+            new MoveTo(0, trackOffset),
+            new LineTo(length, trackOffset),
+            new MoveTo(0, -trackOffset),
+            new LineTo(length, -trackOffset),
+            new MoveTo(half - crossHalf, trackOffset),
+            new LineTo(half + crossHalf, -trackOffset),
+            new MoveTo(half - crossHalf, -trackOffset),
+            new LineTo(half + crossHalf, trackOffset)
         ];
     }
 

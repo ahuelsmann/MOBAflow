@@ -13,7 +13,7 @@ using Windows.UI;
 /// Features an arc-based gauge with animated needle and digital display.
 /// Supports dynamic theme colors via AccentColor property.
 /// </summary>
-public sealed partial class SpeedometerControl : UserControl
+public sealed partial class SpeedometerControl
 {
     /// <summary>
     /// Minimum speed value (typically 0).
@@ -183,19 +183,19 @@ public sealed partial class SpeedometerControl : UserControl
 
     private void ApplyAccentColor()
     {
-        if (AccentColor is not Color color)
+        if (AccentColor is not { } color)
             return;
 
         var brush = new SolidColorBrush(color);
 
         // Apply to needle
-        if (Needle is Path needle)
+        if (Needle is { } needle)
         {
             needle.Fill = brush;
         }
 
         // Apply to center circle stroke
-        if (CenterCircle is Ellipse circle)
+        if (CenterCircle is { } circle)
         {
             circle.Stroke = brush;
         }

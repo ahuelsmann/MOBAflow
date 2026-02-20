@@ -118,27 +118,6 @@
               }
             }
           ],
-          "executionMode": 1,
-          "inPort": 0,
-          "isUsingTimerToIgnoreFeedbacks": false,
-          "intervalForTimerToIgnoreFeedbacks": 0
-        },
-        {
-          "id": "098785e2-d67a-4f11-92f1-ce78fbc3a961",
-          "name": "New Workflow",
-          "description": "",
-          "actions": [
-            {
-              "id": "4f89caaf-2336-48c2-9c98-ee27b100cf59",
-              "name": "New Command",
-              "number": 1,
-              "type": 1,
-              "delayAfterMs": 0,
-              "parameters": {
-                "Bytes": "AA=="
-              }
-            }
-          ],
           "executionMode": 0,
           "inPort": 0,
           "isUsingTimerToIgnoreFeedbacks": false,

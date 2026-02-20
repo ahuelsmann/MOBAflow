@@ -93,10 +93,10 @@ public class IoService : IIoService
                 {
                     switch (msg.Level)
                     {
-                        case Backend.Service.ValidationLevel.Error:
+                        case ValidationLevel.Error:
                             _logger.LogError(msg.Text);
                             break;
-                        case Backend.Service.ValidationLevel.Warning:
+                        case ValidationLevel.Warning:
                             _logger.LogWarning(msg.Text);
                             break;
                         default:

@@ -101,8 +101,7 @@ public sealed partial class TrainControlPage
         {
             DccSpeedSteps.Steps14 => 0,
             DccSpeedSteps.Steps28 => 1,
-            DccSpeedSteps.Steps128 => 2,
-            _ => 2
+            DccSpeedSteps.Steps128 => 2
         };
     }
 

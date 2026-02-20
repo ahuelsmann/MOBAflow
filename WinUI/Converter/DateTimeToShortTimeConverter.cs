@@ -8,7 +8,7 @@ using Microsoft.UI.Xaml.Data;
 /// </summary>
 public sealed class DateTimeToShortTimeConverter : IValueConverter
 {
-    public object? Convert(object? value, Type targetType, object? parameter, string language)
+    public object Convert(object? value, Type targetType, object? parameter, string language)
     {
         if (value is DateTime dt)
             return dt.ToString("HH:mm");
@@ -17,6 +17,6 @@ public sealed class DateTimeToShortTimeConverter : IValueConverter
         return "–";
     }
 
-    public object? ConvertBack(object? value, Type targetType, object? parameter, string language) =>
+    public object ConvertBack(object? value, Type targetType, object? parameter, string language) =>
         throw new NotImplementedException();
 }

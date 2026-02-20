@@ -144,7 +144,6 @@ public sealed partial class JourneysPage
 
     #region Column Splitter (Manual Resize)
     private bool _isSplitterDragging;
-    private string? _activeSplitterTag;
     private Windows.Foundation.Point _splitterDragStart;
     private double _splitterStartSize;
 
@@ -166,7 +165,6 @@ public sealed partial class JourneysPage
         if (sender is not FrameworkElement splitter) return;
 
         _isSplitterDragging = true;
-        _activeSplitterTag = splitter.Tag as string;
         _splitterDragStart = e.GetCurrentPoint(this).Position;
 
         var columnIndex = Grid.GetColumn(splitter) - 1;
@@ -202,7 +200,6 @@ public sealed partial class JourneysPage
         if (!_isSplitterDragging) return;
 
         _isSplitterDragging = false;
-        _activeSplitterTag = null;
 
         if (sender is FrameworkElement splitter)
             splitter.ReleasePointerCapture(e.Pointer);

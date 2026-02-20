@@ -24,7 +24,7 @@ public sealed partial class DockingPanelViewModel : ObservableObject
     private bool isRightPanelVisible = true;
 
     [ObservableProperty]
-    private bool isTopPanelVisible = false;
+    private bool isTopPanelVisible;
 
     [ObservableProperty]
     private bool isBottomPanelVisible = true;
@@ -48,22 +48,22 @@ public sealed partial class DockingPanelViewModel : ObservableObject
     private bool isRightPanelPinned = true;
 
     [ObservableProperty]
-    private bool isTopPanelPinned = false;
+    private bool isTopPanelPinned;
 
     [ObservableProperty]
     private bool isBottomPanelPinned = true;
 
     [ObservableProperty]
-    private bool isLeftPanelMaximized = false;
+    private bool isLeftPanelMaximized;
 
     [ObservableProperty]
-    private bool isRightPanelMaximized = false;
+    private bool isRightPanelMaximized;
 
     [ObservableProperty]
-    private bool isTopPanelMaximized = false;
+    private bool isTopPanelMaximized;
 
     [ObservableProperty]
-    private bool isBottomPanelMaximized = false;
+    private bool isBottomPanelMaximized;
 
     #endregion
 

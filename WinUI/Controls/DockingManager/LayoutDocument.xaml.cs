@@ -16,7 +16,7 @@ using Windows.ApplicationModel.DataTransfer;
 /// Erweiterte LayoutDocument mit Tab-Gruppen, Binding-Support und Window-Management.
 /// Unterstützt gruppierte Tabs (Modified, Pinned, Regular) und Floating Windows.
 /// </summary>
-public sealed partial class LayoutDocument : UserControl
+public sealed partial class LayoutDocument
 {
     #region Dependency Properties
 

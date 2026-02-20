@@ -34,7 +34,7 @@ using Windows.System;
     Order = 10,
     FeatureToggleKey = "IsTrackPlanEditorPageAvailable",
     BadgeLabelKey = "TrackPlanEditorPageLabel")]
-public sealed partial class TrackPlanPage : Page
+public sealed partial class TrackPlanPage
 {
     private const string DragFormatTrackCatalog = "application/x-moba-track-catalog";
     private const double ScaleMmToPx = 1.0;
@@ -62,7 +62,6 @@ public sealed partial class TrackPlanPage : Page
     private readonly List<Ellipse> _highlightedPorts = [];
     private bool _snapEnabled = true;
     private Guid? _selectedSegmentId;
-    private UIElement? _rotationHandle;
     private double _rotationDragStartAngleRad;
     private double _rotationDragStartSegmentDegrees;
 
@@ -125,7 +124,7 @@ public sealed partial class TrackPlanPage : Page
         SetupCanvas();
         SetupZoom();
         _plan.PlanChanged += OnPlanChanged;
-        this.KeyDown += Page_KeyDown;
+        KeyDown += Page_KeyDown;
         RefreshCanvas();
     }
 
@@ -962,7 +961,6 @@ public sealed partial class TrackPlanPage : Page
             return;
 
         _rotationHandleLayer.Children.Clear();
-        _rotationHandle = null;
 
         if (placed == null)
             return;
@@ -1001,8 +999,6 @@ public sealed partial class TrackPlanPage : Page
         Canvas.SetTop(handle, handleCenterY - RotationHandleRadiusPx);
         Canvas.SetZIndex(handle, 1);
         _rotationHandleLayer.Children.Add(handle);
-
-        _rotationHandle = handle;
 
         handle.PointerPressed += RotationHandle_PointerPressed;
     }

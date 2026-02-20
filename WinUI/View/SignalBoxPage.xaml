@@ -7,10 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid
-        x:Name="RootGrid"
-        Padding="0"
-        Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
+    <Grid Padding="0" Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -18,15 +15,11 @@
 
         <!--  Page Header - Fluent Design System  -->
         <Border
-            x:Name="HeaderBorder"
             Grid.Row="0"
             Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
             BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
             BorderThickness="0,0,0,1">
-            <Grid
-                x:Name="HeaderGrid"
-                Padding="32,20,32,20"
-                ColumnSpacing="16">
+            <Grid Padding="32,20,32,20" ColumnSpacing="16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -42,7 +35,6 @@
                     VerticalAlignment="Center"
                     Spacing="2">
                     <TextBlock
-                        x:Name="TitleText"
                         AutomationProperties.HeadingLevel="Level1"
                         FontSize="32"
                         FontWeight="SemiBold"
@@ -66,7 +58,6 @@
 
                 <!--  Toolbox Toggle (for Medium/Compact)  -->
                 <ToggleButton
-                    x:Name="ToolboxToggleButton"
                     Grid.Column="3"
                     VerticalAlignment="Center"
                     IsChecked="True"
@@ -80,7 +71,6 @@
 
                 <!--  Properties Toggle (for Medium/Compact)  -->
                 <ToggleButton
-                    x:Name="PropertiesToggleButton"
                     Grid.Column="4"
                     VerticalAlignment="Center"
                     IsChecked="True"
@@ -94,7 +84,6 @@
 
                 <!--  Skin Selector Button with Flyout  -->
                 <Button
-                    x:Name="SkinSelectorButton"
                     Grid.Column="5"
                     VerticalAlignment="Center"
                     ToolTipService.ToolTip="Farbschema auswählen">
@@ -176,19 +165,17 @@
 
         <!--  Main Content: Toolbox | Canvas | Properties  -->
         <Grid
-            x:Name="MainContentGrid"
             Grid.Row="1"
             Padding="0"
             ColumnSpacing="0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="ToolboxColumn" Width="240" />
+                <ColumnDefinition Width="240" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition x:Name="PropertiesColumn" Width="300" />
+                <ColumnDefinition Width="300" />
             </Grid.ColumnDefinitions>
 
             <!--  LEFT: Toolbox Panel  -->
             <Border
-                x:Name="ToolboxPanel"
                 Grid.Column="0"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -225,7 +212,6 @@
                                 </Grid.RowDefinitions>
                                 <!--  Gerade  -->
                                 <Border
-                                    x:Name="ToolStraight"
                                     Grid.Row="0"
                                     Grid.Column="0"
                                     Height="60"
@@ -267,7 +253,6 @@
                                 </Border>
                                 <!--  Kurve 90°  -->
                                 <Border
-                                    x:Name="ToolCurve90"
                                     Grid.Row="0"
                                     Grid.Column="1"
                                     Height="60"
@@ -304,7 +289,6 @@
                                 </Border>
                                 <!--  Prellbock  -->
                                 <Border
-                                    x:Name="ToolBufferStop"
                                     Grid.Row="1"
                                     Grid.Column="0"
                                     Height="60"
@@ -377,7 +361,6 @@
                                 </Grid.RowDefinitions>
                                 <!--  Weiche Links  -->
                                 <Border
-                                    x:Name="ToolSwitchLeft"
                                     Grid.Row="0"
                                     Grid.Column="0"
                                     Height="60"
@@ -428,7 +411,6 @@
                                 </Border>
                                 <!--  Weiche Rechts  -->
                                 <Border
-                                    x:Name="ToolSwitchRight"
                                     Grid.Row="0"
                                     Grid.Column="1"
                                     Height="60"
@@ -479,7 +461,6 @@
                                 </Border>
                                 <!--  DKW  -->
                                 <Border
-                                    x:Name="ToolSwitchDouble"
                                     Grid.Row="1"
                                     Grid.Column="0"
                                     Height="60"
@@ -545,7 +526,6 @@
                                 </Border>
                                 <!--  Kreuzung  -->
                                 <Border
-                                    x:Name="ToolCrossing"
                                     Grid.Row="1"
                                     Grid.Column="1"
                                     Height="60"
@@ -594,7 +574,6 @@
                                 </Border>
                                 <!--  Dreiwege-Weiche  -->
                                 <Border
-                                    x:Name="ToolSwitchThreeWay"
                                     Grid.Row="2"
                                     Grid.Column="0"
                                     Height="60"
@@ -666,7 +645,6 @@
                                 Text="SIGNAL" />
                             <!--  Ks Signal Screen (UserControl)  -->
                             <Border
-                                x:Name="ToolSignalKsScreen"
                                 Height="70"
                                 Padding="4"
                                 Background="{ThemeResource SubtleFillColorSecondaryBrush}"
@@ -712,7 +690,6 @@
                                 </Grid.ColumnDefinitions>
                                 <!--  Rückmelder  -->
                                 <Border
-                                    x:Name="ToolFeedback"
                                     Grid.Column="0"
                                     Height="60"
                                     Padding="4"
@@ -767,7 +744,6 @@
 
             <!--  CENTER: Stellwerk Canvas  -->
             <Border
-                x:Name="CanvasBorder"
                 Grid.Column="1"
                 Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -795,7 +771,6 @@
 
             <!--  RIGHT: Properties Panel  -->
             <Border
-                x:Name="PropertiesPanel"
                 Grid.Column="2"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -925,28 +900,24 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <Button
-                                        x:Name="Rotate0Button"
                                         Grid.Column="0"
                                         HorizontalAlignment="Stretch"
                                         Click="OnRotateClicked"
                                         Content="0°"
                                         Tag="0" />
                                     <Button
-                                        x:Name="Rotate90Button"
                                         Grid.Column="1"
                                         HorizontalAlignment="Stretch"
                                         Click="OnRotateClicked"
                                         Content="90°"
                                         Tag="90" />
                                     <Button
-                                        x:Name="Rotate180Button"
                                         Grid.Column="2"
                                         HorizontalAlignment="Stretch"
                                         Click="OnRotateClicked"
                                         Content="180°"
                                         Tag="180" />
                                     <Button
-                                        x:Name="Rotate270Button"
                                         Grid.Column="3"
                                         HorizontalAlignment="Stretch"
                                         Click="OnRotateClicked"
@@ -1431,7 +1402,6 @@
 
                             <!--  Delete Button  -->
                             <Button
-                                x:Name="DeleteElementButton"
                                 HorizontalAlignment="Stretch"
                                 Click="OnDeleteElementClicked"
                                 Style="{ThemeResource AccentButtonStyle}">

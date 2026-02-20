@@ -797,18 +797,4 @@ public class TrackPlanSvgRenderer
             };
         }
     }
-
-    /// <summary>
-    /// Zeichnet einen Verbindungspunkt (kleiner gefüllter Kreis) an der exakten Position wo zwei Gleise verbunden sind.
-    /// Wird verwendet um Verbindungen zwischen Gleisen visuell hervorzuheben.
-    /// </summary>
-    /// <param name="x">X-Koordinate des Verbindungspunkts</param>
-    /// <param name="y">Y-Koordinate des Verbindungspunkts</param>
-    /// <param name="color">Farbe des Verbindungspunkts (default: orange)</param>
-    private void DrawConnectionPoint(double x, double y, string color = "#FF6600")
-    {
-        const double radius = 5;
-        _svg.AppendLine($"  <circle cx=\"{x.ToString("F2", CultureInfo.InvariantCulture)}\" cy=\"{y.ToString("F2", CultureInfo.InvariantCulture)}\" " +
-                       $"r=\"{radius}\" fill=\"{color}\" stroke=\"#333\" stroke-width=\"1\" />");
-    }
 }

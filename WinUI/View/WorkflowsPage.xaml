@@ -11,9 +11,9 @@
     DataContext="{x:Bind ViewModel}"
     mc:Ignorable="d">
 
-    <Grid x:Name="RootGrid">
+    <Grid>
         <!--  Main layout grid - same structure for all states  -->
-        <Grid x:Name="MainGrid" ColumnSpacing="0">
+        <Grid ColumnSpacing="0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="300" MinWidth="200" />
                 <ColumnDefinition Width="Auto" />
@@ -30,7 +30,6 @@
 
             <!--  Column 0: Workflows  -->
             <Grid
-                x:Name="WorkflowsPanel"
                 Grid.Row="0"
                 Grid.Column="0"
                 Padding="8">
@@ -50,7 +49,6 @@
                         Grid.Column="0"
                         Padding="8,0,0,0"
                         VerticalAlignment="Center"
-                        FontWeight="SemiBold"
                         Style="{StaticResource SubtitleTextBlockStyle}"
                         Text="Workflows" />
                     <StackPanel
@@ -128,7 +126,6 @@
             </Grid>
 
             <Border
-                x:Name="Column1Divider"
                 Grid.Row="0"
                 Grid.Column="1"
                 Width="1"
@@ -136,7 +133,6 @@
 
             <!--  Column 2: Actions (of selected Workflow)  -->
             <Grid
-                x:Name="ActionsPanel"
                 Grid.Row="0"
                 Grid.Column="2"
                 Padding="8">
@@ -149,7 +145,6 @@
                     Grid.Row="0"
                     Margin="0,0,0,8"
                     Padding="8,0,0,0"
-                    FontWeight="SemiBold"
                     Style="{StaticResource SubtitleTextBlockStyle}"
                     Text="Actions" />
                 <!--  CommandBar for Actions  -->
@@ -220,7 +215,6 @@
             </Grid>
 
             <Border
-                x:Name="Column3Divider"
                 Grid.Row="0"
                 Grid.Column="3"
                 Width="1"
@@ -228,7 +222,6 @@
 
             <!--  Column 4: Properties Panel  -->
             <Grid
-                x:Name="PropertiesPanel"
                 Grid.Row="0"
                 Grid.Column="4"
                 Padding="8">

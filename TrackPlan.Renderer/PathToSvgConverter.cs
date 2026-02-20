@@ -59,7 +59,7 @@ public static class PathToSvgConverter
                         var y1 = Ty(x, y);
                         var x2 = Tx(arc.EndX, arc.EndY);
                         var y2 = Ty(arc.EndX, arc.EndY);
-                        var largeArc = 0; // Kleine Bögen für typische Gleisradien
+                        var largeArc = arc.LargeArc ? 1 : 0;
                         var sweep = arc.Clockwise ? 1 : 0;
                         sb.Append($"M {F(x1)},{F(y1)} A {F(arc.Radius)},{F(arc.Radius)} 0 {largeArc},{sweep} {F(x2)},{F(y2)} ");
                         x = arc.EndX;
@@ -82,8 +82,8 @@ public static class PathToSvgConverter
         double offsetX = 0,
         double offsetY = 0)
     {
-        double Tx(double x, double _) => (x + offsetX) * scale;
-        double Ty(double _, double y) => (y + offsetY) * scale;
+        double Tx(double x) => (x + offsetX) * scale;
+        double Ty(double y) => (y + offsetY) * scale;
 
         var sb = new StringBuilder();
         double x = 0, y = 0;
@@ -97,7 +97,7 @@ public static class PathToSvgConverter
                     y = move.Y;
                     break;
                 case SegmentLocalPathBuilder.LineTo line:
-                    sb.Append($"M {F(Tx(x, y))},{F(Ty(x, y))} L {F(Tx(line.X, line.Y))},{F(Ty(line.X, line.Y))} ");
+                    sb.Append($"M {F(Tx(x))},{F(Ty(y))} L {F(Tx(line.X))},{F(Ty(line.Y))} ");
                     x = line.X;
                     y = line.Y;
                     break;
@@ -105,9 +105,9 @@ public static class PathToSvgConverter
                     {
                         var rx = arc.Radius * scale;
                         var ry = arc.Radius * scale;
-                        var largeArc = 0;
+                        var largeArc = arc.LargeArc ? 1 : 0;
                         var sweep = arc.Clockwise ? 1 : 0;
-                        sb.Append($"M {F(Tx(x, y))},{F(Ty(x, y))} A {F(rx)},{F(ry)} 0 {largeArc},{sweep} {F(Tx(arc.EndX, arc.EndY))},{F(Ty(arc.EndX, arc.EndY))} ");
+                        sb.Append($"M {F(Tx(x))},{F(Ty(y))} A {F(rx)},{F(ry)} 0 {largeArc},{sweep} {F(Tx(arc.EndX))},{F(Ty(arc.EndY))} ");
                         x = arc.EndX;
                         y = arc.EndY;
                         break;

@@ -59,7 +59,6 @@
 
                     <!--  Theme Toggle (left)  -->
                     <ToggleSwitch
-                        x:Name="ThemeToggleSwitch"
                         Grid.Column="0"
                         Margin="8,0,0,0"
                         VerticalAlignment="Center"
@@ -140,7 +139,6 @@
                 <TextBlock
                     Margin="0,0,16,0"
                     VerticalAlignment="Center"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Text="{x:Bind ViewModel.StatusText, Mode=OneWay}" />
                 <!--  Track Power Toggle (like Roco Z21 app)  -->
@@ -172,7 +170,6 @@
                     IsActive="{x:Bind ViewModel.IsPostStartupInitializationRunning, Mode=OneWay}" />
                 <TextBlock
                     VerticalAlignment="Center"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Text="{x:Bind ViewModel.PostStartupStatusText, Mode=OneWay}" />
             </StackPanel>

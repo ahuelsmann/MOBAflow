@@ -10,7 +10,6 @@
 
     <Grid Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
         <TabView
-            x:Name="DocumentTabView"
             AddTabButtonClick="OnAddTabButtonClick"
             Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
             CanDragTabs="True"

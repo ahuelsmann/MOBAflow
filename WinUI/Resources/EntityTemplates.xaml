@@ -23,10 +23,7 @@
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     CornerRadius="4"
                     Spacing="8">
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Style="{ThemeResource CaptionTextBlockStyle}"
-                        Text="RUNTIME STATE" />
+                    <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="RUNTIME STATE" />
                     <Grid ColumnSpacing="16" RowSpacing="4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -390,10 +387,7 @@
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     CornerRadius="4"
                     Spacing="8">
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Style="{ThemeResource CaptionTextBlockStyle}"
-                        Text="PROJECT STATISTICS" />
+                    <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="PROJECT STATISTICS" />
                     <Grid ColumnSpacing="16" RowSpacing="4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -667,10 +661,7 @@
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     CornerRadius="4"
                     Spacing="12">
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Style="{ThemeResource CaptionTextBlockStyle}"
-                        Text="BASIC INFORMATION" />
+                    <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="BASIC INFORMATION" />
 
                     <TextBox
                         Header="Name"
@@ -692,10 +683,7 @@
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     CornerRadius="4"
                     Spacing="12">
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Style="{ThemeResource CaptionTextBlockStyle}"
-                        Text="PURCHASE INFORMATION" />
+                    <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="PURCHASE INFORMATION" />
 
                     <TextBox
                         Header="Manufacturer"
@@ -724,10 +712,7 @@
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     CornerRadius="4"
                     Spacing="12">
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Style="{ThemeResource CaptionTextBlockStyle}"
-                        Text="TECHNICAL DETAILS" />
+                    <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="TECHNICAL DETAILS" />
 
                     <TextBox
                         Header="Series"
@@ -743,10 +728,7 @@
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     CornerRadius="4"
                     Spacing="12">
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Style="{ThemeResource CaptionTextBlockStyle}"
-                        Text="PHOTO" />
+                    <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="PHOTO" />
 
                     <Button
                         Padding="0"
@@ -837,10 +819,7 @@
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     CornerRadius="4"
                     Spacing="12">
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Style="{ThemeResource CaptionTextBlockStyle}"
-                        Text="BASIC INFORMATION" />
+                    <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="BASIC INFORMATION" />
 
                     <TextBox
                         Header="Name"
@@ -862,10 +841,7 @@
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     CornerRadius="4"
                     Spacing="12">
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Style="{ThemeResource CaptionTextBlockStyle}"
-                        Text="PURCHASE INFORMATION" />
+                    <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="PURCHASE INFORMATION" />
 
                     <TextBox
                         Header="Manufacturer"
@@ -894,10 +870,7 @@
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     CornerRadius="4"
                     Spacing="12">
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Style="{ThemeResource CaptionTextBlockStyle}"
-                        Text="TECHNICAL DETAILS" />
+                    <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="TECHNICAL DETAILS" />
 
                     <TextBox
                         Header="Series"
@@ -911,10 +884,7 @@
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     CornerRadius="4"
                     Spacing="12">
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Style="{ThemeResource CaptionTextBlockStyle}"
-                        Text="PHOTO" />
+                    <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="PHOTO" />
 
                     <Button
                         Padding="0"

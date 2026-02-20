@@ -37,7 +37,6 @@
                     Grid.Column="0"
                     Padding="8,0,0,0"
                     VerticalAlignment="Center"
-                    FontWeight="SemiBold"
                     Style="{StaticResource SubtitleTextBlockStyle}"
                     Text="Projects" />
                 <StackPanel

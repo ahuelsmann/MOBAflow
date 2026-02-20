@@ -19,14 +19,14 @@
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="SurfaceSecondaryBrush" Color="#FFF3F3F3" />
                     <SolidColorBrush x:Key="SurfaceBackgroundFillColorDefaultBrush" Color="#FFFFFFFF" />
-                    <!-- TrackPlan: kräftig dunkler Strich auf hellem Hintergrund (Fluent: guter Kontrast) -->
+                    <!--  TrackPlan: kräftig dunkler Strich auf hellem Hintergrund (Fluent: guter Kontrast)  -->
                     <SolidColorBrush x:Key="TrackPlanStrokeBrush" Color="#FF121212" />
                     <SolidColorBrush x:Key="TrackPlanStrokeSelectedBrush" Color="#FF0078D4" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="SurfaceSecondaryBrush" Color="#FF1F1F1F" />
                     <SolidColorBrush x:Key="SurfaceBackgroundFillColorDefaultBrush" Color="#FF202020" />
-                    <!-- TrackPlan: heller Strich auf dunklem Hintergrund (Fluent: Lesbarkeit im Dark Mode) -->
+                    <!--  TrackPlan: heller Strich auf dunklem Hintergrund (Fluent: Lesbarkeit im Dark Mode)  -->
                     <SolidColorBrush x:Key="TrackPlanStrokeBrush" Color="#FFEBEBEB" />
                     <SolidColorBrush x:Key="TrackPlanStrokeSelectedBrush" Color="#FF60CDFF" />
                 </ResourceDictionary>

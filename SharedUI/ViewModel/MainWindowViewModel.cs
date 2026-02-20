@@ -234,9 +234,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(DeleteWorkflowCommand))]
     private WorkflowViewModel? _selectedWorkflow;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(DeleteActionCommand))]
     private object? _selectedAction;
 
     [ObservableProperty]

@@ -25,7 +25,7 @@ public sealed class ViessmannSignalService
     {
         var definition = MultiplexerHelper.GetDefinition(multiplexerArticleNumber);
         var supportedArticles = definition.SignalAspectCommandsBySignalArticle.Keys;
-        var fromData = _dataManager.ViessmannMultiplexSignals ?? [];
+        var fromData = _dataManager.ViessmannMultiplexSignals;
         var main = fromData
             .Where(s => string.Equals(s.Role, "main", StringComparison.OrdinalIgnoreCase) && supportedArticles.Contains(s.ArticleNumber))
             .Select(s => (s.ArticleNumber, $"{s.ArticleNumber} - {s.DisplayName}"))
@@ -50,7 +50,7 @@ public sealed class ViessmannSignalService
         if (definition.DistantSignalArticleNumber == null)
             return [];
         var supportedArticles = definition.SignalAspectCommandsBySignalArticle.Keys;
-        var fromData = _dataManager.ViessmannMultiplexSignals ?? [];
+        var fromData = _dataManager.ViessmannMultiplexSignals;
         var distant = fromData
             .Where(s => string.Equals(s.Role, "distant", StringComparison.OrdinalIgnoreCase) && supportedArticles.Contains(s.ArticleNumber))
             .Select(s => (s.ArticleNumber, $"{s.ArticleNumber} - {s.DisplayName}"))

@@ -14,7 +14,7 @@ using Windows.UI;
 /// Default range: 0-3000 mA (typical Z21 main track current).
 /// Supports dynamic theme colors via AccentColor property.
 /// </summary>
-public sealed partial class AmperemeterControl : UserControl
+public sealed partial class AmperemeterControl
 {
     /// <summary>
     /// Minimum current value (typically 0 mA).
@@ -112,19 +112,19 @@ public sealed partial class AmperemeterControl : UserControl
 
     private void ApplyAccentColor()
     {
-        if (AccentColor is not Color color)
+        if (AccentColor is not { } color)
             return;
 
         var brush = new SolidColorBrush(color);
 
         // Apply to needle
-        if (Needle is Path needle)
+        if (Needle is { } needle)
         {
             needle.Fill = brush;
         }
 
         // Apply to center circle stroke
-        if (CenterCircle is Ellipse circle)
+        if (CenterCircle is { } circle)
         {
             circle.Stroke = brush;
         }

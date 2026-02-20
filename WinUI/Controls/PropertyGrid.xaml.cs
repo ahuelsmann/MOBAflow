@@ -3,7 +3,7 @@
 namespace Moba.WinUI.Controls;
 
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -14,7 +14,7 @@ using System.Linq;
 /// Zeigt Eigenschaften eines Objekts in einer Name/Value-Liste mit optionaler Kategorisierung
 /// und Beschreibung des selektierten Properties.
 /// </summary>
-public sealed partial class PropertyGrid : UserControl
+public sealed partial class PropertyGrid
 {
     #region Dependency Properties
 

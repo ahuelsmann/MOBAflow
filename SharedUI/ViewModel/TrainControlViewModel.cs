@@ -119,7 +119,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
         if (value != null)
         {
             SelectedPresetIndex = -1;
-            var addr = value.Model?.DigitalAddress;
+            var addr = value.Model.DigitalAddress;
             LocoAddress = addr.HasValue ? (int)addr.Value : 0;
             Speed = 0;
             IsForward = true;
@@ -806,7 +806,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
         var savedId = settings.TrainControl.SelectedLocomotiveFromProjectId;
         if (!savedId.HasValue || ProjectLocomotives.Count == 0)
             return;
-        var match = ProjectLocomotives.FirstOrDefault(l => l.Model?.Id == savedId.Value);
+        var match = ProjectLocomotives.FirstOrDefault(l => l.Model.Id == savedId.Value);
         if (match == null || SelectedLocomotiveFromProject != null)
             return;
         _isLoadingPreset = true;

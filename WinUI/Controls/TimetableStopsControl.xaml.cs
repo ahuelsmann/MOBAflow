@@ -8,7 +8,7 @@ using Microsoft.UI.Xaml.Controls;
 /// Displays timetable stops for current journey (Previous/Current/Next station).
 /// Used in TrainControlPage to show journey progress information.
 /// </summary>
-public sealed partial class TimetableStopsControl : UserControl
+public sealed partial class TimetableStopsControl
 {
     private const string StationPlaceholder = "\u2014";
 

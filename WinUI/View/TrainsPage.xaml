@@ -37,7 +37,6 @@
                     Grid.Column="0"
                     Padding="8,0,0,0"
                     VerticalAlignment="Center"
-                    FontWeight="SemiBold"
                     Style="{StaticResource SubtitleTextBlockStyle}"
                     Text="Locomotives" />
                 <StackPanel
@@ -138,7 +137,6 @@
                     Grid.Column="0"
                     Padding="8,0,0,0"
                     VerticalAlignment="Center"
-                    FontWeight="SemiBold"
                     Style="{StaticResource SubtitleTextBlockStyle}"
                     Text="Passenger Wagons" />
                 <StackPanel
@@ -239,7 +237,6 @@
                     Grid.Column="0"
                     Padding="8,0,0,0"
                     VerticalAlignment="Center"
-                    FontWeight="SemiBold"
                     Style="{StaticResource SubtitleTextBlockStyle}"
                     Text="Goods Wagons" />
                 <StackPanel

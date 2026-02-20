@@ -6,7 +6,7 @@
     },
     "filesystem": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem@latest"],
+      "args": ["-y", "@modelcontextprotocol/server-filesystem@latest", "."],
       "env": {
         "MCP_FILESYSTEM_ROOT": ".",
         "MCP_FILESYSTEM_ENABLE_DELETE": "false"

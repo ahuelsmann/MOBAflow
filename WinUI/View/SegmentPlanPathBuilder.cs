@@ -110,7 +110,7 @@ public static class SegmentPlanPathBuilder
                                     Point = new Point(Tx(arc.EndX, arc.EndY), Ty(arc.EndX, arc.EndY)),
                                     Size = new Size(arc.Radius * scale, arc.Radius * scale),
                                     RotationAngle = 0,
-                                    IsLargeArc = false,
+                                    IsLargeArc = arc.LargeArc,
                                     SweepDirection = arc.Clockwise ? SweepDirection.Clockwise : SweepDirection.Counterclockwise
                                 }
                             }

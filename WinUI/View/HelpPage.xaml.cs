@@ -13,7 +13,7 @@ using Microsoft.UI.Xaml.Navigation;
     Icon = "\uE897",
     Category = NavigationCategory.Help,
     Order = 10)]
-public sealed partial class HelpPage : Page
+public sealed partial class HelpPage
 {
     private readonly Dictionary<TreeViewNode, string> _sections = [];
 

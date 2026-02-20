@@ -6,7 +6,6 @@
     xmlns:controls="using:Moba.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    x:Name="Root"
     mc:Ignorable="d">
 
     <Grid x:Name="RootGrid" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
@@ -33,7 +32,7 @@
             Visibility="Collapsed" />
 
         <!--  Main Content Area: Left | Splitter | Center | Splitter | Right  -->
-        <Grid x:Name="MainContentGrid" Grid.Row="1">
+        <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <!--  0: Left Auto-Hide Bar  -->
@@ -82,7 +81,6 @@
 
             <!--  Left Splitter (own column, between Left and Center)  -->
             <Grid
-                x:Name="LeftSplitter"
                 Grid.Column="2"
                 Width="5"
                 Background="Transparent"
@@ -101,7 +99,6 @@
 
             <!--  Center Area: Top | TopSplitter | Document | BottomSplitter | Bottom  -->
             <Grid
-                x:Name="CenterArea"
                 Grid.Column="3"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch">
@@ -139,7 +136,6 @@
 
                 <!--  Top Splitter (own row)  -->
                 <Grid
-                    x:Name="TopSplitter"
                     Grid.Row="1"
                     Height="5"
                     Background="Transparent"
@@ -166,12 +162,11 @@
                     DragLeave="OnDockAreaDragLeave"
                     DragOver="OnDockAreaDragOver"
                     Drop="OnDockAreaDrop">
-                    <ContentPresenter x:Name="DocumentPresenter" Content="{x:Bind DocumentAreaContent, Mode=OneWay}" />
+                    <ContentPresenter Content="{x:Bind DocumentAreaContent, Mode=OneWay}" />
                 </Grid>
 
                 <!--  Bottom Splitter (own row)  -->
                 <Grid
-                    x:Name="BottomSplitter"
                     Grid.Row="3"
                     Height="5"
                     Background="Transparent"
@@ -210,7 +205,6 @@
 
             <!--  Right Splitter (own column)  -->
             <Grid
-                x:Name="RightSplitter"
                 Grid.Column="4"
                 Width="5"
                 Background="Transparent"
@@ -269,11 +263,8 @@
             Visibility="Collapsed" />
 
         <!--  Status Bar  -->
-        <Grid
-            x:Name="StatusBarArea"
-            Grid.Row="3"
-            Background="{ThemeResource LayerFillColorDefaultBrush}">
-            <ContentPresenter x:Name="StatusBarPresenter" Content="{x:Bind StatusBarContent, Mode=OneWay}" />
+        <Grid Grid.Row="3" Background="{ThemeResource LayerFillColorDefaultBrush}">
+            <ContentPresenter Content="{x:Bind StatusBarContent, Mode=OneWay}" />
         </Grid>
 
         <!--  Docking Overlay (spans main content)  -->
@@ -284,7 +275,7 @@
             Background="Transparent"
             IsHitTestVisible="False"
             Visibility="Collapsed">
-            <Canvas x:Name="OverlayCanvas">
+            <Canvas>
                 <Border
                     x:Name="PreviewBox"
                     Background="{ThemeResource AccentFillColorDefaultBrush}"
@@ -296,7 +287,6 @@
             </Canvas>
 
             <Grid
-                x:Name="OverlayTargets"
                 Width="160"
                 Height="160"
                 HorizontalAlignment="Center"

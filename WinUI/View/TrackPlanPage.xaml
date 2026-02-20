@@ -39,45 +39,35 @@
                 Label="Trennen"
                 ToolTipService.ToolTip="Verbindungen des ausgewählten Gleises lösen (R)" />
             <AppBarToggleButton
-                x:Name="GridToggle"
                 Icon="ViewAll"
                 IsChecked="False"
                 Label="Grid" />
-            <AppBarToggleButton
-                x:Name="RulerToggle"
-                IsChecked="True"
-                Label="Rulers">
+            <AppBarToggleButton IsChecked="True" Label="Rulers">
                 <AppBarToggleButton.Icon>
                     <SymbolIcon Symbol="Trim" />
                 </AppBarToggleButton.Icon>
             </AppBarToggleButton>
-            <AppBarToggleButton
-                x:Name="MovableRulerToggle"
-                IsChecked="False"
-                Label="Movable Ruler">
+            <AppBarToggleButton IsChecked="False" Label="Movable Ruler">
                 <AppBarToggleButton.Icon>
                     <SymbolIcon Symbol="Rotate" />
                 </AppBarToggleButton.Icon>
             </AppBarToggleButton>
-            <AppBarToggleButton
-                x:Name="PortHoverAnimationToggle"
-                IsChecked="True"
-                Label="Port Hover">
+            <AppBarToggleButton IsChecked="True" Label="Port Hover">
                 <AppBarToggleButton.Icon>
                     <SymbolIcon Symbol="Highlight" />
                 </AppBarToggleButton.Icon>
             </AppBarToggleButton>
-            <AppBarButton x:Name="RotateRulerLeftButton" Label="Rotate ←">
+            <AppBarButton Label="Rotate ←">
                 <AppBarButton.Icon>
                     <SymbolIcon Symbol="Back" />
                 </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton x:Name="RotateRulerRightButton" Label="Rotate →">
+            <AppBarButton Label="Rotate →">
                 <AppBarButton.Icon>
                     <SymbolIcon Symbol="Forward" />
                 </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton x:Name="ResetRulerButton" Label="Reset Ruler">
+            <AppBarButton Label="Reset Ruler">
                 <AppBarButton.Icon>
                     <SymbolIcon Symbol="Home" />
                 </AppBarButton.Icon>
@@ -86,7 +76,6 @@
             <AppBarButton Label="Opacity:" />
             <AppBarButton>
                 <Slider
-                    x:Name="MovableRulerOpacitySlider"
                     Width="120"
                     Margin="8,0"
                     Maximum="1.0"
@@ -103,7 +92,6 @@
             </Grid.ColumnDefinitions>
             <!--  Left Panel: Toolbox  -->
             <Border
-                x:Name="ToolboxPanel"
                 Grid.Column="0"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -113,7 +101,6 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-
                     <TextBlock
                         Grid.Row="0"
                         Padding="16,12"
@@ -121,7 +108,7 @@
                         Text="Piko A-Gleis" />
                     <ScrollViewer Grid.Row="1" Padding="8,0">
                         <StackPanel x:Name="ToolboxStackPanel" Spacing="4">
-                            <!-- Toolbox wird in OnLoaded aus PikoACatalog gefüllt -->
+                            <!--  Toolbox wird in OnLoaded aus PikoACatalog gefüllt  -->
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>
@@ -198,13 +185,12 @@
             </Border>
             <!--  Right Panel: Properties  -->
             <Border
-                x:Name="PropertiesPanelBorder"
                 Grid.Column="2"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1,0,0,0">
                 <ScrollViewer Padding="16">
-                    <StackPanel x:Name="PropertiesPanel" Spacing="16">
+                    <StackPanel Spacing="16">
                         <!--  Selection Info  -->
                         <StackPanel Spacing="8">
                             <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Selection" />
@@ -217,24 +203,16 @@
                         <!--  Properties Panel  -->
                         <StackPanel Spacing="12" Visibility="Collapsed">
                             <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Properties" />
-                            <TextBox
-                                x:Name="TrackIdTextBox"
-                                Header="Track ID"
-                                IsReadOnly="True" />
-                            <TextBox
-                                x:Name="TemplateIdTextBox"
-                                Header="Template"
-                                IsReadOnly="True" />
-                            <NumberBox x:Name="PositionXBox" Header="Position X (mm)" />
-                            <NumberBox x:Name="PositionYBox" Header="Position Y (mm)" />
+                            <TextBox Header="Track ID" IsReadOnly="True" />
+                            <TextBox Header="Template" IsReadOnly="True" />
+                            <NumberBox Header="Position X (mm)" />
+                            <NumberBox Header="Position Y (mm)" />
                             <NumberBox
-                                x:Name="RotationBox"
                                 Header="Rotation (deg)"
                                 Maximum="360"
                                 Minimum="0"
                                 SmallChange="15" />
                             <NumberBox
-                                x:Name="FeedbackPointBox"
                                 Header="Feedback Point"
                                 Minimum="0"
                                 PlaceholderText="None" />
@@ -252,33 +230,17 @@
                         <StackPanel Spacing="8">
                             <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Sections" />
                             <TextBlock
-                                x:Name="SectionInfoText"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 Text="No section assigned"
                                 TextWrapping="Wrap" />
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Button
-                                    x:Name="CreateSectionButton"
-                                    Content="Create Section"
-                                    IsEnabled="False" />
-                                <Button
-                                    x:Name="ToggleIsolatorButton"
-                                    Content="Toggle Isolator"
-                                    IsEnabled="False" />
+                                <Button Content="Create Section" IsEnabled="False" />
+                                <Button Content="Toggle Isolator" IsEnabled="False" />
                             </StackPanel>
                             <!--  Section Editor  -->
-                            <StackPanel
-                                x:Name="SectionEditorPanel"
-                                Spacing="8"
-                                Visibility="Collapsed">
-                                <TextBox
-                                    x:Name="SectionNameBox"
-                                    Header="Section Name"
-                                    PlaceholderText="Enter section name" />
-                                <ComboBox
-                                    x:Name="SectionFunctionCombo"
-                                    HorizontalAlignment="Stretch"
-                                    Header="Function">
+                            <StackPanel Spacing="8" Visibility="Collapsed">
+                                <TextBox Header="Section Name" PlaceholderText="Enter section name" />
+                                <ComboBox HorizontalAlignment="Stretch" Header="Function">
                                     <ComboBoxItem Content="Strecke" Tag="Track" />
                                     <ComboBoxItem Content="Bahnhof" Tag="Station" />
                                     <ComboBoxItem Content="Abstellgleis" Tag="Siding" />
@@ -349,7 +311,7 @@
                                 </StackPanel>
                                 <Button Content="Delete Section" Style="{ThemeResource AccentButtonStyle}" />
                             </StackPanel>
-                            <ListView x:Name="SectionsList" MaxHeight="120">
+                            <ListView MaxHeight="120">
                                 <ListView.ItemTemplate>
                                     <DataTemplate>
                                         <Grid Padding="4" ColumnSpacing="8">

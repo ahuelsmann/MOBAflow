@@ -2,12 +2,13 @@
 
 namespace Moba.WinUI.View;
 
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Moba.WinUI.Controls;
-using Moba.WinUI.ViewModel;
+using Controls;
 
-public sealed partial class DockingPage : Page
+using Microsoft.UI.Xaml;
+
+using ViewModel;
+
+public sealed partial class DockingPage
 {
     private readonly DockingPageViewModel _viewModel;
     private bool _isInitialized;

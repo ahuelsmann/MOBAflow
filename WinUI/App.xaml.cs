@@ -10,21 +10,13 @@ using Common.Configuration;
 using Common.Events;
 using Common.Serilog;
 
-using Controllers;
-
 using Domain;
 
-using Hubs;
-
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 
 using Serilog;
 using Serilog.Events;
@@ -33,7 +25,6 @@ using Service;
 
 using SharedUI.Extensions;
 using SharedUI.Interface;
-using SharedUI.Service;
 using SharedUI.Shell;
 using SharedUI.ViewModel;
 
@@ -42,9 +33,8 @@ using Sound;
 using System.Diagnostics;
 
 using TrackLibrary.PikoA;
-using TrackPlan.Renderer;
 
-using Utilities;
+using TrackPlan.Renderer;
 
 using View;
 
@@ -56,8 +46,6 @@ using ViewModel;
 public partial class App
 {
     private Window? _window;
-    private IHost? _webAppHost;
-    private UdpDiscoveryResponder? _udpDiscoveryResponder;
     private readonly ILogger<App> _logger;
 
     /// <summary>
@@ -322,7 +310,7 @@ public partial class App
         // TrackPlan (model and ViewModel)
         services.AddSingleton<TrackPlan>();
         services.AddSingleton<TrackPlanViewModel>();
-        services.AddSingleton<TrackLibrary.PikoA.EditableTrackPlan>();
+        services.AddSingleton<EditableTrackPlan>();
 
         // Skin Provider
         services.AddSingleton<ISkinProvider, SkinProvider>();
@@ -469,244 +457,4 @@ public partial class App
             _logger.LogError(ex, "Auto-load failed");
         }
     }
-
-    private async Task StartWebAppIfEnabledAsync()
-    {
-        try
-        {
-            var settings = Services.GetRequiredService<AppSettings>();
-            if (!settings.Application.AutoStartWebApp)
-            {
-                _logger.LogInformation("AutoStartWebApp disabled in settings - skipping REST API launch. To enable: set Application.AutoStartWebApp to true.");
-                return;
-            }
-
-            if (_webAppHost != null)
-            {
-                _logger.LogInformation("REST API already running");
-                return;
-            }
-
-            var restPort = settings.RestApi.Port;
-
-            // Check if port is available BEFORE attempting to start
-            if (!PortChecker.IsPortAvailable(restPort))
-            {
-                var errorMessage = $"Cannot start REST API: Port {restPort} is already in use by another application.\n\n" +
-                                   $"Please either:\n" +
-                                   "1. Close the application using this port, or\n" +
-                                   "2. Change the REST API port in Settings, or\n" +
-                                   "3. Disable 'Auto-start REST API' in Settings";
-
-                _logger.LogError("Port {RestPort} is already in use - cannot start REST API", restPort);
-
-                // Show error dialog to user
-                await ShowPortInUseErrorAsync(restPort, errorMessage);
-                return;
-            }
-
-            // NOTE: FirewallHelper removed - it caused UAC elevation dialogs on every start.
-            // Users should manually configure Windows Firewall if needed.
-            // See docs/wiki/FIREWALL-SETUP.md for instructions.
-
-            // Build WebHost for in-process Kestrel hosting
-            var builder = Host.CreateDefaultBuilder();
-
-            builder.ConfigureWebHostDefaults(webBuilder =>
-            {
-                webBuilder.UseKestrel(options => options.ListenAnyIP(restPort));
-
-                webBuilder.Configure(app =>
-                {
-                    // CORS must be before routing (required for MAUI mobile clients)
-                    app.UseCors();
-
-                    // Map SignalR Hub for photo notifications
-                    app.UseRouting();
-                    app.UseEndpoints(endpoints =>
-                    {
-                        endpoints.MapControllers();
-                        endpoints.MapHub<PhotoHub>("/photos-hub");
-                    });
-                });
-            });
-
-            builder.ConfigureServices((_, services) =>
-            {
-                // Register MOBAflow Web Services
-                services.AddSingleton<PhotoStorageService>();
-
-                // Explicitly add controllers from this assembly (WinUI)
-                // Required because WinUI apps don't auto-discover controllers like ASP.NET Core web apps
-                services.AddControllers()
-                    .AddApplicationPart(typeof(PhotoUploadController).Assembly);
-
-                // Register SignalR for real-time photo notifications
-                services.AddSignalR();
-
-                // CORS: Allow requests from any origin (requires for MAUI mobile clients)
-                services.AddCors(options =>
-                {
-                    options.AddDefaultPolicy(policy =>
-                    {
-                        policy.AllowAnyOrigin()
-                              .AllowAnyMethod()
-                              .AllowAnyHeader();
-                    });
-                });
-            });
-
-            builder.ConfigureLogging(loggingBuilder =>
-                // Use the same Serilog logger as WinUI
-                loggingBuilder.AddSerilog(Log.Logger, dispose: false));
-
-            _webAppHost = builder.Build();
-
-            // Start WebHost asynchronously
-            _ = _webAppHost.RunAsync();
-
-            _logger.LogInformation("REST API started successfully on {RestPort}", restPort);
-            _logger.LogInformation("Endpoints: POST /api/photos/upload; GET /api/photos/health");
-
-            // Give Kestrel a moment to bind
-            await Task.Delay(1000);
-
-            // Start UDP Discovery responder for MAUI auto-discovery
-            StartUdpDiscoveryResponder(restPort);
-
-            // Start SignalR PhotoHubClient for real-time photo notifications
-            _ = StartPhotoHubClientAsync(restPort);
-
-            // Self-test: Verify server is actually responding
-            try
-            {
-                using var httpClient = new HttpClient();
-                httpClient.Timeout = TimeSpan.FromSeconds(5);
-                var testResponse = await httpClient.GetAsync($"http://localhost:{restPort}/api/photos/health");
-                if (testResponse.IsSuccessStatusCode)
-                {
-                    _logger.LogInformation("Self-test passed: server responding on localhost:{RestPort}", restPort);
-                }
-                else
-                {
-                    _logger.LogWarning("Self-test warning: server returned {StatusCode}", testResponse.StatusCode);
-                }
-            }
-            catch (Exception selfTestEx)
-            {
-                _logger.LogWarning(selfTestEx, "Self-test failed. This may indicate controller registration issues.");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to start REST API");
-        }
-    }
-
-    /// <summary>
-    /// Starts the UDP Discovery responder for MAUI auto-discovery.
-    /// Allows MAUI clients to find the REST API server on the local network.
-    /// </summary>
-    private void StartUdpDiscoveryResponder(int restPort)
-    {
-        try
-        {
-            _udpDiscoveryResponder?.Dispose();
-            _udpDiscoveryResponder = new UdpDiscoveryResponder(
-                Services.GetRequiredService<ILogger<UdpDiscoveryResponder>>(),
-                restPort);
-            _udpDiscoveryResponder.Start();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to start UDP Discovery responder - MAUI auto-discovery will not work");
-        }
-    }
-
-    /// <summary>
-    /// Starts PhotoHubClient for real-time photo notifications from MAUI.
-    /// </summary>
-    private async Task StartPhotoHubClientAsync(int restPort)
-    {
-        _logger.LogInformation("StartPhotoHubClientAsync called with port: {RestPort}", restPort);
-
-        try
-        {
-            _logger.LogDebug("Resolving PhotoHubClient from DI...");
-            var photoHubClient = Services.GetRequiredService<PhotoHubClient>();
-
-            _logger.LogDebug("Resolving MainWindowViewModel from DI...");
-            var mainWindowViewModel = Services.GetRequiredService<MainWindowViewModel>();
-
-            _logger.LogDebug("Resolving IUiDispatcher from DI...");
-            var uiDispatcher = Services.GetRequiredService<IUiDispatcher>();
-
-            _logger.LogInformation("Connecting to SignalR Hub at localhost:{RestPort}...", restPort);
-            await photoHubClient.ConnectAsync("localhost", restPort);
-            _logger.LogInformation("Connected to SignalR Hub");
-
-            _logger.LogDebug("Subscribing to PhotoUploaded events...");
-            photoHubClient.PhotoUploaded += async (photoPath, uploadedAt) =>
-            {
-                try
-                {
-                    _logger.LogInformation("[REAL-TIME] Photo uploaded: {PhotoPath} at {UploadedAt}", photoPath, uploadedAt);
-
-                    uiDispatcher.InvokeOnUi(() =>
-                    {
-                        try
-                        {
-                            _logger.LogDebug("Assigning photo to selected item");
-                            mainWindowViewModel.AssignLatestPhoto(photoPath);
-                            _logger.LogInformation("Photo assigned successfully");
-                        }
-                        catch (Exception innerEx)
-                        {
-                            _logger.LogError(innerEx, "Error assigning photo");
-                        }
-                    });
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error handling PhotoUploaded event");
-                }
-
-                await Task.CompletedTask;
-            };
-            _logger.LogInformation("Subscribed to PhotoUploaded events");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to start PhotoHubClient");
-        }
-    }
-
-    /// <summary>
-    /// Shows an error dialog when the REST API port is already in use.
-    /// </summary>
-    private async Task ShowPortInUseErrorAsync(int port, string message)
-    {
-        try
-        {
-            // Use UI dispatcher to show dialog on UI thread
-            var uiDispatcher = Services.GetRequiredService<IUiDispatcher>();
-            await uiDispatcher.InvokeOnUiAsync(async () =>
-            {
-                var dialog = new ContentDialog
-                {
-                    Title = $"Warning: Port {port} Already In Use",
-                    Content = message,
-                    CloseButtonText = "OK",
-                    XamlRoot = _window?.Content?.XamlRoot
-                };
-
-                _ = await dialog.ShowAsync();
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to show port error dialog");
-        }
-    }
 }
-

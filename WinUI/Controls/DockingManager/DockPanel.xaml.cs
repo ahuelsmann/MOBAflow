@@ -27,7 +27,7 @@ public enum DockPosition
 /// Wird in DockingManager-Bereichen verwendet.
 /// Cherry-Picked: Close/Undock (Qt-ADS), Pin to AutoHide (Qt-ADS 4.x).
 /// </summary>
-public sealed partial class DockPanel : UserControl
+public sealed partial class DockPanel
 {
     private const string DockPanelDataKey = "DockPanel";
 
@@ -189,7 +189,7 @@ public sealed partial class DockPanel : UserControl
         }
 
         var isHorizontal = DockPosition is DockPosition.Top or DockPosition.Bottom;
-        
+
         if (isHorizontal)
         {
             // Top/Bottom: Full width, fixed height when collapsed
@@ -197,13 +197,13 @@ public sealed partial class DockPanel : UserControl
             CollapsedTab.Height = 32;
             CollapsedTab.HorizontalAlignment = HorizontalAlignment.Stretch;
             CollapsedTab.VerticalAlignment = VerticalAlignment.Top;
-            
+
             // ExpandedPanel should also stretch horizontally
             ExpandedPanel.Width = double.NaN;
             ExpandedPanel.Height = double.NaN;
             ExpandedPanel.HorizontalAlignment = HorizontalAlignment.Stretch;
             ExpandedPanel.VerticalAlignment = VerticalAlignment.Stretch;
-            
+
             if (CollapsedStack is not null)
             {
                 CollapsedStack.Orientation = Orientation.Horizontal;
@@ -216,13 +216,13 @@ public sealed partial class DockPanel : UserControl
             CollapsedTab.Height = double.NaN;
             CollapsedTab.HorizontalAlignment = HorizontalAlignment.Left;
             CollapsedTab.VerticalAlignment = VerticalAlignment.Stretch;
-            
+
             // ExpandedPanel should also stretch vertically
             ExpandedPanel.Width = double.NaN;
             ExpandedPanel.Height = double.NaN;
             ExpandedPanel.HorizontalAlignment = HorizontalAlignment.Stretch;
             ExpandedPanel.VerticalAlignment = VerticalAlignment.Stretch;
-            
+
             if (CollapsedStack is not null)
             {
                 CollapsedStack.Orientation = Orientation.Vertical;

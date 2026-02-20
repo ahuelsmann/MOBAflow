@@ -66,7 +66,7 @@ public static class PathToCanvasGeometryConverter
                         (float)(arc.Radius * scale),
                         0f,
                         arc.Clockwise ? CanvasSweepDirection.Clockwise : CanvasSweepDirection.CounterClockwise,
-                        CanvasArcSize.Small);
+                        arc.LargeArc ? CanvasArcSize.Large : CanvasArcSize.Small);
                     x = arc.EndX;
                     y = arc.EndY;
                     break;
@@ -126,7 +126,7 @@ public static class PathToCanvasGeometryConverter
                         (float)arc.Radius,
                         0f,
                         arc.Clockwise ? CanvasSweepDirection.Clockwise : CanvasSweepDirection.CounterClockwise,
-                        CanvasArcSize.Small);
+                        arc.LargeArc ? CanvasArcSize.Large : CanvasArcSize.Small);
                     x = arc.EndX;
                     y = arc.EndY;
                     break;

@@ -4,10 +4,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:Moba.WinUI.Controls"
     xmlns:converter="using:Moba.WinUI.Converter"
-    xmlns:vm="using:Moba.SharedUI.ViewModel"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Moba.SharedUI.ViewModel"
     DataContext="{x:Bind ViewModel}"
     mc:Ignorable="d">
 
@@ -26,15 +25,11 @@
 
         <!--  Page Header - Fluent Design System with elevated background  -->
         <Border
-            x:Name="HeaderBorder"
             Grid.Row="0"
             Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
             BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
             BorderThickness="0,0,0,1">
-            <Grid
-                x:Name="HeaderGrid"
-                Padding="32,20,32,20"
-                ColumnSpacing="24">
+            <Grid Padding="32,20,32,20" ColumnSpacing="24">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" MinWidth="150" />
                     <!--  Title  -->
@@ -51,7 +46,6 @@
                     VerticalAlignment="Center"
                     Spacing="4">
                     <TextBlock
-                        x:Name="TitleText"
                         AutomationProperties.HeadingLevel="Level1"
                         FontSize="32"
                         FontWeight="SemiBold"
@@ -104,7 +98,6 @@
 
                 <!--  Skin Selector Button with Flyout  -->
                 <Button
-                    x:Name="SkinSelectorButton"
                     Grid.Column="2"
                     VerticalAlignment="Center"
                     AccessKey="K"
@@ -202,7 +195,6 @@
                 <Button
                     Grid.Column="3"
                     Padding="16,8"
-                    VerticalAlignment="Center"
                     AccessKey="S"
                     AutomationProperties.HelpText="Immediately stops the locomotive"
                     AutomationProperties.Name="Emergency Stop"
@@ -226,7 +218,6 @@
 
         <!--  Main Content with Responsive Layout - Fluent Design  -->
         <Grid
-            x:Name="MainContentGrid"
             Grid.Row="1"
             Padding="32,24,32,32"
             ColumnSpacing="16"
@@ -243,7 +234,6 @@
 
             <!--  LEFT PANEL: Locomotive Settings (Grid.Column="0")  -->
             <Border
-                x:Name="SettingsPanel"
                 Grid.Column="0"
                 Padding="16"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -281,9 +271,7 @@
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <FontIcon FontSize="14" Glyph="&#xE7C0;" />
                                             <TextBlock Text="{x:Bind Name, Mode=OneWay}" />
-                                            <TextBlock
-                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                                Text="{x:Bind DigitalAddress, Mode=OneWay}" />
+                                            <TextBlock Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="{x:Bind DigitalAddress, Mode=OneWay}" />
                                         </StackPanel>
                                     </DataTemplate>
                                 </ComboBox.ItemTemplate>
@@ -419,7 +407,6 @@
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 Text="DCC SPEED STEPS" />
                             <ComboBox
-                                x:Name="SpeedStepsComboBox"
                                 HorizontalAlignment="Stretch"
                                 SelectedIndex="{x:Bind SpeedStepsSelectedIndex, Mode=TwoWay}"
                                 SelectionChanged="SpeedStepsComboBox_SelectionChanged">
@@ -480,24 +467,6 @@
                             </Grid>
                         </StackPanel>
 
-                        <!--  Status  -->
-                        <Border
-                            Padding="12"
-                            Background="{ThemeResource LayerFillColorDefaultBrush}"
-                            CornerRadius="6">
-                            <StackPanel Spacing="2">
-                                <TextBlock
-                                    FontSize="10"
-                                    FontWeight="SemiBold"
-                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                    Text="STATUS" />
-                                <TextBlock
-                                    FontSize="12"
-                                    Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
-                                    TextWrapping="Wrap" />
-                            </StackPanel>
-                        </Border>
-
                         <!--  Ramping Indicator  -->
                         <Border
                             Padding="8"
@@ -518,7 +487,6 @@
 
             <!--  CENTER: 2x2 Grid Layout (Grid.Column="1")  -->
             <Grid
-                x:Name="CenterGrid"
                 Grid.Column="1"
                 ColumnSpacing="16"
                 RowSpacing="16">
@@ -533,7 +501,6 @@
 
                 <!--  Bereich 1 (Bottom-Left): Speedometer  -->
                 <Border
-                    x:Name="SpeedometerPanel"
                     Grid.Row="1"
                     Grid.Column="0"
                     Padding="16"
@@ -549,7 +516,6 @@
 
                         <!--  Speedometer  -->
                         <controls:SpeedometerControl
-                            x:Name="Speedometer"
                             Grid.Row="0"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
@@ -595,7 +561,6 @@
 
                 <!--  Bereich 2 (Top-Row): Journey Info / Timetable Stops  -->
                 <controls:TimetableStopsControl
-                    x:Name="TimetableStops"
                     Grid.Row="0"
                     Grid.Column="0"
                     Grid.ColumnSpan="2"
@@ -620,7 +585,6 @@
 
                 <!--  Bereich 3 (Bottom-Right): Amperemeter (Main Track Current)  -->
                 <Border
-                    x:Name="AmperemeterPanel"
                     Grid.Row="1"
                     Grid.Column="1"
                     Padding="16"
@@ -636,7 +600,10 @@
                         </Grid.RowDefinitions>
 
                         <!--  Header with Peak Badge  -->
-                        <Grid Grid.Row="0" Margin="0,0,0,8" ColumnSpacing="12">
+                        <Grid
+                            Grid.Row="0"
+                            Margin="0,0,0,8"
+                            ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -722,7 +689,6 @@
 
                         <!--  Amperemeter  -->
                         <controls:AmperemeterControl
-                            x:Name="Amperemeter"
                             Grid.Row="1"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
@@ -795,7 +761,6 @@
 
             <!--  RIGHT PANEL: Functions F0-F20 (Grid.Column="2") - Hidden on Medium/Compact  -->
             <Border
-                x:Name="FunctionsPanel"
                 Grid.Column="2"
                 Padding="16"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -835,12 +800,12 @@
                                 <ToggleButton
                                     Grid.Row="0"
                                     Grid.Column="0"
-                                    Tag="0"
                                     Background="{x:Bind ViewModel.IsF0On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#FFD700}"
                                     Command="{x:Bind ViewModel.ToggleF0Command}"
                                     IsChecked="{x:Bind ViewModel.IsF0On, Mode=OneWay}"
                                     RightTapped="FunctionButton_RightTapped"
-                                    Style="{StaticResource BacklightToggleButtonStyle}">
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="0">
                                     <StackPanel Spacing="2">
                                         <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function0Glyph, Mode=OneWay}" />
                                         <TextBlock
@@ -854,12 +819,12 @@
                                 <ToggleButton
                                     Grid.Row="0"
                                     Grid.Column="1"
-                                    Tag="1"
                                     Background="{x:Bind ViewModel.IsF1On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#0078D4}"
                                     Command="{x:Bind ViewModel.ToggleF1Command}"
                                     IsChecked="{x:Bind ViewModel.IsF1On, Mode=OneWay}"
                                     RightTapped="FunctionButton_RightTapped"
-                                    Style="{StaticResource BacklightToggleButtonStyle}">
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="1">
                                     <StackPanel Spacing="2">
                                         <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function1Glyph, Mode=OneWay}" />
                                         <TextBlock
@@ -873,12 +838,12 @@
                                 <ToggleButton
                                     Grid.Row="1"
                                     Grid.Column="0"
-                                    Tag="2"
                                     Background="{x:Bind ViewModel.IsF2On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#FF8C00}"
                                     Command="{x:Bind ViewModel.ToggleF2Command}"
                                     IsChecked="{x:Bind ViewModel.IsF2On, Mode=OneWay}"
                                     RightTapped="FunctionButton_RightTapped"
-                                    Style="{StaticResource BacklightToggleButtonStyle}">
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="2">
                                     <StackPanel Spacing="2">
                                         <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function2Glyph, Mode=OneWay}" />
                                         <TextBlock
@@ -892,12 +857,12 @@
                                 <ToggleButton
                                     Grid.Row="1"
                                     Grid.Column="1"
-                                    Tag="3"
                                     Background="{x:Bind ViewModel.IsF3On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#E81123}"
                                     Command="{x:Bind ViewModel.ToggleF3Command}"
                                     IsChecked="{x:Bind ViewModel.IsF3On, Mode=OneWay}"
                                     RightTapped="FunctionButton_RightTapped"
-                                    Style="{StaticResource BacklightToggleButtonStyle}">
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="3">
                                     <StackPanel Spacing="2">
                                         <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function3Glyph, Mode=OneWay}" />
                                         <TextBlock
@@ -911,12 +876,12 @@
                                 <ToggleButton
                                     Grid.Row="2"
                                     Grid.Column="0"
-                                    Tag="4"
                                     Background="{x:Bind ViewModel.IsF4On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#107C10}"
                                     Command="{x:Bind ViewModel.ToggleF4Command}"
                                     IsChecked="{x:Bind ViewModel.IsF4On, Mode=OneWay}"
                                     RightTapped="FunctionButton_RightTapped"
-                                    Style="{StaticResource BacklightToggleButtonStyle}">
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="4">
                                     <StackPanel Spacing="2">
                                         <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function4Glyph, Mode=OneWay}" />
                                         <TextBlock
@@ -930,12 +895,12 @@
                                 <ToggleButton
                                     Grid.Row="2"
                                     Grid.Column="1"
-                                    Tag="5"
                                     Background="{x:Bind ViewModel.IsF5On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#00B7C3}"
                                     Command="{x:Bind ViewModel.ToggleF5Command}"
                                     IsChecked="{x:Bind ViewModel.IsF5On, Mode=OneWay}"
                                     RightTapped="FunctionButton_RightTapped"
-                                    Style="{StaticResource BacklightToggleButtonStyle}">
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="5">
                                     <StackPanel Spacing="2">
                                         <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function5Glyph, Mode=OneWay}" />
                                         <TextBlock
@@ -949,12 +914,12 @@
                                 <ToggleButton
                                     Grid.Row="3"
                                     Grid.Column="0"
-                                    Tag="6"
                                     Background="{x:Bind ViewModel.IsF6On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#FFB900}"
                                     Command="{x:Bind ViewModel.ToggleF6Command}"
                                     IsChecked="{x:Bind ViewModel.IsF6On, Mode=OneWay}"
                                     RightTapped="FunctionButton_RightTapped"
-                                    Style="{StaticResource BacklightToggleButtonStyle}">
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="6">
                                     <StackPanel Spacing="2">
                                         <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function6Glyph, Mode=OneWay}" />
                                         <TextBlock
@@ -968,12 +933,12 @@
                                 <ToggleButton
                                     Grid.Row="3"
                                     Grid.Column="1"
-                                    Tag="7"
                                     Background="{x:Bind ViewModel.IsF7On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#767676}"
                                     Command="{x:Bind ViewModel.ToggleF7Command}"
                                     IsChecked="{x:Bind ViewModel.IsF7On, Mode=OneWay}"
                                     RightTapped="FunctionButton_RightTapped"
-                                    Style="{StaticResource BacklightToggleButtonStyle}">
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="7">
                                     <StackPanel Spacing="2">
                                         <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function7Glyph, Mode=OneWay}" />
                                         <TextBlock
@@ -987,12 +952,12 @@
                                 <ToggleButton
                                     Grid.Row="4"
                                     Grid.Column="0"
-                                    Tag="8"
                                     Background="{x:Bind ViewModel.IsF8On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#E81B23}"
                                     Command="{x:Bind ViewModel.ToggleF8Command}"
                                     IsChecked="{x:Bind ViewModel.IsF8On, Mode=OneWay}"
                                     RightTapped="FunctionButton_RightTapped"
-                                    Style="{StaticResource BacklightToggleButtonStyle}">
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="8">
                                     <StackPanel Spacing="2">
                                         <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function8Glyph, Mode=OneWay}" />
                                         <TextBlock
@@ -1006,12 +971,12 @@
                                 <ToggleButton
                                     Grid.Row="4"
                                     Grid.Column="1"
-                                    Tag="9"
                                     Background="{x:Bind ViewModel.IsF9On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#7B68EE}"
                                     Command="{x:Bind ViewModel.ToggleF9Command}"
                                     IsChecked="{x:Bind ViewModel.IsF9On, Mode=OneWay}"
                                     RightTapped="FunctionButton_RightTapped"
-                                    Style="{StaticResource BacklightToggleButtonStyle}">
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="9">
                                     <StackPanel Spacing="2">
                                         <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function9Glyph, Mode=OneWay}" />
                                         <TextBlock
@@ -1046,12 +1011,12 @@
                                 <ToggleButton
                                     Grid.Row="0"
                                     Grid.Column="0"
-                                    Tag="11"
                                     Background="{x:Bind ViewModel.IsF11On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#038387}"
                                     Command="{x:Bind ViewModel.ToggleF11Command}"
                                     IsChecked="{x:Bind ViewModel.IsF11On, Mode=OneWay}"
                                     RightTapped="FunctionButton_RightTapped"
-                                    Style="{StaticResource BacklightToggleButtonStyle}">
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="11">
                                     <StackPanel Spacing="2">
                                         <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function11Glyph, Mode=OneWay}" />
                                         <TextBlock
@@ -1065,12 +1030,12 @@
                                 <ToggleButton
                                     Grid.Row="0"
                                     Grid.Column="1"
-                                    Tag="12"
                                     Background="{x:Bind ViewModel.IsF12On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#C239B3}"
                                     Command="{x:Bind ViewModel.ToggleF12Command}"
                                     IsChecked="{x:Bind ViewModel.IsF12On, Mode=OneWay}"
                                     RightTapped="FunctionButton_RightTapped"
-                                    Style="{StaticResource BacklightToggleButtonStyle}">
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="12">
                                     <StackPanel Spacing="2">
                                         <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function12Glyph, Mode=OneWay}" />
                                         <TextBlock
@@ -1084,12 +1049,12 @@
                                 <ToggleButton
                                     Grid.Row="1"
                                     Grid.Column="0"
-                                    Tag="13"
                                     Background="{x:Bind ViewModel.IsF13On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#FF1493}"
                                     Command="{x:Bind ViewModel.ToggleF13Command}"
                                     IsChecked="{x:Bind ViewModel.IsF13On, Mode=OneWay}"
                                     RightTapped="FunctionButton_RightTapped"
-                                    Style="{StaticResource BacklightToggleButtonStyle}">
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="13">
                                     <StackPanel Spacing="2">
                                         <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function13Glyph, Mode=OneWay}" />
                                         <TextBlock
@@ -1103,12 +1068,12 @@
                                 <ToggleButton
                                     Grid.Row="1"
                                     Grid.Column="1"
-                                    Tag="14"
                                     Background="{x:Bind ViewModel.IsF14On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#7A7574}"
                                     Command="{x:Bind ViewModel.ToggleF14Command}"
                                     IsChecked="{x:Bind ViewModel.IsF14On, Mode=OneWay}"
                                     RightTapped="FunctionButton_RightTapped"
-                                    Style="{StaticResource BacklightToggleButtonStyle}">
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="14">
                                     <StackPanel Spacing="2">
                                         <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function14Glyph, Mode=OneWay}" />
                                         <TextBlock
@@ -1122,12 +1087,12 @@
                                 <ToggleButton
                                     Grid.Row="2"
                                     Grid.Column="0"
-                                    Tag="15"
                                     Background="{x:Bind ViewModel.IsF15On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#567C73}"
                                     Command="{x:Bind ViewModel.ToggleF15Command}"
                                     IsChecked="{x:Bind ViewModel.IsF15On, Mode=OneWay}"
                                     RightTapped="FunctionButton_RightTapped"
-                                    Style="{StaticResource BacklightToggleButtonStyle}">
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="15">
                                     <StackPanel Spacing="2">
                                         <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function15Glyph, Mode=OneWay}" />
                                         <TextBlock
@@ -1141,12 +1106,12 @@
                                 <ToggleButton
                                     Grid.Row="2"
                                     Grid.Column="1"
-                                    Tag="16"
                                     Background="{x:Bind ViewModel.IsF16On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#8E562E}"
                                     Command="{x:Bind ViewModel.ToggleF16Command}"
                                     IsChecked="{x:Bind ViewModel.IsF16On, Mode=OneWay}"
                                     RightTapped="FunctionButton_RightTapped"
-                                    Style="{StaticResource BacklightToggleButtonStyle}">
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="16">
                                     <StackPanel Spacing="2">
                                         <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function16Glyph, Mode=OneWay}" />
                                         <TextBlock
@@ -1160,12 +1125,12 @@
                                 <ToggleButton
                                     Grid.Row="3"
                                     Grid.Column="0"
-                                    Tag="17"
                                     Background="{x:Bind ViewModel.IsF17On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#847545}"
                                     Command="{x:Bind ViewModel.ToggleF17Command}"
                                     IsChecked="{x:Bind ViewModel.IsF17On, Mode=OneWay}"
                                     RightTapped="FunctionButton_RightTapped"
-                                    Style="{StaticResource BacklightToggleButtonStyle}">
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="17">
                                     <StackPanel Spacing="2">
                                         <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function17Glyph, Mode=OneWay}" />
                                         <TextBlock
@@ -1179,12 +1144,12 @@
                                 <ToggleButton
                                     Grid.Row="3"
                                     Grid.Column="1"
-                                    Tag="18"
                                     Background="{x:Bind ViewModel.IsF18On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#525E54}"
                                     Command="{x:Bind ViewModel.ToggleF18Command}"
                                     IsChecked="{x:Bind ViewModel.IsF18On, Mode=OneWay}"
                                     RightTapped="FunctionButton_RightTapped"
-                                    Style="{StaticResource BacklightToggleButtonStyle}">
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="18">
                                     <StackPanel Spacing="2">
                                         <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function18Glyph, Mode=OneWay}" />
                                         <TextBlock
@@ -1198,12 +1163,12 @@
                                 <ToggleButton
                                     Grid.Row="4"
                                     Grid.Column="0"
-                                    Tag="19"
                                     Background="{x:Bind ViewModel.IsF19On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#4A5459}"
                                     Command="{x:Bind ViewModel.ToggleF19Command}"
                                     IsChecked="{x:Bind ViewModel.IsF19On, Mode=OneWay}"
                                     RightTapped="FunctionButton_RightTapped"
-                                    Style="{StaticResource BacklightToggleButtonStyle}">
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="19">
                                     <StackPanel Spacing="2">
                                         <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function19Glyph, Mode=OneWay}" />
                                         <TextBlock
@@ -1217,12 +1182,12 @@
                                 <ToggleButton
                                     Grid.Row="4"
                                     Grid.Column="1"
-                                    Tag="20"
                                     Background="{x:Bind ViewModel.IsF20On, Mode=OneWay, Converter={StaticResource BacklightConverter}, ConverterParameter=#69797E}"
                                     Command="{x:Bind ViewModel.ToggleF20Command}"
                                     IsChecked="{x:Bind ViewModel.IsF20On, Mode=OneWay}"
                                     RightTapped="FunctionButton_RightTapped"
-                                    Style="{StaticResource BacklightToggleButtonStyle}">
+                                    Style="{StaticResource BacklightToggleButtonStyle}"
+                                    Tag="20">
                                     <StackPanel Spacing="2">
                                         <FontIcon FontSize="16" Glyph="{x:Bind ViewModel.Function20Glyph, Mode=OneWay}" />
                                         <TextBlock

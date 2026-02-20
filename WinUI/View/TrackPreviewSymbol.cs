@@ -94,7 +94,7 @@ public static class TrackPreviewSymbol
                         {
                             Point = new Windows.Foundation.Point(ToX(arc.EndX), ToY(arc.EndY)),
                             Size = new Windows.Foundation.Size(radius, radius),
-                            IsLargeArc = false,
+                            IsLargeArc = arc.LargeArc,
                             SweepDirection = arc.Clockwise ? SweepDirection.Clockwise : SweepDirection.Counterclockwise
                         });
                         pg.Figures.Add(pf);

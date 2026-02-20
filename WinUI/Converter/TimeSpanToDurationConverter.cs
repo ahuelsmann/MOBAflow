@@ -8,7 +8,7 @@ using Microsoft.UI.Xaml.Data;
 /// </summary>
 public sealed class TimeSpanToDurationConverter : IValueConverter
 {
-    public object? Convert(object? value, Type targetType, object? parameter, string language)
+    public object Convert(object? value, Type targetType, object? parameter, string language)
     {
         if (value is not TimeSpan ts || ts == default)
             return "–";
@@ -20,6 +20,6 @@ public sealed class TimeSpanToDurationConverter : IValueConverter
         return $"{ts.Seconds} s";
     }
 
-    public object? ConvertBack(object? value, Type targetType, object? parameter, string language) =>
+    public object ConvertBack(object? value, Type targetType, object? parameter, string language) =>
         throw new NotImplementedException();
 }

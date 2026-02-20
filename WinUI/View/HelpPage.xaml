@@ -22,10 +22,7 @@
                         FontSize="20"
                         FontWeight="SemiBold"
                         Text="MOBAflow Wiki" />
-                    <TextBlock
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Style="{ThemeResource CaptionTextBlockStyle}"
-                        Text="Dokumentation" />
+                    <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="Dokumentation" />
                 </StackPanel>
 
                 <TreeView

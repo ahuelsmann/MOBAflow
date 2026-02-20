@@ -267,62 +267,72 @@ public static class SegmentPortGeometry
         ];
     }
 
-    /// <summary>W3: 3-Wegeweiche. Port A Ursprung, Port B gerade, Port C links, Port D rechts (2×15°).</summary>
+    /// <summary>W3 (Piko 55225): Port A Ursprung, Port B gerade G239, Port C = WL-Abzweig -15°, Port D = WR-Abzweig +15° (je R9).</summary>
     private static IReadOnlyList<PortInfo> GetW3Ports(double length, double arcDegree, double radius)
     {
         var halfArc = arcDegree / 2;
-        var centerAngle = 90 * Math.PI / 180;
-        var centerX = radius * Math.Cos(centerAngle);
-        var centerY = radius * Math.Sin(centerAngle);
-        var endAngleL = (halfArc - 90) * Math.PI / 180;
-        var endAngleR = (-halfArc - 90) * Math.PI / 180;
-        var portCx = centerX + radius * Math.Cos(endAngleL);
-        var portCy = centerY + radius * Math.Sin(endAngleL);
-        var portDx = centerX + radius * Math.Cos(endAngleR);
-        var portDy = centerY + radius * Math.Sin(endAngleR);
+        // Port C: wie GetWlPorts (linker Ast)
+        var centerL = -90 * Math.PI / 180;
+        var centerLx = radius * Math.Cos(centerL);
+        var centerLy = radius * Math.Sin(centerL);
+        var endAngleL = (-halfArc + 90) * Math.PI / 180;
+        var portCx = centerLx + radius * Math.Cos(endAngleL);
+        var portCy = centerLy + radius * Math.Sin(endAngleL);
+        // Port D: wie GetWrPorts (rechter Ast)
+        var centerR = 90 * Math.PI / 180;
+        var centerRx = radius * Math.Cos(centerR);
+        var centerRy = radius * Math.Sin(centerR);
+        var endAngleR = (halfArc - 90) * Math.PI / 180;
+        var portDx = centerRx + radius * Math.Cos(endAngleR);
+        var portDy = centerRy + radius * Math.Sin(endAngleR);
         return
         [
             new PortInfo("PortA", 0, 0, 0),
             new PortInfo("PortB", length, 0, 0),
-            new PortInfo("PortC", portCx, portCy, halfArc),
-            new PortInfo("PortD", portDx, portDy, -halfArc)
+            new PortInfo("PortC", portCx, portCy, -halfArc),
+            new PortInfo("PortD", portDx, portDy, halfArc)
         ];
     }
 
-    /// <summary>WY: Y-Weiche 30°. Port A Ursprung, Port B/C symmetrisch ±15°. Länge = Bogenlänge (Radius × halber Öffnungswinkel im Bogenmaß).</summary>
+    /// <summary>WY: Y-Weiche wie W3 ohne Gerade. Port A Ursprung, Port B = WL-Abzweig -15°, Port C = WR-Abzweig +15° (je R9).</summary>
     private static IReadOnlyList<PortInfo> GetWyPorts(double arcDegree, double radius)
     {
         var halfArc = arcDegree / 2;
-        var halfArcRad = halfArc * Math.PI / 180;
-        var len = radius * halfArcRad;
-        var radL = -halfArcRad;
-        var radR = halfArcRad;
+        // Port B: wie GetWlPorts (linker Ast)
+        var centerL = -90 * Math.PI / 180;
+        var centerLx = radius * Math.Cos(centerL);
+        var centerLy = radius * Math.Sin(centerL);
+        var endAngleL = (-halfArc + 90) * Math.PI / 180;
+        var portBx = centerLx + radius * Math.Cos(endAngleL);
+        var portBy = centerLy + radius * Math.Sin(endAngleL);
+        // Port C: wie GetWrPorts (rechter Ast)
+        var centerR = 90 * Math.PI / 180;
+        var centerRx = radius * Math.Cos(centerR);
+        var centerRy = radius * Math.Sin(centerR);
+        var endAngleR = (halfArc - 90) * Math.PI / 180;
+        var portCx = centerRx + radius * Math.Cos(endAngleR);
+        var portCy = centerRy + radius * Math.Sin(endAngleR);
         return
         [
             new PortInfo("PortA", 0, 0, 0),
-            new PortInfo("PortB", len * Math.Cos(radL), len * Math.Sin(radL), -halfArc),
-            new PortInfo("PortC", len * Math.Cos(radR), len * Math.Sin(radR), halfArc)
+            new PortInfo("PortB", portBx, portBy, -halfArc),
+            new PortInfo("PortC", portCx, portCy, halfArc)
         ];
     }
 
-    /// <summary>DKW: Doppelkreuzungsweiche. 4 Ports (Kreuzung).</summary>
+    /// <summary>DKW (Piko 55224) – AnyRail-Referenz: Vier Ports an den Enden der zwei parallelen Gleise – A/B oberes Gleis, C/D unteres Gleis.</summary>
     private static IReadOnlyList<PortInfo> GetDkwPorts(double length, double arcDegree, double radius)
     {
-        var centerAngle = 90 * Math.PI / 180;
-        var centerX = radius * Math.Cos(centerAngle);
-        var centerY = radius * Math.Sin(centerAngle);
-        var endAngle = (arcDegree - 90) * Math.PI / 180;
-        var portCx = centerX + radius * Math.Cos(endAngle);
-        var portCy = centerY + radius * Math.Sin(endAngle);
+        var half = length / 2;
         var rad = arcDegree * Math.PI / 180;
-        var portDx = length * Math.Cos(rad);
-        var portDy = length * Math.Sin(rad);
+        var sin = Math.Sin(rad);
+        var trackOffset = half * sin;
         return
         [
-            new PortInfo("PortA", 0, 0, 0),
-            new PortInfo("PortB", length, 0, 0),
-            new PortInfo("PortC", portCx, portCy, arcDegree),
-            new PortInfo("PortD", portDx, portDy, arcDegree)
+            new PortInfo("PortA", 0, trackOffset, 0),
+            new PortInfo("PortB", length, trackOffset, 0),
+            new PortInfo("PortC", 0, -trackOffset, 0),
+            new PortInfo("PortD", length, -trackOffset, 0)
         ];
     }
 

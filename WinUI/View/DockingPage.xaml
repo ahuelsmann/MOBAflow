@@ -33,7 +33,6 @@
             <!--  Center: Document Tabs  -->
             <controls:DockingManager.DocumentAreaContent>
                 <controls:LayoutDocument
-                    x:Name="DocumentArea"
                     ActiveDocument="{Binding ActiveDocument, Mode=TwoWay}"
                     AllowFloatingTabs="False"
                     Documents="{Binding OpenDocuments}"

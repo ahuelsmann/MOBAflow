@@ -8,11 +8,11 @@ using Microsoft.UI.Xaml.Data;
 /// </summary>
 public sealed class BoolToTripLogIconConverter : IValueConverter
 {
-    public object? Convert(object? value, Type targetType, object? parameter, string language)
+    public object Convert(object? value, Type targetType, object? parameter, string language)
     {
         return value is bool b && b ? "\uE769" : "\uE768"; // Pause vs Play
     }
 
-    public object? ConvertBack(object? value, Type targetType, object? parameter, string language) =>
+    public object ConvertBack(object? value, Type targetType, object? parameter, string language) =>
         throw new NotImplementedException();
 }

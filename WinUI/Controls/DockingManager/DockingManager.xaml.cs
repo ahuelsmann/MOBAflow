@@ -25,7 +25,7 @@ using Windows.ApplicationModel.DataTransfer;
 ///   - Focus Highlighting
 ///   - Drag &amp; Drop overlay with preview
 /// </summary>
-public sealed partial class DockingManager : UserControl
+public sealed partial class DockingManager
 {
     private const string DockPanelDataKey = "DockPanel";
     private const string DocumentTabDataKey = "DocumentTab";
@@ -815,8 +815,7 @@ public sealed partial class DockingManager : UserControl
         DockPosition.Left => LeftAutoHideBar,
         DockPosition.Right => RightAutoHideBar,
         DockPosition.Top => TopAutoHideBar,
-        DockPosition.Bottom => BottomAutoHideBar,
-        _ => BottomAutoHideBar
+        DockPosition.Bottom => BottomAutoHideBar
     };
 
     private Button CreateAutoHideTabButton(AutoHideEntry entry)
