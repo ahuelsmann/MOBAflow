@@ -144,7 +144,7 @@ dotnet test
 ### Meta & TODOs
 - [instructions.instructions.md](./instructions.instructions.md) - Instruction-Regeln
 - [prompt.instructions.md](./prompt.instructions.md) - Prompt-Guidelines
-- [todos.instructions.md](./todos.instructions.md) - Aktive TODOs
+- **Offene Arbeit:** Azure DevOps (Projekt MOBAflow, MCP) – Features/Tasks/Backlog. [todos.instructions.md](./todos.instructions.md) – optional Session-Historie/technische Notizen.
 - [todos/](./todos/) - TODO-Unterordner (4 Dateien)
 
 ### Project Overview

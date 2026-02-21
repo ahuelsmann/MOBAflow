@@ -17,7 +17,8 @@ Die Regeln in **`.github/copilot-instructions.md`** sind verbindlich und werden 
 
 - **Vor dem Coden:** Analyse, Recherche, Plan (z. B. Todo-Liste oder kurzer Plan); nie „sofort coden“.
 - **XAML:** Nur `ThemeResource` für Farben/Brushes, keine hardcodierten Farben.
-- **Code:** Keine TODOs im Code → in `todos.instructions.md` dokumentieren; keine `.Result`/`.Wait()` → `await`; Magic Numbers vermeiden.
+- **Code:** Keine TODOs im Code → Work Item in Azure DevOps (MOBAflow) oder `todos.instructions.md`; keine `.Result`/`.Wait()` → `await`; Magic Numbers vermeiden.
+- **Offene Arbeit:** Azure DevOps (MCP) ist die Quelle für Features/Tasks; bei „was ist offen?“ zuerst ADO abfragen.
 - **MVVM:** `[ObservableProperty]`, `[RelayCommand]`, Domain und ViewModel trennen; in Views so wenig Code-Behind wie möglich.
 - **DI:** Constructor Injection, kein Service Locator.
 - **Struktur:** Eine zentrale `README.md` im Root; keine zusätzlichen README in Unterordnern.

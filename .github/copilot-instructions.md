@@ -25,9 +25,10 @@
    - Keine `<ItemGroup><Page Remove="View\DockingPage.xaml" /></ItemGroup>`
    - Keine `<Compile Update="View\DockingPage.xaml.cs"><DependentUpon>DockingPage.xaml</DependentUpon></Compile>`
 
-7. ❌ **Keine TODOs im Code** — IMMER in `todos.instructions.md` dokumentieren
+7. ❌ **Keine TODOs im Code** — in Azure DevOps (Work Item) oder in `todos.instructions.md` dokumentieren
+   - Bevorzugt: Task/Feature in Azure DevOps (Projekt MOBAflow) anlegen
    - Exception: Temporäre Marker während aktiven Debug (mit Datum)
-   - Regel: Vor Commit entfernen oder zu todos.md verschieben
+   - Regel: Vor Commit entfernen oder in ADO/todos dokumentieren
 
 ---
 
@@ -181,7 +182,8 @@ Microsoft-Dokumentation über das MCP‑Tool `microsoft-learn` abrufen.
 Details in `.github/instructions/`:
 
 ### Workflow & Patterns
-- `todos.instructions.md` – Offene Aufgaben / Roadmap  
+- **Offene Arbeit / Roadmap:** **Azure DevOps** (Projekt MOBAflow) ist die maßgebliche Quelle. Bei Fragen wie „was ist offen?“ oder „Features/Tasks“ zuerst das **Azure-DevOps-MCP** nutzen (Work Items, Features, Backlog). `todos.instructions.md` kann weiterhin für Session-Historie oder technische Notizen genutzt werden.
+- `todos.instructions.md` – optional: Session-Status, technische Roadmap-Notizen (wenn nicht in ADO abgebildet)
 - `naming-conventions.instructions.md` – C# Naming Standards (Protocol Constants)  
 - `di-pattern-consistency.instructions.md` – DI-Regeln  
 - `plan-completion.instructions.md` – Plan-Validierung, Build-Checks  
@@ -197,7 +199,7 @@ Details in `.github/instructions/`:
 
 Vor **Commit** IMMER überprüfen:
 - [ ] `.editorconfig` befolgt (Formatting)
-- [ ] Keine `TODO` Comments (→ todos.instructions.md)
+- [ ] Keine `TODO` Comments (→ Work Item in Azure DevOps oder todos.instructions.md)
 - [ ] Keine Magic Numbers (→ Named Constants)
 - [ ] Keine `.Result` / `.Wait()` (→ `await`)
 - [ ] Constructor Injection statt `new Service()`
