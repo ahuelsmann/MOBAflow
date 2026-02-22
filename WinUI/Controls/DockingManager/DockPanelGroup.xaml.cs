@@ -12,9 +12,20 @@ using System.Collections.Specialized;
 using System.Linq;
 
 /// <summary>
-/// Groups multiple DockPanels into a TabView for a single dock position.
-/// Single panel: renders DockPanel directly (no tab overhead).
-/// Multiple panels: renders TabView with tabs per panel.
+/// Legt fest, wie mehrere Panels in einer Dock-Gruppe dargestellt werden.
+/// </summary>
+public enum DockGroupLayoutMode
+{
+    /// <summary>Panels gleichmäßig aufteilen (Split).</summary>
+    Split,
+
+    /// <summary>Panels als Tabs gestapelt, per Tab auswählbar.</summary>
+    Tabbed
+}
+
+/// <summary>
+/// Gruppiert mehrere DockPanels für eine Dock-Position.
+/// Ein Panel: direkte Anzeige. Mehrere: je nach LayoutMode gleichmäßig geteilt (Split) oder als Tabs (Tabbed).
 /// </summary>
 public sealed class DockPanelGroup : UserControl
 {
@@ -22,6 +33,7 @@ public sealed class DockPanelGroup : UserControl
     private readonly Grid _singlePanelView;
     private readonly ContentPresenter _singlePanelPresenter;
     private readonly TabView _panelTabView;
+    private readonly Grid _splitView;
     private readonly TextBlock _emptyState;
 
     /// <summary>
@@ -47,6 +59,13 @@ public sealed class DockPanelGroup : UserControl
             typeof(DockPosition),
             typeof(DockPanelGroup),
             new PropertyMetadata(DockPosition.Left, OnDockPositionChanged));
+
+    public static readonly DependencyProperty LayoutModeProperty =
+        DependencyProperty.Register(
+            nameof(LayoutMode),
+            typeof(DockGroupLayoutMode),
+            typeof(DockPanelGroup),
+            new PropertyMetadata(DockGroupLayoutMode.Tabbed, OnLayoutModeChanged));
 
     public DockPanelGroup()
     {
@@ -76,6 +95,13 @@ public sealed class DockPanelGroup : UserControl
             VerticalAlignment = VerticalAlignment.Stretch
         };
 
+        _splitView = new Grid
+        {
+            Visibility = Visibility.Collapsed,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+
         _emptyState = new TextBlock
         {
             HorizontalAlignment = HorizontalAlignment.Center,
@@ -92,6 +118,7 @@ public sealed class DockPanelGroup : UserControl
         };
         rootGrid.Children.Add(_singlePanelView);
         rootGrid.Children.Add(_panelTabView);
+        rootGrid.Children.Add(_splitView);
         rootGrid.Children.Add(_emptyState);
 
         Content = rootGrid;
@@ -113,6 +140,15 @@ public sealed class DockPanelGroup : UserControl
     {
         get => (DockPosition)GetValue(DockPositionProperty);
         set => SetValue(DockPositionProperty, value);
+    }
+
+    /// <summary>
+    /// Legt fest, ob mehrere Panels gleichmäßig geteilt (Split) oder als Tabs gestapelt (Tabbed) dargestellt werden.
+    /// </summary>
+    public DockGroupLayoutMode LayoutMode
+    {
+        get => (DockGroupLayoutMode)GetValue(LayoutModeProperty);
+        set => SetValue(LayoutModeProperty, value);
     }
 
     /// <summary>
@@ -286,6 +322,7 @@ public sealed class DockPanelGroup : UserControl
         _emptyState.Visibility = Visibility.Collapsed;
         _singlePanelView.Visibility = Visibility.Collapsed;
         _panelTabView.Visibility = Visibility.Collapsed;
+        _splitView.Visibility = Visibility.Collapsed;
 
         switch (_panels.Count)
         {
@@ -293,22 +330,76 @@ public sealed class DockPanelGroup : UserControl
                 _emptyState.Visibility = Visibility.Visible;
                 _singlePanelPresenter.Content = null;
                 _panelTabView.TabItems.Clear();
+                _splitView.Children.Clear();
+                _splitView.RowDefinitions.Clear();
+                _splitView.ColumnDefinitions.Clear();
                 break;
 
             case 1:
                 _singlePanelView.Visibility = Visibility.Visible;
                 _singlePanelPresenter.Content = _panels[0];
                 _panelTabView.TabItems.Clear();
+                _splitView.Children.Clear();
+                _splitView.RowDefinitions.Clear();
+                _splitView.ColumnDefinitions.Clear();
                 break;
 
             default:
-                _panelTabView.Visibility = Visibility.Visible;
                 _singlePanelPresenter.Content = null;
-                RebuildTabs();
+
+                if (LayoutMode == DockGroupLayoutMode.Split)
+                {
+                    _splitView.Visibility = Visibility.Visible;
+                    RebuildSplitView();
+                }
+                else
+                {
+                    _panelTabView.Visibility = Visibility.Visible;
+                    RebuildTabs();
+                }
                 break;
         }
 
         RaisePanelExpansionChanged();
+    }
+
+    private void RebuildSplitView()
+    {
+        _splitView.Children.Clear();
+        _splitView.RowDefinitions.Clear();
+        _splitView.ColumnDefinitions.Clear();
+
+        var isVertical = DockPosition == DockPosition.Left || DockPosition == DockPosition.Right;
+        var count = _panels.Count;
+
+        if (isVertical)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                _splitView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            }
+
+            for (var i = 0; i < count; i++)
+            {
+                var panel = _panels[i];
+                Grid.SetRow(panel, i);
+                _splitView.Children.Add(panel);
+            }
+        }
+        else
+        {
+            for (var i = 0; i < count; i++)
+            {
+                _splitView.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            }
+
+            for (var i = 0; i < count; i++)
+            {
+                var panel = _panels[i];
+                Grid.SetColumn(panel, i);
+                _splitView.Children.Add(panel);
+            }
+        }
     }
 
     private void RebuildTabs()
@@ -391,12 +482,27 @@ public sealed class DockPanelGroup : UserControl
 
     private static void OnDockPositionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is DockPanelGroup group && e.NewValue is DockPosition position)
+        if (d is not DockPanelGroup group || e.NewValue is not DockPosition position)
         {
-            foreach (var panel in group._panels)
-            {
-                panel.DockPosition = position;
-            }
+            return;
+        }
+
+        foreach (var panel in group._panels)
+        {
+            panel.DockPosition = position;
+        }
+
+        if (group._panels.Count >= 2 && group.LayoutMode == DockGroupLayoutMode.Split)
+        {
+            group.UpdateView();
+        }
+    }
+
+    private static void OnLayoutModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is DockPanelGroup group && group._panels.Count >= 2)
+        {
+            group.UpdateView();
         }
     }
 }

@@ -559,11 +559,10 @@
                     </Grid>
                 </Border>
 
-                <!--  Bereich 2 (Top-Row): Journey Info / Timetable Stops  -->
+                <!--  Bereich 2 (Top-Left): Journey Info / Timetable Stops  -->
                 <controls:TimetableStopsControl
                     Grid.Row="0"
                     Grid.Column="0"
-                    Grid.ColumnSpan="2"
                     CurrentStationArrivalValue="{x:Bind ViewModel.CurrentStationArrival, Mode=OneWay}"
                     CurrentStationDepartureValue="{x:Bind ViewModel.CurrentStationDeparture, Mode=OneWay}"
                     CurrentStationHasValue="{x:Bind ViewModel.CurrentStationHasValue, Mode=OneWay}"
@@ -755,6 +754,45 @@
                                 </Grid>
                             </Border>
                         </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!--  Bereich 4 (Top-Right): Functions  -->
+                <Border Grid.Row="0" Grid.Column="1">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <!--  Bremse: Rot = aktiv (Icon gelb mit Ausrufezeichen), Grün = gelöst (Icon weiß/schwarz je Theme, ohne Ausrufezeichen)  -->
+                        <Button
+                            x:Name="BrakeButton"
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            Background="{x:Bind ViewModel.BrakeButtonColorHex, Mode=OneWay, Converter={StaticResource HexColorToBrushConverter}}"
+                            Command="{x:Bind ViewModel.ToggleBrakeCommand}"
+                            ContentTemplate="{x:Bind BrakeIconTemplate, Mode=OneWay}"
+                            IsEnabled="{x:Bind ViewModel.IsBrakeButtonEnabled, Mode=OneWay}"
+                            Style="{StaticResource NeonGlowButtonStyle}" />
+                        <!--  Türfreigabe: Grün/DoorOpen = freigegeben, Rot/DoorClose = gesperrt; nur klickbar wenn Bremse aktiv (rot); 5 s Gelb mit Blinken  -->
+                        <Button
+                            x:Name="DoorReleaseButton"
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Background="{x:Bind ViewModel.DoorReleaseButtonColorHex, Mode=OneWay, Converter={StaticResource HexColorToBrushConverter}}"
+                            Command="{x:Bind ViewModel.ToggleDoorReleaseCommand}"
+                            ContentTemplate="{x:Bind DoorReleaseIconTemplate, Mode=OneWay}"
+                            IsEnabled="{x:Bind ViewModel.IsDoorReleaseButtonEnabled, Mode=OneWay}"
+                            Opacity="{x:Bind ViewModel.DoorReleaseBlinkOpacity, Mode=OneWay}"
+                            Style="{StaticResource NeonGlowButtonStyle}" />
                     </Grid>
                 </Border>
             </Grid>

@@ -39,8 +39,25 @@ using Windows.UI.ViewManagement;
     FeatureToggleKey = "IsTrainControlPageAvailable",
     BadgeLabelKey = "TrainControlPageLabel",
     IsBold = true)]
-public sealed partial class TrainControlPage
+public sealed partial class TrainControlPage : INotifyPropertyChanged
 {
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    /// <summary>
+    /// DataTemplate für den Türfreigabe-Button (DoorOpen oder DoorClose je nach ViewModel.ShowDoorCloseIcon).
+    /// </summary>
+    public DataTemplate? DoorReleaseIconTemplate => ViewModel.ShowDoorCloseIcon ? _doorCloseTemplate : _doorOpenTemplate;
+
+    /// <summary>
+    /// DataTemplate für den Bremse-Button: BrakeActiveIcon (gelb mit Ausrufezeichen) wenn Bremse an, sonst BrakeReleasedIcon (Theme, ohne Ausrufezeichen).
+    /// </summary>
+    public DataTemplate? BrakeIconTemplate => ViewModel.BrakeEngaged ? _brakeActiveTemplate : _brakeReleasedTemplate;
+
+    private DataTemplate? _doorOpenTemplate;
+    private DataTemplate? _doorCloseTemplate;
+    private DataTemplate? _brakeActiveTemplate;
+    private DataTemplate? _brakeReleasedTemplate;
+
     private readonly ILocomotiveService _locomotiveService;
     private readonly ISkinProvider _skinProvider;
     private readonly AppSettings _settings;
@@ -87,6 +104,9 @@ public sealed partial class TrainControlPage
         SkinViewModel = skinViewModel;
 
         InitializeComponent();
+
+        // Icons sofort laden, damit Bremse- und Türfreigabe-Button beim Start sichtbar sind (nicht erst in OnLoaded)
+        LoadIconTemplates();
 
         // Subscribe to skin changes for dynamic updates
         _skinProvider.SkinChanged += OnSkinProviderChanged;
@@ -243,6 +263,20 @@ public sealed partial class TrainControlPage
             UpdateVmaxDisplay();
             UpdateSpeedometerScale();  // This will update both MaxValue and VmaxKmh
         }
+
+        if (e.PropertyName is nameof(ViewModel.DoorReleaseLocked) or nameof(ViewModel.DoorReleaseBlinking) or nameof(ViewModel.DoorReleaseLockedNext))
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DoorReleaseIconTemplate)));
+        if (e.PropertyName is nameof(ViewModel.BrakeEngaged))
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BrakeIconTemplate)));
+    }
+
+    private void LoadIconTemplates()
+    {
+        var appRes = Application.Current.Resources;
+        _doorOpenTemplate = appRes.ContainsKey("DoorOpenIcon") ? appRes["DoorOpenIcon"] as DataTemplate : null;
+        _doorCloseTemplate = appRes.ContainsKey("DoorCloseIcon") ? appRes["DoorCloseIcon"] as DataTemplate : null;
+        _brakeActiveTemplate = appRes.ContainsKey("BrakeActiveIcon") ? appRes["BrakeActiveIcon"] as DataTemplate : null;
+        _brakeReleasedTemplate = appRes.ContainsKey("BrakeReleasedIcon") ? appRes["BrakeReleasedIcon"] as DataTemplate : null;
     }
 
     private void UpdateVmaxDisplay()
@@ -278,6 +312,11 @@ public sealed partial class TrainControlPage
         _skinProvider.SkinChanged += OnSkinProviderChanged;
         _skinProvider.DarkModeChanged += OnDarkModeChanged;
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+
+        // Templates ggf. erneut laden (falls beim Start noch nicht verfügbar) und UI aktualisieren
+        LoadIconTemplates();
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BrakeIconTemplate)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DoorReleaseIconTemplate)));
 
         // Find and store references to themed elements
         _speedometer = FindName("Speedometer") as SpeedometerControl;

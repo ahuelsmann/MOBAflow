@@ -311,7 +311,7 @@ All 8 domain types should be represented in solution.json to serve as a complete
 
 | Package | Version | Purpose | Impact |
 |---------|---------|---------|--------|
-| **Polly** | 8.2.0+ | Resilience policies (retry, circuit breaker, timeout) | Z21 connection reliability |
+| **Polly** | 8.2.0+ | Resilience (retry, circuit breaker, timeout) | Optional: bei Bedarf später für Z21 ergänzen |
 | **Spectre.Console** | 0.50.0+ | Rich console output (for CLI tools, debugging) | Better diagnostics |
 | **FluentValidation** | 11.8.0+ | Configuration & DTO validation | Catch invalid configs early |
 | **MediatR** | 12.1.0+ | CQRS pattern (decouple commands/queries) | Cleaner architecture |
@@ -320,7 +320,7 @@ All 8 domain types should be represented in solution.json to serve as a complete
 
 | Package | Version | Purpose | Use Case |
 |---------|---------|---------|----------|
-| **Mapster** | 8.0.0+ | High-perf object mapping | ViewModel ↔ Domain conversions |
+| **Mapster** | 8.0.0+ | High-perf object mapping | ViewModel ↔ Domain conversions (Vorteil: siehe unten) |
 | **Dapper** | 2.1.0+ | Lightweight ORM (if DB is added) | Solution/Journey persistence |
 | **MessagePack** | 2.5.0+ | Binary serialization (vs JSON) | High-freq Z21 data serialization |
 | **SharpZipLib** | 1.4.0+ | ZIP compression | Solution/Backup export |
@@ -346,8 +346,8 @@ dotnet add WinUI package Serilog.Sinks.Async
 dotnet add WinUI package Serilog.Enrichers.Environment
 dotnet add WinUI package Serilog.Enrichers.Process
 
-# Resilience (MEDIUM PRIORITY - for Z21 reliability)
-dotnet add Backend package Polly
+# Resilience (OPTIONAL - bei Bedarf später für Z21 ergänzen)
+# dotnet add Backend package Polly
 
 # Validation (MEDIUM PRIORITY)
 dotnet add Common package FluentValidation
@@ -365,11 +365,13 @@ dotnet tool install -g dotnet-coverage
 ## 🎯 Implementation Roadmap (by session)
 
 **Session 33:** Polish Signal Box feature: visual alignment, conditional rendering, test all configurations
-**Session 34:** Add Polly resilience policies for Z21 connection
+**Session 34:** Polly (optional): bei Bedarf später ergänzen für Z21-Resilience
 **Session 35:** ✅ Track Plan Win2D Phase 1 (completed)
 **Session 35:** Add FluentValidation for AppSettings validation
-**Session 36:** Add MediatR for CQRS pattern in ViewModel commands
-**Session 37:** Add Mapster for high-performance object mapping
+**Session 36:** (MediatR/CQRS – aktuell nicht geplant, Architektur passt)
+**Session 37:** Mapster optional – siehe „Vorteil Mapster“ unten
+
+**Vorteil Mapster:** Spart Boilerplate bei Domain ↔ ViewModel/DTO: statt vieler Zeilen manueller Property-Kopien eine Zeile `source.Adapt<Dest>()`. Weniger Fehler beim Erweitern von Modellen, oft bessere Performance bei vielen Mappings. Lohnt sich, wenn ihr viele Konvertierungen (z. B. Locomotive/Journey ↔ Anzeige- oder API-Modelle) habt; bei wenigen, einfachen Fällen optional.
 
 ---
 

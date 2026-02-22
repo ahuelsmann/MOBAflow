@@ -304,7 +304,8 @@ public partial class App
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<MainWindowViewModel>(),
             sp.GetService<ITripLogService>(),
-            sp.GetService<ILogger<TrainControlViewModel>>()
+            sp.GetService<ILogger<TrainControlViewModel>>(),
+            sp.GetService<SharedUI.Interface.IUiDispatcher>()
         ));
 
         // TrackPlan (model and ViewModel)

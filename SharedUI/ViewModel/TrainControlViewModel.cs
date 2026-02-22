@@ -17,6 +17,9 @@ using Interface;
 
 using Microsoft.Extensions.Logging;
 
+using System.Threading;
+using System.Threading.Tasks;
+
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -41,8 +44,11 @@ public sealed partial class TrainControlViewModel : ObservableObject
     private readonly ISettingsService _settingsService;
     private readonly ITripLogService? _tripLogService;
     private readonly ILogger<TrainControlViewModel>? _logger;
+    private readonly IUiDispatcher? _uiDispatcher;
 
     private bool _isLoadingPreset;
+    private int _previousSpeed;
+    private CancellationTokenSource? _doorReleaseBlinkCts;
 
     // === DCC Speed Steps Configuration ===
 
@@ -233,6 +239,9 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SpeedKmh))]
+    [NotifyPropertyChangedFor(nameof(DoorReleaseButtonColorHex))]
+    [NotifyPropertyChangedFor(nameof(IsDoorReleaseButtonEnabled))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleDoorReleaseCommand))]
     private int _speed;
 
     // === Locomotive Series (Baureihe) for Vmax calculation ===
@@ -375,6 +384,91 @@ public sealed partial class TrainControlViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isF20On;
+
+    // === Bremse (Lok: Feststellbremse/Federspeicherbremse) und Türfreigabe ===
+    // Ablauf: Geschw. 0 → Bremse an → Tür freigeben; Ende: Tür schließen → Bremse lösen → Fahren.
+
+    /// <summary>
+    /// Bremse angelegt (Feststellbremse/Federspeicherbremse): Geschwindigkeit 0, kann nicht erhöht werden.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(BrakeButtonColorHex))]
+    [NotifyPropertyChangedFor(nameof(IsBrakeButtonEnabled))]
+    [NotifyPropertyChangedFor(nameof(IsDoorReleaseButtonEnabled))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleBrakeCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleDoorReleaseCommand))]
+    private bool _brakeEngaged;
+
+    /// <summary>
+    /// Türfreigabe gesperrt (Türen zu): Icon DoorClose. Wenn freigegeben (Türen auf), kann Geschwindigkeit nicht erhöht werden.
+    /// Standard true = Türen zu, damit Bremse nach dem Anlegen wieder lösbar ist.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowDoorCloseIcon))]
+    [NotifyPropertyChangedFor(nameof(DoorReleaseButtonColorHex))]
+    [NotifyPropertyChangedFor(nameof(IsDoorReleaseButtonEnabled))]
+    [NotifyPropertyChangedFor(nameof(IsBrakeButtonEnabled))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleDoorReleaseCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleBrakeCommand))]
+    private bool _doorReleaseLocked = true;
+
+    /// <summary>
+    /// Während der 5-Sekunden-Übergangsphase blinkt der Button gelb (Farbe + Opacity-Wechsel).
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowDoorCloseIcon))]
+    [NotifyPropertyChangedFor(nameof(DoorReleaseButtonColorHex))]
+    [NotifyPropertyChangedFor(nameof(IsDoorReleaseButtonEnabled))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleDoorReleaseCommand))]
+    private bool _doorReleaseBlinking;
+
+    /// <summary>
+    /// Opacity des Türfreigabe-Buttons: während des Blinkens wechselnd 1.0 / 0.35, sonst 1.0.
+    /// </summary>
+    [ObservableProperty]
+    private double _doorReleaseBlinkOpacity = 1.0;
+
+    /// <summary>
+    /// Zielzustand der Türfreigabe nach Ablauf der 5-Sekunden-Blinkphase.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowDoorCloseIcon))]
+    private bool _doorReleaseLockedNext;
+
+    /// <summary>
+    /// True = DoorClose-Icon anzeigen, False = DoorOpen-Icon (für Bindung ContentTemplate).
+    /// </summary>
+    public bool ShowDoorCloseIcon => (DoorReleaseBlinking && DoorReleaseLockedNext) || (!DoorReleaseBlinking && DoorReleaseLocked);
+
+    /// <summary>
+    /// Hintergrundfarbe des Bremse-Buttons: Grün = gelöst, Rot = angelegt.
+    /// </summary>
+    public string BrakeButtonColorHex => BrakeEngaged ? "#E63946" : "#06D6A0";
+
+    /// <summary>
+    /// Bremse-Button: Anlegen immer möglich (setzt Geschw. auf 0). Lösen nur wenn Türfreigabe beendet (Türen zu).
+    /// </summary>
+    public bool IsBrakeButtonEnabled => !BrakeEngaged || DoorReleaseLocked;
+
+    /// <summary>
+    /// Segoe Fluent Glyph für Bremse: Pause (angelegt) oder Play (gelöst).
+    /// </summary>
+    public string BrakeButtonGlyph => BrakeEngaged ? "\uE72E" : "\uE102";
+
+    /// <summary>
+    /// Hintergrundfarbe des Türfreigabe-Buttons: Grün bei 0 km/h und freigegeben, Rot bei gesperrt oder &gt;0 km/h, Gelb beim Blinken.
+    /// </summary>
+    public string DoorReleaseButtonColorHex => DoorReleaseBlinking ? "#FFD700" : (!DoorReleaseLocked && SpeedKmh == 0 ? "#06D6A0" : "#E63946");
+
+    /// <summary>
+    /// Türfreigabe-Button nur klickbar wenn Bremse angelegt, 0 km/h und nicht während des Blinkens.
+    /// </summary>
+    public bool IsDoorReleaseButtonEnabled => BrakeEngaged && SpeedKmh == 0 && !DoorReleaseBlinking;
+
+    /// <summary>
+    /// Geschwindigkeit darf nur erhöht werden wenn Bremse gelöst und Türen geschlossen (Türfreigabe gesperrt).
+    /// </summary>
+    private bool CanIncreaseSpeed => !BrakeEngaged && DoorReleaseLocked;
 
     // === Function button symbols (F0–F20) – per-locomotive, from Domain.Locomotive.FunctionSymbols ===
 
@@ -715,7 +809,8 @@ public sealed partial class TrainControlViewModel : ObservableObject
         ISettingsService settingsService,
         MainWindowViewModel? mainWindowViewModel = null,
         ITripLogService? tripLogService = null,
-        ILogger<TrainControlViewModel>? logger = null)
+        ILogger<TrainControlViewModel>? logger = null,
+        IUiDispatcher? uiDispatcher = null)
     {
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(eventBus);
@@ -725,6 +820,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
         _mainWindowViewModel = mainWindowViewModel;
         _tripLogService = tripLogService;
         _logger = logger;
+        _uiDispatcher = uiDispatcher;
 
         // Load presets from settings
         LoadPresetsFromSettings();
@@ -1134,10 +1230,21 @@ public sealed partial class TrainControlViewModel : ObservableObject
 
     /// <summary>
     /// Called when Speed changes - send to Z21 and save to preset.
+    /// Erhöhung verhindert wenn Bremse angelegt oder Türfreigabe aktiv (Türen auf).
     /// </summary>
     partial void OnSpeedChanged(int value)
     {
         if (_skipSpeedChangeHandler || _isLoadingPreset) return;
+
+        if (!CanIncreaseSpeed && value > _previousSpeed)
+        {
+            _skipSpeedChangeHandler = true;
+            Speed = _previousSpeed;
+            _skipSpeedChangeHandler = false;
+            return;
+        }
+
+        _previousSpeed = value;
 
         // Save to current preset
         CurrentPreset.Speed = value;
@@ -1471,6 +1578,105 @@ public sealed partial class TrainControlViewModel : ObservableObject
     }
 
     /// <summary>
+    /// Bremse anlegen (Geschwindigkeit auf 0, dann Bremse an) oder lösen (nur wenn Türen geschlossen).
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(IsBrakeButtonEnabled))]
+    private async Task ToggleBrakeAsync()
+    {
+        if (!IsBrakeButtonEnabled) return;
+
+        if (BrakeEngaged)
+        {
+            BrakeEngaged = false;
+            _logger?.LogDebug("Bremse gelöst");
+        }
+        else
+        {
+            _skipSpeedChangeHandler = true;
+            Speed = 0;
+            _skipSpeedChangeHandler = false;
+            await SendDriveCommandAsync();
+            BrakeEngaged = true;
+            _logger?.LogDebug("Bremse angelegt, Geschwindigkeit 0");
+        }
+    }
+
+    /// <summary>
+    /// Schaltet die Türfreigabe um (freigeben/ sperren). 5 Sekunden gelbes Blinken (Opacity-Wechsel), dann Wechsel Icon/Farbe.
+    /// Nur ausführbar wenn Bremse angelegt (Button rot) und 0 km/h.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(IsDoorReleaseButtonEnabled))]
+    private async Task ToggleDoorReleaseAsync()
+    {
+        if (!IsDoorReleaseButtonEnabled || DoorReleaseBlinking) return;
+
+        DoorReleaseLockedNext = !DoorReleaseLocked;
+        DoorReleaseBlinking = true;
+        DoorReleaseBlinkOpacity = 1.0;
+        _doorReleaseBlinkCts?.Cancel();
+        _doorReleaseBlinkCts = new CancellationTokenSource();
+        var token = _doorReleaseBlinkCts.Token;
+
+        async Task RunBlinkLoopAsync()
+        {
+            const int intervalMs = 400;
+            const int totalMs = 5000;
+            for (var elapsed = 0; elapsed < totalMs && !token.IsCancellationRequested; elapsed += intervalMs)
+            {
+                try
+                {
+                    await Task.Delay(intervalMs, token);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+
+                if (_uiDispatcher != null)
+                    _uiDispatcher.InvokeOnUi(() => DoorReleaseBlinkOpacity = DoorReleaseBlinkOpacity == 1.0 ? 0.35 : 1.0);
+                else
+                    DoorReleaseBlinkOpacity = DoorReleaseBlinkOpacity == 1.0 ? 0.35 : 1.0;
+            }
+        }
+
+        try
+        {
+            await Task.WhenAll(
+                Task.Delay(TimeSpan.FromSeconds(5), token),
+                RunBlinkLoopAsync());
+        }
+        catch (OperationCanceledException)
+        {
+            if (_uiDispatcher != null)
+                _uiDispatcher.InvokeOnUi(() => { DoorReleaseBlinkOpacity = 1.0; DoorReleaseBlinking = false; });
+            else
+            {
+                DoorReleaseBlinkOpacity = 1.0;
+                DoorReleaseBlinking = false;
+            }
+            return;
+        }
+
+        if (_uiDispatcher != null)
+        {
+            _uiDispatcher.InvokeOnUi(() =>
+            {
+                DoorReleaseLocked = DoorReleaseLockedNext;
+                DoorReleaseBlinking = false;
+                DoorReleaseBlinkOpacity = 1.0;
+            });
+        }
+        else
+        {
+            DoorReleaseLocked = DoorReleaseLockedNext;
+            DoorReleaseBlinking = false;
+            DoorReleaseBlinkOpacity = 1.0;
+        }
+
+        _logger?.LogDebug("Türfreigabe {State}", DoorReleaseLocked ? "gesperrt" : "freigegeben");
+    }
+
+    /// <summary>
     /// Emergency stop for the current locomotive.
     /// Sets speed to 0 immediately.
     /// </summary>
@@ -1539,7 +1745,8 @@ public sealed partial class TrainControlViewModel : ObservableObject
             _ => 0
         };
 
-        Speed = Math.Clamp(preset, 0, 126);
+        var maxSpeed = CanIncreaseSpeed ? 126 : Speed;
+        Speed = Math.Clamp(preset, 0, maxSpeed);
         _logger?.LogDebug("Speed preset set to {Preset}", preset);
     }
 

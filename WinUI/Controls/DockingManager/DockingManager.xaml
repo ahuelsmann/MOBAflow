@@ -267,7 +267,7 @@
             <ContentPresenter Content="{x:Bind StatusBarContent, Mode=OneWay}" />
         </Grid>
 
-        <!--  Docking Overlay (spans main content)  -->
+        <!--  Docking Overlay: nur Preview-Box für Drop-Ziel, keine Orientierungshilfe  -->
         <Grid
             x:Name="OverlayLayer"
             Grid.Row="0"
@@ -285,118 +285,6 @@
                     Opacity="0.25"
                     Visibility="Collapsed" />
             </Canvas>
-
-            <Grid
-                Width="160"
-                Height="160"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-
-                <!--  Top  -->
-                <Border
-                    Grid.Row="0"
-                    Grid.Column="1"
-                    Width="36"
-                    Height="36"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1"
-                    CornerRadius="6">
-                    <FontIcon
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        FontFamily="{StaticResource SymbolThemeFontFamily}"
-                        FontSize="14"
-                        Glyph="&#xE74A;" />
-                </Border>
-
-                <!--  Left  -->
-                <Border
-                    Grid.Row="1"
-                    Grid.Column="0"
-                    Width="36"
-                    Height="36"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1"
-                    CornerRadius="6">
-                    <FontIcon
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        FontFamily="{StaticResource SymbolThemeFontFamily}"
-                        FontSize="14"
-                        Glyph="&#xE74B;" />
-                </Border>
-
-                <!--  Center  -->
-                <Border
-                    Grid.Row="1"
-                    Grid.Column="1"
-                    Width="36"
-                    Height="36"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
-                    BorderThickness="2"
-                    CornerRadius="6">
-                    <FontIcon
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        FontFamily="{StaticResource SymbolThemeFontFamily}"
-                        FontSize="14"
-                        Glyph="&#xE737;" />
-                </Border>
-
-                <!--  Right  -->
-                <Border
-                    Grid.Row="1"
-                    Grid.Column="2"
-                    Width="36"
-                    Height="36"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1"
-                    CornerRadius="6">
-                    <FontIcon
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        FontFamily="{StaticResource SymbolThemeFontFamily}"
-                        FontSize="14"
-                        Glyph="&#xE72A;" />
-                </Border>
-
-                <!--  Bottom  -->
-                <Border
-                    Grid.Row="2"
-                    Grid.Column="1"
-                    Width="36"
-                    Height="36"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1"
-                    CornerRadius="6">
-                    <FontIcon
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        FontFamily="{StaticResource SymbolThemeFontFamily}"
-                        FontSize="14"
-                        Glyph="&#xE74B;"
-                        RenderTransformOrigin="0.5,0.5">
-                        <FontIcon.RenderTransform>
-                            <RotateTransform Angle="180" />
-                        </FontIcon.RenderTransform>
-                    </FontIcon>
-                </Border>
-            </Grid>
         </Grid>
 
         <!--  Focus Highlight Border  -->

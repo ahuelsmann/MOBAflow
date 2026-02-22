@@ -168,6 +168,50 @@ public sealed partial class DockingManager
             typeof(DockingManager),
             new PropertyMetadata(null));
 
+    public static readonly DependencyProperty LeftLayoutModeProperty =
+        DependencyProperty.Register(
+            nameof(LeftLayoutMode),
+            typeof(DockGroupLayoutMode),
+            typeof(DockingManager),
+            new PropertyMetadata(DockGroupLayoutMode.Tabbed, OnLayoutModeChanged));
+
+    public static readonly DependencyProperty RightLayoutModeProperty =
+        DependencyProperty.Register(
+            nameof(RightLayoutMode),
+            typeof(DockGroupLayoutMode),
+            typeof(DockingManager),
+            new PropertyMetadata(DockGroupLayoutMode.Tabbed, OnLayoutModeChanged));
+
+    public static readonly DependencyProperty TopLayoutModeProperty =
+        DependencyProperty.Register(
+            nameof(TopLayoutMode),
+            typeof(DockGroupLayoutMode),
+            typeof(DockingManager),
+            new PropertyMetadata(DockGroupLayoutMode.Tabbed, OnLayoutModeChanged));
+
+    public static readonly DependencyProperty BottomLayoutModeProperty =
+        DependencyProperty.Register(
+            nameof(BottomLayoutMode),
+            typeof(DockGroupLayoutMode),
+            typeof(DockingManager),
+            new PropertyMetadata(DockGroupLayoutMode.Tabbed, OnLayoutModeChanged));
+
+    private static void OnLayoutModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is DockingManager manager)
+        {
+            manager.SyncLayoutModesToGroups();
+        }
+    }
+
+    private void SyncLayoutModesToGroups()
+    {
+        LeftPanelGroup.LayoutMode = LeftLayoutMode;
+        RightPanelGroup.LayoutMode = RightLayoutMode;
+        TopPanelGroup.LayoutMode = TopLayoutMode;
+        BottomPanelGroup.LayoutMode = BottomLayoutMode;
+    }
+
     #endregion
 
     public DockingManager()
@@ -183,7 +227,8 @@ public sealed partial class DockingManager
         _rightExpandedWidth = RightPanelWidth;
         _topExpandedHeight = TopPanelHeight;
         _bottomExpandedHeight = BottomPanelHeight;
-        
+
+        SyncLayoutModesToGroups();
         UpdateSideWidth(DockPosition.Left, LeftPanelGroup);
         UpdateSideWidth(DockPosition.Right, RightPanelGroup);
         UpdateSideWidth(DockPosition.Top, TopPanelGroup);
@@ -274,6 +319,34 @@ public sealed partial class DockingManager
     {
         get => (ObservableCollection<DockPanel>?)GetValue(BottomPanelsProperty);
         set => SetValue(BottomPanelsProperty, value);
+    }
+
+    /// <summary>Layout-Modus der linken Dock-Gruppe (Split = gleichmäßig, Tabbed = Tabs).</summary>
+    public DockGroupLayoutMode LeftLayoutMode
+    {
+        get => (DockGroupLayoutMode)GetValue(LeftLayoutModeProperty);
+        set => SetValue(LeftLayoutModeProperty, value);
+    }
+
+    /// <summary>Layout-Modus der rechten Dock-Gruppe.</summary>
+    public DockGroupLayoutMode RightLayoutMode
+    {
+        get => (DockGroupLayoutMode)GetValue(RightLayoutModeProperty);
+        set => SetValue(RightLayoutModeProperty, value);
+    }
+
+    /// <summary>Layout-Modus der oberen Dock-Gruppe.</summary>
+    public DockGroupLayoutMode TopLayoutMode
+    {
+        get => (DockGroupLayoutMode)GetValue(TopLayoutModeProperty);
+        set => SetValue(TopLayoutModeProperty, value);
+    }
+
+    /// <summary>Layout-Modus der unteren Dock-Gruppe.</summary>
+    public DockGroupLayoutMode BottomLayoutMode
+    {
+        get => (DockGroupLayoutMode)GetValue(BottomLayoutModeProperty);
+        set => SetValue(BottomLayoutModeProperty, value);
     }
 
     #endregion
