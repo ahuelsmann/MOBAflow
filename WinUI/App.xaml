@@ -15,7 +15,6 @@
                 <ResourceDictionary Source="/Resources/SignalGraphics.xaml" />
                 <ResourceDictionary Source="/Resources/Icons.xaml" />
             </ResourceDictionary.MergedDictionaries>
-
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="SurfaceSecondaryBrush" Color="#FFF3F3F3" />

@@ -280,17 +280,36 @@
                 <ControlTemplate TargetType="Button">
                     <Grid>
                         <!--  Glow nur als Ring (BorderBrush), kein Fill – Innenbereich bleibt transparent  -->
-                        <Border x:Name="GlowOuter" Margin="-12" Background="Transparent" BorderBrush="{TemplateBinding Background}" BorderThickness="10" CornerRadius="18" Opacity="0.2" />
-                        <Border x:Name="GlowMid" Margin="-6" Background="Transparent" BorderBrush="{TemplateBinding Background}" BorderThickness="6" CornerRadius="14" Opacity="0.35" />
-                        <Border x:Name="MainBorder" Background="Transparent" BorderBrush="{TemplateBinding Background}" BorderThickness="2" CornerRadius="12">
+                        <Border
+                            x:Name="GlowOuter"
+                            Margin="-12"
+                            Background="Transparent"
+                            BorderBrush="{TemplateBinding Background}"
+                            BorderThickness="10"
+                            CornerRadius="18"
+                            Opacity="0.2" />
+                        <Border
+                            x:Name="GlowMid"
+                            Margin="-6"
+                            Background="Transparent"
+                            BorderBrush="{TemplateBinding Background}"
+                            BorderThickness="6"
+                            CornerRadius="14"
+                            Opacity="0.35" />
+                        <Border
+                            x:Name="MainBorder"
+                            Background="Transparent"
+                            BorderBrush="{TemplateBinding Background}"
+                            BorderThickness="2"
+                            CornerRadius="12">
                             <ContentPresenter
                                 x:Name="ContentPresenter"
+                                Padding="{TemplateBinding Padding}"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
                                 Content="{TemplateBinding Content}"
                                 ContentTemplate="{TemplateBinding ContentTemplate}"
-                                Foreground="{TemplateBinding Foreground}"
-                                Padding="{TemplateBinding Padding}" />
+                                Foreground="{TemplateBinding Foreground}" />
                         </Border>
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="CommonStates">

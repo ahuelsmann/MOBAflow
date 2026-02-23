@@ -8,7 +8,10 @@
     <!--  ScaleTransform skaliert das Icon (0,65 = kleiner, mit Abstand zum inneren Rahmen).  -->
 
     <DataTemplate x:Key="DoorOpenIcon">
-        <Viewbox HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform">
+        <Viewbox
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Stretch="Uniform">
             <Canvas Width="21000" Height="29700">
                 <Canvas.RenderTransform>
                     <TransformGroup>
@@ -18,24 +21,45 @@
                         <TranslateTransform X="10500" Y="14850" />
                     </TransformGroup>
                 </Canvas.RenderTransform>
-                <Path Fill="Transparent" Stroke="{ThemeResource IconStrokeBrush}" StrokeThickness="1000"
-                      Data="M -44515,-450 l 13876,0 c 276,0 500,200 500,447 l 0,29106 c 0,247 -224,447 -500,447 l -13876,0 c -276,0 -500,-200 -500,-447 l 0,-29106 c 0,-247 224,-447 500,-447 z" />
-                <Path Fill="Transparent" Stroke="{ThemeResource IconStrokeBrush}" StrokeThickness="1000"
-                      Data="M -28909,-450 l 13876,0 c 276,0 500,200 500,447 l 0,29106 c 0,247 -224,447 -500,447 l -13876,0 c -276,0 -500,-200 -500,-447 l 0,-29106 c 0,-247 224,-447 500,-447 z" />
-                <Path Fill="Transparent" Stroke="{ThemeResource IconStrokeBrush}" StrokeThickness="1000"
-                      Data="M -26673,2050 l 9328,0 c 186,0 336,100 336,224 l 0,14552 c 0,124 -150,224 -336,224 l -9328,0 c -186,0 -336,-100 -336,-224 l 0,-14552 c 0,-124 150,-224 336,-224 z" />
-                <Path Fill="Transparent" Stroke="{ThemeResource IconStrokeBrush}" StrokeThickness="1000"
-                      Data="M -42301,2050 l 9328,0 c 186,0 336,100 336,224 l 0,14552 c 0,124 -150,224 -336,224 l -9328,0 c -186,0 -336,-100 -336,-224 l 0,-14552 c 0,-124 150,-224 336,-224 z" />
-                <Path Fill="Transparent" Stroke="{ThemeResource IconStrokeBrush}" StrokeThickness="1000"
-                      Data="M -11811,13495 l 0,0 0,0 4621,-3945 -4621,-3945 0,0 0,0 0,7890 z m 0,0 m 0,0 m 2310,-1972 m 0,-3946 m -2310,-1972 m 0,0 m 0,3945" />
-                <Path Fill="Transparent" Stroke="{ThemeResource IconStrokeBrush}" StrokeThickness="1000"
-                      Data="M -47690,5605 l 0,0 0,0 -4621,3945 4621,3945 0,0 0,0 0,-7890 z m 0,0 m 0,0 m -2310,1972 m 0,3946 m 2310,1972 m 0,0 m 0,-3945" />
+                <Path
+                    Data="M -44515,-450 l 13876,0 c 276,0 500,200 500,447 l 0,29106 c 0,247 -224,447 -500,447 l -13876,0 c -276,0 -500,-200 -500,-447 l 0,-29106 c 0,-247 224,-447 500,-447 z"
+                    Fill="Transparent"
+                    Stroke="{ThemeResource IconStrokeBrush}"
+                    StrokeThickness="1000" />
+                <Path
+                    Data="M -28909,-450 l 13876,0 c 276,0 500,200 500,447 l 0,29106 c 0,247 -224,447 -500,447 l -13876,0 c -276,0 -500,-200 -500,-447 l 0,-29106 c 0,-247 224,-447 500,-447 z"
+                    Fill="Transparent"
+                    Stroke="{ThemeResource IconStrokeBrush}"
+                    StrokeThickness="1000" />
+                <Path
+                    Data="M -26673,2050 l 9328,0 c 186,0 336,100 336,224 l 0,14552 c 0,124 -150,224 -336,224 l -9328,0 c -186,0 -336,-100 -336,-224 l 0,-14552 c 0,-124 150,-224 336,-224 z"
+                    Fill="Transparent"
+                    Stroke="{ThemeResource IconStrokeBrush}"
+                    StrokeThickness="1000" />
+                <Path
+                    Data="M -42301,2050 l 9328,0 c 186,0 336,100 336,224 l 0,14552 c 0,124 -150,224 -336,224 l -9328,0 c -186,0 -336,-100 -336,-224 l 0,-14552 c 0,-124 150,-224 336,-224 z"
+                    Fill="Transparent"
+                    Stroke="{ThemeResource IconStrokeBrush}"
+                    StrokeThickness="1000" />
+                <Path
+                    Data="M -11811,13495 l 0,0 0,0 4621,-3945 -4621,-3945 0,0 0,0 0,7890 z m 0,0 m 0,0 m 2310,-1972 m 0,-3946 m -2310,-1972 m 0,0 m 0,3945"
+                    Fill="Transparent"
+                    Stroke="{ThemeResource IconStrokeBrush}"
+                    StrokeThickness="1000" />
+                <Path
+                    Data="M -47690,5605 l 0,0 0,0 -4621,3945 4621,3945 0,0 0,0 0,-7890 z m 0,0 m 0,0 m -2310,1972 m 0,3946 m 2310,1972 m 0,0 m 0,-3945"
+                    Fill="Transparent"
+                    Stroke="{ThemeResource IconStrokeBrush}"
+                    StrokeThickness="1000" />
             </Canvas>
         </Viewbox>
     </DataTemplate>
 
     <DataTemplate x:Key="DoorCloseIcon">
-        <Viewbox HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform">
+        <Viewbox
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Stretch="Uniform">
             <Canvas Width="21000" Height="29700">
                 <Canvas.RenderTransform>
                     <TransformGroup>
@@ -45,40 +69,89 @@
                         <TranslateTransform X="10500" Y="14850" />
                     </TransformGroup>
                 </Canvas.RenderTransform>
-                <Path Fill="Transparent" Stroke="{ThemeResource IconStrokeBrush}" StrokeThickness="1000"
-                      Data="M -44515,-450 l 13876,0 c 276,0 500,200 500,447 l 0,29106 c 0,247 -224,447 -500,447 l -13876,0 c -276,0 -500,-200 -500,-447 l 0,-29106 c 0,-247 224,-447 500,-447 z" />
-                <Path Fill="Transparent" Stroke="{ThemeResource IconStrokeBrush}" StrokeThickness="1000"
-                      Data="M -28909,-450 l 13876,0 c 276,0 500,200 500,447 l 0,29106 c 0,247 -224,447 -500,447 l -13876,0 c -276,0 -500,-200 -500,-447 l 0,-29106 c 0,-247 224,-447 500,-447 z" />
-                <Path Fill="Transparent" Stroke="{ThemeResource IconStrokeBrush}" StrokeThickness="1000"
-                      Data="M -26673,2050 l 9328,0 c 186,0 336,100 336,224 l 0,14552 c 0,124 -150,224 -336,224 l -9328,0 c -186,0 -336,-100 -336,-224 l 0,-14552 c 0,-124 150,-224 336,-224 z" />
-                <Path Fill="Transparent" Stroke="{ThemeResource IconStrokeBrush}" StrokeThickness="1000"
-                      Data="M -42301,2050 l 9328,0 c 186,0 336,100 336,224 l 0,14552 c 0,124 -150,224 -336,224 l -9328,0 c -186,0 -336,-100 -336,-224 l 0,-14552 c 0,-124 150,-224 336,-224 z" />
-                <Path Fill="Transparent" Stroke="{ThemeResource IconStrokeBrush}" StrokeThickness="1000"
-                      Data="M -7190,5605 l 0,0 0,0 -4621,3945 4621,3945 0,0 0,0 0,-7890 z m 0,0 m 0,0 m -2311,1972 m 0,3946 m 2311,1972 m 0,0 m 0,-3945" />
-                <Path Fill="Transparent" Stroke="{ThemeResource IconStrokeBrush}" StrokeThickness="1000"
-                      Data="M -52311,13496 l 0,0 0,0 4621,-3945 -4621,-3945 0,0 0,0 0,7890 z m 0,0 m 0,0 m 2310,-1973 m 0,-3945 m -2310,-1972 m 0,0 m 0,3945" />
+                <Path
+                    Data="M -44515,-450 l 13876,0 c 276,0 500,200 500,447 l 0,29106 c 0,247 -224,447 -500,447 l -13876,0 c -276,0 -500,-200 -500,-447 l 0,-29106 c 0,-247 224,-447 500,-447 z"
+                    Fill="Transparent"
+                    Stroke="{ThemeResource IconStrokeBrush}"
+                    StrokeThickness="1000" />
+                <Path
+                    Data="M -28909,-450 l 13876,0 c 276,0 500,200 500,447 l 0,29106 c 0,247 -224,447 -500,447 l -13876,0 c -276,0 -500,-200 -500,-447 l 0,-29106 c 0,-247 224,-447 500,-447 z"
+                    Fill="Transparent"
+                    Stroke="{ThemeResource IconStrokeBrush}"
+                    StrokeThickness="1000" />
+                <Path
+                    Data="M -26673,2050 l 9328,0 c 186,0 336,100 336,224 l 0,14552 c 0,124 -150,224 -336,224 l -9328,0 c -186,0 -336,-100 -336,-224 l 0,-14552 c 0,-124 150,-224 336,-224 z"
+                    Fill="Transparent"
+                    Stroke="{ThemeResource IconStrokeBrush}"
+                    StrokeThickness="1000" />
+                <Path
+                    Data="M -42301,2050 l 9328,0 c 186,0 336,100 336,224 l 0,14552 c 0,124 -150,224 -336,224 l -9328,0 c -186,0 -336,-100 -336,-224 l 0,-14552 c 0,-124 150,-224 336,-224 z"
+                    Fill="Transparent"
+                    Stroke="{ThemeResource IconStrokeBrush}"
+                    StrokeThickness="1000" />
+                <Path
+                    Data="M -7190,5605 l 0,0 0,0 -4621,3945 4621,3945 0,0 0,0 0,-7890 z m 0,0 m 0,0 m -2311,1972 m 0,3946 m 2311,1972 m 0,0 m 0,-3945"
+                    Fill="Transparent"
+                    Stroke="{ThemeResource IconStrokeBrush}"
+                    StrokeThickness="1000" />
+                <Path
+                    Data="M -52311,13496 l 0,0 0,0 4621,-3945 -4621,-3945 0,0 0,0 0,7890 z m 0,0 m 0,0 m 2310,-1973 m 0,-3945 m -2310,-1972 m 0,0 m 0,3945"
+                    Fill="Transparent"
+                    Stroke="{ThemeResource IconStrokeBrush}"
+                    StrokeThickness="1000" />
             </Canvas>
         </Viewbox>
     </DataTemplate>
 
     <!--  Bremse: nur Kreis (mit/ohne Ausrufezeichen) plus kleine Bögen links und rechts mit Abstand zum Kreis.  -->
     <DataTemplate x:Key="BrakeActiveIcon">
-        <Viewbox HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform">
+        <Viewbox
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Stretch="Uniform">
             <Canvas Width="100" Height="100">
-                <Ellipse Width="60" Height="60" Canvas.Left="20" Canvas.Top="20" Fill="Transparent" Stroke="#FFD700" StrokeThickness="4" />
-                <Path Fill="Transparent" Stroke="#FFD700" StrokeThickness="3"
-                      Data="M 14,28 Q 4,50 14,72 M 86,28 Q 96,50 86,72" />
-                <Path Fill="Transparent" Stroke="#FFD700" StrokeThickness="3" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                      Data="M 50,38 L 50,52 M 50,58 m 0,1.5 a 1.5,1.5 0 1,1 0,-3 a 1.5,1.5 0 1,1 0,3" />
+                <Ellipse
+                    Canvas.Left="20"
+                    Canvas.Top="20"
+                    Width="60"
+                    Height="60"
+                    Fill="Transparent"
+                    Stroke="#FFD700"
+                    StrokeThickness="4" />
+                <Path
+                    Data="M 14,28 Q 4,50 14,72 M 86,28 Q 96,50 86,72"
+                    Fill="Transparent"
+                    Stroke="#FFD700"
+                    StrokeThickness="3" />
+                <Path
+                    Data="M 50,38 L 50,52 M 50,58 m 0,1.5 a 1.5,1.5 0 1,1 0,-3 a 1.5,1.5 0 1,1 0,3"
+                    Fill="Transparent"
+                    Stroke="#FFD700"
+                    StrokeEndLineCap="Round"
+                    StrokeStartLineCap="Round"
+                    StrokeThickness="3" />
             </Canvas>
         </Viewbox>
     </DataTemplate>
     <DataTemplate x:Key="BrakeReleasedIcon">
-        <Viewbox HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform">
+        <Viewbox
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Stretch="Uniform">
             <Canvas Width="100" Height="100">
-                <Ellipse Width="60" Height="60" Canvas.Left="20" Canvas.Top="20" Fill="Transparent" Stroke="{ThemeResource IconStrokeBrush}" StrokeThickness="4" />
-                <Path Fill="Transparent" Stroke="{ThemeResource IconStrokeBrush}" StrokeThickness="3"
-                      Data="M 14,28 Q 4,50 14,72 M 86,28 Q 96,50 86,72" />
+                <Ellipse
+                    Canvas.Left="20"
+                    Canvas.Top="20"
+                    Width="60"
+                    Height="60"
+                    Fill="Transparent"
+                    Stroke="{ThemeResource IconStrokeBrush}"
+                    StrokeThickness="4" />
+                <Path
+                    Data="M 14,28 Q 4,50 14,72 M 86,28 Q 96,50 86,72"
+                    Fill="Transparent"
+                    Stroke="{ThemeResource IconStrokeBrush}"
+                    StrokeThickness="3" />
             </Canvas>
         </Viewbox>
     </DataTemplate>
