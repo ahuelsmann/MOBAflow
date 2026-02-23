@@ -55,11 +55,11 @@ public class MultiplexerHelperTests
     }
 
     [Test]
-    [TestCase("4046", SignalAspect.Hp0, 0, 0, false)]
-    [TestCase("4046", SignalAspect.Ks1, 0, 0, true)]
-    [TestCase("4046", SignalAspect.Ks1Blink, 1, 0, true)]
-    [TestCase("4046", SignalAspect.Ra12, 1, 0, false)]
-    [TestCase("4046", SignalAspect.Ks2, 2, 0, false)]
+    [TestCase("4046", SignalAspect.Hp0, 0, 1, false)]
+    [TestCase("4046", SignalAspect.Ks1, 0, 1, true)]
+    [TestCase("4046", SignalAspect.Ks1Blink, 2, 1, true)]
+    [TestCase("4046", SignalAspect.Ra12, 1, 0, true)]
+    [TestCase("4046", SignalAspect.Ks2, 2, 0, true)]
     [TestCase("4040", SignalAspect.Ks2, 0, 0, false)]
     [TestCase("4040", SignalAspect.Ks1, 0, 0, true)]
     [TestCase("4040", SignalAspect.Ks1Blink, 1, 0, true)]

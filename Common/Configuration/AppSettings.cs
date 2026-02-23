@@ -29,6 +29,12 @@ public class AppSettings
     public LayoutSettings Layout { get; set; } = new();
 
     /// <summary>
+    /// Signal Box / Viessmann Multiplex-Signal Einstellungen (Stellwerk-Seite).
+    /// Optional; wenn nicht in appsettings.json vorhanden, werden Standardwerte verwendet.
+    /// </summary>
+    public SignalBoxSettings SignalBox { get; set; } = new();
+
+    /// <summary>
     /// Gets Azure Speech Service subscription key (convenience property).
     /// </summary>
     public string AzureSpeechKey => string.IsNullOrEmpty(Speech.Key) ? string.Empty : Speech.Key;
@@ -322,6 +328,25 @@ public class FeatureToggleSettings
     /// </summary>
     public bool IsTrainControlPageAvailable { get; set; } = true;
     public string TrainControlPageLabel { get; set; } = "Preview";
+}
+
+/// <summary>
+/// Einstellungen für die Stellwerk-Seite (SignalBox) und Viessmann-Multiplex-Signale (z. B. 5229).
+/// Ermöglicht pro DCC-Adresse eine getrennte Polaritätsumkehr (Activate-Bit) für die 4 aufeinanderfolgenden Adressen.
+/// </summary>
+public class SignalBoxSettings
+{
+    /// <summary>Polarität umkehren für 1. Adresse (Basisadresse + 0, z. B. 201).</summary>
+    public bool InvertPolarityOffset0 { get; set; }
+
+    /// <summary>Polarität umkehren für 2. Adresse (Basisadresse + 1, z. B. 202).</summary>
+    public bool InvertPolarityOffset1 { get; set; }
+
+    /// <summary>Polarität umkehren für 3. Adresse (Basisadresse + 2, z. B. 203).</summary>
+    public bool InvertPolarityOffset2 { get; set; }
+
+    /// <summary>Polarität umkehren für 4. Adresse (Basisadresse + 3, z. B. 204).</summary>
+    public bool InvertPolarityOffset3 { get; set; }
 }
 
 /// <summary>

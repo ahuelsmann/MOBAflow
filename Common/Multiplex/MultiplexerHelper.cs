@@ -172,9 +172,14 @@ public static class MultiplexerHelper
 
     /// <summary>
     /// 5229 - Multiplexer für Lichtsignale mit Multiplex-Technologie
-    /// Controls 1 main signal (e.g., 4046) + 1 distant signal (e.g., 4040, synchronized).
-    /// 
-    /// Address mapping per 5229.md (signal addresses section).
+    /// Steuert 1 Hauptsignal (z. B. 4046) + 1 Vorsignal (z. B. 4040, synchron).
+    ///
+    /// DCC-Mapping bei Basisadresse 201 (4 Adressen: 201, 202, 203, 204):
+    /// - Adresse 201 (Offset 0): Hp0 = Ausgang 1, false (Rot); Ks1 = Ausgang 1, true (Grün)
+    /// - Adresse 202 (Offset 1): Ra12 = Ausgang 0, true
+    /// - Adresse 203 (Offset 2): Ks2 = Ausgang 0, true; Ks1Blink = Ausgang 1, true
+    /// - Adresse 204 (Offset 3): ggf. weitere Aspekte (z. B. Kennlicht/Dunkel)
+    /// Pro Adresse Polarität umkehrbar: Einstellungen → Stellwerk/Viessmann-Signale oder signalBox.invertPolarityOffset0 … Offset3.
     /// </summary>
     private static MultiplexerDefinition Create5229Definition()
     {
@@ -190,8 +195,8 @@ public static class MultiplexerHelper
             {
                 ["4040"] = new Dictionary<SignalAspect, MultiplexerTurnoutCommand>
                 {
-                    { SignalAspect.Hp0, new MultiplexerTurnoutCommand(0, 0, false) },   // Adr 201, Activate=FALSE → ROT
-                    { SignalAspect.Ks1, new MultiplexerTurnoutCommand(0, 0, true) },    // Adr 201, Activate=TRUE  → GRÜN
+                    { SignalAspect.Hp0, new MultiplexerTurnoutCommand(0, 0, false) },
+                    { SignalAspect.Ks1, new MultiplexerTurnoutCommand(0, 0, true) },
                     { SignalAspect.Ks1Blink, new MultiplexerTurnoutCommand(1, 0, true) },
                     { SignalAspect.Ks2, new MultiplexerTurnoutCommand(0, 0, false) }
                 },
@@ -212,11 +217,11 @@ public static class MultiplexerHelper
                 },
                 ["4046"] = new Dictionary<SignalAspect, MultiplexerTurnoutCommand>
                 {
-                    { SignalAspect.Hp0, new MultiplexerTurnoutCommand(0, 0, false) },   // Adr 201, Activate=FALSE → ROT
-                    { SignalAspect.Ks1, new MultiplexerTurnoutCommand(0, 0, true) },    // Adr 201, Activate=TRUE  → GRÜN
-                    { SignalAspect.Ks1Blink, new MultiplexerTurnoutCommand(1, 0, true) },
-                    { SignalAspect.Ra12, new MultiplexerTurnoutCommand(1, 0, false) },
-                    { SignalAspect.Ks2, new MultiplexerTurnoutCommand(2, 0, false) }
+                    { SignalAspect.Hp0, new MultiplexerTurnoutCommand(0, 1, false) },
+                    { SignalAspect.Ks1, new MultiplexerTurnoutCommand(0, 1, true) },
+                    { SignalAspect.Ks1Blink, new MultiplexerTurnoutCommand(2, 1, true) },
+                    { SignalAspect.Ra12, new MultiplexerTurnoutCommand(1, 0, true) },
+                    { SignalAspect.Ks2, new MultiplexerTurnoutCommand(2, 0, true) }
                 }
             }
         };

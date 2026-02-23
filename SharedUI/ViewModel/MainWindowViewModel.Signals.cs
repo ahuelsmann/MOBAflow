@@ -81,13 +81,19 @@ public partial class MainWindowViewModel
                     $"Calculated DCC address {dccAddress} is outside the valid range (1-2044).");
             }
 
-            System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] DCC Address calculated: {dccAddress}, Output={turnoutCommand.Output}, Activate={turnoutCommand.Activate}");
+            // Optionale Polaritätsumkehr pro Adresse (Offset 0..3 für z. B. 201, 202, 203, 204)
+            var activate = turnoutCommand.Activate;
+            if (ShouldInvertPolarityForOffset(turnoutCommand.AddressOffset))
+            {
+                activate = !activate;
+                System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] InvertPolarity Offset {turnoutCommand.AddressOffset}: Activate flipped to {activate}");
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] DCC Address calculated: {dccAddress}, Output={turnoutCommand.Output}, Activate={activate}");
 
             // For Viessmann multiplex decoders (e.g., 5229): use classic turnout command (0x53)
             // Each signal aspect maps to a different DCC address via AddressOffset
-            System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] Sending turnout command to address={dccAddress}, output={turnoutCommand.Output}, activate={turnoutCommand.Activate}");
-
-            await _z21.SetTurnoutAsync(dccAddress, turnoutCommand.Output, turnoutCommand.Activate, false, cancellationToken).ConfigureAwait(false);
+            await _z21.SetTurnoutAsync(dccAddress, turnoutCommand.Output, activate, false, cancellationToken).ConfigureAwait(false);
 
             System.Diagnostics.Debug.WriteLine("[MWVM.SetSignalAspect] Z21.SetTurnoutAsync completed successfully");
 
@@ -95,11 +101,11 @@ public partial class MainWindowViewModel
                 "Signal '{SignalName}' set: Multiplexer={Multiplexer}, BaseAddress={BaseAddress}, " +
                 "Aspect={Aspect} → Turnout_Address={TurnoutAddress}, Output={Output}, Activate={Activate}",
                 signal.Name, signal.MultiplexerArticleNumber, signal.BaseAddress,
-                signal.SignalAspect, dccAddress, turnoutCommand.Output, turnoutCommand.Activate);
+                signal.SignalAspect, dccAddress, turnoutCommand.Output, activate);
 
             _uiDispatcher.InvokeOnUi(() =>
             {
-                StatusText = $"Signal '{signal.Name}' set (Address {dccAddress}, Output {turnoutCommand.Output}, Activate {turnoutCommand.Activate})";
+                StatusText = $"Signal '{signal.Name}' gestellt: DCC-Adresse {dccAddress}, Ausgang {turnoutCommand.Output}, Activate={activate}";
             });
         }
         catch (Exception ex)
@@ -114,6 +120,23 @@ public partial class MainWindowViewModel
 
             throw;
         }
+    }
+
+    /// <summary>
+    /// Prüft, ob für den angegebenen Adress-Offset (0..3) die Polarität invertiert werden soll.
+    /// </summary>
+    private bool ShouldInvertPolarityForOffset(int addressOffset)
+    {
+        var sb = _settings.SignalBox;
+        if (sb == null) return false;
+        return addressOffset switch
+        {
+            0 => sb.InvertPolarityOffset0,
+            1 => sb.InvertPolarityOffset1,
+            2 => sb.InvertPolarityOffset2,
+            3 => sb.InvertPolarityOffset3,
+            _ => false
+        };
     }
 
     /// <summary>

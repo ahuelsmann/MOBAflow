@@ -521,6 +521,49 @@
                 </StackPanel>
             </Expander>
 
+            <!--  Stellwerk / Viessmann Multiplex-Signale  -->
+            <Expander
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                Header="Stellwerk / Viessmann-Signale"
+                IsExpanded="False">
+                <Expander.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon FontSize="20" Glyph="&#xE713;" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Style="{StaticResource SubtitleTextBlockStyle}"
+                                Text="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </Expander.HeaderTemplate>
+
+                <StackPanel Padding="56,16,0,16" Spacing="12">
+                    <TextBlock
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="Aktivieren, wenn am echten Signal das Bild bei dieser Adresse vertauscht erscheint (Activate-Bit umkehren). Pro Multiplex-Signal 4 aufeinanderfolgende Adressen (z. B. 201–204)."
+                        TextWrapping="Wrap" />
+                    <CheckBox
+                        Content="Adresse 1 – Polarität umkehren (z. B. 201)"
+                        IsChecked="{x:Bind ViewModel.InvertPolarityOffset0Setting, Mode=TwoWay}" />
+                    <CheckBox
+                        Content="Adresse 2 – Polarität umkehren (z. B. 202)"
+                        IsChecked="{x:Bind ViewModel.InvertPolarityOffset1Setting, Mode=TwoWay}" />
+                    <CheckBox
+                        Content="Adresse 3 – Polarität umkehren (z. B. 203)"
+                        IsChecked="{x:Bind ViewModel.InvertPolarityOffset2Setting, Mode=TwoWay}" />
+                    <CheckBox
+                        Content="Adresse 4 – Polarität umkehren (z. B. 204)"
+                        IsChecked="{x:Bind ViewModel.InvertPolarityOffset3Setting, Mode=TwoWay}" />
+                    <TextBlock
+                        Margin="0,8,0,0"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="Weitere Infos: docs/wiki/VIESSMANN-SIGNAL-MAPPING.md"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </Expander>
+
             <!--  Save/Reset Buttons  -->
             <StackPanel
                 Margin="0,24,0,0"

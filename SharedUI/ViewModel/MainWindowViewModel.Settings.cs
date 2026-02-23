@@ -520,6 +520,50 @@ public partial class MainWindowViewModel
 
     #endregion
 
+    #region Signal Box / Viessmann Multiplex-Signale
+
+    private void SetSignalBoxInvert(int offset, bool value)
+    {
+        if (_settings.SignalBox == null) return;
+        var sb = _settings.SignalBox;
+        bool changed;
+        string? propertyName;
+        switch (offset)
+        {
+            case 0:
+                changed = sb.InvertPolarityOffset0 != value;
+                if (changed) sb.InvertPolarityOffset0 = value;
+                propertyName = nameof(InvertPolarityOffset0Setting);
+                break;
+            case 1:
+                changed = sb.InvertPolarityOffset1 != value;
+                if (changed) sb.InvertPolarityOffset1 = value;
+                propertyName = nameof(InvertPolarityOffset1Setting);
+                break;
+            case 2:
+                changed = sb.InvertPolarityOffset2 != value;
+                if (changed) sb.InvertPolarityOffset2 = value;
+                propertyName = nameof(InvertPolarityOffset2Setting);
+                break;
+            case 3:
+                changed = sb.InvertPolarityOffset3 != value;
+                if (changed) sb.InvertPolarityOffset3 = value;
+                propertyName = nameof(InvertPolarityOffset3Setting);
+                break;
+            default:
+                changed = false;
+                propertyName = null;
+                break;
+        }
+        if (changed && propertyName != null)
+        {
+            OnPropertyChanged(propertyName);
+            _ = _settingsService?.SaveSettingsAsync(_settings);
+        }
+    }
+
+    #endregion
+
     #region Feature Toggle Properties (Read-Only for NavigationView Visibility)
 
     /// <summary>

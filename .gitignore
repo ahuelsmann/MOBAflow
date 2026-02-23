@@ -42,8 +42,9 @@ appsettings.Development.json
 appsettings.*.json
 *.user.secrets
 
-# ABER: WinUI/appsettings.json darf ins Repo (enthält keine Secrets mehr)
+# ABER: WinUI/appsettings.json und Schema dürfen ins Repo (keine Secrets)
 !WinUI/appsettings.json
+!WinUI/appsettings.schema.json
 
 # Azure App Configuration Secrets
 azure-appconfig-connection.txt

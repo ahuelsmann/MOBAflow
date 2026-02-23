@@ -453,12 +453,20 @@ public sealed partial class SignalBoxPage
             Debug.WriteLine("[AUTO-SIGNAL] SUCCESS: Signal set");
             DispatcherQueue.TryEnqueue(() =>
             {
-                var signalValue = sig.ExtendedAccessoryValue;
-                SetSignalStatusText.Text =
-                    $"Signal set: {sig.SignalAspect}\n" +
-                    $"Multiplexer: {sig.MultiplexerArticleNumber}\n" +
-                    $"Base Address: {sig.BaseAddress}\n" +
-                    $"DCC Address: {sig.Address} (Value {signalValue})";
+                if (MultiplexerHelper.TryGetTurnoutCommand(
+                        sig.MultiplexerArticleNumber!,
+                        sig.MainSignalArticleNumber,
+                        sig.SignalAspect,
+                        out var cmd))
+                {
+                    SetSignalStatusText.Text =
+                        $"Signal: {sig.SignalAspect}\n" +
+                        $"DCC-Adresse: {sig.Address}, Ausgang: {cmd.Output}, Activate: {(cmd.Activate ? "Ja" : "Nein")}";
+                }
+                else
+                {
+                    SetSignalStatusText.Text = $"Signal gesetzt: {sig.SignalAspect}";
+                }
             });
         }
         catch (Exception ex)

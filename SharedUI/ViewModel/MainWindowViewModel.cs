@@ -647,4 +647,20 @@ public sealed partial class MainWindowViewModel : ObservableObject
             FirmwareVersionCode = unchecked((uint)evt.FirmwareVersionCode)
         };
     }
+
+    #region Signal Box / Viessmann Multiplex-Signale (Binding für Settings-Seite)
+
+    /// <summary>Polarität umkehren für 1. Adresse (z. B. 201).</summary>
+    public bool InvertPolarityOffset0Setting { get => _settings.SignalBox?.InvertPolarityOffset0 ?? false; set => SetSignalBoxInvert(0, value); }
+
+    /// <summary>Polarität umkehren für 2. Adresse (z. B. 202).</summary>
+    public bool InvertPolarityOffset1Setting { get => _settings.SignalBox?.InvertPolarityOffset1 ?? false; set => SetSignalBoxInvert(1, value); }
+
+    /// <summary>Polarität umkehren für 3. Adresse (z. B. 203).</summary>
+    public bool InvertPolarityOffset2Setting { get => _settings.SignalBox?.InvertPolarityOffset2 ?? false; set => SetSignalBoxInvert(2, value); }
+
+    /// <summary>Polarität umkehren für 4. Adresse (z. B. 204).</summary>
+    public bool InvertPolarityOffset3Setting { get => _settings.SignalBox?.InvertPolarityOffset3 ?? false; set => SetSignalBoxInvert(3, value); }
+
+    #endregion
 }

@@ -15,6 +15,7 @@ using SharedUI.ViewModel;
 
 using ViewModel;
 
+using System.ComponentModel;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 
@@ -84,8 +85,37 @@ public sealed partial class SignalBoxPage
         _skinProvider.SkinChanged += OnSkinProviderChanged;
         _skinProvider.DarkModeChanged += OnDarkModeChanged;
 
+        // Sobald eine Solution/Projektdatei geladen wird oder das Projekt gewechselt wird,
+        // Plan-Cache invalidieren und Anzeige auf der aktuellen Seite sofort aktualisieren.
+        ViewModel.SolutionLoaded += OnSolutionLoaded;
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+
         Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
+    }
+
+    private void OnSolutionLoaded(object? sender, EventArgs e)
+    {
+        _planViewModel = null;
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            LoadFromModel();
+            UpdateStatistics();
+            UpdatePropertiesPanel();
+        });
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(MainWindowViewModel.SelectedProject))
+            return;
+        _planViewModel = null;
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            LoadFromModel();
+            UpdateStatistics();
+            UpdatePropertiesPanel();
+        });
     }
 
     private void OnSkinProviderChanged(object? sender, SkinChangedEventArgs e)
@@ -114,6 +144,8 @@ public sealed partial class SignalBoxPage
         _blinkTimer?.Stop();
         _skinProvider.SkinChanged -= OnSkinProviderChanged;
         _skinProvider.DarkModeChanged -= OnDarkModeChanged;
+        ViewModel.SolutionLoaded -= OnSolutionLoaded;
+        ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
     }
 
     /// <summary>
