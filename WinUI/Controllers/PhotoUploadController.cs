@@ -10,7 +10,7 @@ using SharedUI.Service;
 
 [ApiController]
 [Route("api/photos")]
-public class PhotoUploadController : ControllerBase
+internal class PhotoUploadController : ControllerBase
 {
     private readonly PhotoStorageService _photoStorage;
     private readonly IHubContext<PhotoHub> _hubContext;

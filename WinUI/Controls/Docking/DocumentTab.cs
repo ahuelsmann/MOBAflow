@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.WinUI.Controls;
+namespace Moba.WinUI.Controls.Docking;
 
 using Microsoft.UI.Xaml;
 
@@ -10,7 +10,7 @@ using System;
 /// Stellt ein einzelnes Dokument-Tab dar.
 /// Wird von LayoutDocumentEx und DockingManager verwendet.
 /// </summary>
-public class DocumentTab : IEquatable<DocumentTab>
+internal class DocumentTab : IEquatable<DocumentTab>
 {
     public string Title { get; set; } = "Untitled";
     public string IconGlyph { get; set; } = "\uE71E";

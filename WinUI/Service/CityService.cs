@@ -10,7 +10,7 @@ using SharedUI.Interface;
 /// Service für Städte/Bahnhöfe-Stammdaten aus der zentralen DataManager-Instanz.
 /// Daten werden aus der gemeinsamen Stammdaten-Datei (z. B. data.json) geladen.
 /// </summary>
-public class CityService : ICityService
+internal class CityService : ICityService
 {
     private readonly DataManager _dataManager;
     private readonly ILogger<CityService> _logger;

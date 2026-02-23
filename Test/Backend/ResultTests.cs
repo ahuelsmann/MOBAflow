@@ -6,7 +6,7 @@ namespace Moba.Test.Backend;
 /// Tests functional error handling patterns.
 /// </summary>
 [TestFixture]
-public class ResultTests
+internal class ResultTests
 {
     #region Result<T> Tests
     [Test]

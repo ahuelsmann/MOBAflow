@@ -6,7 +6,7 @@ using Microsoft.UI.Xaml.Data;
 /// <summary>
 /// Konvertiert DateTime/DateTime? zu Kurzzeit-String (HH:mm).
 /// </summary>
-public sealed class DateTimeToShortTimeConverter : IValueConverter
+internal sealed class DateTimeToShortTimeConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {

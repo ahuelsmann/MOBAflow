@@ -17,8 +17,6 @@
   <Folder Name="/Solution Items/scripts/">
     <File Path="scripts/Enable-MAUIWifiDebug.ps1" />
   </Folder>
-  <Folder Name="/TrackLibrary/" />
-  <Folder Name="/TrackPlan/" />
   <Project Path="Backend/Backend.csproj">
     <Deploy />
   </Project>

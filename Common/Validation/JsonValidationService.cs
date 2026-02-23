@@ -7,7 +7,7 @@ using System.Text.Json;
 /// Service for validating JSON files before deserialization.
 /// Prevents loading of incompatible, corrupted, or malformed JSON files.
 /// </summary>
-public class JsonValidationService
+public abstract class JsonValidationService
 {
     /// <summary>
     /// Validates JSON structure and content before deserialization.

@@ -4,7 +4,7 @@ namespace Moba.Test.Domain;
 using Moba.Domain.Enum;
 
 [TestFixture]
-public class JourneyTests
+internal class JourneyTests
 {
     [Test]
     public void Constructor_InitializesDefaults()

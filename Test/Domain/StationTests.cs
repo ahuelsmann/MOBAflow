@@ -2,7 +2,7 @@
 namespace Moba.Test.Domain;
 
 [TestFixture]
-public class StationTests
+internal class StationTests
 {
     [Test]
     public void Constructor_InitializesDefaults()

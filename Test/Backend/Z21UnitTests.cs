@@ -7,7 +7,7 @@ using Moba.Common.Events;
 using System.Net;
 
 [TestFixture]
-public class Z21UnitTests
+internal class Z21UnitTests
 {
     [Test]
     public async Task SimulateFeedback_RaisesReceivedEvent()

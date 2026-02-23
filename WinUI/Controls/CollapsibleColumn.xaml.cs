@@ -9,7 +9,7 @@ using Microsoft.UI.Xaml.Input;
 /// A panel that collapses into a narrow vertical tab and expands to show its content.
 /// Behaves like Visual Studio's auto-hide panels or a vertical expander.
 /// </summary>
-public sealed partial class CollapsibleColumn : UserControl
+internal sealed partial class CollapsibleColumn : UserControl
 {
     /// <summary>
     /// Header text displayed in both collapsed tab and expanded header.

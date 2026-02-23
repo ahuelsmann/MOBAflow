@@ -8,7 +8,7 @@ using Microsoft.UI.Xaml.Data;
 /// Converts non-empty strings to Visibility.Visible, null or empty strings to Visibility.Collapsed.
 /// Used for conditionally showing labels like "Preview" or "Beta" in NavigationView.
 /// </summary>
-public partial class StringToVisibilityConverter : IValueConverter
+internal partial class StringToVisibilityConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {

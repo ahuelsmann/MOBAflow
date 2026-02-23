@@ -6,7 +6,7 @@ namespace Moba.Test.Unit;
 /// </summary>
 [TestFixture]
 [Category("Unit")]
-public class NewSolutionTests
+internal class NewSolutionTests
 {
     [Test]
     public void NewSolution_ShouldCreateEmptyProject()

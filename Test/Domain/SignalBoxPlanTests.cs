@@ -6,7 +6,7 @@ namespace Moba.Test.Domain;
 /// Validates cell uniqueness, cascading deletes, and referential integrity.
 /// </summary>
 [TestFixture]
-public class SignalBoxPlanTests
+internal class SignalBoxPlanTests
 {
     private SignalBoxPlan _plan = null!;
 

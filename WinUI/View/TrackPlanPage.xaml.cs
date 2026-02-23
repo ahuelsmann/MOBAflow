@@ -34,7 +34,7 @@ using Windows.System;
     Order = 10,
     FeatureToggleKey = "IsTrackPlanEditorPageAvailable",
     BadgeLabelKey = "TrackPlanEditorPageLabel")]
-public sealed partial class TrackPlanPage
+internal sealed partial class TrackPlanPage
 {
     private const string DragFormatTrackCatalog = "application/x-moba-track-catalog";
     private const double ScaleMmToPx = 1.0;
@@ -265,7 +265,7 @@ public sealed partial class TrackPlanPage
             e.DragUIOverride.Caption = "Gleis ablegen";
     }
 
-    private void Canvas_Drop(object sender, DragEventArgs e)
+    private async void Canvas_Drop(object sender, DragEventArgs e)
     {
         var pos = e.GetPosition(OverlayCanvas);
         var (offsetX, offsetY) = GetDrawOffset();
@@ -274,7 +274,8 @@ public sealed partial class TrackPlanPage
 
         if (e.DataView.Contains(DragFormatTrackCatalog))
         {
-            var code = e.DataView.GetDataAsync(DragFormatTrackCatalog).AsTask().Result?.ToString();
+            var data = await e.DataView.GetDataAsync(DragFormatTrackCatalog);
+            var code = data?.ToString();
             var entry = PikoACatalog.All.FirstOrDefault(c => c.Code == code);
             if (entry != null)
             {

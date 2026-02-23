@@ -13,7 +13,7 @@ using Microsoft.UI.Xaml.Shapes;
 /// <summary>
 /// Partial class containing all element graphics creation methods.
 /// </summary>
-public sealed partial class SignalBoxPage
+sealed partial class SignalBoxPage
 {
     #region Element Graphics - Simplified Track Display
 

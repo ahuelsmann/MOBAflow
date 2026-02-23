@@ -83,6 +83,13 @@ public class DataManager
         }
 
         var json = await File.ReadAllTextAsync(filePath).ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            Cities.Clear();
+            Locomotives.Clear();
+            ViessmannMultiplexSignals.Clear();
+            return;
+        }
         var loaded = JsonSerializer.Deserialize<DataManager>(json, JsonOptions.Default)
             ?? throw new InvalidOperationException("Failed to deserialize master data file");
         UpdateFrom(loaded);
@@ -111,10 +118,17 @@ public class DataManager
         if (!string.IsNullOrEmpty(path) && File.Exists(path))
         {
             string json = await File.ReadAllTextAsync(path).ConfigureAwait(false);
-            if (!string.IsNullOrEmpty(json))
+            if (!string.IsNullOrWhiteSpace(json))
             {
-                var temp = JsonSerializer.Deserialize<DataManager>(json, JsonOptions.Default);
-                return temp;
+                try
+                {
+                    var temp = JsonSerializer.Deserialize<DataManager>(json, JsonOptions.Default);
+                    return temp;
+                }
+                catch (JsonException)
+                {
+                    return null;
+                }
             }
         }
         return null;
@@ -130,10 +144,17 @@ public class DataManager
         if (!string.IsNullOrEmpty(path) && File.Exists(path))
         {
             string json = await File.ReadAllTextAsync(path).ConfigureAwait(false);
-            if (!string.IsNullOrEmpty(json))
+            if (!string.IsNullOrWhiteSpace(json))
             {
-                var data = JsonSerializer.Deserialize<LocomotiveLibraryData>(json, JsonOptions.Default);
-                return data?.Locomotives ?? [];
+                try
+                {
+                    var data = JsonSerializer.Deserialize<LocomotiveLibraryData>(json, JsonOptions.Default);
+                    return data?.Locomotives ?? [];
+                }
+                catch (JsonException)
+                {
+                    return [];
+                }
             }
         }
         return [];
@@ -154,7 +175,7 @@ public class DataManager
 /// <summary>
 /// Ein Eintrag für ein Viessmann Multiplex-Signal (Haupt- oder Vorsignal).
 /// </summary>
-public sealed class ViessmannMultiplexSignalEntry
+public abstract class ViessmannMultiplexSignalEntry
 {
     /// <summary>Viessmann Artikelnummer (z. B. "4040", "4046").</summary>
     public string ArticleNumber { get; set; } = string.Empty;

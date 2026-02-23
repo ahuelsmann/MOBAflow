@@ -13,7 +13,7 @@ using SharedUI.ViewModel;
     Order = 30,
     FeatureToggleKey = "IsTrainsPageAvailable",
     BadgeLabelKey = "TrainsPageLabel")]
-public sealed partial class TrainsPage
+internal sealed partial class TrainsPage
 {
     public MainWindowViewModel ViewModel { get; }
 

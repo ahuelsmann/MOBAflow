@@ -13,7 +13,7 @@ using Mocks;
 /// Tests end-to-end workflow execution.
 /// </summary>
 [TestFixture]
-public class WorkflowServiceTests
+internal class WorkflowServiceTests
 {
     private WorkflowService _workflowService = null!;
     private IActionExecutor _actionExecutor = null!;

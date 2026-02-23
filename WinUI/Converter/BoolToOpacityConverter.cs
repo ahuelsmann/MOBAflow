@@ -13,7 +13,7 @@ using Microsoft.UI.Xaml.Data;
 /// - Glow effect: {Binding IsOn, Converter={StaticResource BoolToOpacityConverter}, ConverterParameter="0.45|0.0"}
 /// - Custom values: {Binding IsActive, Converter={StaticResource BoolToOpacityConverter}, ConverterParameter="0.8|0.3"}
 /// </summary>
-public partial class BoolToOpacityConverter : IValueConverter
+internal partial class BoolToOpacityConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {

@@ -10,7 +10,7 @@ using Moba.Domain;
 /// Tests address calculation and aspect mapping for supported multiplexers.
 /// </summary>
 [TestFixture]
-public class MultiplexerHelperTests
+internal class MultiplexerHelperTests
 {
     [Test]
     public void GetDefinition_5229_ShouldReturnCorrectDefinition()

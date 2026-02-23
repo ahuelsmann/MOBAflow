@@ -9,7 +9,7 @@ using Moba.SharedUI.Interface;
 /// Verifies that the interface contract can be properly implemented.
 /// </summary>
 [TestFixture]
-public class SettingsServiceInterfaceTests
+internal class SettingsServiceInterfaceTests
 {
     private TestSettingsService _service = null!;
 

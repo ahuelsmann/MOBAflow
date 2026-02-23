@@ -5,15 +5,15 @@ namespace Moba.WinUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using Controls;
+using Controls.Docking;
 
 using System.Collections.ObjectModel;
 
 /// <summary>
-/// ViewModel for DockingPage demonstrating LayoutDocumentEx capabilities.
+/// ViewModel for DockingPage demonstrating LayoutDocument capabilities.
 /// (Host-seitig: ohne Plugin-Abhängigkeiten)
 /// </summary>
-public sealed partial class DockingPageViewModel : ObservableObject
+internal sealed partial class DockingPageViewModel : ObservableObject
 {
     [ObservableProperty]
     private ObservableCollection<DocumentTab> openDocuments = new();

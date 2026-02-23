@@ -10,7 +10,7 @@ using Microsoft.UI.Xaml;
 /// Manages ResourceDictionary switching and skin events.
 /// Uses programmatically-built skins to avoid XAML parsing issues in WinUI 3.
 /// </summary>
-public class SkinProvider : ISkinProvider
+internal class SkinProvider : ISkinProvider
 {
     private AppSkin _currentSkin = AppSkin.Blue;
     private bool _isDarkMode;

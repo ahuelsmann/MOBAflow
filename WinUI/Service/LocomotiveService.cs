@@ -10,7 +10,7 @@ using SharedUI.Interface;
 /// Service für Lokomotiv-Stammdaten aus der zentralen DataManager-Instanz.
 /// Daten werden aus der gemeinsamen Stammdaten-Datei (z. B. data.json) geladen.
 /// </summary>
-public class LocomotiveService : ILocomotiveService
+internal class LocomotiveService : ILocomotiveService
 {
     private readonly DataManager _dataManager;
     private readonly ILogger<LocomotiveService> _logger;

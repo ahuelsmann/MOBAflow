@@ -8,7 +8,7 @@ namespace Moba.Test.Helpers;
 /// [Length(1)] [CRC(1)] [0xF0] [0xA1] [InPort] [Value]
 /// Example: InPort 5 with bit 0 active → 04 00 F0 A1 05 03
 /// </summary>
-public static class FeedbackPacketGenerator
+internal static class FeedbackPacketGenerator
 {
     /// <summary>
     /// Creates a valid Z21 RBus feedback packet.
@@ -70,7 +70,7 @@ public static class FeedbackPacketGenerator
     /// <summary>
     /// Common test feedback packets (predefined for convenience).
     /// </summary>
-    public static class Common
+    internal static class Common
     {
         /// <summary>InPort 1, bit 0 active.</summary>
         public static byte[] InPort1 => CreateFeedbackPacket(1);

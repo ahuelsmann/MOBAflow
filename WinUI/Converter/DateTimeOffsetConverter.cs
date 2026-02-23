@@ -6,7 +6,7 @@ using Microsoft.UI.Xaml.Data;
 /// <summary>
 /// Converts between DateTime? and DateTimeOffset for CalendarDatePicker binding.
 /// </summary>
-public partial class DateTimeOffsetConverter : IValueConverter
+internal partial class DateTimeOffsetConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, string language)
     {

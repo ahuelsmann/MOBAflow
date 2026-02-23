@@ -80,16 +80,24 @@
             <converter:BoolToFontWeightConverter x:Key="BoolToFontWeightConverter" />
             <converter:BoolToAccentBrushConverter x:Key="BoolToAccentBrushConverter" />
             <converter:TrackNumberConverter x:Key="TrackNumberConverter" />
-            <converter:ExitSideConverter x:Key="ExitSideConverter" />
+            <converter:BoolToStringConverter
+                x:Key="ExitSideConverter"
+                FalseValue="Exit Right"
+                TrueValue="Exit Left" />
             <converter:NullableUIntConverter x:Key="NullableUIntConverter" />
             <converter:DateTimeToTimeSpanConverter x:Key="DateTimeToTimeSpanConverter" />
             <converter:DateTimeOffsetConverter x:Key="DateTimeOffsetConverter" />
             <converter:PhotoPathToImageConverter x:Key="PhotoPathToImageConverter" />
-            <converter:PinTooltipConverter x:Key="PinTooltipConverter" />
-            <converter:PinForegroundConverter x:Key="PinForegroundConverter" />
+            <converter:BoolToStringConverter
+                x:Key="PinTooltipConverter"
+                FalseValue="Pin panel"
+                TrueValue="Unpin panel" />
             <converter:DateTimeToShortTimeConverter x:Key="DateTimeToShortTimeConverter" />
             <converter:TimeSpanToDurationConverter x:Key="TimeSpanToDurationConverter" />
-            <converter:BoolToTripLogIconConverter x:Key="BoolToTripLogIconConverter" />
+            <converter:BoolToStringConverter
+                x:Key="BoolToTripLogIconConverter"
+                FalseValue="&#xE768;"
+                TrueValue="&#xE769;" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -14,7 +14,7 @@ using SharedUI.Interface;
 /// <summary>
 /// ViewModel for selecting application skins across WinUI pages.
 /// </summary>
-public sealed class SkinSelectorViewModel
+internal sealed class SkinSelectorViewModel
 {
     private readonly ISkinProvider _skinProvider;
     private readonly AppSettings _settings;

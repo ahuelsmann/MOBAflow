@@ -25,7 +25,7 @@ using Windows.ApplicationModel.DataTransfer;
     Order = 30,
     FeatureToggleKey = "IsSettingsPageAvailable",
     BadgeLabelKey = "SettingsPageLabel")]
-public sealed partial class SettingsPage
+internal sealed partial class SettingsPage
 {
     public MainWindowViewModel ViewModel { get; }
 

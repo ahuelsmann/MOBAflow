@@ -13,7 +13,7 @@ using Mocks;
 /// Tests complete workflow: Station reached → Workflow trigger → Actions executed.
 /// </summary>
 [TestFixture]
-public class WorkflowExecutionEndToEndTests
+internal class WorkflowExecutionEndToEndTests
 {
     private FakeUdpClientWrapper _fakeUdp = null!;
     private Z21 _z21 = null!;

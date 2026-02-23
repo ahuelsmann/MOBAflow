@@ -11,7 +11,7 @@ using SharedUI.ViewModel;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class Z21Controller : ControllerBase
+internal class Z21Controller : ControllerBase
 {
     private readonly WebAppViewModel _viewModel;
     private readonly ILogger<Z21Controller> _logger;
@@ -147,5 +147,5 @@ public class Z21Controller : ControllerBase
     }
 }
 
-public record ConnectRequest(string IpAddress);
-public record TrackPowerRequest(bool On);
+internal record ConnectRequest(string IpAddress);
+internal record TrackPowerRequest(bool On);

@@ -22,7 +22,7 @@ using System.Runtime.InteropServices;
     Order = 10,
     FeatureToggleKey = "IsMonitorPageAvailable",
     BadgeLabelKey = "MonitorPageLabel")]
-public sealed partial class MonitorPage
+internal sealed partial class MonitorPage
 {
     public MonitorPageViewModel ViewModel { get; }
 

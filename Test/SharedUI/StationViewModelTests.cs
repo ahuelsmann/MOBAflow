@@ -7,7 +7,7 @@ using Moba.SharedUI.ViewModel;
 /// Tests for StationViewModel - ViewModel wrapper for Station domain model.
 /// </summary>
 [TestFixture]
-public class StationViewModelTests
+internal class StationViewModelTests
 {
     private Station _station = null!;
     private Project _project = null!;

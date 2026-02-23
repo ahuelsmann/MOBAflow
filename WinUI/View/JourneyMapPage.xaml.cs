@@ -17,7 +17,7 @@ using SharedUI.ViewModel;
     Order = 20,
     FeatureToggleKey = "IsJourneyMapPageAvailable",
     BadgeLabelKey = "JourneyMapPageLabel")]
-public sealed partial class JourneyMapPage
+internal sealed partial class JourneyMapPage
 {
     public JourneyMapViewModel ViewModel { get; }
 

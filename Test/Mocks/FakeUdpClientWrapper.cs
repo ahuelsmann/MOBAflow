@@ -5,7 +5,7 @@ namespace Moba.Test.Mocks;
 using Moba.Backend.Network;
 using System.Net;
 
-public sealed class FakeUdpClientWrapper : IUdpClientWrapper
+internal sealed class FakeUdpClientWrapper : IUdpClientWrapper
 {
     public event EventHandler<UdpReceivedEventArgs>? Received;
 

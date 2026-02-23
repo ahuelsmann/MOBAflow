@@ -17,7 +17,7 @@ using View;
 /// Defers non-critical initialization until after the main window is visible.
 /// This improves perceived startup time by deferring heavy operations (plugins, REST discovery, health checks).
 /// </summary>
-public class PostStartupInitializationService
+internal class PostStartupInitializationService
 {
     private static readonly TimeSpan MinimumIndicatorDuration = TimeSpan.FromSeconds(1.5);
     private readonly IEventBus _eventBus;

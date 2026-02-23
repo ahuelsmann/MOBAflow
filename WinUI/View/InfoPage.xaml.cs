@@ -13,7 +13,7 @@ using System.Reflection;
     Icon = "\uE946",
     Category = NavigationCategory.Help,
     Order = 20)]
-public sealed partial class InfoPage
+internal sealed partial class InfoPage
 {
     private readonly Dictionary<TreeViewNode, string> _sections = [];
 

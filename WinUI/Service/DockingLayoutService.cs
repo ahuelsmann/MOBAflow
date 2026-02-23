@@ -7,6 +7,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
+using Microsoft.Extensions.Logging;
+
 using Windows.Storage;
 
 using ViewModel;
@@ -15,31 +17,33 @@ using ViewModel;
 /// Service für Persistierung und Restore von DockingManager Layouts.
 /// Speichert Layout-State in JSON-Datei im LocalAppData.
 /// </summary>
-public class DockingLayoutService
+internal class DockingLayoutService
 {
     #region Constants
 
     private const string LayoutFileName = "docking-layout.json";
     private const int CurrentLayoutVersion = 1;
 
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
+
     #endregion
 
     #region Fields
 
     private readonly StorageFolder _localAppDataFolder;
-    private readonly JsonSerializerOptions _jsonOptions;
+    private readonly ILogger<DockingLayoutService> _logger;
 
     #endregion
 
-    public DockingLayoutService()
+    public DockingLayoutService(ILogger<DockingLayoutService> logger)
     {
         _localAppDataFolder = ApplicationData.Current.LocalFolder;
-        _jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true,
-            WriteIndented = true,
-            Converters = { new JsonStringEnumConverter() }
-        };
+        _logger = logger;
     }
 
     #region Public Methods
@@ -56,7 +60,7 @@ public class DockingLayoutService
                 return null;
 
             var json = await FileIO.ReadTextAsync(layoutFile);
-            var state = JsonSerializer.Deserialize<DockingLayoutState>(json, _jsonOptions);
+            var state = JsonSerializer.Deserialize<DockingLayoutState>(json, JsonOptions);
 
             // Version-Kompatibilität prüfen
             if (state?.Version != CurrentLayoutVersion)
@@ -66,7 +70,7 @@ public class DockingLayoutService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Fehler beim Laden des Layouts: {ex.Message}");
+            _logger.LogWarning(ex, "Fehler beim Laden des Layouts");
             return null;
         }
     }
@@ -100,12 +104,12 @@ public class DockingLayoutService
                 LayoutFileName,
                 CreationCollisionOption.ReplaceExisting);
 
-            var json = JsonSerializer.Serialize(state, _jsonOptions);
+            var json = JsonSerializer.Serialize(state, JsonOptions);
             await FileIO.WriteTextAsync(layoutFile, json);
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Fehler beim Speichern des Layouts: {ex.Message}");
+            _logger.LogWarning(ex, "Fehler beim Speichern des Layouts");
         }
     }
 
@@ -145,7 +149,7 @@ public class DockingLayoutService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Fehler beim Löschen des Layouts: {ex.Message}");
+            _logger.LogWarning(ex, "Fehler beim Löschen des Layouts");
         }
     }
 
@@ -156,7 +160,7 @@ public class DockingLayoutService
 /// Serialisierbare Repräsentation des DockingManager Layout-States.
 /// </summary>
 [JsonSourceGenerationOptions(WriteIndented = true)]
-public class DockingLayoutState
+internal class DockingLayoutState
 {
     public int Version { get; set; }
     public DateTime Timestamp { get; set; }

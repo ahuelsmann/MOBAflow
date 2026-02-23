@@ -9,7 +9,7 @@ using TrackLibrary.PikoA;
 using TrackPlan.Renderer;
 
 [TestFixture]
-public class RendererTests
+internal class RendererTests
 {
     [Test]
     public void Render_PlacementsCount_MatchesSegmentsCount()

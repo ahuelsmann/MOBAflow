@@ -19,7 +19,7 @@ using System.Reflection;
 /// <param name="BadgeLabelKey">Badge label key or null</param>
 /// <param name="PathIconData">PathIcon geometry or null</param>
 /// <param name="IsBold">Bold title flag</param>
-public record PageMetadata(
+internal record PageMetadata(
     string Tag,
     string Title,
     string? Icon,
@@ -35,7 +35,7 @@ public record PageMetadata(
 /// Discovers and registers pages with [NavigationItem] attribute.
 /// Convention-over-configuration approach: Pages auto-register themselves.
 /// </summary>
-public static class PageDiscoveryService
+internal static class PageDiscoveryService
 {
     /// <summary>
     /// Discovers all Page classes with [NavigationItem] attribute.

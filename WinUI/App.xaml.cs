@@ -40,6 +40,8 @@ using View;
 
 using ViewModel;
 
+using Common.Extension;
+
 /// <summary>
 /// Provides application-specific behavior to supplement the default Application class.
 /// </summary>
@@ -226,8 +228,9 @@ public partial class App
                 var logger = sp.GetRequiredService<ILogger<CityService>>();
                 return new CityService(dataManager, logger);
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine($"[DI] CityService failed, using NullCityService: {ex.Message}");
                 return new NullCityService();
             }
         });
@@ -241,8 +244,9 @@ public partial class App
                 var logger = sp.GetRequiredService<ILogger<LocomotiveService>>();
                 return new LocomotiveService(dataManager, logger);
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine($"[DI] LocomotiveService failed, using NullLocomotiveService: {ex.Message}");
                 return new NullLocomotiveService();
             }
         });
@@ -260,8 +264,9 @@ public partial class App
                 var logger = sp.GetRequiredService<ILogger<SettingsService>>();
                 return new SettingsService(appSettings, logger);
             }
-            catch
+            catch (Exception ex)
             {
+                Debug.WriteLine($"[DI] SettingsService failed, using NullSettingsService: {ex.Message}");
                 return new NullSettingsService();
             }
         });
@@ -305,7 +310,7 @@ public partial class App
             sp.GetRequiredService<MainWindowViewModel>(),
             sp.GetService<ITripLogService>(),
             sp.GetService<ILogger<TrainControlViewModel>>(),
-            sp.GetService<SharedUI.Interface.IUiDispatcher>()
+            sp.GetService<IUiDispatcher>()
         ));
 
         // TrackPlan (model and ViewModel)
@@ -376,10 +381,12 @@ public partial class App
 
             // DEFERRED INITIALIZATION (async, doesn't block UI):
             // After MainWindow is visible, start deferred services
-            _ = InitializePostStartupServicesAsync();
+            InitializePostStartupServicesAsync()
+                .SafeFireAndForget(ex => _logger.LogError(ex, "Post-startup initialization failed unexpectedly"));
 
             // Auto-load last solution if enabled (async, non-blocking)
-            _ = AutoLoadLastSolutionAsync(((MainWindow)_window).ViewModel);
+            AutoLoadLastSolutionAsync(((MainWindow)_window).ViewModel)
+                .SafeFireAndForget(ex => _logger.LogError(ex, "Auto-load last solution failed unexpectedly"));
 
             Debug.WriteLine("[OnLaunched] COMPLETE");
         }

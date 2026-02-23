@@ -1,33 +1,28 @@
 <UserControl
-    x:Class="Moba.WinUI.Controls.LayoutDocument"
+    x:Class="Moba.WinUI.Controls.Docking.LayoutDocument"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:Moba.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:docking="using:Moba.WinUI.Controls.Docking"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     x:Name="Root"
     mc:Ignorable="d">
 
     <Grid Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
         <TabView
-            AddTabButtonClick="OnAddTabButtonClick"
             Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
             CanDragTabs="True"
             CanReorderTabs="True"
             IsAddTabButtonVisible="True"
             SelectedItem="{Binding ActiveDocument, ElementName=Root, Mode=TwoWay}"
-            TabCloseRequested="OnTabCloseRequested"
-            TabDragStarting="OnTabDragStarting"
-            TabDroppedOutside="OnTabDroppedOutside"
             TabItemsSource="{Binding Documents, ElementName=Root}">
             <TabView.TabItemTemplate>
-                <DataTemplate x:DataType="controls:DocumentTab">
+                <DataTemplate x:DataType="docking:DocumentTab">
                     <TabViewItem
                         Content="{Binding}"
                         ContentTemplate="{Binding ContentTemplate, ElementName=Root}"
                         Header="{Binding}"
-                        HeaderTemplate="{Binding TabTemplate, ElementName=Root}"
-                        RightTapped="OnTabRightTapped">
+                        HeaderTemplate="{Binding TabTemplate, ElementName=Root}">
                         <TabViewItem.ContextFlyout>
                             <MenuFlyout>
                                 <MenuFlyoutItem x:Name="PinToLeftItem" Text="Pin to Left">
@@ -46,13 +41,13 @@
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
                                 <MenuFlyoutSeparator />
-                                <MenuFlyoutItem Click="OnContextClose" Text="Close">
+                                <MenuFlyoutItem Text="Close">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE711;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem Click="OnContextCloseOthers" Text="Close Others" />
-                                <MenuFlyoutItem Click="OnContextCloseAll" Text="Close All" />
+                                <MenuFlyoutItem Text="Close Others" />
+                                <MenuFlyoutItem Text="Close All" />
                             </MenuFlyout>
                         </TabViewItem.ContextFlyout>
                     </TabViewItem>

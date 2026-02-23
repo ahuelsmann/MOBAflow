@@ -12,7 +12,7 @@ using Windows.Foundation;
 /// Erzeugt Path-Elemente für platzierter Gleissegmente auf dem Plan und als Ghost.
 /// Baut die Geometrie direkt aus Path-Befehlen auf, ohne XAML-Parsing.
 /// </summary>
-public static class SegmentPlanPathBuilder
+internal static class SegmentPlanPathBuilder
 {
     private const double TrackStrokeWidth = 4;
 

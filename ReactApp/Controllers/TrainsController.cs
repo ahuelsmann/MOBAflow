@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class TrainsController : ControllerBase
+internal class TrainsController : ControllerBase
 {
     private readonly ILogger<TrainsController> _logger;
 
@@ -95,6 +95,6 @@ public class TrainsController : ControllerBase
     }
 }
 
-public record TrainDto(int Id, string Name, int Address, int Speed, string Direction, bool[] Functions);
-public record SpeedRequest(int Speed);
-public record FunctionRequest(int FunctionIndex, bool On);
+internal record TrainDto(int Id, string Name, int Address, int Speed, string Direction, bool[] Functions);
+internal record SpeedRequest(int Speed);
+internal record FunctionRequest(int FunctionIndex, bool On);

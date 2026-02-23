@@ -8,7 +8,7 @@ using SharedUI.Interface;
 /// WinUI-Implementierung von IUiDispatcher. Nutzt die DispatcherQueue des Threads,
 /// auf dem die Instanz erstellt wurde (typischerweise UI-Thread bei erster DI-Auflösung).
 /// </summary>
-public class UiDispatcher : IUiDispatcher
+internal class UiDispatcher : IUiDispatcher
 {
     private readonly DispatcherQueue? _dispatcherQueue;
 

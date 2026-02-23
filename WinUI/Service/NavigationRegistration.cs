@@ -18,7 +18,7 @@ using ViewModel;
 /// Uses auto-discovery for pages with [NavigationItem] attribute.
 /// Manual registrations only for pages requiring custom DI setup.
 /// </summary>
-public static class NavigationRegistration
+internal static class NavigationRegistration
 {
     /// <summary>
     /// Discovers and registers all pages (auto + custom DI).

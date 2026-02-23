@@ -11,7 +11,7 @@ using TrackLibrary.PikoA;
 /// Konvertiert Pfad-Befehle aus <see cref="SegmentLocalPathBuilder"/> in Win2D <see cref="CanvasGeometry"/>.
 /// Geometrie in lokalen Koordinaten (mm) – keine Platzierungs-Transform.
 /// </summary>
-public static class PathToCanvasGeometryConverter
+internal static class PathToCanvasGeometryConverter
 {
     /// <summary>
     /// Erstellt eine CanvasGeometry in Weltkoordinaten – identische Transformation wie

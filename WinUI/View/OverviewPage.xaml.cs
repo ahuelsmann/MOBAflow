@@ -16,7 +16,7 @@ using SharedUI.ViewModel;
     Order = 10,
     FeatureToggleKey = "IsOverviewPageAvailable",
     BadgeLabelKey = "OverviewPageLabel")]
-public sealed partial class OverviewPage
+internal sealed partial class OverviewPage
 {
     public MainWindowViewModel ViewModel { get; }
 

@@ -9,7 +9,7 @@ using Domain;
 /// Service for resolving train class input in WinUI context.
 /// Provides methods to parse user input and return resolved locomotive series with UI-friendly formatting.
 /// </summary>
-public class TrainClassResolverService
+internal class TrainClassResolverService
 {
     private readonly ITrainClassParser _parser;
 

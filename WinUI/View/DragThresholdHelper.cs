@@ -11,7 +11,7 @@ using Windows.Foundation;
 /// Pattern: Click selects, drag only starts when mouse moves beyond threshold.
 /// Threshold: 8 pixels (SM_CXDRAG * 2.0 multiplier from Windows system metrics).
 /// </summary>
-public sealed class DragThresholdHelper
+internal sealed class DragThresholdHelper
 {
     /// <summary>
     /// Standard drag threshold from Microsoft AutomaticDragHelper.

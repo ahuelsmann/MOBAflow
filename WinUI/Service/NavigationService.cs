@@ -2,6 +2,7 @@
 namespace Moba.WinUI.Service;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Controls;
 
 using SharedUI.Shell;
@@ -16,19 +17,21 @@ using System.Linq;
 /// For plugins: Uses ContentProvider pattern to avoid XamlTypeInfo resolution issues.
 /// Plugins provide a class with CreateContent() method that returns UIElement.
 /// </summary>
-public class NavigationService : INavigationService
+internal class NavigationService : INavigationService
 {
     #region Fields
     private readonly IServiceProvider _serviceProvider;
     private readonly List<PageMetadata> _pages;
+    private readonly ILogger<NavigationService> _logger;
     private readonly Stack<string> _navigationHistory = new();
     private Frame? _contentFrame;
     #endregion
 
-    public NavigationService(IServiceProvider serviceProvider, List<PageMetadata> pages)
+    public NavigationService(IServiceProvider serviceProvider, List<PageMetadata> pages, ILogger<NavigationService> logger)
     {
         _serviceProvider = serviceProvider;
         _pages = pages;
+        _logger = logger;
     }
 
     /// <inheritdoc />
@@ -96,21 +99,22 @@ public class NavigationService : INavigationService
     }
 
     /// <inheritdoc />
-    public bool NavigateTo(string pageTag, object? parameter = null)
+    public async Task<bool> NavigateToAsync(string pageTag, object? parameter = null)
     {
         try
         {
-            NavigateToPageAsync(pageTag).GetAwaiter().GetResult();
+            await NavigateToPageAsync(pageTag);
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Navigation to '{PageTag}' failed", pageTag);
             return false;
         }
     }
 
     /// <inheritdoc />
-    public bool GoBack()
+    public async Task<bool> GoBackAsync()
     {
         if (!CanGoBack) return false;
 
@@ -127,18 +131,22 @@ public class NavigationService : INavigationService
                 var oldTag = CurrentPageTag;
                 CurrentPageTag = previousTag;
 
+                // Raise navigation event
                 Navigated?.Invoke(this, new NavigationEventArgs
                 {
                     PageTag = previousTag,
                     PreviousPageTag = oldTag
                 });
+
                 return true;
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore
+            _logger.LogError(ex, "GoBack navigation to '{PreviousTag}' failed", previousTag);
+            _navigationHistory.Push(previousTag);
         }
+
         return false;
     }
 

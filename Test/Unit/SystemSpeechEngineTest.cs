@@ -8,7 +8,7 @@ using Moba.Sound;
 /// Minimal test for Windows SAPI Text-to-Speech.
 /// This is a temporary fallback solution while Microsoft.CognitiveServices.Speech is being repaired.
 /// </summary>
-public class SystemSpeechEngineTest
+internal class SystemSpeechEngineTest
 {
     private ISpeakerEngine _speakerEngine = null!;
 

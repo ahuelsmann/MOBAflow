@@ -10,7 +10,7 @@ using SharedUI.Interface;
 /// - Components subscribe to PropertyChanged and call InvokeAsync(StateHasChanged)
 /// - SignalR pushes updates to the client
 /// </summary>
-public class BlazorUiDispatcher : IUiDispatcher
+internal class BlazorUiDispatcher : IUiDispatcher
 {
     public void InvokeOnUi(Action action)
     {

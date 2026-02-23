@@ -16,7 +16,7 @@ using SharedUI.Interface;
 
 using System.Text.Json;
 
-public class IoService : IIoService
+internal class IoService : IIoService
 {
     private WindowId? _windowId;
     private XamlRoot? _xamlRoot;

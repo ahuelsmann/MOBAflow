@@ -2,8 +2,8 @@
     x:Class="Moba.WinUI.View.DockingPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:Moba.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:docking="using:Moba.WinUI.Controls.Docking"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
@@ -13,8 +13,8 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!--  DockingManager: Full VS 2026-style layout  -->
-        <controls:DockingManager
+        <!--  DockingManager  -->
+        <docking:DockingManager
             x:Name="DockManager"
             Grid.Row="1"
             BottomPanelHeight="180"
@@ -31,16 +31,15 @@
             TopPanels="{Binding TopPanels}">
 
             <!--  Center: Document Tabs  -->
-            <controls:DockingManager.DocumentAreaContent>
-                <controls:LayoutDocument
+            <docking:DockingManager.DocumentAreaContent>
+                <docking:LayoutDocument
                     ActiveDocument="{Binding ActiveDocument, Mode=TwoWay}"
                     AllowFloatingTabs="False"
                     Documents="{Binding OpenDocuments}"
-                    EnableTabGrouping="True"
-                    TabDraggedOutside="OnTabDraggedOutside">
+                    EnableTabGrouping="True">
 
-                    <controls:LayoutDocument.TabTemplate>
-                        <DataTemplate x:DataType="controls:DocumentTab">
+                    <docking:LayoutDocument.TabTemplate>
+                        <DataTemplate x:DataType="docking:DocumentTab">
                             <Grid Padding="4,0" ColumnSpacing="6">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
@@ -82,10 +81,10 @@
                                     Visibility="{Binding IsModified, Converter={StaticResource BoolToVisibilityConverter}}" />
                             </Grid>
                         </DataTemplate>
-                    </controls:LayoutDocument.TabTemplate>
+                    </docking:LayoutDocument.TabTemplate>
 
-                    <controls:LayoutDocument.ContentTemplate>
-                        <DataTemplate x:DataType="controls:DocumentTab">
+                    <docking:LayoutDocument.ContentTemplate>
+                        <DataTemplate x:DataType="docking:DocumentTab">
                             <ScrollViewer
                                 Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
                                 HorizontalScrollMode="Disabled"
@@ -93,12 +92,12 @@
                                 <ContentPresenter Margin="0" Content="{Binding Content}" />
                             </ScrollViewer>
                         </DataTemplate>
-                    </controls:LayoutDocument.ContentTemplate>
-                </controls:LayoutDocument>
-            </controls:DockingManager.DocumentAreaContent>
+                    </docking:LayoutDocument.ContentTemplate>
+                </docking:LayoutDocument>
+            </docking:DockingManager.DocumentAreaContent>
 
             <!--  Status Bar  -->
-            <controls:DockingManager.StatusBarContent>
+            <docking:DockingManager.StatusBarContent>
                 <Grid
                     Height="24"
                     Padding="8,0"
@@ -150,7 +149,7 @@
                         Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                         Text="CRLF" />
                 </Grid>
-            </controls:DockingManager.StatusBarContent>
-        </controls:DockingManager>
+            </docking:DockingManager.StatusBarContent>
+        </docking:DockingManager>
     </Grid>
 </Page>

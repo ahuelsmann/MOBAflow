@@ -11,7 +11,7 @@ using Windows.UI;
 /// When OFF: Returns a subtle tint of the color.
 /// Pass the accent color hex as ConverterParameter (e.g., "#FFD700").
 /// </summary>
-public partial class BoolToBacklightBrushConverter : IValueConverter
+internal partial class BoolToBacklightBrushConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {

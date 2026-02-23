@@ -21,7 +21,7 @@ using System.IO;
     Order = 10,
     FeatureToggleKey = "IsSolutionPageAvailable",
     BadgeLabelKey = "SolutionPageLabel")]
-public sealed partial class SolutionPage
+internal sealed partial class SolutionPage
 {
     public MainWindowViewModel ViewModel { get; }
 

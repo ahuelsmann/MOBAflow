@@ -8,7 +8,7 @@ using Moba.SharedUI.Helper;
 /// Verifies that raw Z21 bytes are correctly decoded into Address, Speed, and Direction.
 /// </summary>
 [TestFixture]
-public class Z21DccCommandDecoderTests
+internal class Z21DccCommandDecoderTests
 {
     [Test]
     public void DecodeLocoCommand_WithValidBytes_DecodesCorrectly()

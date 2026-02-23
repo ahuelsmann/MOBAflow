@@ -14,7 +14,7 @@ using Microsoft.UI.Xaml.Media;
 /// Factory for creating NavigationViewItems from PageMetadata.
 /// Handles icon creation, badge rendering, and Feature Toggle visibility binding.
 /// </summary>
-public sealed class NavigationItemFactory
+internal sealed class NavigationItemFactory
 {
     private readonly AppSettings _settings;
 

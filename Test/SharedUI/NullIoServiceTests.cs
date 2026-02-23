@@ -9,7 +9,7 @@ using Moba.SharedUI.Service;
 /// Verifies that all methods return expected "not supported" or null results.
 /// </summary>
 [TestFixture]
-public class NullIoServiceTests
+internal class NullIoServiceTests
 {
     private IIoService _service = null!;
 

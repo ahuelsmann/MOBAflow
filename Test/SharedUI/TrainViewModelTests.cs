@@ -8,7 +8,7 @@ using Moba.SharedUI.ViewModel;
 /// Tests for TrainViewModel - ViewModel wrapper for Train domain model.
 /// </summary>
 [TestFixture]
-public class TrainViewModelTests
+internal class TrainViewModelTests
 {
     private Train _train = null!;
     private Project _project = null!;

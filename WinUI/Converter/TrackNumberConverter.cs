@@ -6,7 +6,7 @@ using Microsoft.UI.Xaml.Data;
 /// Converter that formats a track number for display.
 /// Converts numeric track value to a readable string like "Track 1".
 /// </summary>
-public partial class TrackNumberConverter : IValueConverter
+internal partial class TrackNumberConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {

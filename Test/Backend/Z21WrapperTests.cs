@@ -12,7 +12,7 @@ using System.Net;
 using TestData;
 
 [TestFixture]
-public class Z21WrapperTests
+internal class Z21WrapperTests
 {
     [Test]
     public async Task ConnectAsync_UsesWrapper_AndSendsHandshakeAndBroadcast()

@@ -9,7 +9,7 @@ using SharedUI.Shell;
 /// <summary>
 /// Factory for creating pages with dependency injection support.
 /// </summary>
-public sealed class PageFactory : IPageFactory
+internal sealed class PageFactory : IPageFactory
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly Dictionary<string, Type> _pageRegistry = new(StringComparer.OrdinalIgnoreCase);

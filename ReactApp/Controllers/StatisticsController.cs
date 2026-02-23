@@ -10,7 +10,7 @@ using SharedUI.ViewModel;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class StatisticsController : ControllerBase
+internal class StatisticsController : ControllerBase
 {
     private readonly WebAppViewModel _viewModel;
     private readonly ILogger<StatisticsController> _logger;
@@ -93,7 +93,7 @@ public class StatisticsController : ControllerBase
 /// <summary>
 /// DTO for track statistics matching InPortStatistic.
 /// </summary>
-public record TrackStatisticDto(
+internal record TrackStatisticDto(
     int InPort,
     string Name,
     int Count,
@@ -108,7 +108,7 @@ public record TrackStatisticDto(
 /// <summary>
 /// DTO for lap counter settings.
 /// </summary>
-public record LapCounterSettingsDto(
+internal record LapCounterSettingsDto(
     int CountOfFeedbackPoints,
     int GlobalTargetLapCount,
     bool UseTimerFilter,

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
 using Enum;
@@ -6,7 +6,7 @@ using Enum;
 /// <summary>
 /// Upcoming feature: Additional details about a locomotive or wagon.
 /// </summary>
-public class Details
+public abstract class Details
 {
     public uint Axles { get; set; } = 2; // Number of axles on a wagon
     public Epoch? Epoch { get; set; }

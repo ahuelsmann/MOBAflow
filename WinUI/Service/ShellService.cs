@@ -8,7 +8,7 @@ using SharedUI.Shell;
 /// <summary>
 /// Manages shell regions and content placement for WinUI.
 /// </summary>
-public sealed class ShellService : IShellService
+internal sealed class ShellService : IShellService
 {
     private readonly Dictionary<ShellRegion, RegionState> _regions = new();
 

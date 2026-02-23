@@ -10,8 +10,8 @@
         <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <converter:BoolToFontWeightConverter x:Key="BoolToFontWeightConverter" />
         <converter:BoolToFeedbackBackgroundConverter x:Key="BoolToFeedbackBackgroundConverter" />
-        <converter:BoolToScrollIconConverter x:Key="BoolToScrollIconConverter" />
-        <converter:BoolToScrollTextConverter x:Key="BoolToScrollTextConverter" />
+        <converter:BoolToStringConverter x:Key="BoolToScrollIconConverter" TrueValue="&#xE769;" FalseValue="&#xE768;" />
+        <converter:BoolToStringConverter x:Key="BoolToScrollTextConverter" TrueValue="Paused" FalseValue="Live" />
     </Page.Resources>
 
     <Grid Padding="8">

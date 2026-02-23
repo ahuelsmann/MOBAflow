@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Test.Backend;
 
@@ -11,7 +11,7 @@ using Moq;
 /// Tests template placeholder replacement without speaker dependency.
 /// </summary>
 [TestFixture]
-public class AnnouncementServiceTests
+internal class AnnouncementServiceTests
 {
     private AnnouncementService _announcementService = null!;
     private Mock<ILogger<AnnouncementService>> _mockLogger = null!;

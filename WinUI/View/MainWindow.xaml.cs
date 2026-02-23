@@ -18,7 +18,7 @@ using System.Reflection;
 
 using MainWindowViewModel = SharedUI.ViewModel.MainWindowViewModel;
 
-public sealed partial class MainWindow
+internal sealed partial class MainWindow
 {
     #region Fields
     public MainWindowViewModel ViewModel { get; }

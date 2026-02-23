@@ -1,3 +1,4 @@
+// ReSharper disable All
 namespace Moba.TrackLibrary.PikoA;
 
 using Base;

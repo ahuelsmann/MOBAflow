@@ -16,16 +16,16 @@ public interface INavigationService
     /// <summary>
     /// Navigates to a page by its tag.
     /// </summary>
-    /// <param name="pageTag">The unique tag identifying the page.</param>
+    /// <param name="pageTag">The unique tag identifying page.</param>
     /// <param name="parameter">Optional navigation parameter.</param>
     /// <returns>True if navigation succeeded.</returns>
-    bool NavigateTo(string pageTag, object? parameter = null);
+    Task<bool> NavigateToAsync(string pageTag, object? parameter = null);
 
     /// <summary>
     /// Navigates back to the previous page if possible.
     /// </summary>
     /// <returns>True if back navigation succeeded.</returns>
-    bool GoBack();
+    Task<bool> GoBackAsync();
 
     /// <summary>
     /// Gets whether back navigation is possible.

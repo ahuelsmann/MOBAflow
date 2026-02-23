@@ -14,7 +14,7 @@ using Windows.UI;
 /// Supports all Ks signal aspects: Hp0, Ks1, Ks2, Ks1Blink, Kennlicht, Dunkel, Ra12, Zs1, Zs7.
 /// Automatically blinks for Ks1Blink and Zs1 aspects.
 /// </summary>
-public sealed partial class KsSignalScreen
+internal sealed partial class KsSignalScreen
 {
     private static readonly SolidColorBrush OffColor = new(Color.FromArgb(60, 64, 64, 64));
     private static readonly SolidColorBrush RedOn = new(Color.FromArgb(255, 255, 0, 0));

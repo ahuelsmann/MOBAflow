@@ -7,7 +7,7 @@ using Microsoft.UI.Xaml.Data;
 /// Converts an integer index to a boolean indicating if it matches the converter parameter.
 /// Used for RadioButton.IsChecked binding with preset selection.
 /// </summary>
-public partial class IntToPresetCheckedConverter : IValueConverter
+internal partial class IntToPresetCheckedConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {

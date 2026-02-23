@@ -10,7 +10,7 @@ using System.Net;
 /// Uses FakeUdpClientWrapper to verify contract compliance.
 /// </summary>
 [TestFixture]
-public class UdpClientWrapperTests
+internal class UdpClientWrapperTests
 {
     private FakeUdpClientWrapper _wrapper = null!;
 

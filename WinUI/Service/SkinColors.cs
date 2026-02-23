@@ -10,7 +10,7 @@ using Windows.UI;
 /// Each skin supports both Light and Dark mode.
 /// Colors designed for optimal readability and Fluent Design compliance.
 /// </summary>
-public static class SkinColors
+internal static class SkinColors
 {
     /// <summary>
     /// Gets the complete color palette for a given skin and mode.
@@ -214,7 +214,7 @@ public static class SkinColors
 /// <summary>
 /// Complete color palette for a skin.
 /// </summary>
-public class SkinPalette
+internal class SkinPalette
 {
     public required string Name { get; init; }
 

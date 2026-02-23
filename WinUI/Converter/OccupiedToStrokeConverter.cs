@@ -9,7 +9,7 @@ using Microsoft.UI.Xaml.Media;
 /// Converts track segment occupation state to stroke color.
 /// Occupied segments shown in warning color (orange).
 /// </summary>
-public partial class OccupiedToStrokeConverter : IValueConverter
+internal partial class OccupiedToStrokeConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {

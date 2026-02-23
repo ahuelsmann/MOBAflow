@@ -11,7 +11,7 @@ using Moq;
 /// Tests basic page initialization and properties.
 /// </summary>
 [TestFixture]
-public class WinUiPageViewModelTests
+internal class WinUiPageViewModelTests
 {
     private Mock<ILogger<MainWindowViewModel>> _mockLogger = null!;
 

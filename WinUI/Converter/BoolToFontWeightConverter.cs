@@ -8,7 +8,7 @@ using Microsoft.UI.Xaml.Data;
 /// True → Bold, False → Normal
 /// Used for highlighting current/active items in lists.
 /// </summary>
-public partial class BoolToFontWeightConverter : IValueConverter
+internal partial class BoolToFontWeightConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {

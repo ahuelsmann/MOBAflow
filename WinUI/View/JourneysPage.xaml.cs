@@ -16,7 +16,7 @@ using Windows.System;
 /// Supports drag & drop from city library to stations list.
 /// </summary>
 // ReSharper disable once PartialTypeWithSinglePart
-public sealed partial class JourneysPage
+internal sealed partial class JourneysPage
 {
     private readonly Common.Configuration.AppSettings _settings;
     private readonly SharedUI.Interface.ISettingsService? _settingsService;

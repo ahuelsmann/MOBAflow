@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 /// </summary>
 [TestFixture]
 [Category("Unit")]
-public class SolutionInstanceTests
+internal class SolutionInstanceTests
 {
     [Test]
     public void SolutionSingleton_ShouldReturnSameInstance()

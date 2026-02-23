@@ -6,7 +6,7 @@ using Microsoft.UI.Xaml.Data;
 /// <summary>
 /// Konvertiert TimeSpan? zu Anzeige-String für Dauer (z. B. "2 min 30 s" oder "1 h 5 min").
 /// </summary>
-public sealed class TimeSpanToDurationConverter : IValueConverter
+internal sealed class TimeSpanToDurationConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {

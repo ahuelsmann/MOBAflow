@@ -25,7 +25,7 @@ using Windows.Foundation;
 /// Uses SignalBoxPlanViewModel for MVVM-compliant data management.
 /// Supports skin switching via ISkinProvider.
 /// </summary>
-public sealed partial class SignalBoxPage
+sealed partial class SignalBoxPage
 {
     private const int GridCellSize = 60;
     private const int GridColumns = 32;

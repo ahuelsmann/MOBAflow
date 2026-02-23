@@ -7,7 +7,7 @@ using Moba.Sound;
 /// Tests for NullSoundPlayer - the NullObject implementation for platforms without audio.
 /// </summary>
 [TestFixture]
-public class NullSoundPlayerTests
+internal class NullSoundPlayerTests
 {
     private ISoundPlayer _player = null!;
 

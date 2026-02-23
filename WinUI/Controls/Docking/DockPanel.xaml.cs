@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.WinUI.Controls;
+namespace Moba.WinUI.Controls.Docking;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -13,7 +13,7 @@ using Windows.ApplicationModel.DataTransfer;
 /// <summary>
 /// Specifies the docking position of a panel in the DockingManager.
 /// </summary>
-public enum DockPosition
+internal enum DockPosition
 {
     Left,
     Right,
@@ -27,19 +27,9 @@ public enum DockPosition
 /// Wird in DockingManager-Bereichen verwendet.
 /// Cherry-Picked: Close/Undock (Qt-ADS), Pin to AutoHide (Qt-ADS 4.x).
 /// </summary>
-public sealed partial class DockPanel
+internal sealed partial class DockPanel
 {
     private const string DockPanelDataKey = "DockPanel";
-
-    /// <summary>
-    /// Wird ausgelöst, wenn der Close-Button geklickt wird.
-    /// </summary>
-    public event EventHandler? CloseRequested;
-
-    /// <summary>
-    /// Wird ausgelöst, wenn der Undock-Button geklickt wird (zurück als Tab in Document Area).
-    /// </summary>
-    public event EventHandler? UndockRequested;
 
     /// <summary>
     /// Wird ausgelöst, wenn der Expand/Collapse-Status geändert wird.

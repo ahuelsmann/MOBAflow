@@ -9,7 +9,7 @@ using System.Windows.Input;
 /// Custom behavior for ListView ItemClick that passes the clicked item directly.
 /// This avoids the issue where CommandParameter binding returns null.
 /// </summary>
-public sealed class ListViewItemClickBehavior : Behavior<ListView>
+internal sealed class ListViewItemClickBehavior : Behavior<ListView>
 {
     public static readonly DependencyProperty CommandProperty =
         DependencyProperty.Register(

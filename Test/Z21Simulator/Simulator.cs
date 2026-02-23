@@ -5,7 +5,7 @@ namespace Moba.Test.Z21Simulator;
 using System.Net;
 using System.Net.Sockets;
 
-public class Simulator : IDisposable
+internal class Simulator : IDisposable
 {
     private readonly UdpClient _server;
     private readonly int _port;

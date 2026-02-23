@@ -8,7 +8,7 @@ using Common.Multiplex;
 /// Liefert die wählbaren Viessmann Multiplex-Signale (Haupt- und Vorsignal) aus den Stammdaten (data.json).
 /// Filtert nach Multiplexer (5229/52292) und Rolle (main/distant).
 /// </summary>
-public sealed class ViessmannSignalService
+internal sealed class ViessmannSignalService
 {
     private readonly DataManager _dataManager;
 

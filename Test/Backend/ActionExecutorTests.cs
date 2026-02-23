@@ -12,7 +12,7 @@ using Mocks;
 /// Tests workflow action execution logic without hardware dependencies.
 /// </summary>
 [TestFixture]
-public class ActionExecutorTests
+internal class ActionExecutorTests
 {
     private IActionExecutor _actionExecutor = null!;
     private FakeUdpClientWrapper _fakeUdp = null!;

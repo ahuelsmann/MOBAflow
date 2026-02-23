@@ -7,7 +7,7 @@ using Microsoft.UI.Xaml.Controls;
 /// <summary>
 /// Dialog zur Auswahl eines Segoe-MDL2-Symbols für eine Funktionsschaltfläche (Train Control).
 /// </summary>
-public sealed partial class FunctionSymbolPickerDialog
+internal sealed partial class FunctionSymbolPickerDialog
 {
     /// <summary>
     /// Nach Schließen: gewähltes Symbol (Unicode-Glyph-String) oder null bei Abbrechen.

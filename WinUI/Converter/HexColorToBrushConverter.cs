@@ -12,7 +12,7 @@ using Windows.UI;
 /// Empty string returns null (binding will use FallbackValue or default).
 /// Used for dynamic background colors in track cards and station highlighting.
 /// </summary>
-public partial class HexColorToBrushConverter : IValueConverter
+internal partial class HexColorToBrushConverter : IValueConverter
 {
     public object? Convert(object value, Type targetType, object parameter, string language)
     {

@@ -1,1896 +1,2040 @@
 {
-  "name": "Example Solution",
-  "projects": [
-    {
-      "name": "myMOBA",
-      "speakerEngines": [
+    "name": "Example Solution",
+    "projects": [
         {
-          "name": "Microsoft.CognitiveServices.Speech",
-          "type": "Microsoft.CognitiveServices.Speech",
-          "settings": {}
-        }
-      ],
-      "voices": [
-        {
-          "name": "ElkeNeural",
-          "prosodyRate": 0.0
-        },
-        {
-          "name": "ConradNeural",
-          "prosodyRate": 0.0
-        }
-      ],
-      "locomotives": [
-        {
-          "id": "bb15c10a-5b78-451f-8f2f-2d4e3efa74af",
-          "name": "BR 110 Verkehrsrot",
-          "pos": 1,
-          "digitalAddress": 7,
-          "manufacturer": "Roco",
-          "articleNumber": "62550",
-          "functionSymbols": [
-            "\uEA3B",
-            "",
-            "",
-            "",
-            "\uE753"
-          ],
-          "isPushing": false
-        }
-      ],
-      "passengerWagons": [
-        {
-          "wagonClass": 1,
-          "id": "b2c3d4e5-f6a7-8901-2345-678901cdefab",
-          "name": "Avmz 107 - 1st Class",
-          "pos": 1,
-          "manufacturer": "Piko",
-          "articleNumber": "58520",
-          "series": "Avmz 107",
-          "colorPrimary": 4,
-          "colorSecondary": 6,
-          "details": {
-            "axles": 2,
-            "epoch": 5,
-            "railroadCompany": "DB Regio",
-            "description": "First class passenger coach"
-          }
-        }
-      ],
-      "goodsWagons": [
-        {
-          "cargo": 1,
-          "id": "d4e5f6a7-b8c9-0123-4567-890123efabcd",
-          "name": "Container Wagon Sgns",
-          "pos": 1,
-          "manufacturer": "Piko",
-          "articleNumber": "54771",
-          "series": "Sgns",
-          "colorPrimary": 8,
-          "details": {
-            "axles": 4,
-            "epoch": 6,
-            "railroadCompany": "DB Cargo",
-            "description": "Container flat wagon"
-          }
-        }
-      ],
-      "trains": [
-        {
-          "id": "e2d3c4b5-a6f7-8901-2345-678901bcdef0",
-          "isDoubleTraction": false,
-          "name": "RE 78",
-          "description": "Regional Express to Minden",
-          "trainType": 1,
-          "serviceType": 1,
-          "locomotiveIds": [
-            "f1e2d3c4-b5a6-7890-1234-567890abcdef"
-          ],
-          "wagonIds": [
-            "b2c3d4e5-f6a7-8901-2345-678901cdefab"
-          ]
-        }
-      ],
-      "workflows": [
-        {
-          "id": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
-          "name": "Arrival Main Station",
-          "description": "Plays announcement on station arrival",
-          "actions": [
-            {
-              "id": "131d050b-a36c-4fb1-8f1b-370869537c5a",
-              "name": "Gong",
-              "number": 1,
-              "type": 2,
-              "delayAfterMs": 0,
-              "parameters": {
-                "FilePath": "C:\\Repo\\ahuelsmann\\MOBAflow\\Sound\\Resources\\Sounds\\273231__gollamar__announcement-04.wav"
-              }
+            "name": "myMOBA",
+            "speakerEngines": [
+                {
+                    "name": "Microsoft.CognitiveServices.Speech",
+                    "type": "Microsoft.CognitiveServices.Speech",
+                    "settings": {}
+                }
+            ],
+            "voices": [
+                {
+                    "name": "ElkeNeural",
+                    "prosodyRate": 0.0
+                },
+                {
+                    "name": "ConradNeural",
+                    "prosodyRate": 0.0
+                }
+            ],
+            "locomotives": [
+                {
+                    "id": "bb15c10a-5b78-451f-8f2f-2d4e3efa74af",
+                    "name": "BR 110 Verkehrsrot",
+                    "pos": 1,
+                    "digitalAddress": 7,
+                    "manufacturer": "Roco",
+                    "articleNumber": "62550",
+                    "functionSymbols": [
+                        "\uEA3B",
+                        "",
+                        "",
+                        "",
+                        "\uE767"
+                    ],
+                    "isPushing": false
+                }
+            ],
+            "passengerWagons": [
+                {
+                    "wagonClass": 1,
+                    "id": "b2c3d4e5-f6a7-8901-2345-678901cdefab",
+                    "name": "Avmz 107 - 1st Class",
+                    "pos": 1,
+                    "manufacturer": "Piko",
+                    "articleNumber": "58520",
+                    "series": "Avmz 107",
+                    "colorPrimary": 4,
+                    "colorSecondary": 6,
+                    "details": {
+                        "axles": 2,
+                        "epoch": 5,
+                        "railroadCompany": "DB Regio",
+                        "description": "First class passenger coach"
+                    }
+                }
+            ],
+            "goodsWagons": [
+                {
+                    "cargo": 1,
+                    "id": "d4e5f6a7-b8c9-0123-4567-890123efabcd",
+                    "name": "Container Wagon Sgns",
+                    "pos": 1,
+                    "manufacturer": "Piko",
+                    "articleNumber": "54771",
+                    "series": "Sgns",
+                    "colorPrimary": 8,
+                    "details": {
+                        "axles": 4,
+                        "epoch": 6,
+                        "railroadCompany": "DB Cargo",
+                        "description": "Container flat wagon"
+                    }
+                }
+            ],
+            "trains": [
+                {
+                    "id": "e2d3c4b5-a6f7-8901-2345-678901bcdef0",
+                    "isDoubleTraction": false,
+                    "name": "RE 78",
+                    "description": "Regional Express to Minden",
+                    "trainType": 1,
+                    "serviceType": 1,
+                    "locomotiveIds": [
+                        "f1e2d3c4-b5a6-7890-1234-567890abcdef"
+                    ],
+                    "wagonIds": [
+                        "b2c3d4e5-f6a7-8901-2345-678901cdefab"
+                    ]
+                }
+            ],
+            "workflows": [
+                {
+                    "id": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+                    "name": "Arrival Main Station",
+                    "description": "Plays announcement on station arrival",
+                    "actions": [
+                        {
+                            "id": "131d050b-a36c-4fb1-8f1b-370869537c5a",
+                            "name": "Gong",
+                            "number": 1,
+                            "type": 2,
+                            "delayAfterMs": 0,
+                            "parameters": {
+                                "FilePath": "C:\\Repo\\ahuelsmann\\MOBAflow\\Sound\\Resources\\Sounds\\273231__gollamar__announcement-04.wav"
+                            }
+                        },
+                        {
+                            "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+                            "name": "Arrival Announcement",
+                            "number": 2,
+                            "type": 0,
+                            "delayAfterMs": 0,
+                            "parameters": {
+                                "Rate": -1
+                            }
+                        }
+                    ],
+                    "executionMode": 0,
+                    "inPort": 0,
+                    "isUsingTimerToIgnoreFeedbacks": false,
+                    "intervalForTimerToIgnoreFeedbacks": 0
+                }
+            ],
+            "journeys": [
+                {
+                    "id": "c1d2e3f4-a5b6-7890-1234-567890abcdef",
+                    "name": "RE 78 (Porta-Express)",
+                    "description": "Regional Express from Bielefeld to Minden",
+                    "text": "N\u00E4chster Halt: {StationName}. Ausstieg: {StationIsExitOnLeft}.",
+                    "stations": [
+                        {
+                            "id": "d1e2f3a4-b5c6-7890-1234-567890abcdef",
+                            "name": "Bielefeld Hauptbahnhof",
+                            "inPort": 0,
+                            "numberOfLapsToStop": 2,
+                            "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+                            "isExitOnLeft": true,
+                            "track": 1,
+                            "arrival": "2026-02-16T08:00:00+01:00",
+                            "departure": "2026-02-16T08:02:00+01:00",
+                            "connections": []
+                        },
+                        {
+                            "id": "d2e3f4a5-b6c7-8901-2345-678901bcdef0",
+                            "name": "Herford",
+                            "inPort": 0,
+                            "numberOfLapsToStop": 2,
+                            "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+                            "isExitOnLeft": false,
+                            "track": 1,
+                            "arrival": "2026-02-16T08:10:00+01:00",
+                            "departure": "2026-02-16T08:12:00+01:00",
+                            "connections": []
+                        },
+                        {
+                            "id": "d3e4f5a6-b7c8-9012-3456-789012cdef01",
+                            "name": "Minden (Westf)",
+                            "inPort": 0,
+                            "numberOfLapsToStop": 2,
+                            "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
+                            "isExitOnLeft": true,
+                            "track": 1,
+                            "arrival": "2026-02-16T08:20:00+01:00",
+                            "departure": "2026-02-16T08:22:00+01:00",
+                            "connections": []
+                        }
+                    ],
+                    "inPort": 1,
+                    "isUsingTimerToIgnoreFeedbacks": false,
+                    "intervalForTimerToIgnoreFeedbacks": 20,
+                    "behaviorOnLastStop": 1,
+                    "firstPos": 0
+                }
+            ],
+            "signalBoxPlan": {
+                "id": "f1d3dd73-dcd5-4faa-b180-e687659598ea",
+                "name": "Stellwerk",
+                "grid": {
+                    "width": 20,
+                    "height": 12,
+                    "cellSize": 60
+                },
+                "elements": [
+                    {
+                        "$type": "TrackCurve",
+                        "id": "f364d7d8-8fc3-4217-a84f-31e9805a88b2",
+                        "x": 2,
+                        "y": 3,
+                        "rotation": 270,
+                        "name": "",
+                        "state": "Free"
+                    },
+                    {
+                        "$type": "TrackStraight",
+                        "id": "f52c9e75-8a52-4c3c-9bd4-f88cb8fb8903",
+                        "x": 3,
+                        "y": 3,
+                        "rotation": 0,
+                        "name": "",
+                        "state": "Free"
+                    },
+                    {
+                        "$type": "TrackStraight",
+                        "id": "3bcaa969-8d75-447c-9bf8-a5540d274de4",
+                        "x": 4,
+                        "y": 3,
+                        "rotation": 0,
+                        "name": "",
+                        "state": "Free"
+                    },
+                    {
+                        "$type": "TrackCurve",
+                        "id": "d2d86731-9122-4c16-8e08-00fdef17989c",
+                        "x": 5,
+                        "y": 3,
+                        "rotation": 0,
+                        "name": "",
+                        "state": "Free"
+                    },
+                    {
+                        "$type": "Signal",
+                        "address": 202,
+                        "signalSystem": "Ks",
+                        "signalAspect": "Ra12",
+                        "isMultiplexed": true,
+                        "multiplexerArticleNumber": "5229",
+                        "mainSignalArticleNumber": "4046",
+                        "distantSignalArticleNumber": "4040",
+                        "baseAddress": 201,
+                        "extendedAccessoryValue": 1,
+                        "id": "1837507c-6f91-47cc-a825-0cedf92e4f89",
+                        "x": 3,
+                        "y": 2,
+                        "rotation": 0,
+                        "name": "",
+                        "state": "Free"
+                    },
+                    {
+                        "$type": "Detector",
+                        "feedbackAddress": 1,
+                        "id": "89a8b660-1623-4edb-99b5-c0cf01afba72",
+                        "x": 2,
+                        "y": 4,
+                        "rotation": 90,
+                        "name": "",
+                        "state": "Free"
+                    },
+                    {
+                        "$type": "TrackStraight",
+                        "id": "339647eb-4cc2-41d6-8517-e540f6c16e5c",
+                        "x": 5,
+                        "y": 4,
+                        "rotation": 90,
+                        "name": "",
+                        "state": "Free"
+                    },
+                    {
+                        "$type": "TrackCurve",
+                        "id": "ad566a5c-60be-429a-bff4-720c93c9854a",
+                        "x": 5,
+                        "y": 5,
+                        "rotation": 90,
+                        "name": "",
+                        "state": "Free"
+                    },
+                    {
+                        "$type": "TrackStraight",
+                        "id": "ae0dd7a5-5505-4051-8a81-35fc7409984a",
+                        "x": 4,
+                        "y": 5,
+                        "rotation": 0,
+                        "name": "",
+                        "state": "Free"
+                    },
+                    {
+                        "$type": "TrackStraight",
+                        "id": "b9edfafb-611b-4e20-a98a-7c1ce739c00e",
+                        "x": 3,
+                        "y": 5,
+                        "rotation": 0,
+                        "name": "",
+                        "state": "Free"
+                    },
+                    {
+                        "$type": "TrackCurve",
+                        "id": "ac4d1724-c7cd-4740-91d0-85bc9c14992c",
+                        "x": 2,
+                        "y": 5,
+                        "rotation": 180,
+                        "name": "",
+                        "state": "Free"
+                    }
+                ],
+                "connections": [],
+                "routes": []
             },
-            {
-              "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
-              "name": "Arrival Announcement",
-              "number": 2,
-              "type": 0,
-              "delayAfterMs": 0,
-              "parameters": {
-                "Rate": -1
-              }
-            }
-          ],
-          "executionMode": 0,
-          "inPort": 0,
-          "isUsingTimerToIgnoreFeedbacks": false,
-          "intervalForTimerToIgnoreFeedbacks": 0
+            "tripLogEntries": [
+                {
+                    "id": "f5e027a3-cf3c-4995-85a0-94bb25794d8c",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:44.962175Z",
+                    "endTime": "2026-02-19T17:50:45.0322832Z",
+                    "speed": 3,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0701082"
+                },
+                {
+                    "id": "f24249ee-165a-4264-8cb3-02f8a65d6bb8",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:45.0322832Z",
+                    "endTime": "2026-02-19T17:50:45.0672549Z",
+                    "speed": 12,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0349717"
+                },
+                {
+                    "id": "31a1d825-4d9d-4bcd-a532-934adc309f77",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:45.0672549Z",
+                    "endTime": "2026-02-19T17:50:45.1004872Z",
+                    "speed": 14,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0332323"
+                },
+                {
+                    "id": "67aa7d52-9b00-488c-8973-0623d6f54b5e",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:45.1004872Z",
+                    "endTime": "2026-02-19T17:50:45.1389041Z",
+                    "speed": 18,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0384169"
+                },
+                {
+                    "id": "3d0e4211-a5ee-4fe6-94f2-3eb239d39e30",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:45.1389041Z",
+                    "endTime": "2026-02-19T17:50:45.1740997Z",
+                    "speed": 27,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0351956"
+                },
+                {
+                    "id": "d05ffc5c-ff89-4735-b048-0585834e70ec",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:45.1740997Z",
+                    "endTime": "2026-02-19T17:50:45.205476Z",
+                    "speed": 33,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0313763"
+                },
+                {
+                    "id": "3a9d9b44-b150-45e8-a3fc-270421d6cc6b",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:45.205476Z",
+                    "endTime": "2026-02-19T17:50:45.2366577Z",
+                    "speed": 36,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0311817"
+                },
+                {
+                    "id": "2acb8d1b-5188-4495-bb59-acf4b402ba60",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:45.2366577Z",
+                    "endTime": "2026-02-19T17:50:45.2685732Z",
+                    "speed": 38,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0319155"
+                },
+                {
+                    "id": "6f3a27a3-3256-442e-a02d-675e0f005b3c",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:45.2685732Z",
+                    "endTime": "2026-02-19T17:50:45.2988621Z",
+                    "speed": 42,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0302889"
+                },
+                {
+                    "id": "99c0946d-3be9-4f6d-aaf6-3cbda3a361e6",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:45.2988621Z",
+                    "endTime": "2026-02-19T17:50:45.3278562Z",
+                    "speed": 47,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0289941"
+                },
+                {
+                    "id": "c3a319c0-2bed-4c01-843f-00f84f2c9099",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:45.3278562Z",
+                    "endTime": "2026-02-19T17:50:45.616143Z",
+                    "speed": 51,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.2882868"
+                },
+                {
+                    "id": "3f1af19d-ce8f-4fe4-9961-a8eefceea004",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:45.616143Z",
+                    "endTime": "2026-02-19T17:50:45.6706433Z",
+                    "speed": 57,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0545003"
+                },
+                {
+                    "id": "89cbf5c1-e55e-4bd3-a99e-1b3adffad7fa",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:45.6706433Z",
+                    "endTime": "2026-02-19T17:50:45.7163916Z",
+                    "speed": 58,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0457483"
+                },
+                {
+                    "id": "85538213-d226-4838-8aa1-dabfd5ab53d8",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:45.7163916Z",
+                    "endTime": "2026-02-19T17:50:45.8107835Z",
+                    "speed": 59,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0943919"
+                },
+                {
+                    "id": "6993cc06-a70a-4a25-bc29-9dd77f57b442",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:45.8107835Z",
+                    "endTime": "2026-02-19T17:50:45.8719145Z",
+                    "speed": 66,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0611310"
+                },
+                {
+                    "id": "16260f40-fba9-48d6-9e90-43f644980e47",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:45.8719145Z",
+                    "endTime": "2026-02-19T17:50:45.8970269Z",
+                    "speed": 73,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0251124"
+                },
+                {
+                    "id": "11a6515c-8008-4da6-9b9b-3e398941c265",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:45.8970269Z",
+                    "endTime": "2026-02-19T17:50:45.9214974Z",
+                    "speed": 74,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0244705"
+                },
+                {
+                    "id": "75469f0e-2168-4271-8092-e966f0091381",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:45.9214974Z",
+                    "endTime": "2026-02-19T17:50:45.9442479Z",
+                    "speed": 76,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0227505"
+                },
+                {
+                    "id": "3741faa9-f5c0-4998-93de-d7f5a9b7d772",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:45.9442479Z",
+                    "endTime": "2026-02-19T17:50:45.9697596Z",
+                    "speed": 79,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0255117"
+                },
+                {
+                    "id": "3eae09b5-be35-449a-bca9-dae87218933e",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:45.9697596Z",
+                    "endTime": "2026-02-19T17:50:45.9974568Z",
+                    "speed": 88,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0276972"
+                },
+                {
+                    "id": "c445b1a3-ad4f-4d9a-bdd5-7c03b5a516fb",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:45.9974568Z",
+                    "endTime": "2026-02-19T17:50:46.0236562Z",
+                    "speed": 95,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0261994"
+                },
+                {
+                    "id": "599cbdba-c81e-42d4-80a9-237c91018bd8",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:46.0236562Z",
+                    "endTime": "2026-02-19T17:50:46.0472859Z",
+                    "speed": 99,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0236297"
+                },
+                {
+                    "id": "5a6bbf53-c950-4b38-b640-202293383eb1",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:46.0472859Z",
+                    "endTime": "2026-02-19T17:50:46.3678618Z",
+                    "speed": 100,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.3205759"
+                },
+                {
+                    "id": "efed1d4a-5acd-45ae-b951-d567d980492a",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:46.3678618Z",
+                    "endTime": "2026-02-19T17:50:46.4029985Z",
+                    "speed": 102,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0351367"
+                },
+                {
+                    "id": "74b1275c-0434-4597-b121-e322617b9a46",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:46.4029985Z",
+                    "endTime": "2026-02-19T17:50:46.6249791Z",
+                    "speed": 113,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.2219806"
+                },
+                {
+                    "id": "ab733ac2-9356-4103-a9c9-e1d5c4ffafd2",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:46.6249791Z",
+                    "endTime": "2026-02-19T17:50:47.1145851Z",
+                    "speed": 126,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.4896060"
+                },
+                {
+                    "id": "7b752878-84b0-4547-8739-393d9fea024d",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:47.1145851Z",
+                    "endTime": "2026-02-19T17:50:47.1495498Z",
+                    "speed": 120,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0349647"
+                },
+                {
+                    "id": "3d4196b2-91f1-4653-9353-a570d709a0df",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:47.1495498Z",
+                    "endTime": "2026-02-19T17:50:47.1794443Z",
+                    "speed": 105,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0298945"
+                },
+                {
+                    "id": "54aa692f-8b7c-4400-8da3-5c5a3e71ccfb",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:47.1794443Z",
+                    "endTime": "2026-02-19T17:50:47.205087Z",
+                    "speed": 90,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0256427"
+                },
+                {
+                    "id": "378598e8-d679-4daf-b979-18224d9d95f1",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:47.205087Z",
+                    "endTime": "2026-02-19T17:50:47.232263Z",
+                    "speed": 81,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0271760"
+                },
+                {
+                    "id": "87cfdaf9-391f-432e-b4de-fa0ad638c12c",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:47.232263Z",
+                    "endTime": "2026-02-19T17:50:47.2581026Z",
+                    "speed": 69,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0258396"
+                },
+                {
+                    "id": "144b6d13-d305-448d-af0b-ac32fc5776bd",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:47.2581026Z",
+                    "endTime": "2026-02-19T17:50:47.2845165Z",
+                    "speed": 60,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0264139"
+                },
+                {
+                    "id": "b86a0200-6287-4d62-81a4-e6f86bfcccad",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:47.2845165Z",
+                    "endTime": "2026-02-19T17:50:47.3208471Z",
+                    "speed": 53,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0363306"
+                },
+                {
+                    "id": "72ccbef8-ee46-4163-b86d-a3d93931f3e3",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:47.3208471Z",
+                    "endTime": "2026-02-19T17:50:47.3437562Z",
+                    "speed": 51,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0229091"
+                },
+                {
+                    "id": "ba2d1c4d-210b-4fee-a387-b37f81fa5b8b",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:47.3437562Z",
+                    "endTime": "2026-02-19T17:50:47.6506624Z",
+                    "speed": 50,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.3069062"
+                },
+                {
+                    "id": "d6f4872d-55c0-49a9-a929-00714b6643db",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:47.6506624Z",
+                    "endTime": "2026-02-19T17:50:47.6886283Z",
+                    "speed": 49,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0379659"
+                },
+                {
+                    "id": "565a3008-d628-40fe-9325-753c2f0894c6",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:47.6886283Z",
+                    "endTime": "2026-02-19T17:50:47.7258988Z",
+                    "speed": 46,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0372705"
+                },
+                {
+                    "id": "7b49b034-8752-49eb-bf74-5348e819ea62",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:47.7258988Z",
+                    "endTime": "2026-02-19T17:50:47.7633569Z",
+                    "speed": 44,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0374581"
+                },
+                {
+                    "id": "9311ea8e-a85b-4aad-b588-e28ea61f2f94",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:47.7633569Z",
+                    "endTime": "2026-02-19T17:50:47.7968794Z",
+                    "speed": 40,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0335225"
+                },
+                {
+                    "id": "3cec5a79-6b59-438c-938a-bab0c3bee77a",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:47.7968794Z",
+                    "endTime": "2026-02-19T17:50:47.8230947Z",
+                    "speed": 38,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0262153"
+                },
+                {
+                    "id": "6ebc9fcf-d332-4aeb-aa73-a53afe62e10a",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:47.8230947Z",
+                    "endTime": "2026-02-19T17:50:48.0105911Z",
+                    "speed": 34,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.1874964"
+                },
+                {
+                    "id": "38c57ea1-54b4-41ac-881e-dfc8ff4a2c6e",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.0105911Z",
+                    "endTime": "2026-02-19T17:50:48.028246Z",
+                    "speed": 23,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0176549"
+                },
+                {
+                    "id": "27a055e0-25ce-4927-8970-6c1135549654",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.028246Z",
+                    "endTime": "2026-02-19T17:50:48.0495725Z",
+                    "speed": 22,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0213265"
+                },
+                {
+                    "id": "a58d26e3-6e9b-4c18-a8f1-5b744b8d805e",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.0495725Z",
+                    "endTime": "2026-02-19T17:50:48.0692943Z",
+                    "speed": 21,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0197218"
+                },
+                {
+                    "id": "f53aa3db-a021-4b60-82b6-7a25ff283ba4",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.0692943Z",
+                    "endTime": "2026-02-19T17:50:48.0910901Z",
+                    "speed": 19,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0217958"
+                },
+                {
+                    "id": "727824a4-6096-444c-bc22-25fcf988b394",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.0910901Z",
+                    "endTime": "2026-02-19T17:50:48.1086929Z",
+                    "speed": 18,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0176028"
+                },
+                {
+                    "id": "47195781-15de-4c9f-8d10-299a5950c187",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.1086929Z",
+                    "endTime": "2026-02-19T17:50:48.1293047Z",
+                    "speed": 15,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0206118"
+                },
+                {
+                    "id": "7b75dcdb-d559-4807-b039-d9752a7ea1b7",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.1293047Z",
+                    "endTime": "2026-02-19T17:50:48.1497102Z",
+                    "speed": 14,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0204055"
+                },
+                {
+                    "id": "c89bf73e-b8e0-4a34-bce2-cb67a04fea63",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.1497102Z",
+                    "endTime": "2026-02-19T17:50:48.176994Z",
+                    "speed": 13,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0272838"
+                },
+                {
+                    "id": "d48450e4-5a90-49ec-b7d9-f2359dc21bd6",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.176994Z",
+                    "endTime": "2026-02-19T17:50:48.1987569Z",
+                    "speed": 12,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0217629"
+                },
+                {
+                    "id": "c137499f-f382-408b-9f63-db80c82ab73e",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.1987569Z",
+                    "endTime": "2026-02-19T17:50:48.224827Z",
+                    "speed": 11,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0260701"
+                },
+                {
+                    "id": "052e8199-ba29-4137-919f-828ea441ba66",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.224827Z",
+                    "endTime": "2026-02-19T17:50:48.2473409Z",
+                    "speed": 9,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0225139"
+                },
+                {
+                    "id": "3ccada34-a48c-4944-8253-d04325286b1e",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.2473409Z",
+                    "endTime": "2026-02-19T17:50:48.2848988Z",
+                    "speed": 8,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0375579"
+                },
+                {
+                    "id": "8f520b8e-b63f-4785-9c60-0752f3bc6684",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.2848988Z",
+                    "endTime": "2026-02-19T17:50:48.3058332Z",
+                    "speed": 7,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0209344"
+                },
+                {
+                    "id": "b5a6ebe4-1c48-4257-9562-fa7863b53797",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.3058332Z",
+                    "endTime": "2026-02-19T17:50:48.3469883Z",
+                    "speed": 6,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0411551"
+                },
+                {
+                    "id": "c9f43dc4-1bd4-48be-8bb3-26caafb04822",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.3469883Z",
+                    "endTime": "2026-02-19T17:50:48.3729088Z",
+                    "speed": 5,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0259205"
+                },
+                {
+                    "id": "738dfe46-8a44-4b29-b8a9-74350b733bfa",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.3729088Z",
+                    "endTime": "2026-02-19T17:50:48.3963705Z",
+                    "speed": 4,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0234617"
+                },
+                {
+                    "id": "d2c41038-e901-4773-81ca-023938d28e96",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.3963705Z",
+                    "endTime": "2026-02-19T17:50:48.5435864Z",
+                    "speed": 3,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.1472159"
+                },
+                {
+                    "id": "8ef431bb-a26d-4ee5-a4b9-42e22a6111eb",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.5435864Z",
+                    "endTime": "2026-02-19T17:50:48.5929374Z",
+                    "speed": 4,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0493510"
+                },
+                {
+                    "id": "59426132-ce11-42df-98a3-0ddcf452f0aa",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.5929374Z",
+                    "endTime": "2026-02-19T17:50:48.6426034Z",
+                    "speed": 5,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0496660"
+                },
+                {
+                    "id": "c664813d-8672-4afe-8e97-b1d21633d7de",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.6426034Z",
+                    "endTime": "2026-02-19T17:50:48.680579Z",
+                    "speed": 6,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0379756"
+                },
+                {
+                    "id": "0ec9850f-67ac-427a-bca1-2bc5cddb43cb",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.680579Z",
+                    "endTime": "2026-02-19T17:50:48.7076716Z",
+                    "speed": 7,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0270926"
+                },
+                {
+                    "id": "5454239c-d580-4390-97bd-b45ad6699e55",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.7076716Z",
+                    "endTime": "2026-02-19T17:50:48.7603923Z",
+                    "speed": 10,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0527207"
+                },
+                {
+                    "id": "acbd4669-dffb-4ae5-afc8-ad9da063c3a6",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.7603923Z",
+                    "endTime": "2026-02-19T17:50:48.7876091Z",
+                    "speed": 16,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0272168"
+                },
+                {
+                    "id": "95e7fa61-bb94-4f4a-9b05-2eb0408d91fc",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.7876091Z",
+                    "endTime": "2026-02-19T17:50:48.8130275Z",
+                    "speed": 18,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0254184"
+                },
+                {
+                    "id": "7e6aeb95-33e7-4a97-986a-809ff43d35ac",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.8130275Z",
+                    "endTime": "2026-02-19T17:50:48.8526664Z",
+                    "speed": 19,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0396389"
+                },
+                {
+                    "id": "ed8f99c0-e1f6-4ef8-8f0d-d4d71ea6192d",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.8526664Z",
+                    "endTime": "2026-02-19T17:50:48.923406Z",
+                    "speed": 20,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0707396"
+                },
+                {
+                    "id": "f5b4b7c2-55b9-4362-a89a-c0f036c021ab",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.923406Z",
+                    "endTime": "2026-02-19T17:50:48.9514542Z",
+                    "speed": 21,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0280482"
+                },
+                {
+                    "id": "9d523fc4-c340-4fae-86bf-d0ac0be9da84",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.9514542Z",
+                    "endTime": "2026-02-19T17:50:48.9809558Z",
+                    "speed": 22,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0295016"
+                },
+                {
+                    "id": "c6c3c7f1-a3a6-477d-ab0d-6601d24c0e2f",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:48.9809558Z",
+                    "endTime": "2026-02-19T17:50:49.0067702Z",
+                    "speed": 23,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0258144"
+                },
+                {
+                    "id": "20d697ed-b31d-46b7-9fe2-03285a00ef9d",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:49.0067702Z",
+                    "endTime": "2026-02-19T17:50:49.0385198Z",
+                    "speed": 25,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0317496"
+                },
+                {
+                    "id": "da7e2e99-d865-41ff-8274-6bf77c300e24",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:49.0385198Z",
+                    "endTime": "2026-02-19T17:50:49.070471Z",
+                    "speed": 28,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0319512"
+                },
+                {
+                    "id": "dd9cfa2f-ec00-47dc-b76f-6325a7fa2998",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:49.070471Z",
+                    "endTime": "2026-02-19T17:50:49.1029023Z",
+                    "speed": 37,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0324313"
+                },
+                {
+                    "id": "1e31eb42-99bd-4398-8191-706f6b106cd9",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:49.1029023Z",
+                    "endTime": "2026-02-19T17:50:49.1283767Z",
+                    "speed": 46,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0254744"
+                },
+                {
+                    "id": "701b7636-f960-49e4-aefd-9c7db617869f",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:49.1283767Z",
+                    "endTime": "2026-02-19T17:50:49.1588379Z",
+                    "speed": 51,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0304612"
+                },
+                {
+                    "id": "e97e0b3f-e2f9-4c74-8683-f7589141b375",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:49.1588379Z",
+                    "endTime": "2026-02-19T17:50:49.1924895Z",
+                    "speed": 56,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0336516"
+                },
+                {
+                    "id": "19bfe6c2-c22a-41ab-a3cc-905f41bda548",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:49.1924895Z",
+                    "endTime": "2026-02-19T17:50:49.2132167Z",
+                    "speed": 58,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0207272"
+                },
+                {
+                    "id": "ef3f6bcd-c639-4b51-942d-f6208b4c74df",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:49.2132167Z",
+                    "endTime": "2026-02-19T17:50:49.2394413Z",
+                    "speed": 61,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0262246"
+                },
+                {
+                    "id": "dd5972d1-6bca-4f8f-9a01-f8935c3c622a",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:49.2394413Z",
+                    "endTime": "2026-02-19T17:50:49.2635178Z",
+                    "speed": 65,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0240765"
+                },
+                {
+                    "id": "9ce42172-5ca5-4422-96e9-e20ec2d76edf",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:49.2635178Z",
+                    "endTime": "2026-02-19T17:50:49.4460478Z",
+                    "speed": 67,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.1825300"
+                },
+                {
+                    "id": "b8099f9c-d2ca-4e9d-a427-6ac672245d71",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:49.4460478Z",
+                    "endTime": "2026-02-19T17:50:49.6574448Z",
+                    "speed": 83,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.2113970"
+                },
+                {
+                    "id": "4aeb282e-6f6f-4ddd-804f-2622abacc5db",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:49.6574448Z",
+                    "endTime": "2026-02-19T17:50:49.6800792Z",
+                    "speed": 84,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0226344"
+                },
+                {
+                    "id": "f1b7a1d9-a04a-40ad-881a-eb5d0b465e93",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:49.6800792Z",
+                    "endTime": "2026-02-19T17:50:49.7022748Z",
+                    "speed": 87,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0221956"
+                },
+                {
+                    "id": "baf4ac31-dc56-476f-a6a9-7c2edb18e094",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:49.7022748Z",
+                    "endTime": "2026-02-19T17:50:49.7366226Z",
+                    "speed": 101,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0343478"
+                },
+                {
+                    "id": "c169490d-b0e1-4f7f-9014-f76c4a84a62c",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:49.7366226Z",
+                    "endTime": "2026-02-19T17:50:49.7589631Z",
+                    "speed": 114,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0223405"
+                },
+                {
+                    "id": "7f5a367d-9b24-494b-9e2f-0fc8e13ef59f",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:49.7589631Z",
+                    "endTime": "2026-02-19T17:50:49.782968Z",
+                    "speed": 119,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0240049"
+                },
+                {
+                    "id": "799ffddc-b5d2-4001-adfd-99458a7a8411",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:49.782968Z",
+                    "endTime": "2026-02-19T17:50:49.8080463Z",
+                    "speed": 122,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0250783"
+                },
+                {
+                    "id": "e17f60a9-a3bb-4620-a18c-2801b7740e0b",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:49.8080463Z",
+                    "endTime": "2026-02-19T17:50:50.3194649Z",
+                    "speed": 126,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.5114186"
+                },
+                {
+                    "id": "9ac264c8-ad0c-430b-bdfc-96736e67887b",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:50.3194649Z",
+                    "endTime": "2026-02-19T17:50:50.356785Z",
+                    "speed": 125,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0373201"
+                },
+                {
+                    "id": "f65729e7-8672-490e-aeb6-e0e3f8fd7145",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:50.356785Z",
+                    "endTime": "2026-02-19T17:50:50.6096692Z",
+                    "speed": 109,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.2528842"
+                },
+                {
+                    "id": "fb82785e-c4d5-4628-ab65-191e30ce1b3d",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:50.6096692Z",
+                    "endTime": "2026-02-19T17:50:50.8325757Z",
+                    "speed": 61,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.2229065"
+                },
+                {
+                    "id": "1f0f3b0a-e766-44b3-85e0-748eea3419ba",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:50.8325757Z",
+                    "endTime": "2026-02-19T17:50:50.8622086Z",
+                    "speed": 60,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0296329"
+                },
+                {
+                    "id": "ed467e2e-60d5-4386-b45b-115aa0f33303",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:50.8622086Z",
+                    "endTime": "2026-02-19T17:50:50.8872118Z",
+                    "speed": 47,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0250032"
+                },
+                {
+                    "id": "7cc2dc79-85d7-4106-b999-105080eb4156",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:50.8872118Z",
+                    "endTime": "2026-02-19T17:50:50.9119919Z",
+                    "speed": 28,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0247801"
+                },
+                {
+                    "id": "94d5795d-dd56-41da-ae69-955074f00e74",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:50.9119919Z",
+                    "endTime": "2026-02-19T17:50:50.9480681Z",
+                    "speed": 18,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0360762"
+                },
+                {
+                    "id": "ed7940d8-273f-433d-9ffe-6ac4c27d1d53",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:50.9480681Z",
+                    "endTime": "2026-02-19T17:50:50.9813927Z",
+                    "speed": 6,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0333246"
+                },
+                {
+                    "id": "92da7c52-0af0-468b-8ccc-069dc5a0c8d9",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:50.9813927Z",
+                    "endTime": "2026-02-19T17:50:51.4918387Z",
+                    "speed": 0,
+                    "isStopSegment": true,
+                    "duration": "00:00:00.5104460"
+                },
+                {
+                    "id": "f62b7a81-ac5b-4b0d-9fa0-e6726477ac47",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:51.4918387Z",
+                    "endTime": "2026-02-19T17:50:51.5305144Z",
+                    "speed": 2,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0386757"
+                },
+                {
+                    "id": "65018518-08a9-469e-8391-2b498c7410f3",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:51.5305144Z",
+                    "endTime": "2026-02-19T17:50:51.5616084Z",
+                    "speed": 11,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0310940"
+                },
+                {
+                    "id": "8293d6a0-77ed-43b6-9ef7-96030e2b1919",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:51.5616084Z",
+                    "endTime": "2026-02-19T17:50:51.5914815Z",
+                    "speed": 22,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0298731"
+                },
+                {
+                    "id": "4052a008-050c-48a0-9768-ebc3344d303f",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:51.5914815Z",
+                    "endTime": "2026-02-19T17:50:51.6218572Z",
+                    "speed": 26,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0303757"
+                },
+                {
+                    "id": "f55b0aef-0cec-4c28-b566-28fe414107aa",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:51.6218572Z",
+                    "endTime": "2026-02-19T17:50:51.6516865Z",
+                    "speed": 31,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0298293"
+                },
+                {
+                    "id": "4ca44992-df12-4570-ae05-1d07a9847e09",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:51.6516865Z",
+                    "endTime": "2026-02-19T17:50:51.6828985Z",
+                    "speed": 36,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0312120"
+                },
+                {
+                    "id": "6fa1b571-ae26-4369-8349-7d49ea2c7f70",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:51.6828985Z",
+                    "endTime": "2026-02-19T17:50:51.7086877Z",
+                    "speed": 40,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0257892"
+                },
+                {
+                    "id": "c148d5a4-5564-493a-9a4c-0e1efb6dde5d",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:51.7086877Z",
+                    "endTime": "2026-02-19T17:50:51.7424584Z",
+                    "speed": 41,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0337707"
+                },
+                {
+                    "id": "846b03e2-e437-487e-947d-3695677e1385",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:51.7424584Z",
+                    "endTime": "2026-02-19T17:50:51.7825007Z",
+                    "speed": 43,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0400423"
+                },
+                {
+                    "id": "265f2c72-081a-4733-8e0f-4b1741e17268",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:51.7825007Z",
+                    "endTime": "2026-02-19T17:50:51.8026243Z",
+                    "speed": 47,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0201236"
+                },
+                {
+                    "id": "9bc2022d-4674-4b43-b6c5-2b3a8723855e",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:51.8026243Z",
+                    "endTime": "2026-02-19T17:50:51.8381202Z",
+                    "speed": 51,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0354959"
+                },
+                {
+                    "id": "f02e9dc4-2389-4571-8d99-077dca6ad685",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:51.8381202Z",
+                    "endTime": "2026-02-19T17:50:51.8720718Z",
+                    "speed": 56,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0339516"
+                },
+                {
+                    "id": "7a2b25ca-ba22-4b00-85bf-99e633554691",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:51.8720718Z",
+                    "endTime": "2026-02-19T17:50:51.9014148Z",
+                    "speed": 60,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0293430"
+                },
+                {
+                    "id": "075b34af-d45c-4388-addd-dc0a3e600727",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:51.9014148Z",
+                    "endTime": "2026-02-19T17:50:51.937717Z",
+                    "speed": 64,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0363022"
+                },
+                {
+                    "id": "cbd6d555-96ad-44d5-b592-40ff3afeb954",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:51.937717Z",
+                    "endTime": "2026-02-19T17:50:51.9642545Z",
+                    "speed": 73,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0265375"
+                },
+                {
+                    "id": "cee426b2-d902-46ad-8f45-108496b6ac8b",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:51.9642545Z",
+                    "endTime": "2026-02-19T17:50:52.2434916Z",
+                    "speed": 75,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.2792371"
+                },
+                {
+                    "id": "9b2a4bea-ba3c-4c8f-8eb3-64c8b148e47c",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:52.2434916Z",
+                    "endTime": "2026-02-19T17:50:52.2687247Z",
+                    "speed": 76,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0252331"
+                },
+                {
+                    "id": "f1e1ee16-00bd-4f40-936d-99388a82b1c4",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:52.2687247Z",
+                    "endTime": "2026-02-19T17:50:52.2944349Z",
+                    "speed": 83,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0257102"
+                },
+                {
+                    "id": "96e67481-ca5f-4b7e-acb8-1f71e9c574d5",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:52.2944349Z",
+                    "endTime": "2026-02-19T17:50:52.3136261Z",
+                    "speed": 95,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0191912"
+                },
+                {
+                    "id": "cf45e723-3e5b-4cb1-a3cf-08c09f937242",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:52.3136261Z",
+                    "endTime": "2026-02-19T17:50:52.3419067Z",
+                    "speed": 101,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0282806"
+                },
+                {
+                    "id": "9093c0ef-8134-4b84-8c38-8a3cf62a91d2",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:52.3419067Z",
+                    "endTime": "2026-02-19T17:50:52.3712015Z",
+                    "speed": 107,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0292948"
+                },
+                {
+                    "id": "b50e113a-7e8c-4ac4-ac49-aa09ef332980",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:52.3712015Z",
+                    "endTime": "2026-02-19T17:50:52.4019047Z",
+                    "speed": 116,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0307032"
+                },
+                {
+                    "id": "37db936a-44c8-49a5-8feb-34b81464b33e",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:52.4019047Z",
+                    "endTime": "2026-02-19T17:50:53.0255904Z",
+                    "speed": 126,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.6236857"
+                },
+                {
+                    "id": "139054c8-90a2-4757-9f3c-a52f309abb46",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:53.0255904Z",
+                    "endTime": "2026-02-19T17:50:53.054838Z",
+                    "speed": 115,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0292476"
+                },
+                {
+                    "id": "133afc73-1a5c-411f-bdc1-9d6346ef28f5",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:53.054838Z",
+                    "endTime": "2026-02-19T17:50:53.0821515Z",
+                    "speed": 72,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0273135"
+                },
+                {
+                    "id": "18348d88-886e-4a17-bc73-e5d9b114938f",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:53.0821515Z",
+                    "endTime": "2026-02-19T17:50:53.1074405Z",
+                    "speed": 48,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0252890"
+                },
+                {
+                    "id": "84ccd7b7-87da-48a6-98c9-02185b2fd6e8",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:53.1074405Z",
+                    "endTime": "2026-02-19T17:50:53.1291067Z",
+                    "speed": 23,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0216662"
+                },
+                {
+                    "id": "3debbd7f-0013-4d53-98b1-4e34ba6e550e",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:53.1291067Z",
+                    "endTime": "2026-02-19T17:50:53.1486563Z",
+                    "speed": 12,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0195496"
+                },
+                {
+                    "id": "516ab069-b5cd-438a-81f6-1ff26d10c1e0",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:53.1486563Z",
+                    "endTime": "2026-02-19T17:50:53.1675033Z",
+                    "speed": 3,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0188470"
+                },
+                {
+                    "id": "2f1fc39b-2aa0-4128-8e1a-298a7a9f8134",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-19T17:50:53.1675033Z",
+                    "endTime": "2026-02-20T17:50:21.4339516Z",
+                    "speed": 0,
+                    "isStopSegment": true,
+                    "duration": "23:59:28.2664483"
+                },
+                {
+                    "id": "2a60d448-dbe8-4043-9835-809621d3c437",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-20T17:50:21.4339516Z",
+                    "endTime": "2026-02-20T18:00:52.7987706Z",
+                    "speed": 0,
+                    "isStopSegment": true,
+                    "duration": "00:10:31.3648190"
+                },
+                {
+                    "id": "60fef72a-411e-4082-a93f-f5598724d771",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-20T18:00:52.7987706Z",
+                    "endTime": "2026-02-22T18:50:05.4064585Z",
+                    "speed": 0,
+                    "isStopSegment": true,
+                    "duration": "2.00:49:12.6076879"
+                },
+                {
+                    "id": "71a46e64-65bf-4db6-b3bb-d5615b23c62c",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T18:50:05.4064585Z",
+                    "endTime": "2026-02-22T18:50:05.4601961Z",
+                    "speed": 1,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0537376"
+                },
+                {
+                    "id": "638abefa-a5f0-4612-b3cf-49a1a60618a7",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T18:50:05.4601961Z",
+                    "endTime": "2026-02-22T18:50:05.5067503Z",
+                    "speed": 2,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0465542"
+                },
+                {
+                    "id": "b94fbaf8-8287-4aa1-8247-58c11f7991fc",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T18:50:05.5067503Z",
+                    "endTime": "2026-02-22T18:50:05.5438213Z",
+                    "speed": 3,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0370710"
+                },
+                {
+                    "id": "a9be6dbd-a58b-4e3b-b1a6-4fdc0b18e66d",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T18:50:05.5438213Z",
+                    "endTime": "2026-02-22T18:50:05.5846377Z",
+                    "speed": 4,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0408164"
+                },
+                {
+                    "id": "041c4614-cfa2-4c0d-8e2d-3c941589b644",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T18:50:05.5846377Z",
+                    "endTime": "2026-02-22T18:50:05.6240669Z",
+                    "speed": 5,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0394292"
+                },
+                {
+                    "id": "f021b5be-7590-40f8-9c4e-c0daf692249f",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T18:50:05.6240669Z",
+                    "endTime": "2026-02-22T18:50:05.6541192Z",
+                    "speed": 6,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0300523"
+                },
+                {
+                    "id": "5e3de32c-aace-48ac-810b-87966660ab11",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T18:50:05.6541192Z",
+                    "endTime": "2026-02-22T18:50:05.6787191Z",
+                    "speed": 7,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0245999"
+                },
+                {
+                    "id": "04709ddf-04d1-40d5-8486-447e2eda120a",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T18:50:05.6787191Z",
+                    "endTime": "2026-02-22T18:50:05.7019227Z",
+                    "speed": 8,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0232036"
+                },
+                {
+                    "id": "5d0089f3-c397-47bc-a094-81b311be2df3",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T18:50:05.7019227Z",
+                    "endTime": "2026-02-22T18:50:05.7563278Z",
+                    "speed": 9,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0544051"
+                },
+                {
+                    "id": "f67cc821-59ba-45a3-93b2-9f76fcb1e8a3",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T18:50:05.7563278Z",
+                    "endTime": "2026-02-22T18:50:06.0146671Z",
+                    "speed": 10,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.2583393"
+                },
+                {
+                    "id": "e854f0d2-3817-4d95-a160-d7875d119efc",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T18:50:06.0146671Z",
+                    "endTime": "2026-02-22T18:50:06.202532Z",
+                    "speed": 9,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.1878649"
+                },
+                {
+                    "id": "e69bf626-a565-41e3-b1b4-18ae10cac970",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T18:50:06.202532Z",
+                    "endTime": "2026-02-22T18:50:06.2566219Z",
+                    "speed": 8,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0540899"
+                },
+                {
+                    "id": "5bd543d5-a984-40f0-99b3-8f5b6200e1b1",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T18:50:06.2566219Z",
+                    "endTime": "2026-02-22T18:50:06.2886612Z",
+                    "speed": 7,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0320393"
+                },
+                {
+                    "id": "69b5205d-f7a8-4210-9a9b-168758370df5",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T18:50:06.2886612Z",
+                    "endTime": "2026-02-22T18:50:06.3195506Z",
+                    "speed": 6,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0308894"
+                },
+                {
+                    "id": "b847943c-978e-4e6e-8a11-a4edcc377e1b",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T18:50:06.3195506Z",
+                    "endTime": "2026-02-22T18:50:06.3346524Z",
+                    "speed": 5,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0151018"
+                },
+                {
+                    "id": "7315c6cf-6c25-49d4-b220-78abaf62259e",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T18:50:06.3346524Z",
+                    "endTime": "2026-02-22T18:50:06.366241Z",
+                    "speed": 4,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0315886"
+                },
+                {
+                    "id": "3cc26d7e-232b-4b4c-9ea6-291bcefe2917",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T18:50:06.366241Z",
+                    "endTime": "2026-02-22T18:50:06.4368255Z",
+                    "speed": 3,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0705845"
+                },
+                {
+                    "id": "dcb85cff-e933-4d82-87ff-0240bcb11422",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T18:50:06.4368255Z",
+                    "endTime": "2026-02-22T18:50:06.4826374Z",
+                    "speed": 2,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0458119"
+                },
+                {
+                    "id": "f159855a-2509-41b6-a97d-0d9e24f8c0c3",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T18:50:06.4826374Z",
+                    "endTime": "2026-02-22T18:50:06.5764413Z",
+                    "speed": 1,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0938039"
+                },
+                {
+                    "id": "39ced32c-5eb3-430b-b298-43db1ae58eac",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T18:50:06.5764413Z",
+                    "endTime": "2026-02-22T19:16:25.6665479Z",
+                    "speed": 0,
+                    "isStopSegment": true,
+                    "duration": "00:26:19.0901066"
+                },
+                {
+                    "id": "4fcc1b0c-3b18-4021-ad88-63f34ffce783",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:25.6665479Z",
+                    "endTime": "2026-02-22T19:16:25.7112327Z",
+                    "speed": 1,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0446848"
+                },
+                {
+                    "id": "6de63cc8-0f7c-4747-b5fc-7d03e1acbcbe",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:25.7112327Z",
+                    "endTime": "2026-02-22T19:16:25.7276332Z",
+                    "speed": 2,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0164005"
+                },
+                {
+                    "id": "a5bd70d9-4d82-4d14-9bcc-7a9229e81378",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:25.7276332Z",
+                    "endTime": "2026-02-22T19:16:25.7382677Z",
+                    "speed": 3,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0106345"
+                },
+                {
+                    "id": "95b6809a-180f-4f89-9e05-fb900f91313e",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:25.7382677Z",
+                    "endTime": "2026-02-22T19:16:25.7512181Z",
+                    "speed": 4,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0129504"
+                },
+                {
+                    "id": "defea3d7-df88-424d-a1ff-4358e89e3a93",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:25.7512181Z",
+                    "endTime": "2026-02-22T19:16:25.7626202Z",
+                    "speed": 5,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0114021"
+                },
+                {
+                    "id": "728bfc7d-66e9-4b35-9eab-6575566289ad",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:25.7626202Z",
+                    "endTime": "2026-02-22T19:16:25.772341Z",
+                    "speed": 6,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0097208"
+                },
+                {
+                    "id": "6c282fe7-130c-4959-8b11-61eaa9cc7db5",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:25.772341Z",
+                    "endTime": "2026-02-22T19:16:25.78289Z",
+                    "speed": 7,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0105490"
+                },
+                {
+                    "id": "faa8d58e-8fb6-4783-9e56-b5ac53d522bb",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:25.78289Z",
+                    "endTime": "2026-02-22T19:16:25.793529Z",
+                    "speed": 9,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0106390"
+                },
+                {
+                    "id": "efd45a85-8c7a-47a5-b2a8-b286a0685690",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:25.793529Z",
+                    "endTime": "2026-02-22T19:16:25.8056653Z",
+                    "speed": 10,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0121363"
+                },
+                {
+                    "id": "d6b71970-54a8-43d3-b663-63dc6ee38fba",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:25.8056653Z",
+                    "endTime": "2026-02-22T19:16:25.8158927Z",
+                    "speed": 11,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0102274"
+                },
+                {
+                    "id": "b5856cad-f5e6-4766-b686-cc7bfd34911f",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:25.8158927Z",
+                    "endTime": "2026-02-22T19:16:25.8274302Z",
+                    "speed": 13,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0115375"
+                },
+                {
+                    "id": "f5229fe9-f60b-439e-9670-27b37e6ecc9a",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:25.8274302Z",
+                    "endTime": "2026-02-22T19:16:25.8379104Z",
+                    "speed": 15,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0104802"
+                },
+                {
+                    "id": "63f0fe53-14c5-4cc9-92df-d82e9ffaa153",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:25.8379104Z",
+                    "endTime": "2026-02-22T19:16:25.8509061Z",
+                    "speed": 16,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0129957"
+                },
+                {
+                    "id": "494f23e5-128f-4a62-af0e-8e8e0a77108f",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:25.8509061Z",
+                    "endTime": "2026-02-22T19:16:25.9606355Z",
+                    "speed": 17,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.1097294"
+                },
+                {
+                    "id": "abe1bc82-9502-492b-a2b9-1eb98a75f5c8",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:25.9606355Z",
+                    "endTime": "2026-02-22T19:16:25.9770154Z",
+                    "speed": 16,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0163799"
+                },
+                {
+                    "id": "ad738be0-6c88-4753-a6ce-40340cc9c81c",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:25.9770154Z",
+                    "endTime": "2026-02-22T19:16:25.984813Z",
+                    "speed": 15,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0077976"
+                },
+                {
+                    "id": "a7777162-5404-4c21-a68f-c5bad73d97fb",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:25.984813Z",
+                    "endTime": "2026-02-22T19:16:25.9955606Z",
+                    "speed": 14,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0107476"
+                },
+                {
+                    "id": "9c1f77b8-f1dc-43ed-b788-a94012e4d87b",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:25.9955606Z",
+                    "endTime": "2026-02-22T19:16:26.0061264Z",
+                    "speed": 13,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0105658"
+                },
+                {
+                    "id": "c8383ad4-282d-44e2-94e0-0b21248055bc",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:26.0061264Z",
+                    "endTime": "2026-02-22T19:16:26.0172029Z",
+                    "speed": 12,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0110765"
+                },
+                {
+                    "id": "9929be67-39c7-47a5-9015-0a26d6f4015c",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:26.0172029Z",
+                    "endTime": "2026-02-22T19:16:26.0235844Z",
+                    "speed": 11,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0063815"
+                },
+                {
+                    "id": "cd10252d-a829-42d2-a63d-66f2b261102e",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:26.0235844Z",
+                    "endTime": "2026-02-22T19:16:26.0312491Z",
+                    "speed": 10,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0076647"
+                },
+                {
+                    "id": "bc4e63a1-6bc6-4fff-b58e-cac6ca579ed3",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:26.0312491Z",
+                    "endTime": "2026-02-22T19:16:26.0408497Z",
+                    "speed": 9,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0096006"
+                },
+                {
+                    "id": "53b09378-26fc-4ff4-9d9a-09104b164eab",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:26.0408497Z",
+                    "endTime": "2026-02-22T19:16:26.0513297Z",
+                    "speed": 8,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0104800"
+                },
+                {
+                    "id": "320e74c7-4c97-4ae2-a907-b7c9c9b019e8",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:26.0513297Z",
+                    "endTime": "2026-02-22T19:16:26.0566311Z",
+                    "speed": 6,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0053014"
+                },
+                {
+                    "id": "45fbe327-9cfe-45d2-bb97-97fa57ebefcb",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:26.0566311Z",
+                    "endTime": "2026-02-22T19:16:26.0639677Z",
+                    "speed": 4,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0073366"
+                },
+                {
+                    "id": "8fa0e340-02a5-4b39-83da-efffc8e36cd6",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:26.0639677Z",
+                    "endTime": "2026-02-22T19:16:26.0713931Z",
+                    "speed": 2,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0074254"
+                },
+                {
+                    "id": "d895f8e8-1207-4d0d-bee3-8082a3883b3e",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:26.0713931Z",
+                    "endTime": "2026-02-22T19:16:26.080349Z",
+                    "speed": 1,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0089559"
+                },
+                {
+                    "id": "5a05b736-f3c9-4450-b204-03e3f301a97d",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-22T19:16:26.080349Z",
+                    "endTime": "2026-02-23T17:38:02.8319804Z",
+                    "speed": 0,
+                    "isStopSegment": true,
+                    "duration": "22:21:36.7516314"
+                },
+                {
+                    "id": "cf067701-3ef4-4382-95cb-40d8f1e37df6",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-23T17:38:02.8319804Z",
+                    "endTime": "2026-02-23T17:38:02.8681299Z",
+                    "speed": 1,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0361495"
+                },
+                {
+                    "id": "1a0bc21f-b2c5-4520-b94c-9d3f641470a1",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-23T17:38:02.8681299Z",
+                    "endTime": "2026-02-23T17:38:02.9319493Z",
+                    "speed": 2,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0638194"
+                },
+                {
+                    "id": "b60df8e4-c860-4af7-83a3-9b694fd2d5cc",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-23T17:38:02.9319493Z",
+                    "endTime": "2026-02-23T17:38:02.9540103Z",
+                    "speed": 3,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0220610"
+                },
+                {
+                    "id": "26440f53-51a3-4854-b907-72c6121788e6",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-23T17:38:02.9540103Z",
+                    "endTime": "2026-02-23T17:38:02.9864273Z",
+                    "speed": 4,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0324170"
+                },
+                {
+                    "id": "e0234851-03f7-4a54-8d72-de8e9e66c1dd",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-23T17:38:02.9864273Z",
+                    "endTime": "2026-02-23T17:38:03.0101767Z",
+                    "speed": 5,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0237494"
+                },
+                {
+                    "id": "b3006674-fb8a-40ec-84ce-4f21e64aa980",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-23T17:38:03.0101767Z",
+                    "endTime": "2026-02-23T17:38:03.0395004Z",
+                    "speed": 6,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0293237"
+                },
+                {
+                    "id": "ec0f3ad0-73f2-460a-86bc-852280d1ca21",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-23T17:38:03.0395004Z",
+                    "endTime": "2026-02-23T17:38:03.0639722Z",
+                    "speed": 7,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0244718"
+                },
+                {
+                    "id": "3a4f0559-0656-4bbf-b453-2f724a483386",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-23T17:38:03.0639722Z",
+                    "endTime": "2026-02-23T17:38:03.1880085Z",
+                    "speed": 8,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.1240363"
+                },
+                {
+                    "id": "b39aeba4-373e-4af9-b039-700c51e14095",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-23T17:38:03.1880085Z",
+                    "endTime": "2026-02-23T17:38:03.2213998Z",
+                    "speed": 7,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0333913"
+                },
+                {
+                    "id": "65609485-703d-49e8-9258-1c6d4929fa88",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-23T17:38:03.2213998Z",
+                    "endTime": "2026-02-23T17:38:03.2510854Z",
+                    "speed": 6,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0296856"
+                },
+                {
+                    "id": "e08fdba2-78e9-4d9c-aa39-b08b95d27db2",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-23T17:38:03.2510854Z",
+                    "endTime": "2026-02-23T17:38:03.258372Z",
+                    "speed": 5,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0072866"
+                },
+                {
+                    "id": "96315813-caae-434e-8855-368f6f004af3",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-23T17:38:03.258372Z",
+                    "endTime": "2026-02-23T17:38:03.2732218Z",
+                    "speed": 4,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0148498"
+                },
+                {
+                    "id": "a9f8f97c-8c99-44ff-bbf1-2d22e749cba9",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-23T17:38:03.2732218Z",
+                    "endTime": "2026-02-23T17:38:03.2893224Z",
+                    "speed": 3,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0161006"
+                },
+                {
+                    "id": "cbd66fe5-bd63-4f43-a824-ed4c5c52e8d7",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-23T17:38:03.2893224Z",
+                    "endTime": "2026-02-23T17:38:03.3054932Z",
+                    "speed": 2,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0161708"
+                },
+                {
+                    "id": "d41d3d67-b755-4d9e-87bd-5d282f2ec3e7",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-23T17:38:03.3054932Z",
+                    "endTime": "2026-02-23T17:38:03.3217839Z",
+                    "speed": 1,
+                    "isStopSegment": false,
+                    "duration": "00:00:00.0162907"
+                },
+                {
+                    "id": "1478c098-7de2-44bd-bb26-8442adeb7da7",
+                    "locoAddress": 7,
+                    "startTime": "2026-02-23T17:38:03.3217839Z",
+                    "speed": 0,
+                    "isStopSegment": true
+                }
+            ]
         }
-      ],
-      "journeys": [
-        {
-          "id": "c1d2e3f4-a5b6-7890-1234-567890abcdef",
-          "name": "RE 78 (Porta-Express)",
-          "description": "Regional Express from Bielefeld to Minden",
-          "text": "N\u00E4chster Halt: {StationName}. Ausstieg: {StationIsExitOnLeft}.",
-          "stations": [
-            {
-              "id": "d1e2f3a4-b5c6-7890-1234-567890abcdef",
-              "name": "Bielefeld Hauptbahnhof",
-              "inPort": 0,
-              "numberOfLapsToStop": 2,
-              "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
-              "isExitOnLeft": true,
-              "track": 1,
-              "arrival": "2026-02-16T08:00:00+01:00",
-              "departure": "2026-02-16T08:02:00+01:00",
-              "connections": []
-            },
-            {
-              "id": "d2e3f4a5-b6c7-8901-2345-678901bcdef0",
-              "name": "Herford",
-              "inPort": 0,
-              "numberOfLapsToStop": 2,
-              "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
-              "isExitOnLeft": false,
-              "track": 1,
-              "arrival": "2026-02-16T08:10:00+01:00",
-              "departure": "2026-02-16T08:12:00+01:00",
-              "connections": []
-            },
-            {
-              "id": "d3e4f5a6-b7c8-9012-3456-789012cdef01",
-              "name": "Minden (Westf)",
-              "inPort": 0,
-              "numberOfLapsToStop": 2,
-              "workflowId": "b2c3d4e5-f6a7-8901-2345-678901bcdef0",
-              "isExitOnLeft": true,
-              "track": 1,
-              "arrival": "2026-02-16T08:20:00+01:00",
-              "departure": "2026-02-16T08:22:00+01:00",
-              "connections": []
-            }
-          ],
-          "inPort": 1,
-          "isUsingTimerToIgnoreFeedbacks": false,
-          "intervalForTimerToIgnoreFeedbacks": 20,
-          "behaviorOnLastStop": 1,
-          "firstPos": 0
-        }
-      ],
-      "signalBoxPlan": {
-        "id": "f1d3dd73-dcd5-4faa-b180-e687659598ea",
-        "name": "Stellwerk",
-        "grid": {
-          "width": 20,
-          "height": 12,
-          "cellSize": 60
-        },
-        "elements": [
-          {
-            "$type": "TrackCurve",
-            "id": "f364d7d8-8fc3-4217-a84f-31e9805a88b2",
-            "x": 2,
-            "y": 3,
-            "rotation": 270,
-            "name": "",
-            "state": "Free"
-          },
-          {
-            "$type": "TrackStraight",
-            "id": "f52c9e75-8a52-4c3c-9bd4-f88cb8fb8903",
-            "x": 3,
-            "y": 3,
-            "rotation": 0,
-            "name": "",
-            "state": "Free"
-          },
-          {
-            "$type": "TrackStraight",
-            "id": "3bcaa969-8d75-447c-9bf8-a5540d274de4",
-            "x": 4,
-            "y": 3,
-            "rotation": 0,
-            "name": "",
-            "state": "Free"
-          },
-          {
-            "$type": "TrackCurve",
-            "id": "d2d86731-9122-4c16-8e08-00fdef17989c",
-            "x": 5,
-            "y": 3,
-            "rotation": 0,
-            "name": "",
-            "state": "Free"
-          },
-          {
-            "$type": "Signal",
-            "address": 202,
-            "signalSystem": "Ks",
-            "signalAspect": "Ra12",
-            "isMultiplexed": true,
-            "multiplexerArticleNumber": "5229",
-            "mainSignalArticleNumber": "4046",
-            "distantSignalArticleNumber": "4040",
-            "baseAddress": 201,
-            "extendedAccessoryValue": 1,
-            "id": "1837507c-6f91-47cc-a825-0cedf92e4f89",
-            "x": 3,
-            "y": 2,
-            "rotation": 0,
-            "name": "",
-            "state": "Free"
-          },
-          {
-            "$type": "Detector",
-            "feedbackAddress": 1,
-            "id": "89a8b660-1623-4edb-99b5-c0cf01afba72",
-            "x": 2,
-            "y": 4,
-            "rotation": 90,
-            "name": "",
-            "state": "Free"
-          },
-          {
-            "$type": "TrackStraight",
-            "id": "339647eb-4cc2-41d6-8517-e540f6c16e5c",
-            "x": 5,
-            "y": 4,
-            "rotation": 90,
-            "name": "",
-            "state": "Free"
-          },
-          {
-            "$type": "TrackCurve",
-            "id": "ad566a5c-60be-429a-bff4-720c93c9854a",
-            "x": 5,
-            "y": 5,
-            "rotation": 90,
-            "name": "",
-            "state": "Free"
-          },
-          {
-            "$type": "TrackStraight",
-            "id": "ae0dd7a5-5505-4051-8a81-35fc7409984a",
-            "x": 4,
-            "y": 5,
-            "rotation": 0,
-            "name": "",
-            "state": "Free"
-          },
-          {
-            "$type": "TrackStraight",
-            "id": "b9edfafb-611b-4e20-a98a-7c1ce739c00e",
-            "x": 3,
-            "y": 5,
-            "rotation": 0,
-            "name": "",
-            "state": "Free"
-          },
-          {
-            "$type": "TrackCurve",
-            "id": "ac4d1724-c7cd-4740-91d0-85bc9c14992c",
-            "x": 2,
-            "y": 5,
-            "rotation": 180,
-            "name": "",
-            "state": "Free"
-          }
-        ],
-        "connections": [],
-        "routes": []
-      },
-      "tripLogEntries": [
-        {
-          "id": "f5e027a3-cf3c-4995-85a0-94bb25794d8c",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:44.962175Z",
-          "endTime": "2026-02-19T17:50:45.0322832Z",
-          "speed": 3,
-          "isStopSegment": false,
-          "duration": "00:00:00.0701082"
-        },
-        {
-          "id": "f24249ee-165a-4264-8cb3-02f8a65d6bb8",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:45.0322832Z",
-          "endTime": "2026-02-19T17:50:45.0672549Z",
-          "speed": 12,
-          "isStopSegment": false,
-          "duration": "00:00:00.0349717"
-        },
-        {
-          "id": "31a1d825-4d9d-4bcd-a532-934adc309f77",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:45.0672549Z",
-          "endTime": "2026-02-19T17:50:45.1004872Z",
-          "speed": 14,
-          "isStopSegment": false,
-          "duration": "00:00:00.0332323"
-        },
-        {
-          "id": "67aa7d52-9b00-488c-8973-0623d6f54b5e",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:45.1004872Z",
-          "endTime": "2026-02-19T17:50:45.1389041Z",
-          "speed": 18,
-          "isStopSegment": false,
-          "duration": "00:00:00.0384169"
-        },
-        {
-          "id": "3d0e4211-a5ee-4fe6-94f2-3eb239d39e30",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:45.1389041Z",
-          "endTime": "2026-02-19T17:50:45.1740997Z",
-          "speed": 27,
-          "isStopSegment": false,
-          "duration": "00:00:00.0351956"
-        },
-        {
-          "id": "d05ffc5c-ff89-4735-b048-0585834e70ec",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:45.1740997Z",
-          "endTime": "2026-02-19T17:50:45.205476Z",
-          "speed": 33,
-          "isStopSegment": false,
-          "duration": "00:00:00.0313763"
-        },
-        {
-          "id": "3a9d9b44-b150-45e8-a3fc-270421d6cc6b",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:45.205476Z",
-          "endTime": "2026-02-19T17:50:45.2366577Z",
-          "speed": 36,
-          "isStopSegment": false,
-          "duration": "00:00:00.0311817"
-        },
-        {
-          "id": "2acb8d1b-5188-4495-bb59-acf4b402ba60",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:45.2366577Z",
-          "endTime": "2026-02-19T17:50:45.2685732Z",
-          "speed": 38,
-          "isStopSegment": false,
-          "duration": "00:00:00.0319155"
-        },
-        {
-          "id": "6f3a27a3-3256-442e-a02d-675e0f005b3c",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:45.2685732Z",
-          "endTime": "2026-02-19T17:50:45.2988621Z",
-          "speed": 42,
-          "isStopSegment": false,
-          "duration": "00:00:00.0302889"
-        },
-        {
-          "id": "99c0946d-3be9-4f6d-aaf6-3cbda3a361e6",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:45.2988621Z",
-          "endTime": "2026-02-19T17:50:45.3278562Z",
-          "speed": 47,
-          "isStopSegment": false,
-          "duration": "00:00:00.0289941"
-        },
-        {
-          "id": "c3a319c0-2bed-4c01-843f-00f84f2c9099",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:45.3278562Z",
-          "endTime": "2026-02-19T17:50:45.616143Z",
-          "speed": 51,
-          "isStopSegment": false,
-          "duration": "00:00:00.2882868"
-        },
-        {
-          "id": "3f1af19d-ce8f-4fe4-9961-a8eefceea004",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:45.616143Z",
-          "endTime": "2026-02-19T17:50:45.6706433Z",
-          "speed": 57,
-          "isStopSegment": false,
-          "duration": "00:00:00.0545003"
-        },
-        {
-          "id": "89cbf5c1-e55e-4bd3-a99e-1b3adffad7fa",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:45.6706433Z",
-          "endTime": "2026-02-19T17:50:45.7163916Z",
-          "speed": 58,
-          "isStopSegment": false,
-          "duration": "00:00:00.0457483"
-        },
-        {
-          "id": "85538213-d226-4838-8aa1-dabfd5ab53d8",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:45.7163916Z",
-          "endTime": "2026-02-19T17:50:45.8107835Z",
-          "speed": 59,
-          "isStopSegment": false,
-          "duration": "00:00:00.0943919"
-        },
-        {
-          "id": "6993cc06-a70a-4a25-bc29-9dd77f57b442",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:45.8107835Z",
-          "endTime": "2026-02-19T17:50:45.8719145Z",
-          "speed": 66,
-          "isStopSegment": false,
-          "duration": "00:00:00.0611310"
-        },
-        {
-          "id": "16260f40-fba9-48d6-9e90-43f644980e47",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:45.8719145Z",
-          "endTime": "2026-02-19T17:50:45.8970269Z",
-          "speed": 73,
-          "isStopSegment": false,
-          "duration": "00:00:00.0251124"
-        },
-        {
-          "id": "11a6515c-8008-4da6-9b9b-3e398941c265",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:45.8970269Z",
-          "endTime": "2026-02-19T17:50:45.9214974Z",
-          "speed": 74,
-          "isStopSegment": false,
-          "duration": "00:00:00.0244705"
-        },
-        {
-          "id": "75469f0e-2168-4271-8092-e966f0091381",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:45.9214974Z",
-          "endTime": "2026-02-19T17:50:45.9442479Z",
-          "speed": 76,
-          "isStopSegment": false,
-          "duration": "00:00:00.0227505"
-        },
-        {
-          "id": "3741faa9-f5c0-4998-93de-d7f5a9b7d772",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:45.9442479Z",
-          "endTime": "2026-02-19T17:50:45.9697596Z",
-          "speed": 79,
-          "isStopSegment": false,
-          "duration": "00:00:00.0255117"
-        },
-        {
-          "id": "3eae09b5-be35-449a-bca9-dae87218933e",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:45.9697596Z",
-          "endTime": "2026-02-19T17:50:45.9974568Z",
-          "speed": 88,
-          "isStopSegment": false,
-          "duration": "00:00:00.0276972"
-        },
-        {
-          "id": "c445b1a3-ad4f-4d9a-bdd5-7c03b5a516fb",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:45.9974568Z",
-          "endTime": "2026-02-19T17:50:46.0236562Z",
-          "speed": 95,
-          "isStopSegment": false,
-          "duration": "00:00:00.0261994"
-        },
-        {
-          "id": "599cbdba-c81e-42d4-80a9-237c91018bd8",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:46.0236562Z",
-          "endTime": "2026-02-19T17:50:46.0472859Z",
-          "speed": 99,
-          "isStopSegment": false,
-          "duration": "00:00:00.0236297"
-        },
-        {
-          "id": "5a6bbf53-c950-4b38-b640-202293383eb1",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:46.0472859Z",
-          "endTime": "2026-02-19T17:50:46.3678618Z",
-          "speed": 100,
-          "isStopSegment": false,
-          "duration": "00:00:00.3205759"
-        },
-        {
-          "id": "efed1d4a-5acd-45ae-b951-d567d980492a",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:46.3678618Z",
-          "endTime": "2026-02-19T17:50:46.4029985Z",
-          "speed": 102,
-          "isStopSegment": false,
-          "duration": "00:00:00.0351367"
-        },
-        {
-          "id": "74b1275c-0434-4597-b121-e322617b9a46",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:46.4029985Z",
-          "endTime": "2026-02-19T17:50:46.6249791Z",
-          "speed": 113,
-          "isStopSegment": false,
-          "duration": "00:00:00.2219806"
-        },
-        {
-          "id": "ab733ac2-9356-4103-a9c9-e1d5c4ffafd2",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:46.6249791Z",
-          "endTime": "2026-02-19T17:50:47.1145851Z",
-          "speed": 126,
-          "isStopSegment": false,
-          "duration": "00:00:00.4896060"
-        },
-        {
-          "id": "7b752878-84b0-4547-8739-393d9fea024d",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:47.1145851Z",
-          "endTime": "2026-02-19T17:50:47.1495498Z",
-          "speed": 120,
-          "isStopSegment": false,
-          "duration": "00:00:00.0349647"
-        },
-        {
-          "id": "3d4196b2-91f1-4653-9353-a570d709a0df",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:47.1495498Z",
-          "endTime": "2026-02-19T17:50:47.1794443Z",
-          "speed": 105,
-          "isStopSegment": false,
-          "duration": "00:00:00.0298945"
-        },
-        {
-          "id": "54aa692f-8b7c-4400-8da3-5c5a3e71ccfb",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:47.1794443Z",
-          "endTime": "2026-02-19T17:50:47.205087Z",
-          "speed": 90,
-          "isStopSegment": false,
-          "duration": "00:00:00.0256427"
-        },
-        {
-          "id": "378598e8-d679-4daf-b979-18224d9d95f1",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:47.205087Z",
-          "endTime": "2026-02-19T17:50:47.232263Z",
-          "speed": 81,
-          "isStopSegment": false,
-          "duration": "00:00:00.0271760"
-        },
-        {
-          "id": "87cfdaf9-391f-432e-b4de-fa0ad638c12c",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:47.232263Z",
-          "endTime": "2026-02-19T17:50:47.2581026Z",
-          "speed": 69,
-          "isStopSegment": false,
-          "duration": "00:00:00.0258396"
-        },
-        {
-          "id": "144b6d13-d305-448d-af0b-ac32fc5776bd",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:47.2581026Z",
-          "endTime": "2026-02-19T17:50:47.2845165Z",
-          "speed": 60,
-          "isStopSegment": false,
-          "duration": "00:00:00.0264139"
-        },
-        {
-          "id": "b86a0200-6287-4d62-81a4-e6f86bfcccad",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:47.2845165Z",
-          "endTime": "2026-02-19T17:50:47.3208471Z",
-          "speed": 53,
-          "isStopSegment": false,
-          "duration": "00:00:00.0363306"
-        },
-        {
-          "id": "72ccbef8-ee46-4163-b86d-a3d93931f3e3",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:47.3208471Z",
-          "endTime": "2026-02-19T17:50:47.3437562Z",
-          "speed": 51,
-          "isStopSegment": false,
-          "duration": "00:00:00.0229091"
-        },
-        {
-          "id": "ba2d1c4d-210b-4fee-a387-b37f81fa5b8b",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:47.3437562Z",
-          "endTime": "2026-02-19T17:50:47.6506624Z",
-          "speed": 50,
-          "isStopSegment": false,
-          "duration": "00:00:00.3069062"
-        },
-        {
-          "id": "d6f4872d-55c0-49a9-a929-00714b6643db",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:47.6506624Z",
-          "endTime": "2026-02-19T17:50:47.6886283Z",
-          "speed": 49,
-          "isStopSegment": false,
-          "duration": "00:00:00.0379659"
-        },
-        {
-          "id": "565a3008-d628-40fe-9325-753c2f0894c6",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:47.6886283Z",
-          "endTime": "2026-02-19T17:50:47.7258988Z",
-          "speed": 46,
-          "isStopSegment": false,
-          "duration": "00:00:00.0372705"
-        },
-        {
-          "id": "7b49b034-8752-49eb-bf74-5348e819ea62",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:47.7258988Z",
-          "endTime": "2026-02-19T17:50:47.7633569Z",
-          "speed": 44,
-          "isStopSegment": false,
-          "duration": "00:00:00.0374581"
-        },
-        {
-          "id": "9311ea8e-a85b-4aad-b588-e28ea61f2f94",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:47.7633569Z",
-          "endTime": "2026-02-19T17:50:47.7968794Z",
-          "speed": 40,
-          "isStopSegment": false,
-          "duration": "00:00:00.0335225"
-        },
-        {
-          "id": "3cec5a79-6b59-438c-938a-bab0c3bee77a",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:47.7968794Z",
-          "endTime": "2026-02-19T17:50:47.8230947Z",
-          "speed": 38,
-          "isStopSegment": false,
-          "duration": "00:00:00.0262153"
-        },
-        {
-          "id": "6ebc9fcf-d332-4aeb-aa73-a53afe62e10a",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:47.8230947Z",
-          "endTime": "2026-02-19T17:50:48.0105911Z",
-          "speed": 34,
-          "isStopSegment": false,
-          "duration": "00:00:00.1874964"
-        },
-        {
-          "id": "38c57ea1-54b4-41ac-881e-dfc8ff4a2c6e",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.0105911Z",
-          "endTime": "2026-02-19T17:50:48.028246Z",
-          "speed": 23,
-          "isStopSegment": false,
-          "duration": "00:00:00.0176549"
-        },
-        {
-          "id": "27a055e0-25ce-4927-8970-6c1135549654",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.028246Z",
-          "endTime": "2026-02-19T17:50:48.0495725Z",
-          "speed": 22,
-          "isStopSegment": false,
-          "duration": "00:00:00.0213265"
-        },
-        {
-          "id": "a58d26e3-6e9b-4c18-a8f1-5b744b8d805e",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.0495725Z",
-          "endTime": "2026-02-19T17:50:48.0692943Z",
-          "speed": 21,
-          "isStopSegment": false,
-          "duration": "00:00:00.0197218"
-        },
-        {
-          "id": "f53aa3db-a021-4b60-82b6-7a25ff283ba4",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.0692943Z",
-          "endTime": "2026-02-19T17:50:48.0910901Z",
-          "speed": 19,
-          "isStopSegment": false,
-          "duration": "00:00:00.0217958"
-        },
-        {
-          "id": "727824a4-6096-444c-bc22-25fcf988b394",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.0910901Z",
-          "endTime": "2026-02-19T17:50:48.1086929Z",
-          "speed": 18,
-          "isStopSegment": false,
-          "duration": "00:00:00.0176028"
-        },
-        {
-          "id": "47195781-15de-4c9f-8d10-299a5950c187",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.1086929Z",
-          "endTime": "2026-02-19T17:50:48.1293047Z",
-          "speed": 15,
-          "isStopSegment": false,
-          "duration": "00:00:00.0206118"
-        },
-        {
-          "id": "7b75dcdb-d559-4807-b039-d9752a7ea1b7",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.1293047Z",
-          "endTime": "2026-02-19T17:50:48.1497102Z",
-          "speed": 14,
-          "isStopSegment": false,
-          "duration": "00:00:00.0204055"
-        },
-        {
-          "id": "c89bf73e-b8e0-4a34-bce2-cb67a04fea63",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.1497102Z",
-          "endTime": "2026-02-19T17:50:48.176994Z",
-          "speed": 13,
-          "isStopSegment": false,
-          "duration": "00:00:00.0272838"
-        },
-        {
-          "id": "d48450e4-5a90-49ec-b7d9-f2359dc21bd6",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.176994Z",
-          "endTime": "2026-02-19T17:50:48.1987569Z",
-          "speed": 12,
-          "isStopSegment": false,
-          "duration": "00:00:00.0217629"
-        },
-        {
-          "id": "c137499f-f382-408b-9f63-db80c82ab73e",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.1987569Z",
-          "endTime": "2026-02-19T17:50:48.224827Z",
-          "speed": 11,
-          "isStopSegment": false,
-          "duration": "00:00:00.0260701"
-        },
-        {
-          "id": "052e8199-ba29-4137-919f-828ea441ba66",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.224827Z",
-          "endTime": "2026-02-19T17:50:48.2473409Z",
-          "speed": 9,
-          "isStopSegment": false,
-          "duration": "00:00:00.0225139"
-        },
-        {
-          "id": "3ccada34-a48c-4944-8253-d04325286b1e",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.2473409Z",
-          "endTime": "2026-02-19T17:50:48.2848988Z",
-          "speed": 8,
-          "isStopSegment": false,
-          "duration": "00:00:00.0375579"
-        },
-        {
-          "id": "8f520b8e-b63f-4785-9c60-0752f3bc6684",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.2848988Z",
-          "endTime": "2026-02-19T17:50:48.3058332Z",
-          "speed": 7,
-          "isStopSegment": false,
-          "duration": "00:00:00.0209344"
-        },
-        {
-          "id": "b5a6ebe4-1c48-4257-9562-fa7863b53797",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.3058332Z",
-          "endTime": "2026-02-19T17:50:48.3469883Z",
-          "speed": 6,
-          "isStopSegment": false,
-          "duration": "00:00:00.0411551"
-        },
-        {
-          "id": "c9f43dc4-1bd4-48be-8bb3-26caafb04822",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.3469883Z",
-          "endTime": "2026-02-19T17:50:48.3729088Z",
-          "speed": 5,
-          "isStopSegment": false,
-          "duration": "00:00:00.0259205"
-        },
-        {
-          "id": "738dfe46-8a44-4b29-b8a9-74350b733bfa",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.3729088Z",
-          "endTime": "2026-02-19T17:50:48.3963705Z",
-          "speed": 4,
-          "isStopSegment": false,
-          "duration": "00:00:00.0234617"
-        },
-        {
-          "id": "d2c41038-e901-4773-81ca-023938d28e96",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.3963705Z",
-          "endTime": "2026-02-19T17:50:48.5435864Z",
-          "speed": 3,
-          "isStopSegment": false,
-          "duration": "00:00:00.1472159"
-        },
-        {
-          "id": "8ef431bb-a26d-4ee5-a4b9-42e22a6111eb",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.5435864Z",
-          "endTime": "2026-02-19T17:50:48.5929374Z",
-          "speed": 4,
-          "isStopSegment": false,
-          "duration": "00:00:00.0493510"
-        },
-        {
-          "id": "59426132-ce11-42df-98a3-0ddcf452f0aa",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.5929374Z",
-          "endTime": "2026-02-19T17:50:48.6426034Z",
-          "speed": 5,
-          "isStopSegment": false,
-          "duration": "00:00:00.0496660"
-        },
-        {
-          "id": "c664813d-8672-4afe-8e97-b1d21633d7de",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.6426034Z",
-          "endTime": "2026-02-19T17:50:48.680579Z",
-          "speed": 6,
-          "isStopSegment": false,
-          "duration": "00:00:00.0379756"
-        },
-        {
-          "id": "0ec9850f-67ac-427a-bca1-2bc5cddb43cb",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.680579Z",
-          "endTime": "2026-02-19T17:50:48.7076716Z",
-          "speed": 7,
-          "isStopSegment": false,
-          "duration": "00:00:00.0270926"
-        },
-        {
-          "id": "5454239c-d580-4390-97bd-b45ad6699e55",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.7076716Z",
-          "endTime": "2026-02-19T17:50:48.7603923Z",
-          "speed": 10,
-          "isStopSegment": false,
-          "duration": "00:00:00.0527207"
-        },
-        {
-          "id": "acbd4669-dffb-4ae5-afc8-ad9da063c3a6",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.7603923Z",
-          "endTime": "2026-02-19T17:50:48.7876091Z",
-          "speed": 16,
-          "isStopSegment": false,
-          "duration": "00:00:00.0272168"
-        },
-        {
-          "id": "95e7fa61-bb94-4f4a-9b05-2eb0408d91fc",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.7876091Z",
-          "endTime": "2026-02-19T17:50:48.8130275Z",
-          "speed": 18,
-          "isStopSegment": false,
-          "duration": "00:00:00.0254184"
-        },
-        {
-          "id": "7e6aeb95-33e7-4a97-986a-809ff43d35ac",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.8130275Z",
-          "endTime": "2026-02-19T17:50:48.8526664Z",
-          "speed": 19,
-          "isStopSegment": false,
-          "duration": "00:00:00.0396389"
-        },
-        {
-          "id": "ed8f99c0-e1f6-4ef8-8f0d-d4d71ea6192d",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.8526664Z",
-          "endTime": "2026-02-19T17:50:48.923406Z",
-          "speed": 20,
-          "isStopSegment": false,
-          "duration": "00:00:00.0707396"
-        },
-        {
-          "id": "f5b4b7c2-55b9-4362-a89a-c0f036c021ab",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.923406Z",
-          "endTime": "2026-02-19T17:50:48.9514542Z",
-          "speed": 21,
-          "isStopSegment": false,
-          "duration": "00:00:00.0280482"
-        },
-        {
-          "id": "9d523fc4-c340-4fae-86bf-d0ac0be9da84",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.9514542Z",
-          "endTime": "2026-02-19T17:50:48.9809558Z",
-          "speed": 22,
-          "isStopSegment": false,
-          "duration": "00:00:00.0295016"
-        },
-        {
-          "id": "c6c3c7f1-a3a6-477d-ab0d-6601d24c0e2f",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:48.9809558Z",
-          "endTime": "2026-02-19T17:50:49.0067702Z",
-          "speed": 23,
-          "isStopSegment": false,
-          "duration": "00:00:00.0258144"
-        },
-        {
-          "id": "20d697ed-b31d-46b7-9fe2-03285a00ef9d",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:49.0067702Z",
-          "endTime": "2026-02-19T17:50:49.0385198Z",
-          "speed": 25,
-          "isStopSegment": false,
-          "duration": "00:00:00.0317496"
-        },
-        {
-          "id": "da7e2e99-d865-41ff-8274-6bf77c300e24",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:49.0385198Z",
-          "endTime": "2026-02-19T17:50:49.070471Z",
-          "speed": 28,
-          "isStopSegment": false,
-          "duration": "00:00:00.0319512"
-        },
-        {
-          "id": "dd9cfa2f-ec00-47dc-b76f-6325a7fa2998",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:49.070471Z",
-          "endTime": "2026-02-19T17:50:49.1029023Z",
-          "speed": 37,
-          "isStopSegment": false,
-          "duration": "00:00:00.0324313"
-        },
-        {
-          "id": "1e31eb42-99bd-4398-8191-706f6b106cd9",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:49.1029023Z",
-          "endTime": "2026-02-19T17:50:49.1283767Z",
-          "speed": 46,
-          "isStopSegment": false,
-          "duration": "00:00:00.0254744"
-        },
-        {
-          "id": "701b7636-f960-49e4-aefd-9c7db617869f",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:49.1283767Z",
-          "endTime": "2026-02-19T17:50:49.1588379Z",
-          "speed": 51,
-          "isStopSegment": false,
-          "duration": "00:00:00.0304612"
-        },
-        {
-          "id": "e97e0b3f-e2f9-4c74-8683-f7589141b375",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:49.1588379Z",
-          "endTime": "2026-02-19T17:50:49.1924895Z",
-          "speed": 56,
-          "isStopSegment": false,
-          "duration": "00:00:00.0336516"
-        },
-        {
-          "id": "19bfe6c2-c22a-41ab-a3cc-905f41bda548",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:49.1924895Z",
-          "endTime": "2026-02-19T17:50:49.2132167Z",
-          "speed": 58,
-          "isStopSegment": false,
-          "duration": "00:00:00.0207272"
-        },
-        {
-          "id": "ef3f6bcd-c639-4b51-942d-f6208b4c74df",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:49.2132167Z",
-          "endTime": "2026-02-19T17:50:49.2394413Z",
-          "speed": 61,
-          "isStopSegment": false,
-          "duration": "00:00:00.0262246"
-        },
-        {
-          "id": "dd5972d1-6bca-4f8f-9a01-f8935c3c622a",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:49.2394413Z",
-          "endTime": "2026-02-19T17:50:49.2635178Z",
-          "speed": 65,
-          "isStopSegment": false,
-          "duration": "00:00:00.0240765"
-        },
-        {
-          "id": "9ce42172-5ca5-4422-96e9-e20ec2d76edf",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:49.2635178Z",
-          "endTime": "2026-02-19T17:50:49.4460478Z",
-          "speed": 67,
-          "isStopSegment": false,
-          "duration": "00:00:00.1825300"
-        },
-        {
-          "id": "b8099f9c-d2ca-4e9d-a427-6ac672245d71",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:49.4460478Z",
-          "endTime": "2026-02-19T17:50:49.6574448Z",
-          "speed": 83,
-          "isStopSegment": false,
-          "duration": "00:00:00.2113970"
-        },
-        {
-          "id": "4aeb282e-6f6f-4ddd-804f-2622abacc5db",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:49.6574448Z",
-          "endTime": "2026-02-19T17:50:49.6800792Z",
-          "speed": 84,
-          "isStopSegment": false,
-          "duration": "00:00:00.0226344"
-        },
-        {
-          "id": "f1b7a1d9-a04a-40ad-881a-eb5d0b465e93",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:49.6800792Z",
-          "endTime": "2026-02-19T17:50:49.7022748Z",
-          "speed": 87,
-          "isStopSegment": false,
-          "duration": "00:00:00.0221956"
-        },
-        {
-          "id": "baf4ac31-dc56-476f-a6a9-7c2edb18e094",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:49.7022748Z",
-          "endTime": "2026-02-19T17:50:49.7366226Z",
-          "speed": 101,
-          "isStopSegment": false,
-          "duration": "00:00:00.0343478"
-        },
-        {
-          "id": "c169490d-b0e1-4f7f-9014-f76c4a84a62c",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:49.7366226Z",
-          "endTime": "2026-02-19T17:50:49.7589631Z",
-          "speed": 114,
-          "isStopSegment": false,
-          "duration": "00:00:00.0223405"
-        },
-        {
-          "id": "7f5a367d-9b24-494b-9e2f-0fc8e13ef59f",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:49.7589631Z",
-          "endTime": "2026-02-19T17:50:49.782968Z",
-          "speed": 119,
-          "isStopSegment": false,
-          "duration": "00:00:00.0240049"
-        },
-        {
-          "id": "799ffddc-b5d2-4001-adfd-99458a7a8411",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:49.782968Z",
-          "endTime": "2026-02-19T17:50:49.8080463Z",
-          "speed": 122,
-          "isStopSegment": false,
-          "duration": "00:00:00.0250783"
-        },
-        {
-          "id": "e17f60a9-a3bb-4620-a18c-2801b7740e0b",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:49.8080463Z",
-          "endTime": "2026-02-19T17:50:50.3194649Z",
-          "speed": 126,
-          "isStopSegment": false,
-          "duration": "00:00:00.5114186"
-        },
-        {
-          "id": "9ac264c8-ad0c-430b-bdfc-96736e67887b",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:50.3194649Z",
-          "endTime": "2026-02-19T17:50:50.356785Z",
-          "speed": 125,
-          "isStopSegment": false,
-          "duration": "00:00:00.0373201"
-        },
-        {
-          "id": "f65729e7-8672-490e-aeb6-e0e3f8fd7145",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:50.356785Z",
-          "endTime": "2026-02-19T17:50:50.6096692Z",
-          "speed": 109,
-          "isStopSegment": false,
-          "duration": "00:00:00.2528842"
-        },
-        {
-          "id": "fb82785e-c4d5-4628-ab65-191e30ce1b3d",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:50.6096692Z",
-          "endTime": "2026-02-19T17:50:50.8325757Z",
-          "speed": 61,
-          "isStopSegment": false,
-          "duration": "00:00:00.2229065"
-        },
-        {
-          "id": "1f0f3b0a-e766-44b3-85e0-748eea3419ba",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:50.8325757Z",
-          "endTime": "2026-02-19T17:50:50.8622086Z",
-          "speed": 60,
-          "isStopSegment": false,
-          "duration": "00:00:00.0296329"
-        },
-        {
-          "id": "ed467e2e-60d5-4386-b45b-115aa0f33303",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:50.8622086Z",
-          "endTime": "2026-02-19T17:50:50.8872118Z",
-          "speed": 47,
-          "isStopSegment": false,
-          "duration": "00:00:00.0250032"
-        },
-        {
-          "id": "7cc2dc79-85d7-4106-b999-105080eb4156",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:50.8872118Z",
-          "endTime": "2026-02-19T17:50:50.9119919Z",
-          "speed": 28,
-          "isStopSegment": false,
-          "duration": "00:00:00.0247801"
-        },
-        {
-          "id": "94d5795d-dd56-41da-ae69-955074f00e74",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:50.9119919Z",
-          "endTime": "2026-02-19T17:50:50.9480681Z",
-          "speed": 18,
-          "isStopSegment": false,
-          "duration": "00:00:00.0360762"
-        },
-        {
-          "id": "ed7940d8-273f-433d-9ffe-6ac4c27d1d53",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:50.9480681Z",
-          "endTime": "2026-02-19T17:50:50.9813927Z",
-          "speed": 6,
-          "isStopSegment": false,
-          "duration": "00:00:00.0333246"
-        },
-        {
-          "id": "92da7c52-0af0-468b-8ccc-069dc5a0c8d9",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:50.9813927Z",
-          "endTime": "2026-02-19T17:50:51.4918387Z",
-          "speed": 0,
-          "isStopSegment": true,
-          "duration": "00:00:00.5104460"
-        },
-        {
-          "id": "f62b7a81-ac5b-4b0d-9fa0-e6726477ac47",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:51.4918387Z",
-          "endTime": "2026-02-19T17:50:51.5305144Z",
-          "speed": 2,
-          "isStopSegment": false,
-          "duration": "00:00:00.0386757"
-        },
-        {
-          "id": "65018518-08a9-469e-8391-2b498c7410f3",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:51.5305144Z",
-          "endTime": "2026-02-19T17:50:51.5616084Z",
-          "speed": 11,
-          "isStopSegment": false,
-          "duration": "00:00:00.0310940"
-        },
-        {
-          "id": "8293d6a0-77ed-43b6-9ef7-96030e2b1919",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:51.5616084Z",
-          "endTime": "2026-02-19T17:50:51.5914815Z",
-          "speed": 22,
-          "isStopSegment": false,
-          "duration": "00:00:00.0298731"
-        },
-        {
-          "id": "4052a008-050c-48a0-9768-ebc3344d303f",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:51.5914815Z",
-          "endTime": "2026-02-19T17:50:51.6218572Z",
-          "speed": 26,
-          "isStopSegment": false,
-          "duration": "00:00:00.0303757"
-        },
-        {
-          "id": "f55b0aef-0cec-4c28-b566-28fe414107aa",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:51.6218572Z",
-          "endTime": "2026-02-19T17:50:51.6516865Z",
-          "speed": 31,
-          "isStopSegment": false,
-          "duration": "00:00:00.0298293"
-        },
-        {
-          "id": "4ca44992-df12-4570-ae05-1d07a9847e09",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:51.6516865Z",
-          "endTime": "2026-02-19T17:50:51.6828985Z",
-          "speed": 36,
-          "isStopSegment": false,
-          "duration": "00:00:00.0312120"
-        },
-        {
-          "id": "6fa1b571-ae26-4369-8349-7d49ea2c7f70",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:51.6828985Z",
-          "endTime": "2026-02-19T17:50:51.7086877Z",
-          "speed": 40,
-          "isStopSegment": false,
-          "duration": "00:00:00.0257892"
-        },
-        {
-          "id": "c148d5a4-5564-493a-9a4c-0e1efb6dde5d",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:51.7086877Z",
-          "endTime": "2026-02-19T17:50:51.7424584Z",
-          "speed": 41,
-          "isStopSegment": false,
-          "duration": "00:00:00.0337707"
-        },
-        {
-          "id": "846b03e2-e437-487e-947d-3695677e1385",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:51.7424584Z",
-          "endTime": "2026-02-19T17:50:51.7825007Z",
-          "speed": 43,
-          "isStopSegment": false,
-          "duration": "00:00:00.0400423"
-        },
-        {
-          "id": "265f2c72-081a-4733-8e0f-4b1741e17268",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:51.7825007Z",
-          "endTime": "2026-02-19T17:50:51.8026243Z",
-          "speed": 47,
-          "isStopSegment": false,
-          "duration": "00:00:00.0201236"
-        },
-        {
-          "id": "9bc2022d-4674-4b43-b6c5-2b3a8723855e",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:51.8026243Z",
-          "endTime": "2026-02-19T17:50:51.8381202Z",
-          "speed": 51,
-          "isStopSegment": false,
-          "duration": "00:00:00.0354959"
-        },
-        {
-          "id": "f02e9dc4-2389-4571-8d99-077dca6ad685",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:51.8381202Z",
-          "endTime": "2026-02-19T17:50:51.8720718Z",
-          "speed": 56,
-          "isStopSegment": false,
-          "duration": "00:00:00.0339516"
-        },
-        {
-          "id": "7a2b25ca-ba22-4b00-85bf-99e633554691",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:51.8720718Z",
-          "endTime": "2026-02-19T17:50:51.9014148Z",
-          "speed": 60,
-          "isStopSegment": false,
-          "duration": "00:00:00.0293430"
-        },
-        {
-          "id": "075b34af-d45c-4388-addd-dc0a3e600727",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:51.9014148Z",
-          "endTime": "2026-02-19T17:50:51.937717Z",
-          "speed": 64,
-          "isStopSegment": false,
-          "duration": "00:00:00.0363022"
-        },
-        {
-          "id": "cbd6d555-96ad-44d5-b592-40ff3afeb954",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:51.937717Z",
-          "endTime": "2026-02-19T17:50:51.9642545Z",
-          "speed": 73,
-          "isStopSegment": false,
-          "duration": "00:00:00.0265375"
-        },
-        {
-          "id": "cee426b2-d902-46ad-8f45-108496b6ac8b",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:51.9642545Z",
-          "endTime": "2026-02-19T17:50:52.2434916Z",
-          "speed": 75,
-          "isStopSegment": false,
-          "duration": "00:00:00.2792371"
-        },
-        {
-          "id": "9b2a4bea-ba3c-4c8f-8eb3-64c8b148e47c",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:52.2434916Z",
-          "endTime": "2026-02-19T17:50:52.2687247Z",
-          "speed": 76,
-          "isStopSegment": false,
-          "duration": "00:00:00.0252331"
-        },
-        {
-          "id": "f1e1ee16-00bd-4f40-936d-99388a82b1c4",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:52.2687247Z",
-          "endTime": "2026-02-19T17:50:52.2944349Z",
-          "speed": 83,
-          "isStopSegment": false,
-          "duration": "00:00:00.0257102"
-        },
-        {
-          "id": "96e67481-ca5f-4b7e-acb8-1f71e9c574d5",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:52.2944349Z",
-          "endTime": "2026-02-19T17:50:52.3136261Z",
-          "speed": 95,
-          "isStopSegment": false,
-          "duration": "00:00:00.0191912"
-        },
-        {
-          "id": "cf45e723-3e5b-4cb1-a3cf-08c09f937242",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:52.3136261Z",
-          "endTime": "2026-02-19T17:50:52.3419067Z",
-          "speed": 101,
-          "isStopSegment": false,
-          "duration": "00:00:00.0282806"
-        },
-        {
-          "id": "9093c0ef-8134-4b84-8c38-8a3cf62a91d2",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:52.3419067Z",
-          "endTime": "2026-02-19T17:50:52.3712015Z",
-          "speed": 107,
-          "isStopSegment": false,
-          "duration": "00:00:00.0292948"
-        },
-        {
-          "id": "b50e113a-7e8c-4ac4-ac49-aa09ef332980",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:52.3712015Z",
-          "endTime": "2026-02-19T17:50:52.4019047Z",
-          "speed": 116,
-          "isStopSegment": false,
-          "duration": "00:00:00.0307032"
-        },
-        {
-          "id": "37db936a-44c8-49a5-8feb-34b81464b33e",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:52.4019047Z",
-          "endTime": "2026-02-19T17:50:53.0255904Z",
-          "speed": 126,
-          "isStopSegment": false,
-          "duration": "00:00:00.6236857"
-        },
-        {
-          "id": "139054c8-90a2-4757-9f3c-a52f309abb46",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:53.0255904Z",
-          "endTime": "2026-02-19T17:50:53.054838Z",
-          "speed": 115,
-          "isStopSegment": false,
-          "duration": "00:00:00.0292476"
-        },
-        {
-          "id": "133afc73-1a5c-411f-bdc1-9d6346ef28f5",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:53.054838Z",
-          "endTime": "2026-02-19T17:50:53.0821515Z",
-          "speed": 72,
-          "isStopSegment": false,
-          "duration": "00:00:00.0273135"
-        },
-        {
-          "id": "18348d88-886e-4a17-bc73-e5d9b114938f",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:53.0821515Z",
-          "endTime": "2026-02-19T17:50:53.1074405Z",
-          "speed": 48,
-          "isStopSegment": false,
-          "duration": "00:00:00.0252890"
-        },
-        {
-          "id": "84ccd7b7-87da-48a6-98c9-02185b2fd6e8",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:53.1074405Z",
-          "endTime": "2026-02-19T17:50:53.1291067Z",
-          "speed": 23,
-          "isStopSegment": false,
-          "duration": "00:00:00.0216662"
-        },
-        {
-          "id": "3debbd7f-0013-4d53-98b1-4e34ba6e550e",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:53.1291067Z",
-          "endTime": "2026-02-19T17:50:53.1486563Z",
-          "speed": 12,
-          "isStopSegment": false,
-          "duration": "00:00:00.0195496"
-        },
-        {
-          "id": "516ab069-b5cd-438a-81f6-1ff26d10c1e0",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:53.1486563Z",
-          "endTime": "2026-02-19T17:50:53.1675033Z",
-          "speed": 3,
-          "isStopSegment": false,
-          "duration": "00:00:00.0188470"
-        },
-        {
-          "id": "2f1fc39b-2aa0-4128-8e1a-298a7a9f8134",
-          "locoAddress": 7,
-          "startTime": "2026-02-19T17:50:53.1675033Z",
-          "endTime": "2026-02-20T17:50:21.4339516Z",
-          "speed": 0,
-          "isStopSegment": true,
-          "duration": "23:59:28.2664483"
-        },
-        {
-          "id": "2a60d448-dbe8-4043-9835-809621d3c437",
-          "locoAddress": 7,
-          "startTime": "2026-02-20T17:50:21.4339516Z",
-          "endTime": "2026-02-20T18:00:52.7987706Z",
-          "speed": 0,
-          "isStopSegment": true,
-          "duration": "00:10:31.3648190"
-        },
-        {
-          "id": "60fef72a-411e-4082-a93f-f5598724d771",
-          "locoAddress": 7,
-          "startTime": "2026-02-20T18:00:52.7987706Z",
-          "endTime": "2026-02-22T18:50:05.4064585Z",
-          "speed": 0,
-          "isStopSegment": true,
-          "duration": "2.00:49:12.6076879"
-        },
-        {
-          "id": "71a46e64-65bf-4db6-b3bb-d5615b23c62c",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T18:50:05.4064585Z",
-          "endTime": "2026-02-22T18:50:05.4601961Z",
-          "speed": 1,
-          "isStopSegment": false,
-          "duration": "00:00:00.0537376"
-        },
-        {
-          "id": "638abefa-a5f0-4612-b3cf-49a1a60618a7",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T18:50:05.4601961Z",
-          "endTime": "2026-02-22T18:50:05.5067503Z",
-          "speed": 2,
-          "isStopSegment": false,
-          "duration": "00:00:00.0465542"
-        },
-        {
-          "id": "b94fbaf8-8287-4aa1-8247-58c11f7991fc",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T18:50:05.5067503Z",
-          "endTime": "2026-02-22T18:50:05.5438213Z",
-          "speed": 3,
-          "isStopSegment": false,
-          "duration": "00:00:00.0370710"
-        },
-        {
-          "id": "a9be6dbd-a58b-4e3b-b1a6-4fdc0b18e66d",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T18:50:05.5438213Z",
-          "endTime": "2026-02-22T18:50:05.5846377Z",
-          "speed": 4,
-          "isStopSegment": false,
-          "duration": "00:00:00.0408164"
-        },
-        {
-          "id": "041c4614-cfa2-4c0d-8e2d-3c941589b644",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T18:50:05.5846377Z",
-          "endTime": "2026-02-22T18:50:05.6240669Z",
-          "speed": 5,
-          "isStopSegment": false,
-          "duration": "00:00:00.0394292"
-        },
-        {
-          "id": "f021b5be-7590-40f8-9c4e-c0daf692249f",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T18:50:05.6240669Z",
-          "endTime": "2026-02-22T18:50:05.6541192Z",
-          "speed": 6,
-          "isStopSegment": false,
-          "duration": "00:00:00.0300523"
-        },
-        {
-          "id": "5e3de32c-aace-48ac-810b-87966660ab11",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T18:50:05.6541192Z",
-          "endTime": "2026-02-22T18:50:05.6787191Z",
-          "speed": 7,
-          "isStopSegment": false,
-          "duration": "00:00:00.0245999"
-        },
-        {
-          "id": "04709ddf-04d1-40d5-8486-447e2eda120a",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T18:50:05.6787191Z",
-          "endTime": "2026-02-22T18:50:05.7019227Z",
-          "speed": 8,
-          "isStopSegment": false,
-          "duration": "00:00:00.0232036"
-        },
-        {
-          "id": "5d0089f3-c397-47bc-a094-81b311be2df3",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T18:50:05.7019227Z",
-          "endTime": "2026-02-22T18:50:05.7563278Z",
-          "speed": 9,
-          "isStopSegment": false,
-          "duration": "00:00:00.0544051"
-        },
-        {
-          "id": "f67cc821-59ba-45a3-93b2-9f76fcb1e8a3",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T18:50:05.7563278Z",
-          "endTime": "2026-02-22T18:50:06.0146671Z",
-          "speed": 10,
-          "isStopSegment": false,
-          "duration": "00:00:00.2583393"
-        },
-        {
-          "id": "e854f0d2-3817-4d95-a160-d7875d119efc",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T18:50:06.0146671Z",
-          "endTime": "2026-02-22T18:50:06.202532Z",
-          "speed": 9,
-          "isStopSegment": false,
-          "duration": "00:00:00.1878649"
-        },
-        {
-          "id": "e69bf626-a565-41e3-b1b4-18ae10cac970",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T18:50:06.202532Z",
-          "endTime": "2026-02-22T18:50:06.2566219Z",
-          "speed": 8,
-          "isStopSegment": false,
-          "duration": "00:00:00.0540899"
-        },
-        {
-          "id": "5bd543d5-a984-40f0-99b3-8f5b6200e1b1",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T18:50:06.2566219Z",
-          "endTime": "2026-02-22T18:50:06.2886612Z",
-          "speed": 7,
-          "isStopSegment": false,
-          "duration": "00:00:00.0320393"
-        },
-        {
-          "id": "69b5205d-f7a8-4210-9a9b-168758370df5",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T18:50:06.2886612Z",
-          "endTime": "2026-02-22T18:50:06.3195506Z",
-          "speed": 6,
-          "isStopSegment": false,
-          "duration": "00:00:00.0308894"
-        },
-        {
-          "id": "b847943c-978e-4e6e-8a11-a4edcc377e1b",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T18:50:06.3195506Z",
-          "endTime": "2026-02-22T18:50:06.3346524Z",
-          "speed": 5,
-          "isStopSegment": false,
-          "duration": "00:00:00.0151018"
-        },
-        {
-          "id": "7315c6cf-6c25-49d4-b220-78abaf62259e",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T18:50:06.3346524Z",
-          "endTime": "2026-02-22T18:50:06.366241Z",
-          "speed": 4,
-          "isStopSegment": false,
-          "duration": "00:00:00.0315886"
-        },
-        {
-          "id": "3cc26d7e-232b-4b4c-9ea6-291bcefe2917",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T18:50:06.366241Z",
-          "endTime": "2026-02-22T18:50:06.4368255Z",
-          "speed": 3,
-          "isStopSegment": false,
-          "duration": "00:00:00.0705845"
-        },
-        {
-          "id": "dcb85cff-e933-4d82-87ff-0240bcb11422",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T18:50:06.4368255Z",
-          "endTime": "2026-02-22T18:50:06.4826374Z",
-          "speed": 2,
-          "isStopSegment": false,
-          "duration": "00:00:00.0458119"
-        },
-        {
-          "id": "f159855a-2509-41b6-a97d-0d9e24f8c0c3",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T18:50:06.4826374Z",
-          "endTime": "2026-02-22T18:50:06.5764413Z",
-          "speed": 1,
-          "isStopSegment": false,
-          "duration": "00:00:00.0938039"
-        },
-        {
-          "id": "39ced32c-5eb3-430b-b298-43db1ae58eac",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T18:50:06.5764413Z",
-          "endTime": "2026-02-22T19:16:25.6665479Z",
-          "speed": 0,
-          "isStopSegment": true,
-          "duration": "00:26:19.0901066"
-        },
-        {
-          "id": "4fcc1b0c-3b18-4021-ad88-63f34ffce783",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:25.6665479Z",
-          "endTime": "2026-02-22T19:16:25.7112327Z",
-          "speed": 1,
-          "isStopSegment": false,
-          "duration": "00:00:00.0446848"
-        },
-        {
-          "id": "6de63cc8-0f7c-4747-b5fc-7d03e1acbcbe",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:25.7112327Z",
-          "endTime": "2026-02-22T19:16:25.7276332Z",
-          "speed": 2,
-          "isStopSegment": false,
-          "duration": "00:00:00.0164005"
-        },
-        {
-          "id": "a5bd70d9-4d82-4d14-9bcc-7a9229e81378",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:25.7276332Z",
-          "endTime": "2026-02-22T19:16:25.7382677Z",
-          "speed": 3,
-          "isStopSegment": false,
-          "duration": "00:00:00.0106345"
-        },
-        {
-          "id": "95b6809a-180f-4f89-9e05-fb900f91313e",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:25.7382677Z",
-          "endTime": "2026-02-22T19:16:25.7512181Z",
-          "speed": 4,
-          "isStopSegment": false,
-          "duration": "00:00:00.0129504"
-        },
-        {
-          "id": "defea3d7-df88-424d-a1ff-4358e89e3a93",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:25.7512181Z",
-          "endTime": "2026-02-22T19:16:25.7626202Z",
-          "speed": 5,
-          "isStopSegment": false,
-          "duration": "00:00:00.0114021"
-        },
-        {
-          "id": "728bfc7d-66e9-4b35-9eab-6575566289ad",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:25.7626202Z",
-          "endTime": "2026-02-22T19:16:25.772341Z",
-          "speed": 6,
-          "isStopSegment": false,
-          "duration": "00:00:00.0097208"
-        },
-        {
-          "id": "6c282fe7-130c-4959-8b11-61eaa9cc7db5",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:25.772341Z",
-          "endTime": "2026-02-22T19:16:25.78289Z",
-          "speed": 7,
-          "isStopSegment": false,
-          "duration": "00:00:00.0105490"
-        },
-        {
-          "id": "faa8d58e-8fb6-4783-9e56-b5ac53d522bb",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:25.78289Z",
-          "endTime": "2026-02-22T19:16:25.793529Z",
-          "speed": 9,
-          "isStopSegment": false,
-          "duration": "00:00:00.0106390"
-        },
-        {
-          "id": "efd45a85-8c7a-47a5-b2a8-b286a0685690",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:25.793529Z",
-          "endTime": "2026-02-22T19:16:25.8056653Z",
-          "speed": 10,
-          "isStopSegment": false,
-          "duration": "00:00:00.0121363"
-        },
-        {
-          "id": "d6b71970-54a8-43d3-b663-63dc6ee38fba",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:25.8056653Z",
-          "endTime": "2026-02-22T19:16:25.8158927Z",
-          "speed": 11,
-          "isStopSegment": false,
-          "duration": "00:00:00.0102274"
-        },
-        {
-          "id": "b5856cad-f5e6-4766-b686-cc7bfd34911f",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:25.8158927Z",
-          "endTime": "2026-02-22T19:16:25.8274302Z",
-          "speed": 13,
-          "isStopSegment": false,
-          "duration": "00:00:00.0115375"
-        },
-        {
-          "id": "f5229fe9-f60b-439e-9670-27b37e6ecc9a",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:25.8274302Z",
-          "endTime": "2026-02-22T19:16:25.8379104Z",
-          "speed": 15,
-          "isStopSegment": false,
-          "duration": "00:00:00.0104802"
-        },
-        {
-          "id": "63f0fe53-14c5-4cc9-92df-d82e9ffaa153",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:25.8379104Z",
-          "endTime": "2026-02-22T19:16:25.8509061Z",
-          "speed": 16,
-          "isStopSegment": false,
-          "duration": "00:00:00.0129957"
-        },
-        {
-          "id": "494f23e5-128f-4a62-af0e-8e8e0a77108f",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:25.8509061Z",
-          "endTime": "2026-02-22T19:16:25.9606355Z",
-          "speed": 17,
-          "isStopSegment": false,
-          "duration": "00:00:00.1097294"
-        },
-        {
-          "id": "abe1bc82-9502-492b-a2b9-1eb98a75f5c8",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:25.9606355Z",
-          "endTime": "2026-02-22T19:16:25.9770154Z",
-          "speed": 16,
-          "isStopSegment": false,
-          "duration": "00:00:00.0163799"
-        },
-        {
-          "id": "ad738be0-6c88-4753-a6ce-40340cc9c81c",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:25.9770154Z",
-          "endTime": "2026-02-22T19:16:25.984813Z",
-          "speed": 15,
-          "isStopSegment": false,
-          "duration": "00:00:00.0077976"
-        },
-        {
-          "id": "a7777162-5404-4c21-a68f-c5bad73d97fb",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:25.984813Z",
-          "endTime": "2026-02-22T19:16:25.9955606Z",
-          "speed": 14,
-          "isStopSegment": false,
-          "duration": "00:00:00.0107476"
-        },
-        {
-          "id": "9c1f77b8-f1dc-43ed-b788-a94012e4d87b",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:25.9955606Z",
-          "endTime": "2026-02-22T19:16:26.0061264Z",
-          "speed": 13,
-          "isStopSegment": false,
-          "duration": "00:00:00.0105658"
-        },
-        {
-          "id": "c8383ad4-282d-44e2-94e0-0b21248055bc",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:26.0061264Z",
-          "endTime": "2026-02-22T19:16:26.0172029Z",
-          "speed": 12,
-          "isStopSegment": false,
-          "duration": "00:00:00.0110765"
-        },
-        {
-          "id": "9929be67-39c7-47a5-9015-0a26d6f4015c",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:26.0172029Z",
-          "endTime": "2026-02-22T19:16:26.0235844Z",
-          "speed": 11,
-          "isStopSegment": false,
-          "duration": "00:00:00.0063815"
-        },
-        {
-          "id": "cd10252d-a829-42d2-a63d-66f2b261102e",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:26.0235844Z",
-          "endTime": "2026-02-22T19:16:26.0312491Z",
-          "speed": 10,
-          "isStopSegment": false,
-          "duration": "00:00:00.0076647"
-        },
-        {
-          "id": "bc4e63a1-6bc6-4fff-b58e-cac6ca579ed3",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:26.0312491Z",
-          "endTime": "2026-02-22T19:16:26.0408497Z",
-          "speed": 9,
-          "isStopSegment": false,
-          "duration": "00:00:00.0096006"
-        },
-        {
-          "id": "53b09378-26fc-4ff4-9d9a-09104b164eab",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:26.0408497Z",
-          "endTime": "2026-02-22T19:16:26.0513297Z",
-          "speed": 8,
-          "isStopSegment": false,
-          "duration": "00:00:00.0104800"
-        },
-        {
-          "id": "320e74c7-4c97-4ae2-a907-b7c9c9b019e8",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:26.0513297Z",
-          "endTime": "2026-02-22T19:16:26.0566311Z",
-          "speed": 6,
-          "isStopSegment": false,
-          "duration": "00:00:00.0053014"
-        },
-        {
-          "id": "45fbe327-9cfe-45d2-bb97-97fa57ebefcb",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:26.0566311Z",
-          "endTime": "2026-02-22T19:16:26.0639677Z",
-          "speed": 4,
-          "isStopSegment": false,
-          "duration": "00:00:00.0073366"
-        },
-        {
-          "id": "8fa0e340-02a5-4b39-83da-efffc8e36cd6",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:26.0639677Z",
-          "endTime": "2026-02-22T19:16:26.0713931Z",
-          "speed": 2,
-          "isStopSegment": false,
-          "duration": "00:00:00.0074254"
-        },
-        {
-          "id": "d895f8e8-1207-4d0d-bee3-8082a3883b3e",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:26.0713931Z",
-          "endTime": "2026-02-22T19:16:26.080349Z",
-          "speed": 1,
-          "isStopSegment": false,
-          "duration": "00:00:00.0089559"
-        },
-        {
-          "id": "5a05b736-f3c9-4450-b204-03e3f301a97d",
-          "locoAddress": 7,
-          "startTime": "2026-02-22T19:16:26.080349Z",
-          "speed": 0,
-          "isStopSegment": true
-        }
-      ]
-    }
-  ],
-  "schemaVersion": 1
+    ],
+    "schemaVersion": 1
 }

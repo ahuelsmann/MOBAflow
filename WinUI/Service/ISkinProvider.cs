@@ -8,7 +8,7 @@ using Common.Configuration;
 /// Defines the available application skins (color themes).
 /// Named by their dominant accent color to avoid trademark issues.
 /// </summary>
-public enum AppSkin
+internal enum AppSkin
 {
     /// <summary>
     /// System: Uses Windows system accent color.
@@ -45,7 +45,7 @@ public enum AppSkin
 /// Provides skin (color theme) management and color resources for the application.
 /// Supports multiple predefined skins with Fluent Design System compliance.
 /// </summary>
-public interface ISkinProvider
+internal interface ISkinProvider
 {
     /// <summary>
     /// Gets the currently active skin.
@@ -87,7 +87,7 @@ public interface ISkinProvider
 /// <summary>
 /// Event arguments for skin changes.
 /// </summary>
-public class SkinChangedEventArgs : EventArgs
+internal class SkinChangedEventArgs : EventArgs
 {
     public SkinChangedEventArgs(AppSkin oldSkin, AppSkin newSkin)
     {

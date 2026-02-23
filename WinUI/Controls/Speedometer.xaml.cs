@@ -13,7 +13,7 @@ using Windows.UI;
 /// Features an arc-based gauge with animated needle and digital display.
 /// Supports dynamic theme colors via AccentColor property.
 /// </summary>
-public sealed partial class SpeedometerControl
+internal sealed partial class SpeedometerControl
 {
     /// <summary>
     /// Minimum speed value (typically 0).

@@ -11,7 +11,7 @@ using TrackLibrary.PikoA;
 /// Erzeugt Vorschau-Symbole für Piko A-Gleistypen in der Toolbox.
 /// Nutzt <see cref="SegmentLocalPathBuilder"/> – dieselbe Geometrie wie der TrackPlanSvgRenderer.
 /// </summary>
-public static class TrackPreviewSymbol
+internal static class TrackPreviewSymbol
 {
     private const double Width = 40;
     private const double Height = 24;

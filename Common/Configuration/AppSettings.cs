@@ -404,7 +404,7 @@ public class SidePanelLayoutSettings
 /// <summary>
 /// Persistent layout state for a structurally docked panel.
 /// </summary>
-public class PanelLayoutState
+public abstract class PanelLayoutState
 {
     /// <summary>
     /// Is the panel in the collapsed state?

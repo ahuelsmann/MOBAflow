@@ -10,7 +10,7 @@ using Moba.Domain;
 /// Tests file I/O operations for city library data loading.
 /// </summary>
 [TestFixture]
-public class DataManagerTests
+internal class DataManagerTests
 {
     private string _tempDir = null!;
     private string _testFilePath = null!;

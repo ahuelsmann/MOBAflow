@@ -23,7 +23,7 @@ using Windows.System;
     Order = 20,
     FeatureToggleKey = "IsWorkflowsPageAvailable",
     BadgeLabelKey = "WorkflowsPageLabel")]
-public sealed partial class WorkflowsPage
+internal sealed partial class WorkflowsPage
 {
     public MainWindowViewModel ViewModel { get; }
 

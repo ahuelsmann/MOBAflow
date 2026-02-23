@@ -8,7 +8,7 @@ using Moba.SharedUI.ViewModel;
 /// Tests for WorkflowViewModel - ViewModel wrapper for Workflow domain model.
 /// </summary>
 [TestFixture]
-public class WorkflowViewModelTests
+internal class WorkflowViewModelTests
 {
     private Workflow _workflow = null!;
     private WorkflowViewModel _viewModel = null!;

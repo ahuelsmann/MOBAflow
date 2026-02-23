@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.WinUI.Utilities;
 
@@ -8,7 +8,7 @@ using System.Net.Sockets;
 /// <summary>
 /// Utility for checking network port availability.
 /// </summary>
-public static class PortChecker
+internal static class PortChecker
 {
     /// <summary>
     /// Checks if a TCP port is available for binding.

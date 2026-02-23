@@ -2,13 +2,13 @@
 
 namespace Moba.WinUI.View;
 
-using Controls;
+using Controls.Docking;
 
 using Microsoft.UI.Xaml;
 
 using ViewModel;
 
-public sealed partial class DockingPage
+internal sealed partial class DockingPage
 {
     private readonly DockingPageViewModel _viewModel;
     private bool _isInitialized;
@@ -20,7 +20,6 @@ public sealed partial class DockingPage
         DataContext = viewModel;
 
         Loaded += OnPageLoaded;
-        Unloaded += OnPageUnloaded;
     }
 
     private void OnPageLoaded(object sender, RoutedEventArgs e)
@@ -30,17 +29,7 @@ public sealed partial class DockingPage
             return;
         }
 
-        DockManager.PanelUndocked += OnPanelUndocked;
         _isInitialized = true;
-    }
-
-    private void OnPageUnloaded(object sender, RoutedEventArgs e)
-    {
-        DockManager.PanelUndocked -= OnPanelUndocked;
-    }
-
-    private void OnTabDraggedOutside(object? sender, DocumentTabDraggedOutEventArgs e)
-    {
     }
 
     private void OnTabDockedToSide(object sender, DocumentTabDockedEventArgs e)

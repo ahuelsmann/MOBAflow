@@ -11,7 +11,7 @@ using System.Text;
 /// Uses Multicast (239.255.42.99) instead of Broadcast for better WiFi router compatibility.
 /// Similar pattern to Z21 discovery but for REST-API service discovery.
 /// </summary>
-public class UdpDiscoveryService : BackgroundService
+internal class UdpDiscoveryService : BackgroundService
 {
     private const int DiscoveryPort = 21106; // Different from Z21 (21105) to avoid conflicts
     private const string DiscoveryRequest = "MOBAFLOW_DISCOVER";

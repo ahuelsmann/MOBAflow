@@ -44,7 +44,7 @@ public interface IShellService
 /// <summary>
 /// Options for displaying content in a region.
 /// </summary>
-public sealed class RegionDisplayOptions
+public abstract class RegionDisplayOptions
 {
     /// <summary>
     /// Whether the region should be pinned (stay open).

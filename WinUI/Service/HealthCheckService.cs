@@ -4,6 +4,7 @@ using Timer = System.Timers.Timer;
 
 namespace Moba.WinUI.Service;
 
+using Common.Extension;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Sound;
@@ -12,7 +13,7 @@ using Sound;
 /// Centralized health check service that monitors Azure Speech Service and other dependencies.
 /// Provides periodic health checks and status reporting for UI display.
 /// </summary>
-public partial class HealthCheckService : IDisposable
+internal partial class HealthCheckService : IDisposable
 {
     private readonly SpeechHealthCheck _speechHealthCheck;
     private readonly ILogger<HealthCheckService> _logger;
@@ -58,19 +59,11 @@ public partial class HealthCheckService : IDisposable
     /// </summary>
     public void StartPeriodicChecks()
     {
-        // Perform initial check immediately (even if periodic checks are disabled)
-        // Note: This is a fire-and-forget call - we don't await because:
-        // 1. We don't want to block service initialization
-        // 2. If the check fails, we've already logged it in PerformHealthCheckAsync
-        // 3. Periodic checks (if enabled) will retry soon anyway
-        _ = PerformHealthCheckAsync()
-            .ContinueWith(task => 
-            {
-                if (task.IsFaulted)
-                {
-                    _logger.LogError(task.Exception, "Initial health check failed");
-                }
-            });
+        // Perform initial check immediately (even if periodic checks are disabled).
+        // Fire-and-forget: we don't want to block service initialization.
+        // Periodic checks (if enabled) will retry soon anyway.
+        PerformHealthCheckAsync()
+            .SafeFireAndForget(ex => _logger.LogError(ex, "Initial health check failed"));
 
         var enabled = _configuration.GetValue("HealthCheck:Enabled", true);
         if (!enabled)
@@ -187,7 +180,7 @@ public partial class HealthCheckService : IDisposable
 /// <summary>
 /// Event args for health status changes.
 /// </summary>
-public class HealthStatusChangedEventArgs : EventArgs
+internal class HealthStatusChangedEventArgs : EventArgs
 {
     public string ServiceName { get; set; } = string.Empty;
     public bool IsHealthy { get; set; }

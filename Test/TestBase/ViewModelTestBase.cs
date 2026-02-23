@@ -12,7 +12,7 @@ using Moq;
 /// Base class for ViewModel tests that provides common mock dependencies.
 /// Reduces duplication across test classes by centralizing mock setup.
 /// </summary>
-public abstract class ViewModelTestBase
+internal abstract class ViewModelTestBase
 {
     /// <summary>
     /// Mock for IZ21 interface (Z21 command station)

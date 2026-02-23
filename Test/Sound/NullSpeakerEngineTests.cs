@@ -7,7 +7,7 @@ using Moba.Sound;
 /// Tests for NullSpeakerEngine - the NullObject implementation for platforms without TTS.
 /// </summary>
 [TestFixture]
-public class NullSpeakerEngineTests
+internal class NullSpeakerEngineTests
 {
     private ISpeakerEngine _engine = null!;
 

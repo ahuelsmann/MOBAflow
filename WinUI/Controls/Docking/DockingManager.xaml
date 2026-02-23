@@ -1,10 +1,10 @@
 <UserControl
-    x:Class="Moba.WinUI.Controls.DockingManager"
+    x:Class="Moba.WinUI.Controls.Docking.DockingManager"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:behavior="using:Moba.WinUI.Behavior"
-    xmlns:controls="using:Moba.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:docking="using:Moba.WinUI.Controls.Docking"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
@@ -61,22 +61,39 @@
                 Orientation="Vertical"
                 Visibility="Collapsed" />
 
-            <!--  Left Dock Area (DockPanelGroup)  -->
-            <Grid
-                x:Name="LeftDockArea"
-                Grid.Column="1"
-                Width="{x:Bind LeftPanelWidth, Mode=OneWay}"
-                behavior:DockingDropBehavior.DockPosition="Left"
-                AllowDrop="True"
-                Background="{ThemeResource LayerFillColorDefaultBrush}"
-                DragLeave="OnDockAreaDragLeave"
-                DragOver="OnDockAreaDragOver"
-                Drop="OnDockAreaDrop"
-                Visibility="{x:Bind IsLeftPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                <controls:DockPanelGroup
-                    x:Name="LeftPanelGroup"
-                    DockPosition="Left"
-                    ItemsSource="{x:Bind LeftPanels, Mode=OneWay}" />
+            <!--  Left: Drop-Zone wenn eingeklappt, sonst Dock Area  -->
+            <Grid Grid.Column="1">
+                <Border
+                    Width="16"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Stretch"
+                    behavior:DockingDropBehavior.DockPosition="Left"
+                    AllowDrop="True"
+                    Background="Transparent"
+                    DragLeave="OnDockAreaDragLeave"
+                    DragOver="OnDockAreaDragOver"
+                    Drop="OnDockAreaDrop"
+                    Visibility="{x:Bind IsLeftPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" />
+                <Grid
+                    x:Name="LeftDockArea"
+                    Width="{x:Bind LeftPanelWidth, Mode=OneWay}"
+                    behavior:DockingDropBehavior.DockPosition="Left"
+                    AllowDrop="True"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    DragLeave="OnDockAreaDragLeave"
+                    DragOver="OnDockAreaDragOver"
+                    Drop="OnDockAreaDrop"
+                    Visibility="{x:Bind IsLeftPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <docking:DockPanelGroup
+                        x:Name="LeftPanelGroup"
+                        behavior:DockingDropBehavior.DockPosition="Left"
+                        AllowDrop="True"
+                        DockPosition="Left"
+                        DragLeave="OnDockAreaDragLeave"
+                        DragOver="OnDockAreaDragOver"
+                        Drop="OnDockAreaDrop"
+                        ItemsSource="{x:Bind LeftPanels, Mode=OneWay}" />
+                </Grid>
             </Grid>
 
             <!--  Left Splitter (own column, between Left and Center)  -->
@@ -115,20 +132,15 @@
                     <!--  4: Bottom Dock Area  -->
                 </Grid.RowDefinitions>
 
-                <!--  Top Dock Area  -->
+                <!--  Top: kein Docking (nur Links, Rechts, Unten)  -->
                 <Grid
                     x:Name="TopDockArea"
                     Grid.Row="0"
                     Height="{x:Bind TopPanelHeight, Mode=OneWay}"
                     HorizontalAlignment="Stretch"
-                    behavior:DockingDropBehavior.DockPosition="Top"
-                    AllowDrop="True"
                     Background="{ThemeResource LayerFillColorDefaultBrush}"
-                    DragLeave="OnDockAreaDragLeave"
-                    DragOver="OnDockAreaDragOver"
-                    Drop="OnDockAreaDrop"
                     Visibility="{x:Bind IsTopPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <controls:DockPanelGroup
+                    <docking:DockPanelGroup
                         x:Name="TopPanelGroup"
                         DockPosition="Top"
                         ItemsSource="{x:Bind TopPanels, Mode=OneWay}" />
@@ -183,23 +195,40 @@
                         Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
                 </Grid>
 
-                <!--  Bottom Dock Area  -->
-                <Grid
-                    x:Name="BottomDockArea"
-                    Grid.Row="4"
-                    Height="{x:Bind BottomPanelHeight, Mode=OneWay}"
-                    HorizontalAlignment="Stretch"
-                    behavior:DockingDropBehavior.DockPosition="Bottom"
-                    AllowDrop="True"
-                    Background="{ThemeResource LayerFillColorDefaultBrush}"
-                    DragLeave="OnDockAreaDragLeave"
-                    DragOver="OnDockAreaDragOver"
-                    Drop="OnDockAreaDrop"
-                    Visibility="{x:Bind IsBottomPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <controls:DockPanelGroup
-                        x:Name="BottomPanelGroup"
-                        DockPosition="Bottom"
-                        ItemsSource="{x:Bind BottomPanels, Mode=OneWay}" />
+                <!--  Bottom: Drop-Zone wenn eingeklappt, sonst Dock Area  -->
+                <Grid Grid.Row="4">
+                    <Border
+                        Height="16"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Bottom"
+                        behavior:DockingDropBehavior.DockPosition="Bottom"
+                        AllowDrop="True"
+                        Background="Transparent"
+                        DragLeave="OnDockAreaDragLeave"
+                        DragOver="OnDockAreaDragOver"
+                        Drop="OnDockAreaDrop"
+                        Visibility="{x:Bind IsBottomPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" />
+                    <Grid
+                        x:Name="BottomDockArea"
+                        Height="{x:Bind BottomPanelHeight, Mode=OneWay}"
+                        HorizontalAlignment="Stretch"
+                        behavior:DockingDropBehavior.DockPosition="Bottom"
+                        AllowDrop="True"
+                        Background="{ThemeResource LayerFillColorDefaultBrush}"
+                        DragLeave="OnDockAreaDragLeave"
+                        DragOver="OnDockAreaDragOver"
+                        Drop="OnDockAreaDrop"
+                        Visibility="{x:Bind IsBottomPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <docking:DockPanelGroup
+                            x:Name="BottomPanelGroup"
+                            behavior:DockingDropBehavior.DockPosition="Bottom"
+                            AllowDrop="True"
+                            DockPosition="Bottom"
+                            DragLeave="OnDockAreaDragLeave"
+                            DragOver="OnDockAreaDragOver"
+                            Drop="OnDockAreaDrop"
+                            ItemsSource="{x:Bind BottomPanels, Mode=OneWay}" />
+                    </Grid>
                 </Grid>
             </Grid>
 
@@ -221,22 +250,39 @@
                     Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
             </Grid>
 
-            <!--  Right Dock Area  -->
-            <Grid
-                x:Name="RightDockArea"
-                Grid.Column="5"
-                Width="{x:Bind RightPanelWidth, Mode=OneWay}"
-                behavior:DockingDropBehavior.DockPosition="Right"
-                AllowDrop="True"
-                Background="{ThemeResource LayerFillColorDefaultBrush}"
-                DragLeave="OnDockAreaDragLeave"
-                DragOver="OnDockAreaDragOver"
-                Drop="OnDockAreaDrop"
-                Visibility="{x:Bind IsRightPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                <controls:DockPanelGroup
-                    x:Name="RightPanelGroup"
-                    DockPosition="Right"
-                    ItemsSource="{x:Bind RightPanels, Mode=OneWay}" />
+            <!--  Right: Drop-Zone wenn eingeklappt, sonst Dock Area  -->
+            <Grid Grid.Column="5">
+                <Border
+                    Width="16"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Stretch"
+                    behavior:DockingDropBehavior.DockPosition="Right"
+                    AllowDrop="True"
+                    Background="Transparent"
+                    DragLeave="OnDockAreaDragLeave"
+                    DragOver="OnDockAreaDragOver"
+                    Drop="OnDockAreaDrop"
+                    Visibility="{x:Bind IsRightPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" />
+                <Grid
+                    x:Name="RightDockArea"
+                    Width="{x:Bind RightPanelWidth, Mode=OneWay}"
+                    behavior:DockingDropBehavior.DockPosition="Right"
+                    AllowDrop="True"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    DragLeave="OnDockAreaDragLeave"
+                    DragOver="OnDockAreaDragOver"
+                    Drop="OnDockAreaDrop"
+                    Visibility="{x:Bind IsRightPanelVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <docking:DockPanelGroup
+                        x:Name="RightPanelGroup"
+                        behavior:DockingDropBehavior.DockPosition="Right"
+                        AllowDrop="True"
+                        DockPosition="Right"
+                        DragLeave="OnDockAreaDragLeave"
+                        DragOver="OnDockAreaDragOver"
+                        Drop="OnDockAreaDrop"
+                        ItemsSource="{x:Bind RightPanels, Mode=OneWay}" />
+                </Grid>
             </Grid>
 
             <!--  Right Auto-Hide Bar  -->

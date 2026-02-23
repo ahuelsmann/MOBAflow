@@ -9,7 +9,7 @@ using SharedUI.Shell;
 /// <summary>
 /// Manages application lifecycle events for WinUI.
 /// </summary>
-public sealed class LifecycleHost : ILifecycleHost
+internal sealed class LifecycleHost : ILifecycleHost
 {
     private readonly Application _application;
 

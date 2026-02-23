@@ -39,7 +39,7 @@ using Windows.UI.ViewManagement;
     FeatureToggleKey = "IsTrainControlPageAvailable",
     BadgeLabelKey = "TrainControlPageLabel",
     IsBold = true)]
-public sealed partial class TrainControlPage : INotifyPropertyChanged
+internal sealed partial class TrainControlPage : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
 

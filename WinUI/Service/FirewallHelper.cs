@@ -7,7 +7,7 @@ using System.Diagnostics;
 /// Helper class for managing Windows Firewall rules for WebApp UDP Discovery and HTTP REST-API.
 /// Automatically creates firewall exceptions when WebApp starts.
 /// </summary>
-public static class FirewallHelper
+internal static class FirewallHelper
 {
     private const string RuleNameUdp = "MOBAflow WebApp UDP Discovery";
     private const string RuleNameHttpPrefix = "MOBAflow WebApp REST-API";

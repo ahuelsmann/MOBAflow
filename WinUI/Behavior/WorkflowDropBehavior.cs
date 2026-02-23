@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.WinUI.Behavior;
 
@@ -12,7 +12,7 @@ using Windows.ApplicationModel.DataTransfer;
 /// Behavior that enables drop functionality for Workflow assignment.
 /// Attach to any UIElement (e.g., Border, Grid) to accept Workflow drops.
 /// </summary>
-public sealed class WorkflowDropBehavior : Behavior<UIElement>
+internal sealed class WorkflowDropBehavior : Behavior<UIElement>
 {
     public static readonly DependencyProperty CommandProperty =
         DependencyProperty.Register(

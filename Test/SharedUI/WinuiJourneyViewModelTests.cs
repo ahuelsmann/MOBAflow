@@ -1,10 +1,10 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.SharedUI;
 
 using Moba.Backend.Service;
 
 [TestFixture]
-public class WinuiJourneyViewModelTests
+internal class WinuiJourneyViewModelTests
 {
     [Test]
     public void SessionState_CanBeModified()

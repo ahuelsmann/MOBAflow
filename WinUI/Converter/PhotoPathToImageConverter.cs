@@ -8,7 +8,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 /// Converts a relative photo path ("photos/...") into a BitmapImage that bypasses the image cache.
 /// Ensures updated photos (same filename) are reloaded immediately after upload.
 /// </summary>
-public partial class PhotoPathToImageConverter : IValueConverter
+internal partial class PhotoPathToImageConverter : IValueConverter
 {
     public object? Convert(object value, Type targetType, object parameter, string language)
     {

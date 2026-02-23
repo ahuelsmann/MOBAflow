@@ -1,11 +1,11 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Test.Backend;
 
 using Moba.Backend.Protocol;
 
 [TestFixture]
-public class Z21MessageParserTests
+internal class Z21MessageParserTests
 {
     [Test]
     public void TryParseXBusStatus_ParsesFlags()

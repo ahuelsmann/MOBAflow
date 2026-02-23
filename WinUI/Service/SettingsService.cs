@@ -2,6 +2,7 @@
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
+using Common.Extension;
 
 using Domain;
 
@@ -9,14 +10,14 @@ using Microsoft.Extensions.Logging;
 
 using SharedUI.Interface;
 
-using System.Text.Json;
 using System.Diagnostics;
+using System.Text.Json;
 
 /// <summary>
 /// Service for reading and writing application settings to appsettings.json.
 /// Also handles user preferences (LastSolutionPath, AutoLoadLastSolution).
 /// </summary>
-public class SettingsService : ISettingsService
+internal class SettingsService : ISettingsService
 {
     private readonly AppSettings _settings;
     private readonly string _settingsFilePath;
@@ -66,6 +67,42 @@ public class SettingsService : ISettingsService
     }
 
     /// <summary>
+    /// Copies all property values from a deserialized AppSettings to the DI-registered singleton.
+    /// Single source of truth for property mapping - used by both sync and async load paths.
+    /// </summary>
+    private void ApplyLoadedSettings(AppSettings source)
+    {
+        _settings.Application.LastSolutionPath = source.Application.LastSolutionPath;
+        _settings.Application.AutoLoadLastSolution = source.Application.AutoLoadLastSolution;
+        _settings.Application.AutoStartWebApp = source.Application.AutoStartWebApp;
+        _settings.Application.SelectedSkin = source.Application.SelectedSkin;
+        _settings.Application.IsDarkMode = source.Application.IsDarkMode;
+        _settings.Application.UseSystemTheme = source.Application.UseSystemTheme;
+
+        _settings.Z21.CurrentIpAddress = source.Z21.CurrentIpAddress;
+        _settings.Z21.DefaultPort = source.Z21.DefaultPort;
+
+        _settings.Counter.CountOfFeedbackPoints = source.Counter.CountOfFeedbackPoints;
+        _settings.Counter.TargetLapCount = source.Counter.TargetLapCount;
+        _settings.Counter.UseTimerFilter = source.Counter.UseTimerFilter;
+        _settings.Counter.TimerIntervalSeconds = source.Counter.TimerIntervalSeconds;
+
+        _settings.TrainControl.SelectedPresetIndex = source.TrainControl.SelectedPresetIndex;
+        _settings.TrainControl.SpeedRampStepSize = source.TrainControl.SpeedRampStepSize;
+        _settings.TrainControl.SpeedRampIntervalMs = source.TrainControl.SpeedRampIntervalMs;
+        _settings.TrainControl.SpeedSteps = source.TrainControl.SpeedSteps;
+        _settings.TrainControl.SelectedLocoSeries = source.TrainControl.SelectedLocoSeries;
+        _settings.TrainControl.SelectedVmax = source.TrainControl.SelectedVmax;
+        _settings.TrainControl.SelectedLocomotiveFromProjectId = source.TrainControl.SelectedLocomotiveFromProjectId;
+        if (source.TrainControl.Presets.Count >= 3)
+        {
+            _settings.TrainControl.Presets = source.TrainControl.Presets;
+        }
+
+        _settings.FeatureToggles = source.FeatureToggles;
+    }
+
+    /// <summary>
     /// Loads settings synchronously from appsettings.json (constructor-safe).
     /// </summary>
     private void LoadSettingsSync()
@@ -79,42 +116,7 @@ public class SettingsService : ISettingsService
 
                 if (loadedSettings != null)
                 {
-                    // Copy all loaded values to the DI-registered singleton
-                    _settings.Application.LastSolutionPath = loadedSettings.Application.LastSolutionPath;
-                    _settings.Application.AutoLoadLastSolution = loadedSettings.Application.AutoLoadLastSolution;
-                    _settings.Application.AutoStartWebApp = loadedSettings.Application.AutoStartWebApp;
-
-                    // ✅ FIX: Load SelectedSkin and IsDarkMode
-                    _settings.Application.SelectedSkin = loadedSettings.Application.SelectedSkin;
-                    _settings.Application.IsDarkMode = loadedSettings.Application.IsDarkMode;
-                    _settings.Application.UseSystemTheme = loadedSettings.Application.UseSystemTheme;
-
-                    _settings.Z21.CurrentIpAddress = loadedSettings.Z21.CurrentIpAddress;
-                    _settings.Z21.DefaultPort = loadedSettings.Z21.DefaultPort;
-                    _settings.Counter.CountOfFeedbackPoints = loadedSettings.Counter.CountOfFeedbackPoints;
-                    _settings.Counter.TargetLapCount = loadedSettings.Counter.TargetLapCount;
-                    _settings.Counter.UseTimerFilter = loadedSettings.Counter.UseTimerFilter;
-                    _settings.Counter.TimerIntervalSeconds = loadedSettings.Counter.TimerIntervalSeconds;
-
-                    // TrainControl settings (locomotive presets)
-                    _settings.TrainControl.SelectedPresetIndex = loadedSettings.TrainControl.SelectedPresetIndex;
-                    _settings.TrainControl.SpeedRampStepSize = loadedSettings.TrainControl.SpeedRampStepSize;
-                    _settings.TrainControl.SpeedRampIntervalMs = loadedSettings.TrainControl.SpeedRampIntervalMs;
-                    _settings.TrainControl.SpeedSteps = loadedSettings.TrainControl.SpeedSteps;
-                    _settings.TrainControl.SelectedLocoSeries = loadedSettings.TrainControl.SelectedLocoSeries;
-                    _settings.TrainControl.SelectedVmax = loadedSettings.TrainControl.SelectedVmax;
-                    _settings.TrainControl.SelectedLocomotiveFromProjectId = loadedSettings.TrainControl.SelectedLocomotiveFromProjectId;
-                    if (loadedSettings.TrainControl.Presets.Count >= 3)
-                    {
-                        _settings.TrainControl.Presets = loadedSettings.TrainControl.Presets;
-                    }
-
-                    // FeatureToggles (if present in loaded settings)
-                    if (loadedSettings.FeatureToggles != null)
-                    {
-                        _settings.FeatureToggles = loadedSettings.FeatureToggles;
-                    }
-
+                    ApplyLoadedSettings(loadedSettings);
                     _logger.LogInformation("WinUI settings loaded from {SettingsFilePath}", _settingsFilePath);
                 }
             }
@@ -126,7 +128,6 @@ public class SettingsService : ISettingsService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to load settings synchronously");
-            // Continue with default settings
         }
     }
 
@@ -146,45 +147,9 @@ public class SettingsService : ISettingsService
 
                 if (loadedSettings != null)
                 {
-                    // Copy all loaded values to the DI-registered singleton
-                    _settings.Application.LastSolutionPath = loadedSettings.Application.LastSolutionPath;
-                    _settings.Application.AutoLoadLastSolution = loadedSettings.Application.AutoLoadLastSolution;
-                    _settings.Application.AutoStartWebApp = loadedSettings.Application.AutoStartWebApp;
-
-                    // ✅ FIX: Load SelectedSkin and IsDarkMode
-                    _settings.Application.SelectedSkin = loadedSettings.Application.SelectedSkin;
-                    _settings.Application.IsDarkMode = loadedSettings.Application.IsDarkMode;
-                    _settings.Application.UseSystemTheme = loadedSettings.Application.UseSystemTheme;
-
-                    _settings.Z21.CurrentIpAddress = loadedSettings.Z21.CurrentIpAddress;
-                    _settings.Z21.DefaultPort = loadedSettings.Z21.DefaultPort;
-                    _settings.Counter.CountOfFeedbackPoints = loadedSettings.Counter.CountOfFeedbackPoints;
-                    _settings.Counter.TargetLapCount = loadedSettings.Counter.TargetLapCount;
-                    _settings.Counter.UseTimerFilter = loadedSettings.Counter.UseTimerFilter;
-                    _settings.Counter.TimerIntervalSeconds = loadedSettings.Counter.TimerIntervalSeconds;
-
-                    // TrainControl settings (locomotive presets)
-                    _settings.TrainControl.SelectedPresetIndex = loadedSettings.TrainControl.SelectedPresetIndex;
-                    _settings.TrainControl.SpeedRampStepSize = loadedSettings.TrainControl.SpeedRampStepSize;
-                    _settings.TrainControl.SpeedRampIntervalMs = loadedSettings.TrainControl.SpeedRampIntervalMs;
-                    _settings.TrainControl.SpeedSteps = loadedSettings.TrainControl.SpeedSteps;
-                    _settings.TrainControl.SelectedLocoSeries = loadedSettings.TrainControl.SelectedLocoSeries;
-                    _settings.TrainControl.SelectedVmax = loadedSettings.TrainControl.SelectedVmax;
-                    _settings.TrainControl.SelectedLocomotiveFromProjectId = loadedSettings.TrainControl.SelectedLocomotiveFromProjectId;
-                    if (loadedSettings.TrainControl.Presets.Count >= 3)
-                    {
-                        _settings.TrainControl.Presets = loadedSettings.TrainControl.Presets;
-                    }
-
-                    // FeatureToggles (if present in loaded settings)
-                    if (loadedSettings.FeatureToggles != null)
-                    {
-                        _settings.FeatureToggles = loadedSettings.FeatureToggles;
-                    }
-
+                    ApplyLoadedSettings(loadedSettings);
                     _logger.LogInformation("WinUI settings loaded from {SettingsFilePath}", _settingsFilePath);
                 }
-
             }
             else
             {
@@ -251,7 +216,8 @@ public class SettingsService : ISettingsService
             if (_settings.Application.LastSolutionPath != nonNullValue)
             {
                 _settings.Application.LastSolutionPath = nonNullValue;
-                _ = SaveSettingsAsync(_settings);
+                SaveSettingsAsync(_settings)
+                    .SafeFireAndForget(ex => _logger.LogError(ex, "Failed to save LastSolutionPath"));
             }
         }
     }
@@ -268,7 +234,8 @@ public class SettingsService : ISettingsService
             if (_settings.Application.AutoLoadLastSolution != value)
             {
                 _settings.Application.AutoLoadLastSolution = value;
-                _ = SaveSettingsAsync(_settings);
+                SaveSettingsAsync(_settings)
+                    .SafeFireAndForget(ex => _logger.LogError(ex, "Failed to save AutoLoadLastSolution"));
             }
         }
     }

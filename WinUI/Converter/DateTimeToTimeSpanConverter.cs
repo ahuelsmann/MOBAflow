@@ -8,7 +8,7 @@ using Microsoft.UI.Xaml.Data;
 /// Used for TimePicker binding where only the time component is relevant.
 /// If DateTime is null, returns TimeSpan.Zero.
 /// </summary>
-public partial class DateTimeToTimeSpanConverter : IValueConverter
+internal partial class DateTimeToTimeSpanConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {

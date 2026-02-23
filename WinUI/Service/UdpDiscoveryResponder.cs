@@ -12,7 +12,7 @@ using System.Text;
 /// Listens for UDP Multicast discovery requests from MAUI clients and responds with server IP + Port.
 /// Runs alongside Kestrel to enable automatic server discovery on local network.
 /// </summary>
-public sealed partial class UdpDiscoveryResponder : IDisposable
+internal sealed partial class UdpDiscoveryResponder : IDisposable
 {
     private const int DiscoveryPort = 21106;
     private const string DiscoveryRequest = "MOBAFLOW_DISCOVER";

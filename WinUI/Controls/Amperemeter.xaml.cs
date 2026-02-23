@@ -14,7 +14,7 @@ using Windows.UI;
 /// Default range: 0-3000 mA (typical Z21 main track current).
 /// Supports dynamic theme colors via AccentColor property.
 /// </summary>
-public sealed partial class AmperemeterControl
+internal sealed partial class AmperemeterControl
 {
     /// <summary>
     /// Minimum current value (typically 0 mA).

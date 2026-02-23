@@ -3,7 +3,7 @@ namespace Moba.Test.Unit;
 using Moba.Domain.Enum;
 
 [TestFixture]
-public class JourneyDefaultsTests
+internal class JourneyDefaultsTests
 {
     [Test]
     public void Constructor_Should_Initialize_DefaultValues()
@@ -28,7 +28,7 @@ public class JourneyDefaultsTests
 }
 
 [TestFixture]
-public class StationDefaultsTests
+internal class StationDefaultsTests
 {
     [Test]
     public void Constructor_Should_Initialize_DefaultValues()
@@ -52,7 +52,7 @@ public class StationDefaultsTests
 }
 
 [TestFixture]
-public class WorkflowDefaultsTests
+internal class WorkflowDefaultsTests
 {
     [Test]
     public void Constructor_Should_Initialize_DefaultValues()
@@ -74,7 +74,7 @@ public class WorkflowDefaultsTests
 }
 
 [TestFixture]
-public class TrainDefaultsTests
+internal class TrainDefaultsTests
 {
     [Test]
     public void Constructor_Should_Initialize_DefaultValues()
@@ -97,7 +97,7 @@ public class TrainDefaultsTests
 }
 
 [TestFixture]
-public class ProjectDefaultsTests
+internal class ProjectDefaultsTests
 {
     [Test]
     public void Constructor_Should_Initialize_DefaultValues()

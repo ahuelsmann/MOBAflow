@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 /// Connects to WinUI REST Server's PhotoHub for instant photo updates.
 /// Uses proper Microsoft.AspNetCore.SignalR.Client (not WebSocket).
 /// </summary>
-public class PhotoHubClient : IAsyncDisposable
+internal class PhotoHubClient : IAsyncDisposable
 {
     private HubConnection? _hubConnection;
     private readonly ILogger<PhotoHubClient>? _logger;

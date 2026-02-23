@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.Service;
 
 using Microsoft.Extensions.Logging;
@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 /// Service for storing and managing photo files.
 /// Works in both WebApp (ASP.NET Core) and WinUI (in-process Kestrel) contexts.
 /// </summary>
-public class PhotoStorageService
+public abstract class PhotoStorageService
 {
     private readonly string _storagePath;
     private readonly ILogger<PhotoStorageService> _logger;

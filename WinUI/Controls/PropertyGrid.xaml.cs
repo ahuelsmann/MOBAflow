@@ -14,7 +14,7 @@ using System.Linq;
 /// Zeigt Eigenschaften eines Objekts in einer Name/Value-Liste mit optionaler Kategorisierung
 /// und Beschreibung des selektierten Properties.
 /// </summary>
-public sealed partial class PropertyGrid
+internal sealed partial class PropertyGrid
 {
     #region Dependency Properties
 
@@ -215,7 +215,7 @@ public sealed partial class PropertyGrid
 /// <summary>
 /// Stellt eine Zeile im PropertyGrid dar (Category-Header oder Property-Row).
 /// </summary>
-public sealed class PropertyGridItem
+internal sealed class PropertyGridItem
 {
     /// <summary>
     /// Name der Property oder Kategorie.

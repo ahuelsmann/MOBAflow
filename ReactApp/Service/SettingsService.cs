@@ -9,7 +9,7 @@ using System.Diagnostics;
 /// Blazor-specific settings service for reading and writing application settings.
 /// Uses in-memory storage for Blazor Server (appsettings.json is read-only at runtime).
 /// </summary>
-public class SettingsService : ISettingsService
+internal class SettingsService : ISettingsService
 {
     private readonly AppSettings _settings;
 

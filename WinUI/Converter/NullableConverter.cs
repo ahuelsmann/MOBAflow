@@ -13,7 +13,7 @@ using Microsoft.UI.Xaml.Data;
 /// - Show content when data available: {Binding Data, Converter={StaticResource NullableConverter}}
 /// - Show empty state when no data: {Binding Data, Converter={StaticResource NullableConverter}, ConverterParameter=Invert}
 /// </summary>
-public partial class NullableConverter : IValueConverter
+internal partial class NullableConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {

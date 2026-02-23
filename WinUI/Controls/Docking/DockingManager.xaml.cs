@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.WinUI.Controls;
+namespace Moba.WinUI.Controls.Docking;
 
 using Behavior;
 
@@ -25,7 +25,7 @@ using Windows.ApplicationModel.DataTransfer;
 ///   - Focus Highlighting
 ///   - Drag &amp; Drop overlay with preview
 /// </summary>
-public sealed partial class DockingManager
+internal sealed partial class DockingManager
 {
     private const string DockPanelDataKey = "DockPanel";
     private const string DocumentTabDataKey = "DocumentTab";
@@ -47,16 +47,6 @@ public sealed partial class DockingManager
     /// Raised when a DocumentTab is docked to a side via drag &amp; drop.
     /// </summary>
     public event EventHandler<DocumentTabDockedEventArgs>? TabDockedToSide;
-
-    /// <summary>
-    /// Raised when a DockPanel is closed.
-    /// </summary>
-    public event EventHandler<DockPanelClosedEventArgs>? PanelClosed;
-
-    /// <summary>
-    /// Raised when a DockPanel is undocked back to the document area.
-    /// </summary>
-    public event EventHandler<DockPanelUndockedEventArgs>? PanelUndocked;
 
     // Auto-Hide state
     private readonly Dictionary<DockPosition, List<AutoHideEntry>> _autoHideEntries = new()
@@ -396,25 +386,12 @@ public sealed partial class DockingManager
         RemoveFromGroupOrCollection(BottomPanels, BottomPanelGroup, panel, DockPosition.Bottom);
     }
 
-    /// <summary>
-    /// Finds which dock position a panel is currently docked at.
-    /// </summary>
-    public DockPosition? FindPanelPosition(DockPanel panel)
-    {
-        if (LeftPanelGroup.ContainsPanel(panel)) return DockPosition.Left;
-        if (RightPanelGroup.ContainsPanel(panel)) return DockPosition.Right;
-        if (TopPanelGroup.ContainsPanel(panel)) return DockPosition.Top;
-        if (BottomPanelGroup.ContainsPanel(panel)) return DockPosition.Bottom;
-        return null;
-    }
-
     private DockPanelGroup GetPanelGroup(DockPosition position) => position switch
     {
         DockPosition.Left => LeftPanelGroup,
         DockPosition.Right => RightPanelGroup,
         DockPosition.Top => TopPanelGroup,
-        DockPosition.Bottom => BottomPanelGroup,
-        _ => BottomPanelGroup
+        DockPosition.Bottom => BottomPanelGroup
     };
 
     private ObservableCollection<DockPanel>? GetPanelCollection(DockPosition position) => position switch
@@ -461,12 +438,6 @@ public sealed partial class DockingManager
     private void WireSingleGroup(DockPanelGroup group, DockPosition side)
     {
         group.PanelExpansionChanged += (_, _) => UpdateSideWidth(side, group);
-
-        group.PanelUndockRequested += (_, panel) =>
-        {
-            RemovePanelFromAllGroups(panel);
-            PanelUndocked?.Invoke(this, new DockPanelUndockedEventArgs(panel));
-        };
     }
 
     private void UpdateSideWidth(DockPosition side, DockPanelGroup group)
@@ -1035,29 +1006,21 @@ public sealed partial class DockingManager
 /// <summary>
 /// Represents an auto-hide panel entry in a sidebar.
 /// </summary>
-public sealed record AutoHideEntry(DockPanel Panel, DockPosition Side);
+internal sealed record AutoHideEntry(DockPanel Panel, DockPosition Side);
 
 /// <summary>
 /// EventArgs for a DocumentTab docked to a side.
 /// </summary>
-public sealed class DocumentTabDockedEventArgs(DocumentTab document, DockPosition position) : EventArgs
+internal sealed class DocumentTabDockedEventArgs(DocumentTab document, DockPosition position) : EventArgs
 {
     public DocumentTab Document { get; } = document;
     public DockPosition Position { get; } = position;
 }
 
 /// <summary>
-/// EventArgs for a closed DockPanel.
-/// </summary>
-public sealed class DockPanelClosedEventArgs(DockPanel panel) : EventArgs
-{
-    public DockPanel Panel { get; } = panel;
-}
-
-/// <summary>
 /// EventArgs for a DockPanel undocked back to the document area.
 /// </summary>
-public sealed class DockPanelUndockedEventArgs(DockPanel panel) : EventArgs
+internal sealed class DockPanelUndockedEventArgs(DockPanel panel) : EventArgs
 {
     public DockPanel Panel { get; } = panel;
 }

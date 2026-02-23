@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moba.Sound;
 
-public class CognitiveSpeechEngineTest
+internal class CognitiveSpeechEngineTest
 {
     private ISpeakerEngine _speakerEngine = null!;
 

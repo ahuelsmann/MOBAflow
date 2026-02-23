@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-namespace Moba.WinUI.Controls;
+namespace Moba.WinUI.Controls.Docking;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -14,7 +14,7 @@ using System.Linq;
 /// <summary>
 /// Legt fest, wie mehrere Panels in einer Dock-Gruppe dargestellt werden.
 /// </summary>
-public enum DockGroupLayoutMode
+internal enum DockGroupLayoutMode
 {
     /// <summary>Panels gleichmäßig aufteilen (Split).</summary>
     Split,
@@ -27,19 +27,13 @@ public enum DockGroupLayoutMode
 /// Gruppiert mehrere DockPanels für eine Dock-Position.
 /// Ein Panel: direkte Anzeige. Mehrere: je nach LayoutMode gleichmäßig geteilt (Split) oder als Tabs (Tabbed).
 /// </summary>
-public sealed class DockPanelGroup : UserControl
+internal sealed class DockPanelGroup : UserControl
 {
     private readonly List<DockPanel> _panels = [];
     private readonly Grid _singlePanelView;
-    private readonly ContentPresenter _singlePanelPresenter;
     private readonly TabView _panelTabView;
     private readonly Grid _splitView;
     private readonly TextBlock _emptyState;
-
-    /// <summary>
-    /// Raised when a panel requests undocking back to document area.
-    /// </summary>
-    public event EventHandler<DockPanel>? PanelUndockRequested;
 
     /// <summary>
     /// Raised when any panel expansion state changes.
@@ -69,19 +63,12 @@ public sealed class DockPanelGroup : UserControl
 
     public DockPanelGroup()
     {
-        _singlePanelPresenter = new ContentPresenter
-        {
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Stretch
-        };
-
         _singlePanelView = new Grid
         {
             Visibility = Visibility.Collapsed,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch
         };
-        _singlePanelView.Children.Add(_singlePanelPresenter);
 
         _panelTabView = new TabView
         {
@@ -301,8 +288,8 @@ public sealed class DockPanelGroup : UserControl
         }
 
         _panels.Clear();
-        _panelTabView.TabItems.Clear();
-        _singlePanelPresenter.Content = null;
+        ClearTabItems();
+        _singlePanelView.Children.Clear();
 
         if (panels is not null)
         {
@@ -324,29 +311,25 @@ public sealed class DockPanelGroup : UserControl
         _panelTabView.Visibility = Visibility.Collapsed;
         _splitView.Visibility = Visibility.Collapsed;
 
+        // Ensure panels are detached from any previous host before reparenting.
+        _singlePanelView.Children.Clear();
+        ClearTabItems();
+        _splitView.Children.Clear();
+        _splitView.RowDefinitions.Clear();
+        _splitView.ColumnDefinitions.Clear();
+
         switch (_panels.Count)
         {
             case 0:
                 _emptyState.Visibility = Visibility.Visible;
-                _singlePanelPresenter.Content = null;
-                _panelTabView.TabItems.Clear();
-                _splitView.Children.Clear();
-                _splitView.RowDefinitions.Clear();
-                _splitView.ColumnDefinitions.Clear();
                 break;
 
             case 1:
                 _singlePanelView.Visibility = Visibility.Visible;
-                _singlePanelPresenter.Content = _panels[0];
-                _panelTabView.TabItems.Clear();
-                _splitView.Children.Clear();
-                _splitView.RowDefinitions.Clear();
-                _splitView.ColumnDefinitions.Clear();
+                _singlePanelView.Children.Add(_panels[0]);
                 break;
 
             default:
-                _singlePanelPresenter.Content = null;
-
                 if (LayoutMode == DockGroupLayoutMode.Split)
                 {
                     _splitView.Visibility = Visibility.Visible;
@@ -404,7 +387,7 @@ public sealed class DockPanelGroup : UserControl
 
     private void RebuildTabs()
     {
-        _panelTabView.TabItems.Clear();
+        ClearTabItems();
 
         foreach (var panel in _panels)
         {
@@ -452,22 +435,12 @@ public sealed class DockPanelGroup : UserControl
 
     private void WirePanelEvents(DockPanel panel)
     {
-        panel.UndockRequested += OnPanelUndockRequested;
         panel.IsExpandedChanged += OnPanelIsExpandedChanged;
     }
 
     private void UnwirePanelEvents(DockPanel panel)
     {
-        panel.UndockRequested -= OnPanelUndockRequested;
         panel.IsExpandedChanged -= OnPanelIsExpandedChanged;
-    }
-
-    private void OnPanelUndockRequested(object? sender, EventArgs e)
-    {
-        if (sender is DockPanel panel)
-        {
-            PanelUndockRequested?.Invoke(this, panel);
-        }
     }
 
     private void OnPanelIsExpandedChanged(object? sender, EventArgs e)
@@ -504,5 +477,15 @@ public sealed class DockPanelGroup : UserControl
         {
             group.UpdateView();
         }
+    }
+
+    private void ClearTabItems()
+    {
+        foreach (var item in _panelTabView.TabItems.OfType<TabViewItem>())
+        {
+            item.Content = null;
+        }
+
+        _panelTabView.TabItems.Clear();
     }
 }

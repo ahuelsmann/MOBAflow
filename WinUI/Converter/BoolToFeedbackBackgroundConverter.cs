@@ -12,7 +12,7 @@ using Windows.UI;
 /// True → Accent color with opacity (feedback), False → Transparent.
 /// Uses theme-aware AccentFillColorDefaultBrush for Fluent Design 2 consistency.
 /// </summary>
-public partial class BoolToFeedbackBackgroundConverter : IValueConverter
+internal partial class BoolToFeedbackBackgroundConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, string language)
     {

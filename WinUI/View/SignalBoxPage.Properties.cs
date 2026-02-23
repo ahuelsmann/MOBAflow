@@ -14,7 +14,7 @@ using System.Diagnostics;
 /// <summary>
 /// Partial class containing properties panel logic and event handlers.
 /// </summary>
-public sealed partial class SignalBoxPage
+sealed partial class SignalBoxPage
 {
     #region Properties Panel
 

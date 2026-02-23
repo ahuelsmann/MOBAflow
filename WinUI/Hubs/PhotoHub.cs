@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.SignalR;
 /// SignalR Hub for real-time photo upload notifications.
 /// Notifies all connected clients (e.g., TrainsPage) when a photo is uploaded via MAUI.
 /// </summary>
-public partial class PhotoHub : Hub
+internal abstract partial class PhotoHub : Hub
 {
     /// <summary>
     /// Called when a new photo is uploaded.

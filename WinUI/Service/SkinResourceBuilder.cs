@@ -10,7 +10,7 @@ using Windows.UI;
 /// Programmatic skin resource builder for WinUI 3.
 /// Avoids XAML parsing issues by building ResourceDictionaries in C#.
 /// </summary>
-public static class SkinResourceBuilder
+internal static class SkinResourceBuilder
 {
     /// <summary>
     /// Creates the Blue skin ResourceDictionary.
