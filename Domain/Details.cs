@@ -6,7 +6,7 @@ using Enum;
 /// <summary>
 /// Upcoming feature: Additional details about a locomotive or wagon.
 /// </summary>
-public abstract class Details
+public class Details
 {
     public uint Axles { get; set; } = 2; // Number of axles on a wagon
     public Epoch? Epoch { get; set; }
