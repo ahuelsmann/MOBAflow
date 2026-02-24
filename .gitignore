@@ -71,6 +71,8 @@ logs/
 # Temporary files
 *.tmp
 *~
+temp/
+tmp/
 
 # Azure
 PublishProfiles/
