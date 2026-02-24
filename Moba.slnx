@@ -2,6 +2,8 @@
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
     <File Path=".gitattributes" />
+    <File Path=".github/copilot-instructions.md" />
+    <File Path=".github/instructions/todos.instructions.md" />
     <File Path=".gitignore" />
     <File Path=".sln.DotSettings" />
     <File Path="Directory.Build.props" />
@@ -10,12 +12,6 @@
     <File Path="global.json" />
     <File Path="NuGet.Config" />
     <File Path="README.md" />
-  </Folder>
-  <Folder Name="/Solution Items/.github/">
-    <File Path=".github/copilot-instructions.md" />
-  </Folder>
-  <Folder Name="/Solution Items/scripts/">
-    <File Path="scripts/Enable-MAUIWifiDebug.ps1" />
   </Folder>
   <Project Path="Backend/Backend.csproj">
     <Deploy />
