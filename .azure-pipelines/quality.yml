@@ -1,0 +1,119 @@
+// Azure DevOps Pipeline: PR Validation (Build + Tests + Coverage + Sonar)
+// Nutzt .NET 10, dotnet-coverage und SonarQube/SonarCloud.
+// MAUI bleibt explizit außen vor (nur WinUI, WebApp, Test).
+
+trigger: none
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    exclude:
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/**'
+
+variables:
+  buildPlatform: 'x64'
+  buildConfiguration: 'Release'
+  dotnetVersion: '10.0.x'
+
+  # Sonar-Konfiguration – diese Werte an das tatsächliche Setup anpassen
+  sonarProjectKey: 'mobaflow'
+  sonarProjectName: 'MOBAflow'
+  sonarProjectVersion: '1.0'
+  sonarServiceConnection: 'SonarQubeServiceConnection'
+
+pool:
+  vmImage: 'windows-latest'
+
+stages:
+  - stage: Quality
+    displayName: 'PR Quality Gate: Build, Tests, Coverage, Sonar'
+    jobs:
+      - job: BuildTestAnalyze
+        displayName: 'Build Solution, Run Tests with dotnet-coverage, Run Sonar Analysis'
+        timeoutInMinutes: 60
+
+        steps:
+          - checkout: self
+            fetchDepth: 1
+            clean: true
+
+          - task: UseDotNet@2
+            displayName: 'Install .NET 10 SDK'
+            inputs:
+              packageType: 'sdk'
+              version: '$(dotnetVersion)'
+              includePreviewVersions: true
+
+          - task: SonarQubePrepare@5
+            displayName: 'Prepare SonarQube Analysis'
+            inputs:
+              SonarQube: '$(sonarServiceConnection)'
+              scannerMode: 'MSBuild'
+              projectKey: '$(sonarProjectKey)'
+              projectName: '$(sonarProjectName)'
+              projectVersion: '$(sonarProjectVersion)'
+              extraProperties: |
+                sonar.cs.opencover.reportsPaths=$(Agent.TempDirectory)/coverage.cobertura.xml
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Restore NuGet Packages (no MAUI)'
+            inputs:
+              command: 'restore'
+              projects: |
+                **/WinUI.csproj
+                **/WebApp.csproj
+                **/Test.csproj
+              feedsToUse: 'select'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Build Solution (no MAUI)'
+            inputs:
+              command: 'build'
+              projects: |
+                **/WinUI.csproj
+                **/WebApp.csproj
+              arguments: '--configuration $(buildConfiguration) --no-restore'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Install dotnet-coverage'
+            inputs:
+              command: 'custom'
+              custom: 'tool'
+              arguments: 'install --global dotnet-coverage'
+
+          - script: |
+              dotnet-coverage collect ^
+                "dotnet test **/Test.csproj --configuration $(buildConfiguration) --no-build --logger trx --results-directory $(Agent.TempDirectory)/TestResults" ^
+                -f cobertura ^
+                -o "$(Agent.TempDirectory)/coverage.cobertura.xml"
+            displayName: 'Run Tests with dotnet-coverage (Cobertura)'
+
+          - task: PublishTestResults@2
+            displayName: 'Publish Test Results'
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFormat: 'VSTest'
+              testResultsFiles: '$(Agent.TempDirectory)/TestResults/*.trx'
+              mergeTestResults: true
+              testRunTitle: 'Unit Tests (dotnet-coverage)'
+
+          - task: PublishCodeCoverageResults@2
+            displayName: 'Publish Code Coverage (Cobertura)'
+            condition: succeededOrFailed()
+            inputs:
+              codeCoverageTool: 'Cobertura'
+              summaryFileLocation: '$(Agent.TempDirectory)/coverage.cobertura.xml'
+              reportDirectory: '$(Agent.TempDirectory)/coverage-report'
+
+          - task: SonarQubeAnalyze@5
+            displayName: 'Run SonarQube Analysis'
+
+          - task: SonarQubePublish@5
+            displayName: 'Publish SonarQube Quality Gate Result'
+            inputs:
+              pollingTimeoutSec: '300'
+
