@@ -1,6 +1,6 @@
-// Azure DevOps Pipeline: PR Validation (Build + Tests + Coverage + Sonar)
-// Nutzt .NET 10, dotnet-coverage und SonarQube/SonarCloud.
-// MAUI bleibt explizit außen vor (nur WinUI, WebApp, Test).
+# Azure DevOps Pipeline: PR Validation (Build + Tests + Coverage + Sonar)
+# Nutzt .NET 10, dotnet-coverage und SonarQube/SonarCloud.
+# MAUI bleibt explizit außen vor (nur WinUI, WebApp, Test).
 
 trigger: none
 
