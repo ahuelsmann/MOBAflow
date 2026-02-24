@@ -1,1 +1,20 @@
-{"$schema":"https://aka.ms/vs/mcp/schema","servers":{"azure-devops":{"command":"npx","args":["-y","@azure-devops/mcp@latest"],"type":"stdio","env":{"AZURE_DEVOPS_ORG_URL":"https://dev.azure.com/ahuelsmann"}},"documents":{"command":"npx","args":["-y","@modelcontextprotocol/server-documents@latest"],"type":"stdio"},"filesystem":{"command":"npx","args":["-y","@modelcontextprotocol/server-filesystem@latest","."],"type":"stdio","env":{"MCP_FILESYSTEM_ROOT":".","MCP_FILESYSTEM_ENABLE_DELETE":"false"}},"markitdown":{"command":"npx","args":["-y","@phdcoder/markitdown-mcp@latest"],"type":"stdio"},"microsoft-learn":{"type":"http","url":"https://learn.microsoft.com/mcp/"},"nuget":{"command":"npx","args":["-y","@modelcontextprotocol/server-nuget@latest"],"type":"stdio"},"openapi":{"command":"npx","args":["-y","@modelcontextprotocol/server-openapi@latest"],"type":"stdio","env":{"OPENAPI_SPEC_URLS":"https://localhost:5001/swagger/v1/swagger.json"}},"ripgrep":{"command":"npx","args":["-y","@modelcontextprotocol/server-ripgrep@latest"],"type":"stdio"}}}
+{
+    "$schema": "https://aka.ms/vs/mcp/schema",
+    "servers": {
+        "azure-devops": {
+            "command": "npx",
+            "args": [ "-y", "@azure-devops/mcp@latest", "ahuelsmann", "-d", "all", "-a", "interactive" ],
+            "type": "stdio",
+            "env": { "AZURE_DEVOPS_ORG_URL": "https://dev.azure.com/ahuelsmann" }
+        },
+        "filesystem": {
+            "command": "npx",
+            "args": [ "-y", "@modelcontextprotocol/server-filesystem@latest", "." ],
+            "type": "stdio",
+            "env": {
+                "MCP_FILESYSTEM_ROOT": ".",
+                "MCP_FILESYSTEM_ENABLE_DELETE": "false"
+            }
+        }
+    }
+}
