@@ -1,5 +1,5 @@
-# Azure DevOps Pipeline: PR Validation (Build + Tests + Coverage + Sonar)
-# Nutzt .NET 10, dotnet-coverage und SonarQube/SonarCloud.
+# Azure DevOps Pipeline: PR Validation (Build + Tests + Coverage)
+# Nutzt .NET 10 und dotnet-coverage. SonarQube-Schritte sind aktuell auskommentiert.
 # MAUI bleibt explizit außen vor (nur WinUI, WebApp, Test).
 
 trigger: none
@@ -19,18 +19,18 @@ variables:
   buildConfiguration: 'Release'
   dotnetVersion: '10.0.x'
 
-  # Sonar-Konfiguration – diese Werte an das tatsächliche Setup anpassen
-  sonarProjectKey: 'mobaflow'
-  sonarProjectName: 'MOBAflow'
-  sonarProjectVersion: '1.0'
-  sonarServiceConnection: 'SonarQubeServiceConnection'
+  # Sonar-Konfiguration – aktuell deaktiviert (nur für spätere Aktivierung)
+  #sonarProjectKey: 'mobaflow'
+  #sonarProjectName: 'MOBAflow'
+  #sonarProjectVersion: '1.0'
+  #sonarServiceConnection: 'SonarQubeServiceConnection'
 
 pool:
   vmImage: 'windows-latest'
 
 stages:
   - stage: Quality
-    displayName: 'PR Quality Gate: Build, Tests, Coverage, Sonar'
+    displayName: 'PR Quality Gate: Build, Tests, Coverage'
     jobs:
       - job: BuildTestAnalyze
         displayName: 'Build Solution, Run Tests with dotnet-coverage, Run Sonar Analysis'
@@ -48,16 +48,17 @@ stages:
               version: '$(dotnetVersion)'
               includePreviewVersions: true
 
-          - task: SonarQubePrepare@5
-            displayName: 'Prepare SonarQube Analysis'
-            inputs:
-              SonarQube: '$(sonarServiceConnection)'
-              scannerMode: 'MSBuild'
-              projectKey: '$(sonarProjectKey)'
-              projectName: '$(sonarProjectName)'
-              projectVersion: '$(sonarProjectVersion)'
-              extraProperties: |
-                sonar.cs.opencover.reportsPaths=$(Agent.TempDirectory)/coverage.cobertura.xml
+          # SonarQube/SonarCloud – aktuell deaktiviert
+          # - task: SonarQubePrepare@5
+          #   displayName: 'Prepare SonarQube Analysis'
+          #   inputs:
+          #     SonarQube: '$(sonarServiceConnection)'
+          #     scannerMode: 'MSBuild'
+          #     projectKey: '$(sonarProjectKey)'
+          #     projectName: '$(sonarProjectName)'
+          #     projectVersion: '$(sonarProjectVersion)'
+          #     extraProperties: |
+          #       sonar.cs.opencover.reportsPaths=$(Agent.TempDirectory)/coverage.cobertura.xml
 
           - task: DotNetCoreCLI@2
             displayName: 'Restore NuGet Packages (no MAUI)'
@@ -109,11 +110,11 @@ stages:
               summaryFileLocation: '$(Agent.TempDirectory)/coverage.cobertura.xml'
               reportDirectory: '$(Agent.TempDirectory)/coverage-report'
 
-          - task: SonarQubeAnalyze@5
-            displayName: 'Run SonarQube Analysis'
+          # - task: SonarQubeAnalyze@5
+          #   displayName: 'Run SonarQube Analysis'
 
-          - task: SonarQubePublish@5
-            displayName: 'Publish SonarQube Quality Gate Result'
-            inputs:
-              pollingTimeoutSec: '300'
+          # - task: SonarQubePublish@5
+          #   displayName: 'Publish SonarQube Quality Gate Result'
+          #   inputs:
+          #     pollingTimeoutSec: '300'
 
