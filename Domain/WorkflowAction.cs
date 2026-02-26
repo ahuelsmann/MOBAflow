@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
 using Enum;
@@ -35,14 +35,13 @@ public class WorkflowAction
     public int DelayAfterMs { get; set; }
 
     /// <summary>
-    /// Action-specific parameters (polymorphic via Type property).
-    /// For Command: {"Address": 123, "Speed": 80, "Direction": "Forward"}
-    /// For Audio: {"FilePath": "sound.wav"}
-    /// For Announcement: {"Message": "Train departing", "VoiceName": "de-DE-KatjaNeural"}
-    /// </summary>
-    /// <summary>
-    /// Action-specific parameters stored as plain objects after deserialization.
-    /// Converters handle preservation of JSON structure (JToken) and map to object here.
+    /// Action-specific parameters (polymorphic via <see cref="Type"/>).
+    /// Converters preserve the JSON structure during serialization and deserialization.
+    /// 
+    /// Examples:
+    /// - Command: {"Address": 123, "Speed": 80, "Direction": "Forward"}
+    /// - Audio: {"FilePath": "sound.wav"}
+    /// - Announcement: {"Message": "Train departing", "VoiceName": "de-DE-KatjaNeural"}
     /// </summary>
     public Dictionary<string, object>? Parameters { get; set; }
 }

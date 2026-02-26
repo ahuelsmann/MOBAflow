@@ -5,7 +5,18 @@ namespace Moba.TrackLibrary.Base;
 /// </summary>
 public abstract record SwitchTwoWay : Segment
 {
+    /// <summary>
+    /// Connection port A of the switch.
+    /// </summary>
     public Guid? PortA { get; set; }
+
+    /// <summary>
+    /// Connection port B of the switch.
+    /// </summary>
     public Guid? PortB { get; set; }
+
+    /// <summary>
+    /// Connection port C of the switch.
+    /// </summary>
     public Guid? PortC { get; set; }
 }

@@ -37,13 +37,16 @@ stages:
             inputs:
               versionSpec: '20.x'
 
-          - script: |
-              dotnet tool install --global minver-cli --version 5.*
-              $version = dotnet minver
-              echo "Detected version (MinVer): $version"
-              echo "##vso[task.setvariable variable=MobaflowVersion]$version"
+          - task: PowerShell@2
             displayName: 'Determine version via MinVer'
-            pwsh: true
+            inputs:
+              targetType: 'inline'
+              script: |
+                dotnet tool install --global minver-cli --version 5.*
+                $version = dotnet minver
+                Write-Host "Detected version (MinVer): $version"
+                Write-Host "##vso[task.setvariable variable=MobaflowVersion]$version"
+              pwsh: true
 
           - script: |
               cd "$(Build.SourcesDirectory)"
