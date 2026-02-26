@@ -1,90 +1,91 @@
-# MOBAsmart - Benutzerhandbuch
+# MOBAsmart – User Guide
 
 **Version:** 1.0  
-**Plattform:** Android  
-**Letzte Aktualisierung:** 27.12.2025
+**Platform:** Android  
+**Status:** Production  
+**Last Updated:** 2025-12-27
 
 ---
 
-## 📱 Was ist MOBAsmart?
+## 📱 What is MOBAsmart?
 
-**MOBAsmart** ist die mobile Android-App für die Überwachung deiner Modellbahnanlage. Sie verbindet sich direkt per UDP mit deiner **Roco Z21 Digital-Zentrale** und zählt automatisch die Runden deiner Züge basierend auf Rückmelde-Ereignissen.
-
----
-
-## 🚀 Erste Schritte
-
-### 1. Voraussetzungen
-
-- **Android-Gerät** (Android 7.0 oder neuer)
-- **Roco Z21 Digital-Zentrale** im gleichen WLAN-Netzwerk
-- **Rückmeldemodule** (z.B. Roco 10808) an deiner Anlage angeschlossen
-
-### 2. App installieren
-
-1. Lade die App aus dem Google Play Store herunter *(oder installiere die APK manuell)*
-2. Öffne **MOBAsmart**
-3. Erteile Netzwerk-Berechtigungen (falls abgefragt)
-
-### 3. Z21 verbinden
-
-1. Gib die **IP-Adresse** deiner Z21 ein (z.B. `192.168.0.111`)
-   - **Tipp:** Die IP findest du in der Z21-App unter "Einstellungen"
-2. Tippe auf den **Verbindungs-Toggle**
-3. Wenn verbunden, erscheint ein **grüner Punkt** oben rechts
-
-✅ **Erfolgreich verbunden**, wenn du die Z21-System-Daten siehst:
-- 🌡️ **Temperatur** (z.B. 28°C)
-- 🔌 **Versorgungsspannung** (z.B. 16500mV)
-- ⚡ **VCC-Spannung** (z.B. 5000mV)
+**MOBAsmart** is the Android app for monitoring your model railway layout. It connects directly via UDP to your **Roco Z21 digital command station** and automatically counts train laps based on feedback events.
 
 ---
 
-## 🎯 Hauptfunktionen
+## 🚀 Getting Started
 
-### ⚙️ Einstellungen
+### 1. Requirements
 
-#### **Feedback Points (Tracks)**
-- **Was ist das?** Anzahl der Rückmeldemodule an deiner Anlage
-- **Beispiel:** Wenn du 3 Gleiskontakte hast → Setze auf **3**
-- **Wie ändern?** 
-  - Tippe **−** oder **+** neben "Tracks"
-  - Die App erstellt automatisch 3 separate Zähler (Track 1, Track 2, Track 3)
+- **Android device** (Android 7.0 or newer)
+- **Roco Z21 digital command station** in the same WLAN network
+- **Feedback modules** (e.g. Roco 10808) connected to your layout
 
-#### **Target Lap Count**
-- **Was ist das?** Ziel-Rundenzahl für alle Gleise
-- **Beispiel:** Wenn du 10 Runden fahren möchtest → Setze auf **10**
-- **Wie ändern?** 
-  - Tippe **−** oder **+** neben "Target"
-  - Der **Fortschrittsbalken** zeigt den Fortschritt (z.B. 3/10 = 30%)
+### 2. Install the app
 
-#### **Timer Filter**
-- **Was ist das?** Verhindert Doppelzählungen bei langen Zügen
-- **Warum wichtig?** Ein langer Zug kann einen Gleiskontakt mehrere Sekunden lang auslösen
-- **Empfehlung:** 
-  - ✅ **Aktiviert** (Checkbox angehakt)
-  - **Intervall:** 10 Sekunden (Standard)
-  - **Bedeutung:** Innerhalb von 10 Sekunden wird ein Feedback nur 1x gezählt
+1. Download the app from the Google Play Store *(or install the APK manually)*.
+2. Open **MOBAsmart**.
+3. Grant network permissions (if requested).
 
-**Beispiel:**
+### 3. Connect to Z21
+
+1. Enter the **IP address** of your Z21 (e.g. `192.168.0.111`).
+   - **Tip:** You can find it in the Z21 app under **Settings**.
+2. Tap the **connection toggle**.
+3. When connected, a **green dot** appears in the top-right corner.
+
+✅ **Successfully connected** if you see the Z21 system status data:
+- 🌡️ **Temperature** (e.g. `28°C`)
+- 🔌 **Supply voltage** (e.g. `16500mV`)
+- ⚡ **VCC voltage** (e.g. `5000mV`)
+
+---
+
+## 🎯 Main Features
+
+### ⚙️ Settings
+
+#### Feedback points (tracks)
+- **What is this?** Number of feedback modules on your layout.
+- **Example:** If you have 3 track contacts → set it to **3**.
+- **How to change:**
+  - Tap **−** or **+** next to “Tracks”.
+  - The app automatically creates 3 separate counters (Track 1, Track 2, Track 3).
+
+#### Target lap count
+- **What is this?** Target number of laps for all tracks.
+- **Example:** If you want to drive 10 laps → set it to **10**.
+- **How to change:**
+  - Tap **−** or **+** next to “Target”.
+  - The **progress bar** shows the progress (e.g. 3/10 = 30%).
+
+#### Timer filter
+- **What is this?** Prevents double counting for long trains.
+- **Why is it important?** A long train can keep a track contact active for several seconds.
+- **Recommendation:**
+  - ✅ **Enabled** (checkbox checked).
+  - **Interval:** 10 seconds (default).
+  - **Meaning:** Within 10 seconds, a feedback is only counted once.
+
+**Example:**
 ```
-Ohne Timer Filter:
-  Zug fährt über Track 1 → Count: 1
-  (2 Sekunden später, Zug noch auf Track 1) → Count: 2 ❌ (Doppelzählung!)
+Without timer filter:
+  Train passes Track 1 → Count: 1
+  (2 seconds later, train still on Track 1) → Count: 2 ❌ (double count!)
 
-Mit Timer Filter (10s):
-  Zug fährt über Track 1 → Count: 1
-  (2 Sekunden später, Zug noch auf Track 1) → Ignoriert ✅
-  (12 Sekunden später, neuer Durchgang) → Count: 2 ✅
+With timer filter (10s):
+  Train passes Track 1 → Count: 1
+  (2 seconds later, train still on Track 1) → Ignored ✅
+  (12 seconds later, next lap) → Count: 2 ✅
 ```
 
 ---
 
-## 📊 Lap Counter (Rundenzähler)
+## 📊 Lap Counter
 
-### Anzeige verstehen
+### Understanding the display
 
-Jeder Feedback Point hat seinen eigenen Zähler:
+Each feedback point has its own counter:
 
 ```
 ┌─────────────────────────────────────────┐
@@ -94,248 +95,247 @@ Jeder Feedback Point hat seinen eigenen Zähler:
 └─────────────────────────────────────────┘
 ```
 
-**Legende:**
-- **[5]** → Aktuelle Rundenanzahl
-- **Track 1** → Feedback Point Nummer
-- **Lap: 00:12.5** → Letzte Rundenzeit (12,5 Sekunden)
-- **@ 22:15:30** → Zeitpunkt der letzten Erfassung
-- **Lap 5/10** → 5 von 10 Ziel-Runden
-- **━━━━━━━━━━━** → Fortschrittsbalken (50%)
-- **50%** → Prozentuale Angabe
+**Legend:**
+- **[5]** → Current lap count
+- **Track 1** → Feedback point number
+- **Lap: 00:12.5** → Last lap time (12.5 seconds)
+- **@ 22:15:30** → Timestamp of last detection
+- **Lap 5/10** → 5 of 10 target laps
+- **━━━━━━━━━━━** → Progress bar (50%)
+- **50%** → Percentage
 
-### Badge-Farben
+### Badge colours
 
-- **🟦 Blau (Primary):** Noch keine Runde erfasst
-- **🟢 Grün (Accent):** Mindestens 1 Runde erfasst
+- **🟦 Blue (primary):** No lap recorded yet
+- **🟢 Green (accent):** At least one lap recorded
 
-### Zähler zurücksetzen
+### Reset counters
 
-1. Tippe auf **↻ Reset** (oben rechts im Lap Counter Bereich)
-2. Alle Zähler werden auf **0** zurückgesetzt
-3. Fortschrittsbalken werden zurückgesetzt
-
----
-
-## 🔋 Wichtig: App im Vordergrund lassen
-
-### ⚠️ **Warum muss die App geöffnet bleiben?**
-
-**Android schränkt Hintergrund-Aktivitäten ein:**
-- Nach ~10 Minuten im Hintergrund trennt Android die Netzwerk-Verbindung
-- UDP-Pakete von der Z21 werden nicht mehr empfangen
-- **Resultat:** Lap Counts werden **NICHT** aktualisiert
-
-### ✅ **So nutzt du MOBAsmart richtig:**
-
-#### **Option 1: App immer im Vordergrund (EMPFOHLEN)**
-1. Starte **MOBAsmart**
-2. Verbinde mit Z21
-3. **Lasse das Display eingeschaltet** (oder nutze "Display bleibt an"-Funktion)
-4. Lege das Handy neben die Anlage
-
-**Vorteile:**
-- ✅ Zuverlässige Zählung
-- ✅ Echtzeit-Updates
-- ✅ Keine verpassten Runden
-
-**Tipp:** Nutze einen Ständer oder lege das Handy so hin, dass du die Zähler sehen kannst!
-
-#### **Option 2: Display-Timeout erhöhen**
-1. **Android Einstellungen** → **Display**
-2. **Bildschirm-Timeout** → **10 Minuten** (oder länger)
-3. Platziere das Handy so, dass du die App siehst
-
-#### **Option 3: "Display bleibt an" (Entwickleroptionen)**
-1. **Android Einstellungen** → **Entwickleroptionen**
-   - Falls nicht sichtbar: **Über das Telefon** → 7x auf **Build-Nummer** tippen
-2. **Entwickleroptionen** → **Display bleibt an**
-3. ✅ **Aktivieren**
-4. Schließe Ladegerät an (wegen Akku!)
-
-**⚠️ Vorsicht:** Hoher Akkuverbrauch! Nur mit Ladegerät nutzen.
+1. Tap **↻ Reset** (top right of the lap counter area).
+2. All counters are reset to **0**.
+3. All progress bars are reset.
 
 ---
 
-## 🔌 Gleispower (Track Power)
+## 🔋 Important: Keep the app in the foreground
 
-### An/Aus schalten
+### ⚠️ Why must the app stay open?
 
-1. **Track Power Toggle** → Schaltet Gleisspannung der Z21 ein/aus
+**Android restricts background activity:**
+- After ~10 minutes in the background, Android may cut the network connection.
+- UDP packets from the Z21 are no longer received.
+- **Result:** Lap counts will **not** be updated.
+
+### ✅ How to use MOBAsmart correctly
+
+#### Option 1: Keep app in the foreground (recommended)
+1. Start **MOBAsmart**.
+2. Connect to the Z21.
+3. **Keep the display on** (or use the system “keep screen on” option).
+4. Place the phone next to the layout.
+
+**Benefits:**
+- ✅ Reliable lap counting
+- ✅ Real-time updates
+- ✅ No missed events
+
+**Tip:** Use a stand so you can easily see the counters.
+
+#### Option 2: Increase display timeout
+1. **Android Settings → Display**
+2. **Screen timeout** → set to **10 minutes** or more
+3. Place the phone where you can see the app
+
+#### Option 3: “Stay awake” (developer options)
+1. **Android Settings → Developer options**
+   - If not visible: **About phone** → tap **Build number** 7 times
+2. In **Developer options** enable **Stay awake**
+3. Connect a charger (high battery usage)
+
+**⚠️ Warning:** High battery consumption – only use with charger connected.
+
+---
+
+## 🔌 Track Power
+
+### Switch on/off
+
+1. Use the **Track Power toggle** to switch Z21 track power on/off
 2. **Status:**
-   - 🟡 **Gelb (Warning):** Track Power ist **AN** (Züge fahren)
-   - ⚫ **Grau:** Track Power ist **AUS** (Züge stehen)
+   - 🟡 **Yellow (warning):** Track power is **ON** (trains can move)
+   - ⚫ **Grey:** Track power is **OFF** (trains stopped)
 
-### Wann ausschalten?
+### When to switch off
 
-- ✅ **Nach dem Fahrbetrieb** (spart Energie)
-- ✅ **Bei Wartungsarbeiten** (Sicherheit!)
-- ✅ **Bei längeren Pausen**
-
----
-
-## 🛠️ Problemlösung
-
-### Problem: Keine Verbindung zur Z21
-
-**Lösung:**
-1. **Prüfe IP-Adresse:**
-   - Z21-App öffnen → Einstellungen → IP-Adresse notieren
-   - In MOBAsmart eingeben (z.B. `192.168.0.111`)
-2. **Prüfe WLAN:**
-   - Handy **im gleichen Netzwerk** wie Z21?
-   - Router-Einstellungen: "AP Isolation" deaktiviert?
-3. **Z21 neustarten:**
-   - Stromversorgung kurz trennen (10 Sekunden warten)
-
-### Problem: Lap Counter zählen nicht
-
-**Lösung:**
-1. **Feedback Points korrekt eingestellt?**
-   - Anzahl Tracks = Anzahl Rückmeldemodule?
-2. **Z21 empfängt Rückmeldungen?**
-   - Teste mit Z21-App: "Rückmeldungen" anzeigen lassen
-3. **Timer Filter zu kurz?**
-   - Erhöhe Intervall auf **15 Sekunden**
-4. **App im Vordergrund?**
-   - Siehe [App im Vordergrund lassen](#-wichtig-app-im-vordergrund-lassen)
-
-### Problem: Doppelzählungen
-
-**Lösung:**
-1. **Timer Filter aktivieren:**
-   - ✅ Checkbox "Timer in s" anhaken
-2. **Intervall erhöhen:**
-   - Lange Züge? → **15-20 Sekunden**
-   - Kurze Züge? → **5-10 Sekunden**
-3. **Rückmeldemodule prüfen:**
-   - Sind Gleiskontakte zu nah beieinander?
-   - Gleiskontakte richtig angeschlossen?
+- ✅ After running sessions (saves energy)
+- ✅ During maintenance (safety)
+- ✅ During long pauses
 
 ---
 
-## 📸 Foto-Upload zu MOBAflow (Windows)
+## 🛠️ Troubleshooting
 
-MOBAsmart kann Fotos direkt an die MOBAflow Desktop-App senden. Damit dies funktioniert, muessen Handy und PC im **gleichen Netzwerk** sein und die **Windows Firewall** muss korrekt konfiguriert sein.
+### Problem: No connection to Z21
 
-### Netzwerk-Voraussetzungen
+**Solution:**
+1. **Check IP address:**
+   - Open the Z21 app → Settings → note the IP address
+   - Enter the same address in MOBAsmart (e.g. `192.168.0.111`)
+2. **Check WLAN:**
+   - Is the phone in the **same network** as the Z21?
+   - Router settings: “AP isolation” should be disabled
+3. **Restart Z21:**
+   - Briefly disconnect power (wait ~10 seconds) and reconnect
 
-| Anforderung | Details |
-|-------------|---------|
-| **Gleiches Netzwerk** | Handy und Windows-PC muessen im selben WLAN sein |
-| **Kein VPN aktiv** | Firmennetzwerk/VPN verhindert die Verbindung! |
-| **Kein "AP Isolation"** | Im Router muss Geraete-Kommunikation erlaubt sein |
+### Problem: Lap counters do not increase
 
-### Windows Firewall konfigurieren
+**Solution:**
+1. **Feedback points configured correctly?**
+   - `Tracks` = number of feedback modules?
+2. **Does the Z21 receive feedbacks?**
+   - Test with the Z21 app: show “Feedbacks”
+3. **Timer filter interval too short?**
+   - Increase interval to **15 seconds**
+4. **App in foreground?**
+   - See [Important: Keep the app in the foreground](#-important-keep-the-app-in-the-foreground)
 
-MOBAflow benoetigt zwei Firewall-Freigaben:
+### Problem: Double counting
 
-| Dienst | Protokoll | Port | Zweck |
-|--------|-----------|------|-------|
-| REST API | **TCP** | 5001 | Foto-Upload |
-| Discovery | **UDP** | 21106 | Automatische Erkennung |
+**Solution:**
+1. **Enable timer filter:**
+   - ✅ Check the “Timer in s” checkbox
+2. **Increase interval:**
+   - Long trains → **15–20 seconds**
+   - Short trains → **5–10 seconds**
+3. **Check feedback modules:**
+   - Are contacts too close together?
+   - Are contacts wired correctly?
 
-#### Firewall-Regeln erstellen (PowerShell als Administrator):
+---
+
+## 📸 Photo upload to MOBAflow (Windows)
+
+MOBAsmart can send photos directly to the MOBAflow desktop app. To make this work, the phone and PC must be in the **same network** and **Windows Firewall** must be configured correctly.
+
+### Network prerequisites
+
+| Requirement | Details |
+|------------|---------|
+| **Same network** | Phone and Windows PC must be in the same WLAN |
+| **No active VPN** | Corporate/VPN can block the connection |
+| **No “AP isolation”** | Router must allow device-to-device communication |
+
+### Configure Windows Firewall
+
+MOBAflow needs two firewall rules:
+
+| Service | Protocol | Port | Purpose |
+|---------|----------|------|---------|
+| REST API | **TCP** | 5001 | Photo upload |
+| Discovery | **UDP** | 21106 | Automatic discovery |
+
+#### Create firewall rules (PowerShell as Administrator):
 
 ```powershell
-# TCP fuer REST API (Foto-Upload)
+# TCP for REST API (photo upload)
 New-NetFirewallRule -DisplayName "MOBAflow REST API" -Direction Inbound -Protocol TCP -LocalPort 5001 -Action Allow -Profile Private,Public
 
-# UDP fuer Discovery (automatische Erkennung)
+# UDP for discovery (automatic detection)
 New-NetFirewallRule -DisplayName "MOBAflow Discovery" -Direction Inbound -Protocol UDP -LocalPort 21106 -Action Allow -Profile Private,Public
 ```
 
-#### Alternative: Manuell ueber Windows 11 Einstellungen
+#### Alternative: Configure via Windows 11 settings
 
-**Schritt 1: Windows Defender Firewall oeffnen**
-1. Druecke `Win + I` um **Einstellungen** zu oeffnen
-2. Gehe zu **Datenschutz und Sicherheit** → **Windows-Sicherheit**
-3. Klicke auf **Firewall- und Netzwerkschutz**
-4. Scrolle nach unten und klicke auf **Erweiterte Einstellungen**
-   - *(Alternativ: `Win + R`, dann `wf.msc` eingeben)*
+**Step 1: Open Windows Defender Firewall**
+1. Press `Win + I` to open **Settings**
+2. Go to **Privacy & Security → Windows Security**
+3. Click **Firewall & network protection**
+4. Scroll down and click **Advanced settings**
+   - *(Alternatively: `Win + R`, then type `wf.msc`.)*
 
-**Schritt 2: Neue eingehende Regel erstellen (TCP 5001)**
-1. Klicke links auf **Eingehende Regeln**
-2. Klicke rechts auf **Neue Regel...**
-3. Regeltyp: **Port** auswaehlen → **Weiter**
-4. Protokoll: **TCP** auswaehlen
-5. Ports: **Bestimmte lokale Ports** → `5001` eingeben → **Weiter**
-6. Aktion: **Verbindung zulassen** → **Weiter**
-7. Profil: ☑️ **Domäne**, ☑️ **Privat**, ☑️ **Öffentlich** → **Weiter**
-8. Name: `MOBAflow REST API` → **Fertig stellen**
+**Step 2: Create new inbound rule (TCP 5001)**
+1. Click **Inbound Rules** on the left
+2. Click **New Rule…** on the right
+3. Rule type: choose **Port** → **Next**
+4. Protocol: **TCP**
+5. Ports: **Specific local ports** → enter `5001` → **Next**
+6. Action: **Allow the connection** → **Next**
+7. Profile: ☑️ **Domain**, ☑️ **Private**, ☑️ **Public** → **Next**
+8. Name: `MOBAflow REST API` → **Finish**
 
-**Schritt 3: Zweite Regel erstellen (UDP 21106)**
-1. Wiederhole Schritt 2, aber waehle:
-   - Protokoll: **UDP**
+**Step 3: Create second rule (UDP 21106)**
+1. Repeat step 2, but choose:
+   - Protocol: **UDP**
    - Port: `21106`
    - Name: `MOBAflow Discovery`
 
-**Ergebnis pruefen:**
-Nach Abschluss solltest du zwei neue Regeln sehen:
+**Verify result:**
+Afterwards you should see two new rules:
 ```
 ✅ MOBAflow REST API      (TCP 5001)
 ✅ MOBAflow Discovery     (UDP 21106)
 ```
 
-> **💡 Tipp:** Die Regeln werden sofort aktiv - kein Neustart erforderlich!
+> **💡 Tip:** Rules are effective immediately – no reboot required.
 
-### Troubleshooting Foto-Upload
+### Troubleshooting photo upload
 
-#### Discovery funktioniert nicht (Handy findet PC nicht)
+#### Discovery does not work (phone cannot find PC)
 
-**Ursachen:**
-- VPN/Firmennetzwerk aktiv -> **VPN trennen**
-- Router blockiert Multicast -> **AP Isolation deaktivieren**
-- Falsches Netzwerk-Profil -> Firewall-Regel fuer "Private" UND "Public" erstellen
+**Causes:**
+- VPN/corporate network active → **disconnect VPN**
+- Router blocks multicast → **disable AP isolation**
+- Wrong network profile → create firewall rules for both “Private” and “Public”
 
-**Test:** Kann das Handy die IP des PCs anpingen?
+**Test:** Can the phone ping the PC’s IP?
 
-#### Upload-Timeout / Verbindung fehlgeschlagen
+#### Upload timeout / connection failed
 
-**Ursachen:**
-- Firewall-Regel fehlt oder falsch -> **TCP** (nicht UDP!) fuer Port 5001
-- MOBAflow nicht gestartet -> WinUI-App muss laufen
-- Falscher Port -> REST API laeuft auf Port **5001**
+**Causes:**
+- Missing or wrong firewall rule → must allow **TCP** (not UDP) on port 5001
+- MOBAflow not running → WinUI app must be running
+- Wrong port → REST API listens on port **5001**
 
-**Test am PC (PowerShell):**
+**Test on the PC (PowerShell):**
 ```powershell
-# Pruefen ob Port 5001 lauscht
+# Check if port 5001 is listening
 netstat -an | Select-String ":5001"
 
-# Sollte zeigen: TCP 0.0.0.0:5001 LISTENING
+# Should show: TCP 0.0.0.0:5001 LISTENING
 ```
 
-#### Handy und PC in verschiedenen Netzwerken
+#### Phone and PC in different networks
 
-**Symptom:** Discovery findet nichts, manueller Upload schlaegt fehl
+**Symptom:** Discovery fails, manual upload does not work.
 
-**Pruefen:**
-- PC: `ipconfig` -> IPv4-Adresse notieren (z.B. 192.168.1.100)
-- Handy: Einstellungen -> WLAN -> IP-Adresse (z.B. 192.168.1.xxx)
-- **Gleiche Netzwerk-ID?** (192.168.1.x vs 192.168.1.x = OK)
+**Check:**
+- PC: `ipconfig` → note IPv4 address (e.g. 192.168.1.100)
+- Phone: Android Settings → Wi-Fi → IP address (e.g. 192.168.1.xxx)
+- **Same network ID?** (192.168.1.x vs 192.168.1.x = OK)
 
-**Typische Probleme:**
-- PC via Ethernet (192.168.0.x), Handy via WLAN (192.168.1.x) -> **Verschiedene Subnetze!**
-- PC mit VPN verbunden -> VPN hat eigenes Subnetz
-
----
-
-### Problem: App stuerzt ab / friert ein
-
-**Loesung:**
-1. **App neu starten:**
-   - Task-Switcher -> MOBAsmart schliessen -> Neu oeffnen
-2. **Cache leeren:**
-   - Android Einstellungen -> Apps -> MOBAsmart -> Speicher -> Cache leeren
-3. **App neu installieren:**
-   - Deinstallieren -> Neu installieren (Einstellungen bleiben erhalten!)
+**Typical problems:**
+- PC via Ethernet (192.168.0.x), phone via WLAN (192.168.1.x) → **different subnets**
+- PC connected to VPN → VPN has its own subnet
 
 ---
 
-## 💡 Tipps & Tricks
+### Problem: App crashes or freezes
 
-### 🎯 **Optimale Einstellungen für Racing**
+**Solution:**
+1. **Restart the app:**
+   - Open task switcher → close MOBAsmart → open again
+2. **Clear cache:**
+   - Android Settings → Apps → MOBAsmart → Storage → Clear cache
+3. **Reinstall app:**
+   - Uninstall → reinstall (settings are usually kept)
 
-**Szenario:** 3 Züge fahren Rennen, 10 Runden
+---
+
+## 💡 Tips & Tricks
+
+### 🎯 Recommended settings for racing
+
+**Scenario:** 3 trains racing for 10 laps
 
 ```
 ✅ Tracks: 3
@@ -344,14 +344,14 @@ netstat -an | Select-String ":5001"
 ✅ Intervall: 8 Sekunden (schnelle Züge)
 ```
 
-**Warum?** 
-- 3 separate Zähler (ein Zug pro Track)
-- 10 Runden → Fortschritt gut sichtbar (10%, 20%, ...)
-- 8 Sekunden → Verhindert Doppelzählungen bei schnellen Durchgängen
+**Why?**
+- 3 separate counters (one train per track)
+- 10 laps → good progress visibility (10%, 20%, …)
+- 8 seconds → prevents double counting on fast passes
 
-### 🚂 **Optimale Einstellungen für Automatik-Betrieb**
+### 🚂 Recommended settings for automatic running
 
-**Szenario:** 1 Zug fährt automatisch im Kreis
+**Scenario:** 1 train runs automatically in a loop
 
 ```
 ✅ Tracks: 1 (nur ein Gleiskontakt)
@@ -360,42 +360,42 @@ netstat -an | Select-String ":5001"
 ✅ Intervall: 15 Sekunden (langsamer Zug)
 ```
 
-**Warum?**
-- 1 Zähler ausreichend (nur ein Gleiskontakt nötig)
-- 50 Runden → Kann stundenlang laufen
-- 15 Sekunden → Sicher gegen Doppelzählungen
+**Why?**
+- 1 counter is enough (single contact)
+- 50 laps → can run for hours
+- 15 seconds → robust against double counting
 
-### 📱 **Display-Management**
+### 📱 Display management
 
-**Problem:** Akku leert sich zu schnell
+**Problem:** Battery drains too fast
 
-**Lösung:**
-1. Reduziere **Display-Helligkeit** auf 50%
-2. Nutze **Nachtmodus** (Dark Theme automatisch aktiv)
-3. Schließe **Ladegerät** an (bei langen Sessions)
+**Solution:**
+1. Reduce **display brightness** to ~50%
+2. Use **dark mode** (saves energy on OLED)
+3. Connect a **charger** for long sessions
 
 ---
 
-## 📊 Beispiel-Szenario: Rennen mit 3 Zügen
+## 📊 Example scenario: race with 3 trains
 
 ### Setup
-- **3 Rückmeldemodule** (Roco 10808) an der Strecke
-- **3 Züge** (ICE, TGV, Railjet)
-- **Ziel:** Wer erreicht als erstes 10 Runden?
+- **3 feedback modules** (Roco 10808) along the track
+- **3 trains** (ICE, TGV, Railjet)
+- **Goal:** Which train reaches 10 laps first?
 
-### Konfiguration in MOBAsmart
+### Configuration in MOBAsmart
 
-1. **Verbinde mit Z21**
-   - IP-Adresse eingeben → Toggle aktivieren
-2. **Einstellungen:**
+1. **Connect to Z21**
+   - Enter IP → enable toggle
+2. **Settings:**
    - Tracks: **3**
    - Target: **10**
-   - Timer: **Aktiviert**, **10 Sekunden**
-3. **Reset** → Zähler zurücksetzen
-4. **Track Power** → Einschalten
-5. **Züge starten** (über Z21-App oder Handregler)
+   - Timer: **enabled**, **10 seconds**
+3. Press **Reset** → reset counters
+4. Turn **Track Power** on
+5. **Start trains** (via Z21 app or handheld controller)
 
-### Rennen beobachten
+### Watch the race
 
 ```
 [3]  Track 1  (ICE)
@@ -411,69 +411,69 @@ netstat -an | Select-String ":5001"
      Lap 2/10 ━━░░░░░░░░░░░░░░  20%
 ```
 
-**Sieger:** Track 2 (TGV) erreicht als erstes 10/10! 🏆
+**Winner:** Track 2 (TGV) is the first to reach 10/10! 🏆
 
 ---
 
-## 🔒 Datenschutz & Berechtigungen
+## 🔒 Privacy & Permissions
 
-### Erforderliche Berechtigungen
+### Required permissions
 
-| Berechtigung | Grund |
-|--------------|-------|
-| **Internet** | UDP-Kommunikation mit Z21 |
-| **Netzwerkstatus** | WLAN-Verbindung prüfen |
+| Permission | Reason |
+|-----------|--------|
+| **Internet** | UDP communication with Z21 |
+| **Network state** | Check WLAN connection |
 
-### Was wird NICHT gesammelt?
+### What is **not** collected
 
-- ❌ Keine persönlichen Daten
-- ❌ Keine Standortdaten
-- ❌ Keine Nutzungsstatistiken
-- ❌ Keine Cloud-Verbindung
+- ❌ No personal data
+- ❌ No location data
+- ❌ No usage analytics
+- ❌ No cloud connection
 
-**Alle Daten bleiben lokal auf deinem Gerät!**
+**All data stays locally on your device.**
 
 ---
 
 ## 📞 Support & Feedback
 
-### Probleme melden
+### Reporting issues
 
 **GitHub Issues:**  
-https://dev.azure.com/ahuelsmann/MOBAflow/_git/MOBAflow
+`https://dev.azure.com/ahuelsmann/MOBAflow/_git/MOBAflow`
 
-**E-Mail:**  
-andreas.huelsmann@example.com *(bitte durch echte E-Mail ersetzen!)*
+**E-mail:**  
+`andreas.huelsmann@web.de`
 
-### Feature-Wünsche
+### Feature requests
 
-Wir freuen uns über Feedback! 🎉
+We appreciate feedback! 🎉
 
-Teile uns mit:
-- Was fehlt dir in der App?
-- Welche Funktionen würdest du gerne sehen?
-- Was könnte verbessert werden?
+Tell us:
+- What is missing in the app?
+- Which features would you like to see?
+- What could be improved?
 
 ---
 
-## 📜 Lizenz & Credits
+## 📜 License & Credits
 
-**MOBAsmart** ist Teil des **MOBAflow**-Projekts.
+**MOBAsmart** is part of the **MOBAflow** project.
 
-- **Lizenz:** MIT License
-- **Entwickler:** Andreas Huelsmann
-- **Version:** 1.0 (Dezember 2025)
+- **License:** MIT License
+- **Author:** Andreas Huelsmann
+- **Version:** 1.0 (December 2025)
 
-**Drittanbieter-Software:**
-- Roco Z21 Digital-Zentrale (Kommunikationsprotokoll)
+**Third-party software:**
+- Roco Z21 digital command station (communication protocol)
 - .NET MAUI (Microsoft)
 
-Siehe [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md) für Details.
+See [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md) for details.
 
 ---
 
-## 🎯 Fazit
+## 🎯 Summary
 
-**MOBAsmart** macht das Zählen von Runden kinderleicht! 🚂
+**MOBAsmart** makes lap counting effortless. 🚂
 
-**Viel Spaß beim Fahren!** 🎉
+**Enjoy your running sessions!** 🎉

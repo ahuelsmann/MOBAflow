@@ -24,11 +24,11 @@
 ### Software Requirements
 
 | Requirement | Minimum | Recommended |
-|------------|---|---|
-| .NET SDK | 9.0 | 10.0+ |
+|------------|---------|-------------|
+| .NET SDK   | 10.0    | 10.0+       |
 | Visual Studio | 2022 v17.10 | 2026 |
-| Windows | 10 (1809+) | 11 |
-| Git | 2.30+ | Latest |
+| Windows    | 10 (1809+) | 11 |
+| Git        | 2.30+  | Latest |
 
 ### Hardware Requirements
 

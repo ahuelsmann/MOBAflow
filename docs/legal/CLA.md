@@ -113,12 +113,12 @@ By submitting a Contribution, you confirm:
 
 ### For Corporate Contributors
 
-If you are contributing on behalf of your employer, please also provide:
+If you are contributing on behalf of your employer, please also provide (e.g. in the pull request description or a separate agreement):
 
-- Company Name: ____________________
-- Authorized Representative: ____________________
-- Email: ____________________
-- Date: ____________________
+- Company Name
+- Authorized Representative
+- Email
+- Date
 
 ---
 
@@ -126,7 +126,7 @@ If you are contributing on behalf of your employer, please also provide:
 
 For questions about this CLA, please contact:
 
-- **Email**: [Insert contact email]
+- **Email**: andreas.huelsmann@web.de
 - **GitHub Issues**: Open an issue with the label `cla-question`
 
 ---

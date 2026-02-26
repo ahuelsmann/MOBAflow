@@ -14,6 +14,7 @@
   - [Prerequisites](#prerequisites)
   - [Clone & Build](#clone--build)
   - [Run Applications](#run-applications)
+- [🔐 Trust Model & Signatures](#-trust-model--signatures)
 - [🔧 Configuration](#-configuration)
 - [🛤️ Track Plan](#️-track-plan)
 - [🎵 Audio Library](#-audio-library)
@@ -103,6 +104,52 @@ dotnet build MAUI -f net10.0-android
 ```bash
 dotnet test
 ```
+
+---
+
+## 🔐 Trust Model & Signatures
+
+Official MOBAflow releases are identified by **signed Git tags** in this repository.
+
+- Release versions are tagged as `X.Y.Z` (e.g. `0.1.0`).
+- Starting with version `0.1.0`, maintainers sign these tags with their GPG keys so you can verify that a given version really comes from us and was not modified.
+
+### How to use signed versions as a user
+
+Typical workflow for installing a specific version:
+
+1. **Select a version**: Pick a tag from the GitHub *Tags* / *Releases* list (e.g. `0.1.0`).
+2. **Fetch tags & verify**:
+
+   ```bash
+   git fetch origin --tags
+   git tag -v 0.1.0
+   ```
+
+   Only continue if GPG reports a **valid signature** from a maintainer key listed in `docs/legal/MAINTAINERS.md`.
+3. **Check out the tag**:
+
+   ```bash
+   git checkout 0.1.0
+   ```
+
+4. **Build & run** using the commands from the [Quick Start](#-quick-start) section.
+
+### Verifying a Release Tag
+
+```bash
+git fetch origin --tags
+git tag -v v1.2.3
+```
+
+- Only trust tags whose signature matches one of the maintainer keys documented in `docs/legal/MAINTAINERS.md` (e.g. key ID `7DAD81238FEE2F49`).
+- If verification fails, do **not** use that release and contact the maintainers.
+
+### Maintainer Keys
+
+The current list of GPG keys and fingerprints used for signing release tags is maintained in:
+
+- `docs/legal/MAINTAINERS.md`
 
 ---
 
@@ -485,27 +532,38 @@ Speech settings automatically load from Azure – no local config needed! ✅
 
 ### 📖 Core Documentation
 
+**Location:** `docs/`
+
 | Document | Description |
 |----------|-------------|
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture & design patterns |
 | [CHANGELOG.md](docs/CHANGELOG.md) | Version history & release notes |
 | [SECURITY.md](docs/SECURITY.md) | Security policies & vulnerability reporting |
-| [JSON-VALIDATION.md](docs/JSON-VALIDATION.md) | Schema validation documentation |
-| [MINVER-SETUP.md](docs/MINVER-SETUP.md) | MinVer versioning setup |
-| [HARDWARE-DISCLAIMER.md](docs/HARDWARE-DISCLAIMER.md) | Safety & liability information |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community code of conduct for MOBAflow |
+| [JSON-VALIDATION.md](docs/JSON-VALIDATION.md) | Solution JSON validation documentation |
+| [MINVER-SETUP.md](docs/MINVER-SETUP.md) | MinVer-based versioning setup |
+| [HARDWARE-DISCLAIMER.md](docs/HARDWARE-DISCLAIMER.md) | Hardware safety & liability information |
 | [THIRD-PARTY-NOTICES.md](docs/THIRD-PARTY-NOTICES.md) | Third-party licenses & attributions |
-| [CLAUDE.md](docs/CLAUDE.md) | AI assistant instructions |
+| [CURSOR-AZURE-DEVOPS-MCP.md](docs/CURSOR-AZURE-DEVOPS-MCP.md) | Azure DevOps MCP integration for Cursor |
+| [CLAUDE.md](docs/CLAUDE.md) | AI assistant project instructions |
+| [CLA.md](docs/legal/CLA.md) | Contributor License Agreement (CLA) |
 
-### 📚 Wiki (User Guides)
+### 📚 Wiki (User & Feature Guides)
 
 **Location:** `docs/wiki/`
 
 | Guide | Description |
 |-------|-------------|
-| [INDEX.md](docs/wiki/INDEX.md) | Wiki navigation |
-| [MOBAFLOW-USER-GUIDE.md](docs/wiki/MOBAFLOW-USER-GUIDE.md) | WinUI app user manual |
-| [AZURE-SPEECH-SETUP.md](docs/wiki/AZURE-SPEECH-SETUP.md) | Azure Speech configuration |
-| [PLUGIN-DEVELOPMENT.md](docs/wiki/PLUGIN-DEVELOPMENT.md) | Plugin development guide |
+| [INDEX.md](docs/wiki/INDEX.md) | Wiki navigation & platform overview |
+| [INSTALLATION.md](docs/wiki/INSTALLATION.md) | Installation & setup guide (all platforms) |
+| [MOBAFLOW-USER-GUIDE.md](docs/wiki/MOBAFLOW-USER-GUIDE.md) | WinUI desktop app user guide |
+| [MOBASMART-USER-GUIDE.md](docs/wiki/MOBASMART-USER-GUIDE.md) | MOBAsmart Android app user guide |
+| [MOBASMART-WIKI.md](docs/wiki/MOBASMART-WIKI.md) | In-depth MOBAsmart documentation |
+| [MOBADASH-USER-GUIDE.md](docs/wiki/MOBADASH-USER-GUIDE.md) | MOBAdash Blazor web dashboard guide |
+| [AZURE-SPEECH-SETUP.md](docs/wiki/AZURE-SPEECH-SETUP.md) | Azure Speech configuration for announcements |
+| [QUICK-START-TRACK-STATISTICS.md](docs/wiki/QUICK-START-TRACK-STATISTICS.md) | Quick start for track statistics & lap counting |
+| [VIESSMANN-SIGNAL-MAPPING.md](docs/wiki/VIESSMANN-SIGNAL-MAPPING.md) | Viessmann multiplex signal mapping (SignalBox) |
+| [MOBATPS.md](docs/wiki/MOBATPS.md) | MOBAtps track plan system architecture |
 
 ---
 

@@ -1,37 +1,38 @@
-# JSON-Validierung in MOBAflow
+# JSON Validation in MOBAflow
 
-> **Version:** 1.0  
-> **Erstellt:** 2026-02-05  
-> **Status:** ✅ Produktiv
-
----
-
-## Übersicht
-
-MOBAflow verwendet **JSON-Schema-Validierung**, um sicherzustellen, dass nur kompatible Solution-Dateien geladen werden können. Dies verhindert:
-
-❌ Korrupte JSON-Dateien  
-❌ Inkorrekte Datenstrukturen  
-❌ Inkompatible Schema-Versionen  
-❌ Fehlende Pflichtfelder  
+**Version:** 1.0  
+**Scope:** Solution JSON file validation  
+**Status:** Production  
+**Last Updated:** 2026-02-05
 
 ---
 
-## Architektur
+## Overview
 
-### Komponenten
+MOBAflow uses **JSON schema-style validation** to ensure that only compatible solution files can be loaded. This prevents:
 
-| Komponente | Zweck |
-|------------|-------|
-| `Common/Validation/JsonValidationService.cs` | Zentrale Validierungslogik |
-| `Domain/Solution.cs` | Schema-Version (`SchemaVersion` Property) |
-| `WinUI/Service/IoService.cs` | Validierung vor Deserialisierung |
-| `Test/Common/JsonValidationTests.cs` | 16+ Unit-Tests |
+❌ Corrupted JSON files  
+❌ Incorrect data structures  
+❌ Incompatible schema versions  
+❌ Missing required properties  
 
-### Ablauf
+---
+
+## Architecture
+
+### Components
+
+| Component | Purpose |
+|----------|---------|
+| `Common/Validation/JsonValidationService.cs` | Central validation logic |
+| `Domain/Solution.cs` | Schema version (`SchemaVersion` property) |
+| `WinUI/Service/IoService.cs` | Validation before deserialization |
+| `Test/Common/JsonValidationTests.cs` | 16+ unit tests |
+
+### Flow
 
 ```
-User öffnet .json Datei
+User opens .json file
     ↓
 IoService.LoadAsync()
     ↓
@@ -39,29 +40,29 @@ File.ReadAllTextAsync()
     ↓
 JsonValidationService.Validate()
     ↓
-    ├─ Syntax-Check (JsonDocument.Parse)
-    ├─ Struktur-Check (Properties vorhanden?)
-    ├─ Schema-Version-Check
-    └─ Projekt-Struktur-Check
+    ├─ Syntax check (JsonDocument.Parse)
+    ├─ Structure check (required properties present?)
+    ├─ Schema version check
+    └─ Project structure check
     ↓
-✅ Valide → Deserialisierung
+✅ Valid → Deserialization
     ↓
-Solution geladen
+Solution loaded
 
-❌ Invalide → Fehler anzeigen
+❌ Invalid → Show error
     ↓
-Benutzer erhält klare Fehlermeldung
+User gets a clear error message
 ```
 
 ---
 
-## Schema-Version
+## Schema version
 
-### Aktuell
+### Current
 
-**Konstante:** `Solution.CurrentSchemaVersion = 1`
+**Constant:** `Solution.CurrentSchemaVersion = 1`
 
-### JSON-Beispiel
+### JSON example
 
 ```json
 {
@@ -77,41 +78,41 @@ Benutzer erhält klare Fehlermeldung
 }
 ```
 
-### Version-Check
+### Version checks
 
-- **Fehlt `schemaVersion`:** Warnung, aber erlaubt (für Legacy-Dateien)
-- **Falsche Version:** Fehler, Datei wird **nicht** geladen
-- **Zukünftige Versionen:** Auto-Migration oder Upgrade-Hinweis
+- **Missing `schemaVersion`:** Warning, but allowed (for legacy files)
+- **Wrong version:** Error, file will **not** be loaded
+- **Future versions:** Auto-migration or upgrade hint (planned)
 
 ---
 
-## Validierungsregeln
+## Validation rules
 
-### 1. JSON-Syntax
+### 1. JSON syntax
 
 ```csharp
 JsonDocument.Parse(json)
 ```
 
-**Fehler-Beispiele:**
+**Error examples:**
 ```
 ❌ Invalid JSON format: Unexpected character '{' at position 42.
 ❌ Invalid JSON format: Expected ',' or '}' after property value.
 ```
 
-### 2. Root-Element
+### 2. Root element
 
 ```csharp
 if (root.ValueKind != JsonValueKind.Object)
     return Failure("JSON root must be an object.");
 ```
 
-**Fehler-Beispiel:**
+**Error example:**
 ```
 ❌ JSON root must be an object.
 ```
 
-### 3. Pflichtfelder
+### 3. Required properties
 
 ```csharp
 if (!root.TryGetProperty("name", out _))
@@ -121,25 +122,25 @@ if (!root.TryGetProperty("projects", out var projectsElement))
     return Failure("Missing required property: 'projects'.");
 ```
 
-**Fehler-Beispiele:**
+**Error examples:**
 ```
 ❌ Missing required property: 'name'.
 ❌ Missing required property: 'projects'.
 ```
 
-### 4. Datentypen
+### 4. Data types
 
 ```csharp
 if (projectsElement.ValueKind != JsonValueKind.Array)
     return Failure("Property 'projects' must be an array.");
 ```
 
-**Fehler-Beispiel:**
+**Error example:**
 ```
 ❌ Property 'projects' must be an array.
 ```
 
-### 5. Schema-Version (optional)
+### 5. Schema version (optional)
 
 ```csharp
 if (requiredSchemaVersion.HasValue)
@@ -155,14 +156,14 @@ if (requiredSchemaVersion.HasValue)
 }
 ```
 
-**Fehler-Beispiele:**
+**Error examples:**
 ```
 ❌ Missing schema version. Expected version 1.
 ❌ Schema version must be a number.
 ❌ Incompatible schema version. Expected 1, found 999.
 ```
 
-### 6. Projekt-Struktur
+### 6. Project structure
 
 ```csharp
 foreach (var project in projectsElement.EnumerateArray())
@@ -175,7 +176,7 @@ foreach (var project in projectsElement.EnumerateArray())
 }
 ```
 
-**Fehler-Beispiele:**
+**Error examples:**
 ```
 ❌ Project at index 0 is not an object.
 ❌ Project at index 1 is missing 'name' property.
@@ -193,11 +194,11 @@ public static JsonValidationResult Validate(
     int? requiredSchemaVersion = null)
 ```
 
-**Parameter:**
-- `json` - Raw JSON-String
-- `requiredSchemaVersion` - Erwartete Schema-Version (optional)
+**Parameters:**
+- `json` - Raw JSON string
+- `requiredSchemaVersion` - Expected schema version (optional)
 
-**Rückgabe:**
+**Return type:**
 ```csharp
 public class JsonValidationResult
 {
@@ -206,7 +207,7 @@ public class JsonValidationResult
 }
 ```
 
-**Verwendung:**
+**Usage:**
 
 ```csharp
 var json = await File.ReadAllTextAsync(filePath);
@@ -223,7 +224,7 @@ var solution = JsonSerializer.Deserialize<Solution>(json);
 
 ---
 
-## Fehlerbehandlung
+## Error handling
 
 ### In `IoService`
 
@@ -263,7 +264,7 @@ if (!string.IsNullOrEmpty(error))
 }
 ```
 
-**Benutzer erhält:**
+**User sees:**
 ```
 ❌ Failed to load solution: Invalid solution file: Missing required property: 'projects'
 ```
@@ -272,47 +273,47 @@ if (!string.IsNullOrEmpty(error))
 
 ## Tests
 
-### Test-Datei
+### Test file
 
 `Test/Common/JsonValidationTests.cs`
 
-### Test-Szenarien (16 Tests)
+### Test scenarios (16 tests)
 
-| Test | Szenario |
+| Test | Scenario |
 |------|----------|
-| `Validate_EmptyString_ShouldFail` | Leerer String |
-| `Validate_WhitespaceOnly_ShouldFail` | Nur Whitespace |
-| `Validate_InvalidJson_ShouldFail` | Ungültige JSON-Syntax |
-| `Validate_JsonArray_ShouldFail` | Root ist Array statt Objekt |
-| `Validate_MissingNameProperty_ShouldFail` | Fehlendes `name` |
-| `Validate_MissingProjectsProperty_ShouldFail` | Fehlendes `projects` |
-| `Validate_ProjectsNotArray_ShouldFail` | `projects` ist kein Array |
-| `Validate_ProjectMissingName_ShouldFail` | Projekt ohne `name` |
-| `Validate_ProjectNotObject_ShouldFail` | Projekt ist kein Objekt |
-| `Validate_ValidMinimalJson_ShouldSucceed` | Minimal-JSON (leer) |
-| `Validate_ValidJsonWithProjects_ShouldSucceed` | Valide Solution mit Projekten |
-| `Validate_MissingSchemaVersion_WithRequiredVersion_ShouldFail` | Schema-Version fehlt |
-| `Validate_WrongSchemaVersion_ShouldFail` | Falsche Version |
-| `Validate_InvalidSchemaVersionType_ShouldFail` | Version ist String statt Zahl |
-| `Validate_CorrectSchemaVersion_ShouldSucceed` | Korrekte Version |
-| `Validate_NoSchemaVersionRequired_ShouldSucceed` | Keine Version gefordert |
+| `Validate_EmptyString_ShouldFail` | Empty string |
+| `Validate_WhitespaceOnly_ShouldFail` | Whitespace only |
+| `Validate_InvalidJson_ShouldFail` | Invalid JSON syntax |
+| `Validate_JsonArray_ShouldFail` | Root is array instead of object |
+| `Validate_MissingNameProperty_ShouldFail` | Missing `name` |
+| `Validate_MissingProjectsProperty_ShouldFail` | Missing `projects` |
+| `Validate_ProjectsNotArray_ShouldFail` | `projects` is not an array |
+| `Validate_ProjectMissingName_ShouldFail` | Project without `name` |
+| `Validate_ProjectNotObject_ShouldFail` | Project is not an object |
+| `Validate_ValidMinimalJson_ShouldSucceed` | Minimal JSON (empty) |
+| `Validate_ValidJsonWithProjects_ShouldSucceed` | Valid solution with projects |
+| `Validate_MissingSchemaVersion_WithRequiredVersion_ShouldFail` | Schema version missing |
+| `Validate_WrongSchemaVersion_ShouldFail` | Wrong version |
+| `Validate_InvalidSchemaVersionType_ShouldFail` | Version is string instead of number |
+| `Validate_CorrectSchemaVersion_ShouldSucceed` | Correct version |
+| `Validate_NoSchemaVersionRequired_ShouldSucceed` | No version required |
 
-### Test ausführen
+### Running tests
 
 ```bash
 dotnet test --filter "FullyQualifiedName~JsonValidationTests"
 ```
 
-**Ergebnis:**
+**Result:**
 ```
 Test summary: total: 16; failed: 0; succeeded: 16; skipped: 0
 ```
 
 ---
 
-## Migration (Zukünftig)
+## Migration (future)
 
-### Wenn Schema-Version 2 kommt
+### When schema version 2 is introduced
 
 1. **Update `Solution.CurrentSchemaVersion`:**
    ```csharp
@@ -336,7 +337,7 @@ Test summary: total: 16; failed: 0; succeeded: 16; skipped: 0
    }
    ```
 
-4. **Tests erweitern:**
+4. **Extend tests:**
    ```csharp
    [Test]
    public void MigrateFromV1_ShouldConvertCorrectly() { ... }
@@ -344,41 +345,41 @@ Test summary: total: 16; failed: 0; succeeded: 16; skipped: 0
 
 ---
 
-## Best Practices
+## Best practices
 
 ### ✅ DO
 
-- Immer Schema-Version in neuen Solution-Dateien speichern
-- Klare Fehlermeldungen an Benutzer zurückgeben
-- Validierung **vor** Deserialisierung durchführen
-- Bei breaking changes Version inkrementieren
-- Migration für alte Dateien anbieten
+- Always persist the schema version in new solution files
+- Return clear error messages to the user
+- Validate **before** deserialization
+- Increment the version on breaking changes
+- Offer migration paths for legacy files
 
 ### ❌ DON'T
 
-- Keine generischen `JsonException` werfen
-- Keine silent failures (immer Error zurückgeben)
-- Keine unvalidierten JSON-Strings deserialisieren
-- Schema-Version nicht vergessen zu aktualisieren
+- Do not throw generic `JsonException` without context
+- Do not silently ignore validation failures
+- Do not deserialize unvalidated JSON strings
+- Do not forget to update the schema version constant
 
 ---
 
-## Zusammenfassung
+## Summary
 
-MOBAflow's JSON-Validierung schützt vor:
-- ❌ Korrupten Dateien
-- ❌ Inkompatiblen Versionen
-- ❌ Fehlenden Pflichtfeldern
-- ❌ Falschen Datentypen
+MOBAflow's JSON validation protects against:
+- ❌ Corrupted files
+- ❌ Incompatible versions
+- ❌ Missing required properties
+- ❌ Wrong data types
 
-**Vorteile:**
-- ✅ Bessere Fehlerbehandlung
-- ✅ Klare Benutzermeldungen
-- ✅ Zukunftssichere Migration
-- ✅ 100% Test-Coverage für Validierung
+**Benefits:**
+- ✅ Better error handling
+- ✅ Clear user-facing error messages
+- ✅ Future-proof migration support
+- ✅ High test coverage for validation
 
 ---
 
-**Status:** ✅ Implementiert & getestet (16 Unit-Tests)  
-**Verantwortlich:** `Common/Validation/JsonValidationService.cs`  
+**Status:** Implemented & tested (16 unit tests)  
+**Owner:** `Common/Validation/JsonValidationService.cs`  
 **Tests:** `Test/Common/JsonValidationTests.cs`

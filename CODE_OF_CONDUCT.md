@@ -50,11 +50,16 @@ decisions when appropriate.
 
 ## Scope
 
-This Code of Conduct applies within all community spaces, and also applies when
-an individual is officially representing the community in public spaces.
+This Code of Conduct applies within all MOBAflow community spaces, and also applies when
+an individual is officially representing the project in public spaces.
 Examples of representing our community include using an official e-mail address,
-posting via an official social media account, or acting as an appointed
-representative at an online or offline event.
+posting via an official social media account, participating in project-related chats or forums,
+or acting as an appointed representative at an online or offline event (for example, when
+presenting MOBAflow or demonstrating it on a model railroad layout).
+
+Because MOBAflow interacts with real model railroad hardware, community members are also
+expected not to encourage unsafe wiring, operation, or bypassing of safety mechanisms and
+to respect the safety principles documented in [`HARDWARE-DISCLAIMER.md`](docs/HARDWARE-DISCLAIMER.md).
 
 ## Enforcement
 

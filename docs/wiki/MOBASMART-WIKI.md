@@ -1,109 +1,116 @@
 # MOBAsmart Wiki
 
-**Willkommen im MOBAsmart Wiki!** 🚂
-
-Diese Dokumentation hilft dir, das Beste aus deiner Modellbahn-App herauszuholen.
+**Version:** 1.0  
+**Platform:** Android  
+**Status:** Production  
+**Last Updated:** 2025-12-27
 
 ---
 
-## 📚 Inhaltsverzeichnis
+**Welcome to the MOBAsmart Wiki!** 🚂  
 
-- [Erste Schritte](#-erste-schritte)
-- [Verbindung zur Z21](#-verbindung-zur-z21)
-- [Lap Counter Einstellungen](#-lap-counter-einstellungen)
-- [Lap Counting verstehen](#-lap-counting-verstehen)
+This documentation helps you get the most out of the MOBAsmart Android app.
+
+---
+
+## 📚 Table of Contents
+
+- [Getting Started](#-getting-started)
+- [Connecting to the Z21](#-connecting-to-the-z21)
+- [Lap Counter Settings](#-lap-counter-settings)
+- [Understanding Lap Counting](#-understanding-lap-counting)
 - [Best Practices](#-best-practices)
-- [Problemlösung](#-problemlösung)
+- [Troubleshooting](#-troubleshooting)
 - [FAQ](#-faq)
-- [Technische Details](#-technische-details)
+- [Technical Details](#-technical-details)
 
 ---
 
-## 🚀 Erste Schritte
+## 🚀 Getting Started
 
-### Was du brauchst
+### What you need
 
-| Komponente | Beschreibung | Erforderlich |
-|------------|--------------|--------------|
-| **Android-Gerät** | Smartphone oder Tablet (Android 7.0+) | ✅ Ja |
-| **Roco Z21** | Digital-Zentrale (alle Varianten: Z21, Z21 start, z21) | ✅ Ja |
-| **WLAN** | Z21 und Android-Gerät im gleichen Netzwerk | ✅ Ja |
-| **Rückmeldemodule** | z.B. Roco 10808, 10787 | ✅ Ja |
-| **Gleiskontakte** | z.B. Roco 42614, Märklin 74030 | ✅ Ja |
+| Component | Description | Required |
+|----------|-------------|----------|
+| **Android device** | Smartphone or tablet (Android 7.0+) | ✅ Yes |
+| **Roco Z21** | Digital command station (Z21, Z21 start, z21) | ✅ Yes |
+| **WLAN** | Z21 and Android device in the same network | ✅ Yes |
+| **Feedback modules** | e.g. Roco 10808, 10787 | ✅ Yes |
+| **Track contacts** | e.g. Roco 42614, Märklin 74030 | ✅ Yes |
 
 ### Installation
 
-#### Google Play Store *(geplant)*
-1. Öffne Google Play Store
-2. Suche nach **"MOBAsmart"**
-3. Tippe auf **Installieren**
-4. Öffne die App
+#### Google Play Store *(planned)*
+1. Open Google Play Store.  
+2. Search for **"MOBAsmart"**.  
+3. Tap **Install**.  
+4. Open the app.  
 
-#### Manuelle Installation (APK)
-1. Lade die APK-Datei herunter
-2. **Einstellungen** → **Sicherheit** → **Unbekannte Quellen** aktivieren
-3. APK-Datei antippen und installieren
-4. Öffne **MOBAsmart**
+#### Manual installation (APK)
+1. Download the APK file.  
+2. **Settings → Security → Unknown sources** → enable.  
+3. Tap the APK file to install.  
+4. Open **MOBAsmart**.  
 
-### Erster Start
+### First launch
 
-1. **App öffnen** → Du siehst den Hauptbildschirm
-2. **Berechtigungen erteilen** (Netzwerk) → Tippe auf "Erlauben"
-3. **Fertig!** → Die App ist bereit
-
----
-
-## 🔌 Verbindung zur Z21
-
-### Z21 IP-Adresse finden
-
-#### Methode 1: Z21 App (einfachste)
-1. Öffne die **Z21 App** (Roco)
-2. **Menü** → **Einstellungen** → **Z21-Informationen**
-3. Notiere die **IP-Adresse** (z.B. `192.168.0.111`)
-
-#### Methode 2: Router-Webinterface
-1. Router-Webinterface öffnen (meist `192.168.0.1` oder `192.168.1.1`)
-2. **Netzwerk** → **Verbundene Geräte**
-3. Suche nach **"Z21"** oder **"ROCO"**
-4. Notiere die IP-Adresse
-
-#### Methode 3: Netzwerk-Scanner App
-1. Installiere **"Fing"** oder **"Network Scanner"** (Google Play Store)
-2. Scanne dein Netzwerk
-3. Suche nach Gerät mit Name **"Z21"**
-4. Notiere die IP-Adresse
-
-### Verbindung herstellen
-
-1. **IP-Adresse eingeben:**
-   - Tippe in das Eingabefeld (oben auf dem Bildschirm)
-   - Gib die Z21 IP-Adresse ein (z.B. `192.168.0.111`)
-
-2. **Verbinden:**
-   - Tippe auf den **Connection Switch** (neben "Disconnected")
-   - Warte 2-3 Sekunden
-
-3. **Verbindung prüfen:**
-   - **Grüner Punkt** oben rechts → ✅ Verbunden
-   - **Roter Punkt** oben rechts → ❌ Keine Verbindung
-   - **System Stats** werden angezeigt (Temperatur, Spannung)
-
-### Verbindung trennen
-
-- Tippe erneut auf den **Connection Switch**
-- Warte bis **"Disconnected"** angezeigt wird
+1. **Open the app** → you see the main screen.  
+2. **Grant permissions** (network) → tap “Allow”.  
+3. **Done!** → The app is ready.  
 
 ---
 
-## ⚙️ Lap Counter Einstellungen
+## 🔌 Connecting to the Z21
 
-### Feedback Points (Tracks)
+### Finding the Z21 IP address
 
-#### Was sind Feedback Points?
-**Feedback Points** sind die Rückmeldemodule an deiner Anlage, die erkennen, wenn ein Zug vorbeifährt.
+#### Method 1: Z21 app (easiest)
+1. Open the **Z21 app** (Roco).  
+2. Go to **Menu → Settings → Z21 information**.  
+3. Note the **IP address** (e.g. `192.168.0.111`).  
 
-**Beispiel:**
+#### Method 2: Router web interface
+1. Open your router UI (usually `192.168.0.1` or `192.168.1.1`).  
+2. Go to **Network → Connected devices**.  
+3. Look for **"Z21"** or **"ROCO"**.  
+4. Note the IP address.  
+
+#### Method 3: Network scanner app
+1. Install **"Fing"** or **"Network Scanner"** from Google Play.  
+2. Scan your network.  
+3. Look for a device named **"Z21"**.  
+4. Note the IP address.  
+
+### Establishing the connection
+
+1. **Enter IP address:**
+   - Tap into the input field at the top of the screen.  
+   - Enter the Z21 IP address (e.g. `192.168.0.111`).  
+
+2. **Connect:**
+   - Tap the **connection switch** (next to "Disconnected").  
+   - Wait 2–3 seconds.  
+
+3. **Verify connection:**
+   - **Green dot** in the top right → ✅ connected.  
+   - **Red dot** in the top right → ❌ no connection.  
+   - **System stats** (temperature, voltage) are shown.  
+
+### Disconnecting
+
+- Tap the **connection switch** again.  
+- Wait until **"Disconnected"** is displayed.  
+
+---
+
+## ⚙️ Lap Counter Settings
+
+### Feedback points (tracks)
+
+#### What are feedback points?
+**Feedback points** are the feedback modules on your layout that detect when a train passes.
+
+**Example:**
 ```
 Anlage mit 3 Gleiskontakten:
 ┌─────────────────────────────────────┐
@@ -119,55 +126,55 @@ Anlage mit 3 Gleiskontakten:
 └─────────────────────────────────────┘
 ```
 
-**Einstellung:** `CountOfFeedbackPoints = 3`
+**Setting:** `CountOfFeedbackPoints = 3`
 
-#### Wie einstellen?
+#### How to configure
 
-1. **Zähle deine Rückmeldemodule:**
-   - Wie viele Roco 10808/10787 hast du angeschlossen?
-   - Jedes Modul = 1 Feedback Point
+1. **Count your feedback modules:**
+   - How many Roco 10808/10787 modules are connected?
+   - Each module = 1 feedback point.
 
-2. **In der App einstellen:**
-   - **Tracks:** Tippe **−** oder **+**
-   - Beispiel: 3 Module → Setze auf **3**
+2. **Set in the app:**
+   - **Tracks:** tap **−** or **+**
+   - Example: 3 modules → set to **3**
 
-3. **Ergebnis:**
-   - Die App erstellt 3 separate Zähler:
+3. **Result:**
+   - The app creates 3 separate counters:
      - Track 1
      - Track 2
      - Track 3
 
-**💡 Tipp:** Beginne mit **1 Feedback Point** zum Testen!
+**💡 Tip:** Start with **1 feedback point** for testing.
 
-### Target Lap Count (Ziel-Runden)
+### Target lap count
 
-#### Was ist das?
-**Target Lap Count** ist die Anzahl der Runden, die du erreichen möchtest.
+#### What is it?
+**Target Lap Count** is the number of laps you want to reach.
 
-**Beispiel:**
-- **Racing:** 10 Runden
-- **Dauertest:** 100 Runden
-- **Kurz-Test:** 5 Runden
+**Example:**
+- **Racing:** 10 laps
+- **Endurance test:** 100 laps
+- **Short test:** 5 laps
 
-#### Wie einstellen?
+#### How to configure
 
-1. **Ziel festlegen:**
-   - Wie viele Runden soll der Zug fahren?
+1. **Define the goal:**
+   - How many laps should the train run?
 
-2. **In der App einstellen:**
-   - **Target:** Tippe **−** oder **+**
-   - Beispiel: 10 Runden → Setze auf **10**
+2. **Set in the app:**
+   - **Target:** tap **−** or **+**
+   - Example: 10 laps → set to **10**
 
-3. **Ergebnis:**
-   - **Fortschrittsbalken** zeigt den Fortschritt
-   - Beispiel: 3 von 10 Runden = 30% ━━━━░░░░░░
+3. **Result:**
+   - The **progress bar** shows the progress
+   - Example: 3 of 10 laps = 30% (`━━━━░░░░░░`)
 
-### Timer Filter (Anti-Doppelzählung)
+### Timer filter (anti double-counting)
 
-#### Was ist das?
-**Timer Filter** verhindert, dass ein langer Zug mehrfach gezählt wird, wenn er langsam über einen Gleiskontakt fährt.
+#### What is it?
+The **timer filter** prevents a long train from being counted multiple times when it slowly passes a track contact.
 
-**Problem ohne Timer Filter:**
+**Problem without timer filter:**
 ```
 Zug fährt über Gleiskontakt:
   Sekunde 0: Lok aktiviert Kontakt     → Count: 1
@@ -175,10 +182,10 @@ Zug fährt über Gleiskontakt:
   Sekunde 4: Wagen 6 noch auf Kontakt  → Count: 3 ❌
   Sekunde 6: Letzter Wagen verlässt    → Count: 4 ❌
 
-Ergebnis: 4 Counts, aber nur 1 Durchgang!
+Result: 4 counts, but only 1 pass!
 ```
 
-**Lösung mit Timer Filter (10s):**
+**Solution with timer filter (10s):**
 ```
 Zug fährt über Gleiskontakt:
   Sekunde 0: Lok aktiviert Kontakt     → Count: 1 ✅
@@ -189,35 +196,35 @@ Zug fährt über Gleiskontakt:
 Nächster Durchgang (12 Sekunden später):
   Sekunde 12: Filter abgelaufen        → Count: 2 ✅
 
-Ergebnis: 2 Counts, 2 Durchgänge = Korrekt!
+Result: 2 counts, 2 passes = correct!
 ```
 
-#### Wie einstellen?
+#### How to configure
 
-**1. Timer aktivieren/deaktivieren:**
-- ✅ **Checkbox** anhaken → Timer aktiv
-- ⬜ **Checkbox** leer → Timer inaktiv
+**1. Enable/disable timer:**
+- ✅ Checkbox checked → timer active
+- ⬜ Checkbox empty → timer inactive
 
-**2. Intervall einstellen:**
-- **Tippe −/+** neben dem Timer-Wert
-- **Werte:** 1.0s bis 60.0s (Schritte: 1.0s)
+**2. Set interval:**
+- Tap **− / +** next to the timer value
+- **Values:** 1.0s to 60.0s (steps: 1.0s)
 
-**3. Empfohlene Werte:**
+**3. Recommended values:**
 
-| Szenario | Empfehlung | Grund |
-|----------|------------|-------|
-| **Kurze Züge** (2-3 Wagen) | 5-8 Sekunden | Schnelle Durchgänge |
-| **Mittlere Züge** (4-6 Wagen) | 10-15 Sekunden | Standard-Länge |
-| **Lange Züge** (>6 Wagen) | 15-20 Sekunden | Lange Kontaktzeit |
-| **Sehr langsame Fahrt** | 20-30 Sekunden | Viel Zeit über Kontakt |
+| Scenario | Recommendation | Reason |
+|----------|----------------|--------|
+| **Short trains** (2–3 cars) | 5–8 seconds | Fast passes |
+| **Medium trains** (4–6 cars) | 10–15 seconds | Standard length |
+| **Long trains** (>6 cars) | 15–20 seconds | Long contact time |
+| **Very slow speed** | 20–30 seconds | Long time over contact |
 
-**💡 Tipp:** Teste mit **10 Sekunden** (Standard) und passe bei Bedarf an!
+**💡 Tip:** Start with **10 seconds** (default) and adjust as needed.
 
 ---
 
-## 📊 Lap Counting verstehen
+## 📊 Understanding Lap Counting
 
-### Zähler-Anzeige erklärt
+### Counter display explained
 
 ```
 ┌──────────────────────────────────────────────┐
@@ -227,28 +234,28 @@ Ergebnis: 2 Counts, 2 Durchgänge = Korrekt!
 └──────────────────────────────────────────────┘
 ```
 
-**Bedeutung der Elemente:**
+**Meaning of each element:**
 
-| Element | Bedeutung | Beispiel |
-|---------|-----------|----------|
-| **[5]** | Aktuelle Rundenanzahl | 5 Runden gefahren |
-| **Track 1** | Feedback Point Nummer | Gleiskontakt Nr. 1 |
-| **Lap: 00:12.5** | Letzte Rundenzeit | 12,5 Sekunden für letzte Runde |
-| **@ 22:15:30** | Zeitpunkt der Erfassung | Heute um 22:15:30 Uhr |
-| **Lap 5/10** | Fortschritt | 5 von 10 Ziel-Runden |
-| **━━━━━━━━━━** | Fortschrittsbalken | 50% erreicht |
-| **50%** | Prozentangabe | Halbe Strecke geschafft |
+| Element | Meaning | Example |
+|---------|---------|---------|
+| **[5]** | Current lap count | 5 laps completed |
+| **Track 1** | Feedback point number | Track contact no. 1 |
+| **Lap: 00:12.5** | Last lap time | 12.5 seconds |
+| **@ 22:15:30** | Timestamp | Today at 22:15:30 |
+| **Lap 5/10** | Progress | 5 of 10 target laps |
+| **━━━━━━━━━━** | Progress bar | 50% reached |
+| **50%** | Percentage | Half the target |
 
-### Badge-Farben
+### Badge colours
 
-| Farbe | Bedeutung | Wann? |
-|-------|-----------|-------|
-| 🟦 **Blau (Primary)** | Noch nicht aktiv | Keine Runde erfasst |
-| 🟢 **Grün (Accent)** | Aktiv | Mindestens 1 Runde erfasst |
+| Colour | Meaning | When? |
+|--------|---------|-------|
+| 🟦 **Blue (primary)** | Not active yet | No lap recorded |
+| 🟢 **Green (accent)** | Active | At least 1 lap recorded |
 
-### Rundenzeit-Berechnung
+### Lap time calculation
 
-**Wie wird die Rundenzeit berechnet?**
+**How is lap time calculated?**
 
 ```
 Zeit zwischen zwei aufeinanderfolgenden Feedbacks:
@@ -259,20 +266,20 @@ Durchgang 3: 22:15:55 → Lap Time: 13 Sekunden
 Durchgang 4: 22:16:07 → Lap Time: 12 Sekunden
 ```
 
-**💡 Hinweis:** 
-- Die **erste Runde** hat keine Zeit (Startpunkt unbekannt)
-- Ab der **zweiten Runde** wird die Zeit gemessen
-- Die Zeit zeigt **nur die letzte Runde** (nicht Durchschnitt)
+**💡 Note:** 
+- The **first lap** has no time (start point unknown).
+- From the **second lap** onwards, time is measured.
+- The app always shows the **last lap time**, not the average.
 
 ---
 
 ## ✅ Best Practices
 
-### 🏁 Racing Setup (3 Züge, 10 Runden)
+### 🏁 Racing setup (3 trains, 10 laps)
 
-**Szenario:** Du willst ein Rennen mit 3 Zügen fahren.
+**Scenario:** You want to run a race with 3 trains.
 
-#### Hardware-Setup
+#### Hardware setup
 ```
 3 separate Gleiskontakte:
 ┌─────────────────────────────────────┐
@@ -282,7 +289,7 @@ Durchgang 4: 22:16:07 → Lap Time: 12 Sekunden
 └─────────────────────────────────────┘
 ```
 
-#### App-Einstellungen
+#### App settings
 ```yaml
 Tracks: 3
 Target: 10
@@ -291,17 +298,17 @@ Intervall: 8 Sekunden (schnelle Züge)
 ```
 
 #### Workflow
-1. **Reset** → Zähler auf 0
-2. **Track Power ON** → Gleisspannung einschalten
-3. **Züge starten** (via Z21 App oder Handregler)
-4. **Beobachten:** Welcher Zug erreicht zuerst 10/10?
-5. **Sieger:** Zug mit 100% zuerst! 🏆
+1. Press **Reset** → counters to 0  
+2. **Track Power ON** → enable track power  
+3. **Start trains** (via Z21 app or handheld controller)  
+4. **Watch:** which train reaches 10/10 first?  
+5. **Winner:** train with 100% progress first 🏆  
 
-### 🔄 Automatik-Betrieb (1 Zug, Dauerbetrieb)
+### 🔄 Automatic operation (1 train, continuous)
 
-**Szenario:** Ein Zug fährt automatisch im Kreis.
+**Scenario:** One train runs automatically in a loop.
 
-#### Hardware-Setup
+#### Hardware setup
 ```
 1 Gleiskontakt:
 ┌─────────────────────────────────────┐
@@ -312,7 +319,7 @@ Intervall: 8 Sekunden (schnelle Züge)
 └─────────────────────────────────────┘
 ```
 
-#### App-Einstellungen
+#### App settings
 ```yaml
 Tracks: 1
 Target: 50 (lange Session)
@@ -321,16 +328,16 @@ Intervall: 15 Sekunden (langsamer Zug)
 ```
 
 #### Workflow
-1. **Track Power ON**
-2. **Zug auf Geschwindigkeit 40-50%** (langsame, konstante Fahrt)
-3. **App beobachten** (Display an lassen!)
-4. **Nach 50 Runden:** Zug stoppen, Statistik auswerten
+1. **Track Power ON**  
+2. **Set train speed to 40–50%** (slow, constant speed)  
+3. **Watch the app** (keep the display on)  
+4. **After 50 laps:** stop the train and analyse the statistics  
 
-### 📱 Display-Management (lange Sessions)
+### 📱 Display management (long sessions)
 
-**Problem:** Akku leert sich, Display schaltet ab.
+**Problem:** Battery drains and the display turns off.
 
-**Lösung 1: Display-Timeout erhöhen**
+**Solution 1: Increase screen timeout**
 ```
 Android Einstellungen
 → Display
@@ -338,7 +345,7 @@ Android Einstellungen
 → 10 Minuten
 ```
 
-**Lösung 2: Entwickleroptionen (mit Ladegerät!)**
+**Solution 2: Developer options (with charger!)**
 ```
 Android Einstellungen
 → Entwickleroptionen
@@ -347,7 +354,7 @@ Android Einstellungen
 → Ladegerät anschließen!
 ```
 
-**Lösung 3: Power Bank**
+**Solution 3: Power bank**
 ```
 USB-C Power Bank anschließen
 → Display auf 50% Helligkeit
@@ -356,30 +363,30 @@ USB-C Power Bank anschließen
 
 ---
 
-## 🛠️ Problemlösung
+## 🛠️ Troubleshooting
 
-### Problem: Keine Verbindung zur Z21
+### Problem: No connection to Z21
 
-#### Symptom
-- Roter Punkt oben rechts
-- "Disconnected" wird angezeigt
-- Keine System Stats sichtbar
+#### Symptoms
+- Red dot in the top right  
+- “Disconnected” is shown  
+- No system stats visible  
 
-#### Lösungen
+#### Solutions
 
-**1. IP-Adresse prüfen**
+**1. Check IP address**
 ```
 Richtig: 192.168.0.111
 Falsch:  192.168.0.1   (Router, nicht Z21!)
 Falsch:  192.168.1.111 (falsches Subnetz)
 ```
 
-**2. WLAN-Verbindung prüfen**
-- Ist das **Android-Gerät** im gleichen WLAN wie die **Z21**?
-- Router-Einstellung: **"AP Isolation"** deaktiviert?
-  - Manche Router isolieren WLAN-Geräte untereinander!
+**2. Check WLAN connection**
+- Is the **Android device** in the same WLAN as the **Z21**?
+- Router setting: **“AP isolation”** should be disabled  
+  - Some routers isolate WLAN devices from each other.
 
-**3. Z21 neustarten**
+**3. Restart Z21**
 ```
 1. Stromversorgung der Z21 trennen
 2. 10 Sekunden warten
@@ -388,21 +395,21 @@ Falsch:  192.168.1.111 (falsches Subnetz)
 5. In MOBAsmart erneut verbinden
 ```
 
-**4. Firewall prüfen**
-- Nutzt du eine **Firewall-App** auf Android?
-- MOBAsmart muss **UDP Port 21105** nutzen dürfen
+**4. Check firewall**
+- Are you using a **firewall app** on Android?
+- MOBAsmart must be allowed to use **UDP port 21105**.
 
 ---
 
-### Problem: Lap Counter zählen nicht
+### Problem: Lap counters do not increase
 
-#### Symptom
-- Zug fährt über Gleiskontakt
-- Zähler bleibt bei 0 oder erhöht sich nicht
+#### Symptoms
+- Train passes a track contact  
+- Counter stays at 0 or does not increase  
 
-#### Lösungen
+#### Solutions
 
-**1. Feedback Points korrekt eingestellt?**
+**1. Feedback points configured correctly?**
 ```
 Anzahl Rückmeldemodule an deiner Anlage:
 → 3 Module = Tracks: 3 einstellen
@@ -412,7 +419,7 @@ Wenn falsch eingestellt:
 → Feedbacks gehen verloren!
 ```
 
-**2. Z21 empfängt Rückmeldungen?**
+**2. Does the Z21 receive feedbacks?**
 ```
 Test mit Z21 App:
 1. Z21 App öffnen
@@ -421,7 +428,7 @@ Test mit Z21 App:
 4. Leuchtet die LED auf? → Rückmeldung funktioniert
 ```
 
-**3. Verkabelung prüfen**
+**3. Check wiring**
 ```
 Rückmeldemodule (Roco 10808):
 - Korrekt an Z21 angeschlossen? (RBus)
@@ -430,7 +437,7 @@ Rückmeldemodule (Roco 10808):
 - Kontakte sauber? (Oxidation verhindert Kontakt)
 ```
 
-**4. App im Vordergrund?**
+**4. App in foreground?**
 ```
 ⚠️ WICHTIG: App muss sichtbar sein!
 - Display an?
@@ -440,15 +447,15 @@ Rückmeldemodule (Roco 10808):
 
 ---
 
-### Problem: Doppelzählungen
+### Problem: Double counting
 
-#### Symptom
-- Zug fährt einmal vorbei
-- Zähler erhöht sich um 2, 3 oder 4
+#### Symptoms
+- Train passes once  
+- Counter increases by 2, 3 or 4  
 
-#### Lösungen
+#### Solutions
 
-**1. Timer Filter aktivieren**
+**1. Enable timer filter**
 ```
 ✅ Checkbox "Timer in s" anhaken
 → Intervall: 10 Sekunden (Standard)
@@ -456,7 +463,7 @@ Rückmeldemodule (Roco 10808):
 → Nur 1 Count? → Problem gelöst!
 ```
 
-**2. Intervall erhöhen**
+**2. Increase interval**
 ```
 Langer Zug (>6 Wagen):
 → Intervall: 15-20 Sekunden
@@ -465,7 +472,7 @@ Sehr langsame Fahrt:
 → Intervall: 20-30 Sekunden
 ```
 
-**3. Gleiskontakte überprüfen**
+**3. Check track contacts**
 ```
 Sind mehrere Gleiskontakte zu nah beieinander?
 → Zug aktiviert 2 Kontakte gleichzeitig
@@ -474,18 +481,18 @@ Sind mehrere Gleiskontakte zu nah beieinander?
 
 ---
 
-### Problem: App stürzt ab / friert ein
+### Problem: App crashes or freezes
 
-#### Lösungen
+#### Solutions
 
-**1. App neu starten**
+**1. Restart the app**
 ```
 1. Task-Switcher öffnen (Quadrat-Symbol)
 2. MOBAsmart nach oben wischen (schließen)
 3. App-Icon antippen (neu starten)
 ```
 
-**2. Cache leeren**
+**2. Clear cache**
 ```
 Android Einstellungen
 → Apps
@@ -494,7 +501,7 @@ Android Einstellungen
 → Cache leeren
 ```
 
-**3. App-Daten löschen (⚠️ Einstellungen gehen verloren!)**
+**3. Clear app data (⚠️ settings will be lost!)**
 ```
 Android Einstellungen
 → Apps
@@ -504,7 +511,7 @@ Android Einstellungen
 → App neu starten
 ```
 
-**4. App neu installieren**
+**4. Reinstall the app**
 ```
 1. MOBAsmart deinstallieren
 2. Gerät neu starten
@@ -515,88 +522,88 @@ Android Einstellungen
 
 ## ❓ FAQ
 
-### Allgemeine Fragen
+### General questions
 
-#### **Funktioniert MOBAsmart mit allen Z21-Varianten?**
-✅ **Ja!** Alle Varianten werden unterstützt:
-- Z21 (schwarz)
-- Z21 start (weiß)
-- z21 (klein, weiß)
+#### Does MOBAsmart work with all Z21 variants?
+✅ **Yes.** All variants are supported:
+- Z21 (black)
+- Z21 start (white)
+- z21 (small, white)
 
-#### **Brauche ich eine Internetverbindung?**
-❌ **Nein!** MOBAsmart kommuniziert **lokal** per UDP mit der Z21. Keine Cloud, keine Internetverbindung nötig.
+#### Do I need an internet connection?
+❌ **No.** MOBAsmart communicates **locally** via UDP with the Z21. No cloud and no internet connection required.
 
-#### **Kann ich die App offline nutzen?**
-✅ **Ja!** Solange Android-Gerät und Z21 im gleichen WLAN sind, funktioniert alles offline.
+#### Can I use the app offline?
+✅ **Yes.** As long as the Android device and Z21 are in the same WLAN, everything works offline.
 
-#### **Werden meine Daten irgendwo hochgeladen?**
-❌ **Nein!** Alle Daten bleiben **lokal** auf deinem Gerät. Kein Cloud-Sync, keine Telemetrie.
+#### Are my data uploaded anywhere?
+❌ **No.** All data stays **local** on your device. No cloud sync, no telemetry.
 
-#### **Kostet die App etwas?**
-✅ **Kostenlos!** MOBAsmart ist Open Source (MIT License).
+#### Does the app cost anything?
+✅ **Free.** MOBAsmart is open source (MIT license).
 
 ---
 
-### Technische Fragen
+### Technical questions
 
-#### **Welche Android-Version brauche ich?**
+#### Which Android version is required?
 - **Minimum:** Android 7.0 (Nougat)
-- **Empfohlen:** Android 10+ (bessere Netzwerk-Performance)
+- **Recommended:** Android 10+ (better networking performance)
 
-#### **Funktioniert die App im Hintergrund?**
-❌ **Nein.** Android beendet die UDP-Verbindung nach ~10 Minuten im Hintergrund. **Lösung:** App im Vordergrund lassen (siehe [Display-Management](#-display-management-lange-sessions)).
+#### Does the app work in the background?
+❌ **No.** Android typically closes the UDP connection after ~10 minutes in the background. **Solution:** keep the app in the foreground (see [Display management](#-display-management-long-sessions)).
 
-#### **Kann ich mehrere Z21 gleichzeitig überwachen?**
-❌ **Aktuell nicht.** Die App unterstützt nur **1 Z21-Verbindung** gleichzeitig.
+#### Can I monitor multiple Z21 units at once?
+❌ **Not at the moment.** The app supports only **one Z21 connection** at a time.
 
-#### **Warum zeigt die App keine Lok-Steuerung?**
-💡 **Design-Entscheidung:** MOBAsmart ist auf **Monitoring** fokussiert (Lap Counting, Feedback-Events). Für Lok-Steuerung nutze die **Z21 App** oder **MOBAflow (WinUI)**.
+#### Why doesn’t the app offer loco control?
+💡 **Design decision:** MOBAsmart focuses on **monitoring** (lap counting, feedback events). For locomotive control, use the official **Z21 app** or **MOBAflow (WinUI)**.
 
-#### **Kann ich die Lap-Counts exportieren?**
-⏳ **Geplant!** Export als **CSV** oder **JSON** ist für eine zukünftige Version geplant.
-
----
-
-### Troubleshooting Fragen
-
-#### **Warum verbindet sich die App nicht?**
-Häufigste Ursachen:
-1. **Falsche IP-Adresse** → Prüfe in Z21 App
-2. **Falsches WLAN** → Android-Gerät im Gast-WLAN?
-3. **AP Isolation aktiv** → Router-Einstellung prüfen
-4. **Z21 ausgeschaltet** → Stromversorgung prüfen
-
-#### **Warum zählt nur Track 1, aber nicht Track 2/3?**
-Mögliche Ursachen:
-1. **Falsche Anzahl Tracks** → Setze `Tracks: 3` (nicht 1!)
-2. **Rückmeldemodule nicht angeschlossen** → RBus-Verkabelung prüfen
-3. **Gleiskontakte defekt** → Mit Z21 App testen
-
-#### **Warum ist die Rundenzeit 00:00.0?**
-💡 **Normal!** Die **erste Runde** hat keine Zeit, weil der Startpunkt unbekannt ist. Ab der **zweiten Runde** wird die Zeit gemessen.
+#### Can I export lap counts?
+⏳ **Planned.** Export to **CSV** or **JSON** is planned for a future version.
 
 ---
 
-## 🔧 Technische Details
+### Troubleshooting questions
 
-### UDP-Kommunikation
+#### Why doesn’t the app connect?
+Most common causes:
+1. **Wrong IP address** → verify in the Z21 app.  
+2. **Wrong WLAN** → Android device in guest network?  
+3. **AP isolation active** → check router settings.  
+4. **Z21 powered off** → check power supply.  
 
-**Protokoll:** Z21 LAN Protocol (Roco)  
+#### Why does only Track 1 count, but not Track 2/3?
+Possible causes:
+1. **Wrong number of tracks** → set `Tracks: 3` (not 1).  
+2. **Feedback modules not connected** → check R-Bus wiring.  
+3. **Faulty track contacts** → test with the Z21 app.  
+
+#### Why is lap time 00:00.0?
+💡 **Normal.** The **first lap** has no time because the starting point is unknown. From the **second lap** onwards, lap time is measured.
+
+---
+
+## 🔧 Technical Details
+
+### UDP communication
+
+**Protocol:** Z21 LAN protocol (Roco)  
 **Port:** 21105 (UDP)  
-**Datenrichtung:** Bidirektional (App ↔ Z21)
+**Direction:** bidirectional (app ↔ Z21)
 
-**Gesendete Befehle:**
-- `LAN_GET_SERIAL_NUMBER` → Z21 Seriennummer abfragen
-- `LAN_GET_HWINFO` → Hardware-Info abfragen
-- `LAN_SYSTEMSTATE_GETDATA` → System-Status abfragen (Polling alle 5s)
-- `LAN_SET_TRACK_POWER_ON/OFF` → Gleisspannung ein/aus
+**Sent commands:**
+- `LAN_GET_SERIAL_NUMBER` → query Z21 serial number
+- `LAN_GET_HWINFO` → query hardware information
+- `LAN_SYSTEMSTATE_GETDATA` → query system status (polling every 5s)
+- `LAN_SET_TRACK_POWER_ON/OFF` → toggle track power on/off
 
-**Empfangene Events:**
-- `LAN_SYSTEMSTATE_DATACHANGED` → System-Status (Strom, Temperatur)
-- `LAN_RMBUS_DATACHANGED` → Rückmeldebus-Ereignis (Feedback!)
-- `LAN_X_TURNOUT_INFO` → Weichenstellung (nicht genutzt in MOBAsmart)
+**Received events:**
+- `LAN_SYSTEMSTATE_DATACHANGED` → system status (current, temperature)
+- `LAN_RMBUS_DATACHANGED` → feedback bus event (feedback!)
+- `LAN_X_TURNOUT_INFO` → turnout state (currently not used in MOBAsmart)
 
-### Feedback-Event-Verarbeitung
+### Feedback event processing
 
 ```csharp
 // Pseudocode
@@ -623,7 +630,7 @@ OnFeedbackReceived(FeedbackResult feedback)
 }
 ```
 
-### Datenmodell
+### Data model
 
 ```csharp
 public class InPortStatistic
@@ -639,9 +646,9 @@ public class InPortStatistic
 }
 ```
 
-### Settings-Persistierung
+### Settings persistence
 
-**Speicherort:** `/data/user/0/com.mobaflow.mobasmart/files/appsettings.json`
+**Storage location:** `/data/user/0/com.mobaflow.mobasmart/files/appsettings.json`
 
 **Format:**
 ```json
@@ -659,53 +666,53 @@ public class InPortStatistic
 }
 ```
 
-**Auto-Save:** Änderungen werden **sofort** gespeichert (nach jedem `+`/`−` Klick).
+**Auto-save:** Changes are saved **immediately** (after every `+`/`−` click).
 
 ---
 
-## 📜 Lizenz & Credits
+## 📜 License & Credits
 
-**MOBAsmart** ist Teil des **MOBAflow**-Projekts.
+**MOBAsmart** is part of the **MOBAflow** project.
 
-- **Lizenz:** MIT License
-- **Entwickler:** Andreas Huelsmann
-- **Repository:** [Azure DevOps](https://dev.azure.com/ahuelsmann/MOBAflow)
-- **Version:** 1.0 (Dezember 2025)
+- **License:** MIT License
+- **Author:** Andreas Huelsmann
+- **Repository:** `https://dev.azure.com/ahuelsmann/MOBAflow`
+- **Version:** 1.0 (December 2025)
 
-### Drittanbieter-Software
+### Third-party software
 
-- **Roco Z21** - Digital-Zentrale & Protokoll
-- **.NET MAUI** - Cross-Platform Framework (Microsoft)
-- **CommunityToolkit.Mvvm** - MVVM Framework
-- **UraniumUI** - Material Design Controls
+- **Roco Z21** – digital command station & protocol
+- **.NET MAUI** – cross-platform framework (Microsoft)
+- **CommunityToolkit.Mvvm** – MVVM framework
+- **UraniumUI** – material design controls
 
-Siehe [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md) für vollständige Lizenz-Informationen.
-
----
-
-## 🤝 Beitragen
-
-**Fehler gefunden? Feature-Wunsch?**
-
-1. **GitHub Issue erstellen:**  
-   https://dev.azure.com/ahuelsmann/MOBAflow/_workitems/create/Bug
-
-2. **Pull Request einreichen:**  
-   Fork → Feature Branch → Pull Request
-
-3. **Feedback per E-Mail:**  
-   *(E-Mail-Adresse einfügen)*
+See [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md) for full license information.
 
 ---
 
-## 📖 Weitere Dokumentation
+## 🤝 Contributing
 
-- **User Guide (kompakt):** [`MOBASMART-USER-GUIDE.md`](MOBASMART-USER-GUIDE.md)
+**Found a bug? Want to request a feature?**
+
+1. **Create an Azure DevOps work item (bug):**  
+   `https://dev.azure.com/ahuelsmann/MOBAflow/_workitems/create/Bug`
+
+2. **Submit a pull request:**  
+   Fork → feature branch → Pull Request
+
+3. **Send feedback via e-mail:**  
+   `andreas.huelsmann@web.de`
+
+---
+
+## 📖 Further documentation
+
+- **User Guide (compact):** [`MOBASMART-USER-GUIDE.md`](MOBASMART-USER-GUIDE.md)
 - **Architecture:** [`../ARCHITECTURE.md`](../ARCHITECTURE.md)
-- **Einstieg & Contributing:** [`../../README.md`](../../README.md)
+- **Project overview & contributing:** [`../../README.md`](../../README.md)
 
 ---
 
-**Viel Spaß mit MOBAsmart!** 🚂✨
+**Enjoy using MOBAsmart!** 🚂✨
 
-*Letzte Aktualisierung: 27.12.2025*
+*Last Updated: 2025-12-27*

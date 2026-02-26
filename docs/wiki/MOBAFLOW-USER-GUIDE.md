@@ -1,352 +1,351 @@
-# MOBAflow (WinUI) - Benutzerhandbuch
+# MOBAflow (WinUI) – User Guide
 
 **Version:** 1.0  
-**Plattform:** Windows 10/11 (Desktop)  
-**Letzte Aktualisierung:** 29.12.2025
+**Platform:** Windows 10/11 (Desktop)  
+**Status:** Production  
+**Last Updated:** 2025-12-29
 
 ---
 
-## 📱 Was ist MOBAflow?
+## 📱 What is MOBAflow?
 
-**MOBAflow** ist die Desktop-Anwendung für die umfassende Steuerung und Automatisierung deiner Modellbahnanlage. Sie verbindet sich direkt per UDP mit deiner **Roco Z21 Digital-Zentrale** und bietet erweiterte Funktionen wie Journey-Management, Workflow-Automatisierung und Track Plan Editor.
+**MOBAflow** is the Windows desktop application for advanced control and automation of your model railway layout. It connects directly via UDP to your **Roco Z21 digital command station** and provides features such as journey management, workflow automation, and a visual track plan editor.
 
 ---
 
-## 🚀 Erste Schritte
+## 🚀 Getting Started
 
-### 1. Systemvoraussetzungen
+### 1. System requirements
 
-- **Betriebssystem:** Windows 10 (Version 1809+) oder Windows 11
-- **Runtime:** .NET 10 Desktop Runtime (wird automatisch installiert)
-- **Hardware:** 
-  - Roco Z21 Digital-Zentrale
-  - Rückmeldemodule (Roco 10808, 10787, etc.)
-  - WLAN-Router (Z21 und PC im gleichen Netzwerk)
+- **Operating system:** Windows 10 (version 1809+) or Windows 11  
+- **Runtime:** .NET 10 Desktop Runtime  
+- **Hardware:**  
+  - Roco Z21 digital command station  
+  - Feedback modules (Roco 10808, 10787, etc.)  
+  - WLAN router (Z21 and PC in the same network)
 
 ### 2. Installation
 
-1. **Download:** Lade MOBAflow von [Releases](https://dev.azure.com/ahuelsmann/MOBAflow/_git/MOBAflow) herunter
-2. **Installation:** Starte `MOBAflow-Setup.exe`
-3. **Runtime:** Falls .NET 10 fehlt, wird es automatisch heruntergeladen
-4. **Start:** Öffne MOBAflow über das Desktop-Icon
+1. **Read the installation guide:** Follow the step‑by‑step instructions in [`INSTALLATION.md`](INSTALLATION.md).  
+2. **Build the project:** Build MOBAflow with .NET 10 as described in the installation guide.  
+3. **Start the app:** Launch the WinUI application as described there (for example via `dotnet run --project WinUI`).  
 
-### 3. Erster Start
+### 3. First launch
 
-1. **Willkommensbildschirm:** Übersicht über die Hauptfunktionen
-2. **Z21 verbinden:** IP-Adresse eingeben und "Connect" klicken
-3. **Solution erstellen:** Neue Solution anlegen oder existierende öffnen
-
----
-
-## 🎯 Hauptfunktionen
-
-### 📊 Overview Page
-
-**Die zentrale Steuerung deiner Anlage.**
-
-#### Funktionen:
-- **Z21 Connection Status:** Grün = Verbunden, Rot = Getrennt
-- **Track Power Control:** Gleisspannung ein/aus
-- **System Stats:** 
-  - 🌡️ Temperatur der Z21
-  - 🔌 Versorgungsspannung
-  - ⚡ VCC-Spannung
-  - 🔋 Stromaufnahme (Main Current)
-
-#### Lap Counter (Rundenzähler):
-- **Echtzeitüberwachung** aller Feedback Points
-- **Rundenzeiten** mit Durchschnittsberechnung
-- **Fortschrittsbalken** pro Track
-- **Export-Funktion** (CSV, JSON)
+1. **Welcome screen:** Overview of the main features.  
+2. **Connect to Z21:** Enter the IP address and click **Connect**.  
+3. **Create a solution:** Create a new solution or open an existing one.
 
 ---
 
-### 🚂 Journeys (Fahrten)
+## 🎯 Main Features
 
-**Definiere komplexe Zugfahrten mit Stationen.**
+### 📊 Overview page
 
-#### Was ist eine Journey?
-Eine **Journey** ist eine vordefinierte Route mit mehreren Stationen. Bei jeder Station können automatisch Aktionen ausgeführt werden (Ansagen, Befehle, Sounds).
+**The central control dashboard for your layout.**
 
-#### Journey erstellen:
+#### Features
+- **Z21 connection status:** Green = connected, Red = disconnected  
+- **Track power control:** Turn track power on/off  
+- **System stats:**  
+  - 🌡️ Z21 temperature  
+  - 🔌 Supply voltage  
+  - ⚡ VCC voltage  
+  - 🔋 Main current
 
-1. **Journeys Page** öffnen (Seitenleiste)
-2. **Add Journey** klicken
-3. **Properties:**
-   - **Name:** z.B. "ICE Berlin → München"
-   - **InPort:** Feedback Point für Zugerkennung (z.B. InPort 5)
-   - **Train:** Wähle deinen Zug aus der Liste
+#### Lap counter
+- **Real-time monitoring** of all feedback points  
+- **Lap times** with basic statistics  
+- **Progress bars** per track  
+- **Export function** (CSV, JSON – where supported)
 
-4. **Stations hinzufügen:**
-   - **Add Station** klicken
-   - **Name:** z.B. "Berlin Hbf"
-   - **InPort:** Feedback Point der Station (z.B. InPort 1)
-   - **Workflow:** Aktion bei Ankunft (optional)
+---
 
-#### Beispiel-Journey:
+### 🚂 Journeys
+
+**Define complex train runs with multiple stations.**
+
+#### What is a journey?
+A **journey** is a predefined route with multiple stations. At each station, actions can be executed automatically (announcements, commands, sounds).
+
+#### Creating a journey
+
+1. Open the **Journeys** page (left navigation).  
+2. Click **Add Journey**.  
+3. Configure the **properties**:  
+   - **Name:** e.g. `ICE Berlin → Munich`  
+   - **InPort:** Feedback point used to detect the train (e.g. InPort 5)  
+   - **Train:** Select your train from the list  
+
+4. **Add stations:**  
+   - Click **Add Station**.  
+   - **Name:** e.g. `Berlin Hbf`  
+   - **InPort:** Feedback point of the station (e.g. InPort 1)  
+   - **Workflow:** Action to execute on arrival (optional)  
+
+#### Example journey
 ```
 Journey: "ICE 1234 Hamburg → Frankfurt"
 ├─ Station 1: "Hamburg Hbf" (InPort 1)
-│  └─ Workflow: Ansage "Der Zug fährt ab"
+│  └─ Workflow: Announcement "The train is departing"
 ├─ Station 2: "Bremen Hbf" (InPort 3)
-│  └─ Workflow: Ansage "Nächster Halt: Hannover"
+│  └─ Workflow: Announcement "Next stop: Hanover"
 └─ Station 3: "Frankfurt Hbf" (InPort 5)
-   └─ Workflow: Ansage "Endstation erreicht"
+   └─ Workflow: Announcement "Final destination reached"
 ```
 
-#### Journey aktivieren:
-1. **Journey auswählen** in der Liste
-2. **Start Journey** klicken
-3. **Zug bewegen** → Bei jedem Feedback wird die passende Station erkannt
-4. **Counter erhöht sich** → Zeigt wie oft die Journey durchlaufen wurde
+#### Starting a journey
+1. Select the **journey** in the list.  
+2. Click **Start Journey**.  
+3. Run the train – on each feedback event the matching station is detected.  
+4. The **counter** increases to show how many times the journey has been completed.
 
 ---
 
 ### ⚡ Workflows
 
-**Automatisiere Aktionen mit ereignisgesteuerten Workflows.**
+**Automate actions using event‑driven workflows.**
 
-#### Was ist ein Workflow?
-Ein **Workflow** ist eine Sequenz von Aktionen, die automatisch bei einem Ereignis ausgeführt werden (z.B. Feedback-Event, Zeit-Trigger, Button-Klick).
+#### What is a workflow?
+A **workflow** is a sequence of actions that is executed automatically when a trigger fires (for example a feedback event, a timer, or a button click).
 
-#### Workflow erstellen:
+#### Creating a workflow
 
-1. **Workflows Page** öffnen
-2. **Add Workflow** klicken
-3. **Properties:**
-   - **Name:** z.B. "Bahnhofsansage Berlin"
-   - **InPort:** Trigger-Feedback Point (z.B. InPort 1)
-   - **Execution Mode:** Sequential (nacheinander) oder Parallel (gleichzeitig)
-   - **Actions:** Liste der auszuführenden Aktionen
+1. Open the **Workflows** page.  
+2. Click **Add Workflow**.  
+3. Configure the **properties**:  
+   - **Name:** e.g. `Station announcement Berlin`  
+   - **InPort:** Trigger feedback point (e.g. InPort 1)  
+   - **Execution mode:** Sequential (one after another) or Parallel (staggered/overlapping)  
+   - **Actions:** List of actions to execute  
 
-#### Execution Modes:
+#### Execution modes
 
-| Mode | Beschreibung | DelayAfterMs Bedeutung |
-|------|--------------|------------------------|
-| **Sequential** | Actions laufen nacheinander | Pause NACH Action-Ende vor nächster Action |
-| **Parallel** | Actions starten gestaffelt (overlapping) | Start-Offset (kumulativ von vorheriger Action) |
+| Mode | Description | Meaning of `DelayAfterMs` |
+|------|-------------|---------------------------|
+| **Sequential** | Actions run one after another | Pause **after** the action finishes before the next one starts |
+| **Parallel** | Actions start with offsets (overlap in time) | Start offset (relative delay from the previous action) |
 
-**Beispiel Sequential:**
+**Sequential example:**
 ```
-Action 1: Gong abspielen → Wartet bis Ende → Pause 1000ms → Action 2 startet
-Action 2: Ansage → Wartet bis Ende → Action 3 startet
-```
-
-**Beispiel Parallel (Staggered Start):**
-```
-t=0ms:    Action 1: Gong (DelayAfterMs=0)           → Startet sofort
-t=500ms:  Action 2: Ansage (DelayAfterMs=500)       → Startet nach 500ms (Gong läuft noch)
-t=2500ms: Action 3: Beleuchtung (DelayAfterMs=2000) → Startet nach weiteren 2s
+Action 1: Play "gong.wav" → waits until finished → 1000ms pause → Action 2 starts
+Action 2: Announcement → waits until finished → Action 3 starts
 ```
 
-#### Verfügbare Actions:
+**Parallel example (staggered start):**
+```
+t=0ms:    Action 1: Gong (DelayAfterMs=0)           → starts immediately
+t=500ms:  Action 2: Announcement (DelayAfterMs=500) → starts after 500ms (gong still playing)
+t=2500ms: Action 3: Lights (DelayAfterMs=2000)      → starts 2s after previous action
+```
 
-| Action Type | Beschreibung | Parameter |
-|-------------|--------------|-----------|
-| **Announcement** | Text-to-Speech Ansage | Text, Voice, Rate, Volume |
-| **Command** | Z21-Befehl senden | Command Bytes |
-| **Audio** | WAV-Datei abspielen | File Path |
+#### Available action types
 
-**Alle Actions unterstützen:**
-- **DelayAfterMs:** Zeitverzögerung (Bedeutung abhängig von Execution Mode)
+| Action type | Description | Parameters |
+|-------------|-------------|------------|
+| **Announcement** | Text‑to‑speech station announcement | Text, voice, rate, volume |
+| **Command** | Send Z21 command | Command bytes |
+| **Audio** | Play a WAV file | File path |
 
-#### Beispiel-Workflow (Sequential):
+**All actions support:**
+- **`DelayAfterMs`:** Time delay whose meaning depends on the execution mode
+
+#### Example workflow (sequential)
 ```yaml
 Workflow: "Bahnhofsansage Berlin Hbf"
 Trigger: InPort 1
 Execution Mode: Sequential
 
 Actions:
-1. Audio: "gong.wav" (DelayAfterMs: 1000)          → Gong + 1s Pause danach
-2. Announcement: "ICE 1234 fährt ein"              → Ansage
-3. Announcement: "Vorsicht bei der Einfahrt"       → Zweite Ansage
+1. Audio: `"gong.wav"` (DelayAfterMs: 1000)          → gong + 1s pause afterwards  
+2. Announcement: `"ICE 1234 is arriving"`            → first announcement  
+3. Announcement: `"Please stand back from the edge"` → second announcement  
 ```
 
-#### Beispiel-Workflow (Parallel):
+#### Example workflow (parallel)
 ```yaml
 Workflow: "Bahnhof mit Effekten"
 Trigger: InPort 1
 Execution Mode: Parallel
 
 Actions:
-1. Audio: "gong.wav" (DelayAfterMs: 0)             → t=0ms: Gong startet
-2. Announcement: "Zug fährt ein" (DelayAfterMs: 500) → t=500ms: Ansage startet (Gong läuft noch)
-3. Command: Beleuchtung (DelayAfterMs: 2000)       → t=2500ms: Licht schaltet
+1. Audio: `"gong.wav"` (DelayAfterMs: 0)               → t=0ms: gong starts  
+2. Announcement: `"Train is arriving"` (DelayAfterMs: 500) → t=500ms: announcement starts (gong still playing)  
+3. Command: lights on (DelayAfterMs: 2000)           → t=2500ms: lights switch  
 ```
 
 ---
 
-### 🎨 Track Plan Editor
+### 🎨 Track plan editor
 
-**Visualisiere und bearbeite deinen Gleisplan.**
+**Visualise and edit your track plan.**
 
-#### Funktionen:
-- **AnyRail Import:** Importiere Gleispläne aus AnyRail XML
-- **Drag & Drop:** Platziere Gleise auf der Canvas
-- **Feedback Points:** Verknüpfe Gleise mit InPorts
-- **Zoom & Pan:** Navigation mit Maus/Touchpad
+#### Features
+- **AnyRail import:** Import track plans from AnyRail XML  
+- **Drag & drop:** Place track pieces on the canvas  
+- **Feedback points:** Assign InPorts to track segments  
+- **Zoom & pan:** Navigate using mouse/touchpad  
 
-#### AnyRail Import:
+#### AnyRail import
 
-1. **AnyRail öffnen** → Gleisplan erstellen
-2. **Export:** File → Export → XML
-3. **MOBAflow:** Track Plan Page → Import → XML auswählen
-4. **Fertig!** Gleisplan wird automatisch konvertiert
+1. Open **AnyRail** and create your layout.  
+2. **Export:** `File → Export → XML`.  
+3. In **MOBAflow:** open the track plan page and use **Import** to select the XML file.  
+4. The track plan is converted automatically.
 
-#### Manuelle Bearbeitung:
+#### Manual editing
 
-1. **Track Library** (links): Verfügbare Gleise (Piko A-Gleis)
-2. **Canvas** (Mitte): Arbeitsbereich
-3. **Properties** (rechts): Eigenschaften des ausgewählten Gleises
+1. **Track library** (left): Available tracks (e.g. Piko A‑Gleis).  
+2. **Canvas** (center): Working area.  
+3. **Properties** (right): Properties of the selected track item.  
 
-**Gleise platzieren:**
-- Drag & Drop aus Library
-- Doppelklick auf Track → Rotation ändern
-- Rechtsklick → Löschen
-
----
-
-### 🗂️ Solution Management
-
-**Organisiere deine Anlage in Projects und Solutions.**
-
-#### Was ist eine Solution?
-Eine **Solution** ist eine Datei (`.mobaflow.json`), die alle deine Daten enthält:
-- Journeys
-- Workflows
-- Track Plans
-- Trains
-- Locomotives
-- Feedback Points
-
-#### Neue Solution erstellen:
-
-1. **File** → **New Solution**
-2. **Name:** z.B. "Meine Anlage 2025"
-3. **Speicherort:** Wähle einen Ordner
-4. **Save**
-
-#### Solution öffnen:
-
-1. **File** → **Open Solution**
-2. **Wähle `.mobaflow.json` Datei**
-3. **Fertig!** Alle Daten werden geladen
-
-#### Auto-Load beim Start:
-
-1. **Settings** → **Auto-load last solution**
-2. ✅ **Aktivieren**
-3. Beim nächsten Start wird die letzte Solution automatisch geladen
+**Placing tracks:**
+- Drag & drop from the library.  
+- Double‑click a track to rotate it.  
+- Right‑click to delete.
 
 ---
 
-## 🎙️ Text-to-Speech (Azure Cognitive Services)
+### 🗂️ Solution management
 
-**Professionelle Ansagen mit Azure Speech.**
+**Organise your layout into projects and solutions.**
 
-### Einrichtung:
+#### What is a solution?
+A **solution** is a file (`.mobaflow.json`) that contains all your data:
+- Journeys  
+- Workflows  
+- Track plans  
+- Trains and locomotives  
+- Feedback points  
 
-1. **Azure Account:** Erstelle einen kostenlosen Azure Account
-2. **Speech Service:** Erstelle eine Speech Resource
-3. **API Key kopieren:** Key + Region notieren
+#### Creating a new solution
 
-### In MOBAflow konfigurieren:
+1. Go to **File → New Solution**.  
+2. **Name:** e.g. `My Layout 2025`.  
+3. **Location:** Choose a folder.  
+4. Click **Save**.  
 
-1. **Settings** → **Speech**
-2. **API Key:** Einfügen
-3. **Region:** z.B. "germanywestcentral"
-4. **Voice:** z.B. "de-DE-ConradNeural" (männlich) oder "de-DE-KatjaNeural" (weiblich)
+#### Opening an existing solution
 
-### Test:
+1. Go to **File → Open Solution**.  
+2. Select your `.mobaflow.json` file.  
+3. All data is loaded into the app.  
 
-1. **Workflows** → **Add Workflow** → **Add Announcement Action**
-2. **Text:** "Dies ist ein Test"
-3. **Play** → Ansage sollte abgespielt werden
+#### Auto‑load on startup
 
-### Kostenlose Kontingente:
-- **5 Millionen Zeichen/Monat** kostenlos
-- Für private Nutzung mehr als ausreichend!
+1. Go to **Settings → Auto-load last solution**.  
+2. Enable the option.  
+3. On the next start, the last solution will be loaded automatically.
 
 ---
 
-## 🔧 Einstellungen (Settings Page)
+## 🎙️ Text‑to‑Speech (Azure Cognitive Services)
+
+**Professional announcements using Azure Speech.**
+
+### Setup
+
+1. **Azure account:** Create a free Azure account.  
+2. **Speech service:** Create a Speech resource.  
+3. **Copy API key:** Note down key and region.  
+
+### Configure in MOBAflow
+
+1. Open **Settings → Speech**.  
+2. Paste your **API key**.  
+3. Set the **region**, e.g. `germanywestcentral`.  
+4. Choose a **voice**, e.g. `de-DE-ConradNeural` (male) or `de-DE-KatjaNeural` (female).  
+
+### Test
+
+1. Go to **Workflows → Add Workflow → Add Announcement Action**.  
+2. Enter some test text, for example `"This is a test"`.  
+3. Click **Play** – the announcement should be spoken.  
+
+### Free quota
+- **5 million characters/month** for free (Azure free tier).  
+- More than enough for private model railway usage.
+
+---
+
+## 🔧 Settings page
 
 ### General
 
-| Einstellung | Beschreibung | Default |
-|-------------|--------------|---------|
-| **Auto-load last solution** | Letzte Solution beim Start laden | ✅ Aktiviert |
-| **Reset window layout on start** | Fenstergröße/-position zurücksetzen | ❌ Deaktiviert |
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Auto-load last solution** | Load the last solution file on startup | ✅ Enabled |
+| **Reset window layout on start** | Reset window size/position on startup | ❌ Disabled |
 
 ### Z21
 
-| Einstellung | Beschreibung | Default |
-|-------------|--------------|---------|
-| **Current IP Address** | Z21 IP-Adresse | 192.168.0.111 |
-| **Default Port** | UDP-Port | 21105 |
-| **Auto-connect retry interval** | Wiederverbindung (Sekunden) | 10 |
-| **System state polling interval** | Status-Abfrage (Sekunden) | 5 |
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Current IP Address** | Z21 IP address | `192.168.0.111` |
+| **Default Port** | UDP port | `21105` |
+| **Auto-connect retry interval** | Reconnect interval (seconds) | `10` |
+| **System state polling interval** | Status polling interval (seconds) | `5` |
 
 ### Speech
 
-| Einstellung | Beschreibung | Default |
-|-------------|--------------|---------|
-| **API Key** | Azure Speech Key | (leer) |
-| **Region** | Azure Region | germanywestcentral |
-| **Voice** | Standard-Stimme | de-DE-ConradNeural |
-| **Rate** | Sprechgeschwindigkeit (-10 bis +10) | -1 |
-| **Volume** | Lautstärke (0-100) | 90 |
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **API Key** | Azure Speech API key | (empty) |
+| **Region** | Azure region | `germanywestcentral` |
+| **Voice** | Default voice | `de-DE-ConradNeural` |
+| **Rate** | Speaking rate (`-10` to `+10`) | `-1` |
+| **Volume** | Volume (0–100) | `90` |
 
 ### Counter
 
-| Einstellung | Beschreibung | Default |
-|-------------|--------------|---------|
-| **Count of Feedback Points** | Anzahl InPorts | 0 |
-| **Target Lap Count** | Ziel-Rundenzahl | 10 |
-| **Use Timer Filter** | Anti-Doppelzählung | ✅ Aktiviert |
-| **Timer Interval** | Filter-Intervall (Sekunden) | 10.0 |
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Count of Feedback Points** | Number of InPorts | `0` |
+| **Target Lap Count** | Target number of laps | `10` |
+| **Use Timer Filter** | Anti‑double‑count filter | ✅ Enabled |
+| **Timer Interval** | Filter interval (seconds) | `10.0` |
 
 ---
 
-## 🛠️ Problemlösung
+## 🛠️ Troubleshooting
 
-### Problem: Z21 verbindet nicht
+### Problem: Z21 does not connect
 
-**Lösung:**
-1. **IP-Adresse prüfen:** Stimmt sie mit der Z21 überein?
-2. **Firewall:** Windows Firewall erlaubt MOBAflow? (Port UDP 21105)
-3. **WLAN:** PC und Z21 im gleichen Netzwerk?
-4. **Z21 neustarten:** Stromversorgung trennen, 10s warten
+**Solution:**
+1. **Check IP address:** Does it match your Z21 IP?  
+2. **Firewall:** Does Windows Firewall allow MOBAflow on UDP port `21105`?  
+3. **Network:** Are PC and Z21 in the same LAN/WLAN?  
+4. **Restart Z21:** Power cycle the Z21 and wait 10 seconds before reconnecting.  
 
-### Problem: Azure Speech funktioniert nicht
+### Problem: Azure Speech does not work
 
-**Lösung:**
-1. **API Key korrekt?** Prüfe in Azure Portal
-2. **Region korrekt?** Muss mit Key übereinstimmen
-3. **Internet-Verbindung?** Azure erfordert Internet
-4. **Kontingent aufgebraucht?** Prüfe Azure Nutzung
+**Solution:**
+1. **API key correct?** Verify in the Azure Portal.  
+2. **Region correct?** Must match the key’s region.  
+3. **Internet connection?** Azure Speech requires internet access.  
+4. **Quota exceeded?** Check your Azure usage and quotas.  
 
-### Problem: Journeys zählen nicht
+### Problem: Journeys are not counted
 
-**Lösung:**
-1. **InPort korrekt?** Journey.InPort muss mit Feedback Point übereinstimmen
-2. **Feedback empfangen?** Prüfe auf Overview Page (Lap Counter)
-3. **Journey aktiviert?** "Start Journey" geklickt?
+**Solution:**
+1. **InPort correct?** `Journey.InPort` must match the feedback point.  
+2. **Feedback received?** Check on the overview page (lap counter).  
+3. **Journey started?** Make sure you clicked **Start Journey**.  
 
-### Problem: Workflow wird nicht ausgeführt
+### Problem: Workflow is not executed
 
-**Lösung:**
-1. **InPort korrekt?** Workflow.InPort muss Trigger-Feedback sein
-2. **Actions vorhanden?** Mindestens 1 Action erforderlich
-3. **Fehler in Action?** Log prüfen (View → Logs)
+**Solution:**
+1. **InPort correct?** `Workflow.InPort` must be the trigger feedback point.  
+2. **Any actions defined?** At least one action is required.  
+3. **Error in action?** Check the log output (View → Logs).  
 
 ---
 
-## 💡 Tipps & Tricks
+## 💡 Tips & Tricks
 
-### 🚂 Best Practice: Journey-Struktur
+### 🚂 Best practice: journey structure
 
-**Gute Journey:**
+**Good journey:**
 ```
 Journey: "ICE Hamburg → München"
 InPort: 10 (Lok-Decoder Feedback)
@@ -358,7 +357,7 @@ Stations:
   5. München (InPort 9)
 ```
 
-**Schlechte Journey:**
+**Poor journey:**
 ```
 Journey: "Alle Züge"
 InPort: 0 (kein spezifischer Zug)
@@ -366,57 +365,57 @@ Stations:
   1. Irgendwo (InPort 1)
 ```
 
-### ⚡ Performance-Optimierung
+### ⚡ Performance optimisation
 
-**Problem:** App wird langsam bei vielen Feedbacks
+**Problem:** The app becomes slow with many feedback events.
 
-**Lösung:**
-1. **Polling-Intervall erhöhen:** Settings → Z21 → Polling Interval: 10s
-2. **Weniger Workflows:** Deaktiviere ungenutzte Workflows
-3. **Log-Level reduzieren:** Settings → Logging → Level: Warning
+**Solution:**
+1. **Increase polling interval:** Settings → Z21 → Polling interval: e.g. 10s.  
+2. **Reduce active workflows:** Disable unused workflows.  
+3. **Lower log level:** Settings → Logging → level `Warning`.  
 
-### 🎨 Track Plan Import
+### 🎨 Track plan import
 
-**Tipp:** AnyRail Gleispläne sind präziser als manuelles Zeichnen!
+**Tip:** AnyRail track plans are often more precise than drawing everything manually.
 
-**Workflow:**
-1. **AnyRail:** Exakte Planung mit Maßen
-2. **Export XML:** Alle Geometrie-Infos erhalten
-3. **MOBAflow Import:** Automatische Konvertierung
-4. **Feedback Points zuweisen:** InPorts verknüpfen
+**Typical workflow:**
+1. **AnyRail:** Design your exact layout with measurements.  
+2. **Export XML:** Export with full geometry information.  
+3. **MOBAflow import:** Import the XML and let MOBAflow convert it.  
+4. **Assign feedback points:** Link InPorts to track segments.  
 
 ---
 
-## 📋 Keyboard Shortcuts
+## 📋 Keyboard shortcuts
 
-| Shortcut | Funktion |
+| Shortcut | Function |
 |----------|----------|
-| **Ctrl + N** | Neue Solution |
-| **Ctrl + O** | Solution öffnen |
-| **Ctrl + S** | Solution speichern |
-| **Ctrl + Q** | App beenden |
-| **F1** | Hilfe öffnen |
-| **F5** | Z21 Verbindung aktualisieren |
-| **Ctrl + T** | Track Power Toggle |
+| **Ctrl + N** | New solution |
+| **Ctrl + O** | Open solution |
+| **Ctrl + S** | Save solution |
+| **Ctrl + Q** | Quit app |
+| **F1** | Open help |
+| **F5** | Refresh Z21 connection |
+| **Ctrl + T** | Toggle track power |
 
 ---
 
-## 📜 Lizenz & Credits
+## 📜 License & Credits
 
-**MOBAflow** ist Open Source (MIT License).
+**MOBAflow** is open source (MIT license).
 
-- **Entwickler:** Andreas Huelsmann
-- **Repository:** [Azure DevOps](https://dev.azure.com/ahuelsmann/MOBAflow)
-- **Version:** 3.9 (Dezember 2025)
+- **Author:** Andreas Huelsmann  
+- **Repository:** [Azure DevOps](https://dev.azure.com/ahuelsmann/MOBAflow)  
+- **App version:** 3.9 (December 2025)  
 
-**Drittanbieter:**
-- Roco Z21 (Protokoll)
-- Azure Cognitive Services (Speech)
-- AnyRail (Import-Format)
-- Microsoft WinUI 3 (UI Framework)
+**Third‑party components:**
+- Roco Z21 protocol  
+- Azure Cognitive Services (Speech)  
+- AnyRail (import format)  
+- Microsoft WinUI 3 (UI framework)  
 
-Siehe [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md).
+See [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md) for full details.
 
 ---
 
-**Viel Spaß mit MOBAflow!** 🚂✨
+**Enjoy using MOBAflow!** 🚂✨
