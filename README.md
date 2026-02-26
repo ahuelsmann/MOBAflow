@@ -139,7 +139,7 @@ Typical workflow for installing a specific version:
 
 ```bash
 git fetch origin --tags
-git tag -v v1.2.3
+git tag -v 1.2.3
 ```
 
 - Only trust tags whose signature matches one of the maintainer keys documented in `docs/legal/MAINTAINERS.md` (e.g. key ID `7DAD81238FEE2F49`).

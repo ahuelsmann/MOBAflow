@@ -1,7 +1,7 @@
 # 🔢 MinVer: Versioning for MOBAflow
 
-**Status:** ℹ️ Implementation in Progress  
-**Version:** 0.1.0 (Preview)  
+**Status:** ✅ Enabled for all .NET projects  
+**Baseline Version:** 0.1.x  
 **Last Updated:** February 2026
 
 ---
@@ -12,30 +12,19 @@
 
 ### 🎯 The Problem (without MinVer)
 
-```xml
-<!-- Directory.Build.props - HARDCODED! -->
-<Version>0.1.0</Version>
-<AssemblyVersion>0.1.0.0</AssemblyVersion>
-<FileVersion>0.1.0.0</FileVersion>
-```
-
-**Disadvantages:**
-- ❌ Version must be manually updated with each release
-- ❌ Easy to forget → wrong version numbers
-- ❌ No automatic preview versions (0.1.0-preview.123)
-- ❌ No Git integration
+Früher war die Version in `Directory.Build.props` hart codiert und musste bei jedem Release manuell hochgezogen werden. Das war fehleranfällig und bot keine sinnvollen Preview‑Versionen.
 
 ### ✅ The Solution (with MinVer)
 
 ```powershell
-git tag -a v0.1.0 -m "Release 0.1.0"
+git tag -s 0.1.0 -m "Release 0.1.0"
 # MinVer automatically reads from this tag!
 # → Version = 0.1.0 ✅
 ```
 
-With each commit after the tag:
+Mit jedem Commit nach dem Tag:
 ```
-0.1.0-preview.124+g1a2b3c4d  (automatic!)
+0.1.1-alpha.0.5+g1a2b3c4d  (automatisch berechnet)
 ```
 
 ---
@@ -72,83 +61,64 @@ MAJOR.MINOR.PATCH
 ### Version Format
 
 | Scenario | Version Number | Example |
-|----------|---|---|
-| Create tag | `v1.0.0` | Releases |
-| Commits after tag | `1.0.0-preview.N` | Development |
+|----------|----------------|---------|
+| Create tag | `1.0.0` | Releases |
+| Commits after tag | `1.0.1-alpha.0.N` | Development |
 | Build metadata | `+g<commit>` | Git commit |
 
 ---
 
 ## 🚀 Installation & Setup
 
-### Step 1: Add MinVer NuGet Package
+### Step 1: Central NuGet Package Management
 
-```bash
-# Navigate to project directory
-cd C:\Repos\ahuelsmann\MOBAflow
+MOBAflow verwendet **Central Package Management (CPM)**:
 
-# Add MinVer as NuGet Package
-# Or: Manually write to project file
-```
-
-**Manually in `.csproj` or `Directory.Build.props`:**
+- `Directory.Packages.props` definiert die Version:
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="MinVer" Version="5.0.0" />
+  …
+  <PackageVersion Include="MinVer" Version="6.0.0" />
 </ItemGroup>
 ```
 
-### Step 2: Create version.json
+- `Directory.Build.props` referenziert MinVer für alle Projekte:
 
-**File:** `version.json` (in repo root)
-
-```json
-{
-  "$schema": "https://raw.githubusercontent.com/adamralph/minver/main/schema.json",
-  "minimum": "0.1.0",
-  "prerelease": "preview",
-  "buildMetadata": "build"
-}
-```
-
-**Meaning:**
-- `minimum`: First version number (before first tag)
-- `prerelease`: Prefix for preview versions
-- `buildMetadata`: Add Git commit hash
-
-### Step 3: Adjust Directory.Build.props
-
-**Replace:**
 ```xml
-<!-- OLD - HARDCODED -->
-<Version>0.1.0</Version>
-<AssemblyVersion>0.1.0.0</AssemblyVersion>
-<FileVersion>0.1.0.0</FileVersion>
+<ItemGroup>
+  <PackageReference Include="MinVer" PrivateAssets="all" />
+</ItemGroup>
 ```
 
-**With:**
+### Step 2: Configure MinVer in Directory.Build.props
+
+In `Directory.Build.props`:
+
 ```xml
-<!-- NEW - AUTOMATIC VIA MINVER -->
-<!-- MinVer will automatically inject the version! -->
+<PropertyGroup>
+  <!-- Use tags like 0.1.0 (no 'v' prefix) -->
+  <MinVerTagPrefix></MinVerTagPrefix>
+  <!-- Baseline for tag-less builds -->
+  <MinVerMajorMinor>0.1</MinVerMajorMinor>
+  <!-- Pre-release identifier for commits after the last tag -->
+  <MinVerDefaultPreReleaseIdentifiers>alpha.0</MinVerDefaultPreReleaseIdentifiers>
+</PropertyGroup>
 ```
 
-### Step 4: Create First Tag
+### Step 3: Create First Tag
 
 ```bash
 cd C:\Repos\ahuelsmann\MOBAflow
 
-# Create tag (local)
-git tag -a v0.1.0 -m "Release version 0.1.0"
+# Create tag (local, signed)
+git tag -s 0.1.0 -m "Release 0.1.0"
 
 # Push to remote (GitHub/AzDo)
-git push origin v0.1.0
-
-# Push all tags
-git push origin --tags
+git push origin 0.1.0
 ```
 
-### Step 5: Test Build
+### Step 4: Test Build
 
 ```bash
 # Build
@@ -169,26 +139,26 @@ dotnet build -c Release
 
 ## 📊 Practical Examples
 
-### Scenario 1: Normal Development Flow
+### Scenario 1: Normal Development Flow (0.1.x)
 
 ```bash
 # 1. Check current tag
 git tag
-# Output: v0.1.0
+# Output: 0.1.0
 
-# 2. Work on new feature
+# 2. Work on new feature (0.1.1-alpha.0.1, …)
 git add .
 git commit -m "feat: Add lap counter"
-# → Version is now: 0.1.0-preview.1
+# → Version is now: 0.1.1-alpha.0.1
 
 # 3. Another commit
 git add .
 git commit -m "feat: Add statistics"
-# → Version is now: 0.1.0-preview.2
+# → Version is now: 0.1.1-alpha.0.2
 
 # 4. Plan release - create new tag
-git tag -a v0.2.0 -m "Release v0.2.0: New Statistics Feature"
-# → Version is now: 0.2.0
+git tag -s 0.1.1 -m "Release 0.1.1: New Statistics Feature"
+# → Version is now: 0.1.1
 
 # 5. After release, more commits
 git commit -m "chore: Update deps"
@@ -198,11 +168,11 @@ git commit -m "chore: Update deps"
 ### Scenario 2: Bugfix Release
 
 ```bash
-# Current: Tag v0.2.0 exists
+# Current: Tag 0.2.0 exists
 # Bugfix needed:
 
-git tag -a v0.2.1 -m "Release v0.2.1: Critical Z21 Fix"
-git push origin v0.2.1
+git tag -s 0.2.1 -m "Release 0.2.1: Critical Z21 Fix"
+git push origin 0.2.1
 
 # New version: 0.2.1 ✅
 ```
@@ -210,10 +180,10 @@ git push origin v0.2.1
 ### Scenario 3: Major Release (Breaking Changes)
 
 ```bash
-# Current: v0.5.0
+# Current: 0.5.0
 # API completely redesigned:
 
-git tag -a v1.0.0 -m "Release v1.0.0: Major API Redesign"
+git tag -s 1.0.0 -m "Release 1.0.0: Major API Redesign"
 
 # New version: 1.0.0 ✅
 # Signals: Breaking changes!
@@ -275,8 +245,8 @@ jobs:
 git tag
 
 # If empty: Create first tag
-git tag -a v0.1.0 -m "Initial release"
-git push origin v0.1.0
+git tag -s 0.1.0 -m "Initial release"
+git push origin 0.1.0
 ```
 
 ### Problem: Version is always "0.0.0"
@@ -292,18 +262,18 @@ dotnet build -c Release
 
 ### Problem: "Invalid tag format"
 
-MinVer expects tags in format `v<MAJOR>.<MINOR>.<PATCH>`:
+MOBAflow uses **plain SemVer tags without `v`‑Prefix**:
 
 ```bash
 # ✅ Correct
-git tag v0.1.0
-git tag v1.0.0
-git tag v0.2.1
+git tag 0.1.0
+git tag 1.0.0
+git tag 0.2.1
 
 # ❌ Wrong
-git tag 0.1.0          # Missing 'v' prefix
-git tag release-1.0.0  # Wrong format
-git tag v0.1           # Missing PATCH
+git tag v0.1.0          # We don't use 'v' prefix
+git tag release-1.0.0   # Wrong format
+git tag 0.1             # Missing PATCH
 ```
 
 ### Problem: Tag already exists
@@ -326,17 +296,17 @@ git push origin v0.1.0
 
 ---
 
-## ✅ Checklist: MinVer Implementation
+## ✅ Checklist: MinVer Implementation (MOBAflow)
 
 ```
-[ ] 1. Add MinVer NuGet package to Directory.Build.props
-[ ] 2. Create version.json in root
-[ ] 3. Clean up Directory.Build.props (remove hardcoded versions)
-[ ] 4. Create first Git tag: git tag -a v0.1.0
-[ ] 5. Test build: dotnet build -c Release
-[ ] 6. Verify version in compiled DLL
-[ ] 7. Configure GitHub Actions for Auto-Release (optional)
-[ ] 8. Update documentation (README.md / docs)
+[x] 1. Add MinVer NuGet package via Directory.Packages.props
+[x] 2. Reference MinVer in Directory.Build.props (PrivateAssets=all)
+[x] 3. Remove hardcoded versions from Directory.Build.props
+[x] 4. Configure MinVerTagPrefix / MinVerMajorMinor / MinVerDefaultPreReleaseIdentifiers
+[x] 5. Create first Git tag: git tag -s 0.1.0
+[x] 6. Test build: dotnet build -c Release
+[x] 7. Verify version in compiled DLL / EXE
+[ ] 8. Configure CI release automation (optional)
 ```
 
 ---

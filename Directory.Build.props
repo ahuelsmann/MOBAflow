@@ -1,10 +1,11 @@
 <Project>
   <PropertyGroup>
-    <!-- Versionierung: MinVer holt die Version aus Git-Tags (z. B. 1.0.0) -->
+    <!-- Versionierung: MinVer holt die Version aus Git-Tags (z. B. 0.1.0) -->
     <!-- MinVer-Settings -->
     <MinVerTagPrefix></MinVerTagPrefix>
     <MinVerMajorMinor>0.1</MinVerMajorMinor>
-    <MinVerDefaultPreReleasePhase>alpha</MinVerDefaultPreReleasePhase>
+    <!-- Pre-Release-Bezeichner für Commits nach dem letzten Tag, z. B. 0.1.1-alpha.0.5 -->
+    <MinVerDefaultPreReleaseIdentifiers>alpha.0</MinVerDefaultPreReleaseIdentifiers>
 
     <!-- Project Metadata -->
     <Company>Andreas Huelsmann</Company>
