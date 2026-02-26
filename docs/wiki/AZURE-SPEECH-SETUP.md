@@ -1,6 +1,5 @@
 # Azure Speech Service - Setup and Configuration
 
-**Version:** 1.0  
 **Last Updated:** 2025-02-04
 
 ---

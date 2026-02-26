@@ -83,8 +83,20 @@ internal sealed partial class InfoPage
         HeaderTextBlock.Text = section;
         ContentRichTextBlock.Blocks.Clear();
 
-        var version = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0);
-        var versionString = $"{version.Major}.{version.Minor}.{version.Build}";
+        var assembly = Assembly.GetExecutingAssembly();
+        var infoVersion = assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion;
+        string versionString;
+        if (!string.IsNullOrWhiteSpace(infoVersion))
+        {
+            versionString = infoVersion.Split('+')[0];
+        }
+        else
+        {
+            var fallback = assembly.GetName().Version ?? new Version(0, 0, 0);
+            versionString = $"{fallback.Major}.{fallback.Minor}.{fallback.Build}";
+        }
 
         var content = section switch
         {
@@ -168,10 +180,10 @@ internal sealed partial class InfoPage
                 - MOBAtps (Track Plan System)
                 """,
 
-            "Changelog" => """
+            "Changelog" => $"""
                 Aenderungsprotokoll:
 
-                Version 1.0.0 (aktuell)
+                Aktuelle Version: {versionString}
                 - Initiale Veroeffentlichung
                 - Z21 UDP-Kommunikation
                 - Loksteuerung mit Tachometer

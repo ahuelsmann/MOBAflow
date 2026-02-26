@@ -448,4 +448,3 @@ The architecture supports:
 ---
 
 **Last Updated:** February 2026
-**Version:** 3.16

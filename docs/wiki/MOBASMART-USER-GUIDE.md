@@ -1,6 +1,5 @@
 # MOBAsmart – User Guide
 
-**Version:** 1.0  
 **Platform:** Android  
 **Status:** Production  
 **Last Updated:** 2025-12-27
@@ -462,7 +461,6 @@ Tell us:
 
 - **License:** MIT License
 - **Author:** Andreas Huelsmann
-- **Version:** 1.0 (December 2025)
 
 **Third-party software:**
 - Roco Z21 digital command station (communication protocol)

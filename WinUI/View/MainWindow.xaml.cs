@@ -39,8 +39,19 @@ internal sealed partial class MainWindow
     private static string GetAppVersion()
     {
         var assembly = Assembly.GetExecutingAssembly();
+        var infoVersion = assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion;
+
+        if (!string.IsNullOrWhiteSpace(infoVersion))
+        {
+            // Nur den SemVer-Teil ohne Build-Metadaten anzeigen
+            var semVer = infoVersion.Split('+')[0];
+            return $"v{semVer}";
+        }
+
         var version = assembly.GetName().Version;
-        return version is not null ? $"v{version.Major}.{version.Minor}.{version.Build}" : "";
+        return version is not null ? $"v{version.Major}.{version.Minor}.{version.Build}" : "v0.0.0";
     }
 
     public MainWindow(

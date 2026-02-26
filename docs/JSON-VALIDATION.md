@@ -1,6 +1,5 @@
 # JSON Validation in MOBAflow
 
-**Version:** 1.0  
 **Scope:** Solution JSON file validation  
 **Status:** Production  
 **Last Updated:** 2026-02-05

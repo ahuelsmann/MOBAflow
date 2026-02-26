@@ -1,6 +1,5 @@
 # 🚀 Installation & Setup Guide
 
-**Version:** 0.1.0 (Preview)  
 **Status:** ℹ️ Automated setup scripts are planned for future releases  
 **Last Updated:** February 2026
 

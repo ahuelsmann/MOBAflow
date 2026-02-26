@@ -1,6 +1,5 @@
 # MOBAsmart Wiki
 
-**Version:** 1.0  
 **Platform:** Android  
 **Status:** Production  
 **Last Updated:** 2025-12-27

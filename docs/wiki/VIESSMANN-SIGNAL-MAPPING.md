@@ -1,6 +1,5 @@
 # Viessmann Multiplex Signals (5229) – Aspect Mapping
 
-**Version:** 1.0  
 **Scope:** Mapping SignalBoxPage signal aspects to Viessmann 5229 DCC addresses  
 **Status:** Production  
 **Last Updated:** 2026-02-01

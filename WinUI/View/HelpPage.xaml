@@ -16,20 +16,25 @@
             Background="{ThemeResource LayerFillColorDefaultBrush}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
             BorderThickness="0,0,1,0">
-            <StackPanel Padding="16" Spacing="16">
-                <StackPanel Spacing="4">
-                    <TextBlock
-                        FontSize="20"
-                        FontWeight="SemiBold"
-                        Text="MOBAflow Wiki" />
-                    <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="Dokumentation" />
-                </StackPanel>
+            <ScrollViewer
+                Padding="16"
+                VerticalScrollBarVisibility="Auto"
+                HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="16">
+                    <StackPanel Spacing="4">
+                        <TextBlock
+                            FontSize="20"
+                            FontWeight="SemiBold"
+                            Text="MOBAflow Wiki" />
+                        <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="Dokumentation" />
+                    </StackPanel>
 
-                <TreeView
-                    x:Name="NavigationTreeView"
-                    ItemInvoked="OnNavigationItemInvoked"
-                    SelectionMode="Single" />
-            </StackPanel>
+                    <TreeView
+                        x:Name="NavigationTreeView"
+                        ItemInvoked="OnNavigationItemInvoked"
+                        SelectionMode="Single" />
+                </StackPanel>
+            </ScrollViewer>
         </Border>
 
         <!--  Content Panel  -->
