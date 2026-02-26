@@ -9,13 +9,23 @@ using Enum;
 /// </summary>
 public class Locomotive
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Locomotive"/> class with a new identifier and default name.
+    /// </summary>
     public Locomotive()
     {
         Id = Guid.NewGuid();
         Name = "New Locomotive";
     }
 
+    /// <summary>
+    /// Gets or sets the unique identifier of the locomotive.
+    /// </summary>
     public Guid Id { get; set; }
+
+    /// <summary>
+    /// Gets or sets the display name of the locomotive.
+    /// </summary>
     public string Name { get; set; }
 
     /// <summary>
@@ -23,10 +33,19 @@ public class Locomotive
     /// </summary>
     public uint Pos { get; set; } = 1;
 
+    /// <summary>
+    /// Gets or sets the digital address of the locomotive (DCC address).
+    /// </summary>
     public uint? DigitalAddress { get; set; }
 
+    /// <summary>
+    /// Gets or sets the manufacturer name of the locomotive model.
+    /// </summary>
     public string? Manufacturer { get; set; }
 
+    /// <summary>
+    /// Gets or sets the article number of the locomotive model.
+    /// </summary>
     public string? ArticleNumber { get; set; }
 
     /// <summary>
@@ -43,12 +62,24 @@ public class Locomotive
     /// </summary>
     public List<string>? FunctionSymbols { get; set; }
 
+    /// <summary>
+    /// Gets or sets the primary color scheme of the locomotive.
+    /// </summary>
     public ColorScheme? ColorPrimary { get; set; }
 
+    /// <summary>
+    /// Gets or sets the secondary color scheme of the locomotive.
+    /// </summary>
     public ColorScheme? ColorSecondary { get; set; }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether the locomotive is pushing at the end of the train.
+    /// </summary>
     public bool IsPushing { get; set; }
 
+    /// <summary>
+    /// Gets or sets additional details of the locomotive.
+    /// </summary>
     public Details? Details { get; set; }
 
     /// <summary>

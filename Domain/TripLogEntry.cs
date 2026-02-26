@@ -7,11 +7,17 @@ namespace Moba.Domain;
 /// </summary>
 public class TripLogEntry
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TripLogEntry"/> class with a new identifier.
+    /// </summary>
     public TripLogEntry()
     {
         Id = Guid.NewGuid();
     }
 
+    /// <summary>
+    /// Gets or sets the unique identifier of the trip log entry.
+    /// </summary>
     public Guid Id { get; set; }
 
     /// <summary>

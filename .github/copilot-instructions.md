@@ -204,7 +204,7 @@ Vor **Commit** IMMER überprüfen:
 - [ ] Keine `.Result` / `.Wait()` (→ `await`)
 - [ ] Constructor Injection statt `new Service()`
 - [ ] `[ObservableProperty]` für MVVM Properties
-- [ ] XML-Docs für public APIs (`/// <summary>`)
+- [ ] XML-Docs für public APIs (`/// <summary>`) – dabei KEIN `&` in Texten verwenden, stattdessen ausgeschriebenes `and` benutzen
 - [ ] Tests geschrieben (Enumerable.Range statt for-Loops)
 - [ ] `run_build()` erfolgreich
 - [ ] `run_tests()` alle bestanden

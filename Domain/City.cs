@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
 /// <summary>
@@ -7,6 +7,9 @@ namespace Moba.Domain;
 /// </summary>
 public class City : Station
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="City"/> class with a default name and empty station list.
+    /// </summary>
     public City()
     {
         Name = "New City";

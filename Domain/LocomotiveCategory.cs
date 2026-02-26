@@ -7,6 +7,9 @@ namespace Moba.Domain;
 /// </summary>
 public class LocomotiveCategory
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LocomotiveCategory"/> class with an empty series list.
+    /// </summary>
     public LocomotiveCategory()
     {
         Series = [];

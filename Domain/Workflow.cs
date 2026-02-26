@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
 using Enum;
@@ -8,6 +8,9 @@ using Enum;
 /// </summary>
 public class Workflow
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Workflow"/> class with default values.
+    /// </summary>
     public Workflow()
     {
         Id = Guid.NewGuid();
@@ -17,8 +20,19 @@ public class Workflow
         ExecutionMode = WorkflowExecutionMode.Sequential;  // Default: Sequential
     }
 
+    /// <summary>
+    /// Gets or sets the unique identifier of the workflow.
+    /// </summary>
     public Guid Id { get; set; }
+
+    /// <summary>
+    /// Gets or sets the display name of the workflow.
+    /// </summary>
     public string Name { get; set; }
+
+    /// <summary>
+    /// Gets or sets the description of the workflow.
+    /// </summary>
     public string Description { get; set; }
 
     /// <summary>
@@ -33,7 +47,18 @@ public class Workflow
     /// </summary>
     public WorkflowExecutionMode ExecutionMode { get; set; }
 
+    /// <summary>
+    /// Gets or sets the hardware feedback input port used to trigger this workflow.
+    /// </summary>
     public uint InPort { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether feedbacks are ignored for a certain time after triggering.
+    /// </summary>
     public bool IsUsingTimerToIgnoreFeedbacks { get; set; }
+
+    /// <summary>
+    /// Gets or sets the interval in seconds for which feedbacks are ignored after triggering.
+    /// </summary>
     public double IntervalForTimerToIgnoreFeedbacks { get; set; }
 }

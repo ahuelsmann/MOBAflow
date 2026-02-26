@@ -10,7 +10,14 @@ using System.Text.Json.Serialization;
 /// </summary>
 public static class JsonOptions
 {
+    /// <summary>
+    /// Gets the default JSON serializer options for human readable output.
+    /// </summary>
     public static readonly JsonSerializerOptions Default;
+
+    /// <summary>
+    /// Gets the compact JSON serializer options optimized for storage and transport.
+    /// </summary>
     public static readonly JsonSerializerOptions Compact;
 
     static JsonOptions()

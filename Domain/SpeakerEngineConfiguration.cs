@@ -7,6 +7,9 @@ namespace Moba.Domain;
 /// </summary>
 public class SpeakerEngineConfiguration
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SpeakerEngineConfiguration"/> class with default engine settings.
+    /// </summary>
     public SpeakerEngineConfiguration()
     {
         Name = "AzureCognitiveSpeech";
@@ -14,9 +17,18 @@ public class SpeakerEngineConfiguration
         Settings = [];
     }
 
+    /// <summary>
+    /// Gets or sets the unique name of the speech engine configuration.
+    /// </summary>
     public string Name { get; set; }
 
+    /// <summary>
+    /// Gets or sets the fully qualified type name of the speech engine implementation.
+    /// </summary>
     public string Type { get; set; }
 
+    /// <summary>
+    /// Gets or sets the key value settings for the speech engine.
+    /// </summary>
     public Dictionary<string, string>? Settings { get; set; }
 }

@@ -43,7 +43,8 @@ stages:
               targetType: 'inline'
               script: |
                 dotnet tool install --global minver-cli --version 5.*
-                $version = dotnet minver
+                $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
+                $version = minver
                 Write-Host "Detected version (MinVer): $version"
                 Write-Host "##vso[task.setvariable variable=MobaflowVersion]$version"
               pwsh: true

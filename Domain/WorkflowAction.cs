@@ -9,7 +9,14 @@ using Enum;
 /// </summary>
 public class WorkflowAction
 {
+    /// <summary>
+    /// Gets or sets the unique identifier of the workflow action.
+    /// </summary>
     public Guid Id { get; set; } = Guid.NewGuid();
+
+    /// <summary>
+    /// Gets or sets the display name of the workflow action.
+    /// </summary>
     public string Name { get; set; } = string.Empty;
     
     /// <summary>
@@ -19,6 +26,9 @@ public class WorkflowAction
     /// </summary>
     public uint Number { get; set; }
     
+    /// <summary>
+    /// Gets or sets the action type that defines the concrete behavior.
+    /// </summary>
     public ActionType Type { get; set; }
 
     /// <summary>

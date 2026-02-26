@@ -9,6 +9,9 @@ using System.Text.Json.Serialization;
 /// </summary>
 public class Station
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Station"/> class with a new identifier and default values.
+    /// </summary>
     public Station()
     {
         Id = Guid.NewGuid();
@@ -16,7 +19,14 @@ public class Station
         Connections = [];
     }
 
+    /// <summary>
+    /// Gets or sets the unique identifier of the station.
+    /// </summary>
     public Guid Id { get; set; }
+
+    /// <summary>
+    /// Gets or sets the display name of the station.
+    /// </summary>
     public string Name { get; set; }
 
     /// <summary>
@@ -29,6 +39,10 @@ public class Station
     /// </summary>
     [JsonIgnore]
     public City? City { get; set; }
+
+    /// <summary>
+    /// Gets or sets an optional description of the station.
+    /// </summary>
     public string? Description { get; set; }
 
     /// <summary>

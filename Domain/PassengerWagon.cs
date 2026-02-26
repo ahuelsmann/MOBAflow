@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
 using Enum;
@@ -8,6 +8,9 @@ using Enum;
 /// </summary>
 public class PassengerWagon : Wagon
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PassengerWagon"/> class with default class.
+    /// </summary>
     public PassengerWagon()
     {
         WagonClass = PassengerClass.None;

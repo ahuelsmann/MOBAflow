@@ -14,6 +14,9 @@ public class Solution
     /// </summary>
     public const int CurrentSchemaVersion = 1;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Solution"/> class with default name and empty project list.
+    /// </summary>
     public Solution()
     {
         Name = "New Solution";
@@ -21,7 +24,14 @@ public class Solution
         SchemaVersion = CurrentSchemaVersion;
     }
 
+    /// <summary>
+    /// Gets or sets the solution name.
+    /// </summary>
     public string Name { get; set; }
+
+    /// <summary>
+    /// Gets or sets the list of projects contained in this solution.
+    /// </summary>
     public List<Project> Projects { get; set; }
     
     /// <summary>
