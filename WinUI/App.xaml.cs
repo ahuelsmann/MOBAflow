@@ -8,6 +8,7 @@ using Backend.Service;
 
 using Common.Configuration;
 using Common.Events;
+using Common.Navigation;
 using Common.Serilog;
 
 using Domain;
@@ -200,6 +201,12 @@ public partial class App
         var corePages = NavigationRegistration.RegisterPages(services);
         services.AddSingleton(corePages);
 
+        // Feature toggle page list for dynamic Settings UI (based on NavigationRegistration)
+        services.AddSingleton<IFeatureTogglePageProvider>(sp =>
+            new FeatureTogglePageProvider(
+                sp.GetRequiredService<List<PageMetadata>>(),
+                sp.GetRequiredService<AppSettings>()));
+
         // Register Speech Engine Factory for dynamic engine switching
         services.AddSingleton<SpeakerEngineFactory>();
 
@@ -297,7 +304,8 @@ public partial class App
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<AnnouncementService>(),
             sp.GetRequiredService<PhotoHubClient>(),
-            sp.GetService<ITripLogService>()
+            sp.GetService<ITripLogService>(),
+            sp.GetService<IFeatureTogglePageProvider>()
         ));
 
         services.AddSingleton<JourneyMapViewModel>();

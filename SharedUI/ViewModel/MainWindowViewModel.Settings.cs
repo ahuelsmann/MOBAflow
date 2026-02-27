@@ -2,6 +2,7 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Common.Configuration;
+using Common.Navigation;
 
 using CommunityToolkit.Mvvm.Input;
 
@@ -11,6 +12,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 
 /// <summary>
 /// MainWindowViewModel - Settings Management
@@ -351,7 +353,77 @@ public partial class MainWindowViewModel
 
     #endregion
 
-    #region Feature Toggle Wrapper Properties
+    #region Feature Toggle Items (dynamisch aus NavigationRegistration)
+
+    /// <summary>
+    /// Collection of feature toggle entries for the dynamic Settings UI.
+    /// Populated from IFeatureTogglePageProvider (empty if provider is not injected).
+    /// </summary>
+    public ObservableCollection<FeatureToggleItemViewModel> FeatureToggleItems { get; } = [];
+
+    /// <summary>
+    /// Initializes FeatureToggleItems from the provider. Called by the constructor.
+    /// </summary>
+    internal void InitializeFeatureToggleItems()
+    {
+        if (_featureTogglePageProvider == null) return;
+
+        FeatureToggleItems.Clear();
+        foreach (var info in _featureTogglePageProvider.GetToggleablePages())
+        {
+            var initial = GetFeatureToggleValue(info.FeatureToggleKey);
+            var item = new FeatureToggleItemViewModel(info, initial);
+            item.OnIsCheckedChangedCallback = OnFeatureToggleItemChanged;
+            FeatureToggleItems.Add(item);
+        }
+    }
+
+    private void OnFeatureToggleItemChanged(string key, bool value)
+    {
+        SetFeatureToggleValue(key, value);
+    }
+
+    /// <summary>
+    /// Reads the feature toggle value via reflection from FeatureToggleSettings.
+    /// </summary>
+    internal bool GetFeatureToggleValue(string key)
+    {
+        var prop = typeof(FeatureToggleSettings).GetProperty(key);
+        if (prop == null) return true;
+        return prop.GetValue(_settings.FeatureToggles) as bool? ?? true;
+    }
+
+    /// <summary>
+    /// Writes the feature toggle value via reflection to FeatureToggleSettings and saves.
+    /// Raises OnPropertyChanged for the corresponding read-only property (e.g. IsOverviewPageAvailable).
+    /// </summary>
+    internal void SetFeatureToggleValue(string key, bool value)
+    {
+        var prop = typeof(FeatureToggleSettings).GetProperty(key);
+        if (prop == null) return;
+
+        var current = prop.GetValue(_settings.FeatureToggles) as bool?;
+        if (current == value) return;
+
+        prop.SetValue(_settings.FeatureToggles, value);
+        OnPropertyChanged(key); // z. B. IsOverviewPageAvailable
+        _ = _settingsService?.SaveSettingsAsync(_settings);
+    }
+
+    /// <summary>
+    /// Updates all FeatureToggleItems after a reset (e.g. Reset to Defaults).
+    /// </summary>
+    internal void RefreshFeatureToggleItems()
+    {
+        foreach (var item in FeatureToggleItems)
+        {
+            item.SetChecked(GetFeatureToggleValue(item.FeatureToggleKey));
+        }
+    }
+
+    #endregion
+
+    #region Feature Toggle Wrapper Properties (Legacy – still used for NavigationView)
 
     public bool IsOverviewPageAvailableSetting
     {
@@ -707,6 +779,7 @@ public partial class MainWindowViewModel
             OnPropertyChanged(nameof(IsJourneysPageAvailableSetting));
             OnPropertyChanged(nameof(IsWorkflowsPageAvailableSetting));
             OnPropertyChanged(nameof(IsTrackPlanEditorPageAvailableSetting));
+            OnPropertyChanged(nameof(IsSignalBoxPageAvailableSetting));
             OnPropertyChanged(nameof(IsJourneyMapPageAvailableSetting));
             OnPropertyChanged(nameof(IsMonitorPageAvailableSetting));
             OnPropertyChanged(nameof(IsTrainsPageAvailableSetting));
@@ -719,10 +792,14 @@ public partial class MainWindowViewModel
             OnPropertyChanged(nameof(IsJourneysPageAvailable));
             OnPropertyChanged(nameof(IsWorkflowsPageAvailable));
             OnPropertyChanged(nameof(IsTrackPlanEditorPageAvailable));
+            OnPropertyChanged(nameof(IsSignalBoxPageAvailable));
             OnPropertyChanged(nameof(IsJourneyMapPageAvailable));
+            OnPropertyChanged(nameof(IsDockingPageAvailable));
             OnPropertyChanged(nameof(IsMonitorPageAvailable));
             OnPropertyChanged(nameof(IsTrainsPageAvailable));
             OnPropertyChanged(nameof(IsTrainControlPageAvailable));
+
+            RefreshFeatureToggleItems();
 
             ShowSuccessMessage = true;
             await Task.Delay(3000).ConfigureAwait(false);

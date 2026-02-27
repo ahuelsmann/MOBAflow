@@ -1,6 +1,10 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
+/// <summary>
+/// Represents a connecting service (e.g., transfer connection) for a station.
+/// Pure data object without behavior.
+/// </summary>
 public class ConnectingService
 {
     /// <summary>

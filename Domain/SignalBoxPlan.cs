@@ -410,6 +410,9 @@ public class SignalBoxConnection
 /// </summary>
 public class SignalBoxRoute
 {
+    /// <summary>
+    /// Gets or sets the unique identifier of the route.
+    /// </summary>
     public Guid Id { get; set; } = Guid.NewGuid();
 
     /// <summary>

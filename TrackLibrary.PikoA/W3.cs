@@ -8,7 +8,18 @@ using Base;
 /// </summary>
 public sealed record W3 : SwitchThreeWay
 {
+    /// <summary>
+    /// Gets the straight length of the three way switch in millimeters.
+    /// </summary>
     public double LengthInMm { get; init; } = 239.07;
+
+    /// <summary>
+    /// Gets the switch angle in degrees.
+    /// </summary>
     public double ArcInDegree { get; init; } = 30;
+
+    /// <summary>
+    /// Gets the turnout radius in millimeters.
+    /// </summary>
     public double RadiusInMm { get; init; } = 907.97;
 }

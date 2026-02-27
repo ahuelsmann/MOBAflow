@@ -10,6 +10,7 @@ using Backend.Service;
 
 using Common.Configuration;
 using Common.Events;
+using Common.Navigation;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -52,6 +53,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly ISettingsService? _settingsService;
     private readonly AnnouncementService? _announcementService;
     private readonly ITripLogService? _tripLogService;
+    private readonly IFeatureTogglePageProvider? _featureTogglePageProvider;
 
     // Execution Context (contains all action execution dependencies)
     private readonly ActionExecutionContext _executionContext;
@@ -76,7 +78,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ISettingsService? settingsService = null,
         AnnouncementService? announcementService = null,
         object? photoHubClient = null,  // Optional PhotoHubClient (only in WinUI, type is object to avoid assembly reference)
-        ITripLogService? tripLogService = null)
+        ITripLogService? tripLogService = null,
+        IFeatureTogglePageProvider? featureTogglePageProvider = null)
     {
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(eventBus);
@@ -99,6 +102,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _announcementService = announcementService;
         _executionContext = executionContext;
         _tripLogService = tripLogService;
+        _featureTogglePageProvider = featureTogglePageProvider;
         _ = photoHubClient;
 
         if (_tripLogService != null)
@@ -146,6 +150,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 }
             });
         }
+
+        InitializeFeatureToggleItems();
     }
     #endregion
 

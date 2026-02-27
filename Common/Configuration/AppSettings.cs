@@ -299,9 +299,9 @@ public class FeatureToggleSettings
 
     /// <summary>
     /// Enable Docking page (Layout management with collapsible panels).
-    /// Experimental feature marked as Preview.
+    /// Experimental feature marked as Preview. Hidden by default.
     /// </summary>
-    public bool IsDockingPageAvailable { get; set; } = true;
+    public bool IsDockingPageAvailable { get; set; } = false;
     public string DockingPageLabel { get; set; } = "Preview";
 
     /// <summary>
@@ -312,6 +312,13 @@ public class FeatureToggleSettings
     public string MonitorPageLabel { get; set; } = "Preview";
 
     // Train/Rolling Stock Management (Upcoming - ENABLED by default)
+
+    /// <summary>
+    /// Enable Locomotives page (Locomotive inventory from project/solution).
+    /// Upcoming feature marked as Preview.
+    /// </summary>
+    public bool IsLocomotivesPageAvailable { get; set; } = true;
+    public string LocomotivesPageLabel { get; set; } = "Preview";
 
     /// <summary>
     /// Enable Trains page (Locomotive and wagon inventory management).

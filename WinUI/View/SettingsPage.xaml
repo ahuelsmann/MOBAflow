@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Moba.SharedUI.ViewModel"
     mc:Ignorable="d">
 
     <ScrollViewer>
@@ -442,82 +443,15 @@
                         Text="Control which features are available in the application. Changes require app restart."
                         TextWrapping="Wrap" />
 
-                    <!--  Core Features  -->
-                    <TextBlock
-                        Margin="0,8,0,4"
-                        FontWeight="SemiBold"
-                        Style="{StaticResource BodyStrongTextBlockStyle}"
-                        Text="Core Features" />
-                    <CheckBox Content="Overview Page" IsChecked="{x:Bind ViewModel.IsOverviewPageAvailableSetting, Mode=TwoWay}" />
-                    <CheckBox Content="Solution Page" IsChecked="{x:Bind ViewModel.IsSolutionPageAvailableSetting, Mode=TwoWay}" />
-                    <CheckBox Content="Settings Page" IsChecked="{x:Bind ViewModel.IsSettingsPageAvailableSetting, Mode=TwoWay}" />
-
-                    <!--  Journey Management  -->
-                    <TextBlock
-                        Margin="0,16,0,4"
-                        FontWeight="SemiBold"
-                        Style="{StaticResource BodyStrongTextBlockStyle}"
-                        Text="Journey Management" />
-                    <CheckBox Content="Journeys Page" IsChecked="{x:Bind ViewModel.IsJourneysPageAvailableSetting, Mode=TwoWay}" />
-                    <CheckBox Content="Workflows Page" IsChecked="{x:Bind ViewModel.IsWorkflowsPageAvailableSetting, Mode=TwoWay}" />
-
-                    <!--  Track Management  -->
-                    <TextBlock
-                        Margin="0,16,0,4"
-                        FontWeight="SemiBold"
-                        Style="{StaticResource BodyStrongTextBlockStyle}"
-                        Text="Track Management" />
-
-                    <CheckBox Content="{x:Bind ViewModel.TrackPlanEditorCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.IsTrackPlanEditorPageAvailableSetting, Mode=TwoWay}">
-                        <ToolTipService.ToolTip>
-                            <TextBlock Text="Visual track layout designer" />
-                        </ToolTipService.ToolTip>
-                    </CheckBox>
-
-                    <CheckBox Content="{x:Bind ViewModel.SignalBoxCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.IsSignalBoxPageAvailableSetting, Mode=TwoWay}">
-                        <ToolTipService.ToolTip>
-                            <TextBlock Text="Visual signal and turnout control panel" />
-                        </ToolTipService.ToolTip>
-                    </CheckBox>
-
-                    <CheckBox Content="{x:Bind ViewModel.JourneyMapCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.IsJourneyMapPageAvailableSetting, Mode=TwoWay}">
-                        <ToolTipService.ToolTip>
-                            <TextBlock Text="Journey visualization map" />
-                        </ToolTipService.ToolTip>
-                    </CheckBox>
-
-                    <!--  Monitoring  -->
-                    <TextBlock
-                        Margin="0,16,0,4"
-                        FontWeight="SemiBold"
-                        Style="{StaticResource BodyStrongTextBlockStyle}"
-                        Text="Monitoring &amp; Debugging" />
-
-                    <CheckBox Content="{x:Bind ViewModel.MonitorCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.IsMonitorPageAvailableSetting, Mode=TwoWay}">
-                        <ToolTipService.ToolTip>
-                            <TextBlock Text="Z21 traffic monitor and diagnostics" />
-                        </ToolTipService.ToolTip>
-                    </CheckBox>
-
-                    <!--  Train Management  -->
-                    <TextBlock
-                        Margin="0,16,0,4"
-                        FontWeight="SemiBold"
-                        Style="{StaticResource BodyStrongTextBlockStyle}"
-                        Text="Train Management" />
-
-                    <CheckBox Content="{x:Bind ViewModel.TrainsCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.IsTrainsPageAvailableSetting, Mode=TwoWay}">
-                        <ToolTipService.ToolTip>
-                            <TextBlock Text="Locomotive and wagon inventory management" />
-                        </ToolTipService.ToolTip>
-                    </CheckBox>
-
-                    <CheckBox Content="{x:Bind ViewModel.TrainControlCheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind ViewModel.IsTrainControlPageAvailableSetting, Mode=TwoWay}">
-                        <ToolTipService.ToolTip>
-                            <TextBlock Text="Digital locomotive throttle for Z21" />
-                        </ToolTipService.ToolTip>
-                    </CheckBox>
-
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.FeatureToggleItems, Mode=OneWay}">
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="vm:FeatureToggleItemViewModel">
+                                <CheckBox
+                                    Content="{x:Bind CheckBoxContent, Mode=OneWay}"
+                                    IsChecked="{x:Bind IsChecked, Mode=TwoWay}" />
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
                 </StackPanel>
             </Expander>
 

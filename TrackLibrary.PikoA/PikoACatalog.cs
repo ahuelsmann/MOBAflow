@@ -11,9 +11,24 @@ public static class PikoACatalog
     /// </summary>
     public enum TrackCategory
     {
+        /// <summary>
+        /// Straight track elements (Geraden).
+        /// </summary>
         Straight,
+
+        /// <summary>
+        /// Curved track elements (Bögen).
+        /// </summary>
         Curve,
+
+        /// <summary>
+        /// Turnouts and switches (Weichen).
+        /// </summary>
         Switch,
+
+        /// <summary>
+        /// Crossing track elements (Kreuzungen).
+        /// </summary>
         Crossing
     }
 

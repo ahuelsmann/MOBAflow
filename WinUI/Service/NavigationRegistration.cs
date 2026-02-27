@@ -75,8 +75,8 @@ internal static class NavigationRegistration
             PageType: typeof(SignalBoxPage),
             Category: NavigationCategory.TrackManagement,
             Order: 20,
-            FeatureToggleKey: null,
-            BadgeLabelKey: null,
+            FeatureToggleKey: "IsSignalBoxPageAvailable",
+            BadgeLabelKey: "SignalBoxPageLabel",
             PathIconData: "M7,2 A2,2 0 1,1 11,2 A2,2 0 1,1 7,2 M3,10 A2,2 0 1,1 7,10 A2,2 0 1,1 3,10 M11,10 A2,2 0 1,1 15,10 A2,2 0 1,1 11,10",
             IsBold: false));
 

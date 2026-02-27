@@ -51,11 +51,13 @@ stages:
 
           - script: |
               cd "$(Build.SourcesDirectory)"
+              echo "Ensuring conventional-changelog CLI and preset (conventionalcommits) are available..."
+              npm install -g conventional-changelog-cli conventional-changelog-conventionalcommits
               if exist package.json (
                 echo "Running npm ci..."
                 npm ci
               ) else (
-                echo "No package.json found – skipping npm ci. Make sure conventional-changelog-cli is available."
+                echo "No package.json found – skipping npm ci."
               )
               if exist docs\CHANGELOG.md (
                 echo "Updating docs/CHANGELOG.md using conventional-changelog..."

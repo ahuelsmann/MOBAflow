@@ -1,6 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
+/// <summary>
+/// Represents a voice configuration for speech output.
+/// </summary>
 public class Voice
 {
     /// <summary>
