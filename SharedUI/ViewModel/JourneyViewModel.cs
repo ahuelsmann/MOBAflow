@@ -324,7 +324,7 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     }
 
     /// <summary>
-    /// Handles station reordering after drag & drop.
+    /// Handles station reordering after drag and drop.
     /// Call this method when stations are reordered in the UI.
     /// </summary>
     [RelayCommand]

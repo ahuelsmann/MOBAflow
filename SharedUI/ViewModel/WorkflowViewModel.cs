@@ -181,7 +181,7 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
 
     /// <summary>
     /// Updates the Number property of all actions to reflect their current order.
-    /// Call this after reordering actions via drag & drop.
+    /// Call this after reordering actions via drag and drop.
     /// Synchronizes the ObservableCollection order back to Model.Actions list.
     /// </summary>
     public void UpdateActionNumbers()

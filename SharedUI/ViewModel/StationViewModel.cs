@@ -84,7 +84,7 @@ public sealed partial class StationViewModel : ObservableObject, IViewModelWrapp
     }
 
     /// <summary>
-    /// Command to assign a workflow to this station via drag & drop.
+    /// Command to assign a workflow to this station via drag and drop.
     /// </summary>
     [RelayCommand]
     private void AssignWorkflow(WorkflowViewModel? workflow)

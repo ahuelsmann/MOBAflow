@@ -208,7 +208,7 @@ public sealed partial class TrainViewModel : ObservableObject, IViewModelWrapper
     }
 
     /// <summary>
-    /// Handles locomotive reordering after drag & drop.
+    /// Handles locomotive reordering after drag and drop.
     /// Updates Model.LocomotiveIds to match new UI order.
     /// </summary>
     [RelayCommand]
@@ -232,7 +232,7 @@ public sealed partial class TrainViewModel : ObservableObject, IViewModelWrapper
     }
 
     /// <summary>
-    /// Handles wagon reordering after drag & drop.
+    /// Handles wagon reordering after drag and drop.
     /// Updates Model.WagonIds to match new UI order.
     /// </summary>
     [RelayCommand]
