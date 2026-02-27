@@ -51,6 +51,7 @@ public sealed class EventBus : IEventBus
     private readonly Dictionary<Type, List<(Guid Id, WeakReference<object>? TargetRef, Delegate Handler)>> _subscriptions = [];
     private readonly object _lock = new();
 
+    /// <inheritdoc />
     public void Publish<TEvent>(TEvent @event) where TEvent : class, IEvent
     {
         ArgumentNullException.ThrowIfNull(@event);
@@ -79,6 +80,7 @@ public sealed class EventBus : IEventBus
         }
     }
 
+    /// <inheritdoc />
     public Guid Subscribe<TEvent>(Action<TEvent> handler) where TEvent : class, IEvent
     {
         ArgumentNullException.ThrowIfNull(handler);
@@ -105,6 +107,7 @@ public sealed class EventBus : IEventBus
         return subscriptionId;
     }
 
+    /// <inheritdoc />
     public void Unsubscribe(Guid subscriptionId)
     {
         lock (_lock)
@@ -116,6 +119,7 @@ public sealed class EventBus : IEventBus
         }
     }
 
+    /// <inheritdoc />
     public int GetSubscriberCount<TEvent>() where TEvent : class, IEvent
     {
         lock (_lock)

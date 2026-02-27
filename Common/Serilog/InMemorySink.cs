@@ -120,8 +120,23 @@ public class LogEntry
 /// </summary>
 public enum LogSeverity
 {
+    /// <summary>
+    /// Diagnostic messages useful during development and debugging.
+    /// </summary>
     Debug,
+
+    /// <summary>
+    /// Informational messages about normal application operation.
+    /// </summary>
     Info,
+
+    /// <summary>
+    /// Warnings about unexpected but non-fatal situations.
+    /// </summary>
     Warning,
+
+    /// <summary>
+    /// Error messages indicating failures or exceptions.
+    /// </summary>
     Error
 }
