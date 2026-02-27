@@ -12,6 +12,9 @@ public static class DockingDropBehavior
 {
     #region Attached Properties
 
+    /// <summary>
+    /// Attached property to enable/disable dock drop functionality.
+    /// </summary>
     public static readonly DependencyProperty AllowDockDropProperty =
         DependencyProperty.RegisterAttached(
             "AllowDockDrop",
@@ -19,6 +22,9 @@ public static class DockingDropBehavior
             typeof(DockingDropBehavior),
             new PropertyMetadata(false, OnAllowDockDropChanged));
 
+    /// <summary>
+    /// Attached property to get/set the dock position.
+    /// </summary>
     public static readonly DependencyProperty DockPositionProperty =
         DependencyProperty.RegisterAttached(
             "DockPosition",
@@ -30,15 +36,35 @@ public static class DockingDropBehavior
 
     #region Attached Property Methods
 
+    /// <summary>
+    /// Gets the AllowDockDrop attached property value.
+    /// </summary>
+    /// <param name="obj">The dependency object.</param>
+    /// <returns>True if dock drop is allowed, otherwise false.</returns>
     public static bool GetAllowDockDrop(DependencyObject obj) =>
         (bool)obj.GetValue(AllowDockDropProperty);
 
+    /// <summary>
+    /// Sets the AllowDockDrop attached property value.
+    /// </summary>
+    /// <param name="obj">The dependency object.</param>
+    /// <param name="value">The value to set.</param>
     public static void SetAllowDockDrop(DependencyObject obj, bool value) =>
         obj.SetValue(AllowDockDropProperty, value);
 
+    /// <summary>
+    /// Gets the DockPosition attached property value.
+    /// </summary>
+    /// <param name="obj">The dependency object.</param>
+    /// <returns>The current dock position.</returns>
     public static DockPosition GetDockPosition(DependencyObject obj) =>
         (DockPosition)obj.GetValue(DockPositionProperty);
 
+    /// <summary>
+    /// Sets the DockPosition attached property value.
+    /// </summary>
+    /// <param name="obj">The dependency object.</param>
+    /// <param name="value">The dock position value to set.</param>
     public static void SetDockPosition(DependencyObject obj, DockPosition value) =>
         obj.SetValue(DockPositionProperty, value);
 
@@ -142,9 +168,28 @@ public static class DockingDropBehavior
 /// </summary>
 public enum DockPosition
 {
+    /// <summary>
+    /// Dock to the left side.
+    /// </summary>
     Left,
+
+    /// <summary>
+    /// Dock to the right side.
+    /// </summary>
     Right,
+
+    /// <summary>
+    /// Dock to the top side.
+    /// </summary>
     Top,
+
+    /// <summary>
+    /// Dock to the bottom side.
+    /// </summary>
     Bottom,
+
+    /// <summary>
+    /// Dock to the center area.
+    /// </summary>
     Center
 }
