@@ -3,33 +3,33 @@ namespace Moba.TrackLibrary.PikoA;
 using Base;
 
 /// <summary>
-/// Erzeugt Pfad-Geometrie für Gleissegmente in lokalen Koordinaten (Port A = Ursprung, Winkel 0 = +X).
-/// Verwendet dieselben Formeln wie der TrackPlanSvgRenderer für konsistente Darstellung.
+/// Generates path geometry for track segments in local coordinates (Port A = origin, angle 0 = +X).
+/// Uses the same formulas as TrackPlanSvgRenderer for consistent display.
 /// </summary>
 public static class SegmentLocalPathBuilder
 {
-    /// <summary>Befehl im Pfad (plattformunabhängig).</summary>
+    /// <summary>Command in path (platform-independent).</summary>
     public abstract record PathCommand;
 
-    /// <summary>Bewegt zur Position ohne zu zeichnen (Start neuer Unterpfad).</summary>
+    /// <summary>Moves to position without drawing (start of new subpath).</summary>
     public sealed record MoveTo(double X, double Y) : PathCommand;
 
-    /// <summary>Linie zum angegebenen Punkt.</summary>
+    /// <summary>Line to the specified point.</summary>
     public sealed record LineTo(double X, double Y) : PathCommand;
 
-    /// <summary>Kreisbogen zum Endpunkt (Radius in mm, Clockwise = Sweep-Richtung, LargeArc = Bogen &gt; 180°).</summary>
+    /// <summary>Arc to endpoint (radius in mm, Clockwise = sweep direction, LargeArc = arc &gt; 180°).</summary>
     public sealed record ArcTo(double EndX, double EndY, double Radius, bool Clockwise, bool LargeArc = false) : PathCommand;
 
     /// <summary>
-    /// Liefert die Pfad-Befehle für ein Segment in lokalen Koordinaten.
-    /// Startpunkt ist stets (0, 0) = Port A.
-    /// Verwendet dieselben Formeln wie der TrackPlanSvgRenderer.
+    /// Returns the path commands for a segment in local coordinates.
+    /// Start point is always (0, 0) = Port A.
+    /// Uses the same formulas as TrackPlanSvgRenderer.
     /// </summary>
     public static IReadOnlyList<PathCommand> GetPath(Segment segment) => GetPath(segment, 'A');
 
     /// <summary>
-    /// Liefert die Pfad-Befehle für ein Segment in lokalen Koordinaten mit Berücksichtigung des Entry-Ports.
-    /// Entry-Port B bei Kurven: Kurve rechts (curveDirection -1). Entry-Port B bei Geraden: Linie rückwärts.
+    /// Returns the path commands for a segment in local coordinates considering the entry port.
+    /// Entry port B for curves: curve right (curveDirection -1). Entry port B for straights: line backwards.
     /// </summary>
     public static IReadOnlyList<PathCommand> GetPath(Segment segment, char entryPort)
     {
@@ -54,7 +54,7 @@ public static class SegmentLocalPathBuilder
         };
     }
 
-    /// <summary>Liefert die Bounding-Box des Pfads (MinX, MinY, MaxX, MaxY) in mm.</summary>
+    /// <summary>Returns the bounding box of the path (MinX, MinY, MaxX, MaxY) in mm.</summary>
     public static (double MinX, double MinY, double MaxX, double MaxY) GetBounds(IReadOnlyList<PathCommand> path)
     {
         double minX = 0, minY = 0, maxX = 0, maxY = 0;
@@ -142,7 +142,7 @@ public static class SegmentLocalPathBuilder
         ];
     }
 
-    /// <summary>WY: Y-Weiche wie W3 ohne Gerade – zwei R9-Bögen je 15° (Port B links wie WL, Port C rechts wie WR).</summary>
+    /// <summary>WY: Y-switch like W3 without straight – two R9 arcs of 15° each (Port B left like WL, Port C right like WR).</summary>
     private static IReadOnlyList<PathCommand> GetWyPath(double arcDegree, double radius)
     {
         var halfArc = arcDegree / 2;
@@ -168,18 +168,18 @@ public static class SegmentLocalPathBuilder
         ];
     }
 
-    /// <summary>W3 (Piko 55225): Gerade G239 bis Port B, zwei Abzweige R9 je 15° – Port C wie WL (links), Port D wie WR (rechts).</summary>
+    /// <summary>W3 (Piko 55225): Straight G239 to Port B, two R9 branches 15° each – Port C like WL (left), Port D like WR (right).</summary>
     private static IReadOnlyList<PathCommand> GetW3Path(double length, double arcDegree, double radius)
     {
         var halfArc = arcDegree / 2;
-        // Port C: linker Ast wie WL – Mittelpunkt (0, -radius), Bogen 15° gegen Uhrzeigersinn
+        // Port C: left branch like WL – center (0, -radius), arc 15° counter-clockwise
         var centerL = -90 * Math.PI / 180;
         var centerLx = radius * Math.Cos(centerL);
         var centerLy = radius * Math.Sin(centerL);
         var endAngleL = (-halfArc + 90) * Math.PI / 180;
         var portCx = centerLx + radius * Math.Cos(endAngleL);
         var portCy = centerLy + radius * Math.Sin(endAngleL);
-        // Port D: rechter Ast wie WR – Mittelpunkt (0, radius), Bogen 15° im Uhrzeigersinn
+        // Port D: right branch like WR – center (0, radius), arc 15° clockwise
         var centerR = 90 * Math.PI / 180;
         var centerRx = radius * Math.Cos(centerR);
         var centerRy = radius * Math.Sin(centerR);
@@ -196,7 +196,7 @@ public static class SegmentLocalPathBuilder
         ];
     }
 
-    /// <summary>BWL: Bogenweiche links R2→R3. Stammgleis R2-Bogen, Abzweig R3-Bogen.</summary>
+    /// <summary>BWL: Curved turnout left R2→R3. Main track R2 curve, branch R3 curve.</summary>
     private static IReadOnlyList<PathCommand> GetBwlPath(double arcR2, double radiusR2, double radiusR3)
     {
         var curveDir = -1;
@@ -218,7 +218,7 @@ public static class SegmentLocalPathBuilder
         ];
     }
 
-    /// <summary>BWR: Bogenweiche rechts R2→R3. Stammgleis R2-Bogen, Abzweig R3-Bogen.</summary>
+    /// <summary>BWR: Curved turnout right R2→R3. Main track R2 curve, branch R3 curve.</summary>
     private static IReadOnlyList<PathCommand> GetBwrPath(double arcR2, double radiusR2, double radiusR3)
     {
         const int curveDir = 1;
@@ -240,7 +240,7 @@ public static class SegmentLocalPathBuilder
         ];
     }
 
-    /// <summary>BWLR3: Bogenweiche links R3→R4.</summary>
+    /// <summary>BWLR3: Curved turnout left R3→R4.</summary>
     private static IReadOnlyList<PathCommand> GetBwlr3Path(double radiusR3)
     {
         var radiusR4 = radiusR3 + 61.88;
@@ -262,7 +262,7 @@ public static class SegmentLocalPathBuilder
         ];
     }
 
-    /// <summary>BWRR3: Bogenweiche rechts R3→R4.</summary>
+    /// <summary>BWRR3: Curved turnout right R3→R4.</summary>
     private static IReadOnlyList<PathCommand> GetBwrr3Path(double radiusR3)
     {
         var radiusR4 = radiusR3 + 61.88;
@@ -284,20 +284,20 @@ public static class SegmentLocalPathBuilder
         ];
     }
 
-    /// <summary>DKW (Piko 55224) – AnyRail-Referenz: Zwei parallele Hauptgleise (oben A–B, unten C–D), in der Mitte X aus zwei Diagonalen (15°).</summary>
+    /// <summary>DKW (Piko 55224) – AnyRail reference: Two parallel main tracks (top A–B, bottom C–D), X in center from two diagonals (15°).</summary>
     private static IReadOnlyList<PathCommand> GetDkwPath(double length, double arcDegree, double radius)
     {
         var half = length / 2;
         var rad = arcDegree * Math.PI / 180;
         var cos = Math.Cos(rad);
         var sin = Math.Sin(rad);
-        // Abstand der parallelen Gleise (Höhe der Raute)
+        // Distance of parallel tracks (rhombus height)
         var trackOffset = half * sin;
         var crossHalf = half * cos;
-        // Oberes Gleis: (0, trackOffset) bis (length, trackOffset)
-        // Unteres Gleis: (0, -trackOffset) bis (length, -trackOffset)
-        // X: Diagonale 1 von (half - crossHalf, trackOffset) nach (half + crossHalf, -trackOffset)
-        //    Diagonale 2 von (half - crossHalf, -trackOffset) nach (half + crossHalf, trackOffset)
+        // Upper track: (0, trackOffset) to (length, trackOffset)
+        // Lower track: (0, -trackOffset) to (length, -trackOffset)
+        // X: Diagonal 1 from (half - crossHalf, trackOffset) to (half + crossHalf, -trackOffset)
+        //    Diagonal 2 from (half - crossHalf, -trackOffset) to (half + crossHalf, trackOffset)
         return
         [
             new MoveTo(0, trackOffset),

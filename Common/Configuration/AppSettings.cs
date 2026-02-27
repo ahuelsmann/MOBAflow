@@ -7,11 +7,34 @@ namespace Moba.Common.Configuration;
 /// </summary>
 public class AppSettings
 {
+    /// <summary>
+    /// Gets or sets settings for the Z21 digital command station.
+    /// </summary>
     public Z21Settings Z21 { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets REST API server connection settings.
+    /// </summary>
     public RestApiSettings RestApi { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets Azure Speech synthesis configuration.
+    /// </summary>
     public SpeechSettings Speech { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets general application behavior settings.
+    /// </summary>
     public ApplicationSettings Application { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets counter/statistics feature configuration.
+    /// </summary>
     public CounterSettings Counter { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets health check configuration.
+    /// </summary>
     public HealthCheckSettings HealthCheck { get; set; } = new();
     /// <summary>
     /// Train Control settings including locomotive presets for quick switching.
@@ -29,8 +52,8 @@ public class AppSettings
     public LayoutSettings Layout { get; set; } = new();
 
     /// <summary>
-    /// Signal Box / Viessmann Multiplex-Signal Einstellungen (Stellwerk-Seite).
-    /// Optional; wenn nicht in appsettings.json vorhanden, werden Standardwerte verwendet.
+    /// Signal Box / Viessmann Multiplex signal settings.
+    /// Optional; if not present in appsettings.json, default values are used.
     /// </summary>
     public SignalBoxSettings SignalBox { get; set; } = new();
 
@@ -244,18 +267,30 @@ public class FeatureToggleSettings
     /// Enable Overview page (Dashboard with journey status).
     /// </summary>
     public bool IsOverviewPageAvailable { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets an optional label suffix for the Overview page (e.g., "Preview", "Beta").
+    /// </summary>
     public string OverviewPageLabel { get; set; } = string.Empty;
 
     /// <summary>
     /// Enable Solution page (Project/Solution management).
     /// </summary>
     public bool IsSolutionPageAvailable { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets an optional label suffix for the Solution page.
+    /// </summary>
     public string SolutionPageLabel { get; set; } = string.Empty;
 
     /// <summary>
     /// Enable Settings page (Application configuration).
     /// </summary>
     public bool IsSettingsPageAvailable { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets an optional label suffix for the Settings page.
+    /// </summary>
     public string SettingsPageLabel { get; set; } = string.Empty;
 
     // Journey Management (Stable - ENABLED by default)
@@ -264,12 +299,20 @@ public class FeatureToggleSettings
     /// Enable Journeys page (Train journey management with stations).
     /// </summary>
     public bool IsJourneysPageAvailable { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets an optional label suffix for the Journeys page.
+    /// </summary>
     public string JourneysPageLabel { get; set; } = string.Empty;
 
     /// <summary>
     /// Enable Workflows page (Automation workflows for actions).
     /// </summary>
     public bool IsWorkflowsPageAvailable { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets an optional label suffix for the Workflows page.
+    /// </summary>
     public string WorkflowsPageLabel { get; set; } = string.Empty;
 
     // Track Management (Testing - ENABLED by default)
@@ -279,6 +322,10 @@ public class FeatureToggleSettings
     /// Experimental feature marked as Preview.
     /// </summary>
     public bool IsTrackPlanEditorPageAvailable { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets an optional label suffix for the Track Plan Editor page.
+    /// </summary>
     public string TrackPlanEditorPageLabel { get; set; } = "Preview";
 
     /// <summary>
@@ -286,6 +333,10 @@ public class FeatureToggleSettings
     /// Experimental feature marked as Preview.
     /// </summary>
     public bool IsSignalBoxPageAvailable { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets an optional label suffix for the Signal Box page.
+    /// </summary>
     public string SignalBoxPageLabel { get; set; } = "Preview";
 
     /// <summary>
@@ -293,6 +344,10 @@ public class FeatureToggleSettings
     /// Experimental feature marked as Preview.
     /// </summary>
     public bool IsJourneyMapPageAvailable { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets an optional label suffix for the Journey Map page.
+    /// </summary>
     public string JourneyMapPageLabel { get; set; } = "Preview";
 
     // Monitoring (Testing - ENABLED by default)
@@ -302,6 +357,10 @@ public class FeatureToggleSettings
     /// Experimental feature marked as Preview. Hidden by default.
     /// </summary>
     public bool IsDockingPageAvailable { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets an optional label suffix for the Docking page.
+    /// </summary>
     public string DockingPageLabel { get; set; } = "Preview";
 
     /// <summary>
@@ -309,6 +368,10 @@ public class FeatureToggleSettings
     /// Experimental feature marked as Preview.
     /// </summary>
     public bool IsMonitorPageAvailable { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets an optional label suffix for the Monitor page.
+    /// </summary>
     public string MonitorPageLabel { get; set; } = "Preview";
 
     // Train/Rolling Stock Management (Upcoming - ENABLED by default)
@@ -318,6 +381,10 @@ public class FeatureToggleSettings
     /// Upcoming feature marked as Preview.
     /// </summary>
     public bool IsLocomotivesPageAvailable { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets an optional label suffix for the Locomotives page.
+    /// </summary>
     public string LocomotivesPageLabel { get; set; } = "Preview";
 
     /// <summary>
@@ -325,6 +392,10 @@ public class FeatureToggleSettings
     /// Upcoming feature marked as Preview.
     /// </summary>
     public bool IsTrainsPageAvailable { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets an optional label suffix for the Trains page.
+    /// </summary>
     public string TrainsPageLabel { get; set; } = "Preview";
 
     // Train Control (Digital Throttle - ENABLED by default)
@@ -334,25 +405,29 @@ public class FeatureToggleSettings
     /// New feature marked as Preview until fully tested.
     /// </summary>
     public bool IsTrainControlPageAvailable { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets an optional label suffix for the Train Control page.
+    /// </summary>
     public string TrainControlPageLabel { get; set; } = "Preview";
 }
 
 /// <summary>
-/// Einstellungen für die Stellwerk-Seite (SignalBox) und Viessmann-Multiplex-Signale (z. B. 5229).
-/// Ermöglicht pro DCC-Adresse eine getrennte Polaritätsumkehr (Activate-Bit) für die 4 aufeinanderfolgenden Adressen.
+/// Settings for the Signal Box page and Viessmann Multiplex signals (e.g. 5229).
+/// Allows separate polarity inversion (Activate bit) per DCC address for the 4 consecutive addresses.
 /// </summary>
 public class SignalBoxSettings
 {
-    /// <summary>Polarität umkehren für 1. Adresse (Basisadresse + 0, z. B. 201).</summary>
+    /// <summary>Invert polarity for address 1 (base address + 0, e.g. 201).</summary>
     public bool InvertPolarityOffset0 { get; set; }
 
-    /// <summary>Polarität umkehren für 2. Adresse (Basisadresse + 1, z. B. 202).</summary>
+    /// <summary>Invert polarity for address 2 (base address + 1, e.g. 202).</summary>
     public bool InvertPolarityOffset1 { get; set; }
 
-    /// <summary>Polarität umkehren für 3. Adresse (Basisadresse + 2, z. B. 203).</summary>
+    /// <summary>Invert polarity for address 3 (base address + 2, e.g. 203).</summary>
     public bool InvertPolarityOffset2 { get; set; }
 
-    /// <summary>Polarität umkehren für 4. Adresse (Basisadresse + 3, z. B. 204).</summary>
+    /// <summary>Invert polarity for address 4 (base address + 3, e.g. 204).</summary>
     public bool InvertPolarityOffset3 { get; set; }
 }
 

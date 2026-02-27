@@ -1,7 +1,7 @@
 namespace Moba.TrackLibrary.Base;
 
 /// <summary>
-/// Gerades Gleissegment mit zwei Ports (A, B) und fester Länge.
+/// Straight track segment with two ports (A, B) and fixed length.
 /// </summary>
 public abstract record Straight(double LengthInMm) : Segment
 {

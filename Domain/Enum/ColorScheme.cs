@@ -15,15 +15,15 @@ public enum ColorScheme
     /// <summary>Special purpose or commemorative livery.</summary>
     Special,
 
-    /// <summary>Classic chromoxidgrün livery.</summary>
+    /// <summary>Classic chromium oxide green livery.</summary>
     Chromoxidgrün,
 
     /// <summary>Orientrot livery.</summary>
     Orientrot,
 
-    /// <summary>Ozeanblau (ocean blue) livery.</summary>
+    /// <summary>Ocean blue livery.</summary>
     Ozenblau,
 
-    /// <summary>Verkehrsrot (traffic red) livery.</summary>
+    /// <summary>Traffic red livery.</summary>
     Verkehrsrot,
 }

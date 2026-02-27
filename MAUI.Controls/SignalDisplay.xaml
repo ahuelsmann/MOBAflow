@@ -9,7 +9,7 @@
             Padding="16"
             StrokeShape="RoundRectangle 8">
         
-        <!-- 6x6 Grid Template für Signalbilder -->
+        <!-- 6x6 grid template for signal displays -->
         <Grid WidthRequest="180" HeightRequest="180">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
@@ -41,8 +41,8 @@
             <BoxView Grid.Row="0" Grid.Column="3" Grid.RowSpan="6" Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" WidthRequest="1" HorizontalOptions="End"/>
             <BoxView Grid.Row="0" Grid.Column="4" Grid.RowSpan="6" Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" WidthRequest="1" HorizontalOptions="End"/>
 
-            <!-- Hier Signalelemente hinzufügen -->
-            <!-- Beispiel: Ellipse in Mitte für Signallampe -->
+            <!-- Add signal elements here -->
+            <!-- Example: ellipse in center for signal lamp -->
             <Ellipse Grid.Row="2" Grid.Column="2" Grid.RowSpan="2" Grid.ColumnSpan="2"
                      Fill="Red"
                      Margin="4"/>

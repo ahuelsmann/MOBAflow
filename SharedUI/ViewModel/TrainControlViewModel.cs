@@ -99,7 +99,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     // === Locomotive Presets ===
 
     /// <summary>
-    /// Currently selected preset index (0, 1, or 2). -1 = Lok aus Projekt-Combobox gewählt.
+    /// Currently selected preset index (0, 1, or 2). -1 = locomotive selected from project combo box.
     /// </summary>
     [ObservableProperty]
     private int _selectedPresetIndex;
@@ -107,15 +107,15 @@ public sealed partial class TrainControlViewModel : ObservableObject
     private static readonly ObservableCollection<LocomotiveViewModel> EmptyProjectLocomotives = [];
 
     /// <summary>
-    /// Lokomotiven des aktuellen Projekts für die ComboBox-Auswahl (Stellwerk).
-    /// Entweder Preset (Lok 1/2/3) oder eine Lok aus dieser Liste wird gesteuert.
+    /// Locomotives of the current project for combo box selection.
+    /// Either preset (Loco 1/2/3) or a locomotive from this list is controlled.
     /// </summary>
     public ObservableCollection<LocomotiveViewModel> ProjectLocomotives =>
         _mainWindowViewModel?.SelectedProject?.Locomotives ?? EmptyProjectLocomotives;
 
     /// <summary>
-    /// Aus der Projekt-Combobox gewählte Lok. Wenn gesetzt, wird diese gesteuert (SelectedPresetIndex = -1).
-    /// Beim Wechsel auf ein Preset wird dies auf null gesetzt.
+    /// Locomotive selected from project combo box. When set, this one is controlled (SelectedPresetIndex = -1).
+    /// When switching to a preset, this is set to null.
     /// </summary>
     [ObservableProperty]
     private LocomotiveViewModel? _selectedLocomotiveFromProject;
@@ -129,7 +129,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
             LocoAddress = addr.HasValue ? (int)addr.Value : 0;
             Speed = 0;
             IsForward = true;
-            StatusMessage = $"Lok aus Projekt: {value.Name} (DCC {LocoAddress})";
+            StatusMessage = $"Loco from project: {value.Name} (DCC {LocoAddress})";
         }
 
         if (!_isLoadingPreset)
@@ -385,11 +385,11 @@ public sealed partial class TrainControlViewModel : ObservableObject
     [ObservableProperty]
     private bool _isF20On;
 
-    // === Bremse (Lok: Feststellbremse/Federspeicherbremse) und Türfreigabe ===
-    // Ablauf: Geschw. 0 → Bremse an → Tür freigeben; Ende: Tür schließen → Bremse lösen → Fahren.
+    // === Brake (locomotive: parking brake/spring brake) and door release ===
+    // Flow: speed 0 → brake on → release door; end: close door → release brake → drive.
 
     /// <summary>
-    /// Bremse angelegt (Feststellbremse/Federspeicherbremse): Geschwindigkeit 0, kann nicht erhöht werden.
+    /// Brake applied (parking brake/spring-loaded brake): speed 0, cannot be increased.
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(BrakeButtonColorHex))]
@@ -400,8 +400,8 @@ public sealed partial class TrainControlViewModel : ObservableObject
     private bool _brakeEngaged;
 
     /// <summary>
-    /// Türfreigabe gesperrt (Türen zu): Icon DoorClose. Wenn freigegeben (Türen auf), kann Geschwindigkeit nicht erhöht werden.
-    /// Standard true = Türen zu, damit Bremse nach dem Anlegen wieder lösbar ist.
+    /// Door release locked (doors closed): Icon DoorClose. When released (doors open), speed cannot be increased.
+    /// Default true = doors closed, so brake can be released again after applying.
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowDoorCloseIcon))]
@@ -413,7 +413,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     private bool _doorReleaseLocked = true;
 
     /// <summary>
-    /// Während der 5-Sekunden-Übergangsphase blinkt der Button gelb (Farbe + Opacity-Wechsel).
+    /// During the 5-second transition phase the button blinks yellow (color + opacity change).
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowDoorCloseIcon))]
@@ -423,57 +423,57 @@ public sealed partial class TrainControlViewModel : ObservableObject
     private bool _doorReleaseBlinking;
 
     /// <summary>
-    /// Opacity des Türfreigabe-Buttons: während des Blinkens wechselnd 1.0 / 0.35, sonst 1.0.
+    /// Opacity of the door release button: alternating 1.0 / 0.35 during blinking, otherwise 1.0.
     /// </summary>
     [ObservableProperty]
     private double _doorReleaseBlinkOpacity = 1.0;
 
     /// <summary>
-    /// Zielzustand der Türfreigabe nach Ablauf der 5-Sekunden-Blinkphase.
+    /// Target state of door release after the 5-second blink phase expires.
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowDoorCloseIcon))]
     private bool _doorReleaseLockedNext;
 
     /// <summary>
-    /// True = DoorClose-Icon anzeigen, False = DoorOpen-Icon (für Bindung ContentTemplate).
+    /// True = show DoorClose icon, False = DoorOpen icon (for ContentTemplate binding).
     /// </summary>
     public bool ShowDoorCloseIcon => (DoorReleaseBlinking && DoorReleaseLockedNext) || (!DoorReleaseBlinking && DoorReleaseLocked);
 
     /// <summary>
-    /// Hintergrundfarbe des Bremse-Buttons: Grün = gelöst, Rot = angelegt.
+    /// Background color of brake button: green = released, red = applied.
     /// </summary>
     public string BrakeButtonColorHex => BrakeEngaged ? "#E63946" : "#06D6A0";
 
     /// <summary>
-    /// Bremse-Button: Anlegen immer möglich (setzt Geschw. auf 0). Lösen nur wenn Türfreigabe beendet (Türen zu).
+    /// Brake button: apply always possible (sets speed to 0). Release only when door release ended (doors closed).
     /// </summary>
     public bool IsBrakeButtonEnabled => !BrakeEngaged || DoorReleaseLocked;
 
     /// <summary>
-    /// Segoe Fluent Glyph für Bremse: Pause (angelegt) oder Play (gelöst).
+    /// Segoe Fluent glyph for brake: Pause (applied) or Play (released).
     /// </summary>
     public string BrakeButtonGlyph => BrakeEngaged ? "\uE72E" : "\uE102";
 
     /// <summary>
-    /// Hintergrundfarbe des Türfreigabe-Buttons: Grün bei 0 km/h und freigegeben, Rot bei gesperrt oder &gt;0 km/h, Gelb beim Blinken.
+    /// Background color of door release button: green at 0 km/h and released, red when locked or &gt;0 km/h, yellow when blinking.
     /// </summary>
     public string DoorReleaseButtonColorHex => DoorReleaseBlinking ? "#FFD700" : (!DoorReleaseLocked && SpeedKmh == 0 ? "#06D6A0" : "#E63946");
 
     /// <summary>
-    /// Türfreigabe-Button nur klickbar wenn Bremse angelegt, 0 km/h und nicht während des Blinkens.
+    /// Door release button only clickable when brake applied, 0 km/h, and not during blinking.
     /// </summary>
     public bool IsDoorReleaseButtonEnabled => BrakeEngaged && SpeedKmh == 0 && !DoorReleaseBlinking;
 
     /// <summary>
-    /// Geschwindigkeit darf nur erhöht werden wenn Bremse gelöst und Türen geschlossen (Türfreigabe gesperrt).
+    /// Speed may only be increased when brake released and doors closed (door release locked).
     /// </summary>
     private bool CanIncreaseSpeed => !BrakeEngaged && DoorReleaseLocked;
 
     // === Function button symbols (F0–F20) – per-locomotive, from Domain.Locomotive.FunctionSymbols ===
 
     /// <summary>
-    /// Standard-Symbole für F0–F20 (Segoe MDL2), wenn keine Lok im Projekt oder keine Anpassung gespeichert ist.
+    /// Default symbols for F0–F20 (Segoe MDL2) when no locomotive in project or no customization saved.
     /// </summary>
     private static readonly string[] DefaultFunctionGlyphs =
     {
@@ -483,48 +483,48 @@ public sealed partial class TrainControlViewModel : ObservableObject
     };
 
     /// <summary>
-    /// Glyph für Funktionsschaltfläche F0 (z. B. Licht).
+    /// Glyph for function button F0 (e.g. light).
     /// </summary>
     public string Function0Glyph => GetFunctionGlyph(0);
-    /// <summary>Glyph für F1.</summary>
+    /// <summary>Glyph for F1.</summary>
     public string Function1Glyph => GetFunctionGlyph(1);
-    /// <summary>Glyph für F2.</summary>
+    /// <summary>Glyph for F2.</summary>
     public string Function2Glyph => GetFunctionGlyph(2);
-    /// <summary>Glyph für F3.</summary>
+    /// <summary>Glyph for F3.</summary>
     public string Function3Glyph => GetFunctionGlyph(3);
-    /// <summary>Glyph für F4.</summary>
+    /// <summary>Glyph for F4.</summary>
     public string Function4Glyph => GetFunctionGlyph(4);
-    /// <summary>Glyph für F5.</summary>
+    /// <summary>Glyph for F5.</summary>
     public string Function5Glyph => GetFunctionGlyph(5);
-    /// <summary>Glyph für F6.</summary>
+    /// <summary>Glyph for F6.</summary>
     public string Function6Glyph => GetFunctionGlyph(6);
-    /// <summary>Glyph für F7.</summary>
+    /// <summary>Glyph for F7.</summary>
     public string Function7Glyph => GetFunctionGlyph(7);
-    /// <summary>Glyph für F8.</summary>
+    /// <summary>Glyph for F8.</summary>
     public string Function8Glyph => GetFunctionGlyph(8);
-    /// <summary>Glyph für F9.</summary>
+    /// <summary>Glyph for F9.</summary>
     public string Function9Glyph => GetFunctionGlyph(9);
-    /// <summary>Glyph für F10.</summary>
+    /// <summary>Glyph for F10.</summary>
     public string Function10Glyph => GetFunctionGlyph(10);
-    /// <summary>Glyph für F11.</summary>
+    /// <summary>Glyph for F11.</summary>
     public string Function11Glyph => GetFunctionGlyph(11);
-    /// <summary>Glyph für F12.</summary>
+    /// <summary>Glyph for F12.</summary>
     public string Function12Glyph => GetFunctionGlyph(12);
-    /// <summary>Glyph für F13.</summary>
+    /// <summary>Glyph for F13.</summary>
     public string Function13Glyph => GetFunctionGlyph(13);
-    /// <summary>Glyph für F14.</summary>
+    /// <summary>Glyph for F14.</summary>
     public string Function14Glyph => GetFunctionGlyph(14);
-    /// <summary>Glyph für F15.</summary>
+    /// <summary>Glyph for F15.</summary>
     public string Function15Glyph => GetFunctionGlyph(15);
-    /// <summary>Glyph für F16.</summary>
+    /// <summary>Glyph for F16.</summary>
     public string Function16Glyph => GetFunctionGlyph(16);
-    /// <summary>Glyph für F17.</summary>
+    /// <summary>Glyph for F17.</summary>
     public string Function17Glyph => GetFunctionGlyph(17);
-    /// <summary>Glyph für F18.</summary>
+    /// <summary>Glyph for F18.</summary>
     public string Function18Glyph => GetFunctionGlyph(18);
-    /// <summary>Glyph für F19.</summary>
+    /// <summary>Glyph for F19.</summary>
     public string Function19Glyph => GetFunctionGlyph(19);
-    /// <summary>Glyph für F20.</summary>
+    /// <summary>Glyph for F20.</summary>
     public string Function20Glyph => GetFunctionGlyph(20);
 
     /// <summary>
@@ -825,7 +825,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
         // Load presets from settings
         LoadPresetsFromSettings();
 
-        // Subscribe to Z21 events via EventBus (UiThreadEventBusDecorator führt Handler auf UI-Thread aus)
+        // Subscribe to Z21 events via EventBus (UiThreadEventBusDecorator runs handlers on UI thread)
         eventBus.Subscribe<Z21ConnectionEstablishedEvent>(_ => OnZ21ConnectionChanged(true));
         eventBus.Subscribe<Z21ConnectionLostEvent>(_ => OnZ21ConnectionChanged(false));
         eventBus.Subscribe<LocomotiveInfoChangedEvent>(evt => OnLocoInfoReceived(CreateLocoInfo(evt)));
@@ -892,9 +892,9 @@ public sealed partial class TrainControlViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Stellt die Combobox-Auswahl „Lok aus Projekt“ wieder her, wenn die gespeicherte Lok
-    /// in der aktuellen Projektliste vorkommt. Wird beim Laden der Einstellungen und beim
-    /// Wechsel des Projekts aufgerufen.
+    /// Restores the combo box selection "Loco from project" when the saved locomotive
+    /// appears in the current project list. Called when loading settings and when
+    /// switching projects.
     /// </summary>
     private void TryRestoreSelectedLocomotiveFromProject()
     {
@@ -946,7 +946,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
         SelectedLocoSeries = trainControl.SelectedLocoSeries;
         SelectedVmax = trainControl.SelectedVmax;
 
-        // Wiederherstellen der Combobox-Auswahl „Lok aus Projekt“, falls gespeichert und im Projekt vorhanden
+        // Restore combo box selection "Loco from project" if saved and present in project
         TryRestoreSelectedLocomotiveFromProject();
 
         // Apply current preset only when a preset (0–2) is selected; -1 = Combobox-Auswahl
@@ -1057,7 +1057,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Liefert die zum aktuellen Preset (LocoAddress) gehörende Lok aus dem ausgewählten Projekt, falls vorhanden.
+    /// Returns the locomotive for the current preset (LocoAddress) from the selected project, if present.
     /// </summary>
     private Locomotive? GetCurrentLocomotive()
     {
@@ -1067,7 +1067,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Glyph für die Funktionsschaltfläche mit Index 0–20. Nutzt Domain.Locomotive.FunctionSymbols, sonst Standard-Symbol.
+    /// Glyph for the function button with index 0–20. Uses Domain.Locomotive.FunctionSymbols, otherwise default symbol.
     /// </summary>
     private string GetFunctionGlyph(int functionIndex)
     {
@@ -1080,8 +1080,8 @@ public sealed partial class TrainControlViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Setzt das Symbol für die angegebene Funktion (0–20) für die aktuelle Lok (LocoAddress) und speichert die Solution.
-    /// Nur wirksam, wenn eine Lok mit dieser Digitaladresse im ausgewählten Projekt existiert.
+    /// Sets the symbol for the specified function (0–20) for the current locomotive (LocoAddress) and saves the Solution.
+    /// Only effective when a locomotive with this digital address exists in the selected project.
     /// </summary>
     /// <param name="functionIndex">Funktionsindex 0–20 (F0–F20).</param>
     /// <param name="glyph">Unicode-Glyph-String (z. B. "\uE7B7").</param>
@@ -1103,7 +1103,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Löst PropertyChanged für alle FunctionXGlyph-Properties aus (z. B. nach Adress- oder Symboländerung).
+    /// Raises PropertyChanged for all FunctionXGlyph properties (e.g. after address or symbol change).
     /// </summary>
     private void NotifyAllFunctionGlyphsChanged()
     {
@@ -1230,7 +1230,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
 
     /// <summary>
     /// Called when Speed changes - send to Z21 and save to preset.
-    /// Erhöhung verhindert wenn Bremse angelegt oder Türfreigabe aktiv (Türen auf).
+    /// Speed increase prevented when brake applied or door release active (doors open).
     /// </summary>
     partial void OnSpeedChanged(int value)
     {
@@ -1250,7 +1250,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
         CurrentPreset.Speed = value;
         _ = SavePresetsToSettingsAsync();
 
-        // Fahrtenbuch: Geschwindigkeitsänderung protokollieren
+        // Trip log: record speed change
         _tripLogService?.RecordStateChange(
             _mainWindowViewModel?.SelectedProject?.Model,
             LocoAddress,
@@ -1578,7 +1578,7 @@ public sealed partial class TrainControlViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Bremse anlegen (Geschwindigkeit auf 0, dann Bremse an) oder lösen (nur wenn Türen geschlossen).
+    /// Apply brake (speed to 0, then brake on) or release (only when doors closed).
     /// </summary>
     [RelayCommand(CanExecute = nameof(IsBrakeButtonEnabled))]
     private async Task ToggleBrakeAsync()
@@ -1602,8 +1602,8 @@ public sealed partial class TrainControlViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Schaltet die Türfreigabe um (freigeben/ sperren). 5 Sekunden gelbes Blinken (Opacity-Wechsel), dann Wechsel Icon/Farbe.
-    /// Nur ausführbar wenn Bremse angelegt (Button rot) und 0 km/h.
+    /// Toggles door release (release/lock). 5 seconds yellow blinking (opacity change), then icon/color change.
+    /// Only executable when brake applied (button red) and 0 km/h.
     /// </summary>
     [RelayCommand(CanExecute = nameof(IsDoorReleaseButtonEnabled))]
     private async Task ToggleDoorReleaseAsync()

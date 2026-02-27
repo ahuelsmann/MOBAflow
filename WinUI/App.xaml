@@ -19,7 +19,7 @@
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="SurfaceSecondaryBrush" Color="#FFF3F3F3" />
                     <SolidColorBrush x:Key="SurfaceBackgroundFillColorDefaultBrush" Color="#FFFFFFFF" />
-                    <!--  TrackPlan: kräftig dunkler Strich auf hellem Hintergrund (Fluent: guter Kontrast)  -->
+                    <!--  TrackPlan: strong dark stroke on light background (Fluent: good contrast)  -->
                     <SolidColorBrush x:Key="TrackPlanStrokeBrush" Color="#FF121212" />
                     <SolidColorBrush x:Key="TrackPlanStrokeSelectedBrush" Color="#FF0078D4" />
                     <!--  Icons (Icons.xaml): schwarz im Light-Theme  -->
@@ -31,7 +31,7 @@
                     <!--  TrackPlan: heller Strich auf dunklem Hintergrund (Fluent: Lesbarkeit im Dark Mode)  -->
                     <SolidColorBrush x:Key="TrackPlanStrokeBrush" Color="#FFEBEBEB" />
                     <SolidColorBrush x:Key="TrackPlanStrokeSelectedBrush" Color="#FF60CDFF" />
-                    <!--  Icons (Icons.xaml): weiß im Dark-Theme  -->
+                    <!--  Icons (Icons.xaml): white in dark theme  -->
                     <SolidColorBrush x:Key="IconStrokeBrush" Color="#FFFFFFFF" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>

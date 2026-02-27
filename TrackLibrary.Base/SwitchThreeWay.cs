@@ -1,7 +1,7 @@
 namespace Moba.TrackLibrary.Base;
 
 /// <summary>
-/// Dreiwegeweiche mit vier Ports (A, B, C, D).
+/// Three-way switch with four ports (A, B, C, D).
 /// </summary>
 public abstract record SwitchThreeWay : Segment
 {

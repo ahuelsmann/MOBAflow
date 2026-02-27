@@ -49,7 +49,7 @@ internal sealed partial class SolutionPage
         if (await dialog.ShowAsync() != ContentDialogResult.Primary)
             return;
 
-        // Backup der aktuellen Solution-Datei erstellen (vor dem Löschen)
+        // Create backup of current solution file (before deletion)
         var solutionPath = ViewModel.CurrentSolutionPath;
         if (!string.IsNullOrEmpty(solutionPath) && File.Exists(solutionPath))
         {
@@ -63,7 +63,7 @@ internal sealed partial class SolutionPage
             }
             catch
             {
-                // Backup fehlgeschlagen – Löschen trotzdem ausführen (Benutzer hat bestätigt)
+                // Backup failed – still perform deletion (user has confirmed)
             }
         }
 

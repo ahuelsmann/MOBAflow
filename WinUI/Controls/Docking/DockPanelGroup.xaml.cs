@@ -12,20 +12,20 @@ using System.Collections.Specialized;
 using System.Linq;
 
 /// <summary>
-/// Legt fest, wie mehrere Panels in einer Dock-Gruppe dargestellt werden.
+/// Determines how multiple panels in a dock group are displayed.
 /// </summary>
 internal enum DockGroupLayoutMode
 {
-    /// <summary>Panels gleichmäßig aufteilen (Split).</summary>
+    /// <summary>Split panels evenly (Split).</summary>
     Split,
 
-    /// <summary>Panels als Tabs gestapelt, per Tab auswählbar.</summary>
+    /// <summary>Panels stacked as tabs, selectable by tab.</summary>
     Tabbed
 }
 
 /// <summary>
-/// Gruppiert mehrere DockPanels für eine Dock-Position.
-/// Ein Panel: direkte Anzeige. Mehrere: je nach LayoutMode gleichmäßig geteilt (Split) oder als Tabs (Tabbed).
+/// Groups multiple DockPanels for a dock position.
+/// Single panel: direct display. Multiple: split evenly (Split) or as tabs (Tabbed) depending on LayoutMode.
 /// </summary>
 internal sealed class DockPanelGroup : UserControl
 {
@@ -130,7 +130,7 @@ internal sealed class DockPanelGroup : UserControl
     }
 
     /// <summary>
-    /// Legt fest, ob mehrere Panels gleichmäßig geteilt (Split) oder als Tabs gestapelt (Tabbed) dargestellt werden.
+    /// Determines whether multiple panels are split evenly (Split) or stacked as tabs (Tabbed).
     /// </summary>
     public DockGroupLayoutMode LayoutMode
     {

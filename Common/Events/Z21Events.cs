@@ -131,11 +131,11 @@ public sealed record HealthCheckRecoveredEvent(
     TimeSpan DowntimeDuration) : EventBase;
 
 /// <summary>
-/// TripLog-Service: neuer Eintrag hinzugefügt (für UI-Aktualisierung).
+/// TripLog service: new entry added (for UI update).
 /// </summary>
 public sealed record TripLogEntryAddedEvent : EventBase;
 
 /// <summary>
-/// Post-Startup-Initialisierung: Status-Text für Statusleiste.
+/// Post-startup initialization: status text for status bar.
 /// </summary>
 public sealed record PostStartupStatusEvent(bool IsRunning, string StatusText) : EventBase;

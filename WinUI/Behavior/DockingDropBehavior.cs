@@ -5,8 +5,8 @@ namespace Moba.WinUI.Behavior;
 using Microsoft.UI.Xaml;
 
 /// <summary>
-/// Drag & Drop Handler für DockingManager Panels.
-/// Visualisiert Drop-Zonen und validiert Drop-Positionen.
+/// Drag and drop handler for DockingManager panels.
+/// Visualizes drop zones and validates drop positions.
 /// </summary>
 public static class DockingDropBehavior
 {
@@ -124,8 +124,8 @@ public static class DockingDropBehavior
 
     private static void HighlightDropZone(FrameworkElement element, DockPosition _position)
     {
-        // Appliziere visuelles Feedback basierend auf Drop-Position
-        // könnte mit VisualState oder OpacityMask implementiert werden
+        // Apply visual feedback based on drop position
+        // could be implemented with VisualState or OpacityMask
         element.Opacity = 0.8;
     }
 
@@ -138,7 +138,7 @@ public static class DockingDropBehavior
 }
 
 /// <summary>
-/// Enum für Dock-Positionen.
+/// Enum for dock positions.
 /// </summary>
 public enum DockPosition
 {

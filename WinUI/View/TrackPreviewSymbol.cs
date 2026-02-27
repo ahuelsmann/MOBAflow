@@ -8,8 +8,8 @@ using Microsoft.UI.Xaml.Shapes;
 using TrackLibrary.PikoA;
 
 /// <summary>
-/// Erzeugt Vorschau-Symbole für Piko A-Gleistypen in der Toolbox.
-/// Nutzt <see cref="SegmentLocalPathBuilder"/> – dieselbe Geometrie wie der TrackPlanSvgRenderer.
+/// Creates preview symbols for Piko A track types in the toolbox.
+/// Uses <see cref="SegmentLocalPathBuilder"/> – same geometry as TrackPlanSvgRenderer.
 /// </summary>
 internal static class TrackPreviewSymbol
 {
@@ -19,7 +19,7 @@ internal static class TrackPreviewSymbol
     private const double StrokeThickness = 2;
 
     /// <summary>
-    /// Erstellt ein Vorschau-Symbol für den angegebenen Katalog-Eintrag.
+    /// Creates a preview symbol for the specified catalog entry.
     /// </summary>
     public static Path CreateSymbol(TrackCatalogEntry entry)
     {

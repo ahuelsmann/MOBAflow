@@ -9,17 +9,17 @@ using TrackLibrary.PikoA;
 using Windows.Foundation;
 
 /// <summary>
-/// Erzeugt Path-Elemente für platzierter Gleissegmente auf dem Plan und als Ghost.
-/// Baut die Geometrie direkt aus Path-Befehlen auf, ohne XAML-Parsing.
+/// Creates Path elements for placed track segments on the plan and as ghost.
+/// Builds geometry directly from path commands without XAML parsing.
 /// </summary>
 internal static class SegmentPlanPathBuilder
 {
     private const double TrackStrokeWidth = 4;
 
     /// <summary>
-    /// Erstellt ein Path für ein PlacedSegment (Plan-Anzeige, Ghost oder Auswahl).
-    /// Verwendet dieselbe Transformationslogik wie PathToSvgConverter: Position und Rotation werden
-    /// in die Geometrie eingerechnet, damit der Entry-Port stets korrekt am Verbindungspunkt liegt.
+    /// Creates a Path for a PlacedSegment (plan display, ghost or selection).
+    /// Uses the same transformation logic as PathToSvgConverter: position and rotation are
+    /// applied to the geometry so the entry port is always correctly at the connection point.
     /// </summary>
     public static Path CreatePath(PlacedSegment placed, bool isGhost, bool isSelected, char entryPort = 'A')
     {
@@ -52,12 +52,12 @@ internal static class SegmentPlanPathBuilder
         return path;
     }
 
-    /// <summary>Skalierungsfaktor mm → Pixel (muss mit TrackPlanPage.ScaleMmToPx übereinstimmen).</summary>
+    /// <summary>Scaling factor mm → pixels (must match TrackPlanPage.ScaleMmToPx).</summary>
     public static double ScaleMmToPx { get; set; } = 1.0;
 
     /// <summary>
-    /// Baut PathGeometry in Weltkoordinaten (wie PathToSvgConverter) – Translation und Rotation
-    /// werden pro Punkt angewendet. Damit liegt der Entry-Port immer korrekt am Verbindungspunkt.
+    /// Builds PathGeometry in world coordinates (like PathToSvgConverter) – translation and rotation
+    /// are applied per point so the entry port is always correctly at the connection point.
     /// </summary>
     private static PathGeometry BuildPathGeometryInWorldCoords(
         IReadOnlyList<SegmentLocalPathBuilder.PathCommand> commands,

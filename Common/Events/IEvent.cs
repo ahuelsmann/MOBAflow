@@ -19,5 +19,8 @@ public interface IEvent
 /// </summary>
 public abstract record EventBase : IEvent
 {
+    /// <summary>
+    /// Gets the UTC timestamp when the event instance was created.
+    /// </summary>
     public DateTime CreatedUtc { get; } = DateTime.UtcNow;
 }

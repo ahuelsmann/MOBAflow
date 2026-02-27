@@ -313,7 +313,7 @@
             <ContentPresenter Content="{x:Bind StatusBarContent, Mode=OneWay}" />
         </Grid>
 
-        <!--  Docking Overlay: nur Preview-Box für Drop-Ziel, keine Orientierungshilfe  -->
+        <!--  Docking overlay: preview box for drop target only, no orientation guide  -->
         <Grid
             x:Name="OverlayLayer"
             Grid.Row="0"

@@ -9,15 +9,15 @@ using System;
 using System.Collections.ObjectModel;
 
 /// <summary>
-/// Erweiterte LayoutDocument mit Tab-Gruppen, Binding-Support und Window-Management.
-/// Unterstützt gruppierte Tabs (Modified, Pinned, Regular) und Floating Windows.
+/// Extended LayoutDocument with tab groups, binding support and window management.
+/// Supports grouped tabs (Modified, Pinned, Regular) and floating windows.
 /// </summary>
 internal sealed partial class LayoutDocument
 {
     #region Dependency Properties
 
     /// <summary>
-    /// Alle verfügbaren Dokumente (Binding-Property)
+    /// All available documents (binding property)
     /// </summary>
     public static readonly DependencyProperty DocumentsProperty =
         DependencyProperty.Register(
@@ -26,7 +26,7 @@ internal sealed partial class LayoutDocument
             typeof(LayoutDocument), new PropertyMetadata(null));
 
     /// <summary>
-    /// Aktuell aktives Dokument
+    /// Currently active document
     /// </summary>
     public static readonly DependencyProperty ActiveDocumentProperty =
         DependencyProperty.Register(
@@ -35,7 +35,7 @@ internal sealed partial class LayoutDocument
             typeof(LayoutDocument), new PropertyMetadata(null));
 
     /// <summary>
-    /// Template für Tab-Renderung (ItemTemplate-Support)
+    /// Template for tab rendering (ItemTemplate support)
     /// </summary>
     public static readonly DependencyProperty TabTemplateProperty =
         DependencyProperty.Register(
@@ -44,7 +44,7 @@ internal sealed partial class LayoutDocument
             typeof(LayoutDocument), new PropertyMetadata(null));
 
     /// <summary>
-    /// Template für Content-Renderung
+    /// Template for content rendering
     /// </summary>
     public static readonly DependencyProperty ContentTemplateProperty =
         DependencyProperty.Register(
@@ -62,7 +62,7 @@ internal sealed partial class LayoutDocument
             typeof(LayoutDocument), new PropertyMetadata(false));
 
     /// <summary>
-    /// Ermöglicht Floating-Windows für Tabs
+    /// Enables floating windows for tabs
     /// </summary>
     public static readonly DependencyProperty AllowFloatingTabsProperty =
         DependencyProperty.Register(
@@ -80,7 +80,7 @@ internal sealed partial class LayoutDocument
 
     #region Properties
     /// <summary>
-    /// Alle verfügbaren Dokumente
+    /// All available documents
     /// </summary>
     public ObservableCollection<DocumentTab>? Documents
     {
@@ -89,7 +89,7 @@ internal sealed partial class LayoutDocument
     }
 
     /// <summary>
-    /// Aktuell aktives Dokument
+    /// Currently active document
     /// </summary>
     public DocumentTab? ActiveDocument
     {
@@ -98,7 +98,7 @@ internal sealed partial class LayoutDocument
     }
 
     /// <summary>
-    /// Custom Template für Tab-Renderung
+    /// Custom template for tab rendering
     /// </summary>
     public DataTemplate? TabTemplate
     {
@@ -107,7 +107,7 @@ internal sealed partial class LayoutDocument
     }
 
     /// <summary>
-    /// Custom Template für Content-Renderung
+    /// Custom template for content rendering
     /// </summary>
     public DataTemplate? ContentTemplate
     {
@@ -116,7 +116,7 @@ internal sealed partial class LayoutDocument
     }
 
     /// <summary>
-    /// Tab-Grouping aktivieren (Modified, Pinned, Regular)
+    /// Enable tab grouping (Modified, Pinned, Regular)
     /// </summary>
     public bool EnableTabGrouping
     {
@@ -125,7 +125,7 @@ internal sealed partial class LayoutDocument
     }
 
     /// <summary>
-    /// Floating-Windows für Tabs ermöglichen
+    /// Allow floating windows for tabs
     /// </summary>
     public bool AllowFloatingTabs
     {
@@ -136,7 +136,7 @@ internal sealed partial class LayoutDocument
 }
 
 /// <summary>
-/// Floating Window für Tabs
+/// Floating window for tabs
 /// </summary>
 internal abstract class FloatingTabWindow : Window
 {
@@ -191,7 +191,7 @@ internal abstract class DocumentTabMovedEventArgs : EventArgs
 }
 
 /// <summary>
-/// EventArgs für einen Tab, der aus dem TabView herausgezogen wurde.
+/// EventArgs for a tab that was dragged out of the TabView.
 /// </summary>
 internal abstract class DocumentTabDraggedOutEventArgs(DocumentTab document) : EventArgs
 {

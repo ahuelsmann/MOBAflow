@@ -1,10 +1,18 @@
 namespace Moba.TrackPlan.Renderer;
 
+/// <summary>
+/// Exports SVG-based track plans as HTML files that can be viewed in a browser.
+/// </summary>
 public class SvgExporter
 {
+    /// <summary>
+    /// Writes the given SVG content wrapped in a minimal HTML page to the specified file path.
+    /// </summary>
+    /// <param name="svgContent">The raw SVG markup representing the track plan.</param>
+    /// <param name="filePath">The target file path for the generated HTML file.</param>
     public void Export(string svgContent, string filePath)
     {
-        // HTML-Wrapper für bessere Browser-Darstellung
+        // HTML wrapper for better browser display
         var html = $@"<!DOCTYPE html>
 <html>
 <head>

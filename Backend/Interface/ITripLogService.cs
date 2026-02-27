@@ -4,24 +4,24 @@ namespace Moba.Backend.Interface;
 using Domain;
 
 /// <summary>
-/// Service zum Protokollieren von Fahrten und Haltezeiten über die TrainControlPage.
-/// Ruft RecordStateChange bei jeder Änderung von Geschwindigkeit oder DCC-Adresse auf.
+/// Service for logging trips and stop times via the TrainControlPage.
+/// Calls RecordStateChange on each change of speed or DCC address.
 /// </summary>
 public interface ITripLogService
 {
     /// <summary>
-    /// Wird ausgelöst, wenn ein neuer Fahrtenbuch-Eintrag hinzugefügt wurde.
-    /// Ermöglicht UI-Updates ohne Polling.
+    /// Raised when a new trip log entry has been added.
+    /// Enables UI updates without polling.
     /// </summary>
     event EventHandler? EntryAdded;
 
     /// <summary>
-    /// Erfasst eine Zustandsänderung (Adresse oder Geschwindigkeit).
-    /// Bei Projekt null wird nichts protokolliert.
+    /// Records a state change (address or speed).
+    /// No logging when project is null.
     /// </summary>
-    /// <param name="project">Aktuelles Projekt (null = kein Logging)</param>
-    /// <param name="locoAddress">DCC-Adresse der Lokomotive</param>
-    /// <param name="speed">Geschwindigkeit (0–126, 0 = Halt)</param>
-    /// <param name="timestamp">Zeitpunkt der Änderung (UTC empfohlen)</param>
+    /// <param name="project">Current project (null = no logging)</param>
+    /// <param name="locoAddress">DCC address of the locomotive</param>
+    /// <param name="speed">Speed (0–126, 0 = stop)</param>
+    /// <param name="timestamp">Time of change (UTC recommended)</param>
     void RecordStateChange(Project? project, int locoAddress, int speed, DateTime timestamp);
 }

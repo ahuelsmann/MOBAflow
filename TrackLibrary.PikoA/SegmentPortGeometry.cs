@@ -3,17 +3,17 @@ namespace Moba.TrackLibrary.PikoA;
 using Base;
 
 /// <summary>
-/// Hilfsklasse zur Berechnung von Port-Positionen für Gleissegmente.
-/// Liefert Port-Koordinaten in lokalen Segment-Koordinaten (Port A = Ursprung, Winkel 0 = +X).
+/// Helper class for calculating port positions for track segments.
+/// Returns port coordinates in local segment coordinates (Port A = origin, angle 0 = +X).
 /// </summary>
 public static class SegmentPortGeometry
 {
-    /// <summary>Port-Position in lokalen Koordinaten (X, Y) und Ausrichtungswinkel (Grad).</summary>
+    /// <summary>Port position in local coordinates (X, Y) and orientation angle (degrees).</summary>
     public sealed record PortInfo(string PortName, double LocalX, double LocalY, double LocalAngleDegrees);
 
     /// <summary>
-    /// Berechnet die Port-Positionen für ein Segment in lokalen Koordinaten.
-    /// Port A liegt am Ursprung, Winkel 0 = positive X-Richtung.
+    /// Calculates the port positions for a segment in local coordinates.
+    /// Port A is at the origin, angle 0 = positive X direction.
     /// </summary>
     public static IReadOnlyList<PortInfo> GetPorts(Segment segment)
     {
@@ -36,7 +36,7 @@ public static class SegmentPortGeometry
         };
     }
 
-    /// <summary>Transformiert eine lokale Position in Weltkoordinaten.</summary>
+    /// <summary>Transforms a local position to world coordinates.</summary>
     public static (double Wx, double Wy) ToWorld(double x, double y, double segmentX, double segmentY, double rotationDegrees)
     {
         var r = rotationDegrees * Math.PI / 180;
@@ -48,7 +48,7 @@ public static class SegmentPortGeometry
         );
     }
 
-    /// <summary>Berechnet die Weltposition eines Ports für ein PlacedSegment.</summary>
+    /// <summary>Calculates the world position of a port for a PlacedSegment.</summary>
     public static (double X, double Y, double AngleDegrees) GetPortWorldPosition(PlacedSegment placed, string portName)
     {
         var ports = GetPorts(placed.Segment);
@@ -61,7 +61,7 @@ public static class SegmentPortGeometry
         return (wx, wy, angle);
     }
 
-    /// <summary>Berechnet alle Port-Weltpositionen für ein PlacedSegment. Standardmäßig Entry-Port A.</summary>
+    /// <summary>Calculates all port world positions for a PlacedSegment. Default is entry port A.</summary>
     public static IReadOnlyList<(string PortName, double X, double Y, double AngleDegrees)> GetAllPortWorldPositions(PlacedSegment placed, char entryPort = 'A')
     {
         var ports = GetPortsWithEntry(placed.Segment, entryPort);
@@ -76,9 +76,9 @@ public static class SegmentPortGeometry
     }
 
     /// <summary>
-    /// Liefert Port-Infos, bei denen (0,0) der Entry-Port ist.
-    /// Wichtig für Kurven: Bei Entry B liegt Port B am Ursprung, die lokalen Koordinaten entsprechen
-    /// der Pfad-Geometrie von SegmentLocalPathBuilder (curveDirection -1).
+    /// Returns port infos where (0,0) is the entry port.
+    /// Important for curves: With entry B, Port B is at the origin; local coordinates match
+    /// the path geometry from SegmentLocalPathBuilder (curveDirection -1).
     /// </summary>
     public static IReadOnlyList<PortInfo> GetPortsWithEntry(Segment segment, char entryPort)
     {
@@ -173,7 +173,7 @@ public static class SegmentPortGeometry
 
     private const double ParallelSpacingMm = 61.88;
 
-    /// <summary>BWL/BWR: Bogenweiche R2→R3. Port A Ursprung, Port B Ende R2-Bogen, Port C Ende R3-Bogen.</summary>
+    /// <summary>BWL/BWR: Curved switch R2→R3. Port A origin, Port B end of R2 arc, Port C end of R3 arc.</summary>
     private static IReadOnlyList<PortInfo> GetBwlPorts(double arcR2, double radiusR2, double radiusR3)
     {
         var curveDir = -1;
@@ -218,7 +218,7 @@ public static class SegmentPortGeometry
         ];
     }
 
-    /// <summary>BWLR3/BWRR3: Bogenweiche R3→R4. Port A Ursprung, Port B Ende R3-Bogen, Port C Ende R4-Bogen.</summary>
+    /// <summary>BWLR3/BWRR3: Curved switch R3→R4. Port A origin, Port B end of R3 arc, Port C end of R4 arc.</summary>
     private static IReadOnlyList<PortInfo> GetBwlr3Ports(double radiusR3)
     {
         var radiusR4 = radiusR3 + ParallelSpacingMm;
@@ -267,7 +267,7 @@ public static class SegmentPortGeometry
         ];
     }
 
-    /// <summary>W3 (Piko 55225): Port A Ursprung, Port B gerade G239, Port C = WL-Abzweig -15°, Port D = WR-Abzweig +15° (je R9).</summary>
+    /// <summary>W3 (Piko 55225): Port A origin, Port B straight G239, Port C = WL branch -15°, Port D = WR branch +15° (each R9).</summary>
     private static IReadOnlyList<PortInfo> GetW3Ports(double length, double arcDegree, double radius)
     {
         var halfArc = arcDegree / 2;
@@ -294,7 +294,7 @@ public static class SegmentPortGeometry
         ];
     }
 
-    /// <summary>WY: Y-Weiche wie W3 ohne Gerade. Port A Ursprung, Port B = WL-Abzweig -15°, Port C = WR-Abzweig +15° (je R9).</summary>
+    /// <summary>WY: Y-switch like W3 without straight. Port A origin, Port B = WL branch -15°, Port C = WR branch +15° (each R9).</summary>
     private static IReadOnlyList<PortInfo> GetWyPorts(double arcDegree, double radius)
     {
         var halfArc = arcDegree / 2;
@@ -320,7 +320,7 @@ public static class SegmentPortGeometry
         ];
     }
 
-    /// <summary>DKW (Piko 55224) – AnyRail-Referenz: Vier Ports an den Enden der zwei parallelen Gleise – A/B oberes Gleis, C/D unteres Gleis.</summary>
+    /// <summary>DKW (Piko 55224) – AnyRail reference: Four ports at the ends of the two parallel tracks – A/B top track, C/D bottom track.</summary>
     private static IReadOnlyList<PortInfo> GetDkwPorts(double length, double arcDegree, double radius)
     {
         var half = length / 2;
@@ -336,7 +336,7 @@ public static class SegmentPortGeometry
         ];
     }
 
-    /// <summary>K15: Kreuzung 15°. 4 Ports an den Enden der gekreuzten Geraden.</summary>
+    /// <summary>K15: Crossing 15°. 4 ports at the ends of the crossed straights.</summary>
     private static IReadOnlyList<PortInfo> GetK15Ports(double length, double arcDegree)
     {
         var rad = arcDegree * Math.PI / 180;
@@ -350,7 +350,7 @@ public static class SegmentPortGeometry
         ];
     }
 
-    /// <summary>K30: Kreuzung 30°. 4 Ports an den Enden der gekreuzten Geraden.</summary>
+    /// <summary>K30: Crossing 30°. 4 ports at the ends of the crossed straights.</summary>
     private static IReadOnlyList<PortInfo> GetK30Ports(double length, double arcDegree)
     {
         return GetK15Ports(length, arcDegree);

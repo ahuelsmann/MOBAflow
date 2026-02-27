@@ -5,17 +5,17 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 /// <summary>
-/// Dialog zur Auswahl eines Segoe-MDL2-Symbols für eine Funktionsschaltfläche (Train Control).
+/// Dialog for selecting a Segoe MDL2 symbol for a function button (Train Control).
 /// </summary>
 internal sealed partial class FunctionSymbolPickerDialog
 {
     /// <summary>
-    /// Nach Schließen: gewähltes Symbol (Unicode-Glyph-String) oder null bei Abbrechen.
+    /// After closing: selected symbol (Unicode glyph string) or null on cancel.
     /// </summary>
     public string? SelectedGlyph { get; private set; }
 
     /// <summary>
-    /// Repräsentative Auswahl an Segoe MDL2 Assets Glyphen (F0–F20-relevant und allgemein nützlich).
+    /// Representative selection of Segoe MDL2 Assets glyphs (F0–F20 relevant and generally useful).
     /// </summary>
     private static readonly string[] GlyphList =
     {

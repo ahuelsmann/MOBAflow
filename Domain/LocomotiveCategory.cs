@@ -2,7 +2,7 @@
 namespace Moba.Domain;
 
 /// <summary>
-/// Represents a category of locomotives (e.g., "Elektrolokomotiven", "ICE-Züge").
+/// Represents a category of locomotives (e.g., electric locomotives, ICE trains).
 /// Pure data object for organizing master data.
 /// </summary>
 public class LocomotiveCategory
@@ -16,7 +16,7 @@ public class LocomotiveCategory
     }
 
     /// <summary>
-    /// Name of the category (e.g., "Dampflokomotiven", "Elektrolokomotiven").
+    /// Name of the category (e.g., steam locomotives, electric locomotives).
     /// </summary>
     public string Category { get; set; } = string.Empty;
 

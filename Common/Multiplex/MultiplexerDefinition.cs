@@ -21,7 +21,7 @@ public class MultiplexerDefinition
     public string ArticleNumber { get; init; } = null!;
 
     /// <summary>
-    /// Human-readable name (e.g., "5229 - Multiplexer für Lichtsignale").
+    /// Human-readable name (e.g., "5229 - Multiplexer for light signals").
     /// </summary>
     public string DisplayName { get; init; } = null!;
 

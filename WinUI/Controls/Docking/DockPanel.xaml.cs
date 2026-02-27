@@ -23,8 +23,8 @@ internal enum DockPosition
 }
 
 /// <summary>
-/// Ein dockbares Panel mit Header, Fluent-Design-Icon und Aktionsbuttons.
-/// Wird in DockingManager-Bereichen verwendet.
+/// A dockable panel with header, Fluent Design icon and action buttons.
+/// Used in DockingManager areas.
 /// Cherry-Picked: Close/Undock (Qt-ADS), Pin to AutoHide (Qt-ADS 4.x).
 /// </summary>
 internal sealed partial class DockPanel
@@ -32,7 +32,7 @@ internal sealed partial class DockPanel
     private const string DockPanelDataKey = "DockPanel";
 
     /// <summary>
-    /// Wird ausgelöst, wenn der Expand/Collapse-Status geändert wird.
+    /// Raised when the expand/collapse state changes.
     /// </summary>
     public event EventHandler? IsExpandedChanged;
 

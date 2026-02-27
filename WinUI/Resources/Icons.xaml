@@ -1,11 +1,11 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!--  Icons (DataTemplates für Buttons etc.); weitere SVG-Icons hier ergänzen  -->
-    <!--  Strichfarbe: ThemeResource IconStrokeBrush (Light = schwarz, Dark = weiß) in App.xaml  -->
-    <!--  Tür-Icons: Quelle WinUI/Assets/DoorOpen.svg, DoorClose.svg (viewBox 0 0 21000 29700, stroke-width 1000)  -->
-    <!--  Zentrierung: einheitlich auf den gemeinsamen Türrahmen (Pfade 1–4) bezogen, damit beide Icons gleich wirken.  -->
+    <!--  Icons (DataTemplates for buttons etc.); add further SVG icons here  -->
+    <!--  Stroke color: ThemeResource IconStrokeBrush (Light = black, Dark = white) in App.xaml  -->
+    <!--  Door icons: source WinUI/Assets/DoorOpen.svg, DoorClose.svg (viewBox 0 0 21000 29700, stroke-width 1000)  -->
+    <!--  Centering: uniformly based on shared door frame (paths 1–4) so both icons look consistent.  -->
 
-    <!--  ScaleTransform skaliert das Icon (0,65 = kleiner, mit Abstand zum inneren Rahmen).  -->
+    <!--  ScaleTransform scales the icon (0.65 = smaller, with spacing to inner frame).  -->
 
     <DataTemplate x:Key="DoorOpenIcon">
         <Viewbox
@@ -103,7 +103,7 @@
         </Viewbox>
     </DataTemplate>
 
-    <!--  Bremse: nur Kreis (mit/ohne Ausrufezeichen) plus kleine Bögen links und rechts mit Abstand zum Kreis.  -->
+    <!--  Brake: circle only (with/without exclamation mark) plus small arcs left and right with spacing to circle.  -->
     <DataTemplate x:Key="BrakeActiveIcon">
         <Viewbox
             HorizontalAlignment="Center"

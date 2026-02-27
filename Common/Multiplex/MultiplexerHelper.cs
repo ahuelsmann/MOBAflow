@@ -103,12 +103,12 @@ public static class MultiplexerHelper
     }
 
     /// <summary>
-    /// Artikelnummer des Viessmann-Vorsignals (Ks-Vorsignal); alle anderen gelten als Hauptsignal.
+    /// Article number of the Viessmann distant signal (Ks distant signal); all others count as main signal.
     /// </summary>
     private const string DistantSignalArticle = "4040";
 
     /// <summary>
-    /// Anzeigenamen für Viessmann Multiplex-Signale (Spur H0, siehe https://viessmann-modell.com/sortiment/spur-h0/signale/).
+    /// Display names for Viessmann multiplex signals (HO scale, see https://viessmann-modell.com/sortiment/spur-h0/signale/).
     /// </summary>
     private static readonly IReadOnlyDictionary<string, string> SignalArticleDisplayNames = new Dictionary<string, string>(StringComparer.Ordinal)
     {
@@ -120,10 +120,10 @@ public static class MultiplexerHelper
     };
 
     /// <summary>
-    /// Liefert alle als Hauptsignal wählbaren Viessmann Multiplex-Signale für den angegebenen Multiplexer.
+    /// Returns all Viessmann multiplex signals selectable as main signal for the given multiplexer.
     /// </summary>
-    /// <param name="multiplexerArticleNumber">Multiplexer-Artikelnummer (z. B. "5229", "52292").</param>
-    /// <returns>Auflistung (Artikelnummer, Anzeigename) für die Hauptsignal-ComboBox.</returns>
+    /// <param name="multiplexerArticleNumber">Multiplexer article number (e.g. "5229", "52292").</param>
+    /// <returns>Collection (article number, display name) for the main signal combo box.</returns>
     public static IReadOnlyList<(string ArticleNumber, string DisplayName)> GetMainSignalOptions(string multiplexerArticleNumber)
     {
         var definition = GetDefinition(multiplexerArticleNumber);
@@ -135,7 +135,7 @@ public static class MultiplexerHelper
             var displayName = SignalArticleDisplayNames.TryGetValue(article, out var name) ? name : $"Ks-Signal ({article})";
             result.Add((article, $"{article} - {displayName}"));
         }
-        // Sortierung: 4046 zuerst (typisches Standard-Hauptsignal), dann aufsteigend
+        // Sort: 4046 first (typical standard main signal), then ascending
         result.Sort((a, b) =>
         {
             if (a.Item1 == "4046") return -1;
@@ -146,10 +146,10 @@ public static class MultiplexerHelper
     }
 
     /// <summary>
-    /// Liefert alle als Vorsignal wählbaren Viessmann Multiplex-Signale für den angegebenen Multiplexer.
+    /// Returns all Viessmann multiplex signals selectable as distant signal for the given multiplexer.
     /// </summary>
-    /// <param name="multiplexerArticleNumber">Multiplexer-Artikelnummer (z. B. "5229").</param>
-    /// <returns>Auflistung (Artikelnummer, Anzeigename) für die Vorsignal-ComboBox.</returns>
+    /// <param name="multiplexerArticleNumber">Multiplexer article number (e.g. "5229").</param>
+    /// <returns>Collection (article number, display name) for the distant signal combo box.</returns>
     public static IReadOnlyList<(string ArticleNumber, string DisplayName)> GetDistantSignalOptions(string multiplexerArticleNumber)
     {
         var definition = GetDefinition(multiplexerArticleNumber);
@@ -171,22 +171,22 @@ public static class MultiplexerHelper
     // ===========================================================================
 
     /// <summary>
-    /// 5229 - Multiplexer für Lichtsignale mit Multiplex-Technologie
-    /// Steuert 1 Hauptsignal (z. B. 4046) + 1 Vorsignal (z. B. 4040, synchron).
+    /// 5229 - Multiplexer for light signals with multiplex technology.
+    /// Controls 1 main signal (e.g. 4046) + 1 distant signal (e.g. 4040, synchronized).
     ///
-    /// DCC-Mapping bei Basisadresse 201 (4 Adressen: 201, 202, 203, 204):
-    /// - Adresse 201 (Offset 0): Hp0 = Ausgang 1, false (Rot); Ks1 = Ausgang 1, true (Grün)
-    /// - Adresse 202 (Offset 1): Ra12 = Ausgang 0, true
-    /// - Adresse 203 (Offset 2): Ks2 = Ausgang 0, true; Ks1Blink = Ausgang 1, true
-    /// - Adresse 204 (Offset 3): ggf. weitere Aspekte (z. B. Kennlicht/Dunkel)
-    /// Pro Adresse Polarität umkehrbar: Einstellungen → Stellwerk/Viessmann-Signale oder signalBox.invertPolarityOffset0 … Offset3.
+    /// DCC mapping at base address 201 (4 addresses: 201, 202, 203, 204):
+    /// - Address 201 (Offset 0): Hp0 = output 1, false (red); Ks1 = output 1, true (green)
+    /// - Address 202 (Offset 1): Ra12 = output 0, true
+    /// - Address 203 (Offset 2): Ks2 = output 0, true; Ks1Blink = output 1, true
+    /// - Address 204 (Offset 3): optionally other aspects (e.g. Kennlicht/Dunkel)
+    /// Polarity reversible per address: Settings → interlocking/Viessmann signals or signalBox.invertPolarityOffset0 … Offset3.
     /// </summary>
     private static MultiplexerDefinition Create5229Definition()
     {
         return new MultiplexerDefinition
         {
             ArticleNumber = "5229",
-            DisplayName = "5229 - Multiplexer für Lichtsignale",
+            DisplayName = "5229 - Multiplexer for light signals",
             MainSignalCount = 1,
             AddressesPerSignal = 4,
             MainSignalArticleNumber = "4046",
@@ -217,26 +217,36 @@ public static class MultiplexerHelper
                 },
                 ["4046"] = new Dictionary<SignalAspect, MultiplexerTurnoutCommand>
                 {
+                    // Address [B]  (Offset 0)  -> Hp0 / Ks1
                     { SignalAspect.Hp0, new MultiplexerTurnoutCommand(0, 1, false) },
                     { SignalAspect.Ks1, new MultiplexerTurnoutCommand(0, 1, true) },
+
+                    // Address [B+1] (Offset 1) -> Sh1 / weitere Kombinationen
+                    { SignalAspect.Ra12, new MultiplexerTurnoutCommand(1, 0, true) },   // Sh1 / Ra12
+                    { SignalAspect.Zs1, new MultiplexerTurnoutCommand(1, 1, true) },    // 2. Ausgang auf derselben Adresse
+
+                    // Address [B+2] (Offset 2) -> Ks2 / Ks1 mit Geschwindigkeitsanzeiger
+                    { SignalAspect.Ks2, new MultiplexerTurnoutCommand(2, 0, true) },
                     { SignalAspect.Ks1Blink, new MultiplexerTurnoutCommand(2, 1, true) },
-                    { SignalAspect.Ra12, new MultiplexerTurnoutCommand(1, 0, true) },
-                    { SignalAspect.Ks2, new MultiplexerTurnoutCommand(2, 0, true) }
+
+                    // Address [B+3] (Offset 3) -> Kennlicht / Dunkel
+                    { SignalAspect.Kennlicht, new MultiplexerTurnoutCommand(3, 0, true) },
+                    { SignalAspect.Dunkel, new MultiplexerTurnoutCommand(3, 1, true) }
                 }
             }
         };
     }
 
     /// <summary>
-    /// 52292 - Doppel-Multiplexer für 2 Lichtsignale mit Multiplex-Technologie
-    /// Controls 2 main signals (e.g., 2x 4046) independently.
+    /// 52292 - Double multiplexer for 2 light signals with multiplex technology.
+    /// Controls 2 main signals (e.g. 2x 4046) independently.
     /// </summary>
     private static MultiplexerDefinition Create52292Definition()
     {
         return new MultiplexerDefinition
         {
             ArticleNumber = "52292",
-            DisplayName = "52292 - Doppel-Multiplexer für 2 Lichtsignale",
+            DisplayName = "52292 - Double multiplexer for 2 light signals",
             MainSignalCount = 2,
             AddressesPerSignal = 4,
             MainSignalArticleNumber = "4046",

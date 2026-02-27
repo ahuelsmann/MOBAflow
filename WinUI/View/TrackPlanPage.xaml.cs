@@ -53,7 +53,7 @@ internal sealed partial class TrackPlanPage
     private Guid? _draggedSegmentId;
     private HashSet<Guid> _draggingGroup = [];
     private Point _dragStartCanvasPoint;
-    private bool _dragHasMoved; // true wenn Pointer während Press tatsächlich bewegt wurde
+    private bool _dragHasMoved; // true when pointer actually moved during press
     private bool _isCanvasDragging;
     private bool _useCachedOffsetForNextRefresh;
     private double _cachedDrawOffsetX;
@@ -89,18 +89,18 @@ internal sealed partial class TrackPlanPage
             .Create();
 
     /// <summary>
-    /// Lädt das Test-TrackPlanResult (identisch zum SVG-Test) für visuellen Vergleich Win2D vs. SVG.
+    /// Loads the test TrackPlanResult (identical to SVG test) for visual comparison Win2D vs. SVG.
     /// </summary>
     private void LoadTestPlan()
     {
         var plan = CreateTestPlan();
         var renderResult = new TrackPlanSvgRenderer().Render(plan);
         _plan.LoadFromPlacements(renderResult.Placements, plan.Connections);
-        StatusText.Text = "Test Plan geladen. Klicke „SVG im Browser“ für direkten Vergleich.";
+        StatusText.Text = "Test plan loaded. Click „SVG in Browser“ for direct comparison.";
     }
 
     /// <summary>
-    /// Exportiert dasselbe Test-Plan als SVG und öffnet im Browser.
+    /// Exports the same test plan as SVG and opens in browser.
     /// </summary>
     private void OpenSvgInBrowser()
     {
@@ -114,7 +114,7 @@ internal sealed partial class TrackPlanPage
             Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
         }
 
-        StatusText.Text = $"SVG geöffnet: {path}";
+        StatusText.Text = $"SVG opened: {path}";
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -470,8 +470,8 @@ internal sealed partial class TrackPlanPage
     }
 
     /// <summary>
-    /// Passt das Zielsegment an, wenn die erste Verbindung an Port B (oder C/D) erfolgt.
-    /// Ohne diese Anpassung würde die Kurve gespiegelt erscheinen, da (X,Y,R) Port A als Ursprung erwartet.
+    /// Adjusts the target segment when the first connection is at port B (or C/D).
+    /// Without this adjustment the curve would appear mirrored, since (X,Y,R) expects port A as origin.
     /// </summary>
     private void AdjustTargetSegmentForNewEntryPort(Guid targetSegmentId, string targetPort)
     {
@@ -484,7 +484,7 @@ internal sealed partial class TrackPlanPage
         if (target == null)
             return;
         var (newX, newY, portAngle) = SegmentPortGeometry.GetPortWorldPosition(target, targetPort);
-        // Bei Entry B zeigt die Pfad-Tangente am Ursprung in die entgegengesetzte Richtung (+180°).
+        // With entry B the path tangent at origin points in the opposite direction (+180°).
         var newR = NormalizeAngle(portAngle - 180);
         _plan.UpdateSegmentPosition(targetSegmentId, newX, newY, newR);
     }
@@ -520,9 +520,9 @@ internal sealed partial class TrackPlanPage
                         if (!myPortsWithEntry.TryGetValue(myPortName, out var portInfo))
                             continue;
                         var (localX, localY, myLocalAngle) = portInfo;
-                        // Tangenten müssen übereinstimmen: our_rotation + myLocalAngle = oAngle.
+                        // Tangents must match: our_rotation + myLocalAngle = oAngle.
                         var newRotation = NormalizeAngle(oAngle - myLocalAngle);
-                        // Ursprung so setzen, dass unser Port (localX, localY) bei neuer Rotation genau (ox, oy) trifft.
+                        // Set origin so our port (localX, localY) at new rotation exactly hits (ox, oy).
                         var r = newRotation * Math.PI / 180;
                         var cos = Math.Cos(r);
                         var sin = Math.Sin(r);
@@ -738,9 +738,9 @@ internal sealed partial class TrackPlanPage
 
     /// <summary>Offset in mm, damit der gesamte Inhalt im sichtbaren Bereich liegt (analog SVG viewBox).</summary>
     /// <remarks>
-    /// Während eines Canvas-Drags bleibt der Offset fix, damit die Verschiebung sichtbar bleibt.
+    /// During a canvas drag the offset stays fixed so the displacement remains visible.
     /// PlanChanged ruft sonst bei jedem MoveGroup RefreshCanvas auf; ein neu berechneter Offset
-    /// würde die Bewegung aufheben (neuer Offset = alter Offset − Delta).
+    /// would cancel the movement (new offset = old offset − delta).
     /// </remarks>
     private (double OffsetX, double OffsetY) GetDrawOffset()
     {
@@ -837,7 +837,7 @@ internal sealed partial class TrackPlanPage
         // Keine asynchronen Ressourcen; Geometrie wird pro Draw erzeugt
     }
 
-    /// <summary>Liest die Theme-abhängige Gleis-Strichfarbe für Win2D (Dark: hell, Light: dunkel).</summary>
+    /// <summary>Reads the theme-dependent track stroke color for Win2D (Dark: light, Light: dark).</summary>
     private static Windows.UI.Color ResolveTrackPlanStrokeBrush()
     {
         if (Application.Current.Resources.TryGetValue("TrackPlanStrokeBrush", out var obj) && obj is SolidColorBrush brush)
@@ -845,7 +845,7 @@ internal sealed partial class TrackPlanPage
         return Windows.UI.Color.FromArgb(255, 26, 26, 26);
     }
 
-    /// <summary>Liest die Theme-abhängige Auswahl-Strichfarbe für Win2D.</summary>
+    /// <summary>Reads the theme-dependent selection stroke color for Win2D.</summary>
     private static Windows.UI.Color ResolveTrackPlanStrokeSelectedBrush()
     {
         if (Application.Current.Resources.TryGetValue("TrackPlanStrokeSelectedBrush", out var obj) && obj is SolidColorBrush brush)
@@ -867,7 +867,7 @@ internal sealed partial class TrackPlanPage
             EndCap = CanvasCapStyle.Round
         };
 
-        // Theme-aware Gleisfarben (Fluent Design: aus Ressourcen für Dark/Light)
+        // Theme-aware track colors (Fluent Design: from resources for Dark/Light)
         var strokeBrush = ResolveTrackPlanStrokeBrush();
         var selectedBrush = ResolveTrackPlanStrokeSelectedBrush();
 

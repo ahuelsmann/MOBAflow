@@ -1,15 +1,15 @@
 ---
-description: 'Auto-Save Pattern für ViewModel-Wrappers'
+description: 'Auto-Save Pattern for ViewModel wrappers'
 applyTo: 'SharedUI/ViewModel/**/*.cs'
 ---
 
 # Auto-Save Pattern
 
-> ViewModels speichern automatisch bei PropertyChanged
+> ViewModels save automatically on PropertyChanged
 
 ---
 
-## Pattern: SetProperty für ViewModel-Wrappers
+## Pattern: SetProperty for ViewModel wrappers
 
 ```csharp
 public class JourneyViewModel : ObservableObject, IViewModelWrapper<Journey>
@@ -20,12 +20,12 @@ public class JourneyViewModel : ObservableObject, IViewModelWrapper<Journey>
     {
         get => _model.Name;
         set => SetProperty(_model.Name, value, _model, (m, v) => m.Name = v);
-        // ✅ Triggert PropertyChanged → Auto-Save
+        // ✅ Triggers PropertyChanged → Auto-Save
     }
 }
 ```
 
-## Nested ViewModels: PropertyChanged propagieren
+## Nested ViewModels: propagate PropertyChanged
 
 ```csharp
 // Child ViewModel
@@ -33,7 +33,7 @@ public ObservableCollection<StationViewModel> Stations { get; }
 
 private void OnStationPropertyChanged(object? sender, PropertyChangedEventArgs e)
 {
-    OnPropertyChanged(nameof(Stations));  // ✅ Propagiert nach oben
+    OnPropertyChanged(nameof(Stations));  // ✅ Propagates upward
 }
 ```
 
@@ -53,12 +53,12 @@ private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs
 }
 ```
 
-## Regel
+## Rules
 
-- ✅ **SetProperty()** für alle ViewModel-Wrapper Properties
-- ✅ **Nested ViewModels** propagieren PropertyChanged nach oben
-- ✅ **MainWindowViewModel** subscribed zu PropertyChanged (NICHT zu custom Events)
+- ✅ **SetProperty()** for all ViewModel wrapper properties
+- ✅ **Nested ViewModels** propagate PropertyChanged upward
+- ✅ **MainWindowViewModel** subscribes to PropertyChanged (NOT to custom events)
 
 ---
 
-**Letzte Aktualisierung:** 2026-01-17
+**Last updated:** 2026-01-17

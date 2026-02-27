@@ -30,12 +30,12 @@ public class Station
     public string Name { get; set; }
 
     /// <summary>
-    /// Id der Stadt, zu der diese Station gehört (für Persistenz).
+    /// Id of the city this station belongs to (for persistence).
     /// </summary>
     public Guid? CityId { get; set; }
 
     /// <summary>
-    /// Referenz auf die City (zur Laufzeit aufgelöst; wird nicht serialisiert).
+    /// Reference to the city (resolved at runtime; not serialized).
     /// </summary>
     [JsonIgnore]
     public City? City { get; set; }

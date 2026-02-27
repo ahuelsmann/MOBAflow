@@ -81,13 +81,16 @@ internal class MultiplexerHelperTests
     }
 
     [Test]
-    public void TryGetTurnoutCommand_UnsupportedAspect_ShouldReturnFalse()
+    public void TryGetTurnoutCommand_5229_4046_Zs1_ShouldReturnExpectedMapping()
     {
         // Act
-        var result = MultiplexerHelper.TryGetTurnoutCommand("5229", "4046", SignalAspect.Zs1, out _);
+        var result = MultiplexerHelper.TryGetTurnoutCommand("5229", "4046", SignalAspect.Zs1, out var command);
 
         // Assert
-        Assert.That(result, Is.False);
+        Assert.That(result, Is.True);
+        Assert.That(command.AddressOffset, Is.EqualTo(1));
+        Assert.That(command.Output, Is.EqualTo(1));
+        Assert.That(command.Activate, Is.True);
     }
 
     [Test]
@@ -101,13 +104,13 @@ internal class MultiplexerHelperTests
     }
 
     [Test]
-    public void SupportsAspect_5229_UnsupportedAspect_ShouldReturnFalse()
+    public void SupportsAspect_5229_4046_Zs1_ShouldReturnTrue()
     {
         // Act
         bool supports = MultiplexerHelper.SupportsAspect("5229", "4046", SignalAspect.Zs1);
 
         // Assert
-        Assert.That(supports, Is.False);
+        Assert.That(supports, Is.True);
     }
 
     [Test]

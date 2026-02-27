@@ -105,11 +105,25 @@ public abstract class JsonValidationService
 /// </summary>
 public class JsonValidationResult
 {
+    /// <summary>
+    /// Gets a value indicating whether the JSON passed validation.
+    /// </summary>
     public bool IsValid { get; private set; }
+
+    /// <summary>
+    /// Gets the validation error message when <see cref="IsValid"/> is false; otherwise null.
+    /// </summary>
     public string? ErrorMessage { get; private set; }
 
     private JsonValidationResult() { }
 
+    /// <summary>
+    /// Creates a successful validation result.
+    /// </summary>
     public static JsonValidationResult Success() => new() { IsValid = true };
+
+    /// <summary>
+    /// Creates a failed validation result with an error message.
+    /// </summary>
     public static JsonValidationResult Failure(string errorMessage) => new() { IsValid = false, ErrorMessage = errorMessage };
 }

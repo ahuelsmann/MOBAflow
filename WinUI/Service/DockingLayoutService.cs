@@ -14,8 +14,8 @@ using Windows.Storage;
 using ViewModel;
 
 /// <summary>
-/// Service für Persistierung und Restore von DockingManager Layouts.
-/// Speichert Layout-State in JSON-Datei im LocalAppData.
+/// Service for persisting and restoring DockingManager layouts.
+/// Saves layout state to JSON file in LocalAppData.
 /// </summary>
 internal class DockingLayoutService
 {
@@ -49,7 +49,7 @@ internal class DockingLayoutService
     #region Public Methods
 
     /// <summary>
-    /// Lädt das zuletzt gespeicherte Layout.
+    /// Loads the last saved layout.
     /// </summary>
     public async Task<DockingLayoutState?> LoadLastLayoutAsync()
     {
@@ -62,7 +62,7 @@ internal class DockingLayoutService
             var json = await FileIO.ReadTextAsync(layoutFile);
             var state = JsonSerializer.Deserialize<DockingLayoutState>(json, JsonOptions);
 
-            // Version-Kompatibilität prüfen
+            // Check version compatibility
             if (state?.Version != CurrentLayoutVersion)
                 return null;
 
@@ -70,13 +70,13 @@ internal class DockingLayoutService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Fehler beim Laden des Layouts");
+            _logger.LogWarning(ex, "Error loading layout");
             return null;
         }
     }
 
     /// <summary>
-    /// Speichert das aktuelles Layout.
+    /// Saves the current layout.
     /// </summary>
     public async Task SaveLayoutAsync(DockingPanelViewModel viewModel)
     {
@@ -109,12 +109,12 @@ internal class DockingLayoutService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Fehler beim Speichern des Layouts");
+            _logger.LogWarning(ex, "Error saving layout");
         }
     }
 
     /// <summary>
-    /// Wendet ein gespeichertes Layout auf ein ViewModel an.
+    /// Applies a saved layout to a ViewModel.
     /// </summary>
     public void ApplyLayoutState(DockingLayoutState state, DockingPanelViewModel viewModel)
     {
@@ -135,7 +135,7 @@ internal class DockingLayoutService
     }
 
     /// <summary>
-    /// Löscht das gespeicherte Layout.
+    /// Deletes the saved layout.
     /// </summary>
     public async Task DeleteLayoutAsync()
     {
@@ -149,7 +149,7 @@ internal class DockingLayoutService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Fehler beim Löschen des Layouts");
+            _logger.LogWarning(ex, "Error deleting layout");
         }
     }
 
@@ -157,7 +157,7 @@ internal class DockingLayoutService
 }
 
 /// <summary>
-/// Serialisierbare Repräsentation des DockingManager Layout-States.
+/// Serializable representation of the DockingManager layout state.
 /// </summary>
 [JsonSourceGenerationOptions(WriteIndented = true)]
 internal class DockingLayoutState

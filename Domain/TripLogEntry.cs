@@ -2,8 +2,8 @@
 namespace Moba.Domain;
 
 /// <summary>
-/// Ein Eintrag im Fahrtenbuch – erfasst eine Fahrt- oder Haltephase einer Lokomotive
-/// über die TrainControlPage.
+/// A trip log entry – records a travel or stop phase of a locomotive
+/// via the TrainControlPage.
 /// </summary>
 public class TripLogEntry
 {
@@ -21,32 +21,32 @@ public class TripLogEntry
     public Guid Id { get; set; }
 
     /// <summary>
-    /// DCC-Adresse der Lokomotive (1–9999).
+    /// DCC address of the locomotive (1–9999).
     /// </summary>
     public int LocoAddress { get; set; }
 
     /// <summary>
-    /// Startzeit der Phase (Fahrt oder Halt).
+    /// Start time of the phase (travel or stop).
     /// </summary>
     public DateTime StartTime { get; set; }
 
     /// <summary>
-    /// Endzeit der Phase. Null = Phase läuft noch.
+    /// End time of the phase. Null = phase is still running.
     /// </summary>
     public DateTime? EndTime { get; set; }
 
     /// <summary>
-    /// Geschwindigkeit (0–126 für 128 Speed Steps). 0 = Haltezeit.
+    /// Speed (0–126 for 128 speed steps). 0 = stop.
     /// </summary>
     public int Speed { get; set; }
 
     /// <summary>
-    /// true = Haltezeit (Speed war 0), false = Fahrtphase.
+    /// true = stop phase (speed was 0), false = travel phase.
     /// </summary>
     public bool IsStopSegment { get; set; }
 
     /// <summary>
-    /// Dauer der Phase. Null wenn EndTime noch nicht gesetzt (laufende Phase).
+    /// Duration of the phase. Null when EndTime is not yet set (ongoing phase).
     /// </summary>
     public TimeSpan? Duration => EndTime.HasValue ? EndTime.Value - StartTime : null;
 }

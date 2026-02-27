@@ -1,7 +1,7 @@
 namespace Moba.TrackLibrary.Base;
 
 /// <summary>
-/// Stromversorgungs-Segment mit zwei Ports (A, B).
+/// Power supply segment with two ports (A, B).
 /// </summary>
 public record Power : Segment
 {

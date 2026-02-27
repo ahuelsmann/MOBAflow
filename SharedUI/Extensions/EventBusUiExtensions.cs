@@ -7,14 +7,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Service;
 
 /// <summary>
-/// Erweiterungen zur Registrierung des EventBus mit UI-Thread-Marshalling.
-/// Für WinUI/MAUI: Nach AddUiDispatcher() aufrufen, damit alle EventBus-Handler auf dem UI-Thread laufen.
+/// Extensions for registering the EventBus with UI-thread marshalling.
+/// For WinUI/MAUI: Call after AddUiDispatcher() so all EventBus handlers run on the UI thread.
 /// </summary>
 public static class EventBusUiExtensions
 {
     /// <summary>
-    /// Registriert den EventBus so, dass Publish alle Handler auf dem UI-Thread ausführt.
-    /// Muss nach AddUiDispatcher() aufgerufen werden.
+    /// Registers the EventBus so that Publish executes all handlers on the UI thread.
+    /// Must be called after AddUiDispatcher().
     /// </summary>
     public static IServiceCollection AddEventBusWithUiDispatch(this IServiceCollection services)
     {

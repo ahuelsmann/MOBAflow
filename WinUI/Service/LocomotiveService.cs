@@ -7,8 +7,8 @@ using Microsoft.Extensions.Logging;
 using SharedUI.Interface;
 
 /// <summary>
-/// Service für Lokomotiv-Stammdaten aus der zentralen DataManager-Instanz.
-/// Daten werden aus der gemeinsamen Stammdaten-Datei (z. B. data.json) geladen.
+/// Service for locomotive master data from the central DataManager instance.
+/// Data is loaded from the shared master data file (e.g. data.json).
 /// </summary>
 internal class LocomotiveService : ILocomotiveService
 {
@@ -23,7 +23,7 @@ internal class LocomotiveService : ILocomotiveService
     }
 
     /// <summary>
-    /// Liefert alle Lokomotiv-Kategorien aus dem zentralen Stammdaten-Manager.
+    /// Returns all locomotive categories from the central master data manager.
     /// </summary>
     public Task<List<LocomotiveCategory>> LoadCategoriesAsync()
     {
@@ -31,7 +31,7 @@ internal class LocomotiveService : ILocomotiveService
     }
 
     /// <summary>
-    /// Liefert eine flache Liste aller Baureihen.
+    /// Returns a flat list of all locomotive series.
     /// </summary>
     public Task<List<LocomotiveSeries>> GetAllSeriesAsync()
     {
@@ -40,7 +40,7 @@ internal class LocomotiveService : ILocomotiveService
     }
 
     /// <summary>
-    /// Filtert die Baureihen nach Suchbegriff (Name enthält).
+    /// Filters series by search term (name contains).
     /// </summary>
     public List<LocomotiveSeries> FilterSeries(string searchTerm)
     {
@@ -51,7 +51,7 @@ internal class LocomotiveService : ILocomotiveService
     }
 
     /// <summary>
-    /// Liefert die aktuell geladenen Baureihen ohne erneutes Laden.
+    /// Returns the currently loaded series without reloading.
     /// </summary>
     public List<LocomotiveSeries> GetCachedSeries()
     {
@@ -59,7 +59,7 @@ internal class LocomotiveService : ILocomotiveService
     }
 
     /// <summary>
-    /// Sucht eine Baureihe anhand des exakten Namens.
+    /// Finds a series by exact name.
     /// </summary>
     public LocomotiveSeries? FindByName(string name)
     {
@@ -68,7 +68,7 @@ internal class LocomotiveService : ILocomotiveService
     }
 
     /// <summary>
-    /// Sucht eine Baureihe anhand Teilnamens.
+    /// Finds a series by partial name.
     /// </summary>
     public LocomotiveSeries? FindByPartialName(string partialName)
     {

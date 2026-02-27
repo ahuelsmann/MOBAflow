@@ -3,16 +3,16 @@ namespace Moba.TrackLibrary.PikoA;
 using Base;
 
 /// <summary>
-/// Ein platzierter Gleisabschnitt auf dem editierbaren TrackPlan.
-/// Enthält das Segment, Position (mm) und Rotation (Grad).
+/// A placed track segment on the editable track plan.
+/// Contains the segment, position (mm) and rotation (degrees).
 /// </summary>
-/// <param name="Segment">Das Gleissegment (G119, R9, WR, etc.)</param>
-/// <param name="X">X-Position in mm (Canvas-Koordinaten)</param>
-/// <param name="Y">Y-Position in mm (Canvas-Koordinaten)</param>
-/// <param name="RotationDegrees">Rotation in Grad (0 = rechts, 90 = oben)</param>
+/// <param name="Segment">The track segment (G119, R9, WR, etc.)</param>
+/// <param name="X">X position in mm (canvas coordinates)</param>
+/// <param name="Y">Y position in mm (canvas coordinates)</param>
+/// <param name="RotationDegrees">Rotation in degrees (0 = right, 90 = up)</param>
 public sealed record PlacedSegment(Segment Segment, double X, double Y, double RotationDegrees)
 {
-    /// <summary>Position und Rotation für Copy/Clone bei Bewegungen.</summary>
+    /// <summary>Position and rotation for copy/clone during movements.</summary>
     public PlacedSegment WithPosition(double x, double y, double rotationDegrees) =>
         new(Segment, x, y, rotationDegrees);
 }

@@ -288,9 +288,6 @@ sealed partial class SignalBoxPage
         AspectRa12Button.Background = sig.SignalAspect == SignalAspect.Ra12 ? accentBrush : normalBrush;
         AspectZs1Button.Background = sig.SignalAspect == SignalAspect.Zs1 ? accentBrush : normalBrush;
         AspectZs7Button.Background = sig.SignalAspect == SignalAspect.Zs7 ? accentBrush : normalBrush;
-
-        // Signal type is now fixed (SbSignal), ComboBox can be simplified
-        SignalTypeComboBox.SelectedIndex = 0;
     }
 
     private void UpdateSwitchButtons()

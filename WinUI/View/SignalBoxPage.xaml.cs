@@ -20,8 +20,8 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 
 /// <summary>
-/// Modernes elektronisches Stellwerk (ESTW) - Gleisbildstellwerk.
-/// Ermoeglicht die grafische Planung von Gleisanlagen mit Signalen und Weichen.
+/// Modern electronic interlocking (ESTW) - control panel with track diagram.
+/// Enables graphical planning of track layouts with signals and turnouts.
 /// Uses SignalBoxPlanViewModel for MVVM-compliant data management.
 /// Supports skin switching via ISkinProvider.
 /// </summary>
@@ -504,7 +504,14 @@ sealed partial class SignalBoxPage
             "TrackStraight" => _planViewModel.AddTrackStraight(gridX, gridY),
             "TrackCurve" => _planViewModel.AddTrackCurve(gridX, gridY),
             "Switch" => _planViewModel.AddSwitch(gridX, gridY),
-            "Signal" => _planViewModel.AddSignal(gridX, gridY),
+
+            // Viessmann Ks-Signale (Multiplex, 5229)
+            "Signal-4043" => CreateMultiplexSignal(_planViewModel, gridX, gridY, "4043"),
+            "Signal-4042" => CreateMultiplexSignal(_planViewModel, gridX, gridY, "4042"),
+            "Signal-4046" => CreateMultiplexSignal(_planViewModel, gridX, gridY, "4046"),
+            "Signal-4045" => CreateMultiplexSignal(_planViewModel, gridX, gridY, "4045"),
+            "Signal-4040" => CreateMultiplexSignal(_planViewModel, gridX, gridY, "4040"),
+
             "Detector" => _planViewModel.AddDetector(gridX, gridY),
             _ => null
         };
@@ -514,6 +521,28 @@ sealed partial class SignalBoxPage
         CreateElementVisual(element);
         SelectElement(element);
         UpdateStatistics();
+    }
+
+    /// <summary>
+    /// Helper to create a multiplex Ks signal with predefined Viessmann article number.
+    /// Uses Multiplexer 5229 as Default, BaseAddress = next free signal address.
+    /// </summary>
+    private static SbSignal CreateMultiplexSignal(
+        SignalBoxPlanViewModel planViewModel,
+        int gridX,
+        int gridY,
+        string mainSignalArticle)
+    {
+        var signal = planViewModel.AddSignal(gridX, gridY);
+        signal.SignalSystem = SignalSystemType.Ks;
+        signal.MultiplexerArticleNumber = "5229";
+        signal.IsMultiplexed = true;
+        signal.MainSignalArticleNumber = mainSignalArticle;
+
+        // Persist BaseAddress so die Adress-Paare (B..B+3) rekonstruiert werden können
+        signal.BaseAddress = signal.Address;
+
+        return signal;
     }
 
     private void MoveElement(SbElement element, int newGridX, int newGridY)

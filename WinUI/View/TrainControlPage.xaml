@@ -772,7 +772,7 @@
                             <RowDefinition Height="*" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
-                        <!--  Bremse: Rot = aktiv (Icon gelb mit Ausrufezeichen), Grün = gelöst (Icon weiß/schwarz je Theme, ohne Ausrufezeichen)  -->
+                        <!--  Brake: red = active (icon yellow with exclamation mark), green = released (icon white/black per theme, no exclamation mark)  -->
                         <Button
                             x:Name="BrakeButton"
                             Grid.Row="0"
@@ -782,7 +782,7 @@
                             ContentTemplate="{x:Bind BrakeIconTemplate, Mode=OneWay}"
                             IsEnabled="{x:Bind ViewModel.IsBrakeButtonEnabled, Mode=OneWay}"
                             Style="{StaticResource NeonGlowButtonStyle}" />
-                        <!--  Türfreigabe: Grün/DoorOpen = freigegeben, Rot/DoorClose = gesperrt; nur klickbar wenn Bremse aktiv (rot); 5 s Gelb mit Blinken  -->
+                        <!--  Door release: green/DoorOpen = released, red/DoorClose = locked; only clickable when brake active (red); 5s yellow with blink  -->
                         <Button
                             x:Name="DoorReleaseButton"
                             Grid.Row="0"

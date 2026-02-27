@@ -5,23 +5,23 @@ using System.Collections.ObjectModel;
 using Domain;
 
 /// <summary>
-/// MainWindowViewModel – Erweiterung für LocomotivesPage und Fahrtenbuch.
+/// MainWindowViewModel – extension for LocomotivesPage and trip log.
 /// </summary>
 public partial class MainWindowViewModel
 {
     /// <summary>
-    /// Gefilterte Fahrtenbuch-Einträge für die aktuell gewählte Lokomotive.
+    /// Filtered trip log entries for the currently selected locomotive.
     /// </summary>
     public ObservableCollection<TripLogEntry> TripLogEntriesForSelectedLocomotive { get; } = [];
 
     /// <summary>
-    /// true wenn eine Lok ausgewählt ist und keine Fahrten protokolliert sind.
+    /// true when a locomotive is selected and no trips have been recorded.
     /// </summary>
     public bool ShowEmptyTripLogMessage =>
         SelectedLocomotive != null && TripLogEntriesForSelectedLocomotive.Count == 0;
 
     /// <summary>
-    /// Aktualisiert die Fahrtenbuch-Liste für die gewählte Lokomotive.
+    /// Updates the trip log list for the selected locomotive.
     /// </summary>
     public void RefreshTripLogEntriesForSelectedLocomotive()
     {

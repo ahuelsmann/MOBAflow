@@ -81,7 +81,7 @@ public partial class MainWindowViewModel
                     $"Calculated DCC address {dccAddress} is outside the valid range (1-2044).");
             }
 
-            // Optionale Polaritätsumkehr pro Adresse (Offset 0..3 für z. B. 201, 202, 203, 204)
+            // Optional polarity inversion per address (offset 0..3 for e.g. 201, 202, 203, 204)
             var activate = turnoutCommand.Activate;
             if (ShouldInvertPolarityForOffset(turnoutCommand.AddressOffset))
             {
@@ -123,7 +123,7 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
-    /// Prüft, ob für den angegebenen Adress-Offset (0..3) die Polarität invertiert werden soll.
+    /// Checks whether polarity should be inverted for the specified address offset (0..3).
     /// </summary>
     private bool ShouldInvertPolarityForOffset(int addressOffset)
     {

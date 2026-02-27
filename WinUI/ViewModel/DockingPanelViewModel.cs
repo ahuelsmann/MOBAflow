@@ -10,8 +10,8 @@ using Microsoft.UI.Xaml;
 using System.Collections.Generic;
 
 /// <summary>
-/// ViewModel für DockingManager mit Layout-State Management.
-/// Verwaltet Visibility, Größen und State aller Dock-Panels.
+/// ViewModel for DockingManager with layout state management.
+/// Manages visibility, sizes and state of all dock panels.
 /// </summary>
 internal abstract partial class DockingPanelViewModel : ObservableObject
 {
@@ -283,11 +283,11 @@ internal abstract partial class DockingPanelViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Speichert den aktuellen Layout-State.
+    /// Saves the current layout state.
     /// </summary>
     public void SaveState()
     {
-        // Wird von DockingLayoutService aufgerufen
+        // Called by DockingLayoutService
     }
 
     #endregion

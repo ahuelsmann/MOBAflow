@@ -3,14 +3,14 @@ namespace Moba.TrackLibrary.PikoA;
 using Base;
 
 /// <summary>
-/// Verbindung zwischen zwei Port-Paaren in einem TrackPlan.
-/// Wird vom Renderer verwendet, um Entry-Ports und Verkettungen zu bestimmen.
+/// Connection between two port pairs in a TrackPlan.
+/// Used by the renderer to determine entry ports and chaining.
 /// </summary>
 public record PortConnection(Guid SourceSegment, string SourcePort, Guid TargetSegment, string TargetPort);
 
 /// <summary>
-/// Ergebnis eines Track Plan Builders mit Segmenten und Startkonfiguration.
-/// Enthält alle Gleissegmente und den initialen Renderwinkel.
+/// Result of a track plan builder with segments and start configuration.
+/// Contains all track segments and the initial render angle.
 /// </summary>
 public class TrackPlanResult
 {
@@ -18,22 +18,22 @@ public class TrackPlanResult
     public required List<Segment> Segments { get; init; }
 
     /// <summary>
-    /// Startwinkel für das Rendering in Grad
-    /// 0° = rechts, 90° = oben, 180° = links, 270° = unten
+    /// Start angle for rendering in degrees.
+    /// 0° = right, 90° = up, 180° = left, 270° = down
     /// </summary>
     public required double StartAngleDegrees { get; init; }
 
     /// <summary>
-    /// Alle Port-Verbindungen zwischen Segmenten.
-    /// Wird vom Renderer verwendet, um die logische Verkettung zu verstehen.
+    /// All port connections between segments.
+    /// Used by the renderer to understand logical chaining.
     /// </summary>
     public required List<PortConnection> Connections { get; init; }
 }
 
 /// <summary>
-/// Fluent Builder für TrackPlan-Konstruktion mit Gleis-Verbindungen.
-/// 
-/// Ermöglicht deklarative Definition von Gleisverbindungen:
+/// Fluent builder for track plan construction with track connections.
+///
+/// Enables declarative definition of track connections:
 /// <code>
 /// var plan = new TrackPlanBuilder()
 ///     .Start(180)
@@ -50,10 +50,10 @@ public class TrackPlanBuilder
     private double _startAngleDegrees;
 
     /// <summary>
-    /// Setzt den Startwinkel für das Rendering des Track Plans.
+    /// Sets the start angle for rendering the track plan.
     /// </summary>
-    /// <param name="angleDegrees">Winkel in Grad (0 = rechts, 90 = oben, 180 = links, 270 = unten)</param>
-    /// <returns>Builder für Fluent API Verkettung</returns>
+    /// <param name="angleDegrees">Angle in degrees (0 = right, 90 = up, 180 = left, 270 = down)</param>
+    /// <returns>Builder for fluent API chaining</returns>
     public TrackPlanBuilder Start(double angleDegrees)
     {
         _startAngleDegrees = angleDegrees;
@@ -61,10 +61,10 @@ public class TrackPlanBuilder
     }
 
     /// <summary>
-    /// Fügt ein neues Gleissegment des Typs T hinzu.
+    /// Adds a new track segment of type T.
     /// </summary>
-    /// <typeparam name="T">Gleistyp (z.B. WR, R9) - muss Segment erben</typeparam>
-    /// <returns>TrackBuilder für Port-Verbindungen</returns>
+    /// <typeparam name="T">Track type (e.g. WR, R9) - must inherit from Segment</typeparam>
+    /// <returns>TrackBuilder for port connections</returns>
     public TrackBuilder<T> Add<T>() where T : Segment, new()
     {
         var node = new TrackNode { Type = typeof(T) };
@@ -73,7 +73,7 @@ public class TrackPlanBuilder
     }
 
     /// <summary>
-    /// Interner Hilfsmethode: Fügt Gleissegment basierend auf Type hinzu.
+    /// Internal helper: adds track segment based on type.
     /// </summary>
     internal TrackNode AddTrack(Type type)
     {
@@ -83,7 +83,7 @@ public class TrackPlanBuilder
     }
 
     /// <summary>
-    /// Interner Hilfsmethode: Registriert Verbindung zwischen zwei Ports.
+    /// Internal helper: registers connection between two ports.
     /// </summary>
     internal void AddConnection(TrackNode source, string sourcePort, TrackNode target, string targetPort)
     {
@@ -91,15 +91,15 @@ public class TrackPlanBuilder
     }
 
     /// <summary>
-    /// Erstellt das finale TrackPlanResult mit allen Segmenten und Verbindungen.
-    /// 
-    /// Prozess:
-    /// 1. Instantiiert alle Track-Objekte mit eindeutiger GUID
-    /// 2. Setzt alle Port-Verbindungen basierend auf Connection-Liste
-    /// 3. Konvertiert interne Connections zu PortConnection-Records mit GUIDs
-    /// 4. Rückgabe mit Start-Winkel
+    /// Creates the final TrackPlanResult with all segments and connections.
+    ///
+    /// Process:
+    /// 1. Instantiates all track objects with unique GUID
+    /// 2. Sets all port connections based on connection list
+    /// 3. Converts internal connections to PortConnection records with GUIDs
+    /// 4. Returns with start angle
     /// </summary>
-    /// <returns>Immutable TrackPlanResult mit allen Segmenten</returns>
+    /// <returns>Immutable TrackPlanResult with all segments</returns>
     public TrackPlanResult Create()
     {
         var instances = new Dictionary<TrackNode, Segment>();
@@ -127,7 +127,7 @@ public class TrackPlanBuilder
                 targetProp.SetValue(targetInstance, sourceInstance.No);
             }
 
-            // Exportiere Verbindung mit GUIDs für Renderer
+            // Export connection with GUIDs for renderer
             portConnections.Add(new PortConnection(
                 sourceInstance.No,
                 conn.SourcePort,
@@ -145,25 +145,25 @@ public class TrackPlanBuilder
     }
 
     /// <summary>
-    /// Interner Knoten für Gleis-Tracking während Builder-Konstruktion.
+    /// Internal node for track tracking during builder construction.
     /// </summary>
     internal class TrackNode
     {
-        /// <summary>CLR-Typ des Gleissegments (z.B. typeof(WR), typeof(R9))</summary>
+        /// <summary>CLR type of the track segment (e.g. typeof(WR), typeof(R9))</summary>
         public Type Type { get; set; } = null!;
     }
 
     /// <summary>
-    /// Interner Record für Verbindungsinformation zwischen zwei Port-Paaren.
+    /// Internal record for connection information between two port pairs.
     /// </summary>
     private record Connection(TrackNode Source, string SourcePort, TrackNode Target, string TargetPort);
 }
 
 /// <summary>
-/// Generischer Builder für Gleis-Typ T mit Port-Verkettung.
-/// Stellt fluent API bereit: .FromA, .FromB, .FromC, .FromD
+/// Generic builder for track type T with port chaining.
+/// Provides fluent API: .FromA, .FromB, .FromC, .FromD
 /// </summary>
-/// <typeparam name="T">Gleistyp (z.B. WR, R9)</typeparam>
+/// <typeparam name="T">Track type (e.g. WR, R9)</typeparam>
 public class TrackBuilder<T> where T : Segment, new()
 {
     private readonly TrackPlanBuilder _plan;
@@ -191,8 +191,8 @@ public class TrackBuilder<T> where T : Segment, new()
     /// <summary>
     /// Mehrere parallele Port-Verbindungen definieren.
     /// </summary>
-    /// <param name="branches">Lambda-Ausdrücke für parallele Pfade</param>
-    /// <returns>Builder für weitere Verkettung</returns>
+    /// <param name="branches">Lambda expressions for parallel paths</param>
+    /// <returns>Builder for further chaining</returns>
     public TrackBuilder<T> Connections(params Func<TrackBuilder<T>, object>[] branches)
     {
         foreach (var branch in branches)
@@ -207,9 +207,9 @@ public class TrackBuilder<T> where T : Segment, new()
 }
 
 /// <summary>
-/// Builder für Port-zu-Port Verbindungen zwischen Gleisoberflächen.
-/// 
-/// Stellt fluent API bereit: .ToA&lt;R9&gt;, .ToB&lt;R9&gt;, .ToC&lt;WR&gt;, .ToD&lt;R9&gt;
+/// Builder for port-to-port connections between track surfaces.
+///
+/// Provides fluent API: .ToA&lt;R9&gt;, .ToB&lt;R9&gt;, .ToC&lt;WR&gt;, .ToD&lt;R9&gt;
 /// </summary>
 public class PortBuilder
 {

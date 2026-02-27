@@ -81,7 +81,7 @@ internal static class PathToCanvasGeometryConverter
     /// <summary>
     /// Erstellt eine <see cref="CanvasGeometry"/> aus Pfad-Befehlen in lokalen Koordinaten.
     /// </summary>
-    /// <param name="resourceCreator">CanvasControl oder DrawingSession (für ICanvasResourceCreator)</param>
+    /// <param name="resourceCreator">CanvasControl or DrawingSession (for ICanvasResourceCreator)</param>
     /// <param name="commands">Pfad-Befehle in lokalen Koordinaten (Port A = Ursprung)</param>
     /// <returns>CanvasGeometry in mm</returns>
     public static CanvasGeometry ToCanvasGeometry(ICanvasResourceCreator resourceCreator, IReadOnlyList<SegmentLocalPathBuilder.PathCommand> commands)

@@ -29,7 +29,7 @@ internal sealed partial class InfoPage
 
     private static string LoadReadmeContent()
     {
-        // Zuerst neben der ausfuehrenden Datei suchen (z.B. bin/Debug/)
+        // First search next to the executing file (e.g. bin/Debug/)
         var baseDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
             ?? AppContext.BaseDirectory;
         var readmePath = Path.Combine(baseDir, ReadmeFileName);
@@ -67,8 +67,8 @@ internal sealed partial class InfoPage
 
             Version {versionString}
 
-            Die README.md konnte nicht geladen werden. Bitte stellen Sie sicher, dass die Datei
-            im Anwendungsverzeichnis vorhanden ist, oder installieren Sie MOBAflow neu.
+            The README.md could not be loaded. Please ensure the file is present
+            in the application directory, or reinstall MOBAflow.
 
             Dokumentation: [GitHub](https://github.com/ahuelsmann/MOBAflow)
             """;

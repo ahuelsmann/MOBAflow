@@ -221,24 +221,6 @@
             "state": "Free"
           },
           {
-            "$type": "Signal",
-            "address": 202,
-            "signalSystem": "Ks",
-            "signalAspect": "Ra12",
-            "isMultiplexed": true,
-            "multiplexerArticleNumber": "5229",
-            "mainSignalArticleNumber": "4046",
-            "distantSignalArticleNumber": "4040",
-            "baseAddress": 201,
-            "extendedAccessoryValue": 1,
-            "id": "1837507c-6f91-47cc-a825-0cedf92e4f89",
-            "x": 3,
-            "y": 2,
-            "rotation": 0,
-            "name": "",
-            "state": "Free"
-          },
-          {
             "$type": "Detector",
             "feedbackAddress": 1,
             "id": "89a8b660-1623-4edb-99b5-c0cf01afba72",
@@ -290,6 +272,23 @@
             "x": 2,
             "y": 5,
             "rotation": 180,
+            "name": "",
+            "state": "Free"
+          },
+          {
+            "$type": "Signal",
+            "address": 203,
+            "signalSystem": "Ks",
+            "signalAspect": "Hp0",
+            "isMultiplexed": true,
+            "multiplexerArticleNumber": "5229",
+            "mainSignalArticleNumber": "4046",
+            "distantSignalArticleNumber": "4040",
+            "baseAddress": 203,
+            "id": "7f12fb1e-8d9d-488d-b747-ca28286c1c4c",
+            "x": 4,
+            "y": 6,
+            "rotation": 0,
             "name": "",
             "state": "Free"
           }

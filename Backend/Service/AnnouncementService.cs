@@ -25,7 +25,7 @@ using Sound;
 /// 3. Call GenerateAndSpeakAnnouncementAsync() for text + audio
 /// 
 /// Template Format:
-/// Journey.Text = "Nächster Halt {StationName}. {StationIsExitOnLeft}."
+/// Journey.Text = "Next stop {StationName}. {StationIsExitOnLeft}." (or localized equivalent)
 /// 
 /// Placeholders:
 /// - {StationName} → Station.Name

@@ -311,28 +311,28 @@ internal sealed partial class DockingManager
         set => SetValue(BottomPanelsProperty, value);
     }
 
-    /// <summary>Layout-Modus der linken Dock-Gruppe (Split = gleichmäßig, Tabbed = Tabs).</summary>
+    /// <summary>Layout mode of the left dock group (Split = even, Tabbed = tabs).</summary>
     public DockGroupLayoutMode LeftLayoutMode
     {
         get => (DockGroupLayoutMode)GetValue(LeftLayoutModeProperty);
         set => SetValue(LeftLayoutModeProperty, value);
     }
 
-    /// <summary>Layout-Modus der rechten Dock-Gruppe.</summary>
+    /// <summary>Layout mode of the right dock group.</summary>
     public DockGroupLayoutMode RightLayoutMode
     {
         get => (DockGroupLayoutMode)GetValue(RightLayoutModeProperty);
         set => SetValue(RightLayoutModeProperty, value);
     }
 
-    /// <summary>Layout-Modus der oberen Dock-Gruppe.</summary>
+    /// <summary>Layout mode of the top dock group.</summary>
     public DockGroupLayoutMode TopLayoutMode
     {
         get => (DockGroupLayoutMode)GetValue(TopLayoutModeProperty);
         set => SetValue(TopLayoutModeProperty, value);
     }
 
-    /// <summary>Layout-Modus der unteren Dock-Gruppe.</summary>
+    /// <summary>Layout mode of the bottom dock group.</summary>
     public DockGroupLayoutMode BottomLayoutMode
     {
         get => (DockGroupLayoutMode)GetValue(BottomLayoutModeProperty);
@@ -925,11 +925,11 @@ internal sealed partial class DockingManager
         {
             case DockPosition.Left:
                 IsLeftPanelVisible = visible;
-                // Left/Right: Nur Visibility ändern, Width bleibt gleich
+                // Left/Right: only change visibility, width stays the same
                 break;
             case DockPosition.Right:
                 IsRightPanelVisible = visible;
-                // Left/Right: Nur Visibility ändern, Width bleibt gleich
+                // Left/Right: only change visibility, width stays the same
                 break;
             case DockPosition.Top:
                 IsTopPanelVisible = visible;

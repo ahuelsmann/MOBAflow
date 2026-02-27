@@ -27,7 +27,7 @@ void SetSpeed(int speedStep) { }
 
 ### Private Fields
 ```csharp
-// ✅ _camelCase (mit Unterstrich-Präfix)
+// ✅ _camelCase (with underscore prefix)
 private readonly ILogger _logger;
 private int _currentSpeed;
 private bool _isConnected;

@@ -190,7 +190,7 @@ public partial class App
         // Logging (required by HealthCheckService and SpeechHealthCheck)
         services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(Log.Logger, dispose: true));
 
-        // UI Thread Dispatcher (platform-specific) – vor EventBus, da Decorator ihn benötigt
+        // UI thread dispatcher (platform-specific) – before EventBus, as decorator needs it
         services.AddUiDispatcher();
 
         // Event Bus mit UI-Thread-Marshalling: alle Handler laufen auf dem UI-Thread

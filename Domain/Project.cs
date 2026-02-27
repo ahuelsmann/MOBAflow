@@ -76,7 +76,7 @@ public class Project
     public SignalBoxPlan? SignalBoxPlan { get; set; }
 
     /// <summary>
-    /// Fahrtenbuch: protokollierte Fahrten und Haltezeiten von der TrainControlPage.
+    /// Trip log: recorded trips and stop times from the TrainControlPage.
     /// </summary>
     public List<TripLogEntry> TripLogEntries { get; set; }
 }

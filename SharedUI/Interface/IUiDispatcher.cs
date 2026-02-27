@@ -2,30 +2,30 @@
 namespace Moba.SharedUI.Interface;
 
 /// <summary>
-/// Stellt Ausführung von Aktionen auf dem UI-Thread sicher (Thread-Marshalling).
-/// Wird von ViewModels genutzt, wenn z. B. Events oder Hintergrunddienste vom Nicht-UI-Thread
-/// kommen und Properties/Collections aktualisiert werden müssen.
+/// Ensures execution of actions on the UI thread (thread marshalling).
+/// Used by ViewModels when e.g. events or background services run on a non-UI thread
+/// and properties/collections need to be updated.
 /// </summary>
 /// <remarks>
-/// Best Practice: Collection-Updates während PropertyChanged-Ketten (z. B. bei Projektwechsel)
-/// durch Ersetzen der Collection lösen (neue ObservableCollection zuweisen), nicht durch
-/// Clear/Add in place – vermeidet Reentranz und COMException in WinUI-Bindings.
+/// Best practice: Resolve collection updates during PropertyChanged chains (e.g. on project change)
+/// by replacing the collection (assign new ObservableCollection), not by Clear/Add in place –
+/// avoids reentrancy and COMException in WinUI bindings.
 /// </remarks>
 public interface IUiDispatcher
 {
     /// <summary>
-    /// Führt die Aktion auf dem UI-Thread aus. Ist der Aufruf bereits auf dem UI-Thread,
-    /// wird synchron ausgeführt; sonst wird auf den UI-Thread gewechselt.
+    /// Executes the action on the UI thread. If the call is already on the UI thread,
+    /// runs synchronously; otherwise switches to the UI thread.
     /// </summary>
     void InvokeOnUi(Action action);
 
     /// <summary>
-    /// Führt eine asynchrone Aktion auf dem UI-Thread aus und wartet auf deren Abschluss.
+    /// Executes an async action on the UI thread and waits for completion.
     /// </summary>
     Task InvokeOnUiAsync(Func<Task> asyncAction);
 
     /// <summary>
-    /// Führt eine asynchrone Funktion auf dem UI-Thread aus und gibt das Ergebnis zurück.
+    /// Executes an async function on the UI thread and returns the result.
     /// </summary>
     Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc);
 }

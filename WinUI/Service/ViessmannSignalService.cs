@@ -5,8 +5,8 @@ using Backend.Data;
 using Common.Multiplex;
 
 /// <summary>
-/// Liefert die wählbaren Viessmann Multiplex-Signale (Haupt- und Vorsignal) aus den Stammdaten (data.json).
-/// Filtert nach Multiplexer (5229/52292) und Rolle (main/distant).
+/// Provides the selectable Viessmann Multiplex signals (main and distant signal) from master data (data.json).
+/// Filters by multiplexer (5229/52292) and role (main/distant).
 /// </summary>
 internal sealed class ViessmannSignalService
 {
@@ -18,8 +18,8 @@ internal sealed class ViessmannSignalService
     }
 
     /// <summary>
-    /// Liefert alle als Hauptsignal wählbaren Einträge für den angegebenen Multiplexer.
-    /// Nur Artikelnummern, die der Multiplexer unterstützt und in den Stammdaten mit Rolle "main" stehen.
+    /// Returns all entries selectable as main signal for the specified multiplexer.
+    /// Only article numbers that the multiplexer supports and that have role "main" in master data.
     /// </summary>
     public IReadOnlyList<(string ArticleNumber, string DisplayName)> GetMainSignalOptions(string multiplexerArticleNumber)
     {
@@ -42,7 +42,7 @@ internal sealed class ViessmannSignalService
     }
 
     /// <summary>
-    /// Liefert alle als Vorsignal wählbaren Einträge für den angegebenen Multiplexer.
+    /// Returns all entries selectable as distant signal for the specified multiplexer.
     /// </summary>
     public IReadOnlyList<(string ArticleNumber, string DisplayName)> GetDistantSignalOptions(string multiplexerArticleNumber)
     {

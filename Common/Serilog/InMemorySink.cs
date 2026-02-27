@@ -30,6 +30,10 @@ public class InMemorySink : ILogEventSink
     /// </summary>
     public static void ClearLogs() => LogEntries.Clear();
 
+    /// <summary>
+    /// Emits a Serilog log event into the in-memory buffer and raises <see cref="LogAdded"/>.
+    /// </summary>
+    /// <param name="logEvent">The log event to capture.</param>
     public void Emit(LogEvent logEvent)
     {
         var severity = logEvent.Level switch
@@ -73,13 +77,34 @@ public class InMemorySink : ILogEventSink
 /// </summary>
 public class LogEntry
 {
+    /// <summary>
+    /// Gets the timestamp when the log entry was created.
+    /// </summary>
     public DateTime Timestamp { get; init; } = DateTime.Now;
+
+    /// <summary>
+    /// Gets the severity level of the log entry.
+    /// </summary>
     public LogSeverity Severity { get; init; } = LogSeverity.Info;
+
+    /// <summary>
+    /// Gets the logical source of the log entry (logger or component name).
+    /// </summary>
     public string Source { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Gets the formatted log message.
+    /// </summary>
     public string Message { get; init; } = string.Empty;
 
+    /// <summary>
+    /// Gets the timestamp formatted for display in the UI.
+    /// </summary>
     public string TimestampFormatted => Timestamp.ToString("HH:mm:ss.fff");
 
+    /// <summary>
+    /// Gets an icon string that represents the severity level.
+    /// </summary>
     public string SeverityIcon => Severity switch
     {
         LogSeverity.Debug => "🔍",

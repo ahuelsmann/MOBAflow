@@ -1,39 +1,39 @@
 namespace Moba.TrackLibrary.PikoA;
 /// <summary>
-/// Katalog aller Piko A-Gleistypen für Toolbox und Drag &amp; Drop.
-/// Gruppiert nach Kategorien für die TrackPlanPage.
-/// Ermöglicht spätere Erweiterung um weitere Gleisbibliotheken (z.B. Märklin).
+/// Catalog of all Piko A track types for toolbox and drag and drop.
+/// Grouped by categories for the TrackPlanPage.
+/// Allows future extension with additional track libraries (e.g. Märklin).
 /// </summary>
 public static class PikoACatalog
 {
     /// <summary>
-    /// Kategorie eines Gleistyps (für Toolbox-Gruppierung).
+    /// Category of a track type (for toolbox grouping).
     /// </summary>
     public enum TrackCategory
     {
         /// <summary>
-        /// Straight track elements (Geraden).
+        /// Straight track elements.
         /// </summary>
         Straight,
 
         /// <summary>
-        /// Curved track elements (Bögen).
+        /// Curved track elements.
         /// </summary>
         Curve,
 
         /// <summary>
-        /// Turnouts and switches (Weichen).
+        /// Turnouts and switches.
         /// </summary>
         Switch,
 
         /// <summary>
-        /// Crossing track elements (Kreuzungen).
+        /// Crossing track elements.
         /// </summary>
         Crossing
     }
 
     /// <summary>
-    /// Alle Geraden (Straight) im Piko A-Sortiment.
+    /// All straight tracks in the Piko A range.
     /// </summary>
     public static IReadOnlyList<TrackCatalogEntry> Straights { get; } =
     [
@@ -46,7 +46,7 @@ public static class PikoACatalog
     ];
 
     /// <summary>
-    /// Alle Kurven (Curved) im Piko A-Sortiment.
+    /// All curved tracks in the Piko A range.
     /// </summary>
     public static IReadOnlyList<TrackCatalogEntry> Curves { get; } =
     [
@@ -60,7 +60,7 @@ public static class PikoACatalog
     ];
 
     /// <summary>
-    /// Alle Weichen im Piko A-Sortiment.
+    /// All switches in the Piko A range.
     /// </summary>
     public static IReadOnlyList<TrackCatalogEntry> Switches { get; } =
     [
@@ -76,7 +76,7 @@ public static class PikoACatalog
     ];
 
     /// <summary>
-    /// Alle Kreuzungen im Piko A-Sortiment.
+    /// All crossings in the Piko A range.
     /// </summary>
     public static IReadOnlyList<TrackCatalogEntry> Crossings { get; } =
     [
@@ -85,7 +85,7 @@ public static class PikoACatalog
     ];
 
     /// <summary>
-    /// Alle Gleistypen in einer flachen Liste.
+    /// All track types in a flat list.
     /// </summary>
     public static IReadOnlyList<TrackCatalogEntry> All { get; } =
     [

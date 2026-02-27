@@ -8,8 +8,8 @@ using Domain;
 using Microsoft.Extensions.Logging;
 
 /// <summary>
-/// Implementierung des Fahrtenbuch-Services.
-/// Protokolliert Fahr- und Haltephasen in Project.TripLogEntries.
+/// Trip log service implementation.
+/// Records driving and stopping phases in Project.TripLogEntries.
 /// </summary>
 public sealed class TripLogService : ITripLogService
 {
@@ -34,7 +34,7 @@ public sealed class TripLogService : ITripLogService
 
         lock (entries)
         {
-            // Offenen Eintrag schließen (falls vorhanden)
+            // Close open entry (if any)
             var openEntry = entries.FirstOrDefault(e => e.EndTime == null);
             if (openEntry != null)
             {
@@ -44,7 +44,7 @@ public sealed class TripLogService : ITripLogService
                     openEntry.IsStopSegment, openEntry.LocoAddress, openEntry.StartTime, openEntry.EndTime, openEntry.Speed);
             }
 
-            // Neuen Eintrag anlegen
+            // Create new entry
             var isStop = speed == 0;
             var entry = new TripLogEntry
             {

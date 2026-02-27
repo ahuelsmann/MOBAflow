@@ -1,7 +1,7 @@
 namespace Moba.TrackLibrary.Base;
 
 /// <summary>
-/// Linkskurvenweiche mit drei Ports (A, B, C).
+/// Left curved switch with three ports (A, B, C).
 /// </summary>
 public abstract record SwitchCurvedLeft : Segment
 {

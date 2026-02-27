@@ -5,8 +5,8 @@ using Microsoft.UI.Dispatching;
 using SharedUI.Interface;
 
 /// <summary>
-/// WinUI-Implementierung von IUiDispatcher. Nutzt die DispatcherQueue des Threads,
-/// auf dem die Instanz erstellt wurde (typischerweise UI-Thread bei erster DI-Auflösung).
+/// WinUI implementation of IUiDispatcher. Uses the DispatcherQueue of the thread
+/// on which the instance was created (typically UI thread on first DI resolution).
 /// </summary>
 internal class UiDispatcher : IUiDispatcher
 {

@@ -44,12 +44,12 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 
     /// <summary>
-    /// DataTemplate für den Türfreigabe-Button (DoorOpen oder DoorClose je nach ViewModel.ShowDoorCloseIcon).
+    /// DataTemplate for the door release button (DoorOpen or DoorClose depending on ViewModel.ShowDoorCloseIcon).
     /// </summary>
     public DataTemplate? DoorReleaseIconTemplate => ViewModel.ShowDoorCloseIcon ? _doorCloseTemplate : _doorOpenTemplate;
 
     /// <summary>
-    /// DataTemplate für den Bremse-Button: BrakeActiveIcon (gelb mit Ausrufezeichen) wenn Bremse an, sonst BrakeReleasedIcon (Theme, ohne Ausrufezeichen).
+    /// DataTemplate for the brake button: BrakeActiveIcon (yellow with exclamation mark) when brake is on, otherwise BrakeReleasedIcon (theme, without exclamation mark).
     /// </summary>
     public DataTemplate? BrakeIconTemplate => ViewModel.BrakeEngaged ? _brakeActiveTemplate : _brakeReleasedTemplate;
 
@@ -105,7 +105,7 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
 
         InitializeComponent();
 
-        // Icons sofort laden, damit Bremse- und Türfreigabe-Button beim Start sichtbar sind (nicht erst in OnLoaded)
+        // Load icons immediately so brake and door release buttons are visible at startup (not only in OnLoaded)
         LoadIconTemplates();
 
         // Subscribe to skin changes for dynamic updates
@@ -313,7 +313,7 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         _skinProvider.DarkModeChanged += OnDarkModeChanged;
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
 
-        // Templates ggf. erneut laden (falls beim Start noch nicht verfügbar) und UI aktualisieren
+        // Reload templates if needed (if not yet available at startup) and update UI
         LoadIconTemplates();
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BrakeIconTemplate)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DoorReleaseIconTemplate)));

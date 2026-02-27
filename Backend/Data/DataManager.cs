@@ -6,14 +6,14 @@ using Domain;
 using System.Text.Json;
 
 /// <summary>
-/// Zentrale Stammdaten-Klasse für Städte/Bahnhöfe und Lokomotiv-Bibliothek.
-/// Lädt und speichert analog zur Solution-Klasse aus einer gemeinsamen JSON-Datei (z. B. data.json).
+/// Central master data class for cities/stations and locomotive library.
+/// Loads and saves from a shared JSON file (e.g. data.json), analogous to the Solution class.
 /// </summary>
 public class DataManager
 {
     /// <summary>
-    /// Aktuelle Schema-Version für das Stammdaten-JSON-Format.
-    /// Erhöhen bei Breaking Changes am Schema.
+    /// Current schema version for the master data JSON format.
+    /// Increment when making breaking schema changes.
     /// </summary>
     public const int CurrentSchemaVersion = 1;
 
@@ -26,29 +26,29 @@ public class DataManager
     }
 
     /// <summary>
-    /// Schema-Version dieser Stammdaten-Datei (zur Erkennung inkompatibler Formate).
+    /// Schema version of this master data file (for detecting incompatible formats).
     /// </summary>
     public int SchemaVersion { get; set; }
 
     /// <summary>
-    /// Liste der Städte mit ihren Bahnhöfen (aus der gemeinsamen Stammdaten-Datei).
+    /// List of cities with their stations (from the shared master data file).
     /// </summary>
     public List<City> Cities { get; set; }
 
     /// <summary>
-    /// Liste der Lokomotiv-Kategorien mit ihren Baureihen (aus der gemeinsamen Stammdaten-Datei).
+    /// List of locomotive categories with their series (from the shared master data file).
     /// </summary>
     public List<LocomotiveCategory> Locomotives { get; set; }
 
     /// <summary>
-    /// Viessmann Multiplex-Signale (Ks-Hauptsignal, Ks-Vorsignal) für die ComboBox-Auswahl im Stellwerk.
-    /// Quelle: https://viessmann-modell.com/sortiment/spur-h0/signale/
+    /// Viessmann Multiplex signals (Ks main signal, Ks distant signal) for the ComboBox in the signal box.
+    /// Source: https://viessmann-modell.com/sortiment/spur-h0/signale/
     /// </summary>
     public List<ViessmannMultiplexSignalEntry> ViessmannMultiplexSignals { get; set; }
 
     /// <summary>
-    /// Aktualisiert diese Instanz aus einer anderen DataManager-Instanz.
-    /// Behält die gleiche Objektreferenz und ersetzt die Daten.
+    /// Updates this instance from another DataManager instance.
+    /// Keeps the same object reference and replaces the data.
     /// </summary>
     public void UpdateFrom(DataManager other)
     {
@@ -66,8 +66,8 @@ public class DataManager
     }
 
     /// <summary>
-    /// Lädt Stammdaten aus einer JSON-Datei und wendet sie auf diese Instanz an.
-    /// Analog zu Solution.LoadAsync. Bei fehlender Datei werden die Listen geleert (kein Wurf).
+    /// Loads master data from a JSON file and applies it to this instance.
+    /// Analogous to Solution.LoadAsync. If file is missing, lists are cleared (no exception thrown).
     /// </summary>
     public async Task LoadAsync(string filePath)
     {
@@ -96,8 +96,8 @@ public class DataManager
     }
 
     /// <summary>
-    /// Speichert die aktuellen Stammdaten in eine JSON-Datei.
-    /// Analog zu Solution-Speicherung.
+    /// Saves the current master data to a JSON file.
+    /// Analogous to Solution save.
     /// </summary>
     public async Task SaveAsync(string filePath)
     {
@@ -109,10 +109,10 @@ public class DataManager
     }
 
     /// <summary>
-    /// Lädt Stammdaten aus einer Datei (statisch, für Tests oder einmaliges Laden).
+    /// Loads master data from a file (static, for tests or one-time loading).
     /// </summary>
-    /// <param name="path">Vollständiger Pfad inkl. Dateiname.</param>
-    /// <returns>Geladene Instanz oder null bei Fehler.</returns>
+    /// <param name="path">Full path including file name.</param>
+    /// <returns>Loaded instance or null on error.</returns>
     public static async Task<DataManager?> LoadFromFileAsync(string path)
     {
         if (!string.IsNullOrEmpty(path) && File.Exists(path))
@@ -135,10 +135,10 @@ public class DataManager
     }
 
     /// <summary>
-    /// Lädt nur die Lokomotiv-Bibliothek aus einer separaten JSON-Datei (Legacy; Standard ist data.json mit Cities + Locomotives).
+    /// Loads only the locomotive library from a separate JSON file (legacy; default is data.json with Cities + Locomotives).
     /// </summary>
-    /// <param name="path">Vollständiger Pfad inkl. Dateiname.</param>
-    /// <returns>Liste der Lokomotiv-Kategorien oder leere Liste bei Fehler.</returns>
+    /// <param name="path">Full path including file name.</param>
+    /// <returns>List of locomotive categories or empty list on error.</returns>
     public static async Task<List<LocomotiveCategory>> LoadLocomotivesAsync(string path)
     {
         if (!string.IsNullOrEmpty(path) && File.Exists(path))
@@ -173,17 +173,17 @@ public class DataManager
 }
 
 /// <summary>
-/// Ein Eintrag für ein Viessmann Multiplex-Signal (Haupt- oder Vorsignal).
+/// Entry for a Viessmann Multiplex signal (main or distant signal).
 /// </summary>
 public abstract class ViessmannMultiplexSignalEntry
 {
-    /// <summary>Viessmann Artikelnummer (z. B. "4040", "4046").</summary>
+    /// <summary>Viessmann article number (e.g. "4040", "4046").</summary>
     public string ArticleNumber { get; set; } = string.Empty;
 
-    /// <summary>Anzeigename für die ComboBox (z. B. "Ks-Vorsignal", "Ks-Mehrabschnittssignal").</summary>
+    /// <summary>Display name for the ComboBox (e.g. "Ks-Vorsignal", "Ks-Mehrabschnittssignal").</summary>
     public string DisplayName { get; set; } = string.Empty;
 
-    /// <summary>Rolle: "main" = Hauptsignal, "distant" = Vorsignal.</summary>
+    /// <summary>Role: "main" = main signal, "distant" = distant signal.</summary>
     public string Role { get; set; } = "main";
 }
 

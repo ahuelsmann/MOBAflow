@@ -5,9 +5,9 @@ using Common.Events;
 using Interface;
 
 /// <summary>
-/// Decorator für IEventBus: Führt alle Handler-Aufrufe auf dem UI-Thread aus.
-/// So müssen ViewModels für EventBus-Subscriptions keinen Dispatcher mehr verwenden –
-/// die Thread-Grenze wird zentral hier behandelt.
+/// Decorator for IEventBus: executes all handler calls on the UI thread.
+/// ViewModels for EventBus subscriptions no longer need a dispatcher –
+/// the thread boundary is handled centrally here.
 /// </summary>
 public sealed class UiThreadEventBusDecorator : IEventBus
 {

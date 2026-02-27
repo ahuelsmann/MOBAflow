@@ -7,8 +7,8 @@ using Microsoft.UI.Xaml;
 using System;
 
 /// <summary>
-/// Stellt ein einzelnes Dokument-Tab dar.
-/// Wird von LayoutDocumentEx und DockingManager verwendet.
+/// Represents a single document tab.
+/// Used by LayoutDocumentEx and DockingManager.
 /// </summary>
 internal class DocumentTab : IEquatable<DocumentTab>
 {
@@ -16,7 +16,7 @@ internal class DocumentTab : IEquatable<DocumentTab>
     public string IconGlyph { get; set; } = "\uE71E";
     public UIElement? Content { get; set; }
     public bool IsModified { get; set; }
-    /// <summary>Gibt an, ob das Tab an der Seite angeheftet ist.</summary>
+    /// <summary>Indicates whether the tab is pinned to the side.</summary>
     public bool IsPinned { get; set; }
     public object? Tag { get; set; }
 

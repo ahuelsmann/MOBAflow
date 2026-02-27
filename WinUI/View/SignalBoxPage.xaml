@@ -636,42 +636,164 @@
                         <!--  Separator  -->
                         <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
-                        <!--  SIGNAL Category - nur Ks-Signalschirm  -->
+                        <!--  SIGNAL Category - Viessmann Ks-Signale  -->
                         <StackPanel Spacing="8">
                             <TextBlock
                                 FontSize="11"
                                 FontWeight="SemiBold"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 Text="SIGNAL" />
-                            <!--  Ks Signal Screen (UserControl)  -->
-                            <Border
-                                Height="70"
-                                Padding="4"
-                                Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                                BorderThickness="1"
-                                CanDrag="True"
-                                CornerRadius="6"
-                                DragStarting="OnToolDragStarting"
-                                PointerEntered="OnToolPointerEntered"
-                                PointerExited="OnToolPointerExited"
-                                Tag="Signal"
-                                ToolTipService.ToolTip="Ks-Signalschirm (Mehrabschnittssignal)">
-                                <StackPanel
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    Spacing="4">
-                                    <controls:KsSignalScreen
-                                        Width="50"
-                                        Height="40"
+                            <StackPanel Spacing="6">
+                                <!--  4043 - Ks-Hauptsignal als Ausfahrsignal  -->
+                                <Border
+                                    Height="70"
+                                    Padding="4"
+                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CanDrag="True"
+                                    CornerRadius="6"
+                                    DragStarting="OnToolDragStarting"
+                                    PointerEntered="OnToolPointerEntered"
+                                    PointerExited="OnToolPointerExited"
+                                    Tag="Signal-4043"
+                                    ToolTipService.ToolTip="Ks-Hauptsignal als Ausfahrsignal (4043)">
+                                    <StackPanel
                                         HorizontalAlignment="Center"
-                                        IsHitTestVisible="False" />
-                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        Spacing="4">
+                                        <controls:KsSignalScreen
+                                            Width="50"
+                                            Height="40"
+                                            HorizontalAlignment="Center"
+                                            IsHitTestVisible="False" />
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            FontSize="10"
+                                            Text="Ks-Ausfahrsignal (4043)" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!--  4042 - Ks-Hauptsignal als Einfahrsignal  -->
+                                <Border
+                                    Height="70"
+                                    Padding="4"
+                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CanDrag="True"
+                                    CornerRadius="6"
+                                    DragStarting="OnToolDragStarting"
+                                    PointerEntered="OnToolPointerEntered"
+                                    PointerExited="OnToolPointerExited"
+                                    Tag="Signal-4042"
+                                    ToolTipService.ToolTip="Ks-Hauptsignal als Einfahrsignal (4042)">
+                                    <StackPanel
                                         HorizontalAlignment="Center"
-                                        FontSize="10"
-                                        Text="Ks-Signal" />
-                                </StackPanel>
-                            </Border>
+                                        VerticalAlignment="Center"
+                                        Spacing="4">
+                                        <controls:KsSignalScreen
+                                            Width="50"
+                                            Height="40"
+                                            HorizontalAlignment="Center"
+                                            IsHitTestVisible="False" />
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            FontSize="10"
+                                            Text="Ks-Einfahrsignal (4042)" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!--  4046 - Ks-Mehrabschnittssignal als Ausfahrsignal  -->
+                                <Border
+                                    Height="70"
+                                    Padding="4"
+                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CanDrag="True"
+                                    CornerRadius="6"
+                                    DragStarting="OnToolDragStarting"
+                                    PointerEntered="OnToolPointerEntered"
+                                    PointerExited="OnToolPointerExited"
+                                    Tag="Signal-4046"
+                                    ToolTipService.ToolTip="Ks-Mehrabschnittssignal als Ausfahrsignal (4046)">
+                                    <StackPanel
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Spacing="4">
+                                        <controls:KsSignalScreen
+                                            Width="50"
+                                            Height="40"
+                                            HorizontalAlignment="Center"
+                                            IsHitTestVisible="False" />
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            FontSize="10"
+                                            Text="Ks-Mehrabschnitt (4046)" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!--  4045 - Ks-Mehrabschnittssignal als Einfahrsignal  -->
+                                <Border
+                                    Height="70"
+                                    Padding="4"
+                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CanDrag="True"
+                                    CornerRadius="6"
+                                    DragStarting="OnToolDragStarting"
+                                    PointerEntered="OnToolPointerEntered"
+                                    PointerExited="OnToolPointerExited"
+                                    Tag="Signal-4045"
+                                    ToolTipService.ToolTip="Ks-Mehrabschnittssignal als Einfahrsignal (4045)">
+                                    <StackPanel
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Spacing="4">
+                                        <controls:KsSignalScreen
+                                            Width="50"
+                                            Height="40"
+                                            HorizontalAlignment="Center"
+                                            IsHitTestVisible="False" />
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            FontSize="10"
+                                            Text="Ks-Mehrabschnitt (4045)" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!--  4040 - Ks-Vorsignal  -->
+                                <Border
+                                    Height="70"
+                                    Padding="4"
+                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CanDrag="True"
+                                    CornerRadius="6"
+                                    DragStarting="OnToolDragStarting"
+                                    PointerEntered="OnToolPointerEntered"
+                                    PointerExited="OnToolPointerExited"
+                                    Tag="Signal-4040"
+                                    ToolTipService.ToolTip="Ks-Vorsignal (4040)">
+                                    <StackPanel
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Spacing="4">
+                                        <controls:KsSignalScreen
+                                            Width="50"
+                                            Height="40"
+                                            HorizontalAlignment="Center"
+                                            IsHitTestVisible="False" />
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            FontSize="10"
+                                            Text="Ks-Vorsignal (4040)" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
                         </StackPanel>
 
                         <!--  Separator  -->
@@ -688,7 +810,7 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <!--  Rückmelder  -->
+                                <!--  Feedback point  -->
                                 <Border
                                     Grid.Column="0"
                                     Height="60"
@@ -931,25 +1053,6 @@
                                 x:Name="SignalAspectPanel"
                                 Spacing="12"
                                 Visibility="Collapsed">
-                                <!--  Signal Type Selection  -->
-                                <StackPanel Spacing="8">
-                                    <TextBlock
-                                        FontSize="11"
-                                        FontWeight="SemiBold"
-                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                        Text="SIGNALTYP" />
-                                    <ComboBox
-                                        x:Name="SignalTypeComboBox"
-                                        HorizontalAlignment="Stretch"
-                                        SelectionChanged="OnSignalTypeChanged">
-                                        <ComboBoxItem Content="Ks-Hauptsignal" Tag="KsMain" />
-                                        <ComboBoxItem Content="Ks-Vorsignal" Tag="KsDistant" />
-                                        <ComboBoxItem Content="Ks-Mehrabschnittssignal" Tag="KsMulti" />
-                                        <ComboBoxItem Content="Rangiersignal (Ra12)" Tag="Shunt" />
-                                        <ComboBoxItem Content="Gleissperrsignal" Tag="Block" />
-                                    </ComboBox>
-                                </StackPanel>
-
                                 <!--  Signal Aspect Selection  -->
                                 <StackPanel Spacing="8">
                                     <TextBlock
@@ -1000,7 +1103,7 @@
                                             </StackPanel>
                                         </Border>
 
-                                        <!--  Ks1 - Fahrt (Grün)  -->
+                                        <!--  Ks1 - proceed (green)  -->
                                         <Border
                                             x:Name="AspectKs1Button"
                                             Grid.Row="0"

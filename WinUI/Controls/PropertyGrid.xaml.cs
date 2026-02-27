@@ -11,15 +11,15 @@ using System.Linq;
 
 /// <summary>
 /// Visual Studio-style PropertyGrid control.
-/// Zeigt Eigenschaften eines Objekts in einer Name/Value-Liste mit optionaler Kategorisierung
-/// und Beschreibung des selektierten Properties.
+/// Displays object properties in a Name/Value list with optional categorization
+/// and description of the selected property.
 /// </summary>
 internal sealed partial class PropertyGrid
 {
     #region Dependency Properties
 
     /// <summary>
-    /// Die angezeigten Property-Items.
+    /// The displayed property items.
     /// </summary>
     public static readonly DependencyProperty DisplayItemsProperty =
         DependencyProperty.Register(
@@ -29,7 +29,7 @@ internal sealed partial class PropertyGrid
             new PropertyMetadata(null));
 
     /// <summary>
-    /// Das aktuell selektierte Property.
+    /// The currently selected property.
     /// </summary>
     public static readonly DependencyProperty SelectedPropertyProperty =
         DependencyProperty.Register(
@@ -39,7 +39,7 @@ internal sealed partial class PropertyGrid
             new PropertyMetadata(null));
 
     /// <summary>
-    /// Verfügbare Objekte für den Object-Selector.
+    /// Available objects for the object selector.
     /// </summary>
     public static readonly DependencyProperty AvailableObjectsProperty =
         DependencyProperty.Register(
@@ -49,7 +49,7 @@ internal sealed partial class PropertyGrid
             new PropertyMetadata(null));
 
     /// <summary>
-    /// Name des aktuell selektierten Objekts.
+    /// Name of the currently selected object.
     /// </summary>
     public static readonly DependencyProperty SelectedObjectNameProperty =
         DependencyProperty.Register(
@@ -59,7 +59,7 @@ internal sealed partial class PropertyGrid
             new PropertyMetadata(null, OnSelectedObjectNameChanged));
 
     /// <summary>
-    /// Kategorisierte Ansicht aktiv.
+    /// Categorized view active.
     /// </summary>
     public static readonly DependencyProperty IsCategorizedProperty =
         DependencyProperty.Register(
@@ -69,7 +69,7 @@ internal sealed partial class PropertyGrid
             new PropertyMetadata(true, OnViewModeChanged));
 
     /// <summary>
-    /// Alphabetische Ansicht aktiv.
+    /// Alphabetical view active.
     /// </summary>
     public static readonly DependencyProperty IsAlphabeticalProperty =
         DependencyProperty.Register(
@@ -83,7 +83,7 @@ internal sealed partial class PropertyGrid
     #region Events
 
     /// <summary>
-    /// Wird ausgelöst, wenn ein anderes Objekt im Selector gewählt wird.
+    /// Raised when a different object is selected in the selector.
     /// </summary>
     public event EventHandler<string>? SelectedObjectChanged;
 
@@ -139,7 +139,7 @@ internal sealed partial class PropertyGrid
     #endregion
 
     /// <summary>
-    /// Setzt die anzuzeigenden Properties und aktualisiert die Ansicht.
+    /// Sets the properties to display and refreshes the view.
     /// </summary>
     public void SetProperties(IEnumerable<PropertyGridItem> properties)
     {
@@ -213,47 +213,47 @@ internal sealed partial class PropertyGrid
 }
 
 /// <summary>
-/// Stellt eine Zeile im PropertyGrid dar (Category-Header oder Property-Row).
+/// Represents a row in the PropertyGrid (category header or property row).
 /// </summary>
 internal sealed class PropertyGridItem
 {
     /// <summary>
-    /// Name der Property oder Kategorie.
+    /// Name of the property or category.
     /// </summary>
     public string Name { get; set; } = "";
 
     /// <summary>
-    /// Wert der Property.
+    /// Value of the property.
     /// </summary>
     public string Value { get; set; } = "";
 
     /// <summary>
-    /// Kategorie für Gruppierung.
+    /// Category for grouping.
     /// </summary>
     public string Category { get; set; } = "Misc";
 
     /// <summary>
-    /// Beschreibungstext für das Description-Pane.
+    /// Description text for the description pane.
     /// </summary>
     public string Description { get; set; } = "";
 
     /// <summary>
-    /// True bei Category-Header.
+    /// True for category header.
     /// </summary>
     public bool IsCategoryHeader { get; set; }
 
     /// <summary>
-    /// True bei Property-Zeile.
+    /// True for property row.
     /// </summary>
     public bool IsPropertyRow => !IsCategoryHeader;
 
     /// <summary>
-    /// Ob das Property nur lesbar ist.
+    /// Whether the property is read-only.
     /// </summary>
     public bool IsReadOnly { get; set; }
 
     /// <summary>
-    /// Erstellt einen Category-Header.
+    /// Creates a category header.
     /// </summary>
     public static PropertyGridItem CreateCategoryHeader(string categoryName) => new()
     {
@@ -263,7 +263,7 @@ internal sealed class PropertyGridItem
     };
 
     /// <summary>
-    /// Erstellt ein Property-Item.
+    /// Creates a property item.
     /// </summary>
     public static PropertyGridItem CreateProperty(
         string name,

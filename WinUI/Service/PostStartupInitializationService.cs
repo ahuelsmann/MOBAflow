@@ -103,15 +103,15 @@ internal class PostStartupInitializationService
     }
 
     /// <summary>
-    /// Lädt die zentrale Stammdaten-Datei (Cities + Locomotives) in den DataManager
-    /// und initialisiert die TrainClassLibrary aus derselben Datei.
+    /// Loads the central master data file (Cities + Locomotives) into the DataManager
+    /// and initializes the TrainClassLibrary from the same file.
     /// </summary>
     private async Task InitializeMasterDataAsync(CancellationToken cancellationToken)
     {
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
-            // Stammdaten-Pfad per Konvention (keine Abhängigkeit von Settings)
+            // Master data path by convention (no dependency on Settings)
             var fullPath = Path.Combine(AppContext.BaseDirectory, "data.json");
 
             _logger.LogInformation("[PostStartup] Loading master data from {Path}", fullPath);

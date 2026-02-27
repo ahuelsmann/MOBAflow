@@ -21,7 +21,7 @@ namespace Moba.Backend.Protocol;
 /// - 0x00000200: "schwarze Z21" (Hardware ab 2012)
 /// - 0x00000201: "schwarze Z21" (Hardware ab 2013)
 /// - 0x00000202: SmartRail (ab 2012)
-/// - 0x00000203: "weiße z21" Starterset (ab 2013)
+/// - 0x00000203: "white z21" starter set (from 2013)
 /// - 0x00000204: "z21 start" Starterset (ab 2016)
 /// - 0x00000211: Z21 XL Series (ab 2020)
 /// </summary>
@@ -135,7 +135,7 @@ public static class Z21Protocol
         /// </summary>
         public const byte LAN_SET_TURNOUTMODE = 0x71;
 
-        // ==================== Rückmelder R-BUS (Section 7) ====================
+        // ==================== Feedback R-BUS (Section 7) ====================
 
         /// <summary>
         /// LAN_RMBUS_DATACHANGED: R-Bus feedback module status changed.
@@ -697,7 +697,7 @@ public static class Z21Protocol
         /// <summary>0x00000202: SmartRail (from 2012)</summary>
         public const uint Smartrail = 0x0000_0202;
 
-        /// <summary>0x00000203: "weiße z21" Starterset variant (from 2013)</summary>
+        /// <summary>0x00000203: "white z21" starter set variant (from 2013)</summary>
         public const uint Z21Small = 0x0000_0203;
 
         /// <summary>0x00000204: "z21 start" Starterset variant (from 2016)</summary>

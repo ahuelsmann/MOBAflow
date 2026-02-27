@@ -11,7 +11,7 @@ using System.Collections.ObjectModel;
 
 /// <summary>
 /// ViewModel for DockingPage demonstrating LayoutDocument capabilities.
-/// (Host-seitig: ohne Plugin-Abhängigkeiten)
+/// (Host-side: no plugin dependencies)
 /// </summary>
 internal sealed partial class DockingPageViewModel : ObservableObject
 {

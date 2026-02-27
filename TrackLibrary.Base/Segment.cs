@@ -1,8 +1,8 @@
 namespace Moba.TrackLibrary.Base;
 
 /// <summary>
-/// Basis für alle Gleissegmente.
-/// Records ermöglichen Wert-Semantik und immutable Geometrie bei erweiterbarer Verbindungslogik.
+/// Base for all track segments.
+/// Records enable value semantics and immutable geometry with extensible connection logic.
 /// </summary>
 public abstract record Segment
 {

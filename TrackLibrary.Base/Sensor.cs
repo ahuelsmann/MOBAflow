@@ -1,7 +1,7 @@
 namespace Moba.TrackLibrary.Base;
 
 /// <summary>
-/// Sensor-Segment mit zwei Ports (A, B).
+/// Sensor segment with two ports (A, B).
 /// </summary>
 public abstract record Sensor : Segment
 {

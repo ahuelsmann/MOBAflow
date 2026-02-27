@@ -67,47 +67,47 @@ internal sealed partial class KsSignalScreen
         StopBlinking();
 
         // Default: all LEDs off
-        TopWhiteLight.Fill = OffColor;
-        RedLight.Fill = OffColor;
-        GreenLight.Fill = OffColor;
-        YellowLight.Fill = OffColor;
-        Zs7Left.Fill = OffColor;
+        W1.Fill = OffColor;
+        Hp0.Fill = OffColor;
+        Ks1.Fill = OffColor;
+        Ks2.Fill = OffColor;
+        W2.Fill = OffColor;
         Zs7Center.Fill = OffColor;
         Zs7Right.Fill = OffColor;
-        Ra12Left.Fill = OffColor;
+        W3.Fill = OffColor;
         Ra12Right.Fill = OffColor;
 
         switch (Aspect)
         {
             case "Hp0":
-                RedLight.Fill = RedOn;
+                Hp0.Fill = RedOn;
                 break;
             case "Ks1":
-                GreenLight.Fill = GreenOn;
+                Ks1.Fill = GreenOn;
                 break;
             case "Ks2":
-                YellowLight.Fill = YellowOn;
+                Ks2.Fill = YellowOn;
                 break;
             case "Ks1Blink":
-                GreenLight.Fill = GreenOn;
-                StartBlinking(GreenLight, GreenOn);
+                Ks1.Fill = GreenOn;
+                StartBlinking(Ks1, GreenOn);
                 break;
             case "Kennlicht":
-                TopWhiteLight.Fill = WhiteOn;
+                W1.Fill = WhiteOn;
                 break;
             case "Dunkel":
                 // All off - already set above
                 break;
             case "Ra12":
-                Ra12Left.Fill = WhiteOn;
+                W3.Fill = WhiteOn;
                 Ra12Right.Fill = WhiteOn;
                 break;
             case "Zs1":
-                TopWhiteLight.Fill = WhiteOn;
-                StartBlinking(TopWhiteLight, WhiteOn);
+                W1.Fill = WhiteOn;
+                StartBlinking(W1, WhiteOn);
                 break;
             case "Zs7":
-                Zs7Left.Fill = YellowOn;
+                W2.Fill = YellowOn;
                 Zs7Center.Fill = YellowOn;
                 Zs7Right.Fill = YellowOn;
                 break;

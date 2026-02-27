@@ -4,7 +4,7 @@ namespace Moba.WinUI.Converter;
 using Microsoft.UI.Xaml.Data;
 
 /// <summary>
-/// Konvertiert TimeSpan? zu Anzeige-String für Dauer (z. B. "2 min 30 s" oder "1 h 5 min").
+/// Converts TimeSpan? to display string for duration (e.g. "2 min 30 s" or "1 h 5 min").
 /// </summary>
 internal sealed class TimeSpanToDurationConverter : IValueConverter
 {

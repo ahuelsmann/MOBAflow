@@ -3,24 +3,24 @@ namespace Moba.TrackLibrary.PikoA;
 using Base;
 
 /// <summary>
-/// Editierbares Trackplan-Modell mit platzierter Segmente und Verbindungen.
-/// Unterstützt Drag &amp; Drop, Snapping und Gruppen-Bewegung.
+/// Editable track plan model with placed segments and connections.
+/// Supports drag and drop, snapping, and group movement.
 /// </summary>
 public sealed class EditableTrackPlan
 {
     private readonly List<PlacedSegment> _segments = [];
     private readonly List<PortConnection> _connections = [];
 
-    /// <summary>Alle platzierter Gleissegmente.</summary>
+    /// <summary>All placed track segments.</summary>
     public IReadOnlyList<PlacedSegment> Segments => _segments;
 
-    /// <summary>Alle Port-Verbindungen zwischen Segmenten.</summary>
+    /// <summary>All port connections between segments.</summary>
     public IReadOnlyList<PortConnection> Connections => _connections;
 
-    /// <summary>Ereignis bei Änderung der Segmente oder Verbindungen.</summary>
+    /// <summary>Event raised when segments or connections change.</summary>
     public event EventHandler? PlanChanged;
 
-    /// <summary>Fügt ein neues platzierter Segment hinzu.</summary>
+    /// <summary>Adds a new placed segment.</summary>
     public void AddSegment(PlacedSegment placed)
     {
         if (_segments.Any(s => s.Segment.No == placed.Segment.No))
@@ -30,7 +30,7 @@ public sealed class EditableTrackPlan
         PlanChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>Entfernt ein Segment und alle zugehörigen Verbindungen.</summary>
+    /// <summary>Removes a segment and all associated connections.</summary>
     public void RemoveSegment(Guid segmentNo)
     {
         _segments.RemoveAll(s => s.Segment.No == segmentNo);
@@ -38,7 +38,7 @@ public sealed class EditableTrackPlan
         PlanChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>Aktualisiert die Position eines Segments.</summary>
+    /// <summary>Updates the position of a segment.</summary>
     public void UpdateSegmentPosition(Guid segmentNo, double x, double y, double rotationDegrees)
     {
         var idx = _segments.FindIndex(s => s.Segment.No == segmentNo);
@@ -50,7 +50,7 @@ public sealed class EditableTrackPlan
         PlanChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>Verschiebt alle Segmente in der verbundenen Gruppe um den angegebenen Delta.</summary>
+    /// <summary>Moves all segments in the connected group by the specified delta.</summary>
     public void MoveGroup(IReadOnlySet<Guid> segmentNos, double deltaX, double deltaY)
     {
         for (var i = 0; i < _segments.Count; i++)
@@ -65,7 +65,7 @@ public sealed class EditableTrackPlan
         PlanChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>Fügt eine Verbindung zwischen zwei Ports hinzu. Bestehende Verbindungen der betroffenen Ports werden entfernt.</summary>
+    /// <summary>Adds a connection between two ports. Existing connections for the affected ports are removed.</summary>
     public void AddConnection(Guid sourceSegment, string sourcePort, Guid targetSegment, string targetPort)
     {
         RemoveConnectionsForPort(sourceSegment, sourcePort);
@@ -73,7 +73,7 @@ public sealed class EditableTrackPlan
 
         _connections.Add(new PortConnection(sourceSegment, sourcePort, targetSegment, targetPort));
 
-        // Gegenseitige Port-Referenzen im Segment setzen
+        // Set mutual port references in the segment
         var src = _segments.FirstOrDefault(s => s.Segment.No == sourceSegment)?.Segment;
         var tgt = _segments.FirstOrDefault(s => s.Segment.No == targetSegment)?.Segment;
         if (src != null && tgt != null)
@@ -85,7 +85,7 @@ public sealed class EditableTrackPlan
         PlanChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>Löst ein Segment aus der Gruppe – entfernt alle Verbindungen zu diesem Segment, ohne das Segment zu löschen.</summary>
+    /// <summary>Disconnects a segment from the group – removes all connections to this segment without deleting the segment.</summary>
     public void DisconnectSegmentFromGroup(Guid segmentNo)
     {
         var toRemove = _connections
@@ -97,7 +97,7 @@ public sealed class EditableTrackPlan
         }
     }
 
-    /// <summary>Entfernt eine Verbindung.</summary>
+    /// <summary>Removes a connection.</summary>
     public void RemoveConnection(Guid sourceSegment, string sourcePort, Guid targetSegment, string targetPort)
     {
         _connections.RemoveAll(c =>
@@ -115,7 +115,7 @@ public sealed class EditableTrackPlan
     }
 
     /// <summary>
-    /// Lädt einen TrackPlan aus Platzierungen und Verbindungen (z.B. von TrackPlanSvgRenderer.Render).
+    /// Loads a track plan from placements and connections (e.g. from TrackPlanSvgRenderer.Render).
     /// </summary>
     public void LoadFromPlacements(IReadOnlyList<PlacedSegment> placements, IReadOnlyList<PortConnection> connections)
     {

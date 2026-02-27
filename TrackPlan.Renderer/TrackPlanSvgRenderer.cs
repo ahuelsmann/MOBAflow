@@ -7,23 +7,23 @@ using TrackLibrary.Base;
 using TrackLibrary.PikoA;
 
 /// <summary>
-/// Ergebnis von <see cref="TrackPlanSvgRenderer.Render"/>: SVG-String und Platzierungen für Win2D.
+/// Result of <see cref="TrackPlanSvgRenderer.Render"/>: SVG string and placements for Win2D.
 /// </summary>
 public record RenderResult(string Svg, IReadOnlyList<PlacedSegment> Placements);
 
 /// <summary>
-/// SVG-Renderer für TrackPlan-Visualisierung.
+/// SVG renderer for TrackPlan visualization.
 /// 
-/// Konvertiert ein TrackPlanResult mit Gleissegmenten in skalierbare SVG-Grafik.
+/// Converts a TrackPlanResult with track segments into scalable SVG graphics.
 /// 
 /// Features:
-/// - Nutzt Port-Verbindungen für korrekte Segment-Verkettung
-/// - Automatische Bestimmung von Entry-Ports basierend auf Verbindungen
-/// - Automatische Berechnung des Zeichnungsbereichs basierend auf echtem Inhalt
-/// - Unterstützung beliebiger Start-Winkel (0°, 90°, 180°, 270°)
-/// - Ports als senkrechte Striche (im rechten Winkel zur Fahrtrichtung): schwarz=A, rot=B, grün=C
-/// - Responsive SVG mit viewBox für automatische Skalierung
-/// - 50px Padding um alle Elemente
+/// - Uses port connections for correct segment chaining
+/// - Automatic determination of entry ports based on connections
+/// - Automatic calculation of drawing area based on actual content
+/// - Support for arbitrary start angles (0°, 90°, 180°, 270°)
+/// - Ports as perpendicular strokes (at right angle to direction): black=A, red=B, green=C
+/// - Responsive SVG with viewBox for automatic scaling
+/// - 50px padding around all elements
 /// </summary>
 public class TrackPlanSvgRenderer
 {
@@ -33,21 +33,21 @@ public class TrackPlanSvgRenderer
     private double _minY = double.MaxValue;
     private double _maxX = double.MinValue;
     private double _maxY = double.MinValue;
-    private int _segmentIndex; // Counter für wechselndes Farbschema
+    private int _segmentIndex; // Counter for alternating color scheme
 
     /// <summary>
-    /// Rendert einen TrackPlan in SVG-Format und liefert Platzierungen für Win2D.
+    /// Renders a TrackPlan in SVG format and returns placements for Win2D.
     /// 
-    /// Prozess:
-    /// 1. Erstellt eine Rendering-Queue mit dem ersten Segment
-    /// 2. Verarbeitet Segmente in logischer Verkettungsreihenfolge (Depth-First)
-    /// 3. Für jedes Segment: findet eingehende Verbindung → bestimmt Entry-Port
-    /// 4. Sammelt Platzierung (x, y, angle) für Win2D
-    /// 5. Ruft spezifischen Renderer auf (RenderWR, RenderR9, etc.)
-    /// 6. Generiert finales SVG mit viewBox basierend auf Bounds
+    /// Process:
+    /// 1. Creates a rendering queue with the first segment
+    /// 2. Processes segments in logical chaining order (depth-first)
+    /// 3. For each segment: finds incoming connection → determines entry port
+    /// 4. Collects placement (x, y, angle) for Win2D
+    /// 5. Calls specific renderer (RenderWR, RenderR9, etc.)
+    /// 6. Generates final SVG with viewBox based on bounds
     /// </summary>
-    /// <param name="trackPlan">Das zu rendernde TrackPlanResult</param>
-    /// <returns>SVG-String und Platzierungen (identisch zur SVG-Geometrie)</returns>
+    /// <param name="trackPlan">The TrackPlanResult to render</param>
+    /// <returns>SVG string and placements (identical to SVG geometry)</returns>
     public RenderResult Render(TrackPlanResult trackPlan)
     {
         _svg.Clear();
@@ -75,8 +75,8 @@ public class TrackPlanSvgRenderer
     }
 
     /// <summary>
-    /// Findet das erste Segment: eines ohne eingehende Verbindung.
-    /// Falls alle Segmente verbunden sind, wird das erste zurückgegeben.
+    /// Finds the first segment: one without incoming connection.
+    /// If all segments are connected, returns the first one.
     /// </summary>
     private Segment? FindFirstSegment(TrackPlanResult trackPlan)
     {
@@ -90,7 +90,7 @@ public class TrackPlanSvgRenderer
     }
 
     /// <summary>
-    /// Rekursives Rendering von Segmenten basierend auf Verbindungen.
+    /// Recursive rendering of segments based on connections.
     /// </summary>
     private void RenderSegmentRecursive(Segment segment, PortConnection? incomingConnection, double x, double y, double angle, TrackPlanResult trackPlan, HashSet<Guid> renderedSegments)
     {
@@ -101,12 +101,12 @@ public class TrackPlanSvgRenderer
 
         renderedSegments.Add(segment.No);
 
-        // Bestimme Entry-Port basierend auf eingehender Verbindung
+        // Determine entry port based on incoming connection
         char entryPort = 'A'; // Default
         if (incomingConnection != null)
             entryPort = ExtractPortChar(incomingConnection.TargetPort);
 
-        // Platzierung für Win2D (identisch zur SVG-Zeichenposition)
+        // Placement for Win2D (identical to SVG drawing position)
         double placeAngle = angle;
         if ((segment is G239 or G231 or G62) && entryPort == 'B')
             placeAngle = angle + 180;
@@ -116,7 +116,7 @@ public class TrackPlanSvgRenderer
         double nextY = y;
         double nextAngle = angle;
 
-        // Segment-Index für Farbschema incrementieren
+        // Increment segment index for color scheme
         var currentSegmentIndex = _segmentIndex++;
 
         // Rendera dieses Segment
@@ -158,7 +158,7 @@ public class TrackPlanSvgRenderer
         }
         else
         {
-            // Weitere Gleistypen hier hinzufügen
+            // Add further track types here
         }
 
         // Finde alle ausgehenden Verbindungen von diesem Segment
@@ -172,11 +172,11 @@ public class TrackPlanSvgRenderer
             var nextSegment = trackPlan.Segments.FirstOrDefault(s => s.No == outgoing.TargetSegment);
             if (nextSegment != null && !renderedSegments.Contains(nextSegment.No))
             {
-                // Bestimme neue Position/Winkel basierend auf Ausgangs-Port
+                // Determine new position/angle based on exit port
                 var outgoingPort = ExtractPortChar(outgoing.SourcePort);
 
-                // Berechne Position für dieses Segment aus dem Ausgangs-Port
-                // Für alle Ports außer dem aktuellen Haupt-Ausgang: neue Rendering-Position berechnen
+                // Calculate position for this segment from the exit port
+                // For all ports except the current main exit: calculate new rendering position
                 double branchX = nextX;
                 double branchY = nextY;
                 double branchAngle = nextAngle;
@@ -190,7 +190,7 @@ public class TrackPlanSvgRenderer
                     CalculateCurvedPortPosition(segment, entryPort, outgoingPort, x, y, angle, nextX, nextY, nextAngle,
                         out branchX, out branchY, out branchAngle);
                 }
-                // Geraden (G239, G231, G62) haben nur einen Ausgang → branchX/Y/Angle = nextX/Y/Angle
+                // Straight segments (G239, G231, G62) have only one exit → branchX/Y/Angle = nextX/Y/Angle
 
                 RenderSegmentRecursive(nextSegment, outgoing, branchX, branchY, branchAngle, trackPlan, renderedSegments);
             }
@@ -198,7 +198,7 @@ public class TrackPlanSvgRenderer
     }
 
     /// <summary>
-    /// Extrahiert den Port-Character aus einem Property-Namen (z.B. "PortA" → 'A').
+    /// Extracts the port character from a property name (e.g. "PortA" → 'A').
     /// </summary>
     private char ExtractPortChar(string portProperty)
     {
@@ -206,7 +206,7 @@ public class TrackPlanSvgRenderer
     }
 
     /// <summary>
-    /// Berechnet die Ausgangsposition für einen bestimmten Port der WR.
+    /// Calculates the exit position for a specific port of the WR segment.
     /// </summary>
     private void CalculateWrPortPosition(WR wr, char outgoingPort, double x, double y, double angle, out double outX, out double outY, out double outAngle)
     {
@@ -220,21 +220,21 @@ public class TrackPlanSvgRenderer
 
         if (outgoingPort == 'A')
         {
-            // Port A: Rückwärts, Winkel + 180°
+            // Port A: backwards, angle + 180°
             outX = x;
             outY = y;
             outAngle = angle + 180;
         }
         else if (outgoingPort == 'B')
         {
-            // Port B: Gerade nach vorne, am Ende der Geraden
+            // Port B: straight forward, at end of straight
             outX = x + straightLength * Math.Cos(angle * Math.PI / 180);
             outY = y + straightLength * Math.Sin(angle * Math.PI / 180);
             outAngle = angle;
         }
         else if (outgoingPort == 'C')
         {
-            // Port C: Ende der Kurve
+            // Port C: end of curve
             double centerAngle = angle + 90;
             double centerX = x + radius * Math.Cos(centerAngle * Math.PI / 180);
             double centerY = y + radius * Math.Sin(centerAngle * Math.PI / 180);
@@ -247,8 +247,8 @@ public class TrackPlanSvgRenderer
     }
 
     /// <summary>
-    /// Berechnet die Ausgangsposition für einen bestimmten Port eines Kurvensegments (R9, R1–R4).
-    /// Bei Kurven mit zwei Ports muss für jeden Ausgang die korrekte Position berechnet werden.
+    /// Calculates the exit position for a specific port of a curved segment (R9, R1–R4).
+    /// For curves with two ports, the correct position must be calculated for each exit.
     /// </summary>
     private void CalculateCurvedPortPosition(Segment segment, char entryPort, char outgoingPort, double x, double y, double angle,
         double _nextX, double _nextY, double nextAngle, out double outX, out double outY, out double outAngle)
@@ -272,7 +272,7 @@ public class TrackPlanSvgRenderer
         {
             outX = startX;
             outY = startY;
-            outAngle = angle + 180; // nächste Segment blickt zurück
+            outAngle = angle + 180; // next segment looks back
         }
         else
         {
@@ -282,7 +282,7 @@ public class TrackPlanSvgRenderer
         }
     }
 
-    /// <summary>Zeichnet einen Pfad mit gemeinsamer Geometrie aus SegmentLocalPathBuilder.</summary>
+    /// <summary>Draws a path with shared geometry from SegmentLocalPathBuilder.</summary>
     private void DrawSegmentPath(Segment segment, char entryPort, double x, double y, double angle)
     {
         var path = SegmentLocalPathBuilder.GetPath(segment, entryPort);
@@ -291,13 +291,13 @@ public class TrackPlanSvgRenderer
     }
 
     /// <summary>
-    /// Rendert ein WR-Gleis (Weichenfernmeldegleis).
-    /// Struktur:
-    /// - Port A: Eingang (schwarzer Punkt)
-    /// - Port B: Gerade (roter Punkt), Länge: 239mm
-    /// - Port C: Kurve (grüner Punkt), Radius: 908mm, Winkel: 15°
+    /// Renders a WR track (switch remote indication track).
+    /// Structure:
+    /// - Port A: Entry (black dot)
+    /// - Port B: Straight (red dot), length: 239mm
+    /// - Port C: Curve (green dot), radius: 908mm, angle: 15°
     /// 
-    /// Aktualisiert Position für Weiterzeichnen zum Port-B-Ende.
+    /// Updates position for continuing drawing to Port B end.
     /// </summary>
     private void RenderWr(WR wr, ref double x, ref double y, ref double angle, int segmentIndex)
     {
@@ -305,7 +305,7 @@ public class TrackPlanSvgRenderer
         var radius = wr.RadiusInMm;
         var arcDegree = wr.ArcInDegree;
 
-        // Port A (Eingang) - physischer Port A (schwarz)
+        // Port A (entry) - physical port A (black)
         double portAx = x;
         double portAy = y;
         DrawPortStroke(portAx, portAy, angle, GetPortColor('A', segmentIndex), 'A', true);
@@ -332,20 +332,20 @@ public class TrackPlanSvgRenderer
         DrawPortStroke(portCx, portCy, endAngle, GetPortColor('C', segmentIndex), 'C', false);
         UpdateBounds(portCx, portCy);
 
-        // Position für nächstes Gleis aktualisieren
+        // Update position for next track
         x = portBx;
         y = portBy;
     }
 
     /// <summary>
-    /// Rendert ein R9-Gleis (Kurvengleis).
+    /// Renders an R9 track (curved track).
     /// 
-    /// Struktur:
-    /// - Port A: Eingang (schwarzer Punkt)
-    /// - Port B: Ausgang (roter Punkt)
-    /// - Kreisbogen: Radius 908mm, Winkel 9°
+    /// Structure:
+    /// - Port A: Entry (black dot)
+    /// - Port B: Exit (red dot)
+    /// - Arc: radius 908mm, angle 9°
     /// 
-    /// Kurvenrichtung wird automatisch basierend auf Entry-Port angepasst:
+    /// Curve direction is automatically adjusted based on entry port:
     /// - Entry A: Kurve nach links (curveDirection = 1)
     /// - Entry B: Kurve nach rechts (curveDirection = -1)
     /// </summary>
@@ -366,11 +366,11 @@ public class TrackPlanSvgRenderer
 
         DrawSegmentPath(r9, entryPort, x, y, angle);
 
-        // Start-Port - physischer Port A oder B abhängig vom Entry
+        // Start port - physical port A or B depending on entry
         char startPort = entryPort == 'A' ? 'A' : 'B';
         DrawPortStroke(startX, startY, angle, GetPortColor(startPort, segmentIndex), startPort, true);
 
-        // End-Port - physische Port B oder A abhängig vom Entry
+        // End port - physical port B or A depending on entry
         char endPort = entryPort == 'A' ? 'B' : 'A';
         DrawPortStroke(endX, endY, endAngle, GetPortColor(endPort, segmentIndex), endPort, false);
 
@@ -378,21 +378,21 @@ public class TrackPlanSvgRenderer
         UpdateBounds(startX, startY);
         UpdateBounds(endX, endY);
 
-        // Position für nächstes Gleis aktualisieren
+        // Update position for next track
         x = endX;
         y = endY;
         angle = endAngle;
     }
 
     /// <summary>
-    /// Rendert ein R1-Gleis (Kurvengleis 30°, Radius 360mm).
+    /// Renders an R1 track (curved track 30°, radius 360mm).
     /// 
-    /// Struktur:
-    /// - Port A: Eingang (schwarzer Punkt)
-    /// - Port B: Ausgang (roter Punkt)
-    /// - Kreisbogen: Radius 360mm, Winkel 30°
+    /// Structure:
+    /// - Port A: Entry (black dot)
+    /// - Port B: Exit (red dot)
+    /// - Arc: radius 360mm, angle 30°
     /// 
-    /// Kurvenrichtung wird automatisch basierend auf Entry-Port angepasst.
+    /// Curve direction is automatically adjusted based on entry port.
     /// </summary>
     private void RenderR1(R1 r1, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
     {
@@ -426,14 +426,14 @@ public class TrackPlanSvgRenderer
     }
 
     /// <summary>
-    /// Rendert ein R2-Gleis (Kurvengleis 30°, Radius 422mm).
+    /// Renders an R2 track (curved track 30°, radius 422mm).
     /// 
-    /// Struktur:
-    /// - Port A: Eingang (schwarzer Punkt)
-    /// - Port B: Ausgang (roter Punkt)
-    /// - Kreisbogen: Radius 422mm, Winkel 30°
+    /// Structure:
+    /// - Port A: Entry (black dot)
+    /// - Port B: Exit (red dot)
+    /// - Arc: radius 422mm, angle 30°
     /// 
-    /// Kurvenrichtung wird automatisch basierend auf Entry-Port angepasst.
+    /// Curve direction is automatically adjusted based on entry port.
     /// </summary>
     private void RenderR2(R2 r2, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
     {
@@ -467,14 +467,14 @@ public class TrackPlanSvgRenderer
     }
 
     /// <summary>
-    /// Rendert ein R3-Gleis (Kurvengleis 30°, Radius 484mm).
+    /// Renders an R3 track (curved track 30°, radius 484mm).
     /// 
-    /// Struktur:
-    /// - Port A: Eingang (schwarzer Punkt)
-    /// - Port B: Ausgang (roter Punkt)
-    /// - Kreisbogen: Radius 484mm, Winkel 30°
+    /// Structure:
+    /// - Port A: Entry (black dot)
+    /// - Port B: Exit (red dot)
+    /// - Arc: radius 484mm, angle 30°
     /// 
-    /// Kurvenrichtung wird automatisch basierend auf Entry-Port angepasst.
+    /// Curve direction is automatically adjusted based on entry port.
     /// </summary>
     private void RenderR3(R3 r3, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
     {
@@ -508,14 +508,14 @@ public class TrackPlanSvgRenderer
     }
 
     /// <summary>
-    /// Rendert ein R4-Gleis (Kurvengleis 30°, Radius 546mm).
+    /// Renders an R4 track (curved track 30°, radius 546mm).
     /// 
-    /// Struktur:
-    /// - Port A: Eingang (schwarzer Punkt)
-    /// - Port B: Ausgang (roter Punkt)
-    /// - Kreisbogen: Radius 546mm, Winkel 30°
+    /// Structure:
+    /// - Port A: Entry (black dot)
+    /// - Port B: Exit (red dot)
+    /// - Arc: radius 546mm, angle 30°
     /// 
-    /// Kurvenrichtung wird automatisch basierend auf Entry-Port angepasst.
+    /// Curve direction is automatically adjusted based on entry port.
     /// </summary>
     private void RenderR4(R4 r4, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
     {
@@ -549,14 +549,14 @@ public class TrackPlanSvgRenderer
     }
 
     /// <summary>
-    /// Rendert ein G239-Gleis (Gerade 239mm).
+    /// Renders a G239 track (straight 239mm).
     /// 
-    /// Struktur:
-    /// - Port A: Eingang (schwarzer Punkt)
-    /// - Port B: Ausgang (roter Punkt)
-    /// - Gerade: 239mm Länge
+    /// Structure:
+    /// - Port A: Entry (black dot)
+    /// - Port B: Exit (red dot)
+    /// - Straight: 239mm length
     /// 
-    /// Aktualisiert Position für Weiterzeichnen zum Port B.
+    /// Updates position for continuing drawing to Port B.
     /// </summary>
     private void RenderG239(G239 g239, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
     {
@@ -580,20 +580,20 @@ public class TrackPlanSvgRenderer
         UpdateBounds(portAx, portAy);
         UpdateBounds(portBx, portBy);
 
-        // Position für nächstes Gleis aktualisieren
+        // Update position for next track
         x = portBx;
         y = portBy;
     }
 
     /// <summary>
-    /// Rendert ein G231-Gleis (Gerade 231mm).
+    /// Renders a G231 track (straight 231mm).
     /// 
-    /// Struktur:
-    /// - Port A: Eingang (schwarzer Punkt)
-    /// - Port B: Ausgang (roter Punkt)
-    /// - Gerade: 231mm Länge
+    /// Structure:
+    /// - Port A: Entry (black dot)
+    /// - Port B: Exit (red dot)
+    /// - Straight: 231mm length
     /// 
-    /// Aktualisiert Position für Weiterzeichnen zum Port B.
+    /// Updates position for continuing drawing to Port B.
     /// </summary>
     private void RenderG231(G231 g231, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
     {
@@ -617,20 +617,20 @@ public class TrackPlanSvgRenderer
         UpdateBounds(portAx, portAy);
         UpdateBounds(portBx, portBy);
 
-        // Position für nächstes Gleis aktualisieren
+        // Update position for next track
         x = portBx;
         y = portBy;
     }
 
     /// <summary>
-    /// Rendert ein G62-Gleis (Gerade 62mm).
+    /// Renders a G62 track (straight 62mm).
     /// 
-    /// Struktur:
-    /// - Port A: Eingang (schwarzer Punkt)
-    /// - Port B: Ausgang (roter Punkt)
-    /// - Gerade: 62mm Länge
+    /// Structure:
+    /// - Port A: Entry (black dot)
+    /// - Port B: Exit (red dot)
+    /// - Straight: 62mm length
     /// 
-    /// Aktualisiert Position für Weiterzeichnen zum Port B.
+    /// Updates position for continuing drawing to Port B.
     /// </summary>
     private void RenderG62(G62 g62, char entryPort, ref double x, ref double y, ref double angle, int segmentIndex)
     {
@@ -654,13 +654,13 @@ public class TrackPlanSvgRenderer
         UpdateBounds(portAx, portAy);
         UpdateBounds(portBx, portBy);
 
-        // Position für nächstes Gleis aktualisieren
+        // Update position for next track
         x = portBx;
         y = portBy;
     }
 
     /// <summary>
-    /// Aktualisiert Bounding-Box (min/max Koordinaten) für SVG viewBox-Berechnung.
+    /// Updates bounding box (min/max coordinates) for SVG viewBox calculation.
     /// </summary>
     private void UpdateBounds(double x, double y)
     {
@@ -671,17 +671,17 @@ public class TrackPlanSvgRenderer
     }
 
     /// <summary>
-    /// Finalisiert SVG basierend auf während Rendering gesammelten Bounds.
+    /// Finalizes SVG based on bounds collected during rendering.
     /// 
-    /// - Berechnet Breite/Höhe aus Bounds
-    /// - Fügt 50px Margin hinzu
-    /// - Generiert viewBox für responsive Skalierung
-    /// - Wraps alle SVG-Inhalte in &lt;svg&gt;-Tag
+    /// - Calculates width/height from bounds
+    /// - Adds 50px margin
+    /// - Generates viewBox for responsive scaling
+    /// - Wraps all SVG content in &lt;svg&gt; tag
     /// </summary>
-    /// <returns>Komplettes SVG-Dokument als String</returns>
+    /// <returns>Complete SVG document as string</returns>
     private string BuildSvg()
     {
-        // Margin hinzufügen
+        // Add margin
         double margin = 50;
         double width = _maxX - _minX + 2 * margin;
         double height = _maxY - _minY + 2 * margin;
@@ -701,21 +701,21 @@ public class TrackPlanSvgRenderer
     }
 
     /// <summary>
-    /// Zeichnet einen Port-Strich (senkrecht zum Endpunkt) mit überlappungsfreier Positionierung.
-    /// Der Strich ist 20px lang und steht im rechten Winkel zur angegebenen Richtung.
+    /// Draws a port stroke (perpendicular to endpoint) with overlap-free positioning.
+    /// The stroke is 20px long and at right angles to the given direction.
     /// 
-    /// Positionierung bei Verbindungen (z.B. A-R9-B + B-R9-A):
-    /// - Exit-Port (isEntry=false): Strich -2px VOR dem Verbindungspunkt (in Fahrtrichtung zurück)
-    /// - Entry-Port (isEntry=true): Strich +2px NACH dem Verbindungspunkt (in Fahrtrichtung vorwärts)
+    /// Positioning at connections (e.g. A-R9-B + B-R9-A):
+    /// - Exit port (isEntry=false): stroke -2px before connection point (backwards in travel direction)
+    /// - Entry port (isEntry=true): stroke +2px after connection point (forwards in travel direction)
     /// 
-    /// Dadurch überlappen Striche bei Verbindungen nicht (1-2px Abstand).
+    /// This prevents strokes from overlapping at connections (1-2px gap).
     /// </summary>
-    /// <param name="x">Port X-Koordinate (Verbindungspunkt)</param>
-    /// <param name="y">Port Y-Koordinate (Verbindungspunkt)</param>
-    /// <param name="angle">Fahrtrichtung (in Grad)</param>
-    /// <param name="color">Strich-Farbe</param>
-    /// <param name="portLabel">Port-Label (A/B/C/D)</param>
-    /// <param name="isEntry">True wenn Entry-Port (+2px vorwärts), False wenn Exit-Port (-2px zurück)</param>
+    /// <param name="x">Port X coordinate (connection point)</param>
+    /// <param name="y">Port Y coordinate (connection point)</param>
+    /// <param name="angle">Travel direction (in degrees)</param>
+    /// <param name="color">Stroke color</param>
+    /// <param name="portLabel">Port label (A/B/C/D)</param>
+    /// <param name="isEntry">True if entry port (+2px forwards), False if exit port (-2px back)</param>
     private void DrawPortStroke(double x, double y, double angle, string color, char portLabel, bool isEntry)
     {
         const double strokeLength = 20;
@@ -727,7 +727,7 @@ public class TrackPlanSvgRenderer
         double perpAngle = angle + 90;
 
         // Strich-Positionierung: ±1px vom Verbindungspunkt
-        // Exit: -1px zurück (in Fahrtrichtung), Entry: +1px vorwärts (in Fahrtrichtung)
+        // Exit: -1px back (in direction of travel), Entry: +1px forward (in direction of travel)
         double offset = isEntry ? gap : -gap;
 
         // Versetzung entlang der Fahrtrichtung
@@ -745,13 +745,13 @@ public class TrackPlanSvgRenderer
                        $"x2=\"{x2.ToString("F2", CultureInfo.InvariantCulture)}\" y2=\"{y2.ToString("F2", CultureInfo.InvariantCulture)}\" " +
                        $"stroke=\"{color}\" stroke-width=\"2\" />");
 
-        // Label-Positionierung: SOWOHL entlang (±8px) ALS AUCH senkrecht (12px) versetzt
-        // Exit: -8px zurück, Entry: +8px vorwärts (entlang Fahrtrichtung)
+        // Label positioning: BOTH along (±8px) AND perpendicular (12px) offset
+        // Exit: -8px back, Entry: +8px forward (along direction of travel)
         double labelParallel = isEntry ? labelOffsetParallel : -labelOffsetParallel;
         double labelBaseX = x + labelParallel * Math.Cos(angle * Math.PI / 180);
         double labelBaseY = y + labelParallel * Math.Sin(angle * Math.PI / 180);
 
-        // ZUSÄTZLICH: 12px senkrecht versetzt (ober/unterhalb des Gleises)
+        // ADDITIONAL: 12px perpendicular offset (above/below track)
         double labelX = labelBaseX + labelOffsetPerpendicular * Math.Cos(perpAngle * Math.PI / 180);
         double labelY = labelBaseY + labelOffsetPerpendicular * Math.Sin(perpAngle * Math.PI / 180);
 
@@ -760,14 +760,14 @@ public class TrackPlanSvgRenderer
     }
 
     /// <summary>
-    /// Gibt die Farbe für einen Port basierend auf seinem Namen und Gleis-Index zurück.
-    /// Wechselndes Farbschema pro Gleis für bessere Unterscheidbarkeit:
-    /// - Gerade Indices (0, 2, 4...): A=schwarz, B=rot, C=grün, D=blau
-    /// - Ungerade Indices (1, 3, 5...): A=grau, B=magenta, C=gelb, D=cyan
+    /// Returns the color for a port based on its name and track index.
+    /// Alternating color scheme per track for better distinction:
+    /// - Even indices (0, 2, 4...): A=black, B=red, C=green, D=blue
+    /// - Odd indices (1, 3, 5...): A=gray, B=magenta, C=yellow, D=cyan
     /// </summary>
-    /// <param name="port">Port-Character (A/B/C/D)</param>
-    /// <param name="segmentIndex">Index des Gleissegments (für Farbwechsel)</param>
-    /// <returns>Hex-Farbcode</returns>
+    /// <param name="port">Port character (A/B/C/D)</param>
+    /// <param name="segmentIndex">Index of track segment (for color alternation)</param>
+    /// <returns>Hex color code</returns>
     private string GetPortColor(char port, int segmentIndex)
     {
         var scheme = segmentIndex % 2; // 0 oder 1
@@ -779,7 +779,7 @@ public class TrackPlanSvgRenderer
             {
                 'A' => "#000000", // Schwarz
                 'B' => "#FF0000", // Rot
-                'C' => "#00FF00", // Grün
+                'C' => "#00FF00", // Green
                 'D' => "#0000FF", // Blau
                 _ => "#808080"    // Grau (Fallback)
             };
@@ -792,7 +792,7 @@ public class TrackPlanSvgRenderer
                 'A' => "#808080", // Grau
                 'B' => "#FF00FF", // Magenta
                 'C' => "#FFFF00", // Gelb
-                'D' => "#00FFFF", // Cyan (Türkis)
+                'D' => "#00FFFF", // Cyan
                 _ => "#808080"    // Grau (Fallback)
             };
         }

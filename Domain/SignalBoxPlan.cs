@@ -5,7 +5,7 @@ namespace Moba.Domain;
 using System.Text.Json.Serialization;
 
 /// <summary>
-/// SignalBoxPlan (Gleisbild) - Aggregate Root for railway interlocking topology.
+/// SignalBoxPlan (track diagram) - Aggregate Root for railway interlocking topology.
 /// Provides validated mutation methods (AddElement, RemoveElement, etc.) that enforce
 /// invariants such as cell uniqueness, referential integrity, and cascading deletes.
 /// Symbol-based approach following DB (Deutsche Bahn) standards.
@@ -40,7 +40,7 @@ public class SignalBoxPlan
     public List<SignalBoxConnection> Connections { get; set; } = [];
 
     /// <summary>
-    /// Routes (Fahrstrassen) defined for this plan.
+    /// Routes defined for this plan.
     /// Prefer AddRoute/RemoveRoute for validated mutations.
     /// </summary>
     public List<SignalBoxRoute> Routes { get; set; } = [];
@@ -290,7 +290,7 @@ public sealed record SbTrackStraight : SbElement;
 public sealed record SbTrackCurve : SbElement;
 
 /// <summary>
-/// Switch element (Weiche) with DCC address and position.
+/// Switch element with DCC address and position.
 /// </summary>
 public sealed record SbSwitch : SbElement
 {
@@ -353,16 +353,16 @@ public sealed record SbSignal : SbElement
     /// Base DCC address for the multiplex decoder.
     /// Additional addresses are calculated relative to this base using the tables in 5229.md.
     /// Example (4046):
-    ///   [B]   rot (-) / grün (+)
-    ///   [B+1] rot (-) / grün (+)
-    ///   [B+2] rot (-) / grün (+)
-    ///   [B+3] rot (-) / grün (+)
+    ///   [B]   red (-) / green (+)
+    ///   [B+1] red (-) / green (+)
+    ///   [B+2] red (-) / green (+)
+    ///   [B+3] red (-) / green (+)
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public int BaseAddress { get; set; }
 
     /// <summary>
-    /// Last computed turnout activation (1 = grün (+), 0 = rot (-)).
+    /// Last computed turnout activation (1 = green (+), 0 = red (-)).
     /// This is derived from the multiplexer mapping for status display.
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
@@ -406,7 +406,7 @@ public class SignalBoxConnection
 }
 
 /// <summary>
-/// A route (Fahrstrasse) in the signal box.
+/// A route in the signal box.
 /// </summary>
 public class SignalBoxRoute
 {
@@ -416,7 +416,7 @@ public class SignalBoxRoute
     public Guid Id { get; set; } = Guid.NewGuid();
 
     /// <summary>
-    /// Route name (e.g., "F1" for Fahrstrasse 1).
+    /// Route name (e.g., "F1" for route 1).
     /// </summary>
     public string Name { get; set; } = string.Empty;
 
@@ -505,7 +505,7 @@ public enum SignalAspect
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum SwitchPosition
 {
-    /// <summary>Straight position (Grundstellung)</summary>
+    /// <summary>Straight position (normal position)</summary>
     Straight,
 
     /// <summary>Diverging left position</summary>

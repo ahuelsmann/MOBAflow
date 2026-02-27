@@ -119,7 +119,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         IsDarkMode = settings.Application.IsDarkMode;
 
-        // Subscribe to Z21 events via EventBus (UiThreadEventBusDecorator führt Handler auf UI-Thread aus)
+        // Subscribe to Z21 events via EventBus (UiThreadEventBusDecorator runs handlers on UI thread)
         _eventBus.Subscribe<Z21ConnectionEstablishedEvent>(_ => OnZ21ConnectedChanged(true));
         _eventBus.Subscribe<Z21ConnectionLostEvent>(_ => HandleConnectionLost());
         _eventBus.Subscribe<SystemStateChangedEvent>(evt => OnZ21SystemStateChanged(CreateSystemState(evt)));
@@ -654,18 +654,18 @@ public sealed partial class MainWindowViewModel : ObservableObject
         };
     }
 
-    #region Signal Box / Viessmann Multiplex-Signale (Binding für Settings-Seite)
+    #region Signal Box / Viessmann Multiplex Signals (binding for Settings page)
 
-    /// <summary>Polarität umkehren für 1. Adresse (z. B. 201).</summary>
+    /// <summary>Invert polarity for address 1 (e.g. 201).</summary>
     public bool InvertPolarityOffset0Setting { get => _settings.SignalBox?.InvertPolarityOffset0 ?? false; set => SetSignalBoxInvert(0, value); }
 
-    /// <summary>Polarität umkehren für 2. Adresse (z. B. 202).</summary>
+    /// <summary>Invert polarity for address 2 (e.g. 202).</summary>
     public bool InvertPolarityOffset1Setting { get => _settings.SignalBox?.InvertPolarityOffset1 ?? false; set => SetSignalBoxInvert(1, value); }
 
-    /// <summary>Polarität umkehren für 3. Adresse (z. B. 203).</summary>
+    /// <summary>Invert polarity for address 3 (e.g. 203).</summary>
     public bool InvertPolarityOffset2Setting { get => _settings.SignalBox?.InvertPolarityOffset2 ?? false; set => SetSignalBoxInvert(2, value); }
 
-    /// <summary>Polarität umkehren für 4. Adresse (z. B. 204).</summary>
+    /// <summary>Invert polarity for address 4 (e.g. 204).</summary>
     public bool InvertPolarityOffset3Setting { get => _settings.SignalBox?.InvertPolarityOffset3 ?? false; set => SetSignalBoxInvert(3, value); }
 
     #endregion

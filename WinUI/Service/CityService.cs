@@ -7,8 +7,8 @@ using Microsoft.Extensions.Logging;
 using SharedUI.Interface;
 
 /// <summary>
-/// Service für Städte/Bahnhöfe-Stammdaten aus der zentralen DataManager-Instanz.
-/// Daten werden aus der gemeinsamen Stammdaten-Datei (z. B. data.json) geladen.
+/// Service for city/station master data from the central DataManager instance.
+/// Data is loaded from the shared master data file (e.g. data.json).
 /// </summary>
 internal class CityService : ICityService
 {
@@ -23,7 +23,7 @@ internal class CityService : ICityService
     }
 
     /// <summary>
-    /// Liefert alle Städte aus dem zentralen Stammdaten-Manager.
+    /// Returns all cities from the central master data manager.
     /// </summary>
     public Task<List<City>> LoadCitiesAsync()
     {
@@ -31,7 +31,7 @@ internal class CityService : ICityService
     }
 
     /// <summary>
-    /// Filtert die Städte nach Suchbegriff (Name enthält).
+    /// Filters cities by search term (name contains).
     /// </summary>
     public List<City> FilterCities(string searchTerm)
     {
@@ -42,7 +42,7 @@ internal class CityService : ICityService
     }
 
     /// <summary>
-    /// Liefert die aktuell geladenen Städte ohne erneutes Laden.
+    /// Returns the currently loaded cities without reloading.
     /// </summary>
     public List<City> GetCachedCities()
     {
@@ -50,7 +50,7 @@ internal class CityService : ICityService
     }
 
     /// <summary>
-    /// Sucht eine Station anhand der ID über alle Städte.
+    /// Finds a station by ID across all cities.
     /// </summary>
     public Station? FindStationById(Guid stationId)
     {

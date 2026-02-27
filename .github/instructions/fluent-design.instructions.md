@@ -312,17 +312,17 @@ SetTheme(ElementTheme.Default);  // Follow system
 <!-- ✅ Sidebar mit Mindest-/Maximalbreite, damit Inhalt immer lesbar bleibt -->
 <ColumnDefinition Width="250" MinWidth="200" MaxWidth="400" />
 
-<!-- ✅ Hauptbereich: nimmt Rest, aber nicht unter 300 px -->
+<!-- ✅ Main area: takes remainder, but not below 300 px -->
 <ColumnDefinition Width="*" MinWidth="300" />
 
-<!-- ✅ Splitter/Divider: feste schmale Breite -->
+<!-- ✅ Splitter/divider: fixed narrow width -->
 <ColumnDefinition Width="Auto" />
-<!-- und im Kind: Width="5" oder Width="1" -->
+<!-- and in child: Width="5" or Width="1" -->
 
-<!-- ✅ Zwei gleich große Bereiche -->
+<!-- ✅ Two equal-sized areas -->
 <ColumnDefinition Width="1*" MinWidth="200" />
 <ColumnDefinition Width="1*" MinWidth="200" />
-<!-- oder: Width="*" / Width="*" -->
+<!-- or: Width="*" / Width="*" -->
 ```
 
 ### Zeilenhöhen (RowDefinition)
@@ -344,23 +344,23 @@ Damit Inhalte **innerhalb** der Zelle bleiben und die Spalte nicht „aufblasen�
 3. **Keine festen Breiten in \*-Spalten:** Kinder in einer `Width="*"`-Spalte sollten **kein** festes `Width` haben (außer MaxWidth), damit sie die verfügbare Breite nutzen. Stattdessen `HorizontalAlignment="Stretch"` (Standard) und Inhalt mit TextTrimming/ScrollViewer begrenzen.
 
 ```xaml
-<!-- ✅ Spalte mit *: Inhalt füllt Zelle, scrollt bei Überlauf -->
+<!-- ✅ Column with *: content fills cell, scrolls on overflow -->
 <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled">
     <StackPanel>
-        <!-- Lange Listen/Formulare -->
+        <!-- Long lists/forms -->
     </StackPanel>
 </ScrollViewer>
 
-<!-- ✅ TextBlock in enger Zelle: Ellipse bei Überlauf -->
+<!-- ✅ TextBlock in narrow cell: ellipsis on overflow -->
 <TextBlock Text="{x:Bind Name}" TextTrimming="CharacterEllipsis" />
 
-<!-- ✅ ListView in *-Spalte: füllt Zelle, scrollt selbst -->
+<!-- ✅ ListView in *-column: fills cell, scrolls itself -->
 <ListView ScrollViewer.HorizontalScrollMode="Disabled" ... />
 ```
 
 ### Typische Fehler (Anti-Patterns)
 
-| Problem | Ursache | Lösung |
+| Problem | Cause | Solution |
 |--------|---------|--------|
 | Spalte wird zu breit | **Width="Auto"** + Kind mit langem Text/breitem Inhalt ohne Begrenzung | Auto nur für schmale Inhalte; bei Listen/Text: Spalte **\*** oder **fix + MaxWidth**, Inhalt mit ScrollViewer/TextTrimming. |
 | Spalte zu schmal / Inhalt abgeschnitten | Nur **Width="*"** ohne MinWidth | **MinWidth** für die Spalte setzen (z. B. 200 oder 300). |

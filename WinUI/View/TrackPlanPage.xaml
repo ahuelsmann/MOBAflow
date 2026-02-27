@@ -108,7 +108,7 @@
                         Text="Piko A-Gleis" />
                     <ScrollViewer Grid.Row="1" Padding="8,0">
                         <StackPanel x:Name="ToolboxStackPanel" Spacing="4">
-                            <!--  Toolbox wird in OnLoaded aus PikoACatalog gefüllt  -->
+                            <!--  Toolbox is populated from PikoACatalog in OnLoaded  -->
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>
