@@ -13,7 +13,7 @@ using Windows.System;
 
 /// <summary>
 /// Workflows page displaying workflows and actions with properties panel.
-/// Supports drag & drop of workflows to stations.
+/// Supports drag and drop of workflows to stations.
 /// </summary>
 [NavigationItem(
     Tag = "workflows",

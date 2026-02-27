@@ -13,7 +13,7 @@ using Windows.System;
 
 /// <summary>
 /// Journeys page displaying journeys, stations, and city library with properties panel.
-/// Supports drag & drop from city library to stations list.
+/// Supports drag and drop from city library to stations list.
 /// </summary>
 // ReSharper disable once PartialTypeWithSinglePart
 internal sealed partial class JourneysPage

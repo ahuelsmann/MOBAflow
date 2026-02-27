@@ -391,7 +391,9 @@ internal sealed partial class DockingManager
         DockPosition.Left => LeftPanelGroup,
         DockPosition.Right => RightPanelGroup,
         DockPosition.Top => TopPanelGroup,
-        DockPosition.Bottom => BottomPanelGroup
+        DockPosition.Bottom => BottomPanelGroup,
+        DockPosition.Center => LeftPanelGroup,
+        _ => LeftPanelGroup
     };
 
     private ObservableCollection<DockPanel>? GetPanelCollection(DockPosition position) => position switch
@@ -593,11 +595,11 @@ internal sealed partial class DockingManager
         // Convert Behavior.DockPosition to Controls.DockPosition
         var controlsPosition = (DockPosition)Enum.Parse(typeof(DockPosition), position.ToString());
 
-        if (TryGetDraggedPanel(e, out var panel))
+        if (TryGetDraggedPanel(e, out var panel) && panel is not null)
         {
             DockPanel(panel, controlsPosition);
         }
-        else if (TryGetDraggedDocumentTab(e, out var tab))
+        else if (TryGetDraggedDocumentTab(e, out var tab) && tab is not null)
         {
             DockDocumentTab(tab, controlsPosition);
         }
@@ -859,7 +861,8 @@ internal sealed partial class DockingManager
         DockPosition.Left => LeftAutoHideBar,
         DockPosition.Right => RightAutoHideBar,
         DockPosition.Top => TopAutoHideBar,
-        DockPosition.Bottom => BottomAutoHideBar
+        DockPosition.Bottom => BottomAutoHideBar,
+        _ => LeftAutoHideBar
     };
 
     private Button CreateAutoHideTabButton(AutoHideEntry entry)

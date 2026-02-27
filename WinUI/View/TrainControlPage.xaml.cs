@@ -121,7 +121,8 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         {
             DccSpeedSteps.Steps14 => 0,
             DccSpeedSteps.Steps28 => 1,
-            DccSpeedSteps.Steps128 => 2
+            DccSpeedSteps.Steps128 => 2,
+            _ => 2
         };
     }
 
