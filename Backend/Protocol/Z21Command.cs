@@ -1,6 +1,11 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Protocol;
 
+/// <summary>
+/// Helper methods for building raw Z21 LAN command packets.
+/// Encapsulates the byte-level encoding for common commands such as
+/// handshakes, track power control, locomotive drive and accessory switching.
+/// </summary>
 public static class Z21Command
 {
     /// <summary>
@@ -25,6 +30,10 @@ public static class Z21Command
     public static byte[] BuildLogoff()
         => [0x04, 0x00, Z21Protocol.Header.LAN_LOGOFF, 0x00];
 
+    /// <summary>
+    /// Builds the LAN_SYSTEMSTATE_GETDATA command used as an initial handshake.
+    /// This requests a full system state update from the Z21.
+    /// </summary>
     public static byte[] BuildHandshake()
         => [0x04, 0x00, Z21Protocol.Header.LAN_SYSTEMSTATE_GETDATA, 0x00];
 
@@ -57,15 +66,27 @@ public static class Z21Command
         ];
     }
 
+    /// <summary>
+    /// Builds the LAN_X_SET_TRACK_POWER_ON command to turn track power on.
+    /// </summary>
     public static byte[] BuildTrackPowerOn()
         => [0x07, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_TRACK_POWER, Z21Protocol.TrackPowerDb0.ON, 0xA0];
 
+    /// <summary>
+    /// Builds the LAN_X_SET_TRACK_POWER_OFF command to turn track power off.
+    /// </summary>
     public static byte[] BuildTrackPowerOff()
         => [0x07, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_TRACK_POWER, Z21Protocol.TrackPowerDb0.OFF, 0xA1];
 
+    /// <summary>
+    /// Builds the LAN_X_SET_STOP command to trigger a global emergency stop.
+    /// </summary>
     public static byte[] BuildEmergencyStop()
         => [0x06, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_SET_STOP, 0x80];
 
+    /// <summary>
+    /// Builds the LAN_X_GET_STATUS command to request the current central status.
+    /// </summary>
     public static byte[] BuildGetStatus()
         => [0x07, 0x00, Z21Protocol.Header.LAN_X_HEADER, 0x00, Z21Protocol.XHeader.X_TRACK_POWER, Z21Protocol.XHeader.X_GET_STATUS, 0x05];
 

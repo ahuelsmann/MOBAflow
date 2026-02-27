@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend;
 
 using Protocol;
@@ -25,6 +25,12 @@ public class FeedbackResult
     /// </summary>
     public byte[] RawData { get; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FeedbackResult"/> class
+    /// and extracts the first active InPort from the given Z21 feedback packet.
+    /// </summary>
+    /// <param name="content">Raw LAN_RMBUS_DATACHANGED packet bytes received from the Z21.</param>
+    /// <exception cref="ArgumentException">Thrown when the packet is shorter than 6 bytes.</exception>
     public FeedbackResult(byte[] content)
     {
         if (content.Length < 6)

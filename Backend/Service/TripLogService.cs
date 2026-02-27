@@ -19,6 +19,11 @@ public sealed class TripLogService : ITripLogService
     /// <inheritdoc />
     public event EventHandler? EntryAdded;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TripLogService"/> class.
+    /// </summary>
+    /// <param name="eventBus">Event bus used to publish <see cref="TripLogEntryAddedEvent"/> notifications.</param>
+    /// <param name="logger">Optional logger for diagnostics.</param>
     public TripLogService(IEventBus eventBus, ILogger<TripLogService>? logger = null)
     {
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));

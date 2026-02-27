@@ -83,6 +83,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
         }
     }
 
+    /// <inheritdoc/>
     protected override async Task ProcessFeedbackAsync(FeedbackResult feedback)
     {
         if (Disposed)
@@ -278,6 +279,7 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
         return _states.GetValueOrDefault(journeyId);
     }
 
+    /// <inheritdoc/>
     public override void ResetAll()
     {
         foreach (var journey in Entities)
@@ -288,14 +290,19 @@ public class JourneyManager : BaseFeedbackManager<Journey>, IJourneyManager
         _logger.LogInformation("All journeys reset");
     }
 
+    /// <inheritdoc/>
     protected override uint GetInPort(Journey entity) => entity.InPort;
 
+    /// <inheritdoc/>
     protected override bool IsUsingTimerToIgnoreFeedbacks(Journey entity) => entity.IsUsingTimerToIgnoreFeedbacks;
 
+    /// <inheritdoc/>
     protected override double GetIntervalForTimerToIgnoreFeedbacks(Journey entity) => entity.IntervalForTimerToIgnoreFeedbacks;
 
+    /// <inheritdoc/>
     protected override string GetEntityName(Journey entity) => entity.Name;
 
+    /// <inheritdoc/>
     protected override void Dispose(bool disposing)
     {
         if (disposing)

@@ -11,8 +11,19 @@ using Microsoft.Extensions.Logging;
 /// </summary>
 public class ActionExecutionErrorEventArgs : EventArgs
 {
+    /// <summary>
+    /// Gets the workflow action that failed during execution.
+    /// </summary>
     public required WorkflowAction Action { get; init; }
+
+    /// <summary>
+    /// Gets the exception that was thrown while executing the action.
+    /// </summary>
     public required Exception Exception { get; init; }
+
+    /// <summary>
+    /// Gets a human-readable error message describing the failure.
+    /// </summary>
     public required string ErrorMessage { get; init; }
 }
 

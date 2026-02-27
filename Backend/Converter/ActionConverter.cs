@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend.Converter;
 
 using Domain;
@@ -7,10 +7,18 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 /// <summary>
-/// JSON converter for WorkflowAction - handles Parameters dictionary serialization.
+/// JSON converter for <see cref="WorkflowAction"/> that handles serialization and
+/// deserialization of the <c>Parameters</c> dictionary while keeping the JSON structure flexible.
 /// </summary>
 public class ActionJsonConverter : JsonConverter<WorkflowAction>
 {
+    /// <summary>
+    /// Reads a <see cref="WorkflowAction"/> instance from JSON.
+    /// </summary>
+    /// <param name="reader">The UTF‑8 JSON reader positioned at the value to convert.</param>
+    /// <param name="typeToConvert">The type being converted (ignored, always <see cref="WorkflowAction"/>).</param>
+    /// <param name="options">Serializer options used for nested values.</param>
+    /// <returns>The deserialized <see cref="WorkflowAction"/> instance or <c>null</c> for JSON <c>null</c>.</returns>
     public override WorkflowAction? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType == JsonTokenType.Null)
@@ -50,6 +58,12 @@ public class ActionJsonConverter : JsonConverter<WorkflowAction>
         return action;
     }
 
+    /// <summary>
+    /// Writes a <see cref="WorkflowAction"/> instance to JSON.
+    /// </summary>
+    /// <param name="writer">The JSON writer to write to.</param>
+    /// <param name="value">The workflow action value to convert.</param>
+    /// <param name="options">Serializer options used for nested values.</param>
     public override void Write(Utf8JsonWriter writer, WorkflowAction? value, JsonSerializerOptions options)
     {
         if (value == null)

@@ -16,6 +16,10 @@ public class Z21Monitor
     private readonly ILogger<Z21Monitor> _logger;
     private const int MaxPackets = 1000;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Z21Monitor"/> class.
+    /// </summary>
+    /// <param name="logger">Logger used to persist traffic information.</param>
     public Z21Monitor(ILogger<Z21Monitor> logger)
     {
         _logger = logger;

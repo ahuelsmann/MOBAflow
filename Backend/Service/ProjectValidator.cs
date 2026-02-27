@@ -18,10 +18,18 @@ public interface IProjectValidator
     ProjectValidationResult ValidateCompleteness(Solution solution);
 }
 
+/// <summary>
+/// Default implementation of <see cref="IProjectValidator"/> that verifies
+/// the completeness of a <see cref="Solution"/> and its contained projects.
+/// </summary>
 public class ProjectValidator : IProjectValidator
 {
     private readonly ILogger<ProjectValidator> _logger;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ProjectValidator"/> class.
+    /// </summary>
+    /// <param name="logger">Logger used for diagnostic output during validation.</param>
     public ProjectValidator(ILogger<ProjectValidator> logger)
     {
         ArgumentNullException.ThrowIfNull(logger);
@@ -146,33 +154,63 @@ public class ProjectValidator : IProjectValidator
 }
 
 /// <summary>
-/// Result of project validation with info, warnings, and errors.
+/// Result of project validation with informational messages, warnings, and errors.
 /// </summary>
 public class ProjectValidationResult
 {
     private readonly List<ValidationMessage> _messages = [];
 
+    /// <summary>
+    /// Gets all validation messages produced during validation.
+    /// </summary>
     public IReadOnlyList<ValidationMessage> Messages => _messages.AsReadOnly();
 
+    /// <summary>
+    /// Gets a value indicating whether the project is considered valid (no errors).
+    /// </summary>
     public bool IsValid => !HasErrors;
+
+    /// <summary>
+    /// Gets a value indicating whether any error messages were recorded.
+    /// </summary>
     public bool HasErrors => _messages.Any(m => m.Level == ValidationLevel.Error);
+
+    /// <summary>
+    /// Gets a value indicating whether any warning messages were recorded.
+    /// </summary>
     public bool HasWarnings => _messages.Any(m => m.Level == ValidationLevel.Warning);
 
+    /// <summary>
+    /// Adds an informational validation message.
+    /// </summary>
+    /// <param name="message">Descriptive message text.</param>
     public void AddInfo(string message)
     {
         _messages.Add(new ValidationMessage(ValidationLevel.Info, message));
     }
 
+    /// <summary>
+    /// Adds a warning validation message.
+    /// </summary>
+    /// <param name="message">Descriptive message text.</param>
     public void AddWarning(string message)
     {
         _messages.Add(new ValidationMessage(ValidationLevel.Warning, message));
     }
 
+    /// <summary>
+    /// Adds an error validation message.
+    /// </summary>
+    /// <param name="message">Descriptive message text.</param>
     public void AddError(string message)
     {
         _messages.Add(new ValidationMessage(ValidationLevel.Error, message));
     }
 
+    /// <summary>
+    /// Builds a short human‑readable summary string with counts of errors, warnings and infos.
+    /// </summary>
+    /// <returns>Multi‑line summary string.</returns>
     public string GetSummary()
     {
         var errors = _messages.Where(m => m.Level == ValidationLevel.Error).ToList();
@@ -191,8 +229,16 @@ public class ProjectValidationResult
     }
 }
 
+/// <summary>
+/// Represents a single validation message with severity, text and timestamp.
+/// </summary>
 public class ValidationMessage
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ValidationMessage"/> class.
+    /// </summary>
+    /// <param name="level">Severity level of the message.</param>
+    /// <param name="text">Message text.</param>
     public ValidationMessage(ValidationLevel level, string text)
     {
         Level = level;
@@ -200,16 +246,38 @@ public class ValidationMessage
         Timestamp = DateTime.UtcNow;
     }
 
+    /// <summary>
+    /// Gets the severity level of this message.
+    /// </summary>
     public ValidationLevel Level { get; }
+
+    /// <summary>
+    /// Gets the message text.
+    /// </summary>
     public string Text { get; }
+
+    /// <summary>
+    /// Gets the UTC timestamp when the message was created.
+    /// </summary>
     public DateTime Timestamp { get; }
 
+    /// <summary>
+    /// Returns a string representation including level and text.
+    /// </summary>
     public override string ToString() => $"[{Level}] {Text}";
 }
 
+/// <summary>
+/// Severity level for validation messages.
+/// </summary>
 public enum ValidationLevel
 {
+    /// <summary>Informational message (no impact on validity).</summary>
     Info,
+
+    /// <summary>Warning that indicates a potential issue, but not a hard failure.</summary>
     Warning,
+
+    /// <summary>Error that indicates an invalid or unsupported configuration.</summary>
     Error
 }

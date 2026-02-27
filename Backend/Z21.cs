@@ -23,13 +23,41 @@ using Service;
 using System.Diagnostics;
 using System.Net;
 
+/// <summary>
+/// Default implementation of <see cref="IZ21"/> for communicating with a Z21 command station.
+/// Handles UDP transport, protocol encoding/decoding, keep‑alive, system state polling
+/// and raises high‑level events for feedback, system state and version information.
+/// </summary>
 public class Z21 : IZ21
 {
+    /// <summary>
+    /// Raised when a feedback packet has been parsed into a <see cref="FeedbackResult"/>.
+    /// </summary>
     public event Feedback? Received;
+
+    /// <summary>
+    /// Raised when the Z21 reports a new system state snapshot.
+    /// </summary>
     public event SystemStateChanged? OnSystemStateChanged;
+
+    /// <summary>
+    /// Raised when the X‑Bus status flags change (emergency stop, track off, etc.).
+    /// </summary>
     public event XBusStatusChanged? OnXBusStatusChanged;
+
+    /// <summary>
+    /// Raised when version information (serial number, firmware, hardware) changes.
+    /// </summary>
     public event VersionInfoChanged? OnVersionInfoChanged;
+
+    /// <summary>
+    /// Raised when the connection is lost unexpectedly.
+    /// </summary>
     public event Action? OnConnectionLost;
+
+    /// <summary>
+    /// Raised when the logical connection state changes (true = connected and responding).
+    /// </summary>
     public event Action<bool>? OnConnectedChanged;
 
     private readonly IUdpClientWrapper _udp;
@@ -52,6 +80,9 @@ public class Z21 : IZ21
     private bool _disposed;
     private bool _isConnected;
 
+    /// <summary>
+    /// Gets the optional traffic monitor that records raw Z21 packets.
+    /// </summary>
     public Z21Monitor? TrafficMonitor => _trafficMonitor;
 
     /// <summary>
@@ -59,6 +90,13 @@ public class Z21 : IZ21
     /// </summary>
     public Z21VersionInfo? VersionInfo { get; private set; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Z21"/> class.
+    /// </summary>
+    /// <param name="udp">UDP wrapper used for low-level packet transport.</param>
+    /// <param name="eventBus">Event bus for publishing domain events.</param>
+    /// <param name="logger">Optional logger for diagnostics.</param>
+    /// <param name="trafficMonitor">Optional traffic monitor for packet logging.</param>
     public Z21(IUdpClientWrapper udp, IEventBus eventBus, ILogger<Z21>? logger = null, Z21Monitor? trafficMonitor = null)
     {
         ArgumentNullException.ThrowIfNull(udp);
@@ -1115,6 +1153,10 @@ public class Z21 : IZ21
     #endregion
 
     #region Dispose
+    /// <summary>
+    /// Disposes timers, cancellation tokens and synchronization primitives.
+    /// Does not own the underlying UDP wrapper or event bus.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed) return;

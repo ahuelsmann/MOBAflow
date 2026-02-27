@@ -17,6 +17,10 @@ public class DataManager
     /// </summary>
     public const int CurrentSchemaVersion = 1;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DataManager"/> class
+    /// with empty collections and the current schema version.
+    /// </summary>
     public DataManager()
     {
         Cities = [];

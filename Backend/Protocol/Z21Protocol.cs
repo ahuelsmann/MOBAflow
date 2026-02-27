@@ -146,6 +146,10 @@ public static class Z21Protocol
         /// Compatible with Roco feedback modules: 10787, 10808, 10819
         /// </summary>
         public const byte LAN_RMBUS_DATACHANGED = 0x80;
+
+        /// <summary>
+        /// Alias for <see cref="LAN_RMBUS_DATACHANGED"/> for backward compatibility.
+        /// </summary>
         public const byte LAN_RBUS_DATACHANGED = LAN_RMBUS_DATACHANGED;
 
         /// <summary>
@@ -359,6 +363,10 @@ public static class Z21Protocol
         /// Status bits: see CentralState bitmasks
         /// </summary>
         public const byte X_STATUS_CHANGED = 0x62;
+
+        /// <summary>
+        /// Alias for <see cref="X_BC_STATUS"/> for backward compatibility.
+        /// </summary>
         public const byte X_STATUS = X_BC_STATUS;
 
         /// <summary>

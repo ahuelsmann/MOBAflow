@@ -7,26 +7,76 @@ using Protocol;
 using Service;
 using System.Net;
 
+/// <summary>
+/// Delegate for Z21 feedback events carrying a parsed <see cref="FeedbackResult"/>.
+/// </summary>
+/// <param name="feedbackContent">Parsed feedback data including InPort and raw packet.</param>
 public delegate void Feedback(FeedbackResult feedbackContent);
+
+/// <summary>
+/// Delegate for Z21 system state change events.
+/// </summary>
+/// <param name="systemState">The current system state snapshot.</param>
 public delegate void SystemStateChanged(SystemState systemState);
+
+/// <summary>
+/// Delegate for X‑Bus status change events (emergency stop, track off, short circuit, programming mode).
+/// </summary>
+/// <param name="status">The current X‑Bus status flags.</param>
 public delegate void XBusStatusChanged(XBusStatus status);
+
+/// <summary>
+/// Delegate for Z21 version info change events (serial number, firmware, hardware).
+/// </summary>
+/// <param name="versionInfo">The current version information.</param>
 public delegate void VersionInfoChanged(Z21VersionInfo versionInfo);
 
+/// <summary>
+/// Abstraction of the Z21 command station communication.
+/// Provides connection management, feedback events and high‑level commands for
+/// track power, locomotives, accessories and RailCom.
+/// </summary>
 public interface IZ21 : IDisposable
 {
 
+    /// <summary>
+    /// Raised when any UDP datagram is received and successfully parsed as feedback.
+    /// </summary>
     event Feedback? Received;
+
+    /// <summary>
+    /// Raised when the Z21 reports a new system state snapshot.
+    /// </summary>
     event SystemStateChanged? OnSystemStateChanged;
+
+    /// <summary>
+    /// Raised when the X‑Bus status flags change (emergency stop, track off, etc.).
+    /// </summary>
     event XBusStatusChanged? OnXBusStatusChanged;
+
+    /// <summary>
+    /// Raised when firmware, hardware type or serial number information changes.
+    /// </summary>
     event VersionInfoChanged? OnVersionInfoChanged;
+
+    /// <summary>
+    /// Raised when the Z21 connection is lost unexpectedly.
+    /// </summary>
     event Action? OnConnectionLost;
-    
+
     /// <summary>
     /// Raised when the connection state changes (true = connected and responding, false = disconnected).
     /// </summary>
     event Action<bool>? OnConnectedChanged;
 
+    /// <summary>
+    /// Gets a value indicating whether the Z21 is currently connected and responding.
+    /// </summary>
     bool IsConnected { get; }
+
+    /// <summary>
+    /// Gets the traffic monitor instance that tracks UDP traffic statistics, if enabled.
+    /// </summary>
     Z21Monitor? TrafficMonitor { get; }
 
     /// <summary>
@@ -35,9 +85,23 @@ public interface IZ21 : IDisposable
     /// </summary>
     Z21VersionInfo? VersionInfo { get; }
 
+    /// <summary>
+    /// Connects to the Z21 at the specified IP address and port.
+    /// </summary>
+    /// <param name="address">IP address of the Z21.</param>
+    /// <param name="port">UDP port (default: 21105).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     Task ConnectAsync(IPAddress address, int port = 21105, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Disconnects from the Z21 and stops receiving any further datagrams.
+    /// </summary>
     Task DisconnectAsync();
 
+    /// <summary>
+    /// Sends a raw command byte sequence to the Z21.
+    /// </summary>
+    /// <param name="sendBytes">Raw packet bytes including header, payload and XOR.</param>
     Task SendCommandAsync(byte[] sendBytes);
 
     /// <summary>

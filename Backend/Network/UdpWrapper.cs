@@ -32,6 +32,9 @@ using System.Net.Sockets;
 /// </summary>
 public class UdpWrapper : IUdpClientWrapper
 {
+    /// <summary>
+    /// Raised when a UDP datagram has been received from the Z21.
+    /// </summary>
     public event EventHandler<UdpReceivedEventArgs>? Received;
 
     private UdpClient? _client;
@@ -52,6 +55,10 @@ public class UdpWrapper : IUdpClientWrapper
     /// </summary>
     public bool IsConnected => _client != null && !_disposed;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UdpWrapper"/> class.
+    /// </summary>
+    /// <param name="logger">Optional logger for diagnostics and performance statistics.</param>
     public UdpWrapper(ILogger<UdpWrapper>? logger = null)
     {
         _logger = logger;

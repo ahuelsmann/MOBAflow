@@ -3,22 +3,91 @@ namespace Moba.Backend.Protocol;
 
 using Model;
 
-public record XBusStatus(bool EmergencyStop, bool TrackOff, bool ShortCircuit, bool Programming);
+/// <summary>
+/// Represents the decoded X‑Bus status flags reported by the Z21.
+/// </summary>
+public sealed record XBusStatus
+{
+    /// <summary>
+    /// Gets a value indicating whether an emergency stop is active.
+    /// </summary>
+    public bool EmergencyStop { get; init; }
 
+    /// <summary>
+    /// Gets a value indicating whether track power is switched off.
+    /// </summary>
+    public bool TrackOff { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether a short circuit has been detected.
+    /// </summary>
+    public bool ShortCircuit { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the system is in programming mode.
+    /// </summary>
+    public bool Programming { get; init; }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="XBusStatus"/> record.
+    /// </summary>
+    /// <param name="emergencyStop">True if emergency stop is active.</param>
+    /// <param name="trackOff">True if track power is off.</param>
+    /// <param name="shortCircuit">True if a short circuit is detected.</param>
+    /// <param name="programming">True if the system is in programming mode.</param>
+    public XBusStatus(bool emergencyStop, bool trackOff, bool shortCircuit, bool programming)
+    {
+        EmergencyStop = emergencyStop;
+        TrackOff = trackOff;
+        ShortCircuit = shortCircuit;
+        Programming = programming;
+    }
+}
+
+/// <summary>
+/// Parser utilities for decoding Z21 LAN protocol messages.
+/// Provides helpers to detect packet types and extract structured information
+/// such as serial number, hardware info, system state, X‑Bus status and loco info.
+/// </summary>
 public static class Z21MessageParser
 {
+    /// <summary>
+    /// Determines whether the given packet uses the LAN_X_HEADER (X‑Bus tunneling).
+    /// </summary>
+    /// <param name="data">Raw Z21 packet bytes.</param>
+    /// <returns><c>true</c> if the header is LAN_X_HEADER, otherwise <c>false</c>.</returns>
     public static bool IsLanXHeader(byte[] data)
         => data is { Length: >= 4 } && data[2] == Z21Protocol.Header.LAN_X_HEADER && data[3] == 0x00;
 
+    /// <summary>
+    /// Determines whether the given packet is an R‑Bus feedback packet (LAN_RMBUS_DATACHANGED).
+    /// </summary>
+    /// <param name="data">Raw Z21 packet bytes.</param>
+    /// <returns><c>true</c> if the packet is R‑Bus feedback, otherwise <c>false</c>.</returns>
     public static bool IsRBusFeedback(byte[] data)
         => data is { Length: >= 4 } && data[2] == Z21Protocol.Header.LAN_RMBUS_DATACHANGED && data[3] == 0x00;
 
+    /// <summary>
+    /// Determines whether the given packet is a system state update (LAN_SYSTEMSTATE_DATACHANGED).
+    /// </summary>
+    /// <param name="data">Raw Z21 packet bytes.</param>
+    /// <returns><c>true</c> if the packet is a system state packet, otherwise <c>false</c>.</returns>
     public static bool IsSystemState(byte[] data)
         => data is { Length: >= 4 } && data[2] == Z21Protocol.Header.LAN_SYSTEMSTATE && data[3] == 0x00;
 
+    /// <summary>
+    /// Determines whether the given packet is a serial number response (LAN_GET_SERIAL_NUMBER).
+    /// </summary>
+    /// <param name="data">Raw Z21 packet bytes.</param>
+    /// <returns><c>true</c> if the packet contains serial number data, otherwise <c>false</c>.</returns>
     public static bool IsSerialNumber(byte[] data)
         => data.Length >= 8 && data[2] == Z21Protocol.Header.LAN_GET_SERIAL_NUMBER && data[3] == 0x00;
 
+    /// <summary>
+    /// Determines whether the given packet is a hardware info response (LAN_GET_HWINFO).
+    /// </summary>
+    /// <param name="data">Raw Z21 packet bytes.</param>
+    /// <returns><c>true</c> if the packet contains hardware info, otherwise <c>false</c>.</returns>
     public static bool IsHwInfo(byte[] data)
         => data.Length >= 12 && data[2] == Z21Protocol.Header.LAN_GET_HWINFO && data[3] == 0x00;
 
@@ -48,6 +117,14 @@ public static class Z21MessageParser
         return true;
     }
 
+    /// <summary>
+    /// Tries to parse an X‑Bus status broadcast packet.
+    /// </summary>
+    /// <param name="data">Raw Z21 packet bytes.</param>
+    /// <returns>
+    /// An <see cref="XBusStatus"/> instance when the packet contains valid status information;
+    /// otherwise <c>null</c>.
+    /// </returns>
     public static XBusStatus? TryParseXBusStatus(byte[] data)
     {
         if (data.Length < 7) return null;
@@ -62,6 +139,19 @@ public static class Z21MessageParser
         return new XBusStatus(emergencyStop, trackOff, shortCircuit, programming);
     }
 
+    /// <summary>
+    /// Tries to parse a system state broadcast packet (LAN_SYSTEMSTATE_DATACHANGED).
+    /// </summary>
+    /// <param name="data">Raw Z21 packet bytes.</param>
+    /// <param name="mainCurrent">Main track current in milliamps.</param>
+    /// <param name="progCurrent">Programming track current in milliamps.</param>
+    /// <param name="filteredMainCurrent">Filtered main track current in milliamps.</param>
+    /// <param name="temperature">Internal temperature in degrees Celsius.</param>
+    /// <param name="supplyVoltage">Supply voltage in millivolts.</param>
+    /// <param name="vccVoltage">Logic supply voltage in millivolts.</param>
+    /// <param name="centralState">Central state bitmask.</param>
+    /// <param name="centralStateEx">Extended central state bitmask.</param>
+    /// <returns><c>true</c> if parsing succeeded; otherwise <c>false</c>.</returns>
     public static bool TryParseSystemState(byte[] data, out int mainCurrent, out int progCurrent, out int filteredMainCurrent, out int temperature, out int supplyVoltage, out int vccVoltage, out byte centralState, out byte centralStateEx)
     {
         mainCurrent = progCurrent = filteredMainCurrent = temperature = supplyVoltage = vccVoltage = 0;
@@ -79,6 +169,11 @@ public static class Z21MessageParser
         return true;
     }
 
+    /// <summary>
+    /// Determines whether the given packet is a loco info response (LAN_X_LOCO_INFO).
+    /// </summary>
+    /// <param name="data">Raw Z21 packet bytes.</param>
+    /// <returns><c>true</c> if the packet contains loco info, otherwise <c>false</c>.</returns>
     public static bool IsLocoInfo(byte[] data)
         => data.Length >= 7 && IsLanXHeader(data) && data[4] == Z21Protocol.XHeader.X_LOCO_INFO;
 

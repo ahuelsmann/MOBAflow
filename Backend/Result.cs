@@ -1,6 +1,10 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Backend;
 
+/// <summary>
+/// Generic result type that represents either a successful value or an error message.
+/// Designed for simple success/failure flows without exceptions.
+/// </summary>
 public record Result<T>
 {
     /// <summary>
@@ -86,6 +90,9 @@ public record Result<T>
     }
 }
 
+/// <summary>
+/// Non-generic result type that represents a success or an error message.
+/// </summary>
 public record Result
 {
     /// <summary>

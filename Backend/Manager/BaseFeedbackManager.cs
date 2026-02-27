@@ -16,10 +16,29 @@ using System.Diagnostics;
 /// <typeparam name="TEntity">The type of entity being managed (Workflow, Journey, Platform, etc.)</typeparam>
 public abstract class BaseFeedbackManager<TEntity> : IFeedbackManager where TEntity : class
 {
+    /// <summary>
+    /// Gets the Z21 instance used to receive feedback events and send commands.
+    /// </summary>
     protected readonly IZ21 Z21;
+
+    /// <summary>
+    /// Gets the list of entities managed by this feedback manager (for example journeys or workflows).
+    /// </summary>
     protected readonly List<TEntity> Entities;
+
+    /// <summary>
+    /// Tracks the last feedback time per InPort to support timer‑based filtering.
+    /// </summary>
     protected readonly Dictionary<uint, DateTime> LastFeedbackTime = [];
+
+    /// <summary>
+    /// Optional action execution context used when running workflows in response to feedback.
+    /// </summary>
     protected readonly ActionExecutionContext? ExecutionContext;
+
+    /// <summary>
+    /// Indicates whether this manager has already been disposed.
+    /// </summary>
     protected bool Disposed;
 
     /// <summary>
