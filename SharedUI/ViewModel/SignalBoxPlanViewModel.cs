@@ -314,20 +314,32 @@ public sealed class SignalBoxRouteViewModel : ObservableObject, IViewModelWrappe
     /// </summary>
     public SignalBoxRoute Model => _model;
 
+    /// <summary>
+    /// Gets the unique identifier of this route.
+    /// </summary>
     public Guid Id => _model.Id;
 
+    /// <summary>
+    /// Gets or sets the display name of this route.
+    /// </summary>
     public string Name
     {
         get => _model.Name;
         set => SetProperty(_model.Name, value, _model, (m, v) => m.Name = v);
     }
 
+    /// <summary>
+    /// Gets or sets the identifier of the start signal for this route.
+    /// </summary>
     public Guid StartSignalId
     {
         get => _model.StartSignalId;
         set => SetProperty(_model.StartSignalId, value, _model, (m, v) => m.StartSignalId = v);
     }
 
+    /// <summary>
+    /// Gets or sets the identifier of the end signal for this route.
+    /// </summary>
     public Guid EndSignalId
     {
         get => _model.EndSignalId;

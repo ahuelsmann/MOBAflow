@@ -98,6 +98,13 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
     /// </summary>
     public ObservableCollection<GoodsWagonViewModel> GoodsWagons { get; } = [];
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ProjectViewModel"/> class for the given project.
+    /// </summary>
+    /// <param name="model">The project domain model.</param>
+    /// <param name="dispatcher">Optional UI dispatcher used by nested ViewModels.</param>
+    /// <param name="ioService">Optional IO service used by nested ViewModels.</param>
+    /// <param name="soundPlayer">Optional sound player used by nested ViewModels.</param>
     public ProjectViewModel(Project model, IUiDispatcher? dispatcher = null, IIoService? ioService = null, ISoundPlayer? soundPlayer = null)
     {
         ArgumentNullException.ThrowIfNull(model);
