@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
 namespace Moba.Sound;
 
@@ -16,11 +16,18 @@ public class SystemSpeechEngine : ISpeakerEngine
 {
     private readonly ILogger<SystemSpeechEngine> _logger;
 
+    /// <summary>
+    /// Initialisiert eine neue Instanz der <see cref="SystemSpeechEngine"/> für Windows-Systemsprache (SAPI).
+    /// </summary>
+    /// <param name="logger">Logger für Diagnose- und Fehlermeldungen.</param>
     public SystemSpeechEngine(ILogger<SystemSpeechEngine> logger)
     {
         _logger = logger;
     }
 
+    /// <summary>
+    /// Anzeigename dieser Sprach-Engine, der z.B. in der UI verwendet werden kann.
+    /// </summary>
     public string Name { get; set; } = "System.Speech (Windows SAPI)";
 
     /// <summary>

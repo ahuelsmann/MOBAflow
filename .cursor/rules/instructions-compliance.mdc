@@ -24,4 +24,12 @@ Die Regeln in **`.github/copilot-instructions.md`** sind verbindlich und werden 
 - **Struktur:** Eine zentrale `README.md` im Root; keine zusätzlichen README in Unterordnern.
 - **Qualität:** `.editorconfig` einhalten, öffentliche APIs mit XML-Dokumentation, nach Änderungen Build/Tests und Linter prüfen.
 
+## Ergänzende Kernaussagen aus `.github/copilot-instructions.md`
+
+- **Kommentarsprache:** Code-Kommentare und XML-Dokumentation in **Englisch**, auch wenn die Unterhaltung mit dem Benutzer auf Deutsch erfolgt.
+- **6‑Schritte‑Workflow:** ANALYSE → RECHERCHE → PLAN → IMPLEMENTIERUNG → VALIDIERUNG → DOKUMENTATION strikt einhalten.
+- **Verbote:** Keine separaten `README.md` in Unterordnern, keine Hardcodierung von Farben in XAML, keine TODO-Kommentare im Code.
+- **Architektur & Patterns:** SOLID, DRY, KISS, saubere Trennung Domain/Backend/SharedUI/WinUI/MAUI, MVVM mit CommunityToolkit (`[ObservableProperty]`, `[RelayCommand]`), DI per Konstruktor.
+- **Qualität & Validierung:** Vor Abschluss Build und relevante Tests ausführen, keine neuen Warnings erzeugen, öffentliche APIs konsequent mit `/// <summary>` (Englisch) dokumentieren.
+
 Details und Checkliste siehe `.github/copilot-instructions.md`.

@@ -6,7 +6,8 @@ alwaysApply: true
 # MOBAflow – Cursor Kernregeln
 
 - **Sprache**
-  - Alle Erklärungen und Kommentare sind auf Deutsch zu verfassen.
+  - Antworten und erklärende Texte des Assistenten: **Deutsch**.
+  - Kommentare im Code (inkl. XML-Dokumentation): **Englisch** verfassen.
 
 - **Git-Sicherheit**
   - Keine Git-Befehle wie `commit`, `push`, `pull`, `merge`, `rebase` oder `cherry-pick` ausführen.

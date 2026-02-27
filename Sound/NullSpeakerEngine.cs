@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Sound;
 
 /// <summary>
@@ -8,6 +8,9 @@ namespace Moba.Sound;
 /// </summary>
 public class NullSpeakerEngine : ISpeakerEngine
 {
+    /// <summary>
+    /// Anzeigename dieser Null-Sprach-Engine, der z.B. in der UI angezeigt werden kann.
+    /// </summary>
     public string Name { get; set; } = "Null Speaker Engine (No Audio)";
 
     /// <summary>

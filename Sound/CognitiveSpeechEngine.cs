@@ -27,22 +27,44 @@ public class CognitiveSpeechEngine : ISpeakerEngine
     private readonly IOptionsMonitor<SpeechOptions>? _optionsMonitor;
     private readonly ILogger<CognitiveSpeechEngine> _logger;
 
-    // Primary constructor for DI
+    /// <summary>
+    /// Initialisiert eine neue Instanz der <see cref="CognitiveSpeechEngine"/> für den produktiven Einsatz mit DI.
+    /// </summary>
+    /// <param name="optionsMonitor">Laufend aktualisierte Optionen für die Azure Speech Konfiguration.</param>
+    /// <param name="logger">Logger für Diagnose- und Fehlermeldungen.</param>
     public CognitiveSpeechEngine(IOptionsMonitor<SpeechOptions> optionsMonitor, ILogger<CognitiveSpeechEngine> logger)
     {
         _optionsMonitor = optionsMonitor;
         _logger = logger;
     }
 
-    // Parameterless constructor for JSON deserialization
+    /// <summary>
+    /// Parameterloser Konstruktor für Szenarien wie JSON-Deserialisierung oder Design-Time.
+    /// Verwendet einen Null-Logger und keine aktiven Optionen.
+    /// </summary>
     public CognitiveSpeechEngine()
     {
         _optionsMonitor = null!;
         _logger = NullLogger<CognitiveSpeechEngine>.Instance;
     }
 
+    /// <summary>
+    /// Anzeigename dieser Sprach-Engine, der z.B. in der UI verwendet werden kann.
+    /// </summary>
     public string Name { get; set; } = "Microsoft.CognitiveServices.Speech";
 
+    /// <summary>
+    /// Führt eine Text-zu-Sprache-Ausgabe über Azure Cognitive Services durch.
+    /// </summary>
+    /// <param name="message">Der zu sprechende Text.</param>
+    /// <param name="voiceName">
+    /// Optionaler Name der zu verwendenden Stimme; bei <c>null</c> oder leer wird die konfigurierte Standardstimme verwendet.
+    /// </param>
+    /// <returns>Ein Task, der die asynchrone Sprachausgabe repräsentiert.</returns>
+    /// <exception cref="ArgumentNullException">Wird ausgelöst, wenn <paramref name="message"/> leer oder <c>null</c> ist.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Wird ausgelöst, wenn keine gültigen Azure-Speech-Zugangsdaten konfiguriert sind oder die Sprachausgabe von Azure abgelehnt wird.
+    /// </exception>
     public async Task AnnouncementAsync(string message, string? voiceName)
     {
         if (string.IsNullOrEmpty(message))
