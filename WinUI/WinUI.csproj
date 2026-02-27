@@ -65,17 +65,14 @@
     <ItemGroup>
         <Content Include="..\README.md" Link="README.md" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
-        <Content Include="appsettings.Development.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="solution.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="data.json" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
-
     <!-- JSON Schema Files -->
     <ItemGroup>
         <Content Include="appsettings.schema.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="Build\Schemas\*.schema.json" CopyToOutputDirectory="PreserveNewest" Link="Build\Schemas\%(Filename)%(Extension)" />
     </ItemGroup>
-
     <!-- Import custom build targets for configuration validation -->
     <Import Project="Build\ValidateJsonConfiguration.targets" />
 </Project>
