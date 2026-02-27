@@ -15,6 +15,9 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
 {
     #region Fields
     // Model
+    /// <summary>
+    /// Gets the underlying project domain model represented by this ViewModel.
+    /// </summary>
     public Project Model { get; }
 
     // Optional Services
@@ -27,10 +30,25 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
     private string _name;
 
     // Statistics (computed from collections)
+    /// <summary>
+    /// Gets the number of journeys contained in this project.
+    /// </summary>
     public int JourneyCount => Journeys.Count;
+    /// <summary>
+    /// Gets the number of workflows contained in this project.
+    /// </summary>
     public int WorkflowCount => Workflows.Count;
+    /// <summary>
+    /// Gets the number of trains contained in this project.
+    /// </summary>
     public int TrainCount => Trains.Count;
+    /// <summary>
+    /// Gets the number of locomotives contained in this project.
+    /// </summary>
     public int LocomotiveCount => Locomotives.Count;
+    /// <summary>
+    /// Gets the number of wagons contained in this project.
+    /// </summary>
     public int WagonCount => Wagons.Count;
     #endregion
 

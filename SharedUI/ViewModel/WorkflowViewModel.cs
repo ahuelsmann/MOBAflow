@@ -13,6 +13,9 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 
+/// <summary>
+/// ViewModel wrapper for <see cref="Workflow"/> that exposes configuration and actions for editor and execution UI.
+/// </summary>
 public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrapper<Workflow>
 {
     #region Fields
@@ -24,6 +27,12 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     private readonly ISoundPlayer? _soundPlayer;
     #endregion
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="WorkflowViewModel"/> class.
+    /// </summary>
+    /// <param name="model">The workflow domain model.</param>
+    /// <param name="ioService">Optional IO service used by audio actions.</param>
+    /// <param name="soundPlayer">Optional sound player used to preview audio actions.</param>
     public WorkflowViewModel(Workflow model, IIoService? ioService = null, ISoundPlayer? soundPlayer = null)
     {
         ArgumentNullException.ThrowIfNull(model);
@@ -53,36 +62,54 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     /// </summary>
     public Guid Id => _model.Id;
 
+    /// <summary>
+    /// Gets or sets the display name of the workflow.
+    /// </summary>
     public string Name
     {
         get => _model.Name;
         set => SetProperty(_model.Name, value, _model, (m, v) => m.Name = v);
     }
 
+    /// <summary>
+    /// Gets or sets the description shown for this workflow.
+    /// </summary>
     public string Description
     {
         get => _model.Description;
         set => SetProperty(_model.Description, value, _model, (m, v) => m.Description = v);
     }
 
+    /// <summary>
+    /// Gets or sets the feedback input port that triggers this workflow.
+    /// </summary>
     public uint InPort
     {
         get => _model.InPort;
         set => SetProperty(_model.InPort, value, _model, (m, v) => m.InPort = v);
     }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether a timer window is used to ignore repeated feedbacks.
+    /// </summary>
     public bool IsUsingTimerToIgnoreFeedbacks
     {
         get => _model.IsUsingTimerToIgnoreFeedbacks;
         set => SetProperty(_model.IsUsingTimerToIgnoreFeedbacks, value, _model, (m, v) => m.IsUsingTimerToIgnoreFeedbacks = v);
     }
 
+    /// <summary>
+    /// Gets or sets the timer window duration in seconds during which repeated feedbacks are ignored.
+    /// </summary>
     public double IntervalForTimerToIgnoreFeedbacks
     {
         get => _model.IntervalForTimerToIgnoreFeedbacks;
         set => SetProperty(_model.IntervalForTimerToIgnoreFeedbacks, value, _model, (m, v) => m.IntervalForTimerToIgnoreFeedbacks = v);
     }
 
+    /// <summary>
+    /// Gets or sets the execution mode that defines how the workflow runs its actions.
+    /// </summary>
     public WorkflowExecutionMode ExecutionMode
     {
         get => _model.ExecutionMode;
@@ -94,6 +121,9 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
     /// </summary>
     public IEnumerable<WorkflowExecutionMode> ExecutionModeValues => Enum.GetValues<WorkflowExecutionMode>();
 
+    /// <summary>
+    /// Gets the collection of action ViewModels that belong to this workflow.
+    /// </summary>
     public ObservableCollection<object> Actions { get; }
 
     [RelayCommand]
@@ -206,6 +236,11 @@ public sealed partial class WorkflowViewModel : ObservableObject, IViewModelWrap
         OnPropertyChanged(nameof(Actions));
     }
 
+    /// <summary>
+    /// Starts the workflow in a diagnostic mode that logs the actions which would be executed.
+    /// </summary>
+    /// <param name="journey">The journey context for the workflow.</param>
+    /// <param name="station">The current station context.</param>
     public Task StartAsync(Journey journey, Station station)
     {
         Debug.WriteLine($"[START] Workflow '{_model.Name}' for station '{station.Name}'");

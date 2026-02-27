@@ -20,6 +20,11 @@ public sealed partial class StationViewModel : ObservableObject, IViewModelWrapp
     private readonly Project _project;
     #endregion
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="StationViewModel"/> class.
+    /// </summary>
+    /// <param name="station">The station domain model.</param>
+    /// <param name="project">The parent project that owns this station's workflow references.</param>
     public StationViewModel(Station station, Project project)
     {
         ArgumentNullException.ThrowIfNull(station);
@@ -33,18 +38,27 @@ public sealed partial class StationViewModel : ObservableObject, IViewModelWrapp
     /// </summary>
     public Station Model => _station;
 
+    /// <summary>
+    /// Gets or sets the display name of the station.
+    /// </summary>
     public string Name
     {
         get => _station.Name;
         set => SetProperty(_station.Name, value, _station, (m, v) => m.Name = v);
     }
 
+    /// <summary>
+    /// Gets or sets an optional description shown in the UI for this station.
+    /// </summary>
     public string? Description
     {
         get => _station.Description;
         set => SetProperty(_station.Description, value, _station, (m, v) => m.Description = v);
     }
 
+    /// <summary>
+    /// Gets or sets the feedback input port used to detect this station.
+    /// </summary>
     public int InPort
     {
         get => (int)_station.InPort;
@@ -52,12 +66,18 @@ public sealed partial class StationViewModel : ObservableObject, IViewModelWrapp
     }
 
     // Journey-specific properties (now directly from Station)
+    /// <summary>
+    /// Gets or sets the number of laps to run before stopping at this station.
+    /// </summary>
     public int NumberOfLapsToStop
     {
         get => (int)_station.NumberOfLapsToStop;
         set => SetProperty(_station.NumberOfLapsToStop, (uint)value, _station, (m, v) => m.NumberOfLapsToStop = v);
     }
 
+    /// <summary>
+    /// Gets or sets the identifier of the workflow that should run when this station is reached.
+    /// </summary>
     public Guid? WorkflowId
     {
         get => _station.WorkflowId;
@@ -93,30 +113,45 @@ public sealed partial class StationViewModel : ObservableObject, IViewModelWrapp
         WorkflowId = workflow.Model.Id;
     }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether the train exits this station on the left side.
+    /// </summary>
     public bool IsExitOnLeft
     {
         get => _station.IsExitOnLeft;
         set => SetProperty(_station.IsExitOnLeft, value, _station, (m, v) => m.IsExitOnLeft = v);
     }
 
+    /// <summary>
+    /// Gets or sets the track number used at this station.
+    /// </summary>
     public int Track
     {
         get => (int)(_station.Track ?? 1);
         set => SetProperty(_station.Track, (uint?)value, _station, (m, v) => m.Track = v);
     }
 
+    /// <summary>
+    /// Gets or sets the planned arrival time at this station.
+    /// </summary>
     public DateTime? Arrival
     {
         get => _station.Arrival;
         set => SetProperty(_station.Arrival, value, _station, (m, v) => m.Arrival = v);
     }
 
+    /// <summary>
+    /// Gets or sets the planned departure time from this station.
+    /// </summary>
     public DateTime? Departure
     {
         get => _station.Departure;
         set => SetProperty(_station.Departure, value, _station, (m, v) => m.Departure = v);
     }
 
+    /// <summary>
+    /// Gets or sets the 1-based position of this station within the journey.
+    /// </summary>
     public int Position
     {
         get;

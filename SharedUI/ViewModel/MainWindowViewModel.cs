@@ -64,6 +64,24 @@ public sealed partial class MainWindowViewModel : ObservableObject
     #endregion
 
     #region Constructor
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MainWindowViewModel"/> class with all required backend services and configuration.
+    /// </summary>
+    /// <param name="z21">The Z21 backend service used for digital command control and feedback.</param>
+    /// <param name="eventBus">The event bus used to subscribe to backend domain events.</param>
+    /// <param name="workflowService">The workflow service used to execute workflows.</param>
+    /// <param name="uiDispatcher">Dispatcher used to marshal callbacks onto the UI thread.</param>
+    /// <param name="settings">Application-wide settings object.</param>
+    /// <param name="solution">The currently loaded solution with all projects.</param>
+    /// <param name="executionContext">Execution context containing shared dependencies for workflow actions.</param>
+    /// <param name="logger">Logger used for diagnostic output.</param>
+    /// <param name="ioService">Optional IO service implementation (null uses <see cref="NullIoService"/>).</param>
+    /// <param name="cityLibraryService">Optional city library service for master data.</param>
+    /// <param name="settingsService">Optional settings service used to persist changes.</param>
+    /// <param name="announcementService">Optional announcement service for text-to-speech announcements.</param>
+    /// <param name="photoHubClient">Optional PhotoHub client instance (WinUI only, loosely typed as <see cref="object"/>).</param>
+    /// <param name="tripLogService">Optional trip log service used to record train movements.</param>
+    /// <param name="featureTogglePageProvider">Optional provider for feature toggle page metadata.</param>
     public MainWindowViewModel(
         IZ21 z21,
         IEventBus eventBus,
@@ -357,10 +375,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <summary>
     /// Currently selected city for adding stations to journeys.
     /// </summary>
+    /// <summary>
+    /// Raised when the application should be closed (for example when the user selects an Exit command).
+    /// </summary>
+    public event EventHandler? ExitApplicationRequested;
+
     [ObservableProperty]
     private City? _selectedCity;
-
-    public event EventHandler? ExitApplicationRequested;
 
     /// <summary>
     /// Raised when navigation to a page is requested (e.g., from plugins).
@@ -380,6 +401,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
 
     #region Project Management
+    /// <summary>
+    /// Creates a new empty project in the current solution and selects it.
+    /// </summary>
     [RelayCommand]
     private void AddProject()
     {
@@ -434,6 +458,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     #endregion
 
     #region Lifecycle
+    /// <summary>
+    /// Handles cleanup logic when the main window is closing and requests disconnect from the Z21.
+    /// </summary>
     public void OnWindowClosing()
     {
         // Settings and Solution changes are now auto-saved immediately via PropertyChanged subscriptions

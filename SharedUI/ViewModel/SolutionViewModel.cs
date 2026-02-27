@@ -16,6 +16,9 @@ public sealed partial class SolutionViewModel : ObservableObject, IViewModelWrap
 {
     #region Fields
     // Model
+    /// <summary>
+    /// Gets the underlying solution domain model represented by this ViewModel.
+    /// </summary>
     public Solution Model { get; }
 
     // Optional Services
@@ -35,6 +38,13 @@ public sealed partial class SolutionViewModel : ObservableObject, IViewModelWrap
     /// </summary>
     public ObservableCollection<ProjectViewModel> Projects { get; } = [];
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SolutionViewModel"/> class.
+    /// </summary>
+    /// <param name="model">The solution domain model.</param>
+    /// <param name="dispatcher">Optional UI dispatcher used by nested project ViewModels.</param>
+    /// <param name="ioService">Optional IO service used by nested ViewModels.</param>
+    /// <param name="soundPlayer">Optional sound player used by nested ViewModels.</param>
     public SolutionViewModel(Solution model, IUiDispatcher? dispatcher = null, IIoService? ioService = null, ISoundPlayer? soundPlayer = null)
     {
         ArgumentNullException.ThrowIfNull(model);

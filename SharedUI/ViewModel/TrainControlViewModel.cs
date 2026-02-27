@@ -803,6 +803,16 @@ public sealed partial class TrainControlViewModel : ObservableObject
         return CurrentJourney.Stations[nextIndex];
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TrainControlViewModel"/> class that implements the digital throttle UI.
+    /// </summary>
+    /// <param name="z21">The Z21 backend service used to send drive and function commands.</param>
+    /// <param name="eventBus">Event bus used to receive Z21 feedback events.</param>
+    /// <param name="settingsService">Service used to persist train control presets and options.</param>
+    /// <param name="mainWindowViewModel">Optional main window ViewModel used to access the current project and journey.</param>
+    /// <param name="tripLogService">Optional trip log service used to record train state changes.</param>
+    /// <param name="logger">Optional logger for diagnostics.</param>
+    /// <param name="uiDispatcher">Optional UI dispatcher for updating UI-bound properties.</param>
     public TrainControlViewModel(
         IZ21 z21,
         IEventBus eventBus,

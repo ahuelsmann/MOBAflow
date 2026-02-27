@@ -15,7 +15,9 @@ using System.Diagnostics;
 public partial class MainWindowViewModel
 {
     #region Workflow Search/Filter
-
+    /// <summary>
+    /// Gets or sets the search text used to filter workflows by name on the Workflows page.
+    /// </summary>
     public string WorkflowSearchText
     {
         get;

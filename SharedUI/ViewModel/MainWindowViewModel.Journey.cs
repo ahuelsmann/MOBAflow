@@ -72,6 +72,9 @@ public partial class MainWindowViewModel
         set => SetProperty(ref field, value);
     } = true;
 
+    /// <summary>
+    /// Gets or sets the search text used to filter journeys by name on the Journeys page.
+    /// </summary>
     public string JourneySearchText
     {
         get;

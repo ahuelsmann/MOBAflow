@@ -137,6 +137,9 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         set => SetProperty(_journey.Description, value, _journey, (m, v) => m.Description = v);
     }
 
+    /// <summary>
+    /// Gets or sets the text-to-speech template used when generating announcements for this journey.
+    /// </summary>
     [Display(Name = "Text-to-speech template")]
     public string Text
     {

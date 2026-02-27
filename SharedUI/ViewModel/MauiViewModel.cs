@@ -24,6 +24,16 @@ public sealed partial class MauiViewModel : ObservableObject
     private readonly IPhotoUploadService _photoUploadService;
     private readonly IPhotoCaptureService _photoCaptureService;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MauiViewModel"/> class for the MAUI mobile client.
+    /// </summary>
+    /// <param name="z21">The Z21 backend service used for digital command control and feedback.</param>
+    /// <param name="uiDispatcher">Dispatcher used to marshal updates back to the MAUI UI thread.</param>
+    /// <param name="settings">Application settings used to initialize default values.</param>
+    /// <param name="settingsService">Service used to persist updated settings.</param>
+    /// <param name="restDiscoveryService">Service used to discover the REST API endpoint.</param>
+    /// <param name="photoUploadService">Service used to upload captured photos to the server.</param>
+    /// <param name="photoCaptureService">Service used to capture photos on the device.</param>
     public MauiViewModel(
         IZ21 z21,
         IUiDispatcher uiDispatcher,

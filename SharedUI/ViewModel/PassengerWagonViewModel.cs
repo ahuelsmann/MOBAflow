@@ -15,12 +15,19 @@ public sealed class PassengerWagonViewModel : WagonViewModel
     private PassengerWagon PassengerWagonModel { get; }
     #endregion
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PassengerWagonViewModel"/> class.
+    /// </summary>
+    /// <param name="model">The underlying passenger wagon domain model.</param>
     public PassengerWagonViewModel(PassengerWagon model) : base(model)
     {
         ArgumentNullException.ThrowIfNull(model);
         PassengerWagonModel = model;
     }
 
+    /// <summary>
+    /// Gets or sets the passenger class of this wagon (for example first or second class).
+    /// </summary>
     public PassengerClass WagonClass
     {
         get => PassengerWagonModel.WagonClass;

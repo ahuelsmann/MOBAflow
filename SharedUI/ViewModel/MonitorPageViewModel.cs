@@ -69,6 +69,12 @@ public sealed partial class MonitorPageViewModel : ObservableObject, IDisposable
     /// </summary>
     public int TrafficCount => TrafficPackets.Count;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MonitorPageViewModel"/> class for the Monitor page.
+    /// </summary>
+    /// <param name="mainWindowViewModel">The main window ViewModel providing traffic packets and connection state.</param>
+    /// <param name="uiDispatcher">Dispatcher used to update UI-bound collections on the UI thread.</param>
+    /// <param name="logger">Logger used to write diagnostic log entries.</param>
     public MonitorPageViewModel(MainWindowViewModel mainWindowViewModel, IUiDispatcher uiDispatcher, ILogger<MonitorPageViewModel> logger)
     {
         ArgumentNullException.ThrowIfNull(mainWindowViewModel);
@@ -175,6 +181,9 @@ public sealed partial class MonitorPageViewModel : ObservableObject, IDisposable
         _logger.LogInformation("Traffic cleared");
     }
 
+    /// <summary>
+    /// Releases event subscriptions and timers associated with this ViewModel instance.
+    /// </summary>
     public void Dispose()
     {
         if (_isDisposed)

@@ -13,6 +13,10 @@ public class SbElementViewModel : ObservableObject, IViewModelWrapper<SbElement>
 {
     private readonly SbElement _model;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SbElementViewModel"/> class.
+    /// </summary>
+    /// <param name="model">The underlying signal box element domain model.</param>
     public SbElementViewModel(SbElement model)
     {
         ArgumentNullException.ThrowIfNull(model);
@@ -80,6 +84,10 @@ public class SbElementViewModel : ObservableObject, IViewModelWrapper<SbElement>
 /// </summary>
 public sealed class SbTrackStraightViewModel : SbElementViewModel
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SbTrackStraightViewModel"/> class.
+    /// </summary>
+    /// <param name="model">The underlying straight track domain model.</param>
     public SbTrackStraightViewModel(SbTrackStraight model) : base(model) { }
 
     /// <summary>
@@ -93,6 +101,10 @@ public sealed class SbTrackStraightViewModel : SbElementViewModel
 /// </summary>
 public sealed class SbTrackCurveViewModel : SbElementViewModel
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SbTrackCurveViewModel"/> class.
+    /// </summary>
+    /// <param name="model">The underlying curved track domain model.</param>
     public SbTrackCurveViewModel(SbTrackCurve model) : base(model) { }
 
     /// <summary>
@@ -107,6 +119,10 @@ public sealed class SbTrackCurveViewModel : SbElementViewModel
 /// </summary>
 public sealed class SbSwitchViewModel : SbElementViewModel
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SbSwitchViewModel"/> class.
+    /// </summary>
+    /// <param name="model">The underlying switch domain model.</param>
     public SbSwitchViewModel(SbSwitch model) : base(model) { }
 
     /// <summary>
@@ -139,6 +155,10 @@ public sealed class SbSwitchViewModel : SbElementViewModel
 /// </summary>
 public sealed class SbSignalViewModel : SbElementViewModel
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SbSignalViewModel"/> class.
+    /// </summary>
+    /// <param name="model">The underlying signal domain model.</param>
     public SbSignalViewModel(SbSignal model) : base(model) { }
 
     /// <summary>
@@ -180,6 +200,10 @@ public sealed class SbSignalViewModel : SbElementViewModel
 /// </summary>
 public sealed class SbDetectorViewModel : SbElementViewModel
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SbDetectorViewModel"/> class.
+    /// </summary>
+    /// <param name="model">The underlying detector domain model.</param>
     public SbDetectorViewModel(SbDetector model) : base(model) { }
 
     /// <summary>

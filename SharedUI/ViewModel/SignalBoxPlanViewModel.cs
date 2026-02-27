@@ -14,6 +14,10 @@ public sealed partial class SignalBoxPlanViewModel : ObservableObject, IViewMode
 {
     private readonly SignalBoxPlan _model;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SignalBoxPlanViewModel"/> class.
+    /// </summary>
+    /// <param name="model">The underlying signal box plan domain model.</param>
     public SignalBoxPlanViewModel(SignalBoxPlan model)
     {
         ArgumentNullException.ThrowIfNull(model);
@@ -295,12 +299,19 @@ public sealed class SignalBoxRouteViewModel : ObservableObject, IViewModelWrappe
 {
     private readonly SignalBoxRoute _model;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SignalBoxRouteViewModel"/> class.
+    /// </summary>
+    /// <param name="model">The underlying route domain model.</param>
     public SignalBoxRouteViewModel(SignalBoxRoute model)
     {
         ArgumentNullException.ThrowIfNull(model);
         _model = model;
     }
 
+    /// <summary>
+    /// Gets the underlying route domain model.
+    /// </summary>
     public SignalBoxRoute Model => _model;
 
     public Guid Id => _model.Id;
@@ -323,5 +334,8 @@ public sealed class SignalBoxRouteViewModel : ObservableObject, IViewModelWrappe
         set => SetProperty(_model.EndSignalId, value, _model, (m, v) => m.EndSignalId = v);
     }
 
+    /// <summary>
+    /// Gets the ordered list of element identifiers that belong to this route.
+    /// </summary>
     public List<Guid> ElementIds => _model.ElementIds;
 }

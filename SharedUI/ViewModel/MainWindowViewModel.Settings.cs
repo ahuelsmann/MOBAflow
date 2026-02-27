@@ -34,6 +34,9 @@ public partial class MainWindowViewModel
     public ObservableCollection<string> AvailableIpAddresses => new(_settings.Z21.RecentIpAddresses);
 
     // Wrapper properties for Settings page bindings
+    /// <summary>
+    /// Gets or sets the currently selected IP address for the Z21 command station.
+    /// </summary>
     public string IpAddress
     {
         get => _settings.Z21.CurrentIpAddress;
@@ -48,6 +51,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets the default UDP port used to connect to the Z21 command station.
+    /// </summary>
     public string Port
     {
         get => _settings.Z21.DefaultPort;
@@ -62,6 +68,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets the retry interval in seconds for the automatic Z21 auto-connect logic.
+    /// </summary>
     public double Z21AutoConnectRetryInterval
     {
         get => _settings.Z21.AutoConnectRetryIntervalSeconds;
@@ -76,6 +85,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets the polling interval in seconds for Z21 system state updates.
+    /// </summary>
     public double Z21SystemStatePollingInterval
     {
         get => _settings.Z21.SystemStatePollingIntervalSeconds;
@@ -90,6 +102,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets the API key used for Azure Cognitive Services speech synthesis.
+    /// </summary>
     public string? SpeechKey
     {
         get => _settings.Speech.Key;
@@ -104,6 +119,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets the Azure region used for the speech service.
+    /// </summary>
     public string SpeechRegion
     {
         get => _settings.Speech.Region;
@@ -118,6 +136,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets the speech rate used for synthesized announcements.
+    /// </summary>
     public int SpeechRate
     {
         get => _settings.Speech.Rate;
@@ -132,6 +153,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets the speech output volume as a percentage value.
+    /// </summary>
     public double SpeechVolume
     {
         get => _settings.Speech.Volume;
@@ -146,6 +170,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets the name of the Azure voice used for announcements.
+    /// </summary>
     public string VoiceName
     {
         get => _settings.Speech.VoiceName;
@@ -234,6 +261,9 @@ public partial class MainWindowViewModel
     public bool IsAzureSpeechEngineSelected =>
         SelectedSpeechEngine.Contains("Azure", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Gets or sets a value indicating whether the last used solution is automatically loaded on startup.
+    /// </summary>
     public bool AutoLoadLastSolution
     {
         get => _settings.Application.AutoLoadLastSolution;
@@ -248,6 +278,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether the WebApp should be started automatically with the desktop app.
+    /// </summary>
     public bool AutoStartWebApp
     {
         get => _settings.Application.AutoStartWebApp;
@@ -263,6 +296,9 @@ public partial class MainWindowViewModel
     }
 
     // REST API Settings
+    /// <summary>
+    /// Gets or sets the TCP port used by the REST API hosted by the WebApp.
+    /// </summary>
     public int RestApiPort
     {
         get => _settings.RestApi.Port;
@@ -280,6 +316,9 @@ public partial class MainWindowViewModel
     /// <summary>
     /// Gets the local IP address(es) for the REST API endpoint.
     /// Returns all IPv4 addresses of the machine.
+    /// </summary>
+    /// <summary>
+    /// Gets a comma-separated list of local IPv4 addresses for displaying REST API endpoints.
     /// </summary>
     public string LocalIpAddress
     {
@@ -306,6 +345,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether the periodic health check is enabled.
+    /// </summary>
     public bool HealthCheckEnabled
     {
         get => _settings.HealthCheck.Enabled;
@@ -320,6 +362,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets the interval in seconds between health check executions.
+    /// </summary>
     public double HealthCheckIntervalSeconds
     {
         get => _settings.HealthCheck.IntervalSeconds;
@@ -334,6 +379,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets the configured number of feedback points used for lap counting statistics.
+    /// </summary>
     public double CountOfFeedbackPoints
     {
         get => _settings.Counter.CountOfFeedbackPoints;
@@ -425,6 +473,9 @@ public partial class MainWindowViewModel
 
     #region Feature Toggle Wrapper Properties (Legacy – still used for NavigationView)
 
+    /// <summary>
+    /// Gets or sets whether the Overview page is enabled in the navigation.
+    /// </summary>
     public bool IsOverviewPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsOverviewPageAvailable;
@@ -440,6 +491,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets whether the Solution page is enabled in the navigation.
+    /// </summary>
     public bool IsSolutionPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsSolutionPageAvailable;
@@ -455,6 +509,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets whether the Settings page is enabled in the navigation.
+    /// </summary>
     public bool IsSettingsPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsSettingsPageAvailable;
@@ -470,6 +527,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets whether the Journeys page is enabled in the navigation.
+    /// </summary>
     public bool IsJourneysPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsJourneysPageAvailable;
@@ -485,6 +545,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets whether the Workflows page is enabled in the navigation.
+    /// </summary>
     public bool IsWorkflowsPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsWorkflowsPageAvailable;
@@ -500,6 +563,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets whether the Track Plan Editor page is enabled in the navigation.
+    /// </summary>
     public bool IsTrackPlanEditorPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsTrackPlanEditorPageAvailable;
@@ -515,6 +581,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets whether the Signal Box page is enabled in the navigation.
+    /// </summary>
     public bool IsSignalBoxPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsSignalBoxPageAvailable;
@@ -530,6 +599,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets whether the Journey Map page is enabled in the navigation.
+    /// </summary>
     public bool IsJourneyMapPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsJourneyMapPageAvailable;
@@ -545,6 +617,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets whether the Monitor page is enabled in the navigation.
+    /// </summary>
     public bool IsMonitorPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsMonitorPageAvailable;
@@ -560,6 +635,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets whether the Trains page is enabled in the navigation.
+    /// </summary>
     public bool IsTrainsPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsTrainsPageAvailable;
@@ -575,6 +653,9 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Gets or sets whether the Train Control page is enabled in the navigation.
+    /// </summary>
     public bool IsTrainControlPageAvailableSetting
     {
         get => _settings.FeatureToggles.IsTrainControlPageAvailable;
@@ -712,27 +793,84 @@ public partial class MainWindowViewModel
 
     // Feature Toggle Labels (optional)
 
+    /// <summary>
+    /// Gets the optional label override for the Overview page.
+    /// </summary>
     public string OverviewPageLabel => _settings.FeatureToggles.OverviewPageLabel;
+    /// <summary>
+    /// Gets the optional label override for the Solution page.
+    /// </summary>
     public string SolutionPageLabel => _settings.FeatureToggles.SolutionPageLabel;
+    /// <summary>
+    /// Gets the optional label override for the Journeys page.
+    /// </summary>
     public string JourneysPageLabel => _settings.FeatureToggles.JourneysPageLabel;
+    /// <summary>
+    /// Gets the optional label override for the Workflows page.
+    /// </summary>
     public string WorkflowsPageLabel => _settings.FeatureToggles.WorkflowsPageLabel;
+    /// <summary>
+    /// Gets the optional label override for the Track Plan Editor page.
+    /// </summary>
     public string TrackPlanEditorPageLabel => _settings.FeatureToggles.TrackPlanEditorPageLabel;
+    /// <summary>
+    /// Gets the optional label override for the Signal Box page.
+    /// </summary>
     public string SignalBoxPageLabel => _settings.FeatureToggles.SignalBoxPageLabel;
+    /// <summary>
+    /// Gets the optional label override for the Journey Map page.
+    /// </summary>
     public string JourneyMapPageLabel => _settings.FeatureToggles.JourneyMapPageLabel;
+    /// <summary>
+    /// Gets the optional label override for the Settings page.
+    /// </summary>
     public string SettingsPageLabel => _settings.FeatureToggles.SettingsPageLabel;
+    /// <summary>
+    /// Gets the optional label override for the Docking page.
+    /// </summary>
     public string DockingPageLabel => _settings.FeatureToggles.DockingPageLabel;
+    /// <summary>
+    /// Gets the optional label override for the Monitor page.
+    /// </summary>
     public string MonitorPageLabel => _settings.FeatureToggles.MonitorPageLabel;
+    /// <summary>
+    /// Gets the optional label override for the Trains page.
+    /// </summary>
     public string TrainsPageLabel => _settings.FeatureToggles.TrainsPageLabel;
+    /// <summary>
+    /// Gets the optional label override for the Train Control page.
+    /// </summary>
     public string TrainControlPageLabel => _settings.FeatureToggles.TrainControlPageLabel;
 
     // Settings Page CheckBox Content (with labels)
 
+    /// <summary>
+    /// Gets the checkbox label for enabling or disabling the Track Plan Editor page.
+    /// </summary>
     public string TrackPlanEditorCheckBoxContent => FormatPageContent("Track Plan Editor Page", TrackPlanEditorPageLabel);
+    /// <summary>
+    /// Gets the checkbox label for enabling or disabling the Signal Box page.
+    /// </summary>
     public string SignalBoxCheckBoxContent => FormatPageContent("Signal Box Page", SignalBoxPageLabel);
+    /// <summary>
+    /// Gets the checkbox label for enabling or disabling the Journey Map page.
+    /// </summary>
     public string JourneyMapCheckBoxContent => FormatPageContent("Journey Map Page", JourneyMapPageLabel);
+    /// <summary>
+    /// Gets the checkbox label for enabling or disabling the Docking page.
+    /// </summary>
     public string DockingCheckBoxContent => FormatPageContent("Docking Page", DockingPageLabel);
+    /// <summary>
+    /// Gets the checkbox label for enabling or disabling the Monitor page.
+    /// </summary>
     public string MonitorCheckBoxContent => FormatPageContent("Monitor Page", MonitorPageLabel);
+    /// <summary>
+    /// Gets the checkbox label for enabling or disabling the Trains page.
+    /// </summary>
     public string TrainsCheckBoxContent => FormatPageContent("Trains Page", TrainsPageLabel);
+    /// <summary>
+    /// Gets the checkbox label for enabling or disabling the Train Control page.
+    /// </summary>
     public string TrainControlCheckBoxContent => FormatPageContent("Train Control Page", TrainControlPageLabel);
 
     private static string FormatPageContent(string pageName, string? label)

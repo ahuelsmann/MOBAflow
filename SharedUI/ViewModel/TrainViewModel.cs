@@ -22,6 +22,11 @@ public sealed partial class TrainViewModel : ObservableObject, IViewModelWrapper
     private readonly Project _project;
     #endregion
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TrainViewModel"/> class.
+    /// </summary>
+    /// <param name="model">The train domain model.</param>
+    /// <param name="project">The parent project that owns the locomotives and wagons.</param>
     public TrainViewModel(Train model, Project project)
     {
         ArgumentNullException.ThrowIfNull(model);
@@ -40,30 +45,45 @@ public sealed partial class TrainViewModel : ObservableObject, IViewModelWrapper
     /// </summary>
     public Guid Id => _model.Id;
 
+    /// <summary>
+    /// Gets or sets a value indicating whether this train uses double traction (two locomotives).
+    /// </summary>
     public bool IsDoubleTraction
     {
         get => _model.IsDoubleTraction;
         set => SetProperty(_model.IsDoubleTraction, value, _model, (m, v) => m.IsDoubleTraction = v);
     }
 
+    /// <summary>
+    /// Gets or sets the display name of the train.
+    /// </summary>
     public string Name
     {
         get => _model.Name;
         set => SetProperty(_model.Name, value, _model, (m, v) => m.Name = v);
     }
 
+    /// <summary>
+    /// Gets or sets an optional description for the train.
+    /// </summary>
     public string Description
     {
         get => _model.Description;
         set => SetProperty(_model.Description, value, _model, (m, v) => m.Description = v);
     }
 
+    /// <summary>
+    /// Gets or sets the train type (for example passenger or freight).
+    /// </summary>
     public TrainType TrainType
     {
         get => _model.TrainType;
         set => SetProperty(_model.TrainType, value, _model, (m, v) => m.TrainType = v);
     }
 
+    /// <summary>
+    /// Gets or sets the service type (for example regional, intercity, freight).
+    /// </summary>
     public ServiceType ServiceType
     {
         get => _model.ServiceType;

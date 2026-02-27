@@ -13,8 +13,8 @@ using System.Diagnostics;
 using System.Net;
 
 /// <summary>
-/// Web-optimized ViewModel for Blazor Server - focused on Z21 monitoring and feedback statistics.
-/// Similar to MauiViewModel but optimized for web browser constraints.
+/// Web-optimized ViewModel for Blazor Server focused on Z21 monitoring and feedback statistics.
+/// Similar to <see cref="MauiViewModel"/> but optimized for web browser constraints.
 /// </summary>
 public sealed partial class WebAppViewModel : ObservableObject
 {
@@ -23,6 +23,13 @@ public sealed partial class WebAppViewModel : ObservableObject
     private readonly AppSettings _settings;
     private readonly ISettingsService _settingsService;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="WebAppViewModel"/> class for the web client.
+    /// </summary>
+    /// <param name="z21">The Z21 backend service.</param>
+    /// <param name="uiDispatcher">Dispatcher used to marshal updates back to the Blazor synchronization context.</param>
+    /// <param name="settings">Application settings singleton.</param>
+    /// <param name="settingsService">Service used to persist settings changes.</param>
     public WebAppViewModel(IZ21 z21, IUiDispatcher uiDispatcher, AppSettings settings, ISettingsService settingsService)
     {
         ArgumentNullException.ThrowIfNull(z21);
