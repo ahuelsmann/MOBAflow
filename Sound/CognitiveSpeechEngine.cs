@@ -28,10 +28,10 @@ public class CognitiveSpeechEngine : ISpeakerEngine
     private readonly ILogger<CognitiveSpeechEngine> _logger;
 
     /// <summary>
-    /// Initialisiert eine neue Instanz der <see cref="CognitiveSpeechEngine"/> für den produktiven Einsatz mit DI.
+    /// Initializes a new instance of the <see cref="CognitiveSpeechEngine"/> for production use with dependency injection.
     /// </summary>
-    /// <param name="optionsMonitor">Laufend aktualisierte Optionen für die Azure Speech Konfiguration.</param>
-    /// <param name="logger">Logger für Diagnose- und Fehlermeldungen.</param>
+    /// <param name="optionsMonitor">Options monitor that provides the current Azure Speech configuration.</param>
+    /// <param name="logger">Logger used for diagnostics and error reporting.</param>
     public CognitiveSpeechEngine(IOptionsMonitor<SpeechOptions> optionsMonitor, ILogger<CognitiveSpeechEngine> logger)
     {
         _optionsMonitor = optionsMonitor;
@@ -39,8 +39,8 @@ public class CognitiveSpeechEngine : ISpeakerEngine
     }
 
     /// <summary>
-    /// Parameterloser Konstruktor für Szenarien wie JSON-Deserialisierung oder Design-Time.
-    /// Verwendet einen Null-Logger und keine aktiven Optionen.
+    /// Initializes a new instance of the <see cref="CognitiveSpeechEngine"/> for design-time or serialization scenarios.
+    /// Uses a null logger and does not hold active configuration options.
     /// </summary>
     public CognitiveSpeechEngine()
     {
@@ -49,21 +49,21 @@ public class CognitiveSpeechEngine : ISpeakerEngine
     }
 
     /// <summary>
-    /// Anzeigename dieser Sprach-Engine, der z.B. in der UI verwendet werden kann.
+    /// Display name of this speech engine, for example used in UI selection lists.
     /// </summary>
     public string Name { get; set; } = "Microsoft.CognitiveServices.Speech";
 
     /// <summary>
-    /// Führt eine Text-zu-Sprache-Ausgabe über Azure Cognitive Services durch.
+    /// Performs a text-to-speech announcement using Azure Cognitive Services.
     /// </summary>
-    /// <param name="message">Der zu sprechende Text.</param>
+    /// <param name="message">The text to be spoken.</param>
     /// <param name="voiceName">
-    /// Optionaler Name der zu verwendenden Stimme; bei <c>null</c> oder leer wird die konfigurierte Standardstimme verwendet.
+    /// Optional name of the voice to use; when <c>null</c> or empty, the configured default voice is used.
     /// </param>
-    /// <returns>Ein Task, der die asynchrone Sprachausgabe repräsentiert.</returns>
-    /// <exception cref="ArgumentNullException">Wird ausgelöst, wenn <paramref name="message"/> leer oder <c>null</c> ist.</exception>
+    /// <returns>A task that represents the asynchronous speech synthesis operation.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="message"/> is <c>null</c> or empty.</exception>
     /// <exception cref="InvalidOperationException">
-    /// Wird ausgelöst, wenn keine gültigen Azure-Speech-Zugangsdaten konfiguriert sind oder die Sprachausgabe von Azure abgelehnt wird.
+    /// Thrown when Azure Speech credentials are missing or Azure rejects the synthesis request.
     /// </exception>
     public async Task AnnouncementAsync(string message, string? voiceName)
     {

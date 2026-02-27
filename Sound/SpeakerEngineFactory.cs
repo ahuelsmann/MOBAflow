@@ -19,12 +19,12 @@ public class SpeakerEngineFactory
     private readonly ILogger<SystemSpeechEngine> _systemLogger;
 
     /// <summary>
-    /// Initialisiert eine neue Instanz der <see cref="SpeakerEngineFactory"/>.
+    /// Initializes a new instance of the <see cref="SpeakerEngineFactory"/>.
     /// </summary>
-    /// <param name="appSettings">Globale Anwendungseinstellungen einschließlich Sprachkonfiguration.</param>
-    /// <param name="optionsMonitor">Monitor für die Azure-Speech-Optionen.</param>
-    /// <param name="azureLogger">Logger für die Azure-Sprach-Engine.</param>
-    /// <param name="systemLogger">Logger für die System-Sprach-Engine.</param>
+    /// <param name="appSettings">Global application settings including speech configuration.</param>
+    /// <param name="optionsMonitor">Options monitor for Azure Speech configuration.</param>
+    /// <param name="azureLogger">Logger instance for the Azure-based speech engine.</param>
+    /// <param name="systemLogger">Logger instance for the Windows system speech engine.</param>
     public SpeakerEngineFactory(
         AppSettings appSettings,
         IOptionsMonitor<SpeechOptions> optionsMonitor,

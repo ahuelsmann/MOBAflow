@@ -17,16 +17,16 @@ public class SystemSpeechEngine : ISpeakerEngine
     private readonly ILogger<SystemSpeechEngine> _logger;
 
     /// <summary>
-    /// Initialisiert eine neue Instanz der <see cref="SystemSpeechEngine"/> für Windows-Systemsprache (SAPI).
+    /// Initializes a new instance of the <see cref="SystemSpeechEngine"/> for Windows system speech (SAPI).
     /// </summary>
-    /// <param name="logger">Logger für Diagnose- und Fehlermeldungen.</param>
+    /// <param name="logger">Logger used for diagnostics and error reporting.</param>
     public SystemSpeechEngine(ILogger<SystemSpeechEngine> logger)
     {
         _logger = logger;
     }
 
     /// <summary>
-    /// Anzeigename dieser Sprach-Engine, der z.B. in der UI verwendet werden kann.
+    /// Display name of this speech engine, for example used in UI selection lists.
     /// </summary>
     public string Name { get; set; } = "System.Speech (Windows SAPI)";
 

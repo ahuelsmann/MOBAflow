@@ -9,7 +9,7 @@ namespace Moba.Sound;
 public class NullSpeakerEngine : ISpeakerEngine
 {
     /// <summary>
-    /// Anzeigename dieser Null-Sprach-Engine, der z.B. in der UI angezeigt werden kann.
+    /// Display name of this null speech engine, for example shown in the UI.
     /// </summary>
     public string Name { get; set; } = "Null Speaker Engine (No Audio)";
 
