@@ -9,6 +9,11 @@
         <DefineConstants Condition="'$(ANDROID_SDK_ROOT)' == ''">$(DefineConstants);SKIP_ANDROID_TESTS</DefineConstants>
         <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
     </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Remove="Analysis\Program.cs" />
+    </ItemGroup>
+
     <ItemGroup>
         <PackageReference Include="coverlet.collector">
             <PrivateAssets>all</PrivateAssets>

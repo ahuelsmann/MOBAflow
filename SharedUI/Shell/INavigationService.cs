@@ -43,7 +43,18 @@ public interface INavigationService
 /// </summary>
 public sealed class NavigationEventArgs : EventArgs
 {
+    /// <summary>
+    /// Gets the tag of the page that was navigated to.
+    /// </summary>
     public required string PageTag { get; init; }
+
+    /// <summary>
+    /// Gets an optional navigation parameter that was passed to the target page.
+    /// </summary>
     public object? Parameter { get; init; }
+
+    /// <summary>
+    /// Gets the tag of the page that was active before this navigation occurred.
+    /// </summary>
     public string? PreviousPageTag { get; init; }
 }

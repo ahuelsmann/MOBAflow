@@ -39,6 +39,11 @@ public sealed partial class FeatureToggleItemViewModel : ObservableObject
     /// </summary>
     internal Action<string, bool>? OnIsCheckedChangedCallback { get; set; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FeatureToggleItemViewModel"/> class.
+    /// </summary>
+    /// <param name="info">Metadata that describes the feature toggle and its page.</param>
+    /// <param name="initialValue">The initial checked state for the toggle.</param>
     public FeatureToggleItemViewModel(FeatureTogglePageInfo info, bool initialValue)
     {
         FeatureToggleKey = info.FeatureToggleKey;

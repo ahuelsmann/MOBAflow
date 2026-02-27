@@ -14,6 +14,11 @@ public sealed class UiThreadEventBusDecorator : IEventBus
     private readonly IEventBus _inner;
     private readonly IUiDispatcher _dispatcher;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UiThreadEventBusDecorator"/> class.
+    /// </summary>
+    /// <param name="inner">The underlying event bus that performs the actual publish and subscription logic.</param>
+    /// <param name="dispatcher">The UI dispatcher used to marshal publish calls onto the UI thread.</param>
     public UiThreadEventBusDecorator(IEventBus inner, IUiDispatcher dispatcher)
     {
         _inner = inner ?? throw new ArgumentNullException(nameof(inner));

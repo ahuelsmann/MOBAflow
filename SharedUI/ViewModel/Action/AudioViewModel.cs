@@ -20,6 +20,12 @@ public sealed partial class AudioViewModel : WorkflowActionViewModel
     private readonly ISoundPlayer? _soundPlayer;
     #endregion
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AudioViewModel"/> class for the given workflow action.
+    /// </summary>
+    /// <param name="action">The underlying workflow action that defines this audio playback.</param>
+    /// <param name="ioService">Service used to browse for audio files.</param>
+    /// <param name="soundPlayer">Optional sound player used to preview the selected audio file.</param>
     public AudioViewModel(WorkflowAction action, IIoService ioService, ISoundPlayer? soundPlayer = null) : base(action, ActionType.Audio)
     {
         ArgumentNullException.ThrowIfNull(ioService);
@@ -63,5 +69,9 @@ public sealed partial class AudioViewModel : WorkflowActionViewModel
 
     private bool CanPlayAudio() => _soundPlayer != null && !string.IsNullOrWhiteSpace(FilePath) && File.Exists(FilePath);
 
+    /// <summary>
+    /// Returns a human-readable description of the audio action for debugging and UI display.
+    /// </summary>
+    /// <returns>A string describing the audio playback action.</returns>
     public override string ToString() => !string.IsNullOrEmpty(Name) ? $"{Name} (Audio)" : $"Audio: {Path.GetFileName(FilePath)}";
 }

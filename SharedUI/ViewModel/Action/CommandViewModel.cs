@@ -17,6 +17,10 @@ public sealed class CommandViewModel : WorkflowActionViewModel
     private Z21DccCommandDecoder.DccCommand? _decodedCommand;
     #endregion
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CommandViewModel"/> class for the given workflow action.
+    /// </summary>
+    /// <param name="action">The underlying workflow action that defines this Z21 locomotive command.</param>
     public CommandViewModel(WorkflowAction action) : base(action, ActionType.Command) 
     {
         // Decode bytes on initialization
@@ -172,7 +176,7 @@ public sealed class CommandViewModel : WorkflowActionViewModel
     }
 
         /// <summary>
-        /// Decodes the current Bytes property.
+        /// Decodes the current <see cref="Bytes"/> value into a <see cref="Z21DccCommandDecoder.DccCommand"/> instance.
         /// </summary>
         private Z21DccCommandDecoder.DccCommand? DecodeBytes()
         {
@@ -181,8 +185,8 @@ public sealed class CommandViewModel : WorkflowActionViewModel
     }
 
     /// <summary>
-    /// Updates the Bytes property from current Address, Speed, and Direction values.
-    /// Called automatically when any of these properties change.
+    /// Updates the <see cref="Bytes"/> property from the current <see cref="Address"/>, <see cref="Speed"/>,
+    /// and <see cref="Direction"/> values. Called automatically when any of these properties change.
     /// </summary>
     private void UpdateBytesFromProperties()
         {
@@ -210,5 +214,9 @@ public sealed class CommandViewModel : WorkflowActionViewModel
             }
         }
 
+        /// <summary>
+        /// Returns a human-readable description of the Z21 command for debugging and UI display.
+        /// </summary>
+        /// <returns>A string describing the command.</returns>
         public override string ToString() => !string.IsNullOrEmpty(Name) ? $"{Name} (Command)" : $"Command - Addr:{Address} Speed:{Speed} Dir:{Direction}";
     }

@@ -10,14 +10,24 @@ using Interface;
 /// </summary>
 public sealed class ConnectingServiceViewModel : ObservableObject, IViewModelWrapper<ConnectingService>
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ConnectingServiceViewModel"/> class.
+    /// </summary>
+    /// <param name="model">The underlying connecting service model to wrap.</param>
     public ConnectingServiceViewModel(ConnectingService model)
     {
         ArgumentNullException.ThrowIfNull(model);
         Model = model;
     }
 
+    /// <summary>
+    /// Gets the underlying connecting service domain model.
+    /// </summary>
     public ConnectingService Model { get; }
 
+    /// <summary>
+    /// Gets or sets the display name of the connecting service.
+    /// </summary>
     public string Name
     {
         get => Model.Name;

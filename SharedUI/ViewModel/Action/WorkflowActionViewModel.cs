@@ -16,6 +16,11 @@ public abstract class WorkflowActionViewModel : ObservableObject
     private readonly WorkflowAction _action;
     #endregion
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="WorkflowActionViewModel"/> base class.
+    /// </summary>
+    /// <param name="action">The underlying workflow action model.</param>
+    /// <param name="type">The concrete action type represented by the derived ViewModel.</param>
     protected WorkflowActionViewModel(WorkflowAction action, ActionType type)
     {
         ArgumentNullException.ThrowIfNull(action);
@@ -24,30 +29,45 @@ public abstract class WorkflowActionViewModel : ObservableObject
         _action.Parameters ??= [];
     }
 
+    /// <summary>
+    /// Gets or sets the unique identifier of the underlying workflow action.
+    /// </summary>
     public Guid Id
     {
         get => _action.Id;
         set => SetProperty(_action.Id, value, _action, (a, v) => a.Id = v);
     }
 
+    /// <summary>
+    /// Gets or sets the display name of the action.
+    /// </summary>
     public string Name
     {
         get => _action.Name;
         set => SetProperty(_action.Name, value, _action, (a, v) => a.Name = v);
     }
 
+    /// <summary>
+    /// Gets or sets the sequential number of the action within its workflow.
+    /// </summary>
     public uint Number
     {
         get => _action.Number;
         set => SetProperty(_action.Number, value, _action, (a, v) => a.Number = v);
     }
 
+    /// <summary>
+    /// Gets or sets the delay (in milliseconds) after this action has executed.
+    /// </summary>
     public int DelayAfterMs
     {
         get => _action.DelayAfterMs;
         set => SetProperty(_action.DelayAfterMs, value, _action, (a, v) => a.DelayAfterMs = v);
     }
 
+    /// <summary>
+    /// Gets the concrete type of the underlying workflow action.
+    /// </summary>
     public ActionType Type => _action.Type;
 
     /// <summary>
@@ -55,6 +75,12 @@ public abstract class WorkflowActionViewModel : ObservableObject
     /// </summary>
     public WorkflowAction ToWorkflowAction() => _action;
 
+    /// <summary>
+    /// Gets a typed parameter value from the underlying workflow action.
+    /// </summary>
+    /// <typeparam name="T">The expected parameter type.</typeparam>
+    /// <param name="key">The parameter key.</param>
+    /// <returns>The parameter value converted to <typeparamref name="T"/>, or the default value of <typeparamref name="T"/> when not present.</returns>
     protected T? GetParameter<T>(string key)
     {
         if (_action.Parameters?.TryGetValue(key, out var value) == true)
@@ -75,6 +101,12 @@ public abstract class WorkflowActionViewModel : ObservableObject
         return default;
     }
 
+    /// <summary>
+    /// Sets a typed parameter value on the underlying workflow action.
+    /// </summary>
+    /// <typeparam name="T">The parameter type.</typeparam>
+    /// <param name="key">The parameter key.</param>
+    /// <param name="value">The value to store; <c>null</c> removes the parameter.</param>
     protected void SetParameter<T>(string key, T value)
     {
         _action.Parameters ??= [];

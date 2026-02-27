@@ -72,7 +72,18 @@ public abstract class RegionDisplayOptions
 /// </summary>
 public sealed class RegionChangedEventArgs : EventArgs
 {
+    /// <summary>
+    /// Gets the region that changed.
+    /// </summary>
     public required ShellRegion Region { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the region is currently visible.
+    /// </summary>
     public bool IsVisible { get; init; }
+
+    /// <summary>
+    /// Gets the current content hosted in the region, if any.
+    /// </summary>
     public object? Content { get; init; }
 }

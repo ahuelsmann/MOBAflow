@@ -21,6 +21,10 @@ public sealed partial class LocomotiveViewModel : ObservableObject, IViewModelWr
     private int _photoVersion;
     #endregion
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LocomotiveViewModel"/> class.
+    /// </summary>
+    /// <param name="model">The underlying locomotive model to wrap.</param>
     public LocomotiveViewModel(Locomotive model)
     {
         ArgumentNullException.ThrowIfNull(model);
@@ -37,30 +41,45 @@ public sealed partial class LocomotiveViewModel : ObservableObject, IViewModelWr
         OnPropertyChanged(nameof(HasPhoto));
     }
 
+    /// <summary>
+    /// Gets or sets the display name of the locomotive.
+    /// </summary>
     public string Name
     {
         get => Model.Name;
         set => SetProperty(Model.Name, value, Model, (m, v) => m.Name = v);
     }
 
+    /// <summary>
+    /// Gets or sets the current position index of the locomotive within a train.
+    /// </summary>
     public uint Pos
     {
         get => Model.Pos;
         set => SetProperty(Model.Pos, value, Model, (m, v) => m.Pos = v);
     }
 
+    /// <summary>
+    /// Gets or sets the optional DCC digital address assigned to this locomotive.
+    /// </summary>
     public uint? DigitalAddress
     {
         get => Model.DigitalAddress;
         set => SetProperty(Model.DigitalAddress, value, Model, (m, v) => m.DigitalAddress = v);
     }
 
+    /// <summary>
+    /// Gets or sets the manufacturer name of the locomotive.
+    /// </summary>
     public string? Manufacturer
     {
         get => Model.Manufacturer;
         set => SetProperty(Model.Manufacturer, value, Model, (m, v) => m.Manufacturer = v);
     }
 
+    /// <summary>
+    /// Gets or sets the manufacturer article number.
+    /// </summary>
     public string? ArticleNumber
     {
         get => Model.ArticleNumber;
@@ -68,46 +87,67 @@ public sealed partial class LocomotiveViewModel : ObservableObject, IViewModelWr
     }
 
     /// <summary>
-    /// Anzeigename der Baureihe (aus LocomotiveSeriesRef).
+    /// Gets the display name of the locomotive series from <see cref="Locomotive.LocomotiveSeriesRef"/>.
     /// </summary>
     public string? Series => Model.LocomotiveSeriesRef?.Name;
 
+    /// <summary>
+    /// Gets or sets the primary color scheme of the locomotive.
+    /// </summary>
     public ColorScheme? ColorPrimary
     {
         get => Model.ColorPrimary;
         set => SetProperty(Model.ColorPrimary, value, Model, (m, v) => m.ColorPrimary = v);
     }
 
+    /// <summary>
+    /// Gets or sets the secondary color scheme of the locomotive.
+    /// </summary>
     public ColorScheme? ColorSecondary
     {
         get => Model.ColorSecondary;
         set => SetProperty(Model.ColorSecondary, value, Model, (m, v) => m.ColorSecondary = v);
     }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether the locomotive is configured to push the train.
+    /// </summary>
     public bool IsPushing
     {
         get => Model.IsPushing;
         set => SetProperty(Model.IsPushing, value, Model, (m, v) => m.IsPushing = v);
     }
 
+    /// <summary>
+    /// Gets or sets the optional technical details of the locomotive.
+    /// </summary>
     public Details? Details
     {
         get => Model.Details;
         set => SetProperty(Model.Details, value, Model, (m, v) => m.Details = v);
     }
 
+    /// <summary>
+    /// Gets or sets the invoice date for the locomotive purchase.
+    /// </summary>
     public DateTime? InvoiceDate
     {
         get => Model.InvoiceDate;
         set => SetProperty(Model.InvoiceDate, value, Model, (m, v) => m.InvoiceDate = v);
     }
 
+    /// <summary>
+    /// Gets or sets the delivery date of the locomotive.
+    /// </summary>
     public DateTime? DeliveryDate
     {
         get => Model.DeliveryDate;
         set => SetProperty(Model.DeliveryDate, value, Model, (m, v) => m.DeliveryDate = v);
     }
 
+    /// <summary>
+    /// Gets or sets the relative path of the locomotive photo, if any.
+    /// </summary>
     public string? PhotoPath
     {
         get => Model.PhotoPath;
@@ -130,12 +170,12 @@ public sealed partial class LocomotiveViewModel : ObservableObject, IViewModelWr
     }
 
     /// <summary>
-    /// Cache-busting photo path for UI bindings.
+    /// Gets a cache-busting photo path for UI bindings by appending a version query parameter.
     /// </summary>
     public string? PhotoPathWithVersion => string.IsNullOrWhiteSpace(Model.PhotoPath) ? null : $"{Model.PhotoPath}?v={_photoVersion}";
 
     /// <summary>
-    /// Returns true if a photo is assigned to this locomotive.
+    /// Gets a value indicating whether a photo is assigned to this locomotive.
     /// </summary>
     public bool HasPhoto => !string.IsNullOrWhiteSpace(Model.PhotoPath);
 

@@ -15,12 +15,19 @@ public sealed class GoodsWagonViewModel : WagonViewModel
     private GoodsWagon GoodsWagonModel { get; }
     #endregion
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GoodsWagonViewModel"/> class.
+    /// </summary>
+    /// <param name="model">The underlying goods wagon model to wrap.</param>
     public GoodsWagonViewModel(GoodsWagon model) : base(model)
     {
         ArgumentNullException.ThrowIfNull(model);
         GoodsWagonModel = model;
     }
 
+    /// <summary>
+    /// Gets or sets the cargo type transported by this wagon.
+    /// </summary>
     public CargoType Cargo
     {
         get => GoodsWagonModel.Cargo;

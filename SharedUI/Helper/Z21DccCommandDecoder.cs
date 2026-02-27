@@ -12,10 +12,29 @@ public static class Z21DccCommandDecoder
     /// </summary>
     public class DccCommand
     {
+        /// <summary>
+        /// Gets or sets the DCC locomotive address.
+        /// </summary>
         public int Address { get; set; }
+
+        /// <summary>
+        /// Gets or sets the locomotive speed value in the range 0–127.
+        /// </summary>
         public int Speed { get; set; }
+
+        /// <summary>
+        /// Gets or sets the locomotive direction, typically \"Forward\" or \"Backward\".
+        /// </summary>
         public string Direction { get; set; } = "Forward";
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the command was decoded successfully.
+        /// </summary>
         public bool IsValid { get; set; }
+
+        /// <summary>
+        /// Gets or sets an optional error message describing why decoding failed when <see cref="IsValid"/> is false.
+        /// </summary>
         public string? ErrorMessage { get; set; }
     }
 

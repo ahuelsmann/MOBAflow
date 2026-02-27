@@ -14,7 +14,11 @@ public abstract class PhotoStorageService
 
     private const string StorageFolder = "photos";
 
-    public PhotoStorageService(ILogger<PhotoStorageService> logger)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PhotoStorageService"/> class.
+    /// </summary>
+    /// <param name="logger">The logger used for diagnostic messages and error reporting.</param>
+    protected PhotoStorageService(ILogger<PhotoStorageService> logger)
     {
         _logger = logger;
 

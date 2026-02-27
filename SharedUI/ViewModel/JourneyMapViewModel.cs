@@ -15,6 +15,10 @@ public sealed class JourneyMapViewModel : ObservableObject
     private readonly MainWindowViewModel _mainViewModel;
     #endregion
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JourneyMapViewModel"/> class.
+    /// </summary>
+    /// <param name="mainViewModel">The main window ViewModel that provides journey and project context.</param>
     public JourneyMapViewModel(MainWindowViewModel mainViewModel)
     {
         ArgumentNullException.ThrowIfNull(mainViewModel);

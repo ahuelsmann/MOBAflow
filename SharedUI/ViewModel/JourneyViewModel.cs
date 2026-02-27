@@ -16,6 +16,10 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 
+/// <summary>
+/// ViewModel wrapper for <see cref="Journey"/> that exposes configuration and runtime state
+/// for a train journey and provides commands for managing its stations.
+/// </summary>
 public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapper<Journey>
 {
     #region Fields
@@ -33,7 +37,8 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     #endregion
 
     /// <summary>
-    /// Full constructor with SessionState support (for runtime journey execution).
+    /// Initializes a new instance of the <see cref="JourneyViewModel"/> class with a runtime session state.
+    /// Use this constructor when the journey is actively executed by a <see cref="JourneyManager"/>.
     /// </summary>
     public JourneyViewModel(
         Journey journey,
@@ -62,8 +67,8 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     }
 
     /// <summary>
-    /// Simplified constructor (for UI-only scenarios like TreeView).
-    /// Creates a dummy SessionState that won't receive updates.
+    /// Initializes a new instance of the <see cref="JourneyViewModel"/> class for UI-only scenarios.
+    /// A dummy session state is created that does not receive runtime updates.
     /// </summary>
     public JourneyViewModel(Journey journey, Project project, IUiDispatcher? dispatcher = null)
         : this(journey, project, new JourneySessionState { JourneyId = journey.Id }, null, dispatcher)
@@ -87,30 +92,45 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     /// </summary>
     public Guid Id => _journey.Id;
 
+    /// <summary>
+    /// Gets or sets the feedback input port that starts the journey.
+    /// </summary>
     public uint InPort
     {
         get => _journey.InPort;
         set => SetProperty(_journey.InPort, value, _journey, (m, v) => m.InPort = v);
     }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether a timer-based window is used to ignore feedback events.
+    /// </summary>
     public bool IsUsingTimerToIgnoreFeedbacks
     {
         get => _journey.IsUsingTimerToIgnoreFeedbacks;
         set => SetProperty(_journey.IsUsingTimerToIgnoreFeedbacks, value, _journey, (m, v) => m.IsUsingTimerToIgnoreFeedbacks = v);
     }
 
+    /// <summary>
+    /// Gets or sets the duration in seconds of the timer window used to ignore feedback events.
+    /// </summary>
     public double IntervalForTimerToIgnoreFeedbacks
     {
         get => _journey.IntervalForTimerToIgnoreFeedbacks;
         set => SetProperty(_journey.IntervalForTimerToIgnoreFeedbacks, value, _journey, (m, v) => m.IntervalForTimerToIgnoreFeedbacks = v);
     }
 
+    /// <summary>
+    /// Gets or sets the display name of the journey.
+    /// </summary>
     public string Name
     {
         get => _journey.Name;
         set => SetProperty(_journey.Name, value, _journey, (m, v) => m.Name = v);
     }
 
+    /// <summary>
+    /// Gets or sets the description of the journey.
+    /// </summary>
     public string Description
     {
         get => _journey.Description;
@@ -125,7 +145,7 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     }
 
     /// <summary>
-    /// Stations collection resolved from Project.Stations using StationIds.
+    /// Gets the collection of station ViewModels for this journey.
     /// Cached for UI binding performance.
     /// </summary>
     public ObservableCollection<StationViewModel> Stations
@@ -140,24 +160,26 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         }
     }
 
-    // Enum values for ComboBox binding
+    /// <summary>
+    /// Gets the possible values for <see cref="BehaviorOnLastStop"/> for ComboBox binding.
+    /// </summary>
     public IEnumerable<BehaviorOnLastStop> BehaviorOnLastStopValues =>
         Enum.GetValues<BehaviorOnLastStop>();
 
     /// <summary>
-    /// Current station name (runtime state).
+    /// Gets the current station name from the runtime session state.
     /// </summary>
     public string CurrentStation => _state.CurrentStationName;
 
     /// <summary>
-    /// Current counter value (runtime state).
-    /// Read-only from ViewModel perspective - managed by JourneyManager.
+    /// Gets the current lap or repetition counter from the runtime session state.
+    /// Read-only from the ViewModel perspective – managed by <see cref="JourneyManager"/>.
     /// </summary>
     public int CurrentCounter => _state.Counter;
 
     /// <summary>
-    /// Current position in journey (runtime state).
-    /// Read-only from ViewModel perspective - managed by JourneyManager.
+    /// Gets the current station index within the journey from the runtime session state.
+    /// Read-only from the ViewModel perspective – managed by <see cref="JourneyManager"/>.
     /// </summary>
     public int CurrentPos => _state.CurrentPos;
 
@@ -210,6 +232,9 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
         Debug.WriteLine($"🔄 Journey '{Name}' reset to initial state");
     }
 
+    /// <summary>
+    /// Gets or sets the behavior when the journey reaches the last stop.
+    /// </summary>
     public BehaviorOnLastStop BehaviorOnLastStop
     {
         get => _journey.BehaviorOnLastStop;
@@ -217,7 +242,7 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     }
 
     /// <summary>
-    /// Next Journey ID reference (resolved at runtime).
+    /// Gets or sets the identifier of the next journey to start after this one finishes.
     /// </summary>
     public Guid? NextJourneyId
     {
@@ -226,13 +251,16 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     }
 
     /// <summary>
-    /// Next Journey resolved from Project (for UI display).
+    /// Gets the next journey instance resolved from the project for UI display.
     /// </summary>
     public Journey? NextJourney =>
         _journey.NextJourneyId.HasValue
             ? _project.Journeys.FirstOrDefault(j => j.Id == _journey.NextJourneyId.Value)
             : null;
 
+    /// <summary>
+    /// Gets or sets the initial position index used when resetting the journey.
+    /// </summary>
     public uint FirstPos
     {
         get => _journey.FirstPos;
@@ -240,7 +268,7 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     }
 
     /// <summary>
-    /// Expose domain object for serialization and other operations.
+    /// Gets the underlying journey domain model (for serialization and other operations).
     /// </summary>
     public Journey Model => _journey;
 

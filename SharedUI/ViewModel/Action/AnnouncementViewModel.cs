@@ -15,6 +15,10 @@ public sealed class AnnouncementViewModel : WorkflowActionViewModel
     // (No additional fields - inherits from WorkflowActionViewModel)
     #endregion
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AnnouncementViewModel"/> class for the given workflow action.
+    /// </summary>
+    /// <param name="action">The underlying workflow action that defines this announcement.</param>
     public AnnouncementViewModel(WorkflowAction action) : base(action, ActionType.Announcement) { }
 
     /// <summary>
@@ -36,7 +40,7 @@ public sealed class AnnouncementViewModel : WorkflowActionViewModel
     }
 
     /// <summary>
-    /// Speech rate (-50% to +200%).
+    /// Speech rate in percent relative to the default rate (for example, -50 to +200).
     /// </summary>
     public int Rate
     {
@@ -44,5 +48,9 @@ public sealed class AnnouncementViewModel : WorkflowActionViewModel
         set => SetParameter("Rate", value);
     }
 
+    /// <summary>
+    /// Returns a human-readable description of the announcement for debugging and UI display.
+    /// </summary>
+    /// <returns>A string describing the announcement.</returns>
     public override string ToString() => !string.IsNullOrEmpty(Name) ? $"{Name} (Announcement)" : $"Announcement: {Message}";
 }
