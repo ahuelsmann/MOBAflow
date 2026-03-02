@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
+// Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 #if !SKIP_ANDROID_TESTS
 namespace Moba.Test.SharedUI;
 
@@ -11,10 +11,23 @@ public class MauiAdapterDispatchTests
     private class TestDispatcher : IUiDispatcher
     {
         public bool Dispatched { get; private set; }
+
         public void InvokeOnUi(Action action)
         {
             Dispatched = true; // simulate MainThread dispatch
             action();
+        }
+
+        public Task InvokeOnUiAsync(Func<Task> asyncAction)
+        {
+            Dispatched = true; // simulate MainThread dispatch
+            return asyncAction();
+        }
+
+        public Task<T> InvokeOnUiAsync<T>(Func<Task<T>> asyncFunc)
+        {
+            Dispatched = true; // simulate MainThread dispatch
+            return asyncFunc();
         }
     }
 
