@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Test.Unit;
 
+using System;
 using Microsoft.Extensions.Logging;
 using Moba.Sound;
 
@@ -34,7 +35,7 @@ internal class SystemSpeechEngineTest
             Assert.DoesNotThrowAsync(async () =>
                 await _speakerEngine.AnnouncementAsync("Test Nachricht.", null));
         }
-        catch (System.Speech.Internal.Synthesis.AudioException)
+        catch (Exception ex) when (ex.Message.Contains("Audio device error", StringComparison.OrdinalIgnoreCase))
         {
             Assert.Ignore("Skipping SystemSpeechEngine test because no audio device is available on this environment.");
         }
