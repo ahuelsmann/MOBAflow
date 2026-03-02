@@ -89,7 +89,7 @@ stages:
           - script: |
               cd "$(Build.SourcesDirectory)"
               dotnet-coverage collect ^
-                "dotnet test Test\Test.csproj --configuration $(buildConfiguration) --no-build --logger trx --results-directory $(Agent.TempDirectory)/TestResults" ^
+                "dotnet test Test\Test.csproj --configuration $(buildConfiguration) --logger trx --results-directory $(Agent.TempDirectory)/TestResults" ^
                 -f cobertura ^
                 -o "$(Agent.TempDirectory)/coverage.cobertura.xml"
             displayName: 'Run Tests with dotnet-coverage (Cobertura)'
