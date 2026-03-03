@@ -41,5 +41,7 @@
         <None Update="TestFile\**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <!-- Exclude helper console program with top-level statements from test compilation -->
+        <Compile Remove="Analysis\Program.cs" />
     </ItemGroup>
 </Project>
