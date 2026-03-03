@@ -8,7 +8,9 @@ using SharedUI.Interface;
 
 /// <summary>
 /// Service for city/station master data from the central DataManager instance.
-/// Data is loaded from the shared master data file (e.g. data.json).
+/// Data is normally loaded by PostStartupInitializationService into <see cref="DataManager"/>,
+/// but this service also contains a lazy fallback loader to ensure cities are available
+/// even if the deferred initialization did not run yet.
 /// </summary>
 internal class CityService : ICityService
 {
@@ -24,10 +26,28 @@ internal class CityService : ICityService
 
     /// <summary>
     /// Returns all cities from the central master data manager.
+    /// If the DataManager has not been initialized yet, this method performs
+    /// a lazy load from the default master data file (data.json).
     /// </summary>
-    public Task<List<City>> LoadCitiesAsync()
+    public async Task<List<City>> LoadCitiesAsync()
     {
-        return Task.FromResult(_dataManager.Cities);
+        // Lazy initialization fallback: ensure master data is loaded at least once
+        if (_dataManager.Cities.Count == 0)
+        {
+            try
+            {
+                var fullPath = Path.Combine(AppContext.BaseDirectory, "data.json");
+                _logger.LogInformation("CityService lazy-load: loading master data from {Path}", fullPath);
+                await _dataManager.LoadAsync(fullPath).ConfigureAwait(false);
+                _logger.LogInformation("CityService lazy-load complete: {Cities} cities loaded", _dataManager.Cities.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "CityService lazy-load failed");
+            }
+        }
+
+        return _dataManager.Cities;
     }
 
     /// <summary>

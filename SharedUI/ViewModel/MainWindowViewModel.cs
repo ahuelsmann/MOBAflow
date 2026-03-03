@@ -153,6 +153,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         // Connection status will be updated via EventBus when Z21 responds
         _ = TryAutoConnectToZ21Async();
 
+        // Load City Library once on startup (background, non-blocking).
         if (_cityLibraryService != null)
         {
             _ = Task.Run(async () =>
@@ -244,6 +245,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     }
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(DeleteStationCommand))]
     private StationViewModel? _selectedStation;
 
     /// <summary>
@@ -579,9 +581,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (_cityLibraryService == null) return;
 
         var cities = await _cityLibraryService.LoadCitiesAsync().ConfigureAwait(false);
-        CityLibrary = new ObservableCollection<City>(cities);
 
-        Debug.WriteLine($"[OK] City Library loaded: {CityLibrary.Count} cities");
+        // Ensure collection update happens on UI thread (WinUI requirement)
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            CityLibrary = new ObservableCollection<City>(cities);
+            Debug.WriteLine($"[OK] City Library loaded: {CityLibrary.Count} cities");
+        });
     }
     #endregion
 

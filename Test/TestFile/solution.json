@@ -3,28 +3,6 @@
   "Projects": [
     {
       "Name": "Demo Project",
-      "SpeakerEngines": [
-        {
-          "Name": "Microsoft.CognitiveServices.Speech"
-        }
-      ],
-      "Voices": [
-        {
-          "Name": "ElkeNeural"
-        },
-        {
-          "Name": "GiselaNeural"
-        },
-        {
-          "Name": "KatjaNeural"
-        },
-        {
-          "Name": "HeddaNeural"
-        },
-        {
-          "Name": "KlarissaNeural"
-        }
-      ],
       "Locomotives": [],
       "PassengerWagons": [],
       "GoodsWagons": [],

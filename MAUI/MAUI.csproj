@@ -75,10 +75,6 @@
     <ItemGroup>
         <!-- App Icon - PNG-basiert für bessere Android-Kompatibilität -->
         <MauiIcon Include="Resources\AppIcon\modern_train_backup.png" Color="#512BD4" />
-        <!-- 
-      Splash Screen: Deaktiviert - wir verwenden eine eigene SplashPage
-      Das erzeugt einen leeren/minimalen System-Splash mit nur der Hintergrundfarbe
-    -->
         <!-- Splash image as MauiImage for use in custom SplashPage -->
         <MauiImage Include="Resources\Splash\splash_background.png" />
         <!-- Images (includes all SVG icons automatically) -->

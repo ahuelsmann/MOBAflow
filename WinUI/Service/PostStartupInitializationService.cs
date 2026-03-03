@@ -103,8 +103,9 @@ internal class PostStartupInitializationService
     }
 
     /// <summary>
-    /// Loads the central master data file (Cities + Locomotives) into the DataManager
-    /// and initializes the TrainClassLibrary from the same file.
+    /// Loads the central master data file (Cities + Locomotives) into the DataManager,
+    /// initializes the TrainClassLibrary from the same file and refreshes the City Library
+    /// in the MainWindowViewModel so that the Journeys page shows the loaded cities.
     /// </summary>
     private async Task InitializeMasterDataAsync(CancellationToken cancellationToken)
     {
@@ -123,6 +124,18 @@ internal class PostStartupInitializationService
 
             _logger.LogInformation("[PostStartup] Master data loaded: {Cities} cities, {Locomotives} categories",
                 _dataManager.Cities.Count, _dataManager.Locomotives.Count);
+
+            // Refresh City Library in UI after master data has been loaded
+            try
+            {
+                await _mainWindow.ViewModel.LoadCityLibraryAsync().ConfigureAwait(false);
+                _logger.LogInformation("[PostStartup] City Library refreshed: {Cities} cities",
+                    _mainWindow.ViewModel.CityLibrary.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[PostStartup] Failed to refresh City Library after master data load");
+            }
         }
         catch (OperationCanceledException)
         {

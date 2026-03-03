@@ -19,33 +19,6 @@
         "properties": {
           "name": { "type": "string", "minLength": 1 },
           
-          "speakerEngines": {
-            "type": "array",
-            "description": "Speech synthesis engines (e.g., Azure Cognitive Services)",
-            "items": {
-              "type": "object",
-              "required": ["name", "type"],
-              "properties": {
-                "name": { "type": "string" },
-                "type": { "type": "string" },
-                "settings": { "type": "object" }
-              }
-            }
-          },
-          
-          "voices": {
-            "type": "array",
-            "description": "Voice profiles for speech synthesis",
-            "items": {
-              "type": "object",
-              "required": ["name"],
-              "properties": {
-                "name": { "type": "string" },
-                "prosodyRate": { "type": "number", "minimum": -1, "maximum": 1 }
-              }
-            }
-          },
-          
           "locomotives": {
             "type": "array",
             "description": "Locomotives used in journeys",

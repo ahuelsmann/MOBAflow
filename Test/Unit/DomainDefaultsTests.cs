@@ -107,10 +107,6 @@ internal class ProjectDefaultsTests
 
         // Assert
         Assert.That(project.Name, Is.EqualTo(string.Empty));
-        Assert.That(project.SpeakerEngines, Is.Not.Null);
-        Assert.That(project.SpeakerEngines, Is.Empty);
-        Assert.That(project.Voices, Is.Not.Null);
-        Assert.That(project.Voices, Is.Empty);
         Assert.That(project.Locomotives, Is.Not.Null);
         Assert.That(project.Locomotives, Is.Empty);
         Assert.That(project.PassengerWagons, Is.Not.Null);

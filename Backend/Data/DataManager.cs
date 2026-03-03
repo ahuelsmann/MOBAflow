@@ -25,7 +25,7 @@ public class DataManager
     {
         Cities = [];
         Locomotives = [];
-        ViessmannMultiplexSignals = [];
+        MultiplexSignals = [];
         SchemaVersion = CurrentSchemaVersion;
     }
 
@@ -48,7 +48,7 @@ public class DataManager
     /// Viessmann Multiplex signals (Ks main signal, Ks distant signal) for the ComboBox in the signal box.
     /// Source: https://viessmann-modell.com/sortiment/spur-h0/signale/
     /// </summary>
-    public List<ViessmannMultiplexSignalEntry> ViessmannMultiplexSignals { get; set; }
+    public List<MultiplexSignalEntry> MultiplexSignals { get; set; }
 
     /// <summary>
     /// Updates this instance from another DataManager instance.
@@ -64,9 +64,9 @@ public class DataManager
         Locomotives.Clear();
         foreach (var l in other.Locomotives)
             Locomotives.Add(l);
-        ViessmannMultiplexSignals.Clear();
-        foreach (var s in other.ViessmannMultiplexSignals)
-            ViessmannMultiplexSignals.Add(s);
+        MultiplexSignals.Clear();
+        foreach (var s in other.MultiplexSignals)
+            MultiplexSignals.Add(s);
     }
 
     /// <summary>
@@ -82,7 +82,7 @@ public class DataManager
         {
             Cities.Clear();
             Locomotives.Clear();
-            ViessmannMultiplexSignals.Clear();
+            MultiplexSignals.Clear();
             return;
         }
 
@@ -91,7 +91,7 @@ public class DataManager
         {
             Cities.Clear();
             Locomotives.Clear();
-            ViessmannMultiplexSignals.Clear();
+            MultiplexSignals.Clear();
             return;
         }
         var loaded = JsonSerializer.Deserialize<DataManager>(json, JsonOptions.Default)
@@ -178,8 +178,9 @@ public class DataManager
 
 /// <summary>
 /// Entry for a Viessmann Multiplex signal (main or distant signal).
+/// Plain data object to allow straightforward JSON (de-)serialization.
 /// </summary>
-public abstract class ViessmannMultiplexSignalEntry
+public class MultiplexSignalEntry
 {
     /// <summary>Viessmann article number (e.g. "4040", "4046").</summary>
     public string ArticleNumber { get; set; } = string.Empty;

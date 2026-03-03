@@ -13,8 +13,6 @@ public class Project
     /// </summary>
     public Project()
     {
-        SpeakerEngines = [];
-        Voices = [];
         Locomotives = [];
         PassengerWagons = [];
         GoodsWagons = [];
@@ -28,16 +26,6 @@ public class Project
     /// Gets or sets the project name.
     /// </summary>
     public string Name { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Gets or sets the configured speech engines for this project.
-    /// </summary>
-    public List<SpeakerEngineConfiguration> SpeakerEngines { get; set; }
-
-    /// <summary>
-    /// Gets or sets the available voices for this project.
-    /// </summary>
-    public List<Voice> Voices { get; set; }
 
     /// <summary>
     /// Gets or sets the locomotives belonging to this project.

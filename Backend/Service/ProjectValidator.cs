@@ -101,26 +101,6 @@ public class ProjectValidator : IProjectValidator
             }
         }
 
-        // Check speaker engines (for announcements)
-        if (project.SpeakerEngines.Count == 0)
-        {
-            result.AddInfo($"[{projectName}] ℹ No speaker engines configured (announcements will be silent)");
-        }
-        else
-        {
-            result.AddInfo($"[{projectName}] ✓ Speaker Engines: {project.SpeakerEngines.Count} configured");
-        }
-
-        // Check voices
-        if (project.Voices.Count == 0 && project.SpeakerEngines.Count > 0)
-        {
-            result.AddWarning($"[{projectName}] Speaker engines configured but no voices defined.");
-        }
-        else if (project.Voices.Count > 0)
-        {
-            result.AddInfo($"[{projectName}] ✓ Voices: {project.Voices.Count} available");
-        }
-
         // Check trains (optional but recommended)
         if (project.Trains.Count > 0)
         {

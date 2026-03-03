@@ -10,10 +10,6 @@ internal class ProjectTests
         var project = new Project();
 
         Assert.That(project.Name, Is.EqualTo(string.Empty));
-        Assert.That(project.SpeakerEngines, Is.Not.Null);
-        Assert.That(project.SpeakerEngines, Is.Empty);
-        Assert.That(project.Voices, Is.Not.Null);
-        Assert.That(project.Voices, Is.Empty);
         Assert.That(project.Locomotives, Is.Not.Null);
         Assert.That(project.Locomotives, Is.Empty);
         Assert.That(project.PassengerWagons, Is.Not.Null);
@@ -32,8 +28,6 @@ internal class ProjectTests
     [Test]
     public void Properties_CanBeSet()
     {
-        var speakerEngines = new List<SpeakerEngineConfiguration> { new() };
-        var voices = new List<Voice> { new() };
         var locomotives = new List<Locomotive> { new() };
         var passengerWagons = new List<PassengerWagon> { new() };
         var goodsWagons = new List<GoodsWagon> { new() };
@@ -45,8 +39,6 @@ internal class ProjectTests
         var project = new Project
         {
             Name = "Meine Anlage",
-            SpeakerEngines = speakerEngines,
-            Voices = voices,
             Locomotives = locomotives,
             PassengerWagons = passengerWagons,
             GoodsWagons = goodsWagons,
@@ -57,8 +49,6 @@ internal class ProjectTests
         };
 
         Assert.That(project.Name, Is.EqualTo("Meine Anlage"));
-        Assert.That(project.SpeakerEngines, Is.SameAs(speakerEngines));
-        Assert.That(project.Voices, Is.SameAs(voices));
         Assert.That(project.Locomotives, Is.SameAs(locomotives));
         Assert.That(project.PassengerWagons, Is.SameAs(passengerWagons));
         Assert.That(project.GoodsWagons, Is.SameAs(goodsWagons));

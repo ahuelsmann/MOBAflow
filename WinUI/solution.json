@@ -3,23 +3,6 @@
   "projects": [
     {
       "name": "myMOBA",
-      "speakerEngines": [
-        {
-          "name": "Microsoft.CognitiveServices.Speech",
-          "type": "Microsoft.CognitiveServices.Speech",
-          "settings": {}
-        }
-      ],
-      "voices": [
-        {
-          "name": "ElkeNeural",
-          "prosodyRate": 0.0
-        },
-        {
-          "name": "ConradNeural",
-          "prosodyRate": 0.0
-        }
-      ],
       "locomotives": [
         {
           "id": "bb15c10a-5b78-451f-8f2f-2d4e3efa74af",

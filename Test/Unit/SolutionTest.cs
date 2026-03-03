@@ -28,15 +28,6 @@ internal class SolutionTest
 
         var project = solution.Projects[0];
 
-        // Settings are now in AppSettings (not in Solution)
-        // This test is obsolete - Settings moved to Common.Configuration.AppSettings
-        
-        Assert.That(project.SpeakerEngines, Has.Count.EqualTo(1));
-        Assert.That(project.SpeakerEngines[0].Name, Is.EqualTo("Microsoft.CognitiveServices.Speech"));
-
-        Assert.That(project.Voices, Has.Count.EqualTo(5));
-        Assert.That(project.Voices[0].Name, Is.EqualTo("ElkeNeural"));
-
         Assert.That(project.Trains, Has.Count.EqualTo(1));
         Assert.That(project.Trains[0].Name, Is.EqualTo("RE 78"));
 

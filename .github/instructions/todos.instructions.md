@@ -234,7 +234,6 @@ git config core.hooksPath .git/hooks  # Activate hooks
 3. Schema validation (existing)
 4. **NEW**: ProjectValidator.ValidateCompleteness()
    - Checks if Locomotives, Journeys, Stations are present
-   - Warns about missing SpeakerEngines, Voices if journey has them
    - Logs details about Trains, Workflows, Wagons, SignalBoxPlan
    - Per-project validation (supports multi-project solutions)
 
@@ -244,8 +243,6 @@ git config core.hooksPath .git/hooks  # Activate hooks
 | Locomotives | ❌ | If Journey defined but no Locomotives |
 | Journeys | ❌ | If Project defined but no Journeys |
 | Stations | ❌ | If Journeys defined but no Stations |
-| SpeakerEngines | ❌ | Info only (optional) |
-| Voices | ❌ | If SpeakerEngines exist but no Voices |
 | Trains | ❌ | Info only (optional) |
 | Workflows | ❌ | Info only (optional) |
 | PassengerWagons | ❌ | Info only (optional) |
@@ -253,14 +250,12 @@ git config core.hooksPath .git/hooks  # Activate hooks
 | SignalBoxPlan | ❌ | Info only (optional) |
 
 **solution.json Should Contain Examples:**
-All 8 domain types should be represented in solution.json to serve as a complete reference for developers:
+All domain types should be represented in solution.json to serve as a complete reference for developers:
 ```json
 {
   "name": "Example Solution",
   "projects": [{
     "name": "Example Project",
-    "speakerEngines": [...],     // Speech synthesis config
-    "voices": [...],               // Voice profiles
     "locomotives": [...],          // Required: must have at least one
     "trains": [...],               // Optional: train compositions
     "passengerWagons": [...],      // Optional: passenger cars
