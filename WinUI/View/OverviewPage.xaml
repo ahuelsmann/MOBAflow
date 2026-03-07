@@ -27,8 +27,8 @@
                         <StackPanel Orientation="Horizontal" Spacing="12">
                             <FontIcon
                                 FontSize="20"
-                                Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                                Glyph="&#xE8A7;" />
+                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                Glyph="&#xE968;" />
                             <TextBlock
                                 VerticalAlignment="Center"
                                 Style="{StaticResource SubtitleTextBlockStyle}"
@@ -56,7 +56,7 @@
                     <StackPanel Spacing="8">
                         <TextBlock
                             Style="{StaticResource CaptionTextBlockStyle}"
-                            Text="Connected clients (e.g. MOBAsmart)" />
+                            Text="Connected clients" />
                         <ItemsRepeater ItemsSource="{x:Bind ViewModel.RestApiConnectedClients, Mode=OneWay}">
                             <ItemsRepeater.ItemTemplate>
                                 <DataTemplate x:DataType="vm:RestApiClientInfo">
@@ -66,22 +66,10 @@
                                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                         BorderThickness="1"
                                         CornerRadius="4">
-                                        <Grid ColumnSpacing="12">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock
-                                                Grid.Column="0"
-                                                VerticalAlignment="Center"
-                                                FontWeight="SemiBold"
-                                                Text="{x:Bind DeviceName, Mode=OneWay}" />
-                                            <TextBlock
-                                                Grid.Column="1"
-                                                VerticalAlignment="Center"
-                                                Style="{StaticResource CaptionTextBlockStyle}"
-                                                Text="{x:Bind ConnectedAt, Mode=OneWay, Converter={StaticResource DateTimeToShortTimeConverter}}" />
-                                        </Grid>
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            FontWeight="SemiBold"
+                                            Text="{x:Bind DeviceName, Mode=OneWay}" />
                                     </Border>
                                 </DataTemplate>
                             </ItemsRepeater.ItemTemplate>

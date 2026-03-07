@@ -5,6 +5,7 @@ using Moba.RestApi.Service;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 
 // When started by WinUI, discovery runs in WinUI (MOBAFLOW_DISCOVERY_IN_WINUI=1); otherwise run discovery here
 if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("MOBAFLOW_DISCOVERY_IN_WINUI")))
@@ -13,5 +14,6 @@ if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("MOBAFLOW_DISCOVERY_
 var app = builder.Build();
 
 app.MapControllers();
+app.MapHub<Moba.RestApi.Hubs.PhotoHub>("/photos-hub");
 
 app.Run();

@@ -314,6 +314,24 @@ public partial class MainWindowViewModel
     }
 
     /// <summary>
+    /// Gets or sets the base folder for MOBAflow photos (e.g. OneDrive path). Empty = My Documents\MOBAflow\Photos.
+    /// </summary>
+    public string PhotoStoragePath
+    {
+        get => _settings.Application.PhotoStoragePath ?? string.Empty;
+        set
+        {
+            var v = value ?? string.Empty;
+            if (_settings.Application.PhotoStoragePath != v)
+            {
+                _settings.Application.PhotoStoragePath = v;
+                OnPropertyChanged();
+                _ = _settingsService?.SaveSettingsAsync(_settings);
+            }
+        }
+    }
+
+    /// <summary>
     /// Gets the local IP address(es) for the REST API endpoint.
     /// Returns all IPv4 addresses of the machine.
     /// </summary>

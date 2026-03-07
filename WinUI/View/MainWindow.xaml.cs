@@ -227,9 +227,21 @@ internal sealed partial class MainWindow
 
     private async void MainWindow_Closed(object sender, WindowEventArgs args)
     {
+        // 1) Stop status polling and cancel any in-flight HTTP requests
         _restApiStatusService.Stop();
-        _restApiStatusService.Dispose();
 
+        // 2) Disconnect PhotoHub (SignalR) and dispose status service BEFORE stopping the RestApi process,
+        //    so SignalR shuts down cleanly and does not start reconnect timers after the server is killed.
+        try
+        {
+            _restApiStatusService.Dispose();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[MainWindow] RestApiStatusService.Dispose: {ex.Message}");
+        }
+
+        // 3) Stop RestApi child process so it doesn't outlive the app
         try
         {
             _restApiProcessService.Stop();
@@ -243,12 +255,23 @@ internal sealed partial class MainWindow
         {
             _healthCheckService.HealthStatusChanged -= OnHealthStatusChanged;
             _healthCheckService.StopPeriodicChecks();
+            try
+            {
+                _healthCheckService.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MainWindow] HealthCheckService.Dispose: {ex.Message}");
+            }
         }
 
         // Auto-save solution before closing to prevent data loss
         await ViewModel.SaveSolutionInternalAsync();
 
         ViewModel.OnWindowClosing();
+
+        // WinUI 3 does not exit the process when the window is closed; we must exit explicitly.
+        Application.Current.Exit();
     }
 
     private static void OnExitApplicationRequested(object? sender, EventArgs e)

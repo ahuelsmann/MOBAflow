@@ -77,6 +77,7 @@ stages:
               projects: |
                 **/WinUI.csproj
                 **/WebApp.csproj
+                **/Test.csproj
               arguments: '--configuration $(buildConfiguration) --no-restore'
 
           - task: DotNetCoreCLI@2
@@ -89,9 +90,10 @@ stages:
           - script: |
               cd "$(Build.SourcesDirectory)"
               dotnet-coverage collect ^
-                "dotnet test Test\Test.csproj --configuration $(buildConfiguration) --logger trx --results-directory $(Agent.TempDirectory)/TestResults" ^
+                -s Test/dotnet-coverage.runsettings ^
                 -f cobertura ^
-                -o "$(Agent.TempDirectory)/coverage.cobertura.xml"
+                -o "$(Agent.TempDirectory)/coverage.cobertura.xml" ^
+                "dotnet test Test/Test.csproj --configuration $(buildConfiguration) --no-build --logger trx --results-directory $(Agent.TempDirectory)/TestResults"
             displayName: 'Run Tests with dotnet-coverage (Cobertura)'
 
           - task: PublishTestResults@2
@@ -99,7 +101,7 @@ stages:
             condition: succeededOrFailed()
             inputs:
               testResultsFormat: 'VSTest'
-              testResultsFiles: '$(Agent.TempDirectory)/TestResults/*.trx'
+              testResultsFiles: '$(Agent.TempDirectory)/TestResults/**/*.trx'
               mergeTestResults: true
               testRunTitle: 'Unit Tests (dotnet-coverage)'
 

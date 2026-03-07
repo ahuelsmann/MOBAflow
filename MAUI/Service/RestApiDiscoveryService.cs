@@ -3,6 +3,7 @@ namespace Moba.MAUI.Service;
 
 using Android.OS;
 using Common.Configuration;
+using Common.Discovery;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Sockets;
@@ -17,7 +18,6 @@ public class RestApiDiscoveryService
 {
     private const int DiscoveryPort = 21106;
     private const string DiscoveryRequest = "MOBAFLOW_DISCOVER";
-    private const string DiscoveryResponsePrefix = "MOBAFLOW_REST_API";
     private const string MulticastAddress = "239.255.42.99";
     private const int DiscoveryTimeoutMs = 3000;
 
@@ -88,19 +88,10 @@ public class RestApiDiscoveryService
 
                 _logger.LogDebug("📥 Received response: {Response}", response);
 
-                // Parse response: "MOBAFLOW_REST_API|192.168.0.100|5001"
-                if (response.StartsWith(DiscoveryResponsePrefix, StringComparison.Ordinal))
+                if (DiscoveryResponseParser.TryParse(response, out var ip, out var portVal) && ip != null && portVal != null)
                 {
-                    var parts = response.Split('|');
-                    if (parts.Length >= 3 && int.TryParse(parts[2].Trim(), out var port) && port > 0 && port < 65536)
-                    {
-                        var ip = parts[1].Trim();
-                        if (!string.IsNullOrEmpty(ip))
-                        {
-                            _logger.LogInformation("✅ Server discovered: {Ip}:{Port}", ip, port);
-                            return (ip, port);
-                        }
-                    }
+                    _logger.LogInformation("✅ Server discovered: {Ip}:{Port}", ip, portVal);
+                    return (ip, portVal);
                 }
             }
             catch (OperationCanceledException)
@@ -111,6 +102,14 @@ public class RestApiDiscoveryService
             {
                 _logger.LogDebug("⏱️ Discovery timeout - no response received");
             }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogDebug("⏱️ Discovery timeout - no response received");
+        }
+        catch (TaskCanceledException)
+        {
+            _logger.LogDebug("⏱️ Discovery timeout - no response received");
         }
         catch (Exception ex)
         {

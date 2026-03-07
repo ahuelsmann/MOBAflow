@@ -52,6 +52,11 @@ public partial class App
     private readonly ILogger<App> _logger;
 
     /// <summary>
+    /// Gets the main application window (for folder/file pickers and similar).
+    /// </summary>
+    public static Window? MainWindow => (Current as App)?._window;
+
+    /// <summary>
     /// Initializes the singleton application object. This is the first line of authored code
     /// executed, and as such is the logical equivalent of main() or WinMain().
     /// 
@@ -237,6 +242,7 @@ public partial class App
                 factory.CreateClient(),
                 sp.GetRequiredService<AppSettings>(),
                 sp.GetRequiredService<RestApiProcessService>(),
+                sp.GetRequiredService<PhotoHubClient>(),
                 sp.GetRequiredService<MainWindowViewModel>(),
                 sp.GetRequiredService<IUiDispatcher>(),
                 sp.GetRequiredService<ILogger<RestApiStatusService>>());
@@ -396,6 +402,8 @@ public partial class App
 
             var appSettings = Services.GetRequiredService<AppSettings>();
             Debug.WriteLine("[OnLaunched] AppSettings resolved");
+
+            Converter.PhotoPathToImageConverter.SetPhotoBasePath(appSettings.Application?.PhotoStoragePath);
 
             skinProvider.Initialize(appSettings);
             Debug.WriteLine("[OnLaunched] SkinProvider initialized");

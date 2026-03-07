@@ -2,6 +2,8 @@
 namespace Moba.RestApi.Controllers;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using Moba.RestApi.Hubs;
 
 /// <summary>
 /// REST API for photo health check and upload (MAUI compatibility).
@@ -12,6 +14,13 @@ public class PhotosController : ControllerBase
 {
     private static readonly HashSet<string> AllowedExtensions = [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp"];
     private const long MaxFileSize = 10 * 1024 * 1024; // 10 MB
+
+    private readonly IHubContext<PhotoHub>? _hubContext;
+
+    public PhotosController(IHubContext<PhotoHub>? hubContext = null)
+    {
+        _hubContext = hubContext;
+    }
 
     /// <summary>
     /// Health check endpoint for MAUI app. Returns OK when REST API is running.
@@ -41,18 +50,38 @@ public class PhotosController : ControllerBase
             return BadRequest(new { error = $"Invalid type. Allowed: {string.Join(", ", AllowedExtensions)}" });
 
         var cat = string.IsNullOrWhiteSpace(category) ? "photos" : category.Trim();
-        var baseDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-            "MOBAflow", "Photos", cat);
-        Directory.CreateDirectory(baseDir);
+        var baseDir = GetPhotoBaseDir();
+        var categoryDir = Path.Combine(baseDir, cat);
+        Directory.CreateDirectory(categoryDir);
 
         var fileName = $"{entityId:N}{extension}";
-        var fullPath = Path.Combine(baseDir, fileName);
+        var fullPath = Path.Combine(categoryDir, fileName);
 
         await using (var stream = System.IO.File.Create(fullPath))
             await file.CopyToAsync(stream, cancellationToken);
 
         var relativePath = $"photos/{cat}/{fileName}";
+        if (_hubContext != null)
+        {
+            try
+            {
+                await _hubContext.Clients.All.SendAsync("PhotoUploaded", relativePath, DateTime.UtcNow);
+            }
+            catch
+            {
+                // Ignore if no clients connected
+            }
+        }
         return Ok(new { success = true, photoPath = relativePath });
+    }
+
+    private static string GetPhotoBaseDir()
+    {
+        var configured = Environment.GetEnvironmentVariable("MOBAFLOW_PHOTOS_PATH");
+        if (!string.IsNullOrWhiteSpace(configured))
+            return configured.Trim();
+        return Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+            "MOBAflow", "Photos");
     }
 }

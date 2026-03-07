@@ -2,6 +2,8 @@
 namespace Moba.WinUI.Service;
 
 using Backend.Service;
+using Common.Configuration;
+using Common.Path;
 using Common.Validation;
 
 using Domain;
@@ -20,12 +22,14 @@ internal class IoService : IIoService
 {
     private WindowId? _windowId;
     private XamlRoot? _xamlRoot;
+    private readonly AppSettings _appSettings;
     private readonly ISettingsService _settingsService;
     private readonly IProjectValidator _projectValidator;
     private readonly ILogger<IoService> _logger;
 
-    public IoService(ISettingsService settingsService, IProjectValidator projectValidator, ILogger<IoService> logger)
+    public IoService(AppSettings appSettings, ISettingsService settingsService, IProjectValidator projectValidator, ILogger<IoService> logger)
     {
+        _appSettings = appSettings;
         _settingsService = settingsService;
         _projectValidator = projectValidator;
         _logger = logger;
@@ -403,6 +407,7 @@ internal class IoService : IIoService
 
     /// <summary>
     /// Converts a relative photo path to an absolute file system path.
+    /// Uses Application.PhotoStoragePath when set, otherwise My Documents\MOBAflow\Photos.
     /// </summary>
     public string? GetPhotoFullPath(string? relativePath)
     {
@@ -413,16 +418,17 @@ internal class IoService : IIoService
         if (Path.IsPathRooted(relativePath))
             return relativePath;
 
-        // Convert relative path to absolute
-        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        var appFolder = Path.Combine(localAppData, "MOBAflow");
+        var baseDir = GetPhotoBaseDir();
+        return PhotoPathHelper.ToFullPath(baseDir, relativePath);
+    }
 
-        // ✅ Platform-agnostic: Normalize path separators
-        // relativePath format: "photos/locomotives/{guid}.jpg" or "photos\locomotives\{guid}.jpg"
-        var normalizedPath = relativePath.Replace("/", Path.DirectorySeparatorChar.ToString());
-        var absolutePath = Path.Combine(appFolder, normalizedPath);
-
-        return absolutePath;
+    private string GetPhotoBaseDir()
+    {
+        if (!string.IsNullOrWhiteSpace(_appSettings.Application?.PhotoStoragePath))
+            return _appSettings.Application.PhotoStoragePath.Trim();
+        return Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+            "MOBAflow", "Photos");
     }
 
     /// <summary>

@@ -4,6 +4,7 @@ namespace Moba.SharedUI.ViewModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using Common.Path;
 using Domain;
 
 using Microsoft.Extensions.Logging;
@@ -534,12 +535,11 @@ public partial class MainWindowViewModel
             Debug.WriteLine($"   category: {category}");
             Debug.WriteLine($"   entityId: {entityId}");
 
-            // Get photo storage directory (base directory without "photos" subfolder)
-            var baseDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MOBAflow");
+            // Get photo storage directory: configurable via Application.PhotoStoragePath (e.g. OneDrive), else My Documents
+            var baseDir = GetPhotoBaseDir();
             Debug.WriteLine($"   baseDir: {baseDir}");
 
-            // tempPhotoPath is relative (e.g., "photos/temp/xyz.jpg")
-            var tempPath = Path.Combine(baseDir, tempPhotoPath);
+            var tempPath = PhotoPathHelper.ToFullPath(baseDir, tempPhotoPath);
             Debug.WriteLine($"   tempPath: {tempPath}");
 
             if (!File.Exists(tempPath))
@@ -551,8 +551,8 @@ public partial class MainWindowViewModel
 
             Debug.WriteLine("Temp photo exists");
 
-            // Create category directory (e.g., "C:\\...\\MOBAflow\\photos\\locomotives")
-            var categoryDir = Path.Combine(baseDir, "photos", category);
+            // Category directory under same base (e.g. ...\Photos\locomotives)
+            var categoryDir = Path.Combine(baseDir, category);
             Debug.WriteLine($"   categoryDir: {categoryDir}");
             Directory.CreateDirectory(categoryDir);
             Debug.WriteLine("Category directory created or verified");
@@ -579,6 +579,15 @@ public partial class MainWindowViewModel
             _logger.LogError(ex, "Failed to move photo: {Path}", tempPhotoPath);
             return null;
         }
+    }
+
+    private string GetPhotoBaseDir()
+    {
+        if (!string.IsNullOrWhiteSpace(_settings.Application?.PhotoStoragePath))
+            return _settings.Application.PhotoStoragePath.Trim();
+        return Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+            "MOBAflow", "Photos");
     }
     #endregion
 }

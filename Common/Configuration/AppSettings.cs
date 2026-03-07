@@ -207,6 +207,13 @@ public class ApplicationSettings
     /// NOTE: Since WinUI now has in-process REST API (Kestrel), this is typically not needed.
     /// </summary>
     public bool AutoStartWebApp { get; set; } = true;
+
+    /// <summary>
+    /// Base folder for MOBAflow photos (locomotives, wagons, uploads from MAUI).
+    /// When null or empty, defaults to My Documents\MOBAflow\Photos.
+    /// Can be set to a custom path (e.g. OneDrive folder) so photos are stored in the cloud.
+    /// </summary>
+    public string PhotoStoragePath { get; set; } = string.Empty;
 }
 
 /// <summary>
