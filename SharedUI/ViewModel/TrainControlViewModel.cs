@@ -42,7 +42,6 @@ public sealed partial class TrainControlViewModel : ObservableObject
 {
     private readonly IZ21 _z21;
     private readonly ISettingsService _settingsService;
-    private readonly ITripLogService? _tripLogService;
     private readonly ILogger<TrainControlViewModel>? _logger;
     private readonly IUiDispatcher? _uiDispatcher;
 
@@ -810,7 +809,6 @@ public sealed partial class TrainControlViewModel : ObservableObject
     /// <param name="eventBus">Event bus used to receive Z21 feedback events.</param>
     /// <param name="settingsService">Service used to persist train control presets and options.</param>
     /// <param name="mainWindowViewModel">Optional main window ViewModel used to access the current project and journey.</param>
-    /// <param name="tripLogService">Optional trip log service used to record train state changes.</param>
     /// <param name="logger">Optional logger for diagnostics.</param>
     /// <param name="uiDispatcher">Optional UI dispatcher for updating UI-bound properties.</param>
     public TrainControlViewModel(
@@ -818,7 +816,6 @@ public sealed partial class TrainControlViewModel : ObservableObject
         IEventBus eventBus,
         ISettingsService settingsService,
         MainWindowViewModel? mainWindowViewModel = null,
-        ITripLogService? tripLogService = null,
         ILogger<TrainControlViewModel>? logger = null,
         IUiDispatcher? uiDispatcher = null)
     {
@@ -828,7 +825,6 @@ public sealed partial class TrainControlViewModel : ObservableObject
         _z21 = z21;
         _settingsService = settingsService;
         _mainWindowViewModel = mainWindowViewModel;
-        _tripLogService = tripLogService;
         _logger = logger;
         _uiDispatcher = uiDispatcher;
 
@@ -1207,13 +1203,6 @@ public sealed partial class TrainControlViewModel : ObservableObject
         {
             CurrentPreset.DccAddress = value;
             _ = SavePresetsToSettingsAsync();
-
-            // Fahrtenbuch: Adresswechsel protokollieren
-            _tripLogService?.RecordStateChange(
-                _mainWindowViewModel?.SelectedProject?.Model,
-                value,
-                Speed,
-                DateTime.UtcNow);
         }
 
         if (value >= 1 && value <= 9999 && _z21.IsConnected)
@@ -1259,13 +1248,6 @@ public sealed partial class TrainControlViewModel : ObservableObject
         // Save to current preset
         CurrentPreset.Speed = value;
         _ = SavePresetsToSettingsAsync();
-
-        // Trip log: record speed change
-        _tripLogService?.RecordStateChange(
-            _mainWindowViewModel?.SelectedProject?.Model,
-            LocoAddress,
-            value,
-            DateTime.UtcNow);
 
         if (CanExecuteLocoCommand() && LocoAddress >= 1)
         {

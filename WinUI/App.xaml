@@ -92,12 +92,6 @@
                 x:Key="PinTooltipConverter"
                 FalseValue="Pin panel"
                 TrueValue="Unpin panel" />
-            <converter:DateTimeToShortTimeConverter x:Key="DateTimeToShortTimeConverter" />
-            <converter:TimeSpanToDurationConverter x:Key="TimeSpanToDurationConverter" />
-            <converter:BoolToStringConverter
-                x:Key="BoolToTripLogIconConverter"
-                FalseValue="&#xE768;"
-                TrueValue="&#xE769;" />
             <converter:BoolToStringConverter
                 x:Key="BoolToAutoStartLabelConverter"
                 FalseValue="Auto-start with MOBAflow: Off"

@@ -113,25 +113,4 @@ internal class ProjectTests
         project.Locomotives.Remove(loco);
         Assert.That(project.Locomotives, Is.Empty);
     }
-
-    [Test]
-    public void Constructor_TripLogEntries_InitializedEmpty()
-    {
-        var project = new Project();
-        Assert.That(project.TripLogEntries, Is.Not.Null);
-        Assert.That(project.TripLogEntries, Is.Empty);
-    }
-
-    [Test]
-    public void TripLogEntries_CanAddAndRemove()
-    {
-        var project = new Project();
-        var entry = new TripLogEntry();
-
-        project.TripLogEntries.Add(entry);
-        Assert.That(project.TripLogEntries, Has.Count.EqualTo(1));
-
-        project.TripLogEntries.Remove(entry);
-        Assert.That(project.TripLogEntries, Is.Empty);
-    }
 }

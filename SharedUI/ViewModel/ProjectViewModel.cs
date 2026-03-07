@@ -39,10 +39,6 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
     /// </summary>
     public int WorkflowCount => Workflows.Count;
     /// <summary>
-    /// Gets the number of trains contained in this project.
-    /// </summary>
-    public int TrainCount => Trains.Count;
-    /// <summary>
     /// Gets the number of locomotives contained in this project.
     /// </summary>
     public int LocomotiveCount => Locomotives.Count;
@@ -69,12 +65,6 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
     /// Manually synced with Model.Workflows via Refresh().
     /// </summary>
     public ObservableCollection<WorkflowViewModel> Workflows { get; } = [];
-
-    /// <summary>
-    /// Hierarchical collection of Train ViewModels.
-    /// Manually synced with Model.Trains via Refresh().
-    /// </summary>
-    public ObservableCollection<TrainViewModel> Trains { get; } = [];
 
     /// <summary>
     /// Hierarchical collection of Locomotive ViewModels.
@@ -117,7 +107,6 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
 
         Journeys.CollectionChanged += (_, _) => NotifyStatisticsChanged();
         Workflows.CollectionChanged += (_, _) => NotifyStatisticsChanged();
-        Trains.CollectionChanged += (_, _) => NotifyStatisticsChanged();
         Locomotives.CollectionChanged += (_, _) => NotifyStatisticsChanged();
         Wagons.CollectionChanged += (_, _) => NotifyStatisticsChanged();
     }
@@ -126,7 +115,6 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
     {
         OnPropertyChanged(nameof(JourneyCount));
         OnPropertyChanged(nameof(WorkflowCount));
-        OnPropertyChanged(nameof(TrainCount));
         OnPropertyChanged(nameof(LocomotiveCount));
         OnPropertyChanged(nameof(WagonCount));
     }
@@ -148,10 +136,6 @@ public sealed partial class ProjectViewModel : ObservableObject, IViewModelWrapp
         Workflows.Clear();
         foreach (var w in Model.Workflows)
             Workflows.Add(new WorkflowViewModel(w, ioService: _ioService, soundPlayer: _soundPlayer));
-
-        Trains.Clear();
-        foreach (var t in Model.Trains)
-            Trains.Add(new TrainViewModel(t, Model));
 
         Locomotives.Clear();
         foreach (var l in Model.Locomotives)

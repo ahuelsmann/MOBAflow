@@ -17,7 +17,10 @@
         <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     </Page.Resources>
 
-    <Grid>
+    <local:CursorGrid>
+        <i:Interaction.Behaviors>
+            <local:GridColumnResizeBehavior PersistenceKey="JourneysPage" />
+        </i:Interaction.Behaviors>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="250" MinWidth="200" />
             <ColumnDefinition Width="Auto" />
@@ -26,11 +29,9 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="Auto" />
-            <!--  Properties Panel  -->
-            <ColumnDefinition
-                Width="*"
-                MinWidth="350"
-                MaxWidth="800" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" MinWidth="350" MaxWidth="800" />
         </Grid.ColumnDefinitions>
 
         <!--  Column 0: Journeys  -->
@@ -129,13 +130,8 @@
         <Grid
             Grid.Column="1"
             Width="5"
-            Background="Transparent"
-            PointerEntered="OnSplitterPointerEntered"
-            PointerExited="OnSplitterPointerExited"
-            PointerMoved="OnSplitterPointerMoved"
-            PointerPressed="OnSplitterPointerPressed"
-            PointerReleased="OnSplitterPointerReleased"
-            Tag="Splitter1">
+            local:GridColumnResizeBehavior.SplitterMode="Left"
+            Background="Transparent">
             <Grid
                 Width="1"
                 HorizontalAlignment="Center"
@@ -228,13 +224,8 @@
         <Grid
             Grid.Column="3"
             Width="5"
-            Background="Transparent"
-            PointerEntered="OnSplitterPointerEntered"
-            PointerExited="OnSplitterPointerExited"
-            PointerMoved="OnSplitterPointerMoved"
-            PointerPressed="OnSplitterPointerPressed"
-            PointerReleased="OnSplitterPointerReleased"
-            Tag="Splitter2">
+            local:GridColumnResizeBehavior.SplitterMode="Left"
+            Background="Transparent">
             <Grid
                 Width="1"
                 HorizontalAlignment="Center"
@@ -281,6 +272,17 @@
             </controls:CollapsibleColumn.PanelContent>
         </controls:CollapsibleColumn>
 
+        <Grid
+            Grid.Column="5"
+            Width="5"
+            local:GridColumnResizeBehavior.SplitterMode="Both"
+            Background="Transparent">
+            <Grid
+                Width="1"
+                HorizontalAlignment="Center"
+                Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+        </Grid>
+
         <!--  Column 6: Workflow Library (CollapsibleColumn)  -->
         <controls:CollapsibleColumn
             Grid.Column="6"
@@ -319,8 +321,19 @@
             </controls:CollapsibleColumn.PanelContent>
         </controls:CollapsibleColumn>
 
-        <!--  Column 7: Properties Panel  -->
-        <Grid Grid.Column="7" Padding="8">
+        <Grid
+            Grid.Column="7"
+            Width="5"
+            local:GridColumnResizeBehavior.SplitterMode="Right"
+            Background="Transparent">
+            <Grid
+                Width="1"
+                HorizontalAlignment="Center"
+                Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+        </Grid>
+
+        <!--  Column 8: Properties Panel  -->
+        <Grid Grid.Column="8" Padding="8">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
@@ -331,5 +344,5 @@
                 Content="{x:Bind ViewModel.JourneysPageSelectedObject, Mode=OneWay}"
                 ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
         </Grid>
-    </Grid>
+    </local:CursorGrid>
 </Page>

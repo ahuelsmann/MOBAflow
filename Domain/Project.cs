@@ -19,7 +19,6 @@ public class Project
         Trains = [];
         Workflows = [];
         Journeys = [];
-        TripLogEntries = [];
     }
 
     /// <summary>
@@ -62,9 +61,4 @@ public class Project
     /// Topological representation with signals, switches, and routes.
     /// </summary>
     public SignalBoxPlan? SignalBoxPlan { get; set; }
-
-    /// <summary>
-    /// Trip log: recorded trips and stop times from the TrainControlPage.
-    /// </summary>
-    public List<TripLogEntry> TripLogEntries { get; set; }
 }

@@ -329,7 +329,6 @@ public partial class App
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<AnnouncementService>(),
             sp.GetRequiredService<PhotoHubClient>(),
-            sp.GetService<ITripLogService>(),
             sp.GetService<IFeatureTogglePageProvider>()
         ));
 
@@ -341,7 +340,6 @@ public partial class App
             sp.GetRequiredService<IEventBus>(),
             sp.GetRequiredService<ISettingsService>(),
             sp.GetRequiredService<MainWindowViewModel>(),
-            sp.GetService<ITripLogService>(),
             sp.GetService<ILogger<TrainControlViewModel>>(),
             sp.GetService<IUiDispatcher>()
         ));

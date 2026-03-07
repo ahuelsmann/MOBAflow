@@ -394,6 +394,14 @@ public class FeatureToggleSettings
     /// </summary>
     public string LocomotivesPageLabel { get; set; } = "Preview";
 
+    public bool IsPassengerWagonsPageAvailable { get; set; } = true;
+
+    public string PassengerWagonsPageLabel { get; set; } = "Preview";
+
+    public bool IsGoodsWagonsPageAvailable { get; set; } = true;
+
+    public string GoodsWagonsPageLabel { get; set; } = "Preview";
+
     /// <summary>
     /// Enable Trains page (Locomotive and wagon inventory management).
     /// Upcoming feature marked as Preview.
@@ -467,6 +475,11 @@ public class LayoutSettings
     /// JourneysPage-specific layout settings (column widths, panel visibility).
     /// </summary>
     public JourneysPageLayoutSettings JourneysPage { get; set; } = new();
+
+    /// <summary>
+    /// Generic layout width dictionary to persist resizable grid column widths across pages.
+    /// </summary>
+    public Dictionary<string, double> ColumnWidths { get; set; } = new();
 }
 
 /// <summary>

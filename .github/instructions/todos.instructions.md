@@ -11,8 +11,8 @@
 **Erledigt:**
 - [x] `UiThreadEventBusDecorator` – alle EventBus-Handler laufen auf UI-Thread (WinUI: `AddEventBusWithUiDispatch()`)
 - [x] Z21 publiziert: `Z21ConnectionEstablishedEvent`, `Z21ConnectionLostEvent`, `FeedbackReceivedEvent`
-- [x] TripLogService publiziert `TripLogEntryAddedEvent`; PostStartupInitializationService publiziert `PostStartupStatusEvent`
-- [x] MainWindowViewModel: nur noch EventBus-Subscriptions für Z21, TripLog, PostStartup; keine direkten Z21-/TripLog-Events mehr
+- [x] PostStartupInitializationService publiziert `PostStartupStatusEvent`
+- [x] MainWindowViewModel: EventBus-Subscriptions für Z21 und PostStartup; keine direkten Z21-Events mehr
 - [x] TrainControlViewModel: nur noch EventBus; `IUiDispatcher` entfernt
 - [x] `EnqueueOnUi` überall entfernt; Dispatcher-Service auf `InvokeOnUi` / `InvokeOnUiAsync` reduziert
 - [x] Architektur-Dokumentation: `docs/ARCHITECTURE.md` Abschnitt „Threading und UI-Thread-Grenze“ + Umsetzungsstand
@@ -44,13 +44,13 @@
 
 ## ✅ ERLEDIGT: TrainControlPage – ComboBox für Lok-/Train-Auswahl
 
-**Umsetzung:** Neben den Presets gibt es eine ComboBox mit den Projekt-Lokomotiven (`ProjectLocomotives` / `SelectedLocomotiveFromProject`). Bei Auswahl wird die DCC-Adresse automatisch aus `Locomotive.DigitalAddress` übernommen (`OnSelectedLocomotiveFromProjectChanged` → `LocoAddress`). Bessere Zuordnung zum Fahrtenbuch.
+**Umsetzung:** Neben den Presets gibt es eine ComboBox mit den Projekt-Lokomotiven (`ProjectLocomotives` / `SelectedLocomotiveFromProject`). Bei Auswahl wird die DCC-Adresse automatisch aus `Locomotive.DigitalAddress` übernommen (`OnSelectedLocomotiveFromProjectChanged` → `LocoAddress`).
 
 **Referenz:** `WinUI/View/TrainControlPage.xaml` (ComboBox „Lok aus Projekt“), `SharedUI/ViewModel/TrainControlViewModel.cs` (ProjectLocomotives, SelectedLocomotiveFromProject).
 
 ---
 
-## 📋 FUTURE: Train Control & Pages (aus Session Fahrtenbuch)
+## 📋 FUTURE: Train Control & Pages
 
 **TrainsPage – Umgestaltung:**
 - [ ] Aktuell: Katalog-Verwaltung (Locomotives, Passenger Wagons, Goods Wagons in Spalten)

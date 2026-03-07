@@ -188,8 +188,6 @@ public partial class MainWindowViewModel
             // Clear journey selection when no project is selected
             SelectedJourney = null;
         }
-
-        RefreshTripLogEntriesForSelectedLocomotive();
     }
 
     #endregion

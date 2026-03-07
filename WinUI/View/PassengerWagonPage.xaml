@@ -1,5 +1,5 @@
 <Page
-    x:Class="Moba.WinUI.View.SolutionPage"
+    x:Class="Moba.WinUI.View.PassengerWagonPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -12,25 +12,21 @@
 
     <local:CursorGrid>
         <i:Interaction.Behaviors>
-            <local:GridColumnResizeBehavior PersistenceKey="SolutionPage" />
+            <local:GridColumnResizeBehavior PersistenceKey="PassengerWagonPage" />
         </i:Interaction.Behaviors>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" MinWidth="300" />
+            <ColumnDefinition Width="1*" MinWidth="200" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition
-                Width="400"
-                MinWidth="300"
-                MaxWidth="500" />
+            <ColumnDefinition Width="3.5*" MinWidth="300" />
         </Grid.ColumnDefinitions>
 
-        <!--  Projects List  -->
         <Grid Grid.Column="0" Padding="8">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!--  Header: Title + Actions  -->
             <Grid Grid.Row="0" Margin="0,0,0,8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -41,58 +37,82 @@
                     Padding="8,0,0,0"
                     VerticalAlignment="Center"
                     Style="{StaticResource SubtitleTextBlockStyle}"
-                    Text="Projects" />
+                    Text="Passenger Wagons" />
                 <StackPanel
                     Grid.Column="1"
                     Orientation="Horizontal"
                     Spacing="2">
                     <Button
                         Padding="4"
-                        Command="{x:Bind ViewModel.AddProjectCommand}"
-                        ToolTipService.ToolTip="Create a new MOBA project">
+                        Command="{x:Bind ViewModel.AddPassengerWagonCommand}"
+                        ToolTipService.ToolTip="Add a new passenger wagon">
                         <FontIcon FontSize="14" Glyph="&#xE710;" />
                     </Button>
                     <Button
                         Padding="4"
-                        Click="DeleteProjectButton_Click"
-                        ToolTipService.ToolTip="Remove the selected project">
+                        Command="{x:Bind ViewModel.DeletePassengerWagonCommand}"
+                        ToolTipService.ToolTip="Delete the selected passenger wagon">
                         <FontIcon FontSize="14" Glyph="&#xE74D;" />
                     </Button>
                 </StackPanel>
             </Grid>
 
-            <ListView
+            <AutoSuggestBox
                 Grid.Row="1"
+                Margin="0,0,0,8"
+                PlaceholderText="Search passenger wagons..."
+                QueryIcon="Find"
+                Text="{x:Bind ViewModel.PassengerWagonSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+            <ListView
+                Grid.Row="2"
                 IsItemClickEnabled="True"
-                ItemsSource="{x:Bind ViewModel.SolutionViewModel.Projects, Mode=OneWay}"
-                SelectedItem="{x:Bind ViewModel.SelectedProject, Mode=TwoWay}"
+                ItemsSource="{x:Bind ViewModel.SelectedProject.PassengerWagons, Mode=OneWay}"
+                SelectedItem="{x:Bind ViewModel.SelectedPassengerWagon, Mode=TwoWay}"
                 SelectionMode="Single">
-                <i:Interaction.Behaviors>
-                    <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.SolutionPageItemClickedCommand}" />
-                </i:Interaction.Behaviors>
+                <ListView.ContextFlyout>
+                    <MenuFlyout>
+                        <MenuFlyoutItem Command="{x:Bind ViewModel.AddPassengerWagonCommand}" Text="Add Passenger Wagon">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon Glyph="&#xE710;" />
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem Command="{x:Bind ViewModel.DeletePassengerWagonCommand}" Text="Delete Passenger Wagon">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon Glyph="&#xE738;" />
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                    </MenuFlyout>
+                </ListView.ContextFlyout>
                 <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="viewmodel:ProjectViewModel">
+                    <DataTemplate x:DataType="viewmodel:PassengerWagonViewModel">
                         <Grid Padding="6">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <FontIcon
                                 Grid.Column="0"
                                 Margin="0,0,8,0"
                                 FontSize="16"
-                                Glyph="&#xE8F1;" />
+                                Glyph="&#xE7C0;" />
                             <TextBlock
                                 Grid.Column="1"
                                 VerticalAlignment="Center"
                                 Text="{x:Bind Name, Mode=OneWay}" />
+                            <FontIcon
+                                Grid.Column="2"
+                                FontSize="12"
+                                Foreground="{ThemeResource SystemAccentColor}"
+                                Glyph="&#xEB9F;"
+                                Visibility="{x:Bind HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
                         </Grid>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
         </Grid>
 
-        <!--  Vertical Divider  -->
         <Grid
             Grid.Column="1"
             Width="5"
@@ -104,17 +124,13 @@
                 Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
         </Grid>
 
-        <!--  Properties Panel  -->
-        <Grid Grid.Column="2" Padding="8">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+        <ScrollViewer Grid.Column="2" Padding="8,0,8,0">
             <ContentControl
-                Grid.Row="0"
                 HorizontalContentAlignment="Stretch"
                 VerticalContentAlignment="Stretch"
-                Content="{x:Bind ViewModel.SolutionPageSelectedObject, Mode=OneWay}"
-                ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
-        </Grid>
+                Content="{x:Bind ViewModel.SelectedPassengerWagon, Mode=OneWay}"
+                ContentTemplateSelector="{StaticResource EntityTemplateSelector}"
+                Visibility="{x:Bind ViewModel.SelectedPassengerWagon, Mode=OneWay, Converter={StaticResource NullableConverter}}" />
+        </ScrollViewer>
     </local:CursorGrid>
 </Page>

@@ -52,7 +52,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly ICityService? _cityLibraryService;
     private readonly ISettingsService? _settingsService;
     private readonly AnnouncementService? _announcementService;
-    private readonly ITripLogService? _tripLogService;
     private readonly IFeatureTogglePageProvider? _featureTogglePageProvider;
 
     // Execution Context (contains all action execution dependencies)
@@ -80,7 +79,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="settingsService">Optional settings service used to persist changes.</param>
     /// <param name="announcementService">Optional announcement service for text-to-speech announcements.</param>
     /// <param name="photoHubClient">Optional PhotoHub client instance (WinUI only, loosely typed as <see cref="object"/>).</param>
-    /// <param name="tripLogService">Optional trip log service used to record train movements.</param>
     /// <param name="featureTogglePageProvider">Optional provider for feature toggle page metadata.</param>
     public MainWindowViewModel(
         IZ21 z21,
@@ -96,7 +94,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         ISettingsService? settingsService = null,
         AnnouncementService? announcementService = null,
         object? photoHubClient = null,  // Optional PhotoHubClient (only in WinUI, type is object to avoid assembly reference)
-        ITripLogService? tripLogService = null,
         IFeatureTogglePageProvider? featureTogglePageProvider = null)
     {
         ArgumentNullException.ThrowIfNull(z21);
@@ -119,15 +116,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _settingsService = settingsService;
         _announcementService = announcementService;
         _executionContext = executionContext;
-        _tripLogService = tripLogService;
         _featureTogglePageProvider = featureTogglePageProvider;
         _ = photoHubClient;
-
-        if (_tripLogService != null)
-            _eventBus.Subscribe<TripLogEntryAddedEvent>(_ => RefreshTripLogEntriesForSelectedLocomotive());
-
-        TripLogEntriesForSelectedLocomotive.CollectionChanged += (_, _) =>
-            OnPropertyChanged(nameof(ShowEmptyTripLogMessage));
 
         Solution = solution;
 
@@ -266,20 +256,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(DeleteActionCommand))]
     private object? _selectedAction;
-
-    [ObservableProperty]
-    private TrainViewModel? _selectedTrain;
-
-    /// <summary>
-    /// Called when SelectedTrain changes. Subscribes to PropertyChanged for auto-save.
-    /// </summary>
-    partial void OnSelectedTrainChanged(TrainViewModel? value)
-    {
-        if (value != null)
-        {
-            value.PropertyChanged += OnViewModelPropertyChanged;
-        }
-    }
 
     /// <summary>
     /// Generic handler for ViewModel PropertyChanged events.
@@ -621,42 +597,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     private bool CanAssignWorkflowToStation() => SelectedStation != null;
 
-    [RelayCommand(CanExecute = nameof(CanAddLocomotiveToTrain))]
-    private void AddLocomotiveToTrain(LocomotiveViewModel? locomotiveVm)
-    {
-        if (SelectedTrain == null || locomotiveVm == null || SelectedProject == null) return;
-
-        // Create a copy to avoid modifying the library object
-        var locomotiveCopy = new Locomotive
-        {
-            Name = locomotiveVm.Model.Name,
-            DigitalAddress = locomotiveVm.Model.DigitalAddress,
-            Manufacturer = locomotiveVm.Model.Manufacturer,
-            ArticleNumber = locomotiveVm.Model.ArticleNumber,
-            LocomotiveSeriesRef = locomotiveVm.Model.LocomotiveSeriesRef,
-            ColorPrimary = locomotiveVm.Model.ColorPrimary,
-            ColorSecondary = locomotiveVm.Model.ColorSecondary,
-            IsPushing = locomotiveVm.Model.IsPushing,
-            Details = locomotiveVm.Model.Details
-        };
-
-        // ✅ Add to BOTH lists to keep them in sync (single source of truth)
-        SelectedProject.Model.Locomotives.Add(locomotiveCopy);
-        
-        // Create ViewModel wrapper and add to ViewModel collection
-        var locomotiveCopyVm = new LocomotiveViewModel(locomotiveCopy);
-        SelectedProject.Locomotives.Add(locomotiveCopyVm);
-
-        // Add ID to Train
-        SelectedTrain.Model.LocomotiveIds.Add(locomotiveCopy.Id);
-
-        // Refresh Train collections
-        SelectedTrain.RefreshCollections();
-
-        Debug.WriteLine($"[OK] Added locomotive '{locomotiveCopy.Name}' to train '{SelectedTrain.Name}'");
-    }
-
-    private bool CanAddLocomotiveToTrain() => SelectedTrain != null && SelectedProject != null;
     #endregion
 
     private static SystemState CreateSystemState(SystemStateChangedEvent evt)
