@@ -22,8 +22,8 @@ dotnet restore
 dotnet build                              # Build all
 dotnet run --project WinUI                # Run Windows app
 dotnet run --project WebApp               # Run Blazor web app
-dotnet test                               # Run all tests (262/263 passing)
-dotnet test /p:CollectCoverage=true       # Run tests with coverage
+dotnet test                               # Run all tests (293 passing)
+dotnet test Test/Test.csproj --settings Test/coverlet.runsettings --results-directory TestResults  # Run with coverage (coverage.cobertura.xml in TestResults)
 ```
 
 **Build configurations:** Debug, FastDebug (no analyzers), Release (warnings-as-errors)
@@ -84,6 +84,9 @@ docs/            Documentation (20+ markdown files)
 - Naming: `[TestClass]_Should_[Behavior]_When_[Condition]`
 - Moq for interface mocking, FakeUdpClientWrapper for Z21 simulation
 - Async test support throughout
+- **Test count:** 293 tests across Domain, Common, Backend, SharedUI, Integration. Run `dotnet test Test/Test.csproj`.
+- **Coverage (local):** ReSharper includes **dotCover** – in Visual Studio use *ReSharper → Unit Tests → Run Unit Tests with Coverage* (or right-click test project → Cover). Coverage is shown in the Coverage tool window. For CLI/runsettings-based collection, use `dotnet test --settings Test/coverlet.runsettings` (Coverlet; output in `TestResults/.../coverage.cobertura.xml`) or `dotnet-coverage collect -s Test/dotnet-coverage.runsettings -f cobertura -o coverage.cobertura.xml dotnet test Test/Test.csproj --no-build`.
+- **Coverage (CI):** The **quality.yml** pipeline (PRs to main) runs tests with **dotnet-coverage** and publishes results via `PublishCodeCoverageResults@2` (Cobertura). Coverage percentage and report are visible in the Azure DevOps build summary and the "Code Coverage" tab. Settings: `Test/dotnet-coverage.runsettings` (excludes test assemblies, platform-specific paths).
 
 ## Key Configuration Files
 

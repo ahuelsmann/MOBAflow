@@ -25,7 +25,8 @@ public partial class MainWindowViewModel
     /// <summary>
     /// List of clients currently connected to the REST API (e.g. MAUI app).
     /// </summary>
-    public ObservableCollection<RestApiClientInfo> RestApiConnectedClients { get; } = [];
+    [ObservableProperty]
+    private ObservableCollection<RestApiClientInfo> _restApiConnectedClients = [];
 
     /// <summary>
     /// True when no clients are connected (for showing "No clients connected" hint in Overview).
@@ -41,12 +42,11 @@ public partial class MainWindowViewModel
     {
         RestApiStatusText = statusText ?? "—";
         RestApiIsReachable = isReachable;
-        RestApiConnectedClients.Clear();
-        if (clients != null)
-        {
-            foreach (var c in clients)
-                RestApiConnectedClients.Add(c);
-        }
+
+        RestApiConnectedClients = clients is null
+            ? []
+            : new ObservableCollection<RestApiClientInfo>(clients);
+
         RestApiConnectedClientsEmpty = RestApiConnectedClients.Count == 0;
     }
 }

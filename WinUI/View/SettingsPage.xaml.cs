@@ -6,11 +6,16 @@ using Common.Navigation;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
+using Microsoft.UI.Windowing;
+using Microsoft.Windows.Storage.Pickers;
+
 using Service;
 
 using SharedUI.ViewModel;
 
 using Windows.ApplicationModel.DataTransfer;
+
+using Converter;
 
 /// <summary>
 /// Settings page for application-wide configuration.
@@ -40,6 +45,24 @@ internal sealed partial class SettingsPage
         var dataPackage = new DataPackage();
         dataPackage.SetText(ViewModel.LocalIpAddress);
         Clipboard.SetContent(dataPackage);
+    }
+
+    private async void BrowsePhotoFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var window = App.MainWindow;
+        if (window == null) return;
+
+        var picker = new FolderPicker(window.AppWindow.Id)
+        {
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary
+        };
+
+        var folder = await picker.PickSingleFolderAsync();
+        if (folder == null) return;
+
+        var path = folder.Path;
+        ViewModel.PhotoStoragePath = path;
+        PhotoPathToImageConverter.SetPhotoBasePath(path);
     }
 
     private void AzureSpeechSetupButton_Click(object sender, RoutedEventArgs e)

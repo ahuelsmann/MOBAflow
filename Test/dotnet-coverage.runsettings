@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Used by dotnet-coverage collect -s (e.g. in Azure Pipeline quality.yml).
+     Format: Visual Studio Code Coverage / runsettings. See:
+     https://learn.microsoft.com/en-us/dotnet/core/additional-tools/dotnet-coverage -->
+<Configuration>
+  <CodeCoverage>
+    <ModulePaths>
+      <Include>
+        <ModulePath>.*\.dll$</ModulePath>
+      </Include>
+      <Exclude>
+        <!-- Test assembly (e.g. Moba.Test.dll); do not exclude by path so that Domain/Common/Backend in Test output are still included -->
+        <ModulePath>.*\.Test\.dll$</ModulePath>
+        <ModulePath>.*\.Tests\.dll$</ModulePath>
+        <ModulePath>.*\\x64\\.*</ModulePath>
+        <ModulePath>.*\\arm64\\.*</ModulePath>
+      </Exclude>
+    </ModulePaths>
+  </CodeCoverage>
+</Configuration>

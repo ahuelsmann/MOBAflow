@@ -6,10 +6,21 @@ using Microsoft.UI.Xaml.Media.Imaging;
 
 /// <summary>
 /// Converts a relative photo path ("photos/...") into a BitmapImage that bypasses the image cache.
-/// Ensures updated photos (same filename) are reloaded immediately after upload.
+/// Uses configurable base path when set via SetPhotoBasePath (e.g. from AppSettings); otherwise My Documents\MOBAflow\Photos.
 /// </summary>
 internal partial class PhotoPathToImageConverter : IValueConverter
 {
+    private static string? s_photoBasePath;
+
+    /// <summary>
+    /// Sets the base directory for photo resolution (e.g. from Application.PhotoStoragePath).
+    /// Call from App startup and when the user changes the path in Settings.
+    /// </summary>
+    public static void SetPhotoBasePath(string? path)
+    {
+        s_photoBasePath = string.IsNullOrWhiteSpace(path) ? null : path.Trim();
+    }
+
     public object? Convert(object value, Type targetType, object parameter, string language)
     {
         if (value is not string path || string.IsNullOrWhiteSpace(path))
@@ -42,20 +53,17 @@ internal partial class PhotoPathToImageConverter : IValueConverter
 
     private static string GetAbsolutePath(string relativePath)
     {
-        // Mirror the logic from PhotoStorageService.GetStoragePath()
-        string basePath;
-        var contentRootPath = Environment.GetEnvironmentVariable("ASPNETCORE_CONTENTROOT");
-        if (!string.IsNullOrEmpty(contentRootPath))
-        {
-            basePath = Path.Combine(contentRootPath, "photos");
-        }
-        else
-        {
-            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            basePath = Path.Combine(localAppData, "MOBAflow", "photos");
-        }
-
-        return Path.Combine(basePath, relativePath.Replace("/", "\\"));
+        var baseDir = !string.IsNullOrWhiteSpace(s_photoBasePath)
+            ? s_photoBasePath
+            : Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                "MOBAflow", "Photos");
+        var subPath = relativePath.TrimStart().StartsWith("photos/", StringComparison.OrdinalIgnoreCase)
+            ? relativePath.Substring(7)
+            : relativePath.TrimStart().StartsWith("photos\\", StringComparison.OrdinalIgnoreCase)
+                ? relativePath.Substring(8)
+                : relativePath;
+        return Path.Combine(baseDir, subPath.Replace("/", "\\"));
     }
 
     private static string StripQuery(string path)

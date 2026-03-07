@@ -677,8 +677,22 @@ public sealed partial class MauiViewModel : ObservableObject
                 return;
             }
 
-            var (ip, port) = await _restDiscoveryService.DiscoverServerAsync().ConfigureAwait(false);
-            if (string.IsNullOrEmpty(ip) || port == null)
+            // Use current REST API endpoint when already known (e.g. when status was green); only run discovery when missing
+            string? ip = null;
+            int? port = null;
+            if (!string.IsNullOrWhiteSpace(RestApiIpAddress) && RestApiPort > 0)
+            {
+                ip = RestApiIpAddress.Trim();
+                port = RestApiPort;
+            }
+            if (string.IsNullOrEmpty(ip) || !port.HasValue)
+            {
+                var discovered = await _restDiscoveryService.DiscoverServerAsync().ConfigureAwait(false);
+                ip = discovered.ip;
+                port = discovered.port;
+            }
+
+            if (string.IsNullOrEmpty(ip) || !port.HasValue)
             {
                 PhotoUploadStatus = "⚠️ REST server not found\n\n" +
                                     "• Is MOBAflow (PC) running with\n  \"Auto-start REST API\" enabled?\n" +

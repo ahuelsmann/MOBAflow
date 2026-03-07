@@ -36,6 +36,7 @@ MainWindowViewModel.OnFeedbackReceived() → IsConnected = true (UI thread safe)
 8. **Backend/Common platform-independent** — Zero WinUI/MAUI references
 9. **Never guess file names, APIs** — Use tools first
 10. **No session details here** — Session progress → Azure DevOps or `.github/todos.instructions.md`
+11. **All new or changed features must have tests** — Every suggested/implemented feature needs unit or integration tests; run `dotnet test` before commit.
 
 ---
 
@@ -143,10 +144,16 @@ services.AddTransient<View.JourneyPage>();
 
 ```bash
 dotnet build          # Full build
-dotnet test           # All tests (262 passing)
+dotnet test           # All tests (286+ passing)
 dotnet run --project WinUI    # Windows app
 dotnet run --project WebApp   # Blazor web app
 ```
+
+**Test coverage (regression protection):**
+- **Path handling:** Use `Common.Path.PhotoPathHelper.ToFullPath(baseDir, relativePath)` for photo paths; do not duplicate path logic. Tests: `Test/Common/PhotoPathHelperTests.cs`.
+- **Discovery protocol:** Use `Common.Discovery.DiscoveryResponseParser.TryParse()` for "MOBAFLOW_REST_API|ip|port". Tests: `Test/Common/DiscoveryResponseParserTests.cs`.
+- **Config defaults:** Changing `Common.Configuration` (e.g. `Application.PhotoStoragePath`, `RestApi.Port`) must not break defaults. Tests: `Test/Common/AppSettingsDefaultsTests.cs`.
+- **New features:** Add unit tests for shared logic (path, config, parsing). Platform-specific UI (WinUI/MAUI) should at least have critical paths covered by integration or documented manual checks.
 
 ---
 
@@ -193,7 +200,7 @@ dotnet run --project WebApp   # Blazor web app
 - [ ] Constructor injection only
 - [ ] `[ObservableProperty]` for MVVM
 - [ ] XML-docs for public APIs
-- [ ] Tests pass: `dotnet test`
+- [ ] **Tests for new/changed behavior** — Unit or integration tests added; `dotnet test` passes
 - [ ] Build: `dotnet build`
 - [ ] README updated (if user-facing)
 

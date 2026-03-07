@@ -286,6 +286,30 @@
                         </NumberBox.Description>
                     </NumberBox>
 
+                    <!--  Photo storage folder (e.g. OneDrive)  -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Photo storage folder" />
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox
+                                Grid.Column="0"
+                                PlaceholderText="Default: My Documents\MOBAflow\Photos"
+                                Text="{x:Bind ViewModel.PhotoStoragePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <Button
+                                Grid.Column="1"
+                                VerticalAlignment="Stretch"
+                                Click="BrowsePhotoFolder_Click"
+                                Content="Browse" />
+                        </Grid>
+                        <TextBlock
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="Leave empty for default. Use a folder on OneDrive to sync photos across devices."
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+
                     <!--  Local IP Address Display  -->
                     <StackPanel Spacing="4">
                         <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Local IP Address" />

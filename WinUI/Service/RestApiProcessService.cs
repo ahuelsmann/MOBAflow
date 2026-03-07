@@ -15,6 +15,12 @@ internal sealed class RestApiProcessService : IDisposable
     private const string SolutionFileName = "Moba.slnx";
     private const string RestApiProjectName = "RestApi";
 
+    /// <summary>
+    /// Raised when the REST API has been detected as reachable (either already running or just started).
+    /// Subscribers can refresh the status UI immediately instead of waiting for the next poll.
+    /// </summary>
+    public event EventHandler<int>? ApiBecameReachable;
+
     private readonly AppSettings _appSettings;
     private readonly ILogger<RestApiProcessService> _logger;
     private readonly ILogger<UdpDiscoveryResponder> _discoveryLogger;
@@ -58,6 +64,7 @@ internal sealed class RestApiProcessService : IDisposable
             {
                 _logger.LogInformation("RestApi already running on port {Port} – reusing existing process", port);
                 StartDiscoveryResponder(port);
+                ApiBecameReachable?.Invoke(this, port);
                 return;
             }
 
@@ -78,24 +85,48 @@ internal sealed class RestApiProcessService : IDisposable
                 return;
             }
 
+            // Prefer running the already-built DLL for fast startup (no compile). Fall back to "dotnet run" if not built yet.
+            var buildOutputDir = Path.Combine(repoRoot, RestApiProjectName, "bin", "Debug", "net10.0");
+            var dllPath = Path.Combine(buildOutputDir, $"{RestApiProjectName}.dll");
+            var usePreBuilt = File.Exists(dllPath);
+
+            string fileName;
+            string arguments;
+            string workingDir;
+            if (usePreBuilt)
+            {
+                fileName = "dotnet";
+                arguments = $"\"{dllPath}\" --urls \"http://0.0.0.0:{port}\"";
+                workingDir = buildOutputDir;
+                _logger.LogDebug("Starting RestApi from pre-built output (no compile)");
+            }
+            else
+            {
+                fileName = "dotnet";
+                arguments = $"run --project \"{projectPath}\" --urls \"http://0.0.0.0:{port}\"";
+                workingDir = repoRoot;
+                _logger.LogInformation("RestApi not yet built – running dotnet run (first start may be slow)");
+            }
+
             try
             {
-                var args = $"run --project \"{projectPath}\" --urls \"http://0.0.0.0:{port}\"";
-
                 _process = new Process
                 {
                     StartInfo = new ProcessStartInfo
                     {
-                        FileName = "dotnet",
-                        Arguments = args,
-                        WorkingDirectory = repoRoot,
+                        FileName = fileName,
+                        Arguments = arguments,
+                        WorkingDirectory = workingDir,
                         UseShellExecute = false,
-                        CreateNoWindow = false
+                        CreateNoWindow = true,
+                        WindowStyle = ProcessWindowStyle.Hidden
                     },
                     EnableRaisingEvents = true
                 };
                 // Discovery runs in WinUI so MAUI can find the server (same as former in-process setup)
                 _process.StartInfo.EnvironmentVariables["MOBAFLOW_DISCOVERY_IN_WINUI"] = "1";
+                if (!string.IsNullOrWhiteSpace(_appSettings.Application?.PhotoStoragePath))
+                    _process.StartInfo.EnvironmentVariables["MOBAFLOW_PHOTOS_PATH"] = _appSettings.Application.PhotoStoragePath.Trim();
 
                 _process.Exited += (sender, _) =>
                 {
@@ -122,7 +153,23 @@ internal sealed class RestApiProcessService : IDisposable
 
                 StartDiscoveryResponder(port);
 
-                await Task.Delay(1500, cancellationToken).ConfigureAwait(false);
+                // Wait for the REST API to become reachable (poll up to 30s) so WinUI continues only when the server is ready
+                const int pollIntervalMs = 300;
+                const int maxWaitMs = 30_000;
+                var waited = 0;
+                while (waited < maxWaitMs && !_process.HasExited)
+                {
+                    await Task.Delay(pollIntervalMs, cancellationToken).ConfigureAwait(false);
+                    waited += pollIntervalMs;
+                    if (await IsApiReachableAsync(port, cancellationToken).ConfigureAwait(false))
+                    {
+                        _logger.LogInformation("RestApi became reachable after {Ms}ms", waited);
+                        ApiBecameReachable?.Invoke(this, port);
+                        break;
+                    }
+                }
+                if (!await IsApiReachableAsync(port, cancellationToken).ConfigureAwait(false) && !_process.HasExited)
+                    _logger.LogWarning("RestApi not yet reachable after {Ms}ms – continuing anyway", waited);
             }
             catch (Exception ex)
             {
@@ -194,6 +241,8 @@ internal sealed class RestApiProcessService : IDisposable
             if (!_process.HasExited)
             {
                 _process.Kill(entireProcessTree: true);
+                if (!_process.WaitForExit(TimeSpan.FromSeconds(2)))
+                    _logger.LogDebug("RestApi process did not exit within 2s");
                 _logger.LogInformation("RestApi process stopped");
             }
         }
