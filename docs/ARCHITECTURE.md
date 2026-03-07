@@ -147,7 +147,7 @@ public partial class MainWindowViewModel : ObservableObject
 **Saubere Architektur-Lösung:**
 
 - **Eine zentrale Marshalling-Stelle:** Statt in jedem ViewModel `IUiDispatcher.InvokeOnUi` um jeden Event-Handler zu wickeln, marshalieren wir an der **EventBus-Grenze**. Ein `UiThreadEventBusDecorator` implementiert `IEventBus` und leitet `Publish` so weiter, dass alle Handler auf dem UI-Thread ausgeführt werden (über `IUiDispatcher.InvokeOnUi`). Dann müssen ViewModels für **EventBus-Subscriptions** den Dispatcher nicht mehr kennen.
-- **Verbleibende Dispatcher-Nutzung:** Direkte Event-Quellen, die **nicht** über das EventBus laufen (z. B. `IZ21.Received`, `IZ21.OnConnectionLost`, `TripLogService.EntryAdded`, async Datei-Lade-Completion, Post-Startup-Status), müssen weiterhin an einer Stelle auf den UI-Thread marshalieren – entweder in einem dünnen Adapter/Bridge, der nur dispatcht und dann das ViewModel aufruft, oder (derzeit) im ViewModel mit `IUiDispatcher`. Ziel ist, diese Fälle langfristig entweder über das EventBus zu führen (dann deckt der Decorator sie ab) oder in einem einzigen „UI-Bridge“-Service zu bündeln.
+- **Verbleibende Dispatcher-Nutzung:** Direkte Event-Quellen, die **nicht** über das EventBus laufen (z. B. `IZ21.Received`, `IZ21.OnConnectionLost`, async Datei-Lade-Completion, Post-Startup-Status), müssen weiterhin an einer Stelle auf den UI-Thread marshalieren – entweder in einem dünnen Adapter/Bridge, der nur dispatcht und dann das ViewModel aufruft, oder (derzeit) im ViewModel mit `IUiDispatcher`. Ziel ist, diese Fälle langfristig entweder über das EventBus zu führen (dann deckt der Decorator sie ab) oder in einem einzigen „UI-Bridge“-Service zu bündeln.
 
 **MVVM-Konsequenz:**
 
@@ -155,7 +155,7 @@ public partial class MainWindowViewModel : ObservableObject
 
 **Umsetzung (Stand):**
 
-- **WinUI:** `AddEventBusWithUiDispatch()` – alle EventBus-Handler laufen auf dem UI-Thread. Z21 publiziert u. a. `Z21ConnectionEstablishedEvent`, `Z21ConnectionLostEvent`, `FeedbackReceivedEvent`; TripLogService publiziert `TripLogEntryAddedEvent`; PostStartupInitializationService publiziert `PostStartupStatusEvent`. MainWindowViewModel und TrainControlViewModel nutzen nur noch EventBus-Subscriptions (kein `IUiDispatcher` in TrainControlViewModel mehr).
+- **WinUI:** `AddEventBusWithUiDispatch()` – alle EventBus-Handler laufen auf dem UI-Thread. Z21 publiziert u. a. `Z21ConnectionEstablishedEvent`, `Z21ConnectionLostEvent`, `FeedbackReceivedEvent`; PostStartupInitializationService publiziert `PostStartupStatusEvent`. MainWindowViewModel und TrainControlViewModel nutzen EventBus-Subscriptions für ihre UI-relevanten Statusänderungen.
 - **Verbleibende Dispatcher-Nutzung:** Nur noch dort, wo kein EventBus genutzt wird: z. B. asynchrone Datei-Lade-Callbacks (Solution laden), Health-Status-Updates aus der View (MainWindow.xaml.cs), Settings-Callbacks, JourneyManager-StationChanged. Diese können bei Bedarf ebenfalls auf Events umgestellt werden.
 
 ---

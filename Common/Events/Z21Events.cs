@@ -615,11 +615,6 @@ public sealed record HealthCheckRecoveredEvent : EventBase
 }
 
 /// <summary>
-/// TripLog service: new entry added (for UI update).
-/// </summary>
-public sealed record TripLogEntryAddedEvent : EventBase;
-
-/// <summary>
 /// Post-startup initialization: status text for status bar.
 /// </summary>
 public sealed record PostStartupStatusEvent : EventBase

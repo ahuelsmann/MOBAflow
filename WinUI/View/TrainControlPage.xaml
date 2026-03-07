@@ -5,6 +5,8 @@
     xmlns:controls="using:Moba.WinUI.Controls"
     xmlns:converter="using:Moba.WinUI.Converter"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:i="using:Microsoft.Xaml.Interactivity"
+    xmlns:local="using:Moba.WinUI.Behavior"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:Moba.SharedUI.ViewModel"
     DataContext="{x:Bind ViewModel}"
@@ -217,17 +219,22 @@
         </Border>
 
         <!--  Main Content with Responsive Layout - Fluent Design  -->
-        <Grid
+        <local:CursorGrid
             Grid.Row="1"
             Padding="32,24,32,32"
-            ColumnSpacing="16"
+            ColumnSpacing="0"
             RowSpacing="16">
+            <i:Interaction.Behaviors>
+                <local:GridColumnResizeBehavior PersistenceKey="TrainControlPage" />
+            </i:Interaction.Behaviors>
             <!--  COLUMN DEFINITIONS: Will be modified by VisualStateManager  -->
             <Grid.ColumnDefinitions>
                 <!--  Col 0: Settings Panel (260px on Wide, 250px on Medium, hidden on Compact)  -->
                 <ColumnDefinition Width="260" />
+                <ColumnDefinition Width="Auto" />
                 <!--  Col 1: Center Grid (4 Quadrants - flexible, grows to fill space)  -->
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
                 <!--  Col 2: Functions Panel (180px on Wide, hidden on Medium/Compact)  -->
                 <ColumnDefinition Width="180" />
             </Grid.ColumnDefinitions>
@@ -485,9 +492,20 @@
                 </ScrollViewer>
             </Border>
 
-            <!--  CENTER: 2x2 Grid Layout (Grid.Column="1")  -->
             <Grid
                 Grid.Column="1"
+                Width="5"
+                local:GridColumnResizeBehavior.SplitterMode="Left"
+                Background="Transparent">
+                <Grid
+                    Width="1"
+                    HorizontalAlignment="Center"
+                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+            </Grid>
+
+            <!--  CENTER: 2x2 Grid Layout (Grid.Column="1")  -->
+            <Grid
+                Grid.Column="2"
                 ColumnSpacing="16"
                 RowSpacing="16">
                 <Grid.ColumnDefinitions>
@@ -797,9 +815,20 @@
                 </Border>
             </Grid>
 
+            <Grid
+                Grid.Column="3"
+                Width="5"
+                local:GridColumnResizeBehavior.SplitterMode="Right"
+                Background="Transparent">
+                <Grid
+                    Width="1"
+                    HorizontalAlignment="Center"
+                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+            </Grid>
+
             <!--  RIGHT PANEL: Functions F0-F20 (Grid.Column="2") - Hidden on Medium/Compact  -->
             <Border
-                Grid.Column="2"
+                Grid.Column="4"
                 Padding="16"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -1239,6 +1268,6 @@
                     </StackPanel>
                 </ScrollViewer>
             </Border>
-        </Grid>
+        </local:CursorGrid>
     </Grid>
 </Page>

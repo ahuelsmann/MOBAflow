@@ -267,11 +267,10 @@ public partial class MainWindowViewModel
         SelectedAction = null;
         WorkflowsPageSelectedObject = null;
 
-        // Trains Page
+        // Wagons & Locomotives
         SelectedLocomotive = null;
         SelectedPassengerWagon = null;
         SelectedGoodsWagon = null;
-        TrainsPageSelectedObject = null;
 
         // General
         CurrentSelectedObject = null;

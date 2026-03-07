@@ -4,6 +4,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:Moba.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:i="using:Microsoft.Xaml.Interactivity"
+    xmlns:local="using:Moba.WinUI.Behavior"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
@@ -164,13 +166,18 @@
         </Border>
 
         <!--  Main Content: Toolbox | Canvas | Properties  -->
-        <Grid
+        <local:CursorGrid
             Grid.Row="1"
             Padding="0"
             ColumnSpacing="0">
+            <i:Interaction.Behaviors>
+                <local:GridColumnResizeBehavior PersistenceKey="SignalBoxPage" />
+            </i:Interaction.Behaviors>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="240" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="300" />
             </Grid.ColumnDefinitions>
 
@@ -864,9 +871,20 @@
                 </ScrollViewer>
             </Border>
 
+            <Grid
+                Grid.Column="1"
+                Width="5"
+                local:GridColumnResizeBehavior.SplitterMode="Left"
+                Background="Transparent">
+                <Grid
+                    Width="1"
+                    HorizontalAlignment="Center"
+                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+            </Grid>
+
             <!--  CENTER: Stellwerk Canvas  -->
             <Border
-                Grid.Column="1"
+                Grid.Column="2"
                 Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="0">
@@ -891,9 +909,20 @@
                 </ScrollViewer>
             </Border>
 
+            <Grid
+                Grid.Column="3"
+                Width="5"
+                local:GridColumnResizeBehavior.SplitterMode="Right"
+                Background="Transparent">
+                <Grid
+                    Width="1"
+                    HorizontalAlignment="Center"
+                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+            </Grid>
+
             <!--  RIGHT: Properties Panel  -->
             <Border
-                Grid.Column="2"
+                Grid.Column="4"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1,0,0,0">
@@ -1581,6 +1610,6 @@
                     </StackPanel>
                 </ScrollViewer>
             </Border>
-        </Grid>
+        </local:CursorGrid>
     </Grid>
 </Page>

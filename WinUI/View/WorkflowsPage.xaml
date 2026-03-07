@@ -13,7 +13,10 @@
 
     <Grid>
         <!--  Main layout grid - same structure for all states  -->
-        <Grid ColumnSpacing="0">
+        <local:CursorGrid ColumnSpacing="0">
+            <i:Interaction.Behaviors>
+                <local:GridColumnResizeBehavior PersistenceKey="WorkflowsPage" />
+            </i:Interaction.Behaviors>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="300" MinWidth="200" />
                 <ColumnDefinition Width="Auto" />
@@ -125,11 +128,17 @@
                 </ListView>
             </Grid>
 
-            <Border
+            <Grid
                 Grid.Row="0"
                 Grid.Column="1"
-                Width="1"
-                Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                Width="5"
+                local:GridColumnResizeBehavior.SplitterMode="Left"
+                Background="Transparent">
+                <Grid
+                    Width="1"
+                    HorizontalAlignment="Center"
+                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+            </Grid>
 
             <!--  Column 2: Actions (of selected Workflow)  -->
             <Grid
@@ -214,11 +223,17 @@
                 </ListView>
             </Grid>
 
-            <Border
+            <Grid
                 Grid.Row="0"
                 Grid.Column="3"
-                Width="1"
-                Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                Width="5"
+                local:GridColumnResizeBehavior.SplitterMode="Right"
+                Background="Transparent">
+                <Grid
+                    Width="1"
+                    HorizontalAlignment="Center"
+                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+            </Grid>
 
             <!--  Column 4: Properties Panel  -->
             <Grid
@@ -236,6 +251,6 @@
                     Content="{x:Bind ViewModel.WorkflowsPageSelectedObject, Mode=OneWay}"
                     ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
             </Grid>
-        </Grid>
+        </local:CursorGrid>
     </Grid>
 </Page>

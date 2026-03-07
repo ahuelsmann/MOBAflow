@@ -48,19 +48,12 @@ internal sealed class RestApiStatusService : IDisposable
         _timer = new System.Timers.Timer(PollIntervalWhenWaitingMs);
         _timer.Elapsed += (_, _) => _ = RefreshAsync();
 
-        _photoHubClient.PhotoUploaded += OnPhotoUploaded;
         _restApiProcessService.ApiBecameReachable += OnRestApiBecameReachable;
     }
 
     private void OnRestApiBecameReachable(object? sender, int port)
     {
         _ = RefreshAsync();
-    }
-
-    private async Task OnPhotoUploaded(string photoPath, DateTime uploadedAt)
-    {
-        _uiDispatcher.InvokeOnUi(() => _viewModel.AssignLatestPhoto(photoPath));
-        await Task.CompletedTask;
     }
 
     /// <summary>
@@ -179,7 +172,6 @@ internal sealed class RestApiStatusService : IDisposable
     /// </summary>
     public void Dispose()
     {
-        _photoHubClient.PhotoUploaded -= OnPhotoUploaded;
         _restApiProcessService.ApiBecameReachable -= OnRestApiBecameReachable;
         _timer.Stop();
         _timer.Dispose();
