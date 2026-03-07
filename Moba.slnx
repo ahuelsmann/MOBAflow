@@ -31,6 +31,7 @@
   <Project Path="TrackLibrary.Base/TrackLibrary.Base.csproj" />
   <Project Path="TrackLibrary.PikoA/TrackLibrary.PikoA.csproj" />
   <Project Path="TrackPlan.Renderer/TrackPlan.Renderer.csproj" Id="8dafe6f3-0aa2-4cb9-bd6f-35282159ba7e" />
+  <Project Path="RestApi/RestApi.csproj" />
   <Project Path="WebApp/WebApp.csproj" />
   <Project Path="WinUI/WinUI.csproj">
     <Deploy />

@@ -10,7 +10,7 @@
       {
         "Path": "MAUI\\MAUI.csproj",
         "Action": "Start",
-        "DebugTarget": "MAUI"
+        "DebugTarget": "Motorola edge 50 pro (Android 16.0 - API 36)"
       }
     ]
   }

@@ -10,8 +10,8 @@ using System.Text;
 
 /// <summary>
 /// REST-API Server Discovery Service for MAUI.
-/// Supports both automatic UDP Multicast discovery and manual IP configuration.
-/// Automatically uses 10.0.2.2 when running on Android emulator to access host machine.
+/// Discovery only via UDP Multicast (no saved/manual IP).
+/// Uses 10.0.2.2 on Android emulator to reach host PC.
 /// </summary>
 public class RestApiDiscoveryService
 {
@@ -31,28 +31,16 @@ public class RestApiDiscoveryService
     }
 
     /// <summary>
-    /// Gets the REST-API server endpoint using auto-discovery or manual configuration.
-    /// First attempts UDP Multicast discovery, then falls back to manual configuration.
+    /// Returns REST-API endpoint only when discovered via UDP multicast (or emulator).
     /// </summary>
-    /// <returns>Server IP and Port, or null if not found</returns>
-    public async Task<(string? ip, int? port)> GetServerEndpointAsync()
+    public async Task<(string? ip, int? port)> GetServerEndpointByDiscoveryOnlyAsync()
     {
-        // On Android emulator, skip discovery and use 10.0.2.2 directly
         if (IsRunningOnEmulator())
         {
             _logger.LogInformation("🔄 Android emulator detected - using 10.0.2.2:{Port}", _appSettings.RestApi.Port);
             return ("10.0.2.2", _appSettings.RestApi.Port);
         }
-
-        // Try auto-discovery first
-        var discovered = await DiscoverServerAsync();
-        if (discovered.ip != null)
-        {
-            return discovered;
-        }
-
-        // Fall back to manual configuration
-        return GetManualConfiguration();
+        return await DiscoverServerAsync();
     }
 
     /// <summary>
@@ -65,8 +53,15 @@ public class RestApiDiscoveryService
 
         try
         {
+#if ANDROID
+            AcquireMulticastLock();
+#endif
             using var udpClient = new UdpClient();
             udpClient.EnableBroadcast = true;
+
+            // Bind before send on all platforms so we have a local port to receive the unicast response
+            udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+            udpClient.Client.Bind(new IPEndPoint(IPAddress.Any, 0));
 
             // Set timeout for receive
             udpClient.Client.ReceiveTimeout = DiscoveryTimeoutMs;
@@ -86,19 +81,25 @@ public class RestApiDiscoveryService
             try
             {
                 var result = await udpClient.ReceiveAsync(cts.Token);
-                var response = Encoding.UTF8.GetString(result.Buffer);
+                var response = Encoding.UTF8.GetString(result.Buffer).TrimEnd('\0').Trim();
+#if ANDROID
+                ReleaseMulticastLock();
+#endif
 
                 _logger.LogDebug("📥 Received response: {Response}", response);
 
                 // Parse response: "MOBAFLOW_REST_API|192.168.0.100|5001"
-                if (response.StartsWith(DiscoveryResponsePrefix))
+                if (response.StartsWith(DiscoveryResponsePrefix, StringComparison.Ordinal))
                 {
                     var parts = response.Split('|');
-                    if (parts.Length >= 3 && int.TryParse(parts[2], out var port))
+                    if (parts.Length >= 3 && int.TryParse(parts[2].Trim(), out var port) && port > 0 && port < 65536)
                     {
-                        var ip = parts[1];
-                        _logger.LogInformation("✅ Server discovered: {Ip}:{Port}", ip, port);
-                        return (ip, port);
+                        var ip = parts[1].Trim();
+                        if (!string.IsNullOrEmpty(ip))
+                        {
+                            _logger.LogInformation("✅ Server discovered: {Ip}:{Port}", ip, port);
+                            return (ip, port);
+                        }
                     }
                 }
             }
@@ -115,31 +116,50 @@ public class RestApiDiscoveryService
         {
             _logger.LogWarning(ex, "Discovery failed");
         }
-
-        _logger.LogInformation("ℹ️ Auto-discovery did not find server - using manual configuration");
-        return (null, null);
-    }
-
-    /// <summary>
-    /// Gets the server endpoint from manual configuration.
-    /// </summary>
-    private (string? ip, int? port) GetManualConfiguration()
-    {
-        if (!string.IsNullOrWhiteSpace(_appSettings.RestApi.CurrentIpAddress))
+#if ANDROID
+        finally
         {
-            var configuredIp = _appSettings.RestApi.CurrentIpAddress;
-            _logger.LogInformation("✅ Using manually configured server: {Ip}:{Port}",
-                configuredIp, _appSettings.RestApi.Port);
-            return (configuredIp, _appSettings.RestApi.Port);
+            ReleaseMulticastLock();
         }
+#endif
 
-        _logger.LogWarning("⚠️ No REST-API server configured.");
-        _logger.LogInformation("💡 Configuration required:");
-        _logger.LogInformation("   • For Android Emulator: Use '10.0.2.2' to access host PC");
-        _logger.LogInformation("   • For Physical Device: Enter your PC's IP (e.g., 192.168.0.79)");
-        _logger.LogInformation("   • Or enable Auto-Discovery if MOBAflow is running on the same network");
+        _logger.LogInformation("ℹ️ Auto-discovery did not find server");
         return (null, null);
     }
+
+#if ANDROID
+    private static global::Android.Net.Wifi.WifiManager.MulticastLock? _multicastLock;
+
+    private static void AcquireMulticastLock()
+    {
+        try
+        {
+            var ctx = global::Android.App.Application.Context;
+            var wifi = (global::Android.Net.Wifi.WifiManager?)ctx?.GetSystemService(global::Android.Content.Context.WifiService);
+            if (wifi != null)
+            {
+                _multicastLock = wifi.CreateMulticastLock("MOBAflow REST discovery");
+                _multicastLock?.SetReferenceCounted(false);
+                _multicastLock?.Acquire();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"MulticastLock acquire failed: {ex.Message}");
+        }
+    }
+
+    private static void ReleaseMulticastLock()
+    {
+        try
+        {
+            if (_multicastLock?.IsHeld == true)
+                _multicastLock.Release();
+            _multicastLock = null;
+        }
+        catch { /* ignore */ }
+    }
+#endif
 
     /// <summary>
     /// Checks if running on Android emulator.

@@ -44,6 +44,9 @@ public static class MauiProgram
         builder.Services.AddUiDispatcher();
         builder.Services.AddSingleton<IBackgroundService, BackgroundService>();
 
+        // Event Bus with UI-thread marshalling (required by backend services)
+        builder.Services.AddEventBusWithUiDispatch();
+
         // Configuration (AppSettings + ISettingsService)
         builder.Services.AddSingleton<AppSettings>();
         builder.Services.AddSingleton<ISettingsService, SettingsService>();
@@ -84,8 +87,10 @@ public static class MauiProgram
 
         builder.Services.AddSingleton<PhotoUploadService>();
         builder.Services.AddSingleton<IRestDiscoveryService, RestDiscoveryAdapter>();
+        builder.Services.AddSingleton<IZ21DiscoveryService, Z21DiscoveryService>();
         builder.Services.AddSingleton<IPhotoUploadService, PhotoUploadAdapter>();
         builder.Services.AddSingleton<IPhotoCaptureService, PhotoCaptureService>();
+        builder.Services.AddSingleton<IRestApiClientRegistration, RestApiClientRegistrationService>();
 
         // ViewModels
         builder.Services.AddSingleton<MauiViewModel>();

@@ -288,7 +288,7 @@
 
                     <!--  Local IP Address Display  -->
                     <StackPanel Spacing="4">
-                        <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Text="Local IP Address" />
+                        <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Local IP Address" />
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />

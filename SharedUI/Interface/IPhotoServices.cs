@@ -7,12 +7,25 @@ namespace Moba.SharedUI.Interface;
 public interface IRestDiscoveryService
 {
     /// <summary>
-    /// Attempts to discover a REST server endpoint.
+    /// Attempts to discover a REST server endpoint via UDP multicast (or emulator shortcut).
     /// </summary>
     /// <returns>
     /// A task that returns the discovered IP address and port, or <c>null</c> values when discovery fails.
     /// </returns>
     Task<(string? ip, int? port)> DiscoverServerAsync();
+}
+
+/// <summary>
+/// Discovers a Z21 command station on the local network (e.g. by scanning the subnet on port 21105).
+/// </summary>
+public interface IZ21DiscoveryService
+{
+    /// <summary>
+    /// Attempts to discover a Z21 on the local network.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The IP address of the first responding Z21, or null if none found.</returns>
+    Task<string?> DiscoverZ21Async(CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -58,12 +71,35 @@ public interface IPhotoCaptureService
 }
 
 /// <summary>
+/// Registers the current client (e.g. MOBAsmart) with the REST API so it appears in the Overview "Connected clients" list.
+/// </summary>
+public interface IRestApiClientRegistration
+{
+    /// <summary>
+    /// Registers this client with the server. Call when the app has discovered the API and health check succeeds.
+    /// </summary>
+    /// <param name="serverIp">REST API server IP.</param>
+    /// <param name="serverPort">REST API server port.</param>
+    /// <returns>True if registration succeeded.</returns>
+    Task<bool> RegisterAsync(string serverIp, int serverPort);
+}
+
+/// <summary>
 /// Null-object implementation of <see cref="IRestDiscoveryService"/> used when discovery is not available.
 /// </summary>
 public sealed class NullRestDiscoveryService : IRestDiscoveryService
 {
     /// <inheritdoc />
     public Task<(string? ip, int? port)> DiscoverServerAsync() => Task.FromResult<(string?, int?)>((null, null));
+}
+
+/// <summary>
+/// Null-object implementation of <see cref="IZ21DiscoveryService"/> used when Z21 discovery is not available.
+/// </summary>
+public sealed class NullZ21DiscoveryService : IZ21DiscoveryService
+{
+    /// <inheritdoc />
+    public Task<string?> DiscoverZ21Async(CancellationToken cancellationToken = default) => Task.FromResult<string?>(null);
 }
 
 /// <summary>
@@ -86,4 +122,13 @@ public sealed class NullPhotoCaptureService : IPhotoCaptureService
 {
     /// <inheritdoc />
     public Task<string?> CapturePhotoAsync() => Task.FromResult<string?>(null);
+}
+
+/// <summary>
+/// Null-object implementation of <see cref="IRestApiClientRegistration"/> when registration is not available.
+/// </summary>
+public sealed class NullRestApiClientRegistration : IRestApiClientRegistration
+{
+    /// <inheritdoc />
+    public Task<bool> RegisterAsync(string serverIp, int serverPort) => Task.FromResult(false);
 }

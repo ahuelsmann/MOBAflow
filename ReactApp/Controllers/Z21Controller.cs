@@ -11,7 +11,7 @@ using SharedUI.ViewModel;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-internal class Z21Controller : ControllerBase
+public class Z21Controller : ControllerBase
 {
     private readonly WebAppViewModel _viewModel;
     private readonly ILogger<Z21Controller> _logger;
@@ -53,29 +53,61 @@ internal class Z21Controller : ControllerBase
 
     /// <summary>
     /// Connect to Z21 command station.
+    /// Waits up to 8 seconds for the Z21 to respond before returning; connection is confirmed
+    /// asynchronously by the device (UDP handshake + response).
     /// </summary>
     [HttpPost("connect")]
     public async Task<IActionResult> ConnectAsync([FromBody] ConnectRequest request)
     {
+        const int waitTimeoutMs = 8000;
+        const int pollIntervalMs = 200;
+
         try
         {
-            _logger.LogInformation("Connecting to Z21 at {IpAddress}", request.IpAddress);
-
-            // Update IP address in ViewModel
-            _viewModel.IpAddress = request.IpAddress;
-
-            // Execute the connect command
-            if (_viewModel.ConnectCommand.CanExecute(null))
+            if (string.IsNullOrWhiteSpace(request?.IpAddress))
             {
-                await _viewModel.ConnectCommand.ExecuteAsync(null).ConfigureAwait(false);
+                return Ok(new { success = false, error = "IP-Adresse fehlt." });
             }
 
-            return Ok(new { success = _viewModel.IsConnected, statusText = _viewModel.StatusText });
+            _logger.LogInformation("Connecting to Z21 at {IpAddress}", request.IpAddress);
+
+            _viewModel.IpAddress = request.IpAddress;
+
+            if (!_viewModel.ConnectCommand.CanExecute(null))
+            {
+                _logger.LogWarning("ConnectCommand.CanExecute returned false - connect not executed");
+                return Ok(new { success = false, error = "Verbindung kann derzeit nicht ausgeführt werden.", statusText = _viewModel.StatusText });
+            }
+
+            await _viewModel.ConnectCommand.ExecuteAsync(null).ConfigureAwait(false);
+
+            // Z21 confirms connection asynchronously when it responds to our packets.
+            // Wait for IsConnected to become true (or timeout).
+            var deadline = DateTime.UtcNow.AddMilliseconds(waitTimeoutMs);
+            while (!_viewModel.IsConnected && DateTime.UtcNow < deadline)
+            {
+                await Task.Delay(pollIntervalMs).ConfigureAwait(false);
+            }
+
+            if (_viewModel.IsConnected)
+            {
+                _logger.LogInformation("Z21 connection confirmed at {IpAddress}", request.IpAddress);
+                return Ok(new { success = true, statusText = _viewModel.StatusText });
+            }
+
+            _logger.LogWarning("Z21 connection timeout at {IpAddress} after {Ms} ms", request.IpAddress, waitTimeoutMs);
+            return Ok(new
+            {
+                success = false,
+                error = "Verbindungszeitüberschreitung. Ist die Z21 unter " + request.IpAddress + " erreichbar? "
+                    + "Wenn die WinUI-App sich verbinden kann: WinUI vorher beenden (nur ein Client pro Z21-Slot), Backend-Logs prüfen (Konsole beim Start der ReactApp).",
+                statusText = _viewModel.StatusText
+            });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Connection failed");
-            return Ok(new { success = false, error = ex.Message });
+            return Ok(new { success = false, error = ex.Message, statusText = _viewModel.StatusText });
         }
     }
 
@@ -147,5 +179,5 @@ internal class Z21Controller : ControllerBase
     }
 }
 
-internal record ConnectRequest(string IpAddress);
-internal record TrackPowerRequest(bool On);
+public record ConnectRequest(string IpAddress);
+public record TrackPowerRequest(bool On);

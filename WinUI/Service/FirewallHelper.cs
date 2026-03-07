@@ -65,7 +65,8 @@ internal static class FirewallHelper
     }
 
     /// <summary>
-    /// Deletes a firewall rule by name.
+    /// Deletes a firewall rule by name. Does not request elevation (no UAC prompt).
+    /// Succeeds only when the process already has sufficient rights.
     /// </summary>
     private static void DeleteFirewallRule(string ruleName)
     {
@@ -75,10 +76,11 @@ internal static class FirewallHelper
             {
                 FileName = "netsh",
                 Arguments = $"advfirewall firewall delete rule name=\"{ruleName}\"",
-                Verb = "runas",
-                UseShellExecute = true,
+                UseShellExecute = false,
                 CreateNoWindow = true,
-                WindowStyle = ProcessWindowStyle.Hidden
+                WindowStyle = ProcessWindowStyle.Hidden,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
             };
 
             using var process = Process.Start(psi);
@@ -164,6 +166,7 @@ internal static class FirewallHelper
 
     /// <summary>
     /// Executes a netsh command to modify Windows Firewall rules.
+    /// Does not request elevation (no UAC prompt). Succeeds only when the process already has sufficient rights.
     /// </summary>
     private static void ExecuteNetshCommand(string arguments)
     {
@@ -171,10 +174,11 @@ internal static class FirewallHelper
         {
             FileName = "netsh",
             Arguments = arguments,
-            Verb = "runas", // Request admin elevation
-            UseShellExecute = true, // Required for runas
+            UseShellExecute = false,
             CreateNoWindow = true,
-            WindowStyle = ProcessWindowStyle.Hidden
+            WindowStyle = ProcessWindowStyle.Hidden,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
         };
 
         using var process = Process.Start(psi);
@@ -187,7 +191,7 @@ internal static class FirewallHelper
         else
         {
             Debug.WriteLine($"   ⚠️ Firewall rule creation failed (Exit Code: {process?.ExitCode})");
-            Debug.WriteLine("      Run WinUI as Administrator to create firewall rules automatically");
+            Debug.WriteLine("      Run WinUI as Administrator once to create firewall rules automatically");
         }
     }
 

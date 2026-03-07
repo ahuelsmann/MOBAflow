@@ -90,10 +90,17 @@ dotnet build
 dotnet run --project WinUI
 ```
 
-**🌐 WebApp (Blazor):**
+**🌐 RestApi (REST API only, Port 5001):**
+```bash
+dotnet run --project RestApi
+```
+The RestApi listens on **port 5001** (all interfaces). It provides the REST API for the WinUI Overview status and for the MAUI app (client list, health). You can **start RestApi in two ways:** (1) **Standalone** – run the command above; (2) **Together with WinUI** – enable "Auto-start REST API with MOBAflow" in WinUI Settings so WinUI starts the RestApi process automatically. MAUI discovers the server via UDP multicast; ensure PC and phone are on the same network.
+
+**🌐 WebApp (Blazor only, Port 5000):**
 ```bash
 dotnet run --project WebApp
 ```
+The WebApp runs the Blazor Server UI on **port 5000**. For MAUI connection and Overview status, run **RestApi** (port 5001) in addition or enable "Auto-start REST API with MOBAflow" in WinUI Settings.
 
 **📱 MAUI (Android):**
 ```bash

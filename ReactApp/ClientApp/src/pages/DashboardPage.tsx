@@ -22,17 +22,19 @@ const DashboardPage = observer(() => {
   const { appStore } = useStore()
 
   useEffect(() => {
-    // Initial data load
-    appStore.fetchSystemState()
-    appStore.fetchStatistics()
-    appStore.fetchLapCounterSettings()
+    // Defer initial fetch to next tick so first paint completes (avoids blank page from StrictMode/async timing)
+    const t = setTimeout(() => {
+      appStore.fetchSystemState()
+      appStore.fetchStatistics()
+      appStore.fetchLapCounterSettings()
 
-    // Start polling if connected (similar to Blazor SignalR real-time updates)
-    if (appStore.isConnected) {
-      appStore.startPolling()
-    }
+      if (appStore.isConnected) {
+        appStore.startPolling()
+      }
+    }, 0)
 
     return () => {
+      clearTimeout(t)
       appStore.stopPolling()
     }
   }, [appStore])
@@ -69,7 +71,9 @@ const DashboardPage = observer(() => {
                   value={appStore.ipAddress}
                   onChange={(value) => appStore.setIpAddress(value)}
                   disabled={appStore.isConnected}
-                  options={appStore.availableIpAddresses.map((ip) => ({ value: ip, label: ip }))}
+                  options={Array.isArray(appStore.availableIpAddresses)
+                    ? appStore.availableIpAddresses.map((ip) => ({ value: ip, label: ip }))
+                    : []}
                 />
               </div>
               <Space>
@@ -214,7 +218,7 @@ const DashboardPage = observer(() => {
       <div className="tracks-section">
         <h3 style={{ marginBottom: 16 }}>Track Statistics</h3>
 
-        {appStore.statistics.length === 0 ? (
+        {Array.isArray(appStore.statistics) && appStore.statistics.length === 0 ? (
           <Card>
             <Empty
               description={
@@ -228,11 +232,13 @@ const DashboardPage = observer(() => {
           </Card>
         ) : (
           <Row gutter={[16, 16]}>
-            {appStore.statistics.map((stat) => (
-              <Col xs={24} sm={12} lg={8} xl={6} key={stat.inPort}>
-                <TrackCard stat={stat} />
-              </Col>
-            ))}
+            {(Array.isArray(appStore.statistics) ? appStore.statistics : [])
+              .filter((s): s is TrackStatistic => s != null && typeof s === 'object')
+              .map((stat, index) => (
+                <Col xs={24} sm={12} lg={8} xl={6} key={stat.inPort ?? stat.name ?? index}>
+                  <TrackCard stat={stat} />
+                </Col>
+              ))}
           </Row>
         )}
       </div>
@@ -266,52 +272,62 @@ const DashboardPage = observer(() => {
 
 /**
  * Track Statistics Card - matches track-card in Blazor Dashboard.razor
+ * Defensive: all stat fields have fallbacks to avoid throws on malformed API data.
  */
 const TrackCard = observer(({ stat }: { stat: TrackStatistic }) => {
+  const inPort = stat?.inPort ?? '-'
+  const hasReceivedFirstLap = Boolean(stat?.hasReceivedFirstLap)
+  const lapCountFormatted = stat?.lapCountFormatted ?? '0/0 laps'
+  const progress = typeof stat?.progress === 'number' && !Number.isNaN(stat.progress) ? stat.progress : 0
+  const count = typeof stat?.count === 'number' ? stat.count : 0
+  const targetLapCount = typeof stat?.targetLapCount === 'number' ? stat.targetLapCount : 0
+  const lastFeedbackTime = stat?.lastFeedbackTime ?? null
+  const lastLapTime = stat?.lastLapTime ?? null
+
   return (
     <Card
       size="small"
       title={
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>Track {stat.inPort}</span>
-          <Tag color={stat.hasReceivedFirstLap ? 'processing' : 'default'}>
-            {stat.lapCountFormatted}
+          <span>Track {inPort}</span>
+          <Tag color={hasReceivedFirstLap ? 'processing' : 'default'}>
+            {lapCountFormatted}
           </Tag>
         </div>
       }
       style={{
-        borderTop: `3px solid ${stat.hasReceivedFirstLap ? '#52c41a' : '#d9d9d9'}`,
+        borderTop: `3px solid ${hasReceivedFirstLap ? '#52c41a' : '#d9d9d9'}`,
       }}
     >
       <Progress
-        percent={Math.round(stat.progress * 100)}
-        status={stat.progress >= 1 ? 'success' : 'active'}
+        percent={Math.round(progress * 100)}
+        status={progress >= 1 ? 'success' : 'active'}
         size="small"
         style={{ marginBottom: 12 }}
       />
       <div style={{ fontSize: 12 }}>
         <Row>
           <Col span={12}><strong>InPort:</strong></Col>
-          <Col span={12}>{stat.inPort}</Col>
+          <Col span={12}>{inPort}</Col>
         </Row>
         <Row>
           <Col span={12}><strong>Lap Count:</strong></Col>
-          <Col span={12}>{stat.count}</Col>
+          <Col span={12}>{count}</Col>
         </Row>
         <Row>
           <Col span={12}><strong>Target:</strong></Col>
-          <Col span={12}>{stat.targetLapCount}</Col>
+          <Col span={12}>{targetLapCount}</Col>
         </Row>
-        {stat.lastFeedbackTime && stat.lastFeedbackTime !== '--:--:--' && (
+        {lastFeedbackTime && lastFeedbackTime !== '--:--:--' && (
           <Row>
             <Col span={12}><strong>Last Detected:</strong></Col>
-            <Col span={12}>{stat.lastFeedbackTime}</Col>
+            <Col span={12}>{lastFeedbackTime}</Col>
           </Row>
         )}
-        {stat.lastLapTime && stat.lastLapTime !== '--:--' && (
+        {lastLapTime && lastLapTime !== '--:--' && (
           <Row>
             <Col span={12}><strong>Last Lap Time:</strong></Col>
-            <Col span={12}>{stat.lastLapTime}</Col>
+            <Col span={12}>{lastLapTime}</Col>
           </Row>
         )}
       </div>

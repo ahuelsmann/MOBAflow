@@ -226,6 +226,25 @@ public partial class App
         services.AddSingleton<IUiDispatcher, UiDispatcher>();
         services.AddSingleton<PhotoHubClient>();  // Real-time photo notifications from MAUI
 
+        // HttpClient for REST API status polling (Overview page)
+        services.AddHttpClient();
+
+        // REST API status service (polls /api/status, updates ViewModel for Overview page)
+        services.AddSingleton<RestApiStatusService>(sp =>
+        {
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
+            return new RestApiStatusService(
+                factory.CreateClient(),
+                sp.GetRequiredService<AppSettings>(),
+                sp.GetRequiredService<RestApiProcessService>(),
+                sp.GetRequiredService<MainWindowViewModel>(),
+                sp.GetRequiredService<IUiDispatcher>(),
+                sp.GetRequiredService<ILogger<RestApiStatusService>>());
+        });
+
+        // RestApi process starter (when Auto-start enabled); in-process API no longer used
+        services.AddSingleton<RestApiProcessService>();
+
         // ICityService mit DataManager (Stammdaten aus gemeinsamer Datei)
         services.AddSingleton<ICityService>(sp =>
         {
@@ -388,7 +407,7 @@ public partial class App
             Debug.WriteLine("[OnLaunched] MainWindow activated");
 
             // DEFERRED INITIALIZATION (async, doesn't block UI):
-            // After MainWindow is visible, start deferred services
+            // After MainWindow is visible, start deferred services (incl. RestApi process when Auto-start enabled)
             InitializePostStartupServicesAsync()
                 .SafeFireAndForget(ex => _logger.LogError(ex, "Post-startup initialization failed unexpectedly"));
 

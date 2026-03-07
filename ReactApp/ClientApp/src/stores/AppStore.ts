@@ -109,8 +109,13 @@ export class AppStore {
 
   // ─────────────────────────────────────────────────────────────────────────
   // Track Statistics (matches Statistics collection in WebAppViewModel)
+  // Backing field may be set to non-array by API; getter always returns an array.
   // ─────────────────────────────────────────────────────────────────────────
-  statistics: TrackStatistic[] = []
+  private _statistics: unknown = []
+
+  get statistics(): TrackStatistic[] {
+    return Array.isArray(this._statistics) ? (this._statistics as TrackStatistic[]) : []
+  }
 
   // ─────────────────────────────────────────────────────────────────────────
   // Lap Counter Settings
@@ -162,12 +167,16 @@ export class AppStore {
 
   /** Formatted supply voltage in V */
   get supplyVoltageFormatted(): string {
-    return (this.systemState.supplyVoltage / 1000.0).toFixed(1)
+    const v = this.systemState?.supplyVoltage
+    const n = typeof v === 'number' && !Number.isNaN(v) ? v : 0
+    return (n / 1000.0).toFixed(1)
   }
 
   /** Formatted VCC voltage in V */
   get vccVoltageFormatted(): string {
-    return (this.systemState.vccVoltage / 1000.0).toFixed(1)
+    const v = this.systemState?.vccVoltage
+    const n = typeof v === 'number' && !Number.isNaN(v) ? v : 0
+    return (n / 1000.0).toFixed(1)
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -180,21 +189,34 @@ export class AppStore {
     this.statusText = 'Connecting...'
 
     try {
-      const response = await api.post('/api/z21/connect', { ipAddress: this.ipAddress })
+      const response = await api.post<{ success: boolean; error?: string }>('/api/z21/connect', { ipAddress: this.ipAddress })
+      const data = response?.data
+      const success = Boolean(data?.success)
       runInAction(() => {
-        this.isConnected = response.data.success
-        this.statusText = response.data.success ? 'Connected' : 'Connection failed'
-        if (!response.data.success) {
-          this.connectionError = response.data.error
-        } else {
-          this.startPolling()
+        try {
+          this.isConnected = success
+          this.statusText = success ? 'Connected' : 'Connection failed'
+          if (!success) {
+            this.connectionError = typeof data?.error === 'string' ? data.error : 'Connection failed'
+          } else {
+            this.startPolling()
+          }
+        } catch (e) {
+          console.error('[AppStore] connect runInAction error:', e)
         }
       })
     } catch (error) {
       runInAction(() => {
         this.isConnected = false
         this.statusText = 'Connection failed'
-        this.connectionError = error instanceof Error ? error.message : 'Verbindungsfehler'
+        const msg = error instanceof Error ? error.message : 'Verbindungsfehler'
+        const isAxios = typeof (error as { response?: { status?: number } })?.response?.status === 'number'
+        const status = (error as { response?: { status?: number } })?.response?.status
+        if (isAxios && status === 404) {
+          this.connectionError = 'API nicht gefunden (404). Läuft das Backend unter ' + window.location.origin + '?'
+        } else {
+          this.connectionError = msg
+        }
       })
     } finally {
       runInAction(() => {
@@ -234,20 +256,27 @@ export class AppStore {
         hardwareType: string
       }>('/api/z21/status')
 
+      const d = response.data
+      if (!d || typeof d !== 'object') return
+
       runInAction(() => {
-        this.isConnected = response.data.isConnected
-        this.systemState = {
-          isTrackPowerOn: response.data.isTrackPowerOn,
-          isEmergencyStop: false,
-          mainCurrent: response.data.mainCurrent,
-          temperature: response.data.temperature,
-          supplyVoltage: response.data.supplyVoltage,
-          vccVoltage: response.data.vccVoltage,
-        }
-        this.versionInfo = {
-          serialNumber: response.data.serialNumber,
-          firmwareVersion: response.data.firmwareVersion,
-          hardwareType: response.data.hardwareType,
+        try {
+          this.isConnected = Boolean(d.isConnected)
+          this.systemState = {
+            isTrackPowerOn: Boolean(d.isTrackPowerOn),
+            isEmergencyStop: false,
+            mainCurrent: Number(d.mainCurrent) || 0,
+            temperature: Number(d.temperature) || 0,
+            supplyVoltage: Number(d.supplyVoltage) || 0,
+            vccVoltage: Number(d.vccVoltage) || 0,
+          }
+          this.versionInfo = {
+            serialNumber: String(d.serialNumber ?? '-'),
+            firmwareVersion: String(d.firmwareVersion ?? '-'),
+            hardwareType: String(d.hardwareType ?? '-'),
+          }
+        } catch (e) {
+          console.error('[AppStore] fetchSystemState runInAction error:', e)
         }
       })
     } catch (error) {
@@ -285,9 +314,15 @@ export class AppStore {
 
   async fetchStatistics(): Promise<void> {
     try {
-      const response = await api.get<TrackStatistic[]>('/api/statistics')
+      const response = await api.get<TrackStatistic[] | unknown>('/api/statistics')
+      const data = response.data
+      if (!Array.isArray(data)) return
       runInAction(() => {
-        this.statistics = response.data
+        try {
+          this._statistics = data
+        } catch (e) {
+          console.error('[AppStore] fetchStatistics runInAction error:', e)
+        }
       })
     } catch (error) {
       console.error('Failed to fetch statistics:', error)
@@ -297,8 +332,22 @@ export class AppStore {
   async fetchLapCounterSettings(): Promise<void> {
     try {
       const response = await api.get<LapCounterSettings>('/api/statistics/settings')
+      const d = response.data
+      if (!d || typeof d !== 'object') return
       runInAction(() => {
-        this.lapCounterSettings = response.data
+        try {
+          this.lapCounterSettings = {
+            countOfFeedbackPoints:
+              typeof d.countOfFeedbackPoints === 'number' ? d.countOfFeedbackPoints : this.lapCounterSettings.countOfFeedbackPoints,
+            globalTargetLapCount:
+              typeof d.globalTargetLapCount === 'number' ? d.globalTargetLapCount : this.lapCounterSettings.globalTargetLapCount,
+            useTimerFilter: Boolean(d.useTimerFilter),
+            timerIntervalSeconds:
+              typeof d.timerIntervalSeconds === 'number' ? d.timerIntervalSeconds : this.lapCounterSettings.timerIntervalSeconds,
+          }
+        } catch (e) {
+          console.error('[AppStore] fetchLapCounterSettings runInAction error:', e)
+        }
       })
     } catch (error) {
       console.error('Failed to fetch lap counter settings:', error)
@@ -308,16 +357,22 @@ export class AppStore {
   async resetCounters(): Promise<void> {
     try {
       await api.post('/api/statistics/reset')
+      const current = this.statistics
+      if (!Array.isArray(current)) return
       runInAction(() => {
-        this.statistics = this.statistics.map((stat) => ({
-          ...stat,
-          count: 0,
-          lastLapTime: null,
-          lastFeedbackTime: null,
-          hasReceivedFirstLap: false,
-          progress: 0,
-          lapCountFormatted: `0/${stat.targetLapCount} laps`,
-        }))
+        try {
+          this._statistics = current.map((stat) => ({
+            ...stat,
+            count: 0,
+            lastLapTime: null,
+            lastFeedbackTime: null,
+            hasReceivedFirstLap: false,
+            progress: 0,
+            lapCountFormatted: `0/${stat.targetLapCount} laps`,
+          }))
+        } catch (e) {
+          console.error('[AppStore] resetCounters runInAction error:', e)
+        }
       })
     } catch (error) {
       console.error('Reset counters error:', error)

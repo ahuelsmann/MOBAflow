@@ -16,6 +16,85 @@
                 Style="{StaticResource TitleTextBlockStyle}"
                 Text="Overview" />
 
+            <!--  REST API & Connected Clients  -->
+            <Expander
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                Header="REST API &amp; Clients"
+                IsExpanded="True">
+                <Expander.HeaderTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <FontIcon
+                                FontSize="20"
+                                Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                                Glyph="&#xE8A7;" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Style="{StaticResource SubtitleTextBlockStyle}"
+                                Text="{Binding}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </Expander.HeaderTemplate>
+                <StackPanel Padding="56,16,0,16" Spacing="16">
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="{x:Bind ViewModel.AutoStartWebApp, Mode=OneWay, Converter={StaticResource BoolToAutoStartLabelConverter}}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Ellipse
+                            Width="12"
+                            Height="12"
+                            Fill="{x:Bind ViewModel.RestApiIsReachable, Mode=OneWay, Converter={StaticResource BoolToAccentBrushConverter}}"
+                            VerticalAlignment="Center" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            Style="{StaticResource BodyTextBlockStyle}"
+                            Text="{x:Bind ViewModel.RestApiStatusText, Mode=OneWay}" />
+                    </StackPanel>
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="Connected clients (e.g. MOBAsmart)" />
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.RestApiConnectedClients, Mode=OneWay}">
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="vm:RestApiClientInfo">
+                                    <Border
+                                        Margin="0,0,0,8"
+                                        Padding="12,8"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="4">
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock
+                                                Grid.Column="0"
+                                                VerticalAlignment="Center"
+                                                FontWeight="SemiBold"
+                                                Text="{x:Bind DeviceName, Mode=OneWay}" />
+                                            <TextBlock
+                                                Grid.Column="1"
+                                                VerticalAlignment="Center"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                Text="{x:Bind ConnectedAt, Mode=OneWay, Converter={StaticResource DateTimeToShortTimeConverter}}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                        <TextBlock
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Text="No clients connected"
+                            Visibility="{x:Bind ViewModel.RestApiConnectedClientsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    </StackPanel>
+                </StackPanel>
+            </Expander>
+
             <!--  Z21 System State Section (only visible when connected)  -->
             <Expander
                 HorizontalAlignment="Stretch"
@@ -46,84 +125,81 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
+                    <!--  Row 0: Main Current | Temperature  -->
                     <TextBlock
                         Grid.Row="0"
                         Grid.Column="0"
                         VerticalAlignment="Center"
                         Text="Main Current:" />
-                    <TextBlock
+                    <StackPanel
                         Grid.Row="0"
                         Grid.Column="1"
-                        VerticalAlignment="Center"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                        Text="{x:Bind ViewModel.MainCurrent, Mode=OneWay}" />
-                    <TextBlock
-                        Grid.Row="0"
-                        Grid.Column="1"
-                        Margin="40,0,0,0"
-                        VerticalAlignment="Center"
-                        Text=" mA" />
+                        Orientation="Horizontal"
+                        Spacing="4"
+                        VerticalAlignment="Center">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Text="{x:Bind ViewModel.MainCurrent, Mode=OneWay}" />
+                        <TextBlock VerticalAlignment="Center" Text=" mA" />
+                    </StackPanel>
 
                     <TextBlock
                         Grid.Row="0"
                         Grid.Column="2"
                         VerticalAlignment="Center"
                         Text="Temperature:" />
-                    <TextBlock
+                    <StackPanel
                         Grid.Row="0"
                         Grid.Column="3"
-                        VerticalAlignment="Center"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                        Text="{x:Bind ViewModel.Temperature, Mode=OneWay}" />
-                    <TextBlock
-                        Grid.Row="0"
-                        Grid.Column="3"
-                        Margin="40,0,0,0"
-                        VerticalAlignment="Center"
-                        Text=" °C" />
+                        Orientation="Horizontal"
+                        Spacing="4"
+                        VerticalAlignment="Center">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Text="{x:Bind ViewModel.Temperature, Mode=OneWay}" />
+                        <TextBlock VerticalAlignment="Center" Text=" °C" />
+                    </StackPanel>
 
+                    <!--  Row 1: Supply Voltage | VCC Voltage  -->
                     <TextBlock
                         Grid.Row="1"
                         Grid.Column="0"
                         VerticalAlignment="Center"
                         Text="Supply Voltage:" />
-                    <TextBlock
+                    <StackPanel
                         Grid.Row="1"
                         Grid.Column="1"
-                        VerticalAlignment="Center"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                        Text="{x:Bind ViewModel.SupplyVoltage, Mode=OneWay}" />
-                    <TextBlock
-                        Grid.Row="1"
-                        Grid.Column="1"
-                        Margin="40,0,0,0"
-                        VerticalAlignment="Center"
-                        Text=" mV" />
+                        Orientation="Horizontal"
+                        Spacing="4"
+                        VerticalAlignment="Center">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Text="{x:Bind ViewModel.SupplyVoltage, Mode=OneWay}" />
+                        <TextBlock VerticalAlignment="Center" Text=" mV" />
+                    </StackPanel>
 
                     <TextBlock
                         Grid.Row="1"
                         Grid.Column="2"
                         VerticalAlignment="Center"
                         Text="VCC Voltage:" />
-                    <TextBlock
+                    <StackPanel
                         Grid.Row="1"
                         Grid.Column="3"
-                        VerticalAlignment="Center"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource AccentFillColorDefaultBrush}"
-                        Text="{x:Bind ViewModel.VccVoltage, Mode=OneWay}" />
-                    <TextBlock
-                        Grid.Row="1"
-                        Grid.Column="3"
-                        Margin="40,0,0,0"
-                        VerticalAlignment="Center"
-                        Text=" mV" />
+                        Orientation="Horizontal"
+                        Spacing="4"
+                        VerticalAlignment="Center">
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                            Text="{x:Bind ViewModel.VccVoltage, Mode=OneWay}" />
+                        <TextBlock VerticalAlignment="Center" Text=" mV" />
+                    </StackPanel>
                 </Grid>
             </Expander>
 

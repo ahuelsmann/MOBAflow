@@ -25,6 +25,7 @@ internal class PostStartupInitializationService
     private readonly MainWindow _mainWindow;
     private readonly AppSettings _appSettings;
     private readonly DataManager _dataManager;
+    private readonly RestApiProcessService _restApiProcessService;
     private readonly ILogger<PostStartupInitializationService> _logger;
 
     public PostStartupInitializationService(
@@ -33,6 +34,7 @@ internal class PostStartupInitializationService
         MainWindow mainWindow,
         AppSettings appSettings,
         DataManager dataManager,
+        RestApiProcessService restApiProcessService,
         ILogger<PostStartupInitializationService> logger)
     {
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
@@ -40,6 +42,7 @@ internal class PostStartupInitializationService
         _mainWindow = mainWindow;
         _appSettings = appSettings;
         _dataManager = dataManager ?? throw new ArgumentNullException(nameof(dataManager));
+        _restApiProcessService = restApiProcessService;
         _logger = logger;
     }
 
@@ -59,11 +62,10 @@ internal class PostStartupInitializationService
 
         try
         {
-            // Stammdaten zuerst laden (DataManager), danach TrainClassLibrary aus derselben Datei
-            await InitializeMasterDataAsync(cancellationToken);
-
-            // Run tasks in parallel to minimize wall-clock time
+            // Run all deferred tasks in parallel so the REST API starts immediately
+            // and is not delayed or cancelled by slow master data loading or the 30s timeout.
             await Task.WhenAll(
+                InitializeMasterDataAsync(cancellationToken),
                 InitializeSpeechHealthCheckAsync(cancellationToken),
                 InitializeWebAppAsync(cancellationToken),
                 InitializePluginsAsync(cancellationToken)
@@ -192,29 +194,25 @@ internal class PostStartupInitializationService
     }
 
     /// <summary>
-    /// Starts the ASP.NET Core WebApp for REST API if enabled.
-    /// This can run in the background without blocking the UI.
+    /// Starts the standalone RestApi process when "Auto-start REST API with MOBAflow" is not explicitly disabled.
     /// </summary>
-    private Task InitializeWebAppAsync(CancellationToken cancellationToken)
+    private async Task InitializeWebAppAsync(CancellationToken cancellationToken)
     {
         try
         {
-            if (_appSettings.Application?.AutoStartWebApp != true)
+            if (_appSettings.Application?.AutoStartWebApp == false)
             {
-                _logger.LogInformation("[PostStartup] WebApp disabled in settings");
-                return Task.CompletedTask;
+                _logger.LogInformation("[PostStartup] REST API auto-start disabled in settings");
+                return;
             }
 
-            _logger.LogInformation("[PostStartup] Starting WebApp");
-            // Note: App.StartWebAppIfEnabledAsync() handles the actual startup
-            // We just log that we're in the deferred phase
-            _logger.LogInformation("[PostStartup] WebApp startup delegated to App");
+            _logger.LogInformation("[PostStartup] Starting RestApi process");
+            await _restApiProcessService.StartAsync(cancellationToken).ConfigureAwait(false);
+            _logger.LogInformation("[PostStartup] RestApi process started");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[PostStartup] Failed to start WebApp");
+            _logger.LogError(ex, "[PostStartup] Failed to start RestApi process");
         }
-
-        return Task.CompletedTask;
     }
 }

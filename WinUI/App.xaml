@@ -98,6 +98,10 @@
                 x:Key="BoolToTripLogIconConverter"
                 FalseValue="&#xE768;"
                 TrueValue="&#xE769;" />
+            <converter:BoolToStringConverter
+                x:Key="BoolToAutoStartLabelConverter"
+                FalseValue="Auto-start with MOBAflow: Off"
+                TrueValue="Auto-start with MOBAflow: On" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
