@@ -3,6 +3,8 @@
 using Moba.Backend.Data;
 using Moba.Backend.Extensions;
 using Moba.Common.Configuration;
+using Moba.Common.Events;
+using Moba.ReactApp.Controllers;
 using Moba.ReactApp.Service;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
@@ -19,17 +21,24 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// REST API Controllers with Swagger
-builder.Services.AddControllers();
+// REST API Controllers with Swagger - explicitly add ReactApp assembly so controllers are discovered
+builder.Services.AddControllers()
+    .AddApplicationPart(typeof(Z21Controller).Assembly);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// CORS for React Development Server
+// CORS: allow Vite dev server (5173) and same-origin when serving SPA from backend (49913/49914)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactDev", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "https://localhost:5173")
+        policy.WithOrigins(
+                  "http://localhost:5173",
+                  "https://localhost:5173",
+                  "http://localhost:49913",
+                  "https://localhost:49913",
+                  "http://localhost:49914",
+                  "https://localhost:49914")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -55,6 +64,9 @@ builder.Services.AddSingleton<IUiDispatcher, BlazorUiDispatcher>();
 // Audio Services (NullObject - WebApp doesn't support audio)
 builder.Services.AddSingleton<ISoundPlayer, NullSoundPlayer>();
 builder.Services.AddSingleton<ISpeakerEngine, NullSpeakerEngine>();
+
+// Event bus infrastructure
+builder.Services.AddSingleton<IEventBus, EventBus>();
 
 // Backend services
 builder.Services.AddMobaBackendServices();
@@ -91,6 +103,18 @@ else
 }
 
 app.UseHttpsRedirection();
+
+// Avoid 404 for browser's default favicon.ico request (no file in wwwroot)
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.Equals("/favicon.ico", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.StatusCode = 204;
+        return;
+    }
+    await next();
+});
+
 app.UseStaticFiles();
 app.UseAntiforgery();
 

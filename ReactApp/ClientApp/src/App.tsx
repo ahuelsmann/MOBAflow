@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Layout } from 'antd'
 import AppHeader from './components/AppHeader'
 import AppSidebar from './components/AppSidebar'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import DashboardPage from './pages/DashboardPage'
 import TrainsPage from './pages/TrainsPage'
 import JourneysPage from './pages/JourneysPage'
@@ -27,13 +28,15 @@ function App() {
                 borderRadius: 8,
               }}
             >
-              <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/trains" element={<TrainsPage />} />
-                <Route path="/journeys" element={<JourneysPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-              </Routes>
+              <ErrorBoundary>
+                <Routes>
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/trains" element={<TrainsPage />} />
+                  <Route path="/journeys" element={<JourneysPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                </Routes>
+              </ErrorBoundary>
             </Content>
           </Layout>
         </Layout>

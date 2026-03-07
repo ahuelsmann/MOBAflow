@@ -15,7 +15,7 @@ public partial class App
         _services = services;
 
         // ⚠️ CRITICAL: Load default dark theme resources BEFORE InitializeComponent
-        // Theme will be properly applied after settings are loaded in CreateWindow
+        // Theme will be properly applied after settings are loaded in SplashPage.
         LoadThemeResources(isDark: true);
 
         InitializeComponent();
@@ -127,16 +127,10 @@ public partial class App
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        // ✅ CRITICAL: Load settings BEFORE creating MainPage
-        Debug.WriteLine("🚀 App.CreateWindow: Loading settings...");
-        var settingsService = _services.GetRequiredService<ISettingsService>();
+        // Settings and theme are loaded in SplashPage.OnAppearing before MainPage is shown.
+        Debug.WriteLine("✅ App.CreateWindow: Creating SplashPage...");
 
-        // Async-first: load settings in the background without blocking the UI thread.
-        _ = LoadAndApplySettingsAsync(settingsService);
-
-        Debug.WriteLine("✅ App.CreateWindow: Settings loaded, creating SplashPage...");
-
-        // ✅ Show SplashPage first, then navigate to MainPage
+        // ✅ Show SplashPage first, then navigate to MainPage (SplashPage loads settings)
         var splashPage = new SplashPage();
         var window = new Window(splashPage);
 
@@ -145,22 +139,6 @@ public partial class App
 
         Debug.WriteLine("✅ App.CreateWindow: Window created with SplashPage");
         return window;
-    }
-
-    private async Task LoadAndApplySettingsAsync(ISettingsService settingsService)
-    {
-        try
-        {
-            await settingsService.LoadSettingsAsync().ConfigureAwait(false);
-
-            var settings = settingsService.GetSettings();
-            ApplyTheme(settings.Application.IsDarkMode, settings.Application.UseSystemTheme);
-            Debug.WriteLine($"✅ App.CreateWindow: Theme applied (IsDarkMode={settings.Application.IsDarkMode}, UseSystemTheme={settings.Application.UseSystemTheme})");
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"⚠️ App.CreateWindow: Failed to load settings: {ex.Message}");
-        }
     }
 
     /// <summary>

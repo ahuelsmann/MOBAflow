@@ -25,6 +25,8 @@ internal sealed partial class MainWindow
 
     private readonly NavigationService _navigationService;
     private HealthCheckService? _healthCheckService;
+    private readonly RestApiStatusService _restApiStatusService;
+    private readonly RestApiProcessService _restApiProcessService;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly List<PageMetadata> _pages;
     private readonly NavigationItemFactory _navigationItemFactory;
@@ -61,7 +63,9 @@ internal sealed partial class MainWindow
         IIoService ioService,
         List<PageMetadata> pages,
         AppSettings appSettings,
-        ISkinProvider skinProvider)
+        ISkinProvider skinProvider,
+        RestApiStatusService restApiStatusService,
+        RestApiProcessService restApiProcessService)
     {
         try
         {
@@ -70,6 +74,8 @@ internal sealed partial class MainWindow
             ViewModel = viewModel;
             _navigationService = navigationService;
             _uiDispatcher = uiDispatcher;
+            _restApiStatusService = restApiStatusService;
+            _restApiProcessService = restApiProcessService;
             _pages = pages;
             _navigationItemFactory = new NavigationItemFactory(appSettings);
             _skinProvider = skinProvider;
@@ -130,6 +136,8 @@ internal sealed partial class MainWindow
 
             // Apply initial theme
             ApplyTheme(ViewModel.IsDarkMode);
+
+            _restApiStatusService.Start();
 
             Debug.WriteLine("[MainWindow] Constructor COMPLETE");
         }
@@ -219,6 +227,18 @@ internal sealed partial class MainWindow
 
     private async void MainWindow_Closed(object sender, WindowEventArgs args)
     {
+        _restApiStatusService.Stop();
+        _restApiStatusService.Dispose();
+
+        try
+        {
+            _restApiProcessService.Stop();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[MainWindow] RestApiProcessService.Stop: {ex.Message}");
+        }
+
         if (_healthCheckService != null)
         {
             _healthCheckService.HealthStatusChanged -= OnHealthStatusChanged;

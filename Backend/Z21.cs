@@ -776,6 +776,24 @@ public class Z21 : IZ21
                 _logger?.LogInformation("🚂 Loco Info: {LocoInfo}", locoInfo);
             }
 
+            // Parse LAN_X_GET_VERSION response (0x63) - some Z21 firmware only send this instead of LAN_GET_SERIAL_NUMBER / LAN_GET_HWINFO
+            if (Z21MessageParser.TryParseLanXGetVersionResponse(content, out var xbusVer, out var cmdstId))
+            {
+                SetConnectedIfNotAlready();
+                VersionInfo ??= new Z21VersionInfo();
+                // Preserve existing SerialNumber/HardwareTypeCode if already set; otherwise encode X-Bus version in FirmwareVersionCode for display
+                if (VersionInfo.SerialNumber == 0 && VersionInfo.HardwareTypeCode == 0)
+                {
+                    VersionInfo.FirmwareVersionCode = xbusVer; // Display as V0.xx (e.g. V0.40 for xbusVer=0x40)
+                    _logger?.LogInformation("📌 Z21 LAN_X_GET_VERSION: X-Bus 0x{XBusVer:X2}, CMDST_ID 0x{CmdstId:X4}", xbusVer, cmdstId);
+                }
+                OnVersionInfoChanged?.Invoke(VersionInfo);
+                PublishEventAsync(new VersionInfoChangedEvent(
+                    VersionInfo.SerialNumber,
+                    (int)VersionInfo.HardwareTypeCode,
+                    (int)VersionInfo.FirmwareVersionCode));
+            }
+
             return;
         }
 

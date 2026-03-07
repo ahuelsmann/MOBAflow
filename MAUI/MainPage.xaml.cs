@@ -77,19 +77,6 @@ public partial class MainPage
         await ViewModel.SetTrackPowerCommand.ExecuteAsync(e.Value);
     }
 
-    private async void ConnectionSwitch_Toggled(object sender, ToggledEventArgs e)
-    {
-        _ = sender; // Suppress unused parameter warning
-
-        // Haptic feedback for connection toggle
-        PerformHapticFeedback();
-
-        if (e.Value)
-            await ViewModel.ConnectCommand.ExecuteAsync(null);
-        else
-            await ViewModel.DisconnectCommand.ExecuteAsync(null);
-    }
-
     private async void ThemeSwitch_Toggled(object sender, ToggledEventArgs e)
     {
         _ = sender; // Suppress unused parameter warning

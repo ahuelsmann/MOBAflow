@@ -72,12 +72,12 @@ internal sealed partial class UdpDiscoveryResponder : IDisposable
             _udpListener.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             _udpListener.Client.Bind(localEndPoint);
 
-            // Join multicast group to receive discovery requests
+            // Join multicast on all interfaces so we receive discovery from any NIC (Wi‑Fi, Ethernet, etc.)
             var multicastAddress = IPAddress.Parse(MulticastAddress);
             _udpListener.JoinMulticastGroup(multicastAddress);
 
-            _logger.LogInformation("✅ Joined Multicast group {MulticastAddress} - listening for MAUI discovery requests",
-                MulticastAddress);
+            _logger.LogInformation("✅ Joined Multicast group {MulticastAddress}:{Port} - listening for MAUI discovery",
+                MulticastAddress, DiscoveryPort);
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -90,8 +90,9 @@ internal sealed partial class UdpDiscoveryResponder : IDisposable
                     {
                         _logger.LogInformation("📱 Discovery request received from {RemoteEndPoint}", result.RemoteEndPoint);
 
-                        var localIp = GetLocalIpAddress();
-                        var response = $"{DiscoveryResponsePrefix}|{localIp}|{_restApiPort}";
+                        // Advertise the local IP that is reachable from the client (same subnet)
+                        var advertisedIp = GetLocalIpAddressForRemote(result.RemoteEndPoint);
+                        var response = $"{DiscoveryResponsePrefix}|{advertisedIp}|{_restApiPort}";
                         var responseBytes = Encoding.UTF8.GetBytes(response);
 
                         await _udpListener.SendAsync(responseBytes, result.RemoteEndPoint, cancellationToken);
@@ -126,6 +127,56 @@ internal sealed partial class UdpDiscoveryResponder : IDisposable
         {
             _udpListener?.Close();
         }
+    }
+
+    /// <summary>
+    /// Gets the local IP address reachable from the remote endpoint (prefer same subnet so client can connect).
+    /// </summary>
+    private static string GetLocalIpAddressForRemote(IPEndPoint? remote)
+    {
+        if (remote?.Address == null)
+            return GetLocalIpAddress();
+        return GetLocalIpAddressInSubnet(remote.Address) ?? GetLocalIpAddress();
+    }
+
+    /// <summary>
+    /// Returns a local IPv4 address in the same subnet as the given remote address, or null.
+    /// </summary>
+    private static string? GetLocalIpAddressInSubnet(IPAddress remoteIp)
+    {
+        if (remoteIp.AddressFamily != AddressFamily.InterNetwork)
+            return null;
+        try
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            var remoteBytes = remoteIp.GetAddressBytes();
+            foreach (var local in host.AddressList)
+            {
+                if (local.AddressFamily != AddressFamily.InterNetwork)
+                    continue;
+                if (IsInSameSubnet(local.GetAddressBytes(), remoteBytes, 24))
+                    return local.ToString();
+                if (IsInSameSubnet(local.GetAddressBytes(), remoteBytes, 16))
+                    return local.ToString();
+            }
+        }
+        catch { /* ignore */ }
+        return null;
+    }
+
+    private static bool IsInSameSubnet(byte[] local, byte[] remote, int prefixLength)
+    {
+        if (local.Length != 4 || remote.Length != 4) return false;
+        int fullBytes = prefixLength / 8;
+        int remainder = prefixLength % 8;
+        for (int i = 0; i < fullBytes; i++)
+            if (local[i] != remote[i]) return false;
+        if (remainder > 0)
+        {
+            int mask = (0xFF << (8 - remainder)) & 0xFF;
+            if ((local[fullBytes] & mask) != (remote[fullBytes] & mask)) return false;
+        }
+        return true;
     }
 
     /// <summary>

@@ -21,8 +21,28 @@ public sealed partial class MauiViewModel : ObservableObject
     private readonly AppSettings _settings;
     private readonly ISettingsService _settingsService;
     private readonly IRestDiscoveryService _restDiscoveryService;
+    private readonly IZ21DiscoveryService _z21DiscoveryService;
     private readonly IPhotoUploadService _photoUploadService;
     private readonly IPhotoCaptureService _photoCaptureService;
+    private readonly IRestApiClientRegistration? _restApiClientRegistration;
+
+    /// <summary>Last time we registered with the REST API (for periodic re-register to stay in Overview list).</summary>
+    private DateTime _lastRestApiRegisterTime = DateTime.MinValue;
+
+    private const int RestApiReregisterIntervalSeconds = 120;
+
+    /// <summary>Used to cancel the Z21 reconnect loop when we become connected.</summary>
+    private CancellationTokenSource? _z21ReconnectCts;
+
+    /// <summary>Last time we ran REST API discovery (for re-discovery when unreachable).</summary>
+    private DateTime _lastRestApiDiscoverTime = DateTime.MinValue;
+
+    /// <summary>App start time; used to retry discovery more often in the first 90s when both apps start together.</summary>
+    private readonly DateTime _appStartTimeUtc = DateTime.UtcNow;
+
+    private const int RestApiRediscoverIntervalSeconds = 25;
+    private const int RestApiRediscoverIntervalFirst90Seconds = 10;
+    private const int RestApiStartupRetryWindowSeconds = 90;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MauiViewModel"/> class for the MAUI mobile client.
@@ -32,22 +52,27 @@ public sealed partial class MauiViewModel : ObservableObject
     /// <param name="settings">Application settings used to initialize default values.</param>
     /// <param name="settingsService">Service used to persist updated settings.</param>
     /// <param name="restDiscoveryService">Service used to discover the REST API endpoint.</param>
+    /// <param name="z21DiscoveryService">Service used to discover the Z21 on the local network (optional).</param>
     /// <param name="photoUploadService">Service used to upload captured photos to the server.</param>
     /// <param name="photoCaptureService">Service used to capture photos on the device.</param>
+    /// <param name="restApiClientRegistration">Optional: registers this app with the REST API for Overview client list (MAUI).</param>
     public MauiViewModel(
         IZ21 z21,
         IUiDispatcher uiDispatcher,
         AppSettings settings,
         ISettingsService settingsService,
         IRestDiscoveryService restDiscoveryService,
+        IZ21DiscoveryService z21DiscoveryService,
         IPhotoUploadService photoUploadService,
-        IPhotoCaptureService photoCaptureService)
+        IPhotoCaptureService photoCaptureService,
+        IRestApiClientRegistration? restApiClientRegistration = null)
     {
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(uiDispatcher);
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(settingsService);
         ArgumentNullException.ThrowIfNull(restDiscoveryService);
+        ArgumentNullException.ThrowIfNull(z21DiscoveryService);
         ArgumentNullException.ThrowIfNull(photoUploadService);
         ArgumentNullException.ThrowIfNull(photoCaptureService);
         _z21 = z21;
@@ -55,8 +80,10 @@ public sealed partial class MauiViewModel : ObservableObject
         _settings = settings;
         _settingsService = settingsService;
         _restDiscoveryService = restDiscoveryService;
+        _z21DiscoveryService = z21DiscoveryService;
         _photoUploadService = photoUploadService;
         _photoCaptureService = photoCaptureService;
+        _restApiClientRegistration = restApiClientRegistration;
 
         // Subscribe to Z21 events
         _z21.Received += OnFeedbackReceived;
@@ -66,10 +93,82 @@ public sealed partial class MauiViewModel : ObservableObject
         // ✅ Initialize with loaded settings (settings were loaded in SettingsService constructor)
         LoadSettingsIntoViewModel();
         
+        // Auto-discover REST-API and optionally Z21 when addresses are empty (non-blocking)
+        _ = TryAutoDiscoverEndpointsAsync();
+        
+        // REST API health check: initial check + periodic every 30s
+        StartRestApiHealthCheckLoop();
+        _ = RefreshRestApiReachableAsync();
+        
         // Apply polling interval to Z21 on startup (5 seconds - not configurable)
         _z21.SetSystemStatePollingInterval(5);
         
         InitializeStatistics();
+    }
+    
+    /// <summary>
+    /// Runs REST-API and Z21 discovery in the background. Uses settings as fallback for REST; discovery can override.
+    /// Z21 connect runs as soon as Z21 is discovered (no wait for REST). REST discovery retries with backoff so the
+    /// server has time to come up when both apps start together (~10–15s).
+    /// </summary>
+    private async Task TryAutoDiscoverEndpointsAsync()
+    {
+        try
+        {
+            // Short delay for network stack (especially on Android)
+            await Task.Delay(TimeSpan.FromMilliseconds(500)).ConfigureAwait(false);
+
+            // Start REST discovery in background (updates RestApiIpAddress when found; does not block Z21)
+            _ = RestDiscoveryLoopAsync();
+
+            // Z21 discovery: wait for result and connect immediately when found (no wait for REST)
+            var z21Ip = await _z21DiscoveryService.DiscoverZ21Async(CancellationToken.None).ConfigureAwait(false);
+            if (!string.IsNullOrEmpty(z21Ip))
+            {
+                _uiDispatcher.InvokeOnUi(() =>
+                {
+                    Z21IpAddress = z21Ip;
+                });
+                await _uiDispatcher.InvokeOnUiAsync(async () =>
+                {
+                    await ConnectCommand.ExecuteAsync(null);
+                }).ConfigureAwait(false);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Auto-discover failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Runs REST API discovery with retries and updates RestApiIpAddress when the server is found.
+    /// Runs in background so Z21 connect is not delayed.
+    /// </summary>
+    private async Task RestDiscoveryLoopAsync()
+    {
+        var restDelaysMs = new[] { 0, 2000, 5000, 10000, 15000 }; // 0, +2s, +5s, +10s, +15s (~32s total window)
+        foreach (var delayMs in restDelaysMs)
+        {
+            if (delayMs > 0)
+                await Task.Delay(delayMs).ConfigureAwait(false);
+
+            var (ip, port) = await _restDiscoveryService.DiscoverServerAsync().ConfigureAwait(false);
+            if (!string.IsNullOrEmpty(ip) && port.HasValue)
+            {
+                _lastRestApiDiscoverTime = DateTime.UtcNow;
+                _uiDispatcher.InvokeOnUi(() =>
+                {
+                    RestApiIpAddress = ip;
+                    RestApiPort = port.Value;
+                });
+                _settings.RestApi.CurrentIpAddress = ip;
+                _settings.RestApi.Port = port.Value;
+                try { await _settingsService.SaveSettingsAsync(_settings).ConfigureAwait(false); } catch { /* ignore */ }
+                await RefreshRestApiReachableAsync().ConfigureAwait(false);
+                return;
+            }
+        }
     }
     
     /// <summary>
@@ -84,20 +183,20 @@ public sealed partial class MauiViewModel : ObservableObject
         Debug.WriteLine($"   AppSettings.Counter.TargetLapCount: {_settings.Counter.TargetLapCount}");
         Debug.WriteLine($"   AppSettings.Counter.UseTimerFilter: {_settings.Counter.UseTimerFilter}");
         Debug.WriteLine($"   AppSettings.Counter.TimerIntervalSeconds: {_settings.Counter.TimerIntervalSeconds}");
-        Debug.WriteLine($"   AppSettings.Z21.CurrentIpAddress: {_settings.Z21.CurrentIpAddress}");
-        Debug.WriteLine($"   AppSettings.RestApi.CurrentIpAddress: {_settings.RestApi.CurrentIpAddress}");
         
-        Z21IpAddress = _settings.Z21.CurrentIpAddress;
-        RestApiIpAddress = _settings.RestApi.CurrentIpAddress;
-        RestApiPort = _settings.RestApi.Port;
+        // Z21 and REST API: load from settings as fallback so REST connect works when discovery fails
+        if (!string.IsNullOrWhiteSpace(_settings.RestApi.CurrentIpAddress) && _settings.RestApi.Port > 0)
+        {
+            RestApiIpAddress = _settings.RestApi.CurrentIpAddress.Trim();
+            RestApiPort = _settings.RestApi.Port;
+        }
         CountOfFeedbackPoints = _settings.Counter.CountOfFeedbackPoints;
         GlobalTargetLapCount = _settings.Counter.TargetLapCount;
         UseTimerFilter = _settings.Counter.UseTimerFilter;
         TimerIntervalSeconds = _settings.Counter.TimerIntervalSeconds;
         
         Debug.WriteLine("───────────────────────────────────────────────────────");
-        Debug.WriteLine("✅ Values loaded into ViewModel:");
-        Debug.WriteLine($"   Z21IpAddress: {Z21IpAddress}");
+        Debug.WriteLine("✅ Values loaded into ViewModel (REST: from settings as fallback, discovery can override):");
         Debug.WriteLine($"   RestApiIpAddress: {RestApiIpAddress}");
         Debug.WriteLine($"   RestApiPort: {RestApiPort}");
         Debug.WriteLine($"   CountOfFeedbackPoints: {CountOfFeedbackPoints}");
@@ -115,10 +214,100 @@ public sealed partial class MauiViewModel : ObservableObject
     [ObservableProperty]
     private int _restApiPort = 5001;
 
+    /// <summary>
+    /// True when the REST API (WebApp/WinUI) is reachable via HealthCheck.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isRestApiReachable;
+
     partial void OnRestApiIpAddressChanged(string value)
     {
-        _settings.RestApi.CurrentIpAddress = value;
-        _settingsService.SaveSettingsAsync(_settings); // Auto-save when IP changes
+        _ = RefreshRestApiReachableAsync();
+    }
+
+    partial void OnRestApiPortChanged(int value)
+    {
+        _ = RefreshRestApiReachableAsync();
+    }
+
+    /// <summary>
+    /// Starts the periodic REST API health check loop (runs every 30s).
+    /// Call once after construction.
+    /// </summary>
+    internal void StartRestApiHealthCheckLoop()
+    {
+        _ = RestApiHealthCheckLoopAsync();
+    }
+
+    private async Task RestApiHealthCheckLoopAsync()
+    {
+        while (true)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+            await RefreshRestApiReachableAsync().ConfigureAwait(false);
+
+            // When API is unreachable, re-run discovery periodically. Use shorter interval in the first 90s
+            // so we find the server quickly when both apps are started together (e.g. from Visual Studio).
+            var elapsedSinceStart = (DateTime.UtcNow - _appStartTimeUtc).TotalSeconds;
+            var interval = elapsedSinceStart < RestApiStartupRetryWindowSeconds
+                ? RestApiRediscoverIntervalFirst90Seconds
+                : RestApiRediscoverIntervalSeconds;
+
+            if (!IsRestApiReachable && (DateTime.UtcNow - _lastRestApiDiscoverTime).TotalSeconds >= interval)
+            {
+                _lastRestApiDiscoverTime = DateTime.UtcNow;
+                try
+                {
+                    var (restIp, restPort) = await _restDiscoveryService.DiscoverServerAsync().ConfigureAwait(false);
+                    if (!string.IsNullOrEmpty(restIp) && restPort.HasValue)
+                    {
+                        _uiDispatcher.InvokeOnUi(() =>
+                        {
+                            RestApiIpAddress = restIp;
+                            RestApiPort = restPort.Value;
+                        });
+                        await RefreshRestApiReachableAsync().ConfigureAwait(false);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"REST API re-discovery failed: {ex.Message}");
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Checks REST API reachability and updates IsRestApiReachable on the UI thread.
+    /// </summary>
+    private async Task RefreshRestApiReachableAsync()
+    {
+        if (string.IsNullOrWhiteSpace(RestApiIpAddress) || RestApiPort <= 0)
+        {
+            _uiDispatcher.InvokeOnUi(() => IsRestApiReachable = false);
+            return;
+        }
+        try
+        {
+            var reachable = await _photoUploadService.HealthCheckAsync(RestApiIpAddress, RestApiPort).ConfigureAwait(false);
+            _uiDispatcher.InvokeOnUi(() => IsRestApiReachable = reachable);
+
+            if (reachable && _restApiClientRegistration != null)
+            {
+                var now = DateTime.UtcNow;
+                var shouldRegister = _lastRestApiRegisterTime == DateTime.MinValue
+                    || (now - _lastRestApiRegisterTime).TotalSeconds >= RestApiReregisterIntervalSeconds;
+                if (shouldRegister)
+                {
+                    _lastRestApiRegisterTime = now;
+                    _ = _restApiClientRegistration.RegisterAsync(RestApiIpAddress, RestApiPort);
+                }
+            }
+        }
+        catch
+        {
+            _uiDispatcher.InvokeOnUi(() => IsRestApiReachable = false);
+        }
     }
 
     #endregion
@@ -130,6 +319,12 @@ public sealed partial class MauiViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isConnected;
+
+    /// <summary>
+    /// Short status/error message for Z21 connection (e.g. "Connecting...", "Connection failed: ...").
+    /// </summary>
+    [ObservableProperty]
+    private string? _z21ConnectionStatus;
 
     [ObservableProperty]
     private bool _isTrackPowerOn;
@@ -148,23 +343,38 @@ public sealed partial class MauiViewModel : ObservableObject
 
     partial void OnZ21IpAddressChanged(string value)
     {
-        _settings.Z21.CurrentIpAddress = value;
+        // Discovery-only: do not persist Z21 IP to settings.
     }
 
     [RelayCommand]
     private async Task ConnectAsync()
     {
-        if (string.IsNullOrEmpty(Z21IpAddress)) return;
+        if (string.IsNullOrWhiteSpace(Z21IpAddress))
+        {
+            _uiDispatcher.InvokeOnUi(() => Z21ConnectionStatus = "Enter Z21 IP address");
+            return;
+        }
+
+        if (!int.TryParse(_settings.Z21.DefaultPort, out var port) || port <= 0 || port > 65535)
+            port = 21105;
+
+        _uiDispatcher.InvokeOnUi(() => Z21ConnectionStatus = "Connecting...");
 
         try
         {
-            var address = IPAddress.Parse(Z21IpAddress);
-            int port = int.Parse(_settings.Z21.DefaultPort);
+            var address = IPAddress.Parse(Z21IpAddress.Trim());
             await _z21.ConnectAsync(address, port).ConfigureAwait(false);
+            // Success: status will be set to "Connected" in OnZ21ConnectedChanged when Z21 responds
+        }
+        catch (FormatException ex)
+        {
+            _uiDispatcher.InvokeOnUi(() => Z21ConnectionStatus = $"Invalid IP: {ex.Message}");
+            Debug.WriteLine($"Z21 Connect failed (invalid IP): {ex.Message}");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Connection failed: {ex.Message}");
+            _uiDispatcher.InvokeOnUi(() => Z21ConnectionStatus = $"Connection failed: {ex.Message}");
+            Debug.WriteLine($"Z21 Connection failed: {ex.Message}");
         }
     }
 
@@ -172,6 +382,7 @@ public sealed partial class MauiViewModel : ObservableObject
     private async Task DisconnectAsync()
     {
         await _z21.DisconnectAsync().ConfigureAwait(false);
+        _uiDispatcher.InvokeOnUi(() => Z21ConnectionStatus = null);
     }
 
     [RelayCommand]
@@ -341,7 +552,52 @@ public sealed partial class MauiViewModel : ObservableObject
 
     private void OnZ21ConnectedChanged(bool connected)
     {
-        _uiDispatcher.InvokeOnUi(() => IsConnected = connected);
+        _uiDispatcher.InvokeOnUi(() =>
+        {
+            IsConnected = connected;
+            Z21ConnectionStatus = connected ? "Connected" : null;
+        });
+
+        if (connected)
+        {
+            _z21ReconnectCts?.Cancel();
+            _z21ReconnectCts = null;
+        }
+        else
+        {
+            // Start reconnection loop: retry Connect every 30s until connected
+            _z21ReconnectCts?.Cancel();
+            _z21ReconnectCts = new CancellationTokenSource();
+            _ = Z21ReconnectLoopAsync(_z21ReconnectCts.Token);
+        }
+    }
+
+    /// <summary>
+    /// Periodically attempts to reconnect to Z21 when disconnected (every 30s).
+    /// Stops when connected or when the cancellation token is set.
+    /// </summary>
+    private async Task Z21ReconnectLoopAsync(CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+
+            if (cancellationToken.IsCancellationRequested)
+                break;
+
+            Debug.WriteLine("Z21 reconnecting...");
+            await _uiDispatcher.InvokeOnUiAsync(async () =>
+            {
+                await ConnectCommand.ExecuteAsync(null).ConfigureAwait(false);
+            }).ConfigureAwait(false);
+        }
     }
 
     private void OnZ21SystemStateChanged(SystemState state)
@@ -424,11 +680,11 @@ public sealed partial class MauiViewModel : ObservableObject
             var (ip, port) = await _restDiscoveryService.DiscoverServerAsync().ConfigureAwait(false);
             if (string.IsNullOrEmpty(ip) || port == null)
             {
-                PhotoUploadStatus = "⚠️ REST Server not configured\n\n" +
-                                    "Enter server IP in settings above:\n" +
-                                    "• Use your PC's local IP address\n" +
-                                    "  (e.g., 192.168.0.79)\n\n" +
-                                    "Server must be running on port 5001.";
+                PhotoUploadStatus = "⚠️ REST server not found\n\n" +
+                                    "• Is MOBAflow (PC) running with\n  \"Auto-start REST API\" enabled?\n" +
+                                    "• Are phone and PC on the same Wi‑Fi?\n" +
+                                    "• Try again in a moment (discovery\n  runs automatically).\n\n" +
+                                    "Server must listen on port 5001.";
                 return;
             }
 

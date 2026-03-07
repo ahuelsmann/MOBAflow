@@ -30,20 +30,26 @@ public static class TrainClassLibrary
 
             var json = File.ReadAllText(jsonPath);
             var root = JsonDocument.Parse(json);
-            var locomotivesArray = root.RootElement.GetProperty("Locomotives");
+            // data.json uses lowercase "locomotives"; accept both for compatibility.
+            if (!root.RootElement.TryGetProperty("Locomotives", out var locomotivesProp))
+                root.RootElement.TryGetProperty("locomotives", out locomotivesProp);
 
-            foreach (var categoryElement in locomotivesArray.EnumerateArray())
+            if (locomotivesProp.ValueKind != JsonValueKind.Array)
+                return;
+
+            foreach (var categoryElement in locomotivesProp.EnumerateArray())
             {
-                var seriesArray = categoryElement.GetProperty("Series");
-                foreach (var seriesElement in seriesArray.EnumerateArray())
+                if (!categoryElement.TryGetProperty("Series", out var seriesProp))
+                    continue;
+                foreach (var seriesElement in seriesProp.EnumerateArray())
                 {
                     var locomotive = new LocomotiveSeries
                     {
-                        Name = seriesElement.GetProperty("Name").GetString() ?? string.Empty,
-                        Vmax = seriesElement.GetProperty("Vmax").GetInt32(),
-                        Type = seriesElement.GetProperty("Type").GetString() ?? string.Empty,
-                        Epoch = seriesElement.GetProperty("Epoch").GetString() ?? string.Empty,
-                        Description = seriesElement.GetProperty("Description").GetString() ?? string.Empty
+                        Name = seriesElement.TryGetProperty("Name", out var n) ? n.GetString() ?? string.Empty : string.Empty,
+                        Vmax = seriesElement.TryGetProperty("Vmax", out var v) ? v.GetInt32() : 0,
+                        Type = seriesElement.TryGetProperty("Type", out var t) ? t.GetString() ?? string.Empty : string.Empty,
+                        Epoch = seriesElement.TryGetProperty("Epoch", out var e) ? e.GetString() ?? string.Empty : string.Empty,
+                        Description = seriesElement.TryGetProperty("Description", out var d) ? d.GetString() ?? string.Empty : string.Empty
                     };
 
                     _allLocomotives.Add(locomotive);

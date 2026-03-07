@@ -346,9 +346,9 @@ public partial class MainWindowViewModel
 
     private void OnZ21VersionInfoChanged(Z21VersionInfo versionInfo)
     {
-        SerialNumber = versionInfo.SerialNumber.ToString();
-        FirmwareVersion = versionInfo.FirmwareVersion;
-        HardwareType = versionInfo.HardwareType;
+        SerialNumber = versionInfo.SerialNumber == 0 ? "-" : versionInfo.SerialNumber.ToString();
+        FirmwareVersion = versionInfo.FirmwareVersionCode == 0 ? "-" : versionInfo.FirmwareVersion;
+        HardwareType = versionInfo.HardwareTypeCode == 0 ? "-" : versionInfo.HardwareType;
         _logger.LogInformation("Z21 Version Info: S/N={SerialNumber}, HW={HardwareType}, FW={FirmwareVersion}",
             SerialNumber, HardwareType, FirmwareVersion);
     }

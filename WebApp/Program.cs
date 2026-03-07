@@ -3,6 +3,7 @@
 using Moba.Backend.Data;
 using Moba.Backend.Extensions;
 using Moba.Common.Configuration;
+using Moba.SharedUI.Extensions;
 using Moba.SharedUI.Interface;
 using Moba.SharedUI.Service;
 using Moba.SharedUI.ViewModel;
@@ -32,6 +33,9 @@ builder.Services.AddSingleton<IIoService, NullIoService>();
 // Blazor-specific services
 builder.Services.AddSingleton<IUiDispatcher, BlazorUiDispatcher>();
 
+// Event Bus with UI-thread marshalling (required by backend services)
+builder.Services.AddEventBusWithUiDispatch();
+
 // ✅ Audio Services (NullObject - WebApp doesn't support audio)
 builder.Services.AddSingleton<ISoundPlayer, NullSoundPlayer>();
 builder.Services.AddSingleton<ISpeakerEngine, NullSpeakerEngine>();
@@ -47,12 +51,6 @@ builder.Services.AddSingleton<DataManager>();
 // ✅ WebAppViewModel as Singleton (web-optimized ViewModel for Blazor Server)
 builder.Services.AddSingleton<WebAppViewModel>();
 
-// ✅ REST API Controllers
-builder.Services.AddControllers();
-
-// ✅ UDP Discovery Background Service
-builder.Services.AddHostedService<UdpDiscoveryService>();
-
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
@@ -66,9 +64,6 @@ app.UseHttpsRedirection();
 app.UseAntiforgery();
 
 app.MapStaticAssets();
-
-// ✅ Map REST API Controllers (Photo Upload)
-app.MapControllers();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage
     x:Class="Moba.MAUI.MainPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -13,7 +13,7 @@
             Padding="0"
             HorizontalOptions="Fill"
             Spacing="1">
-            <!--  Header with Status Indicator and Theme Switch  -->
+            <!--  Header with Status Indicators (Z21 + REST API) and Theme Switch  -->
             <Grid Padding="16,6,16,12" ColumnDefinitions="Auto,Auto,Auto,*,Auto">
                 <!--  App Title  -->
                 <Label
@@ -55,141 +55,85 @@
                 <!--  Spacer  -->
                 <BoxView Grid.Column="3" Color="Transparent" />
 
-                <!--  Connection Status Indicator (with pulse animation when connected)  -->
-                <Border
-                    x:Name="ConnectionIndicator"
+                <!--  Z21 + MOBAflow status indicators (two dots: Z21 left, MOBAflow right)  -->
+                <HorizontalStackLayout
                     Grid.Column="4"
-                    BackgroundColor="{Binding IsConnected, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwayAccent}, FalseObject={StaticResource RailwayDanger}}}"
-                    HeightRequest="14"
-                    StrokeShape="RoundRectangle 7"
-                    StrokeThickness="0"
-                    VerticalOptions="Center"
-                    WidthRequest="14">
-                    <Border.Shadow>
-                        <Shadow
-                            Brush="{Binding IsConnected, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwayAccent}, FalseObject={StaticResource RailwayDanger}}}"
-                            Opacity="0.6"
-                            Radius="8" />
-                    </Border.Shadow>
-                </Border>
+                    Spacing="6"
+                    VerticalOptions="Center">
+                    <!--  Z21 connection indicator  -->
+                    <HorizontalStackLayout Spacing="4" VerticalOptions="Center">
+                        <Border
+                            x:Name="ConnectionIndicator"
+                            BackgroundColor="{Binding IsConnected, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwayAccent}, FalseObject={StaticResource RailwayDanger}}}"
+                            HeightRequest="12"
+                            StrokeShape="RoundRectangle 6"
+                            StrokeThickness="0"
+                            WidthRequest="12">
+                            <Border.Shadow>
+                                <Shadow
+                                    Brush="{Binding IsConnected, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwayAccent}, FalseObject={StaticResource RailwayDanger}}}"
+                                    Opacity="0.6"
+                                    Radius="6" />
+                            </Border.Shadow>
+                        </Border>
+                        <Label
+                            FontSize="10"
+                            Text="Z21"
+                            TextColor="{DynamicResource TextSecondary}"
+                            VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                    <!--  MOBAflow (REST API) indicator  -->
+                    <HorizontalStackLayout Spacing="4" VerticalOptions="Center">
+                        <Border
+                            x:Name="RestApiIndicator"
+                            BackgroundColor="{Binding IsRestApiReachable, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwayAccent}, FalseObject={StaticResource RailwayDanger}}}"
+                            HeightRequest="12"
+                            StrokeShape="RoundRectangle 6"
+                            StrokeThickness="0"
+                            WidthRequest="12">
+                            <Border.Shadow>
+                                <Shadow
+                                    Brush="{Binding IsRestApiReachable, Converter={toolkit:BoolToObjectConverter TrueObject={StaticResource RailwayAccent}, FalseObject={StaticResource RailwayDanger}}}"
+                                    Opacity="0.6"
+                                    Radius="6" />
+                            </Border.Shadow>
+                        </Border>
+                        <Label
+                            FontSize="10"
+                            Text="MOBAflow"
+                            TextColor="{DynamicResource TextSecondary}"
+                            VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                </HorizontalStackLayout>
             </Grid>
 
 
-            <!--  Connection Controls Card  -->
+            <!--  Track Power (Z21 auto-connects after discovery)  -->
             <VerticalStackLayout Padding="16,6" Spacing="8">
-                <!--  REST-API Server Section  -->
+                <HorizontalStackLayout
+                    HorizontalOptions="End"
+                    Spacing="0"
+                    VerticalOptions="Center">
+                    <Label
+                        FontSize="11"
+                        Text="Track Power"
+                        TextColor="{DynamicResource TextSecondary}"
+                        VerticalTextAlignment="Center" />
+                    <Switch
+                        IsEnabled="{Binding IsConnected}"
+                        IsToggled="{Binding IsTrackPowerOn, Mode=OneWay}"
+                        OnColor="{DynamicResource RailwayWarning}"
+                        Scale="0.75"
+                        ThumbColor="White"
+                        Toggled="TrackPowerSwitch_Toggled" />
+                </HorizontalStackLayout>
+
+                <!--  Z21 connection status/error message  -->
                 <Label
-                    FontAttributes="Bold"
-                    FontSize="12"
-                    Text="MOBAflow Service"
+                    IsVisible="{Binding Z21ConnectionStatus, Converter={toolkit:IsStringNotNullOrEmptyConverter}}"
+                    FontSize="11"
+                    Text="{Binding Z21ConnectionStatus}"
                     TextColor="{DynamicResource TextSecondary}" />
-
-                <!--  Inline Help Label (only when IP is empty)  -->
-                <Label
-                    FontSize="10"
-                    IsVisible="{Binding RestApiIpAddress, Converter={toolkit:IsStringNullOrEmptyConverter}}"
-                    Text="💡 Enter your PC's local IP (e.g., 192.168.0.79)"
-                    TextColor="{DynamicResource RailwaySecondary}" />
-
-                <!--  IP Address and Port in styled containers  -->
-                <Grid ColumnDefinitions="*,80" ColumnSpacing="8">
-                    <Border
-                        Grid.Column="0"
-                        Padding="12,0"
-                        BackgroundColor="{DynamicResource SurfaceDark}"
-                        StrokeShape="RoundRectangle 6"
-                        StrokeThickness="0">
-                        <Entry
-                            BackgroundColor="Transparent"
-                            FontSize="14"
-                            Placeholder="192.168.0.100"
-                            PlaceholderColor="{DynamicResource TextDisabled}"
-                            Text="{Binding RestApiIpAddress}"
-                            TextColor="{DynamicResource TextPrimary}"
-                            VerticalOptions="Center" />
-                    </Border>
-                    <Border
-                        Grid.Column="1"
-                        Padding="12,0"
-                        BackgroundColor="{DynamicResource SurfaceDark}"
-                        StrokeShape="RoundRectangle 6"
-                        StrokeThickness="0">
-                        <Entry
-                            BackgroundColor="Transparent"
-                            FontSize="14"
-                            HorizontalTextAlignment="Center"
-                            Keyboard="Numeric"
-                            Placeholder="5001"
-                            PlaceholderColor="{DynamicResource TextDisabled}"
-                            Text="{Binding RestApiPort}"
-                            TextColor="{DynamicResource TextPrimary}"
-                            VerticalOptions="Center" />
-                    </Border>
-                </Grid>
-
-                <!--  Z21 IP Address Section  -->
-                <Label
-                    Margin="0,4,0,0"
-                    FontAttributes="Bold"
-                    FontSize="12"
-                    Text="Z21 Digital Command Station"
-                    TextColor="{DynamicResource TextSecondary}" />
-                <Border
-                    Padding="12,0"
-                    BackgroundColor="{DynamicResource SurfaceDark}"
-                    StrokeShape="RoundRectangle 6"
-                    StrokeThickness="0">
-                    <Entry
-                        BackgroundColor="Transparent"
-                        FontSize="14"
-                        Placeholder="192.168.0.111"
-                        PlaceholderColor="{DynamicResource TextDisabled}"
-                        Text="{Binding Z21IpAddress}"
-                        TextColor="{DynamicResource TextPrimary}"
-                        VerticalOptions="Center" />
-                </Border>
-
-                <!--  Connection & Track Power Toggles  -->
-                <Grid ColumnDefinitions="*,*">
-                    <!--  Connection Toggle  -->
-                    <HorizontalStackLayout
-                        Grid.Column="0"
-                        HorizontalOptions="Start"
-                        Spacing="0"
-                        VerticalOptions="Center">
-                        <Label
-                            FontSize="11"
-                            Text="{Binding IsConnected, Converter={toolkit:BoolToObjectConverter TrueObject='Connected', FalseObject='Disconnected'}}"
-                            TextColor="{DynamicResource TextSecondary}"
-                            VerticalTextAlignment="Center" />
-                        <Switch
-                            IsToggled="{Binding IsConnected, Mode=OneWay}"
-                            OnColor="{DynamicResource RailwayAccent}"
-                            Scale="0.75"
-                            ThumbColor="White"
-                            Toggled="ConnectionSwitch_Toggled" />
-                    </HorizontalStackLayout>
-
-                    <!--  Track Power Toggle  -->
-                    <HorizontalStackLayout
-                        Grid.Column="1"
-                        HorizontalOptions="End"
-                        Spacing="0"
-                        VerticalOptions="Center">
-                        <Label
-                            FontSize="11"
-                            Text="Track Power"
-                            TextColor="{DynamicResource TextSecondary}"
-                            VerticalTextAlignment="Center" />
-                        <Switch
-                            IsEnabled="{Binding IsConnected}"
-                            IsToggled="{Binding IsTrackPowerOn, Mode=OneWay}"
-                            OnColor="{DynamicResource RailwayWarning}"
-                            Scale="0.75"
-                            ThumbColor="White"
-                            Toggled="TrackPowerSwitch_Toggled" />
-                    </HorizontalStackLayout>
-                </Grid>
             </VerticalStackLayout>
 
             <!--  System Stats Card (when connected)  -->

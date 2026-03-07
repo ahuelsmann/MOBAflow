@@ -118,6 +118,29 @@ public static class Z21MessageParser
     }
 
     /// <summary>
+    /// Determines whether the given packet is a LAN_X_GET_VERSION response (X-Header 0x63).
+    /// Response format: 09-00-40-00 63-21 XBUS_VER CMDST_ID_MSB CMDST_ID_LSB
+    /// </summary>
+    public static bool IsLanXGetVersionResponse(byte[] data)
+        => data.Length >= 9 && IsLanXHeader(data) && data[4] == 0x63;
+
+    /// <summary>
+    /// Parses the LAN_X_GET_VERSION response (0x63).
+    /// Format: 09-00-40-00 63-21 XBUS_VER CMDST_ID_MSB CMDST_ID_LSB
+    /// XBUS_VER is the X-Bus protocol version; CMDST_ID identifies the command station (e.g. 0x12 = Z21 family).
+    /// Does not contain serial number or full hardware type; use as fallback when LAN_GET_SERIAL_NUMBER / LAN_GET_HWINFO are not sent by the device.
+    /// </summary>
+    public static bool TryParseLanXGetVersionResponse(byte[] data, out byte xbusVer, out ushort cmdstId)
+    {
+        xbusVer = 0;
+        cmdstId = 0;
+        if (data.Length < 9 || !IsLanXGetVersionResponse(data)) return false;
+        xbusVer = data[6];
+        cmdstId = (ushort)((data[7] << 8) | data[8]);
+        return true;
+    }
+
+    /// <summary>
     /// Tries to parse an X‑Bus status broadcast packet.
     /// </summary>
     /// <param name="data">Raw Z21 packet bytes.</param>
