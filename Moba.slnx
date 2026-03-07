@@ -6,6 +6,7 @@
     <File Path=".github/instructions/todos.instructions.md" />
     <File Path=".gitignore" />
     <File Path=".sln.DotSettings" />
+    <File Path="AGENTS.md" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Build.targets" />
     <File Path="Directory.Packages.props" />
