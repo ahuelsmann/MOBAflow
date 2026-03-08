@@ -10,7 +10,10 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Xaml.Interactivity;
 
+using Moba.WinUI;
+
 using SharedUI.Interface;
+using SharedUI.ViewModel;
 
 using Windows.Foundation;
 
@@ -127,7 +130,6 @@ public sealed class GridColumnResizeBehavior : Behavior<Grid>
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        RestorePersistedWidths();
         ResetCursor();
     }
 
@@ -220,6 +222,11 @@ public sealed class GridColumnResizeBehavior : Behavior<Grid>
         if (AssociatedObject == null || _activeBoundary == null)
             return;
 
+        var layout = GetLayoutColumnWidths();
+        var key = PersistenceKey;
+        if (layout == null || string.IsNullOrEmpty(key))
+            return;
+
         var columns = AssociatedObject.ColumnDefinitions;
         var leftColumn = columns[_activeBoundary.LeftColumnIndex];
         var rightColumn = columns[_activeBoundary.RightColumnIndex];
@@ -228,11 +235,13 @@ public sealed class GridColumnResizeBehavior : Behavior<Grid>
         switch (_resizeMode)
         {
             case ResizeMode.LeftOnly:
-                leftColumn.Width = new GridLength(Clamp(_leftStartWidth + delta, leftColumn.MinWidth, GetMaxWidth(leftColumn)));
+                var newLeft = Clamp(_leftStartWidth + delta, leftColumn.MinWidth, GetMaxWidth(leftColumn));
+                layout.SetColumnWidth(key, _activeBoundary.LeftColumnIndex, newLeft);
                 break;
 
             case ResizeMode.RightOnly:
-                rightColumn.Width = new GridLength(Clamp(_rightStartWidth - delta, rightColumn.MinWidth, GetMaxWidth(rightColumn)));
+                var newRight = Clamp(_rightStartWidth - delta, rightColumn.MinWidth, GetMaxWidth(rightColumn));
+                layout.SetColumnWidth(key, _activeBoundary.RightColumnIndex, newRight);
                 break;
 
             case ResizeMode.Both:
@@ -242,10 +251,10 @@ public sealed class GridColumnResizeBehavior : Behavior<Grid>
                 if (maxLeft < minLeft)
                     return;
 
-                var newLeft = Clamp(_leftStartWidth + delta, minLeft, maxLeft);
-                var newRight = totalWidth - newLeft;
-                leftColumn.Width = new GridLength(newLeft);
-                rightColumn.Width = new GridLength(newRight);
+                var left = Clamp(_leftStartWidth + delta, minLeft, maxLeft);
+                var right = totalWidth - left;
+                layout.SetColumnWidth(key, _activeBoundary.LeftColumnIndex, left);
+                layout.SetColumnWidth(key, _activeBoundary.RightColumnIndex, right);
                 break;
         }
     }
@@ -444,36 +453,54 @@ public sealed class GridColumnResizeBehavior : Behavior<Grid>
         return false;
     }
 
-    private void RestorePersistedWidths()
-    {
-        EnsureServices();
-        if (_settings == null || string.IsNullOrWhiteSpace(PersistenceKey) || AssociatedObject == null)
-            return;
-
-        for (var i = 0; i < AssociatedObject.ColumnDefinitions.Count; i++)
-        {
-            var column = AssociatedObject.ColumnDefinitions[i];
-            if (!TryGetPersistedWidth(i, out var width) && !TryGetDefaultWidth(column, out width))
-                continue;
-
-            column.Width = new GridLength(Clamp(width, column.MinWidth, GetMaxWidth(column)));
-        }
-    }
-
     private void PersistCurrentWidths()
     {
-        EnsureServices();
-        if (_settings == null || string.IsNullOrWhiteSpace(PersistenceKey) || AssociatedObject == null || _activeBoundary == null)
+        var layout = GetLayoutColumnWidths();
+        var key = PersistenceKey;
+        if (layout == null || string.IsNullOrEmpty(key) || AssociatedObject == null || _activeBoundary == null)
             return;
 
-        if (_resizeMode is ResizeMode.LeftOnly or ResizeMode.Both)
-            PersistWidth(_activeBoundary.LeftColumnIndex, AssociatedObject.ColumnDefinitions[_activeBoundary.LeftColumnIndex].ActualWidth);
+        EnsureServices();
+        if (_settings == null || _settingsService == null)
+            return;
 
-        if (_resizeMode is ResizeMode.RightOnly or ResizeMode.Both)
-            PersistWidth(_activeBoundary.RightColumnIndex, AssociatedObject.ColumnDefinitions[_activeBoundary.RightColumnIndex].ActualWidth);
+        var columns = AssociatedObject.ColumnDefinitions;
+        for (var i = 0; i < columns.Count; i++)
+        {
+            if (IsSplitterColumn(columns[i]))
+                continue;
+            var width = layout.GetColumnWidth(key, i);
+            if (width > 0)
+                PersistWidth(i, width);
+        }
 
-        if (_settingsService != null)
-            _ = _settingsService.SaveSettingsAsync(_settings);
+        _ = _settingsService.SaveSettingsAsync(_settings);
+    }
+
+    private LayoutColumnWidthsViewModel? GetLayoutColumnWidths()
+    {
+        var app = Application.Current as App;
+        if (app != null)
+        {
+            var fromDi = app.Services.GetService<LayoutColumnWidthsViewModel>();
+            if (fromDi != null)
+                return fromDi;
+            if (app.Resources.TryGetValue("LayoutColumnWidths", out var res) && res is LayoutColumnWidthsViewModel fromRes)
+                return fromRes;
+        }
+
+        // Fallback: from DataContext when the grid is under a page with MainWindowViewModel (e.g. JourneysPage)
+        var fe = AssociatedObject as FrameworkElement;
+        if (fe != null)
+        {
+            for (var current = fe; current != null; current = current.Parent as FrameworkElement)
+            {
+                if (current.DataContext is MainWindowViewModel mainVm)
+                    return mainVm.LayoutColumnWidths;
+            }
+        }
+
+        return null;
     }
 
     private void PersistWidth(int columnIndex, double width)
@@ -481,25 +508,9 @@ public sealed class GridColumnResizeBehavior : Behavior<Grid>
         if (_settings == null || string.IsNullOrWhiteSpace(PersistenceKey))
             return;
 
+        _settings.Layout ??= new LayoutSettings();
+        _settings.Layout.ColumnWidths ??= new Dictionary<string, double>();
         _settings.Layout.ColumnWidths[BuildWidthKey(columnIndex)] = width;
-    }
-
-    private bool TryGetPersistedWidth(int columnIndex, out double width)
-    {
-        width = default;
-        if (_settings == null || string.IsNullOrWhiteSpace(PersistenceKey))
-            return false;
-
-        if (_settings.Layout.ColumnWidths.TryGetValue(BuildWidthKey(columnIndex), out width))
-            return width > 0;
-
-        return false;
-    }
-
-    private static bool TryGetDefaultWidth(ColumnDefinition column, out double width)
-    {
-        width = GetDefaultWidth(column);
-        return !double.IsNaN(width) && width > 0;
     }
 
     private string BuildWidthKey(int columnIndex)
@@ -512,8 +523,9 @@ public sealed class GridColumnResizeBehavior : Behavior<Grid>
         if (_settings != null)
             return;
 
-        _settings = App.Current.Services.GetService<AppSettings>();
-        _settingsService = App.Current.Services.GetService<ISettingsService>();
+        var app = Application.Current as App;
+        _settings = app?.Services.GetService<AppSettings>();
+        _settingsService = app?.Services.GetService<ISettingsService>();
     }
 
     private static double GetMaxWidth(ColumnDefinition column)

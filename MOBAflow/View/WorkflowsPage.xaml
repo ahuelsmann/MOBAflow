@@ -18,15 +18,20 @@
                 <local:GridColumnResizeBehavior PersistenceKey="WorkflowsPage" />
             </i:Interaction.Behaviors>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="300" MinWidth="200" local:GridColumnResizeBehavior.DefaultWidth="300" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" MinWidth="200" />
+                <ColumnDefinition
+                    MinWidth="200"
+                    Width="{Binding WorkflowsPage.Col0, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}"
+                    local:GridColumnResizeBehavior.DefaultWidth="300" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition
-                    Width="350"
+                    MinWidth="200"
+                    Width="{Binding WorkflowsPage.Col2, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition
                     MinWidth="300"
-                    local:GridColumnResizeBehavior.DefaultWidth="350"
-                    MaxWidth="450" />
+                    MaxWidth="450"
+                    Width="{Binding WorkflowsPage.Col4, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}"
+                    local:GridColumnResizeBehavior.DefaultWidth="350" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />

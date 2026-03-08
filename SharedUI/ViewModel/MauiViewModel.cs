@@ -44,6 +44,9 @@ public sealed partial class MauiViewModel : ObservableObject
     private const int RestApiRediscoverIntervalFirst90Seconds = 10;
     private const int RestApiStartupRetryWindowSeconds = 90;
 
+    /// <summary>Interval in seconds for Z21 auto-connect retries when not yet connected (e.g. app started with delay).</summary>
+    private const int Z21StartupRetryIntervalSeconds = 10;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="MauiViewModel"/> class for the MAUI mobile client.
     /// </summary>
@@ -134,10 +137,52 @@ public sealed partial class MauiViewModel : ObservableObject
                     await ConnectCommand.ExecuteAsync(null);
                 }).ConfigureAwait(false);
             }
+            else
+            {
+                // Discovery found no Z21: try once with saved/default IP (e.g. app started with delay or Z21 on different subnet)
+                await _uiDispatcher.InvokeOnUiAsync(async () =>
+                {
+                    if (!IsConnected && !string.IsNullOrWhiteSpace(Z21IpAddress))
+                    {
+                        Debug.WriteLine("Z21 discovery did not find device; trying saved/default IP...");
+                        await ConnectCommand.ExecuteAsync(null).ConfigureAwait(false);
+                    }
+                }).ConfigureAwait(false);
+            }
+
+            // Start periodic Z21 reconnect when not connected (handles delayed app start or Z21 not ready)
+            _ = TryZ21AutoConnectLoopAsync();
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Auto-discover failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Periodically attempts to connect to Z21 when not yet connected (e.g. app or Z21 started with delay).
+    /// Stops when connected. After first connection, reconnects are handled by <see cref="Z21ReconnectLoopAsync"/>.
+    /// </summary>
+    private async Task TryZ21AutoConnectLoopAsync()
+    {
+        var intervalSeconds = _settings.Z21.AutoConnectRetryIntervalSeconds > 0
+            ? _settings.Z21.AutoConnectRetryIntervalSeconds
+            : Z21StartupRetryIntervalSeconds;
+        while (true)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(intervalSeconds)).ConfigureAwait(false);
+            if (IsConnected)
+            {
+                Debug.WriteLine("Z21 startup auto-connect: connected, stopping retry loop");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(Z21IpAddress))
+                continue;
+            Debug.WriteLine("Z21 startup auto-connect: retrying...");
+            await _uiDispatcher.InvokeOnUiAsync(async () =>
+            {
+                await ConnectCommand.ExecuteAsync(null).ConfigureAwait(false);
+            }).ConfigureAwait(false);
         }
     }
 
@@ -184,6 +229,12 @@ public sealed partial class MauiViewModel : ObservableObject
         Debug.WriteLine($"   AppSettings.Counter.UseTimerFilter: {_settings.Counter.UseTimerFilter}");
         Debug.WriteLine($"   AppSettings.Counter.TimerIntervalSeconds: {_settings.Counter.TimerIntervalSeconds}");
         
+        // Z21: load from settings so UI shows last used IP and we can auto-connect when discovery fails
+        if (!string.IsNullOrWhiteSpace(_settings.Z21.CurrentIpAddress))
+        {
+            Z21IpAddress = _settings.Z21.CurrentIpAddress.Trim();
+        }
+        
         // Z21 and REST API: load from settings as fallback so REST connect works when discovery fails
         if (!string.IsNullOrWhiteSpace(_settings.RestApi.CurrentIpAddress) && _settings.RestApi.Port > 0)
         {
@@ -199,6 +250,7 @@ public sealed partial class MauiViewModel : ObservableObject
         Debug.WriteLine("✅ Values loaded into ViewModel (REST: from settings as fallback, discovery can override):");
         Debug.WriteLine($"   RestApiIpAddress: {RestApiIpAddress}");
         Debug.WriteLine($"   RestApiPort: {RestApiPort}");
+        Debug.WriteLine($"   Z21IpAddress: {Z21IpAddress}");
         Debug.WriteLine($"   CountOfFeedbackPoints: {CountOfFeedbackPoints}");
         Debug.WriteLine($"   GlobalTargetLapCount: {GlobalTargetLapCount}");
         Debug.WriteLine($"   UseTimerFilter: {UseTimerFilter}");
@@ -343,7 +395,11 @@ public sealed partial class MauiViewModel : ObservableObject
 
     partial void OnZ21IpAddressChanged(string value)
     {
-        // Discovery-only: do not persist Z21 IP to settings.
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            _settings.Z21.CurrentIpAddress = value.Trim();
+            _ = SaveSettingsAsync();
+        }
     }
 
     [RelayCommand]
@@ -560,6 +616,8 @@ public sealed partial class MauiViewModel : ObservableObject
 
         if (connected)
         {
+            _settings.Z21.CurrentIpAddress = Z21IpAddress?.Trim() ?? string.Empty;
+            _ = SaveSettingsAsync();
             _z21ReconnectCts?.Cancel();
             _z21ReconnectCts = null;
         }

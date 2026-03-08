@@ -35,9 +35,13 @@
                 <local:GridColumnResizeBehavior PersistenceKey="MonitorPage" />
             </i:Interaction.Behaviors>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="35*" MinWidth="350" />
+                <ColumnDefinition
+                    MinWidth="350"
+                    Width="{Binding MonitorPage.Col0, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="65*" MinWidth="400" />
+                <ColumnDefinition
+                    MinWidth="400"
+                    Width="{Binding MonitorPage.Col2, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}" />
             </Grid.ColumnDefinitions>
 
             <!--  Traffic Packets List  -->

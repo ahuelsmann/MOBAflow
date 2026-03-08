@@ -392,7 +392,7 @@ public class FeatureToggleSettings
     /// <summary>
     /// Gets or sets an optional label suffix for the Locomotives page.
     /// </summary>
-    public string LocomotivesPageLabel { get; set; } = "Preview";
+    public string LocomotivesPageLabel { get; set; } = "";
 
     public bool IsPassengerWagonsPageAvailable { get; set; } = true;
 

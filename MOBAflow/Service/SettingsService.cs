@@ -100,6 +100,15 @@ internal class SettingsService : ISettingsService
         }
 
         _settings.Layout.SettingsPage = source.Layout.SettingsPage;
+        _settings.Layout.ColumnWidths = source.Layout?.ColumnWidths != null
+            ? new Dictionary<string, double>(source.Layout.ColumnWidths)
+            : new Dictionary<string, double>();
+        if (source.Layout?.JourneysPage != null)
+        {
+            _settings.Layout.JourneysPage ??= new JourneysPageLayoutSettings();
+            _settings.Layout.JourneysPage.IsCityLibraryExpanded = source.Layout.JourneysPage.IsCityLibraryExpanded;
+            _settings.Layout.JourneysPage.IsWorkflowLibraryExpanded = source.Layout.JourneysPage.IsWorkflowLibraryExpanded;
+        }
         _settings.FeatureToggles = source.FeatureToggles;
     }
 

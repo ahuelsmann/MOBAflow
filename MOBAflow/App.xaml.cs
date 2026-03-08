@@ -315,7 +315,9 @@ public partial class App
         // NOTE: SpeechHealthCheck and HealthCheckService are initialized during post-startup
 
         // ViewModels
+        services.AddSingleton<LayoutColumnWidthsViewModel>();
         services.AddSingleton(sp => new MainWindowViewModel(
+            sp.GetRequiredService<LayoutColumnWidthsViewModel>(),
             sp.GetRequiredService<IZ21>(),
             sp.GetRequiredService<IEventBus>(),
             sp.GetRequiredService<IWorkflowService>(),
@@ -394,6 +396,10 @@ public partial class App
         {
             Debug.WriteLine("[OnLaunched] START");
 
+            // Load settings (including Layout) first so the singleton has persisted values before any View/ViewModel is created
+            _ = Services.GetRequiredService<ISettingsService>();
+            Debug.WriteLine("[OnLaunched] Settings loaded (ISettingsService resolved)");
+
             // Initialize SkinProvider with saved settings before creating MainWindow
             var skinProvider = Services.GetRequiredService<ISkinProvider>();
             Debug.WriteLine("[OnLaunched] SkinProvider resolved");
@@ -405,6 +411,10 @@ public partial class App
 
             skinProvider.Initialize(appSettings);
             Debug.WriteLine("[OnLaunched] SkinProvider initialized");
+
+            // Expose LayoutColumnWidths as app resource before MainWindow so pages can bind to it (e.g. TrackPlanPage with its own ViewModel)
+            var layoutColumnWidths = Services.GetRequiredService<LayoutColumnWidthsViewModel>();
+            Current.Resources["LayoutColumnWidths"] = layoutColumnWidths;
 
             _window = Services.GetRequiredService<MainWindow>();
             Debug.WriteLine("[OnLaunched] MainWindow created");

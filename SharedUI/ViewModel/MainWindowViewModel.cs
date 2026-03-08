@@ -57,6 +57,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
     // Execution Context (contains all action execution dependencies)
     private readonly ActionExecutionContext _executionContext;
 
+    // Layout column widths (observable, bound from grid columns; loaded from settings so UI reflects persisted values)
+    private readonly LayoutColumnWidthsViewModel _layoutColumnWidths;
+
     // Runtime State
     private JourneyManager? _journeyManager;
     private Timer? _z21AutoConnectTimer;
@@ -81,6 +84,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     /// <param name="photoHubClient">Optional PhotoHub client instance (WinUI only, loosely typed as <see cref="object"/>).</param>
     /// <param name="featureTogglePageProvider">Optional provider for feature toggle page metadata.</param>
     public MainWindowViewModel(
+        LayoutColumnWidthsViewModel layoutColumnWidths,
         IZ21 z21,
         IEventBus eventBus,
         IWorkflowService workflowService,
@@ -96,6 +100,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         object? photoHubClient = null,  // Optional PhotoHubClient (only in WinUI, type is object to avoid assembly reference)
         IFeatureTogglePageProvider? featureTogglePageProvider = null)
     {
+        ArgumentNullException.ThrowIfNull(layoutColumnWidths);
         ArgumentNullException.ThrowIfNull(z21);
         ArgumentNullException.ThrowIfNull(eventBus);
         ArgumentNullException.ThrowIfNull(workflowService);
@@ -112,6 +117,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _uiDispatcher = uiDispatcher;
         _settings = settings;
         _logger = logger;
+        _layoutColumnWidths = layoutColumnWidths;
+        _layoutColumnWidths.LoadFrom(settings.Layout);
         _cityLibraryService = cityLibraryService;
         _settingsService = settingsService;
         _announcementService = announcementService;
@@ -127,7 +134,11 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
         IsDarkMode = settings.Application.IsDarkMode;
 
-        // Subscribe to Z21 events via EventBus (UiThreadEventBusDecorator runs handlers on UI thread)
+        // Restore JourneysPage layout so ViewModel has persisted values from the start
+        IsCityLibraryVisible = settings.Layout?.JourneysPage?.IsCityLibraryExpanded ?? true;
+        IsWorkflowLibraryVisible = settings.Layout?.JourneysPage?.IsWorkflowLibraryExpanded ?? true;
+
+        // Subscribe to Z21 events
         _eventBus.Subscribe<Z21ConnectionEstablishedEvent>(_ => OnZ21ConnectedChanged(true));
         _eventBus.Subscribe<Z21ConnectionLostEvent>(_ => HandleConnectionLost());
         _eventBus.Subscribe<SystemStateChangedEvent>(evt => OnZ21SystemStateChanged(CreateSystemState(evt)));
@@ -173,6 +184,12 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isDarkMode = true;  // Dark theme is default for WinUI
+
+    /// <summary>
+    /// Observable column widths per page. Bound from grid ColumnDefinitions; when values are set
+    /// (from loaded settings or from the resize behavior), the UI updates via binding.
+    /// </summary>
+    public LayoutColumnWidthsViewModel LayoutColumnWidths => _layoutColumnWidths;
 
     /// <summary>
     /// Called when IsDarkMode changes. Persists to AppSettings.

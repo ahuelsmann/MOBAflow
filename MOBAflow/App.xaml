@@ -96,6 +96,7 @@
                 x:Key="BoolToAutoStartLabelConverter"
                 FalseValue="Auto-start with MOBAflow: Off"
                 TrueValue="Auto-start with MOBAflow: On" />
+            <converter:DoubleToGridLengthConverter x:Key="DoubleToGridLengthConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
