@@ -85,4 +85,54 @@ internal class PhotoPathHelperTests
 
         Assert.That(result, Is.EqualTo(baseDir));
     }
+
+    [Test]
+    public void NormalizeCategory_WithWagonsAlias_ReturnsWagons()
+    {
+        var result = PhotoPathHelper.NormalizeCategory("wagons");
+
+        Assert.That(result, Is.EqualTo("wagons"));
+    }
+
+    [Test]
+    public void ToStorageRelativePath_ReturnsPhotosPrefixedPath()
+    {
+        var entityId = Guid.Parse("11111111-2222-3333-4444-555555555555");
+
+        var result = PhotoPathHelper.ToStorageRelativePath("locomotives", entityId, "jpg");
+
+        Assert.That(result, Is.EqualTo("photos/locomotives/11111111-2222-3333-4444-555555555555.jpg"));
+    }
+
+    [Test]
+    public void NormalizeStoredRelativePath_AddsPhotosPrefixAndNormalizesBackslashes()
+    {
+        var result = PhotoPathHelper.NormalizeStoredRelativePath("wagons\\abc.png");
+
+        Assert.That(result, Is.EqualTo("photos/wagons/abc.png"));
+    }
+
+    [Test]
+    public void TryGetStorageRelativePath_WhenPathIsInsideBaseDir_ReturnsPhotosRelativePath()
+    {
+        var baseDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "Photos");
+        var fullPath = Path.Combine(baseDir, "locomotives", "abc.jpg");
+
+        var success = PhotoPathHelper.TryGetStorageRelativePath(baseDir, fullPath, out var relativePath);
+
+        Assert.That(success, Is.True);
+        Assert.That(relativePath, Is.EqualTo("photos/locomotives/abc.jpg"));
+    }
+
+    [Test]
+    public void TryGetStorageRelativePath_WhenPathIsOutsideBaseDir_ReturnsFalse()
+    {
+        var baseDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "Photos");
+        var outsidePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "abc.jpg");
+
+        var success = PhotoPathHelper.TryGetStorageRelativePath(baseDir, outsidePath, out var relativePath);
+
+        Assert.That(success, Is.False);
+        Assert.That(relativePath, Is.Null);
+    }
 }

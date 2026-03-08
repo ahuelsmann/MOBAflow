@@ -14,26 +14,16 @@
     <File Path="NuGet.Config" />
     <File Path="README.md" />
   </Folder>
-  <Project Path="Backend/Backend.csproj">
-    <Deploy />
-  </Project>
+  <Project Path="Backend/Backend.csproj" />
   <Project Path="Common/Common.csproj" />
   <Project Path="Domain/Domain.csproj" />
-  <Project Path="MAUI/MAUI.csproj">
-    <Deploy Solution="Debug|*" />
-  </Project>
-  <Project Path="ReactApp/ReactApp.csproj" />
-  <Project Path="SharedUI/SharedUI.csproj" Id="e6527119-fec0-439b-bd9a-a0525ac0f93e" />
-  <Project Path="Sound/Sound.csproj">
-    <Deploy />
-  </Project>
-  <Project Path="Test/Test.csproj" Id="0c1e5217-ca11-41f0-83b1-5b26ca7e3b4d" />
+  <Project Path="MOBApi/MOBApi.csproj" />
+  <Project Path="MOBAflow/MOBAflow.csproj" />
+  <Project Path="MOBAsmart/MOBAsmart.csproj" />
+  <Project Path="SharedUI/SharedUI.csproj" />
+  <Project Path="Sound/Sound.csproj" />
+  <Project Path="Test/Test.csproj" />
   <Project Path="TrackLibrary.Base/TrackLibrary.Base.csproj" />
   <Project Path="TrackLibrary.PikoA/TrackLibrary.PikoA.csproj" />
-  <Project Path="TrackPlan.Renderer/TrackPlan.Renderer.csproj" Id="8dafe6f3-0aa2-4cb9-bd6f-35282159ba7e" />
-  <Project Path="RestApi/RestApi.csproj" />
-  <Project Path="WebApp/WebApp.csproj" />
-  <Project Path="WinUI/WinUI.csproj">
-    <Deploy />
-  </Project>
+  <Project Path="TrackPlan.Renderer/TrackPlan.Renderer.csproj" />
 </Solution>

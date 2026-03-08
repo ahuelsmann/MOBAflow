@@ -472,14 +472,16 @@ public class LayoutSettings
     public TabVisibilitySettings TabVisibility { get; set; } = new();
 
     /// <summary>
-    /// JourneysPage-specific layout settings (column widths, panel visibility).
-    /// </summary>
-    public JourneysPageLayoutSettings JourneysPage { get; set; } = new();
-
-    /// <summary>
     /// Generic layout width dictionary to persist resizable grid column widths across pages.
     /// </summary>
     public Dictionary<string, double> ColumnWidths { get; set; } = new();
+
+    public SettingsPageLayoutSettings SettingsPage { get; set; } = new();
+
+    /// <summary>
+    /// JourneysPage-specific layout settings (panel visibility).
+    /// </summary>
+    public JourneysPageLayoutSettings JourneysPage { get; set; } = new();
 }
 
 /// <summary>
@@ -602,20 +604,10 @@ public class TabVisibilitySettings
 }
 
 /// <summary>
-/// JourneysPage-specific layout settings (column widths, panel visibility).
+/// JourneysPage-specific layout settings (panel visibility).
 /// </summary>
 public class JourneysPageLayoutSettings
 {
-    /// <summary>
-    /// Width of Journeys column (Column 0) in pixels.
-    /// </summary>
-    public double JourneysColumnWidth { get; set; } = 250;
-
-    /// <summary>
-    /// Width of Stations column (Column 2) in pixels.
-    /// </summary>
-    public double StationsColumnWidth { get; set; } = 250;
-
     /// <summary>
     /// Is City Library panel expanded?
     /// </summary>

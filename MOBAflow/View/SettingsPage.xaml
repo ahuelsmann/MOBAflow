@@ -1,0 +1,601 @@
+<Page
+    x:Class="Moba.WinUI.View.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Moba.SharedUI.ViewModel"
+    Loaded="Page_Loaded"
+    mc:Ignorable="d">
+
+    <ScrollViewer>
+        <StackPanel Padding="32,24,32,32" Spacing="8">
+
+            <!--  Page Header with Dark Mode Toggle  -->
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock
+                    Grid.Column="0"
+                    Style="{StaticResource TitleTextBlockStyle}"
+                    Text="Settings" />
+
+                <StackPanel
+                    Grid.Column="1"
+                    HorizontalAlignment="Right"
+                    Spacing="4">
+                    <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Text="Sort sections by" />
+                    <ComboBox
+                        x:Name="SettingsSectionSortModeComboBox"
+                        MinWidth="220"
+                        SelectionChanged="SettingsSectionSortModeComboBox_SelectionChanged">
+                        <ComboBoxItem Content="Recently changed" Tag="recent" />
+                        <ComboBoxItem Content="Most used" Tag="frequency" />
+                        <ComboBoxItem Content="Alphabetical" Tag="alphabetical" />
+                    </ComboBox>
+                </StackPanel>
+            </Grid>
+
+            <!--  Error/Success Messages  -->
+            <InfoBar
+                Title="Error"
+                IsOpen="{x:Bind ViewModel.ShowErrorMessage, Mode=OneWay}"
+                Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                Severity="Error" />
+
+            <InfoBar
+                Title="Success"
+                IsOpen="{x:Bind ViewModel.ShowSuccessMessage, Mode=OneWay}"
+                Message="Speech test successful"
+                Severity="Success" />
+
+            <InfoBar
+                x:Name="LayoutResetInfoBar"
+                IsClosable="True"
+                IsOpen="False"
+                Severity="Informational" />
+
+            <StackPanel
+                x:Name="SettingsExpanderHost"
+                Spacing="8">
+
+                <!--  Z21 Connection Section  -->
+                <Expander
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    Header="Z21 Connection"
+                    IsExpanded="False">
+                    <Expander.HeaderTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <FontIcon FontSize="20" Glyph="&#xE8CE;" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    Style="{StaticResource SubtitleTextBlockStyle}"
+                                    Text="{Binding}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </Expander.HeaderTemplate>
+
+                    <StackPanel Padding="56,16,0,16" Spacing="16">
+                        <TextBox
+                            MaxWidth="400"
+                            HorizontalAlignment="Left"
+                            Header="IP Address"
+                            PlaceholderText="192.168.0.111"
+                            Text="{x:Bind ViewModel.IpAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBox.Description>
+                                <TextBlock Text="IP address of your Z21 digital command station" />
+                            </TextBox.Description>
+                        </TextBox>
+
+                        <TextBox
+                            MaxWidth="200"
+                            HorizontalAlignment="Left"
+                            Header="Port"
+                            PlaceholderText="21105"
+                            Text="{x:Bind ViewModel.Port, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBox.Description>
+                                <TextBlock Text="Z21 communication port (default: 21105)" />
+                            </TextBox.Description>
+                        </TextBox>
+
+                        <NumberBox
+                            MaxWidth="200"
+                            HorizontalAlignment="Left"
+                            Header="Auto-Connect Retry Interval (seconds)"
+                            Minimum="5"
+                            SpinButtonPlacementMode="Inline"
+                            Value="{x:Bind ViewModel.Z21AutoConnectRetryInterval, Mode=TwoWay}">
+                            <NumberBox.Description>
+                                <TextBlock Text="How often to attempt reconnection if Z21 is unreachable (5-60 seconds)" TextWrapping="Wrap" />
+                            </NumberBox.Description>
+                        </NumberBox>
+
+                        <NumberBox
+                            MaxWidth="200"
+                            HorizontalAlignment="Left"
+                            Header="System State Polling Interval (seconds)"
+                            Minimum="5"
+                            SpinButtonPlacementMode="Inline"
+                            Value="{x:Bind ViewModel.Z21SystemStatePollingInterval, Mode=TwoWay}">
+                            <NumberBox.Description>
+                                <TextBlock Text="How often to request current, voltage, temperature updates (0 = disabled, 1-30 seconds)" TextWrapping="Wrap" />
+                            </NumberBox.Description>
+                        </NumberBox>
+                    </StackPanel>
+                </Expander>
+
+                <!--  Speech Synthesis Section  -->
+                <Expander
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    Header="Speech Synthesis"
+                    IsExpanded="False">
+                    <Expander.HeaderTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <FontIcon FontSize="20" Glyph="&#xE8BD;" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    Style="{StaticResource SubtitleTextBlockStyle}"
+                                    Text="{Binding}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </Expander.HeaderTemplate>
+
+                    <StackPanel Padding="56,16,0,16" Spacing="16">
+                        <!--  Speech Engine Selection  -->
+                        <ComboBox
+                            MaxWidth="400"
+                            HorizontalAlignment="Left"
+                            Header="Speech Engine"
+                            ItemsSource="{x:Bind ViewModel.AvailableSpeechEngines}"
+                            SelectedItem="{x:Bind ViewModel.SelectedSpeechEngine, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <FontIcon FontSize="14" Glyph="&#xE8BD;" />
+                                        <TextBlock Text="{Binding}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+
+                        <!--  Azure Settings (only shown when Azure engine selected)  -->
+                        <StackPanel Spacing="16" Visibility="{x:Bind ViewModel.IsAzureSpeechEngineSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <!--  Help Section  -->
+                            <InfoBar
+                                IsClosable="False"
+                                IsOpen="True"
+                                Message="Need an Azure Speech Key? Follow our step-by-step guide to create one."
+                                Severity="Informational">
+                                <InfoBar.ActionButton>
+                                    <Button
+                                        Click="AzureSpeechSetupButton_Click"
+                                        Content=" Setup Guide"
+                                        ToolTipService.ToolTip="Open Azure Speech Setup guide in Help" />
+                                </InfoBar.ActionButton>
+                            </InfoBar>
+
+                            <TextBox
+                                MaxWidth="500"
+                                HorizontalAlignment="Left"
+                                Header="Azure Speech Key"
+                                PlaceholderText="Enter your Azure Speech API key"
+                                Text="{x:Bind ViewModel.SpeechKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <TextBox.Description>
+                                    <TextBlock>
+                                        <Run Text="Get your key from the " />
+                                        <Hyperlink NavigateUri="https://portal.azure.com">Azure Portal</Hyperlink>
+                                        <Run Text=" → Cognitive Services → Speech" />
+                                    </TextBlock>
+                                </TextBox.Description>
+                            </TextBox>
+
+                            <TextBox
+                                MaxWidth="300"
+                                HorizontalAlignment="Left"
+                                Header="Azure Region"
+                                PlaceholderText="germanywestcentral"
+                                Text="{x:Bind ViewModel.SpeechRegion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <TextBox.Description>
+                                    <TextBlock Text="Azure region for Speech Service (e.g., germanywestcentral, westeurope)" />
+                                </TextBox.Description>
+                            </TextBox>
+                        </StackPanel>
+
+                        <NumberBox
+                            MaxWidth="400"
+                            HorizontalAlignment="Left"
+                            Header="Speech Rate"
+                            Maximum="10"
+                            Minimum="-10"
+                            SpinButtonPlacementMode="Inline"
+                            Value="{x:Bind ViewModel.SpeechRate, Mode=TwoWay}">
+                            <NumberBox.Description>
+                                <TextBlock Text="Adjust speech speed (-10 = slowest, 0 = normal, 10 = fastest)" TextWrapping="Wrap" />
+                            </NumberBox.Description>
+                        </NumberBox>
+
+                        <NumberBox
+                            MaxWidth="400"
+                            HorizontalAlignment="Left"
+                            Header="Speech Volume"
+                            Maximum="100"
+                            Minimum="0"
+                            SpinButtonPlacementMode="Inline"
+                            Value="{x:Bind ViewModel.SpeechVolume, Mode=TwoWay}">
+                            <NumberBox.Description>
+                                <TextBlock Text="Adjust speech volume (0-100)" TextWrapping="Wrap" />
+                            </NumberBox.Description>
+                        </NumberBox>
+
+                        <ComboBox
+                            MaxWidth="400"
+                            HorizontalAlignment="Left"
+                            Header="Voice Name"
+                            ItemsSource="{x:Bind ViewModel.AvailableVoiceNames}"
+                            SelectedItem="{x:Bind ViewModel.VoiceName, Mode=TwoWay}"
+                            Visibility="{x:Bind ViewModel.IsAzureSpeechEngineSelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <ComboBox.Description>
+                                <TextBlock Text="Select Azure voice for speech synthesis (e.g., de-DE-KatjaNeural)" TextWrapping="Wrap" />
+                            </ComboBox.Description>
+                        </ComboBox>
+
+                        <!--  Test Message TextBox  -->
+                        <TextBox
+                            MaxWidth="600"
+                            HorizontalAlignment="Left"
+                            Header="Test Message"
+                            PlaceholderText="Enter text to test speech synthesis"
+                            Text="{x:Bind ViewModel.SpeechTestMessage, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            TextWrapping="Wrap">
+                            <TextBox.Description>
+                                <TextBlock Text="Custom text that will be spoken when you click 'Test Speech'" TextWrapping="Wrap" />
+                            </TextBox.Description>
+                        </TextBox>
+
+                        <!--  Test Button  -->
+                        <Button
+                            Command="{x:Bind ViewModel.TestSpeechCommand}"
+                            Content="Test Speech"
+                            ToolTipService.ToolTip="Play a test announcement">
+                            <Button.KeyboardAccelerators>
+                                <KeyboardAccelerator Key="T" Modifiers="Control" />
+                            </Button.KeyboardAccelerators>
+                        </Button>
+                    </StackPanel>
+                </Expander>
+
+                <!--  REST API Section  -->
+                <Expander
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    Header="REST API"
+                    IsExpanded="False">
+                    <Expander.HeaderTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <FontIcon FontSize="20" Glyph="&#xE968;" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    Style="{StaticResource SubtitleTextBlockStyle}"
+                                    Text="{Binding}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </Expander.HeaderTemplate>
+
+                    <StackPanel Padding="56,16,0,16" Spacing="16">
+                        <StackPanel>
+                            <CheckBox Content="Auto-start REST API with MOBAflow" IsChecked="{x:Bind ViewModel.AutoStartWebApp, Mode=TwoWay}" />
+                            <TextBlock
+                                Margin="28,0,0,0"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Starts an in-process server for photo uploads from MOBAsmart"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <NumberBox
+                            MaxWidth="200"
+                            HorizontalAlignment="Left"
+                            Header="Port"
+                            Maximum="65535"
+                            Minimum="1024"
+                            SpinButtonPlacementMode="Inline"
+                            Value="{x:Bind ViewModel.RestApiPort, Mode=TwoWay}">
+                            <NumberBox.Description>
+                                <TextBlock Text="Service port for photo upload (default: 5001)" TextWrapping="Wrap" />
+                            </NumberBox.Description>
+                        </NumberBox>
+
+                        <!--  Photo storage folder (e.g. OneDrive)  -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Photo storage folder" />
+                            <Grid ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox
+                                    Grid.Column="0"
+                                    PlaceholderText="Default: My Documents\MOBAflow\Photos"
+                                    Text="{x:Bind ViewModel.PhotoStoragePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <Button
+                                    Grid.Column="1"
+                                    VerticalAlignment="Stretch"
+                                    Click="BrowsePhotoFolder_Click"
+                                    Content="Browse" />
+                            </Grid>
+                            <TextBlock
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Leave empty for default. Use a folder on OneDrive to sync photos across devices."
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <!--  Local IP Address Display  -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Local IP Address" />
+                            <Grid ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox
+                                    Grid.Column="0"
+                                    IsReadOnly="True"
+                                    Text="{x:Bind ViewModel.LocalIpAddress, Mode=OneWay}" />
+                                <Button
+                                    Grid.Column="1"
+                                    VerticalAlignment="Stretch"
+                                    Click="CopyIpToClipboard_Click"
+                                    ToolTipService.ToolTip="Copy IP address to clipboard">
+                                    <FontIcon FontSize="16" Glyph="&#xE8C8;" />
+                                </Button>
+                            </Grid>
+                            <TextBlock
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Use this IP address in MOBAsmart to connect to the REST API"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </StackPanel>
+                </Expander>
+
+                <!--  Application Behavior Section  -->
+                <Expander
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    Header="Application Behavior"
+                    IsExpanded="False">
+                    <Expander.HeaderTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <FontIcon FontSize="20" Glyph="&#xE794;" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    Style="{StaticResource SubtitleTextBlockStyle}"
+                                    Text="{Binding}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </Expander.HeaderTemplate>
+
+                    <StackPanel Padding="56,16,0,16" Spacing="16">
+                        <StackPanel>
+                            <CheckBox Content="Auto-load last solution" IsChecked="{x:Bind ViewModel.AutoLoadLastSolution, Mode=TwoWay}" />
+                            <TextBlock
+                                Margin="28,0,0,0"
+                                Style="{StaticResource CaptionTextBlockStyle}"
+                                Text="Automatically load the last opened solution on startup"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </StackPanel>
+                </Expander>
+
+                <Expander
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    Header="Layout"
+                    IsExpanded="False">
+                    <Expander.HeaderTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <FontIcon FontSize="20" Glyph="&#xE771;" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    Style="{StaticResource SubtitleTextBlockStyle}"
+                                    Text="{Binding}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </Expander.HeaderTemplate>
+
+                    <StackPanel Padding="56,16,0,16" Spacing="16">
+                        <TextBlock
+                            MaxWidth="700"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="Reset saved splitter positions, panel widths, Settings page section ordering, and the Docking preview layout back to their defaults. Open pages may need to be revisited to pick up the default layout."
+                            TextWrapping="Wrap" />
+                        <Button
+                            HorizontalAlignment="Left"
+                            Click="ResetLayoutButton_Click"
+                            Content="Reset saved layouts"
+                            ToolTipService.ToolTip="Clear persisted layout data and restore default layouts" />
+                    </StackPanel>
+                </Expander>
+
+                <!--  Feedback Points Section  -->
+                <Expander
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    Header="Feedback Points"
+                    IsExpanded="False">
+                    <Expander.HeaderTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <FontIcon FontSize="20" Glyph="&#xE945;" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    Style="{StaticResource SubtitleTextBlockStyle}"
+                                    Text="{Binding}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </Expander.HeaderTemplate>
+
+                    <StackPanel Padding="56,16,0,16" Spacing="16">
+                        <NumberBox
+                            MaxWidth="200"
+                            HorizontalAlignment="Left"
+                            Header="Number of Feedback Points"
+                            Minimum="0"
+                            SpinButtonPlacementMode="Inline"
+                            Value="{x:Bind ViewModel.CountOfFeedbackPoints, Mode=TwoWay}">
+                            <NumberBox.Description>
+                                <TextBlock TextWrapping="Wrap">
+                                    <Run Text="How many feedback points (InPorts) are in your track layout?" />
+                                    <LineBreak />
+                                    <Run Text="Example: 3 → Monitor will show InPorts 1, 2, 3" />
+                                    <LineBreak />
+                                    <Run FontStyle="Italic" Text="Note: Restart required to apply changes" />
+                                </TextBlock>
+                            </NumberBox.Description>
+                        </NumberBox>
+                    </StackPanel>
+                </Expander>
+
+                <!--  Health Check Section  -->
+                <Expander
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    Header="Health Check"
+                    IsExpanded="False">
+                    <Expander.HeaderTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <FontIcon FontSize="20" Glyph="&#xE95E;" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    Style="{StaticResource SubtitleTextBlockStyle}"
+                                    Text="{Binding}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </Expander.HeaderTemplate>
+
+                    <StackPanel Padding="56,16,0,16" Spacing="16">
+                        <CheckBox Content="Enable Z21 connection health checks" IsChecked="{x:Bind ViewModel.HealthCheckEnabled, Mode=TwoWay}" />
+
+                        <NumberBox
+                            Width="300"
+                            HorizontalAlignment="Left"
+                            Header="Health Check Interval (seconds)"
+                            Minimum="5"
+                            SpinButtonPlacementMode="Inline"
+                            Value="{x:Bind ViewModel.HealthCheckIntervalSeconds, Mode=TwoWay}">
+                            <NumberBox.Description>
+                                <TextBlock Text="How often to check Z21 connection status" TextWrapping="Wrap" />
+                            </NumberBox.Description>
+                        </NumberBox>
+                    </StackPanel>
+                </Expander>
+
+                <!--  Feature Toggles Section  -->
+                <Expander
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    Header="Feature Toggles"
+                    IsExpanded="False">
+                    <Expander.HeaderTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <FontIcon FontSize="20" Glyph="&#xE73A;" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    Style="{StaticResource SubtitleTextBlockStyle}"
+                                    Text="{Binding}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </Expander.HeaderTemplate>
+
+                    <StackPanel Padding="56,16,0,16" Spacing="12">
+                        <TextBlock
+                            Margin="0,0,0,8"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="Control which features are available in the application. Changes require app restart."
+                            TextWrapping="Wrap" />
+
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.FeatureToggleItems, Mode=OneWay}">
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="vm:FeatureToggleItemViewModel">
+                                    <CheckBox Content="{x:Bind CheckBoxContent, Mode=OneWay}" IsChecked="{x:Bind IsChecked, Mode=TwoWay}" />
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                    </StackPanel>
+                </Expander>
+
+                <!--  Multiplex Signal Configuration for Signal Box Page  -->
+                <Expander
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    Header="Multiplex Signal Configuration"
+                    IsExpanded="False">
+                    <Expander.HeaderTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <FontIcon FontSize="20" Glyph="&#xE713;" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    Style="{StaticResource SubtitleTextBlockStyle}"
+                                    Text="{Binding}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </Expander.HeaderTemplate>
+
+                    <StackPanel Padding="56,16,0,16" Spacing="12">
+                        <TextBlock
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="Aktivieren, wenn am echten Signal das Bild bei dieser Adresse vertauscht erscheint (Activate-Bit umkehren). Pro Multiplex-Signal 4 aufeinanderfolgende Adressen (z. B. 201–204)."
+                            TextWrapping="Wrap" />
+
+                        <CheckBox Content="Address 1 – Reverse" IsChecked="{x:Bind ViewModel.InvertPolarityOffset0Setting, Mode=TwoWay}" />
+                        <CheckBox Content="Address 2 – Reverse" IsChecked="{x:Bind ViewModel.InvertPolarityOffset1Setting, Mode=TwoWay}" />
+                        <CheckBox Content="Address 3 – Reverse" IsChecked="{x:Bind ViewModel.InvertPolarityOffset2Setting, Mode=TwoWay}" />
+                        <CheckBox Content="Address 4 – Reverse" IsChecked="{x:Bind ViewModel.InvertPolarityOffset3Setting, Mode=TwoWay}" />
+                        <TextBlock
+                            Margin="0,8,0,0"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="More info: docs/wiki/VIESSMANN-SIGNAL-MAPPING.md"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </Expander>
+            </StackPanel>
+
+            <!--  Save/Reset Buttons  -->
+            <StackPanel
+                Margin="0,24,0,0"
+                HorizontalAlignment="Right"
+                Orientation="Horizontal"
+                Spacing="12">
+                <Button Command="{x:Bind ViewModel.ResetToDefaultsCommand}" Content="Reset to Defaults" />
+            </StackPanel>
+
+            <!--  Status Messages  -->
+            <InfoBar
+                Title="Settings Saved"
+                Margin="0,16,0,0"
+                IsClosable="True"
+                IsOpen="{x:Bind ViewModel.ShowSuccessMessage, Mode=OneWay}"
+                Message="Your settings have been saved automatically."
+                Severity="Success" />
+
+            <InfoBar
+                Title="Error Saving Settings"
+                Margin="0,8,0,0"
+                IsClosable="True"
+                IsOpen="{x:Bind ViewModel.ShowErrorMessage, Mode=OneWay}"
+                Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                Severity="Error" />
+        </StackPanel>
+    </ScrollViewer>
+</Page>
