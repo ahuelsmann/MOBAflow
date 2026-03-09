@@ -4,9 +4,8 @@ namespace Moba.WinUI.Controls.Docking;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-
-using System;
 using System.Collections.ObjectModel;
+using Windows.Graphics;
 
 /// <summary>
 /// Extended LayoutDocument with tab groups, binding support and window management.
@@ -152,7 +151,7 @@ internal abstract class FloatingTabWindow : Window
         Content = rootGrid;
 
         // Default size
-        AppWindow.ResizeClient(new Windows.Graphics.SizeInt32 { Width = 800, Height = 600 });
+        AppWindow.ResizeClient(new SizeInt32 { Width = 800, Height = 600 });
     }
 
     public DocumentTab Tab => _tab;

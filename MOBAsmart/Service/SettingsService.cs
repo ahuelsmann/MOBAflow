@@ -2,11 +2,8 @@
 namespace Moba.MAUI.Service;
 
 using Common.Configuration;
-
 using Microsoft.Extensions.Logging;
-
 using SharedUI.Interface;
-
 using System.Text.Json;
 
 /// <summary>

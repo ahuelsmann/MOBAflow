@@ -2,6 +2,8 @@
 
 namespace Moba.Common.Events;
 
+using System.Diagnostics;
+
 /// <summary>
 /// Central event bus for publishing and subscribing to application-wide events.
 /// Decouples backend services (Z21, Feedback) from ViewModels.
@@ -74,7 +76,7 @@ public sealed class EventBus : IEventBus
                 catch (Exception ex)
                 {
                     // Log but don't rethrow - other handlers should still execute
-                    System.Diagnostics.Debug.WriteLine($"EventBus handler error for {eventType.Name}: {ex.Message}");
+                    Debug.WriteLine($"EventBus handler error for {eventType.Name}: {ex.Message}");
                 }
             }
         }

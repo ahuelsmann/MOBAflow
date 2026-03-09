@@ -1,6 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI.Service;
 
+using Android.App;
+using Android.Content;
+using Android.Net.Wifi;
 using Android.OS;
 using Common.Configuration;
 using Common.Discovery;
@@ -8,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using Debug = System.Diagnostics.Debug;
 
 /// <summary>
 /// REST-API Server Discovery Service for MAUI.
@@ -127,14 +131,14 @@ public class RestApiDiscoveryService
     }
 
 #if ANDROID
-    private static global::Android.Net.Wifi.WifiManager.MulticastLock? _multicastLock;
+    private static WifiManager.MulticastLock? _multicastLock;
 
     private static void AcquireMulticastLock()
     {
         try
         {
-            var ctx = global::Android.App.Application.Context;
-            var wifi = (global::Android.Net.Wifi.WifiManager?)ctx?.GetSystemService(global::Android.Content.Context.WifiService);
+            var ctx = Application.Context;
+            var wifi = (WifiManager?)ctx?.GetSystemService(Context.WifiService);
             if (wifi != null)
             {
                 _multicastLock = wifi.CreateMulticastLock("MOBAflow REST discovery");
@@ -144,7 +148,7 @@ public class RestApiDiscoveryService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"MulticastLock acquire failed: {ex.Message}");
+            Debug.WriteLine($"MulticastLock acquire failed: {ex.Message}");
         }
     }
 

@@ -3,25 +3,18 @@ namespace Moba.WinUI.View;
 
 using Common.Configuration;
 using Common.Navigation;
-
 using Controls;
-
 using Domain;
-
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-
 using Service;
-
 using SharedUI.Interface;
 using SharedUI.ViewModel;
-
 using System.ComponentModel;
 using System.Diagnostics;
-
 using ViewModel;
-
 using Windows.UI;
 using Windows.UI.ViewManagement;
 
@@ -121,7 +114,6 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         {
             DccSpeedSteps.Steps14 => 0,
             DccSpeedSteps.Steps28 => 1,
-            DccSpeedSteps.Steps128 => 2,
             _ => 2
         };
     }
@@ -129,7 +121,7 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
     /// <summary>
     /// Selected index for SpeedSteps ComboBox (for x:Bind).
     /// </summary>
-    public int SpeedStepsSelectedIndex { get; set; } = 2; // Default: 128 Steps
+    public int SpeedStepsSelectedIndex { get; set; }
 
     private void OnSkinProviderChanged(object? sender, SkinChangedEventArgs e)
     {
@@ -428,17 +420,7 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         }
     }
 
-    /// <summary>
-    /// Gets the Windows system accent color from UISettings.
-    /// This matches the behavior of {ThemeResource AccentFillColorDefaultBrush}.
-    /// </summary>
-    private static Color GetSystemAccentColor()
-    {
-        var uiSettings = new UISettings();
-        return uiSettings.GetColorValue(UIColorType.Accent);
-    }
-
-    private async void FunctionButton_RightTapped(object sender, Microsoft.UI.Xaml.Input.RightTappedRoutedEventArgs e)
+    private async void FunctionButton_RightTapped(object sender, RightTappedRoutedEventArgs e)
     {
         if (sender is not FrameworkElement fe || fe.Tag is not string tag || !int.TryParse(tag, out var functionIndex) || functionIndex < 0 || functionIndex > 20)
             return;
@@ -463,7 +445,6 @@ internal sealed partial class TrainControlPage : INotifyPropertyChanged
         {
             "14" => DccSpeedSteps.Steps14,
             "28" => DccSpeedSteps.Steps28,
-            "128" => DccSpeedSteps.Steps128,
             _ => DccSpeedSteps.Steps128
         };
 

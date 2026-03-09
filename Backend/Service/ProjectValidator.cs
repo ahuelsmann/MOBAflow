@@ -4,6 +4,7 @@ namespace Moba.Backend.Service;
 
 using Domain;
 using Microsoft.Extensions.Logging;
+using System.Text;
 
 /// <summary>
 /// Validates Project/Solution data structure against completeness requirements.
@@ -197,7 +198,7 @@ public class ProjectValidationResult
         var warnings = _messages.Where(m => m.Level == ValidationLevel.Warning).ToList();
         var infos = _messages.Where(m => m.Level == ValidationLevel.Info).ToList();
 
-        var summary = new System.Text.StringBuilder();
+        var summary = new StringBuilder();
         if (errors.Count > 0)
             summary.AppendLine($"[ERRORS] {errors.Count}");
         if (warnings.Count > 0)

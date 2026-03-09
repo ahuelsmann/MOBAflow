@@ -3,7 +3,6 @@
 namespace Moba.Test.Common;
 
 using Moba.Common.Multiplex;
-using Moba.Domain;
 
 /// <summary>
 /// Unit tests for MultiplexerHelper and MultiplexerDefinition.

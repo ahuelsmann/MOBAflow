@@ -1,11 +1,11 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
+using Common.Multiplex;
 using CommunityToolkit.Mvvm.Input;
-
 using Domain;
-
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 /// <summary>
 /// Partial class for Signal/Multiplex decoder control via Z21.
@@ -23,11 +23,11 @@ public partial class MainWindowViewModel
     {
         ArgumentNullException.ThrowIfNull(signal);
 
-        System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] START: Signal={signal.Name}, Aspect={signal.SignalAspect}");
+        Debug.WriteLine($"[MWVM.SetSignalAspect] START: Signal={signal.Name}, Aspect={signal.SignalAspect}");
 
         if (!signal.IsMultiplexed)
         {
-            System.Diagnostics.Debug.WriteLine("[MWVM.SetSignalAspect] ERROR: Signal not multiplexed");
+            Debug.WriteLine("[MWVM.SetSignalAspect] ERROR: Signal not multiplexed");
             _logger.LogWarning(
                 "Signal '{SignalName}' (ID: {SignalId}) is not marked as multiplexed. Configure IsMultiplexed=true.",
                 signal.Name, signal.Id.ToString()[..8]);
@@ -36,7 +36,7 @@ public partial class MainWindowViewModel
 
         if (string.IsNullOrEmpty(signal.MultiplexerArticleNumber))
         {
-            System.Diagnostics.Debug.WriteLine("[MWVM.SetSignalAspect] ERROR: No multiplexer article number");
+            Debug.WriteLine("[MWVM.SetSignalAspect] ERROR: No multiplexer article number");
             _logger.LogWarning(
                 "Signal '{SignalName}': Multiplexer article number not configured.",
                 signal.Name);
@@ -45,7 +45,7 @@ public partial class MainWindowViewModel
 
         if (signal.BaseAddress <= 0 || signal.BaseAddress > 2044)
         {
-            System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] ERROR: Invalid base address {signal.BaseAddress}");
+            Debug.WriteLine($"[MWVM.SetSignalAspect] ERROR: Invalid base address {signal.BaseAddress}");
             _logger.LogWarning(
                 "Signal '{SignalName}': Invalid base address {Address}. Must be 1-2044.",
                 signal.Name, signal.BaseAddress);
@@ -54,20 +54,20 @@ public partial class MainWindowViewModel
 
         if (!_z21.IsConnected)
         {
-            System.Diagnostics.Debug.WriteLine("[MWVM.SetSignalAspect] ERROR: Z21 not connected");
+            Debug.WriteLine("[MWVM.SetSignalAspect] ERROR: Z21 not connected");
             _logger.LogWarning("Signal '{SignalName}': Z21 not connected; skipping command send.", signal.Name);
             return;
         }
 
         try
         {
-            if (!Common.Multiplex.MultiplexerHelper.TryGetTurnoutCommand(
+            if (!MultiplexerHelper.TryGetTurnoutCommand(
                     signal.MultiplexerArticleNumber,
                     signal.MainSignalArticleNumber,
                     signal.SignalAspect,
                     out var turnoutCommand))
             {
-                System.Diagnostics.Debug.WriteLine("[MWVM.SetSignalAspect] ERROR: Aspect not supported by multiplexer mapping");
+                Debug.WriteLine("[MWVM.SetSignalAspect] ERROR: Aspect not supported by multiplexer mapping");
                 _logger.LogWarning(
                     "Signal '{SignalName}': Aspect {Aspect} not supported by multiplexer mapping.",
                     signal.Name, signal.SignalAspect);
@@ -86,16 +86,16 @@ public partial class MainWindowViewModel
             if (ShouldInvertPolarityForOffset(turnoutCommand.AddressOffset))
             {
                 activate = !activate;
-                System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] InvertPolarity Offset {turnoutCommand.AddressOffset}: Activate flipped to {activate}");
+                Debug.WriteLine($"[MWVM.SetSignalAspect] InvertPolarity Offset {turnoutCommand.AddressOffset}: Activate flipped to {activate}");
             }
 
-            System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] DCC Address calculated: {dccAddress}, Output={turnoutCommand.Output}, Activate={activate}");
+            Debug.WriteLine($"[MWVM.SetSignalAspect] DCC Address calculated: {dccAddress}, Output={turnoutCommand.Output}, Activate={activate}");
 
             // For Viessmann multiplex decoders (e.g., 5229): use classic turnout command (0x53)
             // Each signal aspect maps to a different DCC address via AddressOffset
             await _z21.SetTurnoutAsync(dccAddress, turnoutCommand.Output, activate, false, cancellationToken).ConfigureAwait(false);
 
-            System.Diagnostics.Debug.WriteLine("[MWVM.SetSignalAspect] Z21.SetTurnoutAsync completed successfully");
+            Debug.WriteLine("[MWVM.SetSignalAspect] Z21.SetTurnoutAsync completed successfully");
 
             _logger.LogInformation(
                 "Signal '{SignalName}' set: Multiplexer={Multiplexer}, BaseAddress={BaseAddress}, " +
@@ -110,7 +110,7 @@ public partial class MainWindowViewModel
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[MWVM.SetSignalAspect] EXCEPTION: {ex.Message}");
+            Debug.WriteLine($"[MWVM.SetSignalAspect] EXCEPTION: {ex.Message}");
             _logger.LogError(ex, "Failed to set signal aspect for '{SignalName}'", signal.Name);
 
             _uiDispatcher.InvokeOnUi(() =>
@@ -128,7 +128,6 @@ public partial class MainWindowViewModel
     private bool ShouldInvertPolarityForOffset(int addressOffset)
     {
         var sb = _settings.SignalBox;
-        if (sb == null) return false;
         return addressOffset switch
         {
             0 => sb.InvertPolarityOffset0,

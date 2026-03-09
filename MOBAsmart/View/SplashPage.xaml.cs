@@ -2,7 +2,6 @@
 
 namespace Moba.MAUI.View;
 
-using Microsoft.Extensions.DependencyInjection;
 using SharedUI.Interface;
 
 /// <summary>

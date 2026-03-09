@@ -2,46 +2,35 @@
 
 namespace Moba.WinUI;
 
+using Backend.Data;
 using Backend.Extensions;
 using Backend.Interface;
 using Backend.Service;
-
 using Common.Configuration;
 using Common.Events;
+using Common.Extension;
 using Common.Navigation;
 using Common.Serilog;
-
+using Converter;
 using Domain;
-
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
-
 using Serilog;
 using Serilog.Events;
-
 using Service;
-
 using SharedUI.Extensions;
 using SharedUI.Interface;
 using SharedUI.Shell;
 using SharedUI.ViewModel;
-
 using Sound;
-
 using System.Diagnostics;
-
 using TrackLibrary.PikoA;
-
 using TrackPlan.Renderer;
-
 using View;
-
 using ViewModel;
-
-using Common.Extension;
 
 /// <summary>
 /// Provides application-specific behavior to supplement the default Application class.
@@ -54,7 +43,7 @@ public partial class App
     /// <summary>
     /// Gets the main application window (for folder/file pickers and similar).
     /// </summary>
-    public static Window? MainWindow => (Current as App)?._window;
+    public static Window? MainWindow => Current._window;
 
     /// <summary>
     /// Initializes the singleton application object. This is the first line of authored code
@@ -256,7 +245,7 @@ public partial class App
         {
             try
             {
-                var dataManager = sp.GetRequiredService<Backend.Data.DataManager>();
+                var dataManager = sp.GetRequiredService<DataManager>();
                 var logger = sp.GetRequiredService<ILogger<CityService>>();
                 return new CityService(dataManager, logger);
             }
@@ -272,7 +261,7 @@ public partial class App
         {
             try
             {
-                var dataManager = sp.GetRequiredService<Backend.Data.DataManager>();
+                var dataManager = sp.GetRequiredService<DataManager>();
                 var logger = sp.GetRequiredService<ILogger<LocomotiveService>>();
                 return new LocomotiveService(dataManager, logger);
             }
@@ -285,7 +274,7 @@ public partial class App
 
         // Viessmann Multiplex-Signale aus data.json (Stellwerk ComboBox-Optionen)
         services.AddSingleton<ViessmannSignalService>(sp =>
-            new ViessmannSignalService(sp.GetRequiredService<Backend.Data.DataManager>()));
+            new ViessmannSignalService(sp.GetRequiredService<DataManager>()));
 
         // ISettingsService with NullObject fallback
         services.AddSingleton<ISettingsService>(sp =>
@@ -407,7 +396,7 @@ public partial class App
             var appSettings = Services.GetRequiredService<AppSettings>();
             Debug.WriteLine("[OnLaunched] AppSettings resolved");
 
-            Converter.PhotoPathToImageConverter.SetPhotoBasePath(appSettings.Application?.PhotoStoragePath);
+            PhotoPathToImageConverter.SetPhotoBasePath(appSettings.Application.PhotoStoragePath);
 
             skinProvider.Initialize(appSettings);
             Debug.WriteLine("[OnLaunched] SkinProvider initialized");

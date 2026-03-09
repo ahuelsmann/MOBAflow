@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.MAUI;
 
-using SharedUI.Interface;
 using SharedUI.ViewModel;
 using System.Diagnostics;
 using View;

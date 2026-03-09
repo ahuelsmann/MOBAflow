@@ -3,7 +3,6 @@
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
-
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -119,7 +118,7 @@ internal sealed class NavigationItemFactory
         // Badge (Preview, SKIN, etc.)
         if (hasBadge)
         {
-            var badge = CreateBadge(badgeLabel, page);
+            var badge = CreateBadge(badgeLabel);
             panel.Children.Add(badge);
         }
 
@@ -129,7 +128,7 @@ internal sealed class NavigationItemFactory
     /// <summary>
     /// Creates a badge Border element.
     /// </summary>
-    private Border CreateBadge(string label, PageMetadata registration)
+    private static Border CreateBadge(string label)
     {
         // SKIN badge = purple (#5C2D91)
         var isSkinBadge = label.Equals("SKIN", StringComparison.OrdinalIgnoreCase);

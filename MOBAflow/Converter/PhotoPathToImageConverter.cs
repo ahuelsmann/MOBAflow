@@ -10,7 +10,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 /// </summary>
 internal partial class PhotoPathToImageConverter : IValueConverter
 {
-    private static string? s_photoBasePath;
+    private static string? _sPhotoBasePath;
 
     /// <summary>
     /// Sets the base directory for photo resolution (e.g. from Application.PhotoStoragePath).
@@ -18,7 +18,7 @@ internal partial class PhotoPathToImageConverter : IValueConverter
     /// </summary>
     public static void SetPhotoBasePath(string? path)
     {
-        s_photoBasePath = string.IsNullOrWhiteSpace(path) ? null : path.Trim();
+        _sPhotoBasePath = string.IsNullOrWhiteSpace(path) ? null : path.Trim();
     }
 
     public object? Convert(object value, Type targetType, object parameter, string language)
@@ -53,8 +53,8 @@ internal partial class PhotoPathToImageConverter : IValueConverter
 
     private static string GetAbsolutePath(string relativePath)
     {
-        var baseDir = !string.IsNullOrWhiteSpace(s_photoBasePath)
-            ? s_photoBasePath
+        var baseDir = !string.IsNullOrWhiteSpace(_sPhotoBasePath)
+            ? _sPhotoBasePath
             : Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
                 "MOBAflow", "Photos");

@@ -4,7 +4,6 @@ namespace Moba.WinUI.Service;
 using Common.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
-using System.Net.Http;
 
 /// <summary>
 /// Starts the standalone MOBAapi project process when "Auto-start REST API" is enabled.
@@ -57,7 +56,7 @@ internal sealed class RestApiProcessService : IDisposable
             if (IsRunning)
                 return;
 
-            var port = _appSettings.RestApi?.Port > 0 ? _appSettings.RestApi.Port : 5001;
+            var port = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
 
             // If API is already reachable (e.g. run standalone), do not start a second process
             if (await IsApiReachableAsync(port, cancellationToken).ConfigureAwait(false))
@@ -111,7 +110,7 @@ internal sealed class RestApiProcessService : IDisposable
                 };
                 // Discovery runs in WinUI so MAUI can find the server (same as former in-process setup)
                 _process.StartInfo.EnvironmentVariables["MOBAFLOW_DISCOVERY_IN_WINUI"] = "1";
-                if (!string.IsNullOrWhiteSpace(_appSettings.Application?.PhotoStoragePath))
+                if (!string.IsNullOrWhiteSpace(_appSettings.Application.PhotoStoragePath))
                     _process.StartInfo.EnvironmentVariables["MOBAFLOW_PHOTOS_PATH"] = _appSettings.Application.PhotoStoragePath.Trim();
 
                 _process.Exited += (sender, _) =>
@@ -192,7 +191,8 @@ internal sealed class RestApiProcessService : IDisposable
     {
         try
         {
-            using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(2) };
+            using var client = new HttpClient();
+            client.Timeout = TimeSpan.FromSeconds(2);
             var response = await client.GetAsync(
                 $"http://127.0.0.1:{port}/api/status",
                 cancellationToken).ConfigureAwait(false);

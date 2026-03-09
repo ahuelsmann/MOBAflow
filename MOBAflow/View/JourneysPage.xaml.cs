@@ -1,10 +1,12 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.WinUI.View;
 
+using Common.Configuration;
 using Domain;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using SharedUI.Interface;
 using SharedUI.ViewModel;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
@@ -16,12 +18,12 @@ using Windows.System;
 // ReSharper disable once PartialTypeWithSinglePart
 internal sealed partial class JourneysPage
 {
-    private readonly Common.Configuration.AppSettings _settings;
-    private readonly SharedUI.Interface.ISettingsService? _settingsService;
+    private readonly AppSettings _settings;
+    private readonly ISettingsService? _settingsService;
 
     public MainWindowViewModel ViewModel { get; }
 
-    public JourneysPage(MainWindowViewModel viewModel, Common.Configuration.AppSettings settings, SharedUI.Interface.ISettingsService? settingsService = null)
+    public JourneysPage(MainWindowViewModel viewModel, AppSettings settings, ISettingsService? settingsService = null)
     {
         ViewModel = viewModel;
         _settings = settings;

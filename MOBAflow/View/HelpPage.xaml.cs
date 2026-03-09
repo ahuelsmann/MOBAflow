@@ -1,7 +1,6 @@
 namespace Moba.WinUI.View;
 
 using Common.Navigation;
-
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
@@ -20,7 +19,7 @@ internal sealed partial class HelpPage
     public HelpPage()
     {
         InitializeComponent();
-        Loaded += (s, e) => InitializePage();
+        Loaded += (_, _) => InitializePage();
     }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)

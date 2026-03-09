@@ -3,23 +3,15 @@
 namespace Moba.Backend;
 
 using Common.Events;
-
 using CommunityToolkit.Mvvm.Messaging;
-
+using Domain;
 using Domain.Message;
-
 using Interface;
-
 using Microsoft.Extensions.Logging;
-
 using Model;
-
 using Network;
-
 using Protocol;
-
 using Service;
-
 using System.Diagnostics;
 using System.Net;
 
@@ -1085,7 +1077,7 @@ public class Z21 : IZ21
 
         await SendAsync(command, cancellationToken).ConfigureAwait(false);
 
-        Debug.WriteLine($"[Z21.SetExtAccessory] Command sent successfully");
+        Debug.WriteLine("[Z21.SetExtAccessory] Command sent successfully");
         _logger?.LogInformation("SetExtAccessory: Address={Address}, Value={Value}", extAccessoryAddress, commandValue);
     }
 
@@ -1108,7 +1100,7 @@ public class Z21 : IZ21
     /// Sets a signal aspect using the standard turnout command.
     /// Z21 treats all accessory decoders uniformly - no special multiplex handling needed.
     /// </summary>
-    public async Task SetSignalAspectAsync(Domain.SbSignal signal, CancellationToken cancellationToken = default)
+    public async Task SetSignalAspectAsync(SbSignal signal, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(signal);
 
@@ -1118,7 +1110,7 @@ public class Z21 : IZ21
         }
 
         // Determine activation state from signal aspect
-        var activate = signal.SignalAspect != Domain.SignalAspect.Hp0;
+        var activate = signal.SignalAspect != SignalAspect.Hp0;
 
         // Use standard turnout command for all signal types
         // Output is always 0 for signal control (Z21 doesn't distinguish multiplex vs classic)

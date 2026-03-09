@@ -1,10 +1,10 @@
 namespace Moba.WinUI.Controls;
 
+using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
-
 using Windows.Foundation;
 using Windows.UI;
 
@@ -347,7 +347,7 @@ internal sealed partial class SpeedometerControl
         {
             14 => (13, new[] { 0, 3, 7, 10, 13 }),
             28 => (27, new[] { 0, 7, 14, 21, 27 }),
-            128 or _ => (126, new[] { 0, 32, 63, 95, 126 })
+            128 or _ => (126, [0, 32, 63, 95, 126])
         };
 
         // Use AccentColor from accent brush (matching speedometer needle)
@@ -493,7 +493,7 @@ internal sealed partial class SpeedometerControl
             {
                 Text = kmh.ToString(),
                 FontSize = isMax ? 11 : 10,
-                FontWeight = isMax ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal,
+                FontWeight = isMax ? FontWeights.Bold : FontWeights.Normal,
                 Foreground = isMax ? maxBrush : markerBrush,
                 TextAlignment = TextAlignment.Center
             };

@@ -4,12 +4,9 @@ namespace Moba.WinUI.Controls.Docking;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-
-using System;
-using System.Collections.Generic;
+using Microsoft.UI.Xaml.Media;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Linq;
 
 /// <summary>
 /// Determines how multiple panels in a dock group are displayed.
@@ -418,7 +415,7 @@ internal sealed class DockPanelGroup : UserControl
             {
                 new FontIcon
                 {
-                    FontFamily = (Microsoft.UI.Xaml.Media.FontFamily)
+                    FontFamily = (FontFamily)
                         Application.Current.Resources["SymbolThemeFontFamily"],
                     FontSize = 12,
                     Glyph = panel.PanelIconGlyph

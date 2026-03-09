@@ -2,16 +2,11 @@
 
 namespace Moba.WinUI.Service;
 
-using System;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-
-using Microsoft.Extensions.Logging;
-
-using Windows.Storage;
-
 using ViewModel;
+using Windows.Storage;
 
 /// <summary>
 /// Service for persisting and restoring DockingManager layouts.

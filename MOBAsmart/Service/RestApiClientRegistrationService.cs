@@ -27,7 +27,7 @@ public sealed class RestApiClientRegistrationService : IRestApiClientRegistratio
     public async Task<bool> RegisterAsync(string serverIp, int serverPort)
     {
         var clientId = GetOrCreateClientId();
-        var deviceName = DeviceInfo.Current.Name ?? DeviceNameDefault;
+        var deviceName = DeviceInfo.Current.Name;
         if (string.IsNullOrWhiteSpace(deviceName))
             deviceName = DeviceNameDefault;
 

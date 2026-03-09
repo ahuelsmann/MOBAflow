@@ -2,6 +2,7 @@
 
 namespace Moba.Backend.Interface;
 
+using Domain;
 using Model;
 using Protocol;
 using Service;
@@ -255,5 +256,5 @@ public interface IZ21 : IDisposable
         /// </summary>
         /// <param name="signal">The signal element containing address, aspect, and multiplex settings</param>
         /// <param name="cancellationToken">Cancellation token</param>
-        Task SetSignalAspectAsync(Domain.SbSignal signal, CancellationToken cancellationToken = default);
+        Task SetSignalAspectAsync(SbSignal signal, CancellationToken cancellationToken = default);
         }

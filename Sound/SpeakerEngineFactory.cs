@@ -59,11 +59,9 @@ public class SpeakerEngineFactory
                 _systemLogger.LogDebug("🔊 [FACTORY] ✅ Creating CognitiveSpeechEngine");
                 return new CognitiveSpeechEngine(_optionsMonitor, _azureLogger);
             }
-            else
-            {
-                // Fallback to Windows SAPI if credentials are missing
-                _systemLogger.LogWarning("🔊 [FACTORY] ⚠️ Azure Speech selected but credentials missing. Falling back to Windows SAPI.");
-            }
+
+            // Fallback to Windows SAPI if credentials are missing
+            _systemLogger.LogWarning("🔊 [FACTORY] ⚠️ Azure Speech selected but credentials missing. Falling back to Windows SAPI.");
         }
 
         // Default: Windows SAPI

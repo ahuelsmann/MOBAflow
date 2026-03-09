@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.MOBAapi.Controllers;
+namespace Moba.MOBApi.Controllers;
 
-using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Concurrent;
 
 /// <summary>
 /// REST API for server status and connected MAUI clients.
@@ -104,30 +104,30 @@ internal class ConnectedClientInfo
 /// </summary>
 internal static class ClientRegistry
 {
-    private static readonly ConcurrentDictionary<string, ConnectedClientInfo> s_clients = new();
+    private static readonly ConcurrentDictionary<string, ConnectedClientInfo> SClients = new();
 
     public static void Add(ConnectedClientInfo info)
     {
-        s_clients[info.ClientId] = info;
+        SClients[info.ClientId] = info;
     }
 
     public static void Remove(string clientId)
     {
-        s_clients.TryRemove(clientId, out _);
+        SClients.TryRemove(clientId, out _);
     }
 
     public static void PruneExpired(int expiryMinutes)
     {
         var cutoff = DateTime.UtcNow.AddMinutes(-expiryMinutes);
-        foreach (var kv in s_clients.ToArray())
+        foreach (var kv in SClients.ToArray())
         {
             if (kv.Value.ConnectedAt < cutoff)
-                s_clients.TryRemove(kv.Key, out _);
+                SClients.TryRemove(kv.Key, out _);
         }
     }
 
     public static IReadOnlyList<ConnectedClientInfo> GetAll()
     {
-        return s_clients.Values.ToList();
+        return SClients.Values.ToList();
     }
 }

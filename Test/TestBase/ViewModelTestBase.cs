@@ -5,7 +5,6 @@
 namespace Moba.Test.TestBase;
 
 using Moba.SharedUI.Interface;
-
 using Moq;
 
 /// <summary>
@@ -54,11 +53,11 @@ internal abstract class ViewModelTestBase
         // Configure default IoService behavior (returns empty solution)
         IoServiceMock
             .Setup(s => s.LoadAsync())
-            .ReturnsAsync((new Solution(), null as string, null as string));
+            .ReturnsAsync((new Solution(), null, null));
 
         IoServiceMock
             .Setup(s => s.SaveAsync(It.IsAny<Solution>(), It.IsAny<string>()))
-            .ReturnsAsync((true, "test.json", null as string));
+            .ReturnsAsync((true, "test.json", null));
     }
 
     /// <summary>

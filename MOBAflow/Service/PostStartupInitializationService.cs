@@ -6,11 +6,8 @@ using Backend.Data;
 using Backend.Extensions;
 using Common.Configuration;
 using Common.Events;
-
 using Microsoft.Extensions.Logging;
-
 using System.Diagnostics;
-
 using View;
 
 /// <summary>
@@ -200,7 +197,7 @@ internal class PostStartupInitializationService
     {
         try
         {
-            if (_appSettings.Application?.AutoStartWebApp == false)
+            if (_appSettings.Application.AutoStartWebApp == false)
             {
                 _logger.LogInformation("[PostStartup] REST API auto-start disabled in settings");
                 return;

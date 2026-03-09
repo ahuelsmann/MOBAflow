@@ -4,10 +4,7 @@ namespace Moba.WinUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using Microsoft.UI.Xaml;
-
-using System.Collections.Generic;
 
 /// <summary>
 /// ViewModel for DockingManager with layout state management.
@@ -18,52 +15,52 @@ internal abstract partial class DockingPanelViewModel : ObservableObject
     #region Observable Properties
 
     [ObservableProperty]
-    private bool isLeftPanelVisible = true;
+    private bool _isLeftPanelVisible = true;
 
     [ObservableProperty]
-    private bool isRightPanelVisible = true;
+    private bool _isRightPanelVisible = true;
 
     [ObservableProperty]
-    private bool isTopPanelVisible;
+    private bool _isTopPanelVisible;
 
     [ObservableProperty]
-    private bool isBottomPanelVisible = true;
+    private bool _isBottomPanelVisible = true;
 
     [ObservableProperty]
-    private double leftPanelWidth = 240;
+    private double _leftPanelWidth = 240;
 
     [ObservableProperty]
-    private double rightPanelWidth = 240;
+    private double _rightPanelWidth = 240;
 
     [ObservableProperty]
-    private double topPanelHeight = 100;
+    private double _topPanelHeight = 100;
 
     [ObservableProperty]
-    private double bottomPanelHeight = 100;
+    private double _bottomPanelHeight = 100;
 
     [ObservableProperty]
-    private bool isLeftPanelPinned = true;
+    private bool _isLeftPanelPinned = true;
 
     [ObservableProperty]
-    private bool isRightPanelPinned = true;
+    private bool _isRightPanelPinned = true;
 
     [ObservableProperty]
-    private bool isTopPanelPinned;
+    private bool _isTopPanelPinned;
 
     [ObservableProperty]
-    private bool isBottomPanelPinned = true;
+    private bool _isBottomPanelPinned = true;
 
     [ObservableProperty]
-    private bool isLeftPanelMaximized;
+    private bool _isLeftPanelMaximized;
 
     [ObservableProperty]
-    private bool isRightPanelMaximized;
+    private bool _isRightPanelMaximized;
 
     [ObservableProperty]
-    private bool isTopPanelMaximized;
+    private bool _isTopPanelMaximized;
 
     [ObservableProperty]
-    private bool isBottomPanelMaximized;
+    private bool _isBottomPanelMaximized;
 
     #endregion
 

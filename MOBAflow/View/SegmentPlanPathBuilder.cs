@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using TrackLibrary.PikoA;
 using Windows.Foundation;
+using Windows.UI;
 
 /// <summary>
 /// Creates Path elements for placed track segments on the plan and as ghost.
@@ -41,7 +42,7 @@ internal static class SegmentPlanPathBuilder
         {
             path.Fill = null;
             var accent = (SolidColorBrush)Application.Current.Resources["AccentFillColorDefaultBrush"]!;
-            path.Stroke = new SolidColorBrush(Windows.UI.Color.FromArgb(180, accent.Color.R, accent.Color.G, accent.Color.B));
+            path.Stroke = new SolidColorBrush(Color.FromArgb(180, accent.Color.R, accent.Color.G, accent.Color.B));
         }
         else
         {
@@ -129,13 +130,13 @@ internal static class SegmentPlanPathBuilder
     {
         if (Application.Current.Resources.TryGetValue("TrackPlanStrokeBrush", out var obj) && obj is Brush brush)
             return brush;
-        return new SolidColorBrush(Windows.UI.Color.FromArgb(255, 26, 26, 26));
+        return new SolidColorBrush(Color.FromArgb(255, 26, 26, 26));
     }
 
     private static Brush ResolveTrackStrokeSelectedBrush()
     {
         if (Application.Current.Resources.TryGetValue("TrackPlanStrokeSelectedBrush", out var obj) && obj is Brush brush)
             return brush;
-        return new SolidColorBrush(Windows.UI.Color.FromArgb(255, 0, 120, 215));
+        return new SolidColorBrush(Color.FromArgb(255, 0, 120, 215));
     }
 }

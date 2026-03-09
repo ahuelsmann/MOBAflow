@@ -6,6 +6,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using TrackLibrary.PikoA;
+using Windows.Foundation;
+using Windows.UI;
 
 /// <summary>
 /// Creates preview symbols for Piko A track types in the toolbox.
@@ -73,10 +75,10 @@ internal static class TrackPreviewSymbol
                     {
                         var pf = new PathFigure
                         {
-                            StartPoint = new Windows.Foundation.Point(ToX(x), ToY(y)),
+                            StartPoint = new Point(ToX(x), ToY(y)),
                             IsClosed = false
                         };
-                        pf.Segments.Add(new LineSegment { Point = new Windows.Foundation.Point(ToX(line.X), ToY(line.Y)) });
+                        pf.Segments.Add(new LineSegment { Point = new Point(ToX(line.X), ToY(line.Y)) });
                         pg.Figures.Add(pf);
                         x = line.X;
                         y = line.Y;
@@ -86,14 +88,14 @@ internal static class TrackPreviewSymbol
                     {
                         var pf = new PathFigure
                         {
-                            StartPoint = new Windows.Foundation.Point(ToX(x), ToY(y)),
+                            StartPoint = new Point(ToX(x), ToY(y)),
                             IsClosed = false
                         };
                         var radius = arc.Radius * scale;
                         pf.Segments.Add(new ArcSegment
                         {
-                            Point = new Windows.Foundation.Point(ToX(arc.EndX), ToY(arc.EndY)),
-                            Size = new Windows.Foundation.Size(radius, radius),
+                            Point = new Point(ToX(arc.EndX), ToY(arc.EndY)),
+                            Size = new Size(radius, radius),
                             IsLargeArc = arc.LargeArc,
                             SweepDirection = arc.Clockwise ? SweepDirection.Clockwise : SweepDirection.Counterclockwise
                         });
@@ -112,6 +114,6 @@ internal static class TrackPreviewSymbol
     {
         if (Application.Current.Resources.TryGetValue("TrackPlanStrokeBrush", out var obj) && obj is Brush brush)
             return brush;
-        return new SolidColorBrush(Windows.UI.Color.FromArgb(255, 26, 26, 26));
+        return new SolidColorBrush(Color.FromArgb(255, 26, 26, 26));
     }
 }

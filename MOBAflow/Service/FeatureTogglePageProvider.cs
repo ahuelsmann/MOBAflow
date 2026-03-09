@@ -3,7 +3,6 @@ namespace Moba.WinUI.Service;
 
 using Common.Configuration;
 using Common.Navigation;
-
 using System.Reflection;
 
 /// <summary>

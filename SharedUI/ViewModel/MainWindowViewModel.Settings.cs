@@ -2,17 +2,12 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Common.Configuration;
-using Common.Navigation;
-
 using CommunityToolkit.Mvvm.Input;
-
 using Domain;
-
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
-using System.Reflection;
 
 /// <summary>
 /// MainWindowViewModel - Settings Management
@@ -318,10 +313,10 @@ public partial class MainWindowViewModel
     /// </summary>
     public string PhotoStoragePath
     {
-        get => _settings.Application.PhotoStoragePath ?? string.Empty;
+        get => _settings.Application.PhotoStoragePath;
         set
         {
-            var v = value ?? string.Empty;
+            var v = value;
             if (_settings.Application.PhotoStoragePath != v)
             {
                 _settings.Application.PhotoStoragePath = v;
@@ -695,7 +690,6 @@ public partial class MainWindowViewModel
 
     private void SetSignalBoxInvert(int offset, bool value)
     {
-        if (_settings.SignalBox == null) return;
         var sb = _settings.SignalBox;
         bool changed;
         string? propertyName;

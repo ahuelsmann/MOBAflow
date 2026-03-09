@@ -7,23 +7,16 @@ using Backend.Manager;
 using Backend.Model;
 using Backend.Protocol;
 using Backend.Service;
-
 using Common.Configuration;
 using Common.Events;
 using Common.Navigation;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using Domain;
 using Domain.Enum;
-
 using Interface;
-
 using Microsoft.Extensions.Logging;
-
 using Service;
-
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -135,8 +128,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IsDarkMode = settings.Application.IsDarkMode;
 
         // Restore JourneysPage layout so ViewModel has persisted values from the start
-        IsCityLibraryVisible = settings.Layout?.JourneysPage?.IsCityLibraryExpanded ?? true;
-        IsWorkflowLibraryVisible = settings.Layout?.JourneysPage?.IsWorkflowLibraryExpanded ?? true;
+        IsCityLibraryVisible = settings.Layout.JourneysPage?.IsCityLibraryExpanded ?? true;
+        IsWorkflowLibraryVisible = settings.Layout.JourneysPage?.IsWorkflowLibraryExpanded ?? true;
 
         // Subscribe to Z21 events
         _eventBus.Subscribe<Z21ConnectionEstablishedEvent>(_ => OnZ21ConnectedChanged(true));
@@ -647,16 +640,16 @@ public sealed partial class MainWindowViewModel : ObservableObject
     #region Signal Box / Viessmann Multiplex Signals (binding for Settings page)
 
     /// <summary>Invert polarity for address 1 (e.g. 201).</summary>
-    public bool InvertPolarityOffset0Setting { get => _settings.SignalBox?.InvertPolarityOffset0 ?? false; set => SetSignalBoxInvert(0, value); }
+    public bool InvertPolarityOffset0Setting { get => _settings.SignalBox.InvertPolarityOffset0; set => SetSignalBoxInvert(0, value); }
 
     /// <summary>Invert polarity for address 2 (e.g. 202).</summary>
-    public bool InvertPolarityOffset1Setting { get => _settings.SignalBox?.InvertPolarityOffset1 ?? false; set => SetSignalBoxInvert(1, value); }
+    public bool InvertPolarityOffset1Setting { get => _settings.SignalBox.InvertPolarityOffset1; set => SetSignalBoxInvert(1, value); }
 
     /// <summary>Invert polarity for address 3 (e.g. 203).</summary>
-    public bool InvertPolarityOffset2Setting { get => _settings.SignalBox?.InvertPolarityOffset2 ?? false; set => SetSignalBoxInvert(2, value); }
+    public bool InvertPolarityOffset2Setting { get => _settings.SignalBox.InvertPolarityOffset2; set => SetSignalBoxInvert(2, value); }
 
     /// <summary>Invert polarity for address 4 (e.g. 204).</summary>
-    public bool InvertPolarityOffset3Setting { get => _settings.SignalBox?.InvertPolarityOffset3 ?? false; set => SetSignalBoxInvert(3, value); }
+    public bool InvertPolarityOffset3Setting { get => _settings.SignalBox.InvertPolarityOffset3; set => SetSignalBoxInvert(3, value); }
 
     #endregion
 }

@@ -2,14 +2,9 @@
 namespace Moba.WinUI.View;
 
 using Common.Navigation;
-
-
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
-
-
 using SharedUI.ViewModel;
-
 using System.Collections.Specialized;
 using System.Runtime.InteropServices;
 

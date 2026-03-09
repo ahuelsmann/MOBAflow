@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SharedUI.Service;
+using System.Net;
 using System.Reflection;
 using System.Text.Json;
 
@@ -70,7 +71,7 @@ internal sealed class RestApiHostService : IAsyncDisposable
     {
         if (IsRunning)
             return;
-        var port = _appSettings.RestApi?.Port > 0 ? _appSettings.RestApi.Port : 5001;
+        var port = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
 
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {
@@ -80,7 +81,7 @@ internal sealed class RestApiHostService : IAsyncDisposable
 
         builder.WebHost.UseKestrel(options =>
         {
-            options.Listen(System.Net.IPAddress.Any, port);
+            options.Listen(IPAddress.Any, port);
         });
 
         // Ensure the host uses the WinUI assembly for MVC discovery (avoids "No action descriptors found").

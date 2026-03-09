@@ -155,7 +155,7 @@ public sealed partial class MauiViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Auto-discover failed: {ex.Message}");
+            Debug.WriteLine($"Auto-discover failed: {ex.Message}");
         }
     }
 
@@ -274,11 +274,13 @@ public sealed partial class MauiViewModel : ObservableObject
 
     partial void OnRestApiIpAddressChanged(string value)
     {
+        _ = value;
         _ = RefreshRestApiReachableAsync();
     }
 
     partial void OnRestApiPortChanged(int value)
     {
+        _ = value;
         _ = RefreshRestApiReachableAsync();
     }
 
@@ -616,7 +618,7 @@ public sealed partial class MauiViewModel : ObservableObject
 
         if (connected)
         {
-            _settings.Z21.CurrentIpAddress = Z21IpAddress?.Trim() ?? string.Empty;
+            _settings.Z21.CurrentIpAddress = Z21IpAddress.Trim();
             _ = SaveSettingsAsync();
             _z21ReconnectCts?.Cancel();
             _z21ReconnectCts = null;

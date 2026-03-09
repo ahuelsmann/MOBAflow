@@ -3,9 +3,7 @@
 namespace Moba.WinUI.View;
 
 using Controls.Docking;
-
 using Microsoft.UI.Xaml;
-
 using ViewModel;
 
 internal sealed partial class DockingPage

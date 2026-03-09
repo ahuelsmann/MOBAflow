@@ -3,18 +3,15 @@
 namespace Moba.WinUI.Controls.Docking;
 
 using Behavior;
-
+using Microsoft.UI;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-
-using System;
-using System.Collections.Generic;
+using Microsoft.UI.Xaml.Media;
 using System.Collections.ObjectModel;
-using System.Linq;
-
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Foundation;
 
 /// <summary>
 /// DockingManager Control mit Visual Studio-style Layout nach Fluent Design System.
@@ -35,7 +32,7 @@ internal sealed partial class DockingManager
     // Splitter dragging state
     private bool _isSplitterDragging;
     private string? _activeSplitterTag;
-    private Windows.Foundation.Point _splitterDragStart;
+    private Point _splitterDragStart;
     private double _splitterStartSize;
 
     private double _leftExpandedWidth;
@@ -392,7 +389,6 @@ internal sealed partial class DockingManager
         DockPosition.Right => RightPanelGroup,
         DockPosition.Top => TopPanelGroup,
         DockPosition.Bottom => BottomPanelGroup,
-        DockPosition.Center => LeftPanelGroup,
         _ => LeftPanelGroup
     };
 
@@ -638,7 +634,7 @@ internal sealed partial class DockingManager
         }
 
         var transform = target.TransformToVisual(RootGrid);
-        var origin = transform.TransformPoint(new Windows.Foundation.Point(0, 0));
+        var origin = transform.TransformPoint(new Point(0, 0));
 
         PreviewBox.Width = Math.Max(0, target.ActualWidth);
         PreviewBox.Height = Math.Max(0, target.ActualHeight);
@@ -647,7 +643,7 @@ internal sealed partial class DockingManager
         PreviewBox.Visibility = Visibility.Visible;
     }
 
-    private bool IsPointInsideRoot(Windows.Foundation.Point position)
+    private bool IsPointInsideRoot(Point position)
     {
         return position.X >= 0
             && position.Y >= 0
@@ -869,8 +865,8 @@ internal sealed partial class DockingManager
     {
         var button = new Button
         {
-            Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent),
-            BorderBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent),
+            Background = new SolidColorBrush(Colors.Transparent),
+            BorderBrush = new SolidColorBrush(Colors.Transparent),
             Padding = new Thickness(8, 4, 8, 4),
             Margin = new Thickness(2),
             CornerRadius = new CornerRadius(4),
@@ -882,7 +878,7 @@ internal sealed partial class DockingManager
                 {
                     new FontIcon
                     {
-                        FontFamily = (Microsoft.UI.Xaml.Media.FontFamily)
+                        FontFamily = (FontFamily)
                             Application.Current.Resources["SymbolThemeFontFamily"],
                         FontSize = 12,
                         Glyph = entry.Panel.PanelIconGlyph
@@ -984,7 +980,7 @@ internal sealed partial class DockingManager
         };
 
         var transform = targetArea.TransformToVisual(RootGrid);
-        var origin = transform.TransformPoint(new Windows.Foundation.Point(0, 0));
+        var origin = transform.TransformPoint(new Point(0, 0));
 
         FocusHighlightBorder.Width = targetArea.ActualWidth;
         FocusHighlightBorder.Height = targetArea.ActualHeight;

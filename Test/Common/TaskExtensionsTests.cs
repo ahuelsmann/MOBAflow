@@ -33,7 +33,7 @@ internal class TaskExtensionsTests
     public void SafeFireAndForget_FaultedTask_WithNullCallback_DoesNotThrow()
     {
         var t = Task.FromException(new InvalidOperationException("test"));
-        Assert.DoesNotThrow(() => t.SafeFireAndForget(null));
+        Assert.DoesNotThrow(() => t.SafeFireAndForget());
 
         Thread.Sleep(100);
     }

@@ -2,9 +2,9 @@
 
 namespace Moba.WinUI.View;
 
-using System.Numerics;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Geometry;
+using System.Numerics;
 using TrackLibrary.PikoA;
 
 /// <summary>

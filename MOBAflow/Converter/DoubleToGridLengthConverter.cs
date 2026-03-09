@@ -6,7 +6,6 @@ using Microsoft.UI.Xaml.Data;
 
 /// <summary>
 /// Converts a numeric column width (double, pixels) to a <see cref="GridLength"/> for use with
-/// <see cref="ColumnDefinition.Width"/> when binding to an observable layout view model.
 /// Values less than or equal to zero are converted to <see cref="GridLength.Auto"/>.
 /// </summary>
 internal sealed class DoubleToGridLengthConverter : IValueConverter

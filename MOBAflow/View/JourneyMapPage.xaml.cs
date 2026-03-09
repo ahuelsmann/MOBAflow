@@ -2,7 +2,6 @@
 namespace Moba.WinUI.View;
 
 using Common.Navigation;
-
 using SharedUI.ViewModel;
 
 /// <summary>

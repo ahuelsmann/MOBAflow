@@ -1,7 +1,6 @@
 namespace Moba.WinUI.Behavior;
 
 using Common.Configuration;
-
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
@@ -9,12 +8,8 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Xaml.Interactivity;
-
-using Moba.WinUI;
-
 using SharedUI.Interface;
 using SharedUI.ViewModel;
-
 using Windows.Foundation;
 
 public sealed class GridColumnResizeBehavior : Behavior<Grid>
@@ -508,8 +503,6 @@ public sealed class GridColumnResizeBehavior : Behavior<Grid>
         if (_settings == null || string.IsNullOrWhiteSpace(PersistenceKey))
             return;
 
-        _settings.Layout ??= new LayoutSettings();
-        _settings.Layout.ColumnWidths ??= new Dictionary<string, double>();
         _settings.Layout.ColumnWidths[BuildWidthKey(columnIndex)] = width;
     }
 

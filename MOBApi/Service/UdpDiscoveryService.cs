@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.MOBAapi.Service;
+namespace Moba.MOBApi.Service;
 
 using System.Net;
 using System.Net.Sockets;

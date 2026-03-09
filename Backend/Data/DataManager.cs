@@ -2,7 +2,6 @@
 namespace Moba.Backend.Data;
 
 using Domain;
-
 using System.Text.Json;
 
 /// <summary>

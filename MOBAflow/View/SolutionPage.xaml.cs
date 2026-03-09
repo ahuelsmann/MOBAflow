@@ -2,13 +2,9 @@
 namespace Moba.WinUI.View;
 
 using Common.Navigation;
-
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-
 using SharedUI.ViewModel;
-
-using System.IO;
 
 /// <summary>
 /// Solution page displaying projects list with properties panel.

@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Domain;
 
-using System.Text.Json.Serialization;
 using Enum;
+using System.Text.Json.Serialization;
 
 /// <summary>
 /// Upcoming feature: Represents a locomotive.

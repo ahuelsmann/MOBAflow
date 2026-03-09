@@ -3,13 +3,9 @@ namespace Moba.WinUI.Service;
 
 using Common.Configuration;
 using Common.Extension;
-
 using Domain;
-
 using Microsoft.Extensions.Logging;
-
 using SharedUI.Interface;
-
 using System.Diagnostics;
 using System.Text.Json;
 
@@ -100,10 +96,10 @@ internal class SettingsService : ISettingsService
         }
 
         _settings.Layout.SettingsPage = source.Layout.SettingsPage;
-        _settings.Layout.ColumnWidths = source.Layout?.ColumnWidths != null
+        _settings.Layout.ColumnWidths = source.Layout.ColumnWidths != null
             ? new Dictionary<string, double>(source.Layout.ColumnWidths)
             : new Dictionary<string, double>();
-        if (source.Layout?.JourneysPage != null)
+        if (source.Layout.JourneysPage != null)
         {
             _settings.Layout.JourneysPage ??= new JourneysPageLayoutSettings();
             _settings.Layout.JourneysPage.IsCityLibraryExpanded = source.Layout.JourneysPage.IsCityLibraryExpanded;

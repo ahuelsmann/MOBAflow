@@ -2,7 +2,6 @@
 namespace Moba.WinUI.Controls;
 
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 
 /// <summary>
 /// Displays timetable stops for current journey (Previous/Current/Next station).

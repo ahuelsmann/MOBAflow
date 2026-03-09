@@ -4,25 +4,15 @@ namespace Moba.SharedUI.ViewModel;
 using Backend;
 using Backend.Interface;
 using Backend.Model;
-
 using Common.Configuration;
 using Common.Events;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using Domain;
-
 using Interface;
-
 using Microsoft.Extensions.Logging;
-
-using System.Threading;
-using System.Threading.Tasks;
-
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
 
 /// <summary>
 /// ViewModel for TrainControlPage - provides locomotive drive control interface.

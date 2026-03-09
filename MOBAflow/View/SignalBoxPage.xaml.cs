@@ -1,21 +1,16 @@
 namespace Moba.WinUI.View;
 
 using Domain;
-
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
-
 using Service;
-
 using SharedUI.ViewModel;
-
-using ViewModel;
-
 using System.ComponentModel;
+using ViewModel;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 
@@ -182,7 +177,7 @@ sealed partial class SignalBoxPage
     private void InitializeBlinkTimer()
     {
         _blinkTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
-        _blinkTimer.Tick += (s, e) =>
+        _blinkTimer.Tick += (_, _) =>
         {
             _blinkState = !_blinkState;
             foreach (var led in _blinkingLeds)
@@ -617,7 +612,7 @@ sealed partial class SignalBoxPage
         container.Children.Add(graphic);
 
         // Event-Handler fuer Klick
-        container.PointerPressed += (s, e) =>
+        container.PointerPressed += (_, e) =>
         {
             e.Handled = true;
             var point = e.GetCurrentPoint(container);
@@ -628,7 +623,7 @@ sealed partial class SignalBoxPage
         };
 
         // Doppelklick fuer Weichen/Signale schalten
-        container.DoubleTapped += (s, e) =>
+        container.DoubleTapped += (_, e) =>
         {
             e.Handled = true;
             if (element is SbSwitch sw)
@@ -642,7 +637,7 @@ sealed partial class SignalBoxPage
         };
 
         // Drag-Daten setzen (CanDrag ist bereits nur fuer selektierte Elemente true)
-        container.DragStarting += (s, e) =>
+        container.DragStarting += (_, e) =>
         {
             e.Data.SetText($"MOVE:{element.Id}");
             e.Data.RequestedOperation = DataPackageOperation.Move;

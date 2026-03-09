@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 
-using Moba.MOBAapi.Service;
+using Moba.MOBApi.Hubs;
+using Moba.MOBApi.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,6 @@ if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("MOBAFLOW_DISCOVERY_
 var app = builder.Build();
 
 app.MapControllers();
-app.MapHub<Moba.MOBAapi.Hubs.PhotoHub>("/photos-hub");
+app.MapHub<PhotoHub>("/photos-hub");
 
 app.Run();

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using SharedUI.Interface;
 using SharedUI.ViewModel;
 using System.Text.Json;
+using System.Timers;
 
 /// <summary>
 /// Polls the REST API (RestApi project) status and updates MainWindowViewModel with status and connected clients.
@@ -23,8 +24,8 @@ internal sealed class RestApiStatusService : IDisposable
     private readonly MainWindowViewModel _viewModel;
     private readonly IUiDispatcher _uiDispatcher;
     private readonly ILogger<RestApiStatusService> _logger;
-    private readonly System.Timers.Timer _timer;
-    private static readonly JsonSerializerOptions s_jsonOptions = new() { PropertyNameCaseInsensitive = true };
+    private readonly Timer _timer;
+    private static readonly JsonSerializerOptions SJsonOptions = new() { PropertyNameCaseInsensitive = true };
     private bool _photoHubConnected;
     private readonly CancellationTokenSource _disposeCts = new();
 
@@ -45,7 +46,7 @@ internal sealed class RestApiStatusService : IDisposable
         _uiDispatcher = uiDispatcher;
         _logger = logger;
         _httpClient.Timeout = TimeSpan.FromSeconds(5);
-        _timer = new System.Timers.Timer(PollIntervalWhenWaitingMs);
+        _timer = new Timer(PollIntervalWhenWaitingMs);
         _timer.Elapsed += (_, _) => _ = RefreshAsync();
 
         _restApiProcessService.ApiBecameReachable += OnRestApiBecameReachable;
@@ -90,7 +91,7 @@ internal sealed class RestApiStatusService : IDisposable
             if (response.IsSuccessStatusCode)
             {
                 var json = await response.Content.ReadAsStringAsync(_disposeCts.Token);
-                var data = JsonSerializer.Deserialize<StatusResponse>(json, s_jsonOptions);
+                var data = JsonSerializer.Deserialize<StatusResponse>(json, SJsonOptions);
                 var clients = data?.ConnectedClients?
                     .Select(c => new RestApiClientInfo
                     {
@@ -124,7 +125,7 @@ internal sealed class RestApiStatusService : IDisposable
             {
                 var statusText = BuildUnreachableStatusText(port);
                 _uiDispatcher.InvokeOnUi(() => _viewModel.UpdateRestApiStatus(statusText, false, null));
-                SetPollInterval(_appSettings.Application?.AutoStartWebApp == true
+                SetPollInterval(_appSettings.Application.AutoStartWebApp == true
                     ? PollIntervalWhenWaitingMs
                     : PollIntervalWhenReachableMs);
             }
@@ -136,10 +137,10 @@ internal sealed class RestApiStatusService : IDisposable
         catch (Exception ex)
         {
             _logger.LogDebug(ex, "REST API status check failed");
-            var portFallback = _appSettings.RestApi?.Port > 0 ? _appSettings.RestApi.Port : 5001;
+            var portFallback = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
             var statusText = BuildUnreachableStatusText(portFallback);
             _uiDispatcher.InvokeOnUi(() => _viewModel.UpdateRestApiStatus(statusText, false, null));
-            SetPollInterval(_appSettings.Application?.AutoStartWebApp == true
+            SetPollInterval(_appSettings.Application.AutoStartWebApp == true
                 ? PollIntervalWhenWaitingMs
                 : PollIntervalWhenReachableMs);
         }
@@ -147,7 +148,7 @@ internal sealed class RestApiStatusService : IDisposable
 
     private void SetPollInterval(int intervalMs)
     {
-        if (_timer.Interval != intervalMs)
+        if (Math.Abs(_timer.Interval - intervalMs) > 0.001)
         {
             _timer.Interval = intervalMs;
         }
@@ -159,7 +160,7 @@ internal sealed class RestApiStatusService : IDisposable
     /// </summary>
     private string BuildUnreachableStatusText(int port)
     {
-        if (_appSettings.Application?.AutoStartWebApp == true)
+        if (_appSettings.Application.AutoStartWebApp == true)
             return "Waiting for the REST API to start...";
         if (_restApiProcessService.IsRunning)
             return $"Not reachable (port {port}) – check connection";
@@ -200,8 +201,8 @@ internal sealed class RestApiStatusService : IDisposable
 
     private sealed class ClientDto
     {
-        public string? ClientId { get; set; }
-        public string? DeviceName { get; set; }
-        public DateTime ConnectedAt { get; set; }
+        public string? ClientId { get; init; }
+        public string? DeviceName { get; init; }
+        public DateTime ConnectedAt { get; init; }
     }
 }

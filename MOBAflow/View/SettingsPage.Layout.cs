@@ -1,14 +1,9 @@
 namespace Moba.WinUI.View;
 
 using Common.Configuration;
-
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 internal sealed partial class SettingsPage
 {
@@ -280,7 +275,7 @@ internal sealed partial class SettingsPage
                 yield return child;
                 break;
             case Panel panel:
-                foreach (var childElement in panel.Children.OfType<UIElement>())
+                foreach (var childElement in panel.Children)
                 {
                     yield return childElement;
                 }

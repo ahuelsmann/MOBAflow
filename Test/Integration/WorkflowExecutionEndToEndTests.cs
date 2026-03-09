@@ -5,7 +5,6 @@ namespace Moba.Test.Integration;
 using Moba.Backend.Service;
 using Moba.Common.Events;
 using Moba.Domain.Enum;
-
 using Mocks;
 
 /// <summary>

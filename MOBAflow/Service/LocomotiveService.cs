@@ -13,13 +13,11 @@ using SharedUI.Interface;
 internal class LocomotiveService : ILocomotiveService
 {
     private readonly DataManager _dataManager;
-    private readonly ILogger<LocomotiveService> _logger;
 
     public LocomotiveService(DataManager dataManager, ILogger<LocomotiveService> logger)
     {
         _dataManager = dataManager ?? throw new ArgumentNullException(nameof(dataManager));
-        _logger = logger;
-        _logger.LogInformation("LocomotiveService initialized (data from DataManager)");
+        logger.LogInformation("LocomotiveService initialized (data from DataManager)");
     }
 
     /// <summary>

@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.SharedUI.ViewModel;
 
-using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using System.Collections.ObjectModel;
 
 /// <summary>
 /// MainWindowViewModel - REST API status and connected clients for Overview page.
@@ -40,7 +40,7 @@ public partial class MainWindowViewModel
     /// </summary>
     public void UpdateRestApiStatus(string statusText, bool isReachable, IReadOnlyList<RestApiClientInfo>? clients)
     {
-        RestApiStatusText = statusText ?? "—";
+        RestApiStatusText = statusText;
         RestApiIsReachable = isReachable;
 
         RestApiConnectedClients = clients is null

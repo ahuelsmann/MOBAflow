@@ -74,8 +74,8 @@ public class Z21DiscoveryService : IZ21DiscoveryService
             var data = result.Buffer;
             if (IsZ21Response(data))
             {
-                _logger.LogInformation("Z21 discovered at {Ip}", result.RemoteEndPoint?.Address);
-                return result.RemoteEndPoint?.Address?.ToString();
+                _logger.LogInformation("Z21 discovered at {Ip}", result.RemoteEndPoint.Address);
+                return result.RemoteEndPoint.Address.ToString();
             }
         }
         catch (OperationCanceledException)
@@ -106,7 +106,7 @@ public class Z21DiscoveryService : IZ21DiscoveryService
         {
             if (last == bytes[3])
                 continue;
-            list.Add(new IPAddress(new byte[] { bytes[0], bytes[1], bytes[2], (byte)last }));
+            list.Add(new IPAddress(new[] { bytes[0], bytes[1], bytes[2], (byte)last }));
         }
         return list;
     }
@@ -156,7 +156,7 @@ public class Z21DiscoveryService : IZ21DiscoveryService
     /// </summary>
     private static bool IsZ21Response(byte[] data)
     {
-        if (data == null || data.Length < 4)
+        if (data.Length < 4)
             return false;
         ushort dataLen = (ushort)(data[0] | (data[1] << 8));
         if (dataLen < 4 || dataLen > 1024)

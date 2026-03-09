@@ -1,10 +1,10 @@
 namespace Moba.WinUI.Controls;
 
+using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
-
 using Windows.Foundation;
 using Windows.UI;
 
@@ -342,7 +342,7 @@ internal sealed partial class AmperemeterControl
             {
                 Text = mA.ToString(),
                 FontSize = isMax ? 11 : 10,
-                FontWeight = isMax ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal,
+                FontWeight = isMax ? FontWeights.Bold : FontWeights.Normal,
                 Foreground = isMax ? maxBrush : markerBrush,
                 TextAlignment = TextAlignment.Center
             };

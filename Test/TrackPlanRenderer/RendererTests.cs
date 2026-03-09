@@ -1,11 +1,8 @@
 namespace Moba.Test.TrackPlanRenderer;
 
 using Newtonsoft.Json;
-
 using System.Diagnostics;
-
 using TrackLibrary.PikoA;
-
 using TrackPlan.Renderer;
 
 [TestFixture]

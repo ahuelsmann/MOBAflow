@@ -2,7 +2,6 @@
 namespace Moba.SharedUI.ViewModel;
 
 using Common.Navigation;
-
 using CommunityToolkit.Mvvm.ComponentModel;
 
 /// <summary>

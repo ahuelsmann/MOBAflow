@@ -3,19 +3,14 @@ namespace Moba.WinUI.View;
 
 using Common.Configuration;
 using Common.Navigation;
-
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-
 using Service;
-
 using SharedUI.Interface;
-
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Reflection;
-
 using MainWindowViewModel = SharedUI.ViewModel.MainWindowViewModel;
 
 internal sealed partial class MainWindow

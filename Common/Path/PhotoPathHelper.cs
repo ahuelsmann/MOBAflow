@@ -1,6 +1,8 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
 namespace Moba.Common.Path;
 
+using Path = System.IO.Path;
+
 /// <summary>
 /// Centralized photo path handling to avoid regressions (e.g. Path.DirectorySeparator vs Path.DirectorySeparatorChar).
 /// Used by SharedUI, WinUI IoService, and RestApi for consistent resolution of relative photo paths.
@@ -41,7 +43,7 @@ public static class PhotoPathHelper
             return string.Empty;
 
         var trimmed = path.Trim();
-        if (System.IO.Path.IsPathRooted(trimmed))
+        if (Path.IsPathRooted(trimmed))
             return trimmed;
 
         var subPath = trimmed.StartsWith(PhotosPrefixSlash, StringComparison.OrdinalIgnoreCase)
@@ -60,18 +62,18 @@ public static class PhotoPathHelper
         ArgumentNullException.ThrowIfNull(fullPath);
 
         relativePath = null;
-        if (string.IsNullOrWhiteSpace(fullPath) || !System.IO.Path.IsPathRooted(fullPath))
+        if (string.IsNullOrWhiteSpace(fullPath) || !Path.IsPathRooted(fullPath))
             return false;
 
-        var normalizedBaseDir = System.IO.Path.GetFullPath(baseDir)
-            .TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
-        var normalizedFullPath = System.IO.Path.GetFullPath(fullPath);
-        var candidate = System.IO.Path.GetRelativePath(normalizedBaseDir, normalizedFullPath);
+        var normalizedBaseDir = Path.GetFullPath(baseDir)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var normalizedFullPath = Path.GetFullPath(fullPath);
+        var candidate = Path.GetRelativePath(normalizedBaseDir, normalizedFullPath);
 
         if (candidate.Equals("..", StringComparison.Ordinal)
-            || candidate.StartsWith($"..{System.IO.Path.DirectorySeparatorChar}", StringComparison.Ordinal)
-            || candidate.StartsWith($"..{System.IO.Path.AltDirectorySeparatorChar}", StringComparison.Ordinal)
-            || System.IO.Path.IsPathRooted(candidate))
+            || candidate.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
+            || candidate.StartsWith($"..{Path.AltDirectorySeparatorChar}", StringComparison.Ordinal)
+            || Path.IsPathRooted(candidate))
         {
             return false;
         }
@@ -99,7 +101,7 @@ public static class PhotoPathHelper
                 ? trimmed.Substring(PhotosPrefixBackslash.Length)
                 : relativePath;
 
-        var normalized = subPath.Replace("/", System.IO.Path.DirectorySeparatorChar.ToString());
-        return System.IO.Path.Combine(baseDir, normalized);
+        var normalized = subPath.Replace("/", Path.DirectorySeparatorChar.ToString());
+        return Path.Combine(baseDir, normalized);
     }
 }

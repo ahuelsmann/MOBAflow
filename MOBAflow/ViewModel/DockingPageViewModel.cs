@@ -4,9 +4,7 @@ namespace Moba.WinUI.ViewModel;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using Controls.Docking;
-
 using System.Collections.ObjectModel;
 
 /// <summary>
@@ -16,22 +14,22 @@ using System.Collections.ObjectModel;
 internal sealed partial class DockingPageViewModel : ObservableObject
 {
     [ObservableProperty]
-    private ObservableCollection<DocumentTab> openDocuments = new();
+    private ObservableCollection<DocumentTab> _openDocuments = new();
 
     [ObservableProperty]
-    private DocumentTab? activeDocument;
+    private DocumentTab? _activeDocument;
 
     [ObservableProperty]
-    private ObservableCollection<DockPanel> leftPanels = new();
+    private ObservableCollection<DockPanel> _leftPanels = new();
 
     [ObservableProperty]
-    private ObservableCollection<DockPanel> rightPanels = new();
+    private ObservableCollection<DockPanel> _rightPanels = new();
 
     [ObservableProperty]
-    private ObservableCollection<DockPanel> topPanels = new();
+    private ObservableCollection<DockPanel> _topPanels = new();
 
     [ObservableProperty]
-    private ObservableCollection<DockPanel> bottomPanels = new();
+    private ObservableCollection<DockPanel> _bottomPanels = new();
 
     private int _documentCounter = 1;
 

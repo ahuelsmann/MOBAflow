@@ -3,14 +3,10 @@ namespace Moba.WinUI.Service;
 
 using Common.Configuration;
 using Common.Navigation;
-
 using Microsoft.Extensions.DependencyInjection;
-
 using SharedUI.Interface;
 using SharedUI.ViewModel;
-
 using View;
-
 using ViewModel;
 
 /// <summary>
@@ -32,7 +28,7 @@ internal static class NavigationRegistration
         var discoveredPages = PageDiscoveryService.DiscoverPages(services, typeof(NavigationRegistration).Assembly);
 
         // Manual registrations for pages with custom DI requirements
-        var customPages = RegisterPagesWithCustomDI(services);
+        var customPages = RegisterPagesWithCustomDi(services);
 
         // Combine and return sorted
         return discoveredPages.Concat(customPages)
@@ -41,7 +37,7 @@ internal static class NavigationRegistration
             .ToList();
     }
 
-    private static List<PageMetadata> RegisterPagesWithCustomDI(IServiceCollection services)
+    private static List<PageMetadata> RegisterPagesWithCustomDi(IServiceCollection services)
     {
         var pages = new List<PageMetadata>();
 

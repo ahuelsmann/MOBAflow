@@ -3,6 +3,7 @@
 namespace Moba.WinUI.Behavior;
 
 using Microsoft.UI.Xaml;
+using Windows.ApplicationModel.DataTransfer;
 
 /// <summary>
 /// Drag and drop handler for DockingManager panels.
@@ -94,10 +95,10 @@ public static class DockingDropBehavior
             var position = GetDragPosition(e, element);
             SetDockPosition(element, position);
 
-            e.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Move;
+            e.AcceptedOperation = DataPackageOperation.Move;
             
             // Visual Feedback: Highlight Zone
-            HighlightDropZone(element, position);
+            HighlightDropZone(element);
         }
     }
 
@@ -148,7 +149,7 @@ public static class DockingDropBehavior
         return DockPosition.Center;
     }
 
-    private static void HighlightDropZone(FrameworkElement element, DockPosition _position)
+    private static void HighlightDropZone(FrameworkElement element)
     {
         // Apply visual feedback based on drop position
         // could be implemented with VisualState or OpacityMask

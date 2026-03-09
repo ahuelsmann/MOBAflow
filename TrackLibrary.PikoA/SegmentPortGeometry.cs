@@ -323,6 +323,7 @@ public static class SegmentPortGeometry
     /// <summary>DKW (Piko 55224) – AnyRail reference: Four ports at the ends of the two parallel tracks – A/B top track, C/D bottom track.</summary>
     private static IReadOnlyList<PortInfo> GetDkwPorts(double length, double arcDegree, double radius)
     {
+        _ = radius;
         var half = length / 2;
         var rad = arcDegree * Math.PI / 180;
         var sin = Math.Sin(rad);

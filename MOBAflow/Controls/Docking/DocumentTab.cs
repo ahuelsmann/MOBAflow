@@ -4,8 +4,6 @@ namespace Moba.WinUI.Controls.Docking;
 
 using Microsoft.UI.Xaml;
 
-using System;
-
 /// <summary>
 /// Represents a single document tab.
 /// Used by LayoutDocumentEx and DockingManager.

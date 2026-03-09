@@ -1,8 +1,6 @@
 namespace Moba.WinUI.View;
 
 using Common.Navigation;
-
-using System.IO;
 using System.Reflection;
 
 [NavigationItem(

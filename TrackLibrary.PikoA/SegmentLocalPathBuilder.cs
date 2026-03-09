@@ -287,6 +287,7 @@ public static class SegmentLocalPathBuilder
     /// <summary>DKW (Piko 55224) – AnyRail reference: Two parallel main tracks (top A–B, bottom C–D), X in center from two diagonals (15°).</summary>
     private static IReadOnlyList<PathCommand> GetDkwPath(double length, double arcDegree, double radius)
     {
+        _ = radius;
         var half = length / 2;
         var rad = arcDegree * Math.PI / 180;
         var cos = Math.Cos(rad);

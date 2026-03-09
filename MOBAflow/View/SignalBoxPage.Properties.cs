@@ -1,14 +1,11 @@
 namespace Moba.WinUI.View;
 
 using Common.Multiplex;
-
 using Domain;
-
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-
 using System.Diagnostics;
 
 /// <summary>
@@ -440,8 +437,8 @@ sealed partial class SignalBoxPage
                 return;
             }
 
-            Debug.WriteLine($"[AUTO-SIGNAL] Calling MainWindowViewModel.SetSignalAspectAsync...");
-            SetSignalStatusText.Text = $"⏳ Signal wird gestellt...";
+            Debug.WriteLine("[AUTO-SIGNAL] Calling MainWindowViewModel.SetSignalAspectAsync...");
+            SetSignalStatusText.Text = "⏳ Signal wird gestellt...";
             SetSignalStatusText.Visibility = Visibility.Visible;
 
             // Call the ViewModel method to send the signal command

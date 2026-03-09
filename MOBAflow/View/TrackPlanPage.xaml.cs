@@ -3,28 +3,25 @@
 namespace Moba.WinUI.View;
 
 using Common.Navigation;
-
 using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.Graphics.Canvas.UI;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI.Input;
+using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
-
 using SharedUI.ViewModel;
-
 using System.Diagnostics;
-
 using TrackLibrary.PikoA;
-
 using TrackPlan.Renderer;
-
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.System;
+using Windows.UI;
+using Path = System.IO.Path;
 
 [NavigationItem(
     Tag = "trackplaneditor",
@@ -106,7 +103,7 @@ internal sealed partial class TrackPlanPage
     {
         var plan = CreateTestPlan();
         var renderResult = new TrackPlanSvgRenderer().Render(plan);
-        var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "trackplan-win2d-compare.html");
+        var path = Path.Combine(Path.GetTempPath(), "trackplan-win2d-compare.html");
         new SvgExporter().Export(renderResult.Svg, path);
 
         if (OperatingSystem.IsWindows())
@@ -159,7 +156,7 @@ internal sealed partial class TrackPlanPage
         var header = new TextBlock
         {
             Text = title,
-            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+            FontWeight = FontWeights.SemiBold,
             Margin = new Thickness(0, 8, 0, 4)
         };
         ToolboxStackPanel.Children.Add(header);
@@ -187,7 +184,7 @@ internal sealed partial class TrackPlanPage
             {
                 Text = entry.Code,
                 VerticalAlignment = VerticalAlignment.Center,
-                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
+                FontWeight = FontWeights.SemiBold
             };
             ToolTipService.SetToolTip(codeText, entry.DisplayName);
             panel.Children.Add(codeText);
@@ -838,19 +835,19 @@ internal sealed partial class TrackPlanPage
     }
 
     /// <summary>Reads the theme-dependent track stroke color for Win2D (Dark: light, Light: dark).</summary>
-    private static Windows.UI.Color ResolveTrackPlanStrokeBrush()
+    private static Color ResolveTrackPlanStrokeBrush()
     {
         if (Application.Current.Resources.TryGetValue("TrackPlanStrokeBrush", out var obj) && obj is SolidColorBrush brush)
             return brush.Color;
-        return Windows.UI.Color.FromArgb(255, 26, 26, 26);
+        return Color.FromArgb(255, 26, 26, 26);
     }
 
     /// <summary>Reads the theme-dependent selection stroke color for Win2D.</summary>
-    private static Windows.UI.Color ResolveTrackPlanStrokeSelectedBrush()
+    private static Color ResolveTrackPlanStrokeSelectedBrush()
     {
         if (Application.Current.Resources.TryGetValue("TrackPlanStrokeSelectedBrush", out var obj) && obj is SolidColorBrush brush)
             return brush.Color;
-        return Windows.UI.Color.FromArgb(255, 0, 120, 215);
+        return Color.FromArgb(255, 0, 120, 215);
     }
 
     private void GraphCanvasControl_Draw(CanvasControl sender, CanvasDrawEventArgs args)
@@ -900,7 +897,7 @@ internal sealed partial class TrackPlanPage
                 _zoomSyncing = false;
             }
         };
-        CanvasScrollViewer.ViewChanged += (s, _) =>
+        CanvasScrollViewer.ViewChanged += (_, _) =>
         {
             if (_zoomSyncing)
                 return;

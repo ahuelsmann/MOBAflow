@@ -2,7 +2,6 @@ namespace Moba.TrackPlan.Renderer;
 
 using System.Globalization;
 using System.Text;
-
 using TrackLibrary.Base;
 using TrackLibrary.PikoA;
 
@@ -156,11 +155,8 @@ public class TrackPlanSvgRenderer
         {
             RenderG62(g62, entryPort, ref nextX, ref nextY, ref nextAngle, currentSegmentIndex);
         }
-        else
-        {
-            // Add further track types here
-        }
 
+        // Add further track types here
         // Finde alle ausgehenden Verbindungen von diesem Segment
         var outgoingConnections = trackPlan.Connections
             .Where(c => c.SourceSegment == segment.No)
@@ -251,8 +247,9 @@ public class TrackPlanSvgRenderer
     /// For curves with two ports, the correct position must be calculated for each exit.
     /// </summary>
     private void CalculateCurvedPortPosition(Segment segment, char entryPort, char outgoingPort, double x, double y, double angle,
-        double _nextX, double _nextY, double nextAngle, out double outX, out double outY, out double outAngle)
+        double nextX, double nextY, double nextAngle, out double outX, out double outY, out double outAngle)
     {
+        _ = (nextX, nextY);
         var radius = segment switch { R9 r => r.RadiusInMm, R1 r => r.RadiusInMm, R2 r => r.RadiusInMm, R3 r => r.RadiusInMm, R4 r => r.RadiusInMm, _ => 0.0 };
         var arcDegree = segment switch { R9 r => r.ArcInDegree, R1 r => r.ArcInDegree, R2 r => r.ArcInDegree, R3 r => r.ArcInDegree, R4 r => r.ArcInDegree, _ => 0.0 };
 
@@ -784,17 +781,15 @@ public class TrackPlanSvgRenderer
                 _ => "#808080"    // Grau (Fallback)
             };
         }
-        else
+
+        // Schema 2: Alternative Farben
+        return port switch
         {
-            // Schema 2: Alternative Farben
-            return port switch
-            {
-                'A' => "#808080", // Grau
-                'B' => "#FF00FF", // Magenta
-                'C' => "#FFFF00", // Gelb
-                'D' => "#00FFFF", // Cyan
-                _ => "#808080"    // Grau (Fallback)
-            };
-        }
+            'A' => "#808080", // Grau
+            'B' => "#FF00FF", // Magenta
+            'C' => "#FFFF00", // Gelb
+            'D' => "#00FFFF", // Cyan
+            _ => "#808080"    // Grau (Fallback)
+        };
     }
 }

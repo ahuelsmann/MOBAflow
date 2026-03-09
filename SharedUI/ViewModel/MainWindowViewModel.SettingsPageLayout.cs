@@ -2,9 +2,6 @@ namespace Moba.SharedUI.ViewModel;
 
 using Common.Configuration;
 
-using System;
-using System.Collections.Generic;
-
 public partial class MainWindowViewModel
 {
     public string SettingsSectionSortMode
@@ -99,7 +96,6 @@ public partial class MainWindowViewModel
 
     private SettingsPageLayoutSettings GetSettingsPageLayout()
     {
-        _settings.Layout ??= new LayoutSettings();
         _settings.Layout.SettingsPage ??= new SettingsPageLayoutSettings();
         _settings.Layout.SettingsPage.Sections ??= new Dictionary<string, SettingsPageSectionState>(StringComparer.OrdinalIgnoreCase);
         return _settings.Layout.SettingsPage;

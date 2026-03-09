@@ -20,43 +20,43 @@ internal sealed partial class TrainClassViewModel : ObservableObject
     /// User input for train class (e.g., "110", "BR 110", "br110")
     /// </summary>
     [ObservableProperty]
-    private string trainClassInput = string.Empty;
+    private string _trainClassInput = string.Empty;
 
     /// <summary>
     /// Currently resolved locomotive series, or null if input is invalid or not yet resolved.
     /// </summary>
     [ObservableProperty]
-    private LocomotiveSeries? resolvedSeries;
+    private LocomotiveSeries? _resolvedSeries;
 
     /// <summary>
     /// Display text for resolved series name (e.g., "BR 110.3 (Bügelfalte)"), or empty if not resolved.
     /// </summary>
     [ObservableProperty]
-    private string resolvedDisplayText = string.Empty;
+    private string _resolvedDisplayText = string.Empty;
 
     /// <summary>
     /// Max speed in km/h for resolved series, or 0 if not resolved.
     /// </summary>
     [ObservableProperty]
-    private int vmax;
+    private int _vmax;
 
     /// <summary>
     /// Type of locomotive (e.g., "Elektrolok", "Dampflok", "Triebzug"), or empty if not resolved.
     /// </summary>
     [ObservableProperty]
-    private string locomotiveType = string.Empty;
+    private string _locomotiveType = string.Empty;
 
     /// <summary>
     /// Collection of all available locomotive classes for auto-completion or dropdown binding.
     /// </summary>
     [ObservableProperty]
-    private ObservableCollection<LocomotiveSeries> availableClasses = new();
+    private ObservableCollection<LocomotiveSeries> _availableClasses = new();
 
     /// <summary>
     /// Whether the current input has been resolved successfully.
     /// </summary>
     [ObservableProperty]
-    private bool isResolved;
+    private bool _isResolved;
 
     public TrainClassViewModel(ITrainClassParser parser)
     {
@@ -119,10 +119,7 @@ internal sealed partial class TrainClassViewModel : ObservableObject
     [RelayCommand]
     public async Task SelectClassAsync(LocomotiveSeries series)
     {
-        if (series == null)
-        {
-            return;
-        }
+        ArgumentNullException.ThrowIfNull(series);
 
         TrainClassInput = ExtractClassNumber(series.Name);
         await ResolveInputAsync();

@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Andreas Huelsmann. Licensed under MIT. See LICENSE and README.md for details.
-namespace Moba.MOBAapi.Controllers;
+namespace Moba.MOBApi.Controllers;
 
+using Hubs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using Moba.MOBAapi.Hubs;
 
 /// <summary>
 /// REST API for photo health check and upload (MAUI compatibility).

@@ -82,7 +82,7 @@ internal class DiscoveryResponseParserTests
     [Test]
     public void TryParse_Port_zero_returns_false()
     {
-        var success = DiscoveryResponseParser.TryParse("MOBAFLOW_REST_API|192.168.0.1|0", out var ip, out var port);
+        var success = DiscoveryResponseParser.TryParse("MOBAFLOW_REST_API|192.168.0.1|0", out _, out _);
 
         Assert.That(success, Is.False);
     }
@@ -90,7 +90,7 @@ internal class DiscoveryResponseParserTests
     [Test]
     public void TryParse_Port_65536_returns_false()
     {
-        var success = DiscoveryResponseParser.TryParse("MOBAFLOW_REST_API|192.168.0.1|65536", out var ip, out var port);
+        var success = DiscoveryResponseParser.TryParse("MOBAFLOW_REST_API|192.168.0.1|65536", out _, out _);
 
         Assert.That(success, Is.False);
     }
@@ -114,7 +114,7 @@ internal class DiscoveryResponseParserTests
     [Test]
     public void TryParse_Valid_port_1_returns_true()
     {
-        var success = DiscoveryResponseParser.TryParse("MOBAFLOW_REST_API|0.0.0.0|1", out var ip, out var port);
+        var success = DiscoveryResponseParser.TryParse("MOBAFLOW_REST_API|0.0.0.0|1", out _, out var port);
 
         Assert.That(success, Is.True);
         Assert.That(port, Is.EqualTo(1));
