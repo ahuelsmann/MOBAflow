@@ -15,14 +15,11 @@
             <local:GridColumnResizeBehavior PersistenceKey="SolutionPage" />
         </i:Interaction.Behaviors>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition
-                MinWidth="300"
-                Width="{Binding SolutionPage.Col0, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}" />
+            <ColumnDefinition Width="{Binding SolutionPage.Col0, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}" MinWidth="300" />
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition
-                MinWidth="300"
-                MaxWidth="500"
                 Width="{Binding SolutionPage.Col2, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}"
+                MinWidth="300"
                 local:GridColumnResizeBehavior.DefaultWidth="400" />
         </Grid.ColumnDefinitions>
 

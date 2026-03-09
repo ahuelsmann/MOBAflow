@@ -18,8 +18,8 @@
             BorderThickness="0,0,1,0">
             <ScrollViewer
                 Padding="16"
-                VerticalScrollBarVisibility="Auto"
-                HorizontalScrollBarVisibility="Disabled">
+                HorizontalScrollBarVisibility="Disabled"
+                VerticalScrollBarVisibility="Auto">
                 <StackPanel Spacing="16">
                     <StackPanel Spacing="4">
                         <TextBlock
@@ -42,7 +42,7 @@
             Grid.Column="2"
             Padding="24"
             VerticalScrollBarVisibility="Auto">
-            <StackPanel MaxWidth="800" Spacing="16">
+            <StackPanel Spacing="16">
                 <TextBlock
                     x:Name="HeaderTextBlock"
                     FontSize="32"

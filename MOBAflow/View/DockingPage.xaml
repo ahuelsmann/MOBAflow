@@ -57,7 +57,6 @@
 
                                 <TextBlock
                                     Grid.Column="1"
-                                    MaxWidth="160"
                                     VerticalAlignment="Center"
                                     FontSize="12"
                                     Foreground="{ThemeResource TextFillColorPrimaryBrush}"

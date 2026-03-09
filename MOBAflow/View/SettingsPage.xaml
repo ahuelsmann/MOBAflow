@@ -58,9 +58,7 @@
                 IsOpen="False"
                 Severity="Informational" />
 
-            <StackPanel
-                x:Name="SettingsExpanderHost"
-                Spacing="8">
+            <StackPanel x:Name="SettingsExpanderHost" Spacing="8">
 
                 <!--  Z21 Connection Section  -->
                 <Expander
@@ -82,7 +80,6 @@
 
                     <StackPanel Padding="56,16,0,16" Spacing="16">
                         <TextBox
-                            MaxWidth="400"
                             HorizontalAlignment="Left"
                             Header="IP Address"
                             PlaceholderText="192.168.0.111"
@@ -93,7 +90,6 @@
                         </TextBox>
 
                         <TextBox
-                            MaxWidth="200"
                             HorizontalAlignment="Left"
                             Header="Port"
                             PlaceholderText="21105"
@@ -104,7 +100,6 @@
                         </TextBox>
 
                         <NumberBox
-                            MaxWidth="200"
                             HorizontalAlignment="Left"
                             Header="Auto-Connect Retry Interval (seconds)"
                             Minimum="5"
@@ -116,7 +111,6 @@
                         </NumberBox>
 
                         <NumberBox
-                            MaxWidth="200"
                             HorizontalAlignment="Left"
                             Header="System State Polling Interval (seconds)"
                             Minimum="5"
@@ -150,7 +144,6 @@
                     <StackPanel Padding="56,16,0,16" Spacing="16">
                         <!--  Speech Engine Selection  -->
                         <ComboBox
-                            MaxWidth="400"
                             HorizontalAlignment="Left"
                             Header="Speech Engine"
                             ItemsSource="{x:Bind ViewModel.AvailableSpeechEngines}"
@@ -182,7 +175,6 @@
                             </InfoBar>
 
                             <TextBox
-                                MaxWidth="500"
                                 HorizontalAlignment="Left"
                                 Header="Azure Speech Key"
                                 PlaceholderText="Enter your Azure Speech API key"
@@ -197,7 +189,6 @@
                             </TextBox>
 
                             <TextBox
-                                MaxWidth="300"
                                 HorizontalAlignment="Left"
                                 Header="Azure Region"
                                 PlaceholderText="germanywestcentral"
@@ -209,7 +200,6 @@
                         </StackPanel>
 
                         <NumberBox
-                            MaxWidth="400"
                             HorizontalAlignment="Left"
                             Header="Speech Rate"
                             Maximum="10"
@@ -222,7 +212,6 @@
                         </NumberBox>
 
                         <NumberBox
-                            MaxWidth="400"
                             HorizontalAlignment="Left"
                             Header="Speech Volume"
                             Maximum="100"
@@ -235,7 +224,6 @@
                         </NumberBox>
 
                         <ComboBox
-                            MaxWidth="400"
                             HorizontalAlignment="Left"
                             Header="Voice Name"
                             ItemsSource="{x:Bind ViewModel.AvailableVoiceNames}"
@@ -248,7 +236,6 @@
 
                         <!--  Test Message TextBox  -->
                         <TextBox
-                            MaxWidth="600"
                             HorizontalAlignment="Left"
                             Header="Test Message"
                             PlaceholderText="Enter text to test speech synthesis"
@@ -300,7 +287,6 @@
                         </StackPanel>
 
                         <NumberBox
-                            MaxWidth="200"
                             HorizontalAlignment="Left"
                             Header="Port"
                             Maximum="65535"
@@ -413,7 +399,6 @@
 
                     <StackPanel Padding="56,16,0,16" Spacing="16">
                         <TextBlock
-                            MaxWidth="700"
                             Style="{StaticResource CaptionTextBlockStyle}"
                             Text="Reset saved splitter positions, panel widths, Settings page section ordering, and the Docking preview layout back to their defaults. Open pages may need to be revisited to pick up the default layout."
                             TextWrapping="Wrap" />
@@ -445,7 +430,6 @@
 
                     <StackPanel Padding="56,16,0,16" Spacing="16">
                         <NumberBox
-                            MaxWidth="200"
                             HorizontalAlignment="Left"
                             Header="Number of Feedback Points"
                             Minimum="0"

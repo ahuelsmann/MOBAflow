@@ -230,18 +230,13 @@
             <!--  COLUMN DEFINITIONS: Will be modified by VisualStateManager  -->
             <Grid.ColumnDefinitions>
                 <!--  Col 0: Settings Panel (260px on Wide, 250px on Medium, hidden on Compact)  -->
-                <ColumnDefinition
-                    Width="{Binding TrainControlPage.Col0, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}"
-                    local:GridColumnResizeBehavior.DefaultWidth="260" />
+                <ColumnDefinition Width="{Binding TrainControlPage.Col0, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}" local:GridColumnResizeBehavior.DefaultWidth="260" />
                 <ColumnDefinition Width="Auto" />
                 <!--  Col 1: Center Grid (4 Quadrants - flexible, grows to fill space)  -->
-                <ColumnDefinition
-                    Width="{Binding TrainControlPage.Col2, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}" />
+                <ColumnDefinition Width="{Binding TrainControlPage.Col2, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}" />
                 <ColumnDefinition Width="Auto" />
                 <!--  Col 2: Functions Panel (180px on Wide, hidden on Medium/Compact)  -->
-                <ColumnDefinition
-                    Width="{Binding TrainControlPage.Col4, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}"
-                    local:GridColumnResizeBehavior.DefaultWidth="180" />
+                <ColumnDefinition Width="{Binding TrainControlPage.Col4, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}" local:GridColumnResizeBehavior.DefaultWidth="180" />
             </Grid.ColumnDefinitions>
 
             <!--  LEFT PANEL: Locomotive Settings (Grid.Column="0")  -->

@@ -5,10 +5,8 @@
     xmlns:markdown="using:CommunityToolkit.WinUI.UI.Controls">
 
     <Grid Background="{ThemeResource SolidBackgroundFillColorBaseBrush}">
-        <ScrollViewer
-            Padding="24"
-            VerticalScrollBarVisibility="Auto">
-            <StackPanel MaxWidth="800" Spacing="16">
+        <ScrollViewer Padding="24" VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="16">
                 <TextBlock
                     FontSize="32"
                     FontWeight="SemiBold"

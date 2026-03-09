@@ -15,13 +15,9 @@
             <local:GridColumnResizeBehavior PersistenceKey="GoodsWagonPage" />
         </i:Interaction.Behaviors>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition
-                MinWidth="200"
-                Width="{Binding GoodsWagonPage.Col0, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}" />
+            <ColumnDefinition Width="{Binding GoodsWagonPage.Col0, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}" MinWidth="200" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition
-                MinWidth="300"
-                Width="{Binding GoodsWagonPage.Col2, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}" />
+            <ColumnDefinition Width="{Binding GoodsWagonPage.Col2, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}" MinWidth="300" />
         </Grid.ColumnDefinitions>
 
         <Grid Grid.Column="0" Padding="8">
