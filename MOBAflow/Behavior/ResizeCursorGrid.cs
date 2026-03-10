@@ -3,7 +3,7 @@ namespace Moba.WinUI.Behavior;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml.Controls;
 
-public sealed class CursorGrid : Grid
+public sealed class ResizeCursorGrid : Grid
 {
     private static readonly InputCursor ResizeCursor = InputSystemCursor.Create(InputSystemCursorShape.SizeWestEast);
 

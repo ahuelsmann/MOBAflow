@@ -482,6 +482,20 @@ public class LayoutSettings
     /// JourneysPage-specific layout settings (panel visibility).
     /// </summary>
     public JourneysPageLayoutSettings JourneysPage { get; set; } = new();
+
+    public GoodsWagonPageLayoutSettings GoodsWagonPage { get; set; } = new();
+
+    public LocomotivesPageLayoutSettings LocomotivesPage { get; set; } = new();
+
+    public PassengerWagonPageLayoutSettings PassengerWagonPage { get; set; } = new();
+
+    public SolutionPageLayoutSettings SolutionPage { get; set; } = new();
+
+    public WorkflowsPageLayoutSettings WorkflowsPage { get; set; } = new();
+
+    public SignalBoxPageLayoutSettings SignalBoxPage { get; set; } = new();
+
+    public TrackPlanPageLayoutSettings TrackPlanPage { get; set; } = new();
 }
 
 /// <summary>
@@ -608,6 +622,8 @@ public class TabVisibilitySettings
 /// </summary>
 public class JourneysPageLayoutSettings
 {
+    public bool IsJourneyListExpanded { get; set; } = true;
+
     /// <summary>
     /// Is City Library panel expanded?
     /// </summary>
@@ -617,4 +633,47 @@ public class JourneysPageLayoutSettings
     /// Is Workflow Library panel expanded?
     /// </summary>
     public bool IsWorkflowLibraryExpanded { get; set; } = true;
+
+    public bool IsJourneyPropertiesExpanded { get; set; } = true;
+}
+
+public class GoodsWagonPageLayoutSettings
+{
+    public bool IsListExpanded { get; set; } = true;
+}
+
+public class LocomotivesPageLayoutSettings
+{
+    public bool IsListExpanded { get; set; } = true;
+}
+
+public class PassengerWagonPageLayoutSettings
+{
+    public bool IsListExpanded { get; set; } = true;
+}
+
+public class SolutionPageLayoutSettings
+{
+    public bool IsProjectListExpanded { get; set; } = true;
+}
+
+public class WorkflowsPageLayoutSettings
+{
+    public bool IsWorkflowListExpanded { get; set; } = true;
+
+    public bool IsPropertiesExpanded { get; set; } = true;
+}
+
+public class SignalBoxPageLayoutSettings
+{
+    public bool IsToolboxExpanded { get; set; } = true;
+
+    public bool IsPropertiesExpanded { get; set; } = true;
+}
+
+public class TrackPlanPageLayoutSettings
+{
+    public bool IsToolboxExpanded { get; set; } = true;
+
+    public bool IsPropertiesExpanded { get; set; } = true;
 }

@@ -86,7 +86,7 @@
             </AppBarButton>
         </CommandBar>
         <!--  Main Content Grid  -->
-        <local:CursorGrid x:Name="MainGrid" Grid.Row="1">
+        <local:ResizeCursorGrid x:Name="MainGrid" Grid.Row="1">
             <i:Interaction.Behaviors>
                 <local:GridColumnResizeBehavior PersistenceKey="TrackPlanPage" />
             </i:Interaction.Behaviors>
@@ -433,7 +433,7 @@
                     </StackPanel>
                 </ScrollViewer>
             </Border>
-        </local:CursorGrid>
+        </local:ResizeCursorGrid>
         <!--  Status Bar  -->
         <Border
             Grid.Row="2"

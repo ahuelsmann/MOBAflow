@@ -219,7 +219,7 @@
         </Border>
 
         <!--  Main Content with Responsive Layout - Fluent Design  -->
-        <local:CursorGrid
+        <local:ResizeCursorGrid
             Grid.Row="1"
             Padding="32,24,32,32"
             ColumnSpacing="0"
@@ -233,7 +233,7 @@
                 <ColumnDefinition Width="{Binding TrainControlPage.Col0, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}" local:GridColumnResizeBehavior.DefaultWidth="260" />
                 <ColumnDefinition Width="Auto" />
                 <!--  Col 1: Center Grid (4 Quadrants - flexible, grows to fill space)  -->
-                <ColumnDefinition Width="{Binding TrainControlPage.Col2, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}" />
+                <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <!--  Col 2: Functions Panel (180px on Wide, hidden on Medium/Compact)  -->
                 <ColumnDefinition Width="{Binding TrainControlPage.Col4, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}" local:GridColumnResizeBehavior.DefaultWidth="180" />
@@ -818,7 +818,7 @@
             <Grid
                 Grid.Column="3"
                 Width="5"
-                local:GridColumnResizeBehavior.SplitterMode="Right"
+                local:GridColumnResizeBehavior.SplitterMode="Both"
                 Background="Transparent">
                 <Grid
                     Width="1"
@@ -1268,6 +1268,6 @@
                     </StackPanel>
                 </ScrollViewer>
             </Border>
-        </local:CursorGrid>
+        </local:ResizeCursorGrid>
     </Grid>
 </Page>

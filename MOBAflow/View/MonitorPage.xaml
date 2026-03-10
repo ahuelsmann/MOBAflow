@@ -30,7 +30,7 @@
             Text="Monitor" />
 
         <!--  Main Content: Traffic + Activity Logs  -->
-        <local:CursorGrid Grid.Row="1">
+        <local:ResizeCursorGrid Grid.Row="1">
             <i:Interaction.Behaviors>
                 <local:GridColumnResizeBehavior PersistenceKey="MonitorPage" />
             </i:Interaction.Behaviors>
@@ -295,6 +295,6 @@
                     </ListView.ItemTemplate>
                 </ListView>
             </Grid>
-        </local:CursorGrid>
+        </local:ResizeCursorGrid>
     </Grid>
 </Page>

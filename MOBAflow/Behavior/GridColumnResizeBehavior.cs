@@ -546,13 +546,13 @@ public sealed class GridColumnResizeBehavior : Behavior<Grid>
 
     private void ShowResizeCursor()
     {
-        if (AssociatedObject is CursorGrid cursorGrid)
+        if (AssociatedObject is ResizeCursorGrid cursorGrid)
             cursorGrid.ShowResizeCursor();
     }
 
     private void ResetCursor()
     {
-        if (AssociatedObject is CursorGrid cursorGrid)
+        if (AssociatedObject is ResizeCursorGrid cursorGrid)
             cursorGrid.ShowDefaultCursor();
     }
 

@@ -6,6 +6,7 @@
     <Grid>
         <!--  Collapsed: vertical tab strip  -->
         <Border
+            x:Name="CollapsedTab"
             Width="32"
             HorizontalAlignment="Left"
             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -29,6 +30,7 @@
 
         <!--  Expanded: full panel  -->
         <Grid
+            x:Name="ExpandedPanel"
             Padding="12"
             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"

@@ -10,7 +10,7 @@
     DataContext="{x:Bind ViewModel}"
     mc:Ignorable="d">
 
-    <local:CursorGrid>
+    <local:ResizeCursorGrid>
         <i:Interaction.Behaviors>
             <local:GridColumnResizeBehavior PersistenceKey="GoodsWagonPage" />
         </i:Interaction.Behaviors>
@@ -132,5 +132,5 @@
                 ContentTemplateSelector="{StaticResource EntityTemplateSelector}"
                 Visibility="{x:Bind ViewModel.SelectedGoodsWagon, Mode=OneWay, Converter={StaticResource NullableConverter}}" />
         </ScrollViewer>
-    </local:CursorGrid>
+    </local:ResizeCursorGrid>
 </Page>

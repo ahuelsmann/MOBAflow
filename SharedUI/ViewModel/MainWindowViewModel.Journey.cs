@@ -53,20 +53,32 @@ public partial class MainWindowViewModel
     /// <summary>
     /// Controls whether the City Library panel is visible on JourneysPage.
     /// </summary>
+    private bool _isCityLibraryVisible = true;
+
     public bool IsCityLibraryVisible
     {
-        get;
-        set => SetProperty(ref field, value);
-    } = true;
+        get => _isCityLibraryVisible;
+        set
+        {
+            if (SetProperty(ref _isCityLibraryVisible, value))
+                PersistLayoutState(layout => layout.JourneysPage.IsCityLibraryExpanded = value);
+        }
+    }
 
     /// <summary>
     /// Controls whether the Workflow Library panel is visible on JourneysPage.
     /// </summary>
+    private bool _isWorkflowLibraryVisible = true;
+
     public bool IsWorkflowLibraryVisible
     {
-        get;
-        set => SetProperty(ref field, value);
-    } = true;
+        get => _isWorkflowLibraryVisible;
+        set
+        {
+            if (SetProperty(ref _isWorkflowLibraryVisible, value))
+                PersistLayoutState(layout => layout.JourneysPage.IsWorkflowLibraryExpanded = value);
+        }
+    }
 
     /// <summary>
     /// Gets or sets the search text used to filter journeys by name on the Journeys page.

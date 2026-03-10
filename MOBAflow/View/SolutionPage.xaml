@@ -10,7 +10,7 @@
     DataContext="{x:Bind ViewModel}"
     mc:Ignorable="d">
 
-    <local:CursorGrid>
+    <local:ResizeCursorGrid>
         <i:Interaction.Behaviors>
             <local:GridColumnResizeBehavior PersistenceKey="SolutionPage" />
         </i:Interaction.Behaviors>
@@ -116,5 +116,5 @@
                 Content="{x:Bind ViewModel.SolutionPageSelectedObject, Mode=OneWay}"
                 ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
         </Grid>
-    </local:CursorGrid>
+    </local:ResizeCursorGrid>
 </Page>

@@ -166,7 +166,7 @@
         </Border>
 
         <!--  Main Content: Toolbox | Canvas | Properties  -->
-        <local:CursorGrid
+        <local:ResizeCursorGrid
             Grid.Row="1"
             Padding="0"
             ColumnSpacing="0">
@@ -1615,6 +1615,6 @@
                     </StackPanel>
                 </ScrollViewer>
             </Border>
-        </local:CursorGrid>
+        </local:ResizeCursorGrid>
     </Grid>
 </Page>

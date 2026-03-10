@@ -126,10 +126,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         TimerIntervalSeconds = settings.Counter.TimerIntervalSeconds;
 
         IsDarkMode = settings.Application.IsDarkMode;
-
-        // Restore JourneysPage layout so ViewModel has persisted values from the start
-        IsCityLibraryVisible = settings.Layout.JourneysPage?.IsCityLibraryExpanded ?? true;
-        IsWorkflowLibraryVisible = settings.Layout.JourneysPage?.IsWorkflowLibraryExpanded ?? true;
+        InitializeLayoutPanelStates();
 
         // Subscribe to Z21 events
         _eventBus.Subscribe<Z21ConnectionEstablishedEvent>(_ => OnZ21ConnectedChanged(true));

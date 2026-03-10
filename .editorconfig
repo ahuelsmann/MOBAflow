@@ -10,6 +10,11 @@ end_of_line = crlf
 max_line_length = 140
 insert_final_newline = false
 
+# ReSharper team-shared settings file
+[Moba.sln.DotSettings]
+indent_style = tab
+indent_size = 4
+
 # C# and VB.NET files
 [*.{cs,vb}]
 # Using directives

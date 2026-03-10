@@ -17,7 +17,7 @@
         <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     </Page.Resources>
 
-    <local:CursorGrid>
+    <local:ResizeCursorGrid>
         <i:Interaction.Behaviors>
             <local:GridColumnResizeBehavior PersistenceKey="JourneysPage" />
         </i:Interaction.Behaviors>
@@ -349,5 +349,5 @@
                 Content="{x:Bind ViewModel.JourneysPageSelectedObject, Mode=OneWay}"
                 ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
         </Grid>
-    </local:CursorGrid>
+    </local:ResizeCursorGrid>
 </Page>
