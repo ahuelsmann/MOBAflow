@@ -476,6 +476,12 @@ public class LayoutSettings
     /// </summary>
     public Dictionary<string, double> ColumnWidths { get; set; } = new();
 
+    /// <summary>
+    /// GridSplitter-based layout settings for all pages with resizable columns.
+    /// Replaces the old ColumnWidths dictionary with a more structured approach.
+    /// </summary>
+    public Dictionary<string, PageLayoutSettings> PageLayouts { get; set; } = new();
+
     public SettingsPageLayoutSettings SettingsPage { get; set; } = new();
 
     /// <summary>
