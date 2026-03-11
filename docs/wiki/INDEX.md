@@ -12,14 +12,14 @@ Here you'll find all information about three platforms:
 |----------|-------------|--------------|----------------|
 | **🖥️ MOBAflow** | WinUI 3 (Windows Desktop) | Power Users | Journey Management, Workflow Automation, Track Plan Editor |
 | **📱 MOBAsmart** | .NET MAUI (Android) | Mobile Users | Lap Counter, Z21 Monitoring, Feedback Statistics |
-| **🌐 MOBAdash** | Blazor Server (Web) | Multi-Device | Dashboard, Real-time Monitoring, Statistics |
+| **🌐 MOBApi** | ASP.NET Core REST + SignalR | All Platforms | REST API, Real-time Hub, Client Discovery |
 
 ---
 
 ## 🗂️ Documentation Index
 
 > **📖 User Documentation** - For everyone who wants to use MOBAflow
-> 
+>
 > **👨‍💻 Developer Documentation** - At the end of this page, for plugin developers and contributors
 
 ### 🖥️ MOBAflow (Windows Desktop)
@@ -54,17 +54,15 @@ Here you'll find all information about three platforms:
 
 ---
 
-### 🌐 MOBAdash (Web)
-
-**User Guide:**
-- [`MOBADASH-USER-GUIDE.md`](MOBADASH-USER-GUIDE.md) - Complete Guide
+### 🌐 MOBApi (REST API)
 
 **Main Topics:**
-- 📊 Dashboard (Real-time Monitoring)
-- 📈 Statistics (Evaluation & Charts)
-- 🔄 SignalR (Live Updates)
-- 🔒 Security (HTTPS, VPN, Reverse Proxy)
-- 📱 Progressive Web App (PWA)
+- 🔗 REST API for MOBAflow Overview status
+- 📡 SignalR Hub for real-time updates
+- 📋 Client list & health endpoints
+- 🔍 UDP multicast discovery (MOBAsmart connects automatically)
+
+> **Start MOBApi:** Run `dotnet run --project MOBApi` (Port 5001) or enable "Auto-start REST API" in MOBAflow Settings.
 
 ---
 
@@ -93,13 +91,12 @@ Here you'll find all information about three platforms:
 
 **Link:** [`MOBASMART-USER-GUIDE.md`](MOBASMART-USER-GUIDE.md)
 
-#### 🌐 **Choose MOBAdash if you...**
-- ✅ ...want to access from any device (PC, tablet, phone)
-- ✅ ...prefer web browsers
-- ✅ ...need real-time dashboard
-- ✅ ...want to monitor from anywhere in the network
+#### 🌐 **Run MOBApi if you...**
+- ✅ ...want MOBAsmart to discover MOBAflow automatically
+- ✅ ...need a REST API for external integrations
+- ✅ ...want real-time status via SignalR
 
-**Link:** [`MOBADASH-USER-GUIDE.md`](MOBADASH-USER-GUIDE.md)
+> MOBApi can be started standalone or automatically by MOBAflow via the "Auto-start REST API" setting.
 
 ---
 
@@ -146,7 +143,7 @@ Here you'll find all information about three platforms:
 **Current Version:** 0.1.0 (Preview)
 
 **What's Next:**
-- v0.2.0: Automated setup scripts, Docker support
+- v0.2.0: Automated setup scripts
 - v0.3.0: Commercial plugin marketplace
 - v1.0.0: Feature-complete, production-ready
 
@@ -167,7 +164,7 @@ MOBAflow Repository
 │  └─ wiki/ (This Wiki)
 │     ├─ INDEX.md (You are here)
 │     ├─ INSTALLATION.md, AZURE-SPEECH-SETUP.md
-│     ├─ MOBAFLOW-USER-GUIDE.md, MOBASMART-USER-GUIDE.md, MOBADASH-USER-GUIDE.md
+│     ├─ MOBAFLOW-USER-GUIDE.md, MOBASMART-USER-GUIDE.md
 │     └─ MOBASMART-WIKI.md, MOBATPS.md, QUICK-START-TRACK-STATISTICS.md
 └─ .github/ (Development, Instructions, Workflows)
 ```
@@ -193,5 +190,5 @@ MOBAflow Repository
 
 ---
 
-*Last Updated: February 2026*  
+*Last Updated: June 2025*
 *Questions? Open an issue or discussion on GitHub!* 💬

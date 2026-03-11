@@ -85,7 +85,7 @@ MainWindowViewModel.OnFeedbackReceived() → IsConnected = true (UI thread safe)
 | Backend | `Backend/Service/*.cs` | Z21, WorkflowService, events |
 | EventBus | `Common/Events/`, `SharedUI/Service/` | Pub/sub, UI marshalling |
 | ViewModels | `SharedUI/ViewModel/*.cs` | Observable state |
-| Platform | `WinUI/`, `MAUI/`, `WebApp/` | Pages, navigation |
+| Platform | `MOBAflow/`, `MOBAsmart/`, `MOBApi/` | Pages, navigation, API |
 
 ---
 
@@ -145,8 +145,8 @@ services.AddTransient<View.JourneyPage>();
 ```bash
 dotnet build          # Full build
 dotnet test           # All tests (286+ passing)
-dotnet run --project WinUI    # Windows app
-dotnet run --project WebApp   # Blazor web app
+dotnet run --project MOBAflow    # Windows app
+dotnet run --project MOBApi      # REST API (Port 5001)
 ```
 
 **Test coverage (regression protection):**

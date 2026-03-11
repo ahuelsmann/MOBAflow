@@ -5,8 +5,6 @@
     <File Path=".github/copilot-instructions.md" />
     <File Path=".github/instructions/todos.instructions.md" />
     <File Path=".gitignore" />
-    <File Path=".sln.DotSettings" />
-    <File Path="AGENTS.md" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Build.targets" />
     <File Path="Directory.Packages.props" />
@@ -17,8 +15,8 @@
   <Project Path="Backend/Backend.csproj" />
   <Project Path="Common/Common.csproj" />
   <Project Path="Domain/Domain.csproj" />
-  <Project Path="MOBApi/MOBApi.csproj" />
   <Project Path="MOBAflow/MOBAflow.csproj" />
+  <Project Path="MOBApi/MOBApi.csproj" />
   <Project Path="MOBAsmart/MOBAsmart.csproj" />
   <Project Path="SharedUI/SharedUI.csproj" />
   <Project Path="Sound/Sound.csproj" />

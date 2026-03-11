@@ -35,7 +35,7 @@
 - 🎨 **Visual Track Plan** – Drag & drop track editor with snap-to-connect
 - 🟢 **Win2D GPU Rendering** – High-performance track visualization
 - 🛤️ **Track Libraries** – Extensible support (Piko A-Gleis, Roco Line, Tillig, Märklin)
-- 📱 **Multi-Platform** – WinUI (Windows), MAUI (Android), Blazor (Web)
+- 📱 **Multi-Platform** – MOBAflow (Windows), MOBAsmart (Android), MOBApi (REST)
 - 🟢 **Status Monitoring** – Real-time startup progress with log streaming
 
 ---
@@ -85,26 +85,20 @@ dotnet build
 
 ### Run Applications
 
-**🪟 WinUI (Windows Desktop):**
+**🪟 MOBAflow (Windows Desktop):**
 ```bash
-dotnet run --project WinUI
+dotnet run --project MOBAflow
 ```
 
-**🌐 MOBAapi (REST API only, Port 5001):**
+**🌐 MOBApi (REST API, Port 5001):**
 ```bash
-dotnet run --project MOBAapi
+dotnet run --project MOBApi
 ```
-MOBAapi listens on **port 5001** (all interfaces). It provides the REST API for the WinUI Overview status and for the MAUI app (client list, health). You can **start MOBAapi in two ways:** (1) **Standalone** – run the command above; (2) **Together with WinUI** – enable "Auto-start REST API with MOBAflow" in WinUI Settings so WinUI starts the MOBAapi process automatically. MAUI discovers the server via UDP multicast; ensure PC and phone are on the same network.
+MOBApi listens on **port 5001** (all interfaces). It provides the REST API for the WinUI Overview status and for MOBAsmart (client list, health). You can **start MOBApi in two ways:** (1) **Standalone** – run the command above; (2) **Together with MOBAflow** – enable "Auto-start REST API with MOBAflow" in MOBAflow Settings so MOBAflow starts the MOBApi process automatically. MOBAsmart discovers the server via UDP multicast; ensure PC and phone are on the same network.
 
-**🌐 WebApp (Blazor only, Port 5000):**
+**📱 MOBAsmart (Android):**
 ```bash
-dotnet run --project WebApp
-```
-The WebApp runs the Blazor Server UI on **port 5000**. For MAUI connection and Overview status, run **MOBAapi** (port 5001) in addition or enable "Auto-start REST API with MOBAflow" in WinUI Settings.
-
-**📱 MAUI (Android):**
-```bash
-dotnet build MAUI -f net10.0-android
+dotnet build MOBAsmart -f net10.0-android
 ```
 
 **🧪 Run Tests:**
@@ -203,7 +197,7 @@ MOBAflow uses **Azure Cognitive Services Speech** for text-to-speech announcemen
 
 **2. Configure Secrets:**
 ```bash
-cd WinUI
+cd MOBAflow
 dotnet user-secrets set "Speech:Key" "YOUR-AZURE-SPEECH-KEY"
 dotnet user-secrets set "Speech:Region" "germanywestcentral"
 ```
@@ -388,7 +382,7 @@ MOBAflow follows **Clean Architecture** principles with strict layer separation.
 
 ```
 ┌─────────────────────────────────────┐
-│  WinUI / MAUI / Blazor              │  ← Platform UI
+│  MOBAflow / MOBAsmart / MOBApi      │  ← Platform UI & API
 ├─────────────────────────────────────┤
 │  SharedUI (ViewModels)              │  ← MVVM Layer
 ├─────────────────────────────────────┤
@@ -403,14 +397,14 @@ MOBAflow follows **Clean Architecture** principles with strict layer separation.
 | Layer | Technology |
 |-------|------------|
 | **Framework** | .NET 10 |
-| **UI** | WinUI 3, .NET MAUI, Blazor Server |
+| **UI** | WinUI 3 (MOBAflow), .NET MAUI (MOBAsmart) |
+| **API** | ASP.NET Core REST + SignalR (MOBApi) |
 | **Graphics** | Microsoft.Graphics.Win2D |
 | **MVVM** | CommunityToolkit.Mvvm |
 | **Logging** | Serilog (File + In-Memory Sink) |
 | **Speech** | Azure Cognitive Services, Windows Speech |
 | **Networking** | Direct UDP (Z21 Protocol) |
 | **Testing** | NUnit |
-
 ### 📄 Solution File Format
 
 MOBAflow uses **System.Text.Json** with schema validation.
@@ -566,7 +560,6 @@ Speech settings automatically load from Azure – no local config needed! ✅
 | [MOBAFLOW-USER-GUIDE.md](docs/wiki/MOBAFLOW-USER-GUIDE.md) | WinUI desktop app user guide |
 | [MOBASMART-USER-GUIDE.md](docs/wiki/MOBASMART-USER-GUIDE.md) | MOBAsmart Android app user guide |
 | [MOBASMART-WIKI.md](docs/wiki/MOBASMART-WIKI.md) | In-depth MOBAsmart documentation |
-| [MOBADASH-USER-GUIDE.md](docs/wiki/MOBADASH-USER-GUIDE.md) | MOBAdash Blazor web dashboard guide |
 | [AZURE-SPEECH-SETUP.md](docs/wiki/AZURE-SPEECH-SETUP.md) | Azure Speech configuration for announcements |
 | [QUICK-START-TRACK-STATISTICS.md](docs/wiki/QUICK-START-TRACK-STATISTICS.md) | Quick start for track statistics & lap counting |
 | [VIESSMANN-SIGNAL-MAPPING.md](docs/wiki/VIESSMANN-SIGNAL-MAPPING.md) | Viessmann multiplex signal mapping (SignalBox) |

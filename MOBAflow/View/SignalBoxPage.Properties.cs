@@ -508,12 +508,6 @@ sealed partial class SignalBoxPage
         DeleteSelectedElement();
     }
 
-    private void OnSignalTypeChanged(object sender, SelectionChangedEventArgs e)
-    {
-        // Signal type changes are no longer supported - SbSignal is a single type
-        // This method is kept for XAML binding compatibility
-    }
-
     private void OnMultiplexerSelected(object sender, SelectionChangedEventArgs e)
     {
         if (SelectedElement is not SbSignal sig) return;

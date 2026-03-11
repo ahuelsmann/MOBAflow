@@ -5,29 +5,29 @@
 MOBAflow is built on **Clean Architecture** principles with a clear separation of concerns:
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                   Presentation Layer                         │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
-│  │  WinUI   │  │  MAUI    │  │  Blazor  │  │  Plugins │    │
-│  │(Windows) │  │(Android) │  │  (Web)   │  │(Dynamic) │    │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘    │
-└─────────┼────────────┼────────────┼────────────┼────────────┘
-          │            │            │            │
-          └────────────┼────────────┼────────────┘
+┌──────────────────────────────────────────────┐
+│                   Presentation Layer         │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
+│  │MOBAflow  │  │MOBAsmart │  │  MOBApi  │    │
+│  │(Windows) │  │(Android) │  │  (REST)  │    │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘    │
+└─────────┼────────────┼────────────┼──────────┘
+          │            │            │ 
+          └────────────┼────────────┼
                        │            │
           ┌────────────┴────────────┴────────────┐
           │        Presentation Layer            │
           │     (SharedUI ViewModels)            │
-          │  MVVM, Commands, Observable Props   │
+          │  MVVM, Commands, Observable Props    │
           └────────────┬────────────┬────────────┘
                        │            │
-┌──────────────────────┴────────────┴──────────────────────┐
-│              Domain & Business Logic Layer               │
+┌──────────────────────┴────────────┴─────────────────────┐
+│              Domain & Business Logic Layer              │
 │  ┌────────────┐  ┌──────────────┐  ┌──────────────┐     │
 │  │  Domain    │  │   Backend    │  │  TrackPlan   │     │
 │  │ (Models)   │  │  (Services)  │  │  (Geometry)  │     │
 │  └────────────┘  └──────────────┘  └──────────────┘     │
-└──────────────────────┬────────────────────────────────────┘
+└──────────────────────┬──────────────────────────────────┘
                        │
             ┌──────────┴──────────┐
             │                     │
@@ -60,7 +60,7 @@ public record Workflow(int Id, string Name, List<WorkflowAction> Actions, ...);
 **Characteristics:**
 - ✅ **Framework-agnostic** - No dependencies on UI frameworks
 - ✅ **Testable** - Unit tests without mocking UI
-- ✅ **Reusable** - Shared across all platforms (WinUI, MAUI, Blazor)
+- ✅ **Reusable** - Shared across all platforms (MOBAflow, MOBAsmart, MOBApi)
 - ✅ **Serializable** - JSON for configuration files
 
 ---
@@ -130,7 +130,7 @@ public partial class MainWindowViewModel : ObservableObject
 ```
 
 **Characteristics:**
-- ✅ **Platform-Agnostic** - Used by WinUI, MAUI, and Blazor
+- ✅ **Platform-Agnostic** - Used by MOBAflow, MOBAsmart, and MOBApi
 - ✅ **MVVM Toolkit** - CommunityToolkit.Mvvm for source generators
 - ✅ **Observable Properties** - Reactive UI updates
 - ✅ **Commands** - RelayCommand for user interactions
@@ -160,13 +160,13 @@ public partial class MainWindowViewModel : ObservableObject
 
 ---
 
-### 4. **Platform-Specific Layers** (`WinUI/`, `MAUI/`, `WebApp/`)
+### 4. **Platform-Specific Layers** (`MOBAflow/`, `MOBAsmart/`, `MOBApi/`)
 
-**Purpose:** UI rendering, platform-specific features, page definitions.
+**Purpose:** UI rendering, platform-specific features, page and API definitions.
 
-**WinUI (Windows Desktop):**
+**MOBAflow (Windows Desktop, WinUI 3):**
 ```
-WinUI/
+MOBAflow/
 ├── View/               # XAML Pages (MainWindow, JourneyPage, etc.)
 ├── ViewModel/          # WinUI-specific ViewModels
 ├── Service/            # WinUI Services (NavigationService, etc.)
@@ -174,22 +174,21 @@ WinUI/
 └── Resources/          # Styles, Brushes, Templates
 ```
 
-**MAUI (Android):**
+**MOBAsmart (Android, .NET MAUI):**
 ```
-MAUI/
-├── Pages/              # XAML Pages (MainPage, etc.)
+MOBAsmart/
+├── View/               # XAML Pages (MainPage, etc.)
 ├── Resources/          # Styles, Colors, Fonts
 ├── Platforms/          # Platform-specific code (Permissions, etc.)
-└── Services/           # MAUI Services (Camera, Location, etc.)
+└── Service/            # MAUI Services
 ```
 
-**WebApp (Blazor):**
+**MOBApi (REST API, ASP.NET Core):**
 ```
-WebApp/
-├── Pages/              # Blazor Components (.razor)
-├── Services/           # Backend Services
-├── Shared/             # Shared Components
-└── wwwroot/            # Static Assets
+MOBApi/
+├── Controllers/        # REST API Controllers
+├── Hubs/               # SignalR Hubs
+└── Service/            # API Services
 ```
 
 ---
@@ -219,13 +218,13 @@ WorkflowService.ExecuteWorkflow()
   └─ Update UI state
   ↓
 UI Updates (via Observable Properties)
-  └─ WinUI/MAUI/Blazor re-render
+  └─ MOBAflow/MOBAsmart re-render
 ```
 
 ### Command Execution Flow
 
 ```
-User clicks Button (WinUI/MAUI/Blazor)
+User clicks Button (MOBAflow/MOBAsmart)
   ↓
 [RelayCommand] -> ViewModel Method
   ↓
@@ -425,7 +424,8 @@ UI Re-renders
 
 | Layer | Technology | Why |
 |-------|-----------|-----|
-| **UI** | WinUI 3, MAUI, Blazor | Native look & feel, platform-specific features |
+| **UI** | WinUI 3 (MOBAflow), .NET MAUI (MOBAsmart) | Native look & feel, platform-specific features |
+| **API** | ASP.NET Core REST + SignalR (MOBApi) | Lightweight REST + real-time hub |
 | **MVVM** | CommunityToolkit.Mvvm | Source generators, zero-reflection overhead |
 | **DI** | Microsoft.Extensions.DependencyInjection | Standard .NET DI, no external dependencies |
 | **Logging** | Serilog | Structured, extensible, file + in-memory sinks |

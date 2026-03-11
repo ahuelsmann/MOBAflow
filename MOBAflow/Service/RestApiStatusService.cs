@@ -2,9 +2,12 @@
 namespace Moba.WinUI.Service;
 
 using Common.Configuration;
+
 using Microsoft.Extensions.Logging;
+
 using SharedUI.Interface;
 using SharedUI.ViewModel;
+
 using System.Text.Json;
 using System.Timers;
 
@@ -125,7 +128,7 @@ internal sealed class RestApiStatusService : IDisposable
             {
                 var statusText = BuildUnreachableStatusText(port);
                 _uiDispatcher.InvokeOnUi(() => _viewModel.UpdateRestApiStatus(statusText, false, null));
-                SetPollInterval(_appSettings.Application.AutoStartWebApp == true
+                SetPollInterval(_appSettings.Application.AutoStartWebApp
                     ? PollIntervalWhenWaitingMs
                     : PollIntervalWhenReachableMs);
             }
@@ -140,7 +143,7 @@ internal sealed class RestApiStatusService : IDisposable
             var portFallback = _appSettings.RestApi.Port > 0 ? _appSettings.RestApi.Port : 5001;
             var statusText = BuildUnreachableStatusText(portFallback);
             _uiDispatcher.InvokeOnUi(() => _viewModel.UpdateRestApiStatus(statusText, false, null));
-            SetPollInterval(_appSettings.Application.AutoStartWebApp == true
+            SetPollInterval(_appSettings.Application.AutoStartWebApp
                 ? PollIntervalWhenWaitingMs
                 : PollIntervalWhenReachableMs);
         }
@@ -160,7 +163,7 @@ internal sealed class RestApiStatusService : IDisposable
     /// </summary>
     private string BuildUnreachableStatusText(int port)
     {
-        if (_appSettings.Application.AutoStartWebApp == true)
+        if (_appSettings.Application.AutoStartWebApp)
             return "Waiting for the REST API to start...";
         if (_restApiProcessService.IsRunning)
             return $"Not reachable (port {port}) – check connection";

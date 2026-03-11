@@ -664,7 +664,6 @@ sealed partial class SignalBoxPage
         {
             SignalAspect.Hp0 => SignalAspect.Ks1,
             SignalAspect.Ks1 => SignalAspect.Ks2,
-            SignalAspect.Ks2 => SignalAspect.Hp0,
             _ => SignalAspect.Hp0
         };
         RefreshElementVisual(element);
