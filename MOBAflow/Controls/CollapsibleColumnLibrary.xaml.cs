@@ -8,7 +8,7 @@ using Microsoft.UI.Xaml.Input;
 /// A panel that collapses into a narrow vertical tab and expands to show its content.
 /// Behaves like Visual Studio's auto-hide panels or a vertical expander.
 /// </summary>
-internal sealed partial class CollapsibleColumn
+internal sealed partial class CollapsibleColumnLibrary
 {
     /// <summary>
     /// Header text displayed in both collapsed tab and expanded header.
@@ -45,7 +45,7 @@ internal sealed partial class CollapsibleColumn
         DependencyProperty.Register(nameof(HeaderActions), typeof(UIElement), typeof(CollapsibleColumnProperties),
             new PropertyMetadata(null, OnHeaderActionsChanged));
 
-    public CollapsibleColumn()
+    public CollapsibleColumnLibrary()
     {
         InitializeComponent();
         Loaded += OnLoaded;
@@ -97,31 +97,31 @@ internal sealed partial class CollapsibleColumn
 
     private static void OnHeaderChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is CollapsibleColumn control)
+        if (d is CollapsibleColumnLibrary control)
             control.HeaderTextBlock.Text = (string)e.NewValue;
     }
 
     private static void OnGlyphChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is CollapsibleColumn control)
+        if (d is CollapsibleColumnLibrary control)
             control.ApplyGlyph();
     }
 
     private static void OnIsExpandedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is CollapsibleColumn control)
+        if (d is CollapsibleColumnLibrary control)
             control.ApplyExpansionState();
     }
 
     private static void OnPanelContentChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is CollapsibleColumn control)
+        if (d is CollapsibleColumnLibrary control)
             control.ContentArea.Content = e.NewValue;
     }
 
     private static void OnHeaderActionsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is CollapsibleColumn control)
+        if (d is CollapsibleColumnLibrary control)
             control.ApplyHeaderActions();
     }
 

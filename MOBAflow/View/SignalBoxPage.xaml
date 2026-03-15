@@ -166,24 +166,14 @@
         </Border>
 
         <!--  Main Content: Toolbox | Canvas | Properties  -->
-        <local:ResizeCursorGrid
+        <Grid
             Grid.Row="1"
             Padding="0"
             ColumnSpacing="0">
-            <i:Interaction.Behaviors>
-                <local:GridColumnResizeBehavior PersistenceKey="SignalBoxPage" />
-            </i:Interaction.Behaviors>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition
-                    Width="{Binding SignalBoxPage.Col0, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}"
-                    local:GridColumnResizeBehavior.DefaultWidth="240" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition
-                    Width="{Binding SignalBoxPage.Col2, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition
-                    Width="{Binding SignalBoxPage.Col4, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}"
-                    local:GridColumnResizeBehavior.DefaultWidth="300" />
+                <ColumnDefinition Width="240" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="300" />
             </Grid.ColumnDefinitions>
 
             <!--  LEFT: Toolbox Panel  -->
@@ -876,20 +866,9 @@
                 </ScrollViewer>
             </Border>
 
-            <Grid
-                Grid.Column="1"
-                Width="5"
-                local:GridColumnResizeBehavior.SplitterMode="Left"
-                Background="Transparent">
-                <Grid
-                    Width="1"
-                    HorizontalAlignment="Center"
-                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-            </Grid>
-
             <!--  CENTER: Stellwerk Canvas  -->
             <Border
-                Grid.Column="2"
+                Grid.Column="1"
                 Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="0">
@@ -914,20 +893,9 @@
                 </ScrollViewer>
             </Border>
 
-            <Grid
-                Grid.Column="3"
-                Width="5"
-                local:GridColumnResizeBehavior.SplitterMode="Right"
-                Background="Transparent">
-                <Grid
-                    Width="1"
-                    HorizontalAlignment="Center"
-                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-            </Grid>
-
             <!--  RIGHT: Properties Panel  -->
             <Border
-                Grid.Column="4"
+                Grid.Column="2"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1,0,0,0">
@@ -1615,6 +1583,6 @@
                     </StackPanel>
                 </ScrollViewer>
             </Border>
-        </local:ResizeCursorGrid>
+        </Grid>
     </Grid>
 </Page>

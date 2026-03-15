@@ -2,8 +2,6 @@
     x:Class="Moba.WinUI.View.TrackPlanPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:i="using:Microsoft.Xaml.Interactivity"
-    xmlns:local="using:Moba.WinUI.Behavior"
     xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml">
     <Grid>
         <Grid.RowDefinitions>
@@ -86,21 +84,11 @@
             </AppBarButton>
         </CommandBar>
         <!--  Main Content Grid  -->
-        <local:ResizeCursorGrid x:Name="MainGrid" Grid.Row="1">
-            <i:Interaction.Behaviors>
-                <local:GridColumnResizeBehavior PersistenceKey="TrackPlanPage" />
-            </i:Interaction.Behaviors>
+        <Grid x:Name="MainGrid" Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition
-                    Width="{Binding TrackPlanPage.Col0, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}"
-                    local:GridColumnResizeBehavior.DefaultWidth="180" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition
-                    Width="{Binding TrackPlanPage.Col2, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition
-                    Width="{Binding TrackPlanPage.Col4, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}"
-                    local:GridColumnResizeBehavior.DefaultWidth="240" />
+                <ColumnDefinition Width="180" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="240" />
             </Grid.ColumnDefinitions>
             <!--  Left Panel: Toolbox  -->
             <Border
@@ -126,19 +114,8 @@
                 </Grid>
             </Border>
 
-            <Grid
-                Grid.Column="1"
-                Width="5"
-                local:GridColumnResizeBehavior.SplitterMode="Left"
-                Background="Transparent">
-                <Grid
-                    Width="1"
-                    HorizontalAlignment="Center"
-                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-            </Grid>
-
             <!--  Center: Canvas with Pan/Zoom  -->
-            <Border Grid.Column="2" Background="{ThemeResource SolidBackgroundFillColorBaseAltBrush}">
+            <Border Grid.Column="1" Background="{ThemeResource SolidBackgroundFillColorBaseAltBrush}">
                 <Grid>
                     <ScrollViewer
                         x:Name="CanvasScrollViewer"
@@ -208,20 +185,9 @@
                 </Grid>
             </Border>
 
-            <Grid
-                Grid.Column="3"
-                Width="5"
-                local:GridColumnResizeBehavior.SplitterMode="Right"
-                Background="Transparent">
-                <Grid
-                    Width="1"
-                    HorizontalAlignment="Center"
-                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-            </Grid>
-
             <!--  Right Panel: Properties  -->
             <Border
-                Grid.Column="4"
+                Grid.Column="2"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1,0,0,0">
@@ -433,7 +399,7 @@
                     </StackPanel>
                 </ScrollViewer>
             </Border>
-        </local:ResizeCursorGrid>
+        </Grid>
         <!--  Status Bar  -->
         <Border
             Grid.Row="2"

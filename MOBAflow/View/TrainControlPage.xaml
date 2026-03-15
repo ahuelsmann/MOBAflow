@@ -219,24 +219,15 @@
         </Border>
 
         <!--  Main Content with Responsive Layout - Fluent Design  -->
-        <local:ResizeCursorGrid
+        <Grid
             Grid.Row="1"
             Padding="32,24,32,32"
             ColumnSpacing="0"
             RowSpacing="16">
-            <i:Interaction.Behaviors>
-                <local:GridColumnResizeBehavior PersistenceKey="TrainControlPage" />
-            </i:Interaction.Behaviors>
-            <!--  COLUMN DEFINITIONS: Will be modified by VisualStateManager  -->
             <Grid.ColumnDefinitions>
-                <!--  Col 0: Settings Panel (260px on Wide, 250px on Medium, hidden on Compact)  -->
-                <ColumnDefinition Width="{Binding TrainControlPage.Col0, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}" local:GridColumnResizeBehavior.DefaultWidth="260" />
-                <ColumnDefinition Width="Auto" />
-                <!--  Col 1: Center Grid (4 Quadrants - flexible, grows to fill space)  -->
+                <ColumnDefinition Width="260" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-                <!--  Col 2: Functions Panel (180px on Wide, hidden on Medium/Compact)  -->
-                <ColumnDefinition Width="{Binding TrainControlPage.Col4, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}" local:GridColumnResizeBehavior.DefaultWidth="180" />
+                <ColumnDefinition Width="180" />
             </Grid.ColumnDefinitions>
 
             <!--  LEFT PANEL: Locomotive Settings (Grid.Column="0")  -->
@@ -492,20 +483,9 @@
                 </ScrollViewer>
             </Border>
 
-            <Grid
-                Grid.Column="1"
-                Width="5"
-                local:GridColumnResizeBehavior.SplitterMode="Left"
-                Background="Transparent">
-                <Grid
-                    Width="1"
-                    HorizontalAlignment="Center"
-                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-            </Grid>
-
             <!--  CENTER: 2x2 Grid Layout (Grid.Column="1")  -->
             <Grid
-                Grid.Column="2"
+                Grid.Column="1"
                 ColumnSpacing="16"
                 RowSpacing="16">
                 <Grid.ColumnDefinitions>
@@ -815,20 +795,9 @@
                 </Border>
             </Grid>
 
-            <Grid
-                Grid.Column="3"
-                Width="5"
-                local:GridColumnResizeBehavior.SplitterMode="Both"
-                Background="Transparent">
-                <Grid
-                    Width="1"
-                    HorizontalAlignment="Center"
-                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-            </Grid>
-
             <!--  RIGHT PANEL: Functions F0-F20 (Grid.Column="2") - Hidden on Medium/Compact  -->
             <Border
-                Grid.Column="4"
+                Grid.Column="2"
                 Padding="16"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -1268,6 +1237,6 @@
                     </StackPanel>
                 </ScrollViewer>
             </Border>
-        </local:ResizeCursorGrid>
+        </Grid>
     </Grid>
 </Page>

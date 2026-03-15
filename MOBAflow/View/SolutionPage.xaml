@@ -10,17 +10,11 @@
     DataContext="{x:Bind ViewModel}"
     mc:Ignorable="d">
 
-    <local:ResizeCursorGrid>
-        <i:Interaction.Behaviors>
-            <local:GridColumnResizeBehavior PersistenceKey="SolutionPage" />
-        </i:Interaction.Behaviors>
+    <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="{Binding SolutionPage.Col0, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}" MinWidth="300" />
+            <ColumnDefinition Width="*" MinWidth="300" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition
-                Width="{Binding SolutionPage.Col2, Source={StaticResource LayoutColumnWidths}, Converter={StaticResource DoubleToGridLengthConverter}}"
-                MinWidth="300"
-                local:GridColumnResizeBehavior.DefaultWidth="400" />
+            <ColumnDefinition Width="400" MinWidth="300" MaxWidth="500" />
         </Grid.ColumnDefinitions>
 
         <!--  Projects List  -->
@@ -93,16 +87,10 @@
         </Grid>
 
         <!--  Vertical Divider  -->
-        <Grid
+        <Border
             Grid.Column="1"
-            Width="5"
-            local:GridColumnResizeBehavior.SplitterMode="Right"
-            Background="Transparent">
-            <Grid
-                Width="1"
-                HorizontalAlignment="Center"
-                Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-        </Grid>
+            Width="1"
+            Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
         <!--  Properties Panel  -->
         <Grid Grid.Column="2" Padding="8">
@@ -116,5 +104,5 @@
                 Content="{x:Bind ViewModel.SolutionPageSelectedObject, Mode=OneWay}"
                 ContentTemplateSelector="{StaticResource EntityTemplateSelector}" />
         </Grid>
-    </local:ResizeCursorGrid>
+    </Grid>
 </Page>

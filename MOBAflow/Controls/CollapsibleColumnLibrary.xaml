@@ -1,5 +1,5 @@
 <UserControl
-    x:Class="Moba.WinUI.Controls.CollapsibleColumn"
+    x:Class="Moba.WinUI.Controls.CollapsibleColumnLibrary"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid>
