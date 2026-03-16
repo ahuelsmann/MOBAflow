@@ -1,12 +1,5 @@
 {
   "mcpServers": {
-    "nuget": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-nuget@latest"
-      ]
-    },
     "filesystem": {
       "command": "npx",
       "args": [
@@ -23,32 +16,15 @@
       "command": "npx",
       "args": [
         "-y",
-        "@modelcontextprotocol/server-ripgrep@latest"
+        "mcp-ripgrep@latest"
       ]
     },
-    "documents": {
+    "memory": {
       "command": "npx",
       "args": [
         "-y",
-        "@modelcontextprotocol/server-documents@latest"
+        "@modelcontextprotocol/server-memory"
       ]
-    },
-    "markitdown": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@phdcoder/markitdown-mcp@latest"
-      ]
-    },
-    "openapi": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-openapi@latest"
-      ],
-      "env": {
-        "OPENAPI_SPEC_URLS": "https://localhost:5001/swagger/v1/swagger.json"
-      }
     },
     "azure-devops": {
       "command": "npx",
@@ -75,7 +51,25 @@
       "command": "npx",
       "args": [
         "mcp-remote",
-        "mcp.stackoverflow.com"
+        "https://mcp.stackoverflow.com"
+      ]
+    },
+    "linear": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.linear.app/mcp"
+      ]
+    },
+    "figma": {
+      "url": "https://mcp.figma.com/mcp"
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
       ]
     },
     "fetch": {

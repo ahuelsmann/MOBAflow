@@ -1,72 +1,86 @@
 {
-    "$schema": "https://aka.ms/vs/mcp/schema",
-    "servers": {
-        "azure-devops": {
-            "command": "npx",
-            "args": [ "-y", "@azure-devops/mcp@latest", "ahuelsmann", "-d", "all", "-a", "interactive" ],
-            "type": "stdio",
-            "env": { "AZURE_DEVOPS_ORG_URL": "https://dev.azure.com/ahuelsmann" }
-        },
-        "filesystem": {
-            "command": "npx",
-            "args": [ "-y", "@modelcontextprotocol/server-filesystem@latest", "." ],
-            "type": "stdio",
-            "env": {
-                "MCP_FILESYSTEM_ROOT": ".",
-                "MCP_FILESYSTEM_ENABLE_DELETE": "false"
-            }
-        },
-        "github": {
-            "url": "https://api.githubcopilot.com/mcp/"
-        },
-        "nuget": {
-            "command": "npx",
-            "args": [ "-y", "@modelcontextprotocol/server-nuget@latest" ],
-            "type": "stdio"
-        },
-        "ripgrep": {
-            "command": "npx",
-            "args": [ "-y", "@modelcontextprotocol/server-ripgrep@latest" ],
-            "type": "stdio"
-        },
-        "documents": {
-            "command": "npx",
-            "args": [ "-y", "@modelcontextprotocol/server-documents@latest" ],
-            "type": "stdio"
-        },
-        "markitdown": {
-            "command": "npx",
-            "args": [ "-y", "@phdcoder/markitdown-mcp@latest" ],
-            "type": "stdio"
-        },
-        "openapi": {
-            "command": "npx",
-            "args": [ "-y", "@modelcontextprotocol/server-openapi@latest" ],
-            "type": "stdio",
-            "env": {
-                "OPENAPI_SPEC_URLS": "https://localhost:5001/swagger/v1/swagger.json"
-            }
-        },
-        "notion": {
-            "url": "https://mcp.notion.com/mcp",
-            "type": "stdio"
-        },
-        "slack": {
-            "url": "https://mcp.slack.com/mcp",
-            "type": "stdio"
-        },
-        "stack-mcp-server": {
-            "command": "npx",
-            "args": [ "mcp-remote", "mcp.stackoverflow.com" ],
-            "type": "stdio"
-        },
-        "fetch": {
-            "command": "python",
-            "args": [ "-m", "mcp_server_fetch" ],
-            "type": "stdio",
-            "env": {
-                "PYTHONIOENCODING": "utf-8"
-            }
-        }
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem@latest",
+        "."
+      ],
+      "env": {
+        "MCP_FILESYSTEM_ROOT": ".",
+        "MCP_FILESYSTEM_ENABLE_DELETE": "false"
+      }
+    },
+    "ripgrep": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-ripgrep@latest"
+      ]
+    },
+    "memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ]
+    },
+    "azure-devops": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@azure-devops/mcp@latest",
+        "ahuelsmann",
+        "-d",
+        "all",
+        "-a",
+        "interactive"
+      ],
+      "env": {
+        "AZURE_DEVOPS_ORG_URL": "https://dev.azure.com/ahuelsmann"
+      }
+    },
+    "notion": {
+      "url": "https://mcp.notion.com/mcp"
+    },
+    "slack": {
+      "url": "https://mcp.slack.com/mcp"
+    },
+    "stack-mcp-server": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://mcp.stackoverflow.com"
+      ]
+    },
+    "linear": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.linear.app/mcp"
+      ]
+    },
+    "figma": {
+      "url": "https://mcp.figma.com/mcp"
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    },
+    "fetch": {
+      "command": "python",
+      "args": [
+        "-m",
+        "mcp_server_fetch"
+      ],
+      "env": {
+        "PYTHONIOENCODING": "utf-8"
+      }
     }
+  }
 }
