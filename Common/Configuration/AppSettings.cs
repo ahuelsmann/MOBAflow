@@ -630,6 +630,8 @@ public class JourneysPageLayoutSettings
 {
     public bool IsJourneyListExpanded { get; set; } = true;
 
+    public bool IsStationListExpanded { get; set; } = true;
+
     /// <summary>
     /// Is City Library panel expanded?
     /// </summary>
@@ -641,6 +643,14 @@ public class JourneysPageLayoutSettings
     public bool IsWorkflowLibraryExpanded { get; set; } = true;
 
     public bool IsJourneyPropertiesExpanded { get; set; } = true;
+
+    public double JourneysColumnWidth { get; set; } = 250;
+
+    public double StationsColumnWidth { get; set; } = 250;
+
+    public double CityLibraryColumnWidth { get; set; } = 250;
+
+    public double WorkflowLibraryColumnWidth { get; set; } = 250;
 }
 
 public class GoodsWagonPageLayoutSettings

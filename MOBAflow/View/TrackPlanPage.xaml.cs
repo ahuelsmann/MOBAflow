@@ -23,14 +23,6 @@ using Windows.System;
 using Windows.UI;
 using Path = System.IO.Path;
 
-[NavigationItem(
-    Tag = "trackplaneditor",
-    Title = "Track Plan",
-    Icon = "\uE7F9",
-    Category = NavigationCategory.TrackManagement,
-    Order = 10,
-    FeatureToggleKey = "IsTrackPlanEditorPageAvailable",
-    BadgeLabelKey = "TrackPlanEditorPageLabel")]
 internal sealed partial class TrackPlanPage
 {
     private const string DragFormatTrackCatalog = "application/x-moba-track-catalog";

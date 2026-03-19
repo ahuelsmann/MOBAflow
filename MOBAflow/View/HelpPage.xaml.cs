@@ -6,12 +6,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Navigation;
 
-[NavigationItem(
-    Tag = "help",
-    Title = "Help",
-    Icon = "\uE897",
-    Category = NavigationCategory.Help,
-    Order = 10)]
 internal sealed partial class HelpPage
 {
     private readonly Dictionary<TreeViewNode, string> _sections = [];

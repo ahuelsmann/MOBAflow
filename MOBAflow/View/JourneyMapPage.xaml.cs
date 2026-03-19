@@ -8,14 +8,6 @@ using SharedUI.ViewModel;
 /// Journey Map page showing the virtual route with station progress.
 /// Displays schematic station-to-station visualization with current position indicator.
 /// </summary>
-[NavigationItem(
-    Tag = "journeymap",
-    Title = "Journey Map",
-    Icon = "\uE81D",
-    Category = NavigationCategory.Journey,
-    Order = 20,
-    FeatureToggleKey = "IsJourneyMapPageAvailable",
-    BadgeLabelKey = "JourneyMapPageLabel")]
 internal sealed partial class JourneyMapPage
 {
     public JourneyMapViewModel ViewModel { get; }

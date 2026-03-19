@@ -11,12 +11,6 @@
     <DataTemplate x:Key="JourneyTemplate">
         <ScrollViewer>
             <StackPanel Padding="12" Spacing="12">
-                <!--  Header  -->
-                <TextBlock
-                    Margin="0,0,0,8"
-                    Style="{ThemeResource SubtitleTextBlockStyle}"
-                    Text="Journey Properties" />
-
                 <!--  Runtime State Section  -->
                 <StackPanel
                     Padding="12"
@@ -135,11 +129,6 @@
     <DataTemplate x:Key="StationTemplate">
         <ScrollViewer>
             <StackPanel Padding="16" Spacing="16">
-                <TextBlock
-                    Margin="0,0,0,8"
-                    Style="{ThemeResource SubtitleTextBlockStyle}"
-                    Text="Station Properties" />
-
                 <TextBox
                     Header="Name"
                     PlaceholderText="Station name"

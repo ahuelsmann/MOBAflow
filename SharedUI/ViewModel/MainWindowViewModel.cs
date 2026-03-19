@@ -323,6 +323,21 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private object? _journeysPageSelectedObject;
 
+    partial void OnJourneysPageSelectedObjectChanged(object? value)
+    {
+        OnPropertyChanged(nameof(JourneysPagePropertiesTitle));
+    }
+
+    public string JourneysPagePropertiesTitle
+    {
+        get
+        {
+            if (JourneysPageSelectedObject is JourneyViewModel) return "Journey Properties";
+            if (JourneysPageSelectedObject is StationViewModel) return "Station Properties";
+            return "Properties";
+        }
+    }
+
     /// <summary>
     /// The currently selected object for WorkflowsPage properties panel.
     /// Displays: SelectedWorkflow, SelectedAction

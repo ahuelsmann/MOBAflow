@@ -31,6 +31,76 @@ internal sealed partial class JourneysPage
         InitializeComponent();
         Loaded += OnPageLoaded;
         Unloaded += OnPageUnloaded;
+        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+    }
+
+    private double _journeysExpandedWidth = 250;
+    private double _stationsExpandedWidth = 250;
+    private double _cityLibExpandedWidth = 250;
+    private double _workflowLibExpandedWidth = 250;
+
+    private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ViewModel.IsJourneyListExpanded))
+        {
+            if (!ViewModel.IsJourneyListExpanded)
+            {
+                if (ColJourneys.Width.IsAbsolute)
+                {
+                    _journeysExpandedWidth = ColJourneys.Width.Value;
+                }
+                ColJourneys.Width = GridLength.Auto;
+            }
+            else
+            {
+                ColJourneys.Width = new GridLength(_journeysExpandedWidth);
+            }
+        }
+        else if (e.PropertyName == nameof(ViewModel.IsStationListExpanded))
+        {
+            if (!ViewModel.IsStationListExpanded)
+            {
+                if (ColStations.Width.IsAbsolute)
+                {
+                    _stationsExpandedWidth = ColStations.Width.Value;
+                }
+                ColStations.Width = GridLength.Auto;
+            }
+            else
+            {
+                ColStations.Width = new GridLength(_stationsExpandedWidth);
+            }
+        }
+        else if (e.PropertyName == nameof(ViewModel.IsCityLibraryVisible))
+        {
+            if (!ViewModel.IsCityLibraryVisible)
+            {
+                if (ColCityLib.Width.IsAbsolute)
+                {
+                    _cityLibExpandedWidth = ColCityLib.Width.Value;
+                }
+                ColCityLib.Width = GridLength.Auto;
+            }
+            else
+            {
+                ColCityLib.Width = new GridLength(_cityLibExpandedWidth);
+            }
+        }
+        else if (e.PropertyName == nameof(ViewModel.IsWorkflowLibraryVisible))
+        {
+            if (!ViewModel.IsWorkflowLibraryVisible)
+            {
+                if (ColWorkflowLib.Width.IsAbsolute)
+                {
+                    _workflowLibExpandedWidth = ColWorkflowLib.Width.Value;
+                }
+                ColWorkflowLib.Width = GridLength.Auto;
+            }
+            else
+            {
+                ColWorkflowLib.Width = new GridLength(_workflowLibExpandedWidth);
+            }
+        }
     }
 
     private void OnPageLoaded(object sender, RoutedEventArgs e)
@@ -49,9 +119,84 @@ internal sealed partial class JourneysPage
     {
         var layout = _settings.Layout.JourneysPage;
 
+        // Restore Column Widths First
+        if (layout.JourneysColumnWidth > 0)
+        {
+            _journeysExpandedWidth = layout.JourneysColumnWidth;
+        }
+
+        if (layout.IsJourneyListExpanded)
+        {
+            ColJourneys.Width = new GridLength(_journeysExpandedWidth);
+        }
+        else
+        {
+            ColJourneys.Width = GridLength.Auto;
+        }
+
+        if (layout.StationsColumnWidth > 0)
+        {
+            _stationsExpandedWidth = layout.StationsColumnWidth;
+        }
+
+        if (layout.IsStationListExpanded)
+        {
+            ColStations.Width = new GridLength(_stationsExpandedWidth);
+        }
+        else
+        {
+            ColStations.Width = GridLength.Auto;
+        }
+
+        if (layout.CityLibraryColumnWidth > 0)
+        {
+            _cityLibExpandedWidth = layout.CityLibraryColumnWidth;
+        }
+        
+        if (layout.IsCityLibraryExpanded)
+        {
+            ColCityLib.Width = new GridLength(_cityLibExpandedWidth);
+        }
+        else
+        {
+            ColCityLib.Width = GridLength.Auto;
+        }
+
+        if (layout.WorkflowLibraryColumnWidth > 0)
+        {
+            _workflowLibExpandedWidth = layout.WorkflowLibraryColumnWidth;
+        }
+        
+        if (layout.IsWorkflowLibraryExpanded)
+        {
+            ColWorkflowLib.Width = new GridLength(_workflowLibExpandedWidth);
+        }
+        else
+        {
+            ColWorkflowLib.Width = GridLength.Auto;
+        }
+
         // Restore CollapsibleColumn states
-        ViewModel.IsCityLibraryVisible = layout.IsCityLibraryExpanded;
-        ViewModel.IsWorkflowLibraryVisible = layout.IsWorkflowLibraryExpanded;
+        if (ViewModel.IsJourneyListExpanded != layout.IsJourneyListExpanded)
+        {
+            ViewModel.IsJourneyListExpanded = layout.IsJourneyListExpanded;
+        }
+        if (ViewModel.IsStationListExpanded != layout.IsStationListExpanded)
+        {
+            ViewModel.IsStationListExpanded = layout.IsStationListExpanded;
+        }
+        if (ViewModel.IsCityLibraryVisible != layout.IsCityLibraryExpanded)
+        {
+            ViewModel.IsCityLibraryVisible = layout.IsCityLibraryExpanded;
+        }
+        if (ViewModel.IsWorkflowLibraryVisible != layout.IsWorkflowLibraryExpanded)
+        {
+            ViewModel.IsWorkflowLibraryVisible = layout.IsWorkflowLibraryExpanded;
+        }
+        if (ViewModel.IsJourneyPropertiesExpanded != layout.IsJourneyPropertiesExpanded)
+        {
+            ViewModel.IsJourneyPropertiesExpanded = layout.IsJourneyPropertiesExpanded;
+        }
     }
 
     private void SaveLayout()
@@ -59,8 +204,47 @@ internal sealed partial class JourneysPage
         var layout = _settings.Layout.JourneysPage;
 
         // Save CollapsibleColumn states
+        layout.IsJourneyListExpanded = ViewModel.IsJourneyListExpanded;
+        layout.IsStationListExpanded = ViewModel.IsStationListExpanded;
         layout.IsCityLibraryExpanded = ViewModel.IsCityLibraryVisible;
         layout.IsWorkflowLibraryExpanded = ViewModel.IsWorkflowLibraryVisible;
+        layout.IsJourneyPropertiesExpanded = ViewModel.IsJourneyPropertiesExpanded;
+
+        // Save Column Widths
+        if (ColJourneys.Width.IsAbsolute)
+        {
+            layout.JourneysColumnWidth = ColJourneys.Width.Value;
+        }
+        else if (!ViewModel.IsJourneyListExpanded)
+        {
+            layout.JourneysColumnWidth = _journeysExpandedWidth;
+        }
+
+        if (ColStations.Width.IsAbsolute)
+        {
+            layout.StationsColumnWidth = ColStations.Width.Value;
+        }
+        else if (!ViewModel.IsStationListExpanded)
+        {
+            layout.StationsColumnWidth = _stationsExpandedWidth;
+        }
+
+        if (ColCityLib.Width.IsAbsolute)
+        {
+            layout.CityLibraryColumnWidth = ColCityLib.Width.Value;
+        }
+        else if (!ViewModel.IsCityLibraryVisible)
+        {
+            layout.CityLibraryColumnWidth = _cityLibExpandedWidth;
+        }
+        if (ColWorkflowLib.Width.IsAbsolute)
+        {
+            layout.WorkflowLibraryColumnWidth = ColWorkflowLib.Width.Value;
+        }
+        else if (!ViewModel.IsWorkflowLibraryVisible)
+        {
+            layout.WorkflowLibraryColumnWidth = _workflowLibExpandedWidth;
+        }
     }
 
     #region Drag & Drop Event Handlers

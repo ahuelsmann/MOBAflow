@@ -9,14 +9,6 @@ using SharedUI.ViewModel;
 /// <summary>
 /// Solution page displaying projects list with properties panel.
 /// </summary>
-[NavigationItem(
-    Tag = "solution",
-    Title = "Solution",
-    Icon = "\uE8B7",
-    Category = NavigationCategory.Solution,
-    Order = 10,
-    FeatureToggleKey = "IsSolutionPageAvailable",
-    BadgeLabelKey = "SolutionPageLabel")]
 internal sealed partial class SolutionPage
 {
     public MainWindowViewModel ViewModel { get; }

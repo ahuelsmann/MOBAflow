@@ -6,12 +6,6 @@ using Common.Navigation;
 /// <summary>
 /// Rudimentary template page with a 2-column grid layout for reuse as a starting point.
 /// </summary>
-[NavigationItem(
-    Tag = "template",
-    Title = "Template",
-    Icon = "\uE8A1",
-    Category = NavigationCategory.Core,
-    Order = 200)]
 internal sealed partial class TemplatePage
 {
     public TemplatePage()

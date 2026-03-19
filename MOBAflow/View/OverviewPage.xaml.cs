@@ -8,14 +8,6 @@ using SharedUI.ViewModel;
 /// Overview page showing the Lap Counter Dashboard with Z21 connection and track statistics.
 /// Uses MainWindowViewModel (unified cross-platform ViewModel).
 /// </summary>
-[NavigationItem(
-    Tag = "overview",
-    Title = "Overview",
-    Icon = "\uE80F",
-    Category = NavigationCategory.Core,
-    Order = 10,
-    FeatureToggleKey = "IsOverviewPageAvailable",
-    BadgeLabelKey = "OverviewPageLabel")]
 internal sealed partial class OverviewPage
 {
     public MainWindowViewModel ViewModel { get; }

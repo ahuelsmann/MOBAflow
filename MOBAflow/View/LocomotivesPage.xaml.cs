@@ -4,14 +4,6 @@ namespace Moba.WinUI.View;
 using Common.Navigation;
 using SharedUI.ViewModel;
 
-[NavigationItem(
-    Tag = "locomotives",
-    Title = "Locomotives",
-    Icon = "\uE7C0",
-    Category = NavigationCategory.Solution,
-    Order = 25,
-    FeatureToggleKey = "IsLocomotivesPageAvailable",
-    BadgeLabelKey = "LocomotivesPageLabel")]
 internal sealed partial class LocomotivesPage
 {
     public MainWindowViewModel ViewModel { get; }

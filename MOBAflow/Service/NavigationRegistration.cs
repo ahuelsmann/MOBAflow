@@ -8,39 +8,84 @@ using SharedUI.Interface;
 using SharedUI.ViewModel;
 using View;
 using ViewModel;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+/// <summary>
+/// Metadata for a registered page with navigation information.
+/// </summary>
+internal record PageMetadata(
+    string Tag,
+    string Title,
+    string? Icon,
+    Type PageType,
+    NavigationCategory Category,
+    int Order,
+    string? FeatureToggleKey,
+    string? BadgeLabelKey,
+    string? PathIconData,
+    bool IsBold);
 
 /// <summary>
 /// Centralizes page and navigation registrations for the WinUI app.
-/// Uses auto-discovery for pages with [NavigationItem] attribute.
-/// Manual registrations only for pages requiring custom DI setup.
+/// Uses static registrations to avoid reflection penalties at startup.
 /// </summary>
 internal static class NavigationRegistration
 {
     /// <summary>
-    /// Discovers and registers all pages (auto + custom DI).
+    /// Registers all pages.
     /// Returns combined page metadata for NavigationView building.
     /// </summary>
     public static List<PageMetadata> RegisterPages(IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
-
-        // Auto-discover pages with [NavigationItem] attribute
-        var discoveredPages = PageDiscoveryService.DiscoverPages(services, typeof(NavigationRegistration).Assembly);
-
-        // Manual registrations for pages with custom DI requirements
-        var customPages = RegisterPagesWithCustomDi(services);
-
-        // Combine and return sorted
-        return discoveredPages.Concat(customPages)
-            .OrderBy(p => (int)p.Category)
-            .ThenBy(p => p.Order)
-            .ToList();
-    }
-
-    private static List<PageMetadata> RegisterPagesWithCustomDi(IServiceCollection services)
-    {
         var pages = new List<PageMetadata>();
 
+        // Register standard transient pages (these were previously auto-discovered)
+        services.AddTransient<LocomotivesPage>();
+        pages.Add(new PageMetadata("locomotives", "Locomotives", "\uE7C0", typeof(LocomotivesPage), NavigationCategory.Solution, 25, "IsLocomotivesPageAvailable", "LocomotivesPageLabel", null, false));
+
+        services.AddTransient<PassengerWagonPage>();
+        pages.Add(new PageMetadata("passengerwagons", "Passenger Wagons", "\uE7C0", typeof(PassengerWagonPage), NavigationCategory.Solution, 26, "IsPassengerWagonsPageAvailable", "PassengerWagonsPageLabel", null, false));
+
+        services.AddTransient<SolutionPage>();
+        pages.Add(new PageMetadata("solution", "Solution", "\uE8B7", typeof(SolutionPage), NavigationCategory.Solution, 10, "IsSolutionPageAvailable", "SolutionPageLabel", null, false));
+
+        services.AddTransient<HelpPage>();
+        pages.Add(new PageMetadata("help", "Help", "\uE897", typeof(HelpPage), NavigationCategory.Help, 10, null, null, null, false));
+
+        services.AddTransient<SettingsPage>();
+        pages.Add(new PageMetadata("settings", "Settings", "\uE115", typeof(SettingsPage), NavigationCategory.Help, 30, "IsSettingsPageAvailable", "SettingsPageLabel", null, false));
+
+        services.AddTransient<OverviewPage>();
+        pages.Add(new PageMetadata("overview", "Overview", "\uE80F", typeof(OverviewPage), NavigationCategory.Core, 10, "IsOverviewPageAvailable", "OverviewPageLabel", null, false));
+
+        services.AddTransient<TemplatePage>();
+        pages.Add(new PageMetadata("template", "Template", "\uE8A1", typeof(TemplatePage), NavigationCategory.Core, 200, null, null, null, false));
+
+        services.AddTransient<WorkflowsPage>();
+        pages.Add(new PageMetadata("workflows", "Workflows", "\uE945", typeof(WorkflowsPage), NavigationCategory.Solution, 20, "IsWorkflowsPageAvailable", "WorkflowsPageLabel", null, false));
+
+        services.AddTransient<GoodsWagonPage>();
+        pages.Add(new PageMetadata("goodswagons", "Goods Wagons", "\uE7C0", typeof(GoodsWagonPage), NavigationCategory.Solution, 27, "IsGoodsWagonsPageAvailable", "GoodsWagonsPageLabel", null, false));
+
+        services.AddTransient<TrackPlanPage>();
+        pages.Add(new PageMetadata("trackplaneditor", "Track Plan", "\uE7F9", typeof(TrackPlanPage), NavigationCategory.TrackManagement, 10, "IsTrackPlanEditorPageAvailable", "TrackPlanEditorPageLabel", null, false));
+
+        services.AddTransient<TrainControlPage>();
+        pages.Add(new PageMetadata("traincontrol", "Train Control", "\uEC49", typeof(TrainControlPage), NavigationCategory.TrainControl, 10, "IsTrainControlPageAvailable", "TrainControlPageLabel", null, true));
+
+        services.AddTransient<JourneyMapPage>();
+        pages.Add(new PageMetadata("journeymap", "Journey Map", "\uE81D", typeof(JourneyMapPage), NavigationCategory.Journey, 20, "IsJourneyMapPageAvailable", "JourneyMapPageLabel", null, false));
+
+        services.AddTransient<InfoPage>();
+        pages.Add(new PageMetadata("info", "Info", "\uE946", typeof(InfoPage), NavigationCategory.Help, 20, null, null, null, false));
+
+        services.AddTransient<MonitorPage>();
+        pages.Add(new PageMetadata("monitor", "Monitor", "\uE7F4", typeof(MonitorPage), NavigationCategory.Monitoring, 10, "IsMonitorPageAvailable", "MonitorPageLabel", null, false));
+
+        // Manual registrations for pages with custom DI requirements
         // JourneysPage: requires AppSettings + ISettingsService injection
         services.AddTransient<JourneysPage>(sp => new JourneysPage(
             sp.GetRequiredService<MainWindowViewModel>(),
@@ -91,6 +136,10 @@ internal static class NavigationRegistration
             PathIconData: "M2,3 L6,3 L6,7 L2,7 Z M8,3 L12,3 L12,7 L8,7 Z M2,9 L6,9 L6,13 L2,13 Z M8,9 L12,9 L12,13 L8,13 Z",
             IsBold: false));
 
-        return pages;
+        // Return sorted
+        return pages
+            .OrderBy(p => (int)p.Category)
+            .ThenBy(p => p.Order)
+            .ToList();
     }
 }

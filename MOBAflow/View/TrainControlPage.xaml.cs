@@ -23,15 +23,6 @@ using Windows.UI.ViewManagement;
 /// Supports multiple manufacturer-inspired color themes with system accent as default.
 /// Dynamically applies theme colors to all UI elements.
 /// </summary>
-[NavigationItem(
-    Tag = "traincontrol",
-    Title = "Train Control",
-    Icon = "\uEC49",
-    Category = NavigationCategory.TrainControl,
-    Order = 10,
-    FeatureToggleKey = "IsTrainControlPageAvailable",
-    BadgeLabelKey = "TrainControlPageLabel",
-    IsBold = true)]
 internal sealed partial class TrainControlPage : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;

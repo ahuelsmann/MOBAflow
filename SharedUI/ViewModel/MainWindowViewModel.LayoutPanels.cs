@@ -5,6 +5,7 @@ using Common.Configuration;
 public partial class MainWindowViewModel
 {
     private bool _isJourneyListExpanded = true;
+    private bool _isStationListExpanded = true;
     private bool _isJourneyPropertiesExpanded = true;
     private bool _isLocomotivesListExpanded = true;
     private bool _isPassengerWagonListExpanded = true;
@@ -22,6 +23,16 @@ public partial class MainWindowViewModel
         {
             if (SetProperty(ref _isJourneyListExpanded, value))
                 PersistLayoutState(layout => layout.JourneysPage.IsJourneyListExpanded = value);
+        }
+    }
+
+    public bool IsStationListExpanded
+    {
+        get => _isStationListExpanded;
+        set
+        {
+            if (SetProperty(ref _isStationListExpanded, value))
+                PersistLayoutState(layout => layout.JourneysPage.IsStationListExpanded = value);
         }
     }
 
@@ -118,6 +129,7 @@ public partial class MainWindowViewModel
     private void InitializeLayoutPanelStates()
     {
         _isJourneyListExpanded = _settings.Layout.JourneysPage?.IsJourneyListExpanded ?? true;
+        _isStationListExpanded = _settings.Layout.JourneysPage?.IsStationListExpanded ?? true;
         _isCityLibraryVisible = _settings.Layout.JourneysPage?.IsCityLibraryExpanded ?? true;
         _isWorkflowLibraryVisible = _settings.Layout.JourneysPage?.IsWorkflowLibraryExpanded ?? true;
         _isJourneyPropertiesExpanded = _settings.Layout.JourneysPage?.IsJourneyPropertiesExpanded ?? true;

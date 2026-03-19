@@ -3,12 +3,6 @@ namespace Moba.WinUI.View;
 using Common.Navigation;
 using System.Reflection;
 
-[NavigationItem(
-    Tag = "info",
-    Title = "Info",
-    Icon = "\uE946",
-    Category = NavigationCategory.Help,
-    Order = 20)]
 internal sealed partial class InfoPage
 {
     private const string ReadmeFileName = "README.md";

@@ -14,14 +14,6 @@ using Windows.System;
 /// Workflows page displaying workflows and actions with properties panel.
 /// Supports drag and drop of workflows to stations.
 /// </summary>
-[NavigationItem(
-    Tag = "workflows",
-    Title = "Workflows",
-    Icon = "\uE945",
-    Category = NavigationCategory.Solution,
-    Order = 20,
-    FeatureToggleKey = "IsWorkflowsPageAvailable",
-    BadgeLabelKey = "WorkflowsPageLabel")]
 internal sealed partial class WorkflowsPage
 {
     public MainWindowViewModel ViewModel { get; }

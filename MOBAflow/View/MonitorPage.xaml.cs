@@ -9,14 +9,6 @@ using System.Collections.Specialized;
 using System.Runtime.InteropServices;
 
 // ReSharper disable once PartialTypeWithSinglePart
-[NavigationItem(
-    Tag = "monitor",
-    Title = "Monitor",
-    Icon = "\uE7F4",
-    Category = NavigationCategory.Monitoring,
-    Order = 10,
-    FeatureToggleKey = "IsMonitorPageAvailable",
-    BadgeLabelKey = "MonitorPageLabel")]
 internal sealed partial class MonitorPage
 {
     public MonitorPageViewModel ViewModel { get; }

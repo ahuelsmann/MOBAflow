@@ -17,14 +17,6 @@ using Windows.ApplicationModel.DataTransfer;
 /// Uses MainWindowViewModel.Settings for data binding.
 /// Settings are auto-saved immediately after changes.
 /// </summary>
-[NavigationItem(
-    Tag = "settings",
-    Title = "Settings",
-    Icon = "\uE115",
-    Category = NavigationCategory.Help,
-    Order = 30,
-    FeatureToggleKey = "IsSettingsPageAvailable",
-    BadgeLabelKey = "SettingsPageLabel")]
 internal sealed partial class SettingsPage
 {
     public MainWindowViewModel ViewModel { get; }
