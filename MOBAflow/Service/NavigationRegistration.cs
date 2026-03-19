@@ -61,9 +61,6 @@ internal static class NavigationRegistration
         services.AddTransient<OverviewPage>();
         pages.Add(new PageMetadata("overview", "Overview", "\uE80F", typeof(OverviewPage), NavigationCategory.Core, 10, "IsOverviewPageAvailable", "OverviewPageLabel", null, false));
 
-        services.AddTransient<TemplatePage>();
-        pages.Add(new PageMetadata("template", "Template", "\uE8A1", typeof(TemplatePage), NavigationCategory.Core, 200, null, null, null, false));
-
         services.AddTransient<WorkflowsPage>();
         pages.Add(new PageMetadata("workflows", "Workflows", "\uE945", typeof(WorkflowsPage), NavigationCategory.Solution, 20, "IsWorkflowsPageAvailable", "WorkflowsPageLabel", null, false));
 

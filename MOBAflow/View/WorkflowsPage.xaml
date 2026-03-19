@@ -91,11 +91,11 @@
                                     <FontIcon Glyph="&#xE710;" />
                                 </MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
-                            <MenuFlyoutItem Command="{x:Bind ViewModel.DeleteWorkflowCommand}" Text="Delete Workflow">
-                                <MenuFlyoutItem.Icon>
-                                    <FontIcon Glyph="&#xE738;" />
-                                </MenuFlyoutItem.Icon>
-                            </MenuFlyoutItem>
+                                <MenuFlyoutItem Command="{x:Bind ViewModel.DeleteWorkflowCommand}" Text="Delete Workflow">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE74D;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
                         </MenuFlyout>
                     </ListView.ContextFlyout>
                     <ListView.ItemTemplate>
@@ -184,6 +184,31 @@
                     <i:Interaction.Behaviors>
                         <local:ListViewItemClickBehavior Command="{x:Bind ViewModel.WorkflowsPageItemClickedCommand}" />
                     </i:Interaction.Behaviors>
+                    <ListView.ContextFlyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem Command="{x:Bind ViewModel.AddAnnouncementCommand}" Text="Add Announcement">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE8F2;" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem Command="{x:Bind ViewModel.AddCommandCommand}" Text="Add Command">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE77F;" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem Command="{x:Bind ViewModel.AddAudioCommand}" Text="Add Audio">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE767;" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutSeparator />
+                            <MenuFlyoutItem Command="{x:Bind ViewModel.DeleteActionCommand}" Text="Delete Action">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xE74D;" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                        </MenuFlyout>
+                    </ListView.ContextFlyout>
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="vmAction:WorkflowActionViewModel">
                             <Grid Padding="6">

@@ -1,6 +1,34 @@
 # MOBAflow TODOs & Roadmap
 
-> Last Updated: 2026-02-20
+> Last Updated: 2026-03-19
+
+---
+
+## 📋 NEXT SESSION: UI Layout Pattern Rollout (JourneysPage Style)
+
+**Ziel:** Das erfolgreiche und hochgelobte Layout-Muster der `JourneysPage` auf alle anderen spaltenorientierten Seiten (z.B. `WorkflowsPage`, `TrainsPage`, `LocomotivesPage`, etc.) übertragen, um ein einheitliches, schlankes und professionelles Fluent-Design in der gesamten App zu gewährleisten.
+
+**To-Dos:**
+- [ ] Identifikation aller relevanten Seiten mit Spalten/Grid-Layout.
+- [ ] Umbau der XAML-Strukturen zur Nutzung von `CollapsibleColumnCollection` (für Master-Listen), `CollapsibleColumnHelper` (für Werkzeuge/Bibliotheken) und `CollapsibleColumnProperties` (für Detail-Ansichten).
+- [ ] Anpassung der `GridSplitter`: Breite konsequent auf `4` Pixel reduzieren.
+- [ ] Entfernung von äußeren `Margin`-Werten (`Margin="0"`) an den Collapsible-Controls für maximale Platznutzung.
+- [ ] Übernahme der entsprechenden Code-Behind Logik (Layout-Persistierung in `AppSettings`, dynamische Breiten mit `GridLength.Auto`).
+- [ ] Sicherstellen, dass Suchfelder (`AutoSuggestBox`) und Kontextmenüs (`ContextFlyout`) in allen Listen verfügbar sind.
+
+---
+
+## ✅ SESSION COMPLETED: UI Layout Pattern & Fluent Design (JourneysPage)
+
+**Ziel:** Implementierung eines professionellen, platzsparenden und optisch ansprechenden Spaltenlayouts für die JourneysPage auf Basis des Fluent Design Systems.
+
+**Erledigt:**
+- [x] Architektur-Wechsel: Einführung der Controls `CollapsibleColumnCollection`, `CollapsibleColumnHelper` und `CollapsibleColumnProperties` zur klaren semantischen Trennung.
+- [x] Subtile Farbakzente (20% Opacity) am linken Rand zur Orientierung (Blau für Listen, Gelb für Helper, Orange für Properties).
+- [x] Schlankheitskur: Entfernung überflüssiger Margins (`Margin="0"`), schmalere GridSplitter (`Width="4"`), reduziertes inneres Padding (`12px` statt `20px`), reduziertes Padding in EntityTemplates.
+- [x] UX-Verbesserungen: Einheitliche Suchfelder (`AutoSuggestBox`) für Journeys, Stations, Workflows und Cities hinzugefügt.
+- [x] Navigation: Umfangreiche Kontextmenüs (Rechtsklick) in Listen (Journeys, Stations, Workflows, Actions) implementiert.
+- [x] Code-Behind Refactoring für dynamisches Resizing (`PreviousAndNext`) und Persistierung in den `AppSettings`.
 
 ---
 

@@ -10,11 +10,13 @@
     <!--  ============================================  -->
     <DataTemplate x:Key="JourneyTemplate">
         <ScrollViewer>
-            <StackPanel Padding="12" Spacing="12">
+            <StackPanel Padding="0,0,16,16" Spacing="16">
                 <!--  Runtime State Section  -->
                 <StackPanel
                     Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
                     CornerRadius="4"
                     Spacing="8">
                     <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="RUNTIME STATE" />
@@ -128,7 +130,7 @@
     <!--  ============================================  -->
     <DataTemplate x:Key="StationTemplate">
         <ScrollViewer>
-            <StackPanel Padding="16" Spacing="16">
+            <StackPanel Padding="0,0,16,16" Spacing="16">
                 <TextBox
                     Header="Name"
                     PlaceholderText="Station name"
@@ -244,7 +246,7 @@
     <!--  ============================================  -->
     <DataTemplate x:Key="WorkflowTemplate">
         <ScrollViewer>
-            <StackPanel Padding="16" Spacing="16">
+            <StackPanel Padding="0,0,16,16" Spacing="16">
                 <!--  Header  -->
                 <TextBlock
                     Margin="0,0,0,8"
@@ -373,7 +375,9 @@
                 <!--  Project Statistics  -->
                 <StackPanel
                     Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
                     CornerRadius="4"
                     Spacing="8">
                     <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="PROJECT STATISTICS" />
@@ -455,7 +459,7 @@
     <!--  Action Templates (Polymorphic)  -->
     <DataTemplate x:Key="AnnouncementActionTemplate">
         <ScrollViewer>
-            <StackPanel Padding="16" Spacing="16">
+            <StackPanel Padding="0,0,16,16" Spacing="16">
                 <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Announcement Action" />
 
                 <TextBox
@@ -502,7 +506,7 @@
 
     <DataTemplate x:Key="AudioActionTemplate">
         <ScrollViewer>
-            <StackPanel Padding="16" Spacing="16">
+            <StackPanel Padding="0,0,16,16" Spacing="16">
                 <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Audio Action" />
 
                 <TextBox
@@ -558,7 +562,7 @@
 
     <DataTemplate x:Key="CommandActionTemplate">
         <ScrollViewer>
-            <StackPanel Padding="16" Spacing="16">
+            <StackPanel Padding="0,0,16,16" Spacing="16">
                 <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Command Action" />
 
                 <TextBox
@@ -618,7 +622,7 @@
     <!--  Generic Action Template (Fallback)  -->
     <DataTemplate x:Key="ActionTemplate">
         <ScrollViewer>
-            <StackPanel Padding="16" Spacing="16">
+            <StackPanel Padding="0,0,16,16" Spacing="16">
                 <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Workflow Action" />
 
                 <TextBox Header="Name" Text="{Binding Name, Mode=TwoWay}" />
@@ -638,7 +642,7 @@
     <!--  ============================================  -->
     <DataTemplate x:Key="LocomotiveTemplate">
         <ScrollViewer>
-            <StackPanel Padding="16" Spacing="16">
+            <StackPanel Padding="0,0,16,16" Spacing="16">
                 <TextBlock
                     Margin="0,0,0,8"
                     Style="{ThemeResource SubtitleTextBlockStyle}"
@@ -647,7 +651,9 @@
                 <!--  Basic Information  -->
                 <StackPanel
                     Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
                     CornerRadius="4"
                     Spacing="12">
                     <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="BASIC INFORMATION" />
@@ -669,7 +675,9 @@
                 <!--  Purchase Information  -->
                 <StackPanel
                     Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
                     CornerRadius="4"
                     Spacing="12">
                     <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="PURCHASE INFORMATION" />
@@ -698,7 +706,9 @@
                 <!--  Technical Details  -->
                 <StackPanel
                     Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
                     CornerRadius="4"
                     Spacing="12">
                     <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="TECHNICAL DETAILS" />
@@ -714,7 +724,9 @@
                 <!--  Photo  -->
                 <StackPanel
                     Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
                     CornerRadius="4"
                     Spacing="12">
                     <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="PHOTO" />
@@ -796,7 +808,7 @@
     <!--  ============================================  -->
     <DataTemplate x:Key="WagonTemplate">
         <ScrollViewer>
-            <StackPanel Padding="16" Spacing="16">
+            <StackPanel Padding="0,0,16,16" Spacing="16">
                 <TextBlock
                     Margin="0,0,0,8"
                     Style="{ThemeResource SubtitleTextBlockStyle}"
@@ -805,7 +817,9 @@
                 <!--  Basic Information  -->
                 <StackPanel
                     Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
                     CornerRadius="4"
                     Spacing="12">
                     <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="BASIC INFORMATION" />
@@ -827,7 +841,9 @@
                 <!--  Purchase Information  -->
                 <StackPanel
                     Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
                     CornerRadius="4"
                     Spacing="12">
                     <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="PURCHASE INFORMATION" />
@@ -856,7 +872,9 @@
                 <!--  Technical Details  -->
                 <StackPanel
                     Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
                     CornerRadius="4"
                     Spacing="12">
                     <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="TECHNICAL DETAILS" />
@@ -870,7 +888,9 @@
                 <!--  Photo  -->
                 <StackPanel
                     Padding="12"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
                     CornerRadius="4"
                     Spacing="12">
                     <TextBlock Style="{ThemeResource CaptionTextBlockStyle}" Text="PHOTO" />

@@ -144,6 +144,35 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
     }
 
     /// <summary>
+    /// Gets or sets the search text used to filter stations by name.
+    /// </summary>
+    public string StationSearchText
+    {
+        get => field;
+        set
+        {
+            if (SetProperty(ref field, value))
+            {
+                OnPropertyChanged(nameof(FilteredStations));
+            }
+        }
+    } = string.Empty;
+
+    /// <summary>
+    /// Gets the filtered stations based on search text.
+    /// Returns all stations if search is empty.
+    /// </summary>
+    public List<StationViewModel> FilteredStations
+    {
+        get
+        {
+            return string.IsNullOrWhiteSpace(StationSearchText)
+                ? [.. Stations]
+                : [.. Stations.Where(s => s.Name.Contains(StationSearchText, StringComparison.OrdinalIgnoreCase))];
+        }
+    }
+
+    /// <summary>
     /// Gets the collection of station ViewModels for this journey.
     /// Cached for UI binding performance.
     /// </summary>
@@ -348,6 +377,7 @@ public sealed partial class JourneyViewModel : ObservableObject, IViewModelWrapp
 
         // Notify UI
         OnPropertyChanged(nameof(Stations));
+        OnPropertyChanged(nameof(FilteredStations));
     }
 
     /// <summary>

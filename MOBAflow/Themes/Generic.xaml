@@ -15,7 +15,7 @@
                             Height="32"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Top"
-                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                            Background="{ThemeResource LayerFillColorDefaultBrush}"
                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1"
                             CornerRadius="8"
@@ -33,7 +33,7 @@
 
                         <Grid
                             x:Name="ExpandedPanel"
-                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                            Background="{ThemeResource LayerFillColorDefaultBrush}"
                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1"
                             CornerRadius="8">
@@ -41,10 +41,10 @@
                             <!--  Subtle accent bar on the left  -->
                             <Border 
                                 Width="3" 
-                                Margin="0,16,0,16" 
+                                Margin="0,8,0,8" 
                                 HorizontalAlignment="Left" 
-                                Background="{ThemeResource SystemFillColorCautionBrush}" 
-                                Opacity="0.5"
+                                Background="#FFE666"
+                                Opacity="0.16"
                                 CornerRadius="2" />
                                 
                             <Grid>
@@ -55,7 +55,7 @@
 
                                 <Border
                                     Grid.Row="0"
-                                    Padding="20,12,12,8">
+                                    Padding="12,8,8,4">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
@@ -102,7 +102,7 @@
                                 </Border>
                                 <ContentPresenter 
                                     Grid.Row="1" 
-                                    Padding="20,8,12,12"
+                                    Padding="12,4,8,8"
                                     Content="{TemplateBinding PanelContent}" />
                             </Grid>
                         </Grid>
@@ -141,7 +141,7 @@
                             Height="32"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Top"
-                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            Background="{ThemeResource LayerFillColorDefaultBrush}"
                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1"
                             CornerRadius="8"
@@ -159,7 +159,7 @@
 
                         <Grid
                             x:Name="ExpandedPanel"
-                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            Background="{ThemeResource LayerFillColorDefaultBrush}"
                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1"
                             CornerRadius="8">
@@ -167,10 +167,10 @@
                             <!--  Subtle accent bar on the left  -->
                             <Border 
                                 Width="3" 
-                                Margin="0,16,0,16" 
+                                Margin="0,8,0,8" 
                                 HorizontalAlignment="Left" 
-                                Background="{ThemeResource SystemFillColorSuccessBrush}" 
-                                Opacity="0.5"
+                                Background="#0078D4"
+                                Opacity="0.16"
                                 CornerRadius="2" />
                                 
                             <Grid>
@@ -181,7 +181,7 @@
 
                                 <Border
                                     Grid.Row="0"
-                                    Padding="20,12,12,8">
+                                    Padding="12,8,8,4">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
@@ -229,7 +229,7 @@
                                 
                                 <ContentPresenter 
                                     Grid.Row="1" 
-                                    Padding="20,8,12,12"
+                                    Padding="12,4,8,8"
                                     Content="{TemplateBinding PanelContent}" />
                             </Grid>
                         </Grid>
@@ -268,8 +268,8 @@
                             Height="32"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Top"
-                            Background="{ThemeResource LayerFillColorAltBrush}"
-                            BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}"
+                            Background="{ThemeResource LayerFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1"
                             CornerRadius="8"
                             Visibility="Collapsed">
@@ -286,18 +286,18 @@
 
                         <Grid
                             x:Name="ExpandedPanel"
-                            Background="{ThemeResource LayerFillColorAltBrush}"
-                            BorderBrush="{ThemeResource SurfaceStrokeColorDefaultBrush}"
+                            Background="{ThemeResource LayerFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1"
                             CornerRadius="8">
                             
                             <!--  Subtle accent bar on the left to show it's the active properties panel  -->
                             <Border 
                                 Width="3" 
-                                Margin="0,16,0,16" 
+                                Margin="0,8,0,8" 
                                 HorizontalAlignment="Left" 
-                                Background="{ThemeResource SystemAccentColor}" 
-                                Opacity="0.5"
+                                Background="#FF8C00"
+                                Opacity="0.16"
                                 CornerRadius="2" />
                                 
                             <Grid>
@@ -308,7 +308,7 @@
 
                                 <Border
                                     Grid.Row="0"
-                                    Padding="20,12,12,8">
+                                    Padding="12,8,8,4">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
