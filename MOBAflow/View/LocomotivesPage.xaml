@@ -2,43 +2,35 @@
     x:Class="Moba.WinUI.View.LocomotivesPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Moba.WinUI.Controls"
+    xmlns:controls1="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewmodel="using:Moba.SharedUI.ViewModel"
+    xmlns:converter="using:Moba.WinUI.Converter"
     DataContext="{x:Bind ViewModel}"
     mc:Ignorable="d">
 
+    <Page.Resources>
+        <converter:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converter:NullableConverter x:Key="NullableConverter" />
+    </Page.Resources>
+
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1*" MinWidth="200" />
+            <ColumnDefinition Width="1*" MinWidth="32" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="3.5*" MinWidth="300" />
+            <ColumnDefinition Width="3.5*" MinWidth="32" />
         </Grid.ColumnDefinitions>
 
-        <!--  Column 0: Locomotives  -->
-        <Grid Grid.Column="0" Padding="8">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-
-            <!--  Header: Title + Actions  -->
-            <Grid Grid.Row="0" Margin="0,0,0,8">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBlock
-                    Grid.Column="0"
-                    Padding="8,0,0,0"
-                    VerticalAlignment="Center"
-                    Style="{StaticResource SubtitleTextBlockStyle}"
-                    Text="Locomotives" />
-                <StackPanel
-                    Grid.Column="1"
-                    Orientation="Horizontal"
-                    Spacing="2">
+        <controls:CollapsibleColumnCollection
+            Grid.Column="0"
+            Margin="0"
+            Header="Locomotives"
+            Glyph="&#xE7C0;"
+            IsExpanded="{x:Bind ViewModel.IsLocomotivesListExpanded, Mode=TwoWay}">
+            <controls:CollapsibleColumnCollection.HeaderActions>
+                <StackPanel Orientation="Horizontal" Spacing="2">
                     <Button
                         Padding="4"
                         Command="{x:Bind ViewModel.AddLocomotiveCommand}"
@@ -52,77 +44,92 @@
                         <FontIcon FontSize="14" Glyph="&#xE74D;" />
                     </Button>
                 </StackPanel>
-            </Grid>
+            </controls:CollapsibleColumnCollection.HeaderActions>
+            <controls:CollapsibleColumnCollection.PanelContent>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
 
-            <AutoSuggestBox
-                Grid.Row="1"
-                Margin="0,0,0,8"
-                PlaceholderText="Search locomotives..."
-                QueryIcon="Find"
-                Text="{x:Bind ViewModel.LocomotiveSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <AutoSuggestBox
+                        Grid.Row="0"
+                        Margin="0,0,0,8"
+                        PlaceholderText="Search locomotives..."
+                        QueryIcon="Find"
+                        Text="{x:Bind ViewModel.LocomotiveSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-            <ListView
-                Grid.Row="2"
-                IsItemClickEnabled="True"
-                ItemsSource="{x:Bind ViewModel.SelectedProject.Locomotives, Mode=OneWay}"
-                SelectedItem="{x:Bind ViewModel.SelectedLocomotive, Mode=TwoWay}"
-                SelectionMode="Single">
-                <ListView.ContextFlyout>
-                    <MenuFlyout>
-                        <MenuFlyoutItem Command="{x:Bind ViewModel.AddLocomotiveCommand}" Text="Add Locomotive">
-                            <MenuFlyoutItem.Icon>
-                                <FontIcon Glyph="&#xE710;" />
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutItem Command="{x:Bind ViewModel.DeleteLocomotiveCommand}" Text="Delete Locomotive">
-                            <MenuFlyoutItem.Icon>
-                                <FontIcon Glyph="&#xE738;" />
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                    </MenuFlyout>
-                </ListView.ContextFlyout>
-                <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="viewmodel:LocomotiveViewModel">
-                        <Grid Padding="6">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <FontIcon
-                                Grid.Column="0"
-                                Margin="0,0,8,0"
-                                FontSize="16"
-                                Glyph="&#xE7C0;" />
-                            <TextBlock
-                                Grid.Column="1"
-                                VerticalAlignment="Center"
-                                Text="{x:Bind Name, Mode=OneWay}" />
-                            <FontIcon
-                                Grid.Column="2"
-                                FontSize="12"
-                                Foreground="{ThemeResource SystemAccentColor}"
-                                Glyph="&#xEB9F;"
-                                Visibility="{x:Bind HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
-                        </Grid>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
-        </Grid>
+                    <ListView
+                        Grid.Row="1"
+                        IsItemClickEnabled="True"
+                        ItemsSource="{x:Bind ViewModel.SelectedProject.Locomotives, Mode=OneWay}"
+                        SelectedItem="{x:Bind ViewModel.SelectedLocomotive, Mode=TwoWay}"
+                        SelectionMode="Single">
+                        <ListView.ContextFlyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem Command="{x:Bind ViewModel.AddLocomotiveCommand}" Text="Add Locomotive">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE710;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Command="{x:Bind ViewModel.DeleteLocomotiveCommand}" Text="Delete Locomotive">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE738;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </ListView.ContextFlyout>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="viewmodel:LocomotiveViewModel">
+                                <Grid Padding="6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <FontIcon
+                                        Grid.Column="0"
+                                        Margin="0,0,8,0"
+                                        FontSize="16"
+                                        Glyph="&#xE7C0;" />
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        VerticalAlignment="Center"
+                                        Text="{x:Bind Name, Mode=OneWay}" />
+                                    <FontIcon
+                                        Grid.Column="2"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource SystemAccentColor}"
+                                        Glyph="&#xEB9F;"
+                                        Visibility="{x:Bind HasPhoto, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
+            </controls:CollapsibleColumnCollection.PanelContent>
+        </controls:CollapsibleColumnCollection>
 
-        <Border
+        <controls1:GridSplitter
             Grid.Column="1"
-            Width="1"
-            Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+            Width="4"
+            HorizontalAlignment="Left"
+            ResizeBehavior="PreviousAndNext" />
 
-        <!--  Column 2: Properties  -->
-        <ScrollViewer Grid.Column="2" Padding="8,0,0,0">
-            <ContentControl
-                HorizontalContentAlignment="Stretch"
-                VerticalContentAlignment="Stretch"
-                Content="{x:Bind ViewModel.SelectedLocomotive, Mode=OneWay}"
-                ContentTemplateSelector="{StaticResource EntityTemplateSelector}"
-                Visibility="{x:Bind ViewModel.SelectedLocomotive, Mode=OneWay, Converter={StaticResource NullableConverter}}" />
-        </ScrollViewer>
+        <controls:CollapsibleColumnProperties
+            Grid.Column="2"
+            Margin="0"
+            Header="Properties"
+            Glyph="&#xE946;"
+            IsExpanded="{x:Bind ViewModel.IsLocomotivesPropertiesExpanded, Mode=TwoWay}">
+            <controls:CollapsibleColumnProperties.PanelContent>
+                <ContentControl
+                    HorizontalContentAlignment="Stretch"
+                    VerticalContentAlignment="Stretch"
+                    Content="{x:Bind ViewModel.SelectedLocomotive, Mode=OneWay}"
+                    ContentTemplateSelector="{StaticResource EntityTemplateSelector}"
+                    Visibility="{x:Bind ViewModel.SelectedLocomotive, Mode=OneWay, Converter={StaticResource NullableConverter}}" />
+            </controls:CollapsibleColumnProperties.PanelContent>
+        </controls:CollapsibleColumnProperties>
     </Grid>
 </Page>

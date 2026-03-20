@@ -656,16 +656,19 @@ public class JourneysPageLayoutSettings
 public class GoodsWagonPageLayoutSettings
 {
     public bool IsListExpanded { get; set; } = true;
+    public bool IsPropertiesExpanded { get; set; } = true;
 }
 
 public class LocomotivesPageLayoutSettings
 {
     public bool IsListExpanded { get; set; } = true;
+    public bool IsPropertiesExpanded { get; set; } = true;
 }
 
 public class PassengerWagonPageLayoutSettings
 {
     public bool IsListExpanded { get; set; } = true;
+    public bool IsPropertiesExpanded { get; set; } = true;
 }
 
 public class SolutionPageLayoutSettings
@@ -677,7 +680,15 @@ public class WorkflowsPageLayoutSettings
 {
     public bool IsWorkflowListExpanded { get; set; } = true;
 
+    public bool IsActionsExpanded { get; set; } = true;
+
     public bool IsPropertiesExpanded { get; set; } = true;
+
+    public double WorkflowsColumnWidth { get; set; } = 300;
+
+    public double ActionsColumnWidth { get; set; } = -1; // -1 can mean Auto/Star
+
+    public double PropertiesColumnWidth { get; set; } = 350;
 }
 
 public class SignalBoxPageLayoutSettings

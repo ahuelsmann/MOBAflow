@@ -26,34 +26,6 @@ internal sealed partial class WorkflowsPage
         Debug.WriteLine("✅ ✅ ✅ WorkflowsPage LOADED - Debug Output is WORKING! ✅ ✅ ✅");
     }
 
-    private GridLength GetCollapsibleColumnWidth(double width, bool isExpanded, double expandedDefaultWidth)
-    {
-        if (!isExpanded)
-            return new GridLength(1, GridUnitType.Auto);
-
-        if (width > 0)
-            return new GridLength(width, GridUnitType.Pixel);
-
-        return expandedDefaultWidth > 0
-            ? new GridLength(expandedDefaultWidth, GridUnitType.Pixel)
-            : new GridLength(1, GridUnitType.Auto);
-    }
-
-    private double GetCollapsibleMinWidth(bool isExpanded, double expandedMinWidth)
-    {
-        return isExpanded ? expandedMinWidth : 0d;
-    }
-
-    private double GetSplitterWidth(bool isExpanded)
-    {
-        return isExpanded ? 5d : 0d;
-    }
-
-    private Visibility GetSplitterVisibility(bool isExpanded)
-    {
-        return isExpanded ? Visibility.Visible : Visibility.Collapsed;
-    }
-
     #region Drag & Drop Event Handlers
     private void WorkflowListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {

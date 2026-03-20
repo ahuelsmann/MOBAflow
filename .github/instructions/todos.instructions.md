@@ -4,17 +4,17 @@
 
 ---
 
-## 📋 NEXT SESSION: UI Layout Pattern Rollout (JourneysPage Style)
+## ✅ SESSION COMPLETED: UI Layout Pattern Rollout (JourneysPage Style)
 
 **Ziel:** Das erfolgreiche und hochgelobte Layout-Muster der `JourneysPage` auf alle anderen spaltenorientierten Seiten (z.B. `WorkflowsPage`, `TrainsPage`, `LocomotivesPage`, etc.) übertragen, um ein einheitliches, schlankes und professionelles Fluent-Design in der gesamten App zu gewährleisten.
 
-**To-Dos:**
-- [ ] Identifikation aller relevanten Seiten mit Spalten/Grid-Layout.
-- [ ] Umbau der XAML-Strukturen zur Nutzung von `CollapsibleColumnCollection` (für Master-Listen), `CollapsibleColumnHelper` (für Werkzeuge/Bibliotheken) und `CollapsibleColumnProperties` (für Detail-Ansichten).
-- [ ] Anpassung der `GridSplitter`: Breite konsequent auf `4` Pixel reduzieren.
-- [ ] Entfernung von äußeren `Margin`-Werten (`Margin="0"`) an den Collapsible-Controls für maximale Platznutzung.
-- [ ] Übernahme der entsprechenden Code-Behind Logik (Layout-Persistierung in `AppSettings`, dynamische Breiten mit `GridLength.Auto`).
-- [ ] Sicherstellen, dass Suchfelder (`AutoSuggestBox`) und Kontextmenüs (`ContextFlyout`) in allen Listen verfügbar sind.
+**Erledigt:**
+- [x] Identifikation aller relevanten Seiten mit Spalten/Grid-Layout.
+- [x] Umbau der XAML-Strukturen zur Nutzung von `CollapsibleColumnCollection` (für Master-Listen), `CollapsibleColumnHelper` (für Werkzeuge/Bibliotheken) und `CollapsibleColumnProperties` (für Detail-Ansichten) für `WorkflowsPage`, `LocomotivesPage`, `PassengerWagonPage`, `GoodsWagonPage`.
+- [x] Anpassung der `GridSplitter`: Breite konsequent auf `4` Pixel reduzieren.
+- [x] Entfernung von äußeren `Margin`-Werten (`Margin="0"`) an den Collapsible-Controls für maximale Platznutzung.
+- [x] Übernahme der entsprechenden Code-Behind Logik (Layout-Persistierung in `AppSettings`, dynamische Breiten mit `GridLength.Auto`).
+- [x] Sicherstellen, dass Suchfelder (`AutoSuggestBox`) und Kontextmenüs (`ContextFlyout`) in allen Listen verfügbar sind.
 
 ---
 

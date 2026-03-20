@@ -8,10 +8,14 @@ public partial class MainWindowViewModel
     private bool _isStationListExpanded = true;
     private bool _isJourneyPropertiesExpanded = true;
     private bool _isLocomotivesListExpanded = true;
+    private bool _isLocomotivesPropertiesExpanded = true;
     private bool _isPassengerWagonListExpanded = true;
+    private bool _isPassengerWagonPropertiesExpanded = true;
     private bool _isGoodsWagonListExpanded = true;
+    private bool _isGoodsWagonPropertiesExpanded = true;
     private bool _isProjectListExpanded = true;
     private bool _isWorkflowListExpanded = true;
+    private bool _isWorkflowActionsExpanded = true;
     private bool _isWorkflowPropertiesExpanded = true;
     private bool _isSignalBoxToolboxExpanded = true;
     private bool _isSignalBoxPropertiesExpanded = true;
@@ -56,6 +60,16 @@ public partial class MainWindowViewModel
         }
     }
 
+    public bool IsLocomotivesPropertiesExpanded
+    {
+        get => _isLocomotivesPropertiesExpanded;
+        set
+        {
+            if (SetProperty(ref _isLocomotivesPropertiesExpanded, value))
+                PersistLayoutState(layout => layout.LocomotivesPage.IsPropertiesExpanded = value);
+        }
+    }
+
     public bool IsPassengerWagonListExpanded
     {
         get => _isPassengerWagonListExpanded;
@@ -66,6 +80,16 @@ public partial class MainWindowViewModel
         }
     }
 
+    public bool IsPassengerWagonPropertiesExpanded
+    {
+        get => _isPassengerWagonPropertiesExpanded;
+        set
+        {
+            if (SetProperty(ref _isPassengerWagonPropertiesExpanded, value))
+                PersistLayoutState(layout => layout.PassengerWagonPage.IsPropertiesExpanded = value);
+        }
+    }
+
     public bool IsGoodsWagonListExpanded
     {
         get => _isGoodsWagonListExpanded;
@@ -73,6 +97,16 @@ public partial class MainWindowViewModel
         {
             if (SetProperty(ref _isGoodsWagonListExpanded, value))
                 PersistLayoutState(layout => layout.GoodsWagonPage.IsListExpanded = value);
+        }
+    }
+
+    public bool IsGoodsWagonPropertiesExpanded
+    {
+        get => _isGoodsWagonPropertiesExpanded;
+        set
+        {
+            if (SetProperty(ref _isGoodsWagonPropertiesExpanded, value))
+                PersistLayoutState(layout => layout.GoodsWagonPage.IsPropertiesExpanded = value);
         }
     }
 
@@ -93,6 +127,16 @@ public partial class MainWindowViewModel
         {
             if (SetProperty(ref _isWorkflowListExpanded, value))
                 PersistLayoutState(layout => layout.WorkflowsPage.IsWorkflowListExpanded = value);
+        }
+    }
+
+    public bool IsWorkflowActionsExpanded
+    {
+        get => _isWorkflowActionsExpanded;
+        set
+        {
+            if (SetProperty(ref _isWorkflowActionsExpanded, value))
+                PersistLayoutState(layout => layout.WorkflowsPage.IsActionsExpanded = value);
         }
     }
 
@@ -134,10 +178,14 @@ public partial class MainWindowViewModel
         _isWorkflowLibraryVisible = _settings.Layout.JourneysPage?.IsWorkflowLibraryExpanded ?? true;
         _isJourneyPropertiesExpanded = _settings.Layout.JourneysPage?.IsJourneyPropertiesExpanded ?? true;
         _isLocomotivesListExpanded = _settings.Layout.LocomotivesPage?.IsListExpanded ?? true;
+        _isLocomotivesPropertiesExpanded = _settings.Layout.LocomotivesPage?.IsPropertiesExpanded ?? true;
         _isPassengerWagonListExpanded = _settings.Layout.PassengerWagonPage?.IsListExpanded ?? true;
+        _isPassengerWagonPropertiesExpanded = _settings.Layout.PassengerWagonPage?.IsPropertiesExpanded ?? true;
         _isGoodsWagonListExpanded = _settings.Layout.GoodsWagonPage?.IsListExpanded ?? true;
+        _isGoodsWagonPropertiesExpanded = _settings.Layout.GoodsWagonPage?.IsPropertiesExpanded ?? true;
         _isProjectListExpanded = _settings.Layout.SolutionPage?.IsProjectListExpanded ?? true;
         _isWorkflowListExpanded = _settings.Layout.WorkflowsPage?.IsWorkflowListExpanded ?? true;
+        _isWorkflowActionsExpanded = _settings.Layout.WorkflowsPage?.IsActionsExpanded ?? true;
         _isWorkflowPropertiesExpanded = _settings.Layout.WorkflowsPage?.IsPropertiesExpanded ?? true;
         _isSignalBoxToolboxExpanded = _settings.Layout.SignalBoxPage?.IsToolboxExpanded ?? true;
         _isSignalBoxPropertiesExpanded = _settings.Layout.SignalBoxPage?.IsPropertiesExpanded ?? true;
